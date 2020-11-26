@@ -29,7 +29,7 @@ import rx
 import inspect #this is for function names in titles, probably unnecessary.
 # import setdefaults
 # import tr
-from tr import *
+# from tr import *
 import reports
 import sys
 """for tr:"""
