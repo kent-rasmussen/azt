@@ -3,7 +3,7 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 
 
-import do
+# import do
 import profiles
 #import sys
 #import re
@@ -28,12 +28,13 @@ def doprintwords(db):
 #            if re.search(' ',guid): #, in profiledata.keys(): #(contains space, etc.)
 #                return #if we find it, stop
 #    return guid #if we don't find it, return the guid.
-def getbypsregex(db,ps,regex):
-    regex=do.makeregex(regex, word=False, compile=True) #basically, just compile.
-    guids=db.guidformsbyregex(ps,regex).keys() #idsbylexemeregexnps
-    for guid in guids:
-        printentry(db,guid)
-    print(len(guids), 'entries found.')
+"""Removed this to remove do; do I need it?"""
+# def getbypsregex(db,ps,regex):
+#     regex=do.makeregex(regex, word=False, compile=True) #basically, just compile.
+#     guids=db.guidformsbyregex(ps,regex).keys() #idsbylexemeregexnps
+#     for guid in guids:
+#         printentry(db,guid)
+#     print(len(guids), 'entries found.')
 def printsense(db,match,ps=None,lang=None):
     senseid=match[0]
     form=match[1]

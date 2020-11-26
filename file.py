@@ -116,11 +116,13 @@ def getfilename():
         self.destroy()
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-    filename=filedialog.askopenfilename(initialdir = "$HOME",title = "Select file",)
+    filename=filedialog.askopenfilename(initialdir = "$HOME",
+                                    title = _("Select LIFT Lexicon File"),)
     # print(filename)
     if filename is (): #Try one more time...
         print("Sorry, not sure what's wrong; trying again.")
-        filename=filedialog.askopenfilename(initialdir = "$HOME",title = "Select file",)
+        filename=filedialog.askopenfilename(initialdir = "$HOME",
+                                    title = _("Select LIFT Lexicon File"),)
         if filename is (): #still, then give up.
             print("Sorry, not sure what's wrong; giving up.")
             # return None
