@@ -52,12 +52,12 @@ The main window menu allows each of these to be changed as needed.
 Assuming you don't have any tone frames set up yet, you should do that in the Advanced menu. Note the *name* is important, as this is how you will refer to this frame, and how it will be identified in your database in the future (until/unless you change that). So if you're testing the plural form, something like "Pl" or "Plural", or "Pluriel" might be appropriate --but this is just a name, so make it distinct but useful to your workflow.
 
 I hope this window is otherwise clear. The frame calculator is not particularly smart; it just puts content before and after the form and gloss for each word, so you need to give it that information. If that information (in the form or gloss) alternates in agreement or harmony with the lexicon word forms, you should think through how you want to resolve potential clashes, e.g., by including all options in the frame, or allowing for ungrammaticality:
-- `pl form: '__s/z/ɪz'`
+- `pl form: '__s/z/ɪz'` (with all possible forms in your example)
 - `pl form: '__s'` (knowing that dʒədʒ+pl will come out 'dʒədʒs', not 'dʒədʒɪz')
 
 Once you have the form and gloss content in the appropriate boxes, click on 'see it on a word from the dictionary', and you will get the frame as you have defined it applied to some word (in the filter you have currently set). You can try this on a number of words by continuing to click that button, to see how it will look on different entries. There is no easy way to change this frame after you define it, so I encourage you to get it right before moving on. when you are happy with the frame, click on "use this tone frame".
 
-If you absolutely regret a tone frame you have set up, all your frames are stored in <lift filename>_ToneFrames.py next to your lift file. Careful editing this, though, you may need to redefine all your frames if you corrupt this file.
+If you absolutely regret a tone frame you have set up, all your frames are stored in `<lift filename>_ToneFrames.py` next to your lift file. Careful editing this, though, you may need to redefine all your frames if you corrupt this file.
 
 # Subsequent Runs: Sort, and Follow Directions
 Once you have done any sorting, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
