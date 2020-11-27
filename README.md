@@ -12,4 +12,4 @@ See USAGE for how to use this tool.
 
 To get the program: `git clone https://github.com/kent-rasmussen/azt.git`
 
-To run: `python3 azt/main.py`
+To run: `python3 azt/main.py` or `python azt/main.py`, as appropriate for your OS.

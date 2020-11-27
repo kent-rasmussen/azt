@@ -1,5 +1,5 @@
 # Practical prerequisites
-In case it isn't obvious, in order to use this program to actually do anything, one needs a LIFT database to check. Fortunately these are not hard to generate; LIFT is an open XML specification for storing lexical data ([https://code.google.com/archive/p/lift-standard/]). You can create a LIFT database by a number of routes:
+In case it isn't obvious, in order to use this program to actually do anything, one needs a [LIFT](https://code.google.com/archive/p/lift-standard/) database to check. Fortunately these are not hard to generate; [LIFT](https://code.google.com/archive/p/lift-standard/) is an open XML specification for storing lexical data . You can create a LIFT database by a number of routes:
 - collecting words in [WeSay](https://software.sil.org/wesay/) [Download here](https://software.sil.org/wesay/download/)
   - while you're installing things, I highly recommend the excellent library of images that works with WeSay, [the Art of Reading](https://bloomlibrary.org/artofreading)
 - building a dictionary in FLEx, and exporting to LIFT/WeSay.
