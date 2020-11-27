@@ -62,7 +62,7 @@ If you absolutely regret a tone frame you have set up, all your frames are store
 # Subsequent Runs: Sort, and Follow Directions
 Once you have done any sorting, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
 
-The program is designed to step through the process relatively automatically; once things are set up, you should just have to open the program, and click `Sort`. If you need a break, click quit, and your progress should be there when you return.
+The program is designed to step through the process relatively automatically; once things are set up, you should be able to just open the program, and click `Sort`. If you need a break, click quit on whatever window you're in, and your progress should be there when you return.
 You will, of course from time to time want to move to another part of speech or syllable profile, or check type. That can again be done on the main window menus, and the next time you click `Sort`, the appropriate checks will be launched.
 
 If any of the directions are unclear or inappropriate in any way, please let me know so I can fix them.
