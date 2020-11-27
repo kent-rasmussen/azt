@@ -32,13 +32,13 @@ A→Z+T stores this location in `lift_url.py`, so you only have to do this once.
 
 # First Run: Be Patient and Orient yourself
 ### Syllable Profile Analysis
-If you open A→Z+T without a saved syllable profile analysis file, it will first open your database (once it knows where it is) and go through the entries there, and sort them by syllable profile and part of speech (CVC v CVCV for each of Nouns and Verbs, for example). This can take a couple minutes. If you have a terminal open, you should see it's progress.
+If you open A→Z+T without a saved syllable profile analysis file, it will first open your database (once it knows where it is) and go through the entries there, and sort them by syllable profile and part of speech (CVC v CVCV for each of Nouns and Verbs, for example). This can take a couple minutes. If you have a terminal open, you should see its progress.
 
 ### Configuration File
-If you open A→Z+T without a saved configuration file, you will be greeted with a number of windows asking what you want. Some assumptions the program makes for you (based on your LIFT file), others (at least for now) it asks you for.
+If you open A→Z+T without a saved configuration file, you will be greeted with a number of windows asking what you want to check, and how. Some assumptions the program makes for you (based on your LIFT file), others (at least for now) it asks you for.
 
 ### The Main Window
-On the main window, each of these settings are indicated:
+On the upper left of the main window, each of these settings are indicated:
  - interface language
  - analysis language
  - gloss language(s)
@@ -52,8 +52,12 @@ The main window menu allows each of these to be changed as needed.
 Assuming you don't have any tone frames set up yet, you should do that in the Advanced menu. Note the *name* is important, as this is how you will refer to this frame, and how it will be identified in your database in the future (until/unless you change that). So if you're testing the plural form, something like "Pl" or "Plural", or "Pluriel" might be appropriate --but this is just a name, so make it distinct but useful to your workflow.
 
 I hope this window is otherwise clear. The frame calculator is not particularly smart; it just puts content before and after the form and gloss for each word, so you need to give it that information. If that information (in the form or gloss) alternates in agreement or harmony with the lexicon word forms, you should think through how you want to resolve potential clashes, e.g., by including all options in the frame, or allowing for ungrammaticality:
-- pl form: '__s/z/ɪz'
-- pl form: '__s' (knowing that dʒədʒ+pl will come out 'dʒədʒs', not 'dʒədʒɪz')
+- `pl form: '__s/z/ɪz'`
+- `pl form: '__s'` (knowing that dʒədʒ+pl will come out 'dʒədʒs', not 'dʒədʒɪz')
+
+Once you have the form and gloss content in the appropriate boxes, click on 'see it on a word from the dictionary', and you will get the frame as you have defined it applied to some word (in the filter you have currently set). You can try this on a number of words by continuing to click that button, to see how it will look on different entries. There is no easy way to change this frame after you define it, so I encourage you to get it right before moving on. when you are happy with the frame, click on "use this tone frame".
+
+If you absolutely regret a tone frame you have set up, all your frames are stored in <lift filename>_ToneFrames.py next to your lift file. Careful editing this, though, you may need to redefine all your frames if you corrupt this file.
 
 # Subsequent Runs: Sort, and Follow Directions
 Once you have done any sorting, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
@@ -68,6 +72,6 @@ The UI is currently in French and English; if you want to translate it into anot
 # Advanced Usage: Reports and Recordings
 Once you have done some sortings, it makes sense to run a report. The tone report will show your groupings in just one frame, if that's all you have done, but its real value lies in comparing values across multiple frames, so you'll want to check a couple tone frames before doing much with the tone report.
 
-Recording can be done at any point where at least one frame has been at least partially sorted, but when a word is presented for recording, each example (sorting context) is presented for recording. So if you sort one field, then record, then sort the next, you will see your earlier recordings again. Recordings seem to move rather quickly, so I recommend putting them last in your workflow, and do them all at once --at least once you've tested that they're working correctly with your sound card, etc.
+Recording can be done at any point where at least one frame has been at least partially sorted, but when a word is presented for recording, each example (sorting context) is presented for recording. So if you sort one field, then record, then sort the next, you will see your earlier recordings again. Recordings seem to move rather quickly, so I recommend putting them last in your workflow, and do them all at once —at least once you've tested that they're working correctly with your sound card, etc.
 
-Sound card settings can be adjusted and tested in the advanced menu.
+Sound card settings can be adjusted and tested in the advanced menu —be sure to record and play at the settings you want, to make sure your sound card can handle them.
