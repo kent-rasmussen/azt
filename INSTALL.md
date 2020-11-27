@@ -9,4 +9,4 @@ For some reason, I have had trouble getting pyaudio installed on Windows machine
 - Download and install Python 3.6.8 (e.g., from [here](https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe)
   - Be sure to check "add to PATH" (or whatever options are appropriate), so Windows knows where Python is installed.
     - If you have more than one version of python installed (e.g. 2.7 and 3.6.8), be sure to know how to run version 3 for this program.
-- Open a terminal (e.g., <font face=Wingdings>&#xff;</font> `⊞`+`R`/`cmd`) and run `python -m pip install pyaudio`
+- Open a terminal (e.g., `⊞ win`+`R`/`cmd`) and run `python -m pip install pyaudio`
