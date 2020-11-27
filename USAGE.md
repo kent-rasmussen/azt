@@ -12,16 +12,19 @@ In case it isn't obvious, in order to use this program to actually do anything, 
 LIFT databases can be minimal or very complex. For the purposes of running A→Z+T, you just need the following:
 - citation or lexeme forms (tagged with your language code, of course)
 - glosses or definitions in at least one language (again coded for gloss language)
-- part of speech indication (whatever ps names are in your database is what you will select from to study, and entries with no ps will be left out).
+- part of speech indication:
+  - stored in `sense/grammatical-info@[value]`
+  - whatever ps names (e.g., 'Noun', 'Nom', 'Njina', 'noun', 'n', etc) are in your database is what you will select from to study, so name them appropriately for your work
+  - entries with no ps value will be left out
 
-Sorting information will be placed in entry/sense node, under an example node for each context/frame:
+Sorting information will be placed in `entry/sense` node, under an example node for each context/frame:
 - form
 - sound file name
 - translation
 - frame name
 - subgrouping name
 
-Results of analysis of multiple frame groupings is placed in a separate entry/sense/field[@type='tone'], as this is a summary/analysis of the values contained in the example nodes.
+Results of analysis of multiple frame groupings is placed in a separate `entry/sense/field[@type='tone']`, as this is a summary/analysis of the values contained in the example nodes.
 
 # Tell A→Z+T where to find your database
 The first time you run A→Z+T, you will need to select your LIFT database. Results and some preferences will be stored in that directory.
