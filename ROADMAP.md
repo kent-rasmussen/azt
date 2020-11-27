@@ -1,66 +1,73 @@
 Roadmap including past and future work; '+' = done; IP= in process; NOT= things that don't need doing anymore.
 ctrl-shift-p to find commands
+# Bugs to squash
 Make ATZ not crash if empty url file is present.
+# In Process
 IP: Clean up and document code
 IP: I need to consider the need for db, parent, and window in check scripts.
 IP: Need to fix references to parent of checks and subchecks.
-+finish logic of main window, make things depend on what they should (e.g. subcheck should depend on check.type ( be either C, V, or CV --for now))
-+make regexes work, to include profile (of those available for ps), check (e.g., V1=V2), and subcheck (e.g., a: CaC\2).
-+Add padding to buttons and word labels
-+background color for windows: light blue or light green #b3ff99 #c6ffb3
-+center main page with exit button inside title.
-+extend comparatives buttons, make window large enough for them all, or wordwrap
-scroll comparatives and reports when necessary.
-+make script not die when ps doesn't appear in frames (i.e., be OK making a first frame)
-+make get lift work.
-+get check should do something (other than a blank frame!) when there are no check options for a ps/profile combo.
-+Make logic based on senses, not entries. This will lead to problems with people
+
+# Features to add
+-scroll comparatives and reports when necessary.
+
+# Version 0.3 Nov 2020
+
+- [x] finish logic of main window, make things depend on what they should (e.g. subcheck should depend on check.type ( be either C, V, or CV --for now))
+- [x] make regexes work, to include profile (of those available for ps), check (e.g., V1=V2), and subcheck (e.g., a: CaC\2).
+- [x] Add padding to buttons and word labels
+- [x] background color for windows: light blue or light green #b3ff99 #c6ffb3
+- [x] enter main page with exit button inside title.
+- [x] extend comparatives buttons, make window large enough for them all, or wordwrap
+- [x] make script not die when ps doesn't appear in frames (i.e., be OK making a first frame)
+- [x] make get lift work.
+- [x] get check should do something (other than a blank frame!) when there are no check options for a ps/profile combo.
+- [x] Make logic based on senses, not entries. This will lead to problems with people
   who put fine grained sense dinstinctions in their dictionaries, but hopefully
   that isn't for younger dictionaries, at least. But it will allow us to
   distinguish between zero derivations of a root, so verb frames will only work
   with verb senses, even if the lexeme has a verb and noun sense.
   And critically, it will facilitate putting this info in examples.
-remove all guid references from logic, unless needed for some reason (think about this!)
-+impliment splash screen
-+add icon to splash screen
-+write function to ask if there are unsorted senses for a particular check frame
-  +if so, call sortT.
-OK w/o this:when calling a (tone?) report, first call function to check for entries to sort.
-+make entries (not frame) disappear when they are selected on verifyT.
-+make comparative words smaller font (between instructions and sorting word)
-+to sorting frames, add status to upper right corner (small), with sense x/y progress.
-+to verifying frames, add status to upper right corner (small), with group x/y progress.
-remove references to GUID, unless needed?
+- [ ] remove all guid references from logic, unless needed for some reason (think about this!)
+- [x] impliment splash screen
+- [x] add icon to splash screen
+- [x] write function to ask if there are unsorted senses for a particular check frame
+  - [x] if so, call sortT.
+- [ ] OK w/o this:when calling a (tone?) report, first call function to check for entries to sort.
+- [x] make entries (not frame) disappear when they are selected on verifyT.
+- [x] make comparative words smaller font (between instructions and sorting word)
+- [x] to sorting frames, add status to upper right corner (small), with sense x/y progress.
+- [x] to verifying frames, add status to upper right corner (small), with group x/y progress.
+- [ ] remove references to GUID, unless needed?
 
-Set up data collection:
-  ask for word (with glosses prompting)
-  ask for plural (after all of above, or each?)
-    if yes, add a ps @gi="Noun", add form to examples
-  ask for imperative (after all of above, or each, and even if plural given?)
-  if yes, add a ps @gi="Verb", add form to examples (this could result in second sense; do we want that?)
+- [ ] Set up data collection:
+  - [ ] ask for word (with glosses prompting)
+  - [ ] ask for plural (after all of above, or each?)
+    - [ ] if yes, add a ps @gi="Noun", add form to examples
+  - [ ] ask for imperative (after all of above, or each, and even if plural given?)
+  - [ ] if yes, add a ps @gi="Verb", add form to examples (this could result in second sense; do we want that?)
 
 Hide config page details, make simpler interface.
 add focus for confirmation buttons on add morpheme windows
 
 Tone Frames:
-  Fix this dependency!
+  - [ ] Fix this dependency!
     File "/home/kentr/bin/raspy/doc/dictionarychecker/main_lift.py", line 552, in framelocationsbyps
     l+=[self.toneframes[ps][f]['location']]
-  KeyError: 'location'
-  make distictions for frame values and glossings by language, not 'form', gloss, etc.
-  update framedentry to use iso values, too.
-  check other functions that call framedentry, adjust them (remove framed['form'], make framed[self.analang])
+    KeyError: 'location'
+  - [ ] make distictions for frame values and glossings by language, not 'form', gloss, etc.
+  - [ ] update framedentry to use iso values, too.
+  - [ ] check other functions that call framedentry, adjust them (remove framed['form'], make framed[self.analang])
 
 addmorpheme:
-  +assume ps (or
+  - [x] assume ps (or
               take new ps from defaults file
               later: write window to put it there.
               this is only needed until that ps appears in the lexicon.
               Once done, can add frames per normal)
-  +enter form
-  +enter gloss
-  +generate guid, entry @id, sense @id, datecreated/modified (and generalize use of these last two?)
-  pull definitions, glosses, and semantic domain info from LIFT template.
+  - [x] enter form
+  - [x] enter gloss
+  - [x] generate guid, entry @id, sense @id, datecreated/modified (and generalize use of these last two?)
+  - [ ] pull definitions, glosses, and semantic domain info from LIFT template.
 
 +sound.py:
   +make RecordButton class
