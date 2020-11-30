@@ -15,4 +15,4 @@ To get the program: `git clone https://github.com/kent-rasmussen/azt.git`, or cl
 
 To run: `python main.py` (The python 3+ executable may be called python3.) You may have a better experience (and avoid a terminal) if you tell your operating system to open `main.py` with python —at that point, you should be able to make a link `main.py` on your desktop or wherever.
 
-For usage information, see [USAGE.md]
+For usage information, see [USAGE.md](USAGE.md)
