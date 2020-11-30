@@ -1,5 +1,5 @@
 # TL;DR
-You need Python 3+ to run A→Z+T. If you need to install it, you can find it [here](python.org).
+You need Python 3+ to run A→Z+T. If you need to install it, you can find it [here](https://python.org).
 
 Download this repository, and run `python main.py`. Your python 3+ executable may be called `python3`.
 # Dependencies
