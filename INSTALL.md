@@ -1,5 +1,5 @@
 # TL;DR
-You need Python 3+ to run A→Z+T. If you need to install it, you can find it [here](python.org).
+You need Python 3+ to run A→Z+T. If you need to install it, you can find it [here](https://python.org).
 
 Download this repository, and run `python main.py`. Your python 3+ executable may be called `python3`.
 # Dependencies
@@ -10,3 +10,9 @@ For some reason, I have had trouble getting pyaudio installed on Windows machine
   - Be sure to check "add to PATH" (or whatever options are appropriate), so Windows knows where Python is installed.
     - If you have more than one version of python installed (e.g. 2.7 and 3.6.8), be sure to know how to run version 3 for this program.
 - Open a terminal (e.g., `⊞ win`+`R` then type 'cmd') and run `python -m pip install pyaudio`
+# ATZ
+To get the program: `git clone https://github.com/kent-rasmussen/azt.git`, or click on the green `code` button on the main page for download options. If you download an archive (e.g., zip file), extract it so you have a folder of files. Either way, put it somewhere sensible, so you can find it later. If you use `git clone`, you can update in the future with `git pull`, and just download the changes.
+
+To run: `python main.py` (The python 3+ executable may be called python3.) You may have a better experience (and avoid a terminal) if you tell your operating system to open `main.py` with python (and/or make `main.py` executable) —at that point, you should be able to make a link `main.py` on your desktop or wherever.
+
+For usage information, see [USAGE.md](USAGE.md)
