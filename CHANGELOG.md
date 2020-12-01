@@ -1,5 +1,9 @@
 # In Process
-
+## Issues from November 2020 Zulgo beta test
+- Noform Nogloss entries showing up on recording screen (ideally make never appear, at least skippable)
+- fix problems that arise from empty form, or cut processing of those records earlier
+- make `Record` button on main window.
+- 
 # Version 0.3 (November 2020)
 ## language and search parameters
 - logic to make appropriate assumptions
