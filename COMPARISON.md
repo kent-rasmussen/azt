@@ -1,9 +1,9 @@
 # Comparison of using A→Z+T with Pen and Paper Participatory Methods
 ## Beta Test on Zulgo
 A→Z+T was tested in the Zulgo [gnd] language of Cameroon in November 2020, during five work days in Yaoundé, Cameroon. We checked an existing LIFT database with ~2.4k words. Within that database, we checked three sets of roots, which were sorted for tone class to provide underlying tone melody hypotheses for later testing. 33 CVC nouns were sorted in four tone frames, resulting in three melodies. 99 CVC verbs were sorted in four tone frames, resulting in at least three melodies, and 145 CVCV nouns were sorted in isolation, resulting in at least eight melodies. Most of the above plus 85 CVCV verbs in isolation were recorded, resulting in 686 96khz/24bit sound files —parsed, labeled meaningfully (for part of speech, syllable profile, lexicon sense id and gloss), and added to the database, by the end of the fifth day.
-This page is mostly based on that trial run of A→Z+T, though it is updated with work since, as well.
+This page is mostly based on that trial run of A→Z+T, though it is also updated with other work.
 ## Where Pen and Paper Methods are Better
-I don't want anyone to think that I imagine I have captured all that is good in pen and paper participatory methods. However low we make the bar on using this computer program, there will always be some people (expats and nationals) who simply prefer pen and paper over computers, for a number of reasons.
+I don't want anyone to think that I imagine that A→Z+T captures all the value of pen and paper participatory methods. However low we make the bar on using this computer program, there will always be some people (expats and nationals) who simply prefer pen and paper over computers, for a number of reasons.
 ### Flexibility
 Pen and paper methodologies are ultimately *flexible*, whereas A→Z+T is not, as we need to instruct the computer what to do in advance, and we cannot anticipate every eventuality (as with other computer programs). That said, I hope we have captured much of what is normally done in a pen and paper workshop in this computer model.
 ### Accessibility
