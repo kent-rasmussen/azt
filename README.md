@@ -10,6 +10,8 @@ See [RATIONALE](RATIONALE.md) for why one should use this tool.
 
 See [USAGE](USAGE.md) for how to use this tool.
 
+See [CHANGELOG](CHANGELOG.md) to see features by version.
+
 To get the program: `git clone https://github.com/kent-rasmussen/azt.git`
 
 To run: `python main.py` (The python 3+ executable may be called `python3`.)
