@@ -6,13 +6,13 @@ A→Z+T is written in [Python](https://python.org) (3+) and [Tkinter](https://do
 
 See [INSTALL](INSTALL.md) for help installing.
 
-See [RATIONALE](RATIONALE.md) for why one should use this tool.
+See [RATIONALE](RATIONALE.md) for why one should use this tool; see [COMPARISON](COMPARISON.md) to see A→Z+T compared with pen and paper participatory methods.
 
 See [USAGE](USAGE.md) for how to use this tool.
 
 See [CHANGELOG](CHANGELOG.md) to see features by version.
 
-See [COMPARISON](COMPARISON.md) to see A→Z+T compared with pen and paper participatory methods.
+
 
 To get the program: `git clone https://github.com/kent-rasmussen/azt.git`
 
