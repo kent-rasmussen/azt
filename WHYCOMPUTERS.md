@@ -1,4 +1,4 @@
-# Comparison of using A→Z+T with Pen and Paper Participatory Methods
+# Why Use Computers? A Comparison of Using A→Z+T with Pen and Paper Participatory Methods
 ## Beta Test on Zulgo
 A→Z+T was tested in the Zulgo [gnd] language of Cameroon in November 2020, during five work days in Yaoundé, Cameroon. We checked an existing LIFT database with ~2.4k words. Within that database, we checked three sets of roots, which were sorted for tone class to provide underlying tone melody hypotheses for later testing. 33 CVC nouns were sorted in four tone frames, resulting in three melodies. 99 CVC verbs were sorted in four tone frames, resulting in at least three melodies, and 145 CVCV nouns were sorted in isolation, resulting in at least eight melodies. Most of the above plus 85 CVCV verbs in isolation were recorded, resulting in 686 96khz/24bit sound files —parsed, labeled meaningfully (for part of speech, syllable profile, lexicon sense id and gloss), and added to the database, by the end of the fifth day.
 This page is mostly based on that trial run of A→Z+T, though it is also updated with other work.
