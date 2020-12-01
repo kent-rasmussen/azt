@@ -470,10 +470,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def __init__(self, filename,nsyls=None):
         self.filename=filename #lift_file.liftstr()
         self.logfile=filename+".changes"
+        """Problems reading a valid LIFT file are dealt with in main.py"""
         self.read() #load and parse the XML file. (Should this go to check?)
-        # else:
-        #     print("File problem! quitting")
-        #     exit()
         backupbits=[filename,'_',
                     datetime.datetime.utcnow().isoformat()[:-16], #once/day
                     '.txt']
