@@ -11,13 +11,12 @@
 - make all file open options with `encoding='utf-8'`
 - figure out problem of leaving triage after one addition of words -- related to problem with empty group --related to having a single character name for the group
   - make group name smarter than `len>1`
-- [x] remove lift_url from repo
 
 # Version 0.3.1
 bug fixes:
 - [x] remove `lift_url.py` from repo
   - [x] if non file found in `lift_url.py`, rejects and asks for a file.
-  - [x] if non-LIFT file is given, AZT quits on an exception, with console message, and deletes `lift_url.py`.
+  - [x] if non-LIFT file is given, AZT quits on an exception, with console and UI message, and deletes `lift_url.py`.
 # Version 0.3 (November 2020)
 ## language and search parameters
 - logic to make appropriate assumptions
