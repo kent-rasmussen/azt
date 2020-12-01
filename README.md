@@ -12,6 +12,8 @@ See [USAGE](USAGE.md) for how to use this tool.
 
 See [CHANGELOG](CHANGELOG.md) to see features by version.
 
+See [COMPARISON](COMPARISON.md) to see A→Z+T compared with pen and paper participatory methods.
+
 To get the program: `git clone https://github.com/kent-rasmussen/azt.git`
 
 To run: `python main.py` (The python 3+ executable may be called `python3`.)
