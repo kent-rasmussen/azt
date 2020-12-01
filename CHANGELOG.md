@@ -3,7 +3,19 @@
 - Noform Nogloss entries showing up on recording screen (ideally make never appear, at least skippable)
 - fix problems that arise from empty form, or cut processing of those records earlier
 - make `Record` button on main window.
-- 
+- remove requirement for location key in tone frames
+- fix logic of settings from scratch  
+  - pick a part of speech with no tone frames in it?
+  - remove any circular dependencies as settings are filled out.
+  -make sure each dependency is really necessary (tone frame?)
+- make all file open options with `encoding='utf-8'`
+- figure out problem of leaving triage after one addition of words -- related to problem with empty group --related to having a single character name for the group
+  - make group name smarter than `len>1`
+- remove lift_url from repo
+  - and fix logic to not crash if the file is there, but doesn't read it correctly (Windows problem).
+  - fix logic of small errors in file --final spaces gives unknowns settings files.
+# Version 0.3.1
+bug fixes:
 # Version 0.3 (November 2020)
 ## language and search parameters
 - logic to make appropriate assumptions

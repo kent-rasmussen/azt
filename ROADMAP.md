@@ -9,7 +9,7 @@ IP: Need to fix references to parent of checks and subchecks.
 
 # Features to add
 -scroll comparatives and reports when necessary.
-
+-what and why pages in verious places?
 # Version 0.3 Nov 2020
 
 - [x] finish logic of main window, make things depend on what they should (e.g. subcheck should depend on check.type ( be either C, V, or CV --for now))
