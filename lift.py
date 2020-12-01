@@ -464,6 +464,13 @@ def removenone(url):
     nonattr=re.compile('(\[@name=\'location\'\])*\[[^\[]+None[^\[]+\]')
     newurl=nonattr.sub('',url)
     return newurl
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+class BadParseError(Error):
+    def __init__(self, filename):
+        self.filename = filename
 class Lift(object): #fns called outside of this class call self.nodes here.
     """The job of this class is to expose the XML as python object
     attributes. Nothing more, not thing else, should be done here."""
@@ -471,7 +478,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.filename=filename #lift_file.liftstr()
         self.logfile=filename+".changes"
         """Problems reading a valid LIFT file are dealt with in main.py"""
-        self.read() #load and parse the XML file. (Should this go to check?)
+        try:
+            self.read() #load and parse the XML file. (Should this go to check?)
+        except:
+            raise BadParseError(self.filename)
         backupbits=[filename,'_',
                     datetime.datetime.utcnow().isoformat()[:-16], #once/day
                     '.txt']

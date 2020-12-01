@@ -58,23 +58,26 @@ class Check():
         # _=self._
         # self.fonts=parent.fonts
         # self.theme=parent.theme #Needed?
-        self.filename=file.getfilename()
-        if not file.exists(self.filename):
+        filename=file.getfilename()
+        if not file.exists(filename):
             print("Select a lexical database to check; exiting.")
-            exit()
-        try:
-            lift.read(self) #load and parse the XML file. (Should this go to check?)
-        except:
-            print(_("This doesn't look like a well formed lift file; please "
-                    "choose again."))
-            file.remove('lift_url.py')
-            print("'lift_url.py' removed")
             exit()
         # self.backupfilename=filename+'.bak.txt' #lift_file.liftstr()
         """This and the following bit should probably be in another lift
         class, in the main script. They make non lift-specific changes
         and assumptions about the database."""
-        self.db=lift.Lift(self.filename,nsyls=nsyls)
+        try:
+            self.db=lift.Lift(filename,nsyls=nsyls)
+        except lift.BadParseError:
+            text=_("{} doesn't look like a well formed lift file; please "
+                    "try again.").format(filename)
+            print(text)
+            print("'lift_url.py' removed.")
+            window=Window(self)
+            Label(window,text=text).grid(row=0,column=0)
+            file.remove('lift_url.py') #whatever the problem was, remove it.
+            window.wait_window(window) #Let the user see the error
+            raise #Then force a quit and retry
         # self.db.filename=filename #in lift.py
         if not file.exists(self.db.backupfilename):
             self.db.write(self.db.backupfilename)
