@@ -28,3 +28,12 @@
 - each context/frame where a word has been sorted is presented for recording
 - recording is done by click-speak-release on a single `record` button.
 - once recorded, the user is presented with buttons to play and/or redo the recording.
+
+## Progress
+- the type of search (Consonant, Vowel, Consonant-Vowel, or Tone) is indicated by an icon on the `Sort` button on the lower left of the main window.
+- the right side of the main window shows a table of progress, once some sorting has been done
+  - for one check type at a time (the current check type)
+  - for one grammatical category at a time (the current grammatical category)
+  - The table is organized by syllable profile v subgrouping
+  - cell contents count the number of groups, if unnamed
+  - cell contents list groups, if named
