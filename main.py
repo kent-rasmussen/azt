@@ -66,7 +66,18 @@ class Check():
         """This and the following bit should probably be in another lift
         class, in the main script. They make non lift-specific changes
         and assumptions about the database."""
-        self.db=lift.Lift(filename,nsyls=nsyls)
+        try:
+            self.db=lift.Lift(filename,nsyls=nsyls)
+        except lift.BadParseError:
+            text=_("{} doesn't look like a well formed lift file; please "
+                    "try again.").format(filename)
+            print(text)
+            print("'lift_url.py' removed.")
+            window=Window(self)
+            Label(window,text=text).grid(row=0,column=0)
+            file.remove('lift_url.py') #whatever the problem was, remove it.
+            window.wait_window(window) #Let the user see the error
+            raise #Then force a quit and retry
         # self.db.filename=filename #in lift.py
         if not file.exists(self.db.backupfilename):
             self.db.write(self.db.backupfilename)

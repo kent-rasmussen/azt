@@ -45,8 +45,10 @@ def exists(file):
 def remove(file):
     if exists(file):
         os.remove(file)
+    elif exists(fullpathname(file)):
+        os.remove(fullpathname(file))
     # else:
-    #     print(_("Tried to remove {}, but it does not exist.").format(file))
+    #     print(_("Tried to remove {}, but I can't find it.").format(file))
 def getdiredurl(dir,filename):
     return pathlib.Path.joinpath(dir,filename)
 # def getimagefilename(*args):
@@ -98,27 +100,31 @@ def writeinterfacelangtofile(lang):
 def getfilename():
     try:
         import lift_url
-        #print("lift_url.py imported fine.")
-        try:
-            filename=lift_url.filename
+        if exists(lift_url.filename):
+            # print("lift_url.py imported fine, with a real file.")
+            return lift_url.filename
+        else:
+        # try:
+            # filename=lift_url.filename
             #print('filename: '+filename)
-        except:
+        # except:
             return lift()
     except:
+        # print("lift_url didn't import")
         return lift()
-    try:
-        return filename
-    except:
-        text=(_("Sorry, you don't seem to have selected a LIFT lexicon file."))
-        tkinter.Label(self.status, text=text).grid(column=0,row=1)
-        #window.
-        self.window.wait_window(window=self.window)
-        self.destroy()
+    # try:
+    #     return filename
+    # except:
+    #     text=(_("Sorry, you don't seem to have selected a LIFT lexicon file."))
+    #     tkinter.Label(self.status, text=text).grid(column=0,row=1)
+    #     #window.
+    #     self.window.wait_window(window=self.window)
+    #     self.destroy()
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-    filename=filedialog.askopenfilename(initialdir = "$HOME",
-                                    title = _("Select LIFT Lexicon File"),)
-    # print(filename)
+    filename=filedialog.askopenfilename(initialdir = "$HOME",#filetypes=[('LIFT','*.lift')],
+                                    title = _("Select LIFT Lexicon File"))
+    print('filename:',filename)
     if filename is (): #Try one more time...
         print("Sorry, not sure what's wrong; trying again.")
         filename=filedialog.askopenfilename(initialdir = "$HOME",
