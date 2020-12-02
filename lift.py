@@ -1064,6 +1064,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 self.languagenames[xyz]="Zulgo"
             elif xyz == 'fub':
                 self.languagenames[xyz]="Fulfulde"
+            elif xyz == 'bfj':
+                self.languagenames[xyz]="Chufie’"
+            else:
+                self.languagenames[xyz]="Other Language" #I need to fix this...
             self.languagenames[None]=None #just so we don't fail on None...
     def glossordefn(self,guid=None,senseid=None,lang=None,ps=None
                     ,showurl=False):
@@ -1153,7 +1157,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return actuals
     def vlist(self):
         #This should probably pull stuff from the lift file in some way..….
-        vowels=['a', 'i', 'ɨ','ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o', 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃', 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
+        vowels=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o', 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃', 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
+        if self.analang=='bfj':
+            vowels=['ou','ei']+vowels
         #vowels=vowels+['ə', 'a', 'e', 'i', 'u'] #for gnd
         #vowels=vowels+['á', 'ú', 'í', 'é','ə́','à', 'ù', 'è', 'ì'] #combination extra segments (for gnd)
         #vowels=vowels+['á', 'à', 'ú', 'í', 'é', 'ù', 'è', 'ì'] #for gnd

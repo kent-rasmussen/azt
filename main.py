@@ -609,12 +609,12 @@ class Check():
                                         fieldtype='tone', location=self.name):
                 if len(tonegroup) != 1:
                     output['tonegroup']=tonegroup
-                    # output['tonegroup']=None
-                # else:
         if noframe == False:
             frame=self.toneframes[self.ps][self.name]
+            if self.debug ==True:
+                print(frame)
         if self.debug ==True:
-            print(forms,glosses,frame)
+            print(forms,glosses)
         output['form']=None
         output['gloss']=None
         text=('noform','nogloss')
@@ -634,21 +634,14 @@ class Check():
                         if 'gloss2' in frame:
                             output['gloss2']=self.frameregex.sub(gloss2,
                                                                 frame['gloss2'])
-                        # else:
-                        #     output['gloss2']=gloss2
                     else:
                         output['gloss2']=gloss2
                 text=[output['form'],"‘"+str(output['gloss'])+"’"]
                 if 'gloss2' in output:
-                    # print('     '+text) #,output['form'],"‘"+str(output['gloss'])+"’")
-                # else:
                     text+=["‘"+str(output['gloss2'])+"’"]
                 if 'tonegroup' in output:
-                    # print('     '+text) #,output['form'],"‘"+str(output['gloss'])+"’")
-                # else:
                     text=[str(output['tonegroup'])]+text
-                print('     ',text) #print('     ',output['form'],"‘"+str(output['gloss'])+"’",
-                    # "‘"+str(output['gloss2'])+"’")
+                # print('     ',text)
         output['formatted']='\t'.join(text)
         return output #{'form':outputform,'gloss':outputgloss,'gloss2':outputgloss2}
     def getframedentry(self,guid):
@@ -1695,41 +1688,136 @@ class Check():
         text=_("(Report is also available at ("+self.tonereportfile+")")
         output(window,r,text)
         r.close()
+    def topps(self,x):
+        """take the top x profiles, irrespective of ps"""
+        pss=list()
+        for count in range(x):
+            pss+=[self.profilecounts[count][2]] #(count, profile, ps)
+        # print(pss)
+        return list(dict.fromkeys(pss))
+    def topprofiles(self,x):
+        profiles={}
+        for count in range(x):
+            if self.profilecounts[count][2] not in profiles:
+                profiles[self.profilecounts[count][2]]=list()
+            profiles[self.profilecounts[count][2]]+=[self.profilecounts[count][1]] #(count, profile, ps)
+        # print(profiles)
+        # profiles=list(dict.fromkeys(profiles))
+        return profiles
     def basicreport(self):
-        import sys
-        self.type='V'
-        pss=('Nom','Verbe')
+        # import sys
+        # self.type='V'
+        # pss=('Nom','Verbe')
         self.basicreportfile=''.join([re.sub('\.','_',
-                                        ''.join([self.db.filename,'_'
-                                            ,self.type,'_',str(pss)
+                                        ''.join([self.db.filename
+                                            # ,'_',self.type,'_',str(pss)
                                             ,'.BasicReport'
                                             ])
                                             ),'.txt'])
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
-        profiles.printprofilesbyps(self.db)
-        profiles.printcountssorted(self.db)
-        print('Running a basic report on',self.type,'segments, in these parts '
-                'of speech:',pss)
-        """One syllable forms and checks first"""
-        profs=('CVC',) #let's not conflict with the module...
-        checks=('V1',) #Nothing here with 3V's
-        reports.wordsbypsprofilechecksubcheck(self,pss=pss,profs=profs,
-                                    checks=checks,subchecks=None)
-        if self.nsyls > 1:
-            """Then Two syllable forms and checks"""
-            profs=('CVCVC','CVCV')
-            checks=('V1=V2',) #List!
-            reports.wordsbypsprofilechecksubcheck(self,pss=pss,profs=profs,
-                                    checks=checks,subchecks=None)
-        if self.nsyls > 2:
-            """Then Three syllable forms and checks"""
-            profs=('CVCVCV','CVCVCVC')
-            checks=('V1=V2=V3',) #Nothing here with 3V's
-            reports.wordsbypsprofilechecksubcheck(self,pss=pss,profs=profs,
-                                    checks=checks,subchecks=None)#,nsyls=nsyls)
+        self.basicreported={}
+        self.printprofilesbyps()
+        self.printcountssorted()
+        for self.ps in self.topps(5): #get PSs found in the top five syllable profiles
+            for self.profile in self.topprofiles(5)[self.ps]:
+                for self.type in ['V','C']:
+                    if self.type not in self.basicreported:
+                        self.basicreported[self.type]=list()
+                    # print(self.ps,self.profile,self.type)
+        # print('profilecounts:',self.profilecounts)
+        # print('profilecounts:',self.profilecounts[0])
+        # print('profilecounts:',self.profilecounts[1])
+        # print('profilecounts:',self.profilecounts[0][1])
+        # print('profilecounts:',self.profilecounts[1][1])
+                    # """To finish writing here"""
+                    # sys.stdout.close()
+                    # sys.stdout=sys.__stdout__
+        # print('Running a basic report on',self.type,'segments, in these parts '
+        #         'of speech:',pss)
+        # """One syllable forms and checks first"""
+        # profs=('CVC',) #let's not conflict with the module...
+        # checks=('V1',) #Nothing here with 3V's
+                    self.wordsbypsprofilechecksubcheck(
+                                                # ps=ps,profile=profile,
+                                                # checks=checks,subchecks=None
+                                                )
+        # if self.nsyls > 1:
+        #     """Then Two syllable forms and checks"""
+        #     profs=('CVCVC','CVCV')
+        #     checks=('V1=V2',) #List!
+        #     self.wordsbypsprofilechecksubcheck(pss=pss,profs=profs,
+        #                             checks=checks,subchecks=None)
+        # if self.nsyls > 2:
+        #     """Then Three syllable forms and checks"""
+        #     profs=('CVCVCV','CVCVCVC')
+        #     checks=('V1=V2=V3',) #Nothing here with 3V's
+        #     self.wordsbypsprofilechecksubcheck(pss=pss,profs=profs,
+        #                             checks=checks,subchecks=None)#,nsyls=nsyls)
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         self.checkcheck()
+    def wordsbypsprofilechecksubcheck(self,ps=None,profile=None,checks=None,subchecks=None,nsyls=None):
+        """I need to find a way to limit these tests to appropriate profiles..."""
+        # print('Running wordsbypsprofilechecksubcheck')#pss=('Nom','Verbe')
+        #profiles=('CVCVC',)
+        #checks=('V1','V1=V2','V1=V2=V3')
+        #print(lift.vowels)
+        #check=Check(nsyls=nsyls) #from lift_do
+        # db=self.db
+        # profiles.printprofilesbyps(db)
+        # profiles.printcountssorted(db)
+        if self.type == 'V':
+            subchecks=self.db.v[self.db.analang] #('a',) just the vowels, not method or regex
+        elif self.type == 'C':
+            subchecks=self.db.c[self.db.analang]
+        else:
+            print("Sorry, not sure what I'm doing:",self.type)
+        # self.profile in profs:
+        for codenname in sorted(self.setnamesbyprofile(), key=lambda s: len(s[0]),reverse=True): #key=len([0])): #
+            self.name=codenname[0] #just codes, not names
+            if len(self.name) == 1:
+                print("Error!",self.name,"Doesn't seem to be list formatted.")
+            for self.subcheck in subchecks:
+                print(self.ps,self.profile,self.name,self.subcheck,':')
+                self.buildregex()
+                for match in self.db.senseidformsbyregex(self.regex,ps=ps).items(): #db.idsbylexemeregexnps(check.ps,check.regex).keys(): #compiled!
+                    if match[0] not in self.basicreported[self.type]:
+                        self.basicreported[self.type]+=[match[0]]
+                        print('\t',self.getframedsense(match[0],noframe=True)['formatted'])
+    def printcountssorted(self):
+        print("Ranked and numbered syllable profiles, by grammatical category:")
+        wcounts=list()#{}
+        allkeys=[]
+        for k in self.profilesbysense:
+            allkeys+=self.profilesbysense[k]
+        print('Profiled data:',len(allkeys))
+        self.profilecounts={}
+        for ps in self.profilesbysense:
+            if ps == 'Invalid':
+                print(ps,'entries found:',len(self.profilesbysense['Invalid']))
+            else:
+                print(str(ps)+" (total): "+str(self.db.wordcountbyps(ps)))
+                # wcounts[ps]=list()
+                pscount=0
+                for profile in self.profilesbysense[ps]:
+                    # print(self.profilesbysense[ps][profile])
+                    # print(len(self.profilesbysense[ps][profile]))
+                    count=len(self.profilesbysense[ps][profile]) #.keys()
+                    pscount+=count
+                    wcounts.append((count, profile, ps))
+                for line in sorted(wcounts, reverse=True): #sorted(wcounts[ps], reverse=True):
+                    if line[2] == ps:
+                        print(line[0],line[1])
+                print('Profiled '+str(ps)+' count: '+str(pscount))
+        # for ps in wcounts:
+        #     self.profilecounts+=wcounts
+        self.profilecounts=sorted(wcounts,reverse=True)
+    def printprofilesbyps(self):
+        print("Syllable profiles actually in senses, by grammatical category:")
+        for ps in self.profilesbysense:
+            if ps is 'Invalid':
+                continue
+            print(ps, self.profilesbysense[ps])
     def senseidsincheck(self,senseids):
         """This function takes a list of senseids that match a criteria, and
         limits them to those that match the ps/profile combination we're
@@ -2602,6 +2690,7 @@ class Check():
         and subcheck (e.g., a: CaC\2)."""
         """Provides self.regexCV and self.regex"""
         self.regexCV=None #in case this was run before.
+        # self.debug=True
         if self.debug == True:
             print('self.profile:',self.profile)
             print('self.type:',self.type)
@@ -2621,7 +2710,7 @@ class Check():
             regexS='[^'+S+']*'+S
             for occurrence in reversed(range(maxcount)):
                 occurrence+=1
-                if re.search(S+str(occurrence),self.name) is not None:
+                if re.search(S+str(occurrence),self.name) != None:
                     """Get the second S, regardless of intervening non S..."""
                     regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
                     replS='\\1'+self.subcheck

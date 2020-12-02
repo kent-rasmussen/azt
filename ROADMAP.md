@@ -9,6 +9,7 @@ IP: Need to fix references to parent of checks and subchecks.
 
 # Features to add
 -scroll comparatives and reports when necessary.
+-add `wait` window for reports
 -what and why pages in verious places?
 # Version 0.3 Nov 2020
 
