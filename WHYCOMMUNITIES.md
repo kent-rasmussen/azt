@@ -1,7 +1,17 @@
-# Comparison of using A→Z+T with Traditional Field Methods 
-By Traditional field methods, I mean those designed around a formally trained linguist Eliciting data from a naive speaker of a target language.
-Pros: good IPA transcriptoins you can trust.
-cons: nobody gets teh anlayssi but you, an dyo uleave them wtih notihng (except maybe smoe pay).
-  lots fo tiem processign sound files
-  WYSYWYG data --only what yo ucna see, no/little emic perspective
-  
+# Why Work with Communities: Comparison of using A→Z+T with Traditional Field Methods
+By Traditional Field Methods, I mean those designed around a **formally trained linguist** eliciting data from a **linguistically naïve speaker of a target language**. This is the perspective on field work that is often taught in Field Methods courses in (American?) Universities, and leans heavily on the analytical capacity of the trained linguist from outside the language community. Furthermore, there is typically no expectation of raising the awareness or analytical capacity of the naïve speaker(s) involved in this research; their purpose is merely to provide data.
+## Where Traditional Field Methods are Better
+Probably the main reason Traditional Field Methods are used is the amount of **control** over the outcome in this process. If the researcher doesn't get the desired results, there is no one else to blame. The researcher can trust IPA transcriptions, as they are his own handiwork.
+## Where A→Z+T is Better
+### Participatory Research Methods
+Possibly the main failing of Traditional Field Methods, and the main reason to use any participatory method, is that Traditional Field Methods leaves the community where it was found, in terms of its understanding of their language. There might be a paper published, or eventually a book, but insights may not be shared with the community who speaks the language in any meaningful way. Some Traditional Field Methods practitioners find a way to "give back" to the community, and this is good. But participatory research methods bring the community along with the analysis, making the sharing of the research results more organic, and less dependent on a write-up that comes later, and in another language.
+
+### The Emic Perspective
+In addition to the above (that it's just plain nicer and more respectful to include people in the analysis if their language where possible), it is also true (I believe) that you get better data when you look at a language both from the external (etic) perspective, **and** from the internal (emic) perspective. There are always phonetic details that an outsider might notice, while acknowledging they make no impact on meaningful differences in the language. In fact, one might summarize the main goal of a phonologist as finding which differences are meaningful _within the language_. Yes, it is possible to do much of this through deduction from facts gained via the etic perspective. But it stands to reason that if you want to know what is **important within a language**, that a native speaker of that language has a unique perspective, that we outsiders do not share.
+
+Another take on this point casts the data collection in terms of WYSYWYG (what you see is what you get), which has been criticized as being paraphrased as "What you see is **all** you get". If we insist on maintaining control of the process of analysis, we may exclude perspectives that are not immediately obvious to us, however important they may be to the understanding of the language.
+
+### Data Collection Organized from the Beginning
+Often Traditional Field Methods practitioners find the months after fieldwork full of processing data collected during a field trip. What do you do with the hours and hours of recordings you took during your fieldwork sessions? Do you parse and tag them all, and put them into a searchable database? If you do, how long does that take? Or do you prefer to make a few notes, but basically keep them around in case you need to check something unclear in your notes? My impression from talking with many linguists is that most only thoroughly parse and tag recordings at great cost, typically preferring to procrastinate or delegate the work to a grad student.  
+
+A→Z+T, on the other hand, offers a method of making recordings of target utterances in a small amount of time, which are immediately tagged (through meaningful file names), placed in a repository, and linked to the LIFT lexical database. As soon as the recording is done, so is the parsing, categorizing, and organizing.
