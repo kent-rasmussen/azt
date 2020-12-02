@@ -170,13 +170,13 @@ def printcountssorted(db):
                 print(line[0],line[1])
             print('Profiled '+str(ps)+' count: '+str(pscount))
 def printprofilesbyps(db):
-    print("Syllable profiles actually in entries, by grammatical category:")
-    for ps in db.profileswdatabyentry.keys():
-        if ps is 'Invalid':
-            continue
-        print(ps, db.profilesbyentry[ps])
+    # print("Syllable profiles actually in entries, by grammatical category:")
+    # for ps in db.profileswdatabyentry.keys():
+    #     if ps is 'Invalid':
+    #         continue
+    #     print(ps, db.profilesbyentry[ps])
     print("Syllable profiles actually in senses, by grammatical category:")
-    for ps in db.profileswdatabysense.keys():
+    for ps in db.profilesbysense.keys():
         if ps is 'Invalid':
             continue
         print(ps, db.profilesbysense[ps])
