@@ -160,7 +160,7 @@ class Check():
         self.profilesbysense['Invalid']=[]
         self.profiledguids=[]
         self.profiledsenseids=[]
-        onlyCV={'C','V'}
+        onlyCV={'C','N','V'}
         todo=len(self.db.senseids)
         for senseid in self.db.senseids:
             print(str(self.db.senseids.index(senseid))+'/'+str(todo))
@@ -184,6 +184,7 @@ class Check():
                     for profile in self.profilesbysense[ps]:
                         print(ps,profile,len(self.profilesbysense[ps][profile]))
     def setupCVrxs(self):
+        self.rxN=rx.make(rx.n(self.db),compile=True)
         self.rxC=rx.make(rx.c(self.db),compile=True)
         self.rxV=rx.make(rx.v(self.db),compile=True)
     def profileofform(self,form):
@@ -191,9 +192,10 @@ class Check():
         # print(self.rxC)
         # print(self.rxV)
         fC=self.rxC.sub('C',form)
-        fCV=self.rxV.sub('V',fC)
+        fCN=self.rxN.sub('N',fC)
+        fCNV=self.rxV.sub('V',fCN)
         # print(fCV)
-        return fCV
+        return fCNV
     def gimmeguid(self):
         guidsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
         return guidsbyps[randint(0, len(guidsbyps))]
