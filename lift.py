@@ -1114,6 +1114,18 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nguids=len(self.guids) #,guid,lang,fieldtype,location
     def nc(self):
         nounclasses="1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+    def nlist(self): #This variable gives lists, to iterate over.
+        # prenasalized=['mb','mp','mbh','mv','mf','nd','ndz','ndj','nt','ndh','ng','ŋg','ŋg','nk','ngb','npk','ngy','nj','nch','ns','nz']  #(graphs that preceede a consonant)
+        nasals=['m','M','n','ny','ŋ','ŋŋ','ɲ']
+        actuals={}
+        for lang in self.analangs:
+            unsorted=self.inxyz(lang,nasals) #remove the symbols which are not in the data.
+            """Make digraphs appear first, so they are matched if present"""
+            actuals[lang]=sorted(unsorted,key=len, reverse=True)
+            #print('actuals:',actuals[lang])
+        #print(c)
+        return actuals
+
     def clist(self): #This variable gives lists, to iterate over.
         #should this belong in a config file? (with a notice?)
         #This should probably pull stuff from the lift file in some way..….
@@ -1127,21 +1139,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         fricatives=['ch','j','J','f','ph','bh','v','vh','s','sh','z','Z','zh','ʃ','ʒ','θ','ð','x','ɣ']
         affricates=['dj','chk','ts','dz','tʃ','dʒ']
         lateralfricatives=['sl','zl','zl','ɬ','ɮ']
-        prenasalized=['mb','mp','mbh','mv','mf','nd','ndz','ndj','nt','ndh','ng','ŋg','ŋg','nk','ngb','npk','ngy','nj','nch','ns','nz']  #(graphs that preceede a consonant)
-        nasals=['m','M','n','ny','ŋ','ŋŋ','ɲ']
+        # prenasalized=['mb','mp','mbh','mv','mf','nd','ndz','ndj','nt','ndh','ng','ŋg','ŋg','nk','ngb','npk','ngy','nj','nch','ns','nz']  #(graphs that preceede a consonant)
+        # nasals=['m','M','n','ny','ŋ','ŋŋ','ɲ']
         othersonorants=['l','r','rh','wh']
-        labialized=list(char+'w' for char in plosives+hookedimplosives+fricatives+prenasalized)
-        palatalized=list(char+'y' for char in plosives+hookedimplosives+fricatives+prenasalized)
+        labialized=list(char+'w' for char in plosives+hookedimplosives+fricatives) #+prenasalized
+        palatalized=list(char+'y' for char in plosives+hookedimplosives+fricatives) #+prenasalized
         glides=['y','Y','w','W']
         others=['h', 'hh']
         """At some point, we may want logic to include only certain
         elements in c. The first row is in pretty much any language."""
         c=plosives+fricatives+othersonorants+others
         c=c+affricates
-        c=c+nasals #if nasals are included in C's
+        # c=c+nasals #if nasals are included in C's
         c=c+glides #if glides are included in C's
         c=c+others #if others are included in C's
-        c=c+prenasalized
+        # c=c+prenasalized
         c+=lateralfricatives
         c=c+hookedimplosives #if hookedimplosives are included in C's
         c=c+labialized #if labialized are included in C's
@@ -1181,6 +1193,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.segmentsnotinregexes={}
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
+        self.n=self.nlist()
         self.c=self.clist()
         self.v=self.vlist()
     def segmentin(self, lang, glyph): #this tests if a given glyph is found in the form data (so we don't look for glyphs we already know aren't there).
