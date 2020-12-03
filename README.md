@@ -1,6 +1,9 @@
 # A→Z+T
 
-This is a dictionary and orthography checker, with initial focus on data collection for tonal languages. It is designed to *supplement* (not replace) formal training, on the one hand, and *facilitate* a particular kind of language development on the other, so it may not do what you want —it certainly does not do everything. If you want to get as many people involved in the development of their own language as possible, in a manner that results in a checked lexical database backed up by sound files, then this tool is for you.
+A→Z+T is designed to accelerate community-based language development, supplemented by (not as a replacement for) formal linguistic training. It does this by systematically checking a dictionary (and thus a writing system), with initial focus on data collection for tonal languages. 
+Additional features are still in development. A→Z+T work results in a checked lexical database backed up with sound files, all of which can be viewed in [WeSay](https://software.sil.org/wesay/) or imported into [FLEx](https://software.sil.org/fieldworks/).
+
+<!-- It is designed to *supplement* (not replace) formal training, on the one hand, and *facilitate* a particular kind of language development on the other, so it may not do what you want —it certainly does not do everything. If you want to get as many people involved in the development of their own language as possible, in a manner that results in a checked lexical database backed up by sound files, then this tool is for you. -->
 ## Why
 See [RATIONALE](RATIONALE.md) for more information on why one should use this tool; see [Why Computers](WHYCOMPUTERS.md) to see A→Z+T compared with pen and paper participatory methods. See [Why Work with Communities](WHYCOMMUNITIES.md) to see A→Z+T compared with more traditional field methods
 ## What

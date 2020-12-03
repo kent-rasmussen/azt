@@ -464,16 +464,24 @@ def removenone(url):
     nonattr=re.compile('(\[@name=\'location\'\])*\[[^\[]+None[^\[]+\]')
     newurl=nonattr.sub('',url)
     return newurl
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+class BadParseError(Error):
+    def __init__(self, filename):
+        self.filename = filename
 class Lift(object): #fns called outside of this class call self.nodes here.
     """The job of this class is to expose the XML as python object
     attributes. Nothing more, not thing else, should be done here."""
     def __init__(self, filename,nsyls=None):
         self.filename=filename #lift_file.liftstr()
         self.logfile=filename+".changes"
-        self.read() #load and parse the XML file. (Should this go to check?)
-        # else:
-        #     print("File problem! quitting")
-        #     exit()
+        """Problems reading a valid LIFT file are dealt with in main.py"""
+        try:
+            self.read() #load and parse the XML file. (Should this go to check?)
+        except:
+            raise BadParseError(self.filename)
         backupbits=[filename,'_',
                     datetime.datetime.utcnow().isoformat()[:-16], #once/day
                     '.txt']
@@ -1059,7 +1067,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             elif xyz == 'bfj':
                 self.languagenames[xyz]="Chufie’"
             else:
-                self.languagenames[xyz]="Other Language" #I need to fix this...
+                self.languagenames[xyz]=_("Language with code [{}]").format(xyz) #I need to fix this...
             self.languagenames[None]=None #just so we don't fail on None...
     def glossordefn(self,guid=None,senseid=None,lang=None,ps=None
                     ,showurl=False):
