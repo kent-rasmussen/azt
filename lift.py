@@ -1118,7 +1118,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # prenasalized=['mb','mp','mbh','mv','mf','nd','ndz','ndj','nt','ndh','ng','ŋg','ŋg','nk','ngb','npk','ngy','nj','nch','ns','nz']  #(graphs that preceede a consonant)
         ntri=["ng'"]
         ndi=['mm','ny','ŋŋ']
-        nm=['m','M','n','ŋ','ɲ']
+        nm=['m','m','M','n','n','ŋ','ŋ','ɲ']
         nasals=ntri+ndi+nm
         actuals={}
         for lang in self.analangs:
@@ -1139,12 +1139,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         larger/longer objects first, if you ever want to find them ('ts' must
         precede 't', or you will only find t+s=CC, not ts=C)"""
         pdi=['bh','dh','kp','gh','gb','kk']
-        pm=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','G','ʔ',"ꞌ"]
+        pm=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','ɡ','G','ʔ',"ꞌ",'ʼ']
         # forpeoplewholikec=['c']
         # plosives=pdigraphs+p+forpeoplewholikec
         # phookedimplosives=[]
         fdi=['ch','ph','bh','vh','sh','zh','hh']
-        fm=['j','J','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
+        fm=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
         atri=['chk']
         adi=['dj','ts','dz','tʃ','dʒ']
         lfdi=['sl','zl','zl']
@@ -1189,7 +1189,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return actuals
     def vlist(self):
         #This should probably pull stuff from the lift file in some way..….
-        vowels=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o', 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃', 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
+        vowels=['ẅ','a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o', 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃', 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
         if self.analang=='bfj':
             vowels=['ou','ei']+vowels
         #vowels=vowels+['ə', 'a', 'e', 'i', 'u'] #for gnd
@@ -1343,7 +1343,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     self.segmentsnotinregexes[lang].append(x)
             if len(self.segmentsnotinregexes[lang]) > 0:
                 print("The following segments are not in your",lang,"regex's:",
-                self.segmentsnotinregexes[lang])
+                dict.fromkeys(self.segmentsnotinregexes[lang]))
             else:
                 print("Your regular expressions look OK for",lang,"(there are no segments "+
                     "in your",lang,"data that are not in a regex). Note, this doesn't \n"+
