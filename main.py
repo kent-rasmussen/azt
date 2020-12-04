@@ -2032,9 +2032,16 @@ class Check():
                                         self.db.languagenames[self.analang],
                                         self.name)
         instructions=_("Select the one with the same tone melody as")
+        imgurl=file.fullpathname('images/Sort List.png')
+        img = tkinter.PhotoImage(file = imgurl)
+        # image='images/Sort List.png'
+        # image.grid(column=0,row=1, sticky="ew")
+        Label(self, image=img,text='',
+                        bg=self.theme['background']
+                        ).grid(row=1,column=0,sticky='we')
         self.runwindow.frame.scroll=ScrollingCanvas(self.runwindow.frame)
         self.runwindow.frame.scroll.grid(
-                                column=0,row=1, sticky="ew")
+                                column=1,row=1, sticky="ew")
         """The frame for the groups buttons"""
         self.runwindow.frame.scroll.content.groups=Frame(
                                             self.runwindow.frame.scroll.content)
