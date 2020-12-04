@@ -24,6 +24,7 @@ bug fixes:
   - [x] if non file found in `lift_url.py`, rejects and asks for a file.
   - [x] if non-LIFT file is given, AZT quits on an exception, with console and UI message, and deletes `lift_url.py`.
 - fixed C/V report
+- fixed missing frames on tone checks --asks user to define a frame if none there.
 # Version 0.3 (November 2020)
 ## language and search parameters
 - logic to make appropriate assumptions
