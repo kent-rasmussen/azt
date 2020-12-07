@@ -1159,7 +1159,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """Non-Nasal Sonorants"""
         nnsdi=['rh','wh']
         nnsm=['l','r']
-        glides=['y','Y','w','W']
+        glides=['ẅ','y','Y','w','W']
         basic=nnsdi+obstruents+nnsm+glides
         labialized=list(char+'w' for char in basic) #+prenasalized
         palatalized=list(char+'y' for char in basic) #+prenasalized
@@ -1189,7 +1189,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return actuals
     def vlist(self):
         #This should probably pull stuff from the lift file in some way..….
-        vowels=['ẅ','a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o', 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃', 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
+        vowels=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o', 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃', 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
         if self.analang=='bfj':
             vowels=['ou','ei']+vowels
         #vowels=vowels+['ə', 'a', 'e', 'i', 'u'] #for gnd
