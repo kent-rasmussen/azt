@@ -3275,22 +3275,42 @@ class ScrollingCanvas(Frame):
     def _on_mousewheeldown(self, event):
         self.canvas.yview_scroll(-1,"units")
     def _configure_interior(self, event):
+        # print("Configuring interior")
         # update the scrollbars to match the size of the inner frame
         size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
         self.canvas.config(scrollregion="0 0 %s %s" % size)
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
             # update the canvas's width to fit the inner frame
             self.canvas.config(width=self.content.winfo_reqwidth())
+            # w.winfo_name() == '!scrollingcanvas':
+            # print(w.winfo_name(),w.winfo_id(),w.winfo_parent())
+            # canvasrow=w.grid_info()['row']
+            # canvascol=w.grid_info()['column']
+            # print('row:',w.grid_info()['row'],'column:',w.grid_info()['column'])
+            # print(w.winfo_reqwidth(),w.winfo_reqheight())
+            # print(w.winfo_screenwidth(),w.winfo_screenheight())
+            # print(w.winfo_rootx(),w.winfo_rooty())
+        # parentrow=self.parent.grid_info()['row']
+        # parentcol=self.parent.grid_info()['column']
+        availablexy(self)
+        self.config(height=self.parent.winfo_screenheight()-self.otherrowheight)
+        self.config(width=self.parent.winfo_screenwidth()-self.othercolwidth)
     def _configure_canvas(self, event):
+        # print("Configuring canvas")
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
             # update the inner frame's width to fill the canvas
-            self.canvas.itemconfigure(self.content_id, width=self.canvas.winfo_width())
+            self.canvas.itemconfigure(self.content_id,
+                                        width=self.canvas.winfo_width())
+        availablexy(self)
+        self.config(height=self.parent.winfo_screenheight()-self.otherrowheight)
+        self.config(width=self.parent.winfo_screenwidth()-self.othercolwidth)
     def __init__(self,parent):
         """Make this a Frame, with all the inheritances, I need"""
         self.parent=parent
         inherit(self)
         super(ScrollingCanvas, self).__init__(parent)
         """Not sure if I want these... rather not hardcode."""
+        print(self.parent.winfo_children())
         # self.config(height=1000)
         # self.config(width=2500)
         self.grid_rowconfigure(0, weight=1)
@@ -3331,8 +3351,23 @@ class ScrollingCanvas(Frame):
         yscrollbar.config(command=self.canvas.yview)
         """I'm not sure if I need this; rather not hardcode these ..."""
         """Keep exit button on screen; keep frame on screen with titles."""
-        self.config(height=self.parent.winfo_screenheight()-500)
-        self.config(width=self.parent.winfo_screenwidth()-350)
+        # print(self.winfo_reqwidth())
+        # print(self.winfo_reqheight())
+        # print(self.parent.winfo_reqwidth())
+        # print(self.parent.winfo_reqheight())
+        print('canvas.winfo_reqwidth:',self.canvas.winfo_reqwidth())
+        print('canvas.winfo_reqheight:',self.canvas.winfo_reqheight())
+        # print(self.canvas.parent.winfo_reqwidth())
+        # print(self.canvas.parent.winfo_reqheight())
+        # print(self.content.winfo_reqwidth())
+        # print(self.content.winfo_reqheight())
+        availablexy(self)
+        print(self.otherrowheight)
+        print(self.othercolwidth)
+        self.config(height=self.parent.winfo_screenheight()-self.otherrowheight)
+        self.config(width=self.parent.winfo_screenwidth()-self.othercolwidth)
+        # self.config(height=self.parent.winfo_screenheight()-500)
+        # self.config(width=self.parent.winfo_screenwidth()-350)
         """Bindings so the mouse wheel works correctly, etc."""
         self.canvas.bind('<Enter>', self._bound_to_mousewheel)
         self.canvas.bind('<Leave>', self._unbound_to_mousewheel)
@@ -4122,6 +4157,24 @@ def setfonts(self):
     underline - font underlining (0 - none, 1 - underline)
     overstrike - font strikeout (0 - none, 1 - strikeout)
     """
+def availablexy(self,w=None):
+    if w is None: #initialize a first run
+        w=self
+    # if w.winfo_class() == 'ScrollingCanvas': #better first iteration detection?
+    #     print("Scrollingcanvas!!!")
+        self.otherrowheight=0
+        self.othercolwidth=0
+    wrow=self.grid_info()['row']
+    wcol=self.grid_info()['column']
+    for sib in w.parent.winfo_children():
+        if sib.grid_info()['row'] != wrow:
+            self.otherrowheight+=w.winfo_reqheight()
+        if sib.grid_info()['column'] != wcol:
+            self.othercolwidth+=w.winfo_reqheight()
+    print(w.winfo_class())
+    # if self.otherrowheight<350:
+    if w.winfo_class() != 'Toplevel':
+        availablexy(self,w.parent)
 def returndictnsortnext(self,parent,values): #Spoiler: the parent dies!
     """Kills self.sorting, not parent."""
     # print(self,parent,values)

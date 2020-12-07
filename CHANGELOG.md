@@ -14,6 +14,8 @@
 - make checkcheck pick the most numerous profile that hasn't been finished, along with it's ps.
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - add check to automatic addition of data to first group (e.g., if not valid data).
+- Figure out why sort isn't showing any buttons
+
 # Version 0.3.1
 new features:
 - function to determine most populous syllable profile, with its ps
@@ -25,6 +27,7 @@ bug fixes:
   - [x] if non file found in `lift_url.py`, rejects and asks for a file.
   - [x] if non-LIFT file is given, AZT quits on an exception, with console and UI message, and deletes `lift_url.py`.
 - fixed C/V report
+- Added icons to distinguish sort and verify pages 
 # Version 0.3 (November 2020)
 ## language and search parameters
 - logic to make appropriate assumptions
