@@ -13,6 +13,7 @@
   - make group name smarter than `len>1`
 - make checkcheck pick the most numerous profile that hasn't been finished, along with it's ps.
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
+- add check to automatic addition of data to first group (e.g., if not valid data).
 # Version 0.3.1
 new features:
 - function to determine most populous syllable profile, with its ps

@@ -2034,14 +2034,9 @@ class Check():
         instructions=_("Select the one with the same tone melody as")
         imgurl=file.fullpathname('images/Sort List.png')
         img = tkinter.PhotoImage(file = imgurl)
-        # image='images/Sort List.png'
-        # image.grid(column=0,row=1, sticky="ew")
-        Label(self, image=img,text='',
-                        bg=self.theme['background']
-                        ).grid(row=1,column=0,sticky='we')
         self.runwindow.frame.scroll=ScrollingCanvas(self.runwindow.frame)
         self.runwindow.frame.scroll.grid(
-                                column=1,row=1, sticky="ew")
+                                column=1,row=2, sticky="new")
         """The frame for the groups buttons"""
         self.runwindow.frame.scroll.content.groups=Frame(
                                             self.runwindow.frame.scroll.content)
@@ -2053,7 +2048,7 @@ class Check():
             self.tonegroupbutton(self.runwindow.frame.scroll.content.groups,
             group,row=self.runwindow.frame.scroll.content.groups.row)
             self.runwindow.frame.scroll.content.groups.row+=1
-        """The second frame, for the other two buttons"""
+        """The second frame, for the other two buttons, which also scroll"""
         self.runwindow.frame.scroll.content.anotherskip=Frame(
                                             self.runwindow.frame.scroll.content)
         self.runwindow.frame.scroll.content.anotherskip.grid(row=1,column=0)
@@ -2071,32 +2066,33 @@ class Check():
                 """I want to drop this"""
                 # self.runwindow.resetframe()
                 entryview=Frame(self.runwindow.frame)
-                self.runwindow.frame.grid_rowconfigure(0, weight=1)
-                self.runwindow.frame.grid_rowconfigure(1, weight=0)
-                Label(entryview, text=title,
-                        font=self.fonts['title']
-                        ).grid(column=0, row=0, sticky="w")
-                Label(entryview, text=instructions,
-                        font=self.fonts['instructions']
-                        ).grid(column=0, row=1, sticky="w")
-                Label(entryview, text=progress,
+                titles=Frame(self.runwindow.frame)
+                Label(titles, text=title,
+                        font=self.fonts['title'],
+                        anchor='c').grid(column=0, row=0, sticky="ew")
+                Label(titles, text=instructions,
+                        font=self.fonts['instructions'],
+                        anchor='c').grid(column=0, row=1, sticky="ew")
+                Label(titles, text=progress,
                         font=self.fonts['report'],
-                        anchor='c'
+                        anchor='w'
                         ).grid(column=1, row=0, sticky="ew")
-                entryview.grid(column=0, row=0, sticky="ew")
+                entryview.grid(column=1, row=1, sticky="ew")
+                titles.grid(column=0, row=0, sticky="ew",
+                                                columnspan=2)
+                Label(self.runwindow.frame, image=img,text='',
+                                bg=self.theme['background']
+                                ).grid(row=1,column=0,rowspan=3,sticky='nw')
                 text=(framed['formatted'])
                 self.sorting=Label(entryview, text=text,
                         font=self.fonts['readbig']
                         )
-                self.sorting.grid(column=0,row=2, sticky="w",pady=50)
-                entryview.grid(column=0,row=0, sticky="ew")
-                self.runwindow.wait_window(
-                                    window=self.sorting)# self.runwindow.frame.scroll.content)
+                self.sorting.grid(column=0,row=0, sticky="w",pady=50)
+                self.runwindow.wait_window(window=self.sorting)
                 print("Group selected:",self.groupselected)
             if (self.tonegroups == [] or
                         self.groupselected == "NONEOFTHEABOVE"):
                 self.groupselected=self.addtonegroup()
-                # if hasattr(self.runwindow.frame,'scroll'):
                 """place this one just before the last two"""
                 print('Rows so far:',
                     self.runwindow.frame.scroll.content.groups.grid_size()[1])
@@ -2132,6 +2128,8 @@ class Check():
             "tone melody. Select any word with a different tone melody to "
             "remove it from the list."
             ).format(self.subcheck,self.name,oktext)
+        imgurl=file.fullpathname('images/Verify List.png')
+        img = tkinter.PhotoImage(file = imgurl)
         """Put a menu on this window to rename the group we're checking.
         This should be to a sensible transcription/description of the surface
         tone in this context, e.g., [˦˦˦  ˨˨˨]"""
@@ -2152,7 +2150,9 @@ class Check():
                                         self.name
                                         )
 
-            Label(self.runwindow.frame, text=title,
+            titles=Frame(self.runwindow.frame)
+            titles.grid(column=0, row=0, columnspan=2, sticky="w")
+            Label(titles, text=title,
                     font=self.fonts['title']
                     ).grid(column=0, row=0, sticky="w")
             print(instructions)
@@ -2162,13 +2162,16 @@ class Check():
             if self.subcheck in self.tonegroups:
                 progress=('('+str(self.tonegroups.index(self.subcheck)+1)+'/'
                                             +str(len(self.tonegroups))+')')
-                Label(self.runwindow.frame, text=progress,anchor='w'
+                Label(titles, text=progress,anchor='w'
                                     ).grid(row=0,column=1,sticky="ew")
-            Label(self.runwindow.frame, text=instructions).grid(row=1,column=0,
+            Label(titles, text=instructions).grid(row=1,column=0,
                                                                     sticky="w")
+            Label(self.runwindow.frame, image=img,text='',
+                            bg=self.theme['background']
+                            ).grid(row=1,column=0,rowspan=3,sticky='nw')
             """Scroll after instructions"""
             self.sframe=ScrollingCanvas(self.runwindow.frame)
-            self.sframe.grid(row=2,column=0)
+            self.sframe.grid(row=1,column=1)
             row+=1
             """put entry buttons here."""
             for senseid in self.getexsall(self.subcheck):
@@ -3475,9 +3478,13 @@ class MainApplication(Frame):
         theme='purple'
         pot=list(self.parent.themes.keys())+(['greygreen']*
                                                 (99*len(self.parent.themes)-1))
-        self.parent.themename='Kim' #for my development
+        self.parent.themename='highcontrast' #for low light environments
         self.parent.themename=pot[randint(0, len(pot))-1] #mostly 'greygreen'
-        self.parent.themename='highcontrast'
+        if os.uname().nodename == 'karlap':
+            self.parent.themename='Kim' #for my development
+        """These versions might be necessary later, but with another module"""
+        # print(socket.gethostname())
+        # print(socket.gethostbyaddr(socket.gethostname()))
         if self.parent.themename not in self.parent.themes:
             print("Sorry, that theme doesn't seem to be set up. Pick from "
             "these options:",self.parent.themes.keys())
