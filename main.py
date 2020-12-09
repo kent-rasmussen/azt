@@ -2032,9 +2032,11 @@ class Check():
                                         self.db.languagenames[self.analang],
                                         self.name)
         instructions=_("Select the one with the same tone melody as")
+        imgurl=file.fullpathname('images/Sort List.png')
+        img = tkinter.PhotoImage(file = imgurl)
         self.runwindow.frame.scroll=ScrollingCanvas(self.runwindow.frame)
         self.runwindow.frame.scroll.grid(
-                                column=0,row=1, sticky="ew")
+                                column=1,row=2, sticky="new")
         """The frame for the groups buttons"""
         self.runwindow.frame.scroll.content.groups=Frame(
                                             self.runwindow.frame.scroll.content)
@@ -2046,7 +2048,7 @@ class Check():
             self.tonegroupbutton(self.runwindow.frame.scroll.content.groups,
             group,row=self.runwindow.frame.scroll.content.groups.row)
             self.runwindow.frame.scroll.content.groups.row+=1
-        """The second frame, for the other two buttons"""
+        """The second frame, for the other two buttons, which also scroll"""
         self.runwindow.frame.scroll.content.anotherskip=Frame(
                                             self.runwindow.frame.scroll.content)
         self.runwindow.frame.scroll.content.anotherskip.grid(row=1,column=0)
@@ -2064,32 +2066,33 @@ class Check():
                 """I want to drop this"""
                 # self.runwindow.resetframe()
                 entryview=Frame(self.runwindow.frame)
-                self.runwindow.frame.grid_rowconfigure(0, weight=1)
-                self.runwindow.frame.grid_rowconfigure(1, weight=0)
-                Label(entryview, text=title,
-                        font=self.fonts['title']
-                        ).grid(column=0, row=0, sticky="w")
-                Label(entryview, text=instructions,
-                        font=self.fonts['instructions']
-                        ).grid(column=0, row=1, sticky="w")
-                Label(entryview, text=progress,
+                titles=Frame(self.runwindow.frame)
+                Label(titles, text=title,
+                        font=self.fonts['title'],
+                        anchor='c').grid(column=0, row=0, sticky="ew")
+                Label(titles, text=instructions,
+                        font=self.fonts['instructions'],
+                        anchor='c').grid(column=0, row=1, sticky="ew")
+                Label(titles, text=progress,
                         font=self.fonts['report'],
-                        anchor='c'
+                        anchor='w'
                         ).grid(column=1, row=0, sticky="ew")
-                entryview.grid(column=0, row=0, sticky="ew")
+                titles.grid(column=0, row=0, sticky="ew",
+                                                columnspan=2)
+                Label(self.runwindow.frame, image=img,text='',
+                                bg=self.theme['background']
+                                ).grid(row=1,column=0,rowspan=3,sticky='nw')
                 text=(framed['formatted'])
                 self.sorting=Label(entryview, text=text,
                         font=self.fonts['readbig']
                         )
-                self.sorting.grid(column=0,row=2, sticky="w",pady=50)
-                entryview.grid(column=0,row=0, sticky="ew")
-                self.runwindow.wait_window(
-                                    window=self.sorting)# self.runwindow.frame.scroll.content)
+                entryview.grid(column=1, row=1, sticky="new")
+                self.sorting.grid(column=0,row=0, sticky="w",pady=50)
+                self.runwindow.wait_window(window=self.sorting)
                 print("Group selected:",self.groupselected)
             if (self.tonegroups == [] or
                         self.groupselected == "NONEOFTHEABOVE"):
                 self.groupselected=self.addtonegroup()
-                # if hasattr(self.runwindow.frame,'scroll'):
                 """place this one just before the last two"""
                 print('Rows so far:',
                     self.runwindow.frame.scroll.content.groups.grid_size()[1])
@@ -2119,12 +2122,14 @@ class Check():
         that got pulled from the group), then on to the next largest unverified
         pile.
         """
-        # title changes by group, below.
+        # The title for this page changes by group, below.
         oktext='These all have the same tone'
         instructions=_("Read down this list to verify they all have the same "
             "tone melody. Select any word with a different tone melody to "
             "remove it from the list."
             ).format(self.subcheck,self.name,oktext)
+        imgurl=file.fullpathname('images/Verify List.png')
+        img = tkinter.PhotoImage(file = imgurl)
         """Put a menu on this window to rename the group we're checking.
         This should be to a sensible transcription/description of the surface
         tone in this context, e.g., [˦˦˦  ˨˨˨]"""
@@ -2144,8 +2149,9 @@ class Check():
                                         self.subcheck,
                                         self.name
                                         )
-
-            Label(self.runwindow.frame, text=title,
+            titles=Frame(self.runwindow.frame)
+            titles.grid(column=0, row=0, columnspan=2, sticky="w")
+            Label(titles, text=title,
                     font=self.fonts['title']
                     ).grid(column=0, row=0, sticky="w")
             print(instructions)
@@ -2155,13 +2161,16 @@ class Check():
             if self.subcheck in self.tonegroups:
                 progress=('('+str(self.tonegroups.index(self.subcheck)+1)+'/'
                                             +str(len(self.tonegroups))+')')
-                Label(self.runwindow.frame, text=progress,anchor='w'
+                Label(titles, text=progress,anchor='w'
                                     ).grid(row=0,column=1,sticky="ew")
-            Label(self.runwindow.frame, text=instructions).grid(row=1,column=0,
+            Label(titles, text=instructions).grid(row=1,column=0, columnspan=2,
                                                                     sticky="w")
+            Label(self.runwindow.frame, image=img,text='',
+                            bg=self.theme['background']
+                            ).grid(row=1,column=0,rowspan=3,sticky='nw')
             """Scroll after instructions"""
             self.sframe=ScrollingCanvas(self.runwindow.frame)
-            self.sframe.grid(row=2,column=0)
+            self.sframe.grid(row=1,column=1,sticky='w')
             row+=1
             """put entry buttons here."""
             for senseid in self.getexsall(self.subcheck):
@@ -3265,24 +3274,50 @@ class ScrollingCanvas(Frame):
     def _on_mousewheeldown(self, event):
         self.canvas.yview_scroll(-1,"units")
     def _configure_interior(self, event):
+        # print("Configuring interior")
         # update the scrollbars to match the size of the inner frame
         size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
         self.canvas.config(scrollregion="0 0 %s %s" % size)
+        """This makes sure the canvas is as large as what you put on it"""
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
             # update the canvas's width to fit the inner frame
             self.canvas.config(width=self.content.winfo_reqwidth())
+        self.windowsize()
+    def windowsize(self):
+        availablexy(self)
+        """The above script calculates how much screen is left to fill, these
+        next two lines give a max widget size to stay in the window."""
+        height=self.parent.winfo_screenheight()-self.otherrowheight
+        width=self.parent.winfo_screenwidth()-self.othercolwidth
+        # print('height=',self.parent.winfo_screenheight(),-self.otherrowheight)
+        # print('width=',self.parent.winfo_screenwidth(),-self.othercolwidth)
+        # print(height,width)
+        """This is how much space the contents of the scrolling canvas is asking
+        for. We don't need the scrolling frame to be any bigger than this."""
+        contentrw=self.content.winfo_reqwidth()
+        contentrh=self.content.winfo_reqheight()
+        """If the current scrolling frame dimensions are smaller than the
+        scrolling content, or else pushing the window off the screen, then make
+        the scrolling window the smaller of
+            -the scrolling content or
+            -the max dimensions, from above."""
+        if (self.winfo_width() < contentrw) or (self.winfo_width() > width):
+                self.config(width=min(width,contentrw))
+        if (self.winfo_height() < contentrh) or (self.winfo_height() > height):
+            self.config(height=min(height,contentrh))
     def _configure_canvas(self, event):
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
             # update the inner frame's width to fill the canvas
-            self.canvas.itemconfigure(self.content_id, width=self.canvas.winfo_width())
+            self.canvas.itemconfigure(self.content_id,
+                                        width=self.canvas.winfo_width())
+        self.windowsize()
     def __init__(self,parent):
         """Make this a Frame, with all the inheritances, I need"""
         self.parent=parent
         inherit(self)
         super(ScrollingCanvas, self).__init__(parent)
         """Not sure if I want these... rather not hardcode."""
-        # self.config(height=1000)
-        # self.config(width=2500)
+        print(self.parent.winfo_children())
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         """With or without the following, it still scrolls through..."""
@@ -3296,7 +3331,6 @@ class ScrollingCanvas(Frame):
         """Should decide some day which we want when..."""
         yscrollbar.config(width=50) #make the scrollbars big!
         yscrollbar.config(width=0) #make the scrollbars invisible (use wheel)
-
         self.canvas = tkinter.Canvas(self)
         self.canvas.parent = self.canvas.master
         """make the canvas inherit these values like a frame"""
@@ -3312,17 +3346,15 @@ class ScrollingCanvas(Frame):
         self.canvas.config(yscrollcommand=yscrollbar.set)
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
         """Make all this show up, and take up all the space in parent"""
-        self.grid(row=0, column=0,
-                    sticky=tkinter.N+tkinter.S+tkinter.E+tkinter.W)
-        self.canvas.grid(row=0, column=0,
-                    sticky=tkinter.N+tkinter.S+tkinter.E+tkinter.W)
+        self.grid(row=0, column=0,sticky='nw')
+        self.canvas.grid(row=0, column=0,sticky='nsew')
+        # self.content.grid(row=0, column=0,sticky='nw')
         """We might want horizonal bars some day? (also above)"""
         # xscrollbar.config(command=self.canvas.xview)
         yscrollbar.config(command=self.canvas.yview)
         """I'm not sure if I need this; rather not hardcode these ..."""
-        """Keep exit button on screen; keep frame on screen with titles."""
-        self.config(height=self.parent.winfo_screenheight()-500)
-        self.config(width=self.parent.winfo_screenwidth()-350)
+        # print('canvas.winfo_reqwidth:',self.canvas.winfo_reqwidth())
+        # print('canvas.winfo_reqheight:',self.canvas.winfo_reqheight())
         """Bindings so the mouse wheel works correctly, etc."""
         self.canvas.bind('<Enter>', self._bound_to_mousewheel)
         self.canvas.bind('<Leave>', self._unbound_to_mousewheel)
@@ -3468,9 +3500,13 @@ class MainApplication(Frame):
         theme='purple'
         pot=list(self.parent.themes.keys())+(['greygreen']*
                                                 (99*len(self.parent.themes)-1))
-        self.parent.themename='Kim' #for my development
+        self.parent.themename='highcontrast' #for low light environments
         self.parent.themename=pot[randint(0, len(pot))-1] #mostly 'greygreen'
-        self.parent.themename='highcontrast'
+        if os.uname().nodename == 'karlap':
+            self.parent.themename='Kim' #for my development
+        """These versions might be necessary later, but with another module"""
+        # print(socket.gethostname())
+        # print(socket.gethostbyaddr(socket.gethostname()))
         if self.parent.themename not in self.parent.themes:
             print("Sorry, that theme doesn't seem to be set up. Pick from "
             "these options:",self.parent.themes.keys())
@@ -3546,10 +3582,11 @@ class MainApplication(Frame):
         # self.fullscreen()
         # self.quarterscreen()
         # self.master.minsize(1200,400)
-        self.parent.maxsize(
-                            self.parent.winfo_screenwidth()-200,
-                            self.parent.winfo_screenheight()-200
-                            )
+        """Do I want this?"""
+        # self.parent.maxsize(
+        #                     self.parent.winfo_screenwidth()-200,
+        #                     self.parent.winfo_screenheight()-200
+        #                     )
         #Might be needed for M$ windows:root.state('zoomed')
         """Things that belong to a tkinter.Frame go after this:"""
         super().__init__(parent)
@@ -4108,6 +4145,50 @@ def setfonts(self):
     underline - font underlining (0 - none, 1 - underline)
     overstrike - font strikeout (0 - none, 1 - strikeout)
     """
+def availablexy(self,w=None):
+    if w is None: #initialize a first run
+        w=self
+        self.otherrowheight=0
+        self.othercolwidth=0
+    wrow=w.grid_info()['row']
+    wcol=w.grid_info()['column']
+    rowheight={}
+    colwidth={}
+    for sib in w.parent.winfo_children():
+        if sib.winfo_class() != 'Menu':
+            sib.row=sib.grid_info()['row']
+            sib.col=sib.grid_info()['column']
+            """These are actual the row/col after the max in span,
+            but this is what we want for range()"""
+            sib.rowmax=sib.row+sib.grid_info()['rowspan']
+            sib.colmax=sib.col+sib.grid_info()['columnspan']
+            if wrow not in range(sib.row,sib.rowmax):
+                sib.reqheight=sib.winfo_reqheight()
+                """Give me the tallest cell in this row"""
+                if ((sib.row not in rowheight) or (sib.reqheight >
+                                                        rowheight[sib.row])):
+                    rowheight[sib.row]=sib.reqheight
+            if wcol not in range(sib.col,sib.colmax):
+                sib.reqwidth=sib.winfo_reqheight()
+                """Give me the widest cell in this column"""
+                if ((sib.col not in colwidth) or (sib.reqwidth >
+                                                        colwidth[sib.col])):
+                    colwidth[sib.col]=sib.reqwidth
+    for row in rowheight:
+        self.otherrowheight+=rowheight[row]
+    for col in colwidth:
+        self.othercolwidth+=colwidth[col]
+    if w.parent.winfo_class() != 'Toplevel':
+        availablexy(self,w.parent)
+    else:
+        """This may not be the right way to do this, but this set of adjustments
+        puts the window edge widgets on the edge of the screen. This calculation
+        is done on the toplevel widget, after the above recursive function is
+        done across all the other widgets (so we just get window decoration)."""
+        titlebarHeight = self.winfo_rooty() - self.winfo_y()
+        borderSize= self.winfo_rootx() - self.winfo_x()
+        self.othercolwidth+=borderSize*2
+        self.otherrowheight+=titlebarHeight
 def returndictnsortnext(self,parent,values): #Spoiler: the parent dies!
     """Kills self.sorting, not parent."""
     # print(self,parent,values)
