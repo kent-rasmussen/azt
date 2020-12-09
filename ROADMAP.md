@@ -8,9 +8,13 @@ IP: I need to consider the need for db, parent, and window in check scripts.
 IP: Need to fix references to parent of checks and subchecks.
 
 # Features to add
--scroll comparatives and reports when necessary.
--add `wait` window for reports
--what and why pages in verious places?
+- `Record` button on main screen
+- scroll comparatives and reports when necessary.
+- add `wait` window for reports
+- what and why pages in various places?
+- distinguish C, N, and NC
+- set up recordings for unframed words (to lc field), from C or V checks.
+- XLP export
 # Version 0.3 Nov 2020
 
 - [x] finish logic of main window, make things depend on what they should (e.g. subcheck should depend on check.type ( be either C, V, or CV --for now))
