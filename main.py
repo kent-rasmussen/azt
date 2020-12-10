@@ -129,8 +129,9 @@ class Check():
             print(time.time()-self.start_time)
             self.setupCVrxs()
             self.getprofiles()
-        self.loaddefaults() #do this after profile data, to avoid those defaults
-        # exit()
+            self.makecountssorted()
+        self.guesspsprofile() # takes values of largest ps-profile filter
+        self.loaddefaults() # overwrites guess above, stored on runcheck
         self.storeprofiledata()
         self.checknamesall=self.setnamesall()
         self.V=self.db.v #based on what is actually in the language (no groups)
@@ -183,6 +184,10 @@ class Check():
                 else:
                     for profile in self.profilesbysense[ps]:
                         print(ps,profile,len(self.profilesbysense[ps][profile]))
+    def guesspsprofile(self):
+        """Make this smarter, but for now, just take the most populous tuple"""
+        self.ps=self.profilecounts[0][2]
+        self.profile=self.profilecounts[0][1]
     def setupCVrxs(self):
         self.rxN=rx.make(rx.n(self.db),compile=True)
         self.rxC=rx.make(rx.c(self.db),compile=True)
@@ -555,18 +560,19 @@ class Check():
                     #         outputgloss=self.frameregex.sub(gloss,frame['gloss'])
                     #         print('     ',outputform,"'"+str(outputgloss)+"'")
         return
-    def framelocationsbyps(self,ps):
-        """Locations for all tone frames defined for the language."""
-        print(ps)
-        if ((ps is not None) and (self.toneframes is not None) and
-            (ps in self.toneframes)):
-            l=[]
-            for f in self.toneframes[ps]:
-                l+=[self.toneframes[ps][f]['location']]
-            return list(dict.fromkeys(l))
-        else:
-            print("It doesn't look like you have tone frames set up for",
-                    ps,"yet.")
+    # def framelocationsbyps(self,ps):
+    #     """Locations for all tone frames defined for the language."""
+    #     """I assume this is obsolete, but just commented out for now"""
+    #     print(ps)
+    #     if ((ps is not None) and (self.toneframes is not None) and
+    #         (ps in self.toneframes)):
+    #         l=[]
+    #         for f in self.toneframes[ps]:
+    #             l+=[self.toneframes[ps][f]['location']]
+    #         return list(dict.fromkeys(l))
+    #     else:
+    #         print("It doesn't look like you have tone frames set up for",
+    #                 ps,"yet.")
     def framenamesbyps(self,ps):
         """Names for all tone frames defined for the language."""
         if self.toneframes is not None:
@@ -773,6 +779,7 @@ class Check():
                             ).grid(column=column, row=opts['row'])
         print("Running Check Check!")
         self.makestatus()
+        """We start with the settings that we can likely guess"""
         """Get Analang"""
         if self.analang == None:
             print("find the language")
@@ -804,17 +811,21 @@ class Check():
                                     ))
         proselabel(opts,t)
         opts['row']+=1
+        """These settings must be set (for now); we can't guess them (yet)"""
+        """Ultimately, we will pick the largest ps/profile combination as an
+        initial default (obviously changeable, as are all)"""
         """Get ps"""
         if self.ps == None:
             print("find the ps")
             self.getps()
             return
-        """Get profile"""
+        """Get profile (this depends on ps)"""
         if self.profile == None:
             print("Select a syllable profile.")
             self.getprofile()
             return
-        t=(_("Looking at {} {} words").format(self.profile,self.ps))
+        count=self.countbypsprofile(self.ps,self.profile)
+        t=(_("Looking at {} {} words ({})").format(self.profile,self.ps,count))
         proselabel(opts,t)
         opts['row']+=1
         """Get type"""
@@ -1030,6 +1041,10 @@ class Check():
                 setdefaults.getanalangs(self)
             if default == 'audiolang':
                 setdefaults.getaudiolangs(self)
+    def reloadprofiledata(self):
+        file.remove(self.profiledatafile)
+        self.parent.parent.destroy()
+        main()
     def loadprofiledata(self):
         """This should just be imported, with all defaults in a dictionary
         variable in the file."""
@@ -1040,6 +1055,8 @@ class Check():
             sys.modules['profiledata'] = module
             spec.loader.exec_module(module)
             self.profilesbysense=module.profilesbysense
+            self.profilecounts=module.profilecounts
+            self.profilecountInvalid=module.profilecountInvalid
         except:
             print("There doesn't seem to be a profile data file; "
                     "making one now (wait maybe three minutes).")
@@ -1136,11 +1153,16 @@ class Check():
         self.storestatus()
     def storeprofiledata(self):
         self.f = open(self.profiledatafile, "w", encoding='utf-8')
-        text=f"profilesbysense={self.profilesbysense}"
-        self.f.write(text+'\n')
+        text=[f"profilesbysense={self.profilesbysense}",
+            f"profilecounts={self.profilecounts}",
+            f"profilecountInvalid={self.profilecountInvalid}"]
+        for t in text:
+            self.f.write(t+'\n')
         self.f.close()
         if self.debug==True:
             print(type(self.profilesbysense),self.profilesbysense)
+            print(type(self.profilecounts),self.profilecounts)
+            print(type(self.profilecountInvalid),self.profilecountInvalid)
     def storetoneframes(self):
         self.f = open(self.toneframesfile, "w", encoding='utf-8')
         text=f"toneframes={self.toneframes}"
@@ -1352,7 +1374,7 @@ class Check():
         self.checkcheck()
     def setps(self,choice,window):
         self.ps=choice
-        self.framelocationsbyps(self.ps)
+        # self.framelocationsbyps(self.ps)
         self.cleardefaults('ps')
         window.destroy()
         self.checkcheck() #window
@@ -1743,6 +1765,10 @@ class Check():
         # print(profiles)
         # profiles=list(dict.fromkeys(profiles))
         return profiles
+    def countbypsprofile(self, ps, profile):
+        for line in self.profilecounts:
+            if line[1] == profile and line[2] == ps:
+                return line[0]
     def basicreport(self):
         # import sys
         # self.type='V'
@@ -1756,10 +1782,12 @@ class Check():
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
         self.basicreported={}
         self.printprofilesbyps()
+        self.makecountssorted() #This populates self.profilecounts
         self.printcountssorted()
         num='ALL'
-        for self.ps in self.topps(num): #get PSs found in the top five syllable profiles
-            print('NVCVN:',self.profilesbysense[self.ps]['NVCVN'])
+        for self.ps in self.topps(num): #get PSs found in syllable profiles
+            """For Debugging"""
+            # print('NVCVN:',self.profilesbysense[self.ps]['NVCVN'])
             for self.profile in self.topprofiles(num)[self.ps]:
                 for self.type in ['V','C']:
                     maxcount=re.subn(self.type, self.type, self.profile)[1]
@@ -1838,34 +1866,46 @@ class Check():
                         else:
                             self.basicreported[typenum]+=[match[0]]
                     print('\t',self.getframedsense(match[0],noframe=True)['formatted'])
+    def makecountssorted(self):
+        self.profilecounts={}
+        wcounts=list()
+        for ps in self.profilesbysense:
+            # pscount=0
+            if ps == 'Invalid': #Including these below causes trouble
+                self.profilecountInvalid=len(self.profilesbysense[ps])
+                # wcounts.append((count, None, ps))
+            else:
+                for profile in self.profilesbysense[ps]:
+                    count=len(self.profilesbysense[ps][profile])
+                    # pscount+=count
+                    wcounts.append((count, profile, ps))
+        self.profilecounts=sorted(wcounts,reverse=True)
     def printcountssorted(self):
         print("Ranked and numbered syllable profiles, by grammatical category:")
-        wcounts=list()#{}
-        allkeys=[]
-        for k in self.profilesbysense:
-            allkeys+=self.profilesbysense[k]
-        print('Profiled data:',len(allkeys))
-        self.profilecounts={}
+        #{}
+        # allkeys=[]
+        nTotal=0
+        # nInvalid=0
+        nTotals={}
+        # for k in self.profilesbysense:
+        #     allkeys+=self.profilesbysense[k]
+        for line in self.profilecounts:
+            nTotal+=line[0]
+            if line[2] not in nTotals:
+                nTotals[line[2]]=0
+            nTotals[line[2]]+=line[0]
+            # if line[2] == 'Invalid':
+            #     nInvalid+=line[0]
+        print('Profiled data:',nTotal) #len(allkeys))
+        """Pull this?"""
+        print('Invalid entries found:',self.profilecountInvalid) # nTotals['Invalid']) #len(self.profilesbysense['Invalid']))
         for ps in self.profilesbysense:
             if ps == 'Invalid':
-                print(ps,'entries found:',len(self.profilesbysense['Invalid']))
-            else:
-                print(str(ps)+" (total): "+str(self.db.wordcountbyps(ps)))
-                # wcounts[ps]=list()
-                pscount=0
-                for profile in self.profilesbysense[ps]:
-                    # print(self.profilesbysense[ps][profile])
-                    # print(len(self.profilesbysense[ps][profile]))
-                    count=len(self.profilesbysense[ps][profile]) #.keys()
-                    pscount+=count
-                    wcounts.append((count, profile, ps))
-                for line in sorted(wcounts, reverse=True): #sorted(wcounts[ps], reverse=True):
-                    if line[2] == ps:
-                        print(line[0],line[1])
-                print('Profiled '+str(ps)+' count: '+str(pscount))
-        # for ps in wcounts:
-        #     self.profilecounts+=wcounts
-        self.profilecounts=sorted(wcounts,reverse=True)
+                continue
+            for line in self.profilecounts: #sorted(wcounts, reverse=True):
+                if line[2] == ps:
+                    print(line[0],line[1])
+            print(ps,"(total):",nTotals[ps])
     def printprofilesbyps(self):
         print("Syllable profiles actually in senses, by grammatical category:")
         for ps in self.profilesbysense:
@@ -3502,6 +3542,10 @@ class MainApplication(Frame):
         advancedmenu.add_cascade(label=_("Add other"), menu=filemenu)
         advancedmenu.add_command(label=_("Join Groups"),
                         command=lambda x=check:Check.joinT(x))
+        advancedmenu.add_command(
+                        label=_("Redo Syllable Profile Analysis (Restart)"),
+                        command=lambda x=check:Check.reloadprofiledata(x))
+
         """Unused for now"""
         # settingsmenu = Menu(menubar, tearoff=0)
         # changestuffmenu.add_cascade(label=_("Settings"), menu=settingsmenu)
@@ -4291,7 +4335,6 @@ def main():
     root = tkinter.Tk()
     myapp = MainApplication(root)
     myapp.mainloop()
-
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
