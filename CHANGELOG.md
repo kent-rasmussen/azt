@@ -1,23 +1,23 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test (and since)
-*Empty Form Problems*
+### *Empty Form Problems*
 - Noform Nogloss entries showing up on recording screen (ideally make never appear, at least skippable)
 - fix problems that arise from empty form, or cut processing of those records earlier
-*UI Imporovements*
+### *UI Imporovements*
 - make `Record` button on main window.
-*Naming Groups*
+### *Naming Groups*
 - figure out problem of leaving triage after one addition of words -- related to problem with empty group --related to having a single character name for the group
 - make group name smarter than `len>1`
-*Settings*
+### *Settings*
 - fix logic of settings from scratch  
   - pick a part of speech with no tone frames in it?
   - remove any circular dependencies as settings are filled out.
   -make sure each dependency is really necessary (tone frame?)
-*Prioritization*
+### *Prioritization*
 - make checkcheck pick the most numerous profile that hasn't been finished, along with it's ps.
 - add check to automatic addition of data to first group (e.g., if not valid data).
 - Figure out why sort isn't showing any buttons
-*CV Report*
+### *CV Report*
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - make CV report not include Caa in V1 or V2
 - make CV report only reference lx field
