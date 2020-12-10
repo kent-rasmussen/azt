@@ -28,9 +28,9 @@ new features:
   - most restrictive (e.g., V1=V2) first
   - data only give once (not in V1 or V2 if in V1=V2)
 bug fixes:
-- [x] remove `lift_url.py` from repo
-  - [x] if non file found in `lift_url.py`, rejects and asks for a file.
-  - [x] if non-LIFT file is given, AZT quits on an exception, with console and UI message, and deletes `lift_url.py`.
+- remove `lift_url.py` from repo
+  - if non file found in `lift_url.py`, rejects and asks for a file.
+  - if non-LIFT file is given, AZT quits on an exception, with console and UI message, and deletes `lift_url.py`.
 - fixed C/V report
 - Added icons to distinguish sort and verify pages
   - includes data only once per Sn (not in V1 or V2 if in V1=V2, nor in C1 or C2 if in C1=C2)
