@@ -160,7 +160,7 @@ class Check():
         self.profilesbysense['Invalid']=[]
         self.profiledguids=[]
         self.profiledsenseids=[]
-        onlyCV={'C','V'}
+        onlyCV={'C','N','V'}
         todo=len(self.db.senseids)
         for senseid in self.db.senseids:
             print(str(self.db.senseids.index(senseid))+'/'+str(todo))
@@ -184,6 +184,7 @@ class Check():
                     for profile in self.profilesbysense[ps]:
                         print(ps,profile,len(self.profilesbysense[ps][profile]))
     def setupCVrxs(self):
+        self.rxN=rx.make(rx.n(self.db),compile=True)
         self.rxC=rx.make(rx.c(self.db),compile=True)
         self.rxV=rx.make(rx.v(self.db),compile=True)
     def profileofform(self,form):
@@ -191,9 +192,10 @@ class Check():
         # print(self.rxC)
         # print(self.rxV)
         fC=self.rxC.sub('C',form)
-        fCV=self.rxV.sub('V',fC)
+        fCN=self.rxN.sub('N',fC)
+        fCNV=self.rxV.sub('V',fCN)
         # print(fCV)
-        return fCV
+        return fCNV
     def gimmeguid(self):
         guidsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
         return guidsbyps[randint(0, len(guidsbyps))]
@@ -1688,15 +1690,19 @@ class Check():
         text=_("(Report is also available at ("+self.tonereportfile+")")
         output(window,r,text)
         r.close()
-    def topps(self,x):
+    def topps(self,x='ALL'):
         """take the top x profiles, irrespective of ps"""
         pss=list()
+        if x == 'ALL':
+            x=len(self.profilecounts)
         for count in range(x):
             pss+=[self.profilecounts[count][2]] #(count, profile, ps)
         # print(pss)
         return list(dict.fromkeys(pss))
-    def topprofiles(self,x):
+    def topprofiles(self,x='ALL'):
         profiles={}
+        if x == 'ALL':
+            x=len(self.profilecounts)
         for count in range(x):
             if self.profilecounts[count][2] not in profiles:
                 profiles[self.profilecounts[count][2]]=list()
@@ -1718,11 +1724,16 @@ class Check():
         self.basicreported={}
         self.printprofilesbyps()
         self.printcountssorted()
-        for self.ps in self.topps(5): #get PSs found in the top five syllable profiles
-            for self.profile in self.topprofiles(5)[self.ps]:
+        num='ALL'
+        for self.ps in self.topps(num): #get PSs found in the top five syllable profiles
+            print('NVCVN:',self.profilesbysense[self.ps]['NVCVN'])
+            for self.profile in self.topprofiles(num)[self.ps]:
                 for self.type in ['V','C']:
-                    if self.type not in self.basicreported:
-                        self.basicreported[self.type]=list()
+                    maxcount=re.subn(self.type, self.type, self.profile)[1]
+                    self.typenums=[self.type+str(n+1) for n in range(maxcount)]
+                    for typenum in self.typenums:
+                        if typenum not in self.basicreported:
+                            self.basicreported[typenum]=list()
                     # print(self.ps,self.profile,self.type)
         # print('profilecounts:',self.profilecounts)
         # print('profilecounts:',self.profilecounts[0])
@@ -1773,17 +1784,27 @@ class Check():
         else:
             print("Sorry, not sure what I'm doing:",self.type)
         # self.profile in profs:
-        for codenname in sorted(self.setnamesbyprofile(), key=lambda s: len(s[0]),reverse=True): #key=len([0])): #
+        """This sets each of the checks that are applicable for the given
+        profile."""
+        for typenum in self.basicreported:
+            print(typenum+':',self.basicreported[typenum])
+        for codenname in sorted(self.setnamesbyprofile(),
+                        key=lambda s: len(s[0]),reverse=True): #key=len([0])): #
             self.name=codenname[0] #just codes, not names
+            self.typenumsRun=[typenum for typenum in self.typenums
+                                        if re.search(self.name, typenum)]
             if len(self.name) == 1:
                 print("Error!",self.name,"Doesn't seem to be list formatted.")
             for self.subcheck in subchecks:
                 print(self.ps,self.profile,self.name,self.subcheck,':')
                 self.buildregex()
                 for match in self.db.senseidformsbyregex(self.regex,ps=ps).items(): #db.idsbylexemeregexnps(check.ps,check.regex).keys(): #compiled!
-                    if match[0] not in self.basicreported[self.type]:
-                        self.basicreported[self.type]+=[match[0]]
-                        print('\t',self.getframedsense(match[0],noframe=True)['formatted'])
+                    for typenum in self.typenumsRun:
+                        if match[0] in self.basicreported[typenum]:
+                            return
+                        else:
+                            self.basicreported[typenum]+=[match[0]]
+                    print('\t',self.getframedsense(match[0],noframe=True)['formatted'])
     def printcountssorted(self):
         print("Ranked and numbered syllable profiles, by grammatical category:")
         wcounts=list()#{}

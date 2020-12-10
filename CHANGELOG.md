@@ -16,6 +16,8 @@
 - add check to automatic addition of data to first group (e.g., if not valid data).
 - Figure out why sort isn't showing any buttons
 
+- make CV report not include Caa in V1 or V2
+- make CV report only reference lx field
 # Version 0.3.1
 new features:
 - function to determine most populous syllable profile, with its ps
@@ -28,6 +30,9 @@ bug fixes:
   - [x] if non-LIFT file is given, AZT quits on an exception, with console and UI message, and deletes `lift_url.py`.
 - fixed C/V report
 - Added icons to distinguish sort and verify pages 
+  - includes data only once per Sn (not in V1 or V2 if in V1=V2, nor in C1 or C2 if in C1=C2)
+  - repeats data selected for by another Sn (C1 and V1 both is OK, for CV profile)
+
 # Version 0.3 (November 2020)
 ## language and search parameters
 - logic to make appropriate assumptions

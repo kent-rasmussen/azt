@@ -1114,44 +1114,76 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nguids=len(self.guids) #,guid,lang,fieldtype,location
     def nc(self):
         nounclasses="1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+    def nlist(self): #This variable gives lists, to iterate over.
+        # prenasalized=['mb','mp','mbh','mv','mf','nd','ndz','ndj','nt','ndh','ng','ŋg','ŋg','nk','ngb','npk','ngy','nj','nch','ns','nz']  #(graphs that preceede a consonant)
+        ntri=["ng'"]
+        ndi=['mm','ny','ŋŋ']
+        nm=['m','m','M','n','n','ŋ','ŋ','ɲ']
+        nasals=ntri+ndi+nm
+        actuals={}
+        for lang in self.analangs:
+            unsorted=self.inxyz(lang,nasals) #remove the symbols which are not in the data.
+            """Make digraphs appear first, so they are matched if present"""
+            actuals[lang]=sorted(unsorted,key=len, reverse=True)
+            #print('actuals:',actuals[lang])
+        #print(c)
+        return actuals
+
     def clist(self): #This variable gives lists, to iterate over.
         #should this belong in a config file? (with a notice?)
         #This should probably pull stuff from the lift file in some way..….
         """These are all possible forms, that I have ever run across.
         If I find something new (or you tell me!) we can add it here.
         Forms not actually in the data get removed below."""
-        plosives=['p','P','b','Ɓ','B','bh','t','d','dh','k','kp','g','G','gh','gb','ʔ',"ꞌ",'kk'] #chk for gey
-        forpeoplewholikec=['c']
-        plosives=plosives+forpeoplewholikec
-        hookedimplosives=['ɗ','ɓ']
-        fricatives=['ch','j','J','f','ph','bh','v','vh','s','sh','z','Z','zh','ʃ','ʒ','θ','ð','x','ɣ']
-        affricates=['dj','chk','ts','dz','tʃ','dʒ']
-        lateralfricatives=['sl','zl','zl','ɬ','ɮ']
-        prenasalized=['mb','mp','mbh','mv','mf','nd','ndz','ndj','nt','ndh','ng','ŋg','ŋg','nk','ngb','npk','ngy','nj','nch','ns','nz']  #(graphs that preceede a consonant)
-        nasals=['m','M','n','ny','ŋ','ŋŋ','ɲ']
-        othersonorants=['l','r','rh','wh']
-        labialized=list(char+'w' for char in plosives+hookedimplosives+fricatives+prenasalized)
-        palatalized=list(char+'y' for char in plosives+hookedimplosives+fricatives+prenasalized)
-        glides=['y','Y','w','W']
-        others=['h', 'hh']
+        """Note, objects will be found in the order listed, so put the
+        larger/longer objects first, if you ever want to find them ('ts' must
+        precede 't', or you will only find t+s=CC, not ts=C)"""
+        pdi=['bh','dh','kp','gh','gb','kk']
+        pm=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','ɡ','G','ʔ',"ꞌ",'ʼ']
+        # forpeoplewholikec=['c']
+        # plosives=pdigraphs+p+forpeoplewholikec
+        # phookedimplosives=[]
+        fdi=['ch','ph','bh','vh','sh','zh','hh']
+        fm=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
+        atri=['chk']
+        adi=['dj','ts','dz','tʃ','dʒ']
+        lfdi=['sl','zl','zl']
+        lfm=['ɬ','ɮ']
+        obstruents=atri+pdi+fdi+adi+lfdi+pm+fm+lfm #tri-, then di-, mono-graphs
+        pntri=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']  #(graphs that preceede a consonant)
+        pndi=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']  #(graphs that preceede a consonant)
+        # nasals=['m','M','n','ny','ŋ','ŋŋ','ɲ']
+        ntri=["ng'"]
+        ndi=['mm','ny','ŋŋ']
+        nm=['m','M','n','ŋ','ɲ']
+        """Non-Nasal Sonorants"""
+        nnsdi=['rh','wh']
+        nnsm=['l','r']
+        glides=['ẅ','y','Y','w','W']
+        basic=nnsdi+obstruents+nnsm+glides
+        labialized=list(char+'w' for char in basic) #+prenasalized
+        palatalized=list(char+'y' for char in basic) #+prenasalized
+        # others=[, ]
         """At some point, we may want logic to include only certain
         elements in c. The first row is in pretty much any language."""
-        c=plosives+fricatives+othersonorants+others
-        c=c+affricates
-        c=c+nasals #if nasals are included in C's
-        c=c+glides #if glides are included in C's
-        c=c+others #if others are included in C's
-        c=c+prenasalized
-        c+=lateralfricatives
-        c=c+hookedimplosives #if hookedimplosives are included in C's
-        c=c+labialized #if labialized are included in C's
-        c=c+palatalized #if labialized are included in C's
+        c=labialized+palatalized+basic #trigraphs first
+        #+fricatives+othersonorants+others
+        # c=c+affricates
+        # c=c+nasals #if nasals are included in C's
+        # c=c+glides #if glides are included in C's
+        # c=c+others #if others are included in C's
+        # c=c+prenasalized
+        # c+=lateralfricatives
+        # c=c+hookedimplosives #if hookedimplosives are included in C's
+        # c=c+labialized #if labialized are included in C's
+        # c=c+palatalized #if labialized are included in C's
         actuals={}
         #print('hypotheticals',c)
         for lang in self.analangs:
-            unsorted=self.inxyz(lang,c) #remove the symbols which are not in the data.
-            """Make digraphs appear first, so they are matched if present"""
-            actuals[lang]=sorted(unsorted,key=len, reverse=True)
+            # unsorted=self.inxyz(lang,c) #remove the symbols which are not in the data.
+            # """Make digraphs appear first, so they are matched if present"""
+            # actuals[lang]=sorted(unsorted,key=len, reverse=True)
+            actuals[lang]=self.inxyz(lang,c)
             #print('actuals:',actuals[lang])
         #print(c)
         return actuals
@@ -1181,6 +1213,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.segmentsnotinregexes={}
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
+        self.n=self.nlist()
         self.c=self.clist()
         self.v=self.vlist()
     def segmentin(self, lang, glyph): #this tests if a given glyph is found in the form data (so we don't look for glyphs we already know aren't there).
@@ -1310,7 +1343,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     self.segmentsnotinregexes[lang].append(x)
             if len(self.segmentsnotinregexes[lang]) > 0:
                 print("The following segments are not in your",lang,"regex's:",
-                self.segmentsnotinregexes[lang])
+                dict.fromkeys(self.segmentsnotinregexes[lang]))
             else:
                 print("Your regular expressions look OK for",lang,"(there are no segments "+
                     "in your",lang,"data that are not in a regex). Note, this doesn't \n"+
