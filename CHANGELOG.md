@@ -8,11 +8,6 @@
 ### *Naming Groups*
 - figure out problem of leaving triage after one addition of words -- related to problem with empty group --related to having a single character name for the group
 - make group name smarter than `len>1`
-### *Settings*
-- fix logic of settings from scratch  
-  - pick a part of speech with no tone frames in it?
-  - remove any circular dependencies as settings are filled out.
-  -make sure each dependency is really necessary (tone frame?)
 ### *Prioritization*
 - make checkcheck pick the most numerous profile that hasn't been finished, along with it's ps.
 - add check to automatic addition of data to first group (e.g., if not valid data).
@@ -22,11 +17,19 @@
 - make CV report not include Caa in V1 or V2
 - make CV report only reference lx field
 - make data only give once (not in V1 or V2 if in V1=V2)
+## Cleanup
+- put `setdefaults.py` into Check class
+
 # Version 0.3.1
 new features:
 - function to determine most populous syllable profile, with its ps
+  - assumes most populous ps-profile filter, until another is chosen.
+  - runs (and refreshes) with other syllable profiles on certain startups
 - CV report now takes most populous syllable profiles, and runs all checks
   - most restrictive (e.g., V1=V2) first
+- main window displays number of words in current ps-profile filter
+- new (Advanced) menu option to redo syllable profile analysis
+- only question required on first open (for now) is C,V,CV, or T; everything else has an initial assumed value (though still changeable through the menus).
 bug fixes:
 - remove `lift_url.py` from repo
   - if non file found in `lift_url.py`, rejects and asks for a file.
