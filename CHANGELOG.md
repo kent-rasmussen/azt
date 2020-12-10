@@ -1,20 +1,24 @@
 # In Process
-## Issues from November 2020 Zulgo beta test
+## Issues from November 2020 Zulgo beta test (and since)
+*Empty Form Problems*
 - Noform Nogloss entries showing up on recording screen (ideally make never appear, at least skippable)
 - fix problems that arise from empty form, or cut processing of those records earlier
+*UI Imporovements*
 - make `Record` button on main window.
-- remove requirement for location key in tone frames
+*Naming Groups*
+- figure out problem of leaving triage after one addition of words -- related to problem with empty group --related to having a single character name for the group
+- make group name smarter than `len>1`
+*Settings*
 - fix logic of settings from scratch  
   - pick a part of speech with no tone frames in it?
   - remove any circular dependencies as settings are filled out.
   -make sure each dependency is really necessary (tone frame?)
-- figure out problem of leaving triage after one addition of words -- related to problem with empty group --related to having a single character name for the group
-  - make group name smarter than `len>1`
+*Prioritization*
 - make checkcheck pick the most numerous profile that hasn't been finished, along with it's ps.
-- make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - add check to automatic addition of data to first group (e.g., if not valid data).
 - Figure out why sort isn't showing any buttons
-
+*CV Report*
+- make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - make CV report not include Caa in V1 or V2
 - make CV report only reference lx field
 # Version 0.3.1
@@ -33,6 +37,7 @@ bug fixes:
   - repeats data selected for by another Sn (C1 and V1 both is OK, for CV profile)
 - fixed missing frames on tone checks --asks user to define a frame if none there.
 - make all file open options with `encoding='utf-8'`
+- remove requirement for location key in tone frames
 
 # Version 0.3 (November 2020)
 ## language and search parameters
