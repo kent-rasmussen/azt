@@ -5,6 +5,10 @@ def c(self,lang=None): #join a list into regex format
     if lang is None:
         lang=self.analang
     return '|'.join(self.c[lang]) #include all possible glyphs from consonants()
+def n(self,lang=None): #join a list into regex format
+    if lang is None:
+        lang=self.analang
+    return '|'.join(self.n[lang]) #include all possible glyphs from consonants()
 def v(self,lang=None): #Why does this give me nothing for gnd?!?!?
     if lang is None:
         lang=self.analang
@@ -64,6 +68,8 @@ def fromCV(db, CVs, word=False, compile=False):
             rnext="("+v(db)+")" #[lift.analang]
         elif x == "C":
             rnext="("+c(db)+")"
+        elif x == "N":
+            rnext="("+n(db)+")"
         elif x in db.c[db.analang]+db.v[db.analang]:
             rnext="("+x+")"
         else:
