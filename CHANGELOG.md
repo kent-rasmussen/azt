@@ -33,6 +33,7 @@ bug fixes:
   - includes data only once per Sn (not in V1 or V2 if in V1=V2, nor in C1 or C2 if in C1=C2)
   - repeats data selected for by another Sn (C1 and V1 both is OK, for CV profile)
 
+- fixed missing frames on tone checks --asks user to define a frame if none there.
 # Version 0.3 (November 2020)
 ## language and search parameters
 - logic to make appropriate assumptions

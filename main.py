@@ -570,7 +570,9 @@ class Check():
     def framenamesbyps(self,ps):
         """Names for all tone frames defined for the language."""
         if self.toneframes is not None:
-            if self.toneframes[ps] is not None:
+            if ps not in self.toneframes:
+                self.toneframes[ps]={}
+            else:
                 return list(self.toneframes[ps].keys())
         #     else:
         #         return []
@@ -823,14 +825,23 @@ class Check():
         """Get check"""
         if self.name == 'adhoc':
             tkadhoc()
-        elif self.name == None:
-            print("check selection dialog here, for now just running V1=V2")
-            self.getcheck()
-            return
-        if self.type == 'T':
+        elif self.type == 'T':
+            if self.ps not in self.toneframes:
+                self.toneframes[self.ps]={}
+            """If there's only one tone frame, I don't care what the
+            settings file says"""
+            if len(self.toneframes[self.ps]) == 1:
+                self.name=list(self.toneframes[self.ps].keys())[0]
+            elif self.name not in self.toneframes[self.ps]: #this includes None
+                self.getcheck()
+                return
             t=(_("Checking {}, working on ‘{}’ tone frame").format(
                                     self.typedict[self.type],self.name))
         else:
+            if self.name == None: #no backup assumptions for CV checks, for now
+                print("check selection dialog here, for now just running V1=V2")
+                self.getcheck()
+                return
             t=(_("Checking {}, working on {} = {}".format(
                         self.typedict[self.type],self.name,self.subcheck)))
         proselabel(opts,t)
@@ -867,7 +878,11 @@ class Check():
                     #     print("Apparently noboard hasn't been made.",
                     #         hasattr(self,'noboard'))#,self.noboard.winfo_exists())
                     if self.type == 'T':
-                        self.maketoneprogresstable()
+                        if self.ps in self.toneframes:
+                            self.maketoneprogresstable()
+                        else:
+                            self.makenoboard()
+                            return
                     else:
                         print("Found CV verifications")
                         self.makeCVprogresstable()
@@ -1367,22 +1382,40 @@ class Check():
         print("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
         print("Getting the check name...")
-        window=Window(self.frame,title='Select Check')
-        Label(window.frame, text=_('What check do you want to do?')
-                    ).grid(column=0, row=0)
         if self.type=='T': #if it's a tone check, get from frames.
             checks=self.framenamesbyps(self.ps)
             # checks.append("addone") #use this to add to the list.
             # checks.append("report") #all the set up frames
         else:
             checks=self.setnamesbyprofile()
-        buttonFrame1=ButtonFrame(window.frame,
-                                checks,
-                                self.setcheck,
-                                window
-                                )
-        buttonFrame1.grid(column=0, row=4)
-        buttonFrame1.wait_window(window)
+        window=Window(self.frame,title='Select Check')
+        if checks == []:
+            text=_("You don't seem to have any tone frames set up.\n"
+            "The next window will let you define your first frame. \nPlease pay "
+            "attention to the instructions, and if \nthere's anything you don't "
+            "understand, or if you're not \nsure what a tone frame is, "
+            "please ask for help.")
+            Label(window.frame, text=text).grid(column=0, row=0)
+            b=Button(window.frame, text=_("Define a New Tone Frame"),cmd=self.addframe,
+                    anchor='c')
+            b.grid(column=0, row=1,sticky='')
+            """I need to make this quit the whole program, immediately."""
+            b2=Button(window.frame, text=_("Quit A→Z+T"),cmd=self.parent.parent.destroy,
+                    anchor='c')
+            b2.grid(column=1, row=1,sticky='')
+            b.wait_window(window)
+            self.checkcheck()
+            # self.addframe()
+        else:
+            text=_('What check do you want to do?')
+            Label(window.frame, text=text).grid(column=0, row=0)
+            buttonFrame1=ButtonFrame(window.frame,
+                                    checks,
+                                    self.setcheck,
+                                    window
+                                    )
+            buttonFrame1.grid(column=0, row=4)
+            buttonFrame1.wait_window(window)
     def getV(self,window):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getsubcheck"""
