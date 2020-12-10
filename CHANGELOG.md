@@ -8,7 +8,6 @@
   - pick a part of speech with no tone frames in it?
   - remove any circular dependencies as settings are filled out.
   -make sure each dependency is really necessary (tone frame?)
-- make all file open options with `encoding='utf-8'`
 - figure out problem of leaving triage after one addition of words -- related to problem with empty group --related to having a single character name for the group
   - make group name smarter than `len>1`
 - make checkcheck pick the most numerous profile that hasn't been finished, along with it's ps.
@@ -29,11 +28,12 @@ bug fixes:
   - [x] if non file found in `lift_url.py`, rejects and asks for a file.
   - [x] if non-LIFT file is given, AZT quits on an exception, with console and UI message, and deletes `lift_url.py`.
 - fixed C/V report
-- Added icons to distinguish sort and verify pages 
+- Added icons to distinguish sort and verify pages
   - includes data only once per Sn (not in V1 or V2 if in V1=V2, nor in C1 or C2 if in C1=C2)
   - repeats data selected for by another Sn (C1 and V1 both is OK, for CV profile)
-
 - fixed missing frames on tone checks --asks user to define a frame if none there.
+- make all file open options with `encoding='utf-8'`
+
 # Version 0.3 (November 2020)
 ## language and search parameters
 - logic to make appropriate assumptions
