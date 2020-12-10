@@ -21,12 +21,12 @@
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - make CV report not include Caa in V1 or V2
 - make CV report only reference lx field
+- make data only give once (not in V1 or V2 if in V1=V2)
 # Version 0.3.1
 new features:
 - function to determine most populous syllable profile, with its ps
 - CV report now takes most populous syllable profiles, and runs all checks
   - most restrictive (e.g., V1=V2) first
-  - data only give once (not in V1 or V2 if in V1=V2)
 bug fixes:
 - remove `lift_url.py` from repo
   - if non file found in `lift_url.py`, rejects and asks for a file.
