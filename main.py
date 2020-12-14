@@ -617,7 +617,8 @@ class Check():
         if notonegroup == False:
             for tonegroup in self.db.get('exfieldvalue', senseid=senseid,
                                         fieldtype='tone', location=self.name):
-                if len(tonegroup) != 1:
+                if len(tonegroup) != 1 or not(int(tonegroup) >0):
+                    print('tonegroup is not int:',tonegroup)
                     output['tonegroup']=tonegroup
         if noframe == False:
             frame=self.toneframes[self.ps][self.name]
@@ -1730,7 +1731,8 @@ class Check():
             text=('Values by frame: '+'\t'.join(l))
             output(window,r,text)
             for senseid in groups[group]['senseids']:
-                text=self.getframedsense(senseid,noframe=True)['formatted']
+                text=self.getframedsense(senseid,noframe=True,
+                                                notonegroup=True)['formatted']
                 # for form in self.db.citationorlexeme(senseid=senseid):
                 #     for gloss in self.db.glossordefn(senseid=senseid,
                 #                                     lang=self.glosslang):
@@ -1946,7 +1948,9 @@ class Check():
             newtonevalue=formfield.get()
             self.updatebysubchecksenseid(self.subcheck,newtonevalue)
             self.subcheck=newtonevalue
+            # print('Pre-rename tonegroups:',self.tonegroups)
             self.gettonegroups()
+            # print('Post-rename tonegroups:',self.tonegroups)
             self.verifysubwindow.destroy()
             self.verifyT()
             # self.addtoprofilesbysense(senseid)
@@ -2148,6 +2152,7 @@ class Check():
         self.runwindow.frame.scroll.content.anotherskip.grid(row=1,column=0)
         self.gettonegroup(self.runwindow.frame.scroll.content.anotherskip)
         while self.senseidsunsorted != []:
+            self.groupselected=[] #reset this for each word!
             # print(self.senseidsunsorted)
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'
@@ -2186,18 +2191,27 @@ class Check():
                 print("Group selected:",self.groupselected)
             if (self.tonegroups == [] or
                         self.groupselected == "NONEOFTHEABOVE"):
+                """If there are no groups yet, or if the user asks for another
+                group, make a new group."""
                 self.groupselected=self.addtonegroup()
                 """place this one just before the last two"""
                 print('Rows so far:',
                     self.runwindow.frame.scroll.content.groups.grid_size()[1])
                 self.runwindow.frame.scroll.content.groups.row+=1 #add to above.
+                """Add the new group to the database"""
                 self.addtonefieldex(senseid,framed)
+                """And give the user a button for it, for future words
+                (N.B.: This is only used for groups added during the current
+                run. At the beginning of a run, all used groups have buttons
+                created above.)"""
                 self.tonegroupbutton(self.runwindow.frame.scroll.content.groups,
                         self.groupselected,
                         row=self.runwindow.frame.scroll.content.groups.row)
                 print('Group added:',self.groupselected)
             else: #before making a new button, or now, add fields to the sense.
-                self.addtonefieldex(senseid,framed)
+                """This needs to *not* operate on "exit" button."""
+                if self.groupselected != []:
+                    self.addtonefieldex(senseid,framed)
             self.marksortedsenseid(senseid)
         self.runwindow.resetframe()
     def verifyT(self):
@@ -2238,7 +2252,7 @@ class Check():
                 print(self.subcheck, "already verified, continuing.")
                 continue
             self.runwindow.resetframe() #just once per group
-            title=_("Verify {} Tone Group {} (in ‘{}’ frame)").format(
+            title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
                                         self.db.languagenames[self.analang],
                                         self.subcheck,
                                         self.name
