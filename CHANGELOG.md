@@ -3,8 +3,9 @@
 ### *Empty Form Problems*
 - Noform Nogloss entries showing up on recording screen (ideally make never appear, at least skippable)
 - fix problems that arise from empty form, or cut processing of those records earlier
-### *UI Imporovements*
+### *UI Improvements*
 - make `Record` button on main window.
+- joinT second window has a problem with the scrolling frame
 ### *Naming Groups*
 - figure out problem of leaving triage after one addition of words -- related to problem with empty group --related to having a single character name for the group
 - make group name smarter than `len>1`
@@ -44,7 +45,7 @@ bug fixes:
 - fixed missing frames on tone checks --asks user to define a frame if none there.
 - make all file open options with `encoding='utf-8'`
 - remove requirement for location key in tone frames
-
+- reworked buggy distinction of integer and named groups
 # Version 0.3 (November 2020)
 ## language and search parameters
 - logic to make appropriate assumptions
