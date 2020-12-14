@@ -9,7 +9,7 @@
 - figure out problem of leaving triage after one addition of words -- related to problem with empty group --related to having a single character name for the group
 - make group name smarter than `len>1`
 ### *Prioritization*
-- make checkcheck pick the most numerous profile that hasn't been finished, along with it's ps.
+- make checkcheck reference most popular *unfinished* ps-profile combo
 - add check to automatic addition of data to first group (e.g., if not valid data).
 - Figure out why sort isn't showing any buttons
 ### *CV Report*
@@ -30,11 +30,14 @@ new features:
 - main window displays number of words in current ps-profile filter
 - new (Advanced) menu option to redo syllable profile analysis
 - only question required on first open (for now) is C,V,CV, or T; everything else has an initial assumed value (though still changeable through the menus).
+  - checkcheck picks the most numerous profile, along with it's ps.
 bug fixes:
+- Fixed issue where `exit` sorted into last group; now just exits sorting.
 - remove `lift_url.py` from repo
   - if non file found in `lift_url.py`, rejects and asks for a file.
   - if non-LIFT file is given, AZT quits on an exception, with console and UI message, and deletes `lift_url.py`.
 - fixed C/V report
+- removed (inappropriate) tone group designation from items on tone up report
 - Added icons to distinguish sort and verify pages
   - includes data only once per Sn (not in V1 or V2 if in V1=V2, nor in C1 or C2 if in C1=C2)
   - repeats data selected for by another Sn (C1 and V1 both is OK, for CV profile)
