@@ -2444,22 +2444,15 @@ class Check():
     def addtonegroup(self):
         print("Adding a tone group!")
         self.gettonegroups()
-        if self.tonegroups is not None:
-            if [i for i in self.tonegroups if ((len(i) < 3)
-                                        and (isinstance(int(i), int)))] != []:
-                maxunnamed=max([int(i) for i in self.tonegroups if ((len(i) < 3)
-                                            and (isinstance(int(i), int)))])
-                newgroup=maxunnamed+1
-                self.tonegroups.append(str(newgroup))
-                return str(newgroup)
-            else:
-                print("No numbered tone groups found!")
-                self.tonegroups.append('1')
-                return '1'
-        else:
-            print("No tone groups found at all!")
-            self.tonegroups=['1']
-            return '1'
+        values=[0,] #always have something here
+        for i in self.tonegroups:
+            try:
+                values+=[int(i)]
+            except:
+                print('Tone group',i,'cannot be interpreted as an integer!')
+        newgroup=max(values)+1
+        self.tonegroups.append(str(newgroup))
+        return str(newgroup)
     def addtonefieldex(self,senseid,framed):
         guid=None
         print("Adding",self.groupselected,"value to", self.name,"location "
