@@ -1069,8 +1069,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             else:
                 self.languagenames[xyz]=_("Language with code [{}]").format(xyz) #I need to fix this...
             self.languagenames[None]=None #just so we don't fail on None...
-    def glossordefn(self,guid=None,senseid=None,lang=None,ps=None
+    def glossordefn(self,guid=None,senseid=None,lang='ALL',ps=None
                     ,showurl=False):
+        if lang == None: #This allows for a specified None='give me nothing'
+            return
+        elif lang == 'ALL':
+            lang=None #this is how the script gives all, irrespective of lang.
         forms=self.get('gloss',guid=guid,senseid=senseid,glosslang=lang,ps=ps,
                         showurl=showurl) #,showurl=True
         if forms == []: #for the whole db this will not work if even one gloss is filled out
