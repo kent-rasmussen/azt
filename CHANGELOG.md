@@ -1,25 +1,25 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test (and since)
-### *Empty Form Problems*
-- Noform Nogloss entries showing up on recording screen (ideally make never appear, at least skippable)
-- fix problems that arise from empty form, or cut processing of those records earlier
 ### *UI Improvements*
-- make `Record` button on main window.
 - joinT second window has a problem with the scrolling frame
-### *Naming Groups*
-- figure out problem of leaving triage after one addition of words -- related to problem with empty group --related to having a single character name for the group
-- make group name smarter than `len>1`
+- fix record button image and words
+- ?Figure out why sort isn't showing any buttons
+### *Prioritization*
+- consider check to automatic addition of data to first group (e.g., if not valid data).
+## Cleanup
+- fix references to self.name which change and don't reset (e.g., reports)
+- put `setdefaults.py` into Check class
+## Next Features
+- add C and V sorting (and CV?)
+- add recording page for unsorted data (just citation forms, to go in lc field)
+- make record button work for different contexts (ad hoc, tone report, citation forms)
 ### *Prioritization*
 - make checkcheck reference most popular *unfinished* ps-profile combo
-- add check to automatic addition of data to first group (e.g., if not valid data).
-- Figure out why sort isn't showing any buttons
 ### *CV Report*
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - make CV report not include Caa in V1 or V2
 - make CV report only reference lx field
 - make data only give once (not in V1 or V2 if in V1=V2)
-## Cleanup
-- put `setdefaults.py` into Check class
 
 # Version 0.3.1
 new features:
@@ -30,22 +30,29 @@ new features:
   - most restrictive (e.g., V1=V2) first
 - main window displays number of words in current ps-profile filter
 - new (Advanced) menu option to redo syllable profile analysis
-- only question required on first open (for now) is C,V,CV, or T; everything else has an initial assumed value (though still changeable through the menus).
+- only question required on first open (for now) is C,V,CV, or T; everything else - - `Record` button on main window.
+has an initial assumed value (though still changeable through the menus).
   - checkcheck picks the most numerous profile, along with it's ps.
 bug fixes:
+- make all file open options with `encoding='utf-8'`
 - Fixed issue where `exit` sorted into last group; now just exits sorting.
 - remove `lift_url.py` from repo
   - if non file found in `lift_url.py`, rejects and asks for a file.
   - if non-LIFT file is given, AZT quits on an exception, with console and UI message, and deletes `lift_url.py`.
 - fixed C/V report
+- fixed missing frames on tone checks --asks user to define a frame if none there.
 - removed (inappropriate) tone group designation from items on tone up report
 - Added icons to distinguish sort and verify pages
   - includes data only once per Sn (not in V1 or V2 if in V1=V2, nor in C1 or C2 if in C1=C2)
   - repeats data selected for by another Sn (C1 and V1 both is OK, for CV profile)
-- fixed missing frames on tone checks --asks user to define a frame if none there.
-- make all file open options with `encoding='utf-8'`
 - remove requirement for location key in tone frames
 - reworked buggy distinction of integer and named groups
+- removed Noform Nogloss entries from recording screen
+- framed script now addresses both senses and examples
+- fixed problems that arise from empty form (cut processing of those records)
+- resolved problem of leaving triage resulting in incorrect sorting
+- group name references now use int() instead of len()
+
 # Version 0.3 (November 2020)
 ## language and search parameters
 - logic to make appropriate assumptions
