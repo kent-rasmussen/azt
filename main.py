@@ -550,7 +550,7 @@ class Check():
                     # for self.ps in self.db.pss:
                     for self.name in self.toneframes[self.ps]: #.keys()
                         print('Working on frame',self.name)
-                        framed=self.getframedsense(senseid)
+                        framed=self.getframeddata(senseid)
                         # print(framed['text'])
                     # forms=self.db.citationorlexeme(guid,lang=self.analang,ps=ps)
                     # glosses=self.db.glossordefn(guid,lang=self.glosslang,ps=ps)
@@ -599,62 +599,127 @@ class Check():
                                 location=self.name)
             l+=group
         return list(dict.fromkeys(l))
-    def getframedsense(self,senseid,noframe=False,notonegroup=False):
-        """This generates a dictionary of form {
-        'form':outputform,'gloss':outputgloss
-        } for selection and verification, by ps"""
-        """I shouldn't be doing this where the example exists already. That is,
-        sometimes this script is called to make the example fields, other times
-        to display it. Make it work for both, without reinventing each time."""
+    def getframeddata(self,source,noframe=False,notonegroup=False):
+        """This generates a dictionary of form {'form':outputform,
+        'gloss':outputgloss} for display, by senseid"""
+        """Sometimes this script is called to make the example fields, other times
+        to display it. If source is a senseid, it pulls form/gloss/etc
+        information from the entry. If source is an example, it pulls that info
+        from the example. The info is formatted uniformly in either case."""
         output={}
-        forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang,
-                                        ps=self.ps)
-        glosses=self.db.glossordefn(senseid=senseid,lang=self.glosslang,
-                                        ps=self.ps)
-        if self.glosslang2 is not None: #i.e., if the user has asked for this
+        if self.debug == True:
+            print(source, type(source))
+            print('self.glosslang:',self.glosslang)
+            print('self.glosslang2:',self.glosslang2)
+        """Just in case there's a problem later..."""
+        forms=None
+        glosses=None
+        glosses2=None
+        tonegroups=None
+        """Build dual logic here:"""
+        if isinstance(source,lift.ET.Element):
+            print('Element found!')
+            element=source
+            for node in element:
+                if (node.tag == 'form') and (node.get('lang') == self.analang):
+                    forms=node.findall('text')
+                if ((node.tag == 'translation') and
+                                (node.get('type') == 'Frame translation')):
+                    for subnode in node:
+                        if ((subnode.tag == 'form') and
+                                (subnode.get('lang') == self.glosslang)):
+                            glosses=subnode.findall('text')
+                        if ((subnode.tag == 'form') and
+                                (subnode.get('lang') == self.glosslang2)):
+                            glosses2=subnode.findall('text')
+                if ((node.tag == 'field') and
+                                (subnode.get('type') == 'tone')):
+                    tonegroups=node.findall('text')
+            if self.debug == True:
+                print('forms:',forms)
+                print('glosses:',glosses)
+                print('glosses2:',glosses2)
+                print('tonegroups:',tonegroups)
+            """convert from lists to single items without loosing data,
+            then pull text from nodes"""
+            form=t(firstoflist(forms))
+            gloss=t(firstoflist(glosses))
+            gloss2=t(firstoflist(glosses2))
+            tonegroup=t(firstoflist(tonegroups))
+            """This is what we're pulling from:
+            <example>
+                <form lang="gnd"><text>ga təv</text></form>
+                <translation type="Frame translation">
+                    <form lang="fr"><text>lieu (m), place (f) (pl)</text></form>
+                </translation>
+                <field type="tone">
+                    <form lang="fr"><text>1</text></form>
+                </field>
+                <field type="location">
+                    <form lang="fr"><text>Plural</text></form>
+                </field>
+            </example>
+            """
+        elif (type(source) is str) and (len(source) == 36): #source is sensedid
+            print('36 character senseid string!')
+            senseid=source
+            forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang,
+                                            ps=self.ps)
+            glosses=self.db.glossordefn(senseid=senseid,lang=self.glosslang,
+                                            ps=self.ps)
             glosses2=self.db.glossordefn(senseid=senseid,lang=self.glosslang2,
-                                        ps=self.ps)
-        if notonegroup == False:
-            for tonegroup in self.db.get('exfieldvalue', senseid=senseid,
-                                        fieldtype='tone', location=self.name):
-                if len(tonegroup) != 1 or not(int(tonegroup) >0):
-                    print('tonegroup is not int:',tonegroup)
-                    output['tonegroup']=tonegroup
-        if noframe == False:
-            frame=self.toneframes[self.ps][self.name]
-            if self.debug ==True:
-                print(frame)
-        if self.debug ==True:
+                                            ps=self.ps)
+            tonegroups=self.db.get('exfieldvalue', senseid=senseid,
+                                fieldtype='tone', location=self.name)
+            """convert from lists to single items without loosing data"""
+            form=firstoflist(forms)
+            gloss=firstoflist(glosses)
+            gloss2=firstoflist(glosses2)
+            tonegroup=firstoflist(tonegroups)
+        else:
+            print('Neither Element nor senseid was found!')
+            return output
+        if self.debug == True:
+            print('form:',form)
+            print('gloss:',gloss)
+            print('gloss2:',gloss2)
+            print('tonegroup:',tonegroup)
+        """The following is the same for senses or examples"""
+        if (notonegroup == False) and (tonegroup != None):
+            try:
+                int(tonegroup)
+            except:
+                output['tonegroup']=tonegroup #this is only for named groups
+        if self.debug == True:
             print(forms,glosses)
         output['form']=None
         output['gloss']=None
         text=('noform','nogloss')
-        for form in forms:
-            for gloss in glosses:
-                if noframe == False:
-                    """I shouldn't be doing this unnecessarily."""
-                    output['form']=self.frameregex.sub(form,frame['form'])
-                    output['gloss']=self.frameregex.sub(gloss,frame['gloss'])
-                else:
-                    output['form']=form
-                    output['gloss']=gloss
-                for gloss2 in glosses2: #include gloss2 if asked for and found
-                    if noframe == False:
-                        """only give these if the frame has this gloss, *and*
-                        if the user has requested the second gloss"""
-                        if 'gloss2' in frame:
-                            output['gloss2']=self.frameregex.sub(gloss2,
-                                                                frame['gloss2'])
-                    else:
-                        output['gloss2']=gloss2
-                text=[output['form'],"‘"+str(output['gloss'])+"’"]
-                if 'gloss2' in output:
-                    text+=["‘"+str(output['gloss2'])+"’"]
-                if 'tonegroup' in output:
-                    text=[str(output['tonegroup'])]+text
-                # print('     ',text)
+        if noframe == False:
+            """I shouldn't be doing this unnecessarily."""
+            frame=self.toneframes[self.ps][self.name]
+            if self.debug ==True:
+                print(frame)
+            output['form']=self.frameregex.sub(form,frame['form'])
+            output['gloss']=self.frameregex.sub(gloss,frame['gloss'])
+            if (('gloss2' in frame) and (self.glosslang2 is not None) and
+                                                            (gloss2 != None)):
+                """only give these if the frame has this gloss, *and*
+                if the user has requested the second gloss, *and* if the gloss
+                is in the data"""
+                output['gloss2']=self.frameregex.sub(gloss2,frame['gloss2'])
+        else:
+            output['form']=form
+            output['gloss']=gloss
+            if self.glosslang2 is not None:
+                output['gloss2']=gloss2
+        text=[output['form'],"‘"+str(output['gloss'])+"’"]
+        if 'gloss2' in output:
+            text+=["‘"+str(output['gloss2'])+"’"]
+        if 'tonegroup' in output:
+            text=[str(output['tonegroup'])]+text
         output['formatted']='\t'.join(text)
-        return output #{'form':outputform,'gloss':outputgloss,'gloss2':outputgloss2}
+        return output
     def getframedentry(self,guid):
         """This generates output for selection and verification, by ps"""
         forms=self.db.citationorlexeme(guid,lang=self.analang,ps=self.ps)
@@ -869,6 +934,13 @@ class Check():
         button(opts,t,self.runcheck,column=0,
                 compound='bottom', #image bottom, left, right, or top of text
                 image=self.photo[self.type]
+                )
+        opts['row']+=1
+        t=(_("Record Sorted Examples"))
+        button(opts,t,self.showtonegroupexs,column=0,
+                compound='left', #image bottom, left, right, or top of text
+                row=1,
+                image=self.photo['record']
                 )
         self.maybeboard()
         self.parent.setmenus(self)
@@ -1493,10 +1565,10 @@ class Check():
         self.locations=list(dict.fromkeys(self.locations))
     def showentries(self,senses=None):
         self.getrunwindow()
-        # self.runwindow.frame.scroll=
-        Label(self.runwindow.frame, anchor='w',
-                text=_("Words and phrases to record: click ‘Record’, talk, and release")).grid(row=0,
-                                column=0,sticky='w')
+        """?Make this scroll!"""
+        text=_("Words and phrases to record: click ‘Record’, talk, and release")
+        instr=Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w')
         if (self.entriestoshow is None) and (senses is None):
             Label(self.runwindow.frame, anchor='w',
                     text=_("Sorry, there are no entries to show!")).grid(row=1,
@@ -1510,22 +1582,14 @@ class Check():
             entryframe=Frame(self.runwindow.frame)
             entryframe.grid(row=1,column=0)
             """This is the title for each page: isolation form and glosses."""
-            framed=self.getframedsense(senseid,noframe=True)
+            framed=self.getframeddata(senseid,noframe=True)
             if framed['form']=='noform':
+                entryframe.destroy()
                 continue
             text=framed['formatted']
-            # for form in self.db.citationorlexeme(senseid=senseid):
-            #     for gloss in self.db.glossordefn(senseid=senseid,
-            #                                 lang=self.glosslang):
-            #         text=form+'\t'+"‘"+gloss+"’"
-            #         if self.glosslang2 != None:
-            #             for gloss2 in self.db.glossordefn(senseid=senseid,
-            #                                         lang=self.glosslang2):
-            #                 text+='\t'+"‘"+gloss2+"’"
             Label(entryframe, anchor='w', font=self.fonts['read'],
                     text=text).grid(row=row,
                                     column=0,sticky='w')
-            # print(self.db.get('example',senseid=senseid))
             """Then get each sorted example"""
             self.runwindow.frame.scroll=ScrollingCanvas(
                                             entryframe)
@@ -1533,77 +1597,38 @@ class Check():
             examplesframe=Frame(self.runwindow.frame.scroll.content)
             examplesframe.grid(row=0,column=0,sticky='w')
             examples=self.db.get('example',senseid=senseid)
-            print('examples',examples)
+            print('examples:',examples)
             if examples == []:
                 text=_("No examples! Add some, then come back.")
                 print(text)
                 Label(examplesframe, anchor='w', font=self.fonts['read'],
                         text=text).grid(row=row,
                                         column=0,sticky='w')
-                # return #I want the "next" button...
+                entryframe.destroy()
+                continue #return #I want the "next" button...
             for example in examples:
-                """
-                <example>
-                    <form lang="gnd"><text>ga təv</text></form>
-                    <translation type="Frame translation">
-                        <form lang="fr"><text>lieu (m), place (f) (pl)</text></form></translation>
-                    <field type="tone">
-                        <form lang="fr"><text>1</text></form>
-                    </field>
-                    <field type="location">
-                        <form lang="fr"><text>Plural</text></form>
-                    </field>
-                </example>
-                """
-                # print(example.findall('field'))
-                if form.text == None:
-                    continue
-                for form in example:
-                    if form.get('lang') == self.analang:
-                        formtext=form.find('text').text #assume there's just 1.
-                glosstext=[]
-                for translation in example:
-                    if translation.get('type') == "Frame translation":
-                        for form in translation:
-                            if ((form.get('lang') == self.glosslang) or
-                                    (form.get('lang') == self.glosslang2)):
-                                glosstext+=[form.find('text').text] #just1
-                for field in example:
-                    if field.get('type') == "tone":
-                        for form in field:
-                            if ((form.get('lang') == self.glosslang) or
-                                    (form.get('lang') == self.analang)):
-                                tonegroup=form.find('text').text #just1
-                # print(type(formtext))
-                # print(type(glosstext))
-                # print(type(nn(glosstext)),nn(glosstext))
+                framed=self.getframeddata(example)
                 row+=1
-                """If I end up doing this elsewhere, I should probably make
-                this a function, like getframedsense"""
-                text=self.getframedsense(senseid,noframe=True)['formatted']
-                text=formtext
-                if tonegroup != None and len(tonegroup)>1:
-                    text+='\t'+tonegroup
-                else:
-                    text+='\t'
-                text+='\t‘'+nn(glosstext)+'’'
+                """If I end up pulling from example nodes elsewhere, I should
+                probably make this a function, like getframeddata"""
+                text=framed['formatted']
                 Label(examplesframe, anchor='w',text=text
                                     ).grid(row=row, column=0, sticky='w')
+                print('recordbuttonframetry')
                 rb=RecordButtonFrame(examplesframe,self,senseid,example,
-                                    form=formtext, gloss=nn(glosstext)
-                                    )
+                                    form=nn(framed['form']),
+                                    gloss=nn(framed['gloss'])
+                                    ) #no gloss2; form/gloss just for filename
                 rb.grid(row=row,column=1,sticky='w')
-                #     Label(entryframe, anchor='w',
-                #             text=field.text).grid(row=row,
-                #                             column=0,sticky='w')
-                #     for text in field:
-                #         print(text.text)
-                # # form=example.form
-                #         row+=1
             row+=1
-            d=Button(examplesframe, text=_("Done"),command=entryframe.destroy)
+            d=Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
             d.grid(row=row,column=0)
             examplesframe.wait_window(entryframe)
+        instr.destroy() #Don't show instructions at this point
+        Label(self.runwindow.frame, anchor='w',
+            text=_("All done! Sort some more words, and come back.")
+            ).grid(row=0,column=0,sticky='w')
+        self.runwindow.wait_window(entryframe)
         self.runwindow.destroy()
     def showtonegroupexs(self):
         examplespergrouptorecord=15
@@ -1646,17 +1671,14 @@ class Check():
                             self.ps+'_'+
                             self.profile+
                             ".ToneReport"))+'.txt'
-        # import time
         start_time=time.time() #move this to function?
         self.getidstosort() #in case you didn't just run a check
         self.getlocations()
         output={}
         """Collect location:value correspondences, by sense"""
         for senseid in self.senseidstosort:
-            # print(senseid)
             output[senseid]={}
             for location in self.locations:
-                # print(location)
                 output[senseid][location]={}
                 group=self.db.get('exfieldvalue',senseid=senseid,
                     location=location,fieldtype='tone')
@@ -1720,7 +1742,7 @@ class Check():
             text=('\nGroup '+str(groupname))
             output(window,r,text)
             l=list()
-            print(groups[group]['values'])
+            # print(groups[group]['values'])
             for x in groups[group]['values']:
                 """This shouldn't crash if a word is lacking a value for a
                 location. Just don't include that location in the group
@@ -1731,7 +1753,7 @@ class Check():
             text=('Values by frame: '+'\t'.join(l))
             output(window,r,text)
             for senseid in groups[group]['senseids']:
-                text=self.getframedsense(senseid,noframe=True,
+                text=self.getframeddata(senseid,noframe=True,
                                                 notonegroup=True)['formatted']
                 # for form in self.db.citationorlexeme(senseid=senseid):
                 #     for gloss in self.db.glossordefn(senseid=senseid,
@@ -1867,7 +1889,7 @@ class Check():
                             return
                         else:
                             self.basicreported[typenum]+=[match[0]]
-                    print('\t',self.getframedsense(match[0],noframe=True)['formatted'])
+                    print('\t',self.getframeddata(match[0],noframe=True)['formatted'])
     def makecountssorted(self):
         self.profilecounts={}
         wcounts=list()
@@ -1976,7 +1998,7 @@ class Check():
         # gloss2=tkinter.StringVar()
         padx=50
         pady=10
-        title=_("Rename {} {} tone group {} in ‘{}’ frame"
+        title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
                         ).format(self.ps,self.profile,self.subcheck,
                                     self.name)
         self.verifysubwindow=Window(self.runwindow.frame)
@@ -2158,7 +2180,7 @@ class Check():
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'
                         +str(todo))
             print(senseid,progress)
-            framed=self.getframedsense(senseid)
+            framed=self.getframeddata(senseid)
             """After the first entry, sort by groups."""
             print('self.tonegroups:',self.tonegroups)
             if self.tonegroups != []:
@@ -2312,7 +2334,7 @@ class Check():
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
             kwargs['anchor']='w'
-        framed=self.getframedsense(senseid,notonegroup=True)
+        framed=self.getframeddata(senseid,notonegroup=True)
         text=(framed['formatted'])
         if label==True:
             b=Label(parent, text=text,
@@ -2609,7 +2631,7 @@ class Check():
         senseid=ex['senseid']
         # form=ex['form']
         # gloss=ex['gloss']
-        framed=self.getframedsense(senseid,notonegroup=True)
+        framed=self.getframeddata(senseid,notonegroup=True)
         text=(framed['formatted']) #framed['form'],"'"+str(framed['gloss'])+"'")
         # text='\t'.join(text)
         # cmd=lambda:command(parent, window, check, entry, choice)
@@ -3636,6 +3658,8 @@ class MainApplication(Frame):
         self.parent.photo['CV'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/AZT stacks6.png')
         self.parent.photo['backgrounded'] = tkinter.PhotoImage(file = imgurl)
+        imgurl=file.fullpathname('/usr/share/icons/gnome/24x24/devices/audio-input-microphone.png')
+        self.parent.photo['record'] = tkinter.PhotoImage(file = imgurl)
         setfonts(self.parent)
         """allow for exit button (~200px)"""
         self.parent.wraplength=self.parent.winfo_screenwidth()-300
@@ -4141,13 +4165,32 @@ def name(x):
     except:
         name=x.__class__.__name__ #If x is a class instance
         return "class."+name
+def firstoflist(list,othersOK=False):
+    """This takes a list composed of one item, and returns the item.
+    with othersOK=True, it discards n=2+ items; with othersOK=False,
+    it throws an error if there is more than one item in the list."""
+    # if (len(list) != 1) and (othersOK == False):
+    #     print('Sorry, more than one list item found:',list)
+    # return list[0]
+    if list == None:
+        return
+    elif len(list) == 1: # and (othersOK == False):
+        return list[0]
+    elif othersOK == False:
+        print('Sorry, something other than one list item found:',list)
+def t(element):
+    try:
+        return element.text
+    except:
+        print('Apparently you tried to pull text out of a non element:',element)
 def nonspace(x):
     """Return a space instead of None (for the GUI)"""
     if x is not None:
         return x
     else:
         return " "
-def nn(x,oneperline=False): #Don't print "None" in the UI...
+def nn(x,oneperline=False):
+    """Don't print "None" in the UI..."""
     if type(x) is list or tuple:
         output=[]
         # print('List!')
