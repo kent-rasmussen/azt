@@ -698,6 +698,10 @@ class Check():
         if noframe == False:
             """I shouldn't be doing this unnecessarily."""
             frame=self.toneframes[self.ps][self.name]
+            if form == None: #these have to be strings, or the regex fails
+                form='noform'
+            if gloss == None:
+                gloss='nogloss'
             if self.debug ==True:
                 print(frame)
             output['form']=self.frameregex.sub(form,frame['form'])
@@ -2200,7 +2204,8 @@ class Check():
                         ).grid(column=1, row=0, sticky="ew")
                 titles.grid(column=0, row=0, sticky="ew",
                                                 columnspan=2)
-                Label(self.runwindow.frame, image=img,text='',
+                Label(self.runwindow.frame, image=self.parent.photo['sortT'],
+                                text='',
                                 bg=self.theme['background']
                                 ).grid(row=1,column=0,rowspan=3,sticky='nw')
                 text=(framed['formatted'])
@@ -2209,6 +2214,7 @@ class Check():
                         )
                 entryview.grid(column=1, row=1, sticky="new")
                 self.sorting.grid(column=0,row=0, sticky="w",pady=50)
+                self.sorting.wrap()
                 self.runwindow.wait_window(window=self.sorting)
                 print("Group selected:",self.groupselected)
             if (self.tonegroups == [] or
@@ -2295,12 +2301,13 @@ class Check():
                                     ).grid(row=0,column=1,sticky="ew")
             Label(titles, text=instructions).grid(row=1,column=0, columnspan=2,
                                                                     sticky="w")
-            Label(self.runwindow.frame, image=img,text='',
+            Label(self.runwindow.frame, image=self.parent.photo['verifyT'],
+                            text='',
                             bg=self.theme['background']
                             ).grid(row=1,column=0,rowspan=3,sticky='nw')
             """Scroll after instructions"""
             self.sframe=ScrollingCanvas(self.runwindow.frame)
-            self.sframe.grid(row=1,column=1,sticky='w')
+            self.sframe.grid(row=1,column=1,columnspan=2,sticky='w')
             row+=1
             """put entry buttons here."""
             for senseid in self.getexsall(self.subcheck):
@@ -2375,64 +2382,75 @@ class Check():
         diff2=_("Which other group has the same tone melody as this one?")
         print(introtext)
         self.groupselected=None
-        while self.groupselected != "ALLOK":
-            self.runwindow.resetframe()
-            Label(self.runwindow.frame, text=title, #+' ('+progress+'):',
-                    font=self.fonts['title']
-                    ).grid(column=0, row=0, sticky="w")
-            i=Label(self.runwindow.frame, text=introtext)
-            i.grid(row=1,column=0, sticky="w")
+        # while self.groupselected != "ALLOK":
+        self.runwindow.resetframe()
+        Label(self.runwindow.frame, text=title, #+' ('+progress+'):',
+                font=self.fonts['title']
+                ).grid(column=0, row=0, sticky="w")
+        i=Label(self.runwindow.frame, text=introtext)
+        i.grid(row=1,column=0, sticky="w")
+        self.sframe=ScrollingCanvas(self.runwindow.frame)
+        self.sframe.grid(row=2,column=0)
+        self.sorting=self.sframe.content #Frame(self.runwindow.frame)
+        # self.sorting.grid(row=2,column=0)
+        self.settonevariablesbypsprofile()
+        row=0
+        for group in self.tonegroups:
+            self.tonegroupbutton(self.sorting,group,row,notonegroup=False)
+            row+=1
+        # text=_("It's different than these; start another group")
+        """If all is good, destroy this frame."""
+        b=Button(self.sorting, text=oktext,
+                    cmd=lambda:returndictnsortnext(self,
+                    self.runwindow.frame,
+                    {'groupselected':"ALLOK"}),
+                    anchor="c",
+                    font=self.fonts['instructions']
+                    )
+        b.grid(column=0, row=row, sticky="ew")
+        self.runwindow.frame.wait_window(self.sorting)
+        # print(self.groupselected)
+        if self.groupselected != "ALLOK":
+            # self.runwindow.resetframe() #Should I need this?
+            self.sframe.destroy()
             self.sframe=ScrollingCanvas(self.runwindow.frame)
-            self.sframe.grid(row=2,column=0)
+            self.sframe.grid(row=3,column=0)
             self.sorting=self.sframe.content #Frame(self.runwindow.frame)
+            # self.sorting=Frame(self.runwindow.frame)
             # self.sorting.grid(row=2,column=0)
-            self.settonevariablesbypsprofile()
-            row=0
-            for group in self.tonegroups:
-                self.tonegroupbutton(self.sorting,group,row)
+            # Label(self.sorting, text=title, #+' ('+progress+'):',
+            #         font=self.fonts['title']
+            #         ).grid(column=0, row=0) #, sticky="w"
+            group1=self.groupselected
+            # print('group1:',group1)
+            self.groupselected=None #don't want to leave this there...
+            othergroups=self.tonegroups.copy() #don't mess with the var...
+            othergroups.remove(group1) #don't offer the chosen group again.
+            print('self.tonegroups:',self.tonegroups,'group1:',group1,
+                                'othergroups:',othergroups)
+            i.destroy()
+            i=Label(self.runwindow.frame, text=diff2,
+                    font=self.fonts['instructions']
+                    )
+            i.grid(column=0, row=1, sticky="w")
+            # row+=1
+            # for group in group1:
+            #     print(group)
+            gb=self.tonegroupbutton(self.runwindow.frame,group1,row=2,
+                                font=self.fonts['readbig'],label=True,
+                                notonegroup=False)
+            gb.wrap()
+            row=1 #begin self.sorting rows
+            # row+=1
+            for group in othergroups:
+                self.tonegroupbutton(self.sorting,group,row,
+                                    font=self.fonts['read'],
+                                    notonegroup=False)
                 row+=1
-            # text=_("It's different than these; start another group")
-            """If all is good, destroy this frame."""
-            b=Button(self.sorting, text=oktext,
-                        cmd=lambda:returndictnsortnext(self,
-                                    self.runwindow.frame,
-                                    {'groupselected':"ALLOK"}),
-                        anchor="c",
-                        font=self.fonts['instructions']
-                        )
-            b.grid(column=0, row=row, sticky="ew")
-            self.runwindow.frame.wait_window(self.sorting)
-            print(self.groupselected)
-            if self.groupselected != "ALLOK":
-                # self.runwindow.resetframe() #Should I need this?
-                self.sorting=Frame(self.runwindow.frame)
-                self.sorting.grid(row=2,column=0)
-                # Label(self.sorting, text=title, #+' ('+progress+'):',
-                #         font=self.fonts['title']
-                #         ).grid(column=0, row=0) #, sticky="w"
-                group1=self.groupselected
-                othergroups=self.tonegroups.copy() #don't mess with the var...
-                othergroups.remove(group1) #don't offer the chosen group again.
-                row=1
-                print('self.tonegroups:',self.tonegroups,'group1:',group1,
-                                    'othergroups:',othergroups)
-                i.destroy()
-                i=Label(self.runwindow.frame, text=diff2,
-                        font=self.fonts['instructions']
-                        )
-                i.grid(column=0, row=row, sticky="w")
-                row+=1
-                for group in group1:
-                    self.tonegroupbutton(self.sorting,group,row,
-                                        font=self.fonts['readbig'],label=True)
-                    row+=1
-                for group in othergroups:
-                    self.tonegroupbutton(self.sorting,group,row,
-                                        font=self.fonts['read'])
-                    row+=1
-                self.runwindow.wait_window(self.sorting)
+            self.runwindow.wait_window(self.sorting)
+            if self.groupselected != None:
                 print("Now we're going to join groups",group1,"an"
-                        "d",self.groupselected,".")
+                    "d",self.groupselected,".")
                 """All the senses we're looking at, by ps/profile"""
                 # self.lst1=self.senseidstosort #all in this ps/profile
                 self.updatebysubchecksenseid(group1,self.groupselected)
@@ -2442,9 +2460,12 @@ class Check():
                 self.updatestatus() #not verified=True --if any joined.
                 print('Mark',self.groupselected,'as unverified!!?!')
                 return 1
-        print(f"User selected '{oktext}', moving on.")
-        self.groupselected='' #reset
-        return 0
+        elif self.groupselected == "ALLOK":
+            print(f"User selected '{oktext}', moving on.")
+            self.groupselected='' #reset
+            return 0
+        else:
+            print("I don't understand the user input:",self.groupselected)
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. just move on to verification, where each group's
         sameness will be verified and recorded."""
@@ -2625,13 +2646,19 @@ class Check():
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
             kwargs['anchor']='w'
+        if 'notonegroup' not in kwargs:
+            notonegroup=True
+        else:
+            notonegroup=kwargs['notonegroup']
+            del kwargs['notonegroup']
+        print('notonegroup:',notonegroup)
         ex=self.getex(group) #Even if just one, this is a list
         if ex is None:
             return
         senseid=ex['senseid']
         # form=ex['form']
         # gloss=ex['gloss']
-        framed=self.getframeddata(senseid,notonegroup=True)
+        framed=self.getframeddata(senseid,notonegroup=notonegroup)
         text=(framed['formatted']) #framed['form'],"'"+str(framed['gloss'])+"'")
         # text='\t'.join(text)
         # cmd=lambda:command(parent, window, check, entry, choice)
@@ -2641,7 +2668,8 @@ class Check():
             b=Label(parent, text=text,
                     # anchor="w"#,font=self.fonts['read']
                     **kwargs
-                    ).grid(column=0, row=row,
+                    )
+            b.grid(column=0, row=row,
                             sticky="ew",
                             ipady=15 #Inside the buttons...
                             )
@@ -2652,10 +2680,12 @@ class Check():
                                                 ),
                     # anchor="w", #font=self.fonts['read'],
                     **kwargs
-                    ).grid(column=0, row=row,
+                    )
+            b.grid(column=0, row=row,
                             sticky="ew",
                             ipady=15 #Inside the buttons...
                             )
+        return b
     def printentryinfo(self,guid):
         outputs=[
                     nn(self.db.citationorlexeme(guid=guid)),
@@ -3410,8 +3440,8 @@ class ScrollingCanvas(Frame):
         availablexy(self)
         """The above script calculates how much screen is left to fill, these
         next two lines give a max widget size to stay in the window."""
-        height=self.parent.winfo_screenheight()-self.otherrowheight
-        width=self.parent.winfo_screenwidth()-self.othercolwidth
+        # height=self.parent.winfo_screenheight()-self.otherrowheight
+        # width=self.parent.winfo_screenwidth()-self.othercolwidth
         # print('height=',self.parent.winfo_screenheight(),-self.otherrowheight)
         # print('width=',self.parent.winfo_screenwidth(),-self.othercolwidth)
         # print(height,width)
@@ -3424,10 +3454,20 @@ class ScrollingCanvas(Frame):
         the scrolling window the smaller of
             -the scrolling content or
             -the max dimensions, from above."""
-        if (self.winfo_width() < contentrw) or (self.winfo_width() > width):
-                self.config(width=min(width,contentrw))
-        if (self.winfo_height() < contentrh) or (self.winfo_height() > height):
-            self.config(height=min(height,contentrh))
+        # if self.winfo_width() < contentrw:
+        #      self.config(width=contentrw)
+        # if self.winfo_width() > self.maxwidth:
+        #     self.config(width=self.maxwidth)
+        if ((self.winfo_width() < contentrw)
+                or (self.winfo_width() > self.maxwidth)):
+                self.config(width=min(self.maxwidth,contentrw))
+        # if self.winfo_height() < contentrh:
+        #     self.config(height=contentrh)
+        # if self.winfo_height() > self.maxheight:
+        #     self.config(height=self.maxheight)
+        if ((self.winfo_height() < contentrh)
+                or (self.winfo_height() > self.maxheight)):
+            self.config(height=min(self.maxheight,contentrh))
     def _configure_canvas(self, event):
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
             # update the inner frame's width to fill the canvas
@@ -3642,8 +3682,6 @@ class MainApplication(Frame):
         self.parent['background']=self.parent.theme['background']
         """Set program icon(s) (First should be transparent!)"""
         imgurl=file.fullpathname('images/AZT stacks6.png')
-        # imgurl='images/cropped-AtoZwatermark-20180814_transparent.png'
-        # print(imgurl)
         self.parent.photo={}
         self.parent.photo['transparent'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/AZT stacks6_sm.png')
@@ -3658,7 +3696,15 @@ class MainApplication(Frame):
         self.parent.photo['CV'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/AZT stacks6.png')
         self.parent.photo['backgrounded'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('/usr/share/icons/gnome/24x24/devices/audio-input-microphone.png')
+        imgurl=file.fullpathname('images/Verify List.png')
+        self.parent.photo['verifyT'] = tkinter.PhotoImage(file = imgurl)
+        imgurl=file.fullpathname('images/Sort List.png')
+        self.parent.photo['sortT'] = tkinter.PhotoImage(file = imgurl)
+        imgurl=file.fullpathname(
+            '/usr/share/icons/gnome/24x24/devices/audio-input-microphone.png')
+        # imgurl=file.fullpathname('images/Microphone card_sm.png')
+        # imgurl=file.fullpathname('images/Microphone alone.png')
+        imgurl=file.fullpathname('images/Microphone alone_sm.png')
         self.parent.photo['record'] = tkinter.PhotoImage(file = imgurl)
         setfonts(self.parent)
         """allow for exit button (~200px)"""
@@ -3773,6 +3819,11 @@ class MainApplication(Frame):
         """show window again"""
         parent.deiconify()
 class Label(tkinter.Label):
+    def wrap(self):
+        availablexy(self)
+        # self.maxheight=self.parent.winfo_screenheight()-self.otherrowheight
+        self.config(wraplength=self.maxwidth)
+        print('self.maxwidth:',self.maxwidth)
     def __init__(self, parent, text, column=0, row=1, **kwargs):
         """These have non-None defaults"""
         if 'font' not in kwargs:
@@ -3780,6 +3831,7 @@ class Label(tkinter.Label):
         if 'wraplength' not in kwargs:
             kwargs['wraplength']=parent.wraplength
         self.theme=parent.theme
+        self.parent=parent
         # print(kwargs.keys())
         # if 'photo' in kwargs:
         #     del kwargs['photo']
@@ -4300,6 +4352,11 @@ def availablexy(self,w=None):
         self.othercolwidth=0
     wrow=w.grid_info()['row']
     wcol=w.grid_info()['column']
+    wrowmax=wrow+w.grid_info()['rowspan']
+    wcolmax=wcol+w.grid_info()['columnspan']
+    wrows=set(range(wrow,wrowmax))
+    wcols=set(range(wcol,wcolmax))
+    print('w:',wrow,wrowmax,wrows,wcol,wcolmax,wcols)
     rowheight={}
     colwidth={}
     for sib in w.parent.winfo_children():
@@ -4310,18 +4367,27 @@ def availablexy(self,w=None):
             but this is what we want for range()"""
             sib.rowmax=sib.row+sib.grid_info()['rowspan']
             sib.colmax=sib.col+sib.grid_info()['columnspan']
-            if wrow not in range(sib.row,sib.rowmax):
+            sib.rows=set(range(sib.row,sib.rowmax))
+            sib.cols=set(range(sib.col,sib.colmax))
+            # print('sib:',sib.row,sib.rowmax,sib.rows,sib.col,sib.colmax,sib.cols)
+            # print('wrows & sib.rows:',wrows & sib.rows)
+            # print('wcols & sib.cols:',wcols & sib.cols)
+            if wrows & sib.rows == set(): #the empty set
                 sib.reqheight=sib.winfo_reqheight()
                 """Give me the tallest cell in this row"""
                 if ((sib.row not in rowheight) or (sib.reqheight >
                                                         rowheight[sib.row])):
                     rowheight[sib.row]=sib.reqheight
-            if wcol not in range(sib.col,sib.colmax):
+            # else:
+            #     print(wrows,'and',sib.rows,'share rows')
+            if wcols & sib.cols == set(): #the empty set
                 sib.reqwidth=sib.winfo_reqheight()
                 """Give me the widest cell in this column"""
                 if ((sib.col not in colwidth) or (sib.reqwidth >
                                                         colwidth[sib.col])):
                     colwidth[sib.col]=sib.reqwidth
+            # else:
+            #     print(wcols,'and',sib.cols,'share columns')
     for row in rowheight:
         self.otherrowheight+=rowheight[row]
     for col in colwidth:
@@ -4337,6 +4403,9 @@ def availablexy(self,w=None):
         borderSize= self.winfo_rootx() - self.winfo_x()
         self.othercolwidth+=borderSize*2
         self.otherrowheight+=titlebarHeight
+        self.maxheight=self.parent.winfo_screenheight()-self.otherrowheight
+        self.maxwidth=self.parent.winfo_screenwidth()-self.othercolwidth
+
 def returndictnsortnext(self,parent,values): #Spoiler: the parent dies!
     """Kills self.sorting, not parent."""
     # print(self,parent,values)
