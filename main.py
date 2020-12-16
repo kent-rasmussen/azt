@@ -2172,7 +2172,7 @@ class Check():
         self.runwindow.frame.scroll.content.anotherskip=Frame(
                                             self.runwindow.frame.scroll.content)
         self.runwindow.frame.scroll.content.anotherskip.grid(row=1,column=0)
-        self.gettonegroup(self.runwindow.frame.scroll.content.anotherskip)
+        self.getanotherskip(self.runwindow.frame.scroll.content.anotherskip)
         while self.senseidsunsorted != []:
             self.groupselected=[] #reset this for each word!
             senseid=self.senseidsunsorted[0]
@@ -2182,34 +2182,34 @@ class Check():
             framed=self.getframeddata(senseid)
             """After the first entry, sort by groups."""
             print('self.tonegroups:',self.tonegroups)
-            if self.tonegroups != []:
-                entryview=Frame(self.runwindow.frame)
-                titles=Frame(self.runwindow.frame)
-                Label(titles, text=title,
-                        font=self.fonts['title'],
-                        anchor='c').grid(column=0, row=0, sticky="ew")
-                Label(titles, text=instructions,
-                        font=self.fonts['instructions'],
-                        anchor='c').grid(column=0, row=1, sticky="ew")
-                Label(titles, text=progress,
-                        font=self.fonts['report'],
-                        anchor='w'
-                        ).grid(column=1, row=0, sticky="ew")
-                titles.grid(column=0, row=0, sticky="ew",
-                                                columnspan=2)
-                Label(self.runwindow.frame, image=self.parent.photo['sortT'],
-                                text='',
-                                bg=self.theme['background']
-                                ).grid(row=1,column=0,rowspan=3,sticky='nw')
-                text=(framed['formatted'])
-                self.sorting=Label(entryview, text=text,
-                        font=self.fonts['readbig']
-                        )
-                entryview.grid(column=1, row=1, sticky="new")
-                self.sorting.grid(column=0,row=0, sticky="w",pady=50)
-                self.sorting.wrap()
-                self.runwindow.wait_window(window=self.sorting)
-                print("Group selected:",self.groupselected)
+            # if self.tonegroups != []:
+            entryview=Frame(self.runwindow.frame)
+            titles=Frame(self.runwindow.frame)
+            Label(titles, text=title,
+                    font=self.fonts['title'],
+                    anchor='c').grid(column=0, row=0, sticky="ew")
+            Label(titles, text=instructions,
+                    font=self.fonts['instructions'],
+                    anchor='c').grid(column=0, row=1, sticky="ew")
+            Label(titles, text=progress,
+                    font=self.fonts['report'],
+                    anchor='w'
+                    ).grid(column=1, row=0, sticky="ew")
+            titles.grid(column=0, row=0, sticky="ew",
+                                            columnspan=2)
+            Label(self.runwindow.frame, image=self.parent.photo['sortT'],
+                            text='',
+                            bg=self.theme['background']
+                            ).grid(row=1,column=0,rowspan=3,sticky='nw')
+            text=(framed['formatted'])
+            self.sorting=Label(entryview, text=text,
+                    font=self.fonts['readbig']
+                    )
+            entryview.grid(column=1, row=1, sticky="new")
+            self.sorting.grid(column=0,row=0, sticky="w",pady=50)
+            self.sorting.wrap()
+            self.runwindow.wait_window(window=self.sorting)
+            print("Group selected:",self.groupselected)
             if (self.tonegroups == [] or
                         self.groupselected == "NONEOFTHEABOVE"):
                 """If there are no groups yet, or if the user asks for another
@@ -2602,21 +2602,29 @@ class Check():
                                 showurl=True
                                 )
         self.maybesort()
-    def gettonegroup(self,parent):
+    def getanotherskip(self,parent):
         """This function presents a group of buttons for the user to choose
         from, one for each tone group in that location/ps/profile in the
         database, plus one for the user to indicate that the word doesn't
         belong in any of those (new group), plus one to for the user to
         indicate that the word/frame combo doesn't work (skip)."""
         row=0
-        """This does nothing now, as we start with no groups"""
-        # for group in self.tonegroups:
-        #     self.tonegroupbutton(parent,group,row)
-        #     row+=1
+        firstOK=_("This word is OK in this frame")
         newgroup=_("Different than the above")
         skip=_("Skip this word/phrase")
         """This should just add a button, not reload the frame"""
         row+=10
+        if self.tonegroups == []:
+            bf=Frame(parent)
+            bf.grid(column=0, row=row, sticky="ew")
+            b=Button(bf, text=firstOK,
+                            cmd=lambda:returndictdestroynsortnext(self,bf,
+                                        {'groupselected':"NONEOFTHEABOVE"}),
+                            anchor="w",
+                            font=self.fonts['instructions']
+                            )
+            b.grid(column=0, row=0, sticky="ew")
+            row+=1
         b=Button(parent, text=newgroup,
                         cmd=lambda:returndictnsortnext(self,parent,
                                     {'groupselected':"NONEOFTHEABOVE"}),
@@ -4397,12 +4405,20 @@ def availablexy(self,w=None):
         self.maxheight=self.parent.winfo_screenheight()-self.otherrowheight
         self.maxwidth=self.parent.winfo_screenwidth()-self.othercolwidth
 
-def returndictnsortnext(self,parent,values): #Spoiler: the parent dies!
+def returndictnsortnext(self,parent,values):
     """Kills self.sorting, not parent."""
     # print(self,parent,values)
     for value in values:
         setattr(self,value,values[value])
         self.sorting.destroy() #from or window with button...
+        return value
+def returndictdestroynsortnext(self,parent,values):
+    """Kills self.sorting *and* parent."""
+    # print(self,parent,values)
+    for value in values:
+        setattr(self,value,values[value])
+        self.sorting.destroy() #from or window with button...
+        parent.destroy() #from or window with button...
         return value
 def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
     """Self is where to store the dictionar(ies) in Values, parent is the

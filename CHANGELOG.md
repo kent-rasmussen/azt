@@ -1,7 +1,7 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test (and since)
 ### *UI Improvements*
-- still fix record button image and words
+- *still* fix record button image and words
 ### *Prioritization*
 - consider check to automatic addition of data to first group (e.g., if not valid data).
 ## Cleanup
@@ -34,6 +34,7 @@ new features:
 has an initial assumed value (though still changeable through the menus).
   - checkcheck picks the most numerous profile, along with it's ps.
 - label method to wrap on availablexy
+- Sort now ask user to affirm "This word is OK in this frame" on first word.
 bug fixes:
 - make all file open options with `encoding='utf-8'`
 - Fixed issue where `exit` sorted into last group; now just exits sorting.
