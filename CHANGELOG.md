@@ -1,9 +1,7 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test (and since)
 ### *UI Improvements*
-- joinT second window has a problem with the scrolling frame
-- fix record button image and words
-- ?Figure out why sort isn't showing any buttons
+- still fix record button image and words
 ### *Prioritization*
 - consider check to automatic addition of data to first group (e.g., if not valid data).
 ## Cleanup
@@ -13,6 +11,8 @@
 - add C and V sorting (and CV?)
 - add recording page for unsorted data (just citation forms, to go in lc field)
 - make record button work for different contexts (ad hoc, tone report, citation forms)
+### *UI Improvements*
+- add icons for joinT pages
 ### *Prioritization*
 - make checkcheck reference most popular *unfinished* ps-profile combo
 ### *CV Report*
@@ -33,6 +33,7 @@ new features:
 - only question required on first open (for now) is C,V,CV, or T; everything else - - `Record` button on main window.
 has an initial assumed value (though still changeable through the menus).
   - checkcheck picks the most numerous profile, along with it's ps.
+- label method to wrap on availablexy
 bug fixes:
 - make all file open options with `encoding='utf-8'`
 - Fixed issue where `exit` sorted into last group; now just exits sorting.
@@ -52,6 +53,8 @@ bug fixes:
 - fixed problems that arise from empty form (cut processing of those records)
 - resolved problem of leaving triage resulting in incorrect sorting
 - group name references now use int() instead of len()
+- resolved joinT second window problem with the scrolling frame
+- fixed scrolling frame problems
 
 # Version 0.3 (November 2020)
 ## language and search parameters
