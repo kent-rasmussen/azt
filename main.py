@@ -2150,14 +2150,10 @@ class Check():
                         self.senseidssorted)
             exit()
         todo=len(self.senseidstosort)
-        # print(self.ps,self.profile,todo)
-        # exit()
         title=_("Sort {} Tone (in ‘{}’ frame)").format(
                                         self.db.languagenames[self.analang],
                                         self.name)
         instructions=_("Select the one with the same tone melody as")
-        imgurl=file.fullpathname('images/Sort List.png')
-        img = tkinter.PhotoImage(file = imgurl)
         self.runwindow.frame.scroll=ScrollingCanvas(self.runwindow.frame)
         self.runwindow.frame.scroll.grid(
                                 column=1,row=2, sticky="new")
@@ -2179,7 +2175,6 @@ class Check():
         self.gettonegroup(self.runwindow.frame.scroll.content.anotherskip)
         while self.senseidsunsorted != []:
             self.groupselected=[] #reset this for each word!
-            # print(self.senseidsunsorted)
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'
                         +str(todo))
@@ -2188,8 +2183,6 @@ class Check():
             """After the first entry, sort by groups."""
             print('self.tonegroups:',self.tonegroups)
             if self.tonegroups != []:
-                """I want to drop this"""
-                # self.runwindow.resetframe()
                 entryview=Frame(self.runwindow.frame)
                 titles=Frame(self.runwindow.frame)
                 Label(titles, text=title,
@@ -2264,8 +2257,6 @@ class Check():
             "tone melody. Select any word with a different tone melody to "
             "remove it from the list."
             ).format(self.subcheck,self.name,oktext)
-        imgurl=file.fullpathname('images/Verify List.png')
-        img = tkinter.PhotoImage(file = imgurl)
         """Put a menu on this window to rename the group we're checking.
         This should be to a sensible transcription/description of the surface
         tone in this context, e.g., [˦˦˦  ˨˨˨]"""
