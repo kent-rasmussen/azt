@@ -2,8 +2,6 @@
 ## Issues from November 2020 Zulgo beta test (and since)
 ### *UI Improvements*
 - *still* fix record button image and words
-### *Prioritization*
-- consider check to automatic addition of data to first group (e.g., if not valid data).
 ## Cleanup
 - fix references to self.name which change and don't reset (e.g., reports)
 - put `setdefaults.py` into Check class
