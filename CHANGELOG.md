@@ -1,8 +1,6 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test (and since)
-### *UI Improvements*
-- *still* fix record button image and words
-## Cleanup
+### Cleanup
 - fix references to self.name which change and don't reset (e.g., reports)
 - put `setdefaults.py` into Check class
 ## Next Features
@@ -28,8 +26,8 @@ new features:
   - most restrictive (e.g., V1=V2) first
 - main window displays number of words in current ps-profile filter
 - new (Advanced) menu option to redo syllable profile analysis
-- only question required on first open (for now) is C,V,CV, or T; everything else - - `Record` button on main window.
-has an initial assumed value (though still changeable through the menus).
+- only question required on first open (for now) is C,V,CV, or T; everything else has an initial assumed value (though still changeable through the menus).
+- `Record` button on main window, with unencombered icon
   - checkcheck picks the most numerous profile, along with it's ps.
 - label method to wrap on availablexy
 - Sort now ask user to affirm "This word is OK in this frame" on first word.
