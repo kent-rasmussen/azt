@@ -309,107 +309,66 @@ class Check():
         have language specification (not gloss/gloss2), in case check languages
         change, or switch --so french is always chosen for french glosses,
         whether french is gloss or gloss2."""
+        """self.toneframes should not use 'form' or 'gloss' anymore."""
         def chk():
             namevar=name.get()
-            formbefore=formbeforee.get()
-            formafter=formaftere.get()
-            glossbefore=glossbeforee.get()
-            glossafter=glossaftere.get()
-            """Add these two lines"""
-            # gloss2before=gloss2beforee.get()
-            # gloss2after=gloss2aftere.get()
-            """self.name is set here"""
+            """self.name is set here --I may need it, to correctly test
+            the frames created..."""
             self.name=str(namevar)
             if self.toneframes is None:
                 self.toneframes={}
             if not self.ps in self.toneframes:
                 self.toneframes[self.ps]={}
-            self.toneframes[self.ps][self.name]={} #this should be done by ps...
-            """Add these some day"""
-            # self.toneframes[self.ps][self.name][self.analang]=str(
-            #                                     formbefore+'__'+formafter)
-            # self.toneframes[self.ps][self.name][self.glosslang]=str(
-            #                                     glossbefore+'__'+glossafter)
-            # if self.glosslang2 != None:
-            #     self.toneframes[self.ps][self.name][self.glosslang2]=str(
-            #                                     gloss2before+'__'+gloss2after)
-            """replacing these two lines"""
-            self.toneframes[self.ps][self.name]['form']=str(formbefore+'__'+
-                                                                    formafter)
-            self.toneframes[self.ps][self.name]['gloss']=str(glossbefore+'__'+
-                                                                    glossafter)
-            """toneframes={'Nom':
-                            {'By itself':
-                                {'location': 'Isolation',
-                                'form': '__',
-                                'gloss': 'a __'},
-                        }   }
-            """
+            self.toneframes[self.ps][self.name]={}
+            """Define the new frame"""
+            frame=self.toneframes[self.ps][self.name]
+            langs=[self.analang, self.glosslang]
+            if self.glosslang2 != None:
+                langs+=[self.glosslang2]
+            for lang in langs:
+                db['before'][lang]['text']=db['before'][lang][
+                                                            'entryfield'].get()
+                db['after'][lang]['text']=db['after'][lang][
+                                                            'entryfield'].get()
+                frame[lang]=str(
+                    db['before'][lang]['text']+'__'+db['after'][lang]['text'])
+            senseid=self.gimmesenseid()
+            framed=self.getframeddata(senseid) #after defn above, before below!
+            print(frame,framed)
+            """Display framed data"""
             if hasattr(window,'frame2'):
                 window.frame2.destroy()
             window.frame2=Frame(window.scroll.content)
             window.frame2.grid(row=1,column=0,columnspan=3,sticky='w')
-            guid=self.gimmeguid()
-            """must change the following funtion to xyz format"""
-            framed=self.getframedentry(guid)
-            t=self.toneframes[self.ps][self.name]
-            """Replace these four lines"""
-            text1=('form: '+t['form'])
-            text2=('(ex: '+framed['form']+')')
-            text12=('gloss: '+t['gloss'])
-            text22=('(ex: '+framed['gloss']+')')
-            """with these eight"""
-            # text1={}
-            # text2={}
-            # text1[self.analang]=('form: '+t[self.analang])
-            # text2[self.analang]=('(ex: '+framed[self.analang]+')')
-            # text1[self.glosslang]=('gloss: '+t[self.glosslang])
-            # text2[self.glosslang]=('(ex: '+framed[self.glosslang]+')')
-            # text1[self.glosslang2]=('gloss2: '+t[self.glosslang2])
-            # text2[self.glosslang2]=('(ex: '+framed[self.glosslang2]+')')
+            tf={}
+            tfd={}
             padx=50
             pady=10
             row=0
-            l1=Label(window.frame2,
-                    # text=text1[self.analang],
-                    text=text1,
-                    font=self.fonts['read'],
-                    justify=tkinter.LEFT,anchor='w')
-            l1.grid(row=row,column=columnleft,sticky='w',padx=padx,pady=pady)
-            l2=Label(window.frame2,
-                    text=text2,
-                    # text=text2[self.analang],
-                    font=self.fonts['read'],
-                    justify=tkinter.LEFT,anchor='w')
-            l2.grid(row=row,column=columnleft+1,sticky='w',padx=padx,pady=pady)
-            row+=1
-            l12=Label(window.frame2,
-                    text=text12,
-                    # text=text1[self.glosslang],
-                    font=self.fonts['read'],
-                    justify=tkinter.LEFT,anchor='w')
-            l12.grid(row=row,column=columnleft,sticky='w',padx=padx,pady=pady)
-            l22=Label(window.frame2,
-                    text=text22,
-                    # text=text2[self.glosslang],
-                    font=self.fonts['read'],
-                    justify=tkinter.LEFT,anchor='w')
-            l22.grid(row=row,column=columnleft+1,sticky='w',padx=padx,
-                                                                    pady=pady)
-            # row+=1
-            # l12=Label(window.frame2,
-            #         # text=text12,
-            #         text=text1[self.glosslang2],
-            #         font=self.fonts['read'],
-            #         justify=tkinter.LEFT,anchor='w')
-            # l12.grid(row=row,column=columnleft,sticky='w',padx=padx,pady=pady)
-            # l22=Label(window.frame2,
-            #         # text=text22,
-            #         text=text2[self.glosslang2],
-            #         font=self.fonts['read'],
-            #         justify=tkinter.LEFT,anchor='w')
-            # l22.grid(row=row,column=columnleft+1,sticky='w',padx=padx,
-            #                                                         pady=pady)
+            for lang in langs:
+                print('frame[{}]:'.format(lang),frame[lang])
+                tf[lang]=('form: '+frame[lang])
+                tfd[lang]=('(ex: '+framed[lang]+')')
+                l1=Label(window.frame2,
+                        text=tf[lang],
+                        font=self.fonts['read'],
+                        justify=tkinter.LEFT,anchor='w')
+                l1.grid(row=row,column=columnleft,sticky='w',padx=padx,
+                                                                pady=pady)
+                l2=Label(window.frame2,
+                        text=tfd[lang],
+                        font=self.fonts['read'],
+                        justify=tkinter.LEFT,anchor='w')
+                l2.grid(row=row,column=columnleft+1,sticky='w',padx=padx,
+                                                                pady=pady)
+                row+=1
+            """toneframes={'Nom':
+                            {'name/location (e.g.,"By itself")':
+                                {'form>xyz': '__',
+                                'gloss>xyz': 'a __'},
+                                'gloss2>xyz': 'un __'},
+                        }   }
+            """
             row+=1
             sub_btn=Button(window.frame2,text = 'Use this tone frame',
                       command = submit)
@@ -428,106 +387,74 @@ class Check():
         columnword=1
         columnright=2
         namevar=tkinter.StringVar()
-        formbefore=tkinter.StringVar()
-        formafter=tkinter.StringVar()
-        glossbefore=tkinter.StringVar()
-        glossafter=tkinter.StringVar()
-        gloss2before=tkinter.StringVar()
-        gloss2after=tkinter.StringVar()
+        """Text and fields, before and after, dictionaries by language"""
+        db={}
+        langs=[self.analang, self.glosslang]
+        if self.glosslang2 != None:
+            langs+=[self.glosslang2]
+        for context in ['before','after']:
+            db[context]={}
+            for lang in langs:
+                db[context][lang]={}
+                db[context][lang]['text']=tkinter.StringVar()
         t=(_("Add {} tone frame").format(self.ps))
         Label(window.frame1,text=t+'\n',font=self.fonts['title']
                 ).grid(row=row,column=columnleft,columnspan=3)
         row+=1
         t=_("What do you want to call the tone frame ?")
         Label(window.frame1,text=t).grid(row=row,column=columnleft,sticky='e')
-        name = EntryField(window.frame1,textvariable=namevar
-            # font=self.frame.fonts['default'] #,background=self.theme['offwhite']
-            )
+        name = EntryField(window.frame1,textvariable=namevar)
         name.grid(row=row,column=columnright,sticky='w')
         row+=1
-        t=_("Fill in the {} frame forms below.\n(include a space to "
-        "separate word forms)".format(
-                                    self.db.languagenames[self.analang]))
-        Label(window.frame1,text='\n'+t+'\n').grid(row=row,column=columnleft,
-                                            columnspan=3)
         row+=1
-        t=_("<--What text goes *before* the word *form* in the frame?")
-        # t=_("<--What {} text goes *before* the word *form* in the frame?"
-        #         ).format(self.analang)
-        Label(window.frame1,text=t).grid(row=row,column=columnright,sticky='w')
-        # t=_("<--What text goes *before* the word *form* in the frame?")
-        # t=_("<--What {} text goes *before* the word *form* in the frame?"
-        #     ).format(self.analang)
-        Label(window.frame1,text='word',padx=0,pady=0
-            ).grid(row=row,column=columnword)
-        formbeforee = EntryField(window.frame1,textvariable=formbefore,
-            # font=self.frame.fonts['default'],
-            justify='right')
-        formbeforee.grid(row=row,column=columnleft,sticky='e')
-        row+=1
-        t=_("What text goes *after* the word *form* in the frame?-->")
-        # t=_("What {} text goes *after* the word *form* in the frame?-->"
-        #     ).format(self.analang)
-        Label(window.frame1,text=t).grid(row=row,column=columnleft,sticky='e')
-        Label(window.frame1,text='word',padx=0,pady=0
-            ).grid(row=row,column=columnword)
-        formaftere = EntryField(window.frame1,textvariable=formafter,
-            # font=self.frame.fonts['default'],
-            justify='left')
-        formaftere.grid(row=row,column=columnright,sticky='w')
-        row+=1
-        t=(_("Fill in the {} glossing "
-            "here as appropriate for the morphosyntactic context.\n(include a "
-            "space to separate word glosses)"
-                        ).format(self.db.languagenames[self.glosslang]))
-        Label(window.frame1,text='\n'+t+'\n').grid(row=row,column=columnleft,
-                                            columnspan=3)
-        row+=1
-        t=_("<--What text goes *before* the word *gloss* in the frame?")
-        # t=_("<--What {} text goes *before* the *gloss* in the frame?"
-        #     ).format(self.glosslang)
-        Label(window.frame1,text=t).grid(row=row,column=columnright,sticky='w')
-        Label(window.frame1,text='gloss',padx=0,pady=0
-            ).grid(row=row,column=columnword)
-        glossbeforee = EntryField(window.frame1,textvariable=glossbefore,
-            # font=self.frame.fonts['default'],
-            justify='right')
-        glossbeforee.grid(row=row,column=columnleft,sticky='e')
-        row+=1
-        t=_("What text goes *after* the word *gloss* in the frame?-->")
-        # t=_("What {} text goes *after* the word *gloss* in the frame?-->"
-        #     ).format(self.glosslang)
-        Label(window.frame1,text=t).grid(row=row,column=columnleft,sticky='e')
-        Label(window.frame1,text='gloss',padx=0,pady=0
-            ).grid(row=row,column=columnword)
-        glossaftere = EntryField(window.frame1,textvariable=glossafter,
-            # font=self.frame.fonts['default'],
-            justify='left')
-        glossaftere.grid(row=row,column=columnright,sticky='w')
-        """Add gloss2here"""
-        # row+=1
-        # # t=_("<--What text goes *before* the word *gloss* in the frame?")
-        # t=_("<--What {} text goes *before* the *gloss* in the frame?"
-        #     ).format(self.glosslang2)
-        # Label(window.frame1,text=t).grid(row=row,column=columnright,sticky='w')
-        # Label(window.frame1,text='gloss',padx=0,pady=0
-        #     ).grid(row=row,column=columnword)
-        # gloss2beforee = EntryField(window.frame1,textvariable=gloss2before,
-        #     # font=self.frame.fonts['default'],
-        #     justify='right')
-        # gloss2beforee.grid(row=row,column=columnleft,sticky='e')
-        # row+=1
-        # # t=_("What text goes *after* the word *gloss* in the frame?-->")
-        # t=_("What {} text goes *after* the word *gloss* in the frame?-->"
-        #     ).format(self.glosslang2)
-        # Label(window.frame1,text=t).grid(row=row,column=columnleft,sticky='e')
-        # Label(window.frame1,text='gloss',padx=0,pady=0
-        #     ).grid(row=row,column=columnword)
-        # gloss2aftere = EntryField(window.frame1,textvariable=gloss2after,
-        #     # font=self.frame.fonts['default'],
-        #     justify='left')
-        # gloss2aftere.grid(row=row,column=columnright,sticky='w')
-        """continue"""
+        ti={} # text instructions
+        tb={} # text before
+        ta={} # text after
+        """Set all the label texts"""
+        for lang in langs:
+            if lang == self.analang:
+                ti[lang]=_("Fill in the {} frame forms below.\n(include a "
+                "space to separate word forms)".format(
+                                        self.db.languagenames[lang]))
+                kind='form'
+            else:
+                ti[lang]=(_("Fill in the {} glossing "
+                    "here as appropriate for the morphosyntactic context.\n("
+                    "include a space to separate word glosses)"
+                                ).format(self.db.languagenames[lang]))
+                kind='gloss'
+            tb[lang]=_("<--What text goes *before* the {} word *{}* "
+                        "in the frame?"
+                                ).format(self.db.languagenames[lang],kind)
+            ta[lang]=_("What text goes *after* the {} word *{}* "
+                        "in the frame?-->"
+                                ).format(self.db.languagenames[lang],kind)
+        """Place the labels"""
+        for lang in langs:
+            Label(window.frame1,text='\n'+ti[lang]+'\n').grid(
+                                                row=row,column=columnleft,
+                                                columnspan=3)
+            row+=1
+            Label(window.frame1,text=tb[lang]).grid(row=row,
+                                        column=columnright,sticky='w')
+            Label(window.frame1,text='word',padx=0,pady=0).grid(row=row,
+                                                        column=columnword)
+            db['before'][lang]['entryfield'] = EntryField(window.frame1,
+                                textvariable=db['before'][lang]['text'],
+                                justify='right')
+            db['before'][lang]['entryfield'].grid(row=row,
+                                        column=columnleft,sticky='e')
+            row+=1
+            Label(window.frame1,text=ta[lang]).grid(row=row,
+                    column=columnleft,sticky='e')
+            Label(window.frame1,text='word',padx=0,pady=0).grid(row=row,
+                    column=columnword)
+            db['after'][lang]['entryfield'] = EntryField(window.frame1,
+                    textvariable=db['after'][lang]['text'],
+                    justify='left')
+            db['after'][lang]['entryfield'].grid(row=row,
+                    column=columnright,sticky='w')
+            row+=1
         row+=1
         text=_('See the tone frame around a word from the dictionary')
         chk_btn=Button(window.frame1,text = text, command = chk)
