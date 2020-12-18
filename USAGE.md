@@ -8,7 +8,9 @@ In case it isn't obvious, in order to use this program to actually do anything, 
   - assuming you want to get the checked database *back* into FLEx, you want to use send/receive for WeSay. Import/Export (a different process) can work, but there is no protection against overwriting your data, without doing backups yourself.
   - there is an active [list of users](https://groups.google.com/g/flex-list) to help with problems doing this.
 - store your data in some other form (text, spreadsheet, database) and convert it to LIFT (*PLEASE* don't do this unless you *really* know what you're doing, and have a *good* reason to; the above are much easier, and less likely to result in data corruption)
-
+## Collaboration and archival
+I **strongly** recommend using a version controlled repository (e.g., mercurial, git), as is normally done in WeSay and in recommended FLEx collaboration schemes. Even if you are the only one to ever see this data (why would that be?), the advantages in history and preservation of your data are already there. But if you will be sharing changes with others, you really **must** have an easy way to do this, or you will get bogged down in the logistics of sharing data changes. I recommend using [Language Depot](https://languagedepot.org), though there are certainly solutions for this need on other servers. In any case, setting this up early is always easier than trying to merge divergent data later.
+## LIFT database requirements
 LIFT databases can be minimal or very complex. For the purposes of running A→Z+T, you just need the following:
 - citation or lexeme forms (tagged with your language code, of course)
 - glosses or definitions in at least one language (again coded for gloss language)
@@ -17,6 +19,7 @@ LIFT databases can be minimal or very complex. For the purposes of running A→Z
   - whatever ps names (e.g., 'Noun', 'Nom', 'Njina', 'noun', 'n', etc) are in your database is what you will select from to study, so name them appropriately for your work
   - entries with no ps value will be left out
 
+## Changes to Expect
 A→Z+T will place sorting information in the `entry/sense` node, under an example node for each context/frame:
 - form
 - sound file name
