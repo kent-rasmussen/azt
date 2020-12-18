@@ -2375,13 +2375,19 @@ class Check():
         self.groupselected=None
         # while self.groupselected != "ALLOK":
         self.runwindow.resetframe()
-        Label(self.runwindow.frame, text=title, #+' ('+progress+'):',
+        self.runwindow.frame.titles=Frame(self.runwindow.frame)
+        self.runwindow.frame.titles.grid(column=0, row=0, columnspan=2, sticky="w")
+        Label(self.runwindow.frame.titles, text=title,
                 font=self.fonts['title']
                 ).grid(column=0, row=0, sticky="w")
-        i=Label(self.runwindow.frame, text=introtext)
+        i=Label(self.runwindow.frame.titles, text=introtext)
         i.grid(row=1,column=0, sticky="w")
+        Label(self.runwindow.frame, image=self.parent.photo['joinT'],
+                        text='',
+                        bg=self.theme['background']
+                        ).grid(row=2,column=0,rowspan=2,sticky='nw')
         self.sframe=ScrollingCanvas(self.runwindow.frame)
-        self.sframe.grid(row=2,column=0)
+        self.sframe.grid(row=2,column=1)
         self.sorting=self.sframe.content #Frame(self.runwindow.frame)
         # self.sorting.grid(row=2,column=0)
         self.settonevariablesbypsprofile()
@@ -2405,7 +2411,7 @@ class Check():
             # self.runwindow.resetframe() #Should I need this?
             self.sframe.destroy()
             self.sframe=ScrollingCanvas(self.runwindow.frame)
-            self.sframe.grid(row=3,column=0)
+            self.sframe.grid(row=3,column=1)
             self.sorting=self.sframe.content #Frame(self.runwindow.frame)
             # self.sorting=Frame(self.runwindow.frame)
             # self.sorting.grid(row=2,column=0)
@@ -2423,12 +2429,13 @@ class Check():
             i=Label(self.runwindow.frame, text=diff2,
                     font=self.fonts['instructions']
                     )
-            i.grid(column=0, row=1, sticky="w")
+            i.grid(column=0, row=1, columnspan=2, sticky="w")
             # row+=1
             # for group in group1:
             #     print(group)
             gb=self.tonegroupbutton(self.runwindow.frame,group1,row=2,
-                                font=self.fonts['readbig'],label=True,
+                                column=1,font=self.fonts['readbig'],
+                                label=True,
                                 notonegroup=False)
             gb.wrap()
             row=1 #begin self.sorting rows
@@ -2640,7 +2647,7 @@ class Check():
                         font=self.fonts['instructions']
                         )
         b2.grid(column=0, row=row+1, sticky="ew")
-    def tonegroupbutton(self,parent,group,row,label=False,**kwargs):
+    def tonegroupbutton(self,parent,group,row,column=0,label=False,**kwargs):
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
@@ -2668,7 +2675,7 @@ class Check():
                     # anchor="w"#,font=self.fonts['read']
                     **kwargs
                     )
-            b.grid(column=0, row=row,
+            b.grid(column=column, row=row,
                             sticky="ew",
                             ipady=15 #Inside the buttons...
                             )
@@ -2680,7 +2687,7 @@ class Check():
                     # anchor="w", #font=self.fonts['read'],
                     **kwargs
                     )
-            b.grid(column=0, row=row,
+            b.grid(column=column, row=row,
                             sticky="ew",
                             ipady=15 #Inside the buttons...
                             )
@@ -3699,6 +3706,8 @@ class MainApplication(Frame):
         self.parent.photo['verifyT'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/Sort List.png')
         self.parent.photo['sortT'] = tkinter.PhotoImage(file = imgurl)
+        imgurl=file.fullpathname('images/Join List.png')
+        self.parent.photo['joinT'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname(
             '/usr/share/icons/gnome/24x24/devices/audio-input-microphone.png')
         # imgurl=file.fullpathname('images/Microphone card_sm.png')

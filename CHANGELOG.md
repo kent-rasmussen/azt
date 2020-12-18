@@ -7,8 +7,9 @@
 - add C and V sorting (and CV?)
 - add recording page for unsorted data (just citation forms, to go in lc field)
 - make record button work for different contexts (ad hoc, tone report, citation forms)
+- XLP export
 ### *UI Improvements*
-- add icons for joinT pages
+- add second icon for joinT pages
 ### *Prioritization*
 - make checkcheck reference most popular *unfinished* ps-profile combo
 ### *CV Report*
@@ -18,20 +19,26 @@
 - make data only give once (not in V1 or V2 if in V1=V2)
 
 # Version 0.3.1
-new features:
+## new features:
+### prioritization
 - function to determine most populous syllable profile, with its ps
   - assumes most populous ps-profile filter, until another is chosen.
   - runs (and refreshes) with other syllable profiles on certain startups
+### reports
 - CV report now takes most populous syllable profiles, and runs all checks
   - most restrictive (e.g., V1=V2) first
-- main window displays number of words in current ps-profile filter
-- new (Advanced) menu option to redo syllable profile analysis
+  - includes data only once per Sn (not in V1 or V2 if in V1=V2, nor in C1 or C2 if in C1=C2)
+  - repeats data selected for by another Sn (C1 and V1 both is OK, for CV profile)
+### Useability
 - only question required on first open (for now) is C,V,CV, or T; everything else has an initial assumed value (though still changeable through the menus).
 - `Record` button on main window, with unencombered icon
   - checkcheck picks the most numerous profile, along with it's ps.
 - label method to wrap on availablexy
+- main window displays number of words in current ps-profile filter
+- new (Advanced) menu option to redo syllable profile analysis
 - Sort now ask user to affirm "This word is OK in this frame" on first word.
-bug fixes:
+## bug fixes:
+### Useability
 - make all file open options with `encoding='utf-8'`
 - Fixed issue where `exit` sorted into last group; now just exits sorting.
 - remove `lift_url.py` from repo
@@ -39,19 +46,19 @@ bug fixes:
   - if non-LIFT file is given, AZT quits on an exception, with console and UI message, and deletes `lift_url.py`.
 - fixed C/V report
 - fixed missing frames on tone checks --asks user to define a frame if none there.
-- removed (inappropriate) tone group designation from items on tone up report
-- Added icons to distinguish sort and verify pages
-  - includes data only once per Sn (not in V1 or V2 if in V1=V2, nor in C1 or C2 if in C1=C2)
-  - repeats data selected for by another Sn (C1 and V1 both is OK, for CV profile)
-- remove requirement for location key in tone frames
 - reworked buggy distinction of integer and named groups
 - removed Noform Nogloss entries from recording screen
-- framed script now addresses both senses and examples
-- fixed problems that arise from empty form (cut processing of those records)
 - resolved problem of leaving triage resulting in incorrect sorting
-- group name references now use int() instead of len()
+### UI
+- Added icons to distinguish sort and verify pages, as well as join pages
 - resolved joinT second window problem with the scrolling frame
 - fixed scrolling frame problems
+- removed (inappropriate) tone group designation from items on tone up report
+### Under the hood
+- framed script now addresses both senses and examples
+- fixed problems that arise from empty form (cut processing of those records)
+- group name references now use int() instead of len()
+- remove requirement for location key in tone frames
 
 # Version 0.3 (November 2020)
 ## language and search parameters
