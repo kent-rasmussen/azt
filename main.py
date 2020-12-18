@@ -948,6 +948,7 @@ class Check():
                 )
         self.maybeboard()
         self.parent.setmenus(self)
+        # print(self.__dict__)
     def maybeboard(self):
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
@@ -1338,7 +1339,7 @@ class Check():
                 ("CV6", "Sixth CV")
                 ]
             },
-        "T":{
+        "T":{ #I Think this is obsolete; just use frames
             1:[
                 ("T1", "Sort Words by tone melody"),
                 ("T2", "Verify tone group")
@@ -1820,6 +1821,7 @@ class Check():
             for self.profile in self.topprofiles(num)[self.ps]:
                 for self.type in ['V','C']:
                     maxcount=re.subn(self.type, self.type, self.profile)[1]
+                    """Get these reports from C1/V1 to total number of C/V"""
                     self.typenums=[self.type+str(n+1) for n in range(maxcount)]
                     for typenum in self.typenums:
                         if typenum not in self.basicreported:
@@ -1859,27 +1861,19 @@ class Check():
         self.checkcheck()
     def wordsbypsprofilechecksubcheck(self,ps=None,profile=None,checks=None,subchecks=None,nsyls=None):
         """I need to find a way to limit these tests to appropriate profiles..."""
-        # print('Running wordsbypsprofilechecksubcheck')#pss=('Nom','Verbe')
-        #profiles=('CVCVC',)
-        #checks=('V1','V1=V2','V1=V2=V3')
-        #print(lift.vowels)
-        #check=Check(nsyls=nsyls) #from lift_do
-        # db=self.db
-        # profiles.printprofilesbyps(db)
-        # profiles.printcountssorted(db)
         if self.type == 'V':
             subchecks=self.db.v[self.db.analang] #('a',) just the vowels, not method or regex
         elif self.type == 'C':
             subchecks=self.db.c[self.db.analang]
         else:
             print("Sorry, not sure what I'm doing:",self.type)
-        # self.profile in profs:
         """This sets each of the checks that are applicable for the given
-        profile."""
+        profile; self.basicreported is from self.basicreport()"""
         for typenum in self.basicreported:
             print(typenum+':',self.basicreported[typenum])
         for codenname in sorted(self.setnamesbyprofile(),
-                        key=lambda s: len(s[0]),reverse=True): #key=len([0])): #
+                        key=lambda s: len(s[0]),reverse=True):
+            """self.name set here"""
             self.name=codenname[0] #just codes, not names
             self.typenumsRun=[typenum for typenum in self.typenums
                                         if re.search(self.name, typenum)]
@@ -2783,8 +2777,6 @@ class Check():
     def gettype(self):
         print(_("Asking for check type"))
         window=Window(self.frame,title=_('Select Check Type'))
-        print(self.setnamesall())
-        # optionlist[i]['name']=optionlist[i]['code']
         types=[]
         x=0
         for type in self.checknamesall:
