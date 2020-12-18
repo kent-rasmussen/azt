@@ -1357,12 +1357,12 @@ class Check():
             print("type not set!",self.type)
             return
         if self.type == 'T':
-            n=1
-        else:
-            n=int(re.subn(self.type, self.type, self.profile)[1])
+            print("This shouldn't happen! (setnamesbyprofile with self.type T)")
+            return
+        n=int(re.subn(self.type, self.type, self.profile)[1])
         names=list()
         for i in range(n):
-            ilist=self.setnamesall()[self.type][i+1]
+            ilist=self.checknamesall[self.type][i+1]
             names+=ilist  #.append(, This is causing a list in a list..…
         return names
     def getanalang(self):
@@ -1481,12 +1481,13 @@ class Check():
         print("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
         print("Getting the check name...")
+        """This splits by tone or not, because the checks available for
+        segments depend on the number of segments in the selected syllable
+        profile, but for tone, they don't; tone frames depend only on ps."""
         if self.type=='T': #if it's a tone check, get from frames.
             checks=self.framenamesbyps(self.ps)
-            # checks.append("addone") #use this to add to the list.
-            # checks.append("report") #all the set up frames
         else:
-            checks=self.setnamesbyprofile()
+            checks=self.setnamesbyprofile() #This shouln't return tone checks
         window=Window(self.frame,title='Select Check')
         if checks == []:
             text=_("You don't seem to have any tone frames set up.\n"
@@ -2946,10 +2947,7 @@ class Check():
                             ).grid(column=0, row=row)
                     row+=1
             if self.type == 'T':
-                if self.name == 'report':
-                    self.tonegroupreport()
-                else:
-                    self.maybesort()
+                self.maybesort()
             else: #do the CV checks
                 self.getresults()
     def setsoundhz(self,choice,window):
