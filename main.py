@@ -202,8 +202,11 @@ class Check():
         # print(fCV)
         return fCNV
     def gimmeguid(self):
-        guidsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
-        return guidsbyps[randint(0, len(guidsbyps))]
+        idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
+        return idsbyps[randint(0, len(idsbyps))]
+    def gimmesenseid(self):
+        idsbyps=self.db.get('senseidbyps',lang=self.analang,ps=self.ps)
+        return idsbyps[randint(0, len(idsbyps))]
     def addmorpheme(self):
         def submitform():
             self.runwindow.form=formfield.get()
