@@ -1,8 +1,9 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
+- find references to getframeddata with ['gloss'] or ['form'], change to iso
 - fix references to self.name which change and don't reset (e.g., reports)
-  - """self.name set here""" annotated
+  - """self.name set here""" annotated (just wordsbypsprofilechecksubcheck)
 - check for iteration reset problems for self.subcheck, other variables
 ## Next Features
 - fully distinguish N, C, and NC
@@ -50,6 +51,8 @@
 - main window displays number of words in current ps-profile filter
 - new (Advanced) menu option to redo syllable profile analysis
 - Sort now ask user to affirm "This word is OK in this frame" on first word.
+- added second gloss fields to tone frame addition window
+- added second gloss (now by iso code) to getframeddata
 ## bug fixes:
 ### Useability
 - make all file open options with `encoding='utf-8'`
@@ -72,6 +75,7 @@
 - fixed problems that arise from empty form (cut processing of those records)
 - group name references now use int() instead of len()
 - remove requirement for location key in tone frames
+- gloss and form usage removed from self.toneframes references in getframeddata --now iso codes
 
 # Version 0.3 (November 2020)
 ## language and search parameters
