@@ -4,9 +4,13 @@
 - fix references to self.name which change and don't reset (e.g., reports)
 - put `setdefaults.py` into Check class
 ## Next Features
+- fully distinguish N, C, and NC
+  - make setting to turn this off
 - add C and V sorting (and CV?)
-- add recording page for unsorted data (just citation forms, to go in lc field)
-- make record button work for different contexts (ad hoc, tone report, citation forms)
+- make record button work for different contexts, by `self.type`:
+  - T: tone report (as is currently done)
+  - C,V: citation forms (new page? plural, other forms? all <form @lang/>)
+  - ad hoc?
 - XLP export
 ### *UI Improvements*
 - add second icon for joinT pages
@@ -15,9 +19,15 @@
 ### *CV Report*
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - make CV report not include Caa in V1 or V2
-- make CV report only reference lx field
 - make data only give once (not in V1 or V2 if in V1=V2)
-
+### Documentation
+- Add what and why pages in different places, with rationales and instructions specific to context?
+### Under the Hood
+- transition to gloss only (no definition references)
+  - make docs specify gloss should be populated (maybe instructions to bulk copy?)
+- distinguish between lc and lx
+  - make CV report only reference lx field
+  - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
 # Version 0.3.1
 ## new features:
 ### prioritization
