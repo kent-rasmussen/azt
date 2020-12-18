@@ -2,6 +2,8 @@
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
 - fix references to self.name which change and don't reset (e.g., reports)
+  - """self.name set here""" annotated
+- check for iteration reset problems for self.subcheck, other variables
 ## Next Features
 - fully distinguish N, C, and NC
   - make setting to turn this off
