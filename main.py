@@ -315,6 +315,7 @@ class Check():
             """Add these two lines"""
             # gloss2before=gloss2beforee.get()
             # gloss2after=gloss2aftere.get()
+            """self.name is set here"""
             self.name=str(namevar)
             if self.toneframes is None:
                 self.toneframes={}
@@ -538,6 +539,7 @@ class Check():
                     # self.guidsvalidbyps[ps][randint(0, len(self.guidsvalidbyps[ps]))]
                     print("Showing tone frame info for randomly selected ps =",
                             self.ps,"entry:",guid)
+                    """self.name set here"""
                     for self.name in self.toneframes[self.ps]: #.keys()
                         print('Working on frame',self.name)
                         framed=self.getframedentry(guid)
@@ -548,6 +550,7 @@ class Check():
                     print("Showing tone frame info for randomly selected ps =",
                             self.ps,"sense:",senseid)
                     # for self.ps in self.db.pss:
+                    """self.name set here"""
                     for self.name in self.toneframes[self.ps]: #.keys()
                         print('Working on frame',self.name)
                         framed=self.getframeddata(senseid)
@@ -911,6 +914,7 @@ class Check():
                 self.toneframes[self.ps]={}
             """If there's only one tone frame, I don't care what the
             settings file says"""
+            """self.name set here (But this is one I want to leave alone)"""
             if len(self.toneframes[self.ps]) == 1:
                 self.name=list(self.toneframes[self.ps].keys())[0]
             elif self.name not in self.toneframes[self.ps]: #this includes None
