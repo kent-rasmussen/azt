@@ -2787,7 +2787,7 @@ class Check():
         # optionlist[i]['name']=optionlist[i]['code']
         types=[]
         x=0
-        for type in self.setnamesall():
+        for type in self.checknamesall:
             types.append({})
             types[x]['name']=self.typedict[type]
             types[x]['code']=type
