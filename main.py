@@ -536,8 +536,8 @@ class Check():
             print('self.glosslang2:',self.glosslang2)
         """Just in case there's a problem later..."""
         forms=None
-        glosses=None
-        glosses2=None
+        glosses={}
+        gloss={}
         tonegroups=None
         """Build dual logic here:"""
         if isinstance(source,lift.ET.Element):
@@ -549,25 +549,21 @@ class Check():
                 if ((node.tag == 'translation') and
                                 (node.get('type') == 'Frame translation')):
                     for subnode in node:
-                        if ((subnode.tag == 'form') and
-                                (subnode.get('lang') == self.glosslang)):
-                            glosses=subnode.findall('text')
-                        if ((subnode.tag == 'form') and
-                                (subnode.get('lang') == self.glosslang2)):
-                            glosses2=subnode.findall('text')
+                        if (subnode.tag == 'form'):
+                            glosses[subnode.get('lang')]=subnode.findall('text')
                 if ((node.tag == 'field') and
                                 (subnode.get('type') == 'tone')):
                     tonegroups=node.findall('text')
             if self.debug == True:
                 print('forms:',forms)
-                print('glosses:',glosses)
-                print('glosses2:',glosses2)
+                for lang in gloss:
+                    print('gloss[lang]:',glosses[lang])
                 print('tonegroups:',tonegroups)
             """convert from lists to single items without loosing data,
             then pull text from nodes"""
             form=t(firstoflist(forms))
-            gloss=t(firstoflist(glosses))
-            gloss2=t(firstoflist(glosses2))
+            for lang in gloss:
+                gloss=t(firstoflist(glosses[lang]))
             tonegroup=t(firstoflist(tonegroups))
             """This is what we're pulling from:
             <example>
@@ -588,24 +584,24 @@ class Check():
             senseid=source
             forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang,
                                             ps=self.ps)
-            glosses=self.db.glossordefn(senseid=senseid,lang=self.glosslang,
-                                            ps=self.ps)
-            glosses2=self.db.glossordefn(senseid=senseid,lang=self.glosslang2,
+            for lang in [self.glosslang,self.glosslang2]:
+                if lang != None:
+                    glosses[lang]=self.db.glossordefn(senseid=senseid,lang=lang,
                                             ps=self.ps)
             tonegroups=self.db.get('exfieldvalue', senseid=senseid,
                                 fieldtype='tone', location=self.name)
             """convert from lists to single items without loosing data"""
             form=firstoflist(forms)
-            gloss=firstoflist(glosses)
-            gloss2=firstoflist(glosses2)
+            for lang in glosses:
+                gloss[lang]=firstoflist(glosses[lang])
             tonegroup=firstoflist(tonegroups)
         else:
             print('Neither Element nor senseid was found!')
             return output
         if self.debug == True:
             print('form:',form)
-            print('gloss:',gloss)
-            print('gloss2:',gloss2)
+            for lang in gloss:
+                print('gloss:',gloss[lang])
             print('tonegroup:',tonegroup)
         """The following is the same for senses or examples"""
         if (notonegroup == False) and (tonegroup != None):
@@ -614,35 +610,37 @@ class Check():
             except:
                 output['tonegroup']=tonegroup #this is only for named groups
         if self.debug == True:
-            print(forms,glosses)
-        output['form']=None
-        output['gloss']=None
+            print(forms,glosses[lang])
+        if self.glosslang2 == None:
+            del gloss[self.glosslang2] #remove this now, and lose checks later
+        output[self.analang]=None
+        for lang in gloss:
+            output[lang]=None
         text=('noform','nogloss')
         if noframe == False:
-            """I shouldn't be doing this unnecessarily."""
             frame=self.toneframes[self.ps][self.name]
-            if form == None: #these have to be strings, or the regex fails
+            """Forms and glosses have to be strings, or the regex fails"""
+            if form == None:
                 form='noform'
-            if gloss == None:
-                gloss='nogloss'
+            for lang in gloss:
+                if gloss[lang] == None:
+                    gloss[lang]='nogloss'
             if self.debug ==True:
                 print(frame)
-            output['form']=self.frameregex.sub(form,frame['form'])
-            output['gloss']=self.frameregex.sub(gloss,frame['gloss'])
-            if (('gloss2' in frame) and (self.glosslang2 is not None) and
-                                                            (gloss2 != None)):
-                """only give these if the frame has this gloss, *and*
-                if the user has requested the second gloss, *and* if the gloss
-                is in the data"""
-                output['gloss2']=self.frameregex.sub(gloss2,frame['gloss2'])
+            output[self.analang]=self.frameregex.sub(form,frame[self.analang])
+            for lang in gloss:
+                """only give these if the frame has this gloss, *and* if
+                the gloss is in the data (user selection is above)"""
+                if ((lang == self.glosslang) or ((self.glosslang2 in frame)
+                                                    and (gloss[lang] != None))):
+                    output[lang]=self.frameregex.sub(gloss[lang],frame[lang])
         else:
-            output['form']=form
-            output['gloss']=gloss
-            if self.glosslang2 is not None:
-                output['gloss2']=gloss2
-        text=[str(output['form']),"‘"+str(output['gloss'])+"’"]
-        if 'gloss2' in output:
-            text+=["‘"+str(output['gloss2'])+"’"]
+            output[self.analang]=form
+            for lang in gloss:
+                output[lang]=gloss[lang]
+        text=[str(output[self.analang]),"‘"+str(output[self.glosslang])+"’"]
+        if self.glosslang2 in output:
+            text+=["‘"+str(output[self.glosslang2])+"’"]
         if 'tonegroup' in output:
             text=[str(output['tonegroup'])]+text
         output['formatted']='\t'.join(text)
