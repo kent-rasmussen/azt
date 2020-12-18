@@ -1,8 +1,7 @@
 # In Process
-## Issues from November 2020 Zulgo beta test (and since)
+## Issues from November 2020 Zulgo beta test
 ### Cleanup
 - fix references to self.name which change and don't reset (e.g., reports)
-- put `setdefaults.py` into Check class
 ## Next Features
 - fully distinguish N, C, and NC
   - make setting to turn this off
@@ -12,17 +11,19 @@
   - C,V: citation forms (new page? plural, other forms? all <form @lang/>)
   - ad hoc?
 - XLP export
-### *UI Improvements*
-- add second icon for joinT pages
-### *Prioritization*
+### Prioritization
 - make checkcheck reference most popular *unfinished* ps-profile combo
-### *CV Report*
+### Documentation
+- Add what and why pages in different places, with rationales and instructions specific to context?
+## Issues since November 2020 Zulgo beta test
+### UI Improvements
+- add second icon for joinT pages
+### CV Report
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - make CV report not include Caa in V1 or V2
 - make data only give once (not in V1 or V2 if in V1=V2)
-### Documentation
-- Add what and why pages in different places, with rationales and instructions specific to context?
 ### Under the Hood
+- put `setdefaults.py` into Check class
 - transition to gloss only (no definition references)
   - make docs specify gloss should be populated (maybe instructions to bulk copy?)
 - distinguish between lc and lx
