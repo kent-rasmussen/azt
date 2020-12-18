@@ -303,7 +303,7 @@ class Check():
         local variables):"""
         self.runwindow.destroy()
     def addframe(self):
-        print('tone Frame to add!')
+        print('Tone frame to add!')
         """I should add gloss2 option here, likely just with each language.
         This is not a problem for LFIT translation fields, and it would help to
         have language specification (not gloss/gloss2), in case check languages
