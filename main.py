@@ -717,7 +717,7 @@ class Check():
             output['gloss']=gloss
             if self.glosslang2 is not None:
                 output['gloss2']=gloss2
-        text=[output['form'],"‘"+str(output['gloss'])+"’"]
+        text=[str(output['form']),"‘"+str(output['gloss'])+"’"]
         if 'gloss2' in output:
             text+=["‘"+str(output['gloss2'])+"’"]
         if 'tonegroup' in output:
