@@ -6,7 +6,15 @@
   - """self.name set here""" annotated (just wordsbypsprofilechecksubcheck)
 - check for iteration reset problems for self.subcheck, other variables
 ## Next Features
-- fully distinguish N, C, and NC
+- fully distinguish C, CG, and NC onsets (or just word initial?), C and N finals
+  - look for CG and NC first, then C.
+  - how to treat C1=C2? CG1=CG2? Do we want S to be larger units, or to have N and G modifications?
+  - how to treat N and C different word finally? (may have to leave this for analysis)
+  - set lift.c={} with values lift.c['C'], lift.c['CG'], lift.c['NC']
+    - C could include N and G, but other would be distinct from CC.
+  - set lift.v={}, with lift.v['V'], lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
+    - some people may want V to include Vː, others may not (for tone, probably all should...)
+    - setup questionː is <VN> [Ṽ] or [VN]? —This is important for tone.
   - make setting to turn this off
 - add C and V sorting (and CV?)
 - make record button work for different contexts, by `self.type`:
