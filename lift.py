@@ -703,8 +703,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             # print('fieldtype',field.get('type'))
         """This is a text node, or None"""
         exfieldvalue=self.exampleissameasnew(guid,senseid,analang,glosslang,
-                            # langform,glossform,
-                            forms[analang],forms[glosslang],forms[glosslang2],
+                            gloss2lang,
+                            # langform,glossform,gloss2form,
+                            forms,
                             fieldtype,
                             location,fieldvalue,node,ps=None,showurl=False)
         if exfieldvalue is None: #If not already there, make it.
