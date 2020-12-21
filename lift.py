@@ -677,7 +677,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getsenseids()
         return senseid
     def addexamplefields(self,guid,senseid,analang,
-                                glosslang,langform,glossform,fieldtype,
+                                glosslang,glosslang2,forms,
+                                # langform,glossform,gloss2form,
+                                fieldtype,
                                 location,fieldvalue,ps=None,showurl=False):
         """This fuction will add an XML node to the lift tree, like a new
         example field."""
@@ -700,21 +702,25 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             # print('field',field)
             # print('fieldtype',field.get('type'))
         """This is a text node, or None"""
-        exfieldvalue=self.exampleissameasnew(guid,senseid,analang,
-                            glosslang,langform,glossform,fieldtype,
+        exfieldvalue=self.exampleissameasnew(guid,senseid,analang,glosslang,
+                            # langform,glossform,
+                            forms[analang],forms[glosslang],forms[glosslang2],
+                            fieldtype,
                             location,fieldvalue,node,ps=None,showurl=False)
         if exfieldvalue is None: #If not already there, make it.
             p=ET.SubElement(node, 'example')
             form=ET.SubElement(p,'form',attrib={'lang':analang})
             t=ET.SubElement(form,'text')
-            t.text=langform
+            t.text=forms[analang] #langform
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
             fieldgloss=ET.SubElement(p,'translation',attrib={'type':
                                                         'Frame translation'})
-            form=ET.SubElement(fieldgloss,'form',attrib={'lang':glosslang})
-            glosstext=ET.SubElement(form,'text')
-            glosstext.text=glossform
+            for lang in [glosslang,glosslang2]:
+                if lang != None:
+                    form=ET.SubElement(fieldgloss,'form',attrib={'lang':lang})
+                    glosstext=ET.SubElement(form,'text')
+                    glosstext.text=forms[lang]
 
             exfield=ET.SubElement(p,'field',attrib={'type':fieldtype})
             form=ET.SubElement(exfield,'form',attrib={'lang':glosslang})
@@ -756,18 +762,23 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return False
 
     def exampleisnotsameasnew(self,guid,senseid,analang,
-                                glosslang,langform,glossform,fieldtype,
+                                glosslang,glosslang2,
+                                forms,
+                                # langform,glossform,gloss2form,
+                                fieldtype,
                                 location,fieldvalue,example,ps=None,showurl=False):
         """This checks all the above information, to see if we're dealing with
         the same example or not. If form, translation and location are all the
         same, then return the tone value node to change --otherwise None."""
-        if not self.forminnode(example,langform):
+        if not self.forminnode(example,forms[analang]):
             # print("Not the same example form")
             return #stop already, if this clearly isn't the same example.
         else:
             tr=example.find('translation')
+            """I need to confirm that this logic still does what I want,
+            with multiple gloss language possibilities"""
             if tr.get('type') == 'Frame translation':
-                if not self.forminnode(tr,glossform):
+                if not self.forminnode(tr,forms[glosslang]):
                     # print("Not the same translation form")
                     return
                 else:
@@ -788,13 +799,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
 
         return tonevalue
     def exampleissameasnew(self,guid,senseid,analang,
-                                glosslang,langform,glossform,fieldtype,
+                                glosslang,glosslang2,forms,
+                                # langform,glossform,gloss2form,
+                                fieldtype,
                                 location,fieldvalue,node,ps=None,showurl=False):
         """This looks for any example in the given sense, with the same form,
         gloss, and location values"""
         for example in node.findall('example'):
             valuenode=self.exampleisnotsameasnew(guid,senseid,analang,
-                            glosslang,langform,glossform,fieldtype,
+                            glosslang,glosslang2,forms,
+                            # langform,glossform,gloss2form,
+                            fieldtype,
                             location,fieldvalue,example,ps=None,showurl=False)
             if valuenode != None: #i.e., they *are* the same node
                 # print('valuenode',valuenode, valuenode.text)
@@ -881,7 +896,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             print("add tone:", fieldvalue)
             print("add gloss:", glossform)
     def addpronunciationfields(self,guid,senseid,analang,
-                                glosslang,lang,langform,glossform,fieldtype,
+                                glosslang,glosslang2,
+                                lang,forms,
+                                # langform,glossform,gloss2form,
+                                fieldtype,
                                 location,fieldvalue,ps=None,showurl=False):
         """This fuction will add an XML node to the lift tree, like a new
         pronunciation field."""

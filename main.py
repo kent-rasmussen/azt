@@ -1511,7 +1511,7 @@ class Check():
             entryframe.grid(row=1,column=0)
             """This is the title for each page: isolation form and glosses."""
             framed=self.getframeddata(senseid,noframe=True)
-            if framed['form']=='noform':
+            if framed[self.analang]=='noform':
                 entryframe.destroy()
                 continue
             text=framed['formatted']
@@ -1544,8 +1544,8 @@ class Check():
                                     ).grid(row=row, column=0, sticky='w')
                 print('recordbuttonframetry')
                 rb=RecordButtonFrame(examplesframe,self,senseid,example,
-                                    form=nn(framed['form']),
-                                    gloss=nn(framed['gloss'])
+                                    form=nn(framed[self.analang]),
+                                    gloss=nn(framed[self.glosslang])
                                     ) #no gloss2; form/gloss just for filename
                 rb.grid(row=row,column=1,sticky='w')
             row+=1
@@ -2418,8 +2418,11 @@ class Check():
                 guid,"guid (in main_lift.py)")
         self.db.addexamplefields(
                                     guid,senseid,self.analang,self.glosslang,
-                                    langform=framed['form'],
-                                    glossform=framed['gloss'],
+                                    self.glosslang2,
+                                    forms=framed,
+                                    # langform=framed[self.analang],
+                                    # glossform=framed[self.glosslang],
+                                    # gloss2form=framed[self.glosslang2],
                                     fieldtype='tone',location=self.name,
                                     fieldvalue=self.groupselected,
                                     ps=None #,showurl=True
@@ -2430,8 +2433,12 @@ class Check():
         senseid=None
         self.db.addpronunciationfields(
                                     guid,senseid,self.analang,self.glosslang,
-                                    lang='en',langform=framed['form'],
-                                    glossform=framed['gloss'],
+                                    self.glosslang2,
+                                    lang='en',
+                                    forms=framed,
+                                    # langform=framed[self.analang],
+                                    # glossform=framed[self.glosslang],
+                                    # gloss2form=framed[self.glosslang2],
                                     fieldtype='tone',location=self.name,
                                     fieldvalue=self.groupselected,
                                     ps=None
@@ -2582,7 +2589,7 @@ class Check():
         # form=ex['form']
         # gloss=ex['gloss']
         framed=self.getframeddata(senseid,notonegroup=notonegroup)
-        text=(framed['formatted']) #framed['form'],"'"+str(framed['gloss'])+"'")
+        text=(framed['formatted'])
         # text='\t'.join(text)
         # cmd=lambda:command(parent, window, check, entry, choice)
         # print('self.fonts[read]',self.fonts['read'])
