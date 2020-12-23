@@ -2676,12 +2676,10 @@ class Check():
             windowV=Window(self.frame,title=_('Select Vowel'))
             self.getV(window=windowV)
             windowV.wait_window(window=windowV)
-            self.checkcheck()
         if self.type == "C":
             windowC=Window(self.frame,title=_('Select Consonant'))
             self.getC(windowC)
             self.frame.wait_window(window=windowC)
-            self.checkcheck()
         if self.type == "CV":
             windowC=Window(self.frame,title=_('Select Consonant'))
             self.getC(windowC)
@@ -2693,7 +2691,6 @@ class Check():
             CV=CV+self.subcheck
             print("CV subcheck:"+CV)
             self.subcheck=CV
-            self.checkcheck()
         if self.type == "T":
             """This really should just go to running the check?"""
             windowC=Window(self.frame,title=_('Select Tone check'))
@@ -2701,7 +2698,6 @@ class Check():
                   text=_("You're done! You can run the check now.")
                   ).grid(column=0, row=0)
             self.frame.wait_window(window=windowC)
-            self.checkcheck()
     def getps(self):
         print("Asking for ps...")
         window=Window(self.frame, title=_('Select Grammatical Category'))
