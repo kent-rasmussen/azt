@@ -1,7 +1,6 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
-- Look for for self.toneframes references with form and gloss, convert to iso...
 - fix references to self.name which change and don't reset (e.g., reports)
   - """self.name set here""" annotated (just wordsbypsprofilechecksubcheck)
 - check for iteration reset problems for self.subcheck, other variables
@@ -88,6 +87,7 @@
   exampleisnotsameasnew,exampleissameasnew) to work on iso codes
 - Changed references to getframeddata with ['gloss'] or ['form'] to iso (['formatted'] and ['tonegroup'] OK)
 - reworked addexamplefields and dependent functions to work with iso gloss/forms
+- self.toneframes references with form and gloss converted to iso
 
 # Version 0.3 (November 2020)
 ## language and search parameters
