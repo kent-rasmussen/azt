@@ -840,7 +840,9 @@ class Check():
             if self.debug == True:
                 print('interfacelang already set')
         """Get Analang"""
-        if self.analang == None:
+        if self.analang not in self.db.analangs:
+            self.guessanalang()
+        if (self.analang == None) or ():
             print("find the language")
             self.getanalang()
             return
