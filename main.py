@@ -1015,9 +1015,9 @@ class Check():
                             'interfacelang'
                             ],
                         'ps':[
-                            'profile',
-                            'name',
-                            'subcheck'
+                            'profile' #do I want this?
+                            # 'name',
+                            # 'subcheck'
                             ],
                         'analang':[
                             'glosslang',
@@ -1028,21 +1028,24 @@ class Check():
                             'name',
                             'subcheck'
                             ],
+                        'glosslang':[],
+                        'glosslang2':[],
+                        'name':[],
                         'subcheck':[
                             'regexCV'
                             ],
                         'profile':[
-                            'name'
+                            # 'name'
                             ],
                         'type':[
                             'name',
-                            'subcheck'
+                            # 'subcheck'
                             ]
                         }
     def cleardefaults(self,field=None):
         for default in self.defaults[field]:
             setattr(self, default, None)
-            if default == ('glosslang' or 'glosslang'):
+            if default == ('glosslang' or 'glosslang2'):
                 setdefaults.getglosslangs(self)
             if default == 'analang':
                 setdefaults.getanalangs(self)
@@ -1342,51 +1345,32 @@ class Check():
     def set(self,attribute,choice,window):
         """Before I can use this, I need to pass attribute through the button
         frame."""
-        setattr(self,attribute,choice)
-        if attribute == 'ps':
-            self.framelocationsbyps(self.ps)
-        self.cleardefaults(attribute) #not for all attributes?
         window.destroy()
-        self.checkcheck()
+        if getattr(self,attribute) != choice: #only set if different
+            setattr(self,attribute,choice)
+            """If there's something getting reset that shouldn't be, remove it
+            from self.defaults[attribute]"""
+            self.cleardefaults(attribute)
+            self.checkcheck()
+        else:
+            if self.debug==True:
+                print('No change:',attribute,'==',choice)
     def setprofile(self,choice,window):
-        self.profile=choice
-        self.cleardefaults('profile')
-        window.destroy()
-        self.checkcheck()
+        self.set('profile',choice,window)
     def settype(self,choice,window):
-        self.type=choice
-        self.cleardefaults('type')
-        window.destroy()
-        self.checkcheck()
+        self.set('type',choice,window)
     def setanalang(self,choice,window):
-        if self.debug==True:
-            print('setanalang',self)
-        self.analang=choice
-        self.cleardefaults('analang')
-        window.destroy()
-        self.checkcheck()
+        self.set('analang',choice,window)
     def setS(self,choice,window):
-        self.subcheck=choice
-        self.cleardefaults('subcheck')
-        window.destroy()
+        self.set('subcheck',choice,window)
     def setcheck(self,choice,window):
-        self.name=choice
-        window.destroy()
-        self.checkcheck()
+        self.set('name',choice,window)
     def setglosslang(self,choice,window):
-        self.glosslang=choice
-        window.destroy()
-        self.checkcheck()
+        self.set('glosslang',choice,window)
     def setglosslang2(self,choice,window):
-        self.glosslang2=choice
-        window.destroy()
-        self.checkcheck()
+        self.set('glosslang2',choice,window)
     def setps(self,choice,window):
-        self.ps=choice
-        # self.framelocationsbyps(self.ps)
-        self.cleardefaults('ps')
-        window.destroy()
-        self.checkcheck() #window
+        self.set('ps',choice,window)
     def getglosslang2(self):
         print("this sets the gloss")
         # fn=inspect.currentframe().f_code.co_name
@@ -2911,13 +2895,9 @@ class Check():
             else: #do the CV checks
                 self.getresults()
     def setsoundhz(self,choice,window):
-        self.fs=choice
-        window.destroy()
-        self.soundcheckrefresh()
+        self.set('fs',choice,window)
     def setsoundformat(self,choice,window):
-        self.sample_format=choice
-        window.destroy() #different window!
-        self.soundcheckrefresh()
+        self.set('sample_format',choice,window)
     def getsoundformat(self):
         print("Asking for audio format...")
         window=Window(self.frame, title=_('Select Audio Format'))
@@ -2941,9 +2921,7 @@ class Check():
                                 )
         buttonFrame1.grid(column=0, row=1)
     def setsoundcardindex(self,choice,window):
-        self.audio_card_index=choice
-        window.destroy()
-        self.soundcheckrefresh()
+        self.set('audio_card_index',choice,window)
     def getsoundcardindex(self):
         print("Asking for sampling frequency...")
         window=Window(self.frame, title=_('Select Sound Card'))
@@ -3693,10 +3671,10 @@ class MainApplication(Frame):
         #     interfacelang(lang=self.interfacelang)
         # file.writeinterfacelangtofile(self.interfacelang)
     def setinterfacelangwrapper(self,choice,window):
+            """This can't use Check.set, because checkcheck and attribute aren't
+            in the same class"""
             self.parent.interfacelang=choice
             self.setinterfacelang()
-            # self.framelocationsbyps(self.ps)
-            # self.cleardefaults('ps')
             window.destroy()
             self.check.checkcheck()
     def getinterfacelang(self):
