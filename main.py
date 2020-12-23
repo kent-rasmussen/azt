@@ -142,11 +142,13 @@ class Check():
         # exit()
         self.checkcheck()
     def guessinterfacelang(self):
+        """I'm asked to do this when the root window has the attribute set,
+        but the check doesn't. So I'm testing for the check attribute here."""
         print('guessinterfacelang',self.parent.parent.interfacelang)
-        if (hasattr(self.parent.parent,'interfacelang') and
-            (self.parent.parent.interfacelang == None)):
+        if self.interfacelang == None:
+            if self.glosslang == None:
+                self.guessglosslangs()
             self.parent.parent.interfacelang=self.glosslang
-        # self.parent.parent.
         setinterfacelang(self.glosslang)
     def getinterfacelang(self):
             print("Asking for interface language...")
@@ -162,6 +164,44 @@ class Check():
                                     window
                                     )
             buttonFrame1.grid(column=0, row=1)
+    def guessanalang(self):
+        """if there's only one analysis language, use it."""
+        nlangs=len(self.db.analangs)
+        if nlangs == 1: # print('Only one analang in database!')
+            self.analang=self.db.analangs[0]
+            self.analangdefault=self.db.analangs[0] #In case the above gets changed.
+            """If there are more than two analangs in the database, check if one
+            of the first two is three letters long, and the other isn't"""
+        elif nlangs == 2:
+            if ((len(self.db.analangs[0]) == 3) and
+                (len(self.db.analangs[1]) != 3)):
+                print('Looks like I found an iso code for analang!')
+                self.analang=self.db.analangs[0] #assume this is the iso code
+            elif (len(self.db.analangs[1]) == 3) and (len(self.db.analangs[0]) != 3):
+                print('Looks like I found an iso code for analang!')
+                self.analang=self.db.analangs[1] #assume this is the iso code
+        else: #for three or more analangs, take the first plausible iso code
+            for n in range(nlangs):
+                if len(self.db.analangs[n]) == 3:
+                    self.analang=self.db.analangs[n]
+                    return
+    def guessglosslangs(self):
+        """if there's only one gloss language, use it."""
+        # if not hasattr(self,'glosslangs'):
+        #     self.glosslangs=self.db.glosslangs
+        if len(self.db.glosslangs) == 1:
+            print('Only one glosslang!')
+            self.glosslang=self.db.glosslangs[0] #was self.glosslang=globalvariables.glosslang
+            self.glosslang2=None #was globalvariables.glosslang2 #do we want this here, or in lift_do?
+            """if there are two or more gloss languages, just pick the first two,
+            and the user can select something else later (the gloss languages are not for
+            CV profile analaysis, but for info after checking, when this can be reset."""
+        elif len(self.db.glosslangs) > 1:
+            # print('More than one glosslang!')
+            self.glosslang=self.db.glosslangs[0] #was self.glosslang=globalvariables.glosslang
+            self.glosslang2=self.db.glosslangs[1] #was globalvariables.glosslang2 #do we want this here, or in lift_do?
+        else:
+            print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def addpstoprofileswdata(self):
         if self.ps not in self.profilesbysense:
             self.profilesbysense[self.ps]={}
