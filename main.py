@@ -156,8 +156,6 @@ class Check():
             Label(window.frame, text=_('What language do you want this program '
                                     'to address you in?')
                     ).grid(column=0, row=0)
-            # pss=self.interfacelangs
-            # print(pss)
             buttonFrame1=ButtonFrame(window.frame,
                                     self.parent.parent.interfacelangs,
                                     self.setinterfacelangwrapper,
