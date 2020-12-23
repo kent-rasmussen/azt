@@ -475,6 +475,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     """The job of this class is to expose the XML as python object
     attributes. Nothing more, not thing else, should be done here."""
     def __init__(self, filename,nsyls=None):
+        self.debug=False
         self.filename=filename #lift_file.liftstr()
         self.logfile=filename+".changes"
         """Problems reading a valid LIFT file are dealt with in main.py"""
@@ -732,13 +733,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             fieldlocation=ET.SubElement(form,'text')
             fieldlocation.text=location
         exfieldvalue.text=fieldvalue #change this one value, either way.
+            if self.debug == True:
+                print("=> Found that example already there")
         self.updatemoddatetime(guid=guid,senseid=senseid)
         self.write()
-        def debug():
-            print("add langform:", langform)
+        if self.debug == True:
+            print("add langform:", forms[analang])
             print("add tone:", fieldvalue)
             print("add gloss:", glossform)
-        # debug()
         """End here:""" #build up, or down?
         #node.append('pronunciation')
         """<example>
@@ -781,6 +783,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if tr.get('type') == 'Frame translation':
                 if not self.forminnode(tr,forms[glosslang]):
                     # print("Not the same translation form")
+        if self.debug == True:
+            print("Looking for bits that don't match")
+            if self.debug == True:
+                print('Node:',node.tag,';',node.find('.//text').text)
+                    if self.debug == True:
+                        print(node.get('lang'), '==', analang,';',
                     return
                 else:
                     for fd in example.findall('field'):
@@ -798,6 +806,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                     # print("Not the same lang for tone form")
                                     return
 
+                    if self.debug == True:
+                        print('translation',node.find('form/text').text, '!=',
+                        if self.debug == True:
+                            print('location',location,'not in',node)
         return tonevalue
     def exampleissameasnew(self,guid,senseid,analang,
                                 glosslang,glosslang2,forms,
@@ -806,6 +818,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                 location,fieldvalue,node,ps=None,showurl=False):
         """This looks for any example in the given sense, with the same form,
         gloss, and location values"""
+        if self.debug == True:
+            print('Looking for an example node matching these form and gloss'
+                'elements:',forms)
         for example in node.findall('example'):
             valuenode=self.exampleisnotsameasnew(guid,senseid,analang,
                             glosslang,glosslang2,forms,
@@ -819,6 +834,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 # print('valuenode is None')
                 return
 
+                if self.debug == True:
+                    print('=> This is not the example we are looking for',
     def addtoneUF(self,senseid,group,analang=None,guid=None,showurl=False):
         # print("Adding",group,"draft underlying form value to", senseid,
         #                                 "senseid",guid,"guid (in lift.py)")
