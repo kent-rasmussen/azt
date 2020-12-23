@@ -798,6 +798,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     (not self.forminnode(node,forms[glosslang2])))):
                     if self.debug == True:
                         print('translation',node.find('form/text').text, '!=',
+                                                                        forms)
                     return
             elif (node.tag == 'field'):
                 if (node.get('type') == 'location'):
