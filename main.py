@@ -1798,8 +1798,23 @@ class Check():
         self.profile=originalselfprofilevalue[:]
         self.ps=originalselfpsvalue[:]
         self.checkcheck()
-    def wordsbypsprofilechecksubcheck(self,ps=None,profile=None,checks=None,subchecks=None,nsyls=None):
-        """I need to find a way to limit these tests to appropriate profiles..."""
+    def wordsbypsprofilechecksubcheck(self,ps=None,profile=None,checks=None,
+                                                subchecks=None,nsyls=None):
+        """This function iterates across self.name and self.subcheck values
+        appropriate for the specified self.type, self.profile and self.name
+        values (ps is irrelevant here).
+        Because two functions called (buildregex and getframeddata) use
+        self.name and self.subcheck to do their work, they and their
+        dependents would need to be changed to fit a new paradigm, if we
+        were to change the variable here. So rather, we store the current
+        self.name and self.subcheck values, then iterate across logically
+        possible values (as above), then restore the value."""
+        """I need to find a way to limit these tests to appropriate
+        profiles..."""
+        originalselfnamevalue=self.name[:]
+        originalselfsubcheckvalue=self.subcheck[:]
+        # print('self.checknamesall:',self.checknamesall)
+        # return
         if self.type == 'V':
             subchecks=self.db.v[self.db.analang] #(just the vowels
         elif self.type == 'C':
@@ -1822,15 +1837,22 @@ class Check():
             for self.subcheck in subchecks:
                 print(self.ps,self.profile,self.name,self.subcheck,':')
                 self.buildregex()
-                for match in self.db.senseidformsbyregex(self.regex,ps=ps).items(): #db.idsbylexemeregexnps(check.ps,check.regex).keys(): #compiled!
-                    for typenum in self.typenumsRun:
-                        if match[0] in self.basicreported[typenum]:
-                            return
-                        else:
-                            self.basicreported[typenum]+=[match[0]]
-                    print('\t',self.getframeddata(match[0],noframe=True)['formatted'])
+                for match in self.db.senseidformsbyregex(self.regex,
+                                                            ps=ps).items():
+                    self.checknprint(match[0])
+        self.name=originalselfnamevalue[:]
+        self.subcheck=originalselfsubcheckvalue[:]
+    def checknprint(self,matchid):
+        """This will likely only work when called by
+        wordsbypsprofilechecksubcheck; but is needed becuase it must return if
+        the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
+        for typenum in self.typenumsRun:
             if matchid in self.basicreported[typenum]:
                 return
+            else:
+                self.basicreported[typenum]+=[matchid]
+        print('\t',self.getframeddata(matchid,
+                                        noframe=True)['formatted'])
     def makecountssorted(self):
         self.profilecounts={}
         wcounts=list()
