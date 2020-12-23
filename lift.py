@@ -778,43 +778,47 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This checks all the above information, to see if we're dealing with
         the same example or not. If form, translation and location are all the
         same, then return the tone value node to change --otherwise None."""
-        if not self.forminnode(example,forms[analang]):
-            # print("Not the same example form")
-            return #stop already, if this clearly isn't the same example.
-        else:
-            tr=example.find('translation')
-            """I need to confirm that this logic still does what I want,
-            with multiple gloss language possibilities"""
-            if tr.get('type') == 'Frame translation':
-                if not self.forminnode(tr,forms[glosslang]):
                     # print("Not the same translation form")
         if self.debug == True:
             print("Looking for bits that don't match")
+        for node in example:
             if self.debug == True:
                 print('Node:',node.tag,';',node.find('.//text').text)
+            if (node.tag == 'form'):
+                if ((node.get('lang') == analang)
+                and (node.find('text').text != forms[analang])):
                     if self.debug == True:
                         print(node.get('lang'), '==', analang,';',
+                            node.find('text').text, '!=', forms[analang])
                     return
-                else:
-                    for fd in example.findall('field'):
-                        if fd.get('type') == 'location':
-                            if not self.forminnode(fd,location):
-                                # print("Not the same location form",location)
-                                return
-                            # else:
-                            #     print("Same location!",location)
-                        if fd.get('type') == 'tone':
-                            for f2 in fd.findall('form'):
-                                if f2.get('lang') == glosslang:
-                                    tonevalue=f2.find('text')
-                                else:
-                                    # print("Not the same lang for tone form")
-                                    return
-
+            elif ((node.tag == 'translation') and
+                                (node.get('type') == 'Frame translation')):
+                if ((not self.forminnode(node,forms[glosslang])) and
+                    ((glosslang2 == None) or
+                    (not self.forminnode(node,forms[glosslang2])))):
                     if self.debug == True:
                         print('translation',node.find('form/text').text, '!=',
+                    return
+            elif (node.tag == 'field'):
+                if (node.get('type') == 'location'):
+                    if not self.forminnode(node,location):
                         if self.debug == True:
                             print('location',location,'not in',node)
+                        return
+                if (node.get('type') == 'tone'):
+                    for form in node:
+                        if ((form.get('lang') == glosslang)
+                        or (form.get('lang') == glosslang2)):
+                            """This is set once per example, since this
+                            function runs on an example node"""
+                            tonevalue=form.find('text')
+                            if self.debug == True:
+                                print('tone value found:',tonevalue.text)
+                        else:
+                            print("Not the same lang for tone form")
+                            return
+            else:
+                print("Not sure what kind of node I'm dealing with!",node.tag)
         return tonevalue
     def exampleissameasnew(self,guid,senseid,analang,
                                 glosslang,glosslang2,forms,
@@ -837,7 +841,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 return valuenode
             else:
                 # print('valuenode is None')
-                return
 
                 if self.debug == True:
                     print('=> This is not the example we are looking for',
