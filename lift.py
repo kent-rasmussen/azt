@@ -1726,6 +1726,25 @@ if __name__ == '__main__':
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift.bak.txt"
     lift=Lift(filename,nsyls=2)
+    senseid='bfff97e7-2e3b-40e1-beb1-e682d120b773'
+    forms={
+        'gnd':'səba',
+        'fr':'travail (m) commun (pour doter une fille ou une femme)',
+        'fub':'surga'
+        }
+    location='Isolation'
+    guid=None
+    analang='gnd'
+    glosslang='fr'
+    glosslang2=None #'fub'
+    fieldtype='tone'
+    fieldvalue='!?!?'
+    # lift.debug=True
+    lift.addexamplefields(guid,senseid,analang,
+                                glosslang,glosslang2,forms,
+                                # langform,glossform,gloss2form,
+                                fieldtype,
+                                location,fieldvalue)
     exit()
     guid='130cefa9-63aa-45e7-9996-b17e67870014'
     guid='0007124e-a769-4eb5-a7c0-4ff3af5a3206'
