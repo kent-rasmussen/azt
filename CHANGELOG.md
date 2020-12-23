@@ -1,16 +1,10 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
-- when setting ps and profile in main screen, don't make user reset type and
-subcheck, if current values are appropriate to selected values.
+-add checks to checkcheck to zero out obsoleted settings (not valid for new setting)
+  - current check name might be outside of new ps/profile range, so check that.
   - check where else this logic is a problem (the fact that one setting depends
     on another does not mean that selections are incompatible, and need to be reaffirmed)
-    - maybe keep profile refresh on ps change, but if same ps is selected?
-    - type shouldn't have to change on ps or profile change.
-    - current check name might be outside of new ps/profile range, so check that.
-    - subcheck should only be asked if there is a real check change.
-- fix references to self.name which change and don't reset (e.g., reports)
-  - """self.name set here""" annotated (just wordsbypsprofilechecksubcheck)
 - check for iteration reset problems for self.subcheck, other variables
 ## Next Features
 - fully distinguish C, CG, and NC onsets (or just word initial?), C and N finals
@@ -61,13 +55,16 @@ subcheck, if current values are appropriate to selected values.
 ### Useability
 - only question required on first open (for now) is C,V,CV, or T; everything else has an initial assumed value (though still changeable through the menus).
 - `Record` button on main window, with unencombered icon
-  - checkcheck picks the most numerous profile, along with it's ps.
+  - `checkcheck` picks the most numerous profile, along with it's ps.
 - label method to wrap on availablexy
 - main window displays number of words in current ps-profile filter
 - new (Advanced) menu option to redo syllable profile analysis
 - Sort now ask user to affirm "This word is OK in this frame" on first word.
 - added second gloss fields to tone frame addition window
 - added second gloss (now by iso code) to getframeddata
+- Trimmed down settings that are reset by another to a few essentials
+  - checkcheck (flash) only when a setting is actually changed.
+subcheck, if current values are appropriate to selected values.
 ## bug fixes:
 ### Useability
 - make all file open options with `encoding='utf-8'`
@@ -82,7 +79,7 @@ subcheck, if current values are appropriate to selected values.
 - resolved problem of leaving triage resulting in incorrect sorting
 ### UI
 - Added icons to distinguish sort and verify pages, as well as join pages
-- resolved joinT second window problem with the scrolling frame
+- resolved `joinT` second window problem with the scrolling frame
 - fixed scrolling frame problems
 - removed (inappropriate) tone group designation from items on tone up report
 ### Under the hood
@@ -90,12 +87,13 @@ subcheck, if current values are appropriate to selected values.
 - fixed problems that arise from empty form (cut processing of those records)
 - group name references now use int() instead of len()
 - remove requirement for location key in tone frames
-- gloss and form usage removed from self.toneframes references in getframeddata --now iso codes
-- changed lift.py functions (addexamplefields,addpronunciationfields,
-  exampleisnotsameasnew,exampleissameasnew) to work on iso codes
-- Changed references to getframeddata with ['gloss'] or ['form'] to iso (['formatted'] and ['tonegroup'] OK)
-- reworked addexamplefields and dependent functions to work with iso gloss/forms
-- self.toneframes references with form and gloss converted to iso
+- gloss and form usage removed from self.`toneframes` references in `getframeddata` --now iso codes
+- changed `lift.py` functions (`addexamplefields`,`addpronunciationfields`,
+  `exampleisnotsameasnew`,`exampleissameasnew`) to work on iso codes
+- Changed references to `getframeddata` with ['gloss'] or ['form'] to iso (['formatted'] and ['tonegroup'] OK)
+- reworked `addexamplefields` and dependent functions to work with iso gloss/forms
+- `self.toneframes` references with form and gloss converted to iso
+- fixed references to self.name which iterate. They are now stored and reset (just `name` and `subcheck` in and wordsbypsprofilechecksubcheck, but also `type`, `ps`, and `profile` fixed in basicreport)
 
 # Version 0.3 (November 2020)
 ## language and search parameters
