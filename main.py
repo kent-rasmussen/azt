@@ -3690,31 +3690,39 @@ class MainApplication(Frame):
             self.parent.interfacelang='fr' #default for now (just for first use).
         # self.setinterfacelang()
         self.parent._= setinterfacelang(self.parent.interfacelang)
-    def setinterfacelang(self):
-        """Attention: this just calls the global function with the class
-        variable as a parameter."""
-        print(self.parent.interfacelang)
-        setinterfacelang(self.parent.interfacelang)
-        # if self.interfacelang == 'en':
-        #     # interfacelang(lang=self.interfacelang)
-        #     _ = gettext.gettext #for untranslated American English
-        #     print(_("Translated!"))
-        # else:
-        #     interfacelang(lang=self.interfacelang)
-        # file.writeinterfacelangtofile(self.interfacelang)
-    def getinterfacelang(self):
-            print("Asking for interface language...")
-            window=Window(self.frame, title=_('Select Interface Language'))
-            Label(window.frame, text=_('What language do you want this program '
-                                    'to address you in?')
-                    ).grid(column=0, row=0)
-            # pss=self.interfacelangs
-            # print(pss)
-            buttonFrame1=ButtonFrame(window.frame,
-                                    self.parent.interfacelangs,self.setinterfacelangwrapper,
-                                    window
-                                    )
-            buttonFrame1.grid(column=0, row=1)
+    # def setinterfacelang(self):
+    #     """Attention: this just calls the global function with the class
+    #     variable as a parameter."""
+    #     print(self.parent.interfacelang)
+    #     setinterfacelang(self.parent.interfacelang)
+    #     # if self.interfacelang == 'en':
+    #     #     # interfacelang(lang=self.interfacelang)
+    #     #     _ = gettext.gettext #for untranslated American English
+    #     #     print(_("Translated!"))
+    #     # else:
+    #     #     interfacelang(lang=self.interfacelang)
+    #     # file.writeinterfacelangtofile(self.interfacelang)
+    # def setinterfacelangwrapper(self,choice,window):
+    #         """This can't use Check.set, because checkcheck and attribute aren't
+    #         in the same class"""
+    #         # self.parent.interfacelang=choice
+    #         # self.
+    #         setinterfacelang(choice)
+    #         window.destroy()
+    #         self.check.checkcheck()
+    # def getinterfacelang(self):
+    #         print("Asking for interface language...")
+    #         window=Window(self.frame, title=_('Select Interface Language'))
+    #         Label(window.frame, text=_('What language do you want this program '
+    #                                 'to address you in?')
+    #                 ).grid(column=0, row=0)
+    #         # pss=self.interfacelangs
+    #         # print(pss)
+    #         buttonFrame1=ButtonFrame(window.frame,
+    #                                 self.parent.interfacelangs,self.setinterfacelangwrapper,
+    #                                 window
+    #                                 )
+    #         buttonFrame1.grid(column=0, row=1)
     def __init__(self,parent):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
@@ -4425,15 +4433,15 @@ def inherit(self):
     # self.photowhite=self.parent.photowhite
     # self.photosmall=self.parent.photosmall
     self._=self.parent._
-def interfacelang(lang=None):
-    global aztdir
-    global i18n
-    global _
-    print('aztdir',aztdir, 'lang:',lang)
-    print(i18n[lang])
-    print("Using interface", lang)
-    i18n[lang].install()
-    print(_("Translation seems to be working"))
+# def interfacelang(lang=None):
+#     global aztdir
+#     global i18n
+#     global _
+#     print('aztdir',aztdir, 'lang:',lang)
+#     print(i18n[lang])
+#     print("Using interface", lang)
+#     i18n[lang].install()
+#     print(_("Translation seems to be working"))
 def main():
     print("Running main function") #Don't translate yet!
     root = tkinter.Tk()
