@@ -784,6 +784,11 @@ class Check():
         print("Running Check Check!")
         self.makestatus()
         """We start with the settings that we can likely guess"""
+        if self.interfacelang == None:
+            self.guessinterfacelang()
+        else:
+            if self.debug == True:
+                print('interfacelang already set')
         """Get Analang"""
         if self.analang == None:
             print("find the language")
