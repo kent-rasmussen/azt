@@ -2,6 +2,7 @@
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
 -add checks to checkcheck to zero out obsoleted settings (not valid for new setting)
+- make syllable profile window scroll!
   - current check name might be outside of new ps/profile range, so check that.
   - check where else this logic is a problem (the fact that one setting depends
     on another does not mean that selections are incompatible, and need to be reaffirmed)
@@ -77,6 +78,10 @@ subcheck, if current values are appropriate to selected values.
 - reworked buggy distinction of integer and named groups
 - removed Noform Nogloss entries from recording screen
 - resolved problem of leaving triage resulting in incorrect sorting
+- now guesses:
+  - UI language (via gloss, which is in turn guessed from database)
+  - Analysis language
+  - Gloss languages
 ### UI
 - Added icons to distinguish sort and verify pages, as well as join pages
 - resolved `joinT` second window problem with the scrolling frame
