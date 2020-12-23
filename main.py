@@ -1042,6 +1042,7 @@ class Check():
                             'name',
                             'subcheck'
                             ],
+                        'interfacelang':[],
                         'glosslang':[],
                         'glosslang2':[],
                         'name':[],
