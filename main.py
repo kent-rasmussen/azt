@@ -834,12 +834,13 @@ class Check():
         elif self.type == 'T':
             if self.ps not in self.toneframes:
                 self.toneframes[self.ps]={}
-            """If there's only one tone frame, I don't care what the
-            settings file says"""
             """self.name set here (But this is one I want to leave alone)"""
+            """If there's only one tone frame, I don't care what the
+            settings file says. Also ask if the settings file name isn't in the
+            list of defined frames."""
             if len(self.toneframes[self.ps]) == 1:
                 self.name=list(self.toneframes[self.ps].keys())[0]
-            elif self.name not in self.toneframes[self.ps]: #this includes None
+            elif self.name not in self.toneframes[self.ps]:
                 self.getcheck()
                 return
             t=(_("Checking {}, working on ‘{}’ tone frame").format(
