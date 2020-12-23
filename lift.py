@@ -757,11 +757,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         </example>
         """
     def forminnode(self,node,value):
+        """Returns True if value is in *any* text node child of any form child
+        of node: [node/'form'/'text' = value]
+        """
         for f in node.findall('form'):
-            if f.find('text').text == value:
-                # print(f.find('text').text,'=',value)
-                return True
-        # print(f.find('text').text,'≠',value)
+            for t in f.findall('text'):
+                if t.text == value:
+                    return True
         return False
 
     def exampleisnotsameasnew(self,guid,senseid,analang,
