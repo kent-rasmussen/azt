@@ -1,7 +1,6 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
-- check exampleisnotsameasnew logic
 - Look for for self.toneframes references with form and gloss, convert to iso...
 - fix references to self.name which change and don't reset (e.g., reports)
   - """self.name set here""" annotated (just wordsbypsprofilechecksubcheck)
@@ -88,6 +87,7 @@
 - changed lift.py functions (addexamplefields,addpronunciationfields,
   exampleisnotsameasnew,exampleissameasnew) to work on iso codes
 - Changed references to getframeddata with ['gloss'] or ['form'] to iso (['formatted'] and ['tonegroup'] OK)
+- reworked addexamplefields and dependent functions to work with iso gloss/forms
 
 # Version 0.3 (November 2020)
 ## language and search parameters
