@@ -56,11 +56,6 @@ def getglosslangs(self):
         self.glosslang2=self.glosslangs[1] #was globalvariables.glosslang2 #do we want this here, or in lift_do?
     else:
         print("Can't tell how many glosslangs!",len(self.glosslangs))
-def getinterfacelang(self):
-    """Normally run on check class"""
-    if hasattr(self.parent,'interfacelang') and self.parent.interfacelang == None:
-        self.parent.interfacelang=self.glosslang
-    self.parent.setinterfacelang()
 def langs(self):
     """This should be able to run on a check or lift class."""
     getanalangs(self)
