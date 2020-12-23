@@ -1,6 +1,14 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
+- when setting ps and profile in main screen, don't make user reset type and
+subcheck, if current values are appropriate to selected values.
+  - check where else this logic is a problem (the fact that one setting depends
+    on another does not mean that selections are incompatible, and need to be reaffirmed)
+    - maybe keep profile refresh on ps change, but if same ps is selected?
+    - type shouldn't have to change on ps or profile change.
+    - current check name might be outside of new ps/profile range, so check that.
+    - subcheck should only be asked if there is a real check change.
 - fix references to self.name which change and don't reset (e.g., reports)
   - """self.name set here""" annotated (just wordsbypsprofilechecksubcheck)
 - check for iteration reset problems for self.subcheck, other variables
