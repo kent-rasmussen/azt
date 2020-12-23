@@ -1801,7 +1801,7 @@ class Check():
     def wordsbypsprofilechecksubcheck(self,ps=None,profile=None,checks=None,subchecks=None,nsyls=None):
         """I need to find a way to limit these tests to appropriate profiles..."""
         if self.type == 'V':
-            subchecks=self.db.v[self.db.analang] #('a',) just the vowels, not method or regex
+            subchecks=self.db.v[self.db.analang] #(just the vowels
         elif self.type == 'C':
             subchecks=self.db.c[self.db.analang]
         else:
@@ -2817,11 +2817,12 @@ class Check():
         """One pass for all regexes, S3, then S2, then S1, as needed."""
         if self.type != 'T': #We don't want these subs for tone sorting
             S=str(self.type)
-            regexS='[^'+S+']*'+S
+            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
             for occurrence in reversed(range(maxcount)):
                 occurrence+=1
                 if re.search(S+str(occurrence),self.name) != None:
-                    """Get the second S, regardless of intervening non S..."""
+                    """Get the (n=occurrence) S, regardless of intervening
+                    non S..."""
                     regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
                     replS='\\1'+self.subcheck
                     self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
