@@ -1110,12 +1110,13 @@ class Check():
     def cleardefaults(self,field=None):
         for default in self.defaults[field]:
             setattr(self, default, None)
-            if default == ('glosslang' or 'glosslang2'):
-                setdefaults.getglosslangs(self)
-            if default == 'analang':
-                setdefaults.getanalangs(self)
-            if default == 'audiolang':
-                setdefaults.getaudiolangs(self)
+            """These can be done in checkcheck..."""
+            # if default == ('glosslang' or 'glosslang2'):
+            #     setdefaults.getglosslangs(self)
+            # if default == 'analang':
+            #     setdefaults.getanalangs(self)
+            # if default == 'audiolang':
+            #     setdefaults.getaudiolangs(self)
     def reloadprofiledata(self):
         file.remove(self.profiledatafile)
         self.parent.parent.destroy()
