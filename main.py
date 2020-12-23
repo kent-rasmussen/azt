@@ -152,6 +152,20 @@ class Check():
             self.parent.parent.interfacelang=self.glosslang
         # self.parent.parent.
         setinterfacelang(self.glosslang)
+    def getinterfacelang(self):
+            print("Asking for interface language...")
+            window=Window(self.frame, title=_('Select Interface Language'))
+            Label(window.frame, text=_('What language do you want this program '
+                                    'to address you in?')
+                    ).grid(column=0, row=0)
+            # pss=self.interfacelangs
+            # print(pss)
+            buttonFrame1=ButtonFrame(window.frame,
+                                    self.parent.parent.interfacelangs,
+                                    self.setinterfacelangwrapper,
+                                    window
+                                    )
+            buttonFrame1.grid(column=0, row=1)
     def addpstoprofileswdata(self):
         if self.ps not in self.profilesbysense:
             self.profilesbysense[self.ps]={}
@@ -1371,7 +1385,7 @@ class Check():
             if self.debug==True:
                 print('No change:',attribute,'==',choice)
     def setinterfacelangwrapper(self,choice,window):
-            self.set(interfacelang,choice,window) #set the check variable
+            self.set('interfacelang',choice,window) #set the check variable
             setinterfacelang(choice) #change the UI
     def setprofile(self,choice,window):
         self.set('profile',choice,window)
@@ -3509,7 +3523,7 @@ class MainApplication(Frame):
         # languagemenu.add_command(label=_("Interface language"),
         #                 command=lambda x=check:Check.getanalang(x))
         languagemenu.add_command(label=_("Interface/computer language"),
-                        command=lambda :self.getinterfacelang())
+                        command=lambda x=check:Check.getinterfacelang(x))
         languagemenu.add_command(label=_("Analysis language"),
                         command=lambda x=check:Check.getanalang(x))
         languagemenu.add_command(label=_("Gloss language"),
@@ -4152,6 +4166,9 @@ class Splash(Window):
 
 """These are non-method utilities I'm actually using."""
 def setinterfacelang(lang):
+    global aztdir
+    global i18n
+    global _
     """Attention: for this to work, _ has to be defined globally (here, not in
     a class or module.) So I'm getting the language setting in the class, then
     calling the module (imported globally) from here."""
@@ -4162,7 +4179,12 @@ def setinterfacelang(lang):
     #     _ = lambda s: s
     #     print(_("Translated!"))
     # else:
-    interfacelang(lang=lang)
+    # interfacelang(lang=lang)
+    print('aztdir',aztdir, 'lang:',lang)
+    print(i18n[lang])
+    print("Using interface", lang)
+    i18n[lang].install()
+    print(_("Translation seems to be working"))
     file.writeinterfacelangtofile(lang)
     # return _
 def name(x):
