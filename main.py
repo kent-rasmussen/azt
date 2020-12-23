@@ -91,7 +91,7 @@ class Check():
         self.imagesdir=file.getimagesdir(filename)
         self.audiodir=file.getaudiodir(filename)
         print(self.audiodir)
-        setdefaults.langs(self.db) #This will be done again, on resets
+        # setdefaults.langs(self.db) #This will be done again, on resets
         self.loadstatus()
         self.loadtoneframes()
         if nsyls is not None:
@@ -111,11 +111,11 @@ class Check():
         setdefaults.fields(self.db) #This looks for imp and pl field names.
         self.initdefaults() #provides self.defaults, list to load/save
         self.cleardefaults() #this resets all to none (to be set below)
-        self.analang=self.db.analang #inherit from the lang if not specified
-        self.glosslang=self.db.glosslang #inherit from the lang if not specified
-        self.glosslang2=self.db.glosslang2 #inherit from the lang if not specified
-        self.audiolang=self.db.audiolang
-        setdefaults.getinterfacelang(self)
+        # self.analang=self.db.analang #inherit from the lang if not specified
+        # self.glosslang=self.db.glosslang #inherit from the lang if not specified
+        # self.glosslang2=self.db.glosslang2 #inherit from the lang if not specified
+        # self.audiolang=self.db.audiolang
+        # self.guessinterfacelang()
         print(_('Interface Language: '),self.parent.parent.interfacelang)
         """These two lines can import structured frame dictionaries; do this
         just to make the import, then comment them out again."""
