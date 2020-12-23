@@ -836,6 +836,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
 
                 if self.debug == True:
                     print('=> This is not the example we are looking for',
+                                                                    valuenode)
     def addtoneUF(self,senseid,group,analang=None,guid=None,showurl=False):
         # print("Adding",group,"draft underlying form value to", senseid,
         #                                 "senseid",guid,"guid (in lift.py)")
