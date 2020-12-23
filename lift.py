@@ -679,7 +679,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return senseid
     def addexamplefields(self,guid,senseid,analang,
                                 glosslang,glosslang2,forms,
-                                # langform,glossform,gloss2form,
                                 fieldtype,
                                 location,fieldvalue,ps=None,showurl=False):
         """This fuction will add an XML node to the lift tree, like a new
@@ -687,33 +686,33 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """The program should know before calling this, that there isn't
         already the relevant node --since it is agnostic of what is already
         there."""
-        # urlnattr=attributesettings(attribute,guid,analang,glosslang,lang,ps,form,
-        #                                 fieldtype,location)
         print("Adding",fieldvalue,"value to", location,"location "
                 "in",fieldtype,"fieldtype",senseid,"senseid",guid,"guid (in lift.py)")
-        urlnattr=attributesettings('senseid',senseid=senseid) #just give me the sense.
+        """Get the sense node"""
+        urlnattr=attributesettings('senseid',senseid=senseid)
         url=urlnattr['url']
         if showurl==True:
             print(url)
         node=self.nodes.find(url) #this should always find just one node
         if node is None:
-            print("Sorry, this didn't return a node:",guid,senseid)# nodes=self.nodes.findall(url) #this is a list
+            print("Sorry, this didn't return a node:",guid,senseid)
             return
         """Logic to check if this example already exists"""
-            # print('field',field)
-            # print('fieldtype',field.get('type'))
-        """This is a text node, or None"""
+        """This function returns a text node (from any one of a number of
+        example nodes, which match form, gloss and location) containing a
+        tone sorting value, or None (if no example nodes match form, gloss
+        and location)"""
         exfieldvalue=self.exampleissameasnew(guid,senseid,analang,glosslang,
-                            gloss2lang,
-                            # langform,glossform,gloss2form,
+                            glosslang2,
                             forms,
                             fieldtype,
                             location,fieldvalue,node,ps=None,showurl=False)
         if exfieldvalue is None: #If not already there, make it.
+            print("Didn't find that example already there, creating it...")
             p=ET.SubElement(node, 'example')
             form=ET.SubElement(p,'form',attrib={'lang':analang})
             t=ET.SubElement(form,'text')
-            t.text=forms[analang] #langform
+            t.text=forms[analang]
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
             fieldgloss=ET.SubElement(p,'translation',attrib={'type':
@@ -723,30 +722,27 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     form=ET.SubElement(fieldgloss,'form',attrib={'lang':lang})
                     glosstext=ET.SubElement(form,'text')
                     glosstext.text=forms[lang]
-
             exfield=ET.SubElement(p,'field',attrib={'type':fieldtype})
             form=ET.SubElement(exfield,'form',attrib={'lang':glosslang})
             exfieldvalue=ET.SubElement(form,'text')
-
             locfield=ET.SubElement(p,'field',attrib={'type':'location'})
             form=ET.SubElement(locfield,'form',attrib={'lang':glosslang})
             fieldlocation=ET.SubElement(form,'text')
             fieldlocation.text=location
-        exfieldvalue.text=fieldvalue #change this one value, either way.
+        else:
             if self.debug == True:
                 print("=> Found that example already there")
+        exfieldvalue.text=fieldvalue #change this *one* value, either way.
         self.updatemoddatetime(guid=guid,senseid=senseid)
         self.write()
         if self.debug == True:
             print("add langform:", forms[analang])
             print("add tone:", fieldvalue)
-            print("add gloss:", glossform)
-        """End here:""" #build up, or down?
-        #node.append('pronunciation')
-        """<example>
             print("add gloss:", forms[glosslang])
             if glosslang2 != None:
                 print("add gloss2:", forms[glosslang2])
+        """This is what we're adding/modifying here:
+        <example>
             <form lang="gnd"><text>dìve</text></form>
             <translation type="Frame translation">
                 <form lang="gnd"><text>constructed gloss here</text></form>
@@ -768,17 +764,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if t.text == value:
                     return True
         return False
-
     def exampleisnotsameasnew(self,guid,senseid,analang,
                                 glosslang,glosslang2,
                                 forms,
-                                # langform,glossform,gloss2form,
                                 fieldtype,
-                                location,fieldvalue,example,ps=None,showurl=False):
+                                location,fieldvalue,example,ps=None,
+                                showurl=False):
         """This checks all the above information, to see if we're dealing with
-        the same example or not. If form, translation and location are all the
-        same, then return the tone value node to change --otherwise None."""
-                    # print("Not the same translation form")
+        the same example or not. Stop and return nothing at first node that
+        doesn't match (from form, translation and location). If they all match,
+        then return the tone value node to change."""
         if self.debug == True:
             print("Looking for bits that don't match")
         for node in example:
@@ -823,26 +818,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return tonevalue
     def exampleissameasnew(self,guid,senseid,analang,
                                 glosslang,glosslang2,forms,
-                                # langform,glossform,gloss2form,
                                 fieldtype,
                                 location,fieldvalue,node,ps=None,showurl=False):
-        """This looks for any example in the given sense, with the same form,
-        gloss, and location values"""
+        """This looks for any example in the given sense node, with the same
+        form, gloss, and location values"""
         if self.debug == True:
             print('Looking for an example node matching these form and gloss'
                 'elements:',forms)
         for example in node.findall('example'):
             valuenode=self.exampleisnotsameasnew(guid,senseid,analang,
                             glosslang,glosslang2,forms,
-                            # langform,glossform,gloss2form,
                             fieldtype,
                             location,fieldvalue,example,ps=None,showurl=False)
             if valuenode != None: #i.e., they *are* the same node
-                # print('valuenode',valuenode, valuenode.text)
-                return valuenode
-            else:
-                # print('valuenode is None')
-
+                return valuenode #if you find the example, we're done looking
+            else: #if not, just keep looking, at next example node
                 if self.debug == True:
                     print('=> This is not the example we are looking for',
                                                                     valuenode)
