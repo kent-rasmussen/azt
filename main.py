@@ -525,8 +525,8 @@ class Check():
     def getframeddata(self,source,noframe=False,notonegroup=False):
         """This generates a dictionary of form {'form':outputform,
         'gloss':outputgloss} for display, by senseid"""
-        """Sometimes this script is called to make the example fields, other times
-        to display it. If source is a senseid, it pulls form/gloss/etc
+        """Sometimes this script is called to make the example fields, other
+        times to display it. If source is a senseid, it pulls form/gloss/etc
         information from the entry. If source is an example, it pulls that info
         from the example. The info is formatted uniformly in either case."""
         output={}
@@ -541,7 +541,8 @@ class Check():
         tonegroups=None
         """Build dual logic here:"""
         if isinstance(source,lift.ET.Element):
-            print('Element found!')
+            if self.debug == True:
+                print('Element found!')
             element=source
             for node in element:
                 if (node.tag == 'form') and (node.get('lang') == self.analang):
@@ -580,7 +581,8 @@ class Check():
             </example>
             """
         elif (type(source) is str) and (len(source) == 36): #source is sensedid
-            print('36 character senseid string!')
+            if self.debug == True:
+                print('36 character senseid string!')
             senseid=source
             forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang,
                                             ps=self.ps)
@@ -1275,7 +1277,9 @@ class Check():
     }
         return checks
     def setnamesbyprofile(self):
-        """include profile (of those available for ps), check (e.g., V1=V2)"""
+        """include check names appropriate for the given profile and segment
+        type (e.g., V1=V2 requires at least two vowels). This function is
+        agnostic of part of speech (self.ps)"""
         try:
             len(self.profile)
         except:
@@ -1727,6 +1731,11 @@ class Check():
             if line[1] == profile and line[2] == ps:
                 return line[0]
     def basicreport(self):
+        """We iterate across these values in this script, so we save current
+        values here, and restore them at the end."""
+        originalselftypevalue=self.type[:]
+        originalselfpsvalue=self.ps[:]
+        originalselfprofilevalue=self.profile[:]
         # import sys
         # self.type='V'
         # pss=('Nom','Verbe')
@@ -1785,6 +1794,9 @@ class Check():
         #                             checks=checks,subchecks=None)#,nsyls=nsyls)
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
+        self.type=originalselftypevalue[:]
+        self.profile=originalselfprofilevalue[:]
+        self.ps=originalselfpsvalue[:]
         self.checkcheck()
     def wordsbypsprofilechecksubcheck(self,ps=None,profile=None,checks=None,subchecks=None,nsyls=None):
         """I need to find a way to limit these tests to appropriate profiles..."""
@@ -1798,6 +1810,7 @@ class Check():
         profile; self.basicreported is from self.basicreport()"""
         for typenum in self.basicreported:
             print(typenum+':',self.basicreported[typenum])
+        """setnamesbyprofile doesn't depend on self.ps"""
         for codenname in sorted(self.setnamesbyprofile(),
                         key=lambda s: len(s[0]),reverse=True):
             """self.name set here"""
@@ -1816,6 +1829,8 @@ class Check():
                         else:
                             self.basicreported[typenum]+=[match[0]]
                     print('\t',self.getframeddata(match[0],noframe=True)['formatted'])
+            if matchid in self.basicreported[typenum]:
+                return
     def makecountssorted(self):
         self.profilecounts={}
         wcounts=list()
