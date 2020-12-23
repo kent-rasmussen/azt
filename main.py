@@ -744,8 +744,8 @@ class Check():
         for ps in self.db.pss:
             self.guidsvalidbyps[ps]=self.db.get('guidbyps',ps=ps)
     def checkcheck(self):
-        """To function properly, this should clear variables that depend on"""
-        """variables being set (otherwise unexpected consequences...)."""
+        """This checks for incompatible or missing variable values, and asks
+        for them. If values are OK, they are displayed."""
         opts={
         'row':0,
         'labelcolumn':0,
