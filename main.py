@@ -782,6 +782,8 @@ class Check():
             print("find the language")
             self.getanalang()
             return
+
+        """This just gets the prose language name from the code"""
         for l in self.parent.parent.interfacelangs:
             if l['code']==self.parent.parent.interfacelang:
                 interfacelanguagename=l['name']
