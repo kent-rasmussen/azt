@@ -1357,6 +1357,9 @@ class Check():
         else:
             if self.debug==True:
                 print('No change:',attribute,'==',choice)
+    def setinterfacelangwrapper(self,choice,window):
+            self.set(interfacelang,choice,window) #set the check variable
+            setinterfacelang(choice) #change the UI
     def setprofile(self,choice,window):
         self.set('profile',choice,window)
     def settype(self,choice,window):
@@ -3672,13 +3675,6 @@ class MainApplication(Frame):
         # else:
         #     interfacelang(lang=self.interfacelang)
         # file.writeinterfacelangtofile(self.interfacelang)
-    def setinterfacelangwrapper(self,choice,window):
-            """This can't use Check.set, because checkcheck and attribute aren't
-            in the same class"""
-            self.parent.interfacelang=choice
-            self.setinterfacelang()
-            window.destroy()
-            self.check.checkcheck()
     def getinterfacelang(self):
             print("Asking for interface language...")
             window=Window(self.frame, title=_('Select Interface Language'))
