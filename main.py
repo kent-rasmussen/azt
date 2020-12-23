@@ -646,29 +646,33 @@ class Check():
         output['formatted']='\t'.join(text)
         return output
     def getframedentry(self,guid):
+        """This is most likely obsolete"""
         """This generates output for selection and verification, by ps"""
-        forms=self.db.citationorlexeme(guid,lang=self.analang,ps=self.ps)
-        glosses=self.db.glossordefn(guid,lang=self.glosslang,ps=self.ps)
-        """Add this line"""
-        # gloss2s=self.db.glossordefn(guid,lang=self.glosslang2,ps=self.ps)
+        glosses={}
+        form=firstoflist(self.db.citationorlexeme(guid,lang=self.analang,
+                                                                ps=self.ps))
+        glosses[self.glosslang]=firstoflist(self.db.glossordefn(guid,
+                                        lang=self.glosslang, ps=self.ps))
+        if self.glosslang2 != None:
+            glosses[self.glosslang2]=firstoflist(self.db.glossordefn(guid,
+                                            lang=self.glosslang2,ps=self.ps))
         frame=self.toneframes[self.ps][self.name]
         if self.debug ==True:
             print(forms,glosses,frame)
         outputform=None
-        outputgloss=None
-        for form in forms:
-            for gloss in glosses:
-                """replace these two"""
-                outputform=self.frameregex.sub(form,frame['form'])
-                outputgloss=self.frameregex.sub(gloss,frame['gloss'])
-                """with these three"""
-                # outputform=self.frameregex.sub(form,frame[self.analang])
-                # outputgloss=self.frameregex.sub(gloss,frame[self.glosslang])
-                # outputgloss=self.frameregex.sub(gloss,frame[self.glosslang2])
-                print('     ',outputform,"‘"+str(outputgloss)+"’")
-        """replace this one"""
-        return {'form':outputform,'gloss':outputgloss}
-        """with this one"""
+        outputgloss={}
+        outputform=self.frameregex.sub(form,frame[self.analang])
+        for lang in glosses:
+            if (lang != self.glosslang2) or (self.glosslang2 != None):
+                outputgloss[lang]=self.frameregex.sub(glosses[lang],
+                                            frame[lang])
+        printoutput=('     ',outputform,
+                    "‘"+str(outputgloss[self.glosslang])+"’")
+        if self.glosslang2 != None:
+            printoutput+="‘"+str(outputgloss[self.glosslang2])+"’"
+        print(printoutput)
+        return {self.analang:outputform,self.glosslang:outputgloss,
+                                        self.glosslang2:outputgloss}
     def senseidtriage(self):
         # import time
         # print("Doing senseid triage... This takes awhile...")
