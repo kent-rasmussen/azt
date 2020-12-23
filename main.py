@@ -4171,7 +4171,7 @@ def firstoflist(list,othersOK=False):
     # if (len(list) != 1) and (othersOK == False):
     #     print('Sorry, more than one list item found:',list)
     # return list[0]
-    if list == None:
+    if (list == None) or (list == []):
         return
     elif len(list) == 1: # and (othersOK == False):
         return list[0]
