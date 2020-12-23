@@ -744,6 +744,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """End here:""" #build up, or down?
         #node.append('pronunciation')
         """<example>
+            print("add gloss:", forms[glosslang])
+            if glosslang2 != None:
+                print("add gloss2:", forms[glosslang2])
             <form lang="gnd"><text>dìve</text></form>
             <translation type="Frame translation">
                 <form lang="gnd"><text>constructed gloss here</text></form>
