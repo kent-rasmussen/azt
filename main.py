@@ -145,6 +145,13 @@ class Check():
         # self.profileofform('zukw')
         # exit()
         self.checkcheck()
+    def guessinterfacelang(self):
+        print('guessinterfacelang',self.parent.parent.interfacelang)
+        if (hasattr(self.parent.parent,'interfacelang') and
+            (self.parent.parent.interfacelang == None)):
+            self.parent.parent.interfacelang=self.glosslang
+        # self.parent.parent.
+        setinterfacelang(self.glosslang)
     def addpstoprofileswdata(self):
         if self.ps not in self.profilesbysense:
             self.profilesbysense[self.ps]={}
