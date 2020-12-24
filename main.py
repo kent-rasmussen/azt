@@ -1515,8 +1515,10 @@ class Check():
             #               ).grid(column=0, row=0)
             Label(window.frame,
                           text='What Vowel do you want to work with?'
-                          ).grid(column=0, row=1)
-            buttonFrame1=ButtonFrame(window.frame,
+                          ).grid(column=0, row=0)
+            window.scroll=Frame(window.frame)
+            window.scroll.grid(column=0, row=1)
+            buttonFrame1=ScrollingButtonFrame(window.scroll,
                                      self.db.v[self.analang],self.setS,
                                      window=window
                                      ).grid(column=0, row=4)
@@ -1541,7 +1543,8 @@ class Check():
             buttonFrame1=ScrollingButtonFrame(window.scroll,
                                     self.db.c[self.analang],self.setS,
                                     window=window
-                                    ).grid(column=0, row=0)
+                                    )
+            buttonFrame1.grid(column=0, row=0)
     def getlocations(self):
         self.locations=[]
         # for guid in self.guidstosort:
@@ -2789,11 +2792,13 @@ class Check():
                 optionslist+=[({
                 'code':profile,
                 'description':profile}) for profile in self.additionalprofiles]
-            buttonFrame1=ButtonFrame(window.frame,
+            window.scroll=Frame(window.frame)
+            window.scroll.grid(column=0, row=1)
+            buttonFrame1=ScrollingButtonFrame(window.scroll,
                                     optionslist,self.setprofile,
                                     window
                                     )
-            buttonFrame1.grid(column=0, row=1)
+            buttonFrame1.grid(column=0, row=0)
     def gettype(self):
         print(_("Asking for check type"))
         window=Window(self.frame,title=_('Select Check Type'))
@@ -4143,10 +4148,10 @@ class ButtonFrame(Frame):
                     )
             i=i+1
 class ScrollingButtonFrame(ButtonFrame):
+    """This needs to go inside another frame, for accurrate grid placement"""
     def __init__(self,parent,
                     optionlist,command,
                     window=None,
-                    # width='25',
                     **kwargs
                     ):
         scroll=ScrollingCanvas(parent)
