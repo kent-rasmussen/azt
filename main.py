@@ -126,7 +126,7 @@ class Check():
             self.setupCVrxs()
             self.getprofiles()
             self.makecountssorted()
-        self.guesspsprofile() # takes values of largest ps-profile filter
+        # self.guesspsprofile() # takes values of largest ps-profile filter
         self.loaddefaults() # overwrites guess above, stored on runcheck
         self.storeprofiledata()
         self.checknamesall=self.setnamesall()
@@ -146,7 +146,8 @@ class Check():
         but the check doesn't. So I'm testing for the check attribute here."""
         print('guessinterfacelang',self.parent.parent.interfacelang)
         if self.interfacelang == None:
-            if self.glosslang == None:
+            if ((self.glosslang == None) or
+                    (self.glosslang not in self.db.glosslangs)):
                 self.guessglosslangs()
             self.parent.parent.interfacelang=self.glosslang
         setinterfacelang(self.glosslang)
@@ -185,19 +186,17 @@ class Check():
                     return
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
-        # if not hasattr(self,'glosslangs'):
-        #     self.glosslangs=self.db.glosslangs
         if len(self.db.glosslangs) == 1:
             print('Only one glosslang!')
-            self.glosslang=self.db.glosslangs[0] #was self.glosslang=globalvariables.glosslang
-            self.glosslang2=None #was globalvariables.glosslang2 #do we want this here, or in lift_do?
-            """if there are two or more gloss languages, just pick the first two,
-            and the user can select something else later (the gloss languages are not for
-            CV profile analaysis, but for info after checking, when this can be reset."""
+            self.glosslang=self.db.glosslangs[0]
+            self.glosslang2=None
+            """if there are two or more gloss languages, just pick the first
+            two, and the user can select something else later (the gloss
+            languages are not for CV profile analaysis, but for info after
+            checking, when this can be reset."""
         elif len(self.db.glosslangs) > 1:
-            # print('More than one glosslang!')
-            self.glosslang=self.db.glosslangs[0] #was self.glosslang=globalvariables.glosslang
-            self.glosslang2=self.db.glosslangs[1] #was globalvariables.glosslang2 #do we want this here, or in lift_do?
+            self.glosslang=self.db.glosslangs[0]
+            self.glosslang2=self.db.glosslangs[1]
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def addpstoprofileswdata(self):
@@ -239,9 +238,13 @@ class Check():
                 else:
                     for profile in self.profilesbysense[ps]:
                         print(ps,profile,len(self.profilesbysense[ps][profile]))
-    def guesspsprofile(self):
-        """Make this smarter, but for now, just take the most populous tuple"""
+    def guessps(self):
+        """Make this smarter, but for now, just take value from the most
+        populous tuple"""
         self.ps=self.profilecounts[0][2]
+    def guessprofile(self):
+        """Make this smarter, but for now, just take value from the most
+        populous tuple"""
         self.profile=self.profilecounts[0][1]
     def setupCVrxs(self):
         self.rxN=rx.make(rx.n(self.db),compile=True)
@@ -844,7 +847,6 @@ class Check():
             print("find the language")
             self.getanalang()
             return
-
         """This just gets the prose language name from the code"""
         for l in self.parent.parent.interfacelangs:
             if l['code']==self.parent.parent.interfacelang:
@@ -856,11 +858,17 @@ class Check():
         proselabel(opts,t)
         opts['row']+=1
         """Get glosslang"""
+        if self.glosslang not in self.db.glosslangs:
+            self.guessglosslangs()
         if self.glosslang == None:
             print("find the gloss language")
             self.getglosslang()
             return
-        """Get glosslang2"""
+        """Get glosslang2 (None is OK here, meaning no second gloss language)"""
+        if ((self.glosslang2 != None) and
+                (self.glosslang not in self.db.glosslangs)):
+            """I.e., if glosslang2 is set with a value not in the database"""
+            self.guessglosslangs()
         if self.glosslang2 != None:
             t=(_("Meanings in {} and {}").format(
                                 self.db.languagenames[self.glosslang],
@@ -876,11 +884,15 @@ class Check():
         """Ultimately, we will pick the largest ps/profile combination as an
         initial default (obviously changeable, as are all)"""
         """Get ps"""
+        if self.ps not in self.db.pss:
+            self.guessps()
         if self.ps == None:
             print("find the ps")
             self.getps()
             return
         """Get profile (this depends on ps)"""
+        if self.profile not in self.profilesbysense[self.ps]:
+            self.guessprofile()
         if self.profile == None:
             print("Select a syllable profile.")
             self.getprofile()
@@ -941,7 +953,6 @@ class Check():
                 )
         self.maybeboard()
         self.parent.setmenus(self)
-        # print(self.__dict__)
     def maybeboard(self):
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
