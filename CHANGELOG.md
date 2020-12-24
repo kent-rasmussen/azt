@@ -1,7 +1,6 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
-- make syllable profile window scroll!
 - add checks to checkcheck to zero out obsoleted settings (not valid for new setting)
   - current check name might be outside of new ps/profile range, so check that.
   - check where else this logic is a problem (the fact that one setting depends
@@ -26,6 +25,7 @@
 - XLP export
 ### Prioritization
 - make checkcheck reference most popular *unfinished* ps-profile combo
+- set scrolling selections (just profile?) to sort by number
 ### Documentation
 - Add what and why pages in different places, with rationales and instructions specific to context?
 ## Issues since November 2020 Zulgo beta test
@@ -87,6 +87,8 @@ subcheck, if current values are appropriate to selected values.
 - resolved `joinT` second window problem with the scrolling frame
 - fixed scrolling frame problems
 - removed (inappropriate) tone group designation from items on tone up report
+- syllable profile and vowel windows now scroll
+
 ### Under the hood
 - framed script now addresses both senses and examples
 - fixed problems that arise from empty form (cut processing of those records)
