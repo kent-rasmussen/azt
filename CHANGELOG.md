@@ -1,13 +1,11 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
-- add checks to checkcheck to zero out obsoleted settings (not valid for new setting)
-  - this should be done, but needs to be tested
-  - current check name might be outside of new ps/profile range, so check that.
-  - check where else this logic is a problem (the fact that one setting depends
-    on another does not mean that selections are incompatible, and need to be reaffirmed)
-- check for iteration reset problems for self.subcheck, other variables
+- check that group renaming doesn't mess with iteration across groups
+  - may need to reset iteration?
 ## Next Features
+- rework join page to make more sensible in context
+  - click makes a button into a bold label, and new directions, no other change.
 - fully distinguish C, CG, and NC onsets (or just word initial?), C and N finals
   - look for CG and NC first, then C.
   - how to treat C1=C2? CG1=CG2? Do we want S to be larger units, or to have N and G modifications?
@@ -19,6 +17,7 @@
     - setup questionː is <VN> [Ṽ] or [VN]? —This is important for tone.
   - make setting to turn this off
 - prioritize guesses, so most frequence C or V is chosen first. (then second?)
+  - collections.Counter()
 - add C and V sorting (and CV?)
 - make record button work for different contexts, by `self.type`:
   - T: tone report (as is currently done)
@@ -47,9 +46,16 @@
 # Version 0.3.1
 ## new features:
 ### prioritization
-- function to determine most populous syllable profile, with its ps
+- now assumes *every* setting for initial startup
+  - check type should be `Vowel` until selected otherwise
   - assumes most populous ps-profile filter, until another is chosen.
-  - runs (and refreshes) with other syllable profiles on certain startups
+    - new function to determine most populous syllable profile, with its ps
+    - runs (and refreshes) with other syllable profiles on certain startups
+    - selects most restrictive check available for profile (i.e. CVCV vowel checks start with V1=V2, not V1 or V2)
+    - selects most populous V or C to check first
+      - for CV checks, asks user which C and V (can't really guess that)
+- C, V and profile selection dialogs now include counts, for the user to select based on frequency
+  - counts are for valid data by ps, in the whole database
 ### reports
 - CV report now takes most populous syllable profiles, and runs all checks
   - most restrictive (e.g., V1=V2) first
@@ -103,6 +109,8 @@ subcheck, if current values are appropriate to selected values.
 - reworked `addexamplefields` and dependent functions to work with iso gloss/forms
 - `self.toneframes` references with form and gloss converted to iso
 - fixed references to self.name which iterate. They are now stored and reset (just `name` and `subcheck` in and wordsbypsprofilechecksubcheck, but also `type`, `ps`, and `profile` fixed in basicreport)
+- added checks to checkcheck to zero out obsoleted settings (not valid for new setting)
+- Fixed iteration reset problems for self.subcheck, other variables
 
 # Version 0.3 (November 2020)
 ## language and search parameters
