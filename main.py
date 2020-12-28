@@ -283,9 +283,6 @@ class Check():
         self.rx['C']=rx.make(rx.c(self.db),compile=True)
         self.rx['V']=rx.make(rx.v(self.db),compile=True)
     def profileofform(self,form):
-        # print(form)
-        # print(self.rxC)
-        # print(self.rxV)
         for s in self.rx:
             for ps in self.db.pss:
                 self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches
@@ -1993,6 +1990,7 @@ class Check():
                     wcounts.append((count, profile, ps))
         self.profilecounts=sorted(wcounts,reverse=True)
         self.Scounts={}
+
     def printcountssorted(self):
         print("Ranked and numbered syllable profiles, by grammatical category:")
         #{}
@@ -2064,27 +2062,8 @@ class Check():
             # print('Post-rename tonegroups:',self.tonegroups)
             self.verifysubwindow.destroy()
             self.verifyT()
-            # self.addtoprofilesbysense(senseid)
-            # self.storeprofiledata() #since we changed this.
-            # self.db.addexamplefields(guid,senseid,analang,
-            #                             glosslang,langform,glossform,fieldtype,
-            #                             location,fieldvalue)
-            # chk()
-            # self.storetoneframes()
-            # self.storedefaults()
-        # def submitgloss():
-        #     self.runwindow.gloss=glossfield.get()
-        #     self.runwindow.frame2.destroy()
-        # def submitgloss2():
-        #     self.runwindow.gloss2=gloss2field.get()
-        #     self.runwindow.frame2.destroy()
-        # def submitgloss2no():
-        #     self.runwindow.gloss2=None #gloss2field.get()
-        #     self.runwindow.frame2.destroy()
         self.getrunwindow()
         newname=tkinter.StringVar()
-        # gloss=tkinter.StringVar()
-        # gloss2=tkinter.StringVar()
         padx=50
         pady=10
         title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
@@ -2092,13 +2071,9 @@ class Check():
                                     self.name)
         self.verifysubwindow=Window(self.runwindow.frame)
         self.verifysubwindow.title(title)
-        # title=_("Add a {} morpheme to the dictionary").format(
-        #                     self.db.languagenames[self.analang])
         Label(self.verifysubwindow,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c'
                 ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
-        # self.runwindow.frame2=Frame(self.runwindow)
-        # self.runwindow.frame2.grid(row=1,column=0,sticky='ew',padx=25,pady=25)
         getformtext=_("What the new name do you want to call this surface tone "
                         "group? A label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
@@ -2111,54 +2086,6 @@ class Check():
                   command = submitform,anchor ='c')
         sub_btn.grid(row=2,column=0,sticky='')
         sub_btn.wait_window(self.verifysubwindow) #then move to next step
-        # """repeat above for gloss"""
-        # self.runwindow.frame2=Frame(self.runwindow)
-        # self.runwindow.frame2.grid(row=1,column=0,sticky='ew',padx=25,pady=25)
-        # getglosstext=_("What does {} mean in {}?".format(self.runwindow.form,
-        #                                 self.db.languagenames[self.glosslang]))
-        # getgloss=Label(self.runwindow.frame2,text=getglosstext,
-        #         font=self.fonts['read'],
-        #         justify=tkinter.LEFT,anchor='w')
-        # getgloss.grid(row=0,column=0,padx=padx,pady=pady)
-        # glossfield = EntryField(self.runwindow.frame2,textvariable=gloss)
-        # glossfield.grid(row=1,column=0)
-        # sub_btn=Button(self.runwindow.frame2,text = 'Use this gloss',
-        #           command = submitgloss)
-        # sub_btn.grid(row=2,column=0,sticky='')
-        # sub_btn.wait_window(self.runwindow.frame2) #then move to next step
-        # """repeat above for gloss2?"""
-        # if self.glosslang2 is not None:
-        #     self.runwindow.frame2=Frame(self.runwindow,pady=25)
-        #     self.runwindow.frame2.grid(row=1,column=0,sticky='ew',padx=25,pady=25)
-        #     getgloss2text=_("What does {} mean in {}?".format(
-        #                     self.runwindow.form,
-        #                     self.db.languagenames[self.glosslang2]))
-        #     getgloss2=Label(self.runwindow.frame2,text=getgloss2text,
-        #             font=self.fonts['read'],
-        #             justify=tkinter.LEFT,anchor='w')
-        #     getgloss2.grid(row=0,column=0,sticky='w',padx=padx,pady=pady)
-        #     gloss2field = EntryField(self.runwindow.frame2,textvariable=gloss2)
-        #     gloss2field.grid(row=1,column=0)
-        #     sub_btn=Button(self.runwindow.frame2,text = 'Use this gloss',
-        #               command = submitgloss2)
-        #     sub_btn.grid(row=2,column=0,sticky='')
-        #     sub_btnNo=Button(self.runwindow.frame2,
-        #                 text = _('Skip {} gloss').format(
-        #                     self.db.languagenames[self.glosslang2]),
-        #               command = submitgloss2no)
-        #     sub_btnNo.grid(row=1,column=1,sticky='')
-        #     sub_btn.wait_window(self.runwindow.frame2) #then move to next step
-        # if hasattr(self.runwindow,'gloss2'):
-        # else:
-        # print(self.runwindow.form, self.runwindow.gloss, self.runwindow.gloss2)
-            # print(self.runwindow.form, self.runwindow.gloss)
-        # 2012-03-28T21:15:23Z Times are managed in lift.py
-        # """get the senseid back from this function, which generates it"""
-        # senseid=self.db.addentry(ps=self.ps,analang=self.analang,
-        #                 glosslang=self.glosslang,langform=self.runwindow.form,
-        #                 glossform=self.runwindow.gloss,
-        #                 glosslang2=self.glosslang2,
-        #                 glossform2=self.runwindow.gloss2)
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def maybesort(self):
@@ -2817,13 +2744,6 @@ class Check():
                                 "CV":'',
                                 "T":[(None,None),] #We should fix this some day
                                 }
-        # self.subcheckspossible[
-        # if self.type == "V":
-        # if self.type == "C":
-        # if self.type == "CV":
-        # if self.type == "T":
-
-        self.subcheckspossible
     def getsubcheck(self):
         print("this sets the subcheck")
         if self.type == "V":
