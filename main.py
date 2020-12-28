@@ -9,6 +9,7 @@ import setdefaults
 import threading
 import itertools
 import importlib.util
+import collections
 from random import randint
 if tkinter==True:
     import tkinter #as gui
@@ -209,6 +210,12 @@ class Check():
         self.addpstoprofileswdata()
         self.addprofiletoprofileswdata()
         self.profilesbysense[self.ps][self.profile]+=[senseid]
+    def getscounts(self):
+        self.scount={}
+        for ps in self.db.pss:
+            self.scount[ps]={}
+            for s in self.rx:
+                self.scount[ps][s]=collections.Counter(self.sextracted[ps][s]).most_common()
     def getprofiles(self):
         self.profileswdatabyentry={}
         self.profilesbysense={}
@@ -216,6 +223,11 @@ class Check():
         self.profiledguids=[]
         self.profiledsenseids=[]
         onlyCV={'C','N','V'}
+        self.sextracted={} #Will store matching segments here
+        for ps in self.db.pss:
+            self.sextracted[ps]={}
+            for s in self.rx:
+                self.sextracted[ps][s]=list()
         todo=len(self.db.senseids)
         for senseid in self.db.senseids:
             print(str(self.db.senseids.index(senseid))+'/'+str(todo))
@@ -229,6 +241,7 @@ class Check():
                 else:
                     # print("Invalid profile!",form,profile)
                     self.profilesbysense['Invalid']+=[senseid]
+        self.getscounts()
         print('Done:',time.time()-self.start_time)
         # self.debug=True
         if self.debug==True:
@@ -952,11 +965,11 @@ class Check():
             # t=(_("Checking {}, working on {}".format(
             #             self.typedict[self.type],self.name)))
         """Get subcheck"""
-        self.getsubcheckspossible()
-        print(self.subcheck,self.subcheckspossible[self.type])
-        if self.subcheck not in [x[0] for x in self.subcheckspossible[self.type]]:
+        self.getsubchecksprioritized()
+        print(self.subcheck,self.subchecksprioritized[self.type])
+        if self.subcheck not in [x[0] for x in self.subchecksprioritized[self.type]]:
             self.guesssubcheck()
-        print(self.subcheck,self.subcheckspossible[self.type])
+        print(self.subcheck,self.subchecksprioritized[self.type])
         if self.type != 'T':
             if self.subcheck == None:
                 print("Aparently I don't know yet what (e.g., consonant or "+
@@ -1273,7 +1286,8 @@ class Check():
         self.f = open(self.profiledatafile, "w", encoding='utf-8')
         text=[f"profilesbysense={self.profilesbysense}",
             f"profilecounts={self.profilecounts}",
-            f"profilecountInvalid={self.profilecountInvalid}"]
+            f"profilecountInvalid={self.profilecountInvalid}",
+            f"scount={self.scount}"]
         for t in text:
             self.f.write(t+'\n')
         self.f.close()
@@ -1565,7 +1579,9 @@ class Check():
             window.scroll=Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ScrollingButtonFrame(window.scroll,
-                                     self.db.v[self.analang],self.setS,
+                                     #self.db.v[self.analang],
+                                     self.scount[self.ps][self.type],
+                                     self.setS,
                                      window=window
                                      ).grid(column=0, row=4)
     def getC(self,window):
@@ -1587,7 +1603,9 @@ class Check():
             window.scroll=Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ScrollingButtonFrame(window.scroll,
-                                    self.db.c[self.analang],self.setS,
+                                    # self.db.c[self.analang],
+                                    self.scount[self.ps][self.type],
+                                    self.setS,
                                     window=window
                                     )
             buttonFrame1.grid(column=0, row=0)
@@ -1967,6 +1985,7 @@ class Check():
                     # pscount+=count
                     wcounts.append((count, profile, ps))
         self.profilecounts=sorted(wcounts,reverse=True)
+        self.Scounts={}
     def printcountssorted(self):
         print("Ranked and numbered syllable profiles, by grammatical category:")
         #{}
@@ -2772,21 +2791,21 @@ class Check():
         return '\t'.join(outputs)
     def guesssubcheck(self):
         if self.type == 'CV': #Dunno how to guess this yet...
-            if self.subcheck in (self.subcheckspossible['V']+
-                                self.subcheckspossible['C']+
-                                self.subcheckspossible['T']
-                                ):
+            if self.subcheck in ([x[0] for x in self.subchecksprioritized['V']+
+                                self.subchecksprioritized['C']+
+                                self.subchecksprioritized['T']
+                                ]):
                 self.getsubcheck()
         else:
-            self.subcheck=firstoflist(self.subcheckspossible[self.type],
-                                                            othersOK=True)
-    def getsubcheckspossible(self):
+            self.subcheck=firstoflist(self.subchecksprioritized[self.type],
+                                                            othersOK=True)[0]
+    def getsubchecksprioritized(self):
         """Tone doesn't have subchecks, so we just make it 'None' here."""
         """I really should be able to order these..."""
-        self.subcheckspossible={"V":self.db.v[self.analang],
-                                "C":self.db.c[self.analang],
+        self.subchecksprioritized={"V":self.scount[self.ps]['V'], #self.db.v[self.analang],
+                                "C":self.scount[self.ps]['C'], #self.db.c[self.analang],
                                 "CV":'',
-                                "T":[None,] #We should fix this some day
+                                "T":[(None,None),] #We should fix this some day
                                 }
         # self.subcheckspossible[
         # if self.type == "V":
@@ -2857,12 +2876,11 @@ class Check():
             Label(window.frame, text=_('What syllable profile do you '
                                     'want to work with?')
                                     ).grid(column=0, row=0)
-            # print(self.profilesbysense[self.ps])
-            # print(self.profilesbysense[self.ps][self.profile])
-            optionslist = [({
+            optionslist = sorted([({
                 'code':profile,
                 'description':len(self.profilesbysense[self.ps][profile])
-                            }) for profile in self.profilesbysense[self.ps]]
+                            }) for profile in self.profilesbysense[self.ps]],
+                            key=lambda s: s['description'],reverse=True)
             if self.additionalprofiles is not None:
                 optionslist+=[({
                 'code':profile,
@@ -4180,22 +4198,33 @@ class ButtonFrame(Frame):
         if type(optionlist) is not list:
             print("optionlist is Not a list!",optionlist,type(optionlist))
             return
-        elif list is None:
+        elif (optionlist is None) or (len(optionlist) == 0):
             print("list is empty!",type(optionlist))
             return
-        elif optionlist[0] is dict: #assume the first item represents the list
+            """Assuming from here on that the first list item represents
+            the format of the whole list; hope that's true!"""
+        elif optionlist[0] is dict:
             print("looks like options are already in dictionary format.")
-        elif (len(optionlist) >0) and (type(optionlist[0]) is str):
+        elif type(optionlist[0]) is str:
             """when optionlist is a list of strings/codes"""
             print("looks like options are just a list of codes; making dict.")
             optionlist = [({'code':optionlist[i], 'name':optionlist[i]}
                             ) for i in range(0, len(optionlist))]
-        elif (len(optionlist) >0) and (type(optionlist[0]) is tuple):
-            """when optionlist is a list of binary tuples (codes,names)"""
-            print("looks like options are just a list of (codes,names); "
-                    "making dict.")
-            optionlist = [({'code':optionlist[i][0], 'name':optionlist[i][1]}
-                            ) for i in range(0, len(optionlist))]
+        elif type(optionlist[0]) is tuple:
+            if type(optionlist[0][1]) is str:
+                """when optionlist is a list of binary tuples (codes,names)"""
+                print("looks like options are just a list of (codes,names); "
+                        "making dict.")
+                optionlist = [({'code':optionlist[i][0],
+                                'name':optionlist[i][1]}
+                                ) for i in range(0, len(optionlist))]
+            if type(optionlist[0][1]) is int:
+                """when optionlist is a list of binary tuples (codes,counts)"""
+                print("looks like options are just a list of (codes,counts); "
+                        "making dict.")
+                optionlist = [({'code':optionlist[i][0],
+                                'description':optionlist[i][1]}
+                                ) for i in range(0, len(optionlist))]
         if not 'name' in optionlist[0].keys(): #duplicate from code.
             for i in range(0, len(optionlist)):
                 optionlist[i]['name']=optionlist[i]['code']
