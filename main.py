@@ -275,20 +275,23 @@ class Check():
                                 key=lambda s: len(s[0]),reverse=True),
                                 othersOK=True)[0]
     def guesstype(self):
-        pass
+        """For now, if type isn't set, start with Vowels."""
+        self.type='V'
     def setupCVrxs(self):
-        self.rxN=rx.make(rx.n(self.db),compile=True)
-        self.rxC=rx.make(rx.c(self.db),compile=True)
-        self.rxV=rx.make(rx.v(self.db),compile=True)
+        self.rx={}
+        self.rx['N']=rx.make(rx.n(self.db),compile=True)
+        self.rx['C']=rx.make(rx.c(self.db),compile=True)
+        self.rx['V']=rx.make(rx.v(self.db),compile=True)
     def profileofform(self,form):
         # print(form)
         # print(self.rxC)
         # print(self.rxV)
-        fC=self.rxC.sub('C',form)
-        fCN=self.rxN.sub('N',fC)
-        fCNV=self.rxV.sub('V',fCN)
+        for s in self.rx:
+            for ps in self.db.pss:
+                self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches
+            form=self.rx[s].sub(s,form) #replace with profile variable
         # print(fCV)
-        return fCNV
+        return form #fCNV
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
         return idsbyps[randint(0, len(idsbyps))]
@@ -1192,6 +1195,7 @@ class Check():
             self.profilesbysense=module.profilesbysense
             self.profilecounts=module.profilecounts
             self.profilecountInvalid=module.profilecountInvalid
+            self.scount=module.scount
         except:
             print("There doesn't seem to be a profile data file; "
                     "making one now (wait maybe three minutes).")
