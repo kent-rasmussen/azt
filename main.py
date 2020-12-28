@@ -700,7 +700,7 @@ class Check():
                 output['tonegroup']=tonegroup #this is only for named groups
         if self.debug == True:
             print(forms,glosses[lang])
-        if self.glosslang2 == None:
+        if (self.glosslang2 == None) and (self.glosslang2 in gloss):
             del gloss[self.glosslang2] #remove this now, and lose checks later
         output[self.analang]=None
         for lang in gloss:
