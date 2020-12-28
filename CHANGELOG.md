@@ -1,8 +1,10 @@
 # In Process
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
-- check that group renaming doesn't mess with iteration across groups
+- check that tone group renaming doesn't mess with iteration across groups
   - may need to reset iteration?
+  - fix scrolling frame size problem on rename
+    - frame in a frame? (this problem looks familiar...)
 ## Next Features
 - rework join page to make more sensible in context
   - click makes a button into a bold label, and new directions, no other change.
