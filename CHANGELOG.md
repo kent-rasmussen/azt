@@ -2,6 +2,7 @@
 ## Issues from November 2020 Zulgo beta test
 ### Cleanup
 - add checks to checkcheck to zero out obsoleted settings (not valid for new setting)
+  - this should be done, but needs to be tested
   - current check name might be outside of new ps/profile range, so check that.
   - check where else this logic is a problem (the fact that one setting depends
     on another does not mean that selections are incompatible, and need to be reaffirmed)
@@ -17,6 +18,7 @@
     - some people may want V to include Vː, others may not (for tone, probably all should...)
     - setup questionː is <VN> [Ṽ] or [VN]? —This is important for tone.
   - make setting to turn this off
+- prioritize guesses, so most frequence C or V is chosen first. (then second?)
 - add C and V sorting (and CV?)
 - make record button work for different contexts, by `self.type`:
   - T: tone report (as is currently done)

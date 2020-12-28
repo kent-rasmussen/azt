@@ -129,7 +129,7 @@ class Check():
         # self.guesspsprofile() # takes values of largest ps-profile filter
         self.loaddefaults() # overwrites guess above, stored on runcheck
         self.storeprofiledata()
-        self.checknamesall=self.setnamesall()
+        self.setnamesall() #sets self.checknamesall
         self.V=self.db.v #based on what is actually in the language (no groups)
         self.C=self.db.c #this regex is basically each valid glyph in analang,
         print("Done initializing check; running first check check.")
@@ -246,6 +246,19 @@ class Check():
         """Make this smarter, but for now, just take value from the most
         populous tuple"""
         self.profile=self.profilecounts[0][1]
+    def guesscheckname(self):
+        """Picks the longest name (the most restrictive fiter)"""
+        # print(self.checkspossible)
+        # print(sorted(self.checkspossible,
+        #                         key=lambda s: len(s[0]),reverse=True))
+        # print(firstoflist(sorted(self.checkspossible,
+        #                         key=lambda s: len(s[0]),reverse=True),
+        #                         othersOK=True))
+        self.name=firstoflist(sorted(self.checkspossible,
+                                key=lambda s: len(s[0]),reverse=True),
+                                othersOK=True)[0]
+    def guesstype(self):
+        pass
     def setupCVrxs(self):
         self.rxN=rx.make(rx.n(self.db),compile=True)
         self.rxC=rx.make(rx.c(self.db),compile=True)
@@ -902,14 +915,18 @@ class Check():
         proselabel(opts,t)
         opts['row']+=1
         """Get type"""
+        if self.type not in self.checknamesall:
+            self.guesstype()
         if self.type == None:
             print("Select a check type (C, V, CV, Tone).")
             self.gettype()
             return
         """Get check"""
+        self.getcheckspossible() #This sets self.checkspossible
+        # if self.name not in self.checkspossible
         if self.name == 'adhoc':
             tkadhoc()
-        elif self.type == 'T':
+        elif self.type == 'T': #self.name has different options by self.type
             if self.ps not in self.toneframes:
                 self.toneframes[self.ps]={}
             """self.name set here (But this is one I want to leave alone)"""
@@ -923,22 +940,36 @@ class Check():
                 return
             t=(_("Checking {}, working on ‘{}’ tone frame").format(
                                     self.typedict[self.type],self.name))
+            proselabel(opts,t)
         else:
+            print(self.name,'in', self.checkspossible,'?')
+            if self.name not in [x[0] for x in self.checkspossible]: #setnamesbyprofile
+                self.guesscheckname()
             if self.name == None: #no backup assumptions for CV checks, for now
                 print("check selection dialog here, for now just running V1=V2")
                 self.getcheck()
                 return
-            t=(_("Checking {}, working on {} = {}".format(
-                        self.typedict[self.type],self.name,self.subcheck)))
-        proselabel(opts,t)
-        opts['row']+=1
+            # t=(_("Checking {}, working on {}".format(
+            #             self.typedict[self.type],self.name)))
         """Get subcheck"""
-        if self.subcheck == None and self.type != 'T':
-            print("Aparently I don't know yet what (e.g., consonant or "+
-            "vowel) I'm testing.")
-            self.getsubcheck()
-            return
+        self.getsubcheckspossible()
+        print(self.subcheck,self.subcheckspossible[self.type])
+        if self.subcheck not in [x[0] for x in self.subcheckspossible[self.type]]:
+            self.guesssubcheck()
+        print(self.subcheck,self.subcheckspossible[self.type])
+        if self.type != 'T':
+            if self.subcheck == None:
+                print("Aparently I don't know yet what (e.g., consonant or "+
+                "vowel) I'm testing.")
+                self.getsubcheck()
+                return
+            else:
+                t=(_("Checking {}, working on {} = {}".format(
+                            self.typedict[self.type],self.name,self.subcheck)))
+                proselabel(opts,t)
+
         """Final Button"""
+        opts['row']+=1
         t=(_("Sort!"))
         button(opts,t,self.runcheck,column=0,
                 compound='bottom', #image bottom, left, right, or top of text
@@ -1274,7 +1305,7 @@ class Check():
                 self.storedefault(default)
         self.f.close()
     def setnamesall(self):
-        checks={
+        self.checknamesall={
         "V":{
             1:[("V1", "First/only Vowel")],
             2:[
@@ -1348,14 +1379,13 @@ class Check():
                 ("CV6", "Sixth CV")
                 ]
             },
-        "T":{ #I Think this is obsolete; just use frames
+        "T":{ #this is not obsolete; it is needed to allow T as self.type
             1:[
                 ("T1", "Sort Words by tone melody"),
                 ("T2", "Verify tone group")
             ]
         }
     }
-        return checks
     def setnamesbyprofile(self):
         """include check names appropriate for the given profile and segment
         type (e.g., V1=V2 requires at least two vowels). This function is
@@ -1372,6 +1402,7 @@ class Check():
             print("This shouldn't happen! (setnamesbyprofile with self.type T)")
             return
         n=int(re.subn(self.type, self.type, self.profile)[1])
+        print(n, 'instances of self.type', self.type, 'in', self.profile)
         names=list()
         for i in range(n):
             ilist=self.checknamesall[self.type][i+1]
@@ -1473,30 +1504,34 @@ class Check():
             buttonFrame1=ButtonFrame(window.frame,langs,self.setglosslang2,
                                      window
                                      ).grid(column=0, row=4)
-    def getcheck(self):
-        print("this sets the check")
-        # fn=inspect.currentframe().f_code.co_name
-        print("Getting the check name...")
+    def getcheckspossible(self):
         """This splits by tone or not, because the checks available for
         segments depend on the number of segments in the selected syllable
         profile, but for tone, they don't; tone frames depend only on ps."""
         if self.type=='T': #if it's a tone check, get from frames.
-            checks=self.framenamesbyps(self.ps)
+            self.checkspossible=self.framenamesbyps(self.ps)
         else:
-            checks=self.setnamesbyprofile() #This shouln't return tone checks
+            self.checkspossible=self.setnamesbyprofile() #This shouln't return tone checks
+    def getcheck(self):
+        print("this sets the check")
+        # fn=inspect.currentframe().f_code.co_name
+        print("Getting the check name...")
+        self.getcheckspossible()
         window=Window(self.frame,title='Select Check')
-        if checks == []:
+        if self.checkspossible == []:
             text=_("You don't seem to have any tone frames set up.\n"
-            "The next window will let you define your first frame. \nPlease pay "
-            "attention to the instructions, and if \nthere's anything you don't "
-            "understand, or if you're not \nsure what a tone frame is, "
-            "please ask for help.")
+            "The next window will let you define your first frame. \nPlease "
+            "pay attention to the instructions, and if \nthere's anything "
+            "you don't understand, or if you're not \nsure what a tone "
+            "frame is, please ask for help.")
             Label(window.frame, text=text).grid(column=0, row=0)
-            b=Button(window.frame, text=_("Define a New Tone Frame"),cmd=self.addframe,
+            b=Button(window.frame, text=_("Define a New Tone Frame"),
+                    cmd=self.addframe,
                     anchor='c')
             b.grid(column=0, row=1,sticky='')
             """I need to make this quit the whole program, immediately."""
-            b2=Button(window.frame, text=_("Quit A→Z+T"),cmd=self.parent.parent.destroy,
+            b2=Button(window.frame, text=_("Quit A→Z+T"),
+                    cmd=self.parent.parent.destroy,
                     anchor='c')
             b2.grid(column=1, row=1,sticky='')
             b.wait_window(window)
@@ -1506,7 +1541,7 @@ class Check():
             text=_('What check do you want to do?')
             Label(window.frame, text=text).grid(column=0, row=0)
             buttonFrame1=ButtonFrame(window.frame,
-                                    checks,
+                                    self.checkspossible,
                                     self.setcheck,
                                     window
                                     )
@@ -1880,8 +1915,6 @@ class Check():
         profiles..."""
         originalselfnamevalue=self.name[:]
         originalselfsubcheckvalue=self.subcheck[:]
-        # print('self.checknamesall:',self.checknamesall)
-        # return
         if self.type == 'V':
             subchecks=self.db.v[self.db.analang] #(just the vowels
         elif self.type == 'C':
@@ -2737,6 +2770,31 @@ class Check():
                                         fieldtype='tone',
                                         location=self.subcheck,guid=guid)))
         return '\t'.join(outputs)
+    def guesssubcheck(self):
+        if self.type == 'CV': #Dunno how to guess this yet...
+            if self.subcheck in (self.subcheckspossible['V']+
+                                self.subcheckspossible['C']+
+                                self.subcheckspossible['T']
+                                ):
+                self.getsubcheck()
+        else:
+            self.subcheck=firstoflist(self.subcheckspossible[self.type],
+                                                            othersOK=True)
+    def getsubcheckspossible(self):
+        """Tone doesn't have subchecks, so we just make it 'None' here."""
+        """I really should be able to order these..."""
+        self.subcheckspossible={"V":self.db.v[self.analang],
+                                "C":self.db.c[self.analang],
+                                "CV":'',
+                                "T":[None,] #We should fix this some day
+                                }
+        # self.subcheckspossible[
+        # if self.type == "V":
+        # if self.type == "C":
+        # if self.type == "CV":
+        # if self.type == "T":
+
+        self.subcheckspossible
     def getsubcheck(self):
         print("this sets the subcheck")
         if self.type == "V":
@@ -2748,23 +2806,29 @@ class Check():
             self.getC(windowC)
             self.frame.wait_window(window=windowC)
         if self.type == "CV":
-            windowC=Window(self.frame,title=_('Select Consonant'))
-            self.getC(windowC)
-            self.frame.wait_window(window=windowC)
-            CV=self.subcheck
-            windowV=Window(self.frame,title=_('Select Vowel'))
-            self.getV(windowV)
-            self.frame.wait_window(window=windowV)
-            CV=CV+self.subcheck
-            print("CV subcheck:"+CV)
+            CV=''
+            for self.type in ['C','V']:
+                self.getsubcheck()
+                CV+=self.subcheck
+            # windowC=Window(self.frame,title=_('Select Consonant'))
+            # self.getC(windowC)
+            # self.frame.wait_window(window=windowC)
+            # CV=self.subcheck
+            # windowV=Window(self.frame,title=_('Select Vowel'))
+            # self.getV(windowV)
+            # self.frame.wait_window(window=windowV)
+            # CV=CV+self.subcheck
+            # print("CV subcheck:"+CV)
             self.subcheck=CV
-        if self.type == "T":
-            """This really should just go to running the check?"""
-            windowC=Window(self.frame,title=_('Select Tone check'))
-            Label(windowC.frame,
-                  text=_("You're done! You can run the check now.")
-                  ).grid(column=0, row=0)
-            self.frame.wait_window(window=windowC)
+            self.type = "CV"
+            self.checkcheck()
+        # if self.type == "T":
+        #     """This really should just go to running the check?"""
+        #     windowC=Window(self.frame,title=_('Select Tone check'))
+        #     Label(windowC.frame,
+        #           text=_("You're done! You can run the check now.")
+        #           ).grid(column=0, row=0)
+        #     self.frame.wait_window(window=windowC)
     def getps(self):
         print("Asking for ps...")
         window=Window(self.frame, title=_('Select Grammatical Category'))
@@ -4259,15 +4323,13 @@ def firstoflist(list,othersOK=False):
     """This takes a list composed of one item, and returns the item.
     with othersOK=True, it discards n=2+ items; with othersOK=False,
     it throws an error if there is more than one item in the list."""
-    # if (len(list) != 1) and (othersOK == False):
-    #     print('Sorry, more than one list item found:',list)
-    # return list[0]
     if (list == None) or (list == []):
         return
-    elif len(list) == 1: # and (othersOK == False):
+    elif len(list) == 1 or (othersOK == True):
         return list[0]
-    elif othersOK == False:
-        print('Sorry, something other than one list item found:',list)
+    elif othersOK == False: #(i.e., with `len(list) != 1`)
+        print('Sorry, something other than one list item found:',list,
+                '\nDid you mean to use "othersOK=True"?')
 def t(element):
     try:
         return element.text
