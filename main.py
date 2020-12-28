@@ -222,6 +222,8 @@ class Check():
         self.profilesbysense['Invalid']=[]
         self.profiledguids=[]
         self.profiledsenseids=[]
+        profileori=save(self.profile) #We iterate across this here
+        ps=save(self.ps) #We iterate across this here
         onlyCV={'C','N','V'}
         self.sextracted={} #Will store matching segments here
         for ps in self.db.pss:
@@ -251,6 +253,8 @@ class Check():
                 else:
                     for profile in self.profilesbysense[ps]:
                         print(ps,profile,len(self.profilesbysense[ps][profile]))
+        self.profile=profileori
+        self.ps=ps
     def guessps(self):
         """Make this smarter, but for now, just take value from the most
         populous tuple"""
@@ -1853,9 +1857,9 @@ class Check():
     def basicreport(self):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
-        originalselftypevalue=self.type[:]
-        originalselfpsvalue=self.ps[:]
-        originalselfprofilevalue=self.profile[:]
+        typeori=save(self.type)
+        psori=save(self.ps)
+        profileori=save(self.profile)
         # import sys
         # self.type='V'
         # pss=('Nom','Verbe')
@@ -1914,9 +1918,9 @@ class Check():
         #                             checks=checks,subchecks=None)#,nsyls=nsyls)
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        self.type=originalselftypevalue[:]
-        self.profile=originalselfprofilevalue[:]
-        self.ps=originalselfpsvalue[:]
+        self.type=typeori
+        self.profile=profileori
+        self.ps=psori
         self.checkcheck()
     def wordsbypsprofilechecksubcheck(self,ps=None,profile=None,checks=None,
                                                 subchecks=None,nsyls=None):
@@ -1931,8 +1935,8 @@ class Check():
         possible values (as above), then restore the value."""
         """I need to find a way to limit these tests to appropriate
         profiles..."""
-        originalselfnamevalue=self.name[:]
-        originalselfsubcheckvalue=self.subcheck[:]
+        nameori=save(self.name)
+        subcheckori=save(self.subcheck)
         if self.type == 'V':
             subchecks=self.db.v[self.db.analang] #(just the vowels
         elif self.type == 'C':
@@ -1958,8 +1962,8 @@ class Check():
                 for match in self.db.senseidformsbyregex(self.regex,
                                                             ps=ps).items():
                     self.checknprint(match[0])
-        self.name=originalselfnamevalue[:]
-        self.subcheck=originalselfsubcheckvalue[:]
+        self.name=nameori
+        self.subcheck=subcheckori
     def checknprint(self,matchid):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed becuase it must return if
@@ -2687,12 +2691,14 @@ class Check():
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.gettonegroups() #sets self.tonegroups
     def tryNAgain(self):
+        subcheckori=self.subcheck.copy()
         for self.subcheck in ['NA']:
             for senseid in self.senseidstosort:
                 self.db.rmexfields(senseid=senseid,fieldtype='tone', #I might want to generalize this later...
                                 location=self.name,fieldvalue=self.subcheck,
                                 showurl=True
                                 )
+        self.subcheck=subcheckori
         self.maybesort()
     def getanotherskip(self,parent):
         """This function presents a group of buttons for the user to choose
@@ -4577,6 +4583,9 @@ def inherit(self):
     # self.photowhite=self.parent.photowhite
     # self.photosmall=self.parent.photosmall
     self._=self.parent._
+def save(x):
+    if x is not None:
+        return x.copy()
 # def interfacelang(lang=None):
 #     global aztdir
 #     global i18n
