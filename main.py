@@ -290,8 +290,7 @@ class Check():
             for ps in self.db.pss:
                 self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches
             form=self.rx[s].sub(s,form) #replace with profile variable
-        # print(fCV)
-        return form #fCNV
+        return form
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
         return idsbyps[randint(0, len(idsbyps))]
@@ -2351,6 +2350,7 @@ class Check():
                         command=lambda :self.renamegroup())
         self.runwindow.config(menu=verifymenu)
         self.settonevariablesbypsprofile()
+        """self.subcheck is set here, but probably OK"""
         for self.subcheck in self.tonegroups:
             if self.subcheck in (self.status[self.type][self.ps][self.profile]
                                             [self.name]):
