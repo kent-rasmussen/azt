@@ -222,8 +222,8 @@ class Check():
         self.profilesbysense['Invalid']=[]
         self.profiledguids=[]
         self.profiledsenseids=[]
-        profileori=save(self.profile) #We iterate across this here
-        ps=save(self.ps) #We iterate across this here
+        profileori=self.profile #We iterate across this here
+        psori=self.ps #We iterate across this here
         onlyCV={'C','N','V'}
         self.sextracted={} #Will store matching segments here
         for ps in self.db.pss:
@@ -254,7 +254,7 @@ class Check():
                     for profile in self.profilesbysense[ps]:
                         print(ps,profile,len(self.profilesbysense[ps][profile]))
         self.profile=profileori
-        self.ps=ps
+        self.ps=psori
     def guessps(self):
         """Make this smarter, but for now, just take value from the most
         populous tuple"""
@@ -1857,12 +1857,9 @@ class Check():
     def basicreport(self):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
-        typeori=save(self.type)
-        psori=save(self.ps)
-        profileori=save(self.profile)
-        # import sys
-        # self.type='V'
-        # pss=('Nom','Verbe')
+        typeori=self.type
+        psori=self.ps
+        profileori=self.profile
         self.basicreportfile=''.join([re.sub('\.','_',
                                         ''.join([self.db.filename
                                             # ,'_',self.type,'_',str(pss)
@@ -1935,8 +1932,8 @@ class Check():
         possible values (as above), then restore the value."""
         """I need to find a way to limit these tests to appropriate
         profiles..."""
-        nameori=save(self.name)
-        subcheckori=save(self.subcheck)
+        nameori=self.name
+        subcheckori=self.subcheck
         if self.type == 'V':
             subchecks=self.db.v[self.db.analang] #(just the vowels
         elif self.type == 'C':
@@ -4507,9 +4504,6 @@ def inherit(self):
     # self.photowhite=self.parent.photowhite
     # self.photosmall=self.parent.photosmall
     self._=self.parent._
-def save(x):
-    if x is not None:
-        return x.copy()
 # def interfacelang(lang=None):
 #     global aztdir
 #     global i18n
