@@ -2338,15 +2338,13 @@ class Check():
                                         self.name
                                         )
         oktext=_('These are all different')
-        introtext=_("Congratulations! All your {} with profile {} are sorted "
+        introtext=_("Congratulations! \nAll your {} with profile {} are sorted "
                 "into the groups exemplified below (in the ‘{}’ frame). Do any "
                 "of these have the same tone melody? "
-                "If so, click on one of the two groups. If not, click ‘{}’."
+                "If so, click on the two groups. If not, click ‘{}’."
                 ).format(self.ps,self.profile,self.name,oktext)
-        diff2=_("Which other group has the same tone melody as this one?")
         print(introtext)
         self.groupselected=None
-        # while self.groupselected != "ALLOK":
         self.runwindow.resetframe()
         self.runwindow.frame.titles=Frame(self.runwindow.frame)
         self.runwindow.frame.titles.grid(column=0, row=0, columnspan=2, sticky="w")
@@ -2361,14 +2359,12 @@ class Check():
                         ).grid(row=2,column=0,rowspan=2,sticky='nw')
         self.sframe=ScrollingCanvas(self.runwindow.frame)
         self.sframe.grid(row=2,column=1)
-        self.sorting=self.sframe.content #Frame(self.runwindow.frame)
-        # self.sorting.grid(row=2,column=0)
+        self.sorting=self.sframe.content
         self.settonevariablesbypsprofile()
         row=0
         for group in self.tonegroups:
             self.tonegroupbutton(self.sorting,group,row,notonegroup=False)
             row+=1
-        # text=_("It's different than these; start another group")
         """If all is good, destroy this frame."""
         b=Button(self.sorting, text=oktext,
                     cmd=lambda:returndictnsortnext(self,
@@ -2379,43 +2375,27 @@ class Check():
                     )
         b.grid(column=0, row=row, sticky="ew")
         self.runwindow.frame.wait_window(self.sorting)
-        # print(self.groupselected)
         if self.groupselected != "ALLOK":
-            # self.runwindow.resetframe() #Should I need this?
             self.sframe.destroy()
             self.sframe=ScrollingCanvas(self.runwindow.frame)
             self.sframe.grid(row=3,column=1)
-            self.sorting=self.sframe.content #Frame(self.runwindow.frame)
-            # self.sorting=Frame(self.runwindow.frame)
-            # self.sorting.grid(row=2,column=0)
-            # Label(self.sorting, text=title, #+' ('+progress+'):',
-            #         font=self.fonts['title']
-            #         ).grid(column=0, row=0) #, sticky="w"
+            self.sorting=self.sframe.content
             group1=self.groupselected
-            # print('group1:',group1)
             self.groupselected=None #don't want to leave this there...
             othergroups=self.tonegroups.copy() #don't mess with the var...
             othergroups.remove(group1) #don't offer the chosen group again.
             print('self.tonegroups:',self.tonegroups,'group1:',group1,
                                 'othergroups:',othergroups)
-            i.destroy()
-            i=Label(self.runwindow.frame, text=diff2,
-                    font=self.fonts['instructions']
-                    )
-            i.grid(column=0, row=1, columnspan=2, sticky="w")
-            # row+=1
-            # for group in group1:
-            #     print(group)
-            gb=self.tonegroupbutton(self.runwindow.frame,group1,row=2,
-                                column=1,font=self.fonts['readbig'],
-                                label=True,
-                                notonegroup=False)
-            gb.wrap()
-            row=1 #begin self.sorting rows
-            # row+=1
-            for group in othergroups:
+            for group in self.tonegroups:
+                if group == group1:
+                    label=True
+                    font=self.fonts['readbig']
+                else:
+                    label=False
+                    font=self.fonts['read']
                 self.tonegroupbutton(self.sorting,group,row,
-                                    font=self.fonts['read'],
+                                    font=font,
+                                    label=label,
                                     notonegroup=False)
                 row+=1
             self.runwindow.wait_window(self.sorting)
@@ -2423,7 +2403,6 @@ class Check():
                 print("Now we're going to join groups",group1,"an"
                     "d",self.groupselected,".")
                 """All the senses we're looking at, by ps/profile"""
-                # self.lst1=self.senseidstosort #all in this ps/profile
                 self.updatebysubchecksenseid(group1,self.groupselected)
                 self.subcheck=group1
                 self.updatestatus() #not verified=True --if any joined.
