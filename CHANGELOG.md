@@ -26,8 +26,6 @@
 ### Documentation
 - Add what and why pages in different places, with rationales and instructions specific to context?
 ## Issues since November 2020 Zulgo beta test
-### UI Improvements
-- add second icon for joinT pages
 ### CV Report
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - make CV report not include Caa in V1 or V2
