@@ -667,7 +667,7 @@ class Check():
             if self.debug == True:
                 print('forms:',forms)
                 for lang in gloss:
-                    print('gloss[lang]:',glosses[lang])
+                    print('gloss[{}]:'.format(lang),glosses[lang])
                 print('tonegroups:',tonegroups)
             """convert from lists to single items without loosing data,
             then pull text from nodes"""
@@ -725,7 +725,7 @@ class Check():
         if (self.glosslang2 == None) and (self.glosslang2 in gloss):
             del gloss[self.glosslang2] #remove this now, and lose checks later
         output[self.analang]=None
-        for lang in gloss:
+        for lang in list(gloss.keys())+[self.glosslang]:
             output[lang]=None
         text=('noform','nogloss')
         if noframe == False:
@@ -1473,23 +1473,23 @@ class Check():
         print("this sets the gloss")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title=_('Select Gloss Language'))
-        if self.db.glosslang is None :
-            Label(window.frame,
-                          text='Error: please set Lift file first! ('
-                          +str(self.db.filename)+')'
-                          ).grid(column=0, row=0)
-        else:
-            Label(window.frame,
-                      text=_('What Language do you want to use for glosses?')
-                      ).grid(column=0, row=1)
-            langs=list()
-            for lang in self.db.glosslangs:
-                langs.append({'code':lang, 'name':self.db.languagenames[lang]})
-                print(lang, self.db.languagenames[lang])
-            buttonFrame1=ButtonFrame(window.frame,
-                                     langs,self.setglosslang,
-                                     window
-                                     ).grid(column=0, row=4)
+        # if self.db.glosslang is None :
+        #     Label(window.frame,
+        #                   text='Error: please set Lift file first! ('
+        #                   +str(self.db.filename)+')'
+        #                   ).grid(column=0, row=0)
+        # else:
+        Label(window.frame,
+                  text=_('What Language do you want to use for glosses?')
+                  ).grid(column=0, row=1)
+        langs=list()
+        for lang in self.db.glosslangs:
+            langs.append({'code':lang, 'name':self.db.languagenames[lang]})
+            print(lang, self.db.languagenames[lang])
+        buttonFrame1=ButtonFrame(window.frame,
+                                 langs,self.setglosslang,
+                                 window
+                                 ).grid(column=0, row=4)
     def set(self,attribute,choice,window):
         """Before I can use this, I need to pass attribute through the button
         frame."""
@@ -1694,6 +1694,8 @@ class Check():
                 continue #return #I want the "next" button...
             for example in examples:
                 framed=self.getframeddata(example)
+                if framed[self.analang] is None:
+                    continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
@@ -4274,7 +4276,7 @@ def nonspace(x):
         return " "
 def nn(x,oneperline=False):
     """Don't print "None" in the UI..."""
-    if type(x) is list or tuple:
+    if type(x) is list or type(x) is tuple:
         output=[]
         # print('List!')
         for y in x: #o='\t'.join(outputs)
