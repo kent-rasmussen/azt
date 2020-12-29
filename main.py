@@ -10,6 +10,7 @@ import threading
 import itertools
 import importlib.util
 import collections
+import platform
 from random import randint
 if tkinter==True:
     import tkinter #as gui
@@ -3647,7 +3648,7 @@ class MainApplication(Frame):
                                                 (99*len(self.parent.themes)-1))
         self.parent.themename='highcontrast' #for low light environments
         self.parent.themename=pot[randint(0, len(pot))-1] #mostly 'greygreen'
-        if os.uname().nodename == 'karlap':
+        if platform.uname().node == 'karlap':
             self.parent.themename='Kim' #for my development
         """These versions might be necessary later, but with another module"""
         # print(socket.gethostname())
