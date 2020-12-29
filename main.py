@@ -3651,8 +3651,6 @@ class MainApplication(Frame):
         if platform.uname().node == 'karlap':
             self.parent.themename='Kim' #for my development
         """These versions might be necessary later, but with another module"""
-        # print(socket.gethostname())
-        # print(socket.gethostbyaddr(socket.gethostname()))
         if self.parent.themename not in self.parent.themes:
             print("Sorry, that theme doesn't seem to be set up. Pick from "
             "these options:",self.parent.themes.keys())
