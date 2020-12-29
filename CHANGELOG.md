@@ -2,9 +2,12 @@
 - Find again (not happening now) and fix scrolling frame size problem on rename
   - frame in a frame? (this problem looks familiar...)
 ## Next Features
-- rework join page to make more sensible in context
-  - click makes a button into a bold label, and new directions, no other change.
-- fully distinguish C, CG, and NC onsets (or just word initial?), C and N finals
+- recording page for citation forms (and a secondary form?)
+  - make record button work for different contexts, by `self.type`:
+    - T: tone report (as is currently done)
+    - C,V: citation forms (new page? plural, other forms? all <form @lang/>)
+    - ad hoc?
+- fully distinguish C, CG, and NC onsets, C and N finals
   - look for CG and NC first, then C.
   - how to treat C1=C2? CG1=CG2? Do we want S to be larger units, or to have N and G modifications?
   - how to treat N and C different word finally? (may have to leave this for analysis)
@@ -13,18 +16,13 @@
   - set lift.v={}, with lift.v['V'], lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
     - some people may want V to include Vː, others may not (for tone, probably all should...)
     - setup questionː is <VN> [Ṽ] or [VN]? —This is important for tone.
-  - make setting to turn this off
+  - make settings to turn off `NC≠C≠CC`, `CG≠C≠CC` and `N#≠C#`
 - prioritize guesses, so most frequence C or V is chosen first. (then second?)
   - collections.Counter()
 - add C and V sorting (and CV?)
-- make record button work for different contexts, by `self.type`:
-  - T: tone report (as is currently done)
-  - C,V: citation forms (new page? plural, other forms? all <form @lang/>)
-  - ad hoc?
 - XLP export
 ### Prioritization
 - make checkcheck reference most popular *unfinished* ps-profile combo
-- set scrolling selections (just profile?) to sort by number
 ### Documentation
 - Add what and why pages in different places, with rationales and instructions specific to context?
 ## Issues since November 2020 Zulgo beta test
@@ -52,7 +50,7 @@
     - selects most restrictive check available for profile (i.e. CVCV vowel checks start with V1=V2, not V1 or V2)
     - selects most populous V or C to check first
       - for CV checks, asks user which C and V (can't really guess that)
-- C, V and profile selection dialogs now include counts, for the user to select based on frequency
+- C, V and profile selection dialogs now sorted by (included) counts, for the user to select based on frequency
   - counts are for valid data by ps, in the whole database
 ### reports
 - CV report now takes most populous syllable profiles, and runs all checks
