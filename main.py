@@ -1919,8 +1919,7 @@ class Check():
         self.profile=profileori
         self.ps=psori
         self.checkcheck()
-    def wordsbypsprofilechecksubcheck(self,ps=None,profile=None,checks=None,
-                                                subchecks=None,nsyls=None):
+    def wordsbypsprofilechecksubcheck(self):
         """This function iterates across self.name and self.subcheck values
         appropriate for the specified self.type, self.profile and self.name
         values (ps is irrelevant here).
@@ -1957,7 +1956,7 @@ class Check():
                 print(self.ps,self.profile,self.name,self.subcheck,':')
                 self.buildregex()
                 for match in self.db.senseidformsbyregex(self.regex,
-                                                            ps=ps).items():
+                                                            ps=self.ps).items():
                     self.checknprint(match[0])
         self.name=nameori
         self.subcheck=subcheckori
