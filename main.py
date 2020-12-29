@@ -4083,15 +4083,15 @@ class ButtonFrame(Frame):
         elif type(optionlist[0]) is tuple:
             if type(optionlist[0][1]) is str:
                 """when optionlist is a list of binary tuples (codes,names)"""
-                print("looks like options are just a list of (codes,names); "
-                        "making dict.")
+                print("looks like options are just a list of (codes,names) "
+                        "tuples; making dict.")
                 optionlist = [({'code':optionlist[i][0],
                                 'name':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
-            if type(optionlist[0][1]) is int:
+            elif type(optionlist[0][1]) is int:
                 """when optionlist is a list of binary tuples (codes,counts)"""
-                print("looks like options are just a list of (codes,counts); "
-                        "making dict.")
+                print("looks like options are just a list of (codes,counts) "
+                        "tuples; making dict.")
                 optionlist = [({'code':optionlist[i][0],
                                 'description':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
