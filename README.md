@@ -11,7 +11,7 @@ A→Z+T is written in [Python](https://python.org) (3+) and [Tkinter](https://do
 ## How
 To get the program: `git clone https://github.com/kent-rasmussen/azt.git`
 
-To run: `python main.py` (The python 3+ executable may be called `python3`, i.e., `python3 main.py`.)
+To run: `python main.py` (or `python3 main.py`, as appropriate for the (3+) version of python on your system)
 
 See [INSTALL](INSTALL.md) for more help installing; see [USAGE](USAGE.md) for how to use this tool.
 
