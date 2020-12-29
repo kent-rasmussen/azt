@@ -186,6 +186,27 @@ class Check():
                 if len(self.db.analangs[n]) == 3:
                     self.analang=self.db.analangs[n]
                     return
+    def guessaudiolang(self):
+        """if there's only one audio language, use it."""
+        nlangs=len(self.db.audiolangs)
+        if nlangs == 1: # print('Only one analang in database!')
+            self.audiolang=self.db.audiolangs[0]
+            """If there are more than two analangs in the database, check if one
+            of the first two is three letters long, and the other isn't"""
+        elif nlangs == 2:
+            if ((self.analang in self.db.audiolangs[0]) and
+                (self.analang not in self.db.audiolangs[1])):
+                print('Looks like I found an  audiolang!')
+                self.audiolang=self.db.audiolangs[0] #assume this is the iso code
+            elif ((self.analang in self.db.audiolangs[1]) and
+                    (self.analang not in self.db.audiolangs[0])):
+                print('Looks like I found an iso code for analang!')
+                self.audiolang=self.db.audiolangs[1] #assume this is the iso code
+        else: #for three or more analangs, take the first plausible iso code
+            for n in range(nlangs):
+                if self.analang in self.db.analangs[n]:
+                    self.audiolang=self.db.audiolangs[n]
+                    return
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
         if len(self.db.glosslangs) == 1:
@@ -877,6 +898,9 @@ class Check():
             print("find the language")
             self.getanalang()
             return
+        (self.audiolang)
+        if self.audiolang == None:
+            self.guessaudiolang() #don't display this, but make it
         """This just gets the prose language name from the code"""
         for l in self.parent.parent.interfacelangs:
             if l['code']==self.parent.parent.interfacelang:
@@ -1164,7 +1188,10 @@ class Check():
                         'type':[
                             'name',
                             # 'subcheck'
-                            ]
+                            ],
+                        'fs':[],
+                        'sample_format':[],
+                        'audio_card_index':[]
                         }
     def cleardefaults(self,field=None):
         for default in self.defaults[field]:
@@ -1472,7 +1499,10 @@ class Check():
             """If there's something getting reset that shouldn't be, remove it
             from self.defaults[attribute]"""
             self.cleardefaults(attribute)
-            self.checkcheck()
+            if attribute not in ['fs',
+                                'sample_format',
+                                'audio_card_index']:
+                self.checkcheck()
         else:
             if self.debug==True:
                 print('No change:',attribute,'==',choice)
@@ -2933,8 +2963,10 @@ class Check():
                 self.getresults()
     def setsoundhz(self,choice,window):
         self.set('fs',choice,window)
+        self.soundcheckrefresh()
     def setsoundformat(self,choice,window):
         self.set('sample_format',choice,window)
+        self.soundcheckrefresh()
     def getsoundformat(self):
         print("Asking for audio format...")
         window=Window(self.frame, title=_('Select Audio Format'))
@@ -2959,6 +2991,7 @@ class Check():
         buttonFrame1.grid(column=0, row=1)
     def setsoundcardindex(self,choice,window):
         self.set('audio_card_index',choice,window)
+        self.soundcheckrefresh()
     def getsoundcardindex(self):
         print("Asking for sampling frequency...")
         window=Window(self.frame, title=_('Select Sound Card'))
@@ -3971,7 +4004,7 @@ class RecordButtonFrame(Frame):
         # print(self.wf._nchannels)
         self.wf.close()
         if self.test is not True:
-            self.db.addmediafields(self.example,self.filename) #No dir info
+            self.db.addmediafields(self.example,self.filename,self.audiolang)
     def makebuttons(self):
         if file.exists(self.filenameURL):
             self.makeplaybutton()
@@ -4005,6 +4038,7 @@ class RecordButtonFrame(Frame):
         self.chunk = 1024  # Record in chunks of 1024 samples
         # self.sample_format = pyaudio.paInt16  # 16 bits per sample
         self.channels = 1 #Always record in mono
+        self.audiolang=check.audiolang
         # self.fs = 44100  # Record at 44100 samples per second
         # self.seconds = 3
         # self.toneframesfile=re.sub('\.','_',str(filename+".ToneFrames"))+'.py'

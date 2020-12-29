@@ -882,6 +882,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
     def addmediafields(self,example, url,
+                        lang, #this should be Check.audiolang
                         # guid,senseid,analang,
                         # glosslang,langform,glossform,fieldtype,
                         # location,fieldvalue,ps=None,
@@ -903,7 +904,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #     print("Sorry, this didn't return a node:",guid,senseid)# nodes=self.nodes.findall(url) #this is a list
         #     return
         # p=ET.SubElement(node, 'example')
-        form=ET.SubElement(example,'form',attrib={'lang':self.audiolang})
+        form=ET.SubElement(example,'form',attrib={'lang':lang})
         t=ET.SubElement(form,'text')
         t.text=url
         """Can't really do this without knowing what entry or sense I'm in..."""
