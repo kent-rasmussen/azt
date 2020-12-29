@@ -43,6 +43,7 @@ If you open A→Z+T without a saved configuration file, the program makes assump
 - the largest syllable profile group, and it's ps
 - vowels first, before doing consonants or tone
 - the segment with the largest representation in the database is chosen first.
+
 If you don't like those assumptions, you can change any of these settings in the menus. Those settings are saved to a configuration file each time you run a check, so your preferences will be there for your next run. If you change a setting that leaves another setting invalid (e.g., `V1=g`, or `C1=C2=a`), the invalid setting is removed and replaced with an assumption as above, until you change it.
 
 ### The Main Window
