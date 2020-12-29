@@ -1,10 +1,6 @@
-# In Process
-## Issues from November 2020 Zulgo beta test
-### Cleanup
-- check that tone group renaming doesn't mess with iteration across groups
-  - may need to reset iteration?
-  - fix scrolling frame size problem on rename
-    - frame in a frame? (this problem looks familiar...)
+### Cleanup Unresolved from November 2020 Zulgo beta test
+- Find again (not happening now) and fix scrolling frame size problem on rename
+  - frame in a frame? (this problem looks familiar...)
 ## Next Features
 - rework join page to make more sensible in context
   - click makes a button into a bold label, and new directions, no other change.
@@ -76,6 +72,7 @@
 - Trimmed down settings that are reset by another to a few essentials
   - checkcheck (flash) only when a setting is actually changed.
 subcheck, if current values are appropriate to selected values.
+- Join dialog is now more intuitive: one window with a single reset frame on select, instructions ask user to select two groups (as opposed to one, then the other). The first selection sets the first variable (as before), but leaves text in place, now as a label --other buttons remain.
 ## bug fixes:
 ### Useability
 - make all file open options with `encoding='utf-8'`
