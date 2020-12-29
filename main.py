@@ -1509,6 +1509,7 @@ class Check():
     def setinterfacelangwrapper(self,choice,window):
             self.set('interfacelang',choice,window) #set the check variable
             setinterfacelang(choice) #change the UI
+            self.checkcheck()
     def setprofile(self,choice,window):
         self.set('profile',choice,window)
     def settype(self,choice,window):
