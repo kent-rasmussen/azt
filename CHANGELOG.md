@@ -26,6 +26,8 @@
 ### Documentation
 - Add what and why pages in different places, with rationales and instructions specific to context?
 ## Issues since November 2020 Zulgo beta test
+### Useability
+- make `wait` window for longer tasks (reports, recording)
 ### CV Report
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - make CV report not include Caa in V1 or V2
@@ -58,7 +60,7 @@
 ### Useability
 - only question required on first open (for now) is C,V,CV, or T; everything else has an initial assumed value (though still changeable through the menus).
 - `Record` button on main window, with unencombered icon
-  - `checkcheck` picks the most numerous profile, along with it's ps.
+- `checkcheck` picks the most numerous profile, along with it's ps.
 - label method to wrap on availablexy
 - main window displays number of words in current ps-profile filter
 - new (Advanced) menu option to redo syllable profile analysis
@@ -67,7 +69,7 @@
 - added second gloss (now by iso code) to getframeddata
 - Trimmed down settings that are reset by another to a few essentials
   - checkcheck (flash) only when a setting is actually changed.
-subcheck, if current values are appropriate to selected values.
+  - subcheck, if current values are appropriate to selected values.
 - Join dialog is now more intuitive: one window with a single reset frame on select, instructions ask user to select two groups (as opposed to one, then the other). The first selection sets the first variable (as before), but leaves text in place, now as a label --other buttons remain.
 ## bug fixes:
 ### Useability
@@ -85,6 +87,7 @@ subcheck, if current values are appropriate to selected values.
   - UI language (via gloss, which is in turn guessed from database)
   - Analysis language
   - Gloss languages
+- fixed problems with recording settings and file names
 ### UI
 - Added icons to distinguish sort and verify pages, as well as join pages
 - resolved `joinT` second window problem with the scrolling frame
