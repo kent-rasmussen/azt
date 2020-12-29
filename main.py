@@ -1169,12 +1169,6 @@ class Check():
         for default in self.defaults[field]:
             setattr(self, default, None)
             """These can be done in checkcheck..."""
-            # if default == ('glosslang' or 'glosslang2'):
-            #     setdefaults.getglosslangs(self)
-            # if default == 'analang':
-            #     setdefaults.getanalangs(self)
-            # if default == 'audiolang':
-            #     setdefaults.getaudiolangs(self)
     def reloadprofiledata(self):
         file.remove(self.profiledatafile)
         self.parent.parent.destroy()
@@ -1883,36 +1877,7 @@ class Check():
                     for typenum in self.typenums:
                         if typenum not in self.basicreported:
                             self.basicreported[typenum]=list()
-                    # print(self.ps,self.profile,self.type)
-        # print('profilecounts:',self.profilecounts)
-        # print('profilecounts:',self.profilecounts[0])
-        # print('profilecounts:',self.profilecounts[1])
-        # print('profilecounts:',self.profilecounts[0][1])
-        # print('profilecounts:',self.profilecounts[1][1])
-                    # """To finish writing here"""
-                    # sys.stdout.close()
-                    # sys.stdout=sys.__stdout__
-        # print('Running a basic report on',self.type,'segments, in these parts '
-        #         'of speech:',pss)
-        # """One syllable forms and checks first"""
-        # profs=('CVC',) #let's not conflict with the module...
-        # checks=('V1',) #Nothing here with 3V's
-                    self.wordsbypsprofilechecksubcheck(
-                                                # ps=ps,profile=profile,
-                                                # checks=checks,subchecks=None
-                                                )
-        # if self.nsyls > 1:
-        #     """Then Two syllable forms and checks"""
-        #     profs=('CVCVC','CVCV')
-        #     checks=('V1=V2',) #List!
-        #     self.wordsbypsprofilechecksubcheck(pss=pss,profs=profs,
-        #                             checks=checks,subchecks=None)
-        # if self.nsyls > 2:
-        #     """Then Three syllable forms and checks"""
-        #     profs=('CVCVCV','CVCVCVC')
-        #     checks=('V1=V2=V3',) #Nothing here with 3V's
-        #     self.wordsbypsprofilechecksubcheck(pss=pss,profs=profs,
-        #                             checks=checks,subchecks=None)#,nsyls=nsyls)
+                    self.wordsbypsprofilechecksubcheck()
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         self.type=typeori
@@ -1986,7 +1951,6 @@ class Check():
                     wcounts.append((count, profile, ps))
         self.profilecounts=sorted(wcounts,reverse=True)
         self.Scounts={}
-
     def printcountssorted(self):
         print("Ranked and numbered syllable profiles, by grammatical category:")
         #{}
