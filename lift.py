@@ -1179,32 +1179,58 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """Note, objects will be found in the order listed, so put the
         larger/longer objects first, if you ever want to find them ('ts' must
         precede 't', or you will only find t+s=CC, not ts=C)"""
-        pdi=['bh','dh','kp','gh','gb','kk']
-        pm=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','ɡ','G','ʔ',"ꞌ",'ʼ']
         # forpeoplewholikec=['c']
         # plosives=pdigraphs+p+forpeoplewholikec
         # phookedimplosives=[]
-        fdi=['ch','ph','bh','vh','sh','zh','hh']
-        fm=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
-        atri=['chk']
-        adi=['dj','ts','dz','tʃ','dʒ']
-        lfdi=['sl','zl','zl']
-        lfm=['ɬ','ɮ']
         obstruents=atri+pdi+fdi+adi+lfdi+pm+fm+lfm #tri-, then di-, mono-graphs
-        pntri=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']  #(graphs that preceede a consonant)
-        pndi=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']  #(graphs that preceede a consonant)
         # nasals=['m','M','n','ny','ŋ','ŋŋ','ɲ']
-        ntri=["ng'"]
-        ndi=['mm','ny','ŋŋ']
-        nm=['m','M','n','ŋ','ɲ']
+        """This is a dictionary of theoretically possible segment graphs,
+        by category and number of glyphs, with consonant dictionaries nested
+        inside it, by category."""
+        s={}
+        s['p']={}
+        s['p'][2]=['bh','dh','kp','gh','gb','kk']
+        s['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','ɡ','G',
+                                                                'ʔ',"ꞌ",'ʼ']
+        s['f']={}
+        s['f'][2]=['ch','ph','bh','vh','sh','zh','hh']
+        s['f'][1]=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
+        s['a']={}
+        s['a'][3]=['chk']
+        s['a'][2]=['dj','ts','dz','tʃ','dʒ']
+        s['lf']={}
+        s['lf'][2]=['sl','zl','zl']
+        s['lf'][1]=['ɬ','ɮ']
+        s['pn']={}
+        s['pn'][3]=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']
+        s['pn'][2]=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj',
+                        'ns','nz']
+        s['n']={}
+        s['n'][3]=["ng'"]
+        s['n'][2]=['mm','ny','ŋŋ']
+        s['n'][1]=['m','M','n','ŋ','ɲ']
         """Non-Nasal Sonorants"""
-        nnsdi=['rh','wh']
-        nnsm=['l','r']
-        glides=['ẅ','y','Y','w','W']
         basic=nnsdi+obstruents+nnsm+glides
-        labialized=list(char+'w' for char in basic) #+prenasalized
-        palatalized=list(char+'y' for char in basic) #+prenasalized
         # others=[, ]
+        s['nns']={}
+        s['nns'][2]=['rh','wh']
+        s['nns'][1]=['l','r']
+        """I think I want this gone from C, categorically. Maybe combine CG
+        elsewhere."""
+        s['g']={}
+        s['g'][1]=['ẅ','y','Y','w','W']
+        c=list() #to store valid consonants in
+        for nglyphs in [3,2,1]:
+            for stype in s:
+                if s[stype].get(nglyphs) is not None:
+                    c+=s[stype][nglyphs]
+            lp={}
+            lp['lab']=list(char+'w' for char in c)
+            lp['pal']=list(char+'y' for char in c)
+            lp['labpal']=list(char+'y' for char in lp['lab'])
+            lp['labpal']+=list(char+'w' for char in lp['pal'])
+            for stype in sorted(lp.keys()): #larger graphs first
+                c=lp[stype]+c
         """At some point, we may want logic to include only certain
         elements in c. The first row is in pretty much any language."""
         c=labialized+palatalized+basic #trigraphs first
