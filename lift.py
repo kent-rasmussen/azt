@@ -266,6 +266,13 @@ def attributesettings(
                     f"/field[@type='{fieldtype}']"
                     f"/form[@lang='{lang}']/text"),
             'attr':'nodetext'},
+        'lexemenode': {
+            'cm': 'use to get lexemes of all entries with a form '
+                    'in the specified language (no reference to fields)',
+            'url':(f"entry[@guid='{guid}']"
+                    f"/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
+                    f"/lexical-unit/form[@lang='{analang}']/.."),
+            'attr':'node'},
         'lexeme': {
             'cm': 'use to get lexemes of all entries with a form '
                     'in the specified language (no reference to fields)',
@@ -273,6 +280,13 @@ def attributesettings(
                     f"/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
                     f"/lexical-unit/form[@lang='{analang}']/text"),
             'attr':'nodetext'},
+        'citationnode': {
+            'cm': 'use to get citation forms of one or all entries with a form '
+                    'in the specified language (no reference to fields)',
+            'url':f"entry[@guid='{guid}']"
+                    f"/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
+                    f"/citation/form[@lang='{analang}']/..",
+            'attr':'node'},
         'citation': {
             'cm': 'use to get citation forms of one or all entries with a form '
                     'in the specified language (no reference to fields)',
@@ -299,6 +313,12 @@ def attributesettings(
                     f"/gloss[@lang='{glosslang}']/text"
                     ),
             'attr':'nodetext'},
+        'fieldnode': {
+            'cm': 'use to get whole field nodes (to modify)',
+            'url':f"entry[@guid='{guid}']"
+                    f"/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
+                    f"/field[@type='{fieldtype}']/form[@lang='{lang}']/..",
+            'attr':'node'},
         'fieldname': {
             'cm': 'use to get value(s) for <<document later>>',
             'url':f"entry[@guid='{guid}']"
@@ -881,30 +901,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
-    def addmediafields(self,example, url,
+    def addmediafields(self,node, url,
                         lang, #this should be Check.audiolang
-                        # guid,senseid,analang,
-                        # glosslang,langform,glossform,fieldtype,
-                        # location,fieldvalue,ps=None,
                         showurl=False):
         """This fuction will add an XML node to the lift tree, like a new
         example field."""
         """The program should know before calling this, that there isn't
         already the relevant node --since it is agnostic of what is already
         there."""
-        # urlnattr=attributesettings(attribute,guid,analang,glosslang,lang,ps,form,
-        #                                 fieldtype,location)
-        print("Adding",url,"value to", example,"location")
-        # urlnattr=attributesettings('senseid',senseid=senseid) #just give me the sense.
-        # url=urlnattr['url']
-        # if showurl==True:
-        #     print(url)
-        # node=self.nodes.find(url) #this should always find just one node
-        # if node is None:
-        #     print("Sorry, this didn't return a node:",guid,senseid)# nodes=self.nodes.findall(url) #this is a list
-        #     return
-        # p=ET.SubElement(node, 'example')
-        form=ET.SubElement(example,'form',attrib={'lang':lang})
+        print("Adding",url,"value to", node,"location")
+        form=ET.SubElement(node,'form',attrib={'lang':lang})
         t=ET.SubElement(form,'text')
         t.text=url
         """Can't really do this without knowing what entry or sense I'm in..."""
