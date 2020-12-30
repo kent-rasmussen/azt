@@ -1772,7 +1772,8 @@ class Check():
                 entryframe.destroy()
                 continue #return #I want the "next" button...
             for example in examples:
-                framed=self.getframeddata(example)
+                """These should already be framed!"""
+                framed=self.getframeddata(example,noframe=True)
                 if framed[self.analang] is None:
                     continue
                 row+=1
