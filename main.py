@@ -1170,7 +1170,8 @@ class Check():
     def initdefaults(self):
         """Some of these defaults should be reset when setting another field.
         These are listed under that other field. If no field is specified
-        (e.g., on initialization), then do all the fields with None key.
+        (e.g., on initialization), then do all the fields with None key (other
+        fields are NOT saved to file!).
         These are check related defaults; others in lift.get"""
         self.defaults={None:[
                             'analang', # independent of lift.analang?
@@ -1370,6 +1371,7 @@ class Check():
         if self.debug==True:
             print(type(self.status),self.status)
     def storedefaults(self,field=None):
+        """I don't think this does what I thought it did..."""
         self.f = open(self.defaultfile, "w", encoding='utf-8')
         for default in self.defaults[field]:
             if self.debug==True:
