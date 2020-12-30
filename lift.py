@@ -1163,7 +1163,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         nasals=ntri+ndi+nm
         actuals={}
         for lang in self.analangs:
-            unsorted=self.inxyz(lang,nasals) #remove the symbols which are not in the data.
+            unsorted=self.inxyz(lang,nasals)
+            """Make digraphs appear first, so they are matched if present"""
+            actuals[lang]=sorted(unsorted,key=len, reverse=True)
+        return actuals
+    def glist(self): #This variable gives lists, to iterate over.
+        glides=['ẅ','y','Y','w','W']
+        actuals={}
+        for lang in self.analangs:
+            unsorted=self.inxyz(lang,glides) #remove the symbols which are not in the data.
             """Make digraphs appear first, so they are matched if present"""
             actuals[lang]=sorted(unsorted,key=len, reverse=True)
             #print('actuals:',actuals[lang])
@@ -1201,6 +1209,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         s['lf']={}
         s['lf'][2]=['sl','zl','zl']
         s['lf'][1]=['ɬ','ɮ']
+        """I think I want this gone from C, categorically. Maybe combine NC
+        elsewhere."""
         s['pn']={}
         s['pn'][3]=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']
         s['pn'][2]=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj',
@@ -1224,6 +1234,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for stype in s:
                 if s[stype].get(nglyphs) is not None:
                     c+=s[stype][nglyphs]
+        self.treatlabializepalatalizedasC=False
+        if self.treatlabializepalatalizedasC==True:
             lp={}
             lp['lab']=list(char+'w' for char in c)
             lp['pal']=list(char+'y' for char in c)
@@ -1281,6 +1293,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
         self.n=self.nlist()
+        self.g=self.glist()
         self.c=self.clist()
         self.v=self.vlist()
     def segmentin(self, lang, glyph): #this tests if a given glyph is found in the form data (so we don't look for glyphs we already know aren't there).
