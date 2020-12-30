@@ -132,6 +132,8 @@ class Check():
         self.loaddefaults() # overwrites guess above, stored on runcheck
         self.storeprofiledata()
         self.setnamesall() #sets self.checknamesall
+        if 'bfj' in self.db.v:  #self.analang=='bfj': # need to do this otherwise!
+            self.db.v['bfj']=['ou','ei']+self.db.v['bfj']
         self.V=self.db.v #based on what is actually in the language (no groups)
         self.C=self.db.c #this regex is basically each valid glyph in analang,
         print("Done initializing check; running first check check.")
