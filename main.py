@@ -1181,7 +1181,8 @@ class Check():
                             'sample_format',
                             'fs',
                             'audio_card_index',
-                            'interfacelang'
+                            'interfacelang',
+                            'examplespergrouptorecord'
                             ],
                         'ps':[
                             'profile' #do I want this?
@@ -1213,7 +1214,8 @@ class Check():
                             ],
                         'fs':[],
                         'sample_format':[],
-                        'audio_card_index':[]
+                        'audio_card_index':[],
+                        'examplespergrouptorecord':[]
                         }
     def cleardefaults(self,field=None):
         for default in self.defaults[field]:
@@ -1742,7 +1744,10 @@ class Check():
         self.runwindow.wait_window(entryframe)
         self.runwindow.destroy()
     def showtonegroupexs(self):
-        examplespergrouptorecord=15
+        if (not(hasattr(self,'examplespergrouptorecord')) or
+            (type(self.examplespergrouptorecord) is not int)):
+            self.examplespergrouptorecord=5
+            self.storedefaults('examplespergrouptorecord')
         self.settonevariablesbypsprofile() #maybe not done before
         self.gettoneUFgroups()
         # toneUFgroups=self.toneUFgroups
@@ -1754,7 +1759,7 @@ class Check():
                                         fieldtype='tone', form=toneUFgroup)
                     # print(self.toneUFgroups,senseids)
             batch={}
-            for i in range(examplespergrouptorecord):
+            for i in range(self.examplespergrouptorecord):
                 batch[i]=[]
                 for toneUFgroup in self.toneUFgroups:
                     print(i,len(torecord[toneUFgroup]),toneUFgroup,torecord[toneUFgroup])
@@ -1764,7 +1769,7 @@ class Check():
                         print("Not enough examples, moving on:",i,toneUFgroup)
             print(_('Preparing to record examples from each tone group ({}) '
                     'with index').format(self.toneUFgroups),i)
-            for i in range(examplespergrouptorecord):
+            for i in range(self.examplespergrouptorecord):
                 print(_('Giving user the number {} example from each tone '
                         'group ({}) with index').format(i,self.toneUFgroups))
                 self.showsenseswithexamplestorecord(batch[i])
