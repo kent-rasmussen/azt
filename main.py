@@ -4143,7 +4143,7 @@ class RecordButtonFrame(Frame):
             self.filename=self.filenameURL=f'test_{check.fs}_{check.sample_format}.wav'
         else:
             wavfilename=''
-            args=[check.ps, check.profile, senseid, form, gloss]
+            args=[check.ps, check.profile, senseid, self.node.tag, form, gloss]
             for arg in args:
                 # print(type(arg),type(args))
                 wavfilename+=arg
