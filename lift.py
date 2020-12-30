@@ -1275,19 +1275,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.g=self.glist()
         self.c=self.clist()
         self.v=self.vlist()
-    def segmentin(self, lang, glyph): #this tests if a given glyph is found in the form data (so we don't look for glyphs we already know aren't there).
-        #print(self, lang, glyph)
-        #This actually allows for dygraphs, etc., so I'm keeping it.
-        for form in self.citationforms[lang] + self.lexemes[lang]: #check each form and lexeme in the lift file (not all files use both).
-            #print(form)
+    def segmentin(self, lang, glyph):
+        """This actually allows for dygraphs, etc., so I'm keeping it."""
+        """check each form and lexeme in the lift file (not all files
+        use both)."""
+        for form in self.citationforms[lang] + self.lexemes[lang]:
             if re.search(glyph,form): #see if the glyph is there
-                #print(glyph+": "+form) #if you want to see which form was first found for a given segment
-                #exit()
-                return glyph #once you find it, stop looking. (And if you don't find it, return nothing.)
-        """This doesn't do what I'd hoped for.."""
-        #if glyph not in self.segmentsnotinregexes[lang]:
-        #    self.segmentsnotinregexes[lang]+=[glyph]
-        #    print("Hey, I didn't find",glyph,"in",lang, "language!")
+                return glyph #find it and stop looking, or return nothing
     def inxyz(self, lang, segmentlist): #This calls the above script for each character.
         actuals=list()
         for i in segmentlist:
