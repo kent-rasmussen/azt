@@ -106,7 +106,7 @@ class Check():
         self.db.languagepaths=file.getlangnamepaths(filename,
                                                         self.db.languagecodes)
         # profiles.get(self.db, nsyls=nsyls) #sets: db.profileswdata db.profiles
-        setdefaults.fields(self.db) #This looks for imp and pl field names.
+        setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
         self.initdefaults() #provides self.defaults, list to load/save
         self.cleardefaults() #this resets all to none (to be set below)
         # self.analang=self.db.analang #inherit from the lang if not specified
@@ -1039,12 +1039,20 @@ class Check():
                 image=self.photo[self.type]
                 )
         opts['row']+=1
-        t=(_("Record Sorted Examples"))
-        button(opts,t,self.showtonegroupexs,column=0,
-                compound='left', #image bottom, left, right, or top of text
-                row=1,
-                image=self.photo['record']
-                )
+        if self.type == 'T':
+            t=(_("Record Sorted Examples"))
+            button(opts,t,self.showtonegroupexs,column=0,
+                    compound='left', #image bottom, left, right, or top of text
+                    row=1,
+                    image=self.photo['record']
+                    )
+        else:
+            t=(_("Record Dictionary Words"))
+            button(opts,t,self.showentryformstorecord,column=0,
+                    compound='left', #image bottom, left, right, or top of text
+                    row=1,
+                    image=self.photo['record']
+                    )
         self.maybeboard()
         self.parent.setmenus(self)
     def maybeboard(self):
@@ -1674,6 +1682,52 @@ class Check():
                 senseid=senseid, fieldtype='tone'):
                 self.locations+=[location]
         self.locations=list(dict.fromkeys(self.locations))
+    def showentryformstorecord(self,senses=None):
+        """Save these values before iterating over them"""
+        psori=self.ps
+        profileori=self.profile
+        for psprofile in self.profilecounts:
+            print(psprofile)
+            self.ps=psprofile[2]
+            self.profile=psprofile[1]
+            self.getrunwindow()
+            text=_("Words and phrases to record: click ‘Record’, talk, "
+                    "and release ({} words)".format(psprofile[0]))
+            instr=Label(self.runwindow.frame, anchor='w',text=text)
+            instr.grid(row=0,column=0,sticky='w')
+            buttonframes=ScrollingFrame(self.runwindow.frame)
+            buttonframes.grid(row=1,column=0,sticky='w')
+            print(self.profilesbysense[self.ps][self.profile])
+            for senseid in self.profilesbysense[self.ps][self.profile]:
+                lxnode=self.db.get('lexemenode',senseid=senseid,
+                                                        lang=self.analang)
+                lcnode=self.db.get('citationnode',senseid=senseid,
+                                                        lang=self.analang)
+                if self.db.pluralname is not None:
+                    plnode=self.db.get('fieldnode',senseid=senseid,
+                                            lang=self.analang,
+                                            fieldtype=self.db.pluralname)
+                if self.db.imperativename is not None:
+                    impnode=self.db.get('fieldnode',senseid=senseid,
+                                            lang=self.analang,
+                                            fieldtype=self.db.imperativename)
+                row=0
+                print(lcnode,lxnode)
+                print(firstoflist(lxnode).tag)
+                print(firstoflist(lxnode).text)
+                if lcnode != []:
+                    lcb=RecordButtonFrame(buttonframes,self,senseid,lcnode)
+                    lcb.grid(row=row,column=0,sticky='w')
+                    row+=1
+                else:
+                    lxb=RecordButtonFrame(buttonframes,self,senseid,lxnode)
+                    lxb.grid(row=row,column=0,sticky='w')
+                    row+=1
+
+                    print()
+
+        self.ps=psori
+        self.profile=profileori
     def showsenseswithexamplestorecord(self,senses=None):
         self.getrunwindow()
         """?Make this scroll!"""
@@ -3640,9 +3694,11 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.soundcheck(x))
         recordmenu.add_command(label=_("Record tone group examples"),
                         command=lambda x=check:Check.showtonegroupexs(x))
+        recordmenu.add_command(label=_("Record dictionary words"),
+                        command=lambda x=check:Check.showentryformstorecord(x))
         recordmenu.add_command(label=_("Record examples for particular "
                                                     "entries, 1 at at time"),
-                        command=lambda x=check:Check.showentries(x))
+                        command=lambda x=check:Check.showsenseswithexamplestorecord(x))
         advancedmenu.add_cascade(label=_("Recording"), menu=recordmenu)
         """Frame stuff"""
         filemenu = Menu(menubar, tearoff=0)
