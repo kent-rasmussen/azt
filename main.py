@@ -510,7 +510,7 @@ class Check():
             # self.storedefaults()
             window.destroy()
         window=Window(self.frame, title=_("Define a new tone frame"))
-        window.scroll=ScrollingCanvas(window)
+        window.scroll=ScrollingFrame(window)
         window.frame1=Frame(window.scroll.content)
         window.frame1.grid(row=0,column=0)
         row=0
@@ -1672,7 +1672,7 @@ class Check():
                 senseid=senseid, fieldtype='tone'):
                 self.locations+=[location]
         self.locations=list(dict.fromkeys(self.locations))
-    def showentries(self,senses=None):
+    def showsenseswithexamplestorecord(self,senses=None):
         self.getrunwindow()
         """?Make this scroll!"""
         text=_("Words and phrases to record: click ‘Record’, talk, and release")
@@ -1700,7 +1700,7 @@ class Check():
                     text=text).grid(row=row,
                                     column=0,sticky='w')
             """Then get each sorted example"""
-            self.runwindow.frame.scroll=ScrollingCanvas(
+            self.runwindow.frame.scroll=ScrollingFrame(
                                             entryframe)
             self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
             examplesframe=Frame(self.runwindow.frame.scroll.content)
@@ -1767,7 +1767,7 @@ class Check():
             for i in range(examplespergrouptorecord):
                 print(_('Giving user the number {} example from each tone '
                         'group ({}) with index').format(i,self.toneUFgroups))
-                self.showentries(batch[i])
+                self.showsenseswithexamplestorecord(batch[i])
         else:
             print("How did we get no UR tone groups?",self.profile,self.ps,
                     "\nHave you run the tone report recently?"
@@ -1839,7 +1839,7 @@ class Check():
         r = open(self.tonereportfile, "w", encoding='utf-8')
         self.getrunwindow()
         self.runwindow.title(_("Tone Report"))
-        self.runwindow.scroll=ScrollingCanvas(self.runwindow.frame)
+        self.runwindow.scroll=ScrollingFrame(self.runwindow.frame)
         window=self.runwindow.scroll.content
         window.row=0
         def output(window,r,text):
@@ -2182,7 +2182,7 @@ class Check():
                                         self.db.languagenames[self.analang],
                                         self.name)
         instructions=_("Select the one with the same tone melody as")
-        self.runwindow.frame.scroll=ScrollingCanvas(self.runwindow.frame)
+        self.runwindow.frame.scroll=ScrollingFrame(self.runwindow.frame)
         self.runwindow.frame.scroll.grid(
                                 column=1,row=2, sticky="new")
         """The frame for the groups buttons"""
@@ -2326,7 +2326,7 @@ class Check():
                             bg=self.theme['background']
                             ).grid(row=1,column=0,rowspan=3,sticky='nw')
             """Scroll after instructions"""
-            self.sframe=ScrollingCanvas(self.runwindow.frame)
+            self.sframe=ScrollingFrame(self.runwindow.frame)
             self.sframe.grid(row=1,column=1,columnspan=2,sticky='w')
             row+=1
             """put entry buttons here."""
@@ -2413,7 +2413,7 @@ class Check():
                         text='',
                         bg=self.theme['background']
                         ).grid(row=2,column=0,rowspan=2,sticky='nw')
-        self.sframe=ScrollingCanvas(self.runwindow.frame)
+        self.sframe=ScrollingFrame(self.runwindow.frame)
         self.sframe.grid(row=2,column=1)
         self.sorting=self.sframe.content
         self.settonevariablesbypsprofile()
@@ -2433,7 +2433,7 @@ class Check():
         self.runwindow.frame.wait_window(self.sorting)
         if self.groupselected != "ALLOK":
             self.sframe.destroy()
-            self.sframe=ScrollingCanvas(self.runwindow.frame)
+            self.sframe=ScrollingFrame(self.runwindow.frame)
             self.sframe.grid(row=3,column=1)
             self.sorting=self.sframe.content
             group1=self.groupselected
@@ -3446,7 +3446,7 @@ class Frame(tkinter.Frame):
         super().__init__(parent,**kwargs)
         self['background']=parent['background']
         """Hang on to these for labels and buttons:"""
-class ScrollingCanvas(Frame):
+class ScrollingFrame(Frame):
     def _bound_to_mousewheel(self, event):
         # with Windows OS
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheelMS)
@@ -3515,7 +3515,7 @@ class ScrollingCanvas(Frame):
         """Make this a Frame, with all the inheritances, I need"""
         self.parent=parent
         inherit(self)
-        super(ScrollingCanvas, self).__init__(parent)
+        super(ScrollingFrame, self).__init__(parent)
         """Not sure if I want these... rather not hardcode."""
         print(self.parent.winfo_children())
         self.grid_rowconfigure(0, weight=1)
@@ -4185,7 +4185,7 @@ class ScrollingButtonFrame(ButtonFrame):
                     window=None,
                     **kwargs
                     ):
-        scroll=ScrollingCanvas(parent)
+        scroll=ScrollingFrame(parent)
         super().__init__(scroll.content,optionlist,command,window,**kwargs)
         self.grid(row=0,column=0)
 class Splash(Window):
