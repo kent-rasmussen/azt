@@ -4127,7 +4127,7 @@ class RecordButtonFrame(Frame):
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.db=check.db
-        self.node=node
+        self.node=firstoflist(node) #This should never be more than one node...
         self.callbackrecording=True
         self.chunk = 1024  # Record in chunks of 1024 samples
         # self.sample_format = pyaudio.paInt16  # 16 bits per sample
@@ -4344,16 +4344,19 @@ def name(x):
     except:
         name=x.__class__.__name__ #If x is a class instance
         return "class."+name
-def firstoflist(list,othersOK=False):
+def firstoflist(l,othersOK=False):
     """This takes a list composed of one item, and returns the item.
     with othersOK=True, it discards n=2+ items; with othersOK=False,
     it throws an error if there is more than one item in the list."""
-    if (list == None) or (list == []):
+    print(type(l))
+    if type(l) is not list:
+        return l
+    if (l == None) or (l == []):
         return
-    elif len(list) == 1 or (othersOK == True):
-        return list[0]
+    elif len(l) == 1 or (othersOK == True):
+        return l[0]
     elif othersOK == False: #(i.e., with `len(list) != 1`)
-        print('Sorry, something other than one list item found:',list,
+        print('Sorry, something other than one list item found:',l,
                 '\nDid you mean to use "othersOK=True"?')
 def t(element):
     try:
