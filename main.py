@@ -1702,34 +1702,50 @@ class Check():
             buttonframes=ScrollingFrame(self.runwindow.frame)
             buttonframes.grid(row=1,column=0,sticky='w')
             print(self.profilesbysense[self.ps][self.profile])
+            row=0
             for senseid in self.profilesbysense[self.ps][self.profile]:
-                lxnode=self.db.get('lexemenode',senseid=senseid,
-                                                        lang=self.analang)
-                lcnode=self.db.get('citationnode',senseid=senseid,
-                                                        lang=self.analang)
+                column=0
+                lxnode=firstoflist(self.db.get('lexemenode',senseid=senseid,
+                                                        lang=self.analang))
+                lcnode=firstoflist(self.db.get('citationnode',senseid=senseid,
+                                                        lang=self.analang))
+                gloss=firstoflist(self.db.glossordefn(senseid=senseid,
+                                                        lang=self.glosslang,
+                                                        showurl=True))
+                if gloss is None:
+                    continue #We can't save the file well anyway; don't bother
+                print('gloss:', gloss)
                 if self.db.pluralname is not None:
-                    plnode=self.db.get('fieldnode',senseid=senseid,
+                    plnode=firstoflist(self.db.get('fieldnode',senseid=senseid,
                                             lang=self.analang,
-                                            fieldtype=self.db.pluralname)
+                                            fieldtype=self.db.pluralname))
                 if self.db.imperativename is not None:
-                    impnode=self.db.get('fieldnode',senseid=senseid,
+                    impnode=firstoflist(self.db.get('fieldnode',senseid=senseid,
                                             lang=self.analang,
-                                            fieldtype=self.db.imperativename)
-                row=0
-                print(lcnode,lxnode)
-                print(firstoflist(lxnode).tag)
-                print(firstoflist(lxnode).text)
-                if lcnode != []:
-                    lcb=RecordButtonFrame(buttonframes,self,senseid,lcnode)
-                    lcb.grid(row=row,column=0,sticky='w')
-                    row+=1
+                                            fieldtype=self.db.imperativename))
+                # print(lcnode,lxnode)
+                # print(lxnode.tag)
+                # # print(firstoflist(lxnode).find('form').text)
+                # print(lxnode.find('form/text').text)
+                if lcnode != None:
+                    # print('lcnode!')
+                    lcb=RecordButtonFrame(buttonframes.content,self,senseid=senseid,
+                                                                node=lcnode,
+                                                                gloss=gloss)
+                    lcb.grid(row=row,column=column+1,sticky='w')
                 else:
-                    lxb=RecordButtonFrame(buttonframes,self,senseid,lxnode)
-                    lxb.grid(row=row,column=0,sticky='w')
-                    row+=1
+                    # print('lxnode!')
+                    t=self.getframeddata(lxnode,noframe=True)
+                    lxl=Label(buttonframes.content, text=t[self.analang]+'\t'+gloss)
+                    lxl.grid(row=row,column=column,sticky='w')
+                    lxb=RecordButtonFrame(buttonframes.content,self,senseid=senseid,
+                                                                node=lxnode,
+                                                                gloss=gloss)
+                    lxb.grid(row=row,column=column+1,sticky='w')
+                row+=1
 
-                    print()
-
+                    # print()
+            self.runwindow.wait_window(self.runwindow)
         self.ps=psori
         self.profile=profileori
     def showsenseswithexamplestorecord(self,senses=None):
