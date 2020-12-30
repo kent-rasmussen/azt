@@ -301,14 +301,36 @@ class Check():
         self.type='V'
     def setupCVrxs(self):
         self.rx={}
-        self.rx['N']=rx.make(rx.n(self.db),compile=True)
-        self.rx['C']=rx.make(rx.c(self.db),compile=True)
-        self.rx['V']=rx.make(rx.v(self.db),compile=True)
+        for sclass in ['N','G','C','V']:
+            self.rx[sclass]=rx.make(rx.s(self.db,sclass.lower()),compile=True)
+        # self.rx['G']=rx.make(rx.g(self.db),compile=True)
+        # self.rx['C']=rx.make(rx.c(self.db),compile=True)
+        # self.rx['V']=rx.make(rx.v(self.db),compile=True)
+        # self.rx['N']='Nx'#rx.make(rx.n(self.db),compile=True)
+        # self.rx['N#']='N#x'#rx.make(rx.n(self.db),compile=True)
+        # self.rx['C']='Cx'#rx.make(rx.c(self.db),compile=True)
+        # self.rx['G']='Cx'#rx.make(rx.c(self.db),compile=True)
+        # self.rx['NCG']='NCGx'#rx.make(rx.c(self.db),compile=True)
+        # self.rx['NC']='NCx'#rx.make(rx.c(self.db),compile=True)
+        # self.rx['NG']='NGx'#rx.make(rx.c(self.db),compile=True)
+        # self.rx['CG']='CGx'#rx.make(rx.c(self.db),compile=True)
+        # self.rx['V']='Vx'#rx.make(rx.v(self.db),compile=True)
     def profileofform(self,form):
-        for s in self.rx:
+        """priority sort alphabets (need logic to set one or the other)"""
+        """Look for any C, don't find N or G"""
+        priority=['#','C','N','G','V']
+        """Look for word boundaries, N and G before C (though this doesn't
+        work, since CG is captured by C first...)"""
+        # priority=['#','N','G','C','V']
+        for s in sorted(self.rx.keys(),
+                        key=lambda cons: (-len(cons),
+                                            [priority.index(c) for c in cons])
+                        ):
             for ps in self.db.pss:
                 self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches
             form=self.rx[s].sub(s,form) #replace with profile variable
+        """We could consider combining NC to C (or not), and CG to C (or not)
+        here, after the 'splitter' profiles are formed..."""
         return form
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
