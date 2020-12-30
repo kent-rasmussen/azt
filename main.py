@@ -1726,7 +1726,7 @@ class Check():
                 Label(examplesframe, anchor='w',text=text
                                     ).grid(row=row, column=0, sticky='w')
                 print('recordbuttonframetry')
-                rb=RecordButtonFrame(examplesframe,self,senseid,example,
+                rb=RecordButtonFrame(examplesframe,self,senseid,node=example,
                                     form=nn(framed[self.analang]),
                                     gloss=nn(framed[self.glosslang])
                                     ) #no gloss2; form/gloss just for filename
@@ -3949,28 +3949,32 @@ class RecordButtonFrame(Frame):
         if hasattr(self,'fulldata'):
             delattr(self,'fulldata') #let's start each recording afresh.
         self.pa = pyaudio.PyAudio()
-        """Callback"""
-        self.stream = self.pa.open(
-                input_device_index=self.audio_card_index,
-                format=self.sample_format,
-                channels=self.channels,
-                rate=self.fs,
-                input=True,
-                stream_callback=self.recordcallback)
-        self.stream.start_stream()
-        self.fileopen()
-        """input=True, p.open() method → stream.read() to read from microphone.
-        output=True, stream.write() to the speaker."""
-        """Block"""
-        # self.stream = self.pa.open(format=self.sample_format,
-        #         channels=self.channels,
-        #         rate=self.fs,
-        #         frames_per_buffer=self.chunk,
-        #         input=True)
-        # self.frames = []
-        # for i in range(0, int(self.fs / self.chunk * self.seconds)):
-        #     data = self.stream.read(self.chunk)
-        #     self.frames.append(data)
+        def callback(self):
+            self.stream = self.pa.open(
+                    input_device_index=self.audio_card_index,
+                    format=self.sample_format,
+                    channels=self.channels,
+                    rate=self.fs,
+                    input=True,
+                    stream_callback=self.recordcallback)
+            self.stream.start_stream()
+            self.fileopen()
+            """input=True, p.open() method → stream.read() to read from
+            microphone. output=True, stream.write() to the speaker."""
+        def block(self):
+            self.stream = self.pa.open(format=self.sample_format,
+                    channels=self.channels,
+                    rate=self.fs,
+                    frames_per_buffer=self.chunk,
+                    input=True)
+            self.frames = []
+            for i in range(0, int(self.fs / self.chunk * self.seconds)):
+                data = self.stream.read(self.chunk)
+                self.frames.append(data)
+        if self.callbackrecording==True:
+            callback(self)
+        else:
+            block(self)
     def _stop(self, event):
         # print("I'm stopping recording now")
         self.stream.stop_stream()
@@ -4029,7 +4033,7 @@ class RecordButtonFrame(Frame):
         # print(self.wf._nchannels)
         self.wf.close()
         if self.test is not True:
-            self.db.addmediafields(self.example,self.filename,self.audiolang)
+            self.db.addmediafields(self.node,self.filename,self.audiolang)
     def makebuttons(self):
         if file.exists(self.filenameURL):
             self.makeplaybutton()
@@ -4051,7 +4055,7 @@ class RecordButtonFrame(Frame):
         self.r.bind('<ButtonRelease>', self._redo)
     def function(self):
         pass
-    def __init__(self, parent, check, senseid=None, example=None, form=None, gloss=None, test=False,
+    def __init__(self, parent, check, senseid=None, node=None, form=None, gloss=None, test=False,
                 #choice=None, window=None, #some buttons have these, some don't
                 #command=None,
                 # column=0, row=1,
@@ -4059,7 +4063,8 @@ class RecordButtonFrame(Frame):
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.db=check.db
-        self.example=example
+        self.node=node
+        self.callbackrecording=True
         self.chunk = 1024  # Record in chunks of 1024 samples
         # self.sample_format = pyaudio.paInt16  # 16 bits per sample
         self.channels = 1 #Always record in mono
@@ -4083,7 +4088,7 @@ class RecordButtonFrame(Frame):
             self.filename = re.sub('[\. /?]+','_',str(wavfilename))+'.wav'
             self.filenameURL=str(file.getdiredurl(check.audiodir,self.filename))
             # self.filename=str('audio/'+filename)
-            if ((senseid==None) or (example==None) or (form==None)
+            if ((senseid==None) or (node==None) or (form==None)
                 or (gloss==None)):
                 print("Sorry, unless testing we need all these "
                         "arguments; exiting.")
