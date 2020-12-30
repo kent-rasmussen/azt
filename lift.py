@@ -527,7 +527,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.citationforms=self.citationforms() #lang='gnd'
         self.lexemes=self.lexemes()
         self.defaults=[ #these are lift related defaults; check in lift_do
-                    'xyz',
+                    'analang',
                     'glosslang',
                     'glosslang2',
                     'audiolang'
@@ -1258,8 +1258,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """We need to address long and idiosyncratic vowel orthographies,
         especially for Cameroon. This should also include diacritics, together
         or separately."""
-        if self.analang=='bfj':
-            vowels=['ou','ei']+vowels
         #d=self.diacritics() #["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         actuals={}
         for lang in self.analangs:
