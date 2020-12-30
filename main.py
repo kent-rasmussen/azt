@@ -3105,11 +3105,13 @@ class Check():
             if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
                     print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
                     self.audio_card_indexes+=[{'code':i,'name':p.get_device_info_by_host_api_device_index(0, i).get('name')}]
-        if not hasattr(self,'fs'):
+        if not hasattr(self,'fs') or self.fs not in self.fss:
             self.fs=None
-        if not hasattr(self,'sample_format'):
+        if (not hasattr(self,'sample_format') or
+                (self.sample_format not in self.sample_formats)):
             self.sample_format=None
-        if not hasattr(self,'audio_card_index'):
+        if (not hasattr(self,'audio_card_index') or
+                (self.audio_card_index not in self.audio_card_indexes)):
             self.audio_card_index=None
         # ButtonFram
         self.soundcheckrefresh()
