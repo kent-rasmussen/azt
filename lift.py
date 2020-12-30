@@ -1174,24 +1174,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             unsorted=self.inxyz(lang,glides) #remove the symbols which are not in the data.
             """Make digraphs appear first, so they are matched if present"""
             actuals[lang]=sorted(unsorted,key=len, reverse=True)
-            #print('actuals:',actuals[lang])
-        #print(c)
         return actuals
-
     def clist(self): #This variable gives lists, to iterate over.
-        #should this belong in a config file? (with a notice?)
-        #This should probably pull stuff from the lift file in some way..….
         """These are all possible forms, that I have ever run across.
         If I find something new (or you tell me!) we can add it here.
         Forms not actually in the data get removed below."""
         """Note, objects will be found in the order listed, so put the
         larger/longer objects first, if you ever want to find them ('ts' must
         precede 't', or you will only find t+s=CC, not ts=C)"""
-        # forpeoplewholikec=['c']
-        # plosives=pdigraphs+p+forpeoplewholikec
-        # phookedimplosives=[]
-        obstruents=atri+pdi+fdi+adi+lfdi+pm+fm+lfm #tri-, then di-, mono-graphs
-        # nasals=['m','M','n','ny','ŋ','ŋŋ','ɲ']
         """This is a dictionary of theoretically possible segment graphs,
         by category and number of glyphs, with consonant dictionaries nested
         inside it, by category."""
@@ -1209,24 +1199,25 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         s['lf']={}
         s['lf'][2]=['sl','zl','zl']
         s['lf'][1]=['ɬ','ɮ']
+        # if self.distinguishNC==False:
         """I think I want this gone from C, categorically. Maybe combine NC
         elsewhere."""
         s['pn']={}
         s['pn'][3]=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']
         s['pn'][2]=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj',
                         'ns','nz']
+        """We want this in both"""
         s['n']={}
         s['n'][3]=["ng'"]
         s['n'][2]=['mm','ny','ŋŋ']
         s['n'][1]=['m','M','n','ŋ','ɲ']
         """Non-Nasal Sonorants"""
-        basic=nnsdi+obstruents+nnsm+glides
-        # others=[, ]
         s['nns']={}
         s['nns'][2]=['rh','wh']
         s['nns'][1]=['l','r']
         """I think I want this gone from C, categorically. Maybe combine CG
         elsewhere."""
+        # if self.distinguishNC==False:
         s['g']={}
         s['g'][1]=['ẅ','y','Y','w','W']
         c=list() #to store valid consonants in
@@ -1234,6 +1225,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for stype in s:
                 if s[stype].get(nglyphs) is not None:
                     c+=s[stype][nglyphs]
+        # if self.distinguishCG==False:
         self.treatlabializepalatalizedasC=False
         if self.treatlabializepalatalizedasC==True:
             lp={}
@@ -1245,36 +1237,23 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 c=lp[stype]+c
         """At some point, we may want logic to include only certain
         elements in c. The first row is in pretty much any language."""
-        c=labialized+palatalized+basic #trigraphs first
-        #+fricatives+othersonorants+others
-        # c=c+affricates
-        # c=c+nasals #if nasals are included in C's
-        # c=c+glides #if glides are included in C's
-        # c=c+others #if others are included in C's
-        # c=c+prenasalized
-        # c+=lateralfricatives
-        # c=c+hookedimplosives #if hookedimplosives are included in C's
-        # c=c+labialized #if labialized are included in C's
-        # c=c+palatalized #if labialized are included in C's
         actuals={}
-        #print('hypotheticals',c)
+        if self.debug==True:
+            print('hypotheticals:',c)
         for lang in self.analangs:
-            # unsorted=self.inxyz(lang,c) #remove the symbols which are not in the data.
-            # """Make digraphs appear first, so they are matched if present"""
-            # actuals[lang]=sorted(unsorted,key=len, reverse=True)
             actuals[lang]=self.inxyz(lang,c)
-            #print('actuals:',actuals[lang])
-        #print(c)
+            if self.debug==True:
+                print('actuals[{}]:'.format(lang),actuals[lang])
         return actuals
     def vlist(self):
-        #This should probably pull stuff from the lift file in some way..….
-        vowels=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o', 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃', 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
+        vowels=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
+                'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃',
+                'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
+        """We need to address long and idiosyncratic vowel orthographies,
+        especially for Cameroon. This should also include diacritics, together
+        or separately."""
         if self.analang=='bfj':
             vowels=['ou','ei']+vowels
-        #vowels=vowels+['ə', 'a', 'e', 'i', 'u'] #for gnd
-        #vowels=vowels+['á', 'ú', 'í', 'é','ə́','à', 'ù', 'è', 'ì'] #combination extra segments (for gnd)
-        #vowels=vowels+['á', 'à', 'ú', 'í', 'é', 'ù', 'è', 'ì'] #for gnd
-        #We should include these at some point: (this will likely require iterating over each vowel, for inxyz(Vd possible combinations)).
         #d=self.diacritics() #["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         actuals={}
         for lang in self.analangs:
@@ -1288,10 +1267,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             actuals[lang]=self.inxyz(lang,diacritics)
         return actuals
     def slists(self):
-        #print('Doing slists')
         self.segmentsnotinregexes={}
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
+        """This should probably be done in these functions"""
         self.n=self.nlist()
         self.g=self.glist()
         self.c=self.clist()
