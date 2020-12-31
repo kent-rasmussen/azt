@@ -1279,7 +1279,6 @@ class Check():
             d = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(d)
             for default in self.defaults[field]:
-                print(default)
                 if hasattr(d, default):
                     setattr(self,default,getattr(d,default))
                 print(default, getattr(self,default))
@@ -4155,7 +4154,8 @@ class RecordButtonFrame(Frame):
         self.r.bind('<ButtonRelease>', self._redo)
     def function(self):
         pass
-    def __init__(self, parent, check, senseid=None, node=None, form=None, gloss=None, test=False,
+    def __init__(self, parent, check, senseid=None, node=None, form=None,
+                gloss=None, test=False,
                 #choice=None, window=None, #some buttons have these, some don't
                 #command=None,
                 # column=0, row=1,
@@ -4163,7 +4163,7 @@ class RecordButtonFrame(Frame):
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.db=check.db
-        self.node=firstoflist(node) #This should never be more than one node...
+        self.node=node #This should never be more than one node...
         self.callbackrecording=True
         self.chunk = 1024  # Record in chunks of 1024 samples
         # self.sample_format = pyaudio.paInt16  # 16 bits per sample
@@ -4183,7 +4183,6 @@ class RecordButtonFrame(Frame):
             wavfilename=''
             args=[check.ps, check.profile, senseid, self.node.tag, form, gloss]
             for arg in args:
-                # print(type(arg),type(args))
                 wavfilename+=arg
                 if args.index(arg) < len(args):
                     wavfilename+='_'
