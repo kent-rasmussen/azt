@@ -1711,7 +1711,6 @@ class Check():
         psori=self.ps
         profileori=self.profile
         for psprofile in self.profilecounts:
-            print(psprofile)
             self.ps=psprofile[2]
             self.profile=psprofile[1]
             self.getrunwindow()
@@ -1721,20 +1720,23 @@ class Check():
             instr.grid(row=0,column=0,sticky='w')
             buttonframes=ScrollingFrame(self.runwindow.frame)
             buttonframes.grid(row=1,column=0,sticky='w')
-            print(self.profilesbysense[self.ps][self.profile])
             row=0
             for senseid in self.profilesbysense[self.ps][self.profile]:
                 sense={}
                 sense['column']=0
                 sense['row']=row
                 sense['senseid']=senseid
-                sense['lxnode']=firstoflist(self.db.get('lexemenode',senseid=sense['senseid'],
-                                                        lang=self.analang))
-                sense['lcnode']=firstoflist(self.db.get('citationnode',senseid=sense['senseid'],
-                                                        lang=self.analang))
-                sense['gloss']=firstoflist(self.db.glossordefn(senseid=sense['senseid'],
-                                                        lang=self.glosslang,
-                                                        showurl=True))
+                sense['lxnode']=firstoflist(self.db.get('lexemenode',
+                                                    senseid=sense['senseid'],
+                                                    lang=self.analang))
+                sense['lcnode']=firstoflist(self.db.get('citationnode',
+                                                    senseid=sense['senseid'],
+                                                    lang=self.analang))
+                sense['gloss']=firstoflist(self.db.glossordefn(
+                                                    senseid=sense['senseid'],
+                                                    lang=self.glosslang
+                                                    # ,showurl=True
+                                                    ))
                 if sense['gloss'] is None:
                     continue #We can't save the file well anyway; don't bother
                 print('gloss:', sense['gloss'])
