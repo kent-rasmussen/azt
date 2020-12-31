@@ -1694,6 +1694,14 @@ class Check():
                 senseid=senseid, fieldtype='tone'):
                 self.locations+=[location]
         self.locations=list(dict.fromkeys(self.locations))
+    def makelabelsnrecordingbuttons(self,parent,sense):
+        t=self.getframeddata(sense['nodetoshow'],noframe=True)
+        lxl=Label(parent, text=t[self.analang]+'\t'+sense['gloss'])
+        lxl.grid(row=sense['row'],column=sense['column'],sticky='w')
+        lcb=RecordButtonFrame(parent,self,senseid=sense['senseid'],
+                                                    node=sense['nodetoshow'],
+                                                    gloss=sense['gloss'])
+        lcb.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def showentryformstorecord(self,senses=None):
         """Save these values before iterating over them"""
         psori=self.ps
@@ -1712,44 +1720,44 @@ class Check():
             print(self.profilesbysense[self.ps][self.profile])
             row=0
             for senseid in self.profilesbysense[self.ps][self.profile]:
-                column=0
-                lxnode=firstoflist(self.db.get('lexemenode',senseid=senseid,
+                sense={}
+                sense['column']=0
+                sense['row']=row
+                sense['senseid']=senseid
+                sense['lxnode']=firstoflist(self.db.get('lexemenode',senseid=sense['senseid'],
                                                         lang=self.analang))
-                lcnode=firstoflist(self.db.get('citationnode',senseid=senseid,
+                sense['lcnode']=firstoflist(self.db.get('citationnode',senseid=sense['senseid'],
                                                         lang=self.analang))
-                gloss=firstoflist(self.db.glossordefn(senseid=senseid,
+                sense['gloss']=firstoflist(self.db.glossordefn(senseid=sense['senseid'],
                                                         lang=self.glosslang,
                                                         showurl=True))
-                if gloss is None:
+                if sense['gloss'] is None:
                     continue #We can't save the file well anyway; don't bother
-                print('gloss:', gloss)
+                print('gloss:', sense['gloss'])
                 if self.db.pluralname is not None:
-                    plnode=firstoflist(self.db.get('fieldnode',senseid=senseid,
+                    sense['plnode']=firstoflist(self.db.get('fieldnode',senseid=sense['senseid'],
                                             lang=self.analang,
                                             fieldtype=self.db.pluralname))
                 if self.db.imperativename is not None:
-                    impnode=firstoflist(self.db.get('fieldnode',senseid=senseid,
+                    sense['impnode']=firstoflist(self.db.get('fieldnode',senseid=sense['senseid'],
                                             lang=self.analang,
                                             fieldtype=self.db.imperativename))
                 # print(lcnode,lxnode)
                 # print(lxnode.tag)
                 # # print(firstoflist(lxnode).find('form').text)
                 # print(lxnode.find('form/text').text)
-                if lcnode != None:
+                if sense['lcnode'] != None:
                     # print('lcnode!')
-                    lcb=RecordButtonFrame(buttonframes.content,self,senseid=senseid,
-                                                                node=lcnode,
-                                                                gloss=gloss)
-                    lcb.grid(row=row,column=column+1,sticky='w')
+                    sense['nodetoshow']=sense['lcnode']
                 else:
                     # print('lxnode!')
-                    t=self.getframeddata(lxnode,noframe=True)
-                    lxl=Label(buttonframes.content, text=t[self.analang]+'\t'+gloss)
-                    lxl.grid(row=row,column=column,sticky='w')
-                    lxb=RecordButtonFrame(buttonframes.content,self,senseid=senseid,
-                                                                node=lxnode,
-                                                                gloss=gloss)
-                    lxb.grid(row=row,column=column+1,sticky='w')
+                    sense['nodetoshow']=sense['lxnode']
+                self.makelabelsnrecordingbuttons(buttonframes.content,sense)
+                for node in ['plnode','impnode']:
+                    if (node in sense) and (sense[node] != None):
+                        print(node,'!')
+                        sense['column']+=2
+                        sense['nodetoshow']=sense[node]
                 row+=1
 
                     # print()
