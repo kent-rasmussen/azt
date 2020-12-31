@@ -3,9 +3,9 @@ import re
 """This is called from a number of places"""
 def s(self,stype,lang=None): #join a list into regex format
     if hasattr(self,stype): #should be one of c,v,g,n
-        if lang is None:
-            lang=self.analang
-    return '|'.join(getattr(self,stype)[lang])
+        if lang is None: #This causes an error, as lift.analang doesn't exist
+            lang=self.analang #This should be generalized for all analangs
+        return '|'.join(getattr(self,stype)[lang])
 def make(regex, word=False, compile=False):
     if word == True:
         regex='^'+regex+'$'
