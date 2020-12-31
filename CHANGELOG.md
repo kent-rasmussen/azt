@@ -2,12 +2,7 @@
 - Find again (not happening now) and fix scrolling frame size problem on rename
   - frame in a frame? (this problem looks familiar...)
 ## Next Features
-- recording page for citation forms (and a secondary form?)
-  - make record button work for different contexts, by `self.type`:
-    - T: tone report (as is currently done)
-    - C,V: citation forms (new page? plural, other forms? all <form @lang/>)
-    - ad hoc?
-- fully distinguish C, CG, and NC onsets, C and N finals
+- Fully distinguish C, CG, and NC onsets, C and N finals
   - look for CG and NC first, then C.
   - how to treat C1=C2? CG1=CG2? Do we want S to be larger units, or to have N and G modifications?
   - how to treat N and C different word finally? (may have to leave this for analysis)
@@ -15,12 +10,18 @@
     - C could include N and G, but other would be distinct from CC.
   - set lift.v={}, with lift.v['V'], lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
     - some people may want V to include Vː, others may not (for tone, probably all should...)
-    - setup questionː is <VN> [Ṽ] or [VN]? —This is important for tone.
+    - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
+    - for regex[N#], convert the # to $.
   - make settings to turn off `NC≠C≠CC`, `CG≠C≠CC` and `N#≠C#`
+  - make window to set settings
 - prioritize guesses, so most frequence C or V is chosen first. (then second?)
   - collections.Counter()
 - add C and V sorting (and CV?)
 - XLP export
+  - write to file
+  - run dotexpdf (once you figure out where that is)
+  - figure out window specific variations (with Andy?)
+
 ### Prioritization
 - make checkcheck reference most popular *unfinished* ps-profile combo
 ### Documentation
@@ -39,6 +40,19 @@
 - distinguish between lc and lx
   - make CV report only reference lx field
   - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
+# Version 0.4
+## new features:
+### Functions
+- New page ("Record dictionary words") to record and store links in one of the following (the last two have a number of possible names in field[@type={possible name}]; the tool currently guesses from a number of options, based on what is in the lift database):
+  - lexical-unit/form[@lang=voicelang]/text
+  - citation/form[@lang=voicelang]/text
+  - {pluralname}/form[@lang=voicelang]/text
+  - {imperativename}/form[@lang=voicelang]/text
+### UI
+- Record button now works for different contexts, by `self.type`:
+  - T: tone report (as was done before)
+  - C,V: citation forms (new page? plural, other forms? all <form @lang/>)
+- "Record dictionary words" page also accessible through record menu
 # Version 0.3.1
 ## new features:
 ### prioritization
