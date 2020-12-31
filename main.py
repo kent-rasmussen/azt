@@ -133,7 +133,6 @@ class Check():
             self.getprofiles()
             self.makecountssorted()
         # self.guesspsprofile() # takes values of largest ps-profile filter
-        self.loaddefaults() # overwrites guess above, stored on runcheck
         self.storeprofiledata()
         self.setnamesall() #sets self.checknamesall
         if 'bfj' in self.db.v:  #self.analang=='bfj': # need to do this otherwise!
