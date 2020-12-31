@@ -1,6 +1,8 @@
 ### Cleanup Unresolved from November 2020 Zulgo beta test
 - Find again (not happening now) and fix scrolling frame size problem on rename
   - frame in a frame? (this problem looks familiar...)
+## In Process
+- need to fix multiple links to the same recording
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
   - look for CG and NC first, then C.
