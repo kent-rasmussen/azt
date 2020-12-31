@@ -1048,20 +1048,21 @@ class Check():
         opts['row']+=1
         if self.type == 'T':
             t=(_("Record Sorted Examples"))
-            button(opts,t,self.showtonegroupexs,column=0,
-                    compound='left', #image bottom, left, right, or top of text
-                    row=1,
-                    image=self.photo['record']
-                    )
         else:
             t=(_("Record Dictionary Words"))
-            button(opts,t,self.showentryformstorecord,column=0,
-                    compound='left', #image bottom, left, right, or top of text
-                    row=1,
-                    image=self.photo['record']
-                    )
+        button(opts,t,self.record,column=0,
+                compound='left', #image bottom, left, right, or top of text
+                row=1,
+                image=self.photo['record']
+                )
         self.maybeboard()
         self.parent.setmenus(self)
+    def record(self):
+        self.storedefaults()
+        if self.type == 'T':
+            self.showtonegroupexs()
+        else:
+            self.showentryformstorecord()
     def maybeboard(self):
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
