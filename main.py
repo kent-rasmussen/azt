@@ -685,8 +685,10 @@ class Check():
             for node in element:
                 if (node.tag == 'form') and (node.get('lang') == self.analang):
                     forms=node.findall('text')
-                if ((node.tag == 'translation') and
-                                (node.get('type') == 'Frame translation')):
+                if (((node.tag == 'translation') and
+                                (node.get('type') == 'Frame translation')) or
+                    ((node.tag == 'gloss') and
+                                    (node.get('lang') == self.glosslang))):
                     for subnode in node:
                         if (subnode.tag == 'form'):
                             glosses[subnode.get('lang')]=subnode.findall('text')
