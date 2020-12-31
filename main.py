@@ -4178,6 +4178,8 @@ class RecordButtonFrame(Frame):
         if self.test==True:
             self.filename=self.filenameURL=f'test_{check.fs}_{check.sample_format}.wav'
         else:
+            if form==None:
+                form=node.find(f"form[@lang='{check.analang}']/text").text
             wavfilename=''
             args=[check.ps, check.profile, senseid, self.node.tag, form, gloss]
             for arg in args:
