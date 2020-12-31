@@ -1694,13 +1694,18 @@ class Check():
                 self.locations+=[location]
         self.locations=list(dict.fromkeys(self.locations))
     def makelabelsnrecordingbuttons(self,parent,sense):
-        t=self.getframeddata(sense['nodetoshow'],noframe=True)
-        lxl=Label(parent, text=t[self.analang]+'\t'+sense['gloss'])
-        lxl.grid(row=sense['row'],column=sense['column'],sticky='w')
+        t=self.getframeddata(sense['nodetoshow'],noframe=True)[
+                                            self.analang]+'\t'+sense['gloss']
+        if sense['nodetoshow'] is sense['plnode']:
+            t+=" (pl)"
+        if sense['nodetoshow'] is sense['impnode']:
+            t+="!"
+        lxl=Label(parent, text=t)
         lcb=RecordButtonFrame(parent,self,senseid=sense['senseid'],
-                                                    node=sense['nodetoshow'],
-                                                    gloss=sense['gloss'])
-        lcb.grid(row=sense['row'],column=sense['column']+1,sticky='w')
+                                            node=sense['nodetoshow'],
+                                            gloss=sense['gloss'])
+        lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
+        lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def showentryformstorecord(self,senses=None):
         """Save these values before iterating over them"""
         psori=self.ps
@@ -1757,6 +1762,8 @@ class Check():
                         print(node,'!')
                         sense['column']+=2
                         sense['nodetoshow']=sense[node]
+                        self.makelabelsnrecordingbuttons(buttonframes.content,
+                                                        sense)
                 row+=1
 
                     # print()
