@@ -123,6 +123,10 @@ class Check():
         # self.basicreport() #doing this by menu now
         self.loadprofiledata()
         # print('self.profilesbysense:',self.profilesbysense)
+        """I think I need this before setting up regexs"""
+        self.guessanalang() #needed for regexs
+        self.loaddefaults() # overwrites guess above, stored on runcheck
+        """The line above may need to go after this block"""
         if self.profilesbysense is None:
             print(time.time()-self.start_time)
             self.setupCVrxs()
@@ -304,7 +308,8 @@ class Check():
     def setupCVrxs(self):
         self.rx={}
         for sclass in ['N','G','C','V']:
-            self.rx[sclass]=rx.make(rx.s(self.db,sclass.lower()),compile=True)
+            self.rx[sclass]=rx.make(rx.s(self.db,sclass.lower(),
+                                            lang=self.analang),compile=True)
         # self.rx['G']=rx.make(rx.g(self.db),compile=True)
         # self.rx['C']=rx.make(rx.c(self.db),compile=True)
         # self.rx['V']=rx.make(rx.v(self.db),compile=True)
