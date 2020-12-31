@@ -736,6 +736,7 @@ class Check():
             form=firstoflist(forms)
             for lang in glosses:
                 gloss[lang]=firstoflist(glosses[lang])
+                print('gloss[{}]:'.format(lang),gloss[lang])
             tonegroup=firstoflist(tonegroups)
         else:
             print('Neither Element nor senseid was found!')
