@@ -24,6 +24,8 @@ def askfilename(self):
     return lift() #this is a string
 def getfilenamedir(filename):
     return pathlib.Path(filename).parent
+def getfilenamebase(filename):
+    return pathlib.Path(filename).stem
 def getimagesdir(filename):
     dir=pathlib.Path.joinpath(getfilenamedir(filename),'images')
     if not os.path.exists(dir):

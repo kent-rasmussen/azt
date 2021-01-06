@@ -266,6 +266,13 @@ def attributesettings(
                     f"/field[@type='{fieldtype}']"
                     f"/form[@lang='{lang}']/text"),
             'attr':'nodetext'},
+        'lexemenode': {
+            'cm': 'use to get lexemes of all entries with a form '
+                    'in the specified language (no reference to fields)',
+            'url':(f"entry[@guid='{guid}']"
+                    f"/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
+                    f"/lexical-unit/form[@lang='{analang}']/.."),
+            'attr':'node'},
         'lexeme': {
             'cm': 'use to get lexemes of all entries with a form '
                     'in the specified language (no reference to fields)',
@@ -273,6 +280,13 @@ def attributesettings(
                     f"/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
                     f"/lexical-unit/form[@lang='{analang}']/text"),
             'attr':'nodetext'},
+        'citationnode': {
+            'cm': 'use to get citation forms of one or all entries with a form '
+                    'in the specified language (no reference to fields)',
+            'url':f"entry[@guid='{guid}']"
+                    f"/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
+                    f"/citation/form[@lang='{analang}']/..",
+            'attr':'node'},
         'citation': {
             'cm': 'use to get citation forms of one or all entries with a form '
                     'in the specified language (no reference to fields)',
@@ -299,6 +313,12 @@ def attributesettings(
                     f"/gloss[@lang='{glosslang}']/text"
                     ),
             'attr':'nodetext'},
+        'fieldnode': {
+            'cm': 'use to get whole field nodes (to modify)',
+            'url':f"entry[@guid='{guid}']"
+                    f"/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
+                    f"/field[@type='{fieldtype}']/form[@lang='{lang}']/..",
+            'attr':'node'},
         'fieldname': {
             'cm': 'use to get value(s) for <<document later>>',
             'url':f"entry[@guid='{guid}']"
@@ -507,7 +527,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.citationforms=self.citationforms() #lang='gnd'
         self.lexemes=self.lexemes()
         self.defaults=[ #these are lift related defaults; check in lift_do
-                    'xyz',
+                    'analang',
                     'glosslang',
                     'glosslang2',
                     'audiolang'
@@ -836,11 +856,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if self.debug == True:
                     print('=> This is not the example we are looking for',
                                                                     valuenode)
-    def addtoneUF(self,senseid,group,analang=None,guid=None,showurl=False):
+    def addtoneUF(self,senseid,group,analang,guid=None,showurl=False):
         # print("Adding",group,"draft underlying form value to", senseid,
         #                                 "senseid",guid,"guid (in lift.py)")
-        if analang is None:
-            analang=self.analang
         urlnattr=attributesettings('senseid',senseid=senseid) #just give me the sense.
         url=urlnattr['url']
         if showurl==True:
@@ -881,30 +899,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
-    def addmediafields(self,example, url,
+    def addmediafields(self,node, url,
                         lang, #this should be Check.audiolang
-                        # guid,senseid,analang,
-                        # glosslang,langform,glossform,fieldtype,
-                        # location,fieldvalue,ps=None,
                         showurl=False):
         """This fuction will add an XML node to the lift tree, like a new
         example field."""
         """The program should know before calling this, that there isn't
         already the relevant node --since it is agnostic of what is already
         there."""
-        # urlnattr=attributesettings(attribute,guid,analang,glosslang,lang,ps,form,
-        #                                 fieldtype,location)
-        print("Adding",url,"value to", example,"location")
-        # urlnattr=attributesettings('senseid',senseid=senseid) #just give me the sense.
-        # url=urlnattr['url']
-        # if showurl==True:
-        #     print(url)
-        # node=self.nodes.find(url) #this should always find just one node
-        # if node is None:
-        #     print("Sorry, this didn't return a node:",guid,senseid)# nodes=self.nodes.findall(url) #this is a list
-        #     return
-        # p=ET.SubElement(node, 'example')
-        form=ET.SubElement(example,'form',attrib={'lang':lang})
+        print("Adding",url,"value to", node,"location")
+        form=ET.SubElement(node,'form',attrib={'lang':lang})
         t=ET.SubElement(form,'text')
         t.text=url
         """Can't really do this without knowing what entry or sense I'm in..."""
@@ -1163,80 +1167,95 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         nasals=ntri+ndi+nm
         actuals={}
         for lang in self.analangs:
-            unsorted=self.inxyz(lang,nasals) #remove the symbols which are not in the data.
+            unsorted=self.inxyz(lang,nasals)
             """Make digraphs appear first, so they are matched if present"""
             actuals[lang]=sorted(unsorted,key=len, reverse=True)
-            #print('actuals:',actuals[lang])
-        #print(c)
         return actuals
-
+    def glist(self): #This variable gives lists, to iterate over.
+        glides=['ẅ','y','Y','w','W']
+        actuals={}
+        for lang in self.analangs:
+            unsorted=self.inxyz(lang,glides) #remove the symbols which are not in the data.
+            """Make digraphs appear first, so they are matched if present"""
+            actuals[lang]=sorted(unsorted,key=len, reverse=True)
+        return actuals
     def clist(self): #This variable gives lists, to iterate over.
-        #should this belong in a config file? (with a notice?)
-        #This should probably pull stuff from the lift file in some way..….
         """These are all possible forms, that I have ever run across.
         If I find something new (or you tell me!) we can add it here.
         Forms not actually in the data get removed below."""
         """Note, objects will be found in the order listed, so put the
         larger/longer objects first, if you ever want to find them ('ts' must
         precede 't', or you will only find t+s=CC, not ts=C)"""
-        pdi=['bh','dh','kp','gh','gb','kk']
-        pm=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','ɡ','G','ʔ',"ꞌ",'ʼ']
-        # forpeoplewholikec=['c']
-        # plosives=pdigraphs+p+forpeoplewholikec
-        # phookedimplosives=[]
-        fdi=['ch','ph','bh','vh','sh','zh','hh']
-        fm=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
-        atri=['chk']
-        adi=['dj','ts','dz','tʃ','dʒ']
-        lfdi=['sl','zl','zl']
-        lfm=['ɬ','ɮ']
-        obstruents=atri+pdi+fdi+adi+lfdi+pm+fm+lfm #tri-, then di-, mono-graphs
-        pntri=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']  #(graphs that preceede a consonant)
-        pndi=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']  #(graphs that preceede a consonant)
-        # nasals=['m','M','n','ny','ŋ','ŋŋ','ɲ']
-        ntri=["ng'"]
-        ndi=['mm','ny','ŋŋ']
-        nm=['m','M','n','ŋ','ɲ']
+        """This is a dictionary of theoretically possible segment graphs,
+        by category and number of glyphs, with consonant dictionaries nested
+        inside it, by category."""
+        s={}
+        s['p']={}
+        s['p'][2]=['bh','dh','kp','gh','gb','kk']
+        s['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','ɡ','G',
+                                                                'ʔ',"ꞌ",'ʼ']
+        s['f']={}
+        s['f'][2]=['ch','ph','bh','vh','sh','zh','hh']
+        s['f'][1]=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
+        s['a']={}
+        s['a'][3]=['chk']
+        s['a'][2]=['dj','ts','dz','tʃ','dʒ']
+        s['lf']={}
+        s['lf'][2]=['sl','zl','zl']
+        s['lf'][1]=['ɬ','ɮ']
+        # if self.distinguishNC==False:
+        """I think I want this gone from C, categorically. Maybe combine NC
+        elsewhere."""
+        s['pn']={}
+        s['pn'][3]=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']
+        s['pn'][2]=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj',
+                        'ns','nz']
+        """We want this in both"""
+        s['n']={}
+        s['n'][3]=["ng'"]
+        s['n'][2]=['mm','ny','ŋŋ']
+        s['n'][1]=['m','M','n','ŋ','ɲ']
         """Non-Nasal Sonorants"""
-        nnsdi=['rh','wh']
-        nnsm=['l','r']
-        glides=['ẅ','y','Y','w','W']
-        basic=nnsdi+obstruents+nnsm+glides
-        labialized=list(char+'w' for char in basic) #+prenasalized
-        palatalized=list(char+'y' for char in basic) #+prenasalized
-        # others=[, ]
+        s['nns']={}
+        s['nns'][2]=['rh','wh']
+        s['nns'][1]=['l','r']
+        """I think I want this gone from C, categorically. Maybe combine CG
+        elsewhere."""
+        # if self.distinguishNC==False:
+        s['g']={}
+        s['g'][1]=['ẅ','y','Y','w','W']
+        c=list() #to store valid consonants in
+        for nglyphs in [3,2,1]:
+            for stype in s:
+                if s[stype].get(nglyphs) is not None:
+                    c+=s[stype][nglyphs]
+        # if self.distinguishCG==False:
+        self.treatlabializepalatalizedasC=False
+        if self.treatlabializepalatalizedasC==True:
+            lp={}
+            lp['lab']=list(char+'w' for char in c)
+            lp['pal']=list(char+'y' for char in c)
+            lp['labpal']=list(char+'y' for char in lp['lab'])
+            lp['labpal']+=list(char+'w' for char in lp['pal'])
+            for stype in sorted(lp.keys()): #larger graphs first
+                c=lp[stype]+c
         """At some point, we may want logic to include only certain
         elements in c. The first row is in pretty much any language."""
-        c=labialized+palatalized+basic #trigraphs first
-        #+fricatives+othersonorants+others
-        # c=c+affricates
-        # c=c+nasals #if nasals are included in C's
-        # c=c+glides #if glides are included in C's
-        # c=c+others #if others are included in C's
-        # c=c+prenasalized
-        # c+=lateralfricatives
-        # c=c+hookedimplosives #if hookedimplosives are included in C's
-        # c=c+labialized #if labialized are included in C's
-        # c=c+palatalized #if labialized are included in C's
         actuals={}
-        #print('hypotheticals',c)
+        if self.debug==True:
+            print('hypotheticals:',c)
         for lang in self.analangs:
-            # unsorted=self.inxyz(lang,c) #remove the symbols which are not in the data.
-            # """Make digraphs appear first, so they are matched if present"""
-            # actuals[lang]=sorted(unsorted,key=len, reverse=True)
             actuals[lang]=self.inxyz(lang,c)
-            #print('actuals:',actuals[lang])
-        #print(c)
+            if self.debug==True:
+                print('actuals[{}]:'.format(lang),actuals[lang])
         return actuals
     def vlist(self):
-        #This should probably pull stuff from the lift file in some way..….
-        vowels=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o', 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃', 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
-        if self.analang=='bfj':
-            vowels=['ou','ei']+vowels
-        #vowels=vowels+['ə', 'a', 'e', 'i', 'u'] #for gnd
-        #vowels=vowels+['á', 'ú', 'í', 'é','ə́','à', 'ù', 'è', 'ì'] #combination extra segments (for gnd)
-        #vowels=vowels+['á', 'à', 'ú', 'í', 'é', 'ù', 'è', 'ì'] #for gnd
-        #We should include these at some point: (this will likely require iterating over each vowel, for inxyz(Vd possible combinations)).
+        vowels=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
+                'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃',
+                'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
+        """We need to address long and idiosyncratic vowel orthographies,
+        especially for Cameroon. This should also include diacritics, together
+        or separately."""
         #d=self.diacritics() #["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         actuals={}
         for lang in self.analangs:
@@ -1250,26 +1269,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             actuals[lang]=self.inxyz(lang,diacritics)
         return actuals
     def slists(self):
-        #print('Doing slists')
         self.segmentsnotinregexes={}
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
+        """This should probably be done in these functions"""
         self.n=self.nlist()
+        self.g=self.glist()
         self.c=self.clist()
         self.v=self.vlist()
-    def segmentin(self, lang, glyph): #this tests if a given glyph is found in the form data (so we don't look for glyphs we already know aren't there).
-        #print(self, lang, glyph)
-        #This actually allows for dygraphs, etc., so I'm keeping it.
-        for form in self.citationforms[lang] + self.lexemes[lang]: #check each form and lexeme in the lift file (not all files use both).
-            #print(form)
+    def segmentin(self, lang, glyph):
+        """This actually allows for dygraphs, etc., so I'm keeping it."""
+        """check each form and lexeme in the lift file (not all files
+        use both)."""
+        for form in self.citationforms[lang] + self.lexemes[lang]:
             if re.search(glyph,form): #see if the glyph is there
-                #print(glyph+": "+form) #if you want to see which form was first found for a given segment
-                #exit()
-                return glyph #once you find it, stop looking. (And if you don't find it, return nothing.)
-        """This doesn't do what I'd hoped for.."""
-        #if glyph not in self.segmentsnotinregexes[lang]:
-        #    self.segmentsnotinregexes[lang]+=[glyph]
-        #    print("Hey, I didn't find",glyph,"in",lang, "language!")
+                return glyph #find it and stop looking, or return nothing
     def inxyz(self, lang, segmentlist): #This calls the above script for each character.
         actuals=list()
         for i in segmentlist:
