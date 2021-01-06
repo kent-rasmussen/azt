@@ -1079,6 +1079,9 @@ class Check():
         self.parent.setmenus(self)
     def record(self):
         self.storedefaults()
+        if ((self.fs == None) or (self.sample_format == None)
+                or (self.audio_card_index == None)):
+            self.soundcheck()
         if self.type == 'T':
             self.showtonegroupexs()
         else:
@@ -1729,14 +1732,24 @@ class Check():
         psori=self.ps
         profileori=self.profile
         for psprofile in self.profilecounts:
+            if not(self.runwindow.winfo_exists):
+                print('no runwindow; quitting!')
+                return
+            if not(self.runwindow.frame.winfo_exists):
+                print('no runwindow frame; quitting!')
+                return
+            self.runwindow.resetframe()
             ww=Wait(self.runwindow)
             self.ps=psprofile[2]
             self.profile=psprofile[1]
-            self.getrunwindow()
-            text=_("Words and phrases to record: click ‘Record’, talk, "
-                    "and release ({} words)".format(psprofile[0]))
+            text=_("Record {} {} Words: click ‘Record’, talk, "
+                    "and release ({} words)".format(self.profile,self.ps,
+                                                    psprofile[0]))
             instr=Label(self.runwindow.frame, anchor='w',text=text)
             instr.grid(row=0,column=0,sticky='w')
+            nextb=Button(self.runwindow.frame,text=_("Next Group"),
+                                            cmd=self.runwindow.frame.destroy)
+            nextb.grid(row=0,column=1,sticky='w')
             buttonframes=ScrollingFrame(self.runwindow.frame)
             buttonframes.grid(row=1,column=0,sticky='w')
             row=0
@@ -1788,8 +1801,8 @@ class Check():
                 row+=1
 
                     # print()
-            self.runwindow.wait_window(self.runwindow)
             ww.done()
+            self.runwindow.wait_window(self.runwindow.frame)
         self.ps=psori
         self.profile=profileori
     def showsenseswithexamplestorecord(self,senses=None):
