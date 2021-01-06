@@ -1772,7 +1772,6 @@ class Check():
                                                     ))
                 if sense['gloss'] is None:
                     continue #We can't save the file well anyway; don't bother
-                print('gloss:', sense['gloss'])
                 if self.db.pluralname is not None:
                     sense['plnode']=firstoflist(self.db.get('fieldnode',senseid=sense['senseid'],
                                             lang=self.analang,
@@ -1781,10 +1780,6 @@ class Check():
                     sense['impnode']=firstoflist(self.db.get('fieldnode',senseid=sense['senseid'],
                                             lang=self.analang,
                                             fieldtype=self.db.imperativename))
-                # print(lcnode,lxnode)
-                # print(lxnode.tag)
-                # # print(firstoflist(lxnode).find('form').text)
-                # print(lxnode.find('form/text').text)
                 if sense['lcnode'] != None:
                     # print('lcnode!')
                     sense['nodetoshow']=sense['lcnode']
@@ -1794,14 +1789,11 @@ class Check():
                 self.makelabelsnrecordingbuttons(buttonframes.content,sense)
                 for node in ['plnode','impnode']:
                     if (node in sense) and (sense[node] != None):
-                        print(node,'!')
                         sense['column']+=2
                         sense['nodetoshow']=sense[node]
                         self.makelabelsnrecordingbuttons(buttonframes.content,
                                                         sense)
                 row+=1
-
-                    # print()
             ww.done()
             self.runwindow.wait_window(self.runwindow.frame)
         self.ps=psori
@@ -4442,7 +4434,6 @@ def firstoflist(l,othersOK=False):
     """This takes a list composed of one item, and returns the item.
     with othersOK=True, it discards n=2+ items; with othersOK=False,
     it throws an error if there is more than one item in the list."""
-    print(type(l))
     if type(l) is not list:
         return l
     if (l == None) or (l == []):
