@@ -4456,7 +4456,10 @@ def t(element):
     try:
         return element.text
     except:
-        print('Apparently you tried to pull text out of a non element:',element)
+        if element is None:
+            return
+        else:
+            print('Apparently you tried to pull text out of a non element:',element)
 def nonspace(x):
     """Return a space instead of None (for the GUI)"""
     if x is not None:
