@@ -1,19 +1,11 @@
 Roadmap including past and future work; '+' = done; IP= in process; NOT= things that don't need doing anymore.
 ctrl-shift-p to find commands
 # Bugs to squash
-Make ATZ not crash if empty url file is present.
 # In Process
-IP: Clean up and document code
-IP: I need to consider the need for db, parent, and window in check scripts.
-IP: Need to fix references to parent of checks and subchecks.
 
 # Features to add
-- `Record` button on main screen
-- scroll comparatives and reports when necessary.
-- add `wait` window for reports
 - what and why pages in various places?
 - distinguish C, N, and NC
-- set up recordings for unframed words (to lc field), from C or V checks.
 - XLP export
 # Version 0.3 Nov 2020
 
