@@ -1731,6 +1731,7 @@ class Check():
         """Save these values before iterating over them"""
         psori=self.ps
         profileori=self.profile
+        self.getrunwindow()
         for psprofile in self.profilecounts:
             if not(self.runwindow.winfo_exists):
                 print('no runwindow; quitting!')
@@ -1914,12 +1915,12 @@ class Check():
     def tonegroupreport(self,silent=False):
         print("Starting report...")
         self.storedefaults()
-        self.tonereportfile=re.sub('\.','_',str(
-                            self.db.filename+'_'+
-                            self.ps+'_'+
-                            self.profile+
-                            ".ToneReport"))+'.txt'
+        self.getrunwindow()
         ww=Wait(self.runwindow)
+        self.tonereportfile=''.join([str(self.reportbasefilename),'_',
+                            self.ps,'_',
+                            self.profile,
+                            ".ToneReport.txt"])
         start_time=time.time() #move this to function?
         self.getidstosort() #in case you didn't just run a check
         self.getlocations()
@@ -1975,7 +1976,6 @@ class Check():
                     pass
         """Add the guid information to the groups!!"""
         r = open(self.tonereportfile, "w", encoding='utf-8')
-        self.getrunwindow()
         self.runwindow.title(_("Tone Report"))
         self.runwindow.scroll=ScrollingFrame(self.runwindow.frame)
         window=self.runwindow.scroll.content
