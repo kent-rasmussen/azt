@@ -1717,9 +1717,9 @@ class Check():
     def makelabelsnrecordingbuttons(self,parent,sense):
         t=self.getframeddata(sense['nodetoshow'],noframe=True)[
                                             self.analang]+'\t'+sense['gloss']
-        if sense['nodetoshow'] is sense['plnode']:
+        if ('plnode' in sense) and (sense['nodetoshow'] is sense['plnode']):
             t+=" (pl)"
-        if sense['nodetoshow'] is sense['impnode']:
+        if ('impnode' in sense) and (sense['nodetoshow'] is sense['impnode']):
             t+="!"
         lxl=Label(parent, text=t)
         lcb=RecordButtonFrame(parent,self,senseid=sense['senseid'],
