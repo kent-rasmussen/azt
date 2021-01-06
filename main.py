@@ -1516,7 +1516,7 @@ class Check():
         print("this sets the language")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title=_('Select Analysis Language'))
-        if self.db.analang is None :
+        if self.db.analangs is None :
             Label(window.frame,
                           text='Error: please set Lift file first! ('
                           +str(self.db.filename)+')'
