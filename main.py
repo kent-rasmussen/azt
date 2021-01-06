@@ -1729,6 +1729,7 @@ class Check():
         psori=self.ps
         profileori=self.profile
         for psprofile in self.profilecounts:
+            ww=Wait(self.runwindow)
             self.ps=psprofile[2]
             self.profile=psprofile[1]
             self.getrunwindow()
@@ -1788,6 +1789,7 @@ class Check():
 
                     # print()
             self.runwindow.wait_window(self.runwindow)
+            ww.done()
         self.ps=psori
         self.profile=profileori
     def showsenseswithexamplestorecord(self,senses=None):
@@ -1904,6 +1906,7 @@ class Check():
                             self.ps+'_'+
                             self.profile+
                             ".ToneReport"))+'.txt'
+        ww=Wait(self.runwindow)
         start_time=time.time() #move this to function?
         self.getidstosort() #in case you didn't just run a check
         self.getlocations()
@@ -1997,6 +2000,7 @@ class Check():
                 #                                         "‘"+gloss2+"’"))
                 output(window,r,text)
                 self.db.addtoneUF(senseid,groupname,analang=self.analang)
+        ww.done()
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
         output(window,r,text)
         text=_("(Report is also available at ("+self.tonereportfile+")")
@@ -4319,6 +4323,21 @@ class ScrollingButtonFrame(ButtonFrame):
         scroll=ScrollingFrame(parent)
         super().__init__(scroll.content,optionlist,command,window,**kwargs)
         self.grid(row=0,column=0)
+class Wait(Window):
+    def done(self):
+        self.parent.deiconify()
+        self.destroy()
+    def __init__(self, parent):
+        self.parent=parent
+        self.parent.withdraw()
+        super(Wait, self).__init__(parent,exit=0)
+        title=(_("A→Z+T Dictionary and Orthography Checker in Process"))
+        self.title(title)
+        text=_("Please Wait...")
+        Label(self, text=text,
+                        font=self.fonts['title'],anchor='c',padx=50
+                        ).grid(row=0,column=0,sticky='we')
+        self.update_idletasks()
 class Splash(Window):
     def __init__(self, parent):
         super(Splash, self).__init__(parent,exit=0)
