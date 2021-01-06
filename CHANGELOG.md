@@ -16,21 +16,20 @@
     - for regex[N#], convert the # to $.
   - make settings to turn off `NC≠C≠CC`, `CG≠C≠CC` and `N#≠C#`
   - make window to set settings
-- prioritize guesses, so most frequence C or V is chosen first. (then second?)
+- prioritize guesses, so most frequent C or V is chosen first. (then second?)
   - collections.Counter()
 - add C and V sorting (and CV?)
 - XLP export
   - write to file
-  - run dotexpdf (once you figure out where that is)
+  - run dotexpdf (once you figure out where that is) to generate pdf
+  - run script to generate html
   - figure out window specific variations (with Andy?)
-
 ### Prioritization
 - make checkcheck reference most popular *unfinished* ps-profile combo
 ### Documentation
 - Add what and why pages in different places, with rationales and instructions specific to context?
 ## Issues since November 2020 Zulgo beta test
 ### Useability
-- make `wait` window for longer tasks (reports, recording)
 ### CV Report
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - make CV report not include Caa in V1 or V2
@@ -51,6 +50,7 @@
   - {pluralname}/form[@lang=voicelang]/text
   - {imperativename}/form[@lang=voicelang]/text
 ### UI
+- New `wait` window for longer tasks (reports, recording)
 - Record button now works for different contexts, by `self.type`:
   - T: tone report (as was done before)
   - C,V: citation forms (new page? plural, other forms? all <form @lang/>)
