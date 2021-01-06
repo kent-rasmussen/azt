@@ -55,6 +55,10 @@
   - T: tone report (as was done before)
   - C,V: citation forms (new page? plural, other forms? all <form @lang/>)
 - "Record dictionary words" page also accessible through record menu
+- added check for parameters before making recording windows
+- added button for next group in citation recording pages, distinct from exit.
+### Bugs
+- fixed problem with dot (.) in directory name
 # Version 0.3.1
 ## new features:
 ### prioritization
