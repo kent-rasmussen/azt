@@ -1733,10 +1733,10 @@ class Check():
         profileori=self.profile
         self.getrunwindow()
         for psprofile in self.profilecounts:
-            if not(self.runwindow.winfo_exists):
+            if self.runwindow.winfo_exists==False:
                 print('no runwindow; quitting!')
                 return
-            if not(self.runwindow.frame.winfo_exists):
+            if self.runwindow.frame.winfo_exists==False:
                 print('no runwindow frame; quitting!')
                 return
             self.runwindow.resetframe()
