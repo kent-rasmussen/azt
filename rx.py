@@ -3,8 +3,6 @@ import re
 """This is called from a number of places"""
 def s(self,stype,lang=None): #join a list into regex format
     if hasattr(self,stype): #should be one of c,v,g,n
-        if lang is None: #This causes an error, as lift.analang doesn't exist
-            lang=self.analang #This should be generalized for all analangs
         return '|'.join(getattr(self,stype)[lang])
 def make(regex, word=False, compile=False):
     if word == True:
@@ -15,7 +13,7 @@ def make(regex, word=False, compile=False):
         except:
             print('Regex problem!')
     return regex
-def fromCV(db, CVs, word=False, compile=False):
+def fromCV(db, CVs, lang, word=False, compile=False):
     """ this inputs regex variable (regexCV), a tuple of two parts:
     1. abbreviations with 'C' and 'V' in it, and/or variables for actual
     segments or back reference, e.g., 1 for \1 or 2 for \2, and 'c' or 'v'.
@@ -24,6 +22,7 @@ def fromCV(db, CVs, word=False, compile=False):
     CAUTION: if you don't have this dictionary, CVs[0] is just one letter...
     It outputs language specific regex (compiled if compile=True,
     whole word word=True)."""
+    """lang should be check.analang"""
     if type(CVs) is str:
         CVs=tuple((CVs,))
     regex=list()
@@ -36,8 +35,8 @@ def fromCV(db, CVs, word=False, compile=False):
         exit()
     for x in CVs[0]:
         if x in ["V","C","N","G"]:
-            rnext="("+s(db,x.lower())+")"
-        elif x in db.c[db.analang]+db.v[db.analang]:
+            rnext="("+s(db,x.lower(),lang)+")"
+        elif x in db.c[lang]+db.v[lang]:
             rnext="("+x+")"
         else:
             try:

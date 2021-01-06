@@ -60,7 +60,16 @@ class Check():
         if not file.exists(filename):
             print("Select a lexical database to check; exiting.")
             exit()
-        # self.backupfilename=filename+'.bak.txt' #lift_file.liftstr()
+        filedir=file.getfilenamedir(filename)
+        """We need this variable to make filenames for files that will be
+        imported as python modules. To do that, they need to not have periods
+        (.) in their filenames. So we take the base name from the lift file,
+        and replace periods with underscores, to make our modules basename."""
+        filenamebase=re.sub('\.','_',str(file.getfilenamebase(filename)))
+        if not file.exists(filedir):
+            print("Looks like there's a problem with your directory...",
+                    filename,'\n',filemod)
+            exit()
         """This and the following bit should probably be in another lift
         class, in the main script. They make non lift-specific changes
         and assumptions about the database."""
@@ -82,10 +91,19 @@ class Check():
         else:
             print(_("Apparently we've run this before today; not backing "
             "up again."))
-        self.defaultfile=re.sub('\.','_',str(filename+".CheckDefaults"))+'.py'
-        self.toneframesfile=re.sub('\.','_',str(filename+".ToneFrames"))+'.py'
-        self.statusfile=re.sub('\.','_',str(filename+".VerificationStatus"))+'.py'
-        self.profiledatafile=re.sub('\.','_',str(filename+".ProfileData"))+'.py'
+        self.defaultfile=file.getdiredurl(filedir,
+                                        filenamebase+".CheckDefaults.py")
+        self.toneframesfile=file.getdiredurl(filedir,
+                                        filenamebase+".ToneFrames.py")
+        self.statusfile=file.getdiredurl(filedir,
+                                        filenamebase+".VerificationStatus.py")
+        self.profiledatafile=file.getdiredurl(filedir,
+                                        filenamebase+".ProfileData.py")
+        self.reportbasefilename=file.getdiredurl(filedir, filenamebase)
+        for savefile in [self.defaultfile,self.toneframesfile,self.statusfile,
+                        self.profiledatafile]:
+            if not file.exists(savefile):
+                print(savefile, "doesn't exist!")
         self.imagesdir=file.getimagesdir(filename)
         self.audiodir=file.getaudiodir(filename)
         print(self.audiodir)
@@ -1978,7 +1996,7 @@ class Check():
                 #             text='\t'+'\t'.join((form,"‘"+gloss+"’",
                 #                                         "‘"+gloss2+"’"))
                 output(window,r,text)
-                self.db.addtoneUF(senseid,groupname)
+                self.db.addtoneUF(senseid,groupname,analang=self.analang)
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
         output(window,r,text)
         text=_("(Report is also available at ("+self.tonereportfile+")")
@@ -2014,12 +2032,9 @@ class Check():
         typeori=self.type
         psori=self.ps
         profileori=self.profile
-        self.basicreportfile=''.join([re.sub('\.','_',
-                                        ''.join([self.db.filename
+        self.basicreportfile=''.join([str(self.reportbasefilename)
                                             # ,'_',self.type,'_',str(pss)
-                                            ,'.BasicReport'
-                                            ])
-                                            ),'.txt'])
+                                            ,'.BasicReport.txt'])
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
         self.basicreported={}
         self.printprofilesbyps()
@@ -2059,9 +2074,9 @@ class Check():
         nameori=self.name
         subcheckori=self.subcheck
         if self.type == 'V':
-            subchecks=self.db.v[self.db.analang] #(just the vowels
+            subchecks=self.db.v[self.analang] #(just the vowels
         elif self.type == 'C':
-            subchecks=self.db.c[self.db.analang]
+            subchecks=self.db.c[self.analang]
         else:
             print("Sorry, not sure what I'm doing:",self.type)
         """This sets each of the checks that are applicable for the given
@@ -3031,7 +3046,8 @@ class Check():
             print('self.subcheck='+str(self.subcheck)+str(type(self.subcheck)))
             print('self.regexCV='+str(self.regexCV)+str(type(self.regexCV)))
         """Final step: convert the CVx code to regex, and store in self."""
-        self.regex=rx.fromCV(self.db,self.regexCV, word=True, compile=True)
+        self.regex=rx.fromCV(self.db,self.regexCV, lang=self.analang,
+                            word=True, compile=True)
     def getrunwindow(self):
         # print(self.__dict__)
         # print(hasattr(self,'runwindow'))
