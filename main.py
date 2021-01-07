@@ -4119,7 +4119,7 @@ class RadioButton(tkinter.Radiobutton):
         kwargs['activebackground']=self.theme['activebackground']
         kwargs['selectcolor']=self.theme['activebackground']
         super().__init__(parent,**kwargs)
-        # self['background']=self.theme['offwhite'] #because this is for entry...
+        self.grid(column=column, row=row, sticky=sticky)
 class RadioButtonFrame(Frame):
     def __init__(self, parent, **kwargs):
         for vars in ['var','opts']:
