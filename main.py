@@ -3000,9 +3000,9 @@ class Check():
         Label(self.results, text=text).grid(column=0, row=i)
         font=self.frame.fonts['read']
         guid=0 # in case the following doesn't find anything:
-        for guid in self.db.guidformsbyregex(self.regex,self.ps,self.analang):
+        for senseid in self.db.senseidformsbyregex(self.regex,self.ps,self.analang):
             """This regex is compiled!"""
-            o=self.printentryinfo(guid)
+            o=self.getframeddata(senseid,noframe=True)['formatted']
             if self.debug ==True:
                 o=entry.lexeme,entry.citation,nn(entry.gloss),
                 nn(entry.gloss2),nn(entry.illustration)
@@ -3030,11 +3030,11 @@ class Check():
                     row=i, column=0, font=font, command=self.picked)
             if self.su==True:
                 notok=Button(self.results,
-                            choice=guid, text='X',
+                            choice=senseid, text='X',
                             window=self.runwindow.frame,
                             width=15, row=i,
                             column=1, command=self.notpicked)
-        if guid == 0: #i.e., nothing was found above
+        if senseid == 0: #i.e., nothing was found above
             print(_('No results!'))
             Label(self.results, text=_("No results for ")+self.regexCV+"!"
                             ).grid(column=0, row=i+1)
