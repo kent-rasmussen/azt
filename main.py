@@ -3615,6 +3615,28 @@ class Window(tkinter.Toplevel):
                                             )
             self.backButton.grid(column=3,row=2)
 class Frame(tkinter.Frame):
+        """These lines are different than for the scrolling frame"""
+        contentrw=self.winfo_reqwidth()
+        contentrh=self.winfo_reqheight()
+        """If the current scrolling frame dimensions are smaller than the
+        scrolling content, or else pushing the window off the screen, then make
+        the scrolling window the smaller of
+            -the scrolling content or
+            -the max dimensions, from above."""
+        # if self.winfo_width() < contentrw:
+        #      self.config(width=contentrw)
+        # if self.winfo_width() > self.maxwidth:
+        #     self.config(width=self.maxwidth)
+        if ((self.winfo_width() < contentrw)
+                or (self.winfo_width() > self.maxwidth)):
+                self.config(width=min(self.maxwidth,contentrw))
+        # if self.winfo_height() < contentrh:
+        #     self.config(height=contentrh)
+        # if self.winfo_height() > self.maxheight:
+        #     self.config(height=self.maxheight)
+        if ((self.winfo_height() < contentrh)
+                or (self.winfo_height() > self.maxheight)):
+            self.config(height=min(self.maxheight,contentrh))
     def __init__(self, parent, **kwargs):
         self.parent = parent
         inherit(self)
