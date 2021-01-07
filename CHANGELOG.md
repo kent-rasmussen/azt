@@ -3,6 +3,9 @@
   - frame in a frame? (this problem looks familiar...)
 ## In Process
 - need to fix multiple links to the same recording
+- fix multiple sense glosses pulled into CV reports
+- make help:about scroll
+- bring diacritics into vowel variables
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
   - look for CG and NC first, then C.
