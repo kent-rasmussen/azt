@@ -3124,15 +3124,15 @@ class Check():
                 self.ps is None or self.ps == "Null" or
                 ((self.subcheck is None or self.subcheck == "Null") and
                 self.type != 'T')):
-            def header():
-                row=0
-                texts=((_('Working with Language: ')+self.analang),
-                        (_('Working with Grammatical category: ')+self.ps),
-                        (_('Verifying: ')+self.subcheck))
-                for text in texts:
-                    Label(self.runwindow.frame, text=text
-                            ).grid(column=0, row=row)
-                    row+=1
+            # def header():
+            #     row=0
+            #     texts=((_('Working with Language: ')+self.analang),
+            #             (_('Working with Grammatical category: ')+self.ps),
+            #             (_('Verifying: ')+self.subcheck))
+            #     for text in texts:
+            #         Label(self.runwindow.frame, text=text
+            #                 ).grid(column=0, row=row)
+            #         row+=1
             if self.type == 'T':
                 self.maybesort()
             else: #do the CV checks
