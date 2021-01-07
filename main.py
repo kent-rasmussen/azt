@@ -1265,7 +1265,10 @@ class Check():
                             'fs',
                             'audio_card_index',
                             'interfacelang',
-                            'examplespergrouptorecord'
+                            'examplespergrouptorecord',
+                            'distinguishNC',
+                            'distinguishCG',
+                            'distinguishNwd'
                             ],
                         'ps':[
                             'profile' #do I want this?
