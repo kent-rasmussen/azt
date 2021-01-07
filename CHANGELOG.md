@@ -45,6 +45,7 @@
 # Version 5.0
 - made help:about scroll
 - fixed multiple sense glosses pulled into CV reports (now senses are sorted individually)
+- added linebreaks to tone frame definition window, to keep it on the page
 ### Under the Hood
 - added variables for version number and program name, added to help:about
 # Version 0.4
