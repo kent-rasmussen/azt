@@ -4,7 +4,6 @@
 ## In Process
 - need to fix multiple links to the same recording
 - fix multiple sense glosses pulled into CV reports
-- make help:about scroll
 - bring diacritics into vowel variables
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
@@ -44,6 +43,10 @@
 - distinguish between lc and lx
   - make CV report only reference lx field
   - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
+# Version 5.0
+- made help:about scroll
+### Under the Hood
+- added variables for version number and program name, added to help:about
 # Version 0.4
 ## new features:
 ### Functions
