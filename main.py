@@ -366,23 +366,116 @@ class Check():
         return idsbyps[randint(0, len(idsbyps))]
     def setSdistinctions(self):
         def submitform():
-            self.runwindow.form=formfield.get()
-            self.runwindow.frame2.destroy()
+            change=False
+            for var in varlist:
+                if self.debug==True:
+                    print(var[0],getattr(self,var[0]),var[1].get(),'change:',
+                                                                        change)
+                if getattr(self,var[0]) != var[1].get():
+                    setattr(self,var[0],var[1].get())
+                    change=True
+                if self.debug==True:
+                    print(var[0],getattr(self,var[0]),var[1].get(),'change:',
+                                                                        change)
+            if self.debug==True:
+                print('self.distinguishNC=',self.distinguishNC,
+                    '\nself.distinguishCG=',self.distinguishCG,
+                    '\nself.distinguishNwd=',self.distinguishNwd)
+            if change == True:
+                print('There was a change; we need to redo the analysis now.')
+            self.runwindow.destroy()
+        # self.debug=True
         self.getrunwindow()
-        form=tkinter.StringVar()
-        gloss=tkinter.StringVar()
+        dNC = tkinter.BooleanVar()
+        dCG = tkinter.BooleanVar()
+        dNwd = tkinter.BooleanVar()
+        varlist=[('distinguishNC',dNC),
+                    ('distinguishCG',dCG),
+                    ('distinguishNwd',dNwd)]
+        for var in varlist:
+            if (not hasattr(self,var[0])) or (type(getattr(self,var[0])) is not bool):
+                setattr(self,var[0],False)
+            var[1].set(getattr(self,var[0]))
+        padx=50
+        pady=10
+        row=0
+        column=0
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
-        title=_("Here you set a number of parameters that change how A→Z+T "
-        "Interprets {} segments (consonant and vowel glyphs)").format(
-                            self.db.languagenames[self.analang])
-        Label(self.runwindow,text=title,font=self.fonts['title'],
+        title=_("Tell {} How to Interpret {} Segments"
+                ).format(self.progname,self.db.languagenames[self.analang])
+        titl=Label(self.runwindow,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c'
-                ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
-        formfield = RadioButton(self.runwindow.frame2,textvariable=form)
-        formfield.grid(row=1,column=0)
-        sub_btn=Button(self.runwindow.frame2,text = 'Use these settings',
-                  command = submitgloss)
-        sub_btn.grid(row=2,column=0,sticky='')
+                )
+        titl.grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
+        text=_("Here you can view and set parameters that change how {} "
+        "interprets {} segments \n(consonant and vowel glyphs/characters)"
+                ).format(self.progname,self.db.languagenames[self.analang])
+        instr=Label(self.runwindow,text=text,#font=self.fonts['title'],
+                justify=tkinter.LEFT,anchor='c'
+                )
+        instr.grid(row=1,column=0,sticky='ew',padx=padx,pady=pady)
+        self.runwindow.scroll=ScrollingFrame(self.runwindow)
+        self.runwindow.scroll.grid(row=2,column=0)
+        self.runwindow.frame2a=Frame(self.runwindow.scroll.content)
+        self.runwindow.frame2a.grid(row=row,column=column,padx=padx,
+                                                        pady=pady)
+        text=_('Do you want to distinguish Nasal-Consonant (NC) sequences from '
+                'other consonants?')
+        nc=Label(self.runwindow.frame2a,text=text,#font=self.fonts['title'],
+                justify=tkinter.LEFT,anchor='c'
+                # wraplength=self.runwindow.frame2.winfo_width()/3
+                )
+        nc.grid(row=0,column=0,sticky='ew')
+        # nc.wrap()
+        RadioButtonFrame(self.runwindow.frame2a,var=dNC,
+        opts=[(True,'NC≠C'),(False,'NC=C')]).grid(row=1,column=0)
+        row+=1
+        self.runwindow.frame2b=Frame(self.runwindow.scroll.content)
+        self.runwindow.frame2b.grid(row=row,column=column,padx=padx,
+                                                        pady=pady)
+        text=_('Do you want to distinguish Consonant-Glide (CG) sequences from '
+                'other consonants?')
+        cg=Label(self.runwindow.frame2b,text=text,#font=self.fonts['title'],
+                justify=tkinter.LEFT,anchor='c'
+                # wraplength=self.runwindow.frame2.winfo_width()/3
+                )
+        cg.grid(row=0,column=0,sticky='ew')
+        # cg.wrap()
+        RadioButtonFrame(self.runwindow.frame2b,var=dCG,
+        opts=[(True,'CG≠C'),(False,'CG=C')]).grid(row=1,column=0)
+        row+=1
+        self.runwindow.frame2c=Frame(self.runwindow.scroll.content)
+        self.runwindow.frame2c.grid(row=row,column=column,padx=padx,
+                                                        pady=pady)
+        text=_('Do you want to distinguish Word Final Nasals (N#) from other word '
+            'final consonants?')
+        nwd=Label(self.runwindow.frame2c,text=text,#font=self.fonts['title'],
+                justify=tkinter.LEFT,anchor='c'#,
+                # wraplength=self.runwindow.frame2.winfo_width()/3
+                )
+        nwd.grid(row=0,column=0,sticky='ew')
+        # nwd.wrap()
+        row+=1
+        RadioButtonFrame(self.runwindow.frame2c,var=dNwd,
+        opts=[(True,'N#≠C#'),(False,'N#=C#')]).grid(row=1,column=0)
+        # self.runwindow.frame2.windowsize()
+        # formfield1 = RadioButton(self.runwindow.frame2,textvariable=form)
+        # formfield1.grid(row=row,column=0)
+        # row+=1
+        # formfield2 = RadioButton(self.runwindow.frame2,textvariable=form)
+        # formfield2.grid(row=row,column=0)
+        # row+=1
+        row+=1
+        self.runwindow.frame2d=Frame(self.runwindow.scroll.content)
+        self.runwindow.frame2d.grid(row=row,column=column,padx=padx,
+                                                        pady=pady)
+        sub_btn=Button(self.runwindow.frame2d,text = 'Use these settings',
+                  command = submitform)
+        sub_btn.grid(row=0,column=1,sticky='nw',pady=pady)
+        nbtext=_("N.B.: If you make changes, this button==> \nwill trigger a "
+                "reanalysis of your data, \nwhich will take some time.")
+        sub_nb=Label(self.runwindow.frame2d,text = nbtext, anchor='e')
+        sub_nb.grid(row=0,column=0,sticky='e',pady=pady)
         self.storedefaults()
     def addmorpheme(self):
         def submitform():
