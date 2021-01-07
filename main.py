@@ -492,6 +492,21 @@ class Check():
             """self.name is set here --I may need it, to correctly test
             the frames created..."""
             self.name=str(namevar)
+            if self.name is '':
+                text=_('Sorry, empty name! \nPlease provide at least \na frame '
+                    'name, to distinguish it \nfrom other frames.')
+                print(re.sub('\n','',text))
+                if hasattr(window,'frame2'):
+                    window.frame2.destroy()
+                window.frame2=Frame(window.scroll.content)
+                window.frame2.grid(row=1,column=0,columnspan=3,sticky='w')
+                l1=Label(window.frame2,
+                        text=text,
+                        font=self.fonts['read'],
+                        justify=tkinter.LEFT,anchor='w')
+                l1.grid(row=0,column=columnleft,sticky='w')
+                return
+            print('self.name:',self.name)
             if self.toneframes is None:
                 self.toneframes={}
             if not self.ps in self.toneframes:
@@ -579,14 +594,17 @@ class Check():
                 ).grid(row=row,column=columnleft,columnspan=3)
         row+=1
         t=_("What do you want to call the tone frame ?")
-        Label(window.frame1,text=t).grid(row=row,column=columnleft,sticky='e')
-        name = EntryField(window.frame1,textvariable=namevar)
-        name.grid(row=row,column=columnright,sticky='w')
+        finst=Frame(window.frame1)
+        finst.grid(row=row,column=0)
+        Label(finst,text=t).grid(row=0,column=columnleft,sticky='e')
+        name = EntryField(finst,textvariable=namevar)
+        name.grid(row=0,column=columnright,sticky='w')
         row+=1
         row+=1
         ti={} # text instructions
         tb={} # text before
         ta={} # text after
+        f={} #frames for each lang
         """Set all the label texts"""
         for lang in langs:
             if lang == self.analang:
@@ -596,40 +614,43 @@ class Check():
                 kind='form'
             else:
                 ti[lang]=(_("Fill in the {} glossing "
-                    "here as appropriate for the morphosyntactic context.\n("
+                    "here \nas appropriate for the morphosyntactic context.\n("
                     "include a space to separate word glosses)"
                                 ).format(self.db.languagenames[lang]))
                 kind='gloss'
-            tb[lang]=_("<--What text goes *before* the {} word *{}* "
-                        "in the frame?"
+            tb[lang]=_("What text goes *before* \n<==the {} word *{}* "
+                        "\nin the frame?"
                                 ).format(self.db.languagenames[lang],kind)
-            ta[lang]=_("What text goes *after* the {} word *{}* "
-                        "in the frame?-->"
+            ta[lang]=_("What text goes *after* \nthe {} word *{}*==> "
+                        "\nin the frame?"
                                 ).format(self.db.languagenames[lang],kind)
         """Place the labels"""
         for lang in langs:
-            Label(window.frame1,text='\n'+ti[lang]+'\n').grid(
-                                                row=row,column=columnleft,
+            f[lang]=Frame(window.frame1)
+            f[lang].grid(row=row,column=0)
+            langrow=0
+            Label(f[lang],text='\n'+ti[lang]+'\n').grid(
+                                                row=langrow,column=columnleft,
                                                 columnspan=3)
-            row+=1
-            Label(window.frame1,text=tb[lang]).grid(row=row,
+            langrow+=1
+            Label(f[lang],text=tb[lang]).grid(row=langrow,
                                         column=columnright,sticky='w')
-            Label(window.frame1,text='word',padx=0,pady=0).grid(row=row,
+            Label(f[lang],text='word',padx=0,pady=0).grid(row=langrow,
                                                         column=columnword)
-            db['before'][lang]['entryfield'] = EntryField(window.frame1,
+            db['before'][lang]['entryfield'] = EntryField(f[lang],
                                 textvariable=db['before'][lang]['text'],
                                 justify='right')
-            db['before'][lang]['entryfield'].grid(row=row,
+            db['before'][lang]['entryfield'].grid(row=langrow,
                                         column=columnleft,sticky='e')
-            row+=1
-            Label(window.frame1,text=ta[lang]).grid(row=row,
+            langrow+=1
+            Label(f[lang],text=ta[lang]).grid(row=langrow,
                     column=columnleft,sticky='e')
-            Label(window.frame1,text='word',padx=0,pady=0).grid(row=row,
+            Label(f[lang],text='word',padx=0,pady=0).grid(row=langrow,
                     column=columnword)
-            db['after'][lang]['entryfield'] = EntryField(window.frame1,
+            db['after'][lang]['entryfield'] = EntryField(f[lang],
                     textvariable=db['after'][lang]['text'],
                     justify='left')
-            db['after'][lang]['entryfield'].grid(row=row,
+            db['after'][lang]['entryfield'].grid(row=langrow,
                     column=columnright,sticky='w')
             row+=1
         row+=1
