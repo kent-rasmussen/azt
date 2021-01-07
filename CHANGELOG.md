@@ -3,7 +3,6 @@
   - frame in a frame? (this problem looks familiar...)
 ## In Process
 - need to fix multiple links to the same recording
-- fix multiple sense glosses pulled into CV reports
 - bring diacritics into vowel variables
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
@@ -45,6 +44,7 @@
   - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
 # Version 5.0
 - made help:about scroll
+- fixed multiple sense glosses pulled into CV reports (now senses are sorted individually)
 ### Under the Hood
 - added variables for version number and program name, added to help:about
 # Version 0.4
