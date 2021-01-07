@@ -4109,14 +4109,50 @@ class EntryField(tkinter.Entry):
         super().__init__(parent,**kwargs)
         self['background']=self.theme['offwhite'] #because this is for entry...
 class RadioButton(tkinter.Radiobutton):
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, column=0, row=0, sticky='w', **kwargs):
         self.parent=parent
         inherit(self)
         # self.theme=parent.theme
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['default']
+        # self['background']=self.theme['background']
+        kwargs['activebackground']=self.theme['activebackground']
+        kwargs['selectcolor']=self.theme['activebackground']
         super().__init__(parent,**kwargs)
         # self['background']=self.theme['offwhite'] #because this is for entry...
+class RadioButtonFrame(Frame):
+    def __init__(self, parent, **kwargs):
+        for vars in ['var','opts']:
+            if (vars not in kwargs):
+                print('You need to set {} for radio button frame!').format(vars)
+            else:
+                setattr(self,vars,kwargs[vars])
+                print(self.__dict__)
+                del kwargs[vars] #we don't want this going to the button.
+                print(self.__dict__)
+        column=0
+        sticky='w'
+        self.parent=parent
+        inherit(self)
+        # self.theme=parent.theme
+        # if 'font' not in kwargs:
+        #     kwargs['font']=self.fonts['default']
+        super().__init__(parent,**kwargs)
+        kwargs['background']=self.theme['background']
+        kwargs['activebackground']=self.theme['activebackground']
+        print('self.var:',self.var)
+        print('self.opts:',self.opts)
+        row=0
+        for opt in self.opts:
+            value=opt[0]
+            name=opt[1]
+            RadioButton(self,variable=self.var, value=value, text=name,
+                                                            column=column,
+                                                            row=row,
+                                                            sticky=sticky,
+                                                            indicatoron=0,
+                                                            **kwargs)
+            row+=1
 class Button(tkinter.Button):
     def __init__(self, parent, text,
                 choice=None, window=None, #some buttons have these, some don't
