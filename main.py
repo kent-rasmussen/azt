@@ -3988,7 +3988,7 @@ class MainApplication(Frame):
         # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
         # self.frame.grid(column=0, row=0)
         parent.iconphoto(True, self.photo['backgrounded'])
-        title=_("A→Z+T Dictionary and Orthography Checker")
+        title=_("{} Dictionary and Orthography Checker").format(progname)
         if self.master.themename != 'greygreen':
             print(f"Using theme '{self.master.themename}'.")
             title+=' ('+self.master.themename+')'
