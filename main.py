@@ -3615,6 +3615,17 @@ class Window(tkinter.Toplevel):
                                             )
             self.backButton.grid(column=3,row=2)
 class Frame(tkinter.Frame):
+    def windowsize(self):
+        availablexy(self)
+        """The above script calculates how much screen is left to fill, these
+        next two lines give a max widget size to stay in the window."""
+        # height=self.parent.winfo_screenheight()-self.otherrowheight
+        # width=self.parent.winfo_screenwidth()-self.othercolwidth
+        # print('height=',self.parent.winfo_screenheight(),-self.otherrowheight)
+        # print('width=',self.parent.winfo_screenwidth(),-self.othercolwidth)
+        # print(height,width)
+        """This is how much space the contents of the scrolling canvas is asking
+        for. We don't need the scrolling frame to be any bigger than this."""
         """These lines are different than for the scrolling frame"""
         contentrw=self.winfo_reqwidth()
         contentrh=self.winfo_reqheight()
