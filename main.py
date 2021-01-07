@@ -362,6 +362,26 @@ class Check():
     def gimmesenseid(self):
         idsbyps=self.db.get('senseidbyps',lang=self.analang,ps=self.ps)
         return idsbyps[randint(0, len(idsbyps))]
+    def setSdistinctions(self):
+        def submitform():
+            self.runwindow.form=formfield.get()
+            self.runwindow.frame2.destroy()
+        self.getrunwindow()
+        form=tkinter.StringVar()
+        gloss=tkinter.StringVar()
+        self.runwindow.title(_("Set Parameters for Segment Interpretation"))
+        title=_("Here you set a number of parameters that change how A→Z+T "
+        "Interprets {} segments (consonant and vowel glyphs)").format(
+                            self.db.languagenames[self.analang])
+        Label(self.runwindow,text=title,font=self.fonts['title'],
+                justify=tkinter.LEFT,anchor='c'
+                ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
+        formfield = RadioButton(self.runwindow.frame2,textvariable=form)
+        formfield.grid(row=1,column=0)
+        sub_btn=Button(self.runwindow.frame2,text = 'Use these settings',
+                  command = submitgloss)
+        sub_btn.grid(row=2,column=0,sticky='')
+        self.storedefaults()
     def addmorpheme(self):
         def submitform():
             self.runwindow.form=formfield.get()
@@ -3784,6 +3804,9 @@ class MainApplication(Frame):
         advancedmenu.add_command(
                         label=_("Redo Syllable Profile Analysis (Restart)"),
                         command=lambda x=check:Check.reloadprofiledata(x))
+        advancedmenu.add_command(
+                        label=_("Segment Interpretation Settings"),
+                        command=lambda x=check:Check.setSdistinctions(x))
 
         """Unused for now"""
         # settingsmenu = Menu(menubar, tearoff=0)
@@ -4018,6 +4041,15 @@ class EntryField(tkinter.Entry):
             kwargs['font']=self.fonts['default']
         super().__init__(parent,**kwargs)
         self['background']=self.theme['offwhite'] #because this is for entry...
+class RadioButton(tkinter.Radiobutton):
+    def __init__(self, parent, **kwargs):
+        self.parent=parent
+        inherit(self)
+        # self.theme=parent.theme
+        if 'font' not in kwargs:
+            kwargs['font']=self.fonts['default']
+        super().__init__(parent,**kwargs)
+        # self['background']=self.theme['offwhite'] #because this is for entry...
 class Button(tkinter.Button):
     def __init__(self, parent, text,
                 choice=None, window=None, #some buttons have these, some don't
