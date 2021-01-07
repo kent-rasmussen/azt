@@ -2,6 +2,8 @@
 # coding=UTF-8
 """This file runs the actual GUI for lexical file manipulation/checking"""
 tkinter=True
+progname='A→Z+T'
+version='0.4' #This is a string...
 import lift
 import file
 import profiles
@@ -3819,9 +3821,11 @@ class MainApplication(Frame):
         self.parent.config(menu=menubar)
     def helpabout(self):
         window=Window(self)
-        title=(_("A→Z+T Dictionary and Orthography Checker"))
+        title=(_("{} Dictionary and Orthography Checker").format(self.progname))
         window.title(title)
-        text=_("A to Z and T (AZT) is a computer program that accelerates community"
+        Label(window.frame, text="version: "+version,anchor='c',padx=50
+                        ).grid(row=1,column=0,sticky='we')
+        text=_("{0} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
                 "beginning dictionary by vowels, consonants and tone.\n"
                 "It does this by presenting users with sets of words from a "
@@ -3831,23 +3835,27 @@ class MainApplication(Frame):
                 "customizable and stored in the database for each word, "
                 "allowing for a number of approaches to collecting this data. "
                 "A tone report aids the drafting of underlying categories by "
-                "grouping words based on sorting across tone frames. \nAZT then "
+                "grouping words based on sorting across tone frames. \n{0} then "
                 "allows the user to record a word in each of the frames where "
                 "it has been sorted, storing the recorded audio file in a "
                 "directory, with links to each file in the dictionary database."
                 " Recordings can be made up to 192khz/32float.\nFor help with "
-                "this tool, please write me at kent_rasmussen@sil.org.")
+                "this tool, please check out the documentation at "
+                "https://github.com/kent-rasmussen/azt or write me at "
+                "kent_rasmussen@sil.org.").format(self.progname)
         Label(window.frame, text=title,
                         font=self.fonts['title'],anchor='c',padx=50
                         ).grid(row=0,column=0,sticky='we')
         # self.photo.thumbnail(50,50)
-        Label(window.frame, image=self.photo['small'],text='',
+        f=ScrollingFrame(window.frame)
+        f.grid(row=2,column=0,sticky='we')
+        Label(f.content, image=self.photo['small'],text='',
                         bg=self.theme['background']
-                        ).grid(row=1,column=0,sticky='we')
-        l=Label(window.frame, text=text, pady=50, padx=50,
+                        ).grid(row=0,column=0,sticky='we')
+        l=Label(f.content, text=text, pady=50, padx=50,
                 wraplength=int(self.winfo_screenwidth()/2)
-                ).grid(row=2,column=0,sticky='we')
-    def setmasterconfig(self):
+                ).grid(row=1,column=0,sticky='we')
+    def setmasterconfig(self,progname,version):
         self.parent.debug=True #This puts out lots of console info...
         self.parent.debug=False #keep default here
         """Configure variables for the root window (master)"""
@@ -3905,6 +3913,8 @@ class MainApplication(Frame):
         file.getinterfacelang(self.parent)
         if self.parent.interfacelang == None:
             self.parent.interfacelang='fr' #default for now (just for first use).
+        self.parent.progname=progname
+        self.parent.version=version
         # self.setinterfacelang()
         self.parent._= setinterfacelang(self.parent.interfacelang)
     # def setinterfacelang(self):
@@ -3940,11 +3950,11 @@ class MainApplication(Frame):
     #                                 window
     #                                 )
     #         buttonFrame1.grid(column=0, row=1)
-    def __init__(self,parent):
+    def __init__(self,parent,progname,version):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
         self.parent=parent
-        self.setmasterconfig()
+        self.setmasterconfig(progname,version)
         inherit(self) # do this after setting config.
         # _=self._
         """Pick one of the following three screensizes (or don't):"""
@@ -4694,6 +4704,8 @@ def inherit(self):
     self.wraplength=self.parent.wraplength
     self.photo=self.parent.photo
     # self.photowhite=self.parent.photowhite
+    self.progname=self.parent.progname
+    self.version=self.parent.version
     # self.photosmall=self.parent.photosmall
     self._=self.parent._
 # def interfacelang(lang=None):
@@ -4706,9 +4718,11 @@ def inherit(self):
 #     i18n[lang].install()
 #     print(_("Translation seems to be working"))
 def main():
+    global progname
+    global version
     print("Running main function") #Don't translate yet!
     root = tkinter.Tk()
-    myapp = MainApplication(root)
+    myapp = MainApplication(root,progname,version)
     myapp.mainloop()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
