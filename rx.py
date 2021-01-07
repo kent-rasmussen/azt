@@ -3,9 +3,18 @@ import re
 """This is called from a number of places"""
 def s(self,stype,lang=None): #join a list into regex format
     if hasattr(self,stype): #should be one of c,v,g,n
-        return '|'.join(getattr(self,stype)[lang])
+        return "("+'|'.join(getattr(self,stype)[lang])+")"
 def make(regex, word=False, compile=False):
+    if self.debug==True:
+        """These look for alternations not in groups"""
+        print('End:',re.search('\|[^)]*$',regex))
+        print('Beginning:',re.match('^[^(]*\|',regex))
+    if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
+        print('Regex problem! (need parentheses around segments!):',regex)
+        exit()
     if word == True:
+        """To make alternations and references work correctly, this should
+        already have parentheses () around each S."""
         regex='^'+regex+'$'
     if compile == True:
         try:
@@ -35,7 +44,7 @@ def fromCV(db, CVs, lang, word=False, compile=False):
         exit()
     for x in CVs[0]:
         if x in ["V","C","N","G"]:
-            rnext="("+s(db,x.lower(),lang)+")"
+            rnext=s(db,x.lower(),lang) #this should have parens for each S
         elif x in db.c[lang]+db.v[lang]:
             rnext="("+x+")"
         else:
