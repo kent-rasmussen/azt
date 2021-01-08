@@ -383,6 +383,8 @@ class Check():
                     '\nself.distinguishNwd=',self.distinguishNwd)
             if change == True:
                 print('There was a change; we need to redo the analysis now.')
+                self.storedefaults()
+                self.reloadprofiledata()
             self.runwindow.destroy()
         # self.debug=True
         self.getrunwindow()
