@@ -5,10 +5,9 @@ def s(self,stype,lang=None): #join a list into regex format
     if hasattr(self,stype): #should be one of c,v,g,n
         return "("+'|'.join(getattr(self,stype)[lang])+")"
 def make(regex, word=False, compile=False):
-    if self.debug==True:
-        """These look for alternations not in groups"""
-        print('End:',re.search('\|[^)]*$',regex))
-        print('Beginning:',re.match('^[^(]*\|',regex))
+    # """These look for alternations not in groups"""
+    # print('End:',re.search('\|[^)]*$',regex))
+    # print('Beginning:',re.match('^[^(]*\|',regex))
     if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
         print('Regex problem! (need parentheses around segments!):',regex)
         exit()
