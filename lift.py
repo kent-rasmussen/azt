@@ -1204,12 +1204,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         s['lf'][2]=['sl','zl','zl']
         s['lf'][1]=['ɬ','ɮ']
         # if self.distinguishNC==False:
-        """I think I want this gone from C, categorically. Maybe combine NC
-        elsewhere."""
-        s['pn']={}
-        s['pn'][3]=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']
-        s['pn'][2]=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj',
-                        'ns','nz']
+        # """I think I want this gone from C, categorically. Maybe combine NC
+        # elsewhere."""
+        # s['pn']={}
+        # s['pn'][3]=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']
+        # s['pn'][2]=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj',
+        #                 'ns','nz']
         """We want this in both"""
         s['n']={}
         s['n'][3]=["ng'"]
