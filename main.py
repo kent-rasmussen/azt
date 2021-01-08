@@ -280,7 +280,7 @@ class Check():
         todo=len(self.db.senseids)
         for senseid in self.db.senseids:
             print(str(self.db.senseids.index(senseid))+'/'+str(todo))
-            forms=self.db.citationorlexeme(senseid=senseid)
+            forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
             for form in forms:
                 self.profile=self.profileofform(form)
                 if onlyCV.issuperset(self.profile):
