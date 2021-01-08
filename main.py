@@ -271,7 +271,7 @@ class Check():
         self.profiledsenseids=[]
         profileori=self.profile #We iterate across this here
         psori=self.ps #We iterate across this here
-        onlyCV={'C','N','V'}
+        onlyCV={'C','N','G','V','#'}
         self.sextracted={} #Will store matching segments here
         for ps in self.db.pss:
             self.sextracted[ps]={}
