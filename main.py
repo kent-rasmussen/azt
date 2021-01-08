@@ -48,6 +48,7 @@ class Check():
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
     def __init__(self, parent, frame, nsyls=None):
         self.start_time=time.time() #this enables boot time evaluation
+        self.iterations=0
         # print(time.time()-self.start_time) # with this
         self.debug=parent.debug
         self.su=True #show me stuff others don't want/need
@@ -357,6 +358,10 @@ class Check():
             form=self.rx[s].sub(s,form) #replace with profile variable
         """We could consider combining NC to C (or not), and CG to C (or not)
         here, after the 'splitter' profiles are formed..."""
+        if self.debug==True:
+            self.iterations+=1
+            if self.iterations>15:
+                exit()
         return form
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
