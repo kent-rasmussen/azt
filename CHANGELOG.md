@@ -9,6 +9,9 @@
 - set lc recordings to go on entries, not senses.
 - bring diacritics into vowel variables
 - Check on second gloss for lc/lx recording page
+- Check why recording settings aren't being reused.
+- Find faithful way to keep window on the screen for Windows
+- figure out why multiple fuŋ entries aren't showing for recording on bfj
 
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
