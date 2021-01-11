@@ -1372,7 +1372,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #return self.get('citationform')
         output={}
         for lang in self.analangs:
-            output[lang]=self.get('citation',lang=lang)
+            output[lang]=self.get('citation',analang=lang)
             #output[lang]=list()
             #for form in self.nodes.findall(f"entry/citation/form[@lang='{lang}']/text"):
             #    output[lang]+=[form.text] #print the text of the <text> node above
@@ -1381,7 +1381,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def lexemes(self):
         output={}
         for lang in self.analangs:
-            output[lang]=self.get('lexeme',lang=lang) #list()
+            output[lang]=self.get('lexeme',analang=lang) #list()
             #for form in self.nodes.findall(f"entry/lexical-unit/form[@lang='{lang}']/text"):
             #    output[lang]+=[form.text] #print the text of the <text> node above
         #print(output.keys()) #to see which languages are found
