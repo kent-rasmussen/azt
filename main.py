@@ -1868,7 +1868,7 @@ class Check():
         if ('impnode' in sense) and (sense['nodetoshow'] is sense['impnode']):
             t+="!"
         lxl=Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,senseid=sense['senseid'],
+        lcb=RecordButtonFrame(parent,self,id=sense['guid'],
                                             node=sense['nodetoshow'],
                                             gloss=sense['gloss'])
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
@@ -1878,6 +1878,7 @@ class Check():
         psori=self.ps
         profileori=self.profile
         self.getrunwindow()
+        done=list()
         for psprofile in self.profilecounts:
             if self.runwindow.winfo_exists==False:
                 print('no runwindow; quitting!')
@@ -1904,26 +1905,31 @@ class Check():
                 sense={}
                 sense['column']=0
                 sense['row']=row
-                sense['senseid']=senseid
+                sense['guid']=firstoflist(self.db.get('guidbysense',
+                                            senseid=senseid,showurl=True))
+                if sense['guid'] in done: #only the first of multiple senses
+                    continue
+                else:
+                    done.append(sense['guid'])
                 sense['lxnode']=firstoflist(self.db.get('lexemenode',
-                                                    senseid=sense['senseid'],
+                                                    guid=sense['guid'],
                                                     lang=self.analang))
                 sense['lcnode']=firstoflist(self.db.get('citationnode',
-                                                    senseid=sense['senseid'],
+                                                    guid=sense['guid'],
                                                     lang=self.analang))
                 sense['gloss']=firstoflist(self.db.glossordefn(
-                                                    senseid=sense['senseid'],
+                                                    guid=sense['guid'],
                                                     lang=self.glosslang
                                                     # ,showurl=True
                                                     ))
                 if sense['gloss'] is None:
                     continue #We can't save the file well anyway; don't bother
                 if self.db.pluralname is not None:
-                    sense['plnode']=firstoflist(self.db.get('fieldnode',senseid=sense['senseid'],
+                    sense['plnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
                                             lang=self.analang,
                                             fieldtype=self.db.pluralname))
                 if self.db.imperativename is not None:
-                    sense['impnode']=firstoflist(self.db.get('fieldnode',senseid=sense['senseid'],
+                    sense['impnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
                                             lang=self.analang,
                                             fieldtype=self.db.imperativename))
                 if sense['lcnode'] != None:
@@ -1999,7 +2005,7 @@ class Check():
                 Label(examplesframe, anchor='w',text=text
                                     ).grid(row=row, column=0, sticky='w')
                 print('recordbuttonframetry')
-                rb=RecordButtonFrame(examplesframe,self,senseid,node=example,
+                rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
                                     form=nn(framed[self.analang]),
                                     gloss=nn(framed[self.glosslang])
                                     ) #no gloss2; form/gloss just for filename
@@ -4423,7 +4429,7 @@ class RecordButtonFrame(Frame):
         self.r.bind('<ButtonRelease>', self._redo)
     def function(self):
         pass
-    def __init__(self, parent, check, senseid=None, node=None, form=None,
+    def __init__(self, parent, check, id=None, node=None, form=None,
                 gloss=None, test=False,
                 #choice=None, window=None, #some buttons have these, some don't
                 #command=None,
@@ -4450,7 +4456,7 @@ class RecordButtonFrame(Frame):
             if form==None:
                 form=node.find(f"form[@lang='{check.analang}']/text").text
             wavfilename=''
-            args=[check.ps, check.profile, senseid, self.node.tag, form, gloss]
+            args=[check.ps, id, self.node.tag, form, gloss] #check.profile, <=Changes!
             for arg in args:
                 wavfilename+=arg
                 if args.index(arg) < len(args):
@@ -4458,7 +4464,7 @@ class RecordButtonFrame(Frame):
             self.filename = re.sub('[\. /?]+','_',str(wavfilename))+'.wav'
             self.filenameURL=str(file.getdiredurl(check.audiodir,self.filename))
             # self.filename=str('audio/'+filename)
-            if ((senseid==None) or (node==None) or (form==None)
+            if ((id==None) or (node==None) or (form==None)
                 or (gloss==None)):
                 print("Sorry, unless testing we need all these "
                         "arguments; exiting.")
