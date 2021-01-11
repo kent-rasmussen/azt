@@ -1200,15 +1200,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['p'][2]=['bh','dh','kp','gh','gb','kk']
         c['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','ɡ','G',
                                                                 'ʔ',"ꞌ",'ʼ']
-        s['f']={}
-        s['f'][2]=['ch','ph','bh','vh','sh','zh','hh']
-        s['f'][1]=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
-        s['a']={}
-        s['a'][3]=['chk']
-        s['a'][2]=['dj','ts','dz','tʃ','dʒ']
-        s['lf']={}
-        s['lf'][2]=['sl','zl','zl']
-        s['lf'][1]=['ɬ','ɮ']
         c['f']={}
         c['f'][2]=['ch','ph','bh','vh','sh','zh','hh']
         c['f'][1]=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
@@ -1231,26 +1222,34 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """I think I want this gone from C, categorically. Maybe combine CG
         elsewhere."""
         # if self.distinguishNC==False:
-        s['g']={}
-        s['g'][1]=['ẅ','y','Y','w','W']
-        c=list() #to store valid consonants in
+        s={} #dict to put all hypothetical segements in, by category
+        s['C']=list() #to store valid consonants in
         for nglyphs in [3,2,1]:
-            for stype in s:
-                if s[stype].get(nglyphs) is not None:
-                    c+=s[stype][nglyphs]
+            for stype in c:
+                if c[stype].get(nglyphs) is not None:
+                    s['C']+=c[stype][nglyphs]
         # if self.distinguishCG==False:
-        self.treatlabializepalatalizedasC=False
-        if self.treatlabializepalatalizedasC==True:
-            lp['pal']=list(char+'y' for char in c)
-            lp['labpal']=list(char+'y' for char in lp['lab'])
-            lp['labpal']+=list(char+'w' for char in lp['pal'])
-            for stype in sorted(lp.keys()): #larger graphs first
-                c=lp[stype]+c
+        # s['g']={}
+        s['G']=['ẅ','y','Y','w','W']
+        """We want this in both"""
+        # s['n']={}
+        # s['n'][3]=["ng'"]
+        # s['n'][2]=['mm','ny','ŋŋ']
+        # s['n'][1]=['m','M','n','ŋ','ɲ']
+        # s['n']={}
+        s['N']=["ng'",'mm','ny','ŋŋ','m','M','n','ŋ','ɲ']
+        """Non-Nasal/Glide Sonorants"""
+        # s['nns']={}
+        s['NNGS']=['rh','wh','l','r']
+        # self.treatlabializepalatalizedasC=False
+        # if self.treatlabializepalatalizedasC==True:
+        #     lp={}
         #     lp['lab']=list(char+'w' for char in c)
         #     lp['pal']=list(char+'y' for char in c)
         #     lp['labpal']=list(char+'y' for char in lp['lab'])
         #     lp['labpal']+=list(char+'w' for char in lp['pal'])
         #     for stype in sorted(lp.keys()): #larger graphs first
+        #         c=lp[stype]+c
         s['V']=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
                 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃',
                 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
@@ -1258,27 +1257,54 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """We need to address long and idiosyncratic vowel orthographies,
         especially for Cameroon. This should also include diacritics, together
         or separately."""
-        #d=self.diacritics() #["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
+        """At some point, we may want logic to include only certain
+        elements in c. The first row is in pretty much any language."""
         actuals={}
+        self.debug=True
+        if self.debug==True:
+            print('hypotheticals:',s)
+        if not(hasattr(self,'s')): #don't wipe out an existing dictionary
+            self.s={}
         for lang in self.analangs:
-        #d=d+['̀', '́'] #for gnd
-            actuals[lang]=self.inxyz(lang,vowels)
-        return actuals
-    def diacritics(self):
-        diacritics=["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
-        actuals={}
-        for lang in self.analangs:
-            actuals[lang]=self.inxyz(lang,diacritics)
-        return actuals
+            if lang not in self.s:
+                self.s[lang]={}
+            for stype in s:
+                self.s[lang][stype]=self.inxyz(lang,s[stype])
+                if self.debug==True:
+                    print('hypotheticals[{}][{}]:'.format(lang,stype),s[stype])
+                    print('actuals[{}][{}]:'.format(lang,stype),
+                                                    self.s[lang][stype])
+        # exit()
+        # return actuals
+    # def vlist(self):
+    #     vowels=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
+    #             'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃',
+    #             'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
+    #     """We need to address long and idiosyncratic vowel orthographies,
+    #     especially for Cameroon. This should also include diacritics, together
+    #     or separately."""
+    #     #d=self.diacritics() #["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
+    #     actuals={}
+    #     for lang in self.analangs:
+    #     #d=d+['̀', '́'] #for gnd
+    #         actuals[lang]=self.inxyz(lang,vowels)
+    #     return actuals
+    # def diacritics(self):
+    #     diacritics=["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
+    #     actuals={}
+    #     for lang in self.analangs:
+    #         actuals[lang]=self.inxyz(lang,diacritics)
+    #     return actuals
     def slists(self):
         self.segmentsnotinregexes={}
-        for lang in self.analangs:
-            self.segmentsnotinregexes[lang]=list()
-        """This should probably be done in these functions"""
-        self.n=self.nlist()
-        self.g=self.glist()
-        self.c=self.clist()
-        self.v=self.vlist()
+        self.clist()
+        # for lang in self.analangs:
+        #     self.segmentsnotinregexes[lang]=list()
+        # """This should probably be done in these functions"""
+        # self.n=self.nlist()
+        # self.g=self.glist()
+        # self.c=self.clist()
+        # self.v=self.vlist()
     def segmentin(self, lang, glyph):
         """This actually allows for dygraphs, etc., so I'm keeping it."""
         """check each form and lexeme in the lift file (not all files
@@ -1386,21 +1412,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
             #print(lang)
-            rxs=self.c[lang]+self.v[lang]
+            # rxs=self.s[lang]['C']+self.v[lang]
             extras=list()
+            # print(self.s[lang].values())
+            # print(sum(self.s[lang].values(),[]))
             #print(rxs) #for debugging
             """This is not a particularly sophisticated test. I should be
             also looking for consonant glyphs that occur between vowels,
             and vice versa. Later."""
             nonwordforming=re.compile('[() \[\]\|,\-!@#$*?]')
             #for x in list(dict.fromkeys(str().join(self.forms[lang])+str().join(self.lexemes[lang]))):
-            for x in str().join(self.citationforms[lang])+str().join(self.lexemes[lang]):
-                x=nonwordforming.sub('', x)
-                if not re.search(x,str().join(rxs)+str().join(extras)): #dict.fromkeys?
-                    self.segmentsnotinregexes[lang].append(x)
+            for form in self.citationforms[lang]+self.lexemes[lang]:
+                for x in form:
+                    x=nonwordforming.sub('', x)
+                    print('Checking',x,'from',lang,form)
+                    if not re.search(x,str().join(sum(self.s[lang].values(),[]))+str().join(extras)): #dict.fromkeys?
+                        self.segmentsnotinregexes[lang].append(x)
+                        print('Missing',x,'from',lang,form)
             if len(self.segmentsnotinregexes[lang]) > 0:
                 print("The following segments are not in your",lang,"regex's:",
-                dict.fromkeys(self.segmentsnotinregexes[lang]))
+                list(dict.fromkeys(self.segmentsnotinregexes[lang]).keys()))
             else:
                 print("Your regular expressions look OK for",lang,"(there are no segments "+
                     "in your",lang,"data that are not in a regex). Note, this doesn't \n"+
