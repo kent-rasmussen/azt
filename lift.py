@@ -1195,10 +1195,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This is a dictionary of theoretically possible segment graphs,
         by category and number of glyphs, with consonant dictionaries nested
         inside it, by category."""
-        s={}
-        s['p']={}
-        s['p'][2]=['bh','dh','kp','gh','gb','kk']
-        s['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','ɡ','G',
+        c={}
+        c['p']={}
+        c['p'][2]=['bh','dh','kp','gh','gb','kk']
+        c['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','ɡ','G',
                                                                 'ʔ',"ꞌ",'ʼ']
         s['f']={}
         s['f'][2]=['ch','ph','bh','vh','sh','zh','hh']
@@ -1209,22 +1209,25 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         s['lf']={}
         s['lf'][2]=['sl','zl','zl']
         s['lf'][1]=['ɬ','ɮ']
+        c['f']={}
+        c['f'][2]=['ch','ph','bh','vh','sh','zh','hh']
+        c['f'][1]=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
+        c['a']={}
+        c['a'][3]=['chk']
+        c['a'][2]=['dj','ts','dz','tʃ','dʒ']
+        c['lf']={}
+        c['lf'][2]=['sl','zl','zl']
+        c['lf'][1]=['ɬ','ɮ']
         # if self.distinguishNC==False:
         # """I think I want this gone from C, categorically. Maybe combine NC
         # elsewhere."""
-        # s['pn']={}
+        c['pn']={}
         # s['pn'][3]=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']
         # s['pn'][2]=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj',
         #                 'ns','nz']
-        """We want this in both"""
-        s['n']={}
-        s['n'][3]=["ng'"]
-        s['n'][2]=['mm','ny','ŋŋ']
-        s['n'][1]=['m','M','n','ŋ','ɲ']
-        """Non-Nasal Sonorants"""
-        s['nns']={}
-        s['nns'][2]=['rh','wh']
-        s['nns'][1]=['l','r']
+        """If these appear, they should be single consonants."""
+        c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
+                    'ⁿj','ⁿs','ⁿz']
         """I think I want this gone from C, categorically. Maybe combine CG
         elsewhere."""
         # if self.distinguishNC==False:
@@ -1238,27 +1241,20 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # if self.distinguishCG==False:
         self.treatlabializepalatalizedasC=False
         if self.treatlabializepalatalizedasC==True:
-            lp={}
-            lp['lab']=list(char+'w' for char in c)
             lp['pal']=list(char+'y' for char in c)
             lp['labpal']=list(char+'y' for char in lp['lab'])
             lp['labpal']+=list(char+'w' for char in lp['pal'])
             for stype in sorted(lp.keys()): #larger graphs first
                 c=lp[stype]+c
-        """At some point, we may want logic to include only certain
-        elements in c. The first row is in pretty much any language."""
-        actuals={}
-        if self.debug==True:
-            print('hypotheticals:',c)
-        for lang in self.analangs:
-            actuals[lang]=self.inxyz(lang,c)
-            if self.debug==True:
-                print('actuals[{}]:'.format(lang),actuals[lang])
-        return actuals
-    def vlist(self):
-        vowels=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
+        #     lp['lab']=list(char+'w' for char in c)
+        #     lp['pal']=list(char+'y' for char in c)
+        #     lp['labpal']=list(char+'y' for char in lp['lab'])
+        #     lp['labpal']+=list(char+'w' for char in lp['pal'])
+        #     for stype in sorted(lp.keys()): #larger graphs first
+        s['V']=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
                 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃',
                 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
+        s['d']=["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         """We need to address long and idiosyncratic vowel orthographies,
         especially for Cameroon. This should also include diacritics, together
         or separately."""
