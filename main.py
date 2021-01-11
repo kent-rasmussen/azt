@@ -147,6 +147,8 @@ class Check():
         """I think I need this before setting up regexs"""
         self.guessanalang() #needed for regexs
         self.loaddefaults() # overwrites guess above, stored on runcheck
+        if 'bfj' in self.db.s:  #self.analang=='bfj': # need to do this otherwise!
+            self.db.s['bfj']['V']=['ou','ei']+self.db.s['bfj']['V']
         """The line above may need to go after this block"""
         if self.profilesbysense is None:
             print(time.time()-self.start_time)
@@ -156,8 +158,6 @@ class Check():
         # self.guesspsprofile() # takes values of largest ps-profile filter
         self.storeprofiledata()
         self.setnamesall() #sets self.checknamesall
-        if 'bfj' in self.db.v:  #self.analang=='bfj': # need to do this otherwise!
-            self.db.v['bfj']=['ou','ei']+self.db.v['bfj']
         self.V=self.db.v #based on what is actually in the language (no groups)
         self.C=self.db.c #this regex is basically each valid glyph in analang,
         print("Done initializing check; running first check check.")
