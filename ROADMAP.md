@@ -10,7 +10,7 @@ ctrl-shift-p to find commands
 # Version 0.3 Nov 2020
 
 - [x] finish logic of main window, make things depend on what they should (e.g. subcheck should depend on check.type ( be either C, V, or CV --for now))
-- [x] make regexes work, to include profile (of those available for ps), check (e.g., V1=V2), and subcheck (e.g., a: CaC\2).
+- [x] make regexes work, to include profile (of those available for ps), check (e.g., `V1=V2`), and subcheck (e.g., `a:CaC\2`).
 - [x] Add padding to buttons and word labels
 - [x] background color for windows: light blue or light green #b3ff99 #c6ffb3
 - [x] enter main page with exit button inside title.
@@ -172,8 +172,8 @@ Read and modify LIFT format in a predictable and non-destructive way
   We will know this is done when we see tests showing all and only the changes we’re looking for, to the fields we’re looking at, leaving everything else alone.
     We should set which kinds of changes we are looking to make, and specifically test a list of them, as we implement features.
 +Generalize operation by use of regular expressions for filtering data, as well as for reading and writing, e.g.,
-  ^([mn]{0,1})([[ptjfvmlryh]|[bdgkcsznw][hpby]{0,1}])([aiɨuʉeɛoɔʌ])([́̀̌̂]{0,1})([mn]{0,1})([[ptjfvmlryh]|[bdgkcsznw][hpby]{0,1}])([aiɨuʉeɛoɔʌ])([́̀̌̂]{0,1})$
-  ^([mn]{0,1})([[ptjfvmlryh]|[bdgkcsznw][hpby]{0,1}])([aiɨuʉeɛoɔʌ]{1,2})([́̀̌̂]{0,1})\1\2([aiɨuʉeɛoɔʌ]{1,2})([́̀̌̂]{0,1})$
+  `^([mn]{0,1})([[ptjfvmlryh]|[bdgkcsznw][hpby]{0,1}])([aiɨuʉeɛoɔʌ])([́̀̌̂]{0,1})([mn]{0,1})([[ptjfvmlryh]|[bdgkcsznw][hpby]{0,1}])([aiɨuʉeɛoɔʌ])([́̀̌̂]{0,1})$`
+  `^([mn]{0,1})([[ptjfvmlryh]|[bdgkcsznw][hpby]{0,1}])([aiɨuʉeɛoɔʌ]{1,2})([́̀̌̂]{0,1})\1\2([aiɨuʉeɛoɔʌ]{1,2})([́̀̌̂]{0,1})$`
 +Cross-platform - by developing in python.
 Use Object oriented programming
   +test functionality of vbutton function
