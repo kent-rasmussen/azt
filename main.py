@@ -409,9 +409,13 @@ class Check():
                         key=lambda cons: (-len(cons),
                                             [priority.index(c) for c in cons])
                         ):
+            # print('s:',s, self.rx[s])
             for ps in self.db.pss:
                 self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches
             form=self.rx[s].sub(s,form) #replace with profile variable
+            # print(form)
+            form=re.sub('#$','',form)
+            # print(form)
         """We could consider combining NC to C (or not), and CG to C (or not)
         here, after the 'splitter' profiles are formed..."""
         if self.debug==True:
