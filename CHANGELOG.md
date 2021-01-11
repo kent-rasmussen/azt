@@ -12,6 +12,9 @@
 - Check why recording settings aren't being reused.
 - Find faithful way to keep window on the screen for Windows
 - figure out why multiple fuŋ entries aren't showing for recording on bfj
+    - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
+    - '7cdcddfc-5b9f-44bf-bfe5-d5ce164720cd',
+
 
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
