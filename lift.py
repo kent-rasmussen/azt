@@ -242,6 +242,12 @@ def attributesettings(
                     f"/lexical-unit/form[@lang='{analang}'][text='{form}']"
                     f"/../.."), # ^ [.=’text'] not until python 3.7
             'attr':'guid'},
+        'guidbysense': {
+            'cm': 'use to get guid by ps and citation form '
+                    'in the specified language (no reference to fields)',
+            'url':f"entry[@guid='{guid}']"
+                    f"/sense[@id='{senseid}']/..",
+            'attr':'guid'},
         'senseidbylexeme': {
             'cm': 'use to get senseid by ps and lexeme '
                     'in the specified language (no reference to fields)',
