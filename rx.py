@@ -1,9 +1,16 @@
 ## coding=UTF-8
 import re
 """This is called from a number of places"""
-def s(self,stype,lang=None): #join a list into regex format
-    if hasattr(self,stype): #should be one of c,v,g,n
-        return "("+'|'.join(getattr(self,stype)[lang])+")"
+def s(self,stype,lang=None):
+    """join a list into regex format, sort for longer first, to capture
+    the largest units possible."""
+    if (lang == None) and (hasattr(self,'analang')):
+        lang=self.analang
+    if stype in self.s[lang]:
+
+        return "("+'|'.join(sorted(self.s[lang][stype],key=len,reverse=True))+")"
+    # if hasattr(self,stype): #should be one of c,v,g,n
+    #     return "("+'|'.join(sorted(getattr(self,stype)[lang]))+")"
 def make(regex, word=False, compile=False):
     # """These look for alternations not in groups"""
     # print('End:',re.search('\|[^)]*$',regex))
@@ -43,8 +50,8 @@ def fromCV(db, CVs, lang, word=False, compile=False):
         exit()
     for x in CVs[0]:
         if x in ["V","C","N","G"]:
-            rnext=s(db,x.lower(),lang) #this should have parens for each S
-        elif x in db.c[lang]+db.v[lang]:
+            rnext=s(db,x,lang) #this should have parens for each S
+        elif x in sum(db.s[lang].values(),[]):
             rnext="("+x+")"
         else:
             try:
