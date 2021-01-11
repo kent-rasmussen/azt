@@ -408,8 +408,8 @@ class Check():
         row=0
         column=0
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
-        title=_("Tell {} How to Interpret {} Segments"
-                ).format(self.progname,self.db.languagenames[self.analang])
+        title=_("Interpret {} Segments"
+                ).format(self.db.languagenames[self.analang])
         titl=Label(self.runwindow,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c'
                 )
@@ -479,8 +479,9 @@ class Check():
         sub_btn=Button(self.runwindow.frame2d,text = 'Use these settings',
                   command = submitform)
         sub_btn.grid(row=0,column=1,sticky='nw',pady=pady)
-        nbtext=_("N.B.: If you make changes, this button==> \nwill trigger a "
-                "reanalysis of your data, \nwhich will take some time.")
+        nbtext=_("If you make changes, this button==> \nwill "
+                "restart the program to reanalyze your data, \nwhich will "
+                "take some time.")
         sub_nb=Label(self.runwindow.frame2d,text = nbtext, anchor='e')
         sub_nb.grid(row=0,column=0,sticky='e',pady=pady)
         self.storedefaults()
