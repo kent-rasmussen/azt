@@ -1048,7 +1048,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #     # """<field type="location"><form lang="fr"><text>Plural</text></form></field>"""
         node.attrib['dateModified']=getnow() #text=newfieldvalue #remove(example)
         self.write()
-
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
@@ -1079,8 +1078,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # print('audio:',self.audiolangs)
         # print(self.analangs)
         return self.analangs
-    # def analangs(self):
-    #     return list(dict.fromkeys(self.get('lexemelang')+self.get('citationlang')))
     def glosslangs(self):
         return list(dict.fromkeys(self.get('glosslang')+self.get('defnlang')))
     def langnames(self):
@@ -1209,9 +1206,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['lf']={}
         c['lf'][2]=['sl','zl','zl']
         c['lf'][1]=['ɬ','ɮ']
-        # if self.distinguishNC==False:
-        # """I think I want this gone from C, categorically. Maybe combine NC
-        # elsewhere."""
         c['pn']={}
         # s['pn'][3]=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']
         # s['pn'][2]=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj',
@@ -1221,25 +1215,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     'ⁿj','ⁿs','ⁿz']
         """I think I want this gone from C, categorically. Maybe combine CG
         elsewhere."""
-        # if self.distinguishNC==False:
         s={} #dict to put all hypothetical segements in, by category
         s['C']=list() #to store valid consonants in
         for nglyphs in [3,2,1]:
             for stype in c:
                 if c[stype].get(nglyphs) is not None:
                     s['C']+=c[stype][nglyphs]
-        # if self.distinguishCG==False:
         # s['g']={}
         s['G']=['ẅ','y','Y','w','W']
-        """We want this in both"""
-        # s['n']={}
-        # s['n'][3]=["ng'"]
-        # s['n'][2]=['mm','ny','ŋŋ']
-        # s['n'][1]=['m','M','n','ŋ','ɲ']
-        # s['n']={}
         s['N']=["ng'",'mm','ny','ŋŋ','m','M','n','ŋ','ɲ']
         """Non-Nasal/Glide Sonorants"""
-        # s['nns']={}
         s['NNGS']=['rh','wh','l','r']
         # self.treatlabializepalatalizedasC=False
         # if self.treatlabializepalatalizedasC==True:
