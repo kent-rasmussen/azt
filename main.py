@@ -300,7 +300,8 @@ class Check():
             if change == True:
                 print('There was a change; we need to redo the analysis now.')
                 self.storedefaults()
-                self.reloadprofiledata()
+                if self.debug != True:
+                    self.reloadprofiledata()
             self.runwindow.destroy()
         # self.debug=True
         self.getrunwindow()
