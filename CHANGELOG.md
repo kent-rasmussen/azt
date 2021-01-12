@@ -9,7 +9,6 @@
 - set lc recordings to go on entries, not senses.
 - bring diacritics into vowel variables
 - Check on second gloss for lc/lx recording page
-- Check why recording settings aren't being reused.
 - Find faithful way to keep window on the screen for Windows
 - figure out why multiple fuŋ entries aren't showing for recording on bfj
     - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
@@ -69,6 +68,7 @@
 
 ### Under the Hood
 - added variables for version number and program name, added to help:about
+- Fixed bug where recording settings aren't being reused
 
 # Version 0.4
 ## new features:
