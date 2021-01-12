@@ -818,43 +818,6 @@ class Check():
         text=_('See the tone frame around a word from the dictionary')
         chk_btn=Button(window.frame1,text = text, command = chk)
         chk_btn.grid(row=row+1,column=columnleft,pady=100)
-    # def testframes(self):
-    #     """I don't think I've used this since first testing out frames"""
-    #     times=5
-    #     for self.ps in self.db.pss:
-    #         if self.ps in self.toneframes:
-    #             for p in range(times):
-    #                 guids=self.db.get('guidbyps',ps=self.ps)
-    #                 guid=guids[randint(0, len(guids))-1]
-    #                 print("Showing tone frame info for randomly selected ps =",
-    #                         self.ps,"entry:",guid)
-    #                 """self.name set here"""
-    #                 for self.name in self.toneframes[self.ps]: #.keys()
-    #                     print('Working on frame',self.name)
-    #                     framed=self.getframedentry(guid)
-    #             for p in range(times):
-    #                 senseids=self.db.get('senseidbyps',ps=self.ps)
-    #                 senseid=senseids[randint(0, len(senseids))]
-    #                 print("Showing tone frame info for randomly selected ps =",
-    #                         self.ps,"sense:",senseid)
-    #                 """self.name set here"""
-    #                 for self.name in self.toneframes[self.ps]: #.keys()
-    #                     print('Working on frame',self.name)
-    #                     framed=self.getframeddata(senseid)
-    #     return
-    # def framelocationsbyps(self,ps):
-    #     """Locations for all tone frames defined for the language."""
-    #     """I assume this is obsolete, but just commented out for now"""
-    #     print(ps)
-    #     if ((ps is not None) and (self.toneframes is not None) and
-    #         (ps in self.toneframes)):
-    #         l=[]
-    #         for f in self.toneframes[ps]:
-    #             l+=[self.toneframes[ps][f]['location']]
-    #         return list(dict.fromkeys(l))
-    #     else:
-    #         print("It doesn't look like you have tone frames set up for",
-    #                 ps,"yet.")
     def framenamesbyps(self,ps):
         """Names for all tone frames defined for the language."""
         if self.toneframes is not None:
