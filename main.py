@@ -848,6 +848,7 @@ class Check():
                                 location=self.name)
             l+=group
         return list(dict.fromkeys(l))
+    """Mediating between LIFT and the user"""
     def getframeddata(self,source,noframe=False,notonegroup=False):
         """This generates a dictionary of form {'form':outputform,
         'gloss':outputgloss} for display, by senseid"""
