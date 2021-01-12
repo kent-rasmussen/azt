@@ -3989,14 +3989,15 @@ class MainApplication(Frame):
             # checkmenu.add_command(label=_("Other report"),
             #             command=lambda x=check:Check.runcheck(x))
         changemenu.add_cascade(label=_("Options"), menu=checkmenu)
-        advancedmenu = Menu(menubar, tearoff=0)
+        """Do"""
+        domenu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label=_("Do"), menu=domenu)
         reportmenu = Menu(menubar, tearoff=0)
         reportmenu.add_command(label=_("Tone report"),
                         command=lambda x=check:Check.tonegroupreport(x))
         reportmenu.add_command(label=_("Basic CV report (to file)"),
                         command=lambda x=check:Check.basicreport(x))
-        advancedmenu.add_cascade(label=_("Reports"), menu=reportmenu)
-        menubar.add_cascade(label=_("Advanced"), menu=advancedmenu)
+        domenu.add_cascade(label=_("Reports"), menu=reportmenu)
         recordmenu = Menu(menubar, tearoff=0)
         recordmenu.add_command(label=_("Sound Card Settings"),
                         command=lambda x=check:Check.soundcheck(x))
@@ -4007,19 +4008,23 @@ class MainApplication(Frame):
         recordmenu.add_command(label=_("Record examples for particular "
                                                     "entries, 1 at at time"),
                         command=lambda x=check:Check.showsenseswithexamplestorecord(x))
-        advancedmenu.add_cascade(label=_("Recording"), menu=recordmenu)
-        """Frame stuff"""
+        domenu.add_cascade(label=_("Recording"), menu=recordmenu)
+        domenu.add_command(label=_("Join Groups"),
+                        command=lambda x=check:Check.joinT(x))
+        """Advanced"""
+        advancedmenu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label=_("Advanced"), menu=advancedmenu)
         filemenu = Menu(menubar, tearoff=0)
-        filemenu.add_command(label=_("Skipped data back into sort pile"),
-                        command=lambda x=check:Check.tryNAgain(x))
         filemenu.add_command(label=_("Dictionary Morpheme"),
                         command=lambda x=check:Check.addmorpheme(x))
         advancedmenu.add_command(label=_("Add Tone frame"),
                         command=lambda x=check:Check.addframe(x))
+        redomenu = Menu(menubar, tearoff=0)
+        redomenu.add_command(label=_("Skipped data back into sort pile"),
+                                command=lambda x=check:Check.tryNAgain(x))
+        advancedmenu.add_cascade(label=_("Redo"), menu=redomenu)
         advancedmenu.add_cascade(label=_("Add other"), menu=filemenu)
-        advancedmenu.add_command(label=_("Join Groups"),
-                        command=lambda x=check:Check.joinT(x))
-        advancedmenu.add_command(
+        redomenu.add_command(
                         label=_("Redo Syllable Profile Analysis (Restart)"),
                         command=lambda x=check:Check.reloadprofiledata(x))
         advancedmenu.add_command(
