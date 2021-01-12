@@ -1418,15 +1418,6 @@ class Check():
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.frame.status)
         self.soundsettingswindow.destroy()
-    def record(self):
-        self.storedefaults()
-        if ((self.fs == None) or (self.sample_format == None)
-                or (self.audio_card_index == None)):
-            self.soundcheck()
-        if self.type == 'T':
-            self.showtonegroupexs()
-        else:
-            self.showentryformstorecord()
     def maybeboard(self):
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
@@ -2022,309 +2013,6 @@ class Check():
                 senseid=senseid, fieldtype='tone'):
                 self.locations+=[location]
         self.locations=list(dict.fromkeys(self.locations))
-    def makelabelsnrecordingbuttons(self,parent,sense):
-        t=self.getframeddata(sense['nodetoshow'],noframe=True)[
-                                            self.analang]+'\t'+sense['gloss']
-        if ('plnode' in sense) and (sense['nodetoshow'] is sense['plnode']):
-            t+=" (pl)"
-        if ('impnode' in sense) and (sense['nodetoshow'] is sense['impnode']):
-            t+="!"
-        lxl=Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,id=sense['guid'],
-                                            node=sense['nodetoshow'],
-                                            gloss=sense['gloss'])
-        lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
-        lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
-    def showentryformstorecord(self,senses=None):
-        """Save these values before iterating over them"""
-        psori=self.ps
-        profileori=self.profile
-        self.getrunwindow()
-        done=list()
-        for psprofile in self.profilecounts:
-            if self.runwindow.winfo_exists==False:
-                print('no runwindow; quitting!')
-                return
-            if self.runwindow.frame.winfo_exists==False:
-                print('no runwindow frame; quitting!')
-                return
-            self.runwindow.resetframe()
-            ww=Wait(self.runwindow)
-            self.ps=psprofile[2]
-            self.profile=psprofile[1]
-            text=_("Record {} {} Words: click ‘Record’, talk, "
-                    "and release ({} words)".format(self.profile,self.ps,
-                                                    psprofile[0]))
-            instr=Label(self.runwindow.frame, anchor='w',text=text)
-            instr.grid(row=0,column=0,sticky='w')
-            nextb=Button(self.runwindow.frame,text=_("Next Group"),
-                                            cmd=self.runwindow.frame.destroy)
-            nextb.grid(row=0,column=1,sticky='w')
-            buttonframes=ScrollingFrame(self.runwindow.frame)
-            buttonframes.grid(row=1,column=0,sticky='w')
-            row=0
-            for senseid in self.profilesbysense[self.ps][self.profile]:
-                sense={}
-                sense['column']=0
-                sense['row']=row
-                sense['guid']=firstoflist(self.db.get('guidbysense',
-                                            senseid=senseid,showurl=True))
-                if sense['guid'] in done: #only the first of multiple senses
-                    continue
-                else:
-                    done.append(sense['guid'])
-                sense['lxnode']=firstoflist(self.db.get('lexemenode',
-                                                    guid=sense['guid'],
-                                                    lang=self.analang))
-                sense['lcnode']=firstoflist(self.db.get('citationnode',
-                                                    guid=sense['guid'],
-                                                    lang=self.analang))
-                sense['gloss']=firstoflist(self.db.glossordefn(
-                                                    guid=sense['guid'],
-                                                    lang=self.glosslang
-                                                    # ,showurl=True
-                                                    ))
-                if sense['gloss'] is None:
-                    continue #We can't save the file well anyway; don't bother
-                if self.db.pluralname is not None:
-                    sense['plnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
-                                            lang=self.analang,
-                                            fieldtype=self.db.pluralname))
-                if self.db.imperativename is not None:
-                    sense['impnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
-                                            lang=self.analang,
-                                            fieldtype=self.db.imperativename))
-                if sense['lcnode'] != None:
-                    # print('lcnode!')
-                    sense['nodetoshow']=sense['lcnode']
-                else:
-                    # print('lxnode!')
-                    sense['nodetoshow']=sense['lxnode']
-                self.makelabelsnrecordingbuttons(buttonframes.content,sense)
-                for node in ['plnode','impnode']:
-                    if (node in sense) and (sense[node] != None):
-                        sense['column']+=2
-                        sense['nodetoshow']=sense[node]
-                        self.makelabelsnrecordingbuttons(buttonframes.content,
-                                                        sense)
-                row+=1
-            ww.done()
-            self.runwindow.wait_window(self.runwindow.frame)
-        self.ps=psori
-        self.profile=profileori
-    def showsenseswithexamplestorecord(self,senses=None):
-        self.getrunwindow()
-        """?Make this scroll!"""
-        text=_("Words and phrases to record: click ‘Record’, talk, and release")
-        instr=Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w')
-        if (self.entriestoshow is None) and (senses is None):
-            Label(self.runwindow.frame, anchor='w',
-                    text=_("Sorry, there are no entries to show!")).grid(row=1,
-                                    column=0,sticky='w')
-            return
-        if senses is None:
-            senses=self.entriestoshow
-        for senseid in senses:
-            print("Working on ",senseid)
-            row=0
-            entryframe=Frame(self.runwindow.frame)
-            entryframe.grid(row=1,column=0)
-            """This is the title for each page: isolation form and glosses."""
-            framed=self.getframeddata(senseid,noframe=True)
-            if framed[self.analang]=='noform':
-                entryframe.destroy()
-                continue
-            text=framed['formatted']
-            Label(entryframe, anchor='w', font=self.fonts['read'],
-                    text=text).grid(row=row,
-                                    column=0,sticky='w')
-            """Then get each sorted example"""
-            self.runwindow.frame.scroll=ScrollingFrame(
-                                            entryframe)
-            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
-            examplesframe=Frame(self.runwindow.frame.scroll.content)
-            examplesframe.grid(row=0,column=0,sticky='w')
-            examples=self.db.get('example',senseid=senseid)
-            print('examples:',examples)
-            if examples == []:
-                text=_("No examples! Add some, then come back.")
-                print(text)
-                Label(examplesframe, anchor='w', font=self.fonts['read'],
-                        text=text).grid(row=row,
-                                        column=0,sticky='w')
-                entryframe.destroy()
-                continue #return #I want the "next" button...
-            for example in examples:
-                """These should already be framed!"""
-                framed=self.getframeddata(example,noframe=True)
-                if framed[self.analang] is None:
-                    continue
-                row+=1
-                """If I end up pulling from example nodes elsewhere, I should
-                probably make this a function, like getframeddata"""
-                text=framed['formatted']
-                Label(examplesframe, anchor='w',text=text
-                                    ).grid(row=row, column=0, sticky='w')
-                print('recordbuttonframetry')
-                rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
-                                    form=nn(framed[self.analang]),
-                                    gloss=nn(framed[self.glosslang])
-                                    ) #no gloss2; form/gloss just for filename
-                rb.grid(row=row,column=1,sticky='w')
-            row+=1
-            d=Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
-            d.grid(row=row,column=0)
-            examplesframe.wait_window(entryframe)
-        instr.destroy() #Don't show instructions at this point
-        Label(self.runwindow.frame, anchor='w',
-            text=_("All done! Sort some more words, and come back.")
-            ).grid(row=0,column=0,sticky='w')
-        self.runwindow.wait_window(entryframe)
-        self.runwindow.destroy()
-    def showtonegroupexs(self):
-        if (not(hasattr(self,'examplespergrouptorecord')) or
-            (type(self.examplespergrouptorecord) is not int)):
-            self.examplespergrouptorecord=5
-            self.storedefaults('examplespergrouptorecord')
-        self.settonevariablesbypsprofile() #maybe not done before
-        self.gettoneUFgroups()
-        # toneUFgroups=self.toneUFgroups
-        # print('self.toneUFgroups',self.toneUFgroups)
-        if self.toneUFgroups != []:
-            torecord={}
-            for toneUFgroup in self.toneUFgroups:
-                torecord[toneUFgroup]=self.db.get('senseidbytoneUFgroup',
-                                        fieldtype='tone', form=toneUFgroup)
-                    # print(self.toneUFgroups,senseids)
-            batch={}
-            for i in range(self.examplespergrouptorecord):
-                batch[i]=[]
-                for toneUFgroup in self.toneUFgroups:
-                    print(i,len(torecord[toneUFgroup]),toneUFgroup,torecord[toneUFgroup])
-                    if len(torecord[toneUFgroup]) > i: #don't worry about small piles.
-                        batch[i]+=[torecord[toneUFgroup][i]]
-                    else:
-                        print("Not enough examples, moving on:",i,toneUFgroup)
-            print(_('Preparing to record examples from each tone group ({}) '
-                    'with index').format(self.toneUFgroups),i)
-            for i in range(self.examplespergrouptorecord):
-                print(_('Giving user the number {} example from each tone '
-                        'group ({}) with index').format(i,self.toneUFgroups))
-                self.showsenseswithexamplestorecord(batch[i])
-        else:
-            print("How did we get no UR tone groups?",self.profile,self.ps,
-                    "\nHave you run the tone report recently?"
-                    "\nDoing that for you now...")
-            self.tonegroupreport(silent=True)
-            self.showtonegroupexs()
-    def tonegroupreport(self,silent=False):
-        print("Starting report...")
-        self.storedefaults()
-        self.getrunwindow()
-        ww=Wait(self.runwindow)
-        self.tonereportfile=''.join([str(self.reportbasefilename),'_',
-                            self.ps,'_',
-                            self.profile,
-                            ".ToneReport.txt"])
-        start_time=time.time() #move this to function?
-        self.getidstosort() #in case you didn't just run a check
-        self.getlocations()
-        output={}
-        """Collect location:value correspondences, by sense"""
-        for senseid in self.senseidstosort:
-            output[senseid]={}
-            for location in self.locations:
-                output[senseid][location]={}
-                group=self.db.get('exfieldvalue',senseid=senseid,
-                    location=location,fieldtype='tone')
-                print(group)
-                """Also include location:value for non-example fields"""
-                """How to do this in a principled way?"""
-                # for guid in self.db.get('guidbysenseid',senseid=senseid):
-                #     group+=self.db.get('pronunciationfieldvalue',guid=guid,
-                #         location=location,fieldtype='tone')
-                # print(group)
-                """Save this info by senseid"""
-                output[senseid][location]=group
-        print("Done organizing data; ready to report.")
-        groups={}
-        groupvalues=[]
-        """Look through all the location:value combos (skip over senseids)
-        this is, critically, a dictionary of each location:value correspondence
-        for a given sense. So each groupvalue contains multiple location keys,
-        each with a value value, and the sum of all the location:value
-        correspondences for a sense defines the group --which is distinct from
-        another group which shares some (but not all) of those location:value
-        correspondences."""
-        """For any non-linguists reading this, this is the key analytical step
-        that moves us from a collection of surface forms (each pronunciation
-        group in a given context) to the underlying form (which behaves the same
-        as others in its group, across all contexts)."""
-        # groupvalues=list(dict.fromkeys(output.values())) #can't hash this...
-        for value in output.values(): #so we find unique values manually
-            if value not in groupvalues:
-                groupvalues+=[value]
-        """For each set of location:value correspondences, find the senseids
-        that have it."""
-        x=1 #first group
-        for value in groupvalues:
-            groups[x]={}
-            groups[x]['values']=value
-            groups[x]['senseids']=[]
-            x+=1
-        print('Groups Done; Checking guids against groups.')
-        for senseid in output.keys():
-            for group in groups:
-                if str(output[senseid]) == str(groups[group]['values']):
-                    groups[group]['senseids']+=[senseid] #maybe don't need list here..…
-                else:
-                    pass
-        """Add the guid information to the groups!!"""
-        r = open(self.tonereportfile, "w", encoding='utf-8')
-        self.runwindow.title(_("Tone Report"))
-        self.runwindow.scroll=ScrollingFrame(self.runwindow.frame)
-        window=self.runwindow.scroll.content
-        window.row=0
-        def output(window,r,text):
-            r.write(text+'\n')
-            if silent == False:
-                Label(window,text=text,font=window.fonts['report']).grid(
-                                        row=window.row,column=0, sticky="w")
-            window.row+=1
-        for group in groups:
-            groupname=self.ps+'_'+self.profile+'_'+str(group)
-            text=('\nGroup '+str(groupname))
-            output(window,r,text)
-            l=list()
-            # print(groups[group]['values'])
-            for x in groups[group]['values']:
-                """This shouldn't crash if a word is lacking a value for a
-                location. Just don't include that location in the group
-                definition."""
-                if (('values' in groups[group]) and (x in groups[group]['values'])
-                    and (groups[group]['values'][x] !=[])):
-                    l.append(x+': '+groups[group]['values'][x][0])
-            text=('Values by frame: '+'\t'.join(l))
-            output(window,r,text)
-            for senseid in groups[group]['senseids']:
-                text=self.getframeddata(senseid,noframe=True,
-                                                notonegroup=True)['formatted']
-                # for form in self.db.citationorlexeme(senseid=senseid):
-                #     for gloss in self.db.glossordefn(senseid=senseid,
-                #                                     lang=self.glosslang):
-                #         for gloss2 in self.db.glossordefn(senseid=senseid,
-                #                                     lang=self.glosslang2):
-                #             text='\t'+'\t'.join((form,"‘"+gloss+"’",
-                #                                         "‘"+gloss2+"’"))
-                output(window,r,text)
-                self.db.addtoneUF(senseid,groupname,analang=self.analang)
-        ww.done()
-        text=("Finished in "+str(time.time() - start_time)+" seconds.")
-        output(window,r,text)
-        text=_("(Report is also available at ("+self.tonereportfile+")")
-        output(window,r,text)
-        r.close()
     def topps(self,x='ALL'):
         """take the top x profiles, irrespective of ps"""
         pss=list()
@@ -2349,39 +2037,6 @@ class Check():
         for line in self.profilecounts:
             if line[1] == profile and line[2] == ps:
                 return line[0]
-    def basicreport(self):
-        """We iterate across these values in this script, so we save current
-        values here, and restore them at the end."""
-        typeori=self.type
-        psori=self.ps
-        profileori=self.profile
-        self.basicreportfile=''.join([str(self.reportbasefilename)
-                                            # ,'_',self.type,'_',str(pss)
-                                            ,'.BasicReport.txt'])
-        sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
-        self.basicreported={}
-        self.printprofilesbyps()
-        self.makecountssorted() #This populates self.profilecounts
-        self.printcountssorted()
-        num='ALL'
-        for self.ps in self.topps(num): #get PSs found in syllable profiles
-            """For Debugging"""
-            # print('NVCVN:',self.profilesbysense[self.ps]['NVCVN'])
-            for self.profile in self.topprofiles(num)[self.ps]:
-                for self.type in ['V','C']:
-                    maxcount=re.subn(self.type, self.type, self.profile)[1]
-                    """Get these reports from C1/V1 to total number of C/V"""
-                    self.typenums=[self.type+str(n+1) for n in range(maxcount)]
-                    for typenum in self.typenums:
-                        if typenum not in self.basicreported:
-                            self.basicreported[typenum]=list()
-                    self.wordsbypsprofilechecksubcheck()
-        sys.stdout.close()
-        sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        self.type=typeori
-        self.profile=profileori
-        self.ps=psori
-        self.checkcheck()
     def wordsbypsprofilechecksubcheck(self):
         """This function iterates across self.name and self.subcheck values
         appropriate for the specified self.type, self.profile and self.name
@@ -3258,6 +2913,270 @@ class Check():
             ).grid(column=0, row=0)
         buttonFrame1=ButtonFrame(window.frame,types,self.settype,window)
         buttonFrame1.grid(column=0, row=1)
+    """Doing stuff"""
+    def getrunwindow(self):
+        # print(self.__dict__)
+        # print(hasattr(self,'runwindow'))
+        """Can't test for widget/window if the attribute hasn't been assigned,"
+        but the attribute is still there after window has been killed, so we
+        need to test for both."""
+        if hasattr(self,'runwindow') and (self.runwindow.winfo_exists()):#(type(self.runwindow) is Window):
+            # print(self.runwindow.winfo_exists())
+            # print(type(self.runwindow))
+            if self.debug == True:
+                print("Runwindow already there! Resetting frame...")
+            self.runwindow.resetframe() #I think I'll always want this here...
+        else:
+            t=(_("Run Window"))
+            self.runwindow=Window(self.frame,title=t)
+            self.runwindow.title(t)
+    def runcheck(self):
+        self.storedefaults() #This is not called in checkcheck.
+        t=(_('Run Check'))
+        print("Running check...")
+        self.getrunwindow()
+        # self.runwindow=Window(self.frame,title=t)
+        i=0
+        if self.analang is None or self.analang == "Null":
+            text=(_('Error: please set language first!')+' ('+
+            str(self.analang)+')')
+            Label(self.runwindow.frame, text=text
+                          ).grid(column=0, row=i)
+            i+=1
+        if self.ps is None or self.ps == "Null":
+            text=_('Error: please set Grammatical category first!')+' ('
+            +str(self.ps)+')'
+            Label(self.runwindow.frame,text=text).grid(column=0, row=i)
+            i+=1
+        if (((self.subcheck is None) or (self.subcheck == "Null"))
+                and self.type != 'T'):
+            Label(self.runwindow.frame,
+                          text='Error: please set Subcheck first! ('
+                          +str(self.subcheck)+')'
+                          ).grid(column=0, row=i)
+            i+=1
+        if not (self.analang is None or self.analang == "Null" or
+                self.ps is None or self.ps == "Null" or
+                ((self.subcheck is None or self.subcheck == "Null") and
+                self.type != 'T')):
+            # def header():
+            #     row=0
+            #     texts=((_('Working with Language: ')+self.analang),
+            #             (_('Working with Grammatical category: ')+self.ps),
+            #             (_('Verifying: ')+self.subcheck))
+            #     for text in texts:
+            #         Label(self.runwindow.frame, text=text
+            #                 ).grid(column=0, row=row)
+            #         row+=1
+            if self.type == 'T':
+                self.maybesort()
+            else: #do the CV checks
+                self.getresults()
+    def record(self):
+        self.storedefaults()
+        if ((self.fs == None) or (self.sample_format == None)
+                or (self.audio_card_index == None)):
+            self.soundcheck()
+        if self.type == 'T':
+            self.showtonegroupexs()
+        else:
+            self.showentryformstorecord()
+    def makelabelsnrecordingbuttons(self,parent,sense):
+        t=self.getframeddata(sense['nodetoshow'],noframe=True)[
+                                            self.analang]+'\t'+sense['gloss']
+        if ('plnode' in sense) and (sense['nodetoshow'] is sense['plnode']):
+            t+=" (pl)"
+        if ('impnode' in sense) and (sense['nodetoshow'] is sense['impnode']):
+            t+="!"
+        lxl=Label(parent, text=t)
+        lcb=RecordButtonFrame(parent,self,id=sense['guid'],
+                                            node=sense['nodetoshow'],
+                                            gloss=sense['gloss'])
+        lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
+        lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
+    def showentryformstorecord(self,senses=None):
+        """Save these values before iterating over them"""
+        psori=self.ps
+        profileori=self.profile
+        self.getrunwindow()
+        done=list()
+        for psprofile in self.profilecounts:
+            if self.runwindow.winfo_exists==False:
+                print('no runwindow; quitting!')
+                return
+            if self.runwindow.frame.winfo_exists==False:
+                print('no runwindow frame; quitting!')
+                return
+            self.runwindow.resetframe()
+            ww=Wait(self.runwindow)
+            self.ps=psprofile[2]
+            self.profile=psprofile[1]
+            text=_("Record {} {} Words: click ‘Record’, talk, "
+                    "and release ({} words)".format(self.profile,self.ps,
+                                                    psprofile[0]))
+            instr=Label(self.runwindow.frame, anchor='w',text=text)
+            instr.grid(row=0,column=0,sticky='w')
+            nextb=Button(self.runwindow.frame,text=_("Next Group"),
+                                            cmd=self.runwindow.frame.destroy)
+            nextb.grid(row=0,column=1,sticky='w')
+            buttonframes=ScrollingFrame(self.runwindow.frame)
+            buttonframes.grid(row=1,column=0,sticky='w')
+            row=0
+            for senseid in self.profilesbysense[self.ps][self.profile]:
+                sense={}
+                sense['column']=0
+                sense['row']=row
+                sense['guid']=firstoflist(self.db.get('guidbysense',
+                                            senseid=senseid,showurl=True))
+                if sense['guid'] in done: #only the first of multiple senses
+                    continue
+                else:
+                    done.append(sense['guid'])
+                sense['lxnode']=firstoflist(self.db.get('lexemenode',
+                                                    guid=sense['guid'],
+                                                    lang=self.analang))
+                sense['lcnode']=firstoflist(self.db.get('citationnode',
+                                                    guid=sense['guid'],
+                                                    lang=self.analang))
+                sense['gloss']=firstoflist(self.db.glossordefn(
+                                                    guid=sense['guid'],
+                                                    lang=self.glosslang
+                                                    # ,showurl=True
+                                                    ))
+                if sense['gloss'] is None:
+                    continue #We can't save the file well anyway; don't bother
+                if self.db.pluralname is not None:
+                    sense['plnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
+                                            lang=self.analang,
+                                            fieldtype=self.db.pluralname))
+                if self.db.imperativename is not None:
+                    sense['impnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
+                                            lang=self.analang,
+                                            fieldtype=self.db.imperativename))
+                if sense['lcnode'] != None:
+                    # print('lcnode!')
+                    sense['nodetoshow']=sense['lcnode']
+                else:
+                    # print('lxnode!')
+                    sense['nodetoshow']=sense['lxnode']
+                self.makelabelsnrecordingbuttons(buttonframes.content,sense)
+                for node in ['plnode','impnode']:
+                    if (node in sense) and (sense[node] != None):
+                        sense['column']+=2
+                        sense['nodetoshow']=sense[node]
+                        self.makelabelsnrecordingbuttons(buttonframes.content,
+                                                        sense)
+                row+=1
+            ww.done()
+            self.runwindow.wait_window(self.runwindow.frame)
+        self.ps=psori
+        self.profile=profileori
+    def showsenseswithexamplestorecord(self,senses=None):
+        self.getrunwindow()
+        """?Make this scroll!"""
+        text=_("Words and phrases to record: click ‘Record’, talk, and release")
+        instr=Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w')
+        if (self.entriestoshow is None) and (senses is None):
+            Label(self.runwindow.frame, anchor='w',
+                    text=_("Sorry, there are no entries to show!")).grid(row=1,
+                                    column=0,sticky='w')
+            return
+        if senses is None:
+            senses=self.entriestoshow
+        for senseid in senses:
+            print("Working on ",senseid)
+            row=0
+            entryframe=Frame(self.runwindow.frame)
+            entryframe.grid(row=1,column=0)
+            """This is the title for each page: isolation form and glosses."""
+            framed=self.getframeddata(senseid,noframe=True)
+            if framed[self.analang]=='noform':
+                entryframe.destroy()
+                continue
+            text=framed['formatted']
+            Label(entryframe, anchor='w', font=self.fonts['read'],
+                    text=text).grid(row=row,
+                                    column=0,sticky='w')
+            """Then get each sorted example"""
+            self.runwindow.frame.scroll=ScrollingFrame(
+                                            entryframe)
+            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
+            examplesframe=Frame(self.runwindow.frame.scroll.content)
+            examplesframe.grid(row=0,column=0,sticky='w')
+            examples=self.db.get('example',senseid=senseid)
+            print('examples:',examples)
+            if examples == []:
+                text=_("No examples! Add some, then come back.")
+                print(text)
+                Label(examplesframe, anchor='w', font=self.fonts['read'],
+                        text=text).grid(row=row,
+                                        column=0,sticky='w')
+                entryframe.destroy()
+                continue #return #I want the "next" button...
+            for example in examples:
+                """These should already be framed!"""
+                framed=self.getframeddata(example,noframe=True)
+                if framed[self.analang] is None:
+                    continue
+                row+=1
+                """If I end up pulling from example nodes elsewhere, I should
+                probably make this a function, like getframeddata"""
+                text=framed['formatted']
+                Label(examplesframe, anchor='w',text=text
+                                    ).grid(row=row, column=0, sticky='w')
+                print('recordbuttonframetry')
+                rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
+                                    form=nn(framed[self.analang]),
+                                    gloss=nn(framed[self.glosslang])
+                                    ) #no gloss2; form/gloss just for filename
+                rb.grid(row=row,column=1,sticky='w')
+            row+=1
+            d=Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
+            d.grid(row=row,column=0)
+            examplesframe.wait_window(entryframe)
+        instr.destroy() #Don't show instructions at this point
+        Label(self.runwindow.frame, anchor='w',
+            text=_("All done! Sort some more words, and come back.")
+            ).grid(row=0,column=0,sticky='w')
+        self.runwindow.wait_window(entryframe)
+        self.runwindow.destroy()
+    def showtonegroupexs(self):
+        if (not(hasattr(self,'examplespergrouptorecord')) or
+            (type(self.examplespergrouptorecord) is not int)):
+            self.examplespergrouptorecord=5
+            self.storedefaults('examplespergrouptorecord')
+        self.settonevariablesbypsprofile() #maybe not done before
+        self.gettoneUFgroups()
+        # toneUFgroups=self.toneUFgroups
+        # print('self.toneUFgroups',self.toneUFgroups)
+        if self.toneUFgroups != []:
+            torecord={}
+            for toneUFgroup in self.toneUFgroups:
+                torecord[toneUFgroup]=self.db.get('senseidbytoneUFgroup',
+                                        fieldtype='tone', form=toneUFgroup)
+                    # print(self.toneUFgroups,senseids)
+            batch={}
+            for i in range(self.examplespergrouptorecord):
+                batch[i]=[]
+                for toneUFgroup in self.toneUFgroups:
+                    print(i,len(torecord[toneUFgroup]),toneUFgroup,torecord[toneUFgroup])
+                    if len(torecord[toneUFgroup]) > i: #don't worry about small piles.
+                        batch[i]+=[torecord[toneUFgroup][i]]
+                    else:
+                        print("Not enough examples, moving on:",i,toneUFgroup)
+            print(_('Preparing to record examples from each tone group ({}) '
+                    'with index').format(self.toneUFgroups),i)
+            for i in range(self.examplespergrouptorecord):
+                print(_('Giving user the number {} example from each tone '
+                        'group ({}) with index').format(i,self.toneUFgroups))
+                self.showsenseswithexamplestorecord(batch[i])
+        else:
+            print("How did we get no UR tone groups?",self.profile,self.ps,
+                    "\nHave you run the tone report recently?"
+                    "\nDoing that for you now...")
+            self.tonegroupreport(silent=True)
+            self.showtonegroupexs()
     def getresults(self):
         self.makeresultsframe()
         """"Do I need this?"""
@@ -3355,65 +3274,146 @@ class Check():
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self.db,self.regexCV, lang=self.analang,
                             word=True, compile=True)
-    """Doing stuff"""
-    def getrunwindow(self):
-        # print(self.__dict__)
-        # print(hasattr(self,'runwindow'))
-        """Can't test for widget/window if the attribute hasn't been assigned,"
-        but the attribute is still there after window has been killed, so we
-        need to test for both."""
-        if hasattr(self,'runwindow') and (self.runwindow.winfo_exists()):#(type(self.runwindow) is Window):
-            # print(self.runwindow.winfo_exists())
-            # print(type(self.runwindow))
-            if self.debug == True:
-                print("Runwindow already there! Resetting frame...")
-            self.runwindow.resetframe() #I think I'll always want this here...
-        else:
-            t=(_("Run Window"))
-            self.runwindow=Window(self.frame,title=t)
-            self.runwindow.title(t)
-    def runcheck(self):
-        self.storedefaults() #This is not called in checkcheck.
-        t=(_('Run Check'))
-        print("Running check...")
+    def tonegroupreport(self,silent=False):
+        print("Starting report...")
+        self.storedefaults()
         self.getrunwindow()
-        # self.runwindow=Window(self.frame,title=t)
-        i=0
-        if self.analang is None or self.analang == "Null":
-            text=(_('Error: please set language first!')+' ('+
-            str(self.analang)+')')
-            Label(self.runwindow.frame, text=text
-                          ).grid(column=0, row=i)
-            i+=1
-        if self.ps is None or self.ps == "Null":
-            text=_('Error: please set Grammatical category first!')+' ('
-            +str(self.ps)+')'
-            Label(self.runwindow.frame,text=text).grid(column=0, row=i)
-            i+=1
-        if (((self.subcheck is None) or (self.subcheck == "Null"))
-                and self.type != 'T'):
-            Label(self.runwindow.frame,
-                          text='Error: please set Subcheck first! ('
-                          +str(self.subcheck)+')'
-                          ).grid(column=0, row=i)
-            i+=1
-        if not (self.analang is None or self.analang == "Null" or
-                self.ps is None or self.ps == "Null" or
-                ((self.subcheck is None or self.subcheck == "Null") and
-                self.type != 'T')):
-            # def header():
-            #     row=0
-            #     texts=((_('Working with Language: ')+self.analang),
-            #             (_('Working with Grammatical category: ')+self.ps),
-            #             (_('Verifying: ')+self.subcheck))
-            #     for text in texts:
-            #         Label(self.runwindow.frame, text=text
-            #                 ).grid(column=0, row=row)
-            #         row+=1
-            if self.type == 'T':
-                self.maybesort()
-            else: #do the CV checks
-                self.getresults()
+        ww=Wait(self.runwindow)
+        self.tonereportfile=''.join([str(self.reportbasefilename),'_',
+                            self.ps,'_',
+                            self.profile,
+                            ".ToneReport.txt"])
+        start_time=time.time() #move this to function?
+        self.getidstosort() #in case you didn't just run a check
+        self.getlocations()
+        output={}
+        """Collect location:value correspondences, by sense"""
+        for senseid in self.senseidstosort:
+            output[senseid]={}
+            for location in self.locations:
+                output[senseid][location]={}
+                group=self.db.get('exfieldvalue',senseid=senseid,
+                    location=location,fieldtype='tone')
+                print(group)
+                """Also include location:value for non-example fields"""
+                """How to do this in a principled way?"""
+                # for guid in self.db.get('guidbysenseid',senseid=senseid):
+                #     group+=self.db.get('pronunciationfieldvalue',guid=guid,
+                #         location=location,fieldtype='tone')
+                # print(group)
+                """Save this info by senseid"""
+                output[senseid][location]=group
+        print("Done organizing data; ready to report.")
+        groups={}
+        groupvalues=[]
+        """Look through all the location:value combos (skip over senseids)
+        this is, critically, a dictionary of each location:value correspondence
+        for a given sense. So each groupvalue contains multiple location keys,
+        each with a value value, and the sum of all the location:value
+        correspondences for a sense defines the group --which is distinct from
+        another group which shares some (but not all) of those location:value
+        correspondences."""
+        """For any non-linguists reading this, this is the key analytical step
+        that moves us from a collection of surface forms (each pronunciation
+        group in a given context) to the underlying form (which behaves the same
+        as others in its group, across all contexts)."""
+        # groupvalues=list(dict.fromkeys(output.values())) #can't hash this...
+        for value in output.values(): #so we find unique values manually
+            if value not in groupvalues:
+                groupvalues+=[value]
+        """For each set of location:value correspondences, find the senseids
+        that have it."""
+        x=1 #first group
+        for value in groupvalues:
+            groups[x]={}
+            groups[x]['values']=value
+            groups[x]['senseids']=[]
+            x+=1
+        print('Groups Done; Checking guids against groups.')
+        for senseid in output.keys():
+            for group in groups:
+                if str(output[senseid]) == str(groups[group]['values']):
+                    groups[group]['senseids']+=[senseid] #maybe don't need list here..…
+                else:
+                    pass
+        """Add the guid information to the groups!!"""
+        r = open(self.tonereportfile, "w", encoding='utf-8')
+        self.runwindow.title(_("Tone Report"))
+        self.runwindow.scroll=ScrollingFrame(self.runwindow.frame)
+        window=self.runwindow.scroll.content
+        window.row=0
+        def output(window,r,text):
+            r.write(text+'\n')
+            if silent == False:
+                Label(window,text=text,font=window.fonts['report']).grid(
+                                        row=window.row,column=0, sticky="w")
+            window.row+=1
+        for group in groups:
+            groupname=self.ps+'_'+self.profile+'_'+str(group)
+            text=('\nGroup '+str(groupname))
+            output(window,r,text)
+            l=list()
+            # print(groups[group]['values'])
+            for x in groups[group]['values']:
+                """This shouldn't crash if a word is lacking a value for a
+                location. Just don't include that location in the group
+                definition."""
+                if (('values' in groups[group]) and (x in groups[group]['values'])
+                    and (groups[group]['values'][x] !=[])):
+                    l.append(x+': '+groups[group]['values'][x][0])
+            text=('Values by frame: '+'\t'.join(l))
+            output(window,r,text)
+            for senseid in groups[group]['senseids']:
+                text=self.getframeddata(senseid,noframe=True,
+                                                notonegroup=True)['formatted']
+                # for form in self.db.citationorlexeme(senseid=senseid):
+                #     for gloss in self.db.glossordefn(senseid=senseid,
+                #                                     lang=self.glosslang):
+                #         for gloss2 in self.db.glossordefn(senseid=senseid,
+                #                                     lang=self.glosslang2):
+                #             text='\t'+'\t'.join((form,"‘"+gloss+"’",
+                #                                         "‘"+gloss2+"’"))
+                output(window,r,text)
+                self.db.addtoneUF(senseid,groupname,analang=self.analang)
+        ww.done()
+        text=("Finished in "+str(time.time() - start_time)+" seconds.")
+        output(window,r,text)
+        text=_("(Report is also available at ("+self.tonereportfile+")")
+        output(window,r,text)
+        r.close()
+    def basicreport(self):
+        """We iterate across these values in this script, so we save current
+        values here, and restore them at the end."""
+        typeori=self.type
+        psori=self.ps
+        profileori=self.profile
+        self.basicreportfile=''.join([str(self.reportbasefilename)
+                                            # ,'_',self.type,'_',str(pss)
+                                            ,'.BasicReport.txt'])
+        sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
+        self.basicreported={}
+        self.printprofilesbyps()
+        self.makecountssorted() #This populates self.profilecounts
+        self.printcountssorted()
+        num='ALL'
+        for self.ps in self.topps(num): #get PSs found in syllable profiles
+            """For Debugging"""
+            # print('NVCVN:',self.profilesbysense[self.ps]['NVCVN'])
+            for self.profile in self.topprofiles(num)[self.ps]:
+                for self.type in ['V','C']:
+                    maxcount=re.subn(self.type, self.type, self.profile)[1]
+                    """Get these reports from C1/V1 to total number of C/V"""
+                    self.typenums=[self.type+str(n+1) for n in range(maxcount)]
+                    for typenum in self.typenums:
+                        if typenum not in self.basicreported:
+                            self.basicreported[typenum]=list()
+                    self.wordsbypsprofilechecksubcheck()
+        sys.stdout.close()
+        sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
+        self.type=typeori
+        self.profile=profileori
+        self.ps=psori
+        self.checkcheck()
     """These are old paradigm CV funcs, with too many arguments, and guids"""
     def picked(self,choice):
         if self.debug == True:
