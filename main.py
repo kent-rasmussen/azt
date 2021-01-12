@@ -260,6 +260,7 @@ class Check():
     def guesstype(self):
                     """For now, if type isn't set, start with Vowels."""
                     self.type='V'
+    """User Input functions"""
     def getinterfacelang(self):
             print("Asking for interface language...")
             window=Window(self.frame, title=_('Select Interface Language'))
@@ -272,164 +273,6 @@ class Check():
                                     window
                                     )
             buttonFrame1.grid(column=0, row=1)
-    def addpstoprofileswdata(self):
-        if self.ps not in self.profilesbysense:
-            self.profilesbysense[self.ps]={}
-    def addprofiletoprofileswdata(self):
-        if self.profile not in self.profilesbysense[self.ps]:
-            self.profilesbysense[self.ps][self.profile]=[]
-    def addtoprofilesbysense(self,senseid):
-        self.addpstoprofileswdata()
-        self.addprofiletoprofileswdata()
-        self.profilesbysense[self.ps][self.profile]+=[senseid]
-    def getscounts(self):
-        self.scount={}
-        for ps in self.db.pss:
-            self.scount[ps]={}
-            for s in self.rx:
-                self.scount[ps][s]=collections.Counter(self.sextracted[ps][s]).most_common()
-    def getprofiles(self):
-        self.profileswdatabyentry={}
-        self.profilesbysense={}
-        self.profilesbysense['Invalid']=[]
-        self.profiledguids=[]
-        self.profiledsenseids=[]
-        profileori=self.profile #We iterate across this here
-        psori=self.ps #We iterate across this here
-        onlyCV={'C','N','G','V','#'}
-        self.sextracted={} #Will store matching segments here
-        for ps in self.db.pss:
-            self.sextracted[ps]={}
-            for s in self.rx:
-                self.sextracted[ps][s]=list()
-        todo=len(self.db.senseids)
-        for senseid in self.db.senseids:
-            print(str(self.db.senseids.index(senseid))+'/'+str(todo))
-            forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
-            for form in forms:
-                self.profile=self.profileofform(form)
-                if onlyCV.issuperset(self.profile):
-                    for self.ps in self.db.get('ps',senseid=senseid):
-                        # print("Good profile!",form,profile)
-                        self.addtoprofilesbysense(senseid)
-                else:
-                    # print("Invalid profile!",form,profile)
-                    self.profilesbysense['Invalid']+=[senseid]
-        self.getscounts()
-        print('Done:',time.time()-self.start_time)
-        # self.debug=True
-        if self.debug==True:
-            for ps in self.profilesbysense:
-                if ps == 'Invalid':
-                    print(ps,self.profile,len(self.profilesbysense[ps]))
-                else:
-                    for profile in self.profilesbysense[ps]:
-                        print(ps,profile,len(self.profilesbysense[ps][profile]))
-        self.profile=profileori
-        self.ps=psori
-    def slists(self):
-        if not hasattr(self,'s'):
-            self.s={}
-        for lang in self.db.analangs:
-            if lang not in self.s:
-                self.s[lang]={}
-            for sclass in self.db.s[lang]: #Whatever is in the language (not right)
-                self.s[lang][sclass]=self.db.s[lang][sclass]
-    def setupCVrxs(self):
-        self.rx={}
-        for sclass in ['C','V']: #'N','G',
-            print(rx.s(self,sclass))
-            self.rx[sclass]=rx.make(rx.s(self,
-                                        sclass),compile=True)
-        if self.distinguishNwd==True:
-            self.rx['N#']=rx.make(rx.s(self.db,
-                                    'N',
-                                    lang=self.analang)+'$',compile=True)
-        if self.distinguishCG==True:
-            self.rx['CG']=rx.make(''.join([rx.s(self.db,'C',lang=self.analang),
-                                        rx.s(self.db,'G',lang=self.analang)]),
-                                        compile=True)
-        else: #include it in C:
-            self.rx['C']=rx.make(''.join([rx.s(self.db,'C',lang=self.analang),
-                                        rx.s(self.db,'G',lang=self.analang),
-                                        '|',
-                                        rx.s(self.db,'C',lang=self.analang)]),
-                                        compile=True)
-        if self.distinguishNC==True:
-            self.rx['NC']=rx.make(''.join([rx.s(self.db,'N',lang=self.analang),
-                                        rx.s(self.db,'C',lang=self.analang)]),
-                                        compile=True)
-        else: #include it in C:
-            self.rx['C']=rx.make(''.join([rx.s(self.db,'N',lang=self.analang),
-                                        rx.s(self.db,'C',lang=self.analang),
-                                        '|',
-                                        rx.s(self.db,'C',lang=self.analang)]),
-                                        compile=True)
-        if (self.distinguishNC==False) and (self.distinguishCG==False):
-            self.rx['C']=rx.make(''.join(
-                                        [rx.s(self.db,'N',lang=self.analang),
-                                        rx.s(self.db,'C',lang=self.analang),
-                                        rx.s(self.db,'G',lang=self.analang),
-                                        '|',
-                                        rx.s(self.db,'N',lang=self.analang),
-                                        rx.s(self.db,'C',lang=self.analang),
-                                        '|',
-                                        rx.s(self.db,'C',lang=self.analang),
-                                        rx.s(self.db,'G',lang=self.analang),
-                                        '|',
-                                        rx.s(self.db,'C',lang=self.analang)]),
-                                        compile=True)
-        if (self.distinguishNC==True) and (self.distinguishCG==True):
-            self.rx['NCG']=rx.make(''.join(
-                                        [rx.s(self.db,'N',lang=self.analang),
-                                        rx.s(self.db,'C',lang=self.analang),
-                                        rx.s(self.db,'G',lang=self.analang)]),
-                                        compile=True)
-
-        def anotherthing():
-            self.rx['G']=rx.make(rx.g(self.db),compile=True)
-            self.rx['C']=rx.make(rx.c(self.db),compile=True)
-            self.rx['V']=rx.make(rx.v(self.db),compile=True)
-            self.rx['N']='Nx'#rx.make(rx.n(self.db),compile=True)
-            self.rx['C']='Cx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['G']='Cx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['NCG']='NCGx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['NC']='NCx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['NG']='NGx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['CG']='CGx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['V']='Vx'#rx.make(rx.v(self.db),compile=True)
-    def profileofform(self,form):
-        """priority sort alphabets (need logic to set one or the other)"""
-        """Look for any C, don't find N or G"""
-        priority=['#','C','N','G','V']
-        """Look for word boundaries, N and G before C (though this doesn't
-        work, since CG is captured by C first...)"""
-        priority=['#','N','G','C','V']
-        # print('form:',form)
-        for s in sorted(self.rx.keys(),
-                        key=lambda cons: (-len(cons),
-                                            [priority.index(c) for c in cons])
-                        ):
-            # print('s:',s, self.rx[s])
-            for ps in self.db.pss:
-                self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches
-            form=self.rx[s].sub(s,form) #replace with profile variable
-            # print(form)
-            form=re.sub('#$','',form)
-            # print(form)
-        """We could consider combining NC to C (or not), and CG to C (or not)
-        here, after the 'splitter' profiles are formed..."""
-        if self.debug==True:
-            self.iterations+=1
-            if self.iterations>15:
-                exit()
-        return form
-    def gimmeguid(self):
-        idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
-        return idsbyps[randint(0, len(idsbyps))]
-    def gimmesenseid(self):
-        idsbyps=self.db.get('senseidbyps',lang=self.analang,ps=self.ps)
-        return idsbyps[randint(0, len(idsbyps))]
     def setSdistinctions(self):
         def submitform():
             change=False
@@ -819,6 +662,166 @@ class Check():
         text=_('See the tone frame around a word from the dictionary')
         chk_btn=Button(window.frame1,text = text, command = chk)
         chk_btn.grid(row=row+1,column=columnleft,pady=100)
+    """Get from LIFT database functions"""
+    def addpstoprofileswdata(self):
+        if self.ps not in self.profilesbysense:
+            self.profilesbysense[self.ps]={}
+    def addprofiletoprofileswdata(self):
+        if self.profile not in self.profilesbysense[self.ps]:
+            self.profilesbysense[self.ps][self.profile]=[]
+    def addtoprofilesbysense(self,senseid):
+        self.addpstoprofileswdata()
+        self.addprofiletoprofileswdata()
+        self.profilesbysense[self.ps][self.profile]+=[senseid]
+    def getscounts(self):
+        """This depends on self.sextracted, from getprofiles"""
+        self.scount={}
+        for ps in self.db.pss:
+            self.scount[ps]={}
+            for s in self.rx:
+                self.scount[ps][s]=collections.Counter(self.sextracted[ps][s]).most_common()
+    def getprofiles(self):
+        self.profileswdatabyentry={}
+        self.profilesbysense={}
+        self.profilesbysense['Invalid']=[]
+        self.profiledguids=[]
+        self.profiledsenseids=[]
+        profileori=self.profile #We iterate across this here
+        psori=self.ps #We iterate across this here
+        onlyCV={'C','N','G','V','#'}
+        self.sextracted={} #Will store matching segments here
+        for ps in self.db.pss:
+            self.sextracted[ps]={}
+            for s in self.rx:
+                self.sextracted[ps][s]=list()
+        todo=len(self.db.senseids)
+        for senseid in self.db.senseids:
+            print(str(self.db.senseids.index(senseid))+'/'+str(todo))
+            forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
+            for form in forms:
+                self.profile=self.profileofform(form)
+                if onlyCV.issuperset(self.profile):
+                    for self.ps in self.db.get('ps',senseid=senseid):
+                        # print("Good profile!",form,profile)
+                        self.addtoprofilesbysense(senseid)
+                else:
+                    # print("Invalid profile!",form,profile)
+                    self.profilesbysense['Invalid']+=[senseid]
+        self.getscounts()
+        print('Done:',time.time()-self.start_time)
+        # self.debug=True
+        if self.debug==True:
+            for ps in self.profilesbysense:
+                if ps == 'Invalid':
+                    print(ps,self.profile,len(self.profilesbysense[ps]))
+                else:
+                    for profile in self.profilesbysense[ps]:
+                        print(ps,profile,len(self.profilesbysense[ps][profile]))
+        self.profile=profileori
+        self.ps=psori
+    def slists(self):
+        if not hasattr(self,'s'):
+            self.s={}
+        for lang in self.db.analangs:
+            if lang not in self.s:
+                self.s[lang]={}
+            for sclass in self.db.s[lang]: #Whatever is in the language (not right)
+                self.s[lang][sclass]=self.db.s[lang][sclass]
+    def setupCVrxs(self):
+        self.rx={}
+        for sclass in ['C','V']: #'N','G',
+            print(rx.s(self,sclass))
+            self.rx[sclass]=rx.make(rx.s(self,
+                                        sclass),compile=True)
+        if self.distinguishNwd==True:
+            self.rx['N#']=rx.make(rx.s(self.db,
+                                    'N',
+                                    lang=self.analang)+'$',compile=True)
+        if self.distinguishCG==True:
+            self.rx['CG']=rx.make(''.join([rx.s(self.db,'C',lang=self.analang),
+                                        rx.s(self.db,'G',lang=self.analang)]),
+                                        compile=True)
+        else: #include it in C:
+            self.rx['C']=rx.make(''.join([rx.s(self.db,'C',lang=self.analang),
+                                        rx.s(self.db,'G',lang=self.analang),
+                                        '|',
+                                        rx.s(self.db,'C',lang=self.analang)]),
+                                        compile=True)
+        if self.distinguishNC==True:
+            self.rx['NC']=rx.make(''.join([rx.s(self.db,'N',lang=self.analang),
+                                        rx.s(self.db,'C',lang=self.analang)]),
+                                        compile=True)
+        else: #include it in C:
+            self.rx['C']=rx.make(''.join([rx.s(self.db,'N',lang=self.analang),
+                                        rx.s(self.db,'C',lang=self.analang),
+                                        '|',
+                                        rx.s(self.db,'C',lang=self.analang)]),
+                                        compile=True)
+        if (self.distinguishNC==False) and (self.distinguishCG==False):
+            self.rx['C']=rx.make(''.join(
+                                        [rx.s(self.db,'N',lang=self.analang),
+                                        rx.s(self.db,'C',lang=self.analang),
+                                        rx.s(self.db,'G',lang=self.analang),
+                                        '|',
+                                        rx.s(self.db,'N',lang=self.analang),
+                                        rx.s(self.db,'C',lang=self.analang),
+                                        '|',
+                                        rx.s(self.db,'C',lang=self.analang),
+                                        rx.s(self.db,'G',lang=self.analang),
+                                        '|',
+                                        rx.s(self.db,'C',lang=self.analang)]),
+                                        compile=True)
+        if (self.distinguishNC==True) and (self.distinguishCG==True):
+            self.rx['NCG']=rx.make(''.join(
+                                        [rx.s(self.db,'N',lang=self.analang),
+                                        rx.s(self.db,'C',lang=self.analang),
+                                        rx.s(self.db,'G',lang=self.analang)]),
+                                        compile=True)
+
+        def anotherthing():
+            self.rx['G']=rx.make(rx.g(self.db),compile=True)
+            self.rx['C']=rx.make(rx.c(self.db),compile=True)
+            self.rx['V']=rx.make(rx.v(self.db),compile=True)
+            self.rx['N']='Nx'#rx.make(rx.n(self.db),compile=True)
+            self.rx['C']='Cx'#rx.make(rx.c(self.db),compile=True)
+            self.rx['G']='Cx'#rx.make(rx.c(self.db),compile=True)
+            self.rx['NCG']='NCGx'#rx.make(rx.c(self.db),compile=True)
+            self.rx['NC']='NCx'#rx.make(rx.c(self.db),compile=True)
+            self.rx['NG']='NGx'#rx.make(rx.c(self.db),compile=True)
+            self.rx['CG']='CGx'#rx.make(rx.c(self.db),compile=True)
+            self.rx['V']='Vx'#rx.make(rx.v(self.db),compile=True)
+    def profileofform(self,form):
+        """priority sort alphabets (need logic to set one or the other)"""
+        """Look for any C, don't find N or G"""
+        priority=['#','C','N','G','V']
+        """Look for word boundaries, N and G before C (though this doesn't
+        work, since CG is captured by C first...)"""
+        priority=['#','N','G','C','V']
+        # print('form:',form)
+        for s in sorted(self.rx.keys(),
+                        key=lambda cons: (-len(cons),
+                                            [priority.index(c) for c in cons])
+                        ):
+            # print('s:',s, self.rx[s])
+            for ps in self.db.pss:
+                self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches
+            form=self.rx[s].sub(s,form) #replace with profile variable
+            # print(form)
+            form=re.sub('#$','',form)
+            # print(form)
+        """We could consider combining NC to C (or not), and CG to C (or not)
+        here, after the 'splitter' profiles are formed..."""
+        if self.debug==True:
+            self.iterations+=1
+            if self.iterations>15:
+                exit()
+        return form
+    def gimmeguid(self):
+        idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
+        return idsbyps[randint(0, len(idsbyps))]
+    def gimmesenseid(self):
+        idsbyps=self.db.get('senseidbyps',lang=self.analang,ps=self.ps)
+        return idsbyps[randint(0, len(idsbyps))]
     def framenamesbyps(self,ps):
         """Names for all tone frames defined for the language."""
         if self.toneframes is not None:
