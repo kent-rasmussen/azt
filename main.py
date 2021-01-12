@@ -285,20 +285,18 @@ class Check():
     def setSdistinctions(self):
         def submitform():
             change=False
-            for var in varlist:
+            for ss in self.distinguish:
                 if self.debug==True:
-                    print(var[0],getattr(self,var[0]),var[1].get(),'change:',
+                    print(var[ss],self.distinguish[ss],var[ss].get(),'change:',
                                                                         change)
-                if getattr(self,var[0]) != var[1].get():
-                    setattr(self,var[0],var[1].get())
+                if self.distinguish[ss] != var[ss].get():
+                    self.distinguish[ss]=var[ss].get()
                     change=True
                 if self.debug==True:
-                    print(var[0],getattr(self,var[0]),var[1].get(),'change:',
+                    print(var[ss],self.distinguish[ss],var[ss].get(),'change:',
                                                                         change)
             if self.debug==True:
-                print('self.distinguishNC=',self.distinguishNC,
-                    '\nself.distinguishCG=',self.distinguishCG,
-                    '\nself.distinguishNwd=',self.distinguishNwd)
+                print(self.distinguish)
             if change == True:
                 print('There was a change; we need to redo the analysis now.')
                 self.storedefaults()
@@ -306,34 +304,38 @@ class Check():
             self.runwindow.destroy()
         # self.debug=True
         self.getrunwindow()
-        dNC = tkinter.BooleanVar()
-        dCG = tkinter.BooleanVar()
-        dNwd = tkinter.BooleanVar()
-        varlist=[('distinguishNC',dNC),
-                    ('distinguishCG',dCG),
-                    ('distinguishNwd',dNwd)]
-        for var in varlist:
-            if (not hasattr(self,var[0])) or (type(getattr(self,var[0])) is not bool):
-                setattr(self,var[0],False)
-            var[1].set(getattr(self,var[0]))
-        padx=50
-        pady=10
-        row=0
-        column=0
+        self.initdistinctions()
+        var={}
+        for ss in self.distinguish:
+            var[ss] = tkinter.BooleanVar()
+            var[ss].set(self.distinguish[ss])
+            print(ss, self.distinguish[ss])
+        self.runwindow.options={}
+        self.runwindow.options['row']=0
+        self.runwindow.options['padx']=50
+        self.runwindow.options['pady']=10
+        self.runwindow.options['column']=0
+        """Page title and instructions"""
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
         title=_("Interpret {} Segments"
                 ).format(self.db.languagenames[self.analang])
         titl=Label(self.runwindow,text=title,font=self.fonts['title'],
-                justify=tkinter.LEFT,anchor='c'
-                )
-        titl.grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
+                justify=tkinter.LEFT,anchor='c')
+        titl.grid(row=self.runwindow.options['row'],
+                    column=self.runwindow.options['column'],sticky='ew',
+                    padx=self.runwindow.options['padx'],
+                    pady=self.runwindow.options['pady'])
+        self.runwindow.options['row']+=1
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
                 ).format(self.progname,self.db.languagenames[self.analang])
-        instr=Label(self.runwindow,text=text,#font=self.fonts['title'],
-                justify=tkinter.LEFT,anchor='c'
-                )
-        instr.grid(row=1,column=0,sticky='ew',padx=padx,pady=pady)
+        instr=Label(self.runwindow,text=text,
+                justify=tkinter.LEFT,anchor='c')
+        instr.grid(row=self.runwindow.options['row'],
+                    column=self.runwindow.options['column'],sticky='ew',
+                    padx=self.runwindow.options['padx'],
+                    pady=self.runwindow.options['pady'])
+        """The rest of the page"""
         self.runwindow.scroll=ScrollingFrame(self.runwindow)
         self.runwindow.scroll.grid(row=2,column=0)
         self.runwindow.frame2a=Frame(self.runwindow.scroll.content)
@@ -387,17 +389,21 @@ class Check():
         # row+=1
         row+=1
         self.runwindow.frame2d=Frame(self.runwindow.scroll.content)
-        self.runwindow.frame2d.grid(row=row,column=column,padx=padx,
-                                                        pady=pady)
+        self.runwindow.frame2d.grid(row=self.runwindow.options['row'],
+                    column=self.runwindow.options['column'],sticky='ew',
+                    padx=self.runwindow.options['padx'],
+                    pady=self.runwindow.options['pady'])
         sub_btn=Button(self.runwindow.frame2d,text = 'Use these settings',
                   command = submitform)
-        sub_btn.grid(row=0,column=1,sticky='nw',pady=pady)
+        sub_btn.grid(row=0,column=1,sticky='nw',
+                    pady=self.runwindow.options['pady'])
         nbtext=_("If you make changes, this button==> \nwill "
                 "restart the program to reanalyze your data, \nwhich will "
                 "take some time.")
         sub_nb=Label(self.runwindow.frame2d,text = nbtext, anchor='e')
         sub_nb.grid(row=0,column=0,sticky='e',pady=pady)
         self.storedefaults()
+                    pady=self.runwindow.options['pady'])
     def addmorpheme(self):
         def submitform():
             self.runwindow.form=formfield.get()
