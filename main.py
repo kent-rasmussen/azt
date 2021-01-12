@@ -303,7 +303,23 @@ class Check():
                 if self.debug != True:
                     self.reloadprofiledata()
             self.runwindow.destroy()
-        # self.debug=True
+        def buttonframeframe(self):
+            ss=self.runwindow.options['ss']
+            self.runwindow.frames[ss]=Frame(self.runwindow.scroll.content)
+            self.runwindow.frames[ss].grid(row=self.runwindow.options['row'],
+                        column=self.runwindow.options['column'],sticky='ew',
+                        padx=self.runwindow.options['padx'],
+                        pady=self.runwindow.options['pady'])
+            Label(self.runwindow.frames[ss],text=self.runwindow.options['text'],
+                    justify=tkinter.LEFT,anchor='c'
+                    ).grid(row=0,
+                            column=self.runwindow.options['column'],
+                            sticky='ew',
+                            padx=self.runwindow.options['padx'],
+                            pady=self.runwindow.options['pady'])
+            RadioButtonFrame(self.runwindow.frames[ss],var=var[ss],
+            opts=self.runwindow.options['opts']).grid(row=1,column=0)
+            self.runwindow.options['row']+=1
         self.getrunwindow()
         self.initdistinctions()
         var={}
@@ -339,56 +355,50 @@ class Check():
         """The rest of the page"""
         self.runwindow.scroll=ScrollingFrame(self.runwindow)
         self.runwindow.scroll.grid(row=2,column=0)
-        self.runwindow.frame2a=Frame(self.runwindow.scroll.content)
-        self.runwindow.frame2a.grid(row=row,column=column,padx=padx,
-                                                        pady=pady)
-        text=_('Do you want to distinguish Nasal-Consonant (NC) sequences from '
-                'other consonants?')
-        nc=Label(self.runwindow.frame2a,text=text,#font=self.fonts['title'],
-                justify=tkinter.LEFT,anchor='c'
-                # wraplength=self.runwindow.frame2.winfo_width()/3
-                )
-        nc.grid(row=0,column=0,sticky='ew')
-        # nc.wrap()
-        RadioButtonFrame(self.runwindow.frame2a,var=dNC,
-        opts=[(True,'NC≠C'),(False,'NC=C')]).grid(row=1,column=0)
-        row+=1
-        self.runwindow.frame2b=Frame(self.runwindow.scroll.content)
-        self.runwindow.frame2b.grid(row=row,column=column,padx=padx,
-                                                        pady=pady)
-        text=_('Do you want to distinguish Consonant-Glide (CG) sequences from '
-                'other consonants?')
-        cg=Label(self.runwindow.frame2b,text=text,#font=self.fonts['title'],
-                justify=tkinter.LEFT,anchor='c'
-                # wraplength=self.runwindow.frame2.winfo_width()/3
-                )
-        cg.grid(row=0,column=0,sticky='ew')
-        # cg.wrap()
-        RadioButtonFrame(self.runwindow.frame2b,var=dCG,
-        opts=[(True,'CG≠C'),(False,'CG=C')]).grid(row=1,column=0)
-        row+=1
-        self.runwindow.frame2c=Frame(self.runwindow.scroll.content)
-        self.runwindow.frame2c.grid(row=row,column=column,padx=padx,
-                                                        pady=pady)
-        text=_('Do you want to distinguish Word Final Nasals (N#) from other word '
-            'final consonants?')
-        nwd=Label(self.runwindow.frame2c,text=text,#font=self.fonts['title'],
-                justify=tkinter.LEFT,anchor='c'#,
-                # wraplength=self.runwindow.frame2.winfo_width()/3
-                )
-        nwd.grid(row=0,column=0,sticky='ew')
-        # nwd.wrap()
-        row+=1
-        RadioButtonFrame(self.runwindow.frame2c,var=dNwd,
-        opts=[(True,'N#≠C#'),(False,'N#=C#')]).grid(row=1,column=0)
-        # self.runwindow.frame2.windowsize()
-        # formfield1 = RadioButton(self.runwindow.frame2,textvariable=form)
-        # formfield1.grid(row=row,column=0)
-        # row+=1
-        # formfield2 = RadioButton(self.runwindow.frame2,textvariable=form)
-        # formfield2.grid(row=row,column=0)
-        # row+=1
-        row+=1
+        self.runwindow.frames={}
+        """I considered offering these to the user conditionally, but I don't
+        see a subset of them that would only be relevant when another is
+        selected. For instance, a user may NOT want to distinguish all Nasals,
+        yet distinguish word final nasals. Or CG sequences, but not other G's
+        --or distinguish G, but leave as CG (≠C). So I think these are all
+        independent boolean selections."""
+        self.runwindow.options['ss']='N'
+        self.runwindow.options['text']=_('Do you want to distinguish '
+                                        'all Nasals (N) from '
+                                        'other (simple/single) consonants?')
+        self.runwindow.options['opts']=[(True,'N≠C'),(False,'N=C')]
+        buttonframeframe(self)
+        self.runwindow.options['ss']='G'
+        self.runwindow.options['text']=_('Do you want to distinguish '
+                                        'all Glides (G) from '
+                                        'other (simple/single) consonants?')
+        self.runwindow.options['opts']=[(True,'G≠C'),(False,'G=C')]
+        buttonframeframe(self)
+        self.runwindow.options['ss']='S'
+        self.runwindow.options['text']=_('Do you want to distinguish '
+                                        'all Non-Nasal/Glide Sonorants (S) '
+                                    'from other (simple/single) consonants?')
+        self.runwindow.options['opts']=[(True,'S≠C'),(False,'S=C')]
+        buttonframeframe(self)
+        self.runwindow.options['ss']='NC'
+        self.runwindow.options['text']=_('Do you want to distinguish '
+                                        'Nasal-Consonant (NC) sequences from '
+                                        'other (simple/single) consonants?')
+        self.runwindow.options['opts']=[(True,'NC≠C'),(False,'NC=C')]
+        buttonframeframe(self)
+        self.runwindow.options['ss']='CG'
+        self.runwindow.options['text']=_('Do you want to distinguish '
+                                        'Consonant-Glide (CG) sequences from '
+                                        'other (simple/single) consonants?')
+        self.runwindow.options['opts']=[(True,'CG≠C'),(False,'CG=C')]
+        buttonframeframe(self)
+        self.runwindow.options['ss']='Nwd'
+        self.runwindow.options['text']=_('Do you want to distinguish Word '
+                                        'Final Nasals (N#) from other word '
+                                        'final consonants?')
+        self.runwindow.options['opts']=[(True,'N#≠C#'),(False,'N#=C#')]
+        buttonframeframe(self)
+        """Submit button, etc"""
         self.runwindow.frame2d=Frame(self.runwindow.scroll.content)
         self.runwindow.frame2d.grid(row=self.runwindow.options['row'],
                     column=self.runwindow.options['column'],sticky='ew',
@@ -402,8 +412,7 @@ class Check():
                 "restart the program to reanalyze your data, \nwhich will "
                 "take some time.")
         sub_nb=Label(self.runwindow.frame2d,text = nbtext, anchor='e')
-        sub_nb.grid(row=0,column=0,sticky='e',pady=pady)
-        self.storedefaults()
+        sub_nb.grid(row=0,column=0,sticky='e',
                     pady=self.runwindow.options['pady'])
     def addmorpheme(self):
         def submitform():
@@ -1117,6 +1126,13 @@ class Check():
                 self.s[lang]={}
             for sclass in self.db.s[lang]: #Whatever is in the language (not right)
                 self.s[lang][sclass]=self.db.s[lang][sclass]
+        if self.distinguish['G']==False:
+            self.s[lang]['C']+=self.s[lang]['G']
+            del self.s[lang]['G']
+        if self.distinguish['N']==False:
+            self.s[lang]['C']+=self.s[lang]['N']
+            del self.s[lang]['N']
+
     def setupCVrxs(self):
         """This takes the lists of segments by types (from slists), and turns them into
         the regexes we need"""
@@ -1163,7 +1179,6 @@ class Check():
                                         '|',
                                         rx.s(self.db,'C',lang=self.analang)]),
                                         compile=True)
-        if (self.distinguishNC==True) and (self.distinguishCG==True):
         if (self.distinguish['NC']==True) and (self.distinguish['CG']==True):
             self.rx['NCG']=rx.make(''.join(
                                         [rx.s(self.db,'N',lang=self.analang),
