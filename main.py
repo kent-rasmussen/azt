@@ -170,6 +170,7 @@ class Check():
         # self.profileofform('zukw')
         # exit()
         self.checkcheck()
+    """Guessing functions"""
     def guessinterfacelang(self):
         """I'm asked to do this when the root window has the attribute set,
         but the check doesn't. So I'm testing for the check attribute here."""
@@ -180,18 +181,6 @@ class Check():
                 self.guessglosslangs()
             self.parent.parent.interfacelang=self.glosslang
         setinterfacelang(self.glosslang)
-    def getinterfacelang(self):
-            print("Asking for interface language...")
-            window=Window(self.frame, title=_('Select Interface Language'))
-            Label(window.frame, text=_('What language do you want this program '
-                                    'to address you in?')
-                    ).grid(column=0, row=0)
-            buttonFrame1=ButtonFrame(window.frame,
-                                    self.parent.parent.interfacelangs,
-                                    self.setinterfacelangwrapper,
-                                    window
-                                    )
-            buttonFrame1.grid(column=0, row=1)
     def guessanalang(self):
         """if there's only one analysis language, use it."""
         nlangs=len(self.db.analangs)
@@ -249,6 +238,40 @@ class Check():
             self.glosslang2=self.db.glosslangs[1]
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
+    def guessps(self):
+        """Make this smarter, but for now, just take value from the most
+        populous tuple"""
+        self.ps=self.profilecounts[0][2]
+    def guessprofile(self):
+        """Make this smarter, but for now, just take value from the most
+        populous tuple"""
+        self.profile=self.profilecounts[0][1]
+    def guesscheckname(self):
+        """Picks the longest name (the most restrictive fiter)"""
+        # print(self.checkspossible)
+        # print(sorted(self.checkspossible,
+        #                         key=lambda s: len(s[0]),reverse=True))
+        # print(firstoflist(sorted(self.checkspossible,
+        #                         key=lambda s: len(s[0]),reverse=True),
+        #                         othersOK=True))
+        self.name=firstoflist(sorted(self.checkspossible,
+        key=lambda s: len(s[0]),reverse=True),
+        othersOK=True)[0]
+    def guesstype(self):
+                    """For now, if type isn't set, start with Vowels."""
+                    self.type='V'
+    def getinterfacelang(self):
+            print("Asking for interface language...")
+            window=Window(self.frame, title=_('Select Interface Language'))
+            Label(window.frame, text=_('What language do you want this program '
+                                    'to address you in?')
+                    ).grid(column=0, row=0)
+            buttonFrame1=ButtonFrame(window.frame,
+                                    self.parent.parent.interfacelangs,
+                                    self.setinterfacelangwrapper,
+                                    window
+                                    )
+            buttonFrame1.grid(column=0, row=1)
     def addpstoprofileswdata(self):
         if self.ps not in self.profilesbysense:
             self.profilesbysense[self.ps]={}
@@ -304,28 +327,6 @@ class Check():
                         print(ps,profile,len(self.profilesbysense[ps][profile]))
         self.profile=profileori
         self.ps=psori
-    def guessps(self):
-        """Make this smarter, but for now, just take value from the most
-        populous tuple"""
-        self.ps=self.profilecounts[0][2]
-    def guessprofile(self):
-        """Make this smarter, but for now, just take value from the most
-        populous tuple"""
-        self.profile=self.profilecounts[0][1]
-    def guesscheckname(self):
-        """Picks the longest name (the most restrictive fiter)"""
-        # print(self.checkspossible)
-        # print(sorted(self.checkspossible,
-        #                         key=lambda s: len(s[0]),reverse=True))
-        # print(firstoflist(sorted(self.checkspossible,
-        #                         key=lambda s: len(s[0]),reverse=True),
-        #                         othersOK=True))
-        self.name=firstoflist(sorted(self.checkspossible,
-                                key=lambda s: len(s[0]),reverse=True),
-                                othersOK=True)[0]
-    def guesstype(self):
-        """For now, if type isn't set, start with Vowels."""
-        self.type='V'
     def slists(self):
         if not hasattr(self,'s'):
             self.s={}
