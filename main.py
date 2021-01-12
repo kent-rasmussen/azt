@@ -1093,6 +1093,8 @@ class Check():
         self.profile=profileori
         self.ps=psori
     def slists(self):
+        """This sets up the lists of segments, by types. For the moment, it
+        just pulls from the segment types in the lift database."""
         if not hasattr(self,'s'):
             self.s={}
         for lang in self.db.analangs:
@@ -1101,6 +1103,8 @@ class Check():
             for sclass in self.db.s[lang]: #Whatever is in the language (not right)
                 self.s[lang][sclass]=self.db.s[lang][sclass]
     def setupCVrxs(self):
+        """This takes the lists of segments by types (from slists), and turns them into
+        the regexes we need"""
         self.rx={}
         for sclass in ['C','V']: #'N','G',
             print(rx.s(self,sclass))
