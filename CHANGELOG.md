@@ -11,7 +11,7 @@
 - bring diacritics into vowel variables
 - Check on second gloss for lc/lx recording page
 - Find faithful way to keep window on the screen for MS Windows
-
+- Set menus to have 'Redo' set, for advanced things (incl. profile analysis - get this off the beaten path!)
 
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
