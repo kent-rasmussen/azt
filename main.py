@@ -662,6 +662,48 @@ class Check():
         text=_('See the tone frame around a word from the dictionary')
         chk_btn=Button(window.frame1,text = text, command = chk)
         chk_btn.grid(row=row+1,column=columnleft,pady=100)
+    def setsoundhz(self,choice,window):
+        self.set('fs',choice,window)
+        self.soundcheckrefresh()
+    def setsoundformat(self,choice,window):
+        self.set('sample_format',choice,window)
+        self.soundcheckrefresh()
+    def getsoundformat(self):
+        print("Asking for audio format...")
+        window=Window(self.frame, title=_('Select Audio Format'))
+        Label(window.frame, text=_('What audio format do you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        buttonFrame1=ButtonFrame(window.frame,
+                                self.sample_formats,self.setsoundformat,
+                                window
+                                )
+        buttonFrame1.grid(column=0, row=1)
+    def getsoundhz(self):
+        print("Asking for sampling frequency...")
+        window=Window(self.frame, title=_('Select Sampling Frequency'))
+        Label(window.frame, text=_('What sampling frequency you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        buttonFrame1=ButtonFrame(window.frame,
+                                self.fss,self.setsoundhz,
+                                window
+                                )
+        buttonFrame1.grid(column=0, row=1)
+    def setsoundcardindex(self,choice,window):
+        self.set('audio_card_index',choice,window)
+        self.soundcheckrefresh()
+    def getsoundcardindex(self):
+        print("Asking for sampling frequency...")
+        window=Window(self.frame, title=_('Select Sound Card'))
+        Label(window.frame, text=_('What sound card do you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        buttonFrame1=ButtonFrame(window.frame,
+                                self.audio_card_indexes,self.setsoundcardindex,
+                                window
+                                )
+        buttonFrame1.grid(column=0, row=1)
     """Get from LIFT database functions"""
     def addpstoprofileswdata(self):
         if self.ps not in self.profilesbysense:
@@ -3312,6 +3354,7 @@ class Check():
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self.db,self.regexCV, lang=self.analang,
                             word=True, compile=True)
+    """Doing stuff"""
     def getrunwindow(self):
         # print(self.__dict__)
         # print(hasattr(self,'runwindow'))
@@ -3370,48 +3413,6 @@ class Check():
                 self.maybesort()
             else: #do the CV checks
                 self.getresults()
-    def setsoundhz(self,choice,window):
-        self.set('fs',choice,window)
-        self.soundcheckrefresh()
-    def setsoundformat(self,choice,window):
-        self.set('sample_format',choice,window)
-        self.soundcheckrefresh()
-    def getsoundformat(self):
-        print("Asking for audio format...")
-        window=Window(self.frame, title=_('Select Audio Format'))
-        Label(window.frame, text=_('What audio format do you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        buttonFrame1=ButtonFrame(window.frame,
-                                self.sample_formats,self.setsoundformat,
-                                window
-                                )
-        buttonFrame1.grid(column=0, row=1)
-    def getsoundhz(self):
-        print("Asking for sampling frequency...")
-        window=Window(self.frame, title=_('Select Sampling Frequency'))
-        Label(window.frame, text=_('What sampling frequency you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        buttonFrame1=ButtonFrame(window.frame,
-                                self.fss,self.setsoundhz,
-                                window
-                                )
-        buttonFrame1.grid(column=0, row=1)
-    def setsoundcardindex(self,choice,window):
-        self.set('audio_card_index',choice,window)
-        self.soundcheckrefresh()
-    def getsoundcardindex(self):
-        print("Asking for sampling frequency...")
-        window=Window(self.frame, title=_('Select Sound Card'))
-        Label(window.frame, text=_('What sound card do you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        buttonFrame1=ButtonFrame(window.frame,
-                                self.audio_card_indexes,self.setsoundcardindex,
-                                window
-                                )
-        buttonFrame1.grid(column=0, row=1)
     """These are old paradigm CV funcs, with too many arguments, and guids"""
     def picked(self,choice):
         if self.debug == True:
