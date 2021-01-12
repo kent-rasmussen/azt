@@ -43,8 +43,6 @@
 ### Documentation
 - Add what and why pages in different places, with rationales and instructions specific to context?
 
-## Issues since November 2020 Zulgo beta test
-### Useability
 ### CV Report
 - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
 - make CV report not include Caa in V1 or V2
@@ -53,10 +51,10 @@
 ### Under the Hood
 - put `setdefaults.py` into Check class
 - transition to gloss only (no definition references)
-  - make docs specify gloss should be populated (maybe instructions to bulk copy?)
+    - make docs specify gloss should be populated (maybe instructions to bulk copy?)
 - distinguish between lc and lx
-  - make CV report only reference lx field
-  - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
+    - make CV report only reference lx field
+    - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
 
 # Version 5.0
 - made help:about scroll
@@ -69,6 +67,7 @@
 ### Under the Hood
 - added variables for version number and program name, added to help:about
 - Fixed bug where recording settings aren't being reused
+- clean up code to organize functions in groups
 
 # Version 0.4
 ## new features:
