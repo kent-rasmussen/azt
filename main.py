@@ -1073,6 +1073,7 @@ class Check():
         self.guidsvalidbyps={}
         for ps in self.db.pss:
             self.guidsvalidbyps[ps]=self.db.get('guidbyps',ps=ps)
+    """Making the main window"""
     def checkcheck(self):
         """This checks for incompatible or missing variable values, and asks
         for them. If values are OK, they are displayed."""
@@ -3063,25 +3064,9 @@ class Check():
             for self.type in ['C','V']:
                 self.getsubcheck()
                 CV+=self.subcheck
-            # windowC=Window(self.frame,title=_('Select Consonant'))
-            # self.getC(windowC)
-            # self.frame.wait_window(window=windowC)
-            # CV=self.subcheck
-            # windowV=Window(self.frame,title=_('Select Vowel'))
-            # self.getV(windowV)
-            # self.frame.wait_window(window=windowV)
-            # CV=CV+self.subcheck
-            # print("CV subcheck:"+CV)
             self.subcheck=CV
             self.type = "CV"
             self.checkcheck()
-        # if self.type == "T":
-        #     """This really should just go to running the check?"""
-        #     windowC=Window(self.frame,title=_('Select Tone check'))
-        #     Label(windowC.frame,
-        #           text=_("You're done! You can run the check now.")
-        #           ).grid(column=0, row=0)
-        #     self.frame.wait_window(window=windowC)
     def getps(self):
         print("Asking for ps...")
         window=Window(self.frame, title=_('Select Grammatical Category'))
