@@ -68,6 +68,7 @@
 - clean up code to organize functions in groups
 - removed profile from recording names (so analysis changes don't require file name changes)
 - set lc recordings to go on entries, not senses.
+- variables to (potentially) distinguish nasals, glides, and other sonorants from other consonants
 
 # Version 0.4
 ## new features:
