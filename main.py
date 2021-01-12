@@ -130,6 +130,7 @@ class Check():
         setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
         self.initdefaults() #provides self.defaults, list to load/save
         self.cleardefaults() #this resets all to none (to be set below)
+        self.initdistinctions() #for self.distinguish
         # self.analang=self.db.analang #inherit from the lang if not specified
         # self.glosslang=self.db.glosslang #inherit from the lang if not specified
         # self.glosslang2=self.db.glosslang2 #inherit from the lang if not specified
@@ -273,6 +274,14 @@ class Check():
                                     window
                                     )
             buttonFrame1.grid(column=0, row=1)
+    def initdistinctions(self):
+        if (not hasattr(self,'distinguish')) or (self.distinguish == None):
+            self.distinguish={}
+        for var in ['G','N','S','NC','CG','Nwd']:
+            print(var,self.distinguish)
+            if (var not in self.distinguish) or (type(self.distinguish[var]) is not bool):
+                self.distinguish[var]=False
+            print(var,self.distinguish[var])
     def setSdistinctions(self):
         def submitform():
             change=False
@@ -846,9 +855,7 @@ class Check():
                             'audio_card_index',
                             'interfacelang',
                             'examplespergrouptorecord',
-                            'distinguishNC',
-                            'distinguishCG',
-                            'distinguishNwd'
+                            'distinguish'
                             ],
                         'ps':[
                             'profile' #do I want this?
@@ -881,7 +888,8 @@ class Check():
                         'fs':[],
                         'sample_format':[],
                         'audio_card_index':[],
-                        'examplespergrouptorecord':[]
+                        'examplespergrouptorecord':[],
+                        'distinguish':[]
                         }
     def cleardefaults(self,field=None):
         for default in self.defaults[field]:
@@ -1110,11 +1118,11 @@ class Check():
             print(rx.s(self,sclass))
             self.rx[sclass]=rx.make(rx.s(self,
                                         sclass),compile=True)
-        if self.distinguishNwd==True:
+        if self.distinguish['Nwd']==True:
             self.rx['N#']=rx.make(rx.s(self.db,
                                     'N',
                                     lang=self.analang)+'$',compile=True)
-        if self.distinguishCG==True:
+        if self.distinguish['CG']==True:
             self.rx['CG']=rx.make(''.join([rx.s(self.db,'C',lang=self.analang),
                                         rx.s(self.db,'G',lang=self.analang)]),
                                         compile=True)
@@ -1124,7 +1132,7 @@ class Check():
                                         '|',
                                         rx.s(self.db,'C',lang=self.analang)]),
                                         compile=True)
-        if self.distinguishNC==True:
+        if self.distinguish['NC']==True:
             self.rx['NC']=rx.make(''.join([rx.s(self.db,'N',lang=self.analang),
                                         rx.s(self.db,'C',lang=self.analang)]),
                                         compile=True)
@@ -1134,7 +1142,7 @@ class Check():
                                         '|',
                                         rx.s(self.db,'C',lang=self.analang)]),
                                         compile=True)
-        if (self.distinguishNC==False) and (self.distinguishCG==False):
+        if (self.distinguish['NC']==False) and (self.distinguish['CG']==False):
             self.rx['C']=rx.make(''.join(
                                         [rx.s(self.db,'N',lang=self.analang),
                                         rx.s(self.db,'C',lang=self.analang),
@@ -1149,6 +1157,7 @@ class Check():
                                         rx.s(self.db,'C',lang=self.analang)]),
                                         compile=True)
         if (self.distinguishNC==True) and (self.distinguishCG==True):
+        if (self.distinguish['NC']==True) and (self.distinguish['CG']==True):
             self.rx['NCG']=rx.make(''.join(
                                         [rx.s(self.db,'N',lang=self.analang),
                                         rx.s(self.db,'C',lang=self.analang),
