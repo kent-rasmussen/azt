@@ -3,16 +3,14 @@
     - frame in a frame? (this problem looks familiar...)
 
 ## In Process
-- need to fix multiple links to the same recording
-- check that changes to S regexs don't break too much.
-    - remove profile from recording names
-- set lc recordings to go on entries, not senses.
-- bring diacritics into vowel variables
-- Check on second gloss for lc/lx recording page
-- Find faithful way to keep window on the screen for Windows
 - figure out why multiple fuŋ entries aren't showing for recording on bfj
     - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
     - '7cdcddfc-5b9f-44bf-bfe5-d5ce164720cd',
+- need to fix multiple links to the same recording
+- check that changes to S regexs don't break too much.
+- bring diacritics into vowel variables
+- Check on second gloss for lc/lx recording page
+- Find faithful way to keep window on the screen for MS Windows
 
 
 ## Next Features
@@ -68,6 +66,8 @@
 - added variables for version number and program name, added to help:about
 - Fixed bug where recording settings aren't being reused
 - clean up code to organize functions in groups
+- removed profile from recording names (so analysis changes don't require file name changes)
+- set lc recordings to go on entries, not senses.
 
 # Version 0.4
 ## new features:
