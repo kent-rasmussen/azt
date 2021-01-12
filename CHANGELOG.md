@@ -11,7 +11,6 @@
 - bring diacritics into vowel variables
 - Check on second gloss for lc/lx recording page
 - Find faithful way to keep window on the screen for MS Windows
-- Set menus to have 'Redo' set, for advanced things (incl. profile analysis - get this off the beaten path!)
 
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
@@ -61,6 +60,7 @@
 
 ## UI
 - Added page to instruct A→Z+T how to distinguish certain segment classes
+- removed redo profile analysis from easy temptation
 
 ### Under the Hood
 - added variables for version number and program name, added to help:about
@@ -69,6 +69,7 @@
 - removed profile from recording names (so analysis changes don't require file name changes)
 - set lc recordings to go on entries, not senses.
 - variables to (potentially) distinguish nasals, glides, and other sonorants from other consonants
+- Set menus to have 'Redo' set, for advanced things (incl. profile analysis - get this off the beaten path!)
 
 # Version 0.4
 ## new features:

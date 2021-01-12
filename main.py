@@ -4020,12 +4020,12 @@ class MainApplication(Frame):
         advancedmenu.add_command(label=_("Add Tone frame"),
                         command=lambda x=check:Check.addframe(x))
         redomenu = Menu(menubar, tearoff=0)
-        redomenu.add_command(label=_("Skipped data back into sort pile"),
+        redomenu.add_command(label=_("Previously skipped data"),
                                 command=lambda x=check:Check.tryNAgain(x))
         advancedmenu.add_cascade(label=_("Redo"), menu=redomenu)
         advancedmenu.add_cascade(label=_("Add other"), menu=filemenu)
         redomenu.add_command(
-                        label=_("Redo Syllable Profile Analysis (Restart)"),
+                        label=_("Syllable Profile Analysis (Restart)"),
                         command=lambda x=check:Check.reloadprofiledata(x))
         advancedmenu.add_command(
                         label=_("Segment Interpretation Settings"),
