@@ -934,6 +934,7 @@ class Check():
                     "continuing without one.")
         return
     def storedefault(self,default):
+        """This depends on storedefaults"""
         if self.debug == True:
             print("trying to store "+default)
             print(getattr(self,default))
@@ -943,6 +944,16 @@ class Check():
         else: #at least for dictionary values... what else?
             text=(default+'='+str(getattr(self,default)))
         self.f.write(text+'\n')
+    def storedefaults(self,field=None):
+        """I don't think this does what I thought it did..."""
+        self.f = open(self.defaultfile, "w", encoding='utf-8')
+        for default in self.defaults[field]:
+            if self.debug==True:
+                print(type(default))
+                print(default+": "+str(hasattr(self, default))+": "+str(getattr(self,default)))
+            if hasattr(self, default) and (getattr(self,default) is not None):
+                self.storedefault(default)
+        self.f.close()
     def loadtoneframes(self):
         try:
             spec = importlib.util.spec_from_file_location("toneframes",
@@ -1024,16 +1035,6 @@ class Check():
         self.f.close()
         if self.debug==True:
             print(type(self.status),self.status)
-    def storedefaults(self,field=None):
-        """I don't think this does what I thought it did..."""
-        self.f = open(self.defaultfile, "w", encoding='utf-8')
-        for default in self.defaults[field]:
-            if self.debug==True:
-                print(type(default))
-                print(default+": "+str(hasattr(self, default))+": "+str(getattr(self,default)))
-            if hasattr(self, default) and (getattr(self,default) is not None):
-                self.storedefault(default)
-        self.f.close()
     """Get from LIFT database functions"""
     def addpstoprofileswdata(self):
         if self.ps not in self.profilesbysense:
