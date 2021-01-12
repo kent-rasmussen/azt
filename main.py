@@ -1250,6 +1250,95 @@ class Check():
                 )
         self.maybeboard()
         self.parent.setmenus(self)
+    def soundcheckrefresh(self):
+        self.soundsettingswindow.resetframe() # Frame(self.soundsettingswindow.frame)
+        # self.soundsettingswindow.frame.grid(row=1,column=0)
+        row=0
+        Label(self.soundsettingswindow.frame,
+                text="Current Sound Card Settings:").grid(row=row,column=0)
+        row+=1
+        # row=0
+        if self.fs is None:
+            Label(self.soundsettingswindow.frame,
+                                text='<unset>').grid(row=row,column=0)
+        else:
+            for ratedict in self.fss:
+                if self.fs==ratedict['code']:
+                    self.fsname=ratedict['name']
+            Label(self.soundsettingswindow.frame,
+                                text=self.fsname).grid(row=row,column=0)
+        text=_("Change")
+        Button(self.soundsettingswindow.frame, choice=text,
+                        text=text, anchor='c',
+                        cmd=self.getsoundhz).grid(row=row,column=1)
+        row+=1
+        if self.sample_format is None:
+            Label(self.soundsettingswindow.frame,
+                                text='<unset>').grid(row=row,column=0)
+        else:
+            for ratedict in self.sample_formats:
+                if self.sample_format==ratedict['code']:
+                    self.sample_formatname=ratedict['name']
+            Label(self.soundsettingswindow.frame,
+                        text=self.sample_formatname).grid(row=row,column=0)
+        Button(self.soundsettingswindow.frame, choice=text,
+                        text=text, anchor='c',
+                        cmd=self.getsoundformat).grid(row=row,column=1)
+        row+=1
+        if self.audio_card_index is None:
+            Label(self.soundsettingswindow.frame,
+                                text='<unset>').grid(row=row,column=0)
+        else:
+            for ratedict in self.audio_card_indexes:
+                if self.audio_card_index==ratedict['code']:
+                    self.audio_card_indexname=ratedict['name']
+            Label(self.soundsettingswindow.frame,
+                        text=self.audio_card_indexname).grid(row=row,column=0)
+        Button(self.soundsettingswindow.frame, choice=text,
+                        text=text, anchor='c',
+                        cmd=self.getsoundcardindex).grid(row=row,column=1)
+        row+=1
+        b=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
+        b.grid(row=row,column=0)
+        row+=1
+        bd=Button(self.soundsettingswindow.frame,text=_("Done"),
+                                            cmd=self.checkcheck)
+        bd.grid(row=row,column=0)
+    def soundcheck(self):
+        self.soundsettingswindow=Window(self.frame,
+                                title=_('Select Sound Card Settings'))
+        self.fss=[{'code':192000, 'name':'192khz'},
+                    {'code':96000, 'name':'96khz'},
+                    {'code':44100, 'name':'44.1khz'},
+                    {'code':28000, 'name':'28khz'},
+                    {'code':8000, 'name':'8khz'}
+                    ]
+        self.sample_formats=[{'code':pyaudio.paFloat32, 'name':'32 bit float'},
+                            {'code':pyaudio.paInt32, 'name':'32 bit integer'},
+                            {'code':pyaudio.paInt24, 'name':'24 bit integer'},
+                            {'code':pyaudio.paInt16, 'name':'16 bit integer'},
+                            {'code':pyaudio.paInt8, 'name':'8 bit integer'}
+                            ]
+        self.audio_card_indexes=[]
+        p = pyaudio.PyAudio()
+        info = p.get_host_api_info_by_index(0)
+        numdevices = info.get('deviceCount')
+        for i in range(0, numdevices):
+            if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                    print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
+                    self.audio_card_indexes+=[{'code':i,'name':p.get_device_info_by_host_api_device_index(0, i).get('name')}]
+        if not hasattr(self,'fs') or self.fs not in self.fss:
+            self.fs=None
+        if (not hasattr(self,'sample_format') or
+                (self.sample_format not in self.sample_formats)):
+            self.sample_format=None
+        if (not hasattr(self,'audio_card_index') or
+                (self.audio_card_index not in self.audio_card_indexes)):
+            self.audio_card_index=None
+        # ButtonFram
+        self.soundcheckrefresh()
+        self.soundsettingswindow.wait_window(self.frame.status)
+        self.soundsettingswindow.destroy()
     def record(self):
         self.storedefaults()
         if ((self.fs == None) or (self.sample_format == None)
@@ -3323,95 +3412,6 @@ class Check():
                                 window
                                 )
         buttonFrame1.grid(column=0, row=1)
-    def soundcheckrefresh(self):
-        self.soundsettingswindow.resetframe() # Frame(self.soundsettingswindow.frame)
-        # self.soundsettingswindow.frame.grid(row=1,column=0)
-        row=0
-        Label(self.soundsettingswindow.frame,
-                text="Current Sound Card Settings:").grid(row=row,column=0)
-        row+=1
-        # row=0
-        if self.fs is None:
-            Label(self.soundsettingswindow.frame,
-                                text='<unset>').grid(row=row,column=0)
-        else:
-            for ratedict in self.fss:
-                if self.fs==ratedict['code']:
-                    self.fsname=ratedict['name']
-            Label(self.soundsettingswindow.frame,
-                                text=self.fsname).grid(row=row,column=0)
-        text=_("Change")
-        Button(self.soundsettingswindow.frame, choice=text,
-                        text=text, anchor='c',
-                        cmd=self.getsoundhz).grid(row=row,column=1)
-        row+=1
-        if self.sample_format is None:
-            Label(self.soundsettingswindow.frame,
-                                text='<unset>').grid(row=row,column=0)
-        else:
-            for ratedict in self.sample_formats:
-                if self.sample_format==ratedict['code']:
-                    self.sample_formatname=ratedict['name']
-            Label(self.soundsettingswindow.frame,
-                        text=self.sample_formatname).grid(row=row,column=0)
-        Button(self.soundsettingswindow.frame, choice=text,
-                        text=text, anchor='c',
-                        cmd=self.getsoundformat).grid(row=row,column=1)
-        row+=1
-        if self.audio_card_index is None:
-            Label(self.soundsettingswindow.frame,
-                                text='<unset>').grid(row=row,column=0)
-        else:
-            for ratedict in self.audio_card_indexes:
-                if self.audio_card_index==ratedict['code']:
-                    self.audio_card_indexname=ratedict['name']
-            Label(self.soundsettingswindow.frame,
-                        text=self.audio_card_indexname).grid(row=row,column=0)
-        Button(self.soundsettingswindow.frame, choice=text,
-                        text=text, anchor='c',
-                        cmd=self.getsoundcardindex).grid(row=row,column=1)
-        row+=1
-        b=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
-        b.grid(row=row,column=0)
-        row+=1
-        bd=Button(self.soundsettingswindow.frame,text=_("Done"),
-                                            cmd=self.checkcheck)
-        bd.grid(row=row,column=0)
-    def soundcheck(self):
-        self.soundsettingswindow=Window(self.frame,
-                                title=_('Select Sound Card Settings'))
-        self.fss=[{'code':192000, 'name':'192khz'},
-                    {'code':96000, 'name':'96khz'},
-                    {'code':44100, 'name':'44.1khz'},
-                    {'code':28000, 'name':'28khz'},
-                    {'code':8000, 'name':'8khz'}
-                    ]
-        self.sample_formats=[{'code':pyaudio.paFloat32, 'name':'32 bit float'},
-                            {'code':pyaudio.paInt32, 'name':'32 bit integer'},
-                            {'code':pyaudio.paInt24, 'name':'24 bit integer'},
-                            {'code':pyaudio.paInt16, 'name':'16 bit integer'},
-                            {'code':pyaudio.paInt8, 'name':'8 bit integer'}
-                            ]
-        self.audio_card_indexes=[]
-        p = pyaudio.PyAudio()
-        info = p.get_host_api_info_by_index(0)
-        numdevices = info.get('deviceCount')
-        for i in range(0, numdevices):
-            if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-                    print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
-                    self.audio_card_indexes+=[{'code':i,'name':p.get_device_info_by_host_api_device_index(0, i).get('name')}]
-        if not hasattr(self,'fs') or self.fs not in self.fss:
-            self.fs=None
-        if (not hasattr(self,'sample_format') or
-                (self.sample_format not in self.sample_formats)):
-            self.sample_format=None
-        if (not hasattr(self,'audio_card_index') or
-                (self.audio_card_index not in self.audio_card_indexes)):
-            self.audio_card_index=None
-        # ButtonFram
-        self.soundcheckrefresh()
-        self.soundsettingswindow.wait_window(self.frame.status)
-        self.soundsettingswindow.destroy()
     """These are old paradigm CV funcs, with too many arguments, and guids"""
     def picked(self,choice):
         if self.debug == True:
