@@ -704,6 +704,43 @@ class Check():
                                 window
                                 )
         buttonFrame1.grid(column=0, row=1)
+    """Set User Input"""
+    def set(self,attribute,choice,window):
+        """Before I can use this, I need to pass attribute through the button
+        frame."""
+        window.destroy()
+        if getattr(self,attribute) != choice: #only set if different
+            setattr(self,attribute,choice)
+            """If there's something getting reset that shouldn't be, remove it
+            from self.defaults[attribute]"""
+            self.cleardefaults(attribute)
+            if attribute not in ['fs',
+                                'sample_format',
+                                'audio_card_index']:
+                self.checkcheck()
+        else:
+            if self.debug==True:
+                print('No change:',attribute,'==',choice)
+    def setinterfacelangwrapper(self,choice,window):
+            self.set('interfacelang',choice,window) #set the check variable
+            setinterfacelang(choice) #change the UI
+            self.checkcheck()
+    def setprofile(self,choice,window):
+        self.set('profile',choice,window)
+    def settype(self,choice,window):
+        self.set('type',choice,window)
+    def setanalang(self,choice,window):
+        self.set('analang',choice,window)
+    def setS(self,choice,window):
+        self.set('subcheck',choice,window)
+    def setcheck(self,choice,window):
+        self.set('name',choice,window)
+    def setglosslang(self,choice,window):
+        self.set('glosslang',choice,window)
+    def setglosslang2(self,choice,window):
+        self.set('glosslang2',choice,window)
+    def setps(self,choice,window):
+        self.set('ps',choice,window)    
     """Get from LIFT database functions"""
     def addpstoprofileswdata(self):
         if self.ps not in self.profilesbysense:
@@ -1861,42 +1898,6 @@ class Check():
                                  langs,self.setglosslang,
                                  window
                                  ).grid(column=0, row=4)
-    def set(self,attribute,choice,window):
-        """Before I can use this, I need to pass attribute through the button
-        frame."""
-        window.destroy()
-        if getattr(self,attribute) != choice: #only set if different
-            setattr(self,attribute,choice)
-            """If there's something getting reset that shouldn't be, remove it
-            from self.defaults[attribute]"""
-            self.cleardefaults(attribute)
-            if attribute not in ['fs',
-                                'sample_format',
-                                'audio_card_index']:
-                self.checkcheck()
-        else:
-            if self.debug==True:
-                print('No change:',attribute,'==',choice)
-    def setinterfacelangwrapper(self,choice,window):
-            self.set('interfacelang',choice,window) #set the check variable
-            setinterfacelang(choice) #change the UI
-            self.checkcheck()
-    def setprofile(self,choice,window):
-        self.set('profile',choice,window)
-    def settype(self,choice,window):
-        self.set('type',choice,window)
-    def setanalang(self,choice,window):
-        self.set('analang',choice,window)
-    def setS(self,choice,window):
-        self.set('subcheck',choice,window)
-    def setcheck(self,choice,window):
-        self.set('name',choice,window)
-    def setglosslang(self,choice,window):
-        self.set('glosslang',choice,window)
-    def setglosslang2(self,choice,window):
-        self.set('glosslang2',choice,window)
-    def setps(self,choice,window):
-        self.set('ps',choice,window)
     def getglosslang2(self):
         print("this sets the gloss")
         # fn=inspect.currentframe().f_code.co_name
