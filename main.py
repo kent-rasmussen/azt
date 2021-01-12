@@ -740,7 +740,300 @@ class Check():
     def setglosslang2(self,choice,window):
         self.set('glosslang2',choice,window)
     def setps(self,choice,window):
-        self.set('ps',choice,window)    
+        self.set('ps',choice,window)
+    def getsubcheck(self):
+        print("this sets the subcheck")
+        if self.type == "V":
+            windowV=Window(self.frame,title=_('Select Vowel'))
+            self.getV(window=windowV)
+            windowV.wait_window(window=windowV)
+        if self.type == "C":
+            windowC=Window(self.frame,title=_('Select Consonant'))
+            self.getC(windowC)
+            self.frame.wait_window(window=windowC)
+        if self.type == "CV":
+            CV=''
+            for self.type in ['C','V']:
+                self.getsubcheck()
+                CV+=self.subcheck
+            self.subcheck=CV
+            self.type = "CV"
+            self.checkcheck()
+    def getps(self):
+        print("Asking for ps...")
+        window=Window(self.frame, title=_('Select Grammatical Category'))
+        Label(window.frame, text=_('What grammatical category do you '
+                                    'want to work with (Part of speech)?')
+                ).grid(column=0, row=0)
+        if self.additionalps is not None:
+            pss=self.db.pss+self.additionalps #these should be lists
+        else:
+            pss=self.db.pss
+        print(pss)
+        buttonFrame1=ButtonFrame(window.frame,
+                                pss,self.setps,
+                                window
+                                )
+        buttonFrame1.grid(column=0, row=1)
+    def getprofile(self):
+        print("Asking for profile...")
+        window=Window(self.frame,title=_('Select Syllable Profile'))
+        if self.profilesbysense[self.ps] is None: #likely never happen...
+            Label(window.frame,
+            text=_('Error: please set Grammatical category with profiles '
+                    'first!')+' (not '+str(self.ps)+')'
+            ).grid(column=0, row=0)
+        else:
+            Label(window.frame, text=_('What syllable profile do you '
+                                    'want to work with?')
+                                    ).grid(column=0, row=0)
+            optionslist = sorted([({
+                'code':profile,
+                'description':len(self.profilesbysense[self.ps][profile])
+                            }) for profile in self.profilesbysense[self.ps]],
+                            key=lambda s: s['description'],reverse=True)
+            if self.additionalprofiles is not None:
+                optionslist+=[({
+                'code':profile,
+                'description':profile}) for profile in self.additionalprofiles]
+            window.scroll=Frame(window.frame)
+            window.scroll.grid(column=0, row=1)
+            buttonFrame1=ScrollingButtonFrame(window.scroll,
+                                    optionslist,self.setprofile,
+                                    window
+                                    )
+            buttonFrame1.grid(column=0, row=0)
+    def gettype(self):
+        print(_("Asking for check type"))
+        window=Window(self.frame,title=_('Select Check Type'))
+        types=[]
+        x=0
+        for type in self.checknamesall:
+            types.append({})
+            types[x]['name']=self.typedict[type]
+            types[x]['code']=type
+            x+=1
+        Label(window.frame, text=_('What part of the sound system do you '
+                                    'want to work with?')
+            ).grid(column=0, row=0)
+        buttonFrame1=ButtonFrame(window.frame,types,self.settype,window)
+        buttonFrame1.grid(column=0, row=1)
+    """Settings to and from files"""
+    def initdefaults(self):
+        """Some of these defaults should be reset when setting another field.
+        These are listed under that other field. If no field is specified
+        (e.g., on initialization), then do all the fields with None key (other
+        fields are NOT saved to file!).
+        These are check related defaults; others in lift.get"""
+        self.defaults={None:[
+                            'analang', # independent of lift.analang?
+                            'glosslang', # independent of lift.glosslang?
+                            'glosslang2',
+                            'audiolang',
+                            'ps',
+                            'profile',
+                            'type',
+                            'name',
+                            'regexCV',
+                            # 'toneframes', #this has [ps] keys, don't reset below!
+                            'subcheck',
+                            'additionalps',
+                            # 'profilesbysense',
+                            'entriestoshow',
+                            'additionalprofiles',
+                            'sample_format',
+                            'fs',
+                            'audio_card_index',
+                            'interfacelang',
+                            'examplespergrouptorecord',
+                            'distinguishNC',
+                            'distinguishCG',
+                            'distinguishNwd'
+                            ],
+                        'ps':[
+                            'profile' #do I want this?
+                            # 'name',
+                            # 'subcheck'
+                            ],
+                        'analang':[
+                            'glosslang',
+                            'glosslang2',
+                            'ps',
+                            'profile',
+                            'type',
+                            'name',
+                            'subcheck'
+                            ],
+                        'interfacelang':[],
+                        'glosslang':[],
+                        'glosslang2':[],
+                        'name':[],
+                        'subcheck':[
+                            'regexCV'
+                            ],
+                        'profile':[
+                            # 'name'
+                            ],
+                        'type':[
+                            'name',
+                            # 'subcheck'
+                            ],
+                        'fs':[],
+                        'sample_format':[],
+                        'audio_card_index':[],
+                        'examplespergrouptorecord':[]
+                        }
+    def cleardefaults(self,field=None):
+        for default in self.defaults[field]:
+            setattr(self, default, None)
+            """These can be done in checkcheck..."""
+    def reloadprofiledata(self):
+        file.remove(self.profiledatafile)
+        self.parent.parent.destroy()
+        main()
+    def loadprofiledata(self):
+        """This should just be imported, with all defaults in a dictionary
+        variable in the file."""
+        try:
+            spec = importlib.util.spec_from_file_location("profiledata",
+                                                        self.profiledatafile)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules['profiledata'] = module
+            spec.loader.exec_module(module)
+            self.profilesbysense=module.profilesbysense
+            self.profilecounts=module.profilecounts
+            self.profilecountInvalid=module.profilecountInvalid
+            self.scount=module.scount
+        except:
+            print("There doesn't seem to be a profile data file; "
+                    "making one now (wait maybe three minutes).")
+            self.profilesbysense=None
+        return
+    def loaddefaults(self,field=None):
+        # _=self._
+        """I just need this to load once somewhere..."""
+        self.typedict={
+                'V':_('Vowels'),
+                'C':_('Consonants'),
+                'CV':_('Consonant-Vowel combinations'),
+                'T':_('Tone')
+                }
+        """This should just be imported, with all defaults in a dictionary
+        variable in the file."""
+        try:
+            spec = importlib.util.spec_from_file_location("checkdefaults",
+                                                        self.defaultfile)
+            d = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(d)
+            for default in self.defaults[field]:
+                if hasattr(d, default):
+                    setattr(self,default,getattr(d,default))
+                print(default, getattr(self,default))
+        except:
+            print("There doesn't seem to be a default file; "
+                    "continuing without one.")
+        return
+    def storedefault(self,default):
+        if self.debug == True:
+            print("trying to store "+default)
+            print(getattr(self,default))
+        value=getattr(self,default)
+        if type(value) is str:
+            text=(default+'="'+getattr(self,default)+'"')
+        else: #at least for dictionary values... what else?
+            text=(default+'='+str(getattr(self,default)))
+        self.f.write(text+'\n')
+    def loadtoneframes(self):
+        try:
+            spec = importlib.util.spec_from_file_location("toneframes",
+                                                        self.toneframesfile)
+            # print(spec)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules['toneframes'] = module
+            spec.loader.exec_module(module)
+            self.toneframes=module.toneframes
+        except:
+            print("Problem importing",self.toneframesfile)
+            self.toneframes={}
+    def loadstatus(self):
+        try:
+            spec = importlib.util.spec_from_file_location("verificationstatus",
+                                                        self.statusfile)
+            # print(spec)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules['verificationstatus'] = module
+            spec.loader.exec_module(module)
+            self.status=module.status
+        except:
+            print("Problem importing",self.statusfile)
+            self.status={}
+    def updatestatus(self,verified=False):
+        if self.type not in self.status:
+            self.status[self.type]={}
+        if self.ps not in self.status[self.type]:
+            self.status[self.type][self.ps]={}
+        if self.profile not in self.status[self.type][self.ps]:
+            self.status[self.type][self.ps][self.profile]={}
+        if self.name not in self.status[self.type][self.ps][self.profile]:
+            self.status[self.type][self.ps][self.profile][self.name]=list()
+        if verified == True:
+            if self.subcheck not in (
+                self.status[self.type][self.ps][self.profile][self.name]):
+                self.status[self.type][self.ps][self.profile][self.name].append(
+                                                                self.subcheck)
+            else:
+                print("Tried to set",self.subcheck,"verified in",self.type,
+                        self.ps,self.profile,self.name,"but it was "
+                        "already there.")
+        if verified == False:
+            if self.subcheck in (
+                            self.status[self.type][self.ps][self.profile]
+                            [self.name]):
+                self.status[self.type][self.ps][self.profile][self.name
+                                                                ].remove(
+                                                                self.subcheck)
+            else:
+                print("Tried to set",self.subcheck,"UNverified in",self.type,
+                        self.ps,self.profile,self.name,"but it wasn't "
+                        "there.")
+        self.storestatus()
+    def storeprofiledata(self):
+        self.f = open(self.profiledatafile, "w", encoding='utf-8')
+        text=[f"profilesbysense={self.profilesbysense}",
+            f"profilecounts={self.profilecounts}",
+            f"profilecountInvalid={self.profilecountInvalid}",
+            f"scount={self.scount}"]
+        for t in text:
+            self.f.write(t+'\n')
+        self.f.close()
+        if self.debug==True:
+            print(type(self.profilesbysense),self.profilesbysense)
+            print(type(self.profilecounts),self.profilecounts)
+            print(type(self.profilecountInvalid),self.profilecountInvalid)
+    def storetoneframes(self):
+        self.f = open(self.toneframesfile, "w", encoding='utf-8')
+        text=f"toneframes={self.toneframes}"
+        self.f.write(text+'\n')
+        self.f.close()
+        if self.debug==True:
+            print(type(self.toneframes),self.toneframes)
+    def storestatus(self):
+        self.f = open(self.statusfile, "w", encoding='utf-8')
+        text=f"status={self.status}"
+        self.f.write(text+'\n')
+        self.f.close()
+        if self.debug==True:
+            print(type(self.status),self.status)
+    def storedefaults(self,field=None):
+        """I don't think this does what I thought it did..."""
+        self.f = open(self.defaultfile, "w", encoding='utf-8')
+        for default in self.defaults[field]:
+            if self.debug==True:
+                print(type(default))
+                print(default+": "+str(hasattr(self, default))+": "+str(getattr(self,default)))
+            if hasattr(self, default) and (getattr(self,default) is not None):
+                self.storedefault(default)
+        self.f.close()
     """Get from LIFT database functions"""
     def addpstoprofileswdata(self):
         if self.ps not in self.profilesbysense:
@@ -1528,221 +1821,6 @@ class Check():
     def makeresultsframe(self):
         self.results = Frame(self.runwindow.frame,width=800)
         self.results.grid(row=0, column=0)
-    def initdefaults(self):
-        """Some of these defaults should be reset when setting another field.
-        These are listed under that other field. If no field is specified
-        (e.g., on initialization), then do all the fields with None key (other
-        fields are NOT saved to file!).
-        These are check related defaults; others in lift.get"""
-        self.defaults={None:[
-                            'analang', # independent of lift.analang?
-                            'glosslang', # independent of lift.glosslang?
-                            'glosslang2',
-                            'audiolang',
-                            'ps',
-                            'profile',
-                            'type',
-                            'name',
-                            'regexCV',
-                            # 'toneframes', #this has [ps] keys, don't reset below!
-                            'subcheck',
-                            'additionalps',
-                            # 'profilesbysense',
-                            'entriestoshow',
-                            'additionalprofiles',
-                            'sample_format',
-                            'fs',
-                            'audio_card_index',
-                            'interfacelang',
-                            'examplespergrouptorecord',
-                            'distinguishNC',
-                            'distinguishCG',
-                            'distinguishNwd'
-                            ],
-                        'ps':[
-                            'profile' #do I want this?
-                            # 'name',
-                            # 'subcheck'
-                            ],
-                        'analang':[
-                            'glosslang',
-                            'glosslang2',
-                            'ps',
-                            'profile',
-                            'type',
-                            'name',
-                            'subcheck'
-                            ],
-                        'interfacelang':[],
-                        'glosslang':[],
-                        'glosslang2':[],
-                        'name':[],
-                        'subcheck':[
-                            'regexCV'
-                            ],
-                        'profile':[
-                            # 'name'
-                            ],
-                        'type':[
-                            'name',
-                            # 'subcheck'
-                            ],
-                        'fs':[],
-                        'sample_format':[],
-                        'audio_card_index':[],
-                        'examplespergrouptorecord':[]
-                        }
-    def cleardefaults(self,field=None):
-        for default in self.defaults[field]:
-            setattr(self, default, None)
-            """These can be done in checkcheck..."""
-    def reloadprofiledata(self):
-        file.remove(self.profiledatafile)
-        self.parent.parent.destroy()
-        main()
-    def loadprofiledata(self):
-        """This should just be imported, with all defaults in a dictionary
-        variable in the file."""
-        try:
-            spec = importlib.util.spec_from_file_location("profiledata",
-                                                        self.profiledatafile)
-            module = importlib.util.module_from_spec(spec)
-            sys.modules['profiledata'] = module
-            spec.loader.exec_module(module)
-            self.profilesbysense=module.profilesbysense
-            self.profilecounts=module.profilecounts
-            self.profilecountInvalid=module.profilecountInvalid
-            self.scount=module.scount
-        except:
-            print("There doesn't seem to be a profile data file; "
-                    "making one now (wait maybe three minutes).")
-            self.profilesbysense=None
-        return
-    def loaddefaults(self,field=None):
-        # _=self._
-        """I just need this to load once somewhere..."""
-        self.typedict={
-                'V':_('Vowels'),
-                'C':_('Consonants'),
-                'CV':_('Consonant-Vowel combinations'),
-                'T':_('Tone')
-                }
-        """This should just be imported, with all defaults in a dictionary
-        variable in the file."""
-        try:
-            spec = importlib.util.spec_from_file_location("checkdefaults",
-                                                        self.defaultfile)
-            d = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(d)
-            for default in self.defaults[field]:
-                if hasattr(d, default):
-                    setattr(self,default,getattr(d,default))
-                print(default, getattr(self,default))
-        except:
-            print("There doesn't seem to be a default file; "
-                    "continuing without one.")
-        return
-    def storedefault(self,default):
-        if self.debug == True:
-            print("trying to store "+default)
-            print(getattr(self,default))
-        value=getattr(self,default)
-        if type(value) is str:
-            text=(default+'="'+getattr(self,default)+'"')
-        else: #at least for dictionary values... what else?
-            text=(default+'='+str(getattr(self,default)))
-        self.f.write(text+'\n')
-    def loadtoneframes(self):
-        try:
-            spec = importlib.util.spec_from_file_location("toneframes",
-                                                        self.toneframesfile)
-            # print(spec)
-            module = importlib.util.module_from_spec(spec)
-            sys.modules['toneframes'] = module
-            spec.loader.exec_module(module)
-            self.toneframes=module.toneframes
-        except:
-            print("Problem importing",self.toneframesfile)
-            self.toneframes={}
-    def loadstatus(self):
-        try:
-            spec = importlib.util.spec_from_file_location("verificationstatus",
-                                                        self.statusfile)
-            # print(spec)
-            module = importlib.util.module_from_spec(spec)
-            sys.modules['verificationstatus'] = module
-            spec.loader.exec_module(module)
-            self.status=module.status
-        except:
-            print("Problem importing",self.statusfile)
-            self.status={}
-    def updatestatus(self,verified=False):
-        if self.type not in self.status:
-            self.status[self.type]={}
-        if self.ps not in self.status[self.type]:
-            self.status[self.type][self.ps]={}
-        if self.profile not in self.status[self.type][self.ps]:
-            self.status[self.type][self.ps][self.profile]={}
-        if self.name not in self.status[self.type][self.ps][self.profile]:
-            self.status[self.type][self.ps][self.profile][self.name]=list()
-        if verified == True:
-            if self.subcheck not in (
-                self.status[self.type][self.ps][self.profile][self.name]):
-                self.status[self.type][self.ps][self.profile][self.name].append(
-                                                                self.subcheck)
-            else:
-                print("Tried to set",self.subcheck,"verified in",self.type,
-                        self.ps,self.profile,self.name,"but it was "
-                        "already there.")
-        if verified == False:
-            if self.subcheck in (
-                            self.status[self.type][self.ps][self.profile]
-                            [self.name]):
-                self.status[self.type][self.ps][self.profile][self.name
-                                                                ].remove(
-                                                                self.subcheck)
-            else:
-                print("Tried to set",self.subcheck,"UNverified in",self.type,
-                        self.ps,self.profile,self.name,"but it wasn't "
-                        "there.")
-        self.storestatus()
-    def storeprofiledata(self):
-        self.f = open(self.profiledatafile, "w", encoding='utf-8')
-        text=[f"profilesbysense={self.profilesbysense}",
-            f"profilecounts={self.profilecounts}",
-            f"profilecountInvalid={self.profilecountInvalid}",
-            f"scount={self.scount}"]
-        for t in text:
-            self.f.write(t+'\n')
-        self.f.close()
-        if self.debug==True:
-            print(type(self.profilesbysense),self.profilesbysense)
-            print(type(self.profilecounts),self.profilecounts)
-            print(type(self.profilecountInvalid),self.profilecountInvalid)
-    def storetoneframes(self):
-        self.f = open(self.toneframesfile, "w", encoding='utf-8')
-        text=f"toneframes={self.toneframes}"
-        self.f.write(text+'\n')
-        self.f.close()
-        if self.debug==True:
-            print(type(self.toneframes),self.toneframes)
-    def storestatus(self):
-        self.f = open(self.statusfile, "w", encoding='utf-8')
-        text=f"status={self.status}"
-        self.f.write(text+'\n')
-        self.f.close()
-        if self.debug==True:
-            print(type(self.status),self.status)
-    def storedefaults(self,field=None):
-        """I don't think this does what I thought it did..."""
-        self.f = open(self.defaultfile, "w", encoding='utf-8')
-        for default in self.defaults[field]:
-            if self.debug==True:
-                print(type(default))
-                print(default+": "+str(hasattr(self, default))+": "+str(getattr(self,default)))
-            if hasattr(self, default) and (getattr(self,default) is not None):
-                self.storedefault(default)
-        self.f.close()
     def setnamesall(self):
         self.checknamesall={
         "V":{
@@ -2836,83 +2914,6 @@ class Check():
                                 "CV":'',
                                 "T":[(None,None),] #We should fix this some day
                                 }
-    def getsubcheck(self):
-        print("this sets the subcheck")
-        if self.type == "V":
-            windowV=Window(self.frame,title=_('Select Vowel'))
-            self.getV(window=windowV)
-            windowV.wait_window(window=windowV)
-        if self.type == "C":
-            windowC=Window(self.frame,title=_('Select Consonant'))
-            self.getC(windowC)
-            self.frame.wait_window(window=windowC)
-        if self.type == "CV":
-            CV=''
-            for self.type in ['C','V']:
-                self.getsubcheck()
-                CV+=self.subcheck
-            self.subcheck=CV
-            self.type = "CV"
-            self.checkcheck()
-    def getps(self):
-        print("Asking for ps...")
-        window=Window(self.frame, title=_('Select Grammatical Category'))
-        Label(window.frame, text=_('What grammatical category do you '
-                                    'want to work with (Part of speech)?')
-                ).grid(column=0, row=0)
-        if self.additionalps is not None:
-            pss=self.db.pss+self.additionalps #these should be lists
-        else:
-            pss=self.db.pss
-        print(pss)
-        buttonFrame1=ButtonFrame(window.frame,
-                                pss,self.setps,
-                                window
-                                )
-        buttonFrame1.grid(column=0, row=1)
-    def getprofile(self):
-        print("Asking for profile...")
-        window=Window(self.frame,title=_('Select Syllable Profile'))
-        if self.profilesbysense[self.ps] is None: #likely never happen...
-            Label(window.frame,
-            text=_('Error: please set Grammatical category with profiles '
-                    'first!')+' (not '+str(self.ps)+')'
-            ).grid(column=0, row=0)
-        else:
-            Label(window.frame, text=_('What syllable profile do you '
-                                    'want to work with?')
-                                    ).grid(column=0, row=0)
-            optionslist = sorted([({
-                'code':profile,
-                'description':len(self.profilesbysense[self.ps][profile])
-                            }) for profile in self.profilesbysense[self.ps]],
-                            key=lambda s: s['description'],reverse=True)
-            if self.additionalprofiles is not None:
-                optionslist+=[({
-                'code':profile,
-                'description':profile}) for profile in self.additionalprofiles]
-            window.scroll=Frame(window.frame)
-            window.scroll.grid(column=0, row=1)
-            buttonFrame1=ScrollingButtonFrame(window.scroll,
-                                    optionslist,self.setprofile,
-                                    window
-                                    )
-            buttonFrame1.grid(column=0, row=0)
-    def gettype(self):
-        print(_("Asking for check type"))
-        window=Window(self.frame,title=_('Select Check Type'))
-        types=[]
-        x=0
-        for type in self.checknamesall:
-            types.append({})
-            types[x]['name']=self.typedict[type]
-            types[x]['code']=type
-            x+=1
-        Label(window.frame, text=_('What part of the sound system do you '
-                                    'want to work with?')
-            ).grid(column=0, row=0)
-        buttonFrame1=ButtonFrame(window.frame,types,self.settype,window)
-        buttonFrame1.grid(column=0, row=1)
     """Doing stuff"""
     def getrunwindow(self):
         # print(self.__dict__)
