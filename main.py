@@ -2975,10 +2975,10 @@ class Check():
             else: #do the CV checks
                 self.getresults()
     def record(self):
-        self.storedefaults()
         if ((self.fs == None) or (self.sample_format == None)
                 or (self.audio_card_index == None)):
             self.soundcheck()
+        self.storedefaults()
         if self.type == 'T':
             self.showtonegroupexs()
         else:
