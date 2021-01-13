@@ -4991,7 +4991,7 @@ def inherit(self):
 def main():
     global progname
     global version
-    print("Running main function") #Don't translate yet!
+    logger.info("Running main function") #Don't translate yet!
     root = tkinter.Tk()
     myapp = MainApplication(root,progname,version)
     myapp.mainloop()
@@ -5003,7 +5003,8 @@ if __name__ == "__main__":
     else:
         filename = inspect.getframeinfo(inspect.currentframe()).filename
         aztdir = os.path.dirname(os.path.abspath(filename))
-    print('aztdir:',aztdir)
+    logger.info('Running {} v{} in {}'.format(progname,version,aztdir))
+    print(aztdir,'!')
     transdir=aztdir+'/translations/'
     i18n={}
     # t = gettext.translation('dictionarychecker', aztdir)
