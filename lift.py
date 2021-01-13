@@ -1403,7 +1403,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             also looking for consonant glyphs that occur between vowels,
             and vice versa. Later."""
             # nonwordforming=re.compile('[() \[\]\|,\-!@#$*?]')
-            invalid=['(',')' ,'[',']','|',',','-','!','@','#','$','*','?']
+            invalid=['(',')',' ','[',']','|',',','-','!','@','#','$','*','?'
+                        ,'\n']
             for form in self.citationforms[lang]+self.lexemes[lang]:
                 for x in form:
                     # x=nonwordforming.sub('', x)
