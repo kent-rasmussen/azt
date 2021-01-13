@@ -3020,11 +3020,15 @@ class Check():
             self.showentryformstorecord()
     def makelabelsnrecordingbuttons(self,parent,sense):
         t=self.getframeddata(sense['nodetoshow'],noframe=True)[
-                                            self.analang]+'\t'+sense['gloss']
-        if ('plnode' in sense) and (sense['nodetoshow'] is sense['plnode']):
-            t+=" (pl)"
-        if ('impnode' in sense) and (sense['nodetoshow'] is sense['impnode']):
-            t+="!"
+                                            self.analang]#+'\t'+sense['gloss']
+        for g in ['gloss','gloss2']:
+            if sense[g] is not None:
+                t+='\t‘'+sense[g]
+                if ('plnode' in sense) and (sense['nodetoshow'] is sense['plnode']):
+                    t+=" (pl)"
+                if ('impnode' in sense) and (sense['nodetoshow'] is sense['impnode']):
+                    t+="!"
+                t+='’'
         lxl=Label(parent, text=t)
         lcb=RecordButtonFrame(parent,self,id=sense['guid'],
                                             node=sense['nodetoshow'],
@@ -3064,7 +3068,7 @@ class Check():
                 sense['column']=0
                 sense['row']=row
                 sense['guid']=firstoflist(self.db.get('guidbysense',
-                                            senseid=senseid,showurl=True))
+                                            senseid=senseid))
                 if sense['guid'] in done: #only the first of multiple senses
                     continue
                 else:
@@ -3078,9 +3082,15 @@ class Check():
                 sense['gloss']=firstoflist(self.db.glossordefn(
                                                     guid=sense['guid'],
                                                     lang=self.glosslang
-                                                    # ,showurl=True
-                                                    ))
-                if sense['gloss'] is None:
+                                                    ),othersOK=True)
+                if ((hasattr(self,'glosslang2')) and
+                        (self.glosslang2 is not None)):
+                    sense['gloss2']=firstoflist(self.db.glossordefn(
+                                                    guid=sense['guid'],
+                                                    lang=self.glosslang2
+                                                    ),othersOK=True)
+                if ((sense['gloss'] is None) and
+                        (('gloss2' in sense) and (sense['gloss2'] is None))):
                     continue #We can't save the file well anyway; don't bother
                 if self.db.pluralname is not None:
                     sense['plnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
