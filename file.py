@@ -4,6 +4,8 @@ from tkinter import filedialog
 from tkinter import Tk
 import pathlib
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # import os
 def fullpathname(filename):

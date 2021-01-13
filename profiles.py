@@ -1,5 +1,7 @@
 # coding=UTF-8
 import rx
+import logging
+logger = logging.getLogger(__name__)
 class Base():
     pass
 def debug():
