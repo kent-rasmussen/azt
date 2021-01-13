@@ -519,8 +519,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # exit()
         self.getguids() #sets: self.guids and self.nguids
         self.getsenseids() #sets: self.senseids and self.nsenseids
-        print("Working on",filename,"with",self.nguids,"entries and",
-                                                        self.nsenseids,"senses")
+        logger.info("Working on {} with {}, entries "
+                    "and {} senses".format(filename,self.nguids,self.nsenseids))
         """These three get all possible langs by type"""
         self.glosslangs=self.glosslangs()
         self.analangs=self.analangs() #this gets audiolangs, too.
@@ -569,7 +569,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #                 glosslang='fr',langform='gnxform',glossform='frforme',
         #                 now='January 5, 2020',glosslang2='fub',
         #                 glossform2='fub fub')
-        print("Language initialization done.")
+        logger.info("Language initialization done.")
     def get(self,attribute, guid=None, senseid=None, analang=None,
             glosslang=None, lang=None, ps=None, form=None, fieldtype=None,
             location=None, fieldvalue=None, showurl=False):
