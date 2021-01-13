@@ -4,6 +4,10 @@
 tkinter=True
 progname='A→Z+T'
 version='0.4' #This is a string...
+loglevel='DEBUG' #levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
+from logsetup import logsetup
+logger=logsetup(loglevel)
+"""My modules, which should log as above"""
 import lift
 import file
 import profiles

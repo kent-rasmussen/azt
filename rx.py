@@ -1,5 +1,7 @@
 ## coding=UTF-8
 import re
+import logging
+logger = logging.getLogger(__name__)
 """This is called from a number of places"""
 def s(self,stype,lang=None):
     """join a list into regex format, sort for longer first, to capture

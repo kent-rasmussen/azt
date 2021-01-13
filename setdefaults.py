@@ -1,4 +1,6 @@
 # coding=UTF-8
+import logging
+logger = logging.getLogger(__name__)
 """This module is for setting defaults automatically (for either "
 "a check or database?)."""
 """It may also be where list choice options are prioritized

@@ -41,6 +41,8 @@ import re
 #What should their relationship(S) be?
 #class Tree(object):
 #This returns the root node of an ElementTree tree (the entire tree as nodes), to edit the XML.
+import logging
+logger = logging.getLogger(__name__)
 class TreeParsed(object):
     def __init__(self, lift):
         self=Tree(lift).parsed
