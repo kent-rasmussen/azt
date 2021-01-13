@@ -3,46 +3,16 @@
 """This module controls manipulation of LIFT files and objects"""
 """"(Lexical Interchange FormaT), both for reading and writing"""
 from xml.etree import ElementTree as ET
-#import os
 import sys
 import pathlib
 import threading
-#import .get #How do I get the modules in this package!?!?
-#import ws_environment
-# import datetime
 import shutil
 import datetime
-#import globalvariables
-#import lift_file
 import re
-#import timeit
-#import entry #.class
-#import do
-#define some variables that should come to us via another script:
-#global guid
-#guid=globalvariables.guid
-
-#global glosslang
-#global glosslang2
-# global nfields
-#lift=lift_file.liftstr()
-
-#This should be pulled in a working system; it is used to reset xyz, while allowing a file and folder of different (i.e., test) value:
-#xyz='ndk'
-
-#sys.exit() #use this to stop reading here (wherever you put this).
-#pathlib.Path.home().joinpath('python', 'scripts', 'test.py') # for debug, etc.
-#To output this script's namecitation
-#print(pathlib.Path(__file__).name)
-
-#this parses the lift file into an entire ElementTree tree, for reading or writing the LIFT file.
-
-#think through these three categories; are they all necessary/helpful?
-#What should their relationship(S) be?
-#class Tree(object):
-#This returns the root node of an ElementTree tree (the entire tree as nodes), to edit the XML.
 import logging
 logger = logging.getLogger(__name__)
+"""This returns the root node of an ElementTree tree (the entire tree as
+nodes), to edit the XML."""
 class TreeParsed(object):
     def __init__(self, lift):
         self=Tree(lift).parsed
