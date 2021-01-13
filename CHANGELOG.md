@@ -11,6 +11,7 @@
 - bring diacritics into vowel variables
 - Check on second gloss for lc/lx recording page
 - Find faithful way to keep window on the screen for MS Windows
+- set up log to run by default
 
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
@@ -70,6 +71,7 @@
 - set lc recordings to go on entries, not senses.
 - variables to (potentially) distinguish nasals, glides, and other sonorants from other consonants
 - Set menus to have 'Redo' set, for advanced things (incl. profile analysis - get this off the beaten path!)
+- removed invalid check from profilecheck
 
 # Version 0.4
 ## new features:
