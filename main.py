@@ -12,6 +12,7 @@ import lift
 import file
 import profiles
 import setdefaults
+"""Other people's stuff"""
 import threading
 import itertools
 import importlib.util
@@ -42,11 +43,6 @@ import gettext
 import sys
 import inspect
 import os
-
-"""Leave exactly one of the following two lines uncommented!"""
-# _ = gettext.gettext #for untranslated American English
-# tr.interfacelang(lang='fr') #For French good enough for our context.
-# tr.interfacelang()
 class Check():
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
@@ -4979,15 +4975,6 @@ def inherit(self):
     self.version=self.parent.version
     # self.photosmall=self.parent.photosmall
     self._=self.parent._
-# def interfacelang(lang=None):
-#     global aztdir
-#     global i18n
-#     global _
-#     print('aztdir',aztdir, 'lang:',lang)
-#     print(i18n[lang])
-#     print("Using interface", lang)
-#     i18n[lang].install()
-#     print(_("Translation seems to be working"))
 def main():
     global progname
     global version
@@ -5017,14 +5004,6 @@ if __name__ == "__main__":
     # interfacelang('fr')
     main()
     exit()
-    print("running main")
-    root = tkinter.Tk()
-    # splash=tkinter.Frame(root)
-    # splash.mainloop()
-    myapp = MainApplication(root)
-    # splash.destroy()
-    myapp.mainloop()
-
     """The following are just for testing"""
     entry=Entry(db, guid='003307da-3636-40cd-aca9-6b0d798055d2')
     print(entry.lexeme)
