@@ -9,9 +9,11 @@
 - need to fix multiple links to the same recording
 - check that changes to S regexs don't break too much.
 - bring diacritics into vowel variables
-- Check on second gloss for lc/lx recording page
 - Find faithful way to keep window on the screen for MS Windows
-- set up log to run by default
+- diagnose pl/imp not appearing on recording screen
+  - not really there?
+  - pushed off the screen?
+- Test logging on MS Windows
 
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
@@ -62,6 +64,7 @@
 ## UI
 - Added page to instruct A→Z+T how to distinguish certain segment classes
 - removed redo profile analysis from easy temptation
+- Second gloss now showing for lc/lx recording page
 
 ### Under the Hood
 - added variables for version number and program name, added to help:about
@@ -72,6 +75,7 @@
 - variables to (potentially) distinguish nasals, glides, and other sonorants from other consonants
 - Set menus to have 'Redo' set, for advanced things (incl. profile analysis - get this off the beaten path!)
 - removed invalid check from profilecheck
+- set up log to run by default, working in modules
 
 # Version 0.4
 ## new features:
