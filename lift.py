@@ -1396,22 +1396,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def extrasegments(self):
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
-            #print(lang)
-            # rxs=self.s[lang]['C']+self.v[lang]
             extras=list()
-            # print(self.s[lang].values())
-            # print(sum(self.s[lang].values(),[]))
-            #print(rxs) #for debugging
             """This is not a particularly sophisticated test. I should be
             also looking for consonant glyphs that occur between vowels,
             and vice versa. Later."""
-            nonwordforming=re.compile('[() \[\]\|,\-!@#$*?]')
-            #for x in list(dict.fromkeys(str().join(self.forms[lang])+str().join(self.lexemes[lang]))):
+            # nonwordforming=re.compile('[() \[\]\|,\-!@#$*?]')
+            invalid=['(',')' ,'[',']','|',',','-','!','@','#','$','*','?']
             for form in self.citationforms[lang]+self.lexemes[lang]:
                 for x in form:
-                    x=nonwordforming.sub('', x)
-                    print('Checking',x,'from',lang,form)
-                    if not re.search(x,str().join(sum(self.s[lang].values(),[]))+str().join(extras)): #dict.fromkeys?
+                    # x=nonwordforming.sub('', x)
+                    # print('Checking',x,'from',lang,form)
+                    if ((x not in invalid) and (not re.search(x,
+                                        str().join(sum(self.s[lang].values(),
+                                        []))+str().join(extras)))):
                         self.segmentsnotinregexes[lang].append(x)
                         print('Missing',x,'from',lang,form)
             if len(self.segmentsnotinregexes[lang]) > 0:
@@ -1423,17 +1420,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "say anything about digraphs or complex segments which should "+
                     "be counted as a single segment --those may not be covered by \n"+
                     "your regexes.")
-    #def glosses(self): #UNUSED This outputs all glosses in the LIFT file; purpose?
-    #    output={}
-    #    for lang in self.glosslangs:
-    #        output[lang]=self.get('glosse',lang=lang) #list()
-    #    return output
-    #    for gloss in self.nodes.findall(f"entry/sense/gloss[@lang='{self.glosslang}']/text"):
-    #        if gloss.text is not None:
-    #            yield gloss.text #print the text of the <text> node above (I might want to make the other returns into yields, as well)
-    #def gloss2s(self): #UNUSED This outputs all gloss2s in the LIFT file; purpose?
-    #    for gloss in self.nodes.findall(f"entry/sense/gloss[@lang='{self.glosslang2}']/text"):
-    #        print(gloss.text) #print the text of the <text> node above
     def pss(self): #get all POS values in the LIFT file
         return self.get('ps')
         #pss=list()
