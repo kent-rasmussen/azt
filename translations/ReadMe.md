@@ -5,14 +5,18 @@ Python), there are a couple things we should all pay attention to:
 - The following formats work:
     - format()ed string on one line:
 
+        ```
         _("Language with code [{}]").format(xyz)
+        ```
     - format()ed strings, with format on line after reference
 
+        ```
         _("{} doesn't look like a well formed lift file; please "  
         "try again.").format(filename)`
+        ```
     - format()ed strings with multiple references to the same format item, given at the end
         ```
-        _("Your regular expressions look OK for {0} (there are "\n
+        _("Your regular expressions look OK for {0} (there are "
         "no segments in your {0} data that are not in a regex). "
         "Note, this doesn't \nsay anything about digraphs or "
         "complex segments which should be counted as a single "
