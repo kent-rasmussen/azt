@@ -769,7 +769,7 @@ msgstr "Aide"
 #: /home/kentr/bin/raspy/azt/main.py:4223
 #, fuzzy
 msgid "{} Dictionary and Orthography Checker"
-msgstr "A→Z+T Vérificateur de Dictionnaire et d'Orthographe"
+msgstr "{} Vérificateur de Dictionnaire et d'Orthographe"
 
 #: /home/kentr/bin/raspy/azt/main.py:4060
 #, fuzzy, python-brace-format
@@ -791,7 +791,7 @@ msgid ""
 "For help with this tool, please check out the documentation at https://"
 "github.com/kent-rasmussen/azt or write me at kent_rasmussen@sil.org."
 msgstr ""
-"A à Z et T (AZT) est un programme informatique qui accélère le développement "
+"{0} est un programme informatique qui accélère le développement "
 "du langage à base communautaire en facilitant le tri d'un dictionnaire "
 "simple par voyelles, consonnes et ton. \n"
 "Il le fait en présentant aux utilisateurs des ensembles de mots provenant "
@@ -803,7 +803,7 @@ msgstr ""
 "ces données. Un rapport de tonalité facilite la rédaction des catégories "
 "sous-jacentes en regroupant les mots en fonction du tri entre les images de "
 "tonalité. \n"
-"AZT permet ensuite à l'utilisateur d'enregistrer un mot dans chacune des "
+"{0} permet ensuite à l'utilisateur d'enregistrer un mot dans chacune des "
 "images où il a été trié, en stockant le fichier audio enregistré dans un "
 "répertoire, avec des liens vers chaque fichier de la base de données du "
 "dictionnaire. Les enregistrements peuvent être réalisés jusqu'à 192 "

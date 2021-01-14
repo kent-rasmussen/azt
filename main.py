@@ -4992,6 +4992,7 @@ if __name__ == "__main__":
     else:
         filename = inspect.getframeinfo(inspect.currentframe()).filename
         aztdir = os.path.dirname(os.path.abspath(filename))
+    """Not translating yet"""
     log.info('Running {} v{} in {} at {}'.format(progname,version,aztdir,
                                     datetime.datetime.utcnow().isoformat()))
     transdir=aztdir+'/translations/'
