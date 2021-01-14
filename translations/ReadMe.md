@@ -5,7 +5,7 @@ Python), there are a couple things we should all pay attention to:
 - The following formats work:
     - `_("Language with code [{}]").format(xyz)`
         - format()ed string on one line
-    - `_("{} doesn't look like a well formed lift file; please "  
+    - `_("{} doesn't look like a well formed lift file; please "<br/>
       "try again.").format(filename)`
         - format()ed strings, with format on line after reference
     - `_("Your regular expressions look OK for {0} (there are "\n
