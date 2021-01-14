@@ -23,3 +23,5 @@ Python), there are a couple things we should all pay attention to:
         "segment --those may not be covered by \n"
         "your regexes.".format(lang))`
         ```
+- There doesn't seem to be any difference on the use of `_("").format()` syntax or `_("".format())` syntax
+- There doesn't seem to be any way to bring the format items into the translation, so we're stuck hopefully understanding more or less what each `{}` means. 
