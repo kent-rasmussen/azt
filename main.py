@@ -5,8 +5,8 @@ tkinter=True
 progname='A→Z+T'
 version='0.4' #This is a string...
 loglevel='DEBUG' #levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
-from logsetup import logsetup
-logger=logsetup(loglevel)
+from logsetup import *
+log=logsetup(loglevel)
 """My modules, which should log as above"""
 import lift
 import file
@@ -62,7 +62,7 @@ class Check():
         # self.theme=parent.theme #Needed?
         filename=file.getfilename()
         if not file.exists(filename):
-            print("Select a lexical database to check; exiting.")
+            log.error("Select a lexical database to check; exiting.")
             exit()
         filedir=file.getfilenamedir(filename)
         """We need this variable to make filenames for files that will be
@@ -4979,10 +4979,11 @@ def inherit(self):
 def main():
     global progname
     global version
-    logger.info("Running main function") #Don't translate yet!
+    log.info("Running main function") #Don't translate yet!
     root = tkinter.Tk()
     myapp = MainApplication(root,progname,version)
     myapp.mainloop()
+    logging.shutdown()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
@@ -4991,7 +4992,7 @@ if __name__ == "__main__":
     else:
         filename = inspect.getframeinfo(inspect.currentframe()).filename
         aztdir = os.path.dirname(os.path.abspath(filename))
-    logger.info('Running {} v{} in {} at {}'.format(progname,version,aztdir,
+    log.info('Running {} v{} in {} at {}'.format(progname,version,aztdir,
                                     datetime.datetime.utcnow().isoformat()))
     transdir=aztdir+'/translations/'
     i18n={}

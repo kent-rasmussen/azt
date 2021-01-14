@@ -1,6 +1,6 @@
 # coding=UTF-8
 import logging
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 """This module is for setting defaults automatically (for either "
 "a check or database?)."""
 """It may also be where list choice options are prioritized
@@ -12,15 +12,13 @@ preferred field on the entry level. So I probably just need a third field
 for each gloss/glossonly/defn, and citation/citationonly/lexeme. """
 def getaudiolangs(self):
     """if there's only one gloss language, use it."""
-    # print(self.audiolang)
-    # print(self.audiolangs)
     if not hasattr(self,'audiolangs'):
         self.audiolangs=self.db.audiolangs
     if len(self.audiolangs) == 1:
-        # print('Only one audiolang!')
+        log.debug('Only one audiolang!')
         self.audiolang=self.audiolangs[0]
     else:
-        print("More than one audiolang! Set this up! (exiting)")
+        log.error("More than one audiolang! Set this up! (exiting)")
         exit()
 
 def langs(self):
@@ -28,35 +26,35 @@ def langs(self):
     getanalangs(self) #self.guessanalang()
     getglosslangs(self) #self.guessglosslangs()
     getaudiolangs(self)
-    print('Analysis Language: '+self.analang)
-    print('Audio Recording Language: '+self.audiolang)
-    print('Gloss Language: '+self.glosslang)
-    print('Second Gloss Language: '+self.glosslang2)
-    print("If you don't like these selections, they can be changed later.")
-    print("If you're working on a multilingual dictionary, we need to "
+    log.info('Analysis Language: '+self.analang)
+    log.info('Audio Recording Language: '+self.audiolang)
+    log.info('Gloss Language: '+self.glosslang)
+    log.info('Second Gloss Language: '+self.glosslang2)
+    log.info("If you don't like these selections, they can be changed later.")
+    log.info("If you're working on a multilingual dictionary, we need to "
             "figure out how to deal with that, later.  :-)")
     self.languagecodes=[self.analangs]+[self.glosslangs]
 def fields(self):
     """I think this is lift specific; may move it to defaults, if not."""
     fields=self.fields()
-    print("Fields found in lexicon: "+str(fields))
+    log.info(_("Fields found in lexicon: {}".format(str(fields))))
     plopts=('Plural', 'plural','pl','Pluriel','pluriel')
     impopts=('Imperative','imperative','imp','Imp')
     for opt in plopts:
         if opt in fields:
             self.pluralname=opt
     try:
-        print('Plural field: '+self.pluralname)
+        log.info(_('Plural field name: {}').format(self.pluralname))
     except:
-        print('Looks like there is no Plural field in the database')
+        log.info(_('Looks like there is no Plural field in the database'))
         self.pluralname=None
     for opt in impopts:
         if opt in fields:
             self.imperativename=opt
     try:
-        print('Imperative field: '+self.imperativename)
+        log.info(_('Imperative field name: {}'.format(self.imperativename)))
     except:
-        print('Looks like there is no Imperative field in the database')
+        log.info(_('Looks like there is no Imperative field in the database'))
         self.imperativename=None
 def count(self):
     """Return the number of occurrances of subcategories, for a given category.
