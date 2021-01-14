@@ -10,10 +10,12 @@ Python), there are a couple things we should all pay attention to:
 
         _("{} doesn't look like a well formed lift file; please "  
         "try again.").format(filename)`
-    - `_("Your regular expressions look OK for {0} (there are "\n
-                "no segments in your {0} data that are not in a regex). "
-                "Note, this doesn't \nsay anything about digraphs or "
-                "complex segments which should be counted as a single "
-                "segment --those may not be covered by \n"
-                "your regexes.".format(lang))`
-        - format()ed strings with multiple references to the same format item, given at the end
+    - format()ed strings with multiple references to the same format item, given at the end
+        ```
+        _("Your regular expressions look OK for {0} (there are "\n
+        "no segments in your {0} data that are not in a regex). "
+        "Note, this doesn't \nsay anything about digraphs or "
+        "complex segments which should be counted as a single "
+        "segment --those may not be covered by \n"
+        "your regexes.".format(lang))`
+        ```
