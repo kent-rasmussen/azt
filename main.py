@@ -27,6 +27,7 @@ if tkinter==True:
     import kivy
 """
 import time
+import datetime
 import pyaudio
 import wave
 # #for some day..…
@@ -4990,8 +4991,8 @@ if __name__ == "__main__":
     else:
         filename = inspect.getframeinfo(inspect.currentframe()).filename
         aztdir = os.path.dirname(os.path.abspath(filename))
-    logger.info('Running {} v{} in {}'.format(progname,version,aztdir))
-    print(aztdir,'!')
+    logger.info('Running {} v{} in {} at {}'.format(progname,version,aztdir,
+                                    datetime.datetime.utcnow().isoformat()))
     transdir=aztdir+'/translations/'
     i18n={}
     # t = gettext.translation('dictionarychecker', aztdir)
