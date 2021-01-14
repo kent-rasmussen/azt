@@ -4,6 +4,7 @@ Python), there are a couple things we should all pay attention to:
 
 - The following formats work:
     - format()ed string on one line
+    
         _("Language with code [{}]").format(xyz)
     - `_("{} doesn't look like a well formed lift file; please "<br/>
       "try again.").format(filename)`
