@@ -4,7 +4,11 @@
 tkinter=True
 progname='A→Z+T'
 version='0.4' #This is a string...
-loglevel='DEBUG' #levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
+import platform
+if platform.uname().node == 'karlap':
+    loglevel='DEBUG' #levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
+else:
+    loglevel='DEBUG' #levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
 from logsetup import *
 log=logsetup(loglevel)
 """My modules, which should log as above"""
@@ -17,7 +21,6 @@ import threading
 import itertools
 import importlib.util
 import collections
-import platform
 from random import randint
 if tkinter==True:
     import tkinter #as gui
@@ -4220,10 +4223,10 @@ class MainApplication(Frame):
         # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
         # self.frame.grid(column=0, row=0)
         parent.iconphoto(True, self.photo['backgrounded'])
-        title=_("{} Dictionary and Orthography Checker").format(progname)
+        title=_("{} Dictionary and Orthography Checker").format(self.progname)
         if self.master.themename != 'greygreen':
             print(f"Using theme '{self.master.themename}'.")
-            title+=' ('+self.master.themename+')'
+            title+=_(' ('+self.master.themename+')')
         parent.title(title)
         # self.introtext=_()
         # l=Label(self.frame, text=self.introtext, font=self.fonts['title'])
@@ -4646,7 +4649,8 @@ class Wait(Window):
         self.parent=parent
         self.parent.withdraw()
         super(Wait, self).__init__(parent,exit=0)
-        title=(_("A→Z+T Dictionary and Orthography Checker in Process"))
+        title=(_("{} Dictionary and Orthography Checker in Process"
+                                                    ).format(self.progname))
         self.title(title)
         text=_("Please Wait...")
         Label(self, text=text,
@@ -4659,7 +4663,7 @@ class Splash(Window):
         # _=self._
         # print(self.theme['background'])
         # print(self.theme['activebackground'])
-        title=(_("A→Z+T Dictionary and Orthography Checker"))
+        title=(_("{} Dictionary and Orthography Checker").format(progname))
         self.title(title)
         text=_("Your dictionary database is loading...\n\n"
                 # "This program can take 30-100 seconds to load, depending on "
@@ -5001,7 +5005,7 @@ if __name__ == "__main__":
     # _ = t.gettext
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    # i18n['fub'] = gettext.translation('azt', transdir, languages=['fub'])
+    # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     # interfacelang('en')
     # # print(_('Tone'))
     # interfacelang('fr')
