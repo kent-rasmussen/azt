@@ -710,7 +710,7 @@ msgstr "Enregistrer des exemples de groupes de sons"
 
 #: /home/kentr/bin/raspy/azt/main.py:4017
 msgid "Record dictionary words"
-msgstr ""
+msgstr "Enregistrer des mot du diccionnaire"
 
 #: /home/kentr/bin/raspy/azt/main.py:4019
 msgid "Record examples for particular entries, 1 at at time"
