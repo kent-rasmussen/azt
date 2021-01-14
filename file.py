@@ -102,17 +102,15 @@ def writeinterfacelangtofile(lang):
 def getfilename():
     try:
         import lift_url
-        if exists(lift_url.filename):
-            log.debug("lift_url.py imported fine, with a real file.")
+        if exists(lift_url.filename): #tests if file exists at url
+            log.debug("lift_url.py imported fine, and url points to a file.")
             return lift_url.filename
         else:
-        # try:
-            # filename=lift_url.filename
-            #print('filename: '+filename)
-        # except:
+            log.debug("lift_url imported, but didn't contain a url that points "
+                        "to a file: {}".format(str(lift_url.filename)))
             return lift()
     except:
-        # print("lift_url didn't import")
+        log.debug("lift_url didn't import")
         return lift()
     # try:
     #     return filename
@@ -126,15 +124,15 @@ def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     filename=filedialog.askopenfilename(initialdir = "$HOME",#filetypes=[('LIFT','*.lift')],
                                     title = _("Select LIFT Lexicon File"))
-    print('filename:',filename)
+    log.debug('filename:'+str(filename))
     if filename is (): #Try one more time...
-        print("Sorry, not sure what's wrong; trying again.")
+        log.warning("Sorry, did you select a file? Trying again.")
         filename=filedialog.askopenfilename(initialdir = "$HOME",
                                     title = _("Select LIFT Lexicon File"),)
         if filename is (): #still, then give up.
-            print("Sorry, not sure what's wrong; giving up.")
+            log.warning("Sorry, did you select a file? Giving up.")
             # return None
-    print(filename)
+    log.debug('filename: {}'.format(str(filename)))
     """Assuming this file is still in lift/, this works. Once out,
     remove a parent"""
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
@@ -148,18 +146,20 @@ def lift():
 
 if __name__ == "__main__":
     import sys
-    import ws_environment
+    # import ws_environment
     import datetime
     import shutil
-    import globalvariables
-    wsfolder=ws_environment.getwsfolder()
-    langdir=ws_environment.getlangdir()
-    xyz=globalvariables.xyz
+    def _(x):
+        str(x)
+    # import globalvariables
+    # wsfolder=ws_environment.getwsfolder()
+    # langdir=ws_environment.getlangdir()
+    # xyz=globalvariables.xyz
     def usage():
-        print("usage for one entry:")
-        print(" python3 " + pathlib.Path(__file__).name + " <forms|ids|tones|prontones|glosses|gloss2s|plurals|pses|all|cards|lxnglosses> <lift file> <guid>")
-        print("usage for all entries in lift file:")
-        print(" python3 " + pathlib.Path(__file__).name + " <forms|ids|tones|prontones|glosses|gloss2s|plurals|pses|all|cards|lxnglosses|ids2testN|ids2testV> <lift file>")
+        log.info("usage for one entry:")
+        log.info(" python3 " + pathlib.Path(__file__).name + " <forms|ids|tones|prontones|glosses|gloss2s|plurals|pses|all|cards|lxnglosses> <lift file> <guid>")
+        log.info("usage for all entries in lift file:")
+        log.info(" python3 " + pathlib.Path(__file__).name + " <forms|ids|tones|prontones|glosses|gloss2s|plurals|pses|all|cards|lxnglosses|ids2testN|ids2testV> <lift file>")
         exit() #if there is a problem with the usage, we don't want to keep going...
     def liftori():
         global wsfolder
@@ -174,44 +174,44 @@ if __name__ == "__main__":
         global xyz
         return str(pathlib.Path.joinpath(wsfolder, xyz))
 
-    def baklift():
-        global wsfolder
-        global xyz
-        now=datetime.datetime.now()
-        return pathlib.Path.joinpath(wsfolder, xyz, xyz + '.lift' + str(now))
+    # def baklift():
+    #     global wsfolder
+    #     global xyz
+    #     now=datetime.datetime.now()
+    #     return pathlib.Path.joinpath(wsfolder, xyz, xyz + '.lift' + str(now))
     lift=lift()
-    baklift=baklift()
+    # baklift=baklift()
 
     #Varify that these files and folders exist as appropriate:
-    if wsfolder.exists():
-        print("WeSay Folder is " + str(wsfolder))
+    # if wsfolder.exists():
+    #     log.info("WeSay Folder is " + str(wsfolder))
+    # else:
+    #     log.info("Sorry, problem with non-existent WeSay folder " + str(wsfolder))
+    #     usage()
+    # if langdir.exists():
+    #     log.info("Lang Directory is " + str(langdir))
+    # else:
+    #     log.info("Sorry, problem with non-existent language directory " + str(langdir))
+    #     usage()
+    if exists(lift):
+        log.info("Lift file is " + str(lift))
     else:
-        print("Sorry, problem with non-existent WeSay folder " + str(wsfolder))
+        log.info("Sorry, problem with non-existent lift file " + str(lift))
         usage()
-    if langdir.exists():
-        print("Lang Directory is " + str(langdir))
-    else:
-        print("Sorry, problem with non-existent language directory " + str(langdir))
-        usage()
-    if lift.exists():
-        print("Lift file is " + str(lift))
-    else:
-        print("Sorry, problem with non-existent lift file " + str(lift))
-        usage()
-    if baklift.exists():
-        print("Sorry, lift file backup already exists " + str(baklift))
-        usage()
-    else:
-        print("Lift file backup is " + str(baklift))
+    # if baklift.exists():
+    #     log.info("Sorry, lift file backup already exists " + str(baklift))
+    #     usage()
+    # else:
+    #     log.info("Lift file backup is " + str(baklift))
 
 
-    def bak():
-        now=datetime.datetime.now()
-        print("Running at " + str(now))
-        global lift
-        global baklift
-        #lift=lift()
-        #baklift=baklift()
-        shutil.copyfile(lift, baklift)
-        print(lift, "backed up.")
-    bak() #do I want this running each time anything happens?
+    # def bak():
+    #     now=datetime.datetime.now()
+    #     log.info("Running at " + str(now))
+    #     global lift
+    #     global baklift
+    #     #lift=lift()
+    #     #baklift=baklift()
+    #     shutil.copyfile(lift, baklift)
+    #     log.info(lift, "backed up.")
+    # bak() #do I want this running each time anything happens?

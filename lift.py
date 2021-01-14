@@ -10,13 +10,13 @@ import shutil
 import datetime
 import re
 import logging
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 """This returns the root node of an ElementTree tree (the entire tree as
 nodes), to edit the XML."""
 class TreeParsed(object):
     def __init__(self, lift):
         self=Tree(lift).parsed
-        print(self.glosslang)
+        log.info(self.glosslang)
         Tree.__init__(self, db, guid=guid)
         #self.lift=lift
 """This function defines where to find each node in the xml {url}, and what
@@ -44,7 +44,7 @@ def attributesettings(
     and/or a tone description (<field>) in a particular (yet another) language.
     For now, I'm just going to assume people write meta descriptions in their
     primary gloss language."""
-    #print(ps)
+    #log.info(ps)
     def script():
         pass
     attributes={
@@ -445,13 +445,13 @@ def attributesettings(
     if attribute == 'attributes':
         return attributes.keys()
     if attribute not in attributes:
-        print("Sorry,",attribute,"isn't defined yet. This is what's available:")
+        log.info(' '.join(["Sorry,",attribute,"isn't defined yet. This is what's available:"]))
         for line in list(attributes.keys()):
             try:
-                print(line, '\t',attributes[line]['cm'])
+                log.info(' '.join(line, '\t',attributes[line]['cm']))
             except:
-                print(line, '\t',"UNDOCUMENTED?!?!", )
-        print("This is where that key was called; fix it, and try again:")
+                log.info(' '.join(line, '\t',"UNDOCUMENTED?!?!", ))
+        log.info("This is where that key was called; fix it, and try again:")
     """I should also add/remove pronunciation or other systematic things here"""
     url=attributes[attribute]['url']
     attributes[attribute]['url']=removenone(attributes[attribute]['url'])
@@ -485,20 +485,20 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     datetime.datetime.utcnow().isoformat()[:-16], #once/day
                     '.txt']
         self.backupfilename=''.join(backupbits)
-        # print(self.backupfilename)
+        # log.info(self.backupfilename)
         # exit()
         self.getguids() #sets: self.guids and self.nguids
         self.getsenseids() #sets: self.senseids and self.nsenseids
-        logger.info("Working on {} with {}, entries "
+        log.info("Working on {} with {}, entries "
                     "and {} senses".format(filename,self.nguids,self.nsenseids))
         """These three get all possible langs by type"""
         self.glosslangs=self.glosslangs()
         self.analangs=self.analangs() #this gets audiolangs, too.
-        # print(self.audiolangs)
-        # print(self.analangs)
-        # print(self.analangs)
+        # log.info(self.audiolangs)
+        # log.info(self.analangs)
+        # log.info(self.analangs)
         self.langnames()
-        self.pss=self.pss() #print(self.pss)
+        self.pss=self.pss() #log.info(self.pss)
         self.getformstosearch() #sets: self.formstosearch[lang][ps] #no guids
         """This is very costly on boot time"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
@@ -539,7 +539,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #                 glosslang='fr',langform='gnxform',glossform='frforme',
         #                 now='January 5, 2020',glosslang2='fub',
         #                 glossform2='fub fub')
-        logger.info("Language initialization done.")
+        log.info("Language initialization done.")
     def get(self,attribute, guid=None, senseid=None, analang=None,
             glosslang=None, lang=None, ps=None, form=None, fieldtype=None,
             location=None, fieldvalue=None, showurl=False):
@@ -552,17 +552,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         @lang should only be used here when referring to a <field> field."""
         if attribute == 'Test':
             from random import randint
-            # print(randint(0, len(self.guids)))
+            # log.info(randint(0, len(self.guids)))
             guid=self.guids[randint(0, len(self.guids))-1]
-            print("Showing info for randomly selected entry",guid)
+            log.info("Showing info for randomly selected entry: "+guid)
             for attribute in attributesettings('attributes'):
-                print(attribute,self.get(attribute,guid=guid))#,showurl=True
-                # print('senseid',attribute,self.get(attribute,senseid=senseid))#,showurl=True
+                log.info(' '.join(attribute,self.get(attribute,guid=guid)))#,showurl=True
+                # log.info('senseid',attribute,self.get(attribute,senseid=senseid))#,showurl=True
             senseid=self.senseids[randint(0, len(self.senseids))-1]
-            print("Showing info for randomly selected sense",senseid)
+            log.info("Showing info for randomly selected sense: "+senseid)
             for attribute in attributesettings('attributes'):
-                # print('guid',attribute,self.get(attribute,guid=guid))#,showurl=True
-                print(  attribute,self.get(attribute,senseid=senseid))#,showurl=True
+                # log.info('guid',attribute,self.get(attribute,guid=guid))#,showurl=True
+                log.info(' '.join(attribute,self.get(attribute,senseid=senseid)))#,showurl=True
             return
         # urlnfn=attributesettings(attribute, guid=guid, lang=lang, ps=ps, fieldtype=fieldtype, location=location)
         """This is slightly faster than kwargs"""
@@ -570,49 +570,49 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                         lang,ps,form,
                                         fieldtype,location,
                                         fieldvalue=fieldvalue)
-        # print(attribute,guid,senseid,analang,glosslang,
+        # log.info(' '.join(attribute,guid,senseid,analang,glosslang,
         #                                 lang,ps,form,
         #                                 fieldtype,location,
-        #                                 fieldvalue)
+        #                                 fieldvalue))
         #url=self.attributes[attribute]['url']
         #url=attributesettings(attribute, guid, lang, fieldtype, location)['url']
         url=urlnattr['url']
         if showurl==True:
-            print(url)
+            log.info(url)
         #url=removenone(url) do in earlier fn
         # if attribute == 'example':
-        #     print(url)
+        #     log.info(url)
         #     nodeset=self.nodes.findall("entry/sense[@id='f024c2d9-a1c9-4f50-99cc-3a1e097e4b86']/example")
         # else:
         nodeset=self.nodes.findall(url) #This is the only place we need self=lift
-        # print(nodeset.findall('form'))
+        # log.info(nodeset.findall('form'))
         output=[]
         #fn=self.attributes[attribute]['formfn']
         #fn=attributesettings(attribute, guid, lang, fieldtype, location)['formfn']
         attr=urlnattr['attr']
-        # print(attribute,attr,nodeset,len(nodeset))
+        # log.info(' '.join(attribute,attr,nodeset,len(nodeset)))
         for node in nodeset:
             # for attr in attrs:
-                # print(attribute,attr)
+                # log.info(' '.join(attribute,attr))
                 if attr == 'nodetext':
                     if node is not None:
-                        # print("Returning node text")
+                        # log.info("Returning node text")
                         output+=[node.text]
                 elif attr == 'node':
                     if node is not None:
-                        # print("Returning whole node")
+                        # log.info("Returning whole node")
                         output+=[node]
                 else:
-                    # print("Returning node attribute")
+                    # log.info("Returning node attribute")
                     output+=[node.get(attr)]
-            #print('Node:',node)
+            #log.info(' '.join('Node:',node))
             # output+=[fn(node)]
             #output+=[self.attributes[attribute]['formfn'](node)]
             #output+=[self.attributesettings(attribute, guid, lang, fieldtype, location)['formfn'](node)]
         return list(dict.fromkeys(output))
     def makenewguid(self):
         from random import randint
-        print("Making a new unique guid")
+        log.info("Making a new unique guid")
         """f'{int:x}:' gives int in lowercase hexidecimal"""
         def gimmeint():
             return f'{randint(0, 15):x}'
@@ -625,17 +625,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         guid=allguids[0]
         while guid in allguids:
             guid=rxi(8)+'-'+rxi(4)+'-'+rxi(4)+'-'+rxi(4)+'-'+rxi(12)
-        # print(guid)
+        # log.info(guid)
         return guid
     def addentry(self,ps,analang,glosslang,langform,glossform,glosslang2=None,
         glossform2=None,showurl=False):
-        print("Adding an entry")
+        log.info("Adding an entry")
         self.makenewguid()
         guid=senseid=self.makenewguid()
         while guid == senseid:
             senseid=self.makenewguid()
-        print('newguid:',guid)
-        print('newsenseid:',senseid)
+        log.info(' '.join('newguid:',guid))
+        log.info(' '.join('newsenseid:',senseid))
         now=getnow()
         entry=ET.SubElement(self.nodes, 'entry', attrib={
                                 'dateCreated':now,
@@ -684,16 +684,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """The program should know before calling this, that there isn't
         already the relevant node --since it is agnostic of what is already
         there."""
-        print("Adding",fieldvalue,"value to", location,"location "
-                "in",fieldtype,"fieldtype",senseid,"senseid",guid,"guid (in lift.py)")
+        log.info("Adding {} value to {} location in {} fieldtype {} senseid {}"
+                "guid (in lift.py)".format(fieldvalue,location,fieldtype,
+                                                            senseid,guid))
         """Get the sense node"""
         urlnattr=attributesettings('senseid',senseid=senseid)
         url=urlnattr['url']
         if showurl==True:
-            print(url)
+            log.info(url)
         node=self.nodes.find(url) #this should always find just one node
         if node is None:
-            print("Sorry, this didn't return a node:",guid,senseid)
+            log.info(' '.join("Sorry, this didn't return a node:",guid,senseid))
             return
         """Logic to check if this example already exists"""
         """This function returns a text node (from any one of a number of
@@ -706,7 +707,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             fieldtype,
                             location,fieldvalue,node,ps=None,showurl=False)
         if exfieldvalue is None: #If not already there, make it.
-            print("Didn't find that example already there, creating it...")
+            log.info("Didn't find that example already there, creating it...")
             p=ET.SubElement(node, 'example')
             form=ET.SubElement(p,'form',attrib={'lang':analang})
             t=ET.SubElement(form,'text')
@@ -729,16 +730,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             fieldlocation.text=location
         else:
             if self.debug == True:
-                print("=> Found that example already there")
+                log.info("=> Found that example already there")
         exfieldvalue.text=fieldvalue #change this *one* value, either way.
         self.updatemoddatetime(guid=guid,senseid=senseid)
         self.write()
         if self.debug == True:
-            print("add langform:", forms[analang])
-            print("add tone:", fieldvalue)
-            print("add gloss:", forms[glosslang])
+            log.info("add langform: {}".format(forms[analang]))
+            log.info("add tone: {}".format(fieldvalue))
+            log.info("add gloss: {}".format(forms[glosslang]))
             if glosslang2 != None:
-                print("add gloss2:", forms[glosslang2])
+                log.info(' '.join("add gloss2:", forms[glosslang2]))
         """This is what we're adding/modifying here:
         <example>
             <form lang="gnd"><text>dìve</text></form>
@@ -773,16 +774,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         doesn't match (from form, translation and location). If they all match,
         then return the tone value node to change."""
         if self.debug == True:
-            print("Looking for bits that don't match")
+            log.info("Looking for bits that don't match")
         for node in example:
             if self.debug == True:
-                print('Node:',node.tag,';',node.find('.//text').text)
+                log.info('Node: {} ; {}'.format(node.tag,
+                                                node.find('.//text').text))
             if (node.tag == 'form'):
                 if ((node.get('lang') == analang)
                 and (node.find('text').text != forms[analang])):
                     if self.debug == True:
-                        print(node.get('lang'), '==', analang,';',
-                            node.find('text').text, '!=', forms[analang])
+                        log.info('{} == {}; {}  != {}'.format(node.get('lang'),
+                            analang, node.find('text').text, forms[analang]))
                     return
             elif ((node.tag == 'translation') and
                                 (node.get('type') == 'Frame translation')):
@@ -790,14 +792,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     ((glosslang2 == None) or
                     (not self.forminnode(node,forms[glosslang2])))):
                     if self.debug == True:
-                        print('translation',node.find('form/text').text, '!=',
-                                                                        forms)
+                        log.info(' '.join('translation',node.find('form/text').text, '!=',
+                                                                        forms))
                     return
             elif (node.tag == 'field'):
                 if (node.get('type') == 'location'):
                     if not self.forminnode(node,location):
                         if self.debug == True:
-                            print('location',location,'not in',node)
+                            log.info(' '.join('location',location,'not in',node))
                         return
                 if (node.get('type') == 'tone'):
                     for form in node:
@@ -807,12 +809,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             function runs on an example node"""
                             tonevalue=form.find('text')
                             if self.debug == True:
-                                print('tone value found:',tonevalue.text)
+                                log.info('tone value found: {}'.format(
+                                                            tonevalue.text))
                         else:
-                            print("Not the same lang for tone form")
+                            log.info("Not the same lang for tone form")
                             return
             else:
-                print("Not sure what kind of node I'm dealing with!",node.tag)
+                log.info(' '.join("Not sure what kind of node I'm dealing with!",node.tag))
         return tonevalue
     def exampleissameasnew(self,guid,senseid,analang,
                                 glosslang,glosslang2,forms,
@@ -821,8 +824,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This looks for any example in the given sense node, with the same
         form, gloss, and location values"""
         if self.debug == True:
-            print('Looking for an example node matching these form and gloss'
-                'elements:',forms)
+            log.info('Looking for an example node matching these form and gloss'
+                'elements: {}'.format(forms))
         for example in node.findall('example'):
             valuenode=self.exampleisnotsameasnew(guid,senseid,analang,
                             glosslang,glosslang2,forms,
@@ -832,36 +835,36 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 return valuenode #if you find the example, we're done looking
             else: #if not, just keep looking, at next example node
                 if self.debug == True:
-                    print('=> This is not the example we are looking for',
-                                                                    valuenode)
+                    log.info('=> This is not the example we are looking '
+                            'for: {}'.format(valuenode))
     def addtoneUF(self,senseid,group,analang,guid=None,showurl=False):
-        # print("Adding",group,"draft underlying form value to", senseid,
-        #                                 "senseid",guid,"guid (in lift.py)")
+        # log.info(' '.join("Adding",group,"draft underlying form value to", senseid,
+        #                                 "senseid",guid,"guid (in lift.py)"))
         urlnattr=attributesettings('senseid',senseid=senseid) #just give me the sense.
         url=urlnattr['url']
         if showurl==True:
-            print(url)
+            log.info(url)
         node=self.nodes.find(url) #this should always find just one node
         if node is None:
-            print("Sorry, this didn't return a node:",guid,senseid)# nodes=self.nodes.findall(url) #this is a list
+            log.info(' '.join("Sorry, this didn't return a node:",guid,senseid))
             return
         t=None
         for field in node.findall('field'):
-            # print('field',field)
-            # print('fieldtype',field.get('type'))
+            # log.info(' '.join('field',field))
+            # log.info(' '.join('fieldtype',field.get('type')))
             if field.get('type') == 'tone':
-                # print(field.find('form'))
+                # log.info(field.find('form'))
                 f=field.findall('form')
-                # print('f',f)
+                # log.info(' '.join('f',f))
                 f2=field.find('form')
-                # print('f2',f2)
-                # print(f.get('lang'))
+                # log.info(' '.join('f2',f2))
+                # log.info(f.get('lang'))
                 t=f2.find('text')
-                # print('t',t)
+                # log.info(' '.join('t',t))
                 for fs in f:
                     t2=fs.find('text')
-                    # print('t2',t2)
-        # print(t)
+                    # log.info(' '.join('t2',t2))
+        # log.info(t)
         # try:
         #     t
         # except NameError:
@@ -885,7 +888,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """The program should know before calling this, that there isn't
         already the relevant node --since it is agnostic of what is already
         there."""
-        print("Adding",url,"value to", node,"location")
+        log.info(' '.join("Adding",url,"value to", node,"location"))
         form=ET.SubElement(node,'form',attrib={'lang':lang})
         t=ET.SubElement(form,'text')
         t.text=url
@@ -893,9 +896,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # self.updatemoddatetime(guid=guid,senseid=senseid)
         self.write()
         def debug():
-            print("add langform:", langform)
-            print("add tone:", fieldvalue)
-            print("add gloss:", glossform)
+            log.info(' '.join("add langform:", langform))
+            log.info(' '.join("add tone:", fieldvalue))
+            log.info(' '.join("add gloss:", glossform))
     def addpronunciationfields(self,guid,senseid,analang,
                                 glosslang,glosslang2,
                                 lang,forms,
@@ -911,7 +914,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         urlnattr=attributesettings('guid',guid) #just give me the entry.
         url=urlnattr['url']
         if showurl==True:
-            print(url)
+            log.info(url)
         node=self.nodes.find(url) #this should always find just one node
         # nodes=self.nodes.findall(url) #this is a list
         p=ET.SubElement(node, 'pronunciation')
@@ -928,9 +931,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         t3.text=glossform
         trait=ET.SubElement(p,'trait',attrib={'name':'location', 'value':location})
         def debug():
-            print("add langform:", langform)
-            print("add tone:", fieldvalue)
-            print("add gloss:", glossform)
+            log.info(' '.join("add langform:", langform))
+            log.info(' '.join("add tone:", fieldvalue))
+            log.info(' '.join("add gloss:", glossform))
         # debug()
         self.updatemoddatetime(guid=guid,senseid=senseid)
         self.write()
@@ -956,14 +959,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         urlnattr=attributesettings('senseid',senseid=senseid) #just give me the sense.
         url=urlnattr['url']
         if showurl==True:
-            print(url)
+            log.info(url)
         node=self.nodes.find(url) #this should always find just one node
         urlnattr2=attributesettings('exfieldvaluefromsense',location=None,
                                     fieldtype=fieldtype,fieldvalue=fieldvalue
                                     )
         url2=urlnattr2['url']
         if showurl==True:
-            print(url2)
+            log.info(url2)
         for example in node.findall(url2):
             # """<field type="tone"><form lang="fr"><text>1</text></form></field>"""
             # """<field type="location"><form lang="fr"><text>Plural</text></form></field>"""
@@ -987,7 +990,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         ) #just give me the sense.
         url=urlnattr['url']
         if showurl==True:
-            print(url)
+            log.info(url)
         node=self.nodes.find(url) #this should always find just one node
         # for value in node.findall(f"field[@type=location]/"
         #                             f"form[text='{location}']"
@@ -1010,7 +1013,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         ) #just give me the sense.
         url=urlnattr['url']
         if showurl==True:
-            print(url)
+            log.info(url)
         node=self.nodes.find(url) #this should always find just one node
         # for value in node.findall(f"field[@type=location]/"
         #                             f"form[text='{location}']"
@@ -1039,7 +1042,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.analangs=[]
         possibles=list(dict.fromkeys(self.get('lexemelang')+self.get('citationlang')))
         for lang in possibles:
-            # print(lang,lang.find('audio'))
+            # log.info(' '.join(lang,lang.find('audio')))
             if 'audio' in lang:
                 self.audiolangs+=[lang]
             else:
@@ -1047,8 +1050,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if self.audiolangs == []:
             for self.analang in self.analangs:
                 self.audiolangs+=[f'{self.analang}-Zxxx-x-audio']
-        # print('audio:',self.audiolangs)
-        # print(self.analangs)
+        # log.info(' '.join('audio:',self.audiolangs))
+        # log.info(self.analangs)
         return self.analangs
     def glosslangs(self):
         return list(dict.fromkeys(self.get('glosslang')+self.get('defnlang')))
@@ -1060,9 +1063,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         node=None
         self.languagenames={}
         for xyz in self.analangs+self.glosslangs: #self.languagepaths.keys():
-            # print('Looking for langauge name for',xyz)
+            # log.info(' '.join('Looking for langauge name for',xyz))
             """This provides an ldml node"""
-            #print(tree.nodes.find(f"special/palaso:languageName", namespaces=ns))
+            #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
             #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
             """This doesn't seem to be working; I should fix it, but there
             doesn't seem to be reason to generalize it for now."""
@@ -1071,7 +1074,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
             if node is not None:
                 self.languagenames[xyz]=node.get('value')
-                print('found',self.languagenames[xyz])
+                log.info(' '.join('found',self.languagenames[xyz]))
             elif xyz == 'fr':
                 self.languagenames[xyz]="Français"
             elif xyz == 'en':
@@ -1219,7 +1222,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         actuals={}
         self.debug=True
         if self.debug==True:
-            print('hypotheticals:',s)
+            log.info(' '.join(['hypotheticals: ',str(s)]))
         if not(hasattr(self,'s')): #don't wipe out an existing dictionary
             self.s={}
         for lang in self.analangs:
@@ -1228,9 +1231,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for stype in s:
                 self.s[lang][stype]=self.inxyz(lang,s[stype])
                 if self.debug==True:
-                    print('hypotheticals[{}][{}]:'.format(lang,stype),s[stype])
-                    print('actuals[{}][{}]:'.format(lang,stype),
-                                                    self.s[lang][stype])
+                    log.info(' '.join(['hypotheticals[{}][{}]:'.format(lang,stype),str(s[stype])]))
+                    log.info(' '.join(['actuals[{}][{}]:'.format(lang,stype),
+                                                    str(self.s[lang][stype])]))
         # exit()
         # return actuals
     # def vlist(self):
@@ -1273,7 +1276,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         actuals=list()
         for i in segmentlist:
             s=self.segmentin(lang,i)
-            #print(s) #to see the following run per segment
+            #log.info(s) #to see the following run per segment
             if s is not None:
                 actuals.append(s)
         return actuals
@@ -1312,9 +1315,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for ps in self.pss: #I need to break this up.
                 # start_time=time.time()
                 self.getguidformstosearchbyps(ps,lang=lang)
-                self.getsenseidformstosearchbyps(ps,lang=lang)#print("Found",len(self.guidformstosearch[lang][ps])," words in",lang,ps,"i"
+                self.getsenseidformstosearchbyps(ps,lang=lang)
                 #"n",str(time.time() - start_time),"seconds.")
-        #print(self.guidformstosearch)
+        #log.info(self.guidformstosearch)
     def getformstosearchbyps(self,ps,lang=None):
         if lang is None:
             lang=self.analang
@@ -1343,9 +1346,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for ps in self.pss+[None]: #I need to break this up.
                 # start_time=time.time()
                 self.getformstosearchbyps(ps,lang=lang)
-                #print("Found",len(self.formstosearch[lang][ps])," words in",lang,ps,"i"
                 #"n",str(time.time() - start_time),"seconds.")
-        # print(self.formstosearch)
+        # log.info(self.formstosearch)
     def citationforms(self): #outputs generator object with each form in LIFT file.
         """This produces a dictionary, of forms for each language."""
         #return self.get('citationform')
@@ -1355,7 +1357,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             #output[lang]=list()
             #for form in self.nodes.findall(f"entry/citation/form[@lang='{lang}']/text"):
             #    output[lang]+=[form.text] #print the text of the <text> node above
-        #print(output.keys()) #to see which languages are found
+        #log.info(output.keys()) #to see which languages are found
         return output
     def lexemes(self):
         output={}
@@ -1363,7 +1365,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             output[lang]=self.get('lexeme',analang=lang) #list()
             #for form in self.nodes.findall(f"entry/lexical-unit/form[@lang='{lang}']/text"):
             #    output[lang]+=[form.text] #print the text of the <text> node above
-        #print(output.keys()) #to see which languages are found
+        #log.info(output.keys()) #to see which languages are found
         return output
     def extrasegments(self):
         for lang in self.analangs:
@@ -1378,21 +1380,23 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for form in self.citationforms[lang]+self.lexemes[lang]:
                 for x in form:
                     # x=nonwordforming.sub('', x)
-                    # print('Checking',x,'from',lang,form)
+                    # log.info(' '.join('Checking',x,'from',lang,form))
                     if ((x not in invalid) and (not re.search(x,
                                         str().join(sum(self.s[lang].values(),
                                         []))+str().join(extras)))):
                         self.segmentsnotinregexes[lang].append(x)
-                        print('Missing',x,'from',lang,form)
+                        log.info('Missing {} from {} {}'.format(x,lang,form))
             if len(self.segmentsnotinregexes[lang]) > 0:
-                print("The following segments are not in your",lang,"regex's:",
-                list(dict.fromkeys(self.segmentsnotinregexes[lang]).keys()))
+                log.info("The following segments are not in your {} "
+                "regex's: {}".format(lang,
+                list(dict.fromkeys(self.segmentsnotinregexes[lang]).keys())))
             else:
-                print("Your regular expressions look OK for",lang,"(there are no segments "+
-                    "in your",lang,"data that are not in a regex). Note, this doesn't \n"+
-                    "say anything about digraphs or complex segments which should "+
-                    "be counted as a single segment --those may not be covered by \n"+
-                    "your regexes.")
+                log.info(_("Your regular expressions look OK for {0} (there are "
+                    "no segments in your {0} data that are not in a regex). "
+                    "Note, this doesn't \nsay anything about digraphs or "
+                    "complex segments which should be counted as a single "
+                    "segment --those may not be covered by \n"
+                    "your regexes.".format(lang)))
     def pss(self): #get all POS values in the LIFT file
         return self.get('ps')
         #pss=list()
@@ -1417,13 +1421,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if ps is None:
             entries=self.nodes.findall(f"entry")
             #gi1=self.nodes.findall(f".//grammatical-info")
-            #print('Entries found:',len(entries))#for gi in entry.find(f"grammatical-info"):
-            #print('Ps found:',len(gi1))#for gi in entry.find(f"grammatical-info"):
+            #log.info(' '.join('Entries found:',len(entries)))#for gi in entry.find(f"grammatical-info"):
+            #log.info(' '.join('Ps found:',len(gi1)))#for gi in entry.find(f"grammatical-info"):
             for entry in entries:
                 gi=entry.find(f".//grammatical-info") #.get('value')
                 #if gi is not None and len(gi)>1:
-                #    print(gi)
-                #    print(x,y,z,zz)
+                #    log.info(gi)
+                #    log.info(' '.join(x,y,z,zz))
                 #    exit()
                 #    x+=1
                 if gi is None: #entry.find(f".//grammatical-info") is None:
@@ -1431,23 +1435,23 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     output+=[entry] #add this item to a list, not it's elements
                 #elif gi is not None: #entry.find(f".//grammatical-info") is not None:
                 #    z+=1
-                #    print(type(gi))
-                #    print(gi.get('value'))
-                #    print(len(gi))
+                #    log.info(type(gi))
+                #    log.info(gi.get('value'))
+                #    log.info(len(gi))
                 #    winfoentries+=[entry]
                 #else:
                 #    zz+=1
-                #    print("Huh?")
+                #    log.info("Huh?")
         else:
-            #print(ps)
+            #log.info(ps)
             # for self.db.get('')
             for entry in self.nodes.findall(f"entry/sense/grammatical-info[@value='{ps}']/../.."):
-                #print('Skipping this for now...')
+                #log.info('Skipping this for now...')
                 output+=[entry] #add this item to a list, not it's elements
-        #print('Entries without ps:',len(output))
-        #print('Entries with ps:',len(winfoentries))
-        #print('Total entries found (Should be 2468):',len(output)+len(winfoentries))
-        #print('multiple:',x,'no ps:',y,'wps',z,'totalps:',y+z,'huh:',zz)
+        #log.info(' '.join('Entries without ps:',len(output)))
+        #log.info(' '.join('Entries with ps:',len(winfoentries)))
+        #log.info(' '.join('Total entries found (Should be 2468):',len(output)+len(winfoentries)))
+        #log.info(' '.join('multiple:',x,'no ps:',y,'wps',z,'totalps:',y+z,'huh:',zz))
         #exit()
         return output #list of entry nodes
     def guidformsbyregex(self,regex,ps=None,analang=None): #self is LIFT!
@@ -1456,7 +1460,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         and outputs a dictionary of {guid:form} form."""
         if analang is None:
             analang=self.analang
-        #print(regex)
+        #log.info(regex)
         output={}
         def checkformsbyps(self,analang,ps):
             for form in self.formstosearch[analang][ps]:
@@ -1473,20 +1477,20 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             return output
         for entry in entries:
             def debug():
-                print(len(entry))
-                print(str(entry.tag))
-                print(str(entry.get('guid')))
-                print(entry.attrib) #('value'))
-                print(str(entry.find('lexical-unit')))
-                print(str(entry.find('citation')))
-                print(str(entry.find('form')))
-                print(self.get('lexeme',guid=entry.get('guid')))
-                print(self.get('lexeme',guid=entry.get('guid'))[0])
+                log.info(len(entry))
+                log.info(str(entry.tag))
+                log.info(str(entry.get('guid')))
+                log.info(entry.attrib) #('value'))
+                log.info(str(entry.find('lexical-unit')))
+                log.info(str(entry.find('citation')))
+                log.info(str(entry.find('form')))
+                log.info(self.get('lexeme',guid=entry.get('guid')))
+                log.info(self.get('lexeme',guid=entry.get('guid'))[0])
                 exit()
             #debug()
             """FIX THIS!!!"""
             form=self.get('lexeme',guid=entry.get('guid')) #self.formbyid(entry.get('guid'))[0] #just looking for one at this point.
-            print("Apparently there are no/multiple forms for this entry...")
+            log.info("Apparently there are no/multiple forms for this entry...")
         return output
     def senseidformsbyregex(self,regex,ps=None,analang=None): #self is LIFT!
         """This function takes in a ps and compiled regex,
@@ -1509,20 +1513,20 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             return output
         for entry in entries:
             def debug():
-                print(len(entry))
-                print(str(entry.tag))
-                print(str(entry.get('guid')))
-                print(entry.attrib) #('value'))
-                print(str(entry.find('lexical-unit')))
-                print(str(entry.find('citation')))
-                print(str(entry.find('form')))
-                print(self.get('lexeme',guid=entry.get('guid')))
-                print(self.get('lexeme',guid=entry.get('guid'))[0])
+                log.info(len(entry))
+                log.info(str(entry.tag))
+                log.info(str(entry.get('guid')))
+                log.info(entry.attrib) #('value'))
+                log.info(str(entry.find('lexical-unit')))
+                log.info(str(entry.find('citation')))
+                log.info(str(entry.find('form')))
+                log.info(self.get('lexeme',guid=entry.get('guid')))
+                log.info(self.get('lexeme',guid=entry.get('guid'))[0])
                 exit()
             #debug()
             """FIX THIS!!!"""
             form=self.get('lexeme',guid=entry.get('guid')) #self.formbyid(entry.get('guid'))[0] #just looking for one at this point.
-            print("Apparently there are no/multiple forms for this entry...")
+            log.info("Apparently there are no/multiple forms for this entry...")
         return output
     def formbyid(self,guid,lang=None): #This is the language version, use without entry.
         """bring this logic into get()"""
@@ -1531,7 +1535,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             form=self.get('lexeme',guid=guid,lang=lang) #form=self.nodes.findall(f"entry[@guid='{guid}']/lexical-unit/form[@lang='{self.xyz}']/text")
             if form == []:
                 return None
-        #print(form)
+        #log.info(form)
         return form #[0].text #print the text of the <text> node above
     def psbyid(self,guid): #This is the language version, use without entry.
         #return self.nodes.find(f"entry[@guid='{guid}']/sense/grammatical-info").get('value')
@@ -1557,7 +1561,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         output={}
         for form in self.formstosearch[self.analang][ps]:
             # form=self.formstosearch[self.analang][ps][guid]
-            # print(form)
+            # log.info(form)
             if regex.search(form):
             # if len(form) == 1 and regex.search(form):
                 output[guid]=form
@@ -1574,8 +1578,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if ps is None:
             #entries=
             #gi1=self.nodes.findall(f".//grammatical-info")
-            #print('Entries found:',len(entries))#for gi in entry.find(f"grammatical-info"):
-            #print('Ps found:',len(gi1))#for gi in entry.find(f"grammatical-info"):
+            #log.info(' '.join('Entries found:',len(entries)))#for gi in entry.find(f"grammatical-info"):
+            #log.info(' '.join('Ps found:',len(gi1)))#for gi in entry.find(f"grammatical-info"):
             for entry in self.nodes.findall(f"entry"):
                 #gi= #.get('value')
                 if entry.find(f".//grammatical-info") is None: #entry.find(f".//grammatical-info") is None:
@@ -1594,7 +1598,7 @@ class Entry(object): # what does "object do here?"
     #import get #class put:
     def __init__(self, db, guid=None, *args, **kwargs):
         if guid is None:
-            print("Sorry, I was kidding about that; I really do need the entry's guid.")
+            log.info("Sorry, I was kidding about that; I really do need the entry's guid.")
             exit()
         #self.language=globalvariables.xyz #Do I want this here? It doesn't really add anything.. How can I check internal language? If there are more writing systems, do I want to find them?
         #self.ps=lift_get.ps(self.guid) #do this is lift_get Entry class, inherit from there.
@@ -1602,7 +1606,7 @@ class Entry(object): # what does "object do here?"
         self.db=db #Do I want this?
         """Probably should rework this... How to get entry fields?"""
         # self.nodes=self.db.nodes.find(f"entry[@guid='{self.guid}']") #get.nodes(self)
-        #print(self.nodes.get('guid'))
+        #log.info(self.nodes.get('guid'))
         #probably should trim all of these..…
         """These depend on check analysis, should move..."""
         self.analang=self.db.analangs[0]
@@ -1618,11 +1622,11 @@ class Entry(object): # what does "object do here?"
         # self.gloss=get.obentrydefn(self, self.db.glosslang) #entry.get.gloss(self, self.db.glosslang, guid)
         # self.gloss2=get.gloss(self, self.db.glosslang2, guid)
         # self.plural=db.get('plural',guid=guid)
-        # print("Looking for pronunciation field locations...")
+        # log.info("Looking for pronunciation field locations...")
         self.tone={}
         for location in self.db.get('pronunciationfieldlocation',guid=guid,
             fieldtype='tone'):
-            # print('Found:', location)
+            # log.info(' '.join('Found:', location))
             self.tone[location]=db.get('pronunciationfieldvalue',guid=guid,location=location,fieldtype='tone')
         """These depend on check analysis, should move..."""
         #self.plural=db.get('fieldvalue',guid=guid,lang=self.analang,fieldtype=db.pluralname)
@@ -1653,7 +1657,7 @@ class Unused():
             if re.search('^.$',i): #looking only at digraphs
                 inxyz.append(i)
                 #s=i[0]
-                #print(s) #to see the following run per segment
+                #log.info(s) #to see the following run per segment
                 #if i not in inxyz:
                 #    inxyz.append(i)
         return removedups(inxyz)
@@ -1664,7 +1668,7 @@ class Unused():
             if re.search('^..$',i): #looking only at digraphs
                 inxyz.append(i[0])
                 #s=i[0]
-                #print(s) #to see the following run per segment
+                #log.info(s) #to see the following run per segment
                 #if s not in inxyz:
                 #    inxyz.append(s)
         return inxyz
@@ -1673,7 +1677,7 @@ class Unused():
         for i in digraphs:
             if re.search('^..$',i): #looking only at digraphs
                 inxyz.append(i[1])
-                #print(s) #to see the following run per segment
+                #log.info(s) #to see the following run per segment
                 #if s not in inxyz:
                 #    inxyz.append(s)
         return inxyz
@@ -1682,7 +1686,7 @@ class Unused():
         for i in trigraphs:
             if re.search('^...$',i): #looking only at digraphs
                 s=i[0] #re.search('^.',i)
-                #print(i) #to see the following run per trigraph
+                #log.info(i) #to see the following run per trigraph
                 if  s not in inxyz: #s.group() is not None and
                     inxyz.append(s)
         return inxyz
@@ -1691,7 +1695,7 @@ class Unused():
         for i in trigraphs:
             if re.search('^...$',i): #looking only at digraphs
                 s=i[1] #re.search('^.',i)
-                #print(i) #to see the following run per trigraph
+                #log.info(i) #to see the following run per trigraph
                 if  s not in inxyz: #s.group() is not None and
                     inxyz.append(s)
         return inxyz
@@ -1700,7 +1704,7 @@ class Unused():
         for i in trigraphs:
             if re.search('^...$',i): #looking only at digraphs
                 s=i[2] #re.search('^.',i)
-                #print(i) #to see the following run per trigraph
+                #log.info(i) #to see the following run per trigraph
                 if  s not in inxyz: #s.group() is not None and
                     inxyz.append(s)
         return inxyz
@@ -1712,7 +1716,8 @@ def getnow():
 
 if __name__ == '__main__':
     import time #for testing; remove in production
-    #import entry.get as get
+    def _(x):
+        str(x)
     """To Test:"""
     filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
@@ -1755,185 +1760,111 @@ if __name__ == '__main__':
             fieldtype='tone',showurl=True)
         # output=lift.get('exfieldvalue', senseid=senseid,
         #     fieldtype='tone', location=name, showurl=True)
-        print(senseid,output)
+        log.info(' '.join(senseid,output))
         outputs+=output
-    print(len(outputs))
+    log.info(len(outputs))
     # for ps in lift.pss:
-    #     # print(len(lift.senseidformstosearch[lang][ps][guid]))
-    #     print(ps,len(lift.senseidformstosearch[lang][ps]))
-    # print(lift.get('lexeme', #, guid='0007124e-a769-4eb5-a7c0-4ff3af5a3206',
+    #     # log.info(len(lift.senseidformstosearch[lang][ps][guid]))
+    #     log.info(' '.join(ps,len(lift.senseidformstosearch[lang][ps])))
+    # log.info(' '.join(lift.get('lexeme', #, guid='0007124e-a769-4eb5-a7c0-4ff3af5a3206',
     #     #fieldtype='tone', location='Plural',
-    #     showurl=True))
-        #print(hasattr(lift,'db'))
+    #     showurl=True)))
+        #log.info(hasattr(lift,'db'))
     # lift.get('Test')
-    print(lift.nodes.get('producer'))
+    log.info(lift.nodes.get('producer'))
     #Not needed now:
     #Lift.profiles.get(lift, nsyls=lift.nsyls)
     #Not working now?
     exit()
     times=100
-    print("Timing...")
+    log.info("Timing...")
     start_time=time.time() #move this to function?
     for x in range(times):
         # lift=Lift(filename,nsyls=2)
         c=Entry(lift,guid)
-    print("Finished",times,"iterations in",time.time() - start_time," seconds.")
+    log.info(' '.join("Finished",times,"iterations in",time.time() - start_time," seconds."))
     lang=None
     guid=None
     fieldtype=None
     location=None
     def getfieldscheck(lift,guid,lang,fieldtype,location):
         lexeme=lift.get('pronunciationfieldname',guid,lang,fieldtype,location)
-        #print(lexeme)
+        #log.info(lexeme)
         lexeme=lift.get('pronunciationfieldvalue',guid,lang,fieldtype,location)
-        #print(lexeme)
+        #log.info(lexeme)
         lexeme=lift.get('pronunciation',guid,lang,fieldtype,location)
-        #print(lexeme)
+        #log.info(lexeme)
     exit()
     times=100
     for fn in [getfieldscheck]:
         start_time=time.time() #move this to function?
         for x in range(times):
-            fn(lift,guid,lang,fieldtype,location) #print(fn,timeit.timeit(fn, setup=setup, number=times))
-        print("Finished",times,"iterations of",fn," in",time.time() - start_time," seconds.")
+            fn(lift,guid,lang,fieldtype,location) #log.info(' '.join(fn,timeit.timeit(fn, setup=setup, number=times)))
+        log.info(' '.join("Finished",times,"iterations of",fn," in",time.time() - start_time," seconds."))
     exit()
     e=Entry(lift,guid)
-    print(e.nodes)
+    log.info(e.nodes)
     #get.gloss(lift)
     gloss='Dummy'
-    print(get.gloss(lift,None,guid=None))
-    print('lift_get.Lift() all:')
+    log.info(get.gloss(lift,None,guid=None))
+    log.info('lift_get.Lift() all:')
     def objectliftall(lift,guid):
         gloss=get.gloss(lift,None,guid=None) #lift.glosslang
         return gloss
     gloss=objectliftall(lift,guid)
-    print('\t',gloss)
+    log.info(' '.join('\t',gloss))
 
-    print('ET.lift all:')
+    log.info('ET.lift all:')
     def etliftall(lift,guid):
         gloss=get.gloss(lift.nodes,None,guid=None) #lift.glosslang
         return gloss
     gloss=etliftall(lift,guid)
-    print('\t',gloss)
+    log.info(' '.join('\t',gloss))
 
-    print('lift_get.Lift():')
+    log.info('lift_get.Lift():')
     def objectlift(lift,guid):
         #gloss=get.obliftdefn(lift,guid,lang=lift.glosslang) #get.gloss(lift,None,guid) #lift.glosslang
         gloss=get.gloss(lift,None,guid) #lift.glosslang
         return gloss
     gloss=objectlift(lift,guid)
-    print('\t',gloss)
+    log.info(' '.join('\t',gloss))
 
-    print('lift_get.Entry():')
+    log.info('lift_get.Entry():')
     def objectentry(lift,guid):
         entry=Entry(lift,guid) #for lift_get.Entry()
         gloss=entry.gloss
         return gloss
     gloss=objectentry(lift,guid)
-    print('\t',gloss)
+    log.info(' '.join('\t',gloss))
 
-    print('ET.entry:')
+    log.info('ET.entry:')
     def etentry(lift,guid):
         entry=lift.nodes.find(f"entry[@guid='{guid}']") #for nodeset
         #gloss=get.etentrydefn(entry,lang=lift.glosslang) #get.gloss(entry,None,guid) #lift.glosslang
         get.gloss(entry,None,guid) #lift.glosslang
         return gloss
     gloss=etentry(lift,guid)
-    print('\t',gloss)
+    log.info(' '.join('\t',gloss))
 
-    print('ET.lift:')
+    log.info('ET.lift:')
     def etlift(lift,guid):
         #gloss=get.etliftdefn(lift.nodes,guid,lang=lift.glosslang) #get.gloss(lift.nodes,None,guid) #lift.glosslang
         get.gloss(lift.nodes,None,guid) #lift.glosslang
         return gloss
     gloss=etlift(lift,guid)
-    print('\t',gloss)
+    log.info(' '.join('\t',gloss))
     #exit()
     exit()
     times=100
     for fn in [getfieldscheck,objectliftall,etliftall,objectlift,etlift,objectentry,etentry]:
         start_time=time.time() #move this to function?
         for x in range(times):
-            fn(lift,guid) #print(fn,timeit.timeit(fn, setup=setup, number=times))
-        print("Finished",fn," in",time.time() - start_time," seconds.")
+            fn(lift,guid) #log.info(' '.join(fn,timeit.timeit(fn, setup=setup, number=times))
+        log.info(' '.join("Finished",fn," in",time.time() - start_time," seconds."))
 
         #C=lift_get.cbeta() #This might need some formatting to work in a regex above.
         #out2=C,timeit.timeit(test, number=times)
-        #print(out1)
-        #print(out2)
+        #log.info(out1)
+        #log.info(out2)
 
     #lift.nodes=Tree(lift).parsed
-    """These are redundant"""
-    #print("Working on",lift,"with",lift.nodes.nids(),"entries.")
-    #extrasegments() # should probably have this as an intro to anything else
-    #v=v()
-    #c=c()
-    #print(c)
-    def regextest():
-        #a='rasd\nsa sd'
-        #print(re.findall(r'[^\S\n\t]+',a))
-        #i=re.search('( )+','Bob and sally')
-        #print(i)
-        #exit()
-        list=[
-        ' +','\ ','\w','\W','\s','\S','\t','\n','\r','\f','\v',
-        r' ',r'\ ',r'\w',r'\W',r'\s',r'\S',r'\t',r'\n',r'\r',r'\f',r'\v',
-        '[ ]'
-        ]
-        for regex in list:
-            print(regex,re.search(' +','Bob and sally'))
-        exit()
-    #print(v)
-    #regex=cvregex('CVC')
-    #for form in forms:
-    #print(regex)
-    #vs=vowels()
-    #print(vs)
-    #print(timeit.timeit(c, number=10000))
-    #print(cprime())
-    #print(timeit.timeit(cprime, number=1))
-    #print(v())
-    #for form in forms():
-    #    print(form)
-    #pss=pss()
-    #print(pss)
-    #formsnids()
-    #ids=idsbyformregex("bha")
-    #ids=formregex("bha")
-    #print(ids)
-    #try:
-    #for id in ids:
-    #    print(id)
-    #except:
-    #    print("eror!")
-        #print(id[0])
-        #print(id[1])
-    #setenv()
-    #e=parse()
-    #Call the above functions (for testing, should be called from other scripts):
-    #ids()
-    #forms=forms()
-    #for form in forms:
-    #    print(form)
-    #form()
-    #glosses=glosses()
-    #gloss2s()
-    #gloss=gloss(guid)
-    #print(gloss)
-    #for gloss in glosses():
-    #    print(gloss)
-    #print("gloss= "  str(gloss()))
-    #gloss2()
-
-    #numbers of ids and fields:
-    #nids=nids()
-    #print(nids)
-    #nfields=nfields()
-    #print(nfields)
-    #for field in fields(guid):
-    #    print(field)
-    #print(pls('Syllable Structure',xyz))
-    #field('Oliver Kroeger Wordlist')
-    #pls('Plural',xyz)
-    #pls('Part of Speech - Original',xyz)
-    #pls('Morphemes - Plural Form',xyz)

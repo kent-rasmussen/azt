@@ -1,7 +1,7 @@
 ## coding=UTF-8
 import re
 import logging
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 """This is called from a number of places"""
 def s(self,stype,lang=None):
     """join a list into regex format, sort for longer first, to capture
@@ -14,11 +14,8 @@ def s(self,stype,lang=None):
     # if hasattr(self,stype): #should be one of c,v,g,n
     #     return "("+'|'.join(sorted(getattr(self,stype)[lang]))+")"
 def make(regex, word=False, compile=False):
-    # """These look for alternations not in groups"""
-    # print('End:',re.search('\|[^)]*$',regex))
-    # print('Beginning:',re.match('^[^(]*\|',regex))
     if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
-        print('Regex problem! (need parentheses around segments!):',regex)
+        log.error('Regex problem! (need parentheses around segments!):',regex)
         exit()
     if word == True:
         """To make alternations and references work correctly, this should
@@ -28,7 +25,7 @@ def make(regex, word=False, compile=False):
         try:
             regex=re.compile(regex, re.UNICODE)
         except:
-            print('Regex problem!')
+            log.error('Regex problem!')
     return regex
 def fromCV(db, CVs, lang, word=False, compile=False):
     """ this inputs regex variable (regexCV), a tuple of two parts:
@@ -47,7 +44,7 @@ def fromCV(db, CVs, lang, word=False, compile=False):
     references=range(1,5)
     variables=('v','c')
     def CVproblem():
-        print("Error! check your CV template; it should only have 'C' "
+        log.error("Error! check your CV template; it should only have 'C' "
                 "and 'V' in it, or 'x' references ("+x+')')
         exit()
     for x in CVs[0]:
