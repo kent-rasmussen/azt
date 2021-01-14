@@ -5,7 +5,7 @@ from tkinter import Tk
 import pathlib
 import os
 import logging
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 # import os
 def fullpathname(filename):
@@ -19,7 +19,7 @@ def fullpathname(filename):
                                 base_path,
                                 filename)
 def askfilename(self):
-    print('Apparently there is no last lift file url; asking...')
+    log.info('Apparently there is no last lift file url; asking...')
     text=(_("Please select a LIFT lexicon file to check"))
     tkinter.Label(self.status, text=text).grid(column=0,
     row=0)
@@ -35,11 +35,10 @@ def getimagesdir(filename):
     return dir
 def getaudiodir(filename):
     dir=pathlib.Path.joinpath(getfilenamedir(filename),'audio')
-    # print("Looking for",dir)
+    log.debug("Looking for {}".format(dir))
     if not os.path.exists(dir):
-        # print(dir,"not there, making it!")
+        log.debug("{} not there, making it!".format(dir))
         os.mkdir(dir)
-    # exit()
     return dir
 def exists(file):
     if os.path.exists(file):
@@ -51,14 +50,14 @@ def remove(file):
         os.remove(file)
     elif exists(fullpathname(file)):
         os.remove(fullpathname(file))
-    # else:
-    #     print(_("Tried to remove {}, but I can't find it.").format(file))
+    else:
+        log.debug(_("Tried to remove {}, but I can't find it.").format(file))
 def getdiredurl(dir,filename):
     return pathlib.Path.joinpath(dir,filename)
 # def getimagefilename(*args):
 #     wavfilename=''
 #     for arg in args:
-#         print(type(arg),type(args))
+#         log.debug(type(arg),type(args))
 #         wavfilename+=arg
 #         if args.index(arg) < len(args):
 #             wavfilename+='_'
@@ -71,9 +70,8 @@ def getlangnamepaths(filename, langs):
     for lang in langs:
         #filename=pathlib.Path.joinpath(wsdir, lang +'.ldml')
         output[lang]=str(pathlib.Path.joinpath(wsdir, lang +'.ldml'))
-        #print(filename)
-    #print(output)
-    #exit()
+        log.debug(filename)
+    log.debug(output)
     return output
 def getinterfacelang(self):
     """This is called by the mainapplication class before anything else happens,
@@ -86,15 +84,15 @@ def getinterfacelang(self):
                             ]
     try:
         import ui_lang
-        #print("lift_url.py imported fine.")
+        log.debug("lift_url.py imported fine.") #Sorry, no translation!
         try:
             self.interfacelang=ui_lang.interfacelang
-            #print('filename: '+filename)
+            log.debug('filename: '+filename)
         except:
-            print("Didn't find ui_lang.interfacelang") #Sorry, no translation!
+            log.error("Didn't find ui_lang.interfacelang") #Sorry, no translation!
             self.interfacelang=None
     except:
-        print("Didn't find ui_lang.py") #Sorry, no translation!
+        log.error("Didn't find ui_lang.py") #Sorry, no translation!
         self.interfacelang=None
 def writeinterfacelangtofile(lang):
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "ui_lang.py")
@@ -105,7 +103,7 @@ def getfilename():
     try:
         import lift_url
         if exists(lift_url.filename):
-            # print("lift_url.py imported fine, with a real file.")
+            log.debug("lift_url.py imported fine, with a real file.")
             return lift_url.filename
         else:
         # try:
