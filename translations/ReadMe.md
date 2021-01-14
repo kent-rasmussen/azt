@@ -3,10 +3,11 @@ Because of the way we are doing translations (within the constraints of
 Python), there are a couple things we should all pay attention to:
 
 - The following formats work:
-    - format()ed string on one line
+    - format()ed string on one line:
 
         _("Language with code [{}]").format(xyz)
     - format()ed strings, with format on line after reference
+    
         _("{} doesn't look like a well formed lift file; please "
         "try again.").format(filename)`
     - `_("Your regular expressions look OK for {0} (there are "\n
