@@ -32,7 +32,7 @@ msgstr "Veuillez sélectionner un fichier de lexique LIFT à vérifier"
 
 #: /home/kentr/bin/raspy/azt/lift.py:1089
 msgid "Language with code [{}]"
-msgstr ""
+msgstr "Langue du code [{}]"
 
 #: /home/kentr/bin/raspy/azt/lift.py:1394
 #, python-brace-format
