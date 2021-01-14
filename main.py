@@ -4999,9 +4999,9 @@ if __name__ == "__main__":
     i18n={}
     # t = gettext.translation('dictionarychecker', aztdir)
     # _ = t.gettext
-    i18n['en'] = gettext.translation('dictionarychecker', transdir, languages=['en_US'])
-    i18n['fr'] = gettext.translation('dictionarychecker', transdir, languages=['fr_FR'])
-    i18n['fub'] = gettext.translation('dictionarychecker', transdir, languages=['fub'])
+    i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
+    i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
+    # i18n['fub'] = gettext.translation('azt', transdir, languages=['fub'])
     # interfacelang('en')
     # # print(_('Tone'))
     # interfacelang('fr')

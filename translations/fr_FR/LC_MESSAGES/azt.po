@@ -686,7 +686,7 @@ msgstr "Options"
 #: /home/kentr/bin/raspy/azt/main.py:4005
 #, fuzzy
 msgid "Do"
-msgstr "Terminé"
+msgstr "Faire"
 
 #: /home/kentr/bin/raspy/azt/main.py:4007
 msgid "Tone report"
@@ -838,7 +838,7 @@ msgstr "A→Z+T Vérificateur de Dictionnaire et d'Orthographe"
 
 #: /home/kentr/bin/raspy/azt/main.py:4651
 msgid "Please Wait..."
-msgstr ""
+msgstr "Attendez SVP..."
 
 #: /home/kentr/bin/raspy/azt/main.py:4662
 msgid "A→Z+T Dictionary and Orthography Checker"
