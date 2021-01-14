@@ -4058,7 +4058,7 @@ class MainApplication(Frame):
         window=Window(self)
         title=(_("{} Dictionary and Orthography Checker").format(self.progname))
         window.title(title)
-        Label(window.frame, text="version: "+version,anchor='c',padx=50
+        Label(window.frame, text=_("version: {}").format(version),anchor='c',padx=50
                         ).grid(row=1,column=0,sticky='we')
         text=_("{0} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
