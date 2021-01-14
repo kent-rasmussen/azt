@@ -1,5 +1,6 @@
 # Translation ReadMe
-<--Two spaces at the end of a line gives a linebreak, but three ticks (```) gives better overall format, with shading-->
+<--Two spaces at the end of a line gives a linebreak, but three ticks (```)
+gives better overall format, with shading-->
 Because of the way we are doing translations (within the constraints of
 Python), there are a couple things we should all pay attention to:
 
