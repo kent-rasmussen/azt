@@ -6,7 +6,7 @@ progname='A→Z+T'
 version='0.4' #This is a string...
 import platform
 if platform.uname().node == 'karlap':
-    loglevel='DEBUG' #levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
+    loglevel=1 #levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
 else:
     loglevel='DEBUG' #levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
 from logsetup import *

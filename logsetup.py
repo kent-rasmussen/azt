@@ -8,9 +8,10 @@ def logsetup(loglevel):
     """This function needs to run before importing any of my modules, which
     I'd like to have log stuff. So I put it here, so it won't clog up the
     top of main.py"""
+    print(loglevel)
     logfile='log_'+datetime.datetime.utcnow().isoformat()[:-16]+'.txt'
     levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
-    if loglevel.upper() not in levels:
+    if (type(loglevel) is not int) and (loglevel.upper() not in levels):
         print("Please select one of the following debug levels (that and above "
             "will print):"
             "\nDEBUG:    Detailed information, typically of interest only when "
@@ -25,7 +26,10 @@ def logsetup(loglevel):
             "may be unable to continue running.")
         exit()
     log = logging.getLogger()
-    log.setLevel(getattr(logging, loglevel.upper()))
+    if type(loglevel) is int:
+        log.setLevel(loglevel)
+    else:
+        log.setLevel(getattr(logging, loglevel.upper()))
     simpleformat = logging.Formatter('%(message)s')
     fullformat = logging.Formatter('%(asctime)s: %(name)s: %(levelname)s '
                                     '- %(message)s')
