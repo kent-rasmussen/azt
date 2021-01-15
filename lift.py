@@ -403,7 +403,7 @@ def attributesettings(
                     f"/lexical-unit/form"),
             'attr': 'lang'},
         'citationlang':{
-            'cm': "analysis languages used in lexemes",
+            'cm': "analysis languages used in citation forms",
             'url':(f"entry[@guid='{guid}']"
                     f"/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
                     f"/citation/form"),
@@ -593,14 +593,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 # log.info(' '.join(attribute,attr))
                 if attr == 'nodetext':
                     if node is not None:
-                        # log.info("Returning node text")
+                        log.log(1,"Returning node text")
                         output+=[node.text]
                 elif attr == 'node':
                     if node is not None:
-                        # log.info("Returning whole node")
+                        log.log(1,"Returning whole node")
                         output+=[node]
                 else:
-                    # log.info("Returning node attribute")
+                    log.log(1,"Returning node attribute")
                     output+=[node.get(attr)]
             #log.info(' '.join('Node:',node))
             # output+=[fn(node)]
@@ -1054,19 +1054,22 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                 len(gforms),glang,form))
                         #     possibles.remove(glang) #not anymore
         for lang in possibles:
-            # log.info(' '.join(lang,lang.find('audio')))
             if 'audio' in lang:
+                log.debug(_("Audio langauge {} found.".format(lang)))
                 self.audiolangs+=[lang]
             else:
                 self.analangs+=[lang]
         if self.audiolangs == []:
+            log.debug(_('No audio languages found in Database; creating one '
+            'for each analysis langauge.'))
             for self.analang in self.analangs:
                 self.audiolangs+=[f'{self.analang}-Zxxx-x-audio']
-        # log.info(' '.join('audio:',self.audiolangs))
-        # log.info(self.analangs)
+        log.debug('Audio languages: {}'.format(self.audiolangs))
+        log.debug('Analysis languages: {}'.format(self.analangs))
     def glosslangs(self):
         self.glosslangs=list(dict.fromkeys(self.get('glosslang')+self.get(
                                                                 'defnlang')))
+        log.debug(_("gloss languages found: {}".format(self.glosslangs)))
     def langnames(self):
         """This is for getting the prose name for a language from a code."""
         """It uses a xyz.ldml file, produced (at least) by WeSay."""
@@ -1170,6 +1173,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             actuals[lang]=sorted(unsorted,key=len, reverse=True)
         return actuals
     def clist(self): #This variable gives lists, to iterate over.
+        log.log(2,"Creating CV lists from scratch")
         """These are all possible forms, that I have ever run across.
         If I find something new (or you tell me!) we can add it here.
         Forms not actually in the data get removed below."""
@@ -1243,9 +1247,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for stype in s:
                 self.s[lang][stype]=self.inxyz(lang,s[stype])
                 if self.debug==True:
-                    log.info(' '.join(['hypotheticals[{}][{}]:'.format(lang,stype),str(s[stype])]))
-                    log.info(' '.join(['actuals[{}][{}]:'.format(lang,stype),
-                                                    str(self.s[lang][stype])]))
+                    log.info('hypotheticals[{}][{}]: {}'.format(lang,stype,
+                                                        str(s[stype])))
+                    log.info('actuals[{}][{}]: {}'.format(lang,stype,
+                                                    str(self.s[lang][stype])))
         # exit()
         # return actuals
     # def vlist(self):
