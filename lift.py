@@ -492,11 +492,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Working on {} with {}, entries "
                     "and {} senses".format(filename,self.nguids,self.nsenseids))
         """These three get all possible langs by type"""
-        self.glosslangs=self.glosslangs()
-        self.analangs=self.analangs() #this gets audiolangs, too.
-        # log.info(self.audiolangs)
-        # log.info(self.analangs)
-        # log.info(self.analangs)
+        self.glosslangs() #sets: self.glosslangs
+        self.analangs() #sets: self.analangs, self.audiolangs
         self.langnames()
         self.pss=self.pss() #log.info(self.pss)
         self.getformstosearch() #sets: self.formstosearch[lang][ps] #no guids
@@ -1038,9 +1035,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             filename=self.filename
         self.tree.write(filename, encoding="UTF-8")
     def analangs(self):
+        log.log(1,_("Looking for analangs in lift file"))
         self.audiolangs=[]
         self.analangs=[]
         possibles=list(dict.fromkeys(self.get('lexemelang')+self.get('citationlang')))
+        log.info(_("Possible analysis language codes found: {}".format(possibles)))
+        for glang in ['fr','en']:
+            if glang in possibles:
+                for form in ['citation','lexeme']:
+                    gforms=self.get(form,analang=glang)
+                    if 0< len(gforms):
+                        log.info("LWC lang {} found in {} field: {}".format(
+                            glang,form,self.get(form,analang=glang)))
+                        """For Saxwe, and others who have fr or en encoding errors"""
+                        if len(gforms) <= 10:
+                            log.info("Only {} examples of LWC lang {} found "
+                                "in {} field; is this correct?".format(
+                                                len(gforms),glang,form))
+                        #     possibles.remove(glang) #not anymore
         for lang in possibles:
             # log.info(' '.join(lang,lang.find('audio')))
             if 'audio' in lang:
@@ -1052,9 +1064,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 self.audiolangs+=[f'{self.analang}-Zxxx-x-audio']
         # log.info(' '.join('audio:',self.audiolangs))
         # log.info(self.analangs)
-        return self.analangs
     def glosslangs(self):
-        return list(dict.fromkeys(self.get('glosslang')+self.get('defnlang')))
+        self.glosslangs=list(dict.fromkeys(self.get('glosslang')+self.get(
+                                                                'defnlang')))
     def langnames(self):
         """This is for getting the prose name for a language from a code."""
         """It uses a xyz.ldml file, produced (at least) by WeSay."""
