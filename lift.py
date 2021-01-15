@@ -606,7 +606,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             # output+=[fn(node)]
             #output+=[self.attributes[attribute]['formfn'](node)]
             #output+=[self.attributesettings(attribute, guid, lang, fieldtype, location)['formfn'](node)]
-        return list(dict.fromkeys(output))
+        return output #list(dict.fromkeys(output)) #Do I need to remove dups?
     def makenewguid(self):
         from random import randint
         log.info("Making a new unique guid")
@@ -1410,7 +1410,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "segment --those may not be covered by \n"
                     "your regexes.".format(lang)))
     def pss(self): #get all POS values in the LIFT file
-        return self.get('ps')
+        return list(dict.fromkeys(self.get('ps')))
         #pss=list()
         #for ps in self.nodes.findall(f"entry/sense/grammatical-info"):
         #    thisps=ps.attrib.get('value')
