@@ -1170,7 +1170,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c={}
         c['p']={}
         c['p'][2]=['bh','dh','kp','gh','gb','kk']
-        c['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','c','k','g','ɡ','G',
+        c['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','ɖ','c','k','g','ɡ','G',
                                                                 'ʔ',"ꞌ",'ʼ']
         c['f']={}
         c['f'][2]=['ch','ph','bh','vh','sh','zh','hh']
@@ -1210,7 +1210,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #     lp['labpal']+=list(char+'w' for char in lp['pal'])
         #     for stype in sorted(lp.keys()): #larger graphs first
         #         c=lp[stype]+c
-        s['V']=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
+        s['V']=['a', 'á', 'i', 'ɨ', 'ï', 'í','ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
                 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃',
                 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
         s['d']=["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
@@ -1385,7 +1385,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                         str().join(sum(self.s[lang].values(),
                                         []))+str().join(extras)))):
                         self.segmentsnotinregexes[lang].append(x)
-                        log.info('Missing {} from {} {}'.format(x,lang,form))
+                        log.debug('Missing {} from {} {}'.format(x,lang,form))
             if len(self.segmentsnotinregexes[lang]) > 0:
                 log.info("The following segments are not in your {} "
                 "regex's: {}".format(lang,
