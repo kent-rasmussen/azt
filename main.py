@@ -140,7 +140,7 @@ class Check():
         # self.glosslang2=self.db.glosslang2 #inherit from the lang if not specified
         # self.audiolang=self.db.audiolang
         # self.guessinterfacelang()
-        print(_('Interface Language: '),self.parent.parent.interfacelang)
+        log.info(_('Interface Language: {}'.format(self.parent.parent.interfacelang)))
         """These two lines can import structured frame dictionaries; do this
         just to make the import, then comment them out again."""
         # import toneframesbylang
@@ -151,6 +151,8 @@ class Check():
         # print('self.profilesbysense:',self.profilesbysense)
         """I think I need this before setting up regexs"""
         self.guessanalang() #needed for regexs
+        log.debug("analang guessed: {} (If you don't like this, change it in "
+                    "the menus)".format(self.analang))
         self.loaddefaults() # overwrites guess above, stored on runcheck
         if 'bfj' in self.db.s:  #self.analang=='bfj': # need to do this otherwise!
             self.db.s['bfj']['V']=['ou','ei']+self.db.s['bfj']['V']
@@ -166,7 +168,7 @@ class Check():
         self.setnamesall() #sets self.checknamesall
         # self.V=self.db.v #based on what is actually in the language (no groups)
         # self.C=self.db.c #this regex is basically each valid glyph in analang,
-        print("Done initializing check; running first check check.")
+        log.info("Done initializing check; running first check check.")
         # self.profileofform()
         # exs=
         # print(len(exs))
@@ -187,25 +189,46 @@ class Check():
             self.parent.parent.interfacelang=self.glosslang
         setinterfacelang(self.glosslang)
     def guessanalang(self):
+        langspriority=collections.Counter(self.db.get('lexemelang')+
+                                self.db.get('citationlang')).most_common()
+        self.analang=langspriority[0][0]
+        log.debug(_("Analysis language with the most fields ({}): {} ({})".format(langspriority[0][1],self.analang,langspriority)))
+        return
         """if there's only one analysis language, use it."""
         nlangs=len(self.db.analangs)
+        log.debug(_("Found {} analangs: {}".format(nlangs,self.db.analangs)))
         if nlangs == 1: # print('Only one analang in database!')
             self.analang=self.db.analangs[0]
             self.analangdefault=self.db.analangs[0] #In case the above gets changed.
+            log.debug(_('Only one analang in file; using it: ({})'.format(
+                                                        self.db.analangs[0])))
             """If there are more than two analangs in the database, check if one
             of the first two is three letters long, and the other isn't"""
         elif nlangs == 2:
             if ((len(self.db.analangs[0]) == 3) and
                 (len(self.db.analangs[1]) != 3)):
-                print('Looks like I found an iso code for analang!')
+                log.debug(_('Looks like I found an iso code for analang! '
+                                        '({})'.format(self.db.analangs[0])))
                 self.analang=self.db.analangs[0] #assume this is the iso code
-            elif (len(self.db.analangs[1]) == 3) and (len(self.db.analangs[0]) != 3):
-                print('Looks like I found an iso code for analang!')
+            elif ((len(self.db.analangs[1]) == 3) and
+                    (len(self.db.analangs[0]) != 3)):
+                log.debug(_('Looks like I found an iso code for analang! '
+                                            '({})'.format(self.db.analangs[1])))
                 self.analang=self.db.analangs[1] #assume this is the iso code
+            else:
+                langspriority=collections.Counter(self.db.get('lexemelang')+
+                                        self.db.get('citationlang')).most_common()
+                log.debug("All: {}".format(self.db.get('lexemelang')+
+                                        self.db.get('citationlang')))
+                log.debug(collections.Counter(self.db.get('lexemelang')+
+                                        self.db.get('citationlang')))
+                log.debug('Found the following analangs: {}'.format(langspriority))
         else: #for three or more analangs, take the first plausible iso code
             for n in range(nlangs):
                 if len(self.db.analangs[n]) == 3:
                     self.analang=self.db.analangs[n]
+                    log.debug(_('Looks like I found an iso code for analang! '
+                                            '({})'.format(self.db.analangs[n])))
                     return
     def guessaudiolang(self):
         """if there's only one audio language, use it."""
@@ -282,10 +305,12 @@ class Check():
         if (not hasattr(self,'distinguish')) or (self.distinguish == None):
             self.distinguish={}
         for var in ['G','N','S','NC','CG','Nwd']:
-            print(var,self.distinguish)
+            log.debug(_("Variable {} current value: {}").format(var,
+                                                            self.distinguish))
             if (var not in self.distinguish) or (type(self.distinguish[var]) is not bool):
                 self.distinguish[var]=False
-            print(var,self.distinguish[var])
+            log.debug(_("Variable {} current value: {}").format(var,
+                                                        self.distinguish[var]))
     def setSdistinctions(self):
         def submitform():
             change=False
@@ -748,8 +773,7 @@ class Check():
                                 'audio_card_index']:
                 self.checkcheck()
         else:
-            if self.debug==True:
-                print('No change:',attribute,'==',choice)
+            log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setinterfacelangwrapper(self,choice,window):
             self.set('interfacelang',choice,window) #set the check variable
             setinterfacelang(choice) #change the UI
@@ -933,7 +957,7 @@ class Check():
             self.profilecountInvalid=module.profilecountInvalid
             self.scount=module.scount
         except:
-            print("There doesn't seem to be a profile data file; "
+            log.info("There doesn't seem to be a profile data file; "
                     "making one now (wait maybe three minutes).")
             self.profilesbysense=None
         return
@@ -958,7 +982,7 @@ class Check():
                     setattr(self,default,getattr(d,default))
                 print(default, getattr(self,default))
         except:
-            print("There doesn't seem to be a default file; "
+            log.info("There doesn't seem to be a default file; "
                     "continuing without one.")
         return
     def storedefault(self,default):
@@ -1142,7 +1166,7 @@ class Check():
         the regexes we need"""
         self.rx={}
         for sclass in ['C','V']: #'N','G',
-            print(rx.s(self,sclass))
+            log.debug(str(rx.s(self,sclass)))
             self.rx[sclass]=rx.make(rx.s(self,
                                         sclass),compile=True)
         if self.distinguish['Nwd']==True:
@@ -1532,7 +1556,6 @@ class Check():
             print("find the language")
             self.getanalang()
             return
-        (self.audiolang)
         if self.audiolang == None:
             self.guessaudiolang() #don't display this, but make it
         """This just gets the prose language name from the code"""
