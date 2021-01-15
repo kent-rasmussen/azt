@@ -13,7 +13,8 @@
 - diagnose pl/imp not appearing on recording screen
   - not really there?
   - pushed off the screen?
-- Test logging on MS Windows
+- test analang prioritization/guessing on various lift files.
+- test my logging (log.log(1,x))
 
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
@@ -61,6 +62,9 @@
 - fixed multiple sense glosses pulled into CV reports (now senses are sorted individually)
 - added linebreaks to tone frame definition window, to keep it on the page
 
+# prioritization
+- We now guess analysis language (when unspecified) based on the one with the most appearances.
+
 ## UI
 - Added page to instruct A→Z+T how to distinguish certain segment classes
 - removed redo profile analysis from easy temptation
@@ -75,8 +79,8 @@
 - variables to (potentially) distinguish nasals, glides, and other sonorants from other consonants
 - Set menus to have 'Redo' set, for advanced things (incl. profile analysis - get this off the beaten path!)
 - removed invalid check from profilecheck
-- set up log to run by default, working in modules
-
+- set up log to run by default, working in modules: seems to be working in MS Windows
+- added check and warning for fr or en encoded lc/lx data (<10 examples)
 # Version 0.4
 ## new features:
 ### Functions
