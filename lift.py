@@ -1055,13 +1055,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         #     possibles.remove(glang) #not anymore
         for lang in possibles:
             if 'audio' in lang:
-                log.debug(_("Audio langauge {} found.".format(lang)))
+                log.debug(_("Audio language {} found.".format(lang)))
                 self.audiolangs+=[lang]
             else:
                 self.analangs+=[lang]
         if self.audiolangs == []:
             log.debug(_('No audio languages found in Database; creating one '
-            'for each analysis langauge.'))
+            'for each analysis language.'))
             for self.analang in self.analangs:
                 self.audiolangs+=[f'{self.analang}-Zxxx-x-audio']
         log.debug('Audio languages: {}'.format(self.audiolangs))
@@ -1078,7 +1078,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         node=None
         self.languagenames={}
         for xyz in self.analangs+self.glosslangs: #self.languagepaths.keys():
-            # log.info(' '.join('Looking for langauge name for',xyz))
+            # log.info(' '.join('Looking for language name for',xyz))
             """This provides an ldml node"""
             #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
             #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
