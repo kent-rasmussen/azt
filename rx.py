@@ -10,7 +10,7 @@ def s(self,stype,lang=None):
         log.debug(_('telling rx.s which lang to use'))
         lang=self.analang
         log.debug(_("Using analang: {}".format(self.analang)))
-    log.debug(_("Looking in self.s: {}".format(self.s)))
+    log.debug(_("Looking in self.s[{}]: {}".format(lang,self.s)))
     if stype in self.s[lang]:
         return "("+'|'.join(sorted(self.s[lang][stype],key=len,reverse=True))+")"
     # if hasattr(self,stype): #should be one of c,v,g,n
