@@ -1166,15 +1166,23 @@ class Check():
         for lang in self.db.analangs:
             if lang not in self.s:
                 self.s[lang]={}
-            for sclass in self.db.s[lang]: #Whatever is in the language (not right)
-                self.s[lang][sclass]=self.db.s[lang][sclass]
-        if self.distinguish['G']==False:
-            self.s[lang]['C']+=self.s[lang]['G']
-            del self.s[lang]['G']
-        if self.distinguish['N']==False:
-            self.s[lang]['C']+=self.s[lang]['N']
-            del self.s[lang]['N']
-
+            """These should always be there, no matter what"""
+            self.s[lang]['C']=list() #make it here, then only add later
+            self.s[lang]['V']=list() #make it here, then only add later
+            self.s[lang]['d']=list() #make it here, then only add later
+            for sclass in self.db.s[lang]: #Whatever is in the language
+                """These lines just add to a list, for a later regex"""
+                if sclass in self.distinguish: #i.e., not C or V
+                    if self.distinguish[sclass]==False: #not d, for now
+                        """At this point, all distinctions are consonants"""
+                        self.s[lang]['C']+=self.db.s[lang][sclass]
+                    else:
+                        self.s[lang][sclass]=self.db.s[lang][sclass]
+                else: #make its own check list from lift list
+                    self.s[lang][sclass]+=self.db.s[lang][sclass]
+                if sclass in self.s[lang] and self.s[lang][sclass] == []:
+                    del self.s[lang][sclass]
+            log.info("Segment lists for {} language: {}".format(lang,self.s[lang]))
     def setupCVrxs(self):
         """This takes the lists of segments by types (from slists), and turns them into
         the regexes we need"""
