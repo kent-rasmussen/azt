@@ -171,7 +171,7 @@ class Check():
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
         """The line above may need to go after this block"""
         if self.profilesbysense is None:
-            print(time.time()-self.start_time)
+            log.info(time.time()-self.start_time)
             self.setupCVrxs()
             self.getprofiles()
             self.makecountssorted()
