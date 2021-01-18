@@ -1214,7 +1214,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         s['G']=['ẅ','y','Y','w','W']
         s['N']=["ng'",'mm','ny','ŋŋ','m','M','n','ŋ','ɲ']
         """Non-Nasal/Glide Sonorants"""
-        s['NNGS']=['rh','wh','l','r']
+        s['S']=['rh','wh','l','r']
         # self.treatlabializepalatalizedasC=False
         # if self.treatlabializepalatalizedasC==True:
         #     lp={}
