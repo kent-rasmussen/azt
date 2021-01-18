@@ -3,6 +3,9 @@
     - frame in a frame? (this problem looks familiar...)
 
 ## In Process
+- figure out which x[N,C,G,S,CG,NC,NCG,NCS] distinctions to maintain, and how.
+  - What is not C
+  - What is not CC/CCC
 - bring diacritics into vowel variables
 - figure out why multiple fuŋ entries aren't showing for recording on bfj
     - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
