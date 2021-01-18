@@ -26,6 +26,8 @@ if tkinter==True:
     import tkinter #as gui
     import tkinter.font
     import tkinter.scrolledtext
+    import tkintermod
+    tkinter.CallWrapper = tkintermod.TkErrorCatcher
 """else:
     import kivy
 """
