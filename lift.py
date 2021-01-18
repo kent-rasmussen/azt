@@ -1240,11 +1240,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """At some point, we may want logic to include only certain
         elements in c. The first row is in pretty much any language."""
         actuals={}
-        self.debug=True
-        if self.debug==True:
-            log.info(' '.join(['hypotheticals: ',str(s)]))
-        if not(hasattr(self,'s')): #don't wipe out an existing dictionary
-            self.s={}
+        log.log(3,'hypotheticals: {}'.format(x))
+        self.s={} #wipe out an existing dictionary
         for lang in self.analangs:
             if lang not in self.s:
                 self.s[lang]={}
