@@ -125,7 +125,7 @@ class Check():
                 print(savefile, "doesn't exist!")
         self.imagesdir=file.getimagesdir(filename)
         self.audiodir=file.getaudiodir(filename)
-        print(self.audiodir)
+        log.info('self.audiodir: {}'.format(self.audiodir))
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.loadstatus()
         self.loadtoneframes()
@@ -166,7 +166,8 @@ class Check():
         log.debug("analang guessed: {} (If you don't like this, change it in "
                     "the menus)".format(self.analang))
         self.loaddefaults() # overwrites guess above, stored on runcheck
-        if 'bfj' in self.db.s:  #self.analang=='bfj': # need to do this otherwise!
+        self.checkdistinctions() #checks (and sets) values for self.distinguish
+        if 'bfj' in self.db.s:
             self.db.s['bfj']['V']=['ou','ei']+self.db.s['bfj']['V']
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
         """The line above may need to go after this block"""
@@ -313,18 +314,24 @@ class Check():
                                     window
                                     )
             buttonFrame1.grid(column=0, row=1)
-    def initdistinctions(self):
+    def checkdistinctions(self):
         if (not hasattr(self,'distinguish')) or (self.distinguish == None):
             self.distinguish={}
-        for var in ['G','N','S','NC','CG','Nwd','d']:
-            log.debug(_("Variable {} current value: {}").format(var,
+        for var in ['G','N','S','NC','CG','CS','Nwd','d']:
+            log.log(2,_("Variable {} current value: {}").format(var,
                                                             self.distinguish))
-            if (var not in self.distinguish) or (type(self.distinguish[var]) is not bool):
+            if ((var not in self.distinguish) or
+                (type(self.distinguish[var]) is not bool)):
                 self.distinguish[var]=False
             if var == 'd':
                 self.distinguish[var]=True #don't change this default, yet...
-            log.debug(_("Variable {} current value: {}").format(var,
+            log.log(2,_("Variable {} current value: {}").format(var,
                                                         self.distinguish[var]))
+        self.distinguish['NCG']=(self.distinguish['NC'] and
+                                        self.distinguish['CG'])
+        self.distinguish['NCS']=(self.distinguish['NC'] and
+                                        self.distinguish['CS'])
+        log.log(2,"self.distinguish: {}".format(self.distinguish))
     def setSdistinctions(self):
         def submitform():
             change=False
@@ -364,7 +371,7 @@ class Check():
             opts=self.runwindow.options['opts']).grid(row=1,column=0)
             self.runwindow.options['row']+=1
         self.getrunwindow()
-        self.initdistinctions()
+        self.checkdistinctions()
         var={}
         for ss in self.distinguish:
             var[ss] = tkinter.BooleanVar()
