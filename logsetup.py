@@ -40,10 +40,10 @@ def logsetup(loglevel):
                                     '%(levelname)s: '
                                     '%(message)s')
     console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
+    console.setLevel(0) #Let the loglevel determine what to show
     console.setFormatter(simpleformat)
     file = logging.FileHandler(logfile,mode='w', encoding='utf-8')
-    file.setLevel(logging.DEBUG)
+    file.setLevel(0) #Let the loglevel determine what to show
     file.setFormatter(timelessformat)
     log.addHandler(console)
     log.addHandler(file)
