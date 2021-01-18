@@ -1198,23 +1198,29 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['lf'][2]=['sl','zl','zl']
         c['lf'][1]=['ɬ','ɮ']
         c['pn']={}
-        # s['pn'][3]=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch']
-        # s['pn'][2]=['mb','mp','mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj',
-        #                 'ns','nz']
         """If these appear, they should be single consonants."""
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
                     'ⁿj','ⁿs','ⁿz']
-        s={} #dict to put all hypothetical segements in, by category
-        s['C']=list() #to store valid consonants in
+        x={} #dict to put all hypothetical segements in, by category
+        x['C']=list() #to store valid consonants in
         for nglyphs in [3,2,1]:
             for stype in c:
                 if c[stype].get(nglyphs) is not None:
-                    s['C']+=c[stype][nglyphs]
+                    x['C']+=c[stype][nglyphs]
         # s['g']={}
-        s['G']=['ẅ','y','Y','w','W']
-        s['N']=["ng'",'mm','ny','ŋŋ','m','M','n','ŋ','ɲ']
+        # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
+        #         'mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']
+        x['G']=['ẅ','y','Y','w','W']
+        x['CG']=list((char+g for char in x['C'] for g in x['G']))
+        x['N']=["ng'",'mm','ny','ŋŋ','m','M','n','ŋ','ɲ']
+        x['NC']=list((n+char for char in x['C'] for n in x['N']))
+        x['NCG']=list((n+char+g for char in x['C'] for n in x['N']
+                                                    for g in x['G']))
         """Non-Nasal/Glide Sonorants"""
-        s['S']=['rh','wh','l','r']
+        x['S']=['rh','wh','l','r']
+        x['CS']=list((char+s for char in x['C'] for s in x['S']))
+        x['NCS']=list((n+char+s for char in x['C'] for n in x['N']
+                                                    for s in x['S']))
         # self.treatlabializepalatalizedasC=False
         # if self.treatlabializepalatalizedasC==True:
         #     lp={}
@@ -1224,10 +1230,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #     lp['labpal']+=list(char+'w' for char in lp['pal'])
         #     for stype in sorted(lp.keys()): #larger graphs first
         #         c=lp[stype]+c
-        s['V']=['a', 'á', 'i', 'ɨ', 'ï', 'í','ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
+        x['V']=['a', 'á', 'i', 'ɨ', 'ï', 'í','ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
                 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃',
                 'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
-        s['d']=["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
+        x['d']=["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         """We need to address long and idiosyncratic vowel orthographies,
         especially for Cameroon. This should also include diacritics, together
         or separately."""
@@ -1242,13 +1248,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             if lang not in self.s:
                 self.s[lang]={}
-            for stype in s:
-                self.s[lang][stype]=self.inxyz(lang,s[stype])
-                if self.debug==True:
-                    log.info('hypotheticals[{}][{}]: {}'.format(lang,stype,
-                                                        str(s[stype])))
-                    log.info('actuals[{}][{}]: {}'.format(lang,stype,
-                                                    str(self.s[lang][stype])))
+            for stype in x:
+                self.s[lang][stype]=self.inxyz(lang,x[stype])
+                log.log(3,'hypotheticals[{}][{}]: {}'.format(lang,stype,
+                                                    str(x[stype])))
+                log.log(3,'actuals[{}][{}]: {}'.format(lang,stype,
+                                                str(self.s[lang][stype])))
     def slists(self):
         self.segmentsnotinregexes={}
         self.clist()
