@@ -1204,8 +1204,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """If these appear, they should be single consonants."""
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
                     'ⁿj','ⁿs','ⁿz']
-        """I think I want this gone from C, categorically. Maybe combine CG
-        elsewhere."""
         s={} #dict to put all hypothetical segements in, by category
         s['C']=list() #to store valid consonants in
         for nglyphs in [3,2,1]:
@@ -1251,37 +1249,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                         str(s[stype])))
                     log.info('actuals[{}][{}]: {}'.format(lang,stype,
                                                     str(self.s[lang][stype])))
-        # exit()
-        # return actuals
-    # def vlist(self):
-    #     vowels=['a', 'i', 'ɨ', 'ï', 'ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
-    #             'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃',
-    #             'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
-    #     """We need to address long and idiosyncratic vowel orthographies,
-    #     especially for Cameroon. This should also include diacritics, together
-    #     or separately."""
-    #     #d=self.diacritics() #["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
-    #     actuals={}
-    #     for lang in self.analangs:
-    #     #d=d+['̀', '́'] #for gnd
-    #         actuals[lang]=self.inxyz(lang,vowels)
-    #     return actuals
-    # def diacritics(self):
-    #     diacritics=["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
-    #     actuals={}
-    #     for lang in self.analangs:
-    #         actuals[lang]=self.inxyz(lang,diacritics)
-    #     return actuals
     def slists(self):
         self.segmentsnotinregexes={}
         self.clist()
-        # for lang in self.analangs:
-        #     self.segmentsnotinregexes[lang]=list()
-        # """This should probably be done in these functions"""
-        # self.n=self.nlist()
-        # self.g=self.glist()
-        # self.c=self.clist()
-        # self.v=self.vlist()
     def segmentin(self, lang, glyph):
         """This actually allows for dygraphs, etc., so I'm keeping it."""
         """check each form and lexeme in the lift file (not all files
@@ -1297,9 +1267,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if s is not None:
                 actuals.append(s)
         return actuals
-    #def idbyforms(self,form): #is this at all useful?
-    #    for entry in self.nodes.findall(f"entry/citation/form[@lang='{self.xyz}']/[text='{self.form}']/../.."):
-    #        yield entry.get('guid')
     def getguidformstosearchbyps(self,ps,lang=None):
         if lang is None:
             lang=self.analang
