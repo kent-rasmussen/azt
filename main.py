@@ -5,10 +5,20 @@ tkinter=True
 progname='A→Z+T'
 version='0.4' #This is a string...
 import platform
+"""Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
+information than 'DEBUG' does):
+1. Information I probably never want to see.
+'DEBUG': Stuff that should probably not be shared with the user in the long
+    term (as it is distracting, too much, or hard to make use of), but
+    definitely should be put out all the time for now, in case of any errors.
+'INFO': information that will never likely be in the user's way, and may be
+    helpful.
+Other levels:'WARNING','ERROR','CRITICAL'
+"""
 if platform.uname().node == 'karlap':
-    loglevel=1 #levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
+    loglevel=2 #
 else:
-    loglevel='DEBUG' #levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
+    loglevel='DEBUG'
 from logsetup import *
 log=logsetup(loglevel)
 """My modules, which should log as above"""
@@ -5022,7 +5032,10 @@ if __name__ == "__main__":
         filename = inspect.getframeinfo(inspect.currentframe()).filename
         aztdir = os.path.dirname(os.path.abspath(filename))
     """Not translating yet"""
-    log.info('Running {} v{} in {} at {}'.format(progname,version,aztdir,
+    log.info('Running {} v{} in {} on {} with loglevel {} at {}'.format(
+                                    progname,version,aztdir,
+                                    platform.uname().node,
+                                    loglevel,
                                     datetime.datetime.utcnow().isoformat()))
     transdir=aztdir+'/translations/'
     i18n={}
@@ -5034,7 +5047,10 @@ if __name__ == "__main__":
     # interfacelang('en')
     # # print(_('Tone'))
     # interfacelang('fr')
-    main()
+    try:
+        main()
+    except Exception as e:
+        log.exception("Unexpected exception! %s",e)
     exit()
     """The following are just for testing"""
     entry=Entry(db, guid='003307da-3636-40cd-aca9-6b0d798055d2')
