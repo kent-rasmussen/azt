@@ -316,11 +316,13 @@ class Check():
     def initdistinctions(self):
         if (not hasattr(self,'distinguish')) or (self.distinguish == None):
             self.distinguish={}
-        for var in ['G','N','S','NC','CG','Nwd']:
+        for var in ['G','N','S','NC','CG','Nwd','d']:
             log.debug(_("Variable {} current value: {}").format(var,
                                                             self.distinguish))
             if (var not in self.distinguish) or (type(self.distinguish[var]) is not bool):
                 self.distinguish[var]=False
+            if var == 'd':
+                self.distinguish[var]=True #don't change this default, yet...
             log.debug(_("Variable {} current value: {}").format(var,
                                                         self.distinguish[var]))
     def setSdistinctions(self):
@@ -1177,6 +1179,7 @@ class Check():
         """This takes the lists of segments by types (from slists), and turns them into
         the regexes we need"""
         self.rx={}
+        """IF VV=V and Vː=V and 'Vá=V', then include ː (and :?) in s['d']."""
         for sclass in ['C','V']: #'N','G',
             log.debug(str(rx.s(self,sclass)))
             self.rx[sclass]=rx.make(rx.s(self,
