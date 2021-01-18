@@ -70,8 +70,8 @@ def getlangnamepaths(filename, langs):
     for lang in langs:
         #filename=pathlib.Path.joinpath(wsdir, lang +'.ldml')
         output[lang]=str(pathlib.Path.joinpath(wsdir, lang +'.ldml'))
-        log.debug(filename)
-    log.debug(output)
+        log.log(1,filename)
+    log.log(1,output)
     return output
 def getinterfacelang(self):
     """This is called by the mainapplication class before anything else happens,
