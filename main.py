@@ -16,7 +16,7 @@ information than 'DEBUG' does):
 Other levels:'WARNING','ERROR','CRITICAL'
 """
 if platform.uname().node == 'karlap':
-    loglevel=2 #
+    loglevel=5 #
 else:
     loglevel='DEBUG'
 from logsetup import *
@@ -146,7 +146,6 @@ class Check():
         setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
         self.initdefaults() #provides self.defaults, list to load/save
         self.cleardefaults() #this resets all to none (to be set below)
-        self.initdistinctions() #for self.distinguish
         # self.analang=self.db.analang #inherit from the lang if not specified
         # self.glosslang=self.db.glosslang #inherit from the lang if not specified
         # self.glosslang2=self.db.glosslang2 #inherit from the lang if not specified
@@ -336,19 +335,23 @@ class Check():
         def submitform():
             change=False
             for ss in self.distinguish:
-                if self.debug==True:
-                    print(var[ss],self.distinguish[ss],var[ss].get(),'change:',
-                                                                        change)
-                if self.distinguish[ss] != var[ss].get():
-                    self.distinguish[ss]=var[ss].get()
-                    change=True
-                if self.debug==True:
-                    print(var[ss],self.distinguish[ss],var[ss].get(),'change:',
-                                                                        change)
-            if self.debug==True:
-                print(self.distinguish)
+                log.debug("Variable {} was: {}, now: {}, to be: {}, change: {}"
+                            "".format(ss,var[ss],
+                            self.distinguish[ss],
+                            var[ss].get(),change))
+                if ss in var:
+                    if self.distinguish[ss] != var[ss].get():
+                        self.distinguish[ss]=var[ss].get()
+                        change=True
+                log.debug("Variable {} was: {}, now: {}, to be: {}, change: {}"
+                            "".format(ss,var[ss],
+                            self.distinguish[ss],
+                            var[ss].get(),change))
+                if ss=='NCG':
+                    var[ss]=(var['NC'].get() and var['CG'].get())
+            log.debug(self.distinguish)
             if change == True:
-                print('There was a change; we need to redo the analysis now.')
+                log.info('There was a change; we need to redo the analysis now.')
                 self.storedefaults()
                 if self.debug != True:
                     self.reloadprofiledata()
@@ -434,13 +437,15 @@ class Check():
         self.runwindow.options['text']=_('Do you want to distinguish '
                                         'Nasal-Consonant (NC) sequences from '
                                         'other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'NC≠C'),(False,'NC=C')]
+        self.runwindow.options['opts']=[(True,'NC≠C (=NC or CC, as above)'),
+                                    (False,'NC=C')]
         buttonframeframe(self)
         self.runwindow.options['ss']='CG'
         self.runwindow.options['text']=_('Do you want to distinguish '
                                         'Consonant-Glide (CG) sequences from '
                                         'other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'CG≠C'),(False,'CG=C')]
+        self.runwindow.options['opts']=[(True,'CG≠C (=CG or CC, as above)'),
+                                        (False,'CG=C')]
         buttonframeframe(self)
         self.runwindow.options['ss']='Nwd'
         self.runwindow.options['text']=_('Do you want to distinguish Word '
