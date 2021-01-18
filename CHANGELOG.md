@@ -3,18 +3,18 @@
     - frame in a frame? (this problem looks familiar...)
 
 ## In Process
+- pause on "lift_url didn't import" error
+- bring diacritics into vowel variables
 - figure out why multiple fuŋ entries aren't showing for recording on bfj
     - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
     - '7cdcddfc-5b9f-44bf-bfe5-d5ce164720cd',
 - need to fix multiple links to the same recording
 - check that changes to S regexs don't break too much.
-- bring diacritics into vowel variables
 - Find faithful way to keep window on the screen for MS Windows
 - diagnose pl/imp not appearing on recording screen
   - not really there?
   - pushed off the screen?
 - test analang prioritization/guessing on various lift files.
-- test my logging (log.log(1,x))
 
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
@@ -81,6 +81,9 @@
 - removed invalid check from profilecheck
 - set up log to run by default, working in modules: seems to be working in MS Windows
 - added check and warning for fr or en encoded lc/lx data (<10 examples)
+- Fine grained logging works now (log.log(1,x))
+- Added exceptions to logs, both from python and tkinter
+
 # Version 0.4
 ## new features:
 ### Functions
