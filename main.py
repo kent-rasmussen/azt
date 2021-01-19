@@ -316,7 +316,9 @@ class Check():
     def checkinterpretations(self):
         if (not hasattr(self,'distinguish')) or (self.distinguish == None):
             self.distinguish={}
-        for var in ['G','N','S','NC','CG','CS','Nwd','d']:
+        if (not hasattr(self,'interpret')) or (self.interpret == None):
+            self.interpret={}
+        for var in ['G','N','S','Nwd','d']:
             log.log(2,_("Variable {} current value: {}").format(var,
                                                             self.distinguish))
             if ((var not in self.distinguish) or
@@ -330,6 +332,15 @@ class Check():
                                         self.distinguish['CG'])
         self.distinguish['NCS']=(self.distinguish['NC'] and
                                         self.distinguish['CS'])
+        for var in ['NC','CG','CS']:
+            log.log(2,_("Variable {} current value: {}").format(var,
+                                                            self.interpret))
+            if ((var not in self.interpret) or
+                (type(self.interpret[var]) is not str) or
+                not(1 <=len(self.interpret[var])<= 2)):
+                self.interpret[var]='CC'
+            log.log(2,_("Variable {} current value: {}").format(var,
+                                                        self.interpret[var]))
         log.log(2,"self.distinguish: {}".format(self.distinguish))
     def setSdistinctions(self):
         def submitform():
