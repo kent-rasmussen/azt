@@ -165,7 +165,7 @@ class Check():
         log.debug("analang guessed: {} (If you don't like this, change it in "
                     "the menus)".format(self.analang))
         self.loaddefaults() # overwrites guess above, stored on runcheck
-        self.checkdistinctions() #checks (and sets) values for self.distinguish
+        self.checkinterpretations() #checks (and sets) values for self.distinguish
         if 'bfj' in self.db.s:
             self.db.s['bfj']['V']=['ou','ei']+self.db.s['bfj']['V']
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
@@ -313,7 +313,7 @@ class Check():
                                     window
                                     )
             buttonFrame1.grid(column=0, row=1)
-    def checkdistinctions(self):
+    def checkinterpretations(self):
         if (not hasattr(self,'distinguish')) or (self.distinguish == None):
             self.distinguish={}
         for var in ['G','N','S','NC','CG','CS','Nwd','d']:
@@ -374,7 +374,7 @@ class Check():
             opts=self.runwindow.options['opts']).grid(row=1,column=0)
             self.runwindow.options['row']+=1
         self.getrunwindow()
-        self.checkdistinctions()
+        self.checkinterpretations()
         var={}
         for ss in self.distinguish:
             var[ss] = tkinter.BooleanVar()
