@@ -3,9 +3,7 @@
     - frame in a frame? (this problem looks familiar...)
 
 ## In Process
-- figure out which x[N,C,G,S,CG,NC,NCG,NCS] distinctions to maintain, and how.
-  - What is not C
-  - What is not CC/CCC
+- Make CV report sensible.
 - bring diacritics into vowel variables
 - figure out why multiple fuŋ entries aren't showing for recording on bfj
     - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
@@ -19,19 +17,13 @@
 
 ## Next Features
 - Fully distinguish C, CG, and NC onsets, C and N finals
-    - look for CG and NC first, then C.
     - how to treat C1=C2? CG1=CG2? Do we want S to be larger units, or to have N and G modifications?
-    - how to treat N and C different word finally? (may have to leave this for analysis)
-    - set lift.c={} with values lift.c['C'], lift.c['CG'], lift.c['NC']
-        - C could include N and G, but other would be distinct from CC.
-    - set lift.v={}, with lift.v['V'], lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
+    - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
+        - or is lift.s['V'] and lift.s['d'] enough?
+        - doing it here is nice to have the test of what is actually there...
+    - New check settings:
         - some people may want V to include Vː, others may not (for tone, probably all should...)
         - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
-        - for regex[N#], convert the # to $.
-    - make settings to turn off `NC≠C≠CC`, `CG≠C≠CC` and `N#≠C#`
-    - make window to set settings
-- prioritize guesses, so most frequent C or V is chosen first. (then second?)
-    - collections.Counter()
 - add C and V sorting (and CV?)
 - XLP export
     - write to file
@@ -65,11 +57,13 @@
 
 # prioritization
 - We now guess analysis language (when unspecified) based on the one with the most appearances.
+- User can now distinguish C,N,N#,G, and S as desired, NC and CG can be that, C or CC.
 
 ## UI
 - Added page to instruct A→Z+T how to distinguish certain segment classes
 - removed redo profile analysis from easy temptation
 - Second gloss now showing for lc/lx recording page
+- C/V check now just outputs filter by ps-profile; buttons no longer cause a crash.
 
 ### Under the Hood
 - added variables for version number and program name, added to help:about
@@ -85,6 +79,9 @@
 - Fine grained logging works now (log.log(1,x))
 - Added exceptions to logs, both from python and tkinter
 - Analysis language guessing seems to work on various lift files.
+- distinguished between segment type distinctions x[N,C,G,S] and segment combination x[CG,NC,NCG,NCS] distinctions, which are non boolean (as xy, as CC, or as C).
+  - set up init init, check, and UI to work with new variables
+- set getresults to use profile data, so it doesn't pick up <ch> = CC.
 
 # Version 0.4
 ## new features:
