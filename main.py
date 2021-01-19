@@ -445,11 +445,12 @@ class Check():
         self.runwindow.options['opts']=[(True,'S≠C'),(False,'S=C')]
         buttonframeframe(self)
         self.runwindow.options['ss']='NC'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'Nasal-Consonant (NC) sequences from '
-                                        'other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'NC≠C (=NC or CC, as above)'),
-                                    (False,'NC=C')]
+        self.runwindow.options['text']=_('How do you want to interpret '
+                                        'Nasal-Consonant (NC) sequences?')
+        self.runwindow.options['opts']=[('NC','NC=NC (≠C, ≠CC)'),
+                                    ('C','NC=C (≠NC, ≠CC)'),
+                                    ('CC','NC=CC (≠NC, ≠C)')
+                                    ]
         buttonframeframe(self)
         self.runwindow.options['ss']='CG'
         self.runwindow.options['text']=_('Do you want to distinguish '
