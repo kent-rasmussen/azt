@@ -328,10 +328,6 @@ class Check():
                 self.distinguish[var]=True #don't change this default, yet...
             log.log(2,_("Variable {} current value: {}").format(var,
                                                         self.distinguish[var]))
-        self.distinguish['NCG']=(self.distinguish['NC'] and
-                                        self.distinguish['CG'])
-        self.distinguish['NCS']=(self.distinguish['NC'] and
-                                        self.distinguish['CS'])
         for var in ['NC','CG','CS']:
             log.log(2,_("Variable {} current value: {}").format(var,
                                                             self.interpret))
@@ -341,6 +337,10 @@ class Check():
                 self.interpret[var]='CC'
             log.log(2,_("Variable {} current value: {}").format(var,
                                                         self.interpret[var]))
+        # self.distinguish['NCG']=(self.distinguish['NC'] and
+        #                                 self.distinguish['CG'])
+        # self.distinguish['NCS']=(self.distinguish['NC'] and
+        #                                 self.distinguish['CS'])
         log.log(2,"self.distinguish: {}".format(self.distinguish))
     def setSdistinctions(self):
         def submitform():
