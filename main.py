@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 """This file runs the actual GUI for lexical file manipulation/checking"""
-tkinter=True
-progname='A→Z+T'
-version='0.4' #This is a string...
+program={'name':'A→Z+T'}
+program['tkinter']=True
+program['production']=True
+program['version']='0.4' #This is a string...
 import platform
 """Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
 information than 'DEBUG' does):
@@ -32,7 +33,7 @@ import itertools
 import importlib.util
 import collections
 from random import randint
-if tkinter==True:
+if program['tkinter']==True:
     import tkinter #as gui
     import tkinter.font
     import tkinter.scrolledtext
@@ -4160,7 +4161,7 @@ class MainApplication(Frame):
         l=Label(f.content, text=text, pady=50, padx=50,
                 wraplength=int(self.winfo_screenwidth()/2)
                 ).grid(row=1,column=0,sticky='we')
-    def setmasterconfig(self,progname,version):
+    def setmasterconfig(self,program):
         self.parent.debug=True #This puts out lots of console info...
         self.parent.debug=False #keep default here
         """Configure variables for the root window (master)"""
@@ -4218,8 +4219,8 @@ class MainApplication(Frame):
         file.getinterfacelang(self.parent)
         if self.parent.interfacelang == None:
             self.parent.interfacelang='fr' #default for now (just for first use).
-        self.parent.progname=progname
-        self.parent.version=version
+        self.parent.progname=program['name']
+        self.parent.version=program['version']
         # self.setinterfacelang()
         self.parent._= setinterfacelang(self.parent.interfacelang)
     # def setinterfacelang(self):
@@ -4255,11 +4256,11 @@ class MainApplication(Frame):
     #                                 window
     #                                 )
     #         buttonFrame1.grid(column=0, row=1)
-    def __init__(self,parent,progname,version):
+    def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
         self.parent=parent
-        self.setmasterconfig(progname,version)
+        self.setmasterconfig(program)
         inherit(self) # do this after setting config.
         # _=self._
         """Pick one of the following three screensizes (or don't):"""
@@ -4733,7 +4734,7 @@ class Splash(Window):
         # _=self._
         # print(self.theme['background'])
         # print(self.theme['activebackground'])
-        title=(_("{} Dictionary and Orthography Checker").format(progname))
+        title=(_("{} Dictionary and Orthography Checker").format(program['name']))
         self.title(title)
         text=_("Your dictionary database is loading...\n\n"
                 # "This program can take 30-100 seconds to load, depending on "
@@ -5051,11 +5052,10 @@ def inherit(self):
     # self.photosmall=self.parent.photosmall
     self._=self.parent._
 def main():
-    global progname
-    global version
+    global program
     log.info("Running main function") #Don't translate yet!
     root = tkinter.Tk()
-    myapp = MainApplication(root,progname,version)
+    myapp = MainApplication(root,program)
     myapp.mainloop()
     logging.shutdown()
 if __name__ == "__main__":
@@ -5068,7 +5068,7 @@ if __name__ == "__main__":
         aztdir = os.path.dirname(os.path.abspath(filename))
     """Not translating yet"""
     log.info('Running {} v{} in {} on {} with loglevel {} at {}'.format(
-                                    progname,version,aztdir,
+                                    program['name'],program['version'],aztdir,
                                     platform.uname().node,
                                     loglevel,
                                     datetime.datetime.utcnow().isoformat()))
