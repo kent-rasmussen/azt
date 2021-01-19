@@ -1194,7 +1194,8 @@ class Check():
             self.s[lang]['C']=list() #make it here, then only add later
             self.s[lang]['V']=list() #make it here, then only add later
             self.s[lang]['d']=list() #make it here, then only add later
-            for sclass in self.db.s[lang]: #Whatever is in the language
+            """At this point, we only include lists of single segments"""
+            for sclass in [x for x in self.db.s[lang] if len(x) == 1]:
                 """These lines just add to a list, for a later regex"""
                 if sclass in self.distinguish: #i.e., not C or V
                     if self.distinguish[sclass]==False: #not d, for now
