@@ -4,6 +4,11 @@
 
 ## In Process
 - Make CV report sensible.
+- XLP export
+    - write to file
+    - run dotexpdf (once you figure out where that is) to generate pdf
+    - run script to generate html
+    - figure out window specific variations (with Andy?)
 - bring diacritics into vowel variables
 - figure out why multiple fuŋ entries aren't showing for recording on bfj
     - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
@@ -25,11 +30,6 @@
         - some people may want V to include Vː, others may not (for tone, probably all should...)
         - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
 - add C and V sorting (and CV?)
-- XLP export
-    - write to file
-    - run dotexpdf (once you figure out where that is) to generate pdf
-    - run script to generate html
-    - figure out window specific variations (with Andy?)
 
 ### Prioritization
 - make checkcheck reference most popular *unfinished* ps-profile combo
