@@ -1227,7 +1227,7 @@ class Check():
         the regexes we need"""
         self.rx={}
         """IF VV=V and Vː=V and 'Vá=V', then include ː (and :?) in s['d']."""
-        for sclass in ['C','V']: #'N','G',
+        for sclass in self.s[self.analang]: #['C','V']: #'N','G',
             log.debug(str(rx.s(self,sclass)))
             self.rx[sclass]=rx.make(rx.s(self,
                                         sclass),compile=True)
@@ -1295,6 +1295,10 @@ class Check():
         """Look for word boundaries, N and G before C (though this doesn't
         work, since CG is captured by C first...)"""
         priority=['#','N','G','S','C','V']
+        log.log(2,"Searching in this order: {}".format(sorted(self.rx.keys(),
+                        key=lambda cons: (-len(cons),
+                                            [priority.index(c) for c in cons])
+                        )))
         for s in sorted(self.rx.keys(),
                         key=lambda cons: (-len(cons),
                                             [priority.index(c) for c in cons])
