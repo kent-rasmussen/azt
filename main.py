@@ -346,22 +346,29 @@ class Check():
     def setSdistinctions(self):
         def submitform():
             change=False
-            for ss in self.distinguish:
-                log.debug("Variable {} was: {}, now: {}, to be: {}, change: {}"
-                            "".format(ss,var[ss],
-                            self.distinguish[ss],
+            for type in ['distinguish', 'interpret']:
+                for ss in getattr(self,type):
+                    log.debug("Variable {} was: {}, now: {}, change: {}"
+                            "".format(ss,
+                            getattr(self,type)[ss],
                             var[ss].get(),change))
-                if ss in var:
-                    if self.distinguish[ss] != var[ss].get():
-                        self.distinguish[ss]=var[ss].get()
-                        change=True
-                log.debug("Variable {} was: {}, now: {}, to be: {}, change: {}"
-                            "".format(ss,var[ss],
-                            self.distinguish[ss],
+                    if ss in var:
+                        if ((ss in getattr(self,type)) and
+                                (getattr(self,type)[ss] != var[ss].get())):
+                            getattr(self,type)[ss]=var[ss].get()
+                            change=True
+                        # elif ((ss in self.interpret) and
+                        #         (self.interpret[ss] != var[ss].get())):
+                        #     self.interpret[ss]=var[ss].get()
+                        #     change=True
+                log.debug("Variable {} was: {}, now: {}, change: {}"
+                            "".format(ss,
+                            getattr(self,type)[ss],
                             var[ss].get(),change))
                 if ss=='NCG':
                     var[ss]=(var['NC'].get() and var['CG'].get())
-            log.debug(self.distinguish)
+            log.debug('self.distinguish:',self.distinguish)
+            log.debug('self.interpret:',self.interpret)
             if change == True:
                 log.info('There was a change; we need to redo the analysis now.')
                 self.storedefaults()
@@ -392,6 +399,10 @@ class Check():
             var[ss] = tkinter.BooleanVar()
             var[ss].set(self.distinguish[ss])
             print(ss, self.distinguish[ss])
+        for ss in self.interpret:
+            var[ss] = tkinter.StringVar()
+            var[ss].set(self.interpret[ss])
+            print(ss, self.interpret[ss])
         self.runwindow.options={}
         self.runwindow.options['row']=0
         self.runwindow.options['padx']=50
@@ -938,7 +949,8 @@ class Check():
                             'audio_card_index',
                             'interfacelang',
                             'examplespergrouptorecord',
-                            'distinguish'
+                            'distinguish',
+                            'interpret'
                             ],
                         'ps':[
                             'profile' #do I want this?
@@ -972,7 +984,8 @@ class Check():
                         'sample_format':[],
                         'audio_card_index':[],
                         'examplespergrouptorecord':[],
-                        'distinguish':[]
+                        'distinguish':[],
+                        'interpret':[]
                         }
     def cleardefaults(self,field=None):
         for default in self.defaults[field]:
@@ -1222,27 +1235,27 @@ class Check():
             self.rx['N#']=rx.make(rx.s(self.db,
                                     'N',
                                     lang=self.analang)+'$',compile=True)
-        if self.distinguish['CG']==True:
+        if self.interpret['CG']=='CG':
             self.rx['CG']=rx.make(''.join([rx.s(self.db,'C',lang=self.analang),
                                         rx.s(self.db,'G',lang=self.analang)]),
                                         compile=True)
-        else: #include it in C:
+        elif self.interpret['CG']=='C':
             self.rx['C']=rx.make(''.join([rx.s(self.db,'C',lang=self.analang),
                                         rx.s(self.db,'G',lang=self.analang),
                                         '|',
                                         rx.s(self.db,'C',lang=self.analang)]),
                                         compile=True)
-        if self.distinguish['NC']==True:
+        if self.interpret['NC']=='NC':
             self.rx['NC']=rx.make(''.join([rx.s(self.db,'N',lang=self.analang),
                                         rx.s(self.db,'C',lang=self.analang)]),
                                         compile=True)
-        else: #include it in C:
+        elif self.interpret['NC']=='C':
             self.rx['C']=rx.make(''.join([rx.s(self.db,'N',lang=self.analang),
                                         rx.s(self.db,'C',lang=self.analang),
                                         '|',
                                         rx.s(self.db,'C',lang=self.analang)]),
                                         compile=True)
-        if (self.distinguish['NC']==False) and (self.distinguish['CG']==False):
+        if (self.interpret['NC']=='C') and (self.interpret['CG']=='C'):
             self.rx['C']=rx.make(''.join(
                                         [rx.s(self.db,'N',lang=self.analang),
                                         rx.s(self.db,'C',lang=self.analang),
@@ -1256,7 +1269,7 @@ class Check():
                                         '|',
                                         rx.s(self.db,'C',lang=self.analang)]),
                                         compile=True)
-        if (self.distinguish['NC']==True) and (self.distinguish['CG']==True):
+        if (self.interpret['NC']=='NC') and (self.interpret['CG']=='CG'):
             self.rx['NCG']=rx.make(''.join(
                                         [rx.s(self.db,'N',lang=self.analang),
                                         rx.s(self.db,'C',lang=self.analang),
