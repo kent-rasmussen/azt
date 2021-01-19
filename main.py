@@ -390,7 +390,7 @@ class Check():
                             padx=self.runwindow.options['padx'],
                             pady=self.runwindow.options['pady'])
             RadioButtonFrame(self.runwindow.frames[ss],var=var[ss],
-            opts=self.runwindow.options['opts']).grid(row=1,column=0)
+            opts=self.runwindow.options['opts']).grid(row=0,column=1)
             self.runwindow.options['row']+=1
         self.getrunwindow()
         self.checkinterpretations()
@@ -440,42 +440,42 @@ class Check():
         independent boolean selections."""
         self.runwindow.options['ss']='N'
         self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all Nasals (N) from '
+                                        'all Nasals (N) \nfrom '
                                         'other (simple/single) consonants?')
         self.runwindow.options['opts']=[(True,'N≠C'),(False,'N=C')]
         buttonframeframe(self)
+        self.runwindow.options['ss']='Nwd'
+        self.runwindow.options['text']=_('Do you want to distinguish Word '
+                                        'Final Nasals (N#) \nfrom other word '
+                                        'final consonants?')
+        self.runwindow.options['opts']=[(True,'N#≠C#'),(False,'N#=C#')]
+        buttonframeframe(self)
         self.runwindow.options['ss']='G'
         self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all Glides (G) from '
+                                        'all Glides (G) \nfrom '
                                         'other (simple/single) consonants?')
         self.runwindow.options['opts']=[(True,'G≠C'),(False,'G=C')]
         buttonframeframe(self)
         self.runwindow.options['ss']='S'
         self.runwindow.options['text']=_('Do you want to distinguish '
                                         'all Non-Nasal/Glide Sonorants (S) '
-                                    'from other (simple/single) consonants?')
+                                    '\nfrom other (simple/single) consonants?')
         self.runwindow.options['opts']=[(True,'S≠C'),(False,'S=C')]
         buttonframeframe(self)
         self.runwindow.options['ss']='NC'
         self.runwindow.options['text']=_('How do you want to interpret '
-                                        'Nasal-Consonant (NC) sequences?')
+                                        '\nNasal-Consonant (NC) sequences?')
         self.runwindow.options['opts']=[('NC','NC=NC (≠C, ≠CC)'),
                                     ('C','NC=C (≠NC, ≠CC)'),
                                     ('CC','NC=CC (≠NC, ≠C)')
                                     ]
         buttonframeframe(self)
         self.runwindow.options['ss']='CG'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'Consonant-Glide (CG) sequences from '
-                                        'other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'CG≠C (=CG or CC, as above)'),
-                                        (False,'CG=C')]
-        buttonframeframe(self)
-        self.runwindow.options['ss']='Nwd'
-        self.runwindow.options['text']=_('Do you want to distinguish Word '
-                                        'Final Nasals (N#) from other word '
-                                        'final consonants?')
-        self.runwindow.options['opts']=[(True,'N#≠C#'),(False,'N#=C#')]
+        self.runwindow.options['text']=_('How do you want to interpret '
+                                        '\nConsonant-Glide (CG) sequences?')
+        self.runwindow.options['opts']=[('CG','CG=CG (≠C, ≠CC)'),
+                                    ('C','CG=C (≠CG, ≠CC)'),
+                                    ('CC','CG=CC (≠CG, ≠C)')]
         buttonframeframe(self)
         """Submit button, etc"""
         self.runwindow.frame2d=Frame(self.runwindow.scroll.content)
