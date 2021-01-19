@@ -3323,14 +3323,17 @@ class Check():
         c1 = "Any"
         c2 = "Any"
         i=0
-        self.buildregex()
+        self.buildregex() #It would be nice fo this to iterate through...
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
-        text=(nn((self.ps,_("roots of form"),self.regexCV)))
+        text=(nn((self.ps,_("roots of form"),self.profile)))
         Label(self.results, text=text).grid(column=0, row=i)
         font=self.frame.fonts['read']
-        guid=0 # in case the following doesn't find anything:
-        for senseid in self.db.senseidformsbyregex(self.regex,self.ps,self.analang):
+        self.results.scroll=ScrollingFrame(self.results)
+        for self.subcheck in self.s[self.analang][self.type]:
+            log.debug('self.subcheck: {}'.format(self.subcheck))
+        senseid=0 # in case the following doesn't find anything:
+        for senseid in self.profilesbysense[self.ps][self.profile]:#db.senseidformsbyregex(self.regex,self.ps,self.analang):
             """This regex is compiled!"""
             o=self.getframeddata(senseid,noframe=True)['formatted']
             if self.debug ==True:
@@ -3354,12 +3357,12 @@ class Check():
                     photoimage = image.subsample(3, 3)
                     tkinter.Button(self.results, width=800, image=photoimage).grid(column=0)
             i+=1
-            b=Button(self.results,
-                    choice=guid, text=o,
+            b=Button(self.results.scroll.content,
+                    choice=senseid, text=o,
                     window=self.runwindow.frame,
                     row=i, column=0, font=font, command=self.picked)
             if self.su==True:
-                notok=Button(self.results,
+                notok=Button(self.results.scroll.content,
                             choice=senseid, text='X',
                             window=self.runwindow.frame,
                             width=15, row=i,
@@ -3550,7 +3553,8 @@ class Check():
         self.ps=psori
         self.checkcheck()
     """These are old paradigm CV funcs, with too many arguments, and guids"""
-    def picked(self,choice):
+    def picked(self,choice,**kwargs):
+        return
         if self.debug == True:
             print(entry.__dict__)
         entry.addresult(check, result='OK') #let's not translate this...
