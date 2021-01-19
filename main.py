@@ -1151,7 +1151,7 @@ class Check():
         self.profiledsenseids=[]
         profileori=self.profile #We iterate across this here
         psori=self.ps #We iterate across this here
-        onlyCV={'C','N','G','V','#'}
+        onlyCV={'C','N','G','S','V','#'}
         self.sextracted={} #Will store matching segments here
         for ps in self.db.pss:
             self.sextracted[ps]={}
@@ -1277,11 +1277,10 @@ class Check():
     def profileofform(self,form):
         """priority sort alphabets (need logic to set one or the other)"""
         """Look for any C, don't find N or G"""
-        priority=['#','C','N','G','V']
+        priority=['#','C','N','G','S','V']
         """Look for word boundaries, N and G before C (though this doesn't
         work, since CG is captured by C first...)"""
-        priority=['#','N','G','C','V']
-        # print('form:',form)
+        priority=['#','N','G','S','C','V']
         for s in sorted(self.rx.keys(),
                         key=lambda cons: (-len(cons),
                                             [priority.index(c) for c in cons])

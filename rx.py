@@ -50,7 +50,7 @@ def fromCV(db, CVs, lang, word=False, compile=False):
                 "and 'V' in it, or 'x' references ("+x+')')
         exit()
     for x in CVs[0]:
-        if x in ["V","C","N","G"]:
+        if x in ["V","C","N","G","S"]:
             rnext=s(db,x,lang) #this should have parens for each S
         elif x in sum(db.s[lang].values(),[]):
             rnext="("+x+")"
