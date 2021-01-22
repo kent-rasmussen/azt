@@ -9,6 +9,17 @@
     - run dotexpdf (once you figure out where that is) to generate pdf
     - run script to generate html
     - figure out window specific variations (with Andy?)
+- Test that change of analang is respected on reanalysis.
+  - and that change of analang triggers reanalysis
+- Add treatment of long vowels, similar to consonant distinctions/interpretation
+  - lift.s['VV'] should include xx for x in lift.s['V']
+  - lift.s['V:'] should include x:, and xː for x in lift.s['V'], as for c['pn'], which is always C.
+  - lift.s['VV'] (where V1-V2) should be interpretable as V, VV, or V:
+    - add to appropriate check.s variable, as for NC and CG
+    - or make VV>V: or not, and feed that to V:>V or not.
+  - lift.s['V:'] should consider VdVd, dVdV, dVVd, and VddV as possibles/hypotheticals.  
+  - lift.s['V'] should include lift.s['d'], if present
+- Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
 - bring diacritics into vowel variables
 - figure out why multiple fuŋ entries aren't showing for recording on bfj
     - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
