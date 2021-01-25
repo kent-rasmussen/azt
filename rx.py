@@ -3,6 +3,8 @@ import re
 import logging
 log = logging.getLogger(__name__)
 """This is called from a number of places"""
+def id(x):
+    return re.sub('[ .!]','_',x) #remove charcters that are invalid for ids
 def s(self,stype,lang=None):
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
