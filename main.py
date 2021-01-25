@@ -2261,9 +2261,9 @@ class Check():
         nameori=self.name
         subcheckori=self.subcheck
         if self.type == 'V':
-            subchecks=self.db.v[self.analang] #(just the vowels
+            subchecks=self.s[self.analang]['V'] #(just the vowels
         elif self.type == 'C':
-            subchecks=self.db.c[self.analang]
+            subchecks=self.s[self.analang]['C']
         else:
             print("Sorry, not sure what I'm doing:",self.type)
         """This sets each of the checks that are applicable for the given
@@ -2276,7 +2276,7 @@ class Check():
             """self.name set here"""
             self.name=codenname[0] #just codes, not names
             self.typenumsRun=[typenum for typenum in self.typenums
-                                        if re.search(self.name, typenum)]
+                                        if re.search(typenum,self.name)]
             if len(self.name) == 1:
                 print("Error!",self.name,"Doesn't seem to be list formatted.")
             for self.subcheck in subchecks:
@@ -3532,10 +3532,21 @@ class Check():
         typeori=self.type
         psori=self.ps
         profileori=self.profile
+        instr=_("The data in this report is given by most restrictive test "
+                "first, followed by less restrictive tests (e.g., V1=V2 "
+                "before V1 or V2). Additionally, each word only "
+                "appears once per segment in a given position, so a word that "
+                "occurrs in a more restrictive environment will not appear in "
+                "the later less restrictive environments. But where multiple "
+                "examples of a segment type occur with different values, e.g., "
+                "V1≠V2, those words will appear multiple times, e.g., for "
+                "both V1=x and V2=y.")
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                             # ,'_',self.type,'_',str(pss)
                                             ,'.BasicReport.txt'])
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
+        print(instr)
+        log.info(instr)
         self.basicreported={}
         self.printprofilesbyps()
         self.makecountssorted() #This populates self.profilecounts
