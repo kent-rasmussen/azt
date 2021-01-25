@@ -2280,7 +2280,9 @@ class Check():
             if len(self.name) == 1:
                 print("Error!",self.name,"Doesn't seem to be list formatted.")
             for self.subcheck in subchecks:
-                print(self.ps,self.profile,self.name,self.subcheck,':')
+                t=_("{}={}".format(self.name,self.subcheck))
+                print(t)
+                log.info(t)
                 self.buildregex()
                 for match in self.db.senseidformsbyregex(self.regex,
                                                             ps=self.ps).items():
@@ -3551,11 +3553,17 @@ class Check():
         self.printprofilesbyps()
         self.makecountssorted() #This populates self.profilecounts
         self.printcountssorted()
+        num=1
         num='ALL'
         for self.ps in self.topps(num): #get PSs found in syllable profiles
             """For Debugging"""
             # print('NVCVN:',self.profilesbysense[self.ps]['NVCVN'])
-            for self.profile in self.topprofiles(num)[self.ps]:
+            profilestodo=['CVCV']
+            profilestodo=self.topprofiles(num)[self.ps]
+            for self.profile in profilestodo:
+                t=_("{} {}s".format(self.profile,self.ps))
+                print(t)
+                log.info(t)
                 for self.type in ['V','C']:
                     maxcount=re.subn(self.type, self.type, self.profile)[1]
                     """Get these reports from C1/V1 to total number of C/V"""
