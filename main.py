@@ -365,8 +365,8 @@ class Check():
                             "".format(ss,
                             getattr(self,type)[ss],
                             var[ss].get(),change))
-                if ss=='NCG':
-                    var[ss]=(var['NC'].get() and var['CG'].get())
+                # if ss=='NCG':
+                #     var[ss]=(var['NC'].get() and var['CG'].get())
             log.debug('self.distinguish:',self.distinguish)
             log.debug('self.interpret:',self.interpret)
             if change == True:
@@ -822,6 +822,8 @@ class Check():
                                 'sample_format',
                                 'audio_card_index']:
                 self.checkcheck()
+            if attribute in ['analang', 'interpret','distinguish']: #do the last two cause problems?
+                self.reloadprofiledata()
         else:
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setinterfacelangwrapper(self,choice,window):
@@ -834,6 +836,7 @@ class Check():
         self.set('type',choice,window)
     def setanalang(self,choice,window):
         self.set('analang',choice,window)
+        self.reloadprofiledata()
     def setS(self,choice,window):
         self.set('subcheck',choice,window)
     def setcheck(self,choice,window):
