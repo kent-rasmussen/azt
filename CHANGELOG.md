@@ -2,6 +2,11 @@
 - Find again (not happening now) and fix scrolling frame size problem on rename
     - frame in a frame? (this problem looks familiar...)
 
+### CV Report
+    - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
+    - make CV report not include Caa in V1 or V2
+    - make data only give once (not in V1 or V2 if in V1=V2)
+
 ## In Process
 - Make CV report sensible.
 - XLP export
@@ -47,11 +52,6 @@
 
 ### Documentation
 - Add what and why pages in different places, with rationales and instructions specific to context?
-
-### CV Report
-- make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
-- make CV report not include Caa in V1 or V2
-- make data only give once (not in V1 or V2 if in V1=V2)
 
 ### Under the Hood
 - put `setdefaults.py` into Check class
