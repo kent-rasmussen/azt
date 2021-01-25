@@ -4179,9 +4179,10 @@ class MainApplication(Frame):
         self.parent.config(menu=menubar)
     def helpabout(self):
         window=Window(self)
-        title=(_("{} Dictionary and Orthography Checker").format(self.progname))
+        title=(_("{} Dictionary and Orthography Checker").format(self.program['name']))
         window.title(title)
         Label(window.frame, text=_("version: {}").format(version),anchor='c',padx=50
+        Label(window.frame, text=_("version: {}").format(program['version']),anchor='c',padx=50
                         ).grid(row=1,column=0,sticky='we')
         text=_("{0} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
@@ -4200,7 +4201,7 @@ class MainApplication(Frame):
                 " Recordings can be made up to 192khz/32float.\nFor help with "
                 "this tool, please check out the documentation at "
                 "https://github.com/kent-rasmussen/azt or write me at "
-                "kent_rasmussen@sil.org.").format(self.progname)
+                "kent_rasmussen@sil.org.".format(self.program['name']))
         Label(window.frame, text=title,
                         font=self.fonts['title'],anchor='c',padx=50
                         ).grid(row=0,column=0,sticky='we')
