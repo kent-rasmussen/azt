@@ -3,19 +3,13 @@
     - frame in a frame? (this problem looks familiar...)
 
 ### CV Report
-    - make CV report not include ei as both V and VV, but not exclude a word for both C1 and C2.
-    - make CV report not include Caa in V1 or V2
-    - make data only give once (not in V1 or V2 if in V1=V2)
+    - Need to make XLP example test for results NOT in previous results!
 
 ## In Process
-- Make CV report sensible.
 - XLP export
-    - write to file
     - run dotexpdf (once you figure out where that is) to generate pdf
     - run script to generate html
     - figure out window specific variations (with Andy?)
-- Test that change of analang is respected on reanalysis.
-  - and that change of analang triggers reanalysis
 - Add treatment of long vowels, similar to consonant distinctions/interpretation
   - lift.s['VV'] should include xx for x in lift.s['V']
   - lift.s['V:'] should include x:, and xː for x in lift.s['V'], as for c['pn'], which is always C.
@@ -24,6 +18,10 @@
     - or make VV>V: or not, and feed that to V:>V or not.
   - lift.s['V:'] should consider VdVd, dVdV, dVVd, and VddV as possibles/hypotheticals.  
   - lift.s['V'] should include lift.s['d'], if present
+  - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
+      - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
+      - or is lift.s['V'] and lift.s['d'] enough?
+      - doing it here is nice to have the test of what is actually there...
 - Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
 - bring diacritics into vowel variables
 - figure out why multiple fuŋ entries aren't showing for recording on bfj
@@ -37,15 +35,7 @@
   - pushed off the screen?
 
 ## Next Features
-- Fully distinguish C, CG, and NC onsets, C and N finals
-    - how to treat C1=C2? CG1=CG2? Do we want S to be larger units, or to have N and G modifications?
-    - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
-        - or is lift.s['V'] and lift.s['d'] enough?
-        - doing it here is nice to have the test of what is actually there...
-    - New check settings:
-        - some people may want V to include Vː, others may not (for tone, probably all should...)
-        - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
-- add C and V sorting (and CV?)
+    - add C and V sorting (and CV?)
 
 ### Prioritization
 - make checkcheck reference most popular *unfinished* ps-profile combo
@@ -60,8 +50,15 @@
 - distinguish between lc and lx
     - make CV report only reference lx field
     - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
+# Version 0.6
+- fixed numerous report problems (should be mostly working now)
+- Implemented XlingPaper export (at least beginning)
+    - writing organized data to file, which compiles to PDF in XXE.
 
-# Version 5.0
+## Bug fixes
+- Analysis lang is correctly treated on change (triggering reanalysis)
+
+# Version 0.5
 - made help:about scroll
 - fixed multiple sense glosses pulled into CV reports (now senses are sorted individually)
 - added linebreaks to tone frame definition window, to keep it on the page
