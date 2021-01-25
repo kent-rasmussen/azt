@@ -996,6 +996,7 @@ class Check():
             setattr(self, default, None)
             """These can be done in checkcheck..."""
     def reloadprofiledata(self):
+        self.storedefaults()
         file.remove(self.profiledatafile)
         self.parent.parent.destroy()
         main()
