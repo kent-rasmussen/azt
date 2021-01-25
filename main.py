@@ -1388,11 +1388,10 @@ class Check():
                 if ((node.tag == 'field') and
                                 (subnode.get('type') == 'tone')):
                     tonegroups=node.findall('text')
-            if self.debug == True:
-                print('forms:',forms)
-                for lang in gloss:
-                    print('gloss[{}]:'.format(lang),glosses[lang])
-                print('tonegroups:',tonegroups)
+            log.log(2,'forms: {}'.format(forms))
+            for lang in gloss:
+                log.log(2,'gloss[{}]: {}'.format(lang,glosses[lang]))
+            log.debug('tonegroups: {}'.format(tonegroups))
             """convert from lists to single items without loosing data,
             then pull text from nodes"""
             form=t(firstoflist(forms))
@@ -1429,16 +1428,15 @@ class Check():
             form=firstoflist(forms)
             for lang in glosses:
                 gloss[lang]=firstoflist(glosses[lang])
-                print('gloss[{}]:'.format(lang),gloss[lang])
+                log.log(2,'gloss[{}]: {}'.format(lang,gloss[lang]))
             tonegroup=firstoflist(tonegroups)
         else:
             print('Neither Element nor senseid was found!')
             return output
-        if self.debug == True:
-            print('form:',form)
-            for lang in gloss:
-                print('gloss:',gloss[lang])
-            print('tonegroup:',tonegroup)
+        log.log(2,'form: {}'.format(form))
+        for lang in gloss:
+            log.log(2,'gloss:'.format(gloss[lang]))
+        log.log(2,'tonegroup: {}'.format(tonegroup))
         """The following is the same for senses or examples"""
         if (notonegroup == False) and (tonegroup != None):
             try:
@@ -2269,29 +2267,32 @@ class Check():
         """This sets each of the checks that are applicable for the given
         profile; self.basicreported is from self.basicreport()"""
         for typenum in self.basicreported:
-            print(typenum+':',self.basicreported[typenum])
+            log.log(2, '{}: {}'.format(typenum,self.basicreported[typenum]))
         """setnamesbyprofile doesn't depend on self.ps"""
         for codenname in sorted(self.setnamesbyprofile(),
                         key=lambda s: len(s[0]),reverse=True):
             """self.name set here"""
             self.name=codenname[0] #just codes, not names
+            log.debug('self.name: {}; self.type: {}; self.typenums: {}'.format(
+                                        self.name,self.type,self.typenums))
             self.typenumsRun=[typenum for typenum in self.typenums
                                         if re.search(typenum,self.name)]
             if len(self.name) == 1:
-                print("Error!",self.name,"Doesn't seem to be list formatted.")
+                log.debug("Error! {} Doesn't seem to be list formatted.".format(self.name))
             for self.subcheck in subchecks:
                 t=_("{}={}".format(self.name,self.subcheck))
                 print(t)
                 log.info(t)
                 self.buildregex()
                 for match in self.db.senseidformsbyregex(self.regex,
+                                                            self.analang,
                                                             ps=self.ps).items():
                     self.checknprint(match[0])
         self.name=nameori
         self.subcheck=subcheckori
     def checknprint(self,matchid):
         """This will likely only work when called by
-        wordsbypsprofilechecksubcheck; but is needed becuase it must return if
+        wordsbypsprofilechecksubcheck; but is needed because it must return if
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
         for typenum in self.typenumsRun:
             if matchid in self.basicreported[typenum]:
