@@ -3,7 +3,7 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A→Z+T'}
 program['tkinter']=True
-program['production']=True
+program['production']=False #True for making screenshots
 program['version']='0.5' #This is a string...
 import platform
 """Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
