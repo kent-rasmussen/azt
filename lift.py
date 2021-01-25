@@ -1478,11 +1478,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             form=self.get('lexeme',guid=entry.get('guid')) #self.formbyid(entry.get('guid'))[0] #just looking for one at this point.
             log.info("Apparently there are no/multiple forms for this entry...")
         return output
-    def senseidformsbyregex(self,regex,ps=None,analang=None): #self is LIFT!
+    def senseidformsbyregex(self,regex,analang,ps=None): #self is LIFT!
         """This function takes in a ps and compiled regex,
         and outputs a dictionary of {senseid:form} form."""
-        if analang is None:
-            analang=self.analang
+        # if analang is None:
+        #     analang=self.analang
         output={}
         def checkformsbyps(self,analang,ps):
             for form in self.formstosearch[analang][ps]:
