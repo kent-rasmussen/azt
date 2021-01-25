@@ -1389,14 +1389,15 @@ class Check():
                                 (subnode.get('type') == 'tone')):
                     tonegroups=node.findall('text')
             log.log(2,'forms: {}'.format(forms))
-            for lang in gloss:
+            for lang in glosses: #gloss doesn't seem to be defined above; glosses?
                 log.log(2,'gloss[{}]: {}'.format(lang,glosses[lang]))
             log.debug('tonegroups: {}'.format(tonegroups))
             """convert from lists to single items without loosing data,
             then pull text from nodes"""
             form=t(firstoflist(forms))
-            for lang in gloss:
-                gloss=t(firstoflist(glosses[lang]))
+            for lang in glosses:
+                if (lang == self.analang) or (lang == self.analang2):
+                    gloss[lang]=t(firstoflist(glosses[lang]))
             tonegroup=t(firstoflist(tonegroups))
             """This is what we're pulling from:
             <example>
