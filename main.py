@@ -3547,6 +3547,9 @@ class Check():
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                             # ,'_',self.type,'_',str(pss)
                                             ,'.BasicReport.txt'])
+        self.basicreportfileXLP=''.join([str(self.reportbasefilename)
+                                            # ,'_',self.type,'_',str(pss)
+                                            ,'.BasicReportXLP.xml'])
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
         print(instr)
         log.info(instr)
@@ -3561,6 +3564,10 @@ class Check():
             # print('NVCVN:',self.profilesbysense[self.ps]['NVCVN'])
             profilestodo=['CVCV']
             profilestodo=self.topprofiles(num)[self.ps]
+            t=_("This report covers the following syllable profiles: {}".format(
+                                                            profilestodo))
+            log.info(t)
+            print(t)
             for self.profile in profilestodo:
                 t=_("{} {}s".format(self.profile,self.ps))
                 print(t)
