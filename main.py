@@ -27,6 +27,7 @@ import lift
 import file
 import profiles
 import setdefaults
+import xlp
 """Other people's stuff"""
 import threading
 import itertools
@@ -2245,7 +2246,7 @@ class Check():
         for line in self.profilecounts:
             if line[1] == profile and line[2] == ps:
                 return line[0]
-    def wordsbypsprofilechecksubcheck(self):
+    def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
         """This function iterates across self.name and self.subcheck values
         appropriate for the specified self.type, self.profile and self.name
         values (ps is irrelevant here).
@@ -2282,26 +2283,37 @@ class Check():
                 log.debug("Error! {} Doesn't seem to be list formatted.".format(self.name))
             for self.subcheck in subchecks:
                 t=_("{}={}".format(self.name,self.subcheck))
+                xlp.Paragraph(parent,t)
                 print(t)
                 log.info(t)
                 self.buildregex()
-                for match in self.db.senseidformsbyregex(self.regex,
-                                                            self.analang,
-                                                            ps=self.ps).items():
-                    self.checknprint(match[0])
+                matches=self.db.senseidformsbyregex(self.regex,
+                                                    self.analang,
+                                                    ps=self.ps).items()
+                if len(matches)>0: #AND!!! not in self.basicreported[typenum]
+                    ex=xlp.Example(parent,self.name+self.subcheck)
+                for match in matches:
+                    self.checknprint(match[0],parent=ex)
         self.name=nameori
         self.subcheck=subcheckori
-    def checknprint(self,matchid):
+    def checknprint(self,matchid,parent):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
+        """parent is the current section of the XLP report"""
         for typenum in self.typenumsRun:
             if matchid in self.basicreported[typenum]:
                 return
             else:
                 self.basicreported[typenum]+=[matchid]
-        print('\t',self.getframeddata(matchid,
-                                        noframe=True)['formatted'])
+        framed=self.getframeddata(matchid,noframe=True)
+        print('\t',framed['formatted'])
+        ex=xlp.ListWord(parent,'x'+matchid)
+        el=xlp.LangData(ex,self.analang,framed[self.analang])
+        eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
+        print(framed)
+        if (self.glosslang2 != '') and (self.glosslang2 in framed):
+                eg2=xlp.Gloss(ex,self.glosslang2,framed[self.glosslang2])
     def makecountssorted(self):
         self.profilecounts={}
         wcounts=list()
@@ -3551,6 +3563,10 @@ class Check():
         self.basicreportfileXLP=''.join([str(self.reportbasefilename)
                                             # ,'_',self.type,'_',str(pss)
                                             ,'.BasicReportXLP.xml'])
+        xlpr=xlp.Report(self.basicreportfileXLP)
+        xlpr.addlang({'id':self.analang, 'name': 'Zulgo'}) #FIX!!
+        si=xlp.Section(xlpr,"Introduction")
+        p=xlp.Paragraph(si,instr)
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
         print(instr)
         log.info(instr)
@@ -3571,6 +3587,7 @@ class Check():
             print(t)
             for self.profile in profilestodo:
                 t=_("{} {}s".format(self.profile,self.ps))
+                s1=xlp.Section(xlpr,t)
                 print(t)
                 log.info(t)
                 for self.type in ['V','C']:
@@ -3580,7 +3597,9 @@ class Check():
                     for typenum in self.typenums:
                         if typenum not in self.basicreported:
                             self.basicreported[typenum]=list()
-                    self.wordsbypsprofilechecksubcheck()
+                    self.wordsbypsprofilechecksubcheck(s1)
+        xlpr.finish()
+        xlpr.write()
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         self.type=typeori
