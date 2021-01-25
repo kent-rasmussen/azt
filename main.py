@@ -3552,7 +3552,7 @@ class Check():
                 "first, followed by less restrictive tests (e.g., V1=V2 "
                 "before V1 or V2). Additionally, each word only "
                 "appears once per segment in a given position, so a word that "
-                "occurrs in a more restrictive environment will not appear in "
+                "occurs in a more restrictive environment will not appear in "
                 "the later less restrictive environments. But where multiple "
                 "examples of a segment type occur with different values, e.g., "
                 "V1≠V2, those words will appear multiple times, e.g., for "
@@ -4200,7 +4200,6 @@ class MainApplication(Frame):
         window=Window(self)
         title=(_("{} Dictionary and Orthography Checker").format(self.program['name']))
         window.title(title)
-        Label(window.frame, text=_("version: {}").format(version),anchor='c',padx=50
         Label(window.frame, text=_("version: {}").format(program['version']),anchor='c',padx=50
                         ).grid(row=1,column=0,sticky='we')
         text=_("{0} is a computer program that accelerates community"
