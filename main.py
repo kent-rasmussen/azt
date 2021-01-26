@@ -3575,7 +3575,10 @@ class Check():
                                             # ,'_',self.type,'_',str(pss)
                                             ,'.BasicReportXLP.xml'])
         xlpr=xlp.Report(self.basicreportfileXLP)
-        xlpr.addlang({'id':self.analang, 'name': 'Zulgo'}) #FIX!!
+        for lang in [self.analang,self.glosslang,self.glosslang2]:
+            if lang != None:
+                xlpr.addlang({'id':self.analang,
+                            'name': self.db.languagenames[self.analang]})
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
