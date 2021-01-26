@@ -2337,13 +2337,22 @@ class Check():
                 print(t)
                 log.info(t)
                 self.buildregex()
-                matches=self.db.senseidformsbyregex(self.regex,
+                log.debug("self.regex: {}; self.regexCV: {}".format(self.regex,
+                                                                self.regexCV))
+                matches=set(self.db.senseidformsbyregex(self.regex,
                                                     self.analang,
-                                                    ps=self.ps).items()
-                if len(matches)>0: #AND!!! not in self.basicreported[typenum]
-                    ex=xlp.Example(parent,self.name+self.subcheck)
-                for match in matches:
-                    self.checknprint(match[0],parent=ex)
+                                                    ps=self.ps).keys())
+                for typenum in self.typenumsRun:
+                    # matchestofind=
+                    matches-=self.basicreported[typenum]
+                log.debug("{} matches found!: {}".format(len(matches),matches))
+                            # len(matches-self.basicreported[typenum]),
+                            # matches-self.basicreported[typenum]))
+                if len(matches)>0:
+                    id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck)
+                    ex=xlp.Example(parent,id)
+                    for match in matches:
+                        self.checknprint(match,parent=ex)
         self.name=nameori
         self.subcheck=subcheckori
     def checknprint(self,matchid,parent):
@@ -2352,10 +2361,13 @@ class Check():
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
         """parent is the current section of the XLP report"""
         for typenum in self.typenumsRun:
-            if matchid in self.basicreported[typenum]:
-                return
-            else:
-                self.basicreported[typenum]+=[matchid]
+            # if matchid in self.basicreported[typenum]:
+            #     log.error("not printing id {}; found in self."
+            #                 "basicreported[{}]".format(matchid,typenum))
+            #     return
+            # else:
+                # self.basicreported[typenum]+=[matchid]
+                self.basicreported[typenum].add(matchid)
         framed=self.getframeddata(matchid,noframe=True)
         print('\t',framed['formatted'])
         ex=xlp.ListWord(parent,'x'+matchid)
