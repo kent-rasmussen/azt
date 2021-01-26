@@ -3680,6 +3680,10 @@ class Check():
                 print(t)
                 log.info(t)
                 for self.type in self.s[self.analang]: # was ['V','C']:
+                    t=_("{} checks".format(self.type))
+                    print(t)
+                    log.info(t)
+                    s3=xlp.Section(s2,t,level=3)
                     maxcount=re.subn(self.type, self.type, self.profile)[1]
                     """Get these reports from C1/V1 to total number of C/V"""
                     self.typenums=[self.type+str(n+1) for n in range(maxcount)]
