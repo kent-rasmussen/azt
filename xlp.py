@@ -2,11 +2,13 @@
 # coding=UTF-8
 from xml.etree import ElementTree as ET
 import rx
+import file
 import logging
 log = logging.getLogger(__name__)
 class Report(object):
     def __init__(self,filename):
         self.filename=filename
+        self.stylesheetdir=file.getstylesheetdir(filename)
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
         self.node=ET.Element('lingPaper') #self.tree.getroot()
         self.title="Generic A→Z+T output report"
@@ -53,12 +55,15 @@ class Report(object):
         self.backmatter()
         self.languages()
         self.xlptypes()
+        self.stylesheet()
     def write(self):
         """This writes changes to XML which can be read by XXE as XLP."""
+        doctype=self.node.tag
         with open(self.filename, 'wb') as f:
             f.write('<?xml version="1.0" encoding="UTF-8" ?>'
                     '<!DOCTYPE lingPaper PUBLIC "-//XMLmind//DTD XLingPap//EN"'
-                    ' "XLingPap.dtd">'.encode('utf8'))
+                    '<!DOCTYPE {} PUBLIC "-//XMLmind//DTD XLingPap//EN"'
+                    ' "XLingPap.dtd">'.format(doctype).encode('utf8'))
             # ElementTree.ElementTree(tree).write(f, 'utf-8')
             indent(self.node)
             self.tree=ET.ElementTree(self.node)
@@ -205,6 +210,25 @@ class Report(object):
         # ></types
         # >
 
+        if hasattr(self,'stylesheetdir'):
+            print('self.stylesheetdir:',self.stylesheetdir)
+        stylesheetname='CannedPaperStylesheet.xml'
+        url=file.getdiredurl(self.stylesheetdir,stylesheetname)
+        print(url)
+        tree = ET.parse(url)
+        print(tree)
+        stylesheet = tree.getroot()
+        # stylesheet=ET.Element('publisherStyleSheet')
+        self.styled=ET.Element('xlingpaper') #self.tree.getroot()
+        self.styled.set('version','2.24.0')
+        sp=ET.SubElement(self.styled,'styledPaper')
+        sp.append(self.node)
+        sp.append(stylesheet)
+        self.node=self.styled
+        # ET.dump(self.styled)
+        # ET.dump(stylesheet)
+        # ET.dump(sp)
+        # ET.dump(self.node)
 class Section(ET.Element):
     def __init__(self,parent,title,level=1):
         id=rx.id(title)
