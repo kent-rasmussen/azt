@@ -2370,9 +2370,13 @@ class Check():
                 self.basicreported[typenum].add(matchid)
         framed=self.getframeddata(matchid,noframe=True)
         print('\t',framed['formatted'])
-        el=xlp.LangData(ex,self.analang,framed[self.analang])
         id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck+matchid)
         ex=xlp.ListWord(parent,id)
+        if self.audiolang in framed:
+            el=xlp.LinkedData(ex,self.analang,framed[self.analang],
+                            framed[self.audiolang])
+        else:
+            el=xlp.LangData(ex,self.analang,framed[self.analang])
         eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
         print(framed)
         if (self.glosslang2 != '') and (self.glosslang2 in framed):
