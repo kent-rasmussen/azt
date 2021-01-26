@@ -22,6 +22,7 @@ class Report(object):
         self.frontmatter()
         log.info("Done initializing Report")
     def finish(self):
+        log.info("Done; setting back matter, etc, now.")
         self.backmatter()
         self.languages()
         self.xlptypes()
@@ -185,9 +186,8 @@ class Report(object):
         stylesheetname='CannedPaperStylesheet.xml'
         url=file.getdiredurl(self.stylesheetdir,stylesheetname)
         tree = ET.parse(url)
-        print(tree)
         stylesheet = tree.getroot()
-        self.styled=ET.Element('xlingpaper') #self.tree.getroot()
+        self.styled=ET.Element('xlingpaper')
         self.styled.set('version','2.24.0')
         sp=ET.SubElement(self.styled,'styledPaper')
         sp.append(self.node)
@@ -270,5 +270,35 @@ if __name__ == "__main__":
     def _(x):
         return str(x)
     print('trying manual report generation...')
-    d=Report('filetest.xml')
+    d=Report('filetest.xml',"a non-language")
+    s1=Section(d,"Section One title")
+    t="This is the first paragraph in the report."
+    p=Paragraph(s1,t)
+    e=Example(s1,'x1')
+    ew=Word(e)
+    # el=LangData(ew,'gnd','baba')
+    lang={'id':'gnd', 'name': 'Zulgo'}
+    d.addlang(lang)
+    es=LinkedData(ew,lang['id'],'baba','Noun_d4410d1a-bba0-4c9e-823c-4566'
+                '2abea150_lexical-unit_goŋ_roof_.wav',phonetic=True)
+    es=LangData(ew,lang['id'],'˦˦ ˨˨',)
+    lang={'id':'en', 'name': 'English'}
+    d.addlang(lang)
+    eg=Gloss(ew,lang['id'],'father')
+    t="This is a second paragraph in the report, after an example."
+    p=Paragraph(s1,t)
+    e=Example(s1,'x2')
+    elw=ListWord(e,'linked')
+    # el=LangData(ew,'gnd','baba')
+    lang={'id':'gnd', 'name': 'Zulgo'}
+    es=LinkedData(elw,'gnd','baba','Noun_d4410d1a-bba0-4c9e-823c-45662abe'
+                                        'a150_lexical-unit_goŋ_roof_.wav')
+    es=LangData(elw,lang['id'],'˦˦ ˨˨',)
+    eg=Gloss(elw,'en','father')
+    elw=ListWord(e,'Not linked')
+    # el=LangData(ew,'gnd','baba')
+    es=LangData(elw,'gnd','baba')
+    es=LangData(elw,'gnd','˨˨ ˦˦',phonetic=True)
+    eg=Gloss(elw,'en','father')
+    d.finish()
     d.write()
