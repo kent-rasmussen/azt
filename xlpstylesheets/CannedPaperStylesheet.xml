@@ -1365,6 +1365,8 @@ textbeforeafterusesfontinfo="no"
 ></langDataLayout
 ><glossLayout
 ><glossInExampleLayout
+textafter="ˊ"
+textbefore="ˋ"
 textbeforeafterusesfontinfo="no"
 ></glossInExampleLayout
 ><glossInTableLayout
