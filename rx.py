@@ -5,16 +5,16 @@ log = logging.getLogger(__name__)
 """This is called from a number of places"""
 def id(x):
     return re.sub('[ .!=]','_',x) #remove charcters that are invalid for ids
-def s(self,stype,lang=None):
+def s(check,stype,lang=None):
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
     if (lang == None) and (hasattr(self,'analang')):
         log.debug(_('telling rx.s which lang to use'))
-        lang=self.analang
-        log.debug(_("Using analang: {}".format(self.analang)))
-    log.log(2,_("Looking in self.s[{}]: {}".format(lang,self.s[lang])))
-    if stype in self.s[lang]:
-        return "("+'|'.join(sorted(self.s[lang][stype],key=len,reverse=True))+")"
+        lang=check.analang
+        log.debug(_("Using analang: {}".format(check.analang)))
+    log.log(2,_("Looking in check.s[{}]: {}".format(lang,check.s[lang])))
+    if stype in check.s[lang]:
+        return "("+'|'.join(sorted(check.s[lang][stype],key=len,reverse=True))+")"
     # if hasattr(self,stype): #should be one of c,v,g,n
     #     return "("+'|'.join(sorted(getattr(self,stype)[lang]))+")"
 def make(regex, word=False, compile=False):
@@ -31,7 +31,7 @@ def make(regex, word=False, compile=False):
         except:
             log.error('Regex problem!')
     return regex
-def fromCV(db, CVs, lang, word=False, compile=False):
+def fromCV(check, lang, word=False, compile=False):
     """ this inputs regex variable (regexCV), a tuple of two parts:
     1. abbreviations with 'C' and 'V' in it, and/or variables for actual
     segments or back reference, e.g., 1 for \1 or 2 for \2, and 'c' or 'v'.
@@ -41,6 +41,7 @@ def fromCV(db, CVs, lang, word=False, compile=False):
     It outputs language specific regex (compiled if compile=True,
     whole word word=True)."""
     """lang should be check.analang"""
+    CVs=check.regexCV
     if type(CVs) is str:
         CVs=tuple((CVs,))
     regex=list()
@@ -53,8 +54,8 @@ def fromCV(db, CVs, lang, word=False, compile=False):
         exit()
     for x in CVs[0]:
         if x in ["V","C","N","G","S"]:
-            rnext=s(db,x,lang) #this should have parens for each S
-        elif x in sum(db.s[lang].values(),[]):
+            rnext=s(check,x,lang) #this should have parens for each S
+        elif x in sum(check.s[lang].values(),[]):
             rnext="("+x+")"
         else:
             try:
