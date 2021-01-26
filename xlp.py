@@ -59,7 +59,6 @@ class Report(object):
         doctype=self.node.tag
         with open(self.filename, 'wb') as f:
             f.write('<?xml version="1.0" encoding="UTF-8" ?>'
-                    '<!DOCTYPE lingPaper PUBLIC "-//XMLmind//DTD XLingPap//EN"'
                     '<!DOCTYPE {} PUBLIC "-//XMLmind//DTD XLingPap//EN"'
                     ' "XLingPap.dtd">'.format(doctype).encode('utf8'))
             # ElementTree.ElementTree(tree).write(f, 'utf-8')
