@@ -3579,18 +3579,32 @@ class Check():
         self.printcountssorted()
         num=1
         num='ALL'
-        for self.ps in self.topps(num): #get PSs found in syllable profiles
+        num=5
+        log.debug('self.topps(num):       {}'.format(self.topps(num)))
+        log.debug('self.topprofiles(num): {}'.format(self.topprofiles(num)))
+        profilestodo=['CVCV']
+        profilestodo=self.topprofiles(num)
+        t=_("This report covers the following top {} syllable profiles:"
+            " {}".format(num,profilestodo))
+        log.info(t)
+        print(t)
+        p=xlp.Paragraph(si,t)
+        for self.ps in profilestodo: #get PSs found in syllable profiles
             """For Debugging"""
             # print('NVCVN:',self.profilesbysense[self.ps]['NVCVN'])
-            profilestodo=['CVCV']
-            profilestodo=self.topprofiles(num)[self.ps]
-            t=_("This report covers the following syllable profiles: {}".format(
-                                                            profilestodo))
+            t=_("{} data".format(self.ps))
             log.info(t)
             print(t)
-            for self.profile in profilestodo:
+            s1=xlp.Section(xlpr,t)
+            t=_("This report covers the following top {} syllable profiles "
+                "which are found in {}s: {}".format(num,self.ps,
+                                                    profilestodo[self.ps]))
+            p=xlp.Paragraph(s1,t)
+            log.info(t)
+            print(t)
+            for self.profile in profilestodo[self.ps]:
                 t=_("{} {}s".format(self.profile,self.ps))
-                s1=xlp.Section(xlpr,t)
+                s2=xlp.Section(s1,t,level=2)
                 print(t)
                 log.info(t)
                 for self.type in ['V','C']:
