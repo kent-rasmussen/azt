@@ -4,7 +4,9 @@
 
 ### CV Report
     - Need to make XLP example test for results NOT in previous results!
-
+    - test: if exists sound file, link data. else: langdata
+        - make this both for example and lx/lc recordings.
+    - fix key 7 problem for sxw
 ## In Process
 - XLP export
     - run dotexpdf (once you figure out where that is) to generate pdf
