@@ -3675,8 +3675,8 @@ class Check():
                     self.typenums=[self.type+str(n+1) for n in range(maxcount)]
                     for typenum in self.typenums:
                         if typenum not in self.basicreported:
-                            self.basicreported[typenum]=list()
-                    self.wordsbypsprofilechecksubcheck(s1)
+                            self.basicreported[typenum]=set()
+                    self.wordsbypsprofilechecksubcheck(s2)
         xlpr.finish()
         xlpr.write()
         sys.stdout.close()
