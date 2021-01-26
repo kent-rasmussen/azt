@@ -2262,12 +2262,13 @@ class Check():
         profiles..."""
         nameori=self.name
         subcheckori=self.subcheck
-        if self.type == 'V':
-            subchecks=self.s[self.analang]['V'] #(just the vowels
-        elif self.type == 'C':
-            subchecks=self.s[self.analang]['C']
-        else:
-            print("Sorry, not sure what I'm doing:",self.type)
+        subchecks=self.s[self.analang][self.type]
+        # if self.type == 'V':
+        #     subchecks=self.s[self.analang]['V'] #(just the vowels
+        # elif self.type == 'C':
+        #     subchecks=self.s[self.analang]['C']
+        # else:
+        #     print("Sorry, not sure what I'm doing:",self.type)
         """This sets each of the checks that are applicable for the given
         profile; self.basicreported is from self.basicreport()"""
         for typenum in self.basicreported:
