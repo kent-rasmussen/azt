@@ -2224,7 +2224,7 @@ class Check():
                 self.locations+=[location]
         self.locations=list(dict.fromkeys(self.locations))
     def topps(self,x='ALL'):
-        """take the top x profiles, irrespective of ps"""
+        """take the top x ps', irrespective of profile"""
         pss=list()
         if x == 'ALL':
             x=len(self.profilecounts)
@@ -2233,6 +2233,7 @@ class Check():
         # print(pss)
         return list(dict.fromkeys(pss))
     def topprofiles(self,x='ALL'):
+        """take the top x ps-profile combos, return in ps:profile dict"""
         profiles={}
         if x == 'ALL':
             x=len(self.profilecounts)
