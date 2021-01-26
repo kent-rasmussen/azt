@@ -40,6 +40,20 @@ def getaudiodir(filename):
         log.debug("{} not there, making it!".format(dir))
         os.mkdir(dir)
     return dir
+def getstylesheetdir(filename):
+    dir=pathlib.Path.joinpath(getfilenamedir(filename),'xlpstylesheets')
+    log.debug("Looking for {}".format(dir))
+    if not os.path.exists(dir):
+        log.debug("{} not there, not using your stylesheet!\nIf you want to "
+        "use your own XLingPaper styesheet for these reports, make that "
+        "directory, and put the stylesheet in it. For now, using a default "
+        "styelsheet.".format(dir))
+        dir=pathlib.Path.joinpath(pathlib.Path(__file__).parent,'xlpstylesheets')
+        if not os.path.exists(dir):
+            log.debug("{} not there, not using a stylesheet!".format(dir))
+            return
+    return dir
+
 def exists(file):
     if os.path.exists(file):
         return True
