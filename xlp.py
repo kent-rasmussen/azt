@@ -21,34 +21,6 @@ class Report(object):
         self.langlist=list()
         self.frontmatter()
         log.info("Done initializing Report")
-        # s1=Section(self,"Section One title")
-        # t="This is the first paragraph in the report."
-        # p=Paragraph(s1,t)
-        # e=Example(s1,'x1')
-        # ew=Word(e)
-        # # el=LangData(ew,'gnd','baba')
-        # es=LinkedData(ew,lang['id'],'baba','Noun_d4410d1a-bba0-4c9e-823c-4566'
-        #             '2abea150_lexical-unit_goŋ_roof_.wav',phonetic=True)
-        # es=LangData(ew,lang['id'],'˦˦ ˨˨',)
-        # lang={'id':'en', 'name': 'English'}
-        # self.addlang(lang)
-        # eg=Gloss(ew,lang['id'],'father')
-        # t="This is a second paragraph in the report, after an example."
-        # p=Paragraph(s1,t)
-        # e=Example(s1,'x2')
-        # elw=ListWord(e,'linked')
-        # # el=LangData(ew,'gnd','baba')
-        # lang={'id':'gnd', 'name': 'Zulgo'}
-        # es=LinkedData(elw,'gnd','baba','Noun_d4410d1a-bba0-4c9e-823c-45662abe'
-        #                                     'a150_lexical-unit_goŋ_roof_.wav')
-        # es=LangData(elw,lang['id'],'˦˦ ˨˨',)
-        # eg=Gloss(elw,'en','father')
-        # elw=ListWord(e,'Not linked')
-        # # el=LangData(ew,'gnd','baba')
-        # es=LangData(elw,'gnd','baba')
-        # es=LangData(elw,'gnd','˨˨ ˦˦',phonetic=True)
-        # eg=Gloss(elw,'en','father')
-        log.info("Done; setting back matter, etc, now.")
     def finish(self):
         self.backmatter()
         self.languages()
@@ -62,6 +34,7 @@ class Report(object):
                     '<!DOCTYPE {} PUBLIC "-//XMLmind//DTD XLingPap//EN"'
                     ' "XLingPap.dtd">'.format(doctype).encode('utf8'))
             # ElementTree.ElementTree(tree).write(f, 'utf-8')
+            #in 3.9: self.tree=ET.indent(ET.ElementTree(self.node))
             indent(self.node)
             self.tree=ET.ElementTree(self.node)
             self.tree.write(f, encoding="UTF-8")
@@ -206,26 +179,20 @@ class Report(object):
         # >Add your custom types here.</comment
         # ></types
         # >
-
+    def stylesheet(self):
         if hasattr(self,'stylesheetdir'):
             print('self.stylesheetdir:',self.stylesheetdir)
         stylesheetname='CannedPaperStylesheet.xml'
         url=file.getdiredurl(self.stylesheetdir,stylesheetname)
-        print(url)
         tree = ET.parse(url)
         print(tree)
         stylesheet = tree.getroot()
-        # stylesheet=ET.Element('publisherStyleSheet')
         self.styled=ET.Element('xlingpaper') #self.tree.getroot()
         self.styled.set('version','2.24.0')
         sp=ET.SubElement(self.styled,'styledPaper')
         sp.append(self.node)
         sp.append(stylesheet)
         self.node=self.styled
-        # ET.dump(self.styled)
-        # ET.dump(stylesheet)
-        # ET.dump(sp)
-        # ET.dump(self.node)
 class Section(ET.Element):
     def __init__(self,parent,title,level=1):
         id=rx.id(title)
