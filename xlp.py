@@ -206,9 +206,10 @@ class Report(object):
         # >
 
 class Section(ET.Element):
-    def __init__(self,parent,title):
+    def __init__(self,parent,title,level=1):
         id=rx.id(title)
-        self.node=ET.SubElement(parent.node,'section1',attrib={'id':id})
+        name='section'+str(level)
+        self.node=ET.SubElement(parent.node,name,attrib={'id':id})
         st=SecTitle(self,title) #I always need this
 class SecTitle(ET.Element):
     def __init__(self,parent,text):
