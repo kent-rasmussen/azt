@@ -6,12 +6,12 @@ import file
 import logging
 log = logging.getLogger(__name__)
 class Report(object):
-    def __init__(self,filename):
+    def __init__(self,filename,langname):
         self.filename=filename
         self.stylesheetdir=file.getstylesheetdir(filename)
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
         self.node=ET.Element('lingPaper') #self.tree.getroot()
-        self.title="Generic A→Z+T output report"
+        self.title="Generic A→Z+T output report for {}".format(langname)
         self.authors=[{'name':'Kent Rasmussen',
                         'affiliation':'SIL Cameroun',
                         'Email':'kent_rasmussen@sil.org'},
@@ -27,8 +27,6 @@ class Report(object):
         # e=Example(s1,'x1')
         # ew=Word(e)
         # # el=LangData(ew,'gnd','baba')
-        # lang={'id':'gnd', 'name': 'Zulgo'}
-        # self.addlang(lang)
         # es=LinkedData(ew,lang['id'],'baba','Noun_d4410d1a-bba0-4c9e-823c-4566'
         #             '2abea150_lexical-unit_goŋ_roof_.wav',phonetic=True)
         # es=LangData(ew,lang['id'],'˦˦ ˨˨',)
