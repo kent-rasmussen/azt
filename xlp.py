@@ -217,7 +217,6 @@ class SecTitle(ET.Element):
         self.node.text=text
 class Paragraph(ET.Element):
     def __init__(self,parent,text):
-        print(self,parent,text)
         self.node=ET.SubElement(parent.node,'p')
         self.node.text=text
 class Example(ET.Element):
