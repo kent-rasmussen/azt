@@ -1234,7 +1234,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             #log.info(s) #to see the following run per segment
             if s is not None:
                 actuals.append(s)
-        return actuals
+        return list(dict.fromkeys(actuals))
     def getguidformstosearchbyps(self,ps,lang=None):
         if lang is None:
             lang=self.analang
