@@ -167,6 +167,7 @@ class Check():
         log.debug("analang guessed: {} (If you don't like this, change it in "
                     "the menus)".format(self.analang))
         self.loaddefaults() # overwrites guess above, stored on runcheck
+        self.langnames()
         self.checkinterpretations() #checks (and sets) values for self.distinguish
         if 'bfj' in self.db.s:
             self.db.s['bfj']['V']=['ou','ei']+self.db.s['bfj']['V']
@@ -302,6 +303,41 @@ class Check():
     def guesstype(self):
                     """For now, if type isn't set, start with Vowels."""
                     self.type='V'
+    def langnames(self):
+        """This is for getting the prose name for a language from a code."""
+        """It uses a xyz.ldml file, produced (at least) by WeSay."""
+        #ET.register_namespace("", 'palaso')
+        ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
+        node=None
+        self.languagenames={}
+        for xyz in self.db.analangs+self.db.glosslangs: #self.languagepaths.keys():
+            # log.info(' '.join('Looking for language name for',xyz))
+            """This provides an ldml node"""
+            #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
+            #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
+            """This doesn't seem to be working; I should fix it, but there
+            doesn't seem to be reason to generalize it for now."""
+            # tree=ET.parse(self.languagepaths[xyz])
+            # tree.nodes=tree.getroot()
+            # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
+            if node is not None:
+                self.languagenames[xyz]=node.get('value')
+                log.info(' '.join('found',self.languagenames[xyz]))
+            elif xyz == 'fr':
+                self.languagenames[xyz]="Français"
+            elif xyz == 'en':
+                self.languagenames[xyz]="English"
+            elif xyz == 'gnd':
+                self.languagenames[xyz]="Zulgo"
+            elif xyz == 'fub':
+                self.languagenames[xyz]="Fulfulde"
+            elif xyz == 'bfj':
+                self.languagenames[xyz]="Chufie’"
+            else:
+                self.languagenames[xyz]=_("Language with code [{}]").format(xyz) #I need to fix this...
+            self.languagenames[None]=None #just so we don't fail on None...
+        for xyz in self.adnlangnames: #overwrite with user specified names
+            self.languagenames[xyz]=self.adnlangnames[xyz]
     """User Input functions"""
     def getinterfacelang(self):
             print("Asking for interface language...")
@@ -412,7 +448,7 @@ class Check():
         """Page title and instructions"""
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
         title=_("Interpret {} Segments"
-                ).format(self.db.languagenames[self.analang])
+                ).format(self.languagenames[self.analang])
         titl=Label(self.runwindow,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c')
         titl.grid(row=self.runwindow.options['row'],
@@ -422,7 +458,7 @@ class Check():
         self.runwindow.options['row']+=1
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
-                ).format(self.progname,self.db.languagenames[self.analang])
+                ).format(self.progname,self.languagenames[self.analang])
         instr=Label(self.runwindow,text=text,
                 justify=tkinter.LEFT,anchor='c')
         instr.grid(row=self.runwindow.options['row'],
@@ -518,7 +554,7 @@ class Check():
         pady=10
         self.runwindow.title(_("Add Morpheme to Dictionary"))
         title=_("Add a {} morpheme to the dictionary").format(
-                            self.db.languagenames[self.analang])
+                            self.languagenames[self.analang])
         Label(self.runwindow,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c'
                 ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
@@ -526,7 +562,7 @@ class Check():
         self.runwindow.frame2.grid(row=1,column=0,sticky='ew',padx=25,pady=25)
         getformtext=_("What is the form of the new {} "
                     "morpheme (consonants and vowels only)?".format(
-                                self.db.languagenames[self.analang]))
+                                self.languagenames[self.analang]))
         getform=Label(self.runwindow.frame2,text=getformtext,
                 font=self.fonts['read'])
         getform.grid(row=0,column=0,padx=padx,pady=pady)
@@ -540,7 +576,7 @@ class Check():
         self.runwindow.frame2=Frame(self.runwindow)
         self.runwindow.frame2.grid(row=1,column=0,sticky='ew',padx=25,pady=25)
         getglosstext=_("What does {} mean in {}?".format(self.runwindow.form,
-                                        self.db.languagenames[self.glosslang]))
+                                        self.languagenames[self.glosslang]))
         getgloss=Label(self.runwindow.frame2,text=getglosstext,
                 font=self.fonts['read'],
                 justify=tkinter.LEFT,anchor='w')
@@ -557,7 +593,7 @@ class Check():
             self.runwindow.frame2.grid(row=1,column=0,sticky='ew',padx=25,pady=25)
             getgloss2text=_("What does {} mean in {}?".format(
                             self.runwindow.form,
-                            self.db.languagenames[self.glosslang2]))
+                            self.languagenames[self.glosslang2]))
             getgloss2=Label(self.runwindow.frame2,text=getgloss2text,
                     font=self.fonts['read'],
                     justify=tkinter.LEFT,anchor='w')
@@ -569,7 +605,7 @@ class Check():
             sub_btn.grid(row=2,column=0,sticky='')
             sub_btnNo=Button(self.runwindow.frame2,
                         text = _('Skip {} gloss').format(
-                            self.db.languagenames[self.glosslang2]),
+                            self.languagenames[self.glosslang2]),
                       command = submitgloss2no)
             sub_btnNo.grid(row=1,column=1,sticky='')
             sub_btn.wait_window(self.runwindow.frame2) #then move to next step
@@ -720,20 +756,20 @@ class Check():
             if lang == self.analang:
                 ti[lang]=_("Fill in the {} frame forms below.\n(include a "
                 "space to separate word forms)".format(
-                                        self.db.languagenames[lang]))
+                                        self.languagenames[lang]))
                 kind='form'
             else:
                 ti[lang]=(_("Fill in the {} glossing "
                     "here \nas appropriate for the morphosyntactic context.\n("
                     "include a space to separate word glosses)"
-                                ).format(self.db.languagenames[lang]))
+                                ).format(self.languagenames[lang]))
                 kind='gloss'
             tb[lang]=_("What text goes *before* \n<==the {} word *{}* "
                         "\nin the frame?"
-                                ).format(self.db.languagenames[lang],kind)
+                                ).format(self.languagenames[lang],kind)
             ta[lang]=_("What text goes *after* \nthe {} word *{}*==> "
                         "\nin the frame?"
-                                ).format(self.db.languagenames[lang],kind)
+                                ).format(self.languagenames[lang],kind)
         """Place the labels"""
         for lang in langs:
             f[lang]=Frame(window.frame1)
@@ -954,7 +990,8 @@ class Check():
                             'interfacelang',
                             'examplespergrouptorecord',
                             'distinguish',
-                            'interpret'
+                            'interpret',
+                            'adnlangnames'
                             ],
                         'ps':[
                             'profile' #do I want this?
@@ -989,7 +1026,8 @@ class Check():
                         'audio_card_index':[],
                         'examplespergrouptorecord':[],
                         'distinguish':[],
-                        'interpret':[]
+                        'interpret':[],
+                        'adnlangnames':[]
                         }
     def cleardefaults(self,field=None):
         for default in self.defaults[field]:
@@ -1642,7 +1680,7 @@ class Check():
         t=(_("Using {}").format(interfacelanguagename))
         proselabel(opts,t)
         opts['row']+=1
-        t=(_("Working on {}").format(self.db.languagenames[self.analang]))
+        t=(_("Working on {}").format(self.languagenames[self.analang]))
         proselabel(opts,t)
         opts['row']+=1
         """Get glosslang"""
@@ -1659,12 +1697,12 @@ class Check():
             self.guessglosslangs()
         if self.glosslang2 != None:
             t=(_("Meanings in {} and {}").format(
-                                self.db.languagenames[self.glosslang],
-                                self.db.languagenames[self.glosslang2]
+                                self.languagenames[self.glosslang],
+                                self.languagenames[self.glosslang2]
                                 ))
         else:
                 t=(_("Meanings in {} only").format(
-                                    self.db.languagenames[self.glosslang]
+                                    self.languagenames[self.glosslang]
                                     ))
         proselabel(opts,t)
         opts['row']+=1
@@ -2080,8 +2118,8 @@ class Check():
                           ).grid(column=0, row=1)
             langs=list()
             for lang in self.db.analangs:
-                langs.append({'code':lang, 'name':self.db.languagenames[lang]})
-                print(lang, self.db.languagenames[lang])
+                langs.append({'code':lang, 'name':self.languagenames[lang]})
+                print(lang, self.languagenames[lang])
             buttonFrame1=ButtonFrame(window.frame,
                                      langs,self.setanalang,
                                      window
@@ -2101,8 +2139,8 @@ class Check():
                   ).grid(column=0, row=1)
         langs=list()
         for lang in self.db.glosslangs:
-            langs.append({'code':lang, 'name':self.db.languagenames[lang]})
-            print(lang, self.db.languagenames[lang])
+            langs.append({'code':lang, 'name':self.languagenames[lang]})
+            print(lang, self.languagenames[lang])
         buttonFrame1=ButtonFrame(window.frame,
                                  langs,self.setglosslang,
                                  window
@@ -2122,10 +2160,10 @@ class Check():
             for lang in self.db.glosslangs:
                 if lang == self.glosslang:
                     continue
-                langs.append({'code':lang, 'name':self.db.languagenames[lang]})
-                print(lang, self.db.languagenames[lang])
+                langs.append({'code':lang, 'name':self.languagenames[lang]})
+                print(lang, self.languagenames[lang])
             langs.append({'code':None, 'name':'just use '
-                            +self.db.languagenames[self.glosslang]})
+                            +self.languagenames[self.glosslang]})
             buttonFrame1=ButtonFrame(window.frame,langs,self.setglosslang2,
                                      window
                                      ).grid(column=0, row=4)
@@ -2512,7 +2550,7 @@ class Check():
             exit()
         todo=len(self.senseidstosort)
         title=_("Sort {} Tone (in ‘{}’ frame)").format(
-                                        self.db.languagenames[self.analang],
+                                        self.languagenames[self.analang],
                                         self.name)
         instructions=_("Select the one with the same tone melody as")
         self.runwindow.frame.scroll=ScrollingFrame(self.runwindow.frame)
@@ -2634,7 +2672,7 @@ class Check():
                 continue
             self.runwindow.resetframe() #just once per group
             title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
-                                        self.db.languagenames[self.analang],
+                                        self.languagenames[self.analang],
                                         self.subcheck,
                                         self.name
                                         )
@@ -2723,7 +2761,7 @@ class Check():
         """
         self.getrunwindow()
         title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
-                                        self.db.languagenames[self.analang],
+                                        self.languagenames[self.analang],
                                         self.name
                                         )
         oktext=_('These are all different')
@@ -3444,7 +3482,7 @@ class Check():
             print('self.subcheck='+str(self.subcheck)+str(type(self.subcheck)))
             print('self.regexCV='+str(self.regexCV)+str(type(self.regexCV)))
         """Final step: convert the CVx code to regex, and store in self."""
-        self.regex=rx.fromCV(self.db,self.regexCV, lang=self.analang,
+        self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
     def tonegroupreport(self,silent=False):
         print("Starting report...")
@@ -3577,8 +3615,8 @@ class Check():
         xlpr=xlp.Report(self.basicreportfileXLP)
         for lang in [self.analang,self.glosslang,self.glosslang2]:
             if lang != None:
-                xlpr.addlang({'id':self.analang,
-                            'name': self.db.languagenames[self.analang]})
+                xlpr.addlang({'id':lang,
+                            'name': self.languagenames[lang]})
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')

@@ -494,7 +494,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """These three get all possible langs by type"""
         self.glosslangs() #sets: self.glosslangs
         self.analangs() #sets: self.analangs, self.audiolangs
-        self.langnames()
         self.pss=self.pss() #log.info(self.pss)
         self.getformstosearch() #sets: self.formstosearch[lang][ps] #no guids
         """This is very costly on boot time"""
@@ -1070,39 +1069,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.glosslangs=list(dict.fromkeys(self.get('glosslang')+self.get(
                                                                 'defnlang')))
         log.debug(_("gloss languages found: {}".format(self.glosslangs)))
-    def langnames(self):
-        """This is for getting the prose name for a language from a code."""
-        """It uses a xyz.ldml file, produced (at least) by WeSay."""
-        #ET.register_namespace("", 'palaso')
-        ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
-        node=None
-        self.languagenames={}
-        for xyz in self.analangs+self.glosslangs: #self.languagepaths.keys():
-            # log.info(' '.join('Looking for language name for',xyz))
-            """This provides an ldml node"""
-            #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
-            #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
-            """This doesn't seem to be working; I should fix it, but there
-            doesn't seem to be reason to generalize it for now."""
-            # tree=ET.parse(self.languagepaths[xyz])
-            # tree.nodes=tree.getroot()
-            # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
-            if node is not None:
-                self.languagenames[xyz]=node.get('value')
-                log.info(' '.join('found',self.languagenames[xyz]))
-            elif xyz == 'fr':
-                self.languagenames[xyz]="Français"
-            elif xyz == 'en':
-                self.languagenames[xyz]="English"
-            elif xyz == 'gnd':
-                self.languagenames[xyz]="Zulgo"
-            elif xyz == 'fub':
-                self.languagenames[xyz]="Fulfulde"
-            elif xyz == 'bfj':
-                self.languagenames[xyz]="Chufie’"
-            else:
-                self.languagenames[xyz]=_("Language with code [{}]").format(xyz) #I need to fix this...
-            self.languagenames[None]=None #just so we don't fail on None...
     def glossordefn(self,guid=None,senseid=None,lang='ALL',ps=None
                     ,showurl=False):
         if lang == None: #This allows for a specified None='give me nothing'
