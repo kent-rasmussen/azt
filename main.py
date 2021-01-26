@@ -1257,8 +1257,11 @@ class Check():
                 if sclass in self.distinguish: #i.e., not C or V
                     if self.distinguish[sclass]==False: #not d, for now
                         """At this point, all distinctions are consonants"""
+                        log.debug("Adding {} to C for {}.".format(sclass,lang))
                         self.s[lang]['C']+=self.db.s[lang][sclass]
                     else:
+                        log.debug("Keeping {} distinct from C for {}.".format(
+                                    sclass,lang))
                         self.s[lang][sclass]=self.db.s[lang][sclass]
                 else: #make its own check list from lift list
                     self.s[lang][sclass]+=self.db.s[lang][sclass]
@@ -2325,12 +2328,14 @@ class Check():
                         key=lambda s: len(s[0]),reverse=True):
             """self.name set here"""
             self.name=codenname[0] #just codes, not names
-            log.debug('self.name: {}; self.type: {}; self.typenums: {}'.format(
-                                        self.name,self.type,self.typenums))
             self.typenumsRun=[typenum for typenum in self.typenums
                                         if re.search(typenum,self.name)]
+            log.debug('self.name: {}; self.type: {}; self.typenums: {}; '
+                        'self.typenumsRun: {}'.format(self.name,self.type,
+                                                self.typenums,self.typenumsRun))
             if len(self.name) == 1:
-                log.debug("Error! {} Doesn't seem to be list formatted.".format(self.name))
+                log.debug("Error! {} Doesn't seem to be list formatted.".format(
+                                                                    self.name))
             for self.subcheck in subchecks:
                 t=_("{}={}".format(self.name,self.subcheck))
                 xlp.Paragraph(parent,t)
@@ -3645,26 +3650,25 @@ class Check():
         self.printprofilesbyps()
         self.makecountssorted() #This populates self.profilecounts
         self.printcountssorted()
-        num=1
-        num='ALL'
+        # num=1
+        # num='ALL'
         num=5
         log.debug('self.topps(num):       {}'.format(self.topps(num)))
         log.debug('self.topprofiles(num): {}'.format(self.topprofiles(num)))
-        profilestodo=['CVCV']
+        # profilestodo={'Verb':['CVC']}
         profilestodo=self.topprofiles(num)
         t=_("This report covers the following top {} syllable profiles:"
-            " {}".format(num,profilestodo))
+            " {}. This is of course configurable, but I assume you don't want "
+            "everything.".format(num,profilestodo))
         log.info(t)
         print(t)
         p=xlp.Paragraph(si,t)
-        for self.ps in profilestodo: #get PSs found in syllable profiles
-            """For Debugging"""
-            # print('NVCVN:',self.profilesbysense[self.ps]['NVCVN'])
+        for self.ps in profilestodo: #keys are ps
             t=_("{} data".format(self.ps))
             log.info(t)
             print(t)
             s1=xlp.Section(xlpr,t)
-            t=_("This report covers the following top {} syllable profiles "
+            t=_("This section covers the following top {} syllable profiles "
                 "which are found in {}s: {}".format(num,self.ps,
                                                     profilestodo[self.ps]))
             p=xlp.Paragraph(s1,t)
