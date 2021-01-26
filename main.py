@@ -2371,6 +2371,7 @@ class Check():
         framed=self.getframeddata(matchid,noframe=True)
         print('\t',framed['formatted'])
         el=xlp.LangData(ex,self.analang,framed[self.analang])
+        id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck+matchid)
         ex=xlp.ListWord(parent,id)
         eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
         print(framed)
