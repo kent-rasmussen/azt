@@ -3,14 +3,13 @@
     - frame in a frame? (this problem looks familiar...)
 
 ### CV Report
-    - Need to make XLP example test for results NOT in previous results!
-    - test: if exists sound file, link data. else: langdata
-        - make this both for example and lx/lc recordings.
+    - make tone report work
+        - test: link data
     - fix key 7 problem for sxw
 ## In Process
 - XLP export
-    - run dotexpdf (once you figure out where that is) to generate pdf
-    - run script to generate html
+    - run dotexpdf (once you figure out where that is) to generate pdf?
+    - run script to generate html?
     - figure out window specific variations (with Andy?)
 - Add treatment of long vowels, similar to consonant distinctions/interpretation
   - lift.s['VV'] should include xx for x in lift.s['V']
@@ -56,6 +55,7 @@
 - fixed numerous report problems (should be mostly working now)
 - Implemented XlingPaper export (at least beginning)
     - writing organized data to file, which compiles to PDF in XXE.
+    - if exists sound file, link data. else: langdata (for both examples and forms)
 
 ## Bug fixes
 - Analysis lang is correctly treated on change (triggering reanalysis)
