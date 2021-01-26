@@ -47,12 +47,12 @@ def fromCV(check, lang, word=False, compile=False):
     regex=list()
     references=('\1','\2','\3','\4')
     references=range(1,5)
-    variables=('v','c')
+    # variables=('v','c')
     def CVproblem():
         log.error("Error! check your CV template; it should only have 'C' "
                 "and 'V' in it, or 'x' references ("+x+')')
         exit()
-    for x in CVs[0]:
+    for x in CVs[0]: #We need better logic here, this gives (s)(h)...
         if x in ["V","C","N","G","S"]:
             rnext=s(check,x,lang) #this should have parens for each S
         elif x in sum(check.s[lang].values(),[]):
