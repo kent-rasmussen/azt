@@ -1378,8 +1378,9 @@ class Check():
                 print('Element found!')
             element=source
             for node in element:
-                if (node.tag == 'form') and (node.get('lang') == self.analang):
-                    forms=node.findall('text')
+                if (node.tag == 'form') and ((node.get('lang') == self.analang)
+                        or (node.get('lang') == self.voicelang)):
+                    forms[node.get('lang')]=node.findall('text')
                 if (((node.tag == 'translation') and
                                 (node.get('type') == 'Frame translation')) or
                     ((node.tag == 'gloss') and
@@ -1396,7 +1397,8 @@ class Check():
             log.debug('tonegroups: {}'.format(tonegroups))
             """convert from lists to single items without loosing data,
             then pull text from nodes"""
-            form=t(firstoflist(forms))
+            form=t(firstoflist(forms[self.analang]))
+            voice=t(firstoflist(forms[self.voicelang]))
             for lang in glosses:
                 if (lang == self.analang) or (lang == self.analang2):
                     gloss[lang]=t(firstoflist(glosses[lang]))
@@ -1419,7 +1421,11 @@ class Check():
             if self.debug == True:
                 print('36 character senseid string!')
             senseid=source
-            forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang,
+            forms[self.analang]=self.db.citationorlexeme(senseid=senseid,
+                                            lang=self.analang,
+                                            ps=self.ps)
+            forms[self.voicelang]=self.db.citationorlexeme(senseid=senseid,
+                                            lang=self.voicelang,
                                             ps=self.ps)
             for lang in [self.glosslang,self.glosslang2]:
                 if lang != None:
@@ -1428,7 +1434,8 @@ class Check():
             tonegroups=self.db.get('exfieldvalue', senseid=senseid,
                                 fieldtype='tone', location=self.name)
             """convert from lists to single items without loosing data"""
-            form=firstoflist(forms)
+            form=firstoflist(forms[self.analang])
+            voice=firstoflist(forms[self.voicelang])
             for lang in glosses:
                 gloss[lang]=firstoflist(glosses[lang])
                 log.log(2,'gloss[{}]: {}'.format(lang,gloss[lang]))
@@ -1475,6 +1482,7 @@ class Check():
             output[self.analang]=form
             for lang in gloss:
                 output[lang]=gloss[lang]
+        output[self.voicelang]=voice
         text=[str(output[self.analang]),"‘"+str(output[self.glosslang])+"’"]
         if self.glosslang2 in output:
             text+=["‘"+str(output[self.glosslang2])+"’"]
