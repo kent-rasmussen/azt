@@ -3433,7 +3433,6 @@ class Check():
         c1 = "Any"
         c2 = "Any"
         i=0
-        self.buildregex() #It would be nice fo this to iterate through...
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
         text=(nn((self.ps,_("roots of form"),self.profile)))
