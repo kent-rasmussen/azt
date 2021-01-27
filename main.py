@@ -2370,17 +2370,15 @@ class Check():
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
-        """parent is the current section of the XLP report"""
-        for typenum in self.typenumsRun:
-            # if matchid in self.basicreported[typenum]:
-            #     log.error("not printing id {}; found in self."
-            #                 "basicreported[{}]".format(matchid,typenum))
-                # self.basicreported[typenum]+=[matchid]
-                self.basicreported[typenum].add(matchid)
-        framed=self.getframeddata(matchid,noframe=True)
-        print('\t',framed['formatted'])
-        id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck+matchid)
-        ex=xlp.ListWord(parent,id)
+        """parent is an example in the XLP report"""
+        id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck+framed[
+                                self.analang]+framed[self.glosslang])
+        if listword == True:
+            ex=xlp.ListWord(parent,id)
+        else:
+            id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck)
+            exx=xlp.Example(parent,id) #the id goes here...
+            ex=xlp.Word(exx) #This doesn't have an id
         if self.audiolang in framed:
             el=xlp.LinkedData(ex,self.analang,framed[self.analang],
                             framed[self.audiolang])
