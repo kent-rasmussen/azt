@@ -3,13 +3,11 @@
     - frame in a frame? (this problem looks familiar...)
 
 ### CV Report
-    - clean up report with close() method
-    - make short reports which repond to filters on sort
     - make tone report work
         - test: link data
     - fix key 7 problem for sxw
 ## In Process
-- XLP export
+- XLP export (these are not likely to happen)
     - run dotexpdf (once you figure out where that is) to generate pdf?
     - run script to generate html?
     - figure out window specific variations (with Andy?)
@@ -58,9 +56,13 @@
 - Implemented XlingPaper export (at least beginning)
     - writing organized data to file, which compiles to PDF in XXE.
     - if exists sound file, link data. else: langdata (for both examples and forms)
+    - made short reports which respond to filters on 'sort' button
 
 ## Bug fixes
 - Analysis lang is correctly treated on change (triggering reanalysis)
+
+## Under the hood
+- cleaned up report with close() method
 
 # Version 0.5
 - made help:about scroll
