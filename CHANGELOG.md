@@ -3,6 +3,8 @@
     - frame in a frame? (this problem looks familiar...)
 
 ### CV Report
+    - clean up report with close() method
+    - make short reports which repond to filters on sort
     - make tone report work
         - test: link data
     - fix key 7 problem for sxw
