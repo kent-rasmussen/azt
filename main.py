@@ -3637,7 +3637,7 @@ class Check():
         self.basicreportfileXLP=''.join([str(self.reportbasefilename)
                                             # ,'_',self.type,'_',str(pss)
                                             ,'.BasicReportXLP.xml'])
-        xlpr=xlp.Report(self.basicreportfileXLP,
+        xlpr=xlp.Report(self.basicreportfileXLP,'Generic',
                         self.languagenames[self.analang])
         for lang in [self.analang,self.glosslang,self.glosslang2]:
             if lang != None:
