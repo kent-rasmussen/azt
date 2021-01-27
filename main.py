@@ -3446,38 +3446,62 @@ class Check():
         senseid=0 # in case the following doesn't find anything:
         for self.subcheck in self.s[self.analang][self.type]:
             log.debug('self.subcheck: {}'.format(self.subcheck))
-        for senseid in self.profilesbysense[self.ps][self.profile]:#db.senseidformsbyregex(self.regex,self.ps,self.analang):
-            """This regex is compiled!"""
-            o=self.getframeddata(senseid,noframe=True)['formatted']
-            if self.debug ==True:
-                o=entry.lexeme,entry.citation,nn(entry.gloss),
-                nn(entry.gloss2),nn(entry.illustration)
-                print(o)
-            def makeimg():
-                img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
-                "/pictures/button.png")
-                if o[4] is not None:
-                    img = tkinter.PhotoImage(file = lift_file.liftdirstr()+'/'
-                    +o[4])
-                    #use this template to add other pictures to GUI.
-                else:
+            self.buildregex() #It would be nice fo this to iterate through...
+            # for senseid in self.profilesbysense[self.ps][self.profile]:
+            # print(self.profilesbysense[self.ps][self.profile][0])
+            # print(self.db.citationorlexeme(self.profilesbysense[self.ps][self.profile][0]))
+            # print(firstoflist(self.db.citationorlexeme(self.profilesbysense[self.ps][self.profile][0])))
+            senseidstocheck=self.db.senseidformsbyregex(self.regex,
+                                                self.analang,
+                                                ps=self.ps)
+            # senseidstocheck= filter(lambda x: self.regex.search(
+            #                         firstoflist(self.db.citationorlexeme(x))),
+            #             self.profilesbysense[self.ps][self.profile])
+            if len(senseidstocheck)>0:
+                id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck)
                 ex=xlp.Example(si,id)
+            for senseid in senseidstocheck: #self.senseidformstosearch[lang][ps]
+                # where self.regex(self.senseidformstosearch[lang][ps][senseid]):
+                """This regex is compiled!"""
+                framed=self.getframeddata(senseid,noframe=True)
+                # if self.regex(framed[self.analang]):
+                o=framed['formatted']
                 self.framedtoXLP(framed,parent=ex,listword=True)
+                if self.debug ==True:
+                    o=entry.lexeme,entry.citation,nn(entry.gloss),
+                    nn(entry.gloss2),nn(entry.illustration)
+                    print(o)
+                def makeimg():
                     img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
-                        "/pictures/button.png")
-                    #Resizing image to fit on button
-                    image = Image.open(img)
-                    photoimage = image.resize((34, 26), Image.ANTIALIAS)
-                    photo = ImageTk.PhotoImage(image)
-                    photoimage = image.subsample(3, 3)
-                    tkinter.Button(self.results, width=800, image=photoimage).grid(column=0)
-            i+=1
-            b=Button(self.results.scroll.content,
-                    choice=senseid, text=o,
-                    window=self.runwindow.frame,
-                    row=i, column=0, font=font, command=self.picked)
-            if self.su==True:
-                notok=Button(self.results.scroll.content,
+                    "/pictures/button.png")
+                    if o[4] is not None:
+                        img = tkinter.PhotoImage(file = lift_file.liftdirstr()+'/'
+                        +o[4])
+                        #use this template to add other pictures to GUI.
+                    else:
+                        img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
+                            "/pictures/button.png")
+                        #Resizing image to fit on button
+                        image = Image.open(img)
+                        photoimage = image.resize((34, 26), Image.ANTIALIAS)
+                        photo = ImageTk.PhotoImage(image)
+                        photoimage = image.subsample(3, 3)
+                        tkinter.Button(self.results, width=800, image=photoimage).grid(column=0)
+                i+=1
+                # b=Button(self.results.scroll.content,
+                #         choice=senseid, text=o,
+                #         window=self.runwindow.frame,
+                #         row=i, column=0, font=font, command=self.picked)
+                col=0
+                for lang in [self.analang, self.glosslang, self.glosslang2]:
+                    col+=1
+                    if lang != None:
+                        Label(self.results.scroll.content,
+                            text=framed[lang], font=font,
+                            anchor='w',padx=10).grid(row=i, column=col,
+                                                        sticky='w')
+                if self.su==True:
+                    notok=Button(self.results.scroll.content,
                             choice=senseid, text='X',
                             window=self.runwindow.frame,
                             width=15, row=i,
