@@ -3442,9 +3442,10 @@ class Check():
         # p=xlp.Paragraph(si,instr)
         font=self.frame.fonts['read']
         self.results.scroll=ScrollingFrame(self.results)
+        self.results.scroll.grid(column=0, row=1)
+        senseid=0 # in case the following doesn't find anything:
         for self.subcheck in self.s[self.analang][self.type]:
             log.debug('self.subcheck: {}'.format(self.subcheck))
-        senseid=0 # in case the following doesn't find anything:
         for senseid in self.profilesbysense[self.ps][self.profile]:#db.senseidformsbyregex(self.regex,self.ps,self.analang):
             """This regex is compiled!"""
             o=self.getframeddata(senseid,noframe=True)['formatted']
