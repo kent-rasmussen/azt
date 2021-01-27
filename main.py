@@ -1783,6 +1783,8 @@ class Check():
             else:
                 t=(_("Checking {}, working on {} = {}".format(
                             self.typedict[self.type],self.name,self.subcheck)))
+                t=(_("Checking {}, working on {}".format(
+                            self.typedict[self.type],self.name)))
                 proselabel(opts,t)
 
         """Final Button"""
