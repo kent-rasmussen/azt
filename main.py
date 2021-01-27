@@ -3691,8 +3691,7 @@ class Check():
                         if typenum not in self.basicreported:
                             self.basicreported[typenum]=set()
                     self.wordsbypsprofilechecksubcheck(s2)
-        xlpr.finish()
-        xlpr.write()
+        xlpr.close()
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         self.type=typeori

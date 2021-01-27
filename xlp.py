@@ -21,12 +21,13 @@ class Report(object):
         self.langlist=list()
         self.frontmatter()
         log.info("Done initializing Report")
-    def finish(self):
+    def close(self):
         log.info("Done; setting back matter, etc, now.")
         self.backmatter()
         self.languages()
         self.xlptypes()
         self.stylesheet()
+        self.write()
     def write(self):
         """This writes changes to XML which can be read by XXE as XLP."""
         doctype=self.node.tag
