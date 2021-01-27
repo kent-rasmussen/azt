@@ -2358,8 +2358,12 @@ class Check():
                 if len(matches)>0:
                     id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck)
                     ex=xlp.Example(parent,id)
-                    for match in matches:
-                        self.checknprint(match,parent=ex)
+                    for senseid in matches:
+                        for typenum in self.typenumsRun:
+                            self.basicreported[typenum].add(senseid)
+                        framed=self.getframeddata(senseid,noframe=True)
+                        print('\t',framed['formatted'])
+                        self.framedtoXLP(framed,parent=ex,listword=True)
         self.name=nameori
         self.subcheck=subcheckori
     def checknprint(self,matchid,parent):
@@ -2371,8 +2375,6 @@ class Check():
             # if matchid in self.basicreported[typenum]:
             #     log.error("not printing id {}; found in self."
             #                 "basicreported[{}]".format(matchid,typenum))
-            #     return
-            # else:
                 # self.basicreported[typenum]+=[matchid]
                 self.basicreported[typenum].add(matchid)
         framed=self.getframeddata(matchid,noframe=True)
