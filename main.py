@@ -3410,6 +3410,20 @@ class Check():
             self.showtonegroupexs()
     def getresults(self):
         self.makeresultsframe()
+        self.adhocreportfileXLP=''.join([str(self.reportbasefilename)
+                                        ,'_',str(self.ps)
+                                        ,'-',str(self.profile)
+                                        ,'_',str(self.name)
+                                        ,'_ReportXLP.xml'])
+        xlpr=xlp.Report(self.adhocreportfileXLP,''.join([str(self.ps)
+                                                        ,'-',str(self.profile)
+                                                        ,' ',str(self.name)]),
+                        self.languagenames[self.analang])
+        """Don't forget to add the languages to the report!"""
+        for lang in [self.analang,self.glosslang,self.glosslang2]:
+            if lang != None:
+                xlpr.addlang({'id':lang,
+                            'name': self.languagenames[lang]})
         """"Do I need this?"""
         self.results.grid(column=0,
                         row=self.runwindow.frame.grid_info()['row']+1,
@@ -3424,6 +3438,8 @@ class Check():
         list, or tuple."""
         text=(nn((self.ps,_("roots of form"),self.profile)))
         Label(self.results, text=text).grid(column=0, row=i)
+        si=xlp.Section(xlpr,text)
+        # p=xlp.Paragraph(si,instr)
         font=self.frame.fonts['read']
         self.results.scroll=ScrollingFrame(self.results)
         for self.subcheck in self.s[self.analang][self.type]:
@@ -3444,6 +3460,8 @@ class Check():
                     +o[4])
                     #use this template to add other pictures to GUI.
                 else:
+                ex=xlp.Example(si,id)
+                self.framedtoXLP(framed,parent=ex,listword=True)
                     img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
                         "/pictures/button.png")
                     #Resizing image to fit on button
@@ -3463,6 +3481,7 @@ class Check():
                             window=self.runwindow.frame,
                             width=15, row=i,
                             column=1, command=self.notpicked)
+        xlpr.close()
         if senseid == 0: #i.e., nothing was found above
             print(_('No results!'))
             Label(self.results, text=_("No results for ")+self.regexCV+"!"
