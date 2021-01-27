@@ -3435,7 +3435,8 @@ class Check():
         i=0
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
-        text=(nn((self.ps,_("roots of form"),self.profile)))
+        text=(_("{} roots of form {} by {}".format(self.ps,self.profile,
+                                                            self.name)))
         Label(self.results, text=text).grid(column=0, row=i)
         si=xlp.Section(xlpr,text)
         # p=xlp.Paragraph(si,instr)
