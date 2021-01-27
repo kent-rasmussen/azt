@@ -336,8 +336,9 @@ class Check():
             else:
                 self.languagenames[xyz]=_("Language with code [{}]").format(xyz) #I need to fix this...
             self.languagenames[None]=None #just so we don't fail on None...
-        for xyz in self.adnlangnames: #overwrite with user specified names
-            self.languagenames[xyz]=self.adnlangnames[xyz]
+        if (hasattr(self,'adnlangnames') and (self.adnlangnames is not None)):
+            for xyz in self.adnlangnames: #overwrite with user specified names
+                self.languagenames[xyz]=self.adnlangnames[xyz]
     """User Input functions"""
     def getinterfacelang(self):
             print("Asking for interface language...")
