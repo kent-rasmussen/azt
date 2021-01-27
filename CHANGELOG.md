@@ -58,6 +58,9 @@
     - if exists sound file, link data. else: langdata (for both examples and forms)
     - made short reports which respond to filters on 'sort' button
 
+## UI
+- removed subcheck from main screen, at least until we are using it again
+
 ## Bug fixes
 - Analysis lang is correctly treated on change (triggering reanalysis)
 
