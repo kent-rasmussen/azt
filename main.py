@@ -2366,7 +2366,7 @@ class Check():
                         self.framedtoXLP(framed,parent=ex,listword=True)
         self.name=nameori
         self.subcheck=subcheckori
-    def checknprint(self,matchid,parent):
+    def framedtoXLP(self,framed,parent,listword=False):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
