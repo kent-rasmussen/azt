@@ -6,12 +6,12 @@ import file
 import logging
 log = logging.getLogger(__name__)
 class Report(object):
-    def __init__(self,filename,langname):
+    def __init__(self,filename,report,langname):
         self.filename=filename
         self.stylesheetdir=file.getstylesheetdir(filename)
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
         self.node=ET.Element('lingPaper') #self.tree.getroot()
-        self.title="Generic A→Z+T output report for {}".format(langname)
+        self.title="{} A→Z+T output report for {}".format(report,langname)
         self.authors=[{'name':'Kent Rasmussen',
                         'affiliation':'SIL Cameroun',
                         'Email':'kent_rasmussen@sil.org'},
