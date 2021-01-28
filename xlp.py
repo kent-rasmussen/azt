@@ -195,7 +195,7 @@ class Report(object):
         sp.append(stylesheet)
         self.node=self.styled
 class Section(ET.Element):
-    def __init__(self,parent,title,level=1):
+    def __init__(self,parent,title="No Section Title!",level=1):
         id=rx.id(title)
         name='section'+str(level)
         self.node=ET.SubElement(parent.node,name,attrib={'id':id})
@@ -205,7 +205,7 @@ class SecTitle(ET.Element):
         self.node=ET.SubElement(parent.node,'secTitle')
         self.node.text=text
 class Paragraph(ET.Element):
-    def __init__(self,parent,text):
+    def __init__(self,parent,text='No Paragraph text!'):
         self.node=ET.SubElement(parent.node,'p')
         self.node.text=text
 class Example(ET.Element):
