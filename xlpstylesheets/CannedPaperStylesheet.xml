@@ -30,6 +30,7 @@
 ><lineSpacing
 ></lineSpacing
 ><defaultFontFamily
+XeLaTeXSpecial="graphite font-feature='Hide tone contour staves=True'"
 >Charis SIL</defaultFontFamily
 ><basicPointSize
 >12</basicPointSize
