@@ -8,7 +8,7 @@ def id(x):
 def s(check,stype,lang=None):
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
-    if (lang == None) and (hasattr(self,'analang')):
+    if (lang == None) and (hasattr(check,'analang')):
         log.debug(_('telling rx.s which lang to use'))
         lang=check.analang
         log.debug(_("Using analang: {}".format(check.analang)))
