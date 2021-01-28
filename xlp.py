@@ -12,6 +12,8 @@ class Report(object):
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
         self.node=ET.Element('lingPaper') #self.tree.getroot()
         self.title="{} A→Z+T output report for {}".format(report,langname)
+        log.info("Starting XLingPaper report file at {} with title '{}'".format(
+                                                        filename,self.title))
         self.authors=[{'name':'Kent Rasmussen',
                         'affiliation':'SIL Cameroun',
                         'Email':'kent_rasmussen@sil.org'},
