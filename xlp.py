@@ -249,7 +249,7 @@ class XLPobject(ET.Element):
 
 class Link(ET.Element):
     def __init__(self,parent,url,text,phonetic=False):
-        self.node=ET.SubElement(parent.node,'link',attrib={'href':'audio/'+url})
+        self.node=ET.SubElement(parent.node,'link',attrib={'href':url})
         if phonetic == True:
             ph=XLPobject(self,'tPhonetic',text)
         else:
