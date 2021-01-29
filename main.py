@@ -1800,7 +1800,7 @@ class Check():
 
         """Final Button"""
         opts['row']+=1
-        t=(_("Sort!"))
+        t=(_("Report!"))
         button(opts,t,self.runcheck,column=0,
                 compound='bottom', #image bottom, left, right, or top of text
                 image=self.photo[self.type]
@@ -3795,7 +3795,8 @@ class Check():
                     t=_("{} checks".format(self.typedict[self.type]['sg']))
                     print(t)
                     log.info(t)
-                    s3=xlp.Section(s2,t,level=3)
+                    sid=" ".join([t,"for",self.profile,self.ps+'s'])
+                    s3=xlp.Section(s2,sid,level=3)
                     maxcount=re.subn(self.type, self.type, self.profile)[1]
                     """Get these reports from C1/V1 to total number of C/V"""
                     self.typenums=[self.type+str(n+1) for n in range(maxcount)]
