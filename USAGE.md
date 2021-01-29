@@ -42,9 +42,9 @@ A→Z+T assumes your lift file is in a directory set apart for its analysis. As 
 
 - A syllable profile analysis file (on first run, and if CV analysis parameters change). This can take a while to run, so we store and load it, rather than running it on each startup.
 - A preferences file (any time a check is run, to preserve preferences, including `ps`/`profile` status). This allows you to start where you left off.
-- Report files, whenever reports are run by the user
 - A tone frame definitions file, once at least one has been defined. I strongly recommend not modifying this file.
-- an `audio` folder, where sound files are saved, once at least one has been recorded.
+- An `audio` folder, where sound files are saved, once at least one has been recorded.
+- A `report` folder, where report files are stored whenever run by the user. These are set apart from the rest of the repository to reduce clutter. N.B.: relative links to audio work in this hierarchy, if you move a report from a sister directory to `audio`, be sure to update the links accordingly.
 
 # Tell A→Z+T Where to Find Your Database
 The first time you run A→Z+T, you will need to select your LIFT database.
@@ -91,20 +91,41 @@ Once you have the form and gloss content in the appropriate boxes, click on 'see
 
 If you absolutely regret a tone frame you have set up, all your frames are stored in `<lift filename>_ToneFrames.py` next to your lift file. Careful editing this, though; you may need to redefine all your frames if you corrupt this file (This would be a great time to ask for help if you don't absolutely certainly know what you're doing).
 
-# Subsequent Runs: Sort, and Follow Directions
-Once you have done any sorting, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
+### Recording
+The first time you try to record, you will be asked to tell A→Z+T what sound card parameters you want. You can set frequency, bit depth, and sound card number (to select between multiple cards). This window is designed with a test button, so you can set parameters and test them, before moving on. So I suggest you select the highest quality that your card can do (assuming that's what you want!), and test to see if it records and plays back OK. I have found several computers with cards that can record at 96khz, somewhat to my surprise —though be sure to think about your microphone and environment, etc, too! If you are making recordings for easy sharing over low bandwidth (as opposed to linguistic study), consider the implications of these setting on the size of your files.
+
+The sound card settings should be stored in your repository, so you won't have to keep setting them. However, if you are sharing a repository across computers with different recording capacities, you will want to pay attention to this; the sound card settings dialog is also available through a menu item.
+
+# Subsequent Runs: CV analysis (View data and run reports)
+A→Z+T doesn't do CV sorting and verification (Yet!), but you can make recordings and filter your data and look at it through a number of checks (e.g., by C1, or by V1=V2, etc.).
+
+## Recording Citation and Secondary Forms
+When Consonants or Vowels are selected, you can click on "Record Dictionary Words", which will give you a page of `Record` buttons next to words filtered by ps-profile combinations, largest first. To skip to the next slice of data, just click "Next Group". For each entry in the data slice, this page provides a button to record a sound file for citation or lexeme fields, but also plural and imperative fields, if in the database. These recordings should then appear in reports, FLEx, and other uses of the LIFT database (e.g., the [Dictionary App Builder](https://software.sil.org/dictionaryappbuilder/)).
+
+##Consonant and Vowel Reports
+To look at filtered data, set up the desired parameters so they appear on the main screen, then click "Report!". This results in a window with data to scroll through, and an XLingPaper XML document with the same output, ready for printing to PDF or HTML through the XMLmind XML Editor (XXE).
+
+For a more thorough report, use the Basic Report menu item. This will select your top ps-profile combinations, and present each of those slices of your data in order, with the relevant checks for consonants and vowels for each. So the CVCV profile will start with C1=C2, before moving to other data sorted by C1, then by C2 —then it will do the same for vowels. Longer syllable profiles will thus include more checks, though maybe not containing much data (e.g., if you don't have much C1=C2=C3 data).
+
+I want this tool to be ultimately able to help with the sorting and correction of consonants and vowels, but my hope is that until those functions are implemented, these reports will be helpful.
+
+# Subsequent Runs: Tone (Sort, and Follow Directions)
+##Sorting progression
+Once you have done any sorting for the selected part of speech, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
 
 The program is designed to step through the process relatively automatically; once things are set up, you should be able to just open the program, and click `Sort`. If you need a break, click quit on whatever window you're in, and your progress should be there when you return.
 
 You will, of course from time to time want to move to another part of speech or syllable profile, or check type. That can again be done on the main window menus, and the next time you click `Sort`, the appropriate checks will be launched, and those changes saved to the preferences file.
 
+## Recording Data Sorted in Frames
+Recording data in frames can be done at any point where at least one frame has been at least partially sorted, but when a word is presented for recording, each example (sorting context) is presented for recording. So if you sort one field, then record, then sort the next, you will see your earlier recordings again. Recordings seem to move rather quickly, so I recommend putting them last in your workflow, and do them all at once —at least once you've tested that they're working correctly with your sound card, etc.
+
+## Tone Reports
+Once you have done some sortings, it makes sense to run a report. The tone report will show your groupings in just one frame, if that's all you have done, but its real value lies in comparing values across multiple frames, so you'll want to check a couple tone frames before doing much with the tone report.
+
+This report is also exported to text and [XLingPaper](https://software.sil.org/xlingpaper/) XML files, which has similar organization, but more detail, that what you will see on the report window.
+
+# Miscellaneous
 If any of the directions are unclear or inappropriate in any way, please let me know so I can fix them.
 
 The UI is currently in French and English; if you want to translate it into another language, please let's talk!
-
-# Advanced Usage: Reports and Recordings
-Once you have done some sortings, it makes sense to run a report. The tone report will show your groupings in just one frame, if that's all you have done, but its real value lies in comparing values across multiple frames, so you'll want to check a couple tone frames before doing much with the tone report.
-
-Recording can be done at any point where at least one frame has been at least partially sorted, but when a word is presented for recording, each example (sorting context) is presented for recording. So if you sort one field, then record, then sort the next, you will see your earlier recordings again. Recordings seem to move rather quickly, so I recommend putting them last in your workflow, and do them all at once —at least once you've tested that they're working correctly with your sound card, etc.
-
-Sound card settings can be adjusted and tested in the advanced menu —be sure to record and play at the settings you want, to make sure your sound card can handle them.
