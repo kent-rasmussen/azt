@@ -3304,7 +3304,7 @@ class Check():
                         self.makelabelsnrecordingbuttons(buttonframes.content,
                                                         sense)
                 row+=1
-            ww.done()
+            ww.close()
             self.runwindow.wait_window(self.runwindow.frame)
         self.ps=psori
         self.profile=profileori
@@ -3444,6 +3444,7 @@ class Check():
         text=(_("{} roots of form {} by {}".format(self.ps,self.profile,
                                                             self.name)))
         Label(self.results, text=text).grid(column=0, row=i)
+        ww=Wait(self.runwindow)
         si=xlp.Section(xlpr,text)
         # p=xlp.Paragraph(si,instr)
         font=self.frame.fonts['read']
@@ -3513,6 +3514,7 @@ class Check():
                             width=15, row=i,
                             column=1, command=self.notpicked)
         xlpr.close()
+        ww.close()
         if senseid == 0: #i.e., nothing was found above
             print(_('No results!'))
             Label(self.results, text=_("No results for ")+self.regexCV+"!"
@@ -3659,7 +3661,7 @@ class Check():
                 #                                         "‘"+gloss2+"’"))
                 output(window,r,text)
                 self.db.addtoneUF(senseid,groupname,analang=self.analang)
-        ww.done()
+        ww.close()
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
         output(window,r,text)
         text=_("(Report is also available at ("+self.tonereportfile+")")
@@ -3697,6 +3699,7 @@ class Check():
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
         print(instr)
         log.info(instr)
+        ww=Wait(self) #non-widget parent deiconifies no window...
         self.basicreported={}
         self.printprofilesbyps()
         self.makecountssorted() #This populates self.profilecounts
@@ -3745,6 +3748,7 @@ class Check():
         xlpr.close()
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
+        ww.close()
         self.type=typeori
         self.profile=profileori
         self.ps=psori
@@ -4925,14 +4929,22 @@ class ScrollingButtonFrame(ButtonFrame):
         scroll=ScrollingFrame(parent)
         super().__init__(scroll.content,optionlist,command,window,**kwargs)
         self.grid(row=0,column=0)
-class Wait(Window):
-    def done(self):
-        self.parent.deiconify()
+class Wait(tkinter.Toplevel): #Window?
+    def close(self):
+        try:
+            self.parent.deiconify()
+        except:
+            log.debug("Not deiconifying parent.")
         self.destroy()
-    def __init__(self, parent):
+    def __init__(self, parent=None):
+        global program
         self.parent=parent
-        self.parent.withdraw()
-        super(Wait, self).__init__(parent,exit=0)
+        inherit(self)
+        try:
+            self.parent.withdraw()
+        except:
+            log.debug("Not withdrawing parent.")
+        super(Wait, self).__init__()
         title=(_("{} Dictionary and Orthography Checker in Process"
                                                 ).format(self.program['name']))
         self.title(title)
