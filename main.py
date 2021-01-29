@@ -3745,7 +3745,7 @@ class Check():
                 print(t)
                 log.info(t)
                 for self.type in self.s[self.analang]: # was ['V','C']:
-                    t=_("{} checks".format(self.type))
+                    t=_("{} checks".format(self.typedict[self.type]['sg']))
                     print(t)
                     log.info(t)
                     s3=xlp.Section(s2,t,level=3)
