@@ -464,7 +464,7 @@ class Check():
         self.runwindow.options['row']+=1
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
-                ).format(self.progname,self.languagenames[self.analang])
+                ).format(self.program['name'],self.languagenames[self.analang])
         instr=Label(self.runwindow,text=text,
                 justify=tkinter.LEFT,anchor='c')
         instr.grid(row=self.runwindow.options['row'],
@@ -4433,8 +4433,7 @@ class MainApplication(Frame):
         file.getinterfacelang(self.parent)
         if self.parent.interfacelang == None:
             self.parent.interfacelang='fr' #default for now (just for first use).
-        self.parent.progname=program['name']
-        self.parent.version=program['version']
+        self.parent.program=program
         # self.setinterfacelang()
         self.parent._= setinterfacelang(self.parent.interfacelang)
     # def setinterfacelang(self):
@@ -4508,7 +4507,7 @@ class MainApplication(Frame):
         # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
         # self.frame.grid(column=0, row=0)
         parent.iconphoto(True, self.photo['backgrounded'])
-        title=_("{} Dictionary and Orthography Checker").format(self.progname)
+        title=_("{} Dictionary and Orthography Checker").format(self.program['name'])
         if self.master.themename != 'greygreen':
             print(f"Using theme '{self.master.themename}'.")
             title+=_(' ('+self.master.themename+')')
@@ -4935,7 +4934,7 @@ class Wait(Window):
         self.parent.withdraw()
         super(Wait, self).__init__(parent,exit=0)
         title=(_("{} Dictionary and Orthography Checker in Process"
-                                                    ).format(self.progname))
+                                                ).format(self.program['name']))
         self.title(title)
         text=_("Please Wait...")
         Label(self, text=text,
@@ -4948,7 +4947,8 @@ class Splash(Window):
         # _=self._
         # print(self.theme['background'])
         # print(self.theme['activebackground'])
-        title=(_("{} Dictionary and Orthography Checker").format(program['name']))
+        title=(_("{} Dictionary and Orthography Checker").format(program[
+                                                                    'name']))
         self.title(title)
         text=_("Your dictionary database is loading...\n\n"
                 # "This program can take 30-100 seconds to load, depending on "
@@ -5261,8 +5261,7 @@ def inherit(self):
     self.wraplength=self.parent.wraplength
     self.photo=self.parent.photo
     # self.photowhite=self.parent.photowhite
-    self.progname=self.parent.progname
-    self.version=self.parent.version
+    self.program=self.parent.program
     # self.photosmall=self.parent.photosmall
     self._=self.parent._
 def main():
