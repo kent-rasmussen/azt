@@ -2399,7 +2399,8 @@ class Check():
         else:
             el=xlp.LangData(ex,self.analang,framed[self.analang])
         eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
-        if (self.glosslang2 != '') and (self.glosslang2 in framed):
+        if ((self.glosslang2 != '') and (self.glosslang2 in framed)
+                and (framed[self.glosslang2] != None)):
                 eg2=xlp.Gloss(ex,self.glosslang2,framed[self.glosslang2])
     def makecountssorted(self):
         self.profilecounts={}
