@@ -1443,7 +1443,7 @@ class Check():
             log.log(2,'forms: {}'.format(forms))
             for lang in glosses: #gloss doesn't seem to be defined above; glosses?
                 log.log(2,'gloss[{}]: {}'.format(lang,glosses[lang]))
-            log.debug('tonegroups: {}'.format(tonegroups))
+            log.log(2,'tonegroups: {}'.format(tonegroups))
             """convert from lists to single items without loosing data,
             then pull text from nodes"""
             form=t(firstoflist(forms[self.analang]))
@@ -2356,7 +2356,7 @@ class Check():
                 print(t)
                 log.info(t)
                 self.buildregex()
-                log.debug("self.regex: {}; self.regexCV: {}".format(self.regex,
+                log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
                                                                 self.regexCV))
                 matches=set(self.db.senseidformsbyregex(self.regex,
                                                     self.analang,
@@ -2364,7 +2364,7 @@ class Check():
                 for typenum in self.typenumsRun:
                     # matchestofind=
                     matches-=self.basicreported[typenum]
-                log.debug("{} matches found!: {}".format(len(matches),matches))
+                log.log(2,"{} matches found!: {}".format(len(matches),matches))
                             # len(matches-self.basicreported[typenum]),
                             # matches-self.basicreported[typenum]))
                 if len(matches)>0:
@@ -5290,7 +5290,6 @@ def availablexy(self,w=None):
         self.otherrowheight+=titlebarHeight
         self.maxheight=self.parent.winfo_screenheight()-self.otherrowheight
         self.maxwidth=self.parent.winfo_screenwidth()-self.othercolwidth
-
 def returndictnsortnext(self,parent,values):
     """Kills self.sorting, not parent."""
     # print(self,parent,values)
