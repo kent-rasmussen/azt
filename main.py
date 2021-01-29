@@ -3624,11 +3624,38 @@ class Check():
                     pass
         """Add the guid information to the groups!!"""
         r = open(self.tonereportfile, "w", encoding='utf-8')
-        self.runwindow.title(_("Tone Report"))
+        title=_("Tone Report")
+        self.runwindow.title(title)
         self.runwindow.scroll=ScrollingFrame(self.runwindow.frame)
         window=self.runwindow.scroll.content
         window.row=0
         xlpr=self.xlpstart(reporttype='Tone')
+        s1=xlp.Section(xlpr,title='Introduction')
+        text=_("This report follows an analysis of sortings of {} morphemes "
+        "(roots or affixes) across the following frames: {}. {} stores these "
+        "sortings in lift examples, which are output here, with any glossing "
+        "and sound file links found in each lift sense example. "
+        "Each group in "
+        "this report is distinct from the others, in terms of its grouping "
+        "across the multiple frames used. Sound files should be available "
+        "through links, if the audio directory with those files is in the same "
+        "directory as this file.".format(self.ps,self.locations,
+                                            self.program['name']))
+        p1=xlp.Paragraph(s1,text=text)
+        text=_("As a warning to the analyst who may not understand the "
+        "implications of this *automated analysis*, you may have too few "
+        "groupings here, particularly if you have sorted on fewer frames than "
+        "necessary to distinguish all your underlying tone melodies. On the "
+        "other hand, if your team has been overly precise, or if your database "
+        "contains bad information (sorting information which is arbitrary or "
+        "otherwise inappropriate for the language), then you likely have more "
+        "groups here than you have underlying tone melodies. However, if you "
+        "have avoided each of these two errors, this report should contain a "
+        "decent draft of your underlying tone melody groups. It does not "
+        "pretend to tell you what the values of those groups are, nor how "
+        "those groups interact with morphology in interesting ways (hopefully "
+        "you can do each of these better than a computer could).")
+        p2=xlp.Paragraph(s1,text=text)
         def output(window,r,text):
             r.write(text+'\n')
             if silent == False:
@@ -3638,6 +3665,7 @@ class Check():
         for group in groups:
             groupname=self.ps+'_'+self.profile+'_'+str(group)
             text=('\nGroup '+str(groupname))
+            s1=xlp.Section(xlpr,title=text)
             output(window,r,text)
             l=list()
             # print(groups[group]['values'])
@@ -3649,10 +3677,23 @@ class Check():
                     and (groups[group]['values'][x] !=[])):
                     l.append(x+': '+groups[group]['values'][x][0])
             text=('Values by frame: '+'\t'.join(l))
+            p1=xlp.Paragraph(s1,text)
             output(window,r,text)
             for senseid in groups[group]['senseids']:
-                text=self.getframeddata(senseid,noframe=True,
-                                                notonegroup=True)['formatted']
+                framed=self.getframeddata(senseid,noframe=True,
+                                                notonegroup=True)
+                text=framed['formatted']
+                examples=self.db.get('example',senseid=senseid)
+                log.log(2,"{} examples found: {}".format(len(examples),
+                                                                    examples))
+                if examples != []:
+                    id=self.idXLP(framed)+'_examples'
+                    log.log(2,"Using id {}".format(id))
+                    e1=xlp.Example(s1,id)
+                    for example in examples:
+                        """These should already be framed!"""
+                        framed=self.getframeddata(example,noframe=True)
+                        self.framedtoXLP(framed,parent=e1,listword=True)
                 # for form in self.db.citationorlexeme(senseid=senseid):
                 #     for gloss in self.db.glossordefn(senseid=senseid,
                 #                                     lang=self.glosslang):
@@ -3663,6 +3704,7 @@ class Check():
                 output(window,r,text)
                 self.db.addtoneUF(senseid,groupname,analang=self.analang)
         ww.close()
+        xlpr.close()
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
         output(window,r,text)
         text=_("(Report is also available at ("+self.tonereportfile+")")
