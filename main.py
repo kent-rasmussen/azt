@@ -959,7 +959,7 @@ class Check():
         x=0
         for type in self.checknamesall:
             types.append({})
-            types[x]['name']=self.typedict[type]
+            types[x]['name']=self.typedict[type]['pl']
             types[x]['code']=type
             x+=1
         Label(window.frame, text=_('What part of the sound system do you '
@@ -974,6 +974,7 @@ class Check():
         (e.g., on initialization), then do all the fields with None key (other
         fields are NOT saved to file!).
         These are check related defaults; others in lift.get"""
+        self.loadtypedict()
         self.defaults={None:[
                             'analang', # independent of lift.analang?
                             'glosslang', # independent of lift.glosslang?
@@ -1062,15 +1063,16 @@ class Check():
                     "making one now (wait maybe three minutes).")
             self.profilesbysense=None
         return
-    def loaddefaults(self,field=None):
-        # _=self._
+    def loadtypedict(self):
         """I just need this to load once somewhere..."""
         self.typedict={
-                'V':_('Vowels'),
-                'C':_('Consonants'),
-                'CV':_('Consonant-Vowel combinations'),
-                'T':_('Tone')
+                'V':{'sg':_('Vowel'),'pl':_('Vowels')},
+                'C':{'sg':_('Consonant'),'pl':_('Consonants')},
+                'CV':{'sg':_('Consonant-Vowel combination'),'pl':_('Consonant-Vowel combinations')},
+                'T':{'sg':_('Tone'),'pl':_('Tones')},
                 }
+    def loaddefaults(self,field=None):
+        # _=self._
         """This should just be imported, with all defaults in a dictionary
         variable in the file."""
         try:
@@ -1762,7 +1764,7 @@ class Check():
                 self.getcheck()
                 return
             t=(_("Checking {}, working on ‘{}’ tone frame").format(
-                                    self.typedict[self.type],self.name))
+                                    self.typedict[self.type]['pl'],self.name))
             proselabel(opts,t)
         else:
             print(self.name,'in', self.checkspossible,'?')
@@ -1773,7 +1775,7 @@ class Check():
                 self.getcheck()
                 return
             # t=(_("Checking {}, working on {}".format(
-            #             self.typedict[self.type],self.name)))
+            #             self.typedict[self.type]['pl'],self.name)))
         """Get subcheck"""
         self.getsubchecksprioritized()
         print(self.subcheck,self.subchecksprioritized[self.type])
@@ -1788,9 +1790,9 @@ class Check():
                 return
             else:
                 t=(_("Checking {}, working on {} = {}".format(
-                            self.typedict[self.type],self.name,self.subcheck)))
+                            self.typedict[self.type]['pl'],self.name,self.subcheck)))
                 t=(_("Checking {}, working on {}".format(
-                            self.typedict[self.type],self.name)))
+                            self.typedict[self.type]['pl'],self.name)))
                 proselabel(opts,t)
 
         """Final Button"""
@@ -1944,7 +1946,7 @@ class Check():
                     bg='red' #self.theme['background']
                     ).grid(row=0,column=1,sticky='we')
     def makeCVprogresstable(self):
-        Label(self.leaderboard, text=_('{} Progress').format(self.typedict[self.type]), font=self.fonts['title']
+        Label(self.leaderboard, text=_('{} Progress').format(self.typedict[self.type]['sg']), font=self.fonts['title']
                         ).grid(row=0,column=0,sticky='nwe')
         self.leaderboardtable=Frame(self.leaderboard)
         self.leaderboardtable.grid(row=1,column=0)
