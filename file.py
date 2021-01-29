@@ -204,7 +204,7 @@ if __name__ == "__main__":
     #     global xyz
     #     now=datetime.datetime.now()
     #     return pathlib.Path.joinpath(wsfolder, xyz, xyz + '.lift' + str(now))
-    lift=lift()
+    # lift=lift()
     # baklift=baklift()
 
     #Varify that these files and folders exist as appropriate:
@@ -218,11 +218,11 @@ if __name__ == "__main__":
     # else:
     #     log.info("Sorry, problem with non-existent language directory " + str(langdir))
     #     usage()
-    if exists(lift):
-        log.info("Lift file is " + str(lift))
-    else:
-        log.info("Sorry, problem with non-existent lift file " + str(lift))
-        usage()
+    # if exists(lift):
+    #     log.info("Lift file is " + str(lift))
+    # else:
+    #     log.info("Sorry, problem with non-existent lift file " + str(lift))
+    #     usage()
     # if baklift.exists():
     #     log.info("Sorry, lift file backup already exists " + str(baklift))
     #     usage()
