@@ -2375,17 +2375,22 @@ class Check():
                         self.framedtoXLP(framed,parent=ex,listword=True)
         self.name=nameori
         self.subcheck=subcheckori
+    def idXLP(self,framed):
+        idbits='x'
+        for x in [self.ps,self.profile,self.name,self.subcheck,
+                    framed[self.analang],framed[self.glosslang]]:
+            if x != None:
+                idbits+=x
+        return rx.id(idbits) #for either example or listword
     def framedtoXLP(self,framed,parent,listword=False):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
         """parent is an example in the XLP report"""
-        id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck+framed[
-                                self.analang]+framed[self.glosslang])
+        id=self.idXLP(framed)
         if listword == True:
             ex=xlp.ListWord(parent,id)
         else:
-            id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck)
             exx=xlp.Example(parent,id) #the id goes here...
             ex=xlp.Word(exx) #This doesn't have an id
         if self.audiolang in framed:
