@@ -128,6 +128,7 @@ class Check():
         self.imagesdir=file.getimagesdir(filename)
         self.audiodir=file.getaudiodir(filename)
         log.info('self.audiodir: {}'.format(self.audiodir))
+        self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.loadstatus()
         self.loadtoneframes()

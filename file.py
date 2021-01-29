@@ -40,6 +40,8 @@ def getaudiodir(filename):
         log.debug("{} not there, making it!".format(dir))
         os.mkdir(dir)
     return dir
+def getreldir(origin,dest):
+    return os.path.relpath(dest,origin)
 def getstylesheetdir(filename):
     dir=pathlib.Path.joinpath(getfilenamedir(filename),'xlpstylesheets')
     log.debug("Looking for {}".format(dir))
@@ -68,6 +70,8 @@ def remove(file):
         log.debug(_("Tried to remove {}, but I can't find it.").format(file))
 def getdiredurl(dir,filename):
     return pathlib.Path.joinpath(dir,filename)
+def getdiredrelURL(reldir,filename):
+    return pathlib.PurePath(reldir).joinpath(filename)
 # def getimagefilename(*args):
 #     wavfilename=''
 #     for arg in args:
