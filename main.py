@@ -3797,7 +3797,7 @@ class Check():
                     for typenum in self.typenums:
                         if typenum not in self.basicreported:
                             self.basicreported[typenum]=set()
-                    self.wordsbypsprofilechecksubcheck(s2)
+                    self.wordsbypsprofilechecksubcheck(s3)
         xlpr.close()
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
