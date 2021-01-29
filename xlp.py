@@ -64,12 +64,12 @@ class Report(object):
         for lang in self.langlist:
             self.language(lgs,lang['id'], lang['name'])
     def language(self, parent, id, name):
+        XeLaTeXSpecial=("graphite font-feature='Hide tone contour staves=True' "
+                                "font-feature='Literacy alternates=True'")
         lg=ET.SubElement(parent, 'language',
             attrib={'id':id, 'name':name,
                     'font-family':'Charis SIL',
-                    'XeLaTeXSpecial':"graphite font-feature='Hide tone contour "
-                    "staves=True' font-feature='Literacy alternates=True'"
-                    })
+                    'XeLaTeXSpecial':XeLaTeXSpecial})
     def addlang(self, lang):
         if 'id' in lang and 'name' in lang:
             self.langlist+=[lang]
