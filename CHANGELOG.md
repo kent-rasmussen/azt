@@ -3,8 +3,6 @@
     - frame in a frame? (this problem looks familiar...)
 
 ### CV Report
-    - make tone report work
-        - test: link data
     - fix key 7 problem for sxw
 ## In Process
 - XLP export (these are not likely to happen)
@@ -23,7 +21,7 @@
       - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
       - or is lift.s['V'] and lift.s['d'] enough?
       - doing it here is nice to have the test of what is actually there...
-- Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
+- done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
 - bring diacritics into vowel variables
 - figure out why multiple fuŋ entries aren't showing for recording on bfj
     - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
@@ -51,12 +49,17 @@
 - distinguish between lc and lx
     - make CV report only reference lx field
     - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
+
 # Version 0.6
 - fixed numerous report problems (should be mostly working now)
-- Implemented XlingPaper export (at least beginning)
-    - writing organized data to file, which compiles to PDF in XXE.
-    - if exists sound file, link data. else: langdata (for both examples and forms)
-    - made short reports which respond to filters on 'sort' button
+- Implemented XLingPaper export (at least beginning)
+    - Organized data written to valid XLP XML file, which compiles to PDF in XXE.
+    - data is written from entry lc/lx or sense examples, as appropriate
+    - If a sound file exists, it is linked in XLP to the data form.
+    - There are three report options:
+        - Basic, for top ps-profile combos (Menu)
+        - Just data as currently filtered (click on C/V "Sort" button)
+        - Tone report, with examples (Menu)
 
 ## UI
 - removed subcheck from main screen, at least until we are using it again
