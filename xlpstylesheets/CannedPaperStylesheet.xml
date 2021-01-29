@@ -42,8 +42,7 @@ leaderpattern="rule"
 textalign="left"
 ></footnoteLine
 ><linkLayout
-color="blue"
-decoration="underline"
+color="black"
 ><appendixRefLinkLayout
 ></appendixRefLinkLayout
 ><citationLinkLayout
@@ -61,7 +60,6 @@ decoration="underline"
 ><interlinearRefLinkLayout
 ></interlinearRefLinkLayout
 ><linkLinkLayout
-showmarking="no"
 ></linkLinkLayout
 ><sectionRefLinkLayout
 ></sectionRefLinkLayout
