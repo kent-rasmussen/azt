@@ -40,6 +40,13 @@ def getaudiodir(filename):
         log.debug("{} not there, making it!".format(dir))
         os.mkdir(dir)
     return dir
+def getreportdir(filename):
+    dir=pathlib.Path.joinpath(getfilenamedir(filename),'reports')
+    log.debug("Looking for {}".format(dir))
+    if not os.path.exists(dir):
+        log.debug("{} not there, making it!".format(dir))
+        os.mkdir(dir)
+    return dir
 def getreldir(origin,dest):
     return os.path.relpath(dest,origin)
 def getstylesheetdir(filename):

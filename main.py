@@ -120,7 +120,6 @@ class Check():
                                         filenamebase+".VerificationStatus.py")
         self.profiledatafile=file.getdiredurl(filedir,
                                         filenamebase+".ProfileData.py")
-        self.reportbasefilename=file.getdiredurl(filedir, filenamebase)
         for savefile in [self.defaultfile,self.toneframesfile,self.statusfile,
                         self.profiledatafile]:
             if not file.exists(savefile):
@@ -128,7 +127,12 @@ class Check():
         self.imagesdir=file.getimagesdir(filename)
         self.audiodir=file.getaudiodir(filename)
         log.info('self.audiodir: {}'.format(self.audiodir))
+        self.reportsdir=file.getreportdir(filename)
+        self.reportbasefilename=file.getdiredurl(self.reportsdir, filenamebase)
         self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
+        log.log(2,'self.reportsdir: {}'.format(self.reportsdir))
+        log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
+        log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.loadstatus()
         self.loadtoneframes()
