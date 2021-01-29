@@ -1449,7 +1449,7 @@ class Check():
             form=t(firstoflist(forms[self.analang]))
             voice=t(firstoflist(forms[self.audiolang]))
             for lang in glosses:
-                if (lang == self.analang) or (lang == self.analang2):
+                if (lang == self.glosslang) or (lang == self.glosslang2):
                     gloss[lang]=t(firstoflist(glosses[lang]))
             tonegroup=t(firstoflist(tonegroups))
             """This is what we're pulling from:
