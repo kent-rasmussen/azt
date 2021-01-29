@@ -3429,15 +3429,7 @@ class Check():
                                         ,'-',str(self.profile)
                                         ,'_',str(self.name)
                                         ,'_ReportXLP.xml'])
-        xlpr=xlp.Report(self.adhocreportfileXLP,''.join([str(self.ps)
-                                                        ,'-',str(self.profile)
-                                                        ,' ',str(self.name)]),
-                        self.languagenames[self.analang])
-        """Don't forget to add the languages to the report!"""
-        for lang in [self.analang,self.glosslang,self.glosslang2]:
-            if lang != None:
-                xlpr.addlang({'id':lang,
-                            'name': self.languagenames[lang]})
+        xlpr=xlpr=self.xlpstart()
         """"Do I need this?"""
         self.results.grid(column=0,
                         row=self.runwindow.frame.grid_info()['row']+1,
@@ -3636,6 +3628,7 @@ class Check():
         self.runwindow.scroll=ScrollingFrame(self.runwindow.frame)
         window=self.runwindow.scroll.content
         window.row=0
+        xlpr=self.xlpstart(reporttype='Tone')
         def output(window,r,text):
             r.write(text+'\n')
             if silent == False:
@@ -3675,6 +3668,24 @@ class Check():
         text=_("(Report is also available at ("+self.tonereportfile+")")
         output(window,r,text)
         r.close()
+    def xlpstart(self,reporttype='adhoc'):
+        if reporttype == 'Tone':
+            reporttype=''.join([str(self.ps),'-',
+                            str(self.profile),' ',
+                            reporttype])
+        elif reporttype != 'Basic': #If it is, we don't want these in the title.
+            reporttype=''.join([str(self.ps),'-',
+                            str(self.profile),' ',
+                            str(self.name)])
+        reportfileXLP=''.join([str(self.reportbasefilename)
+                                            ,'_',rx.id(reporttype)
+                                            ,'_','ReportXLP.xml'])
+        xlpreport=xlp.Report(reportfileXLP,reporttype,
+                        self.languagenames[self.analang])
+        for lang in [self.analang,self.glosslang,self.glosslang2]:
+            if lang != None:
+                xlpreport.addlang({'id':lang,'name': self.languagenames[lang]})
+        return xlpreport
     def basicreport(self):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
@@ -3693,15 +3704,7 @@ class Check():
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                             # ,'_',self.type,'_',str(pss)
                                             ,'.BasicReport.txt'])
-        self.basicreportfileXLP=''.join([str(self.reportbasefilename)
-                                            # ,'_',self.type,'_',str(pss)
-                                            ,'.BasicReportXLP.xml'])
-        xlpr=xlp.Report(self.basicreportfileXLP,'Generic',
-                        self.languagenames[self.analang])
-        for lang in [self.analang,self.glosslang,self.glosslang2]:
-            if lang != None:
-                xlpr.addlang({'id':lang,
-                            'name': self.languagenames[lang]})
+        xlpr=self.xlpstart(reporttype='Basic')
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
