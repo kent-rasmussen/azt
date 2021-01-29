@@ -2394,8 +2394,9 @@ class Check():
             exx=xlp.Example(parent,id) #the id goes here...
             ex=xlp.Word(exx) #This doesn't have an id
         if self.audiolang in framed:
-            el=xlp.LinkedData(ex,self.analang,framed[self.analang],
-                            framed[self.audiolang])
+            url=file.getdiredrelURL(self.reporttoaudiorelURL,framed[self.audiolang])
+            el=xlp.LinkedData(ex,self.analang,framed[self.analang],str(url))
+                            # framed[self.audiolang])
         else:
             el=xlp.LangData(ex,self.analang,framed[self.analang])
         eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
