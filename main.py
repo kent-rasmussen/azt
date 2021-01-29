@@ -1447,7 +1447,10 @@ class Check():
             """convert from lists to single items without loosing data,
             then pull text from nodes"""
             form=t(firstoflist(forms[self.analang]))
-            voice=t(firstoflist(forms[self.audiolang]))
+            if self.audiolang in forms:
+                voice=t(firstoflist(forms[self.audiolang]))
+            else:
+                voice=None
             for lang in glosses:
                 if (lang == self.glosslang) or (lang == self.glosslang2):
                     gloss[lang]=t(firstoflist(glosses[lang]))
@@ -1531,7 +1534,7 @@ class Check():
             output[self.analang]=form
             for lang in gloss:
                 output[lang]=gloss[lang]
-        if voice is not None:
+        if voice != None:
             output[self.audiolang]=voice
         text=[str(output[self.analang]),"‘"+str(output[self.glosslang])+"’"]
         if self.glosslang2 in output:
