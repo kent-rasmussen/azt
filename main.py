@@ -1942,7 +1942,7 @@ class Check():
         print("No Progress board")
         # self.leaderboard.destroy()
         self.noboard=Label(self.leaderboard, image=self.photo['transparent'],
-                    text='',
+                    text='', pady=50,
                     bg='red' #self.theme['background']
                     ).grid(row=0,column=1,sticky='we')
     def makeCVprogresstable(self):
@@ -1962,7 +1962,8 @@ class Check():
                 return nn(x,oneperline=True) #to show groups...
             else:
                 return len(x) #to show counts
-        Label(self.leaderboard, text=_('Tone Progress'), font=self.fonts['title']
+        title=_('Tone Progress for {} Words'.format(self.ps))
+        Label(self.leaderboard, text=title, font=self.fonts['title'],padx=25
                         ).grid(row=0,column=0,sticky='nwe')
         self.leaderboardtable=Frame(self.leaderboard)
         self.leaderboardtable.grid(row=1,column=0)
@@ -4994,8 +4995,8 @@ class Splash(Window):
                 # "language, by building your dictionary and "
                 # "writing system!"
                 )
-        Label(self, text=title,
-                        font=self.fonts['title'],anchor='c',padx=50
+        Label(self, text=title, pady=50,
+                        font=self.fonts['title'],anchor='c',padx=25
                         ).grid(row=0,column=0,sticky='we')
         Label(self, image=self.photo['transparent'],text='',
                         bg=self.theme['background']
