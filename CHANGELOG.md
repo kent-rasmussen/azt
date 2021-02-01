@@ -1,3 +1,5 @@
+# Changelog
+
 ### Cleanup Unresolved from November 2020 Zulgo beta test
 - Find again (not happening now) and fix scrolling frame size problem on rename
     - frame in a frame? (this problem looks familiar...)
