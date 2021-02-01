@@ -88,8 +88,8 @@ class Check():
         and replace periods with underscores, to make our modules basename."""
         filenamebase=re.sub('\.','_',str(file.getfilenamebase(filename)))
         if not file.exists(filedir):
-            print("Looks like there's a problem with your directory...",
-                    filename,'\n',filemod)
+            log.info(_("Looks like there's a problem with your directory... {}"
+                    "\n{}".format(filename,filemod)))
             exit()
         """This and the following bit should probably be in another lift
         class, in the main script. They make non lift-specific changes
@@ -100,7 +100,7 @@ class Check():
             text=_("{} doesn't look like a well formed lift file; please "
                     "try again.").format(filename)
             print(text)
-            print("'lift_url.py' removed.")
+            log.info("'lift_url.py' removed.")
             window=Window(self)
             Label(window,text=text).grid(row=0,column=0)
             file.remove('lift_url.py') #whatever the problem was, remove it.
@@ -260,11 +260,11 @@ class Check():
         elif nlangs == 2:
             if ((self.analang in self.db.audiolangs[0]) and
                 (self.analang not in self.db.audiolangs[1])):
-                print('Looks like I found an  audiolang!')
+                log.info('Looks like I found an  audiolang!')
                 self.audiolang=self.db.audiolangs[0] #assume this is the iso code
             elif ((self.analang in self.db.audiolangs[1]) and
                     (self.analang not in self.db.audiolangs[0])):
-                print('Looks like I found an iso code for analang!')
+                log.info('Looks like I found an iso code for analang!')
                 self.audiolang=self.db.audiolangs[1] #assume this is the iso code
         else: #for three or more analangs, take the first plausible iso code
             for n in range(nlangs):
@@ -274,7 +274,7 @@ class Check():
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
         if len(self.db.glosslangs) == 1:
-            print('Only one glosslang!')
+            log.info('Only one glosslang!')
             self.glosslang=self.db.glosslangs[0]
             self.glosslang2=None
             """if there are two or more gloss languages, just pick the first
@@ -346,7 +346,7 @@ class Check():
                 self.languagenames[xyz]=self.adnlangnames[xyz]
     """User Input functions"""
     def getinterfacelang(self):
-            print("Asking for interface language...")
+            log.info("Asking for interface language...")
             window=Window(self.frame, title=_('Select Interface Language'))
             Label(window.frame, text=_('What language do you want this program '
                                     'to address you in?')
@@ -632,7 +632,7 @@ class Check():
         local variables):"""
         self.runwindow.destroy()
     def addframe(self):
-        print('Tone frame to add!')
+        log.info('Tone frame to add!')
         """I should add gloss2 option here, likely just with each language.
         This is not a problem for LFIT translation fields, and it would help to
         have language specification (not gloss/gloss2), in case check languages
@@ -816,7 +816,7 @@ class Check():
         self.set('sample_format',choice,window)
         self.soundcheckrefresh()
     def getsoundformat(self):
-        print("Asking for audio format...")
+        log.info("Asking for audio format...")
         window=Window(self.frame, title=_('Select Audio Format'))
         Label(window.frame, text=_('What audio format do you '
                                     'want to work with?')
@@ -827,7 +827,7 @@ class Check():
                                 )
         buttonFrame1.grid(column=0, row=1)
     def getsoundhz(self):
-        print("Asking for sampling frequency...")
+        log.info("Asking for sampling frequency...")
         window=Window(self.frame, title=_('Select Sampling Frequency'))
         Label(window.frame, text=_('What sampling frequency you '
                                     'want to work with?')
@@ -841,7 +841,7 @@ class Check():
         self.set('audio_card_index',choice,window)
         self.soundcheckrefresh()
     def getsoundcardindex(self):
-        print("Asking for sampling frequency...")
+        log.info("Asking for sampling frequency...")
         window=Window(self.frame, title=_('Select Sound Card'))
         Label(window.frame, text=_('What sound card do you '
                                     'want to work with?')
@@ -891,7 +891,7 @@ class Check():
     def setps(self,choice,window):
         self.set('ps',choice,window)
     def getsubcheck(self):
-        print("this sets the subcheck")
+        log.info("this sets the subcheck")
         if self.type == "V":
             windowV=Window(self.frame,title=_('Select Vowel'))
             self.getV(window=windowV)
@@ -909,7 +909,7 @@ class Check():
             self.type = "CV"
             self.checkcheck()
     def getps(self):
-        print("Asking for ps...")
+        log.info("Asking for ps...")
         window=Window(self.frame, title=_('Select Grammatical Category'))
         Label(window.frame, text=_('What grammatical category do you '
                                     'want to work with (Part of speech)?')
@@ -925,7 +925,7 @@ class Check():
                                 )
         buttonFrame1.grid(column=0, row=1)
     def getprofile(self):
-        print("Asking for profile...")
+        log.info("Asking for profile...")
         window=Window(self.frame,title=_('Select Syllable Profile'))
         if self.profilesbysense[self.ps] is None: #likely never happen...
             Label(window.frame,
@@ -1148,9 +1148,9 @@ class Check():
                 self.status[self.type][self.ps][self.profile][self.name].append(
                                                                 self.subcheck)
             else:
-                print("Tried to set",self.subcheck,"verified in",self.type,
-                        self.ps,self.profile,self.name,"but it was "
-                        "already there.")
+                log.info("Tried to set {} verified in {} {} {} {} but it was "
+                        "already there.".format(self.subcheck,self.type,
+                        self.ps,self.profile,self.name,))
         if verified == False:
             if self.subcheck in (
                             self.status[self.type][self.ps][self.profile]
@@ -1424,7 +1424,7 @@ class Check():
         """Build dual logic here:"""
         if isinstance(source,lift.ET.Element):
             if self.debug == True:
-                print('Element found!')
+                log.info('Element found!')
             element=source
             for node in element:
                 if (node.tag == 'form') and ((node.get('lang') == self.analang)
@@ -1471,7 +1471,7 @@ class Check():
             """
         elif (type(source) is str) and (len(source) == 36): #source is sensedid
             if self.debug == True:
-                print('36 character senseid string!')
+                log.info('36 character senseid string!')
             senseid=source
             forms[self.analang]=self.db.citationorlexeme(senseid=senseid,
                                             lang=self.analang,
@@ -1493,7 +1493,7 @@ class Check():
                 log.log(2,'gloss[{}]: {}'.format(lang,gloss[lang]))
             tonegroup=firstoflist(tonegroups)
         else:
-            print('Neither Element nor senseid was found!')
+            log.info('Neither Element nor senseid was found!')
             return output
         log.log(2,'form: {}'.format(form))
         for lang in gloss:
@@ -1599,7 +1599,7 @@ class Check():
         print(len(self.senseidsvalidwps),'senses with valid data and ps data.')
     def guidtriage(self):
         # import time
-        print("Doing guid triage... This takes awhile...")
+        log.info("Doing guid triage... This takes awhile...")
         start_time=time.time()
         self.guids=self.db.guids
         self.guidsinvalid=[] #nothing, for now...
@@ -1635,7 +1635,7 @@ class Check():
         print("Set the above variables in "+str(time.time() - start_time)+" se"
                 "conds.")
     def guidtriagebyps(self):
-        print("Doing guid triage by ps... This also takes awhile?...")
+        log.info("Doing guid triage by ps... This also takes awhile?...")
         self.guidsvalidbyps={}
         for ps in self.db.pss:
             self.guidsvalidbyps[ps]=self.db.get('guidbyps',ps=ps)
@@ -1671,19 +1671,19 @@ class Check():
             Button(self.frame.status, choice=text, text=text, anchor='c',
                             cmd=fn, width=opts['width'], **kwargs
                             ).grid(column=column, row=opts['row'])
-        print("Running Check Check!")
+        log.info("Running Check Check!")
         self.makestatus()
         """We start with the settings that we can likely guess"""
         if self.interfacelang == None:
             self.guessinterfacelang()
         else:
             if self.debug == True:
-                print('interfacelang already set')
+                log.info('interfacelang already set')
         """Get Analang"""
         if self.analang not in self.db.analangs:
             self.guessanalang()
         if (self.analang == None) or ():
-            print("find the language")
+            log.info("find the language")
             self.getanalang()
             return
         if self.audiolang == None:
@@ -1702,7 +1702,7 @@ class Check():
         if self.glosslang not in self.db.glosslangs:
             self.guessglosslangs()
         if self.glosslang == None:
-            print("find the gloss language")
+            log.info("find the gloss language")
             self.getglosslang()
             return
         """Get glosslang2 (None is OK here, meaning no second gloss language)"""
@@ -1728,14 +1728,14 @@ class Check():
         if self.ps not in self.db.pss:
             self.guessps()
         if self.ps == None:
-            print("find the ps")
+            log.info("find the ps")
             self.getps()
             return
         """Get profile (this depends on ps)"""
         if self.profile not in self.profilesbysense[self.ps]:
             self.guessprofile()
         if self.profile == None:
-            print("Select a syllable profile.")
+            log.info("Select a syllable profile.")
             self.getprofile()
             return
         count=self.countbypsprofile(self.ps,self.profile)
@@ -1746,7 +1746,7 @@ class Check():
         if self.type not in self.checknamesall:
             self.guesstype()
         if self.type == None:
-            print("Select a check type (C, V, CV, Tone).")
+            log.info("Select a check type (C, V, CV, Tone).")
             self.gettype()
             return
         """Get check"""
@@ -1774,7 +1774,7 @@ class Check():
             if self.name not in [x[0] for x in self.checkspossible]: #setnamesbyprofile
                 self.guesscheckname()
             if self.name == None: #no backup assumptions for CV checks, for now
-                print("check selection dialog here, for now just running V1=V2")
+                log.info("check selection dialog here, for now just running V1=V2")
                 self.getcheck()
                 return
             # t=(_("Checking {}, working on {}".format(
@@ -1787,8 +1787,8 @@ class Check():
         print(self.subcheck,self.subchecksprioritized[self.type])
         if self.type != 'T':
             if self.subcheck == None:
-                print("Aparently I don't know yet what (e.g., consonant or "+
-                "vowel) I'm testing.")
+                log.info("Aparently I don't know yet what (e.g., consonant or "
+                        "vowel) I'm testing.")
                 self.getsubcheck()
                 return
             else:
@@ -1892,7 +1892,7 @@ class Check():
         numdevices = info.get('deviceCount')
         for i in range(0, numdevices):
             if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-                    print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
+                    log.info("Input Device id {} - {}".format(i,p.get_device_info_by_host_api_device_index(0, i).get('name')))
                     self.audio_card_indexes+=[{'code':i,'name':p.get_device_info_by_host_api_device_index(0, i).get('name')}]
         if not hasattr(self,'fs') or self.fs not in self.fss:
             self.fs=None
@@ -1916,7 +1916,7 @@ class Check():
             if self.ps in self.status[self.type]:
                 for profile in self.status[self.type][self.ps]:
                     done+=len(self.status[self.type][self.ps][profile])
-                print('done:',done)
+                log.info('done: {}'.format(done))
                 if done >0:
                     if (hasattr(self,'noboard') and (self.noboard is not None)): #.winfo_exists())):
                         self.noboard.destroy()
@@ -1930,7 +1930,7 @@ class Check():
                             self.makenoboard()
                             return
                     else:
-                        print("Found CV verifications")
+                        log.info("Found CV verifications")
                         self.makeCVprogresstable()
                 else:
                     self.makenoboard()
@@ -1942,7 +1942,7 @@ class Check():
             self.makenoboard()
             return
     def makenoboard(self):
-        print("No Progress board")
+        log.info("No Progress board")
         # self.leaderboard.destroy()
         self.noboard=Label(self.leaderboard, image=self.photo['transparent'],
                     text='', pady=50,
@@ -2011,7 +2011,7 @@ class Check():
         try:
             self.frame.status.destroy()
         except:
-            print("Apparently, this is my first time making the status frame.")
+            log.info("Apparently, this is my first time making the status frame.")
         self.frame.status=Frame(self.frame)
         self.frame.status.grid(row=0, column=0,sticky='nw') # as row 1?
     def makeresultsframe(self):
@@ -2106,13 +2106,13 @@ class Check():
         try:
             len(self.profile)
         except:
-            print("It doesn't look like you've picked a syllable profile yet.")
+            log.info("It doesn't look like you've picked a syllable profile yet.")
             return
         if type(self.type) is not str:
             print("type not set!",self.type)
             return
         if self.type == 'T':
-            print("This shouldn't happen! (setnamesbyprofile with self.type T)")
+            log.info("This shouldn't happen! (setnamesbyprofile with self.type T)")
             return
         n=int(re.subn(self.type, self.type, self.profile)[1])
         print(n, 'instances of self.type', self.type, 'in', self.profile)
@@ -2122,7 +2122,7 @@ class Check():
             names+=ilist  #.append(, This is causing a list in a list..…
         return names
     def getanalang(self):
-        print("this sets the language")
+        log.info("this sets the language")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title=_('Select Analysis Language'))
         if self.db.analangs is None :
@@ -2143,7 +2143,7 @@ class Check():
                                      window
                                      ).grid(column=0, row=4)
     def getglosslang(self):
-        print("this sets the gloss")
+        log.info("this sets the gloss")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title=_('Select Gloss Language'))
         # if self.db.glosslang is None :
@@ -2164,7 +2164,7 @@ class Check():
                                  window
                                  ).grid(column=0, row=4)
     def getglosslang2(self):
-        print("this sets the gloss")
+        log.info("this sets the gloss")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title='Select Gloss Language')
         if self.db.filename is None :
@@ -2194,9 +2194,9 @@ class Check():
         else:
             self.checkspossible=self.setnamesbyprofile() #This shouln't return tone checks
     def getcheck(self):
-        print("this sets the check")
+        log.info("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
-        print("Getting the check name...")
+        log.info("Getting the check name...")
         self.getcheckspossible()
         window=Window(self.frame,title='Select Check')
         if self.checkspossible == []:
@@ -2422,7 +2422,7 @@ class Check():
         self.profilecounts=sorted(wcounts,reverse=True)
         self.Scounts={}
     def printcountssorted(self):
-        print("Ranked and numbered syllable profiles, by grammatical category:")
+        log.info("Ranked and numbered syllable profiles, by grammatical category:")
         #{}
         # allkeys=[]
         nTotal=0
@@ -2448,7 +2448,7 @@ class Check():
                     print(line[0],line[1])
             print(ps,"(total):",nTotals[ps])
     def printprofilesbyps(self):
-        print("Syllable profiles actually in senses, by grammatical category:")
+        log.info("Syllable profiles actually in senses, by grammatical category:")
         for ps in self.profilesbysense:
             if ps is 'Invalid':
                 continue
@@ -2481,7 +2481,7 @@ class Check():
                 """As soon as you find one with form and gloss, quit."""
                 return output
             else:
-                print("none problem")
+                log.info("none problem")
     def renamegroup(self):
         def submitform():
             newtonevalue=formfield.get()
@@ -2571,7 +2571,7 @@ class Check():
         with an integer --we just need a unique name, in any case, and the
         groups are by frame (surface distinctions), rather than by lexeme
         (underlying distinctions) in any case."""
-        print('Running sortT:')
+        log.info('Running sortT:')
         self.getrunwindow()
         """sortingstatus() checks by self.ps,self.profile,self.name (frame),
         for the presence of a populated fieldtype='tone'. So any time any of
@@ -2678,7 +2678,7 @@ class Check():
             self.marksortedsenseid(senseid)
         self.runwindow.resetframe()
     def verifyT(self):
-        print("Running verifyT!")
+        log.info("Running verifyT!")
         """Show entries each in a row, users mark those that are different, and we
         remove that group designation from the entry (so the entry will show up on
         the next sorting). After all entries have been verified as "the same",
@@ -2795,7 +2795,7 @@ class Check():
                             ipady=15 #Inside the buttons...
                             )
     def joinT(self):
-        print("Running joinT!")
+        log.info("Running joinT!")
         """This window shows up after sorting, or maybe after verification, to
         allow the user to join groups that look the same. I think before
         verification, as this would require the new pile to be verified again.
@@ -2905,7 +2905,7 @@ class Check():
                                 location=self.name,fieldvalue=oldtonevalue,
                                 newfieldvalue=newtonevalue)
     def addtonegroup(self):
-        print("Adding a tone group!")
+        log.info("Adding a tone group!")
         self.gettonegroups()
         values=[0,] #always have something here
         for i in self.tonegroups:
@@ -3164,7 +3164,7 @@ class Check():
             # print(self.runwindow.winfo_exists())
             # print(type(self.runwindow))
             if self.debug == True:
-                print("Runwindow already there! Resetting frame...")
+                log.info("Runwindow already there! Resetting frame...")
             self.runwindow.resetframe() #I think I'll always want this here...
         else:
             t=(_("Run Window"))
@@ -3173,7 +3173,7 @@ class Check():
     def runcheck(self):
         self.storedefaults() #This is not called in checkcheck.
         t=(_('Run Check'))
-        print("Running check...")
+        log.info("Running check...")
         self.getrunwindow()
         # self.runwindow=Window(self.frame,title=t)
         i=0
@@ -3246,10 +3246,10 @@ class Check():
         done=list()
         for psprofile in self.profilecounts:
             if self.runwindow.winfo_exists==False:
-                print('no runwindow; quitting!')
+                log.info('no runwindow; quitting!')
                 return
             if self.runwindow.frame.winfo_exists==False:
-                print('no runwindow frame; quitting!')
+                log.info('no runwindow frame; quitting!')
                 return
             self.runwindow.resetframe()
             ww=Wait(self.runwindow)
@@ -3375,7 +3375,7 @@ class Check():
                 text=framed['formatted']
                 Label(examplesframe, anchor='w',text=text
                                     ).grid(row=row, column=0, sticky='w')
-                print('recordbuttonframetry')
+                log.info('recordbuttonframetry')
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
                                     form=nn(framed[self.analang]),
                                     gloss=nn(framed[self.glosslang])
@@ -3566,7 +3566,7 @@ class Check():
         self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
     def tonegroupreport(self,silent=False):
-        print("Starting report...")
+        log.info("Starting report...")
         self.storedefaults()
         self.getrunwindow()
         ww=Wait(self.runwindow)
@@ -3594,7 +3594,7 @@ class Check():
                 # print(group)
                 """Save this info by senseid"""
                 output[senseid][location]=group
-        print("Done organizing data; ready to report.")
+        log.info("Done organizing data; ready to report.")
         groups={}
         groupvalues=[]
         """Look through all the location:value combos (skip over senseids)
@@ -3620,7 +3620,7 @@ class Check():
             groups[x]['values']=value
             groups[x]['senseids']=[]
             x+=1
-        print('Groups Done; Checking guids against groups.')
+        log.info('Groups Done; Checking guids against groups.')
         for senseid in output.keys():
             for group in groups:
                 if str(output[senseid]) == str(groups[group]['values']):
@@ -3669,7 +3669,7 @@ class Check():
             window.row+=1
         for group in groups:
             groupname=self.ps+'_'+self.profile+'_'+str(group)
-            text=('\nGroup '+str(groupname))
+            text=_('\nGroup {}'.format(str(groupname)))
             s1=xlp.Section(xlpr,title=text)
             output(window,r,text)
             l=list()
@@ -3681,7 +3681,7 @@ class Check():
                 if (('values' in groups[group]) and (x in groups[group]['values'])
                     and (groups[group]['values'][x] !=[])):
                     l.append(x+': '+groups[group]['values'][x][0])
-            text=('Values by frame: '+'\t'.join(l))
+            text=_('Values by frame: {}'.format('\t'.join(l)))
             p1=xlp.Paragraph(s1,text)
             output(window,r,text)
             for senseid in groups[group]['senseids']:
@@ -3829,7 +3829,7 @@ class Check():
     def notpicked(self,choice):
         """I should think through what I want for this button/script."""
         if entry is None:
-            print("No entry!")
+            log.info("No entry!")
             """Probably a bad idea"""
             entry=Entry(db, parent, window, check, guid=choice)
         if self.debug==True:
@@ -3848,7 +3848,7 @@ class Check():
             problemopts=[("badCheck",bcv1nv2),
                 ("badSubcheck",bscv1isv2nsc+" (V1=V2≠"+check.subcheck+")")]
         else:
-            print("Sorry, that check isn't set up yet.")
+            log.info("Sorry, that check isn't set up yet.")
         buttonFrame1=ButtonFrame(window.frame,window,check,entry,list=problemopts,
                                     command=Check.fixdiff,width="50")
         buttonFrame1.grid(column=0, row=3)
@@ -3924,11 +3924,11 @@ class Check():
             window=Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
             Check.fixV12(parent, window, check, entry, choice)
         else:
-            print("Huh? I don't understand what the user wants.")
+            log.info("Huh? I don't understand what the user wants.")
         Check.fixVs
     def fixVs(parent, window, check, entry, choice):
         #This isn't working yet.
-        print("running fixVs!!!!???!??!?!?!?")
+        log.info("running fixVs!!!!???!??!?!?!?")
 
         #I need to rework this to work more generally..….
         Label(window.frame, text="I will make the following changes:").grid(column=0, row=0)
@@ -3967,26 +3967,26 @@ class Check():
         if check.fix == "V1":
             r=str('('+V+')'+'('+C+')'+'('+V+')')
             sub=(choice+r"\2\3")
-            print("Note: this assumes we're changing one of two vowels "+
+            log.info("Note: this assumes we're changing one of two vowels "
                 "separated by a consonant")
             #I want to access the second group...
             #print(r)
         elif check.fix == "C1":
             r=str('(('+C+'))'+'('+V+')'+'('+C+')')
             print(r)
-            print("Note: this assumes we're changing one of two consonants "+
+            log.info("Note: this assumes we're changing one of two consonants "
                 "separated by a vowel")
         elif check.fix == "V2":
             r=str('('+V+')'+'('+C+')'+'('+V+')')
             sub=(r"\1\2"+choice)
-            print("Note: this assumes we're changing one of two vowels "+
+            print("Note: this assumes we're changing one of two vowels "
                 "separated by a consonant")
             #print(r)
         elif check.fix == "C2":
             r=str('('+C+')'+V+'('+C+')')
             print(r)
         else:
-            print("Fix "+check.fix +" undefined.")
+            log.info("Fix "+check.fix +" undefined.")
         def old():
             if check.fix == ("V1" or "C1"):
                 ximin=1
@@ -4006,10 +4006,10 @@ class Check():
         try: # use a previous entry.newform, if it exists:
             baseform=entry.newform
             entry.newform=''
-            print("Using newform")
+            log.info("Using newform")
         except:
             baseform=entry.lexeme
-            print("Using lexeme")
+            log.info("Using lexeme")
             #entry.newform = re.sub(check.subcheck, choice, entry.newform, count=1)
         print('r: '+r)
         print('sub: '+sub)
@@ -4022,13 +4022,13 @@ class Check():
                     print("exchanging "+check.subcheck+" for "+choice)
                     print(ximin,xi,ximax)
                     if x == check.subcheck:
-                        print("x == check.subcheck")
+                        log.info("x == check.subcheck")
                     if xi >= ximin and xi <= ximax:
-                        print("xi >= ximin  and xi <= ximax") # <= ximax ):
+                        log.info("xi >= ximin  and xi <= ximax") # <= ximax ):
                     if ximin <= xi:
-                        print("ximin <= xi") # <= ximax ):
+                        log.info("ximin <= xi") # <= ximax ):
                     if xi <= ximax:
-                        print("xi <= ximax") # <= ximax ):
+                        log.info("xi <= ximax") # <= ximax ):
                 if x == check.subcheck: # <= ximax ):
                     if ximin <= xi <= ximax:
                         try:
@@ -4076,7 +4076,7 @@ class Entry(lift.Entry):
         except:
             self.checkresults[check.name][check.subcheck]={}
         self.checkresults[check.name][check.subcheck]['result']=result
-        print("Don't forget to write these changes to a file somewhere...")
+        log.info("Don't forget to write these changes to a file somewhere...")
 class Window(tkinter.Toplevel):
     def resetframe(self):
         if hasattr(self,'frame') and type(self.frame) is Frame:
@@ -4108,12 +4108,12 @@ class Window(tkinter.Toplevel):
         parentname=name(parent)
         selfname=name(self)
         if self.debug==True:
-            print("Current window:")
+            log.info("Current window:")
             print(parent)
             print(window)
             print ("    parent.name: "+parentname)
             print ("    self.name: "+selfname)
-            print("End current window descriptions")
+            log.info("End current window descriptions")
         self.iconphoto(False, self.photo['backgrounded']) #don't want this transparent
         self.title(title)
         self.parent=parent
