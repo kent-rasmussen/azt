@@ -3322,8 +3322,8 @@ class Check():
         self.runwindow.wait_window(self.runwindow.frame)
     def showentryformstorecord(self):
         """Save these values before iterating over them"""
-        justone=False #give default of all slices, largest first
         justone=True #for now, let user set just one slice of data
+        justone=False #give default of all slices, largest first
         psori=self.ps
         profileori=self.profile
         self.getrunwindow()
@@ -3331,12 +3331,13 @@ class Check():
             self.showentryformstorecordpage()
         else:
             for psprofile in self.profilecounts:
-                self.ps=psprofile[2]
-                self.profile=psprofile[1]
-                nextb=Button(self.runwindow.frame,text=_("Next Group"),
-                                            cmd=self.runwindow.frame.destroy)
-                nextb.grid(row=0,column=1,sticky='w')
-                self.showentryformstorecordpage()
+                if self.runwindow.winfo_exists():
+                    self.ps=psprofile[2]
+                    self.profile=psprofile[1]
+                    nextb=Button(self.runwindow,text=_("Next Group"),
+                                            cmd=self.runwindow.resetframe) # .frame.destroy
+                    nextb.grid(row=0,column=1,sticky='ne')
+                    self.showentryformstorecordpage()
             self.ps=psori
             self.profile=profileori
     def showsenseswithexamplestorecord(self,senses=None):
@@ -3401,12 +3402,6 @@ class Check():
             d=Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
             d.grid(row=row,column=0)
             examplesframe.wait_window(entryframe)
-        instr.destroy() #Don't show instructions at this point
-        Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
-            text=_("All done! Sort some more words, and come back.")
-            ).grid(row=0,column=0,rowspan=2,sticky='w')
-        self.runwindow.wait_window()
-        # self.runwindow.destroy()
     def showtonegroupexs(self):
         if (not(hasattr(self,'examplespergrouptorecord')) or
             (type(self.examplespergrouptorecord) is not int)):
@@ -3414,14 +3409,11 @@ class Check():
             self.storedefaults('examplespergrouptorecord')
         self.settonevariablesbypsprofile() #maybe not done before
         self.gettoneUFgroups()
-        # toneUFgroups=self.toneUFgroups
-        # print('self.toneUFgroups',self.toneUFgroups)
         if self.toneUFgroups != []:
             torecord={}
             for toneUFgroup in self.toneUFgroups:
                 torecord[toneUFgroup]=self.db.get('senseidbytoneUFgroup',
                                         fieldtype='tone', form=toneUFgroup)
-                    # print(self.toneUFgroups,senseids)
             batch={}
             for i in range(self.examplespergrouptorecord):
                 batch[i]=[]
@@ -3437,6 +3429,12 @@ class Check():
                 log.info(_('Giving user the number {} example from each tone '
                         'group ({}) with index'.format(i,self.toneUFgroups)))
                 self.showsenseswithexamplestorecord(batch[i])
+            if self.runwindow.winfo_exists():
+                Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
+                text=_("All done! Sort some more words, and come back.")
+                ).grid(row=0,column=0,rowspan=2,sticky='w')
+            # self.runwindow.wait_window()
+            #
         else:
             print("How did we get no UR tone groups?",self.profile,self.ps,
                     "\nHave you run the tone report recently?"
@@ -5025,7 +5023,7 @@ class Wait(tkinter.Toplevel): #Window?
         self.title(title)
         text=_("Please Wait...")
         Label(self, text=text,
-                        font=self.fonts['title'],anchor='c',padx=50
+                        font=self.fonts['title'],anchor='c',padx=50,pady=50
                         ).grid(row=0,column=0,sticky='we')
         self.update_idletasks()
 class Splash(Window):
