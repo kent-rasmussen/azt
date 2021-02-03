@@ -620,8 +620,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         while guid in allguids:
             guid=rxi(8)+'-'+rxi(4)+'-'+rxi(4)+'-'+rxi(4)+'-'+rxi(12)
         return guid
-    def addentry(self, ps, analang, glosslang, langform, glossform,
-        glosslang2=None, glossform2=None, showurl=False):
+    def addentry(self, showurl=False, **kwargs):
+        # kwargs are ps, analang, glosslang, langform, glossform,glosslang2,
+        # glossform2
         log.info("Adding an entry")
         self.makenewguid()
         guid=senseid=self.makenewguid()
@@ -634,102 +635,115 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                 'dateCreated':now,
                                 'dateModified':now,
                                 'guid':guid,
-                                'id':(langform+'_'+str(guid))
+                                'id':(kwargs['langform']+'_'+str(guid))
                                 })
         lexicalunit=ET.SubElement(entry, 'lexical-unit', attrib={})
-        form=ET.SubElement(lexicalunit, 'form', attrib={'lang':analang})
+        form=ET.SubElement(lexicalunit, 'form',
+                                        attrib={'lang':kwargs['analang']})
         text=ET.SubElement(form, 'text')
-        text.text=langform
+        text.text=kwargs['langform']
         """At some point, I'll want to distinguish between these two"""
         citation=ET.SubElement(entry, 'citation', attrib={})
-        form=ET.SubElement(citation, 'form', attrib={'lang':analang})
+        form=ET.SubElement(citation, 'form', attrib={'lang':kwargs['analang']})
         text=ET.SubElement(form, 'text')
-        text.text=langform
+        text.text=kwargs['langform']
         sense=ET.SubElement(entry, 'sense', attrib={'id':senseid})
         grammaticalinfo=ET.SubElement(sense, 'grammatical-info',
-                                            attrib={'value':ps})
+                                            attrib={'value':kwargs['ps']})
         definition=ET.SubElement(sense, 'definition')
-        form=ET.SubElement(definition, 'form', attrib={'lang':glosslang})
+        form=ET.SubElement(definition, 'form',
+                                        attrib={'lang':kwargs['glosslang']})
         text=ET.SubElement(form, 'text')
-        text.text=glossform
-        gloss=ET.SubElement(sense, 'gloss', attrib={'lang':glosslang})
+        text.text=kwargs['glossform']
+        gloss=ET.SubElement(sense, 'gloss', attrib={'lang':kwargs['glosslang']})
         text=ET.SubElement(gloss, 'text')
-        text.text=glossform
-        if (glosslang2 is not None) and (glossform2 is not None):
-            form=ET.SubElement(definition, 'form', attrib={'lang':glosslang2})
+        text.text=kwargs['glossform']
+        if (glosslang2 in kwargs) and (glossform2 in kwargs):
+            form=ET.SubElement(definition, 'form',
+                                        attrib={'lang':kwargs['glosslang2']})
             text=ET.SubElement(form, 'text')
-            text.text=glossform2
-            gloss=ET.SubElement(sense, 'gloss', attrib={'lang':glosslang2})
+            text.text=kwargs['glossform2']
+            gloss=ET.SubElement(sense, 'gloss',
+                                        attrib={'lang':kwargs['glosslang2']})
             text=ET.SubElement(gloss, 'text')
-            text.text=glossform
+            text.text=kwargs['glossform2']
         self.write()
         """Since we added a guid and senseid, we want to refresh these"""
         self.getguids()
         self.getsenseids()
         return senseid
-    def addexamplefields(self,guid,senseid,analang,glosslang,glosslang2,forms,
-        fieldtype,location,fieldvalue,ps=None,showurl=False):
+    def addexamplefields(self,showurl=False,**kwargs):
+        # ,guid,senseid,analang,glosslang,glosslang2,forms,
+        # fieldtype,location,fieldvalue,ps=None
         # This fuction will add an XML node to the lift tree, like a new
         # example field.
         # The program should know before calling this, that there isn't
         # already the relevant node --since it is agnostic of what is already
         # there.
-        log.info("Adding {} value to {} location in {} fieldtype {} senseid {}"
-                "guid (in lift.py)".format(fieldvalue,location,fieldtype,
-                                                            senseid,guid))
+        log.info("Adding {} value to {} location in {} fieldtype {} senseid {} "
+                "guid (in lift.py)".format(kwargs['fieldvalue'],
+                                        kwargs['location'],kwargs['fieldtype'],
+                                        kwargs['senseid'],kwargs['guid']))
         """Get the sense node"""
-        urlnattr=self.geturlnattr('senseid',senseid=senseid)
+        urlnattr=self.geturlnattr('senseid',senseid=kwargs['senseid'])
         url=urlnattr['url']
         if showurl==True:
             log.info(url)
         node=self.nodes.find(url) #this should always find just one node
         if node is None:
-            log.info(' '.join("Sorry, this didn't return a node:",guid,senseid))
+            log.info("Sorry, this didn't return a node:".format(
+                            kwargs['guid'],kwargs['senseid']))
             return
         # """Logic to check if this example already exists"""
         # """This function returns a text node (from any one of a number of
         # example nodes, which match form, gloss and location) containing a
         # tone sorting value, or None (if no example nodes match form, gloss
         # and location)"""
-        exfieldvalue=self.exampleissameasnew(guid,senseid,analang,glosslang,
-                            glosslang2,
-                            forms,
-                            fieldtype,
-                            location,fieldvalue,node,ps=None,showurl=False)
+        #We're adding a node to kwargs here.
+        exfieldvalue=self.exampleissameasnew(**kwargs,node=node,showurl=False)
+        # guid,senseid,analang,glosslang,
+        # glosslang2,
+        # forms,
+        # fieldtype,
+        # location,fieldvalue,node,ps=None
         if exfieldvalue is None: #If not already there, make it.
             log.info("Didn't find that example already there, creating it...")
             p=ET.SubElement(node, 'example')
-            form=ET.SubElement(p,'form',attrib={'lang':analang})
+            form=ET.SubElement(p,'form',attrib={'lang':kwargs['analang']})
             t=ET.SubElement(form,'text')
-            t.text=forms[analang]
+            t.text=kwargs['forms'][kwargs['analang']]
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
             fieldgloss=ET.SubElement(p,'translation',attrib={'type':
                                                         'Frame translation'})
-            for lang in [glosslang,glosslang2]:
+            for lang in [kwargs['glosslang'],kwargs['glosslang2']]:
                 if lang != None:
-                    form=ET.SubElement(fieldgloss,'form',attrib={'lang':lang})
+                    form=ET.SubElement(fieldgloss,'form',
+                                        attrib={'lang':lang})
                     glosstext=ET.SubElement(form,'text')
-                    glosstext.text=forms[lang]
-            exfield=ET.SubElement(p,'field',attrib={'type':fieldtype})
-            form=ET.SubElement(exfield,'form',attrib={'lang':glosslang})
+                    glosstext.text=kwargs['forms'][lang]
+            exfield=ET.SubElement(p,'field',
+                                    attrib={'type':kwargs['fieldtype']})
+            form=ET.SubElement(exfield,'form',
+                                    attrib={'lang':kwargs['glosslang']})
             exfieldvalue=ET.SubElement(form,'text')
             locfield=ET.SubElement(p,'field',attrib={'type':'location'})
-            form=ET.SubElement(locfield,'form',attrib={'lang':glosslang})
+            form=ET.SubElement(locfield,'form',
+                                    attrib={'lang':kwargs['glosslang']})
             fieldlocation=ET.SubElement(form,'text')
-            fieldlocation.text=location
+            fieldlocation.text=kwargs['location']
         else:
             if self.debug == True:
                 log.info("=> Found that example already there")
-        exfieldvalue.text=fieldvalue #change this *one* value, either way.
-        self.updatemoddatetime(guid=guid,senseid=senseid)
+        exfieldvalue.text=kwargs['fieldvalue'] #change this *one* value, either way.
+        self.updatemoddatetime(guid=kwargs['guid'],senseid=kwargs['senseid'])
         self.write()
         if self.debug == True:
-            log.info("add langform: {}".format(forms[analang]))
-            log.info("add tone: {}".format(fieldvalue))
-            log.info("add gloss: {}".format(forms[glosslang]))
+            log.info("add langform: {}".format(kwargs['forms'][kwargs['analang']]))
+            log.info("add tone: {}".format(['fieldvalue']))
+            log.info("add gloss: {}".format(kwargs['forms'][kwargs['glosslang']]))
             if glosslang2 != None:
-                log.info(' '.join("add gloss2:", forms[glosslang2]))
+                log.info(' '.join("add gloss2:", kwargs['forms'][kwargs['glosslang2']]))
         # """This is what we're adding/modifying here:
         # <example>
         #     <form lang="gnd"><text>dìve</text></form>
@@ -752,44 +766,46 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if t.text == value:
                     return True
         return False
-    def exampleisnotsameasnew(self,guid,senseid,analang, glosslang, glosslang2, forms, fieldtype, location,fieldvalue,example,ps=None, showurl=False):
-        """This checks all the above information, to see if we're dealing with
-        the same example or not. Stop and return nothing at first node that
-        doesn't match (from form, translation and location). If they all match,
-        then return the tone value node to change."""
+    def exampleisnotsameasnew(self, showurl=False, **kwargs):
+        # guid,senseid,analang, glosslang, glosslang2, forms, fieldtype,
+        # location,fieldvalue,example,ps=None,
+        # """This checks all the above information, to see if we're dealing with
+        # the same example or not. Stop and return nothing at first node that
+        # doesn't match (from form, translation and location). If they all match,
+        # then return the tone value node to change."""
         if self.debug == True:
             log.info("Looking for bits that don't match")
-        for node in example:
+        for node in kwargs['example']:
             if self.debug == True:
                 log.info('Node: {} ; {}'.format(node.tag,
                                                 node.find('.//text').text))
             if (node.tag == 'form'):
-                if ((node.get('lang') == analang)
-                and (node.find('text').text != forms[analang])):
+                if ((node.get('lang') == kwargs['analang'])
+                and (node.find('text').text != kwargs['forms'][kwargs['analang']])):
                     if self.debug == True:
                         log.info('{} == {}; {}  != {}'.format(node.get('lang'),
-                            analang, node.find('text').text, forms[analang]))
+                            kwargs['analang'], node.find('text').text, kwargs['forms'][kwargs['analang']]))
                     return
             elif ((node.tag == 'translation') and
                                 (node.get('type') == 'Frame translation')):
-                if ((not self.forminnode(node,forms[glosslang])) and
-                    ((glosslang2 == None) or
-                    (not self.forminnode(node,forms[glosslang2])))):
+                if ((not self.forminnode(node,kwargs['forms'][kwargs['glosslang']])) and
+                    ((glosslang2 not in kwargs) or (kwargs['glosslang2'] == None) or
+                    (not self.forminnode(node,kwargs['forms'][kwargs['glosslang2']])))):
                     if self.debug == True:
                         log.debug('translation {} != {}'.format(
-                                    node.find('form/text').text, forms))
+                                    node.find('form/text').text, kwargs['forms']))
                     return
             elif (node.tag == 'field'):
                 if (node.get('type') == 'location'):
-                    if not self.forminnode(node,location):
+                    if not self.forminnode(node,kwargs['location']):
                         if self.debug == True:
                             log.debug('location {} not in {}'.format(
-                                                                location,node))
+                                                                kwargs['location'],node))
                         return
                 if (node.get('type') == 'tone'):
                     for form in node:
-                        if ((form.get('lang') == glosslang)
-                        or (form.get('lang') == glosslang2)):
+                        if ((form.get('lang') == kwargs['glosslang'])
+                        or (form.get('lang') == kwargs['glosslang2'])):
                             """This is set once per example, since this
                             function runs on an example node"""
                             tonevalue=form.find('text')
@@ -802,20 +818,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             else:
                 log.info(' '.join("Not sure what kind of node I'm dealing with!",node.tag))
         return tonevalue
-    def exampleissameasnew(self,guid,senseid,analang,
-                                glosslang,glosslang2,forms,
-                                fieldtype,
-                                location,fieldvalue,node,ps=None,showurl=False):
+    def exampleissameasnew(self,showurl=False, **kwargs):
+        # ,guid,senseid,analang, glosslang,glosslang2,forms, fieldtype,
+        # location,fieldvalue,node,ps=None
         """This looks for any example in the given sense node, with the same
         form, gloss, and location values"""
         if self.debug == True:
             log.info('Looking for an example node matching these form and gloss'
                 'elements: {}'.format(forms))
-        for example in node.findall('example'):
-            valuenode=self.exampleisnotsameasnew(guid,senseid,analang,
-                            glosslang,glosslang2,forms,
-                            fieldtype,
-                            location,fieldvalue,example,ps=None,showurl=False)
+        for example in kwargs['node'].findall('example'):
+            valuenode=self.exampleisnotsameasnew(**kwargs
+                            # guid,senseid,analang,
+                            # glosslang,glosslang2,forms,
+                            # fieldtype,
+                            # location,fieldvalue,example,ps=None
+                            ,showurl=False)
             if valuenode != None: #i.e., they *are* the same node
                 return valuenode #if you find the example, we're done looking
             else: #if not, just keep looking, at next example node
@@ -874,7 +891,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """The program should know before calling this, that there isn't
         already the relevant node --since it is agnostic of what is already
         there."""
-        log.info(' '.join("Adding",url,"value to", node,"location"))
+        log.info("Adding {} value to {} location".format(url,node))
         form=ET.SubElement(node,'form',attrib={'lang':lang})
         t=ET.SubElement(form,'text')
         t.text=url
