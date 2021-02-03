@@ -2925,15 +2925,17 @@ class Check():
                 "in",'tone',"fieldtype",senseid,"senseid",
                 guid,"guid (in main_lift.py)")
         self.db.addexamplefields(
-                                    guid,senseid,self.analang,self.glosslang,
-                                    self.glosslang2,
+                                    guid=guid,senseid=senseid,
+                                    analang=self.analang,
+                                    glosslang=self.glosslang,
+                                    glosslang2=self.glosslang2,
                                     forms=framed,
                                     # langform=framed[self.analang],
                                     # glossform=framed[self.glosslang],
                                     # gloss2form=framed[self.glosslang2],
                                     fieldtype='tone',location=self.name,
-                                    fieldvalue=self.groupselected,
-                                    ps=None #,showurl=True
+                                    fieldvalue=self.groupselected#,
+                                    # ps=None #,showurl=True
                                     )
         self.subcheck=self.groupselected
         self.updatestatus() #this marks the group unverified.
