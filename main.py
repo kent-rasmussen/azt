@@ -3245,89 +3245,99 @@ class Check():
                                             gloss=sense['gloss'])
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
-    def showentryformstorecord(self,senses=None):
+    def showentryformstorecordpage(self):
+        if not self.runwindow.winfo_exists():
+            log.info('no runwindow; quitting!')
+            return
+        if not self.runwindow.frame.winfo_exists():
+            log.info('no runwindow frame; quitting!')
+            return
+        self.runwindow.resetframe()
+        ww=Wait(self.runwindow)
+        for psprofile in self.profilecounts:
+            if self.ps==psprofile[2] and self.profile==psprofile[1]:
+                count=psprofile[0]
+        text=_("Record {} {} Words: click ‘Record’, talk, "
+                "and release ({} words)".format(self.profile,self.ps,
+                                                count))
+        instr=Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w')
+        buttonframes=ScrollingFrame(self.runwindow.frame)
+        buttonframes.grid(row=1,column=0,sticky='w')
+        row=0
+        done=list()
+        for senseid in self.profilesbysense[self.ps][self.profile]:
+            sense={}
+            sense['column']=0
+            sense['row']=row
+            sense['guid']=firstoflist(self.db.get('guidbysense',
+                                        senseid=senseid))
+            if sense['guid'] in done: #only the first of multiple senses
+                continue
+            else:
+                done.append(sense['guid'])
+            sense['lxnode']=firstoflist(self.db.get('lexemenode',
+                                                guid=sense['guid'],
+                                                lang=self.analang))
+            sense['lcnode']=firstoflist(self.db.get('citationnode',
+                                                guid=sense['guid'],
+                                                lang=self.analang))
+            sense['gloss']=firstoflist(self.db.glossordefn(
+                                                guid=sense['guid'],
+                                                lang=self.glosslang
+                                                ),othersOK=True)
+            if ((hasattr(self,'glosslang2')) and
+                    (self.glosslang2 is not None)):
+                sense['gloss2']=firstoflist(self.db.glossordefn(
+                                                guid=sense['guid'],
+                                                lang=self.glosslang2
+                                                ),othersOK=True)
+            if ((sense['gloss'] is None) and
+                    (('gloss2' in sense) and (sense['gloss2'] is None))):
+                continue #We can't save the file well anyway; don't bother
+            if self.db.pluralname is not None:
+                sense['plnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
+                                        lang=self.analang,
+                                        fieldtype=self.db.pluralname))
+            if self.db.imperativename is not None:
+                sense['impnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
+                                        lang=self.analang,
+                                        fieldtype=self.db.imperativename))
+            if sense['lcnode'] != None:
+                # print('lcnode!')
+                sense['nodetoshow']=sense['lcnode']
+            else:
+                # print('lxnode!')
+                sense['nodetoshow']=sense['lxnode']
+            self.makelabelsnrecordingbuttons(buttonframes.content,sense)
+            for node in ['plnode','impnode']:
+                if (node in sense) and (sense[node] != None):
+                    sense['column']+=2
+                    sense['nodetoshow']=sense[node]
+                    self.makelabelsnrecordingbuttons(buttonframes.content,
+                                                    sense)
+            row+=1
+        ww.close()
+        self.runwindow.wait_window(self.runwindow.frame)
+    def showentryformstorecord(self):
         """Save these values before iterating over them"""
+        justone=False #give default of all slices, largest first
+        justone=True #for now, let user set just one slice of data
         psori=self.ps
         profileori=self.profile
         self.getrunwindow()
-        done=list()
-        for psprofile in self.profilecounts:
-            if self.runwindow.winfo_exists==False:
-                log.info('no runwindow; quitting!')
-                return
-            if self.runwindow.frame.winfo_exists==False:
-                log.info('no runwindow frame; quitting!')
-                return
-            self.runwindow.resetframe()
-            ww=Wait(self.runwindow)
-            self.ps=psprofile[2]
-            self.profile=psprofile[1]
-            text=_("Record {} {} Words: click ‘Record’, talk, "
-                    "and release ({} words)".format(self.profile,self.ps,
-                                                    psprofile[0]))
-            instr=Label(self.runwindow.frame, anchor='w',text=text)
-            instr.grid(row=0,column=0,sticky='w')
-            nextb=Button(self.runwindow.frame,text=_("Next Group"),
+        if justone==True:
+            self.showentryformstorecordpage()
+        else:
+            for psprofile in self.profilecounts:
+                self.ps=psprofile[2]
+                self.profile=psprofile[1]
+                nextb=Button(self.runwindow.frame,text=_("Next Group"),
                                             cmd=self.runwindow.frame.destroy)
-            nextb.grid(row=0,column=1,sticky='w')
-            buttonframes=ScrollingFrame(self.runwindow.frame)
-            buttonframes.grid(row=1,column=0,sticky='w')
-            row=0
-            for senseid in self.profilesbysense[self.ps][self.profile]:
-                sense={}
-                sense['column']=0
-                sense['row']=row
-                sense['guid']=firstoflist(self.db.get('guidbysense',
-                                            senseid=senseid))
-                if sense['guid'] in done: #only the first of multiple senses
-                    continue
-                else:
-                    done.append(sense['guid'])
-                sense['lxnode']=firstoflist(self.db.get('lexemenode',
-                                                    guid=sense['guid'],
-                                                    lang=self.analang))
-                sense['lcnode']=firstoflist(self.db.get('citationnode',
-                                                    guid=sense['guid'],
-                                                    lang=self.analang))
-                sense['gloss']=firstoflist(self.db.glossordefn(
-                                                    guid=sense['guid'],
-                                                    lang=self.glosslang
-                                                    ),othersOK=True)
-                if ((hasattr(self,'glosslang2')) and
-                        (self.glosslang2 is not None)):
-                    sense['gloss2']=firstoflist(self.db.glossordefn(
-                                                    guid=sense['guid'],
-                                                    lang=self.glosslang2
-                                                    ),othersOK=True)
-                if ((sense['gloss'] is None) and
-                        (('gloss2' in sense) and (sense['gloss2'] is None))):
-                    continue #We can't save the file well anyway; don't bother
-                if self.db.pluralname is not None:
-                    sense['plnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
-                                            lang=self.analang,
-                                            fieldtype=self.db.pluralname))
-                if self.db.imperativename is not None:
-                    sense['impnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
-                                            lang=self.analang,
-                                            fieldtype=self.db.imperativename))
-                if sense['lcnode'] != None:
-                    # print('lcnode!')
-                    sense['nodetoshow']=sense['lcnode']
-                else:
-                    # print('lxnode!')
-                    sense['nodetoshow']=sense['lxnode']
-                self.makelabelsnrecordingbuttons(buttonframes.content,sense)
-                for node in ['plnode','impnode']:
-                    if (node in sense) and (sense[node] != None):
-                        sense['column']+=2
-                        sense['nodetoshow']=sense[node]
-                        self.makelabelsnrecordingbuttons(buttonframes.content,
-                                                        sense)
-                row+=1
-            ww.close()
-            self.runwindow.wait_window(self.runwindow.frame)
-        self.ps=psori
-        self.profile=profileori
+                nextb.grid(row=0,column=1,sticky='w')
+                self.showentryformstorecordpage()
+            self.ps=psori
+            self.profile=profileori
     def showsenseswithexamplestorecord(self,senses=None):
         self.getrunwindow()
         """?Make this scroll!"""
