@@ -4,7 +4,7 @@
 program={'name':'A→Z+T'}
 program['tkinter']=True
 program['production']=False #True for making screenshots
-program['version']='0.6' #This is a string...
+program['version']='0.6.1' #This is a string...
 import platform
 """Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
 information than 'DEBUG' does):

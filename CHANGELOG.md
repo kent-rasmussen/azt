@@ -52,6 +52,12 @@
     - make CV report only reference lx field
     - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
 
+# Version 0.6.1
+- cleanup of exceptions on code running after windows closed.
+- fixed logic in sort/verify/join and recording windows
+- set logic to record just one (selected) slice of lexicon for lc/lx recordings
+    - There is no setting for this yet, just quick to change the code
+    - skip button only when doing multiple pages.
 # Version 0.6
 - fixed numerous report problems (should be mostly working now)
 - Implemented XLingPaper export (at least beginning)
