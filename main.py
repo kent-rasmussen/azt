@@ -17,7 +17,7 @@ information than 'DEBUG' does):
 Other levels:'WARNING','ERROR','CRITICAL'
 """
 if platform.uname().node == 'karlap':
-    loglevel=5 #
+    loglevel=15 #
 else:
     loglevel='DEBUG'
 from logsetup import *
@@ -2354,7 +2354,7 @@ class Check():
                 t=_("{}={}".format(self.name,self.subcheck))
                 xlp.Paragraph(parent,t)
                 print(t)
-                log.info(t)
+                log.debug(t)
                 self.buildregex()
                 log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
                                                                 self.regexCV))
@@ -3585,7 +3585,7 @@ class Check():
                 output[senseid][location]={}
                 group=self.db.get('exfieldvalue',senseid=senseid,
                     location=location,fieldtype='tone')
-                print(group)
+                log.debug(group)
                 """Also include location:value for non-example fields"""
                 """How to do this in a principled way?"""
                 # for guid in self.db.get('guidbysenseid',senseid=senseid):
