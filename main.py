@@ -2890,7 +2890,8 @@ class Check():
             self.groupselected='' #reset
             return 0
         else:
-            print("I don't understand the user input:",self.groupselected)
+            log.info("I don't understand the user input (closed window?): "
+                    "{}".format(self.groupselected))
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. just move on to verification, where each group's
         sameness will be verified and recorded."""
@@ -3366,8 +3367,7 @@ class Check():
                     text=text).grid(row=row,
                                     column=0,sticky='w')
             """Then get each sorted example"""
-            self.runwindow.frame.scroll=ScrollingFrame(
-                                            entryframe)
+            self.runwindow.frame.scroll=ScrollingFrame(entryframe)
             self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
             examplesframe=Frame(self.runwindow.frame.scroll.content)
             examplesframe.grid(row=0,column=0,sticky='w')
@@ -3402,7 +3402,7 @@ class Check():
             d.grid(row=row,column=0)
             examplesframe.wait_window(entryframe)
         instr.destroy() #Don't show instructions at this point
-        Label(self.runwindow.frame, anchor='w',
+        Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
             text=_("All done! Sort some more words, and come back.")
             ).grid(row=0,column=0,rowspan=2,sticky='w')
         self.runwindow.wait_window()
@@ -3434,8 +3434,8 @@ class Check():
             print(_('Preparing to record examples from each tone group ({}) '
                     'with index').format(self.toneUFgroups),i)
             for i in range(self.examplespergrouptorecord):
-                print(_('Giving user the number {} example from each tone '
-                        'group ({}) with index').format(i,self.toneUFgroups))
+                log.info(_('Giving user the number {} example from each tone '
+                        'group ({}) with index'.format(i,self.toneUFgroups)))
                 self.showsenseswithexamplestorecord(batch[i])
         else:
             print("How did we get no UR tone groups?",self.profile,self.ps,
