@@ -2549,14 +2549,14 @@ class Check():
                 susequent verifications or sorts"""
                 self.maybesort()
                 return
-            else:
+            elif joined == False and self.runwindow.winfo_exists():
                 self.runwindow.resetframe()
                 Label(self.runwindow.frame, text=done).grid(row=0,column=0)
                 Label(self.runwindow.frame, text='',
                             image=self.photo[self.type]
                             ).grid(row=1,column=0)
                 print(done)
-        else:
+        elif self.runwindow.winfo_exists():
             self.verifyT()
     def sortT(self):
         """This window/frame/function shows one entry at a time (with pic?)
@@ -2618,7 +2618,7 @@ class Check():
                                             self.runwindow.frame.scroll.content)
         self.runwindow.frame.scroll.content.anotherskip.grid(row=1,column=0)
         self.getanotherskip(self.runwindow.frame.scroll.content.anotherskip)
-        while self.senseidsunsorted != []:
+        while self.senseidsunsorted != [] and self.runwindow.winfo_exists():
             self.groupselected=[] #reset this for each word!
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'
@@ -2716,6 +2716,8 @@ class Check():
                                             [self.name]):
                 print(self.subcheck, "already verified, continuing.")
                 continue
+            if not self.runwindow.winfo_exists():
+                return
             self.runwindow.resetframe() #just once per group
             title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
                                         self.languagenames[self.analang],
@@ -2848,7 +2850,7 @@ class Check():
                     )
         b.grid(column=0, row=row, sticky="ew")
         self.runwindow.frame.wait_window(self.sorting)
-        if self.groupselected != "ALLOK":
+        if self.groupselected != "ALLOK" and self.runwindow.winfo_exists():
             self.sframe.destroy()
             self.sframe=ScrollingFrame(self.runwindow.frame)
             self.sframe.grid(row=3,column=1)
@@ -3364,10 +3366,9 @@ class Check():
             if examples == []:
                 text=_("No examples! Add some, then come back.")
                 print(text)
-                Label(examplesframe, anchor='w', font=self.fonts['read'],
-                        text=text).grid(row=row,
-                                        column=0,sticky='w')
                 entryframe.destroy()
+                Label(self.runwindow.frame, anchor='w', font=self.fonts['read'],
+                        text=text).grid(row=1,column=0,sticky='w')
                 continue #return #I want the "next" button...
             for example in examples:
                 """These should already be framed!"""
@@ -3393,9 +3394,9 @@ class Check():
         instr.destroy() #Don't show instructions at this point
         Label(self.runwindow.frame, anchor='w',
             text=_("All done! Sort some more words, and come back.")
-            ).grid(row=0,column=0,sticky='w')
-        self.runwindow.wait_window(entryframe)
-        self.runwindow.destroy()
+            ).grid(row=0,column=0,rowspan=2,sticky='w')
+        self.runwindow.wait_window()
+        # self.runwindow.destroy()
     def showtonegroupexs(self):
         if (not(hasattr(self,'examplespergrouptorecord')) or
             (type(self.examplespergrouptorecord) is not int)):
@@ -4084,11 +4085,11 @@ class Entry(lift.Entry):
         log.info("Don't forget to write these changes to a file somewhere...")
 class Window(tkinter.Toplevel):
     def resetframe(self):
-        if hasattr(self,'frame') and type(self.frame) is Frame:
-            self.frame.destroy()
-        self.frame=Frame(self.outsideframe)
-        """Which of these is better? (just use one)"""
-        self.frame.grid(column=0,row=0,sticky='we')
+        if self.winfo_exists(): #If this has been destroyed, don't bother.
+            if hasattr(self,'frame') and type(self.frame) is Frame:
+                self.frame.destroy()
+            self.frame=Frame(self.outsideframe)
+            self.frame.grid(column=0,row=0,sticky='we')
     def __init__(self, parent,
                 backcmd=False, exit=True,
                 title="No Title Yet!", choice=None,
@@ -4179,7 +4180,7 @@ class Frame(tkinter.Frame):
         inherit(self)
         # _=self._
         """tkinter.Frame thingies below this"""
-        super().__init__(parent,**kwargs)
+        super(Frame, self).__init__(parent,**kwargs)
         self['background']=parent['background']
         """Hang on to these for labels and buttons:"""
 class ScrollingFrame(Frame):
