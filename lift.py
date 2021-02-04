@@ -8,7 +8,8 @@ import pathlib
 import threading
 import shutil
 import datetime
-import re
+import re #needed?
+import rx
 import logging
 log = logging.getLogger(__name__)
 """This returns the root node of an ElementTree tree (the entire tree as
@@ -1125,26 +1126,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nguids=len(self.guids) #,guid,lang,fieldtype,location
     def nc(self):
         nounclasses="1 2 3 4 5 6 7 8 9 10 11 12 13 14"
-    def nlist(self): #This variable gives lists, to iterate over.
-        # prenasalized=['mb','mp','mbh','mv','mf','nd','ndz','ndj','nt','ndh','ng','ŋg','ŋg','nk','ngb','npk','ngy','nj','nch','ns','nz']  #(graphs that preceede a consonant)
-        ntri=["ng'"]
-        ndi=['mm','ny','ŋŋ']
-        nm=['m','m','M','n','n','ŋ','ŋ','ɲ']
-        nasals=ntri+ndi+nm
-        actuals={}
-        for lang in self.analangs:
-            unsorted=self.inxyz(lang,nasals)
-            """Make digraphs appear first, so they are matched if present"""
-            actuals[lang]=sorted(unsorted,key=len, reverse=True)
-        return actuals
-    def glist(self): #This variable gives lists, to iterate over.
-        glides=['ẅ','y','Y','w','W']
-        actuals={}
-        for lang in self.analangs:
-            unsorted=self.inxyz(lang,glides) #remove the symbols which are not in the data.
-            """Make digraphs appear first, so they are matched if present"""
-            actuals[lang]=sorted(unsorted,key=len, reverse=True)
-        return actuals
+    # def nlist(self): #This variable gives lists, to iterate over.
+    #     # prenasalized=['mb','mp','mbh','mv','mf','nd','ndz','ndj','nt','ndh','ng','ŋg','ŋg','nk','ngb','npk','ngy','nj','nch','ns','nz']  #(graphs that preceede a consonant)
+    #     ntri=["ng'"]
+    #     ndi=['mm','ny','ŋŋ']
+    #     nm=['m','m','M','n','n','ŋ','ŋ','ɲ']
+    #     nasals=ntri+ndi+nm
+    #     actuals={}
+    #     for lang in self.analangs:
+    #         unsorted=self.inxyz(lang,nasals)
+    #         """Make digraphs appear first, so they are matched if present"""
+    #         actuals[lang]=sorted(unsorted,key=len, reverse=True)
+    #     return actuals
+    # def glist(self): #This variable gives lists, to iterate over.
+    #     glides=['ẅ','y','Y','w','W']
+    #     actuals={}
+    #     for lang in self.analangs:
+    #         unsorted=self.inxyz(lang,glides) #remove the symbols which are not in the data.
+    #         """Make digraphs appear first, so they are matched if present"""
+    #         actuals[lang]=sorted(unsorted,key=len, reverse=True)
+    #     return actuals
     def clist(self): #This variable gives lists, to iterate over.
         log.log(2,"Creating CV lists from scratch")
         """These are all possible forms, that I have ever run across.
@@ -1184,16 +1185,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
         #         'mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']
         x['G']=['ẅ','y','Y','w','W']
-        x['CG']=list((char+g for char in x['C'] for g in x['G']))
+        # x['CG']=list((char+g for char in x['C'] for g in x['G']))
         x['N']=["ng'",'mm','ny','ŋŋ','m','M','n','ŋ','ɲ']
-        x['NC']=list((n+char for char in x['C'] for n in x['N']))
-        x['NCG']=list((n+char+g for char in x['C'] for n in x['N']
-                                                    for g in x['G']))
+        # x['NC']=list((n+char for char in x['C'] for n in x['N']))
+        # x['NCG']=list((n+char+g for char in x['C'] for n in x['N']
+        #                                             for g in x['G']))
         """Non-Nasal/Glide Sonorants"""
         x['S']=['rh','wh','l','r']
-        x['CS']=list((char+s for char in x['C'] for s in x['S']))
-        x['NCS']=list((n+char+s for char in x['C'] for n in x['N']
-                                                    for s in x['S']))
+        # x['CS']=list((char+s for char in x['C'] for s in x['S']))
+        # x['NCS']=list((n+char+s for char in x['C'] for n in x['N']
+        #                                             for s in x['S']))
         # self.treatlabializepalatalizedasC=False
         # if self.treatlabializepalatalizedasC==True:
         #     lp={}
@@ -1205,13 +1206,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #         c=lp[stype]+c
         x['V']=['a', 'á', 'i', 'ɨ', 'ï', 'í','ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
                 'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃',
-                'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O']
+                'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O'
+                ,'à', 'á', 'é', 'è', 'ì', 'í', 'ó', 'ò', 'ú', 'ù' #for those using precomposed letters
+                ]
         x['d']=["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
-        """We need to address long and idiosyncratic vowel orthographies,
-        especially for Cameroon. This should also include diacritics, together
-        or separately."""
-        """At some point, we may want logic to include only certain
-        elements in c. The first row is in pretty much any language."""
+        x['ː']=[":","ː"] # vowel length markers
+        x['b']=['=','-'] #affix boundary markers
+        # """We need to address long and idiosyncratic vowel orthographies,
+        # especially for Cameroon. This should also include diacritics, together
+        # or separately."""
+        # """At some point, we may want logic to include only certain
+        # elements in c. The first row is in pretty much any language."""
         actuals={}
         log.log(3,'hypotheticals: {}'.format(x))
         self.s={} #wipe out an existing dictionary
@@ -1219,7 +1224,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if lang not in self.s:
                 self.s[lang]={}
             for stype in x:
-                self.s[lang][stype]=self.inxyz(lang,x[stype])
+                self.s[lang][stype]=rx.inxyz(self,lang,x[stype])
                 log.log(3,'hypotheticals[{}][{}]: {}'.format(lang,stype,
                                                     str(x[stype])))
                 log.log(3,'actuals[{}][{}]: {}'.format(lang,stype,
@@ -1227,21 +1232,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def slists(self):
         self.segmentsnotinregexes={}
         self.clist()
-    def segmentin(self, lang, glyph):
-        """This actually allows for dygraphs, etc., so I'm keeping it."""
-        """check each form and lexeme in the lift file (not all files
-        use both)."""
-        for form in self.citationforms[lang] + self.lexemes[lang]:
-            if re.search(glyph,form): #see if the glyph is there
-                return glyph #find it and stop looking, or return nothing
-    def inxyz(self, lang, segmentlist): #This calls the above script for each character.
-        actuals=list()
-        for i in segmentlist:
-            s=self.segmentin(lang,i)
-            #log.info(s) #to see the following run per segment
-            if s is not None:
-                actuals.append(s)
-        return list(dict.fromkeys(actuals))
+    # def segmentin(self, lang, glyph):
+    #     """This actually allows for dygraphs, etc., so I'm keeping it."""
+    #     """check each form and lexeme in the lift file (not all files
+    #     use both)."""
+    #     for form in self.citationforms[lang] + self.lexemes[lang]:
+    #         if re.search(glyph,form): #see if the glyph is there
+    #             return glyph #find it and stop looking, or return nothing
+    # def inxyz(self, lang, segmentlist): #This calls the above script for each character.
+    #     actuals=list()
+    #     for i in segmentlist:
+    #         s=self.segmentin(lang,i)
+    #         #log.info(s) #to see the following run per segment
+    #         if s is not None:
+    #             actuals.append(s)
+    #     return list(dict.fromkeys(actuals))
     def getguidformstosearchbyps(self,ps,lang=None):
         if lang is None:
             lang=self.analang
@@ -1327,6 +1332,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #log.info(output.keys()) #to see which languages are found
         return output
     def extrasegments(self):
+        # start_time=time.time() #this enables boot time evaluation
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
             extras=list()
@@ -1338,11 +1344,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         ,'\n']
             for form in self.citationforms[lang]+self.lexemes[lang]:
                 for x in form:
-                    # x=nonwordforming.sub('', x)
-                    # log.info(' '.join('Checking',x,'from',lang,form))
-                    if ((x not in invalid) and (not re.search(x,
-                                        str().join(sum(self.s[lang].values(),
-                                        []))+str().join(extras)))):
+                    if ((x not in invalid) and
+                            (x not in [item for sublist in self.s[lang].values()
+                                for item in sublist])):
                         self.segmentsnotinregexes[lang].append(x)
                         log.debug('Missing {} from {} {}'.format(x,lang,form))
             if len(self.segmentsnotinregexes[lang]) > 0:
@@ -1350,12 +1354,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 "regex's: {}".format(lang,
                 list(dict.fromkeys(self.segmentsnotinregexes[lang]).keys())))
             else:
-                log.info(_("Your regular expressions look OK for {0} (there are "
-                    "no segments in your {0} data that are not in a regex). "
-                    "Note, this doesn't \nsay anything about digraphs or "
+                print("No problems!")
+                log.log(20,"Your {}".format(lang))
+                log.info(_("Your regular expressions look OK for {} (there are "
+                    "no segments in your {} data that are not in a regex). "
+                    "".format(lang,lang)))
+                log.info("Note, this doesn't say anything about digraphs or "
                     "complex segments which should be counted as a single "
-                    "segment --those may not be covered by \n"
-                    "your regexes.".format(lang)))
+                    "segment.")
+                log.info("--those may not be covered by your regexes.")
+                print("No problems!")
+
+        # log.log(2,"{} (lift.extrasegments run time): {}".format(
+        #         time.time()-start_time,self.segmentsnotinregexes))
     def pss(self): #get all POS values in the LIFT file
         return list(dict.fromkeys(self.get('ps')))
         #pss=list()
@@ -1512,7 +1523,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for entry in self.nodes.findall(f"entry/sense/grammatical-info[@value='{ps}']/../.."): #for each entry
                 for form in entry.findall(f"./lexical-unit/form[@lang='{self.xyz}']/text"): #for each CITATION form this needs to see lexeme forms, too..…
                 #for form in entry.findall(f"./citation/form[@lang='{xyz}']/text"): #for each CITATION form this needs to see lexeme forms, too..…
-                    if re.search(regex,form.text): #check if the form matches the regex
+                    # if re.search(regex,form.text): #check if the form matches the regex
+                    if regex.search(form.text): #check if the form matches the regex
                         yield entry.get('guid'), ps, form.text #print the tuple (may want to augment this some day to include other things)
     def idsbylexemeregexnps(self,ps,regex): #outputs [guid, ps, form] tuples for each entry in the LIFT file lexeme which matches the regex and ps.
         """This puts out a dictionary with guid keys and (ps,form) tuples
@@ -1550,7 +1562,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return count
     def formsregex(self,regex): #UNUSED? outputs [guid, form] tuples where the form matches a regex. This might make sense for a tuple with lexeme-unit, citation, and plural.
         for entry in formsnids():
-            if re.search(regex,entry[1]): #check regex against the form part of the tuple output by formsnids
+            if regex.search(entry[1]): #check regex against the form part of the tuple output by formsnids
                 yield entry[0] #print id part of the tuple output by formsnids
 class Entry(object): # what does "object do here?"
     #import lift.put as put #class put:
@@ -1593,8 +1605,6 @@ class Entry(object): # what does "object do here?"
         # self.imperative=db.get('imperative',guid=guid)
         self.ps=db.get('ps',guid=guid)
         self.illustration=db.get('illustration',guid=guid)
-
-
 class Language(object):
     def __init__(self, xyz):
         """define consonants and vowels here?regex's belong where?"""
@@ -1604,71 +1614,9 @@ class Language(object):
         #self.tree=ET.parse(lift)
         #self.parsed=self.tree.getroot()
         self.code=xyz
-
 class Unused():
     def removedups(x): #This removes duplicates from a list
         return list(dict.fromkeys(x))
-    def list2glyphs(x): #This takes a list and concatenates it into a single string.
-        return str().join(x)
-    def monograph(monographs): #probably not needed, for cbeta() only.
-        inxyz=list()
-        for i in monographs:
-            if re.search('^.$',i): #looking only at digraphs
-                inxyz.append(i)
-                #s=i[0]
-                #log.info(s) #to see the following run per segment
-                #if i not in inxyz:
-                #    inxyz.append(i)
-        return removedups(inxyz)
-
-    def digraph1(digraphs): #probably not needed, for cbeta() only.
-        inxyz=list()
-        for i in digraphs:
-            if re.search('^..$',i): #looking only at digraphs
-                inxyz.append(i[0])
-                #s=i[0]
-                #log.info(s) #to see the following run per segment
-                #if s not in inxyz:
-                #    inxyz.append(s)
-        return inxyz
-    def digraph2(digraphs): #probably not needed, for cbeta() only.
-        inxyz=list()
-        for i in digraphs:
-            if re.search('^..$',i): #looking only at digraphs
-                inxyz.append(i[1])
-                #log.info(s) #to see the following run per segment
-                #if s not in inxyz:
-                #    inxyz.append(s)
-        return inxyz
-    def trigraph1(trigraphs): #probably not needed, for cbeta() only.
-        inxyz=list()
-        for i in trigraphs:
-            if re.search('^...$',i): #looking only at digraphs
-                s=i[0] #re.search('^.',i)
-                #log.info(i) #to see the following run per trigraph
-                if  s not in inxyz: #s.group() is not None and
-                    inxyz.append(s)
-        return inxyz
-    def trigraph2(trigraphs): #probably not needed, for cbeta() only.
-        inxyz=list()
-        for i in trigraphs:
-            if re.search('^...$',i): #looking only at digraphs
-                s=i[1] #re.search('^.',i)
-                #log.info(i) #to see the following run per trigraph
-                if  s not in inxyz: #s.group() is not None and
-                    inxyz.append(s)
-        return inxyz
-    def trigraph3(trigraphs): #probably not needed, for cbeta() only.
-        inxyz=list()
-        for i in trigraphs:
-            if re.search('^...$',i): #looking only at digraphs
-                s=i[2] #re.search('^.',i)
-                #log.info(i) #to see the following run per trigraph
-                if  s not in inxyz: #s.group() is not None and
-                    inxyz.append(s)
-        return inxyz
-    def polygraph1(x):
-        return digraph1(x)+trigraph1(x) #probably not needed for anything, including cbeta().
 """Functions I'm using, but not in a class"""
 def buildurl(url):
     log.log(2,'BaseURL: {}'.format(url[0]))
@@ -2115,9 +2063,9 @@ def getnow():
 if __name__ == '__main__':
     import time #for testing; remove in production
     def _(x):
-        str(x)
+        return str(x)
     """To Test:"""
-    loglevel=15
+    loglevel=5
     from logsetup import *
     log=logsetup(loglevel)
     filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
