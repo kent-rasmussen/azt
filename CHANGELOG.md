@@ -1,5 +1,6 @@
 # Changelog
 
+## In process
 ### Cleanup Unresolved from November 2020 Zulgo beta test
 - Find again (not happening now) and fix scrolling frame size problem on rename
     - frame in a frame? (this problem looks familiar...)
@@ -58,6 +59,10 @@
 - set logic to record just one (selected) slice of lexicon for lc/lx recordings
     - There is no setting for this yet, just quick to change the code
     - skip button only when doing multiple pages.
+- Reworking of regex for V and C combinations
+    - All bfj characters are now taken up by regexs
+
+
 # Version 0.6
 - fixed numerous report problems (should be mostly working now)
 - Implemented XLingPaper export (at least beginning)
