@@ -1,10 +1,27 @@
 ## coding=UTF-8
 import re
+import time
 import logging
 log = logging.getLogger(__name__)
 """This is called from a number of places"""
 def id(x):
     return re.sub('[ .!=\(\),\'/?ꞌ]','_',x) #remove charcters that are invalid for ids
+def segmentin(forms, glyph):
+    # """This actually allows for dygraphs, etc., so I'm keeping it."""
+    # for form in forms: # as: self.citationforms[lang] + self.lexemes[lang]
+        if re.search(glyph,' '.join(forms)): #see if the glyph is there
+            return glyph #find it and stop looking, or return nothing
+def inxyz(db, lang, segmentlist): #This calls the above script for each character.
+    start_time=time.time() #this enables boot time evaluation
+    actuals=list()
+    forms=db.citationforms[lang] + db.lexemes[lang]
+    for i in segmentlist:
+        s=segmentin(forms,i)
+        #log.info(s) #to see the following run per segment
+        if s is not None:
+            actuals.append(s)
+    log.log(2,'{} {}'.format(time.time()-start_time, segmentlist)) # with this
+    return list(dict.fromkeys(actuals))
 def s(check,stype,lang=None):
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
