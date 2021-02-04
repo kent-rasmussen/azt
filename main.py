@@ -17,7 +17,7 @@ information than 'DEBUG' does):
 Other levels:'WARNING','ERROR','CRITICAL'
 """
 if platform.uname().node == 'karlap':
-    loglevel=15 #
+    loglevel=5 #
 else:
     loglevel='DEBUG'
 from logsetup import *
@@ -179,10 +179,13 @@ class Check():
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
         """The line above may need to go after this block"""
         if self.profilesbysense is None:
-            log.info(time.time()-self.start_time)
-            self.setupCVrxs()
-            self.getprofiles()
-            self.makecountssorted()
+            log.info("Starting profile analysis at {}".format(time.time()
+                                                            -self.start_time))
+            self.setupCVrxs() #creates self.rx dictionaries
+            self.getprofiles() #creates self.profilesbysense nested dicts
+            self.makecountssorted() #creates self.profilecounts
+            for var in ['rx','profilesbysense','profilecounts']:
+                log.debug("{}: {}".format(var,getattr(self,var)))
         # self.guesspsprofile() # takes values of largest ps-profile filter
         self.storeprofiledata()
         self.setnamesall() #sets self.checknamesall
@@ -362,7 +365,7 @@ class Check():
             self.distinguish={}
         if (not hasattr(self,'interpret')) or (self.interpret == None):
             self.interpret={}
-        for var in ['G','N','S','Nwd','d']:
+        for var in ['G','N','S','Nwd','d','ː']:
             log.log(2,_("Variable {} current value: {}").format(var,
                                                             self.distinguish))
             if ((var not in self.distinguish) or
@@ -372,19 +375,20 @@ class Check():
                 self.distinguish[var]=True #don't change this default, yet...
             log.log(2,_("Variable {} current value: {}").format(var,
                                                         self.distinguish[var]))
-        for var in ['NC','CG','CS']:
+        for var in ['NC','CG','CS','VV']:
             log.log(2,_("Variable {} current value: {}").format(var,
                                                             self.interpret))
             if ((var not in self.interpret) or
                 (type(self.interpret[var]) is not str) or
                 not(1 <=len(self.interpret[var])<= 2)):
-                self.interpret[var]='CC'
-            log.log(2,_("Variable {} current value: {}").format(var,
+                if var=='VV':
+                    self.interpret[var]='VV'
+                else:
+                    self.interpret[var]='CC'
+                log.log(2,_("Variable {} current value: {}").format(var,
                                                         self.interpret[var]))
-        # self.distinguish['NCG']=(self.distinguish['NC'] and
-        #                                 self.distinguish['CG'])
-        # self.distinguish['NCS']=(self.distinguish['NC'] and
-        #                                 self.distinguish['CS'])
+        if self.interpret['VV']=='Vː' and self.distinguish['ː']==False:
+            self.interpret['VV']='VV'
         log.log(2,"self.distinguish: {}".format(self.distinguish))
     def setSdistinctions(self):
         def submitform():
@@ -1223,11 +1227,15 @@ class Check():
             for s in self.rx:
                 self.sextracted[ps][s]=list()
         todo=len(self.db.senseids)
+        x=0
         for senseid in self.db.senseids:
-            print(str(self.db.senseids.index(senseid))+'/'+str(todo))
+            x+=1
             forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
             for form in forms:
                 self.profile=self.profileofform(form)
+                if x % 10 is 0:
+                    log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
+                                                    self.profile))
                 if onlyCV.issuperset(self.profile):
                     for self.ps in self.db.get('ps',senseid=senseid):
                         # print("Good profile!",form,profile)
@@ -1256,80 +1264,143 @@ class Check():
             if lang not in self.s:
                 self.s[lang]={}
             """These should always be there, no matter what"""
-            self.s[lang]['C']=list() #make it here, then only add later
-            self.s[lang]['V']=list() #make it here, then only add later
-            self.s[lang]['d']=list() #make it here, then only add later
-            """At this point, we only include lists of single segments"""
-            for sclass in [x for x in self.db.s[lang] if len(x) == 1]:
-                """These lines just add to a list, for a later regex"""
-                if sclass in self.distinguish: #i.e., not C or V
-                    if self.distinguish[sclass]==False: #not d, for now
-                        """At this point, all distinctions are consonants"""
+            for sclass in self.db.s[lang]: #Just populate each list now
+                self.s[lang][sclass]=self.db.s[lang][sclass]
+                """These lines just add to a C list, for a later regex"""
+                if ((sclass in self.distinguish) and #might distinguish, but
+                    (self.distinguish[sclass]==False) and #don't want to
+                    (self.distinguish[sclass] not in ['d','ː'])): #Not vowelesq!
                         log.debug("Adding {} to C for {}.".format(sclass,lang))
                         self.s[lang]['C']+=self.db.s[lang][sclass]
-                    else:
-                        log.debug("Keeping {} distinct from C for {}.".format(
-                                    sclass,lang))
-                        self.s[lang][sclass]=self.db.s[lang][sclass]
-                else: #make its own check list from lift list
-                    self.s[lang][sclass]+=self.db.s[lang][sclass]
-                if sclass in self.s[lang] and self.s[lang][sclass] == []:
-                    del self.s[lang][sclass]
-            log.info("Segment lists for {} language: {}".format(lang,self.s[lang]))
+            log.info("Segment lists for {} language: {}".format(lang,
+                                                                self.s[lang]))
     def setupCVrxs(self):
-        """This takes the lists of segments by types (from slists), and turns them into
-        the regexes we need"""
-        self.rx={}
+        # This takes the lists of segments by types (from slists), and turns
+        # them into the regexes we need.
+        # Note that C, S, and/or G may already be included in C lists, above,
+        # but not deleted from self.s[self.analang] until the end of
+        # this function.
         """IF VV=V and Vː=V and 'Vá=V', then include ː (and :?) in s['d']."""
-        for sclass in self.s[self.analang]: #['C','V']: #'N','G',
-            log.debug(str(rx.s(self,sclass)))
-            self.rx[sclass]=rx.make(rx.s(self,
-                                        sclass),compile=True)
-        if self.distinguish['Nwd']==True:
-            self.rx['N#']=rx.make(rx.s(self.db,
-                                    'N',
-                                    lang=self.analang)+'$',compile=True)
-        if self.interpret['CG']=='CG':
-            self.rx['CG']=rx.make(''.join([rx.s(self.db,'C',lang=self.analang),
-                                        rx.s(self.db,'G',lang=self.analang)]),
-                                        compile=True)
-        elif self.interpret['CG']=='C':
-            self.rx['C']=rx.make(''.join([rx.s(self.db,'C',lang=self.analang),
-                                        rx.s(self.db,'G',lang=self.analang),
-                                        '|',
-                                        rx.s(self.db,'C',lang=self.analang)]),
-                                        compile=True)
-        if self.interpret['NC']=='NC':
-            self.rx['NC']=rx.make(''.join([rx.s(self.db,'N',lang=self.analang),
-                                        rx.s(self.db,'C',lang=self.analang)]),
-                                        compile=True)
-        elif self.interpret['NC']=='C':
-            self.rx['C']=rx.make(''.join([rx.s(self.db,'N',lang=self.analang),
-                                        rx.s(self.db,'C',lang=self.analang),
-                                        '|',
-                                        rx.s(self.db,'C',lang=self.analang)]),
-                                        compile=True)
+        # First, reduce each list to what is actually found in the language
+        for sclass in self.s[self.analang]:
+            self.s[self.analang][sclass]=rx.inxyz(self.db,self.analang,
+                                                self.s[self.analang][sclass])
+        # Include plausible sequences of length and diacritics in V, if desired.
+        # Excess list items will be removed by re.inxyz()
+        if self.distinguish['d'] == False:
+            self.s[self.analang]['V']+=list((v+d #do we ever have d+v?
+                                    for v in self.s[self.analang]['V']
+                                    for d in self.s[self.analang]['d']))
+            self.s[self.analang]['V']+=list((d+v #supposedly good unicode...
+                                    for v in self.s[self.analang]['V']
+                                    for d in self.s[self.analang]['d']))
+        if self.distinguish['ː'] == False:
+            self.s[self.analang]['V']+=list((v+l
+                                    for v in self.s[self.analang]['V']
+                                    for l in self.s[self.analang]['ː']))
+        if ((self.distinguish['d'] == False) and
+                                            (self.distinguish['ː'] == False)):
+            self.s[self.analang]['V']+=list((v+d+l
+                                    for v in self.s[self.analang]['V']
+                                    for d in self.s[self.analang]['d']
+                                    for l in self.s[self.analang]['ː']))
+            self.s[self.analang]['V']+=list((v+l+d #does this happen?
+                                    for v in self.s[self.analang]['V']
+                                    for d in self.s[self.analang]['d']
+                                    for l in self.s[self.analang]['ː']))
+            self.s[self.analang]['V']+=list((d+v+l #supposedly good unicode...
+                                    for v in self.s[self.analang]['V']
+                                    for d in self.s[self.analang]['d']
+                                    for l in self.s[self.analang]['ː']))
+        # Make lists that combine each of the remaining possibilities
+        self.s[self.analang]['VV']=list((v+v
+                                        for v in self.s[self.analang]['V']))
+        self.s[self.analang]['CG']=list((char+g
+                                        for char in self.s[self.analang]['C']
+                                        for g in self.s[self.analang]['G']))
+        self.s[self.analang]['NC']=list((n+char
+                                        for char in self.s[self.analang]['C']
+                                        for n in self.s[self.analang]['N']))
+        self.s[self.analang]['CS']=list((char+s
+                                        for char in self.s[self.analang]['C']
+                                        for s in self.s[self.analang]['S']))
+        self.s[self.analang]['NCS']=list((n+char+s
+                                        for char in self.s[self.analang]['C']
+                                        for n in self.s[self.analang]['N']
+                                        for s in self.s[self.analang]['S']))
+        self.s[self.analang]['NCG']=list((n+char+g
+                                        for char in self.s[self.analang]['C']
+                                        for n in self.s[self.analang]['N']
+                                        for g in self.s[self.analang]['G']))
+        self.s[self.analang]['CSG']=list((char+s+g
+                                        for char in self.s[self.analang]['C']
+                                        for s in self.s[self.analang]['S']
+                                        for g in self.s[self.analang]['G']))
+        self.s[self.analang]['NCSG']=list((n+char+s+g
+                                        for char in self.s[self.analang]['C']
+                                        for n in self.s[self.analang]['N']
+                                        for s in self.s[self.analang]['S']
+                                        for g in self.s[self.analang]['G']))
+        # Combine some of the above, depending on user settings
+        if self.interpret['VV']=='V':
+            self.s[self.analang]['V']+=self.s[self.analang]['VV']
+        elif (self.interpret['VV']=='Vː') and (self.distinguish['ː']==True):
+            self.s[self.analang]['Vː']=self.s[self.analang]['VV'] #first make
+        del self.s[self.analang]['VV'] #I never want this, but for the above.
+        # Unlike the above, the following have implied else: with ['XY']=XY.
+        if self.interpret['CG']=='C':
+            self.s[self.analang]['C']+=self.s[self.analang]['CG']
+            del self.s[self.analang]['CG']
+        elif self.interpret['CG']=='CC':
+            del self.s[self.analang]['CG'] # leave it for 'C'
+        if self.interpret['CS']=='C':
+            self.s[self.analang]['C']+=self.s[self.analang]['CS']
+            del self.s[self.analang]['CS']
+        elif self.interpret['CS']=='CC':
+            del self.s[self.analang]['CS'] # leave it for 'C'
+        if self.interpret['NC']=='C':
+            self.s[self.analang]['C']+=self.s[self.analang]['NC']
+            del self.s[self.analang]['NC']
+        elif self.interpret['NC']=='CC':
+            del self.s[self.analang]['NC'] # leave it for 'C'
         if (self.interpret['NC']=='C') and (self.interpret['CG']=='C'):
-            self.rx['C']=rx.make(''.join(
-                                        [rx.s(self.db,'N',lang=self.analang),
-                                        rx.s(self.db,'C',lang=self.analang),
-                                        rx.s(self.db,'G',lang=self.analang),
-                                        '|',
-                                        rx.s(self.db,'N',lang=self.analang),
-                                        rx.s(self.db,'C',lang=self.analang),
-                                        '|',
-                                        rx.s(self.db,'C',lang=self.analang),
-                                        rx.s(self.db,'G',lang=self.analang),
-                                        '|',
-                                        rx.s(self.db,'C',lang=self.analang)]),
-                                        compile=True)
-        if (self.interpret['NC']=='NC') and (self.interpret['CG']=='CG'):
-            self.rx['NCG']=rx.make(''.join(
-                                        [rx.s(self.db,'N',lang=self.analang),
-                                        rx.s(self.db,'C',lang=self.analang),
-                                        rx.s(self.db,'G',lang=self.analang)]),
-                                        compile=True)
-
+            self.s[self.analang]['C']+=self.s[self.analang]['NCG']
+            del self.s[self.analang]['NCG']
+        if (self.interpret['NC']=='C') and (self.interpret['CS']=='C'):
+            self.s[self.analang]['C']+=self.s[self.analang]['NCS']
+            del self.s[self.analang]['NCS']
+        if (self.interpret['CG']=='C') and (self.interpret['CS']=='C'):
+            self.s[self.analang]['C']+=self.s[self.analang]['CSG']
+            del self.s[self.analang]['CSG']
+        if ((self.interpret['NC']=='C') and (self.interpret['CG']=='C')
+                                        and (self.interpret['CS']=='C')):
+            self.s[self.analang]['C']+=self.s[self.analang]['NCSG']
+            del self.s[self.analang]['NCSG']
+        #Finished joining lists; now make the regexs
+        self.rx={}
+        if self.distinguish['Nwd'] == True:
+            self.s[lang]['Nwd']=self.db.s[lang]['N'] #make Nwd before deleting N
+        for sclass in list(self.s[self.analang]):
+            if ((sclass in self.distinguish) and
+                    (self.distinguish[sclass]==False)):
+                del self.s[self.analang][sclass]
+            else:
+                # check again for combinations not in the database
+                self.s[self.analang][sclass]=rx.inxyz(self.db,self.analang,
+                                                self.s[self.analang][sclass])
+                if sclass in ['NCSG','CSG','NCS']:
+                    log.debug("Class element on passing {}: {}".format(sclass,
+                    self.s[self.analang][sclass]))
+                    # exit()
+                if self.s[self.analang][sclass] == []:
+                    del self.s[self.analang][sclass]
+                else:
+                    log.debug("{} class sorted elements: {}".format(sclass,
+                                                        str(rx.s(self,sclass))))
+                    if sclass == 'Nwd': #word final, not just a list of glyphs:
+                        self.rx['N#']=rx.make(rx.s(self,sclass)+'$',compile=True)
+                    else:
+                        self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
         def anotherthing():
             self.rx['G']=rx.make(rx.g(self.db),compile=True)
             self.rx['C']=rx.make(rx.c(self.db),compile=True)
@@ -1348,21 +1419,34 @@ class Check():
         priority=['#','C','N','G','S','V']
         """Look for word boundaries, N and G before C (though this doesn't
         work, since CG is captured by C first...)"""
-        priority=['#','N','G','S','C','V']
-        log.log(2,"Searching in this order: {}".format(sorted(self.rx.keys(),
+        priority=['#','N','G','S','C','V','d','b']
+        log.log(15,"Searching {} in this order: {}".format(form,
+                        sorted(self.rx.keys(),
                         key=lambda cons: (-len(cons),
                                             [priority.index(c) for c in cons])
                         )))
+        log.log(15,"Searching with these regexes: {}".format(self.rx))
         for s in sorted(self.rx.keys(),
                         key=lambda cons: (-len(cons),
                                             [priority.index(c) for c in cons])
                         ):
-            # print('s:',s, self.rx[s])
+            log.debug('s: {}; rx: {}'.format(s, self.rx[s]))
             for ps in self.db.pss:
-                self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches
-            form=self.rx[s].sub(s,form) #replace with profile variable
+                self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches for that one variable
+            if s not in ['d','b']:
+                log.debug("Not in d or b, returning variable: {}".format(s))
+                form=self.rx[s].sub(s,form) #replace with profile variable
+            elif s == 'd':
+                log.debug("in d; maybe returning variable: {}".format(s))
+                if self.distinguish['d']==True:
+                    form=self.rx[s].sub(s,form) #replace with 'Vd', etc.
+                else:
+                    form=self.rx[s].sub('',form) #remove
+            # leaving boundary markers alone in profiles
+            # elif s == 'b':
+            #     form=self.rx[s].sub(s,form) #replace with profile variable
             # print(form)
-            form=re.sub('#$','',form)
+            form=re.sub('#$','',form) #pull word final word boundary
             # print(form)
         """We could consider combining NC to C (or not), and CG to C (or not)
         here, after the 'splitter' profiles are formed..."""
@@ -1732,6 +1816,12 @@ class Check():
             self.getps()
             return
         """Get profile (this depends on ps)"""
+        if self.ps not in self.profilesbysense:
+            log.error("{} doesn't seem to be in profiles by sense: {}. Do you "
+                        "need to rerun your syllable profiles? Exiting.".format(
+                        self.ps,self.profilesbysense.keys()
+            ))
+            exit()
         if self.profile not in self.profilesbysense[self.ps]:
             self.guessprofile()
         if self.profile == None:
