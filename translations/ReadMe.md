@@ -1,11 +1,17 @@
 # Translation ReadMe
-<--Two spaces at the end of a line gives a linebreak, but three ticks (```)
-gives better overall format, with shading-->
+<!-- Two spaces at the end of a line gives a linebreak, but three ticks (```) -->
+<!-- gives better overall format, with shading -->
 Because of the way we are doing translations (within the constraints of
 Python), there are a couple things we should all pay attention to:
 
 - There doesn't seem to be any difference on the use of `_("").format()` syntax or `_("".format())` syntax
-- There doesn't seem to be any way to bring the format items into the translation, so we're stuck hopefully understanding more or less what each `{}` means.
+
+- The best practice may be to put a semantically helpful keyword for each variable, like this:  
+
+      ```
+      _("{name} Dictionary and Orthography Checker").format(name=self.program['name'])
+      ```
+- Otherwise, there doesn't seem to be any way to bring the format items into the translation, so we're stuck hopefully understanding more or less what each `{}` means.
 - The following formats work:
     - format()ed string on one line:
 
