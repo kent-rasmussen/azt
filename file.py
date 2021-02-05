@@ -109,10 +109,10 @@ def getinterfacelang(self):
                             ]
     try:
         import ui_lang
-        log.debug("lift_url.py imported fine.") #Sorry, no translation!
+        log.debug("ui_lang.py imported fine.") #Sorry, no translation!
         try:
+            log.debug('ui_lang: {}'.format(ui_lang.__dict__))
             self.interfacelang=ui_lang.interfacelang
-            log.debug('filename: '+filename)
         except:
             log.error("Didn't find ui_lang.interfacelang") #Sorry, no translation!
             self.interfacelang=None
