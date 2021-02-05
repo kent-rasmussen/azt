@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-01 14:39+0100\n"
+"POT-Creation-Date: 2021-02-05 09:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kent Rasmussen <kent_rasmussen@sil.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,169 +29,165 @@ msgstr ""
 msgid "Select LIFT Lexicon File"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/lift.py:1037
+#: /home/kentr/bin/raspy/azt/lift.py:1045
 msgid "Looking for analangs in lift file"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/lift.py:1041
+#: /home/kentr/bin/raspy/azt/lift.py:1049
 msgid "Possible analysis language codes found: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/lift.py:1057
+#: /home/kentr/bin/raspy/azt/lift.py:1065
 msgid "Audio language {} found."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/lift.py:1062
+#: /home/kentr/bin/raspy/azt/lift.py:1070
 msgid ""
 "No audio languages found in Database; creating one for each analysis "
 "language."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/lift.py:1071
+#: /home/kentr/bin/raspy/azt/lift.py:1079
 msgid "gloss languages found: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/lift.py:1346
-#, python-brace-format
+#: /home/kentr/bin/raspy/azt/lift.py:1359
 msgid ""
-"Your regular expressions look OK for {0} (there are no segments in your {0} "
-"data that are not in a regex). Note, this doesn't \n"
-"say anything about digraphs or complex segments which should be counted as a "
-"single segment --those may not be covered by \n"
-"your regexes."
+"Your regular expressions look OK for {} (there are no segments in your {} "
+"data that are not in a regex). "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:91
+#: /home/kentr/bin/raspy/azt/main.py:93
 msgid ""
 "Looks like there's a problem with your directory... {}\n"
 "{}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:100
+#: /home/kentr/bin/raspy/azt/main.py:102
 msgid "{} doesn't look like a well formed lift file; please try again."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:113
+#: /home/kentr/bin/raspy/azt/main.py:115
 msgid "Apparently we've run this before today; not backing up again."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:161
+#: /home/kentr/bin/raspy/azt/main.py:163
 msgid "Interface Language: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:215
+#: /home/kentr/bin/raspy/azt/main.py:220
 msgid "Analysis language with the most fields ({}): {} ({})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:219
+#: /home/kentr/bin/raspy/azt/main.py:224
 msgid "Found {} analangs: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:223
+#: /home/kentr/bin/raspy/azt/main.py:228
 msgid "Only one analang in file; using it: ({})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:230 /home/kentr/bin/raspy/azt/main.py:235
-#: /home/kentr/bin/raspy/azt/main.py:250
+#: /home/kentr/bin/raspy/azt/main.py:235 /home/kentr/bin/raspy/azt/main.py:240
+#: /home/kentr/bin/raspy/azt/main.py:255
 msgid "Looks like I found an iso code for analang! ({})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:342
+#: /home/kentr/bin/raspy/azt/main.py:347
 msgid "Language with code [{}]"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:350
+#: /home/kentr/bin/raspy/azt/main.py:355
 msgid "Select Interface Language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:351
+#: /home/kentr/bin/raspy/azt/main.py:356
 msgid "What language do you want this program to address you in?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:366 /home/kentr/bin/raspy/azt/main.py:373
-#: /home/kentr/bin/raspy/azt/main.py:376 /home/kentr/bin/raspy/azt/main.py:382
+#: /home/kentr/bin/raspy/azt/main.py:371 /home/kentr/bin/raspy/azt/main.py:378
+#: /home/kentr/bin/raspy/azt/main.py:381 /home/kentr/bin/raspy/azt/main.py:390
 msgid "Variable {} current value: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:455
+#: /home/kentr/bin/raspy/azt/main.py:461
 msgid "Set Parameters for Segment Interpretation"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:456
+#: /home/kentr/bin/raspy/azt/main.py:462
 msgid "Interpret {} Segments"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:465
+#: /home/kentr/bin/raspy/azt/main.py:471
 msgid ""
 "Here you can view and set parameters that change how {} interprets {} "
 "segments \n"
 "(consonant and vowel glyphs/characters)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:485
+#: /home/kentr/bin/raspy/azt/main.py:491
 msgid ""
 "Do you want to distinguish all Nasals (N) \n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:491
+#: /home/kentr/bin/raspy/azt/main.py:497
 msgid ""
 "Do you want to distinguish Word Final Nasals (N#) \n"
 "from other word final consonants?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:497
+#: /home/kentr/bin/raspy/azt/main.py:503
 msgid ""
 "Do you want to distinguish all Glides (G) \n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:503
+#: /home/kentr/bin/raspy/azt/main.py:509
 msgid ""
 "Do you want to distinguish all Non-Nasal/Glide Sonorants (S) \n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:509
+#: /home/kentr/bin/raspy/azt/main.py:515
 msgid ""
 "How do you want to interpret \n"
 "Nasal-Consonant (NC) sequences?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:517
+#: /home/kentr/bin/raspy/azt/main.py:523
 msgid ""
 "How do you want to interpret \n"
 "Consonant-Glide (CG) sequences?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:533
+#: /home/kentr/bin/raspy/azt/main.py:539
 msgid ""
 "If you make changes, this button==> \n"
 "will restart the program to reanalyze your data, \n"
 "which will take some time."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:561
+#: /home/kentr/bin/raspy/azt/main.py:567
 msgid "Add Morpheme to Dictionary"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:562
+#: /home/kentr/bin/raspy/azt/main.py:568
 msgid "Add a {} morpheme to the dictionary"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:569
+#: /home/kentr/bin/raspy/azt/main.py:575
 msgid "What is the form of the new {} morpheme (consonants and vowels only)?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:584 /home/kentr/bin/raspy/azt/main.py:600
+#: /home/kentr/bin/raspy/azt/main.py:590 /home/kentr/bin/raspy/azt/main.py:606
 msgid "What does {} mean in {}?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:613
+#: /home/kentr/bin/raspy/azt/main.py:619
 msgid "Skip {} gloss"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:648
+#: /home/kentr/bin/raspy/azt/main.py:654
 msgid ""
 "Sorry, empty name! \n"
 "Please provide at least \n"
@@ -199,243 +195,247 @@ msgid ""
 "from other frames."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:725
+#: /home/kentr/bin/raspy/azt/main.py:731
 msgid "Define a new tone frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:744
+#: /home/kentr/bin/raspy/azt/main.py:750
 msgid "Add {} tone frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:748
+#: /home/kentr/bin/raspy/azt/main.py:754
 msgid "What do you want to call the tone frame ?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:763
+#: /home/kentr/bin/raspy/azt/main.py:769
 msgid ""
 "Fill in the {} frame forms below.\n"
 "(include a space to separate word forms)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:768
+#: /home/kentr/bin/raspy/azt/main.py:774
 msgid ""
 "Fill in the {} glossing here \n"
 "as appropriate for the morphosyntactic context.\n"
 "(include a space to separate word glosses)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:773
+#: /home/kentr/bin/raspy/azt/main.py:779
 msgid ""
 "What text goes *before* \n"
 "<==the {} word *{}* \n"
 "in the frame?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:776
+#: /home/kentr/bin/raspy/azt/main.py:782
 msgid ""
 "What text goes *after* \n"
 "the {} word *{}*==> \n"
 "in the frame?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:809
+#: /home/kentr/bin/raspy/azt/main.py:815
 msgid "See the tone frame around a word from the dictionary"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:820
+#: /home/kentr/bin/raspy/azt/main.py:826
 msgid "Select Audio Format"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:821
+#: /home/kentr/bin/raspy/azt/main.py:827
 msgid "What audio format do you want to work with?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:831
+#: /home/kentr/bin/raspy/azt/main.py:837
 msgid "Select Sampling Frequency"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:832
+#: /home/kentr/bin/raspy/azt/main.py:838
 msgid "What sampling frequency you want to work with?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:845
+#: /home/kentr/bin/raspy/azt/main.py:851
 msgid "Select Sound Card"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:846
+#: /home/kentr/bin/raspy/azt/main.py:852
 msgid "What sound card do you want to work with?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:871
+#: /home/kentr/bin/raspy/azt/main.py:877
 msgid "No change: {} == {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:896
+#: /home/kentr/bin/raspy/azt/main.py:902
 msgid "Select Vowel"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:900
+#: /home/kentr/bin/raspy/azt/main.py:906
 msgid "Select Consonant"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:913
+#: /home/kentr/bin/raspy/azt/main.py:919
 msgid "Select Grammatical Category"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:914
+#: /home/kentr/bin/raspy/azt/main.py:920
 msgid "What grammatical category do you want to work with (Part of speech)?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:929
+#: /home/kentr/bin/raspy/azt/main.py:935
 msgid "Select Syllable Profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:932
+#: /home/kentr/bin/raspy/azt/main.py:938
 msgid "Error: please set Grammatical category with profiles first!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:936
+#: /home/kentr/bin/raspy/azt/main.py:942
 msgid "What syllable profile do you want to work with?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:956
+#: /home/kentr/bin/raspy/azt/main.py:962
 msgid "Asking for check type"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:957
+#: /home/kentr/bin/raspy/azt/main.py:963
 msgid "Select Check Type"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:965
+#: /home/kentr/bin/raspy/azt/main.py:971
 msgid "What part of the sound system do you want to work with?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1069
+#: /home/kentr/bin/raspy/azt/main.py:1075
 msgid "Vowel"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1069
+#: /home/kentr/bin/raspy/azt/main.py:1075
 msgid "Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1070
+#: /home/kentr/bin/raspy/azt/main.py:1076
 msgid "Consonant"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1070
+#: /home/kentr/bin/raspy/azt/main.py:1076
 msgid "Consonants"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1071
+#: /home/kentr/bin/raspy/azt/main.py:1077
 msgid "Consonant-Vowel combination"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1071
+#: /home/kentr/bin/raspy/azt/main.py:1077
 msgid "Consonant-Vowel combinations"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1072
+#: /home/kentr/bin/raspy/azt/main.py:1078
 msgid "Tone"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1072
+#: /home/kentr/bin/raspy/azt/main.py:1078
 msgid "Tones"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1695
+#: /home/kentr/bin/raspy/azt/main.py:1781
 msgid "Using {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1698
+#: /home/kentr/bin/raspy/azt/main.py:1784
 msgid "Working on {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1714
+#: /home/kentr/bin/raspy/azt/main.py:1800
 msgid "Meanings in {} and {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1719
+#: /home/kentr/bin/raspy/azt/main.py:1805
 msgid "Meanings in {} only"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1742
+#: /home/kentr/bin/raspy/azt/main.py:1834
 msgid "Looking at {} {} words ({})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1769
+#: /home/kentr/bin/raspy/azt/main.py:1861
 msgid "Checking {}, working on ‘{}’ tone frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1795
+#: /home/kentr/bin/raspy/azt/main.py:1887
 msgid "Checking {}, working on {} = {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1797
+#: /home/kentr/bin/raspy/azt/main.py:1889
 msgid "Checking {}, working on {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1803
+#: /home/kentr/bin/raspy/azt/main.py:1896
+msgid "Sort!"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1898
 msgid "Report!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1810
+#: /home/kentr/bin/raspy/azt/main.py:1905
 msgid "Record Sorted Examples"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1812
+#: /home/kentr/bin/raspy/azt/main.py:1907
 msgid "Record Dictionary Words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1837
-#: /home/kentr/bin/raspy/azt/main.py:4328
+#: /home/kentr/bin/raspy/azt/main.py:1932
+#: /home/kentr/bin/raspy/azt/main.py:4434
 msgid "Change"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1871
+#: /home/kentr/bin/raspy/azt/main.py:1966
 msgid "Done"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1876
+#: /home/kentr/bin/raspy/azt/main.py:1971
 msgid "Select Sound Card Settings"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1952
+#: /home/kentr/bin/raspy/azt/main.py:2047
 msgid "{} Progress"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1956
+#: /home/kentr/bin/raspy/azt/main.py:2051
 msgid "Nothing to see here..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1968
+#: /home/kentr/bin/raspy/azt/main.py:2063
 msgid "Tone Progress for {} Words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2127
+#: /home/kentr/bin/raspy/azt/main.py:2222
 msgid "Select Analysis Language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2135
+#: /home/kentr/bin/raspy/azt/main.py:2230
 msgid "What language do you want to analyze?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2148
+#: /home/kentr/bin/raspy/azt/main.py:2243
 msgid "Select Gloss Language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2156
+#: /home/kentr/bin/raspy/azt/main.py:2251
 msgid "What Language do you want to use for glosses?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2171
+#: /home/kentr/bin/raspy/azt/main.py:2266
 msgid "Error: please set Lift file first!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2175
+#: /home/kentr/bin/raspy/azt/main.py:2270
 msgid "What other language do you want to use for glosses?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2203
+#: /home/kentr/bin/raspy/azt/main.py:2298
 msgid ""
 "You don't seem to have any tone frames set up.\n"
 "The next window will let you define your first frame. \n"
@@ -444,72 +444,72 @@ msgid ""
 "sure what a tone frame is, please ask for help."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2209
+#: /home/kentr/bin/raspy/azt/main.py:2304
 msgid "Define a New Tone Frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2214
+#: /home/kentr/bin/raspy/azt/main.py:2309
 msgid "Quit A→Z+T"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2222
+#: /home/kentr/bin/raspy/azt/main.py:2317
 msgid "What check do you want to do?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2258
+#: /home/kentr/bin/raspy/azt/main.py:2353
 msgid "Error: please set Grammatical category first! "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2354
+#: /home/kentr/bin/raspy/azt/main.py:2449
 msgid "{}={}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2499
+#: /home/kentr/bin/raspy/azt/main.py:2594
 msgid "Rename {} {} tone group ‘{}’ in ‘{}’ frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2507
+#: /home/kentr/bin/raspy/azt/main.py:2602
 msgid ""
 "What the new name do you want to call this surface tone group? A label that "
 "describes the surface tone form in this context would be best, like "
 "‘[˥˥˥ ˨˨˨]’"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2522
+#: /home/kentr/bin/raspy/azt/main.py:2617
 msgid "All tone groups in {} have been verified!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2595
+#: /home/kentr/bin/raspy/azt/main.py:2690
 msgid "Sort {} Tone (in ‘{}’ frame)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2598
+#: /home/kentr/bin/raspy/azt/main.py:2693
 msgid "Select the one with the same tone melody as"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2698
+#: /home/kentr/bin/raspy/azt/main.py:2793
 msgid ""
 "Read down this list to verify they all have the same tone melody. Select any "
 "word with a different tone melody to remove it from the list."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2706
+#: /home/kentr/bin/raspy/azt/main.py:2801
 msgid "Rename Group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2717
+#: /home/kentr/bin/raspy/azt/main.py:2814
 msgid "Verify {} Tone Group ‘{}’ (in ‘{}’ frame)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2806
+#: /home/kentr/bin/raspy/azt/main.py:2903
 msgid "Review Groups for {} Tone (in ‘{}’ frame)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2810
+#: /home/kentr/bin/raspy/azt/main.py:2907
 msgid "These are all different"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2811
+#: /home/kentr/bin/raspy/azt/main.py:2908
 msgid ""
 "Congratulations! \n"
 "All your {} with profile {} are sorted into the groups exemplified below (in "
@@ -517,91 +517,91 @@ msgid ""
 "the two groups. If not, click ‘{}’."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3050
+#: /home/kentr/bin/raspy/azt/main.py:3150
 msgid "This word is OK in this frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3051
+#: /home/kentr/bin/raspy/azt/main.py:3151
 msgid "Different than the above"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3052
+#: /home/kentr/bin/raspy/azt/main.py:3152
 msgid "Skip this word/phrase"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3170
+#: /home/kentr/bin/raspy/azt/main.py:3270
 msgid "Run Window"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3175
+#: /home/kentr/bin/raspy/azt/main.py:3275
 msgid "Run Check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3181
+#: /home/kentr/bin/raspy/azt/main.py:3281
 msgid "Error: please set language first!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3187
+#: /home/kentr/bin/raspy/azt/main.py:3287
 msgid "Error: please set Grammatical category first!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3258
+#: /home/kentr/bin/raspy/azt/main.py:3353
 msgid "Record {} {} Words: click ‘Record’, talk, and release ({} words)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3263
+#: /home/kentr/bin/raspy/azt/main.py:3429
 msgid "Next Group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3327
+#: /home/kentr/bin/raspy/azt/main.py:3438
 msgid "Words and phrases to record: click ‘Record’, talk, and release"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3332
+#: /home/kentr/bin/raspy/azt/main.py:3443
 msgid "Sorry, there are no entries to show!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3360
+#: /home/kentr/bin/raspy/azt/main.py:3470
 msgid "No examples! Add some, then come back."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3385
+#: /home/kentr/bin/raspy/azt/main.py:3494
 msgid "Done/Next"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3390
-msgid "All done! Sort some more words, and come back."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3418
+#: /home/kentr/bin/raspy/azt/main.py:3518
 msgid "Preparing to record examples from each tone group ({}) with index"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3421
+#: /home/kentr/bin/raspy/azt/main.py:3521
 msgid "Giving user the number {} example from each tone group ({}) with index"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3443
+#: /home/kentr/bin/raspy/azt/main.py:3526
+msgid "All done! Sort some more words, and come back."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:3549
 msgid "Getting results of Search request"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3449
+#: /home/kentr/bin/raspy/azt/main.py:3555
 msgid "{} roots of form {} by {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3524
+#: /home/kentr/bin/raspy/azt/main.py:3630
 msgid "No results!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3525
+#: /home/kentr/bin/raspy/azt/main.py:3631
 msgid "No results for "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3632
+#: /home/kentr/bin/raspy/azt/main.py:3738
 msgid "Tone Report"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3639
+#: /home/kentr/bin/raspy/azt/main.py:3745
 msgid ""
 "This report follows an analysis of sortings of {} morphemes (roots or "
 "affixes) across the following frames: {}. {} stores these sortings in lift "
@@ -612,7 +612,7 @@ msgid ""
 "files is in the same directory as this file."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3650
+#: /home/kentr/bin/raspy/azt/main.py:3756
 msgid ""
 "As a warning to the analyst who may not understand the implications of this "
 "*automated analysis*, you may have too few groupings here, particularly if "
@@ -628,21 +628,21 @@ msgid ""
 "each of these better than a computer could)."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3672
+#: /home/kentr/bin/raspy/azt/main.py:3778
 msgid ""
 "\n"
 "Group {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3684
+#: /home/kentr/bin/raspy/azt/main.py:3790
 msgid "Values by frame: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3715
+#: /home/kentr/bin/raspy/azt/main.py:3821
 msgid "(Report is also available at ("
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3742
+#: /home/kentr/bin/raspy/azt/main.py:3848
 msgid ""
 "The data in this report is given by most restrictive test first, followed by "
 "less restrictive tests (e.g., V1=V2 before V1 or V2). Additionally, each "
@@ -653,240 +653,240 @@ msgid ""
 "times, e.g., for both V1=x and V2=y."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3772
+#: /home/kentr/bin/raspy/azt/main.py:3878
 msgid ""
 "This report covers the following top {} syllable profiles: {}. This is of "
 "course configurable, but I assume you don't want everything."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3779
+#: /home/kentr/bin/raspy/azt/main.py:3885
 msgid "{} data"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3783
+#: /home/kentr/bin/raspy/azt/main.py:3889
 msgid ""
 "This section covers the following top {} syllable profiles which are found "
 "in {}s: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3790
+#: /home/kentr/bin/raspy/azt/main.py:3896
 msgid "{} {}s"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3795
+#: /home/kentr/bin/raspy/azt/main.py:3901
 msgid "{} checks"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3843
+#: /home/kentr/bin/raspy/azt/main.py:3949
 msgid "What is wrong with this word?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3846
+#: /home/kentr/bin/raspy/azt/main.py:3952
 msgid "Two different vowels (V1≠V2)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3847
+#: /home/kentr/bin/raspy/azt/main.py:3953
 msgid "Vowels are the same, but the wrong vowel"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3862
+#: /home/kentr/bin/raspy/azt/main.py:3968
 msgid "TITLE!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3865
+#: /home/kentr/bin/raspy/azt/main.py:3971
 msgid ""
 "It looks like the vowels are the same, but not the correct vowel; let's fix "
 "that."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3869
+#: /home/kentr/bin/raspy/azt/main.py:3975
 msgid "What are the two vowels?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3876
+#: /home/kentr/bin/raspy/azt/main.py:3982
 msgid "fixV1:Different data to be fixed! "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3882
+#: /home/kentr/bin/raspy/azt/main.py:3988
 msgid "It looks like the vowels aren't the same; let's fix that."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3886
+#: /home/kentr/bin/raspy/azt/main.py:3992
 msgid "What is the first vowel? (C_CV)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3895
+#: /home/kentr/bin/raspy/azt/main.py:4001
 msgid "fixV2:Different data to be fixed! "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3896
+#: /home/kentr/bin/raspy/azt/main.py:4002
 msgid "What is the second vowel?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3912
+#: /home/kentr/bin/raspy/azt/main.py:4018
 msgid "fixVs:Different vowels! "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3923
+#: /home/kentr/bin/raspy/azt/main.py:4029
 msgid "fixVs:Same Vowel, but wrong one! "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4122
-#: /home/kentr/bin/raspy/azt/main.py:4593
+#: /home/kentr/bin/raspy/azt/main.py:4228
+#: /home/kentr/bin/raspy/azt/main.py:4701
 msgid "Exit"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4130
+#: /home/kentr/bin/raspy/azt/main.py:4236
 msgid "Back"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4319
+#: /home/kentr/bin/raspy/azt/main.py:4425
 msgid "Interface/computer language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4321
+#: /home/kentr/bin/raspy/azt/main.py:4427
 msgid "Analysis language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4323
+#: /home/kentr/bin/raspy/azt/main.py:4429
 msgid "Gloss language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4325
+#: /home/kentr/bin/raspy/azt/main.py:4431
 msgid "Another gloss language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4327
+#: /home/kentr/bin/raspy/azt/main.py:4433
 msgid "Languages"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4331
+#: /home/kentr/bin/raspy/azt/main.py:4437
 msgid "Part of speech"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4333
+#: /home/kentr/bin/raspy/azt/main.py:4439
 msgid "Syllable profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4335
+#: /home/kentr/bin/raspy/azt/main.py:4441
 msgid "Words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4338
+#: /home/kentr/bin/raspy/azt/main.py:4444
 msgid "Sound type (Consonant, Vowel, or Tone)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4343
+#: /home/kentr/bin/raspy/azt/main.py:4449
 msgid "Tone Frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4345
+#: /home/kentr/bin/raspy/azt/main.py:4451
 msgid "Location in word"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4349
+#: /home/kentr/bin/raspy/azt/main.py:4455
 msgid "Segment(s) to check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4353
+#: /home/kentr/bin/raspy/azt/main.py:4459
 msgid "Options"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4356
+#: /home/kentr/bin/raspy/azt/main.py:4462
 msgid "Do"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4358
+#: /home/kentr/bin/raspy/azt/main.py:4464
 msgid "Tone report"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4360
+#: /home/kentr/bin/raspy/azt/main.py:4466
 msgid "Basic CV report (to file)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4362
+#: /home/kentr/bin/raspy/azt/main.py:4468
 msgid "Reports"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4364
+#: /home/kentr/bin/raspy/azt/main.py:4470
 msgid "Sound Card Settings"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4366
+#: /home/kentr/bin/raspy/azt/main.py:4472
 msgid "Record tone group examples"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4368
+#: /home/kentr/bin/raspy/azt/main.py:4474
 msgid "Record dictionary words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4370
+#: /home/kentr/bin/raspy/azt/main.py:4476
 msgid "Record examples for particular entries, 1 at at time"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4373
+#: /home/kentr/bin/raspy/azt/main.py:4479
 msgid "Recording"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4374
+#: /home/kentr/bin/raspy/azt/main.py:4480
 msgid "Join Groups"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4378
+#: /home/kentr/bin/raspy/azt/main.py:4484
 msgid "Advanced"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4380
+#: /home/kentr/bin/raspy/azt/main.py:4486
 msgid "Dictionary Morpheme"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4382
+#: /home/kentr/bin/raspy/azt/main.py:4488
 msgid "Add Tone frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4385
+#: /home/kentr/bin/raspy/azt/main.py:4491
 msgid "Previously skipped data"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4387
-#: /home/kentr/bin/raspy/azt/main.py:4846
+#: /home/kentr/bin/raspy/azt/main.py:4493
+#: /home/kentr/bin/raspy/azt/main.py:4954
 msgid "Redo"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4388
+#: /home/kentr/bin/raspy/azt/main.py:4494
 msgid "Add other"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4390
+#: /home/kentr/bin/raspy/azt/main.py:4496
 msgid "Syllable Profile Analysis (Restart)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4393
+#: /home/kentr/bin/raspy/azt/main.py:4499
 msgid "Segment Interpretation Settings"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4401
+#: /home/kentr/bin/raspy/azt/main.py:4507
 msgid "About"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4403
+#: /home/kentr/bin/raspy/azt/main.py:4509
 msgid "Help"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4407
-#: /home/kentr/bin/raspy/azt/main.py:4573
-#: /home/kentr/bin/raspy/azt/main.py:5021
-msgid "{} Dictionary and Orthography Checker"
+#: /home/kentr/bin/raspy/azt/main.py:4513
+#: /home/kentr/bin/raspy/azt/main.py:5129
+#, python-brace-format
+msgid "{name} Dictionary and Orthography Checker"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4409
+#: /home/kentr/bin/raspy/azt/main.py:4515
 msgid "version: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4411
+#: /home/kentr/bin/raspy/azt/main.py:4517
 #, python-brace-format
 msgid ""
-"{0} is a computer program that accelerates community-based language "
+"{name} is a computer program that accelerates community-based language "
 "development by facilitating the sorting of a beginning dictionary by vowels, "
 "consonants and tone.\n"
 "It does this by presenting users with sets of words from a LIFT dictionary "
@@ -896,27 +896,31 @@ msgid ""
 "allowing for a number of approaches to collecting this data. A tone report "
 "aids the drafting of underlying categories by grouping words based on "
 "sorting across tone frames. \n"
-"{0} then allows the user to record a word in each of the frames where it has "
-"been sorted, storing the recorded audio file in a directory, with links to "
-"each file in the dictionary database. Recordings can be made up to "
+"{name} then allows the user to record a word in each of the frames where it "
+"has been sorted, storing the recorded audio file in a directory, with links "
+"to each file in the dictionary database. Recordings can be made up to "
 "192khz/32float.\n"
-"For help with this tool, please check out the documentation at https://"
-"github.com/kent-rasmussen/azt or write me at kent_rasmussen@sil.org."
+"For help with this tool, please check out the documentation at {url} or "
+"write me at {Email}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4576
+#: /home/kentr/bin/raspy/azt/main.py:4681
+msgid "{} Dictionary and Orthography Checker"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:4684
 msgid " ("
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4837
+#: /home/kentr/bin/raspy/azt/main.py:4945
 msgid "Record"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4842
+#: /home/kentr/bin/raspy/azt/main.py:4950
 msgid "Play"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4895
+#: /home/kentr/bin/raspy/azt/main.py:5003
 msgid ""
 "Sorry, you need to set the fs, sample_rate, and sound card!\n"
 "(Change Stuff|Recording|Sound Card Settings)\n"
@@ -924,36 +928,38 @@ msgid ""
 "a record button will be here."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5007
-msgid "{} Dictionary and Orthography Checker in Process"
+#: /home/kentr/bin/raspy/azt/main.py:5115
+#, python-brace-format
+msgid "{name} Dictionary and Orthography Checker in Process"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5010
+#: /home/kentr/bin/raspy/azt/main.py:5118
 msgid "Please Wait..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5024
+#: /home/kentr/bin/raspy/azt/main.py:5132
+#, python-brace-format
 msgid ""
 "Your dictionary database is loading...\n"
 "\n"
-"A to Z and T is a computer program that accelerates community-based language "
+"{name} is a computer program that accelerates community-based language "
 "development by facilitating the sorting of a beginning dictionary by vowels, "
 "consonants and tone. (more in help:about)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5093
+#: /home/kentr/bin/raspy/azt/main.py:5201
 msgid "Translation seems to be working"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/rx.py:12
+#: /home/kentr/bin/raspy/azt/rx.py:29
 msgid "telling rx.s which lang to use"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/rx.py:14
+#: /home/kentr/bin/raspy/azt/rx.py:31
 msgid "Using analang: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/rx.py:15
+#: /home/kentr/bin/raspy/azt/rx.py:32
 msgid "Looking in check.s[{}]: {}"
 msgstr ""
 
