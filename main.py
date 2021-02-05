@@ -5,6 +5,8 @@ program={'name':'A→Z+T'}
 program['tkinter']=True
 program['production']=False #True for making screenshots
 program['version']='0.6.1' #This is a string...
+program['url']='https://github.com/kent-rasmussen/azt'
+program['Email']='kent_rasmussen@sil.org'
 import platform
 """Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
 information than 'DEBUG' does):
@@ -74,6 +76,7 @@ class Check():
         self.parent=parent #should be mainapplication frame
         self.frame=frame
         inherit(self)
+        log.info("check.interfacelang: {}".format(self.interfacelang))
         # _=self._
         # self.fonts=parent.fonts
         # self.theme=parent.theme #Needed?
@@ -204,7 +207,7 @@ class Check():
     def guessinterfacelang(self):
         """I'm asked to do this when the root window has the attribute set,
         but the check doesn't. So I'm testing for the check attribute here."""
-        print('guessinterfacelang',self.parent.parent.interfacelang)
+        log.debug('guessinterfacelang: {}'.format(self.parent.parent.interfacelang))
         if self.interfacelang == None:
             if ((self.glosslang == None) or
                     (self.glosslang not in self.db.glosslangs)):
@@ -354,6 +357,7 @@ class Check():
             Label(window.frame, text=_('What language do you want this program '
                                     'to address you in?')
                     ).grid(column=0, row=0)
+            # self.parent.parent.interfacelangs is set in file.py
             buttonFrame1=ButtonFrame(window.frame,
                                     self.parent.parent.interfacelangs,
                                     self.setinterfacelangwrapper,
@@ -875,7 +879,13 @@ class Check():
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setinterfacelangwrapper(self,choice,window):
             self.set('interfacelang',choice,window) #set the check variable
-            setinterfacelang(choice) #change the UI
+            setinterfacelang(choice) #change the UI *ONLY* no object attributes
+            # inherit(self,'interfacelang')
+            self.storedefaults()
+            for base in [self,self.parent.parent]:
+                setattr(base,'interfacelang',choice)
+                log.info("pre checkcheck {base}: {}".format(getattr(base,
+                                                'interfacelang'),base=base))
             self.checkcheck()
     def setprofile(self,choice,window):
         self.set('profile',choice,window)
@@ -1044,11 +1054,13 @@ class Check():
         for default in self.defaults[field]:
             setattr(self, default, None)
             """These can be done in checkcheck..."""
+    def restart(self):
+        self.parent.parent.destroy()
+        main()
     def reloadprofiledata(self):
         self.storedefaults()
         file.remove(self.profiledatafile)
-        self.parent.parent.destroy()
-        main()
+        self.restart()
     def loadprofiledata(self):
         """This should just be imported, with all defaults in a dictionary
         variable in the file."""
@@ -1103,10 +1115,10 @@ class Check():
         else: #at least for dictionary values... what else?
             text=(default+'='+str(getattr(self,default)))
         self.f.write(text+'\n')
-    def storedefaults(self,field=None):
+    def storedefaults(self):
         """I don't think this does what I thought it did..."""
         self.f = open(self.defaultfile, "w", encoding='utf-8')
-        for default in self.defaults[field]:
+        for default in self.defaults[None]:
             if self.debug==True:
                 print(type(default))
                 print(default+": "+str(hasattr(self, default))+": "+str(getattr(self,default)))
@@ -1758,7 +1770,10 @@ class Check():
         log.info("Running Check Check!")
         self.makestatus()
         """We start with the settings that we can likely guess"""
+        for base in [self,self.parent.parent]:
+            log.info("{base}: {}".format(getattr(base,'interfacelang'),base=base))
         if self.interfacelang == None:
+            log.info("No interface language! Guessing.")
             self.guessinterfacelang()
         else:
             if self.debug == True:
@@ -1773,6 +1788,7 @@ class Check():
         if self.audiolang == None:
             self.guessaudiolang() #don't display this, but make it
         """This just gets the prose language name from the code"""
+        # self.parent.parent.interfacelangs is set in file.py
         for l in self.parent.parent.interfacelangs:
             if l['code']==self.parent.parent.interfacelang:
                 interfacelanguagename=l['name']
@@ -4508,11 +4524,11 @@ class MainApplication(Frame):
         self.parent.config(menu=menubar)
     def helpabout(self):
         window=Window(self)
-        title=(_("{} Dictionary and Orthography Checker").format(self.program['name']))
+        title=(_("{name} Dictionary and Orthography Checker".format(name=self.program['name'])))
         window.title(title)
         Label(window.frame, text=_("version: {}").format(program['version']),anchor='c',padx=50
                         ).grid(row=1,column=0,sticky='we')
-        text=_("{0} is a computer program that accelerates community"
+        text=_("{name} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
                 "beginning dictionary by vowels, consonants and tone.\n"
                 "It does this by presenting users with sets of words from a "
@@ -4522,14 +4538,16 @@ class MainApplication(Frame):
                 "customizable and stored in the database for each word, "
                 "allowing for a number of approaches to collecting this data. "
                 "A tone report aids the drafting of underlying categories by "
-                "grouping words based on sorting across tone frames. \n{0} then "
+                "grouping words based on sorting across tone frames. \n{name} then "
                 "allows the user to record a word in each of the frames where "
                 "it has been sorted, storing the recorded audio file in a "
                 "directory, with links to each file in the dictionary database."
                 " Recordings can be made up to 192khz/32float.\nFor help with "
                 "this tool, please check out the documentation at "
-                "https://github.com/kent-rasmussen/azt or write me at "
-                "kent_rasmussen@sil.org.".format(self.program['name']))
+                "{url} or write me at "
+                "{Email}.".format(name=self.program['name'],
+                                    url=self.program['url'],
+                                    Email=self.program['Email']))
         Label(window.frame, text=title,
                         font=self.fonts['title'],anchor='c',padx=50
                         ).grid(row=0,column=0,sticky='we')
@@ -4674,7 +4692,7 @@ class MainApplication(Frame):
         # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
         # self.frame.grid(column=0, row=0)
         parent.iconphoto(True, self.photo['backgrounded'])
-        title=_("{} Dictionary and Orthography Checker").format(self.program['name'])
+        title=_("{name} Dictionary and Orthography Checker").format(name=self.program['name'])
         if self.master.themename != 'greygreen':
             print(f"Using theme '{self.master.themename}'.")
             title+=_(' ('+self.master.themename+')')
@@ -5108,8 +5126,8 @@ class Wait(tkinter.Toplevel): #Window?
         except:
             log.debug("Not withdrawing parent.")
         super(Wait, self).__init__()
-        title=(_("{} Dictionary and Orthography Checker in Process"
-                                                ).format(self.program['name']))
+        title=(_("{name} Dictionary and Orthography Checker in Process"
+                                            ).format(name=self.program['name']))
         self.title(title)
         text=_("Please Wait...")
         Label(self, text=text,
@@ -5122,39 +5140,14 @@ class Splash(Window):
         # _=self._
         # print(self.theme['background'])
         # print(self.theme['activebackground'])
-        title=(_("{} Dictionary and Orthography Checker").format(program[
+        title=(_("{name} Dictionary and Orthography Checker").format(name=program[
                                                                     'name']))
         self.title(title)
         text=_("Your dictionary database is loading...\n\n"
-                # "This program can take 30-100 seconds to load, depending on "
-                # "how fast your computer is, and how large your dictionary "
-                # "database is. It is going through all "
-                # "the entries and senses in your database, to prepare to "
-                # "check them.\n"
-                "A to Z and T is a computer program that accelerates community"
+                "{name} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
                 "beginning dictionary by vowels, consonants and tone. "
-                "(more in help:about)"
-                # "It does this by presenting users with sets of words from a "
-                # "LIFT dictionary database, one part of speech and syllable "
-                # "profile at a time. These words are sorted into groups based "
-                # "on consonants, vowels, and tone. Tone frames are "
-                # "customizable and stored in the database for each word, "
-                # "allowing for a number of approaches to collecting this data. "
-                # "A tone report aids the drafting of underlying categories by "
-                # "grouping words based on sorting across tone frames. AZT then "
-                # "allows the user to record a word in each of the frames where "
-                # "it has been sorted, storing the recorded audio file in a "
-                # "directory, with links to each file in the dictionary database."
-                # " Recordings can be made up to 192khz/32float."
-                # "This dictionary and orthography checker guides you through "
-                # "a comparison of the consonants, vowels, and tone in a lexical "
-                # "datbase. As you follow the guide and indicate words and "
-                # "phrases that sound the same or different, you are "
-                # "taking part in the development of your "
-                # "language, by building your dictionary and "
-                # "writing system!"
-                )
+                "(more in help:about)").format(name=program['name'])
         Label(self, text=title, pady=50,
                         font=self.fonts['title'],anchor='c',padx=25
                         ).grid(row=0,column=0,sticky='we')
@@ -5425,19 +5418,28 @@ def removesenseidfromsubcheck(self,parent,senseid):
                         )
     self.markunsortedsenseid(senseid)
     parent.destroy() #.runwindow.resetframe()
-def inherit(self):
+def inherit(self,attr=None):
     """This function brings these attributes from the parent, to inherit
     from the root window, through all windows, frames, and scrolling frames, etc
     """
-    self.fonts=self.parent.fonts
-    self.theme=self.parent.theme
-    self.debug=self.parent.debug
-    self.wraplength=self.parent.wraplength
-    self.photo=self.parent.photo
-    # self.photowhite=self.parent.photowhite
-    self.program=self.parent.program
-    # self.photosmall=self.parent.photosmall
-    self._=self.parent._
+    if attr == None:
+        attrs=['fonts','theme','debug','wraplength','photo','program',
+                '_','interfacelang']
+    else:
+        attrs=[attr]
+    for attr in attrs:
+        setattr(self,attr,getattr(self.parent,attr))
+    # print("self.fonts: {}, self.parent.fonts: {}".format(self.fonts,self.parent.fonts))
+    # self.fonts=self.parent.fonts
+    # self.theme=self.parent.theme
+    # self.debug=self.parent.debug
+    # self.wraplength=self.parent.wraplength
+    # self.photo=self.parent.photo
+    # # self.photowhite=self.parent.photowhite
+    # self.program=self.parent.program
+    # # self.photosmall=self.parent.photosmall
+    # self._=self.parent._
+    # self.interfacelang=self.parent.interfacelang
 def main():
     global program
     log.info("Running main function") #Don't translate yet!
