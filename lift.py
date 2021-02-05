@@ -1355,7 +1355,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 list(dict.fromkeys(self.segmentsnotinregexes[lang]).keys())))
             else:
                 print("No problems!")
-                log.log(20,"Your {}".format(lang))
                 log.info(_("Your regular expressions look OK for {} (there are "
                     "no segments in your {} data that are not in a regex). "
                     "".format(lang,lang)))
