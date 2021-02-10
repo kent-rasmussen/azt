@@ -767,6 +767,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if t.text == value:
                     return True
         return False
+    def convertalltodecomposed(self):
+        for form in self.nodes.findall('.//form'):
+            if form.get('lang') in self.analangs:
+                for t in form.findall('.//text'):
+                    t.text=rx.makeprecomposed(t.text)
     def exampleisnotsameasnew(self, showurl=False, **kwargs):
         # guid,senseid,analang, glosslang, glosslang2, forms, fieldtype,
         # location,fieldvalue,example,ps=None,
@@ -2070,7 +2075,11 @@ if __name__ == '__main__':
     filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift.bak.txt"
+    filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     lift=Lift(filename,nsyls=2)
+    lift.convertalltodecomposed()
+    lift.write()
+    exit()
     senseid='bfff97e7-2e3b-40e1-beb1-e682d120b773'
     forms={
         'gnd':'səba',
