@@ -4334,6 +4334,8 @@ class ScrollingFrame(Frame):
         for. We don't need the scrolling frame to be any bigger than this."""
         contentrw=self.content.winfo_reqwidth()
         contentrh=self.content.winfo_reqheight()
+        for child in self.content.winfo_children():
+            contentrw=max(contentrw,child.winfo_reqwidth())
         """If the current scrolling frame dimensions are smaller than the
         scrolling content, or else pushing the window off the screen, then make
         the scrolling window the smaller of
