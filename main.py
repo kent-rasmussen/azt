@@ -2635,7 +2635,9 @@ class Check():
         done=(_("All tone groups in {} have been verified!").format(self.name))
         self.settonevariablesbypsprofile()
         if self.senseidsunsorted != []:
-            self.sortT()
+            quit=self.sortT()
+            if quit == True:
+                return 1
         """offer a chance to join groups before moving on
         Nope: do this after verifying piles!"""
         # self.getrunwindow()
@@ -2788,6 +2790,8 @@ class Check():
                 """This needs to *not* operate on "exit" button."""
                 if self.groupselected != []:
                     self.addtonefieldex(senseid,framed)
+                else:
+                    return 1 # this should only happen on Exit
             self.marksortedsenseid(senseid)
         self.runwindow.resetframe()
     def verifyT(self):
@@ -2948,7 +2952,7 @@ class Check():
         self.settonevariablesbypsprofile()
         row=0
         for group in self.tonegroups:
-            self.tonegroupbutton(self.sorting,group,row,notonegroup=False)
+            self.tonegroupbuttonframe(self.sorting,group,row,notonegroup=False)
             row+=1
         """If all is good, destroy this frame."""
         b=Button(self.sorting, text=oktext,
