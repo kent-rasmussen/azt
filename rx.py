@@ -6,6 +6,23 @@ log = logging.getLogger(__name__)
 """This is called from a number of places"""
 def id(x):
     return re.sub('[ .!=\(\),\'/?ꞌ]','_',x) #remove charcters that are invalid for ids
+def makeprecomposed(x):
+    if x is None:
+        return
+    subs={'á':'á',
+    'à':'à',
+    'é':'é',
+    'è':'è',
+    'í':'í',
+    'ì':'ì',
+    'ó':'ó',
+    'ò':'ò',
+    'ú':'ú',
+    'ù':'ù',
+    }
+    for s in subs:
+        x=re.sub(s,subs[s],x)
+    return x
 def segmentin(forms, glyph):
     # """This actually allows for dygraphs, etc., so I'm keeping it."""
     # for form in forms: # as: self.citationforms[lang] + self.lexemes[lang]
@@ -85,3 +102,7 @@ def fromCV(check, lang, word=False, compile=False):
         regex.append(rnext)
     regexjoined=str().join(regex)
     return make(regexjoined,word=word, compile=compile)
+if __name__ == '__main__':
+    s='ááààééèèííììóóòòúúùù'
+    s2=makeprecomposed(s)
+    print(s,s2)
