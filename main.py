@@ -4336,6 +4336,11 @@ class ScrollingFrame(Frame):
         contentrh=self.content.winfo_reqheight()
         for child in self.content.winfo_children():
             contentrw=max(contentrw,child.winfo_reqwidth())
+            log.log(2,"{} ({})".format(child.winfo_reqwidth(),child))
+        log.log(2,contentrw)
+        log.log(2,self.parent.winfo_children())
+        log.log(2,'self.winfo_width(): {}; contentrw: {}; self.maxwidth: {}'
+                    ''.format(self.winfo_width(),contentrw,self.maxwidth))
         """If the current scrolling frame dimensions are smaller than the
         scrolling content, or else pushing the window off the screen, then make
         the scrolling window the smaller of
@@ -4368,7 +4373,7 @@ class ScrollingFrame(Frame):
         inherit(self)
         super(ScrollingFrame, self).__init__(parent)
         """Not sure if I want these... rather not hardcode."""
-        print(self.parent.winfo_children())
+        log.debug(self.parent.winfo_children())
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         """With or without the following, it still scrolls through..."""
@@ -4734,7 +4739,7 @@ class Label(tkinter.Label):
         availablexy(self)
         # self.maxheight=self.parent.winfo_screenheight()-self.otherrowheight
         self.config(wraplength=self.maxwidth)
-        print('self.maxwidth:',self.maxwidth)
+        log.debug('self.maxwidth (Label): {}'.format(self.maxwidth))
     def __init__(self, parent, text, column=0, row=1, **kwargs):
         """These have non-None defaults"""
         if 'font' not in kwargs:
@@ -5342,7 +5347,8 @@ def availablexy(self,w=None):
     wcolmax=wcol+w.grid_info()['columnspan']
     wrows=set(range(wrow,wrowmax))
     wcols=set(range(wcol,wcolmax))
-    print('w:',wrow,wrowmax,wrows,wcol,wcolmax,wcols)
+    log.log(2,'wrow: {}; wrowmax: {}; wrows: {}; wcol: {}; wcolmax: {}; '
+            'wcols: {} ({})'.format(wrow,wrowmax,wrows,wcol,wcolmax,wcols,w))
     rowheight={}
     colwidth={}
     for sib in w.parent.winfo_children():
@@ -5391,6 +5397,16 @@ def availablexy(self,w=None):
         self.otherrowheight+=titlebarHeight
         self.maxheight=self.parent.winfo_screenheight()-self.otherrowheight
         self.maxwidth=self.parent.winfo_screenwidth()-self.othercolwidth
+        log.log(2,"self.winfo_rootx(): {}".format(self.winfo_rootx()))
+        log.log(2,"self.winfo_x(): {}".format(self.winfo_x()))
+        log.log(2,"titlebarHeight: {}".format(titlebarHeight))
+        log.log(2,"borderSize: {}".format(borderSize))
+    log.debug("width: {}; self.maxheight: {}; self.maxwidth: {}".format(
+                                self.parent.winfo_screenwidth(),
+                                self.maxheight,
+                                self.maxwidth))
+    log.debug("cols: {}".format(colwidth))
+    log.debug("rows: {}".format(rowheight))
 def returndictnsortnext(self,parent,values):
     """Kills self.sorting, not parent."""
     # print(self,parent,values)
