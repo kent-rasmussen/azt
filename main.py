@@ -4382,6 +4382,9 @@ class ScrollingFrame(Frame):
         """Should decide some day which we want when..."""
         yscrollbar.config(width=50) #make the scrollbars big!
         yscrollbar.config(width=0) #make the scrollbars invisible (use wheel)
+        yscrollbar.config(width=15) #make the scrollbars useable...
+        yscrollbar.config(background=self.theme['background'])
+        yscrollbar.config(activebackground=self.theme['activebackground'])
         self.canvas = tkinter.Canvas(self)
         self.canvas.parent = self.canvas.master
         """make the canvas inherit these values like a frame"""
