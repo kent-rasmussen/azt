@@ -781,6 +781,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # then return the tone value node to change."""
         if self.debug == True:
             log.info("Looking for bits that don't match")
+        tonevalue=None # set now, will change later, or not...
+        log.debug("Looking for bits that don't match")
+        if kwargs['example'] == None:
+            log.info("Hey! You gave me an empty example!")
+            return
         for node in kwargs['example']:
             if self.debug == True:
                 log.info('Node: {} ; {}'.format(node.tag,
@@ -833,7 +838,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info('Looking for an example node matching these form and gloss'
                 'elements: {}'.format(forms))
         for example in kwargs['node'].findall('example'):
-            valuenode=self.exampleisnotsameasnew(**kwargs
+            valuenode=self.exampleisnotsameasnew(**kwargs, example=example
                             # guid,senseid,analang,
                             # glosslang,glosslang2,forms,
                             # fieldtype,
