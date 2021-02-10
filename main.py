@@ -1573,6 +1573,7 @@ class Check():
             if self.debug == True:
                 log.info('36 character senseid string!')
             senseid=source
+            output['senseid']=senseid
             forms[self.analang]=self.db.citationorlexeme(senseid=senseid,
                                             lang=self.analang,
                                             ps=self.ps)
