@@ -55,8 +55,9 @@ make column of buttons to allow user to ask for a different comparison word for 
     - make CV report only reference lx field
     - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
 
-# Version 0.6.1
+# Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
+- New buttons to allow user to ask for a different comparison word for tone group
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
