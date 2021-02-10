@@ -178,7 +178,11 @@ class Check():
         self.langnames()
         self.checkinterpretations() #checks (and sets) values for self.distinguish
         if 'bfj' in self.db.s:
-            self.db.s['bfj']['V']=['ou','ei']+self.db.s['bfj']['V']
+            bfjvdigraphs=(['ou','ei','ɨʉ','ai']+
+            ['óu','éi','ɨ́ʉ','ái']+
+            ['òu','èi','ɨ̀ʉ','ài'])
+            self.db.s['bfj']['V']=bfjvdigraphs+self.db.s['bfj']['V']
+            log.debug(self.db.s['bfj']['V'])
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
         """The line above may need to go after this block"""
         if self.profilesbysense is None:
