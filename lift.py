@@ -779,22 +779,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # the same example or not. Stop and return nothing at first node that
         # doesn't match (from form, translation and location). If they all match,
         # then return the tone value node to change."""
-        if self.debug == True:
-            log.info("Looking for bits that don't match")
         tonevalue=None # set now, will change later, or not...
         log.debug("Looking for bits that don't match")
         if kwargs['example'] == None:
             log.info("Hey! You gave me an empty example!")
             return
         for node in kwargs['example']:
-            if self.debug == True:
-                log.info('Node: {} ; {}'.format(node.tag,
+            try:
+                log.debug('Node: {} ; {}'.format(node.tag,
                                                 node.find('.//text').text))
+            except:
+                log.debug('Node: {} ; Likely no text node!'.format(node.tag))
             if (node.tag == 'form'):
                 if ((node.get('lang') == kwargs['analang'])
                 and (node.find('text').text != kwargs['forms'][kwargs['analang']])):
-                    if self.debug == True:
-                        log.info('{} == {}; {}  != {}'.format(node.get('lang'),
+                    log.debug('{} == {}; {}  != {}'.format(node.get('lang'),
                             kwargs['analang'], node.find('text').text, kwargs['forms'][kwargs['analang']]))
                     return
             elif ((node.tag == 'translation') and
@@ -802,16 +801,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if ((not self.forminnode(node,kwargs['forms'][kwargs['glosslang']])) and
                     ((glosslang2 not in kwargs) or (kwargs['glosslang2'] == None) or
                     (not self.forminnode(node,kwargs['forms'][kwargs['glosslang2']])))):
-                    if self.debug == True:
-                        log.debug('translation {} != {}'.format(
-                                    node.find('form/text').text, kwargs['forms']))
+                    log.debug('translation {} != {}'.format(
+                                node.find('form/text').text, kwargs['forms']))
                     return
             elif (node.tag == 'field'):
                 if (node.get('type') == 'location'):
                     if not self.forminnode(node,kwargs['location']):
-                        if self.debug == True:
-                            log.debug('location {} not in {}'.format(
-                                                                kwargs['location'],node))
+                        log.debug('location {} not in {}'.format(
+                                                    kwargs['location'],node))
                         return
                 if (node.get('type') == 'tone'):
                     for form in node:
@@ -820,14 +817,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             """This is set once per example, since this
                             function runs on an example node"""
                             tonevalue=form.find('text')
-                            if self.debug == True:
-                                log.info('tone value found: {}'.format(
+                            log.debug('tone value found: {}'.format(
                                                             tonevalue.text))
                         else:
                             log.info("Not the same lang for tone form")
                             return
             else:
-                log.info(' '.join("Not sure what kind of node I'm dealing with!",node.tag))
+                log.debug("Not sure what kind of node I'm dealing with!".format(node.tag))
         return tonevalue
     def exampleissameasnew(self,showurl=False, **kwargs):
         # ,guid,senseid,analang, glosslang,glosslang2,forms, fieldtype,
@@ -847,8 +843,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if valuenode != None: #i.e., they *are* the same node
                 return valuenode #if you find the example, we're done looking
             else: #if not, just keep looking, at next example node
-                if self.debug == True:
-                    log.info('=> This is not the example we are looking '
+                log.debug('=> This is not the example we are looking '
                             'for: {}'.format(valuenode))
     def addtoneUF(self,senseid,group,analang,guid=None,showurl=False):
         # log.info(' '.join("Adding",group,"draft underlying form value to", senseid,
