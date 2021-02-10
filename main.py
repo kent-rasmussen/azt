@@ -2722,8 +2722,8 @@ class Check():
         self.runwindow.frame.scroll.content.groups.row=0 #rows for this frame
         """If we have tone groups already, make them now."""
         for group in self.tonegroups:
-            self.tonegroupbutton(self.runwindow.frame.scroll.content.groups,
-            group,row=self.runwindow.frame.scroll.content.groups.row)
+            self.tonegroupbuttonframe(self.runwindow.frame.scroll.content.groups,
+            group,row=self.runwindow.frame.scroll.content.groups.row) #notonegroup?
             self.runwindow.frame.scroll.content.groups.row+=1
         """The second frame, for the other two buttons, which also scroll"""
         self.runwindow.frame.scroll.content.anotherskip=Frame(
@@ -2782,7 +2782,7 @@ class Check():
                 (N.B.: This is only used for groups added during the current
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
-                self.tonegroupbutton(self.runwindow.frame.scroll.content.groups,
+                self.tonegroupbuttonframe(self.runwindow.frame.scroll.content.groups,
                         self.groupselected,
                         row=self.runwindow.frame.scroll.content.groups.row)
                 print('Group added:',self.groupselected)
@@ -2982,7 +2982,7 @@ class Check():
                 else:
                     label=False
                     font=self.fonts['read']
-                self.tonegroupbutton(self.sorting,group,row,
+                self.tonegroupbuttonframe(self.sorting,group,row,
                                     font=font,
                                     label=label,
                                     notonegroup=False)
@@ -3200,7 +3200,7 @@ class Check():
                         font=self.fonts['instructions']
                         )
         b2.grid(column=0, row=row+1, sticky="ew")
-    def tonegroupbutton(self,parent,group,row,column=0,label=False,**kwargs):
+    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,**kwargs):
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
@@ -3210,41 +3210,29 @@ class Check():
         else:
             notonegroup=kwargs['notonegroup']
             del kwargs['notonegroup']
-        print('notonegroup:',notonegroup)
-        ex=self.getex(group) #Even if just one, this is a list
-        if ex is None:
+        framed=self.getex(group,notonegroup=notonegroup)
+        if framed is None:
             return
-        senseid=ex['senseid']
-        # form=ex['form']
-        # gloss=ex['gloss']
-        framed=self.getframeddata(senseid,notonegroup=notonegroup)
         text=(framed['formatted'])
-        # text='\t'.join(text)
-        # cmd=lambda:command(parent, window, check, entry, choice)
-        # print('self.fonts[read]',self.fonts['read'])
         """This should maybe be brought up a level in frames?"""
+        bf=Frame(parent)
+        bf.grid(column=column, row=row, sticky="ew")
         if label==True:
-            b=Label(parent, text=text,
-                    # anchor="w"#,font=self.fonts['read']
-                    **kwargs
-                    )
-            b.grid(column=column, row=row,
-                            sticky="ew",
-                            ipady=15 #Inside the buttons...
-                            )
+            b=Label(bf, text=text, **kwargs)
+            b.grid(column=0, row=0, sticky="ew", ipady=15) #Inside the buttons
         else:
-            b=Button(parent, text=text,
+            b=Button(bf, text=text,
                     cmd=lambda p=parent:returndictnsortnext(self,p,
                                                 {'groupselected':group}
-                                                ),
-                    # anchor="w", #font=self.fonts['read'],
-                    **kwargs
-                    )
-            b.grid(column=column, row=row,
-                            sticky="ew",
-                            ipady=15 #Inside the buttons...
-                            )
-        return b
+                                                ),**kwargs)
+            b.grid(column=0, row=0, sticky="ew", ipady=15) #Inside the buttons
+            bc=Button(bf, text='~', #🔃 isn't cool for tck...
+                    cmd=lambda p=parent:self.tonegroupbuttonframe(parent=parent,
+                                        group=group,notonegroup=notonegroup,
+                                        row=row,column=column,label=label)
+                    ,**kwargs) #to Button
+            bc.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+        return bf
     def printentryinfo(self,guid):
         outputs=[
                     nn(self.db.citationorlexeme(guid=guid)),
