@@ -5379,8 +5379,8 @@ def availablexy(self,w=None):
         puts the window edge widgets on the edge of the screen. This calculation
         is done on the toplevel widget, after the above recursive function is
         done across all the other widgets (so we just get window decoration)."""
-        titlebarHeight = self.winfo_rooty() - self.winfo_y()
-        borderSize= self.winfo_rootx() - self.winfo_x()
+        titlebarHeight = 50 #not working: self.winfo_rooty() - self.winfo_y()
+        borderSize= 0 #not working: self.winfo_rootx() - self.winfo_x()
         self.othercolwidth+=borderSize*2
         self.otherrowheight+=titlebarHeight
         self.maxheight=self.parent.winfo_screenheight()-self.otherrowheight
