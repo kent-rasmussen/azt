@@ -2585,14 +2585,14 @@ class Check():
         in a given tone frame (from check)"""
         senseids=self.getexsall(value)
         output={}
-        for i in range(len(senseids)): #in case the only example is the last one...
+        for i in range(len(senseids)): #just keep trying until you succeed
+            senseid=senseids[randint(0, len(senseids))-1]
             """this may die if you ask for what's not there..."""
-            form=self.db.citationorlexeme(senseids[i])
-            gloss=self.db.glossordefn(senseids[i])
-            if form is not None and gloss is not None:
-                output={'senseid':senseids[i],'form':form,'gloss':gloss}
+            framed=self.getframeddata(senseid,notonegroup=notonegroup)
+            if ((framed[self.analang] != None) and
+                    (framed[self.glosslang] != None)):
                 """As soon as you find one with form and gloss, quit."""
-                return output
+                return framed
             else:
                 log.info("none problem")
     def renamegroup(self):
