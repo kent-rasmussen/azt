@@ -2580,7 +2580,7 @@ class Check():
                             )
         senseidsincheck=self.senseidsincheck(senseids)
         return list(senseidsincheck)
-    def getex(self,value):
+    def getex(self,value,notonegroup=True):
         """This function finds examples in the lexicon for a given tone value,
         in a given tone frame (from check)"""
         senseids=self.getexsall(value)
