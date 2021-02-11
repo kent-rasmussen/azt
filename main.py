@@ -3233,12 +3233,12 @@ class Check():
                                                 {'groupselected':group}
                                                 ),**kwargs)
             b.grid(column=0, row=0, sticky="ew", ipady=15) #Inside the buttons
-            bc=Button(bf, text='~', #🔃 isn't cool for tck...
+            bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck...
                     cmd=lambda p=parent:self.tonegroupbuttonframe(parent=parent,
                                         group=group,notonegroup=notonegroup,
                                         row=row,column=column,label=label)
                     ,**kwargs) #to Button
-            bc.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+            bc.grid(column=1, row=0, sticky="nsew", ipady=15) #Inside buttons
         return bf
     def printentryinfo(self,guid):
         outputs=[
@@ -4626,6 +4626,8 @@ class MainApplication(Frame):
         # imgurl=file.fullpathname('images/Microphone alone.png')
         imgurl=file.fullpathname('images/Microphone alone_sm.png')
         self.parent.photo['record'] = tkinter.PhotoImage(file = imgurl)
+        imgurl=file.fullpathname('images/Change Circle_sm.png')
+        self.parent.photo['change'] = tkinter.PhotoImage(file = imgurl)
         setfonts(self.parent)
         """allow for exit button (~200px)"""
         self.parent.wraplength=self.parent.winfo_screenwidth()-300
@@ -4820,7 +4822,7 @@ class RadioButtonFrame(Frame):
                                                             **kwargs)
             row+=1
 class Button(tkinter.Button):
-    def __init__(self, parent, text,
+    def __init__(self, parent, text=None,
                 choice=None, window=None, #some buttons have these, some don't
                 command=None, column=0, row=1,
                 **kwargs):
