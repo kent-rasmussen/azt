@@ -1,7 +1,6 @@
 # Changelog
 
 ## In process
-make column of buttons to allow user to ask for a different comparison word for tone group
 
 ### Cleanup Unresolved from November 2020 Zulgo beta test
 - Find again (not happening now) and fix scrolling frame size problem on rename
@@ -65,6 +64,7 @@ make column of buttons to allow user to ask for a different comparison word for 
 - Added distinction for recording of dictionary words:
     - Record button gives slice of data as indicated on the main screen (selected ps-profile)
     - Menu (Do/Recording/Record Dictionary words...) gives a page for each slice, starting with largest
+- made troughs on scrollbar follow theme
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
 - improved calculation of column width inside scrolling frame (not great, but better)

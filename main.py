@@ -4397,6 +4397,7 @@ class ScrollingFrame(Frame):
         yscrollbar.config(width=15) #make the scrollbars useable...
         yscrollbar.config(background=self.theme['background'])
         yscrollbar.config(activebackground=self.theme['activebackground'])
+        yscrollbar.config(troughcolor=self.theme['background'])
         self.canvas = tkinter.Canvas(self)
         self.canvas.parent = self.canvas.master
         """make the canvas inherit these values like a frame"""
