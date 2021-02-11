@@ -59,6 +59,7 @@ make column of buttons to allow user to ask for a different comparison word for 
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
 - New buttons to allow user to ask for a different comparison word for tone group
     - These seem to be working
+    - with icon
 - added thin themed vertical scrollbars
 - clarified instructions when there is no tone frame yet.
 
