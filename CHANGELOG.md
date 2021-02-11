@@ -62,7 +62,9 @@ make column of buttons to allow user to ask for a different comparison word for 
     - with icon
 - added thin themed vertical scrollbars
 - clarified instructions when there is no tone frame yet.
-
+- Added distinction for recording of dictionary words:
+    - Record button gives slice of data as indicated on the main screen (selected ps-profile)
+    - Menu (Do/Recording/Record Dictionary words...) gives a page for each slice, starting with largest
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
 - improved calculation of column width inside scrolling frame (not great, but better)

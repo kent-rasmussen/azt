@@ -3432,10 +3432,8 @@ class Check():
             row+=1
         ww.close()
         self.runwindow.wait_window(self.runwindow.frame)
-    def showentryformstorecord(self):
+    def showentryformstorecord(self,justone=True):
         """Save these values before iterating over them"""
-        justone=True #for now, let user set just one slice of data
-        justone=False #give default of all slices, largest first
         psori=self.ps
         profileori=self.profile
         self.getrunwindow()
@@ -4502,8 +4500,8 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.soundcheck(x))
         recordmenu.add_command(label=_("Record tone group examples"),
                         command=lambda x=check:Check.showtonegroupexs(x))
-        recordmenu.add_command(label=_("Record dictionary words"),
-                        command=lambda x=check:Check.showentryformstorecord(x))
+        recordmenu.add_command(label=_("Record dictionary words, largest group first"),
+                        command=lambda x=check:Check.showentryformstorecord(x,justone=False))
         recordmenu.add_command(label=_("Record examples for particular "
                                                     "entries, 1 at at time"),
                         command=lambda x=check:Check.showsenseswithexamplestorecord(x))
