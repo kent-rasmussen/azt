@@ -1936,6 +1936,9 @@ class Check():
                 )
         self.maybeboard()
         self.parent.setmenus(self)
+    def soundcheckrefreshdone(self):
+        self.storedefaults()
+        self.checkcheck()
     def soundcheckrefresh(self):
         self.soundsettingswindow.resetframe() # Frame(self.soundsettingswindow.frame)
         # self.soundsettingswindow.frame.grid(row=1,column=0)
@@ -1988,7 +1991,7 @@ class Check():
         b.grid(row=row,column=0)
         row+=1
         bd=Button(self.soundsettingswindow.frame,text=_("Done"),
-                                            cmd=self.checkcheck)
+                                            cmd=self.soundcheckrefreshdone)
         bd.grid(row=row,column=0)
     def soundcheck(self):
         self.soundsettingswindow=Window(self.frame,
