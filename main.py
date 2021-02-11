@@ -2338,7 +2338,6 @@ class Check():
             b2.grid(column=1, row=1,sticky='')
             b.wait_window(window)
             self.checkcheck()
-            # self.addframe()
         else:
             text=_('What check do you want to do?')
             Label(window.frame, text=text).grid(column=0, row=0)
@@ -3178,7 +3177,7 @@ class Check():
         indicate that the word/frame combo doesn't work (skip)."""
         row=0
         firstOK=_("This word is OK in this frame")
-        newgroup=_("Different than the above")
+        newgroup=_("Different")
         skip=_("Skip this word/phrase")
         """This should just add a button, not reload the frame"""
         row+=10
