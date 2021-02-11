@@ -4965,8 +4965,11 @@ class RecordButtonFrame(Frame):
         # print("I'm writing and closing the recording file now")
         while self.stream.is_active():
             time.sleep(0.1)
-        self.wf.writeframes(self.fulldata)
-        # print(self.wf._nchannels)
+        if hasattr(self,'fulldata'):
+            self.wf.writeframes(self.fulldata)
+        else:
+            log.debug("Nothing recorded!")
+            # print(self.wf._nchannels)
         self.wf.close()
         if self.test is not True:
             self.db.addmediafields(self.node,self.filename,self.audiolang)
