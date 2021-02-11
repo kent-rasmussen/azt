@@ -2313,14 +2313,16 @@ class Check():
         log.info("Getting the check name...")
         self.getcheckspossible()
         window=Window(self.frame,title='Select Check')
+        btext=_("Define a New Tone Frame")
         if self.checkspossible == []:
             text=_("You don't seem to have any tone frames set up.\n"
-            "The next window will let you define your first frame. \nPlease "
+            "Click '{}' below to define a tone frame. \nPlease "
             "pay attention to the instructions, and if \nthere's anything "
             "you don't understand, or if you're not \nsure what a tone "
-            "frame is, please ask for help.")
-            Label(window.frame, text=text).grid(column=0, row=0)
-            b=Button(window.frame, text=_("Define a New Tone Frame"),
+            "frame is, please ask for help. \nWhen you are done making frames, "
+            "click 'Exit' to continue.".format(btext))
+            Label(window.frame, text=text).grid(column=0, row=0, ipady=25)
+            b=Button(window.frame, text=btext,
                     cmd=self.addframe,
                     anchor='c')
             b.grid(column=0, row=1,sticky='')
