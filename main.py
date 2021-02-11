@@ -1773,6 +1773,11 @@ class Check():
                             cmd=fn, width=opts['width'], **kwargs
                             ).grid(column=column, row=opts['row'])
         log.info("Running Check Check!")
+        #If the user exits out before this point, just stop.
+        try:
+            self.frame.winfo_exists()
+        except:
+            return
         self.makestatus()
         """We start with the settings that we can likely guess"""
         for base in [self,self.parent.parent]:
@@ -4723,6 +4728,11 @@ class MainApplication(Frame):
         """Do any check tests here"""
         """Make the rest of the mainApplication window"""
         e=(_("Exit"))
+        #If the user exits out before this point, just stop.
+        try:
+            self.check.frame.winfo_exists()
+        except:
+            return
         exit=tkinter.Button(self.frame, text=e, command=parent.destroy,
                             width=15,bg=self.theme['background'],
                             activebackground=self.theme['activebackground'])
