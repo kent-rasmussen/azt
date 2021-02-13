@@ -3345,7 +3345,7 @@ class Check():
         t=self.getframeddata(sense['nodetoshow'],noframe=True)[
                                             self.analang]#+'\t'+sense['gloss']
         for g in ['gloss','gloss2']:
-            if sense[g] is not None:
+            if (g in sense) and (sense[g] is not None):
                 t+='\t‘'+sense[g]
                 if ('plnode' in sense) and (sense['nodetoshow'] is sense['plnode']):
                     t+=" (pl)"
