@@ -2013,17 +2013,32 @@ class Check():
         info = p.get_host_api_info_by_index(0)
         numdevices = info.get('deviceCount')
         for i in range(0, numdevices):
-            if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-                    log.info("Input Device id {} - {}".format(i,p.get_device_info_by_host_api_device_index(0, i).get('name')))
-                    self.audio_card_indexes+=[{'code':i,'name':p.get_device_info_by_host_api_device_index(0, i).get('name')}]
-        if not hasattr(self,'fs') or self.fs not in self.fss:
+            if (p.get_device_info_by_host_api_device_index(0, i).get(
+                                                    'maxInputChannels')) > 0:
+                    log.info("Input Device id {} - {}".format(i,
+                        p.get_device_info_by_host_api_device_index(0, i).get(
+                                                                    'name')))
+                    self.audio_card_indexes+=[{
+                            'code':i,
+                            'name':p.get_device_info_by_host_api_device_index(
+                            0, i).get('name')}]
+        log.log(2,"fs: {}; sf: {}; ci: {}".format(
+                        self.fs,self.sample_format,self.audio_card_index))
+        log.log(2,"fss: {}; sfs: {}; cis: {}".format(
+                        self.fss,self.sample_formats,self.audio_card_indexes))
+        if not hasattr(self,'fs') or self.fs not in [v['code'] for v
+                                                in self.fss]:
             self.fs=None
         if (not hasattr(self,'sample_format') or
-                (self.sample_format not in self.sample_formats)):
+                (self.sample_format not in [v['code'] for v
+                                                in self.sample_formats])):
             self.sample_format=None
         if (not hasattr(self,'audio_card_index') or
-                (self.audio_card_index not in self.audio_card_indexes)):
+                (self.audio_card_index not in [v['code'] for v
+                                                in self.audio_card_indexes])):
             self.audio_card_index=None
+        log.log(2,"fs: {}; sf: {}; ci: {}".format(
+                        self.fs,self.sample_format,self.audio_card_index))
         # ButtonFram
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.frame.status)
