@@ -150,11 +150,11 @@ def lift():
     filename=filedialog.askopenfilename(initialdir = "$HOME",#filetypes=[('LIFT','*.lift')],
                                     title = _("Select LIFT Lexicon File"))
     log.debug('filename:'+str(filename))
-    if filename is (): #Try one more time...
+    if filename == (): #Try one more time...
         log.warning("Sorry, did you select a file? Trying again.")
         filename=filedialog.askopenfilename(initialdir = "$HOME",
                                     title = _("Select LIFT Lexicon File"),)
-        if filename is (): #still, then give up.
+        if filename == (): #still, then give up.
             log.warning("Sorry, did you select a file? Giving up.")
             # return None
     log.debug('filename: {}'.format(str(filename)))
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     import datetime
     import shutil
     def _(x):
-        str(x)
+        return x
     # import globalvariables
     # wsfolder=ws_environment.getwsfolder()
     # langdir=ws_environment.getlangdir()
