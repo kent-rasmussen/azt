@@ -64,11 +64,15 @@
 - Added distinction for recording of dictionary words:
     - Record button gives slice of data as indicated on the main screen (selected ps-profile)
     - Menu (Do/Recording/Record Dictionary words...) gives a page for each slice, starting with largest
-- made troughs on scrollbar follow theme
+- made troughs on scrollbar follow theme (at least on Linux)
+
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
 - improved calculation of column width inside scrolling frame (not great, but better)
 - cleaned up exit on a couple functions
+- set file write to a .part file, until finished, before overwriting lift
+- fixed some internals that were causing crashes on particular data.
+- fixed sound card settings window overwriting settings
 
 # Version 0.6.1
 - cleanup of exceptions on code running after windows closed.
