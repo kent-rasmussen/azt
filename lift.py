@@ -12,6 +12,11 @@ import re #needed?
 import rx
 import logging
 log = logging.getLogger(__name__)
+try: #Allow this module to be used without translation
+    _("x")
+except:
+    def _(x):
+        return x
 """This returns the root node of an ElementTree tree (the entire tree as
 nodes), to edit the XML."""
 class TreeParsed(object):
@@ -908,6 +913,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info(' '.join("add langform:", langform))
             log.info(' '.join("add tone:", fieldvalue))
             log.info(' '.join("add gloss:", glossform))
+    def addmodcitationfields(self,entry,langform,lang):
+        citation=entry.find('citation')
+        if citation is None:
+            citation=ET.SubElement(entry, 'citation')
+        form=citation.find("form[@lang='{lang}']".format(lang=lang))
+        if form is None:
+            form=ET.SubElement(citation,'form',attrib={'lang':lang})
+        t=form.find('text')
+        if t is None:
+            t=ET.SubElement(form,'text')
+        t.text=langform
     def addpronunciationfields(self,guid,senseid,analang,
                                 glosslang,glosslang2,
                                 lang,forms,
@@ -1039,6 +1055,28 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This returns the root node of an ElementTree tree (the entire
         tree as nodes), to edit the XML."""
         self.nodes=self.tree.getroot()
+    def writelzma(self,filename=None):
+        try:
+            import lzma
+        except ImportError:
+            from backports import lzma
+        """This writes changes back to XML."""
+        """When this goes into production, change this:"""
+        #self.tree.write(self.filename, encoding="UTF-8")
+        if filename is None:
+            filename=self.filename
+        compressed=filename+'_'+getnow()+'.7z'
+        data=self.write()
+        with open(filename,'r') as d:
+            data=d.read()
+            # with lzma.LZMAFile(compressed,'w') as t:
+            with lzma.open(compressed, "wt") as f:
+                f.write(data)
+                f.close()
+                # t.write(d)
+                # t.close()
+                d.close()
+        return compressed
     def write(self,filename=None):
         """This writes changes back to XML."""
         """When this goes into production, change this:"""
