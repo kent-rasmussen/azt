@@ -9,6 +9,7 @@ import threading
 import shutil
 import datetime
 import re #needed?
+import os
 import rx
 import logging
 log = logging.getLogger(__name__)
@@ -743,7 +744,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 log.info("=> Found that example already there")
         exfieldvalue.text=kwargs['fieldvalue'] #change this *one* value, either way.
         self.updatemoddatetime(guid=kwargs['guid'],senseid=kwargs['senseid'])
-        self.write()
+        # self.write()
         if self.debug == True:
             log.info("add langform: {}".format(kwargs['forms'][kwargs['analang']]))
             log.info("add tone: {}".format(['fieldvalue']))
@@ -890,7 +891,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #     pass
         t.text=group
         self.updatemoddatetime(guid=guid,senseid=senseid)
-        self.write()
+        # self.write()
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
@@ -961,7 +962,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info(' '.join("add gloss:", glossform))
         # debug()
         self.updatemoddatetime(guid=guid,senseid=senseid)
-        self.write()
+        # self.write()
         """End here:""" #build up, or down?
         #node.append('pronunciation')
         """<pronunciation>
@@ -1001,7 +1002,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 print (child.tag, child.attrib)
             node.remove(example)
         self.updatemoddatetime(guid=guid,senseid=senseid)
-        self.write()
+        # self.write()
     def updateexfieldvalue(self,guid=None,senseid=None,analang=None,
                     glosslang=None,langform=None,glossform=None,fieldtype=None,
                     location=None,fieldvalue=None,ps=None,
@@ -1025,7 +1026,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #     # """<field type="location"><form lang="fr"><text>Plural</text></form></field>"""
         node.text=newfieldvalue #remove(example)
         self.updatemoddatetime(guid=guid,senseid=senseid)
-        self.write()
+        # self.write()
     def updatemoddatetime(self,guid=None,senseid=None,analang=None,
                     glosslang=None,langform=None,glossform=None,fieldtype=None,
                     location=None,fieldvalue=None,ps=None,
@@ -1083,7 +1084,31 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #self.tree.write(self.filename, encoding="UTF-8")
         if filename is None:
             filename=self.filename
-        self.tree.write(filename, encoding="UTF-8")
+        write=0
+        replace=0
+        remove=0
+        try:
+            self.tree.write(filename+'.part', encoding="UTF-8")
+            write=1
+        except:
+            log.error("There was a problem writing to file: {}"
+                    "".format(os.listdir(pathlib.Path(filename))))
+        if write==1:
+            try:
+                os.replace(filename+'.part',filename)
+                replace=1
+            except:
+                log.error("There was a problem writing to file. This is what's "
+                "here: {}".format(os.listdir(str(pathlib.Path(filename)+'.part'))))
+        if replace==1:
+        #     try:
+        #         os.remove(filename+'.part')
+        #         remove=1
+        #     except:
+        #         log.error("There was a problem writing to file. This is what's "
+        #             "here: {}".format(os.listdir(pathlib.Path(filename+'*'))))
+        # if remove==1:
+            log.info("No problems writing to file!")
     def analangs(self):
         log.log(1,_("Looking for analangs in lift file"))
         self.audiolangs=[]
