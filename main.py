@@ -54,7 +54,7 @@ import wave
 #import Image #, ImageTk
 import re
 import rx
-import inspect #this is for function names in titles, probably unnecessary.
+import inspect #this is for determining this file name and location
 import reports
 import sys
 """for tr:"""
