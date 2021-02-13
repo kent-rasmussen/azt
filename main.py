@@ -4440,6 +4440,7 @@ class ScrollingFrame(Frame):
         """Bindings so the mouse wheel works correctly, etc."""
         self.canvas.bind('<Enter>', self._bound_to_mousewheel)
         self.canvas.bind('<Leave>', self._unbound_to_mousewheel)
+        self.canvas.bind('<Destroy>', self._unbound_to_mousewheel)
         self.canvas.bind('<Configure>', self._configure_canvas)
         self.content.bind('<Configure>', self._configure_interior)
 class Menu(tkinter.Menu):
