@@ -3516,7 +3516,7 @@ class Check():
         if (not(hasattr(self,'examplespergrouptorecord')) or
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=5
-            self.storedefaults('examplespergrouptorecord')
+            self.storedefaults()
         self.settonevariablesbypsprofile() #maybe not done before
         self.gettoneUFgroups()
         if self.toneUFgroups != []:
