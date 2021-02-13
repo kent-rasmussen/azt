@@ -1480,7 +1480,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     for guid in self.get('guidbylexeme',form=form,ps=ps):
                         output[guid]=form
             return output
-        if ps is 'All': #When I'm looking through each ps, not ps=None (e.g., invalid).
+        if ps == 'All': #When I'm looking through each ps, not ps=None (e.g., invalid).
             for ps in self.pss+[None]:
                 output.update(checkformsbyps(self,analang,ps)) #adds dict entries
             return output
@@ -1516,7 +1516,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     for senseid in self.get('senseidbylexeme',form=form,ps=ps):
                         output[senseid]=form
             return output
-        if ps is 'All': #When I'm looking through each ps, not ps=None (e.g., invalid).
+        if ps == 'All': #When I'm looking through each ps, not ps=None (e.g., invalid).
             for ps in self.pss+[None]:
                 output.update(checkformsbyps(self,analang,ps)) #adds dict entries
             return output
