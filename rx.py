@@ -47,10 +47,11 @@ def s(check,stype,lang=None):
         lang=check.analang
         log.debug(_("Using analang: {}".format(check.analang)))
     log.log(2,_("Looking in check.s[{}]: {}".format(lang,check.s[lang])))
-    if stype in check.s[lang]:
-        return "("+'|'.join(sorted(check.s[lang][stype],key=len,reverse=True))+")"
-    # if hasattr(self,stype): #should be one of c,v,g,n
-    #     return "("+'|'.join(sorted(getattr(self,stype)[lang]))+")"
+    if stype == "C-N":
+        list=set(check.s[lang]['C'])-set(check.s[lang]['N'])
+    elif stype in check.s[lang]:
+        list=check.s[lang][stype]
+    return "("+'|'.join(sorted(list,key=len,reverse=True))+")"
 def make(regex, word=False, compile=False):
     if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
         log.error('Regex problem! (need parentheses around segments!):',regex)
@@ -76,32 +77,27 @@ def fromCV(check, lang, word=False, compile=False):
     whole word word=True)."""
     """lang should be check.analang"""
     CVs=check.regexCV
-    if type(CVs) is str:
-        CVs=tuple((CVs,))
+    log.debug('CVs: {}'.format(CVs))
+    if type(CVs) is not str:
+        log.error("regexCV is not string! ({})".format(check.regexCV))
     regex=list()
     references=('\1','\2','\3','\4')
     references=range(1,5)
-    # variables=('v','c')
-    def CVproblem():
-        log.error("Error! check your CV template; it should only have 'C' "
-                "and 'V' in it, or 'x' references ("+x+')')
-        exit()
-    for x in CVs[0]: #We need better logic here, this gives (s)(h)...
-        if x in ["V","C","N","G","S"]:
-            rnext=s(check,x,lang) #this should have parens for each S
-        elif x in sum(check.s[lang].values(),[]):
-            rnext="("+x+")"
-        else:
-            try:
-                if int(x) in references:
-                    rnext="(\\"+x+")"
-                else:
-                    CVproblem()
-            except:
-                CVproblem()
-        regex.append(rnext)
-    regexjoined=str().join(regex)
-    return make(regexjoined,word=word, compile=compile)
+    if check.distinguish['Nwd'] and not check.distinguish['N']:
+        rxthis=s(check,'C-N',lang) #Pull out C# first;exclude N# if appropriate.
+        CVs=re.sub('C$',rxthis,CVs)
+        log.debug('CVs: {}'.format(CVs))
+    for x in ["V","N","G","S","C"]: #just pull out big ones first
+        rxthis=s(check,x,lang) #this should have parens for each S
+        CVs=re.sub(x,rxthis,CVs)
+        log.debug('CVs: {}'.format(CVs))
+    for x in references: #get capture group expressions
+        CVrepl='\\\\{}'.format(str(x)) #this needs to be escaped to survive...
+        log.debug('x: {}; repl: {}'.format(x,CVrepl))
+        log.debug('CVs: {}'.format(CVs))
+    CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs)
+    log.debug('CVs: {}'.format(CVs))
+    return make(CVs,word=word, compile=compile)
 if __name__ == '__main__':
     s='ááààééèèííììóóòòúúùù'
     s2=makeprecomposed(s)
