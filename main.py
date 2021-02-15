@@ -1419,18 +1419,6 @@ class Check():
                         self.rx['N#']=rx.make(rx.s(self,sclass)+'$',compile=True)
                     else:
                         self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
-        def anotherthing():
-            self.rx['G']=rx.make(rx.g(self.db),compile=True)
-            self.rx['C']=rx.make(rx.c(self.db),compile=True)
-            self.rx['V']=rx.make(rx.v(self.db),compile=True)
-            self.rx['N']='Nx'#rx.make(rx.n(self.db),compile=True)
-            self.rx['C']='Cx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['G']='Cx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['NCG']='NCGx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['NC']='NCx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['NG']='NGx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['CG']='CGx'#rx.make(rx.c(self.db),compile=True)
-            self.rx['V']='Vx'#rx.make(rx.v(self.db),compile=True)
     def profileofform(self,form):
         formori=form
         """priority sort alphabets (need logic to set one or the other)"""
