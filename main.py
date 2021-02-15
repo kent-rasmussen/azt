@@ -1430,6 +1430,7 @@ class Check():
             self.rx['CG']='CGx'#rx.make(rx.c(self.db),compile=True)
             self.rx['V']='Vx'#rx.make(rx.v(self.db),compile=True)
     def profileofform(self,form):
+        formori=form
         """priority sort alphabets (need logic to set one or the other)"""
         """Look for any C, don't find N or G"""
         priority=['#','C','N','G','S','V']
@@ -1446,7 +1447,7 @@ class Check():
                         key=lambda cons: (-len(cons),
                                             [priority.index(c) for c in cons])
                         ):
-            log.debug('s: {}; rx: {}'.format(s, self.rx[s]))
+            log.log(3,'s: {}; rx: {}'.format(s, self.rx[s]))
             for ps in self.db.pss:
                 self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches for that one variable
             if s is 'N#': #different regex key for this one.
@@ -1456,7 +1457,7 @@ class Check():
                 log.log(2,"Not in d or b, returning variable: {}".format(s))
                 form=self.rx[s].sub(s,form) #replace with profile variable
             elif s == 'd':
-                log.debug("in d; maybe returning variable: {}".format(s))
+                log.log(2,"in d; returning {} or nothing".format(s))
                 if self.distinguish['d']==True:
                     form=self.rx[s].sub(s,form) #replace with 'Vd', etc.
                 else:
@@ -1473,6 +1474,7 @@ class Check():
             self.iterations+=1
             if self.iterations>15:
                 exit()
+        log.debug("{}: {}".format(formori,form))
         return form
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
