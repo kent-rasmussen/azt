@@ -5437,7 +5437,7 @@ def availablexy(self,w=None):
         titlebarHeight = 50 #not working: self.winfo_rooty() - self.winfo_y()
         borderSize= 0 #not working: self.winfo_rootx() - self.winfo_x()
         self.othercolwidth+=borderSize*2
-        self.otherrowheight+=titlebarHeight
+        self.otherrowheight+=titlebarHeight+100
         self.maxheight=self.parent.winfo_screenheight()-self.otherrowheight
         self.maxwidth=self.parent.winfo_screenwidth()-self.othercolwidth
         log.log(2,"self.winfo_rootx(): {}".format(self.winfo_rootx()))
