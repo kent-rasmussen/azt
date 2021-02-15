@@ -1395,7 +1395,7 @@ class Check():
         #Finished joining lists; now make the regexs
         self.rx={}
         if self.distinguish['Nwd'] == True:
-            self.s[lang]['Nwd']=self.db.s[lang]['N'] #make Nwd before deleting N
+            self.s[self.analang]['Nwd']=self.db.s[self.analang]['N'] #make Nwd before deleting N
         for sclass in list(self.s[self.analang]):
             if ((sclass in self.distinguish) and
                     (self.distinguish[sclass]==False)):
@@ -2673,6 +2673,8 @@ class Check():
             (self.profile in self.status[self.type][self.ps]) and
             (self.name in self.status[self.type][self.ps][self.profile])):
             verified=self.status[self.type][self.ps][self.profile][self.name]
+        else:
+            verified=set()
         """Let's not leave groups in verified after they are gone"""
         # for group in verified:
         #     if group not in self.tonegroups:
@@ -2791,6 +2793,8 @@ class Check():
             self.sorting.grid(column=0,row=0, sticky="w",pady=50)
             self.sorting.wrap()
             self.runwindow.wait_window(window=self.sorting)
+            if not self.runwindow.winfo_exists():
+                return
             print("Group selected:",self.groupselected)
             if (self.tonegroups == [] or
                         self.groupselected == "NONEOFTHEABOVE"):
