@@ -3254,6 +3254,12 @@ class Check():
         else:
             notonegroup=kwargs['notonegroup']
             del kwargs['notonegroup']
+        if 'renew' in kwargs:
+            if kwargs['renew'] == True:
+                log.info("Resetting tone group example ({}): {}".format(group,
+                                                            self.exs[group]))
+                del self.exs[group]
+            del kwargs['renew']
         framed=self.getex(group,notonegroup=notonegroup)
         if framed is None:
             return
@@ -3272,8 +3278,8 @@ class Check():
             b.grid(column=0, row=0, sticky="ew", ipady=15) #Inside the buttons
             bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck...
                     cmd=lambda p=parent:self.tonegroupbuttonframe(parent=parent,
-                                        group=group,notonegroup=notonegroup,
-                                        row=row,column=column,label=label)
+                                group=group,notonegroup=notonegroup,
+                                row=row,column=column,label=label, renew=True)
                     ,**kwargs) #to Button
             bc.grid(column=1, row=0, sticky="nsew", ipady=15) #Inside buttons
         return bf
