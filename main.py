@@ -380,7 +380,7 @@ class Check():
                 (type(self.distinguish[var]) is not bool)):
                 self.distinguish[var]=False
             if var == 'd':
-                self.distinguish[var]=True #don't change this default, yet...
+                self.distinguish[var]=False #don't change this default, yet...
             log.log(2,_("Variable {} current value: {}").format(var,
                                                         self.distinguish[var]))
         for var in ['NC','CG','CS','VV']:
@@ -1285,7 +1285,7 @@ class Check():
                 """These lines just add to a C list, for a later regex"""
                 if ((sclass in self.distinguish) and #might distinguish, but
                     (self.distinguish[sclass]==False) and #don't want to
-                    (self.distinguish[sclass] not in ['d','ː'])): #Not vowelesq!
+                    (sclass not in ['d','ː'])): #Not vowelesq!
                         log.debug("Adding {} to C for {}.".format(sclass,lang))
                         self.s[lang]['C']+=self.db.s[lang][sclass]
             log.info("Segment lists for {} language: {}".format(lang,
