@@ -1,7 +1,7 @@
 # Changelog
 
 ## In process
-
+- for joinT, set up to pick one to make it a label, then the others, make instructions correct
 ### Cleanup Unresolved from November 2020 Zulgo beta test
 - Find again (not happening now) and fix scrolling frame size problem on rename
     - frame in a frame? (this problem looks familiar...)
@@ -66,6 +66,7 @@
     - Menu (Do/Recording/Record Dictionary words...) gives a page for each slice, starting with largest
 - made troughs on scrollbar follow theme (at least on Linux)
 - made crash logs zipped and ready to send
+- reports now exclude final N if appropriate to settings.
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
