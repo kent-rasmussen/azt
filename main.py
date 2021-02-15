@@ -1449,8 +1449,11 @@ class Check():
             log.debug('s: {}; rx: {}'.format(s, self.rx[s]))
             for ps in self.db.pss:
                 self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches for that one variable
-            if s not in ['d','b']:
-                log.debug("Not in d or b, returning variable: {}".format(s))
+            if s is 'N#': #different regex key for this one.
+                log.log(2,"Not in d or b, returning variable: {}".format(s))
+                form=self.rx['Nwd'].sub(s,form) #replace with profile variable
+            elif s not in ['d','b']:
+                log.log(2,"Not in d or b, returning variable: {}".format(s))
                 form=self.rx[s].sub(s,form) #replace with profile variable
             elif s == 'd':
                 log.debug("in d; maybe returning variable: {}".format(s))
