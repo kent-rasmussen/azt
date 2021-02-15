@@ -56,6 +56,12 @@
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
+- made crash logs zipped and ready to send
+- reports now exclude final N if appropriate to settings.
+- store and reuse examples for tone groups, assuming they remain relevant.
+    - unless removed by refresh button
+    
+### UI
 - New buttons to allow user to ask for a different comparison word for tone group
     - These seem to be working
     - with icon
@@ -65,8 +71,6 @@
     - Record button gives slice of data as indicated on the main screen (selected ps-profile)
     - Menu (Do/Recording/Record Dictionary words...) gives a page for each slice, starting with largest
 - made troughs on scrollbar follow theme (at least on Linux)
-- made crash logs zipped and ready to send
-- reports now exclude final N if appropriate to settings.
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
