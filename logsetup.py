@@ -2,6 +2,7 @@
 # coding=UTF-8
 import datetime
 import logging
+import lzma
 def logshutdown(): #Not sure I'll ever need this...
     logging.shutdown()
 def logsetup(loglevel):
@@ -26,6 +27,7 @@ def logsetup(loglevel):
             "may be unable to continue running.")
         exit()
     log = logging.getLogger()
+    log.filename=logfile
     if type(loglevel) is int:
         log.setLevel(loglevel)
     else:
@@ -56,3 +58,18 @@ def logsetup(loglevel):
         log.critical("Critical!")
     # test(log)
     return log
+def logwritelzma(filename):
+    try:
+        import lzma
+    except ImportError:
+        from backports import lzma
+    """This writes changes back to XML."""
+    """When this goes into production, change this:"""
+    compressed='log_'+datetime.datetime.utcnow().isoformat()[:-7]+'Z'+'.7z'
+    with open(filename,'r') as d:
+        data=d.read()
+        with lzma.open(compressed, "wt") as f:
+            f.write(data)
+            f.close()
+            d.close()
+    return compressed
