@@ -1016,7 +1016,8 @@ class Check():
                             'examplespergrouptorecord',
                             'distinguish',
                             'interpret',
-                            'adnlangnames'
+                            'adnlangnames',
+                            'exs'
                             ],
                         'ps':[
                             'profile' #do I want this?
@@ -1052,7 +1053,8 @@ class Check():
                         'examplespergrouptorecord':[],
                         'distinguish':[],
                         'interpret':[],
-                        'adnlangnames':[]
+                        'adnlangnames':[],
+                        'exs':[]
                         }
     def cleardefaults(self,field=None):
         for default in self.defaults[field]:
