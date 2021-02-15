@@ -5508,7 +5508,7 @@ def main():
     root = tkinter.Tk()
     myapp = MainApplication(root,program)
     myapp.mainloop()
-    logging.shutdown()
+    logshutdown()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
@@ -5537,6 +5537,7 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         log.exception("Unexpected exception! %s",e)
+        logwritelzma(log.filename)
     exit()
     """The following are just for testing"""
     entry=Entry(db, guid='003307da-3636-40cd-aca9-6b0d798055d2')
