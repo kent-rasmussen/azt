@@ -65,6 +65,7 @@
     - Record button gives slice of data as indicated on the main screen (selected ps-profile)
     - Menu (Do/Recording/Record Dictionary words...) gives a page for each slice, starting with largest
 - made troughs on scrollbar follow theme (at least on Linux)
+- made crash logs zipped and ready to send
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
