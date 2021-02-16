@@ -1,44 +1,31 @@
 # Changelog
 
-## In process
-- for joinT, set up to pick one to make it a label, then the others, make instructions correct
-### Cleanup Unresolved from November 2020 Zulgo beta test
-- Find again (not happening now) and fix scrolling frame size problem on rename
-    - frame in a frame? (this problem looks familiar...)
+## Verify Problem
+- fix multiple links to the same recording
+- check that changes to S regexs don't break too much.
+- diagnose pl/imp not appearing on recording screen
+    - not really there?
+    - pushed off the screen?
 
-### CV Report
-    - fix key 7 problem for sxw
 ## In Process
+- setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
+    - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
+- done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
+
+## Next Features
+- add C and V sorting (and CV?)
+
+## Some Day, if possible
 - XLP export (these are not likely to happen)
     - run dotexpdf (once you figure out where that is) to generate pdf?
     - run script to generate html?
     - figure out window specific variations (with Andy?)
-- Add treatment of long vowels, similar to consonant distinctions/interpretation
-  - lift.s['VV'] should include xx for x in lift.s['V']
-  - lift.s['V:'] should include x:, and xː for x in lift.s['V'], as for c['pn'], which is always C.
-  - lift.s['VV'] (where V1-V2) should be interpretable as V, VV, or V:
-    - add to appropriate check.s variable, as for NC and CG
-    - or make VV>V: or not, and feed that to V:>V or not.
-  - lift.s['V:'] should consider VdVd, dVdV, dVVd, and VddV as possibles/hypotheticals.  
-  - lift.s['V'] should include lift.s['d'], if present
-  - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
-      - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
-      - or is lift.s['V'] and lift.s['d'] enough?
-      - doing it here is nice to have the test of what is actually there...
-- done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
-- bring diacritics into vowel variables
-- figure out why multiple fuŋ entries aren't showing for recording on bfj
-    - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
-    - '7cdcddfc-5b9f-44bf-bfe5-d5ce164720cd',
-- need to fix multiple links to the same recording
-- check that changes to S regexs don't break too much.
-- Find faithful way to keep window on the screen for MS Windows
-- diagnose pl/imp not appearing on recording screen
-  - not really there?
-  - pushed off the screen?
 
-## Next Features
-    - add C and V sorting (and CV?)
+### For specific databases
+    - fix key 7 problem for sxw
+    -? figure out why multiple fuŋ entries aren't showing for recording on bfj
+        - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
+        - '7cdcddfc-5b9f-44bf-bfe5-d5ce164720cd',
 
 ### Prioritization
 - make checkcheck reference most popular *unfinished* ps-profile combo
@@ -60,7 +47,8 @@
 - reports now exclude final N if appropriate to settings.
 - store and reuse examples for tone groups, assuming they remain relevant.
     - unless removed by refresh button
-    
+    - relevance is determined by presence in group to check, so all will be reset on ps-profile and/or frame change.
+
 ### UI
 - New buttons to allow user to ask for a different comparison word for tone group
     - These seem to be working
@@ -71,6 +59,11 @@
     - Record button gives slice of data as indicated on the main screen (selected ps-profile)
     - Menu (Do/Recording/Record Dictionary words...) gives a page for each slice, starting with largest
 - made troughs on scrollbar follow theme (at least on Linux)
+- Improved join page visibility (button to label, not button recreated)
+- Added wait window to page creation and page final processing functions
+- Fixed/improved JoinT appearance and function
+- Added window with error message if tone group rename function attempts to use a name already in use.
+- windows now (mostly?) on the screen for MS Windows
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
@@ -79,6 +72,17 @@
 - set file write to a .part file, until finished, before overwriting lift
 - fixed some internals that were causing crashes on particular data.
 - fixed sound card settings window overwriting settings
+- converted ww=Wait(parent) to window method (with self.ww=Wait(self))
+- implemented double canary system, to allow for joinT to progress without destroying and remaking page
++ Added treatment of long vowels, similar to consonant distinctions/interpretation
+    + lift.s['VV'] includes xx for x in lift.s['V'] (though there is no VV regex made, as it would be superfluous)
+    + lift.s['Vː'] includes x:, and xː (if both ':' and 'ː' are in the database) for x in lift.s['V'].
+    -? Long vowels (lift.s['Vː'] or VV>V) require the same V formulation on both Vs:
+        - VdVd and dVdV are OK, but not dVVd and VddV.
+    + lift.s['V'] includes lift.s['d'], if present
+    + lift.s['VV'] is interpretable as V, VV, or Vː
+    + These lists test what is actually there before making the regexs...
+    + diacritics now in vowel variables
 
 # Version 0.6.1
 - cleanup of exceptions on code running after windows closed.
