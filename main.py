@@ -49,6 +49,7 @@ import time
 import datetime
 import pyaudio
 import wave
+import unicodedata
 # #for some day..…
 # from PIL import Image #, ImageTk
 #import Image #, ImageTk
@@ -450,11 +451,11 @@ class Check():
         self.getrunwindow()
         self.checkinterpretations()
         var={}
-        for ss in self.distinguish:
+        for ss in self.distinguish: #Should be already set.
             var[ss] = tkinter.BooleanVar()
             var[ss].set(self.distinguish[ss])
             print(ss, self.distinguish[ss])
-        for ss in self.interpret:
+        for ss in self.interpret: #This should already be set, even by default
             var[ss] = tkinter.StringVar()
             var[ss].set(self.interpret[ss])
             print(ss, self.interpret[ss])
@@ -555,6 +556,7 @@ class Check():
         sub_nb=Label(self.runwindow.frame2d,text = nbtext, anchor='e')
         sub_nb.grid(row=0,column=0,sticky='e',
                     pady=self.runwindow.options['pady'])
+        self.runwindow.ww.close()
     def addmorpheme(self):
         def submitform():
             self.runwindow.form=formfield.get()
@@ -2708,12 +2710,13 @@ class Check():
         #         verified.remove(group)
         """if all items in the self.tonegroups exists in verified"""
         if set(self.tonegroups).issubset(verified):
-            self.getrunwindow()
+            # self.getrunwindow()
             joined=self.joinT()
             if joined == True:
                 """Don't know how many joins we'll need, nor the results of
                 susequent verifications or sorts"""
                 self.maybesort()
+                self.runwindow.ww.done()
                 return
             elif joined == False and self.runwindow.winfo_exists():
                 self.runwindow.resetframe()
@@ -2722,8 +2725,9 @@ class Check():
                             image=self.photo[self.type]
                             ).grid(row=1,column=0)
                 print(done)
-        elif self.runwindow.winfo_exists():
-            self.verifyT()
+                return
+        # elif self.runwindow.winfo_exists(): #pull this?
+        self.verifyT()
     def sortT(self):
         # This window/frame/function shows one entry at a time (with pic?)
         # for the user to select a tone group based on buttons defined below.
@@ -2839,7 +2843,8 @@ class Check():
                 (N.B.: This is only used for groups added during the current
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
-                self.tonegroupbuttonframe(self.runwindow.frame.scroll.content.groups,
+                self.tonegroupbuttonframe(
+                        self.runwindow.frame.scroll.content.groups,
                         self.groupselected,
                         row=self.runwindow.frame.scroll.content.groups.row)
                 print('Group added:',self.groupselected)
@@ -2868,6 +2873,7 @@ class Check():
         pile.
         """
         # The title for this page changes by group, below.
+        self.getrunwindow()
         oktext='These all have the same tone'
         instructions=_("Read down this list to verify they all have the same "
             "tone melody. Select any word with a different tone melody to "
@@ -2947,7 +2953,8 @@ class Check():
             else:
                 print(f"User did NOT select '{oktext}', assuming we'll come "
                         "back to this!!")
-        self.maybesort()
+        if self.runwindow.winfo_exists():
+            self.maybesort()
     def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['read']
@@ -3038,7 +3045,8 @@ class Check():
                                         label=True, font=self.fonts['readbig'],
                                         canary=canary,canary2=canary2)
             self.groupselected=None #don't want to leave this there...
-            log.debug('self.tonegroups:',self.tonegroups,'group1:',group1)
+            log.debug('self.tonegroups: {}; group1: {}'.format(self.tonegroups,
+                                                                        group1))
             self.runwindow.wait_window(canary2)
             if self.groupselected == "ALLOK":
                 print(f"User selected '{oktext}', moving on.")
@@ -3055,7 +3063,7 @@ class Check():
                 self.subcheck=self.groupselected
                 self.updatestatus() #not verified=True --if any joined.
                 print('Mark',self.groupselected,'as unverified!!?!')
-                self.runwindow.ww.close()
+                # self.runwindow.ww.close()
                 return 1
         elif self.groupselected == "ALLOK":
             print(f"User selected '{oktext}', moving on.")
@@ -3293,6 +3301,7 @@ class Check():
             bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck...
                     cmd=lambda p=parent:self.tonegroupbuttonframe(parent=parent,
                                 group=group,notonegroup=notonegroup,
+                                canary=canary,canary2=canary2,
                                 row=row,column=column,label=label, renew=True)
                     ,**kwargs) #to Button
             bc.grid(column=1, row=0, sticky="nsew", ipady=15) #Inside buttons
@@ -4266,11 +4275,9 @@ class Window(tkinter.Toplevel):
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
             log.debug("There is already a wait window: {}".format(self.ww))
             return #don't make another one...
-        # try:
-        #     log.debug("Apparently there is not already a wait window: {}".format(self.ww))
-        # except:
-        #     log.debug("Apparently there is not already a wait window.")
         self.ww=Wait(self)
+    def waitdone(self):
+        pass
     def __init__(self, parent,
                 backcmd=False, exit=True,
                 title="No Title Yet!", choice=None,
@@ -4303,7 +4310,7 @@ class Window(tkinter.Toplevel):
             log.info("End current window descriptions")
         self.iconphoto(False, self.photo['backgrounded']) #don't want this transparent
         self.title(title)
-        self.parent=parent
+        # self.parent=parent
         self.resetframe()
         if exit is True:
             e=(_("Exit")) #This should be the class, right?
@@ -4871,7 +4878,7 @@ class RadioButtonFrame(Frame):
         # self.theme=parent.theme
         # if 'font' not in kwargs:
         #     kwargs['font']=self.fonts['default']
-        super().__init__(parent,**kwargs)
+        super(RadioButtonFrame,self).__init__(parent,**kwargs)
         kwargs['background']=self.theme['background']
         kwargs['activebackground']=self.theme['activebackground']
         print('self.var:',self.var)
@@ -5213,17 +5220,23 @@ class Wait(tkinter.Toplevel): #Window?
         self.parent=parent
         inherit(self)
         try:
-            self.parent.withdraw()
+            if platform.uname().system == 'Linux':
+                self.parent.withdraw()
+            else:
+                self.parent.iconify()
         except:
             log.debug("Not withdrawing parent.")
-        super(Wait, self).__init__()
+        super(Wait, self).__init__(bg=self.theme['background'])
+        self.photo = parent.photo #need this before making the frame
+        # self['background']=self.theme['background']
+        self.outsideframe=Frame(self)
         title=(_("{name} Dictionary and Orthography Checker in Process"
                                             ).format(name=self.program['name']))
         self.title(title)
         text=_("Please Wait...")
-        Label(self, text=text,
-                        font=self.fonts['title'],anchor='c',padx=50,pady=50
-                        ).grid(row=0,column=0,sticky='we')
+        self.l=Label(self, text=text,
+                font=self.fonts['title'],anchor='c',padx=50,pady=50)
+        self.l.grid(row=0,column=0,sticky='we')
         self.update_idletasks()
 class Splash(Window):
     def __init__(self, parent):
