@@ -2994,43 +2994,40 @@ class Check():
         self.sorting=self.sframe.content
         self.settonevariablesbypsprofile()
         row=0
+        canary=Label(self.runwindow,text='')
+        canary.grid(row=5,column=5)
+        canary2=Label(self.runwindow,text='')
+        canary2.grid(row=5,column=5)
         for group in self.tonegroups:
-            self.tonegroupbuttonframe(self.sorting,group,row,notonegroup=False)
+            self.tonegroupbuttonframe(self.sorting,group,row,notonegroup=False,
+                                        canary=canary,canary2=canary2)
             row+=1
         """If all is good, destroy this frame."""
         b=Button(self.sorting, text=oktext,
                     cmd=lambda:returndictnsortnext(self,
                     self.runwindow.frame,
-                    {'groupselected':"ALLOK"}),
+                    {'groupselected':"ALLOK"},
+                    canary=canary,canary2=canary2
+                    ),
                     anchor="c",
                     font=self.fonts['instructions']
                     )
         b.grid(column=0, row=row, sticky="ew")
-        self.runwindow.frame.wait_window(self.sorting)
+        self.runwindow.ww.close()
+        self.runwindow.frame.wait_window(canary)
         if self.groupselected != "ALLOK" and self.runwindow.winfo_exists():
-            self.sframe.destroy()
-            self.sframe=ScrollingFrame(self.runwindow.frame)
-            self.sframe.grid(row=3,column=1)
-            self.sorting=self.sframe.content
             group1=self.groupselected
+            row=self.tonegroups.index(group1)
+            self.tonegroupbuttonframe(self.sorting,group1,row,notonegroup=False,
+                                        label=True, font=self.fonts['readbig'],
+                                        canary=canary,canary2=canary2)
             self.groupselected=None #don't want to leave this there...
-            othergroups=self.tonegroups.copy() #don't mess with the var...
-            othergroups.remove(group1) #don't offer the chosen group again.
-            print('self.tonegroups:',self.tonegroups,'group1:',group1,
-                                'othergroups:',othergroups)
-            for group in self.tonegroups:
-                if group == group1:
-                    label=True
-                    font=self.fonts['readbig']
-                else:
-                    label=False
-                    font=self.fonts['read']
-                self.tonegroupbuttonframe(self.sorting,group,row,
-                                    font=font,
-                                    label=label,
-                                    notonegroup=False)
-                row+=1
-            self.runwindow.wait_window(self.sorting)
+            log.debug('self.tonegroups:',self.tonegroups,'group1:',group1)
+            self.runwindow.wait_window(canary2)
+            if self.groupselected == "ALLOK":
+                print(f"User selected '{oktext}', moving on.")
+                self.groupselected='' #reset
+                return 0
             if self.groupselected != None:
                 print("Now we're going to join groups",group1,"an"
                     "d",self.groupselected,".")
@@ -3243,7 +3240,7 @@ class Check():
                         font=self.fonts['instructions']
                         )
         b2.grid(column=0, row=row+1, sticky="ew")
-    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,**kwargs):
+    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,**kwargs):
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
@@ -3272,8 +3269,8 @@ class Check():
         else:
             b=Button(bf, text=text,
                     cmd=lambda p=parent:returndictnsortnext(self,p,
-                                                {'groupselected':group}
-                                                ),**kwargs)
+                                        {'groupselected':group},
+                                        canary=canary,canary2=canary2),**kwargs)
             b.grid(column=0, row=0, sticky="ew", ipady=15) #Inside the buttons
             bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck...
                     cmd=lambda p=parent:self.tonegroupbuttonframe(parent=parent,
@@ -5465,12 +5462,17 @@ def availablexy(self,w=None):
                                 self.maxwidth))
     log.debug("cols: {}".format(colwidth))
     log.debug("rows: {}".format(rowheight))
-def returndictnsortnext(self,parent,values):
+def returndictnsortnext(self,parent,values,canary=None,canary2=None):
     """Kills self.sorting, not parent."""
     # print(self,parent,values)
     for value in values:
         setattr(self,value,values[value])
-        self.sorting.destroy() #from or window with button...
+        if canary == None:
+            self.sorting.destroy() #from or window with button...
+        elif canary.winfo_exists():
+            canary.destroy() #Just delete the one
+        elif canary2.winfo_exists():
+            canary2.destroy() #or the other
         return value
 def returndictdestroynsortnext(self,parent,values):
     """Kills self.sorting *and* parent."""
