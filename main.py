@@ -375,7 +375,7 @@ class Check():
         if (not hasattr(self,'interpret')) or (self.interpret == None):
             self.interpret={}
         for var in ['G','N','S','Nwd','d','ː']:
-            log.log(2,_("Variable {} current value: {}").format(var,
+            log.log(5,_("Variable {} current value: {}").format(var,
                                                             self.distinguish))
             if ((var not in self.distinguish) or
                 (type(self.distinguish[var]) is not bool)):
@@ -385,7 +385,7 @@ class Check():
             log.log(2,_("Variable {} current value: {}").format(var,
                                                         self.distinguish[var]))
         for var in ['NC','CG','CS','VV','VN']:
-            log.log(2,_("Variable {} current value: {}").format(var,
+            log.log(5,_("Variable {} current value: {}").format(var,
                                                             self.interpret))
             if ((var not in self.interpret) or
                 (type(self.interpret[var]) is not str) or
@@ -536,9 +536,8 @@ class Check():
         self.runwindow.options['ss']='VN'
         self.runwindow.options['text']=_('How do you want to interpret '
                                         '\nVowel-Nasal (VN) sequences?')
-        self.runwindow.options['opts']=[('VN','VN=VN (≠Ṽ, ≠V)'),
-                                    ('Ṽ','VN=Ṽ (≠VN, ≠V)'),
-                                    ('V','VN=V (≠VN, ≠Ṽ)')]
+        self.runwindow.options['opts']=[('VN','VN=VN (≠Ṽ)'),
+                                    ('Ṽ','VN=Ṽ (≠VN)')]
         buttonframeframe(self)
         """Submit button, etc"""
         self.runwindow.frame2d=Frame(self.runwindow.scroll.content)
@@ -1380,6 +1379,10 @@ class Check():
             self.s[self.analang]['Vː']+=self.s[self.analang]['VV']
         #I never want this, but for the above, because VV is just V+V:
         del self.s[self.analang]['VV']
+        if self.interpret['VN']=='Ṽ':
+            self.s[self.analang]['Ṽ']=list((v+n
+                                            for v in self.s[self.analang]['V']
+                                            for n in self.s[self.analang]['N']))
         # Unlike the above, the following have implied else: with ['XY']=XY.
         if self.interpret['CG']=='C':
             self.s[self.analang]['C']+=self.s[self.analang]['CG']
@@ -1438,10 +1441,10 @@ class Check():
         formori=form
         """priority sort alphabets (need logic to set one or the other)"""
         """Look for any C, don't find N or G"""
-        priority=['#','C','N','G','S','V']
+        priority=['#','̃','C','N','G','S','V']
         """Look for word boundaries, N and G before C (though this doesn't
         work, since CG is captured by C first...)"""
-        priority=['#','N','G','S','C','V','d','b']
+        priority=['#','̃','N','G','S','C','Ṽ','V','d','b']
         log.log(15,"Searching {} in this order: {}".format(form,
                         sorted(self.rx.keys(),
                         key=lambda cons: (-len(cons),
@@ -4838,7 +4841,7 @@ class Label(tkinter.Label):
         # if 'photo' in kwargs:
         #     del kwargs['photo']
         # print(kwargs.keys())
-        tkinter.Label.__init__(self, parent, text=text, **kwargs)
+        tkinter.Label.__init__(self, parent, text=nfc(text), **kwargs)
         self['background']=self.theme['background']
 class EntryField(tkinter.Entry):
     def __init__(self, parent, **kwargs):
@@ -4875,9 +4878,6 @@ class RadioButtonFrame(Frame):
         sticky='w'
         self.parent=parent
         inherit(self)
-        # self.theme=parent.theme
-        # if 'font' not in kwargs:
-        #     kwargs['font']=self.fonts['default']
         super(RadioButtonFrame,self).__init__(parent,**kwargs)
         kwargs['background']=self.theme['background']
         kwargs['activebackground']=self.theme['activebackground']
@@ -4941,7 +4941,7 @@ class Button(tkinter.Button):
                     cmd=lambda :command('choice')
                 else:
                     cmd=lambda :command()
-        tkinter.Button.__init__(self, parent, text=text, command=cmd,
+        tkinter.Button.__init__(self, parent, text=nfc(text), command=cmd,
                                 **kwargs)
         self.grid(column=column, row=row, sticky=sticky)
 class RecordButtonFrame(Frame):
@@ -5549,7 +5549,7 @@ def inherit(self,attr=None):
     for attr in attrs:
         setattr(self,attr,getattr(self.parent,attr))
 def nfc(x):
-    return unicodedata.normalize('NFC', x)
+    return unicodedata.normalize('NFC', str(x))
     # print("self.fonts: {}, self.parent.fonts: {}".format(self.fonts,self.parent.fonts))
     # self.fonts=self.parent.fonts
     # self.theme=self.parent.theme
