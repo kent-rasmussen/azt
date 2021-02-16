@@ -2806,6 +2806,7 @@ class Check():
             entryview.grid(column=1, row=1, sticky="new")
             self.sorting.grid(column=0,row=0, sticky="w",pady=50)
             self.sorting.wrap()
+            self.runwindow.ww.close()
             self.runwindow.wait_window(window=self.sorting)
             if not self.runwindow.winfo_exists():
                 return
@@ -2876,6 +2877,7 @@ class Check():
             if not self.runwindow.winfo_exists():
                 return
             self.runwindow.resetframe() #just once per group
+            self.runwindow.wait()
             title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
                                         self.languagenames[self.analang],
                                         self.subcheck,
@@ -2923,6 +2925,7 @@ class Check():
                             font=self.fonts['instructions']
                             )
             b.grid(column=0, row=0, sticky="ew")
+            self.runwindow.ww.close()
             b.wait_window(bf)
             if self.groupselected == "ALLOK":
                 print(f"User selected '{oktext}', moving on.")
@@ -3029,6 +3032,7 @@ class Check():
                 self.groupselected='' #reset
                 return 0
             if self.groupselected != None:
+                self.runwindow.wait()
                 print("Now we're going to join groups",group1,"an"
                     "d",self.groupselected,".")
                 """All the senses we're looking at, by ps/profile"""
@@ -3038,6 +3042,7 @@ class Check():
                 self.subcheck=self.groupselected
                 self.updatestatus() #not verified=True --if any joined.
                 print('Mark',self.groupselected,'as unverified!!?!')
+                self.runwindow.ww.close()
                 return 1
         elif self.groupselected == "ALLOK":
             print(f"User selected '{oktext}', moving on.")
@@ -3326,6 +3331,7 @@ class Check():
             t=(_("Run Window"))
             self.runwindow=Window(self.frame,title=t)
             self.runwindow.title(t)
+        self.runwindow.wait()
     def runcheck(self):
         self.storedefaults() #This is not called in checkcheck.
         t=(_('Run Check'))
@@ -3402,7 +3408,7 @@ class Check():
             log.info('no runwindow frame; quitting!')
             return
         self.runwindow.resetframe()
-        ww=Wait(self.runwindow)
+        self.runwindow.wait()
         for psprofile in self.profilecounts:
             if self.ps==psprofile[2] and self.profile==psprofile[1]:
                 count=psprofile[0]
@@ -3466,7 +3472,7 @@ class Check():
                     self.makelabelsnrecordingbuttons(buttonframes.content,
                                                     sense)
             row+=1
-        ww.close()
+        self.runwindow.ww.close()
         self.runwindow.wait_window(self.runwindow.frame)
     def showentryformstorecord(self,justone=True):
         """Save these values before iterating over them"""
@@ -3609,7 +3615,7 @@ class Check():
         text=(_("{} roots of form {} by {}".format(self.ps,self.profile,
                                                             self.name)))
         Label(self.results, text=text).grid(column=0, row=i)
-        ww=Wait(self.runwindow)
+        self.runwindow.wait()
         si=xlp.Section(xlpr,text)
         # p=xlp.Paragraph(si,instr)
         font=self.frame.fonts['read']
@@ -3679,7 +3685,7 @@ class Check():
                             width=15, row=i,
                             column=1, command=self.notpicked)
         xlpr.close()
-        ww.close()
+        self.runwindow.ww.close()
         if senseid == 0: #i.e., nothing was found above
             print(_('No results!'))
             Label(self.results, text=_("No results for ")+self.regexCV+"!"
@@ -3729,7 +3735,6 @@ class Check():
         log.info("Starting report...")
         self.storedefaults()
         self.getrunwindow()
-        ww=Wait(self.runwindow)
         self.tonereportfile=''.join([str(self.reportbasefilename),'_',
                             self.ps,'_',
                             self.profile,
@@ -3868,7 +3873,7 @@ class Check():
                 #                                         "‘"+gloss2+"’"))
                 output(window,r,text)
                 self.db.addtoneUF(senseid,groupname,analang=self.analang)
-        ww.close()
+        self.runwindow.ww.close()
         xlpr.close()
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
         output(window,r,text)
@@ -3917,7 +3922,7 @@ class Check():
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
         print(instr)
         log.info(instr)
-        ww=Wait(self) #non-widget parent deiconifies no window...
+        self.frame.wait() #non-widget parent deiconifies no window...
         self.basicreported={}
         self.printprofilesbyps()
         self.makecountssorted() #This populates self.profilecounts
@@ -3967,7 +3972,7 @@ class Check():
         xlpr.close()
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        ww.close()
+        self.frame.ww.close()
         self.type=typeori
         self.profile=profileori
         self.ps=psori
@@ -4244,6 +4249,15 @@ class Window(tkinter.Toplevel):
                 self.frame.destroy()
             self.frame=Frame(self.outsideframe)
             self.frame.grid(column=0,row=0,sticky='we')
+    def wait(self):
+        if hasattr(self,'ww') and self.ww.winfo_exists() == True:
+            log.debug("There is already a wait window: {}".format(self.ww))
+            return #don't make another one...
+        # try:
+        #     log.debug("Apparently there is not already a wait window: {}".format(self.ww))
+        # except:
+        #     log.debug("Apparently there is not already a wait window.")
+        self.ww=Wait(self)
     def __init__(self, parent,
                 backcmd=False, exit=True,
                 title="No Title Yet!", choice=None,
