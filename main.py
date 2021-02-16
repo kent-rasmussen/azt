@@ -383,14 +383,14 @@ class Check():
                 self.distinguish[var]=False #don't change this default, yet...
             log.log(2,_("Variable {} current value: {}").format(var,
                                                         self.distinguish[var]))
-        for var in ['NC','CG','CS','VV']:
+        for var in ['NC','CG','CS','VV','VN']:
             log.log(2,_("Variable {} current value: {}").format(var,
                                                             self.interpret))
             if ((var not in self.interpret) or
                 (type(self.interpret[var]) is not str) or
                 not(1 <=len(self.interpret[var])<= 2)):
-                if var=='VV':
-                    self.interpret[var]='VV'
+                if (var == 'VV') or (var == 'VN'):
+                    self.interpret[var]=var
                 else:
                     self.interpret[var]='CC'
                 log.log(2,_("Variable {} current value: {}").format(var,
@@ -531,6 +531,13 @@ class Check():
         self.runwindow.options['opts']=[('CG','CG=CG (≠C, ≠CC)'),
                                     ('C','CG=C (≠CG, ≠CC)'),
                                     ('CC','CG=CC (≠CG, ≠C)')]
+        buttonframeframe(self)
+        self.runwindow.options['ss']='VN'
+        self.runwindow.options['text']=_('How do you want to interpret '
+                                        '\nVowel-Nasal (VN) sequences?')
+        self.runwindow.options['opts']=[('VN','VN=VN (≠Ṽ, ≠V)'),
+                                    ('Ṽ','VN=Ṽ (≠VN, ≠V)'),
+                                    ('V','VN=V (≠VN, ≠Ṽ)')]
         buttonframeframe(self)
         """Submit button, etc"""
         self.runwindow.frame2d=Frame(self.runwindow.scroll.content)
@@ -4873,12 +4880,13 @@ class RadioButtonFrame(Frame):
         for opt in self.opts:
             value=opt[0]
             name=opt[1]
-            RadioButton(self,variable=self.var, value=value, text=name,
-                                                            column=column,
-                                                            row=row,
-                                                            sticky=sticky,
-                                                            indicatoron=0,
-                                                            **kwargs)
+            log.info("Value: {}; name: {}".format(value,name))
+            RadioButton(self,variable=self.var, value=value, text=nfc(name),
+                                                column=column,
+                                                row=row,
+                                                sticky=sticky,
+                                                indicatoron=0,
+                                                **kwargs)
             row+=1
 class Button(tkinter.Button):
     def __init__(self, parent, text=None,
@@ -5527,6 +5535,8 @@ def inherit(self,attr=None):
         attrs=[attr]
     for attr in attrs:
         setattr(self,attr,getattr(self.parent,attr))
+def nfc(x):
+    return unicodedata.normalize('NFC', x)
     # print("self.fonts: {}, self.parent.fonts: {}".format(self.fonts,self.parent.fonts))
     # self.fonts=self.parent.fonts
     # self.theme=self.parent.theme
