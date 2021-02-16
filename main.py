@@ -1334,6 +1334,10 @@ class Check():
         # Make lists that combine each of the remaining possibilities
         self.s[self.analang]['VV']=list((v+v
                                         for v in self.s[self.analang]['V']))
+        if self.distinguish['ː'] == True:
+            self.s[self.analang]['Vː']=list((v+l
+                                    for v in self.s[self.analang]['V']
+                                    for l in self.s[self.analang]['ː']))
         self.s[self.analang]['CG']=list((char+g
                                         for char in self.s[self.analang]['C']
                                         for g in self.s[self.analang]['G']))
@@ -1364,8 +1368,9 @@ class Check():
         if self.interpret['VV']=='V':
             self.s[self.analang]['V']+=self.s[self.analang]['VV']
         elif (self.interpret['VV']=='Vː') and (self.distinguish['ː']==True):
-            self.s[self.analang]['Vː']=self.s[self.analang]['VV'] #first make
-        del self.s[self.analang]['VV'] #I never want this, but for the above.
+            self.s[self.analang]['Vː']+=self.s[self.analang]['VV']
+        #I never want this, but for the above, because VV is just V+V:
+        del self.s[self.analang]['VV']
         # Unlike the above, the following have implied else: with ['XY']=XY.
         if self.interpret['CG']=='C':
             self.s[self.analang]['C']+=self.s[self.analang]['CG']
