@@ -2626,6 +2626,17 @@ class Check():
     def renamegroup(self):
         def submitform():
             newtonevalue=formfield.get()
+            if newtonevalue in self.tonegroups:
+                er=Window(self.runwindow)
+                l=Label(er,text=_("Sorry, there is already a group with that "
+                                "label; If you want to join the groups, "
+                                "give it a different name now, and join "
+                                "it after they are both verified ({} is "
+                                "already in {})".format(newtonevalue,
+                                                        self.tonegroups)))
+                l.grid(row=0,column=0)
+                self.gettonegroups()
+                return
             self.updatebysubchecksenseid(self.subcheck,newtonevalue)
             self.subcheck=newtonevalue
             # print('Pre-rename tonegroups:',self.tonegroups)
