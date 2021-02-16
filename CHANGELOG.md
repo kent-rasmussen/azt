@@ -1,21 +1,21 @@
 # Changelog
 
-## Verify Problem
+## In Process
+- setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
+    - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
+- done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
+
+### Verify Problem
 - fix multiple links to the same recording
 - check that changes to S regexs don't break too much.
 - diagnose pl/imp not appearing on recording screen
     - not really there?
     - pushed off the screen?
 
-## In Process
-- setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
-    - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
-- done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
-
-## Next Features
+### Next Features
 - add C and V sorting (and CV?)
 
-## Some Day, if possible
+### Some Day, if possible
 - XLP export (these are not likely to happen)
     - run dotexpdf (once you figure out where that is) to generate pdf?
     - run script to generate html?
