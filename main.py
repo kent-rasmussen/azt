@@ -1156,6 +1156,7 @@ class Check():
             print("Problem importing",self.statusfile)
             self.status={}
     def updatestatus(self,verified=False):
+        #This function updates the status file, not the lift file.
         if self.type not in self.status:
             self.status[self.type]={}
         if self.ps not in self.status[self.type]:
@@ -5478,7 +5479,6 @@ def availablexy(self,w=None):
     log.debug("rows: {}".format(rowheight))
 def returndictnsortnext(self,parent,values,canary=None,canary2=None):
     """Kills self.sorting, not parent."""
-    # print(self,parent,values)
     for value in values:
         setattr(self,value,values[value])
         if canary == None:
