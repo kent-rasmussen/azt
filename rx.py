@@ -43,9 +43,9 @@ def s(check,stype,lang=None):
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
     if (lang == None) and (hasattr(check,'analang')):
-        log.debug(_('telling rx.s which lang to use'))
+        log.log(2,_('telling rx.s which lang to use'))
         lang=check.analang
-        log.debug(_("Using analang: {}".format(check.analang)))
+        log.log(2,_("Using analang: {}".format(check.analang)))
     log.log(2,_("Looking in check.s[{}]: {}".format(lang,check.s[lang])))
     if stype == "C-N":
         list=set(check.s[lang]['C'])-set(check.s[lang]['N'])
