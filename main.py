@@ -3569,14 +3569,14 @@ class Check():
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
                 text=framed['formatted']
-                Label(examplesframe, anchor='w',text=text
-                                    ).grid(row=row, column=0, sticky='w')
                 log.info('recordbuttonframetry')
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
                                     form=nn(framed[self.analang]),
                                     gloss=nn(framed[self.glosslang])
                                     ) #no gloss2; form/gloss just for filename
-                rb.grid(row=row,column=1,sticky='w')
+                rb.grid(row=row,column=0,sticky='w')
+                Label(examplesframe, anchor='w',text=text
+                                        ).grid(row=row, column=1, sticky='w')
             row+=1
             d=Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
             d.grid(row=row,column=0)
