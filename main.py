@@ -3874,7 +3874,8 @@ class Check():
                 definition."""
                 if (('values' in groups[group]) and (x in groups[group]['values'])
                     and (groups[group]['values'][x] !=[])):
-                    l.append(x+': '+groups[group]['values'][x][0])
+                    log.debug('x: {}; values: {}'.format(x,str(groups[group]['values'][x])))
+                    l.append(x+': '+str(groups[group]['values'][x][0]))
             text=_('Values by frame: {}'.format('\t'.join(l)))
             p1=xlp.Paragraph(s1,text)
             output(window,r,text)
