@@ -2831,8 +2831,7 @@ class Check():
             if not self.runwindow.winfo_exists():
                 return
             print("Group selected:",self.groupselected)
-            if (self.tonegroups == [] or
-                        self.groupselected == "NONEOFTHEABOVE"):
+            if (self.groupselected == "NONEOFTHEABOVE"):
                 """If there are no groups yet, or if the user asks for another
                 group, make a new group."""
                 self.groupselected=self.addtonegroup()
