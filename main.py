@@ -3533,6 +3533,8 @@ class Check():
         for senseid in senses:
             print("Working on ",senseid)
             row=0
+            if not self.runwindow.winfo_exists():
+                return 1
             entryframe=Frame(self.runwindow.frame)
             entryframe.grid(row=1,column=0)
             """This is the title for each page: isolation form and glosses."""
@@ -3605,7 +3607,9 @@ class Check():
             for i in range(self.examplespergrouptorecord):
                 log.info(_('Giving user the number {} example from each tone '
                         'group ({}) with index'.format(i,self.toneUFgroups)))
-                self.showsenseswithexamplestorecord(batch[i])
+                exited=self.showsenseswithexamplestorecord(batch[i])
+                if exited == True:
+                    return
             if self.runwindow.winfo_exists():
                 Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
                 text=_("All done! Sort some more words, and come back.")
