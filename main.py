@@ -3537,7 +3537,7 @@ class Check():
             entryframe=Frame(self.runwindow.frame)
             entryframe.grid(row=1,column=0)
             """This is the title for each page: isolation form and glosses."""
-            framed=self.getframeddata(senseid,noframe=True)
+            framed=self.getframeddata(senseid,noframe=True,notonegroup=True)
             if framed[self.analang]=='noform':
                 entryframe.destroy()
                 continue
