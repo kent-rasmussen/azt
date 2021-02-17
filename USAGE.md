@@ -78,7 +78,9 @@ The main window menu allows each of these to be changed as needed.
 ### Tone Frames
 Assuming you don't have any tone frames set up yet, you will be asked to do so when you try to sort on tone. You can also do that in the Advanced menu, for as many frames as you want to define. Note the *name* is important, as this is how you will refer to this frame, and how it will be identified in your database in the future (until/unless you change that). So if you're testing the plural form, something like "Pl" or "Plural", or "Pluriel" might be appropriate --but this is just a name, so make it distinct but useful to your workflow.
 
-I hope the `Add Tone Frame` window is otherwise clear. The frame calculator is not particularly smart; **it just puts content before and after the form and one or two glosses** for each word, so you need to give it that information. If that information (in the form or gloss) alternates in agreement or harmony with the lexicon word forms, you should think through how you want to resolve potential clashes, e.g., by
+I hope the `Add Tone Frame` window is otherwise clear, though two points are in order:
+1. I have seen on at least one MS Windows system, that keyboarding that takes multiple keystrokes to produce a character (like 'n'+'>' → 'ŋ') may show up as '?' in the entry field. If this happens, *do* *not* ignore it, as this will be on every window, and added to your database examples. Rather, type the correct characters into another program (e.g., text editor), then cut and paste into this field, and it should appear correctly.
+2. The frame calculator is not particularly smart; **it just puts content before and after the form and one or two glosses** for each word, so you need to give it that information. If that information (in the form or gloss) alternates in agreement or harmony with the lexicon word forms, you should think through how you want to resolve potential clashes, e.g., by
 
 - including all options in the frame:
     - `pl form: '__s/z/ɪz'` (with all forms given for each word in that frame)
