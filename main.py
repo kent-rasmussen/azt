@@ -3612,6 +3612,7 @@ class Check():
                 if exited == True:
                     return
             if self.runwindow.winfo_exists():
+                self.runwindow.ww.close()
                 Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
                 text=_("All done! Sort some more words, and come back.")
                 ).grid(row=0,column=0,rowspan=2,sticky='w')
