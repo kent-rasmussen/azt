@@ -3560,6 +3560,7 @@ class Check():
                 Label(self.runwindow.frame, anchor='w', font=self.fonts['read'],
                         text=text).grid(row=1,column=0,sticky='w')
                 continue #return #I want the "next" button...
+            examples.reverse()
             for example in examples:
                 """These should already be framed!"""
                 framed=self.getframeddata(example,noframe=True)
