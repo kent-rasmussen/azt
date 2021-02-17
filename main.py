@@ -2719,7 +2719,7 @@ class Check():
                 """Don't know how many joins we'll need, nor the results of
                 susequent verifications or sorts"""
                 self.maybesort()
-                self.runwindow.ww.done()
+                self.runwindow.ww.close()
                 return
             elif joined == False and self.runwindow.winfo_exists():
                 self.runwindow.resetframe()
