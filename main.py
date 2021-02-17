@@ -711,7 +711,7 @@ class Check():
             row=0
             for lang in langs:
                 print('frame[{}]:'.format(lang),frame[lang])
-                tf[lang]=('form: '+frame[lang])
+                tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
                 tfd[lang]=('(ex: '+framed[lang]+')')
                 l1=Label(window.frame2,
                         text=tf[lang],
