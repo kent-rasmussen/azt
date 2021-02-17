@@ -11,6 +11,7 @@
     - include instructions with "up to" this number.
 
 ### Verify Problem
+- include tone grouping in recording pages?
 - fix multiple links to the same recording
 - check that changes to S regexs don't break too much.
 - diagnose pl/imp not appearing on recording screen
