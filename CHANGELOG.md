@@ -4,6 +4,11 @@
 - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
     - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
 - done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
+- Make Wait window show background color and label message in MS Windows (working fine in Linux)
+- Fix 'ŋ' display problem in entry fields in MS windows (working fine in Linux)
+    [x] noted issue in USAGE.md
+- set up user option for number of tone examples to record (set to [1,5,100,1000])
+    - include instructions with "up to" this number.
 
 ### Verify Problem
 - fix multiple links to the same recording
@@ -64,6 +69,9 @@
 - Fixed/improved JoinT appearance and function
 - Added window with error message if tone group rename function attempts to use a name already in use.
 - windows now (mostly?) on the screen for MS Windows
+- Fixed problem where skipping first word in sort created a group button
+- reverse selection of examples for recording; they now appear most recent first.
+- put recording buttons on the left, so they would never be pushed off the screen
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
