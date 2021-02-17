@@ -3580,6 +3580,7 @@ class Check():
             row+=1
             d=Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
             d.grid(row=row,column=0)
+            self.runwindow.ww.close()
             examplesframe.wait_window(entryframe)
     def showtonegroupexs(self):
         if (not(hasattr(self,'examplespergrouptorecord')) or
@@ -3872,7 +3873,8 @@ class Check():
                 """This shouldn't crash if a word is lacking a value for a
                 location. Just don't include that location in the group
                 definition."""
-                if (('values' in groups[group]) and (x in groups[group]['values'])
+                if (('values' in groups[group]) and
+                        (x in groups[group]['values'])
                     and (groups[group]['values'][x] !=[])):
                     log.debug('x: {}; values: {}'.format(x,str(groups[group]['values'][x])))
                     l.append(x+': '+str(groups[group]['values'][x][0]))
