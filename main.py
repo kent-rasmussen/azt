@@ -3221,7 +3221,7 @@ class Check():
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.gettonegroups() #sets self.tonegroups
     def tryNAgain(self):
-        subcheckori=self.subcheck.copy()
+        subcheckori=self.subcheck
         for self.subcheck in ['NA']:
             for senseid in self.senseidstosort:
                 self.db.rmexfields(senseid=senseid,fieldtype='tone', #I might want to generalize this later...
