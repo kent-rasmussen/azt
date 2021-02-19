@@ -643,45 +643,40 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         guid=senseid=self.makenewguid()
         while guid == senseid:
             senseid=self.makenewguid()
-        log.info(' '.join('newguid:',guid))
-        log.info(' '.join('newsenseid:',senseid))
+        log.info('newguid: {}'.format(guid))
+        log.info('newsenseid: {}'.format(senseid))
         now=getnow()
+        analang=kwargs['analang']
         entry=ET.SubElement(self.nodes, 'entry', attrib={
                                 'dateCreated':now,
                                 'dateModified':now,
                                 'guid':guid,
-                                'id':(kwargs['langform']+'_'+str(guid))
+                                'id':(kwargs['form'][analang]+'_'+str(guid))
                                 })
         lexicalunit=ET.SubElement(entry, 'lexical-unit', attrib={})
         form=ET.SubElement(lexicalunit, 'form',
-                                        attrib={'lang':kwargs['analang']})
+                                        attrib={'lang':analang})
         text=ET.SubElement(form, 'text')
-        text.text=kwargs['langform']
+        text.text=kwargs['form'][analang]
         """At some point, I'll want to distinguish between these two"""
         citation=ET.SubElement(entry, 'citation', attrib={})
-        form=ET.SubElement(citation, 'form', attrib={'lang':kwargs['analang']})
+        form=ET.SubElement(citation, 'form', attrib={'lang':analang})
         text=ET.SubElement(form, 'text')
-        text.text=kwargs['langform']
+        text.text=kwargs['form'][analang]
+        del kwargs['form'][analang] #because we're done with this.
         sense=ET.SubElement(entry, 'sense', attrib={'id':senseid})
         grammaticalinfo=ET.SubElement(sense, 'grammatical-info',
                                             attrib={'value':kwargs['ps']})
         definition=ET.SubElement(sense, 'definition')
-        form=ET.SubElement(definition, 'form',
-                                        attrib={'lang':kwargs['glosslang']})
-        text=ET.SubElement(form, 'text')
-        text.text=kwargs['glossform']
-        gloss=ET.SubElement(sense, 'gloss', attrib={'lang':kwargs['glosslang']})
-        text=ET.SubElement(gloss, 'text')
-        text.text=kwargs['glossform']
-        if (glosslang2 in kwargs) and (glossform2 in kwargs):
+        for glosslang in kwargs['form']: #now just glosslangs
             form=ET.SubElement(definition, 'form',
-                                        attrib={'lang':kwargs['glosslang2']})
+                                attrib={'lang':glosslang})
             text=ET.SubElement(form, 'text')
-            text.text=kwargs['glossform2']
+            text.text=kwargs['form'][glosslang]
             gloss=ET.SubElement(sense, 'gloss',
-                                        attrib={'lang':kwargs['glosslang2']})
+                                attrib={'lang':glosslang})
             text=ET.SubElement(gloss, 'text')
-            text.text=kwargs['glossform2']
+            text.text=kwargs['form'][glosslang]
         self.write()
         """Since we added a guid and senseid, we want to refresh these"""
         self.getguids()
