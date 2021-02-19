@@ -500,6 +500,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         "/citation/form"
                         ),['guid','senseid','ps']),
                 'attr': 'lang'},
+            'pronunciationlang':{
+                'cm': "analysis languages used in citation forms",
+                'url':(("entry[@guid='{guid}']"
+                        "/sense[@id='{senseid}']"
+                        "/grammatical-info[@value='{ps}']/../.."
+                        "/pronunciation/form"
+                        ),['guid','senseid','ps']),
+                'attr': 'lang'},
             'glosslang':{
                 'cm': "gloss languages used in glosses",
                 'url':(("entry[@guid='{guid}']"
@@ -1113,7 +1121,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.log(1,_("Looking for analangs in lift file"))
         self.audiolangs=[]
         self.analangs=[]
-        possibles=list(dict.fromkeys(self.get('lexemelang')+self.get('citationlang')))
+        possibles=list(dict.fromkeys(self.get('lexemelang')+self.get('citation'
+                                        'lang')+self.get('pronunciationlang')))
         log.info(_("Possible analysis language codes found: {}".format(possibles)))
         for glang in ['fr','en']:
             if glang in possibles:
