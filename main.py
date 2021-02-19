@@ -2032,7 +2032,8 @@ class Check():
         # ButtonFram
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.frame.status)
-        self.soundsettingswindow.destroy()
+        if self.soundsettingswindow.winfo_exists:
+            self.soundsettingswindow.destroy()
     def maybeboard(self):
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
