@@ -4399,7 +4399,7 @@ class ScrollingFrame(Frame):
         # print(height,width)
         """This is how much space the contents of the scrolling canvas is asking
         for. We don't need the scrolling frame to be any bigger than this."""
-        contentrw=self.content.winfo_reqwidth()
+        contentrw=self.content.winfo_reqwidth()+self.yscrollbarwidth
         contentrh=self.content.winfo_reqheight()
         for child in self.content.winfo_children():
             contentrw=max(contentrw,child.winfo_reqwidth())
@@ -4452,9 +4452,10 @@ class ScrollingFrame(Frame):
         yscrollbar = tkinter.Scrollbar(self)
         yscrollbar.grid(row=0, column=1, sticky=tkinter.N+tkinter.S)
         """Should decide some day which we want when..."""
-        yscrollbar.config(width=50) #make the scrollbars big!
-        yscrollbar.config(width=0) #make the scrollbars invisible (use wheel)
-        yscrollbar.config(width=15) #make the scrollbars useable...
+        self.yscrollbarwidth=50 #make the scrollbars big!
+        self.yscrollbarwidth=0 #make the scrollbars invisible (use wheel)
+        self.yscrollbarwidth=15 #make the scrollbars useable, but not obnoxious
+        yscrollbar.config(width=self.yscrollbarwidth)
         yscrollbar.config(background=self.theme['background'])
         yscrollbar.config(activebackground=self.theme['activebackground'])
         yscrollbar.config(troughcolor=self.theme['background'])
