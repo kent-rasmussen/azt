@@ -3201,9 +3201,10 @@ class Check():
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.gettonegroups() #sets self.tonegroups
     def tryNAgain(self):
+        self.settonevariablesbypsprofile()
         subcheckori=self.subcheck
         for self.subcheck in ['NA']:
-            for senseid in self.senseidstosort:
+            for senseid in self.senseidstosort: #this is a ps-profile slice
                 self.db.rmexfields(senseid=senseid,fieldtype='tone', #I might want to generalize this later...
                                 location=self.name,fieldvalue=self.subcheck,
                                 showurl=True
