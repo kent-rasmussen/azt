@@ -5039,7 +5039,13 @@ class RecordButtonFrame(Frame):
             if form==None:
                 form=node.find(f"form[@lang='{check.analang}']/text").text
             wavfilename=''
-            args=[check.ps, id, self.node.tag, form, gloss] #check.profile, <=Changes!
+            if (self.node.tag == 'example') and (check.analang != 'bfj'): #for now, since in process
+                l=self.node.find("field[@type='location']//text")
+                if l is not None:
+                    psprofile=check.ps+'-'+l.text
+                else: psprofile=check.ps
+            else: psprofile=check.ps
+            args=[psprofile, id, self.node.tag, form, gloss] #check.profile, <=Changes!
             for arg in args:
                 wavfilename+=arg
                 if args.index(arg) < len(args):
