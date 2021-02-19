@@ -3169,15 +3169,6 @@ class Check():
     def getidstosort(self):
         """These variables should not have to be reset between checks"""
         """If needed, this will break..."""
-        # if ((self.ps not in self.profilesbysense) or
-        #         (self.profile not in self.profilesbysense[self.ps])):
-        #     profiles.wordsbypsprofile(self.db,self.ps,self.profile)
-        # print('self.ps:',self.ps,self.profilesbysense.keys())
-        # print('self.ps.keys:',self.ps,
-        #         self.profilesbysense[self.ps].keys())
-        # print('self.profile.keys:',self.profile,
-        #         self.profilesbysense[self.ps][self.profile])
-        # print(self.profilesbysense[self.ps][self.profile])
         self.senseidstosort=list(self.profilesbysense[self.ps]
                                                     [self.profile])
     def sortingstatus(self):
@@ -4356,11 +4347,9 @@ class Frame(tkinter.Frame):
     def __init__(self, parent, **kwargs):
         self.parent = parent
         inherit(self)
-        # _=self._
         """tkinter.Frame thingies below this"""
         tkinter.Frame.__init__(self,parent,**kwargs)
         self['background']=parent['background']
-        """Hang on to these for labels and buttons:"""
 class ScrollingFrame(Frame):
     def _bound_to_mousewheel(self, event):
         # with Windows OS
@@ -4701,39 +4690,6 @@ class MainApplication(Frame):
         self.parent.program=program
         # self.setinterfacelang()
         self.parent._= setinterfacelang(self.parent.interfacelang)
-    # def setinterfacelang(self):
-    #     """Attention: this just calls the global function with the class
-    #     variable as a parameter."""
-    #     print(self.parent.interfacelang)
-    #     setinterfacelang(self.parent.interfacelang)
-    #     # if self.interfacelang == 'en':
-    #     #     # interfacelang(lang=self.interfacelang)
-    #     #     _ = gettext.gettext #for untranslated American English
-    #     #     print(_("Translated!"))
-    #     # else:
-    #     #     interfacelang(lang=self.interfacelang)
-    #     # file.writeinterfacelangtofile(self.interfacelang)
-    # def setinterfacelangwrapper(self,choice,window):
-    #         """This can't use Check.set, because checkcheck and attribute aren't
-    #         in the same class"""
-    #         # self.parent.interfacelang=choice
-    #         # self.
-    #         setinterfacelang(choice)
-    #         window.destroy()
-    #         self.check.checkcheck()
-    # def getinterfacelang(self):
-    #         print("Asking for interface language...")
-    #         window=Window(self.frame, title=_('Select Interface Language'))
-    #         Label(window.frame, text=_('What language do you want this program '
-    #                                 'to address you in?')
-    #                 ).grid(column=0, row=0)
-    #         # pss=self.interfacelangs
-    #         # print(pss)
-    #         buttonFrame1=ButtonFrame(window.frame,
-    #                                 self.parent.interfacelangs,self.setinterfacelangwrapper,
-    #                                 window
-    #                                 )
-    #         buttonFrame1.grid(column=0, row=1)
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
