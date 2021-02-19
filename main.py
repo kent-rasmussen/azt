@@ -921,10 +921,7 @@ class Check():
         else:
             pss=self.db.pss
         print(pss)
-        buttonFrame1=ButtonFrame(window.frame,
-                                pss,self.setps,
-                                window
-                                )
+        buttonFrame1=ScrollingButtonFrame(window.frame,pss,self.setps,window)
         buttonFrame1.grid(column=0, row=1)
     def getprofile(self):
         log.info("Asking for profile...")
@@ -5187,16 +5184,16 @@ class ButtonFrame(Frame):
                     **kwargs
                     )
             i=i+1
-class ScrollingButtonFrame(ButtonFrame):
+class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
     """This needs to go inside another frame, for accurrate grid placement"""
-    def __init__(self,parent,
-                    optionlist,command,
-                    window=None,
-                    **kwargs
-                    ):
-        scroll=ScrollingFrame(parent)
-        super().__init__(scroll.content,optionlist,command,window,**kwargs)
-        self.grid(row=0,column=0)
+    def __init__(self,parent,optionlist,command,window=None,**kwargs):
+        ScrollingFrame.__init__(self,parent)
+        self.bf=ButtonFrame(parent=self.content,
+                            optionlist=optionlist,
+                            command=command,
+                            window=window,
+                            **kwargs)
+        self.bf.grid(row=0, column=0)
 class Wait(tkinter.Toplevel): #Window?
     def close(self):
         try:
