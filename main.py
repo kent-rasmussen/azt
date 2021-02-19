@@ -4525,12 +4525,12 @@ class MainApplication(Frame):
         changemenu.add_cascade(label=_("Languages"), menu=languagemenu)
         menubar.add_cascade(label=_("Change"), menu=changemenu)
         """Word/data choice stuff"""
-        filtermenu = Menu(menubar, tearoff=0)
-        filtermenu.add_command(label=_("Part of speech"),
+        # filtermenu = Menu(menubar, tearoff=0)
+        changemenu.add_command(label=_("Part of speech"),
                         command=lambda x=check:Check.getps(x))
-        filtermenu.add_command(label=_("Syllable profile"),
+        changemenu.add_command(label=_("Syllable profile"),
                         command=lambda x=check:Check.getprofile(x))
-        changemenu.add_cascade(label=_("Words"), menu=filtermenu)
+        # changemenu.add_cascade(label=_("Words"), menu=filtermenu)
         """What to check stuff"""
         checkmenu = Menu(menubar, tearoff=0)
         checkmenu.add_command(label=_("Sound type (Consonant, Vowel, or Tone)"),
