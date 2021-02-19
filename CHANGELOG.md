@@ -4,28 +4,37 @@
 - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
     - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
 - done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
-- Make Wait window show background color and label message in MS Windows (working fine in Linux)
-- Fix 'ŋ' display problem in entry fields in MS windows (working fine in Linux)
-    [x] noted issue in USAGE.md
 - set up user option for number of tone examples to record (set to [1,5,100,1000])
     - include instructions with "up to" this number.
+- TIME?:For recording windows, consider adding a "skip to next undone"
+- TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
+- cycle through tone groups to record based on volume of the group.
+- show count of batch numbers on recording screen
+- TIME:set up not sorting on profile for small classes
+- set up summary table for XLP tone export
 
 ### Verify Problem
-- include tone grouping in recording pages?
 - fix multiple links to the same recording
 - check that changes to S regexs don't break too much.
 - diagnose pl/imp not appearing on recording screen
     - not really there?
     - pushed off the screen?
+- Report not showing all examples in profile and sorting (50ish of 139 CV in bfj)
 
 ### Next Features
 - add C and V sorting (and CV?)
-
+- model form construct with fields for CV info and tone info, which may contain variables (HAB,CONT) in addition to H, L, etc.
 ### Some Day, if possible
+- have automatic choice of ps-profile go through all defined frames, then next most populous ps-profile
+- include tone grouping in recording pages?
 - XLP export (these are not likely to happen)
     - run dotexpdf (once you figure out where that is) to generate pdf?
     - run script to generate html?
     - figure out window specific variations (with Andy?)
+- set tone report to ignore NA, if there is only one other value in that position (given the other values for the other frames).
+- Fix 'ŋ' display problem in entry fields in MS windows (working fine in Linux)
+    [x] noted issue in USAGE.md
+- Make Wait window show background color and label message in MS Windows (working fine in Linux)
 
 ### For specific databases
     - fix key 7 problem for sxw
@@ -54,6 +63,7 @@
 - store and reuse examples for tone groups, assuming they remain relevant.
     - unless removed by refresh button
     - relevance is determined by presence in group to check, so all will be reset on ps-profile and/or frame change.
+- frame names now included in recording filenames
 
 ### UI
 - New buttons to allow user to ask for a different comparison word for tone group
@@ -73,6 +83,7 @@
 - Fixed problem where skipping first word in sort created a group button
 - reverse selection of examples for recording; they now appear most recent first.
 - put recording buttons on the left, so they would never be pushed off the screen
+- pulled words submenu, made ps and profile selection in main "change" menu
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
@@ -92,7 +103,8 @@
     + lift.s['VV'] is interpretable as V, VV, or Vː
     + These lists test what is actually there before making the regexs...
     + diacritics now in vowel variables
-
+- add tone frame shouldn't add the frame anywhere until final check completed
+- Add morpheme now allows skipping any gloss language, and doesn't create gloss or definition nodes, as appropriate.
 # Version 0.6.1
 - cleanup of exceptions on code running after windows closed.
 - fixed logic in sort/verify/join and recording windows
