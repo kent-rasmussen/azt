@@ -4360,7 +4360,7 @@ class Frame(tkinter.Frame):
         inherit(self)
         # _=self._
         """tkinter.Frame thingies below this"""
-        super(Frame, self).__init__(parent,**kwargs)
+        tkinter.Frame.__init__(self,parent,**kwargs)
         self['background']=parent['background']
         """Hang on to these for labels and buttons:"""
 class ScrollingFrame(Frame):
@@ -4440,7 +4440,7 @@ class ScrollingFrame(Frame):
         """Make this a Frame, with all the inheritances, I need"""
         self.parent=parent
         inherit(self)
-        super(ScrollingFrame, self).__init__(parent)
+        Frame.__init__(self,parent)
         """Not sure if I want these... rather not hardcode."""
         log.debug(self.parent.winfo_children())
         self.grid_rowconfigure(0, weight=1)
@@ -5096,7 +5096,7 @@ class RecordButtonFrame(Frame):
                 or (gloss==None)):
                 print("Sorry, unless testing we need all these "
                         "arguments; exiting.")
-        super(RecordButtonFrame, self).__init__(parent, **kwargs)
+        Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
         if ((check.fs == None) or (check.sample_format == None)
@@ -5126,7 +5126,7 @@ class ButtonFrame(Frame):
         if self.debug == True:
             for kwarg in kwargs:
                 print("ButtonFrame",kwarg,":",kwargs[kwarg])
-        super().__init__(parent)
+        Frame.__init__(self,parent)
         gimmenull=False # When do I want a null option added to my lists? ever?
         self['background']=self.theme['background']
         i=0
