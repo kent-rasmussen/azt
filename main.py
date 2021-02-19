@@ -661,9 +661,11 @@ class Check():
         """self.toneframes should not use 'form' or 'gloss' anymore."""
         def chk():
             namevar=name.get()
+            if hasattr(self,'namechk') and self.namechk != namevar:
+                del self.toneframes[self.ps][self.namechk]
             """self.name is set here --I may need it, to correctly test
             the frames created..."""
-            self.name=str(namevar)
+            self.namechk=self.name=str(namevar)
             if self.name is '':
                 text=_('Sorry, empty name! \nPlease provide at least \na frame '
                     'name, to distinguish it \nfrom other frames.')
