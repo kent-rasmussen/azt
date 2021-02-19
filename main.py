@@ -932,8 +932,8 @@ class Check():
                     'first!')+' (not '+str(self.ps)+')'
             ).grid(column=0, row=0)
         else:
-            Label(window.frame, text=_('What syllable profile do you '
-                                    'want to work with?')
+            Label(window.frame, text=_('What ({}) syllable profile do you '
+                                    'want to work with?'.format(self.ps))
                                     ).grid(column=0, row=0)
             optionslist = sorted([({
                 'code':profile,
