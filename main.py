@@ -2648,17 +2648,14 @@ class Check():
                 eg2=xlp.Gloss(ex,self.glosslang2,framed[self.glosslang2])
     def makecountssorted(self):
         self.profilecounts={}
+        self.profilecountInvalid=0
         wcounts=list()
         for ps in self.profilesbysense:
-            # pscount=0
-            if ps == 'Invalid': #Including these below causes trouble
-                self.profilecountInvalid=len(self.profilesbysense[ps])
-                # wcounts.append((count, None, ps))
-            else:
-                for profile in self.profilesbysense[ps]:
-                    count=len(self.profilesbysense[ps][profile])
-                    # pscount+=count
-                    wcounts.append((count, profile, ps))
+            for profile in self.profilesbysense[ps]:
+                if profile == 'Invalid':
+                    self.profilecountInvalid+=len(self.profilesbysense[ps][profile])
+                count=len(self.profilesbysense[ps][profile])
+                wcounts.append((count, profile, ps))
         self.profilecounts=sorted(wcounts,reverse=True)
         self.Scounts={}
     def printcountssorted(self):
