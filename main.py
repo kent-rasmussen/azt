@@ -1942,7 +1942,6 @@ class Check():
         #     ))
         #     exit()
         """Get profile (this depends on ps)"""
-            exit()
         if self.profile not in self.profilesbysense[self.ps]:
             self.guessprofile()
         if self.profile == None:
