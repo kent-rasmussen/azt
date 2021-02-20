@@ -144,9 +144,10 @@ class Check():
             self.nsyls=nsyls
         else:
             self.nsyls=2
-        self.invalidchars=[' ','...','-',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
-        self.invalidregex='( |\.|-|,|\)|\()+'
-        self.profilelegit=['#','̃','C','N','G','S','V'] #In 'alphabetical' order
+        self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
+        self.invalidregex='( |\.|,|\)|\()+'
+        # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
+        self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b','o'] #'alphabetical' order
         """Are we OK without these?"""
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
@@ -1506,7 +1507,7 @@ class Check():
         # self.profilelegit=['#','̃','C','N','G','S','V']
         """Look for word boundaries, N and G before C (though this doesn't
         work, since CG is captured by C first...)"""
-        self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b']
+        # self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b']
         log.log(15,"Searching {} in this order: {}".format(form,
                         sorted(self.rx.keys(),
                         key=lambda cons: (-len(cons),
