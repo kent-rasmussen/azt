@@ -127,6 +127,16 @@ Once you have done some sortings, it makes sense to run a report. The tone repor
 
 This report is also exported to text and [XLingPaper](https://software.sil.org/xlingpaper/) XML files, which has similar organization, but more detail, that what you will see on the report window.
 
+## Ad Hoc Sorting Groups
+After you have done the analysis of noun and verb roots, you may want to move to a smaller grammatical category, and you may find that the slicing of data into strict ps-profile groups makes it difficult to see what's going on in your data. If you want to manually select a set of morphemes to sort, either a subset of a CV profile group, or including data from multiple CV profiles (or both), click on "Add/Modify Ad Hoc Sorting Groups" (In the Advanced menu, of course!). This provides a window where you can give a (unique!) name to your _ad hoc_ group, and select the senses from your dictionary that you want to compare in it.
+
+This window will leave you with that group selected, so you are immediately ready to sort the senses included in it.
+
+Your _ad hoc_ group is treated by A→Z+T as another CV profile group, so you can select it from the "Change/syllable profile" menu item, or else move back to a standard CV profile group.
+
+Once you have an _ad hoc_ group defined, you can modify it by selecting this menu item with that group selected on the main screen. To create another _ad hoc_ group, select a standard CV profile on the main screen before selecting this menu item.
+
+
 # Miscellaneous
 If any of the directions are unclear or inappropriate in any way, please let me know so I can fix them.
 
