@@ -1928,18 +1928,20 @@ class Check():
         """Ultimately, we will pick the largest ps/profile combination as an
         initial default (obviously changeable, as are all)"""
         """Get ps"""
-        if self.ps not in self.db.pss:
+        if ((self.ps not in self.db.pss) or
+                (self.ps not in self.profilesbysense)):
             self.guessps()
         if self.ps == None:
             log.info("find the ps")
             self.getps()
             return
+        # if self.ps not in self.profilesbysense:
+        #     log.error("{} doesn't seem to be in profiles by sense: {}. Do you "
+        #                 "need to rerun your syllable profiles? Exiting.".format(
+        #                 self.ps,self.profilesbysense.keys()
+        #     ))
+        #     exit()
         """Get profile (this depends on ps)"""
-        if self.ps not in self.profilesbysense:
-            log.error("{} doesn't seem to be in profiles by sense: {}. Do you "
-                        "need to rerun your syllable profiles? Exiting.".format(
-                        self.ps,self.profilesbysense.keys()
-            ))
             exit()
         if self.profile not in self.profilesbysense[self.ps]:
             self.guessprofile()
