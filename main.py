@@ -1342,20 +1342,18 @@ class Check():
                 if x % 10 is 0:
                     log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
                                                     self.profile))
-                        self.addtoprofilesbysense(senseid)
-                else:
-                    # print("Invalid profile!",form,profile)
-                    self.profilesbysense['Invalid']+=[senseid]
+                if not set(self.profilelegit).issuperset(self.profile):
+                    self.profile='Invalid'
+                for self.ps in self.db.get('ps',senseid=senseid):
+                    self.addtoprofilesbysense(senseid)
         self.getscounts()
         print('Done:',time.time()-self.start_time)
         # self.debug=True
         if self.debug==True:
             for ps in self.profilesbysense:
-                if ps == 'Invalid':
-                    print(ps,self.profile,len(self.profilesbysense[ps]))
-                else:
-                    for profile in self.profilesbysense[ps]:
-                        print(ps,profile,len(self.profilesbysense[ps][profile]))
+                for profile in self.profilesbysense[ps]:
+                    log.debug("ps: {}; profile: {} ({})".format(ps,profile,
+                            len(self.profilesbysense[ps][profile])))
         self.profile=profileori
         self.ps=psori
     def slists(self):
