@@ -84,6 +84,7 @@
 - reverse selection of examples for recording; they now appear most recent first.
 - put recording buttons on the left, so they would never be pushed off the screen
 - pulled words submenu, made ps and profile selection in main "change" menu
+- New Add/Modify Ad Hoc sorting pages
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
