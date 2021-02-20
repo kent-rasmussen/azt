@@ -302,11 +302,26 @@ class Check():
     def guessps(self):
         """Make this smarter, but for now, just take value from the most
         populous tuple"""
-        self.ps=self.profilecounts[0][2]
+        self.profilecountsValid=[]
+        for x in [x for x in self.profilecounts if x[1]!='Invalid']:
+            self.profilecountsValid.append(x)
+        if len(self.profilecountsValid) >0:
+            self.ps=self.profilecountsValid[0][2]
+        else:
+            self.profile=self.profilecounts[0][2]
     def guessprofile(self):
         """Make this smarter, but for now, just take value from the most
-        populous tuple"""
-        self.profile=self.profilecounts[0][1]
+        populous valid tuple"""
+        log.debug(self.profilecounts)
+        self.profilecountsValid=[]
+        for x in [x for x in self.profilecounts if x[2]==self.ps]:
+            log.debug(x)
+            self.profilecountsValid.append(x)
+        log.debug(self.profilecountsValid)
+        if len(self.profilecountsValid) >0:
+            self.profile=self.profilecountsValid[0][1]
+        else:
+            self.profile=profilecounts[0][1]
     def guesscheckname(self):
         """Picks the longest name (the most restrictive fiter)"""
         # print(self.checkspossible)
