@@ -557,6 +557,94 @@ class Check():
         sub_nb.grid(row=0,column=0,sticky='e',
                     pady=self.runwindow.options['pady'])
         self.runwindow.ww.close()
+    def addmodadhocsort(self):
+        def submitform():
+            if profilevar.get() == "":
+                log.debug("Give a name for this adhoc sort group!")
+                return
+            self.runwindow.destroy()
+            self.senseidstosort=[]
+            for var in [x for x in vars if len(x.get()) >1]:
+                log.log(2,"var {}: {}".format(vars.index(var),var.get()))
+                self.senseidstosort.append(var.get())
+            log.log(2,"ids: {}".format(self.senseidstosort))
+            self.profile=profilevar.get()
+            self.profilesbysense[self.ps][self.profile]=self.senseidstosort
+            self.storeprofiledata() #since we changed this.
+            self.checkcheck()
+        # if not hasattr(self,'senseidstosort'):
+        #     print(self.senseidstosort)
+        # else:
+        #     self.senseidstosort=[]
+        self.getrunwindow()
+        title=_("Add Ad Hoc Sort Group to {} group".format(self.ps))
+        self.runwindow.title(title)
+        padx=50
+        pady=10
+        Label(self.runwindow,text=title,font=self.fonts['title'],
+                ).grid(row=0,column=0,sticky='ew')
+        allpssensids=list()
+        for profile in self.profilesbysense[self.ps]:
+            allpssensids+=list(self.profilesbysense[self.ps][profile])
+        if len(allpssensids)>50:
+            text=_("This is a large group ({})! Are you in the right "
+                    "grammatical category?".format(len(allpssensids)))
+            log.error(text)
+            Label(self.runwindow,text=text).grid(row=1,column=0,sticky='ew')
+            self.runwindow.ww.close()
+            return
+        text=_("This page will allow you to set up your own sets of dictionary "
+                "senses to sort, within the '{0}' grammatical category. \nYou "
+                "should only do this if the '{0}' grammatical category is so "
+                "small that sorting them by syllable profile gives you "
+                "unusably small slices of your database."
+                "\nIf you want to compare words that are currently in "
+                "different grammatical categories, put them first into the "
+                "same grammatical category another tool (e.g., FLEx or WeSay), "
+                "then put them in an ad hoc group here."
+                "\nIf you're looking at a group you created earlier, and you "
+                "want to create a new group, exit here, switch to a regular "
+                "sorting group, and try this window again.".format(self.ps))
+        Label(self.runwindow,text=text).grid(row=1,column=0,sticky='ew')
+        qframe=Frame(self.runwindow)
+        qframe.grid(row=2,column=0,sticky='ew')
+        text=_("What do you want to call this group for sorting {} words?"
+                "".format(self.ps))
+        Label(qframe,text=text).grid(row=0,column=0,sticky='ew')
+        if set(self.profilelegit).issuperset(self.profile):
+            default=None
+        else:
+            default=self.profile
+        profilevar=tkinter.StringVar(value=default)
+        namefield = EntryField(qframe,textvariable=profilevar)
+        namefield.grid(row=0,column=1)
+        sub_btn=Button(qframe,text = _("OK"),
+                  command = submitform,anchor ='c')
+        sub_btn.grid(row=0,column=2,sticky='')
+        vars=list()
+        row=0
+        scroll=ScrollingFrame(self.runwindow)
+        for id in allpssensids:
+            log.debug("id: {}; index: {}; row: {}".format(id,
+                                                    allpssensids.index(id),row))
+            idn=allpssensids.index(id)
+            vars.append(tkinter.StringVar())
+            if id in self.profilesbysense[self.ps][self.profile]:
+                vars[idn].set(id)
+            framed=self.getframeddata(id, noframe=True)
+            log.debug("forms: {}".format(framed['formatted']))
+            tkinter.Checkbutton(scroll.content, text = framed['formatted'],
+                                variable = vars[allpssensids.index(id)],
+                                onvalue = id, offvalue = 0,
+                                font=self.fonts['read'],
+                                bg=self.theme['background'],
+                                activebackground=self.theme['activebackground'],
+                                anchor='w'
+                                ).grid(row=row,column=0,sticky='ew')
+            row+=1
+        scroll.grid(row=3,column=0,sticky='ew')
+        self.runwindow.ww.close()
+        self.runwindow.wait_window(scroll)
     def addmorpheme(self):
         def makewindow(lang):
             def submitform(lang):
@@ -4604,7 +4692,9 @@ class MainApplication(Frame):
         advancedmenu.add_command(
                         label=_("Segment Interpretation Settings"),
                         command=lambda x=check:Check.setSdistinctions(x))
-
+        advancedmenu.add_command(
+                        label=_("Add/Modify Ad Hoc Sorting Group"),
+                        command=lambda x=check:Check.addmodadhocsort(x))
         """Unused for now"""
         # settingsmenu = Menu(menubar, tearoff=0)
         # changestuffmenu.add_cascade(label=_("Settings"), menu=settingsmenu)
