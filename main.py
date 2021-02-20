@@ -627,7 +627,8 @@ class Check():
         text=_("What do you want to call this group for sorting {} words?"
                 "".format(self.ps))
         Label(qframe,text=text).grid(row=0,column=0,sticky='ew')
-        if set(self.profilelegit).issuperset(self.profile):
+        if ((set(self.profilelegit).issuperset(self.profile)) or
+                                            (self.profile == "Invalid")):
             default=None
         else:
             default=self.profile
@@ -1341,9 +1342,6 @@ class Check():
                 if x % 10 is 0:
                     log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
                                                     self.profile))
-                if set(self.profilelegit).issuperset(self.profile):
-                    for self.ps in self.db.get('ps',senseid=senseid):
-                        # print("Good profile!",form,profile)
                         self.addtoprofilesbysense(senseid)
                 else:
                     # print("Invalid profile!",form,profile)
