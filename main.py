@@ -1936,7 +1936,11 @@ class Check():
             return
         count=self.countbypsprofile(self.ps,self.profile)
         if count == None:
-            count=len(self.profilesbysense[self.ps][self.profile])
+            if ((self.ps in self.profilesbysense) and
+                    (self.profile in self.profilesbysense[self.ps])):
+                count=len(self.profilesbysense[self.ps][self.profile])
+            else:
+                count=0
         t=(_("Looking at {} {} words ({})").format(self.profile,self.ps,count))
         proselabel(opts,t)
         opts['row']+=1
