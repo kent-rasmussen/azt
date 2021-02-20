@@ -2669,6 +2669,7 @@ class Check():
         local variables):"""
     def maybesort(self):
         done=(_("All tone groups in {} have been verified!").format(self.name))
+        self.getrunwindow()
         self.settonevariablesbypsprofile()
         if self.senseidsunsorted != []:
             quit=self.sortT()
@@ -2700,7 +2701,19 @@ class Check():
                 self.maybesort()
                 self.runwindow.ww.close()
                 return
-            elif joined == False and self.runwindow.winfo_exists():
+            elif joined == None:
+                window=self.getrunwindow()
+                buttontxt=_("Sort!")
+                text=_("Hey, you're not Done!\nCome back when you have time; "
+                "restart where you left off by pressing '{}'".format(buttontxt))
+                Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+                # Label(self.runwindow.frame, text='',
+                #             image=self.photo[self.type]
+                #             ).grid(row=1,column=0)
+                # print(done)
+                self.runwindow.ww.close()
+                return
+        elif joined == False and self.runwindow.winfo_exists():
                 self.runwindow.resetframe()
                 Label(self.runwindow.frame, text=done).grid(row=0,column=0)
                 Label(self.runwindow.frame, text='',
@@ -2853,6 +2866,9 @@ class Check():
         that got pulled from the group), then on to the next largest unverified
         pile.
         """
+        if len(self.tonegroups) == 0:
+            log.debug("No tone groups to verify!")
+            return
         # The title for this page changes by group, below.
         self.getrunwindow()
         oktext='These all have the same tone'
@@ -2968,6 +2984,9 @@ class Check():
         also, the joining would provide for one less group to match against
         (hopefully semi automatically).
         """
+        if len(self.tonegroups) == 0:
+            log.debug("No tone groups to distinguish!")
+            return
         self.getrunwindow()
         title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
                                         self.languagenames[self.analang],
@@ -3331,8 +3350,6 @@ class Check():
         self.storedefaults() #This is not called in checkcheck.
         t=(_('Run Check'))
         log.info("Running check...")
-        self.getrunwindow()
-        # self.runwindow=Window(self.frame,title=t)
         i=0
         if self.analang is None or self.analang == "Null":
             text=(_('Error: please set language first!')+' ('+
@@ -3366,6 +3383,9 @@ class Check():
             #                 ).grid(column=0, row=row)
             #         row+=1
             if self.type == 'T':
+                if self.name not in self.toneframes[self.ps]:
+                    self.getcheck()
+                    return
                 self.maybesort()
             else: #do the CV checks
                 self.getresults()
