@@ -146,6 +146,7 @@ class Check():
             self.nsyls=2
         self.invalidchars=[' ','...','-',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
         self.invalidregex='( |\.|-|,|\)|\()+'
+        self.profilelegit=['#','̃','C','N','G','S','V'] #In 'alphabetical' order
         """Are we OK without these?"""
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
@@ -1220,7 +1221,7 @@ class Check():
         self.profiledsenseids=[]
         profileori=self.profile #We iterate across this here
         psori=self.ps #We iterate across this here
-        onlyCV={'C','N','G','S','V','#'}
+        # onlyCV={'C','N','G','S','V','#'} #now self.profilelegit
         self.sextracted={} #Will store matching segments here
         for ps in self.db.pss:
             self.sextracted[ps]={}
@@ -1236,7 +1237,7 @@ class Check():
                 if x % 10 is 0:
                     log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
                                                     self.profile))
-                if onlyCV.issuperset(self.profile):
+                if set(self.profilelegit).issuperset(self.profile):
                     for self.ps in self.db.get('ps',senseid=senseid):
                         # print("Good profile!",form,profile)
                         self.addtoprofilesbysense(senseid)
@@ -1414,19 +1415,19 @@ class Check():
         formori=form
         """priority sort alphabets (need logic to set one or the other)"""
         """Look for any C, don't find N or G"""
-        priority=['#','̃','C','N','G','S','V']
+        # self.profilelegit=['#','̃','C','N','G','S','V']
         """Look for word boundaries, N and G before C (though this doesn't
         work, since CG is captured by C first...)"""
-        priority=['#','̃','N','G','S','C','Ṽ','V','d','b']
+        self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b']
         log.log(15,"Searching {} in this order: {}".format(form,
                         sorted(self.rx.keys(),
                         key=lambda cons: (-len(cons),
-                                            [priority.index(c) for c in cons])
+                                    [self.profilelegit.index(c) for c in cons])
                         )))
         log.log(15,"Searching with these regexes: {}".format(self.rx))
         for s in sorted(self.rx.keys(),
                         key=lambda cons: (-len(cons),
-                                            [priority.index(c) for c in cons])
+                                    [self.profilelegit.index(c) for c in cons])
                         ):
             log.log(3,'s: {}; rx: {}'.format(s, self.rx[s]))
             for ps in self.db.pss:
