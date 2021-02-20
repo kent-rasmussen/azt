@@ -1846,6 +1846,8 @@ class Check():
             self.getprofile()
             return
         count=self.countbypsprofile(self.ps,self.profile)
+        if count == None:
+            count=len(self.profilesbysense[self.ps][self.profile])
         t=(_("Looking at {} {} words ({})").format(self.profile,self.ps,count))
         proselabel(opts,t)
         opts['row']+=1
@@ -1870,10 +1872,12 @@ class Check():
             list of defined frames."""
             if len(self.toneframes[self.ps]) == 1:
                 self.name=list(self.toneframes[self.ps].keys())[0]
-            elif self.name not in self.toneframes[self.ps]:
-                self.getcheck()
-                return
-            t=(_("Checking {}, working on ‘{}’ tone frame").format(
+            if self.name not in self.toneframes[self.ps]:
+                t=(_("Checking {}, no defined tone frame yet.").format(
+                                    self.typedict[self.type]['pl']))
+                # self.getcheck()
+            else:    # return
+                t=(_("Checking {}, working on ‘{}’ tone frame").format(
                                     self.typedict[self.type]['pl'],self.name))
             proselabel(opts,t)
         else:
