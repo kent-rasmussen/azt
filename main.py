@@ -5285,10 +5285,11 @@ class Wait(tkinter.Toplevel): #Window?
         self.parent=parent
         inherit(self)
         try:
-            if platform.uname().system == 'Linux':
-                self.parent.withdraw()
-            else:
-                self.parent.iconify()
+            self.parent.withdraw()
+            # if platform.uname().system == 'Linux':
+            #     self.parent.withdraw()
+            # else:
+            #     self.parent.iconify() #A window doesn't return on deiconify...
         except:
             log.debug("Not withdrawing parent.")
         super(Wait, self).__init__(bg=self.theme['background'])
