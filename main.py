@@ -5322,12 +5322,16 @@ class Splash(Window):
         Label(self, text=title, pady=50,
                         font=self.fonts['title'],anchor='c',padx=25
                         ).grid(row=0,column=0,sticky='we')
+        Label(self, text=v, pady=50,
+                        # font=self.fonts['read'],
+                        anchor='c',padx=25
+                        ).grid(row=1,column=0,sticky='we')
         Label(self, image=self.photo['transparent'],text='',
                         bg=self.theme['background']
-                        ).grid(row=1,column=0,sticky='we')
+                        ).grid(row=2,column=0,sticky='we')
         l=Label(self, text=text, pady=50, padx=50,
                 wraplength=int(self.winfo_screenwidth()/3)
-                ).grid(row=2,column=0,sticky='we')
+                ).grid(row=3,column=0,sticky='we')
         self.withdraw() #don't show until placed
         self.update_idletasks()
         self.w = self.winfo_reqwidth()
