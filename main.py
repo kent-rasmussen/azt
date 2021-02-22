@@ -5408,17 +5408,17 @@ class Splash(Window):
                 "-based language development by facilitating the sorting of a "
                 "beginning dictionary by vowels, consonants and tone. "
                 "(more in help:about)").format(name=program['name'])
-        Label(self, text=title, pady=50,
+        Label(self, text=title, pady=30,
                         font=self.fonts['title'],anchor='c',padx=25
                         ).grid(row=0,column=0,sticky='we')
-        Label(self, text=v, pady=50,
+        Label(self, text=v, pady=30,
                         # font=self.fonts['read'],
                         anchor='c',padx=25
                         ).grid(row=1,column=0,sticky='we')
         Label(self, image=self.photo['transparent'],text='',
                         bg=self.theme['background']
                         ).grid(row=2,column=0,sticky='we')
-        l=Label(self, text=text, pady=50, padx=50,
+        l=Label(self, text=text, pady=30, padx=50,
                 wraplength=int(self.winfo_screenwidth()/3)
                 ).grid(row=3,column=0,sticky='we')
         self.withdraw() #don't show until placed
