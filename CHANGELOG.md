@@ -1,15 +1,14 @@
 # Changelog
 
 ## In Process
-- set up user option for number of tone examples to record (set to [1,5,100,1000])
-    - include instructions with "up to" this number.
+- button for next CV profile on done screen.
+- cycle through tone groups to record based on volume of the group.
+- show count of batch numbers on recording screen
+- TIME?:For recording windows, consider adding a "skip to next undone"
 - TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
 - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
     - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
 - done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
-- TIME?:For recording windows, consider adding a "skip to next undone"
-- cycle through tone groups to record based on volume of the group.
-- show count of batch numbers on recording screen
 - TIME:set up not sorting on profile for small classes
 - set up summary table for XLP tone export
 
@@ -85,6 +84,8 @@
 - put recording buttons on the left, so they would never be pushed off the screen
 - pulled words submenu, made ps and profile selection in main "change" menu
 - New Add/Modify Ad Hoc sorting pages
+- New (Advanced) window to set user option for number of tone examples to record (1,5,100, or 1000)
+- Add Frame window now removed check session (on bottom) on any keypress, in any field on the page (this should keep users from changing the information in the fields, then submitting before those changes are checked.)
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
