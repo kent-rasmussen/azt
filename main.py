@@ -819,9 +819,9 @@ class Check():
                                                                 pady=pady)
             """toneframes={'Nom':
                             {'name/location (e.g.,"By itself")':
-                                {'form>xyz': '__',
-                                'gloss>xyz': 'a __'},
-                                'gloss2>xyz': 'un __'},
+                                {'analang.xyz': '__',
+                                'glosslang.xyz': 'a __'},
+                                'glosslang2.xyz': 'un __'},
                         }   }
             """
             row+=1
@@ -839,9 +839,8 @@ class Check():
             self.name=name
             self.toneframes[self.ps][self.name]=frame
             self.storetoneframes()
-            # self.storedefaults()
             window.destroy()
-        window=Window(self.frame, title=_("Define a new tone frame"))
+        window=Window(self.frame, title=_("Define a New Tone Frame"))
         window.scroll=ScrollingFrame(window)
         window.frame1=Frame(window.scroll.content)
         window.frame1.grid(row=0,column=0)
@@ -860,7 +859,7 @@ class Check():
             for lang in langs:
                 db[context][lang]={}
                 db[context][lang]['text']=tkinter.StringVar()
-        t=(_("Add {} tone frame").format(self.ps))
+        t=(_("Add {} Tone Frame").format(self.ps))
         Label(window.frame1,text=t+'\n',font=self.fonts['title']
                 ).grid(row=row,column=columnleft,columnspan=3)
         row+=1
@@ -2035,7 +2034,6 @@ class Check():
                 t=(_("Checking {}, working on {}".format(
                             self.typedict[self.type]['pl'],self.name)))
                 proselabel(opts,t)
-
         """Final Button"""
         opts['row']+=1
         if self.type == 'T':
