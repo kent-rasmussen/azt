@@ -766,11 +766,11 @@ class Check():
                 text=_('Sorry, empty name! \nPlease provide at least \na frame '
                     'name, to distinguish it \nfrom other frames.')
                 print(re.sub('\n','',text))
-                if hasattr(window,'framechk'):
-                    window.framechk.destroy()
-                window.framechk=Frame(window.scroll.content)
-                window.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
-                l1=Label(window.framechk,
+                if hasattr(self.addwindow,'framechk'):
+                    self.addwindow.framechk.destroy()
+                self.addwindow.framechk=Frame(self.addwindow.scroll.content)
+                self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
+                l1=Label(self.addwindow.framechk,
                         text=text,
                         font=self.fonts['read'],
                         justify=tkinter.LEFT,anchor='w')
@@ -802,16 +802,16 @@ class Check():
             self.name=self.nameori
             print(frame,framed)
             """Display framed data"""
-            if hasattr(window,'framechk'):
-                window.framechk.destroy()
-            window.framechk=Frame(window.scroll.content)
-            window.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
+            if hasattr(self.addwindow,'framechk'):
+                self.addwindow.framechk.destroy()
+            self.addwindow.framechk=Frame(self.addwindow.scroll.content)
+            self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
             tf={}
             tfd={}
             padx=50
             pady=10
             row=0
-            lt=Label(window.framechk,
+            lt=Label(self.addwindow.framechk,
                     text="Examples for {} tone frame".format(namevar),
                     font=self.fonts['readbig'],
                     justify=tkinter.LEFT,anchor='w')
@@ -822,13 +822,13 @@ class Check():
                 print('frame[{}]:'.format(lang),frame[lang])
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
                 tfd[lang]=('(ex: '+framed[lang]+')')
-                l1=Label(window.framechk,
+                l1=Label(self.addwindow.framechk,
                         text=tf[lang],
                         font=self.fonts['read'],
                         justify=tkinter.LEFT,anchor='w')
                 l1.grid(row=row,column=columnleft,sticky='w',padx=padx,
                                                                 pady=pady)
-                l2=Label(window.framechk,
+                l2=Label(self.addwindow.framechk,
                         text=tfd[lang],
                         font=self.fonts['read'],
                         justify=tkinter.LEFT,anchor='w')
@@ -843,24 +843,24 @@ class Check():
             """
             row+=1
             stext=_('Use {} tone frame'.format(namevar))
-            sub_btn=Button(window.framechk,text = stext,
+            sub_btn=Button(self.addwindow.framechk,text = stext,
                       command = lambda x=frame,n=namevar: submit(x,n))
             sub_btn.grid(row=row,column=columnright,sticky='w')
         def unchk(event):
             #This is here to keep people from thinking they are approving what's
             #next to this button, in case any variable has been changed.
-            if hasattr(window,'framechk'):
-                window.framechk.destroy()
+            if hasattr(self.addwindow,'framechk'):
+                self.addwindow.framechk.destroy()
         def submit(frame,name):
             # Having made and unset these, we now reset and write them to file.
             self.name=name
             self.toneframes[self.ps][self.name]=frame
             self.storetoneframes()
-            window.destroy()
-        window=Window(self.frame, title=_("Define a New Tone Frame"))
-        window.scroll=ScrollingFrame(window)
-        window.frame1=Frame(window.scroll.content)
-        window.frame1.grid(row=0,column=0)
+            self.addwindow.destroy()
+        self.addwindow=Window(self.frame, title=_("Define a New Tone Frame"))
+        self.addwindow.scroll=ScrollingFrame(self.addwindow)
+        self.addwindow.frame1=Frame(self.addwindow.scroll.content)
+        self.addwindow.frame1.grid(row=0,column=0)
         row=0
         columnleft=0
         columnword=1
@@ -877,11 +877,11 @@ class Check():
                 db[context][lang]={}
                 db[context][lang]['text']=tkinter.StringVar()
         t=(_("Add {} Tone Frame").format(self.ps))
-        Label(window.frame1,text=t+'\n',font=self.fonts['title']
+        Label(self.addwindow.frame1,text=t+'\n',font=self.fonts['title']
                 ).grid(row=row,column=columnleft,columnspan=3)
         row+=1
         t=_("What do you want to call the tone frame ?")
-        finst=Frame(window.frame1)
+        finst=Frame(self.addwindow.frame1)
         finst.grid(row=row,column=0)
         Label(finst,text=t).grid(row=0,column=columnleft,sticky='e')
         name = EntryField(finst,textvariable=namevar)
@@ -914,7 +914,7 @@ class Check():
                                 ).format(self.languagenames[lang],kind)
         """Place the labels"""
         for lang in langs:
-            f[lang]=Frame(window.frame1)
+            f[lang]=Frame(self.addwindow.frame1)
             f[lang].grid(row=row,column=0)
             langrow=0
             Label(f[lang],text='\n'+ti[lang]+'\n').grid(
@@ -945,7 +945,7 @@ class Check():
             row+=1
         row+=1
         text=_('See the tone frame around a word from the dictionary')
-        chk_btn=Button(window.frame1,text = text, command = chk)
+        chk_btn=Button(self.addwindow.frame1,text = text, command = chk)
         chk_btn.grid(row=row+1,column=columnleft,pady=100)
     def setsoundhz(self,choice,window):
         self.set('fs',choice,window)
