@@ -2635,6 +2635,37 @@ class Check():
         for line in self.profilecounts:
             if line[1] == profile and line[2] == ps:
                 return line[0]
+    def getprofilestodo(self):
+        log.debug(self.profilecounts)
+        self.profilecountsValid=[]
+        #self.profilecountsValid filters out Invalid, and also by self.ps...
+        for x in [x for x in self.profilecounts if x[2]==self.ps]:
+            log.debug("profile count tuple: {}".format(x))
+            self.profilecountsValid.append(x)
+        log.debug("Valid profiles for ps {}: {}".format(self.ps,
+                                                    self.profilecountsValid))
+        self.profilestodo=[x[1] for x in self.profilecountsValid if
+                            self.profilecountsValid.index(x)<=self.maxprofiles]
+        log.debug("self.profilestodo: {}".format(self.profilestodo))
+    def getframestodo(self):
+        #This sets self.senseidstosort,self.senseids(un)sorted,&self.tonegroups
+        self.settonevariablesbypsprofile()
+        self.framestodo=[]
+        self.nameori=self.name
+        for self.name in self.toneframes[self.ps]:
+            self.gettonegroups() #depends on self.ps/self.profile/self.name
+            if self.name in self.status[self.type][self.ps][self.profile]:
+                done=self.status[self.type][self.ps][self.profile][self.name] #verified.
+            else:
+                continue
+            groupstodo=list(set(self.tonegroups)-set(done))
+            if len(groupstodo) >0:
+                log.debug("{} frame has elements left to verify: {}".format(
+                                                            frame,groupstodo))
+                self.framestodo.append(frame)
+                # return
+        log.debug("Frames to do: {}".format(self.framestodo))
+        self.name=self.nameori
     def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
         """This function iterates across self.name and self.subcheck values
         appropriate for the specified self.type, self.profile and self.name
@@ -2890,13 +2921,55 @@ class Check():
                 Label(self.runwindow.frame, text=text).grid(row=0,column=0)
                 self.runwindow.ww.close()
                 return
-            elif joined == False and self.runwindow.winfo_exists():
-                self.runwindow.resetframe()
-                Label(self.runwindow.frame, text=done).grid(row=0,column=0)
-                Label(self.runwindow.frame, text='',
-                            image=self.photo[self.type]
-                            ).grid(row=1,column=0)
-                return
+            elif joined == False:
+                # self.updatestatus(verified=True,alldone=True)
+                if self.runwindow.winfo_exists():
+                    def nframe():
+                        self.name=self.framestodo[0]
+                        self.runwindow.destroy()
+                        self.runcheck()
+                    def aframe():
+                        self.runwindow.destroy()
+                        self.addframe()
+                        self.addwindow.wait_window(self.addwindow)
+                        self.runcheck()
+                    def nprofile():
+                        self.nextprofile()
+                        self.runwindow.destroy()
+                        self.runcheck()
+                    def nps():
+                        self.nextps()
+                        self.nextprofile(guess=True)
+                        self.runwindow.destroy()
+                        self.runcheck()
+                    self.runwindow.resetframe()
+                    Label(self.runwindow.frame, text=done).grid(row=0,column=0,
+                                                                columnspan=2)
+                    Label(self.runwindow.frame, text='',
+                                image=self.photo[self.type]
+                                ).grid(row=1,column=0,columnspan=2)
+                    #I need to build some logic here;I should only show two of these
+                    #buttons at a time. Are the frames all sorted?
+                    self.getframestodo()
+                    self.getprofilestodo()
+                    if len(self.framestodo) >0:
+                        Button(self.runwindow.frame,
+                            text=_("Continue to next frame"),
+                            command=nframe).grid(row=2,column=0)
+                    else:
+                        Button(self.runwindow.frame,
+                            text=_("Define a new frame"),
+                            command=aframe).grid(row=2,column=0)
+                    if ((self.profile in self.profilestodo) and
+                    (self.profilestodo.index(self.profile) < self.maxprofiles)):
+                        Button(self.runwindow.frame,
+                            text=_("Continue to next syllable profile"),
+                            command=nprofile).grid(row=2,column=1)
+                    else:
+                        Button(self.runwindow.frame,
+                            text=_("Continue to next Grammatical Category"),
+                            command=nps).grid(row=2,column=1)
+                    return
         # we only get here if a group is not verified (otherwise, return above)
         self.verifyT()
     def sortT(self):
