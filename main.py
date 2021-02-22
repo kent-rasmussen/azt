@@ -1299,8 +1299,9 @@ class Check():
                                                                 self.subcheck)
             else:
                 log.info("Tried to set {} verified in {} {} {} {} but it was "
-                        "already there.".format(self.subcheck,self.type,
-                        self.ps,self.profile,self.name,))
+                        "already there, and we're not done with the {} frame."
+                        "".format(self.subcheck,self.type,
+                        self.ps,self.profile,self.name,self.name))
         if verified == False:
             if self.subcheck in (
                             self.status[self.type][self.ps][self.profile]
@@ -2823,7 +2824,7 @@ class Check():
         """This function finds examples in the lexicon for a given tone value,
         in a given tone frame (from check)"""
         senseids=self.getexsall(value)
-        if self.exs == None:
+        if (not hasattr(self,'exs')) or (self.exs == None):
             self.exs={} #in case this hasn't been set up by now
         if value in self.exs:
             if self.exs[value] in senseids: #if stored value is in group
@@ -3404,15 +3405,9 @@ class Check():
     def gettonegroups(self):
         print("Looking for tone groups for",self.name)
         tonegroups=[]
-        # for guid in self.guidstosort: #I should be able to make this a regex...
-        #     """For now, support both types of fields"""
-        #     tonegroups+=self.db.get('pronunciationfieldvalue', guid=guid,
-        #         fieldtype='tone', location=self.name) #,showurl=True
-        #     print(tonegroups)
         for senseid in self.senseidstosort: #I should be able to make this a regex...
             tonegroups+=self.db.get('exfieldvalue', senseid=senseid,
                 fieldtype='tone', location=self.name)#, showurl=True)
-            # print(tonegroups)
         self.tonegroups=list(dict.fromkeys(tonegroups))
         if 'NA' in self.tonegroups:
             self.tonegroups.remove('NA')
@@ -3437,7 +3432,6 @@ class Check():
         self.senseidssorted.remove(senseid)
     def getidstosort(self):
         """These variables should not have to be reset between checks"""
-        """If needed, this will break..."""
         self.senseidstosort=list(self.profilesbysense[self.ps]
                                                     [self.profile])
     def sortingstatus(self):
@@ -3860,7 +3854,8 @@ class Check():
                 self.runwindow.resetframe()
                 Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
                 text=_("All done! Sort some more words, and come back.")
-                ).grid(row=0,column=0,rowspan=2,sticky='w')
+                ).grid(row=0,column=0,sticky='w') #?rowspan=2,
+                Button(self.runwindow.frame,
                         text=_("Continue to next syllable profile"),
                         command=next).grid(row=1,column=0)
             # self.runwindow.wait_window()
