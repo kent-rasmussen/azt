@@ -177,6 +177,7 @@ class Check():
         self.guessanalang() #needed for regexs
         log.debug("analang guessed: {} (If you don't like this, change it in "
                     "the menus)".format(self.analang))
+        self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.loaddefaults() # overwrites guess above, stored on runcheck
         self.langnames()
         self.checkinterpretations() #checks (and sets) values for self.distinguish
@@ -309,19 +310,35 @@ class Check():
             self.ps=self.profilecountsValid[0][2]
         else:
             self.profile=self.profilecounts[0][2]
-    def guessprofile(self):
+    def nextprofile(self,guess=False):
         """Make this smarter, but for now, just take value from the most
         populous valid tuple"""
-        log.debug(self.profilecounts)
-        self.profilecountsValid=[]
-        for x in [x for x in self.profilecounts if x[2]==self.ps]:
-            log.debug(x)
-            self.profilecountsValid.append(x)
-        log.debug(self.profilecountsValid)
+        self.getprofilestodo()
         if len(self.profilecountsValid) >0:
-            self.profile=self.profilecountsValid[0][1]
+            profiles=[x[1] for x in self.profilecountsValid]
+            if (guess == True) or (self.profile not in profiles):
+                if self.profile not in profiles:
+                    log.debug("{} profile not in valid profiles for "
+                                "ps {}.".format(self.profile,self.ps))
+                self.profile=self.profilecountsValid[0][1]
+                if guess == True:
+                    log.debug("Guessing {} profile, from valid profiles for "
+                                "ps {}: {}.".format(self.profile,self.ps,
+                                                    self.profilecountsValid))
+            else:
+                index=profiles.index(self.profile)
+                log.debug("{} profile found in valid profiles for ps {}; "
+                            "selecting next one in this list: {}".format(
+                            self.profile,self.ps,self.profilecountsValid))
+                self.profile=self.profilecountsValid[index+1][1]
+                if index >= self.maxprofiles:
+                    return 1 #We hit the max already, but give a valid profile
         else:
-            self.profile=profilecounts[0][1]
+            log.error("For some reason, I don't see any Valid profiles for "
+                        "ps {}. This is likely a problem with your syllable "
+                        "profile analysis.".format(self.ps))
+            self.profile=self.profilecounts[0][1]
+        self.checkcheck()
     def guesscheckname(self):
         """Picks the longest name (the most restrictive fiter)"""
         # print(self.checkspossible)
@@ -1125,7 +1142,8 @@ class Check():
                             'distinguish',
                             'interpret',
                             'adnlangnames',
-                            'exs'
+                            'exs',
+                            'maxprofiles'
                             ],
                         'ps':[
                             'profile' #do I want this?
@@ -1162,7 +1180,8 @@ class Check():
                         'distinguish':[],
                         'interpret':[],
                         'adnlangnames':[],
-                        'exs':[]
+                        'exs':[],
+                        'maxprofiles':[]
                         }
     def cleardefaults(self,field=None):
         for default in self.defaults[field]:
@@ -1962,7 +1981,7 @@ class Check():
         #     exit()
         """Get profile (this depends on ps)"""
         if self.profile not in self.profilesbysense[self.ps]:
-            self.guessprofile()
+            self.nextprofile(guess=True)
         if self.profile == None:
             log.info("Select a syllable profile.")
             self.getprofile()
@@ -4697,6 +4716,8 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.getps(x))
         changemenu.add_command(label=_("Syllable profile"),
                         command=lambda x=check:Check.getprofile(x))
+        changemenu.add_command(label=_("Next Syllable profile"),
+                        command=lambda x=check:Check.nextprofile(x))
         # changemenu.add_cascade(label=_("Words"), menu=filtermenu)
         """What to check stuff"""
         checkmenu = Menu(menubar, tearoff=0)
