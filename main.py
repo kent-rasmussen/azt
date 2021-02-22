@@ -741,20 +741,19 @@ class Check():
         """self.toneframes should not use 'form' or 'gloss' anymore."""
         def chk():
             namevar=name.get()
-            if hasattr(self,'namechk') and self.namechk != namevar:
-                del self.toneframes[self.ps][self.namechk]
-            """self.name is set here --I may need it, to correctly test
-            the frames created..."""
-            self.namechk=self.name=str(namevar)
+            # self.name is set here --I need it to correctly test the frames
+            # created...
+            self.nameori=self.name
+            self.name=str(namevar)
             if self.name is '':
                 text=_('Sorry, empty name! \nPlease provide at least \na frame '
                     'name, to distinguish it \nfrom other frames.')
                 print(re.sub('\n','',text))
-                if hasattr(window,'frame2'):
-                    window.frame2.destroy()
-                window.frame2=Frame(window.scroll.content)
-                window.frame2.grid(row=1,column=0,columnspan=3,sticky='w')
-                l1=Label(window.frame2,
+                if hasattr(window,'framechk'):
+                    window.framechk.destroy()
+                window.framechk=Frame(window.scroll.content)
+                window.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
+                l1=Label(window.framechk,
                         text=text,
                         font=self.fonts['read'],
                         justify=tkinter.LEFT,anchor='w')
@@ -779,35 +778,45 @@ class Check():
                 frame[lang]=str(
                     db['before'][lang]['text']+'__'+db['after'][lang]['text'])
             senseid=self.gimmesenseid()
+            # This needs self.toneframes
             framed=self.getframeddata(senseid) #after defn above, before below!
+            #At this point, remove this frame (in case we don't submit it)
+            del self.toneframes[self.ps][self.name]
+            self.name=self.nameori
             print(frame,framed)
             """Display framed data"""
-            if hasattr(window,'frame2'):
-                window.frame2.destroy()
-            window.frame2=Frame(window.scroll.content)
-            window.frame2.grid(row=1,column=0,columnspan=3,sticky='w')
+            if hasattr(window,'framechk'):
+                window.framechk.destroy()
+            window.framechk=Frame(window.scroll.content)
+            window.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
             tf={}
             tfd={}
             padx=50
             pady=10
             row=0
+            lt=Label(window.framechk,
+                    text="Examples for {} tone frame".format(namevar),
+                    font=self.fonts['readbig'],
+                    justify=tkinter.LEFT,anchor='w')
+            lt.grid(row=row,column=columnleft,sticky='w',columnspan=2,
+                    padx=padx,pady=pady)
             for lang in langs:
+                row+=1
                 print('frame[{}]:'.format(lang),frame[lang])
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
                 tfd[lang]=('(ex: '+framed[lang]+')')
-                l1=Label(window.frame2,
+                l1=Label(window.framechk,
                         text=tf[lang],
                         font=self.fonts['read'],
                         justify=tkinter.LEFT,anchor='w')
                 l1.grid(row=row,column=columnleft,sticky='w',padx=padx,
                                                                 pady=pady)
-                l2=Label(window.frame2,
+                l2=Label(window.framechk,
                         text=tfd[lang],
                         font=self.fonts['read'],
                         justify=tkinter.LEFT,anchor='w')
                 l2.grid(row=row,column=columnleft+1,sticky='w',padx=padx,
                                                                 pady=pady)
-                row+=1
             """toneframes={'Nom':
                             {'name/location (e.g.,"By itself")':
                                 {'form>xyz': '__',
@@ -816,11 +825,19 @@ class Check():
                         }   }
             """
             row+=1
-            sub_btn=Button(window.frame2,text = 'Use this tone frame',
-                      command = submit)
+            stext=_('Use {} tone frame'.format(namevar))
+            sub_btn=Button(window.framechk,text = stext,
+                      command = lambda x=frame,n=namevar: submit(x,n))
             sub_btn.grid(row=row,column=columnright,sticky='w')
-        def submit():
-            chk()
+        def unchk(event):
+            #This is here to keep people from thinking they are approving what's
+            #next to this button, in case any variable has been changed.
+            if hasattr(window,'framechk'):
+                window.framechk.destroy()
+        def submit(frame,name):
+            # Having made and unset these, we now reset and write them to file.
+            self.name=name
+            self.toneframes[self.ps][self.name]=frame
             self.storetoneframes()
             # self.storedefaults()
             window.destroy()
@@ -853,6 +870,7 @@ class Check():
         Label(finst,text=t).grid(row=0,column=columnleft,sticky='e')
         name = EntryField(finst,textvariable=namevar)
         name.grid(row=0,column=columnright,sticky='w')
+        name.bind('<Key>', unchk)
         row+=1
         row+=1
         ti={} # text instructions
@@ -906,6 +924,8 @@ class Check():
                     justify='left')
             db['after'][lang]['entryfield'].grid(row=langrow,
                     column=columnright,sticky='w')
+            for w in ['before','after']:
+                db[w][lang]['entryfield'].bind('<Key>', unchk)
             row+=1
         row+=1
         text=_('See the tone frame around a word from the dictionary')
