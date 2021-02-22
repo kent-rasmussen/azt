@@ -2781,29 +2781,20 @@ class Check():
             quit=self.sortT()
             if quit == True:
                 return 1
-        """offer a chance to join groups before moving on
-        Nope: do this after verifying piles!"""
-        # self.getrunwindow()
-        # self.joinT()
-        # self.updatestatus(verified=False)
+        #status is populated by verifyT, and unpopulated by joinT
         if ((self.type in self.status) and
             (self.ps in self.status[self.type]) and
             (self.profile in self.status[self.type][self.ps]) and
             (self.name in self.status[self.type][self.ps][self.profile])):
             verified=self.status[self.type][self.ps][self.profile][self.name]
         else:
-            verified=set()
-        """Let's not leave groups in verified after they are gone"""
-        # for group in verified:
-        #     if group not in self.tonegroups:
-        #         verified.remove(group)
-        """if all items in the self.tonegroups exists in verified"""
+            verified=set() #so the following doesn't crash...
+        # if all items in the self.tonegroups exists in verified
         if set(self.tonegroups).issubset(verified):
-            # self.getrunwindow()
             joined=self.joinT()
+            # This is recursive because we don't know how many joins we'll need,
+            # nor the results of susequent verifications or sorts
             if joined == True:
-                """Don't know how many joins we'll need, nor the results of
-                susequent verifications or sorts"""
                 self.maybesort()
                 self.runwindow.ww.close()
                 return
@@ -2813,10 +2804,6 @@ class Check():
                 text=_("Hey, you're not Done!\nCome back when you have time; "
                 "restart where you left off by pressing '{}'".format(buttontxt))
                 Label(self.runwindow.frame, text=text).grid(row=0,column=0)
-                # Label(self.runwindow.frame, text='',
-                #             image=self.photo[self.type]
-                #             ).grid(row=1,column=0)
-                # print(done)
                 self.runwindow.ww.close()
                 return
             elif joined == False and self.runwindow.winfo_exists():
@@ -2825,9 +2812,8 @@ class Check():
                 Label(self.runwindow.frame, text='',
                             image=self.photo[self.type]
                             ).grid(row=1,column=0)
-                print(done)
                 return
-        # we only get here if a group is not verified
+        # we only get here if a group is not verified (otherwise, return above)
         self.verifyT()
     def sortT(self):
         # This window/frame/function shows one entry at a time (with pic?)
