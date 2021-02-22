@@ -5313,6 +5313,7 @@ class Splash(Window):
         title=(_("{name} Dictionary and Orthography Checker").format(name=program[
                                                                     'name']))
         self.title(title)
+        v=_("Version: {}".format(program['version']))
         text=_("Your dictionary database is loading...\n\n"
                 "{name} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
