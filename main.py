@@ -2819,7 +2819,7 @@ class Check():
                 # print(done)
                 self.runwindow.ww.close()
                 return
-        elif joined == False and self.runwindow.winfo_exists():
+            elif joined == False and self.runwindow.winfo_exists():
                 self.runwindow.resetframe()
                 Label(self.runwindow.frame, text=done).grid(row=0,column=0)
                 Label(self.runwindow.frame, text='',
