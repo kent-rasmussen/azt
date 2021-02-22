@@ -1,7 +1,6 @@
 # Changelog
 
 ## In Process
-- button for next CV profile on done screen.
 - cycle through tone groups to record based on volume of the group.
 - show count of batch numbers on recording screen
 - TIME?:For recording windows, consider adding a "skip to next undone"
@@ -86,6 +85,9 @@
 - New Add/Modify Ad Hoc sorting pages
 - New (Advanced) window to set user option for number of tone examples to record (1,5,100, or 1000)
 - Add Frame window now removed check session (on bottom) on any keypress, in any field on the page (this should keep users from changing the information in the fields, then submitting before those changes are checked.)
+- buttons for next CV profile on done screens:
+    - Recording: next CV profile  
+    - Sorting: next Frame or new frame, next CV profile or ps   
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
