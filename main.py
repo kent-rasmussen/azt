@@ -3750,6 +3750,10 @@ class Check():
             self.runwindow.ww.close()
             examplesframe.wait_window(entryframe)
     def showtonegroupexs(self):
+        def next():
+            self.nextprofile()
+            self.runwindow.destroy()
+            self.showtonegroupexs()
         if (not(hasattr(self,'examplespergrouptorecord')) or
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=5
@@ -3780,9 +3784,12 @@ class Check():
                     return
             if self.runwindow.winfo_exists():
                 self.runwindow.ww.close()
+                self.runwindow.resetframe()
                 Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
                 text=_("All done! Sort some more words, and come back.")
                 ).grid(row=0,column=0,rowspan=2,sticky='w')
+                        text=_("Continue to next syllable profile"),
+                        command=next).grid(row=1,column=0)
             # self.runwindow.wait_window()
             #
         else:
