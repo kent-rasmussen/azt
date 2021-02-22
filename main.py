@@ -998,6 +998,8 @@ class Check():
         self.set('glosslang2',choice,window)
     def setps(self,choice,window):
         self.set('ps',choice,window)
+    def setexamplespergrouptorecord(self,choice,window):
+        self.set('examplespergrouptorecord',choice,window)
     def getsubcheck(self):
         log.info("this sets the subcheck")
         if self.type == "V":
@@ -2467,6 +2469,55 @@ class Check():
                                     )
             buttonFrame1.grid(column=0, row=4)
             buttonFrame1.wait_window(window)
+    def getexamplespergrouptorecord(self):
+        log.info("this sets the number of examples per group to record")
+        self.npossible=[
+            {'code':1,'name':"1 - Bare minimum, just one per group"},
+            {'code':5,'name':"5 - Some, but not all, of most groups"},
+            {'code':100,'name':"100 - All examples in most databases"},
+            {'code':1000,'name':"1000 - All examples in VERY large databases"}
+                        ]
+        title=_('Select Number of Examples per Group to Record')
+        window=Window(self.frame, title=title)
+        text=_("The {0} tone report splits sorted data into "
+                "draft underlying tone melody groups, "
+                "with distinct values for each of your tone frames. This "
+                "exhaustively finds differences between groups of lexical "
+                "senses, but often "
+                "misses similarities between groups, which might be "
+                "distinguished only because a single word was skipped or sorted "
+                "incorrectly."
+                "\n\nEven before a linguist has been able to evaluate these "
+                "groups, it may be helpful to record your sorted data. "
+                "{0} can give you a window for each lexicon sense in a tone "
+                "group, with a record button for each sorted sense-frame "
+                "combination. "
+                "\n\nThose "
+                "windows will be presented to the user from one tone report "
+                "group after "
+                "another, until all groups have had one page presented. Then "
+                "{0} will "
+                "repeat this process, until it has done a number of "
+                "rounds equal to the number selected below. "
+                "\n\nIf a "
+                "group has fewer examples than this number, that group will be "
+                "skipped once done. "
+                "\nPicking a larger number could delay opening "
+                "the recording window; picking a smaller number could mean "
+                "data not getting recorded. "
+                "Up to how many examples do you want to record for each group?"
+                "".format(self.program['name'])
+                )
+        Label(window.frame, text=title, font=self.fonts['title']).grid(column=0,
+                                                                        row=0)
+        Label(window.frame, text=text, justify='left').grid(column=0, row=1)
+        buttonFrame1=ButtonFrame(window.frame,
+                                self.npossible,
+                                self.setexamplespergrouptorecord,
+                                window
+                                )
+        buttonFrame1.grid(column=0, row=4)
+        buttonFrame1.wait_window(window)
     def getV(self,window):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getsubcheck"""
@@ -2517,10 +2568,6 @@ class Check():
             buttonFrame1.grid(column=0, row=0)
     def getlocations(self):
         self.locations=[]
-        # for guid in self.guidstosort:
-        #     for location in self.db.get('pronunciationfieldlocation',
-        #         guid=guid, fieldtype='tone'):
-        #         self.locations+=[location]
         for senseid in self.senseidstosort:
             for location in self.db.get('exfieldlocation',
                 senseid=senseid, fieldtype='tone'):
@@ -4695,6 +4742,9 @@ class MainApplication(Frame):
         advancedmenu.add_command(
                         label=_("Add/Modify Ad Hoc Sorting Group"),
                         command=lambda x=check:Check.addmodadhocsort(x))
+        advancedmenu.add_command(
+                label=_("Select the Number of Examples per Group to Record"),
+                command=lambda x=check:Check.getexamplespergrouptorecord(x))
         """Unused for now"""
         # settingsmenu = Menu(menubar, tearoff=0)
         # changestuffmenu.add_cascade(label=_("Settings"), menu=settingsmenu)
@@ -5206,7 +5256,7 @@ class ButtonFrame(Frame):
         gimmenull=False # When do I want a null option added to my lists? ever?
         self['background']=self.theme['background']
         i=0
-        """Make sure list is in the proper format"""[0]
+        """Make sure list is in the proper format: list of dictionaries"""
         if type(optionlist) is not list:
             print("optionlist is Not a list!",optionlist,type(optionlist))
             return
@@ -5217,8 +5267,8 @@ class ButtonFrame(Frame):
             the format of the whole list; hope that's true!"""
         elif optionlist[0] is dict:
             print("looks like options are already in dictionary format.")
-        elif type(optionlist[0]) is str:
-            """when optionlist is a list of strings/codes"""
+        elif (type(optionlist[0]) is str) or (type(optionlist[0]) is int):
+            """when optionlist is a list of strings/codes/integers"""
             print("looks like options are just a list of codes; making dict.")
             optionlist = [({'code':optionlist[i], 'name':optionlist[i]}
                             ) for i in range(0, len(optionlist))]
