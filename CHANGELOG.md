@@ -1,13 +1,13 @@
 # Changelog
 
 ## In Process
+- set up user option for number of tone examples to record (set to [1,5,100,1000])
+    - include instructions with "up to" this number.
+- TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
 - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
     - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
 - done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
-- set up user option for number of tone examples to record (set to [1,5,100,1000])
-    - include instructions with "up to" this number.
 - TIME?:For recording windows, consider adding a "skip to next undone"
-- TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
 - cycle through tone groups to record based on volume of the group.
 - show count of batch numbers on recording screen
 - TIME:set up not sorting on profile for small classes
