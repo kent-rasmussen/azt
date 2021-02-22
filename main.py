@@ -2154,7 +2154,7 @@ class Check():
             if self.ps in self.status[self.type]:
                 for profile in self.status[self.type][self.ps]:
                     done+=len(self.status[self.type][self.ps][profile])
-                log.info('done: {}'.format(done))
+                log.debug('done: {}'.format(done))
                 if done >0:
                     if (hasattr(self,'noboard') and (self.noboard is not None)): #.winfo_exists())):
                         self.noboard.destroy()
@@ -2827,7 +2827,7 @@ class Check():
                             ).grid(row=1,column=0)
                 print(done)
                 return
-        # elif self.runwindow.winfo_exists(): #pull this?
+        # we only get here if a group is not verified
         self.verifyT()
     def sortT(self):
         # This window/frame/function shows one entry at a time (with pic?)
