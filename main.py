@@ -3766,7 +3766,7 @@ class Check():
                     self.showentryformstorecordpage()
             self.ps=psori
             self.profile=profileori
-    def showsenseswithexamplestorecord(self,senses=None):
+    def showsenseswithexamplestorecord(self,senses=None,progress=None):
         self.getrunwindow()
         """?Make this scroll!"""
         text=_("Words and phrases to record: click ‘Record’, talk, and release")
@@ -3786,6 +3786,12 @@ class Check():
                 return 1
             entryframe=Frame(self.runwindow.frame)
             entryframe.grid(row=1,column=0)
+            if progress is not None:
+                progressl=Label(self.runwindow.frame, anchor='e',
+                    font=self.fonts['small'],
+                    text="({}/{})".format(*progress)
+                    )#.grid(row=row,column=0,sticky='w')
+                progressl.grid(row=0,column=1,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
             framed=self.getframeddata(senseid,noframe=True,notonegroup=True)
             if framed[self.analang]=='noform':
@@ -3862,7 +3868,8 @@ class Check():
             for i in range(self.examplespergrouptorecord):
                 log.info(_('Giving user the number {} example from each tone '
                         'group ({}) with index'.format(i,self.toneUFgroups)))
-                exited=self.showsenseswithexamplestorecord(batch[i])
+                exited=self.showsenseswithexamplestorecord(batch[i],(i,
+                                                self.examplespergrouptorecord))
                 if exited == True:
                     return
             if self.runwindow.winfo_exists():
@@ -5672,6 +5679,7 @@ def setfonts(self):
             'read':tkinter.font.Font(family="Andika SIL", size=big),
             'readbig':tkinter.font.Font(family="Andika SIL", size=bigger,
                                         weight='bold'),
+            'small':tkinter.font.Font(family="Andika SIL", size=small),
             'default':tkinter.font.Font(family="Andika SIL", size=default)
                 }
     # print(self.fonts)
