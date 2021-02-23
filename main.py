@@ -3445,10 +3445,18 @@ class Check():
         """I think these are only valuable during a check, so we don't have to
         constantly refresh sortingstatus() from the lift file."""
         self.senseidssorted.append(senseid)
-        self.senseidsunsorted.remove(senseid)
+        if senseid in self.senseidsunsorted:
+            self.senseidsunsorted.remove(senseid)
+        else:
+            log.error("Sense id {} not found in unsorted senseids! ({}) "
+                        "".format(senseid,self.senseidsunsorted))
     def markunsortedsenseid(self,senseid):
         self.senseidsunsorted.append(senseid)
-        self.senseidssorted.remove(senseid)
+        if senseid in self.senseidssorted:
+            self.senseidssorted.remove(senseid)
+        else:
+            log.error("Sense id {} not found in sorted senseids! ({}) "
+                        "".format(senseid,self.senseidsunsorted))
     def getidstosort(self):
         """These variables should not have to be reset between checks"""
         self.senseidstosort=list(self.profilesbysense[self.ps]
