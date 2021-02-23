@@ -1780,10 +1780,10 @@ class Check():
             frame=self.toneframes[self.ps][self.name]
             """Forms and glosses have to be strings, or the regex fails"""
             if form == None:
-                form='noform'
+                form=nn(form) #'noform'
             for lang in gloss:
                 if gloss[lang] == None:
-                    gloss[lang]='nogloss'
+                    gloss[lang]=nn(gloss[lang]) #'nogloss'
             if self.debug ==True:
                 print(frame)
             output[self.analang]=self.frameregex.sub(form,frame[self.analang])
