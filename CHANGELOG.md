@@ -1,10 +1,10 @@
 # Changelog
 
 ## In Process
+- fix duplicate example problem.
 - TIME?:For recording windows, consider adding a "skip to next undone"
 - TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
 - cycle through tone groups to record based on volume of the group.
-- show count of batch numbers on recording screen
 - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
     - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
 - done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
@@ -87,6 +87,7 @@
 - buttons for next CV profile on done screens:
     - Recording: next CV profile  
     - Sorting: next Frame or new frame, next CV profile or ps   
+- show count of batch numbers on recording screen (x/y), where y is the total number per group you asked for.
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
