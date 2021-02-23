@@ -1041,6 +1041,8 @@ class Check():
     def setprofile(self,choice,window):
         self.set('profile',choice,window)
     def settype(self,choice,window):
+        if not set(self.profilelegit).issuperset(self.profile):
+            self.nextprofile(guess=True)
         self.set('type',choice,window)
     def setanalang(self,choice,window):
         self.set('analang',choice,window)
