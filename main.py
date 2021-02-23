@@ -1395,6 +1395,9 @@ class Check():
             forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
             if forms == []:
                 self.profile='Invalid'
+                for self.ps in self.db.get('ps',senseid=senseid):
+                    self.addtoprofilesbysense(senseid)
+                continue
             for form in forms:
                 self.profile=self.profileofform(form)
                 if x % 10 is 0:
@@ -1783,7 +1786,7 @@ class Check():
                                                     and (gloss[lang] != None))):
                     output[lang]=self.frameregex.sub(gloss[lang],frame[lang])
         else:
-            output[self.analang]=form
+            output[self.analang]=nn(form) #for non-segmental forms
             for lang in gloss:
                 output[lang]=gloss[lang]
         if voice != None:
