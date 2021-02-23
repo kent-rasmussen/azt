@@ -2662,8 +2662,8 @@ class Check():
             groupstodo=list(set(self.tonegroups)-set(done))
             if len(groupstodo) >0:
                 log.debug("{} frame has elements left to verify: {}".format(
-                                                            frame,groupstodo))
-                self.framestodo.append(frame)
+                                                        self.name,groupstodo))
+                self.framestodo.append(self.name)
                 # return
         log.debug("Frames to do: {}".format(self.framestodo))
         self.name=self.nameori
