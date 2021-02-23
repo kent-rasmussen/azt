@@ -2,6 +2,7 @@
 
 ## In Process
 - fix duplicate example problem.
+- fix zip problem on Windows: "OSError: [Errno 22] Invalid argument: 'log_-:.7z'"
 - TIME?:For recording windows, consider adding a "skip to next undone"
 - TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
 - cycle through tone groups to record based on volume of the group.
