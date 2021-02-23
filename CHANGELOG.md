@@ -91,6 +91,9 @@
     - Recording: next CV profile  
     - Sorting: next Frame or new frame, next CV profile or ps   
 - show count of batch numbers on recording screen (x/y), where y is the total number per group you asked for.
+- now resolve automatically conflicts between profile and type of check.
+    - ad hoc sort group definition/modification/selection sets check type to Tone.
+    - Selecting anything other than Tone in the menu changes to a CV profile.
 
 ### Under the Hood
 - fixed problem with empty examples and tonevalues
