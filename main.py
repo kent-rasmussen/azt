@@ -4962,6 +4962,7 @@ class MainApplication(Frame):
         theme='tkinterdefaults'
         theme='evenlighterpink'
         theme='purple'
+        self.parent.themename='purple' #for low light environments
         pot=list(self.parent.themes.keys())+(['greygreen']*
                                                 (99*len(self.parent.themes)-1))
         self.parent.themename='highcontrast' #for low light environments
