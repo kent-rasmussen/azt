@@ -1,7 +1,7 @@
 # Changelog
 
 ## In Process
-- fix duplicate example problem.
+- fix duplicate example problem. (I don't see this; what is happening?)
 - fix zip problem on Windows: "OSError: [Errno 22] Invalid argument: 'log_-:.7z'"
 - TIME?:For recording windows, consider adding a "skip to next undone"
 - TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
@@ -10,7 +10,8 @@
     - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
 - done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
 - set up summary table for XLP tone export
-
+- record button makes a window in addmodd, if it is open
+- record window exit doesn't exit process (so it is the same as done/next)
 ### Verify Problem
 - fix multiple links to the same recording
 - check that changes to S regexs don't break too much.
@@ -83,6 +84,7 @@
 - put recording buttons on the left, so they would never be pushed off the screen
 - pulled words submenu, made ps and profile selection in main "change" menu
 - New Add/Modify Ad Hoc sorting pages
+    - multiple tweaks to form
 - New (Advanced) window to set user option for number of tone examples to record (1,5,100, or 1000)
 - Add Frame window now removed check session (on bottom) on any keypress, in any field on the page (this should keep users from changing the information in the fields, then submitting before those changes are checked.)
 - buttons for next CV profile on done screens:
