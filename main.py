@@ -1393,6 +1393,8 @@ class Check():
         for senseid in self.db.senseids:
             x+=1
             forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
+            if forms == []:
+                self.profile='Invalid'
             for form in forms:
                 self.profile=self.profileofform(form)
                 if x % 10 is 0:
@@ -1568,6 +1570,8 @@ class Check():
                     else:
                         self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
     def profileofform(self,form):
+        if form == None:
+            return "Invalid"
         formori=form
         """priority sort alphabets (need logic to set one or the other)"""
         """Look for any C, don't find N or G"""
