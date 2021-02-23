@@ -2307,6 +2307,9 @@ class Check():
         self.frame.status=Frame(self.frame)
         self.frame.status.grid(row=0, column=0,sticky='nw') # as row 1?
     def makeresultsframe(self):
+        if (not hasattr(self,'runwindow') or
+                (self.runwindow.winfo_exists == False)):
+            self.getrunwindow()
         self.results = Frame(self.runwindow.frame,width=800)
         self.results.grid(row=0, column=0)
     def setnamesall(self):
