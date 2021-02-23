@@ -2015,6 +2015,8 @@ class Check():
             log.info("Select a syllable profile.")
             self.getprofile()
             return
+        if not set(self.profilelegit).issuperset(self.profile):
+            self.type='T'
         count=self.countbypsprofile(self.ps,self.profile)
         if count == None:
             if ((self.ps in self.profilesbysense) and
