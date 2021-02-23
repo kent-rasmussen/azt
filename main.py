@@ -4815,9 +4815,12 @@ class MainApplication(Frame):
         # filtermenu = Menu(menubar, tearoff=0)
         changemenu.add_command(label=_("Part of speech"),
                         command=lambda x=check:Check.getps(x))
-        changemenu.add_command(label=_("Syllable profile"),
+        # profilemenu.add_cascade(label=_("Languages"), menu=languagemenu)
+        profilemenu = Menu(changemenu, tearoff=0)
+        changemenu.add_cascade(label=_("Syllable profile"), menu=profilemenu)
+        profilemenu.add_command(label=_("Choose"),
                         command=lambda x=check:Check.getprofile(x))
-        changemenu.add_command(label=_("Next Syllable profile"),
+        profilemenu.add_command(label=_("Next"),
                         command=lambda x=check:Check.nextprofile(x))
         # changemenu.add_cascade(label=_("Words"), menu=filtermenu)
         """What to check stuff"""
