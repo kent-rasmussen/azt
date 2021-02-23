@@ -871,6 +871,7 @@ class Check():
             self.toneframes[self.ps][self.name]=frame
             self.storetoneframes()
             self.addwindow.destroy()
+            self.checkcheck()
         self.addwindow=Window(self.frame, title=_("Define a New Tone Frame"))
         self.addwindow.scroll=ScrollingFrame(self.addwindow)
         self.addwindow.frame1=Frame(self.addwindow.scroll.content)
