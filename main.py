@@ -647,7 +647,8 @@ class Check():
                 "unusably small slices of your database."
                 "\nIf you want to compare words that are currently in "
                 "different grammatical categories, put them first into the "
-                "same grammatical category another tool (e.g., FLEx or WeSay), "
+                "same grammatical category in another tool (e.g., FLEx or "
+                "WeSay), "
                 "then put them in an ad hoc group here."
                 "\nIf you're looking at a group you created earlier, and you "
                 "want to create a new group, exit here, switch to a regular "
@@ -657,7 +658,7 @@ class Check():
         qframe.grid(row=2,column=0,sticky='ew')
         text=_("What do you want to call this group for sorting {} words?"
                 "".format(self.ps))
-        Label(qframe,text=text).grid(row=0,column=0,sticky='ew')
+        Label(qframe,text=text).grid(row=0,column=0,sticky='ew',pady=20)
         if ((set(self.profilelegit).issuperset(self.profile)) or
                                             (self.profile == "Invalid")):
             default=None
@@ -666,9 +667,12 @@ class Check():
         profilevar=tkinter.StringVar(value=default)
         namefield = EntryField(qframe,textvariable=profilevar)
         namefield.grid(row=0,column=1)
+        text=_("Select the words below that you want in this group, then click "
+                "==>".format(self.ps))
+        Label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
         sub_btn=Button(qframe,text = _("OK"),
                   command = submitform,anchor ='c')
-        sub_btn.grid(row=0,column=2,sticky='')
+        sub_btn.grid(row=1,column=1,sticky='w')
         vars=list()
         row=0
         scroll=ScrollingFrame(self.runwindow)
@@ -679,6 +683,8 @@ class Check():
             vars.append(tkinter.StringVar())
             if id in self.profilesbysense[self.ps][self.profile]:
                 vars[idn].set(id)
+            else:
+                vars[idn].set(0)
             framed=self.getframeddata(id, noframe=True)
             log.debug("forms: {}".format(framed['formatted']))
             tkinter.Checkbutton(scroll.content, text = framed['formatted'],
