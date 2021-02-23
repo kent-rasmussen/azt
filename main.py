@@ -178,6 +178,7 @@ class Check():
         log.debug("analang guessed: {} (If you don't like this, change it in "
                     "the menus)".format(self.analang))
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
+        self.maxpss=2 #don't automatically give more than two grammatical categories
         self.loaddefaults() # overwrites guess above, stored on runcheck
         self.langnames()
         self.checkinterpretations() #checks (and sets) values for self.distinguish
@@ -197,7 +198,6 @@ class Check():
             self.makecountssorted() #creates self.profilecounts
             for var in ['rx','profilesbysense','profilecounts']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
-        # self.guesspsprofile() # takes values of largest ps-profile filter
         self.storeprofiledata()
         self.setnamesall() #sets self.checknamesall
         # self.V=self.db.v #based on what is actually in the language (no groups)
@@ -300,16 +300,30 @@ class Check():
             self.glosslang2=self.db.glosslangs[1]
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
-    def guessps(self):
+    def nextps(self,guess=False):
         """Make this smarter, but for now, just take value from the most
         populous tuple"""
         self.profilecountsValid=[]
         for x in [x for x in self.profilecounts if x[1]!='Invalid']:
             self.profilecountsValid.append(x)
-        if len(self.profilecountsValid) >0:
-            self.ps=self.profilecountsValid[0][2]
+        pssdups=[x[2] for x in self.profilecountsValid]
+        pss=[]
+        for ps in pssdups:
+            if ps not in pss:
+                pss.append(ps)
+        log.debug('Profiles in priority order: {}'.format(pss))
+        if (guess == True) or (self.ps not in pss):
+            # if len(pss) >0:
+                self.ps=pss[0]
+            # else:
+            #     self.profile=self.profilecounts[0][2]
         else:
-            self.profile=self.profilecounts[0][2]
+            index=pss.index(self.ps)
+            log.debug("{} ps found in valid pss; "
+                    "selecting next one in this list: {}".format(self.ps,pss))
+            self.ps=pss[index+1]
+        if index >= self.maxpss:
+            return 1 #We hit the max already, but give a valid profile
     def nextprofile(self,guess=False):
         """Make this smarter, but for now, just take value from the most
         populous valid tuple"""
@@ -1969,7 +1983,7 @@ class Check():
         """Get ps"""
         if ((self.ps not in self.db.pss) or
                 (self.ps not in self.profilesbysense)):
-            self.guessps()
+            self.nextps(guess=True)
         if self.ps == None:
             log.info("find the ps")
             self.getps()
@@ -2655,16 +2669,18 @@ class Check():
         self.nameori=self.name
         for self.name in self.toneframes[self.ps]:
             self.gettonegroups() #depends on self.ps/self.profile/self.name
+            log.debug("frame: {}; groups: {}".format(self.name, self.tonegroups))
             if self.name in self.status[self.type][self.ps][self.profile]:
                 done=self.status[self.type][self.ps][self.profile][self.name] #verified.
             else:
-                continue
+                done=[]
             groupstodo=list(set(self.tonegroups)-set(done))
-            if len(groupstodo) >0:
-                log.debug("{} frame has elements left to verify: {}".format(
-                                                        self.name,groupstodo))
+            log.debug("groupstodo: {}; self.tonegroups: {}; done: {}".format(
+                                    groupstodo, self.tonegroups, done))
+            if len(self.tonegroups) == 0 or len(groupstodo) >0:
+                log.debug("{} frame has not been started, or has elements "
+                            "left to verify: {}".format(self.name,groupstodo))
                 self.framestodo.append(self.name)
-                # return
         log.debug("Frames to do: {}".format(self.framestodo))
         self.name=self.nameori
     def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
