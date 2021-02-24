@@ -5851,7 +5851,11 @@ def inherit(self,attr=None):
     for attr in attrs:
         setattr(self,attr,getattr(self.parent,attr))
 def nfc(x):
+    #This makes (pre)composed characters, e.g., vowel and accent in one
     return unicodedata.normalize('NFC', str(x))
+def nfd(x):
+    #This makes decomposed characters. e.g., vowel + accent
+    return unicodedata.normalize('NFD', str(x))
     # print("self.fonts: {}, self.parent.fonts: {}".format(self.fonts,self.parent.fonts))
     # self.fonts=self.parent.fonts
     # self.theme=self.parent.theme
