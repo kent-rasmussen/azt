@@ -5390,7 +5390,10 @@ class RecordButtonFrame(Frame):
                     psprofile=check.ps+'-'+l.text
                 else: psprofile=check.ps
             else: psprofile=check.ps
-            args=[psprofile, id, self.node.tag, form, gloss] #check.profile, <=Changes!
+            log.debug(check.s[check.analang])
+            if not hasattr(check, 'rx'):
+                check.rx={'d':rx.make(rx.s(check,'d'),compile=True)} #ad hoc dictionary
+            args=[psprofile, id, self.node.tag, rx.stripdiacritics(check,form), gloss] #check.profile, <=Changes!
             for arg in args:
                 wavfilename+=arg
                 if args.index(arg) < len(args):
