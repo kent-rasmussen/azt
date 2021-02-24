@@ -179,7 +179,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'cm': 'use to get guids of entries with fields at the '
                         'example level',
                 'url':(("entry[@guid='{guid}']"
-                        "/lexical-unit/form[@lang='{analang}']/../.."
+                        # "/lexical-unit/form[@lang='{analang}']/../.."
                         "/sense[@id='{senseid}']"
                             "/grammatical-info[@value='{ps}']/.."
                             "/example"
