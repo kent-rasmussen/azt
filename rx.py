@@ -23,6 +23,8 @@ def makeprecomposed(x):
     for s in subs:
         x=re.sub(s,subs[s],x)
     return x
+def stripdiacritics(check,x):
+    return check.rx['d'].sub('',x)
 def segmentin(forms, glyph):
     # """This actually allows for dygraphs, etc., so I'm keeping it."""
     # for form in forms: # as: self.citationforms[lang] + self.lexemes[lang]
