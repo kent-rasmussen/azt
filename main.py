@@ -690,9 +690,13 @@ class Check():
             tkinter.Checkbutton(scroll.content, text = framed['formatted'],
                                 variable = vars[allpssensids.index(id)],
                                 onvalue = id, offvalue = 0,
-                                font=self.fonts['read'],
                                 bg=self.theme['background'],
                                 activebackground=self.theme['activebackground'],
+                                image=self.photo['uncheckedbox'],
+                                selectimage=self.photo['checkedbox'],
+                                indicatoron=False,
+                                compound='left',
+                                font=self.fonts['read'],
                                 anchor='w'
                                 ).grid(row=row,column=0,sticky='ew')
             row+=1
@@ -5008,14 +5012,18 @@ class MainApplication(Frame):
         self.parent.photo['sortT'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/Join List.png')
         self.parent.photo['joinT'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname(
-            '/usr/share/icons/gnome/24x24/devices/audio-input-microphone.png')
+        # imgurl=file.fullpathname(
+        #     '/usr/share/icons/gnome/24x24/devices/audio-input-microphone.png')
         # imgurl=file.fullpathname('images/Microphone card_sm.png')
         # imgurl=file.fullpathname('images/Microphone alone.png')
         imgurl=file.fullpathname('images/Microphone alone_sm.png')
         self.parent.photo['record'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/Change Circle_sm.png')
         self.parent.photo['change'] = tkinter.PhotoImage(file = imgurl)
+        imgurl=file.fullpathname('images/checked.png')
+        self.parent.photo['checkedbox'] = tkinter.PhotoImage(file = imgurl)
+        imgurl=file.fullpathname('images/unchecked.png')
+        self.parent.photo['uncheckedbox'] = tkinter.PhotoImage(file = imgurl)
         setfonts(self.parent)
         """allow for exit button (~200px)"""
         self.parent.wraplength=self.parent.winfo_screenwidth()-300
