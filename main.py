@@ -2876,8 +2876,10 @@ class Check():
         for i in range(len(senseids)): #just keep trying until you succeed
             senseid=senseids[randint(0, len(senseids))-1]
             framed=self.getframeddata(senseid,notonegroup=notonegroup)
-            if ((framed[self.analang] != None) and
-                    (framed[self.glosslang] != None)):
+            if (
+                # (framed[self.analang] != None) and
+                    (framed[self.glosslang] != None)
+                    ):
                 """As soon as you find one with form and gloss, quit."""
                 self.exs[value]=senseid
                 return framed
