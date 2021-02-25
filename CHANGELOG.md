@@ -1,15 +1,6 @@
 # Changelog
 
-## Notes/feedback from Chufie' workshop:
-- Every thing went well
-- COVID-19 fear at beginning
-- Good to sort after having talked through the linguistic distinctions (e.g., TAM)
-- Not everything done, but understandable for two week workshop.
-- Easy to use for non-computer savvy
-- Engagement felt
-
-## In Process
-- fix duplicate example problem. (I don't see this; what is happening?)
+## Issues from Chufie' workshop (Feb 2021)
 + zero form silently doesn't make a button
 - verify screen doesn't make button
 - skip verification if zero or one item in group.
@@ -23,12 +14,13 @@
 - TIME?:For recording windows, consider adding a "skip to next undone"
 - TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
 - cycle through tone groups to record based on volume of the group.
-- setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
-    - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
-- done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
 - set up summary table for XLP tone export
 - record button makes a window in addmodd, if it is open
 - record window exit doesn't exit process (so it is the same as done/next)
+
+- setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
+    - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
+- done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
 
 ## Consider
 - ways to change a frame after the fact... this seems to be a common problem
@@ -137,7 +129,7 @@
     + diacritics now in vowel variables
 - add tone frame shouldn't add the frame anywhere until final check completed
 - Add morpheme now allows skipping any gloss language, and doesn't create gloss or definition nodes, as appropriate.
-- Function to remove extra example fields (added by Chorus?) 
+- Function to remove extra example fields (added by Chorus?), running now on each load
 
 # Version 0.6.1
 - cleanup of exceptions on code running after windows closed.
