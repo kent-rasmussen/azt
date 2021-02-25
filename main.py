@@ -633,6 +633,7 @@ class Check():
         allpssensids=list()
         for profile in self.profilesbysense[self.ps]:
             allpssensids+=list(self.profilesbysense[self.ps][profile])
+        allpssensids=list(dict.fromkeys(allpssensids))
         if len(allpssensids)>70:
             text=_("This is a large group ({})! Are you in the right "
                     "grammatical category?".format(len(allpssensids)))
