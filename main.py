@@ -5907,7 +5907,7 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         log.exception("Unexpected exception! %s",e)
-        logwritelzma(log.filename)
+        logwritelzma(log.filename) #in logsetup
     exit()
     """The following are just for testing"""
     entry=Entry(db, guid='003307da-3636-40cd-aca9-6b0d798055d2')
