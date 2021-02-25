@@ -1,8 +1,25 @@
 # Changelog
 
+## Notes/feedback from Chufie' workshop:
+- Every thing went well
+- COVID-19 fear at beginning
+- Good to sort after having talked through the linguistic distinctions (e.g., TAM)
+- Not everything done, but understandable for two week workshop.
+- Easy to use for non-computer savvy
+- Engagement felt
+
 ## In Process
 - fix duplicate example problem. (I don't see this; what is happening?)
++ zero form silently doesn't make a button
+- verify screen doesn't make button
+- skip verification if zero or one item in group.
+- set current visible on numbers to record
+- extra space being added for None forms in Frame construction
+- remove underlining in table headers (bold)
+- give error message if crashing because selecting part of speech that isn't populated in profile analysis.
 - fix zip problem on Windows: "OSError: [Errno 22] Invalid argument: 'log_-:.7z'"
+- for addframe, add button/menu to allow viewing all frames already done, to help with consistency across frames.
+- remove invalid characters from character names
 - TIME?:For recording windows, consider adding a "skip to next undone"
 - TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
 - cycle through tone groups to record based on volume of the group.
@@ -12,6 +29,10 @@
 - set up summary table for XLP tone export
 - record button makes a window in addmodd, if it is open
 - record window exit doesn't exit process (so it is the same as done/next)
+
+## Consider
+- ways to change a frame after the fact... this seems to be a common problem
+
 ### Verify Problem
 - fix multiple links to the same recording
 - check that changes to S regexs don't break too much.
@@ -23,6 +44,7 @@
 ### Next Features
 - add C and V sorting (and CV?)
 - model form construct with fields for CV info and tone info, which may contain variables (HAB,CONT) in addition to H, L, etc.
+
 ### Some Day, if possible
 - have automatic choice of ps-profile go through all defined frames, then next most populous ps-profile
 - include tone grouping in recording pages?
@@ -115,6 +137,8 @@
     + diacritics now in vowel variables
 - add tone frame shouldn't add the frame anywhere until final check completed
 - Add morpheme now allows skipping any gloss language, and doesn't create gloss or definition nodes, as appropriate.
+- Function to remove extra example fields (added by Chorus?) 
+
 # Version 0.6.1
 - cleanup of exceptions on code running after windows closed.
 - fixed logic in sort/verify/join and recording windows
