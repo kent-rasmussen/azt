@@ -1117,6 +1117,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     "from {}".format(
                                                             sense.get('id')))
                                         sense.remove(example)
+        self.write()
     def addtoneUF(self,senseid,group,analang,guid=None,showurl=False):
         # log.info(' '.join("Adding",group,"draft underlying form value to", senseid,
         #                                 "senseid",guid,"guid (in lift.py)"))
