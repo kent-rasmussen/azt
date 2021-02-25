@@ -5276,7 +5276,8 @@ class RecordButtonFrame(Frame):
             block(self)
     def _stop(self, event):
         # print("I'm stopping recording now")
-        self.stream.stop_stream()
+        if hasattr(self,'stream'):
+            self.stream.stop_stream()
         self.fileclose()
         self.b.destroy()
         self.makeplaybutton()
