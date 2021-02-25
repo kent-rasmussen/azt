@@ -17,6 +17,7 @@
 - set up summary table for XLP tone export
 - record button makes a window in addmodd, if it is open
 - record window exit doesn't exit process (so it is the same as done/next)
+- widen "Do" menu item
 
 - setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
     - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
