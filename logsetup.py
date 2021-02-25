@@ -3,6 +3,8 @@
 import datetime
 import logging
 import lzma
+import re
+
 def logshutdown(): #Not sure I'll ever need this...
     logging.shutdown()
 def logsetup(loglevel):
@@ -66,6 +68,7 @@ def logwritelzma(filename):
     """This writes changes back to XML."""
     """When this goes into production, change this:"""
     compressed='log_'+datetime.datetime.utcnow().isoformat()[:-7]+'Z'+'.7z'
+    compressed=re.sub(':','-',compressed)
     with open(filename,'r') as d:
         data=d.read()
         with lzma.open(compressed, "wt") as f:
