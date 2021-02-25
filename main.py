@@ -1638,7 +1638,7 @@ class Check():
         return idsbyps[randint(0, len(idsbyps))]
     def gimmesenseid(self):
         idsbyps=self.db.get('senseidbyps',lang=self.analang,ps=self.ps)
-        return idsbyps[randint(0, len(idsbyps))]
+        return idsbyps[randint(0, len(idsbyps)-1)]
     def framenamesbyps(self,ps):
         """Names for all tone frames defined for the language."""
         if self.toneframes is not None:
