@@ -1722,7 +1722,7 @@ class Check():
                 voice=None
             for lang in glosses:
                 if (lang == self.glosslang) or (lang == self.glosslang2):
-                    gloss[lang]=t(firstoflist(glosses[lang]))
+                    gloss[lang]=t(firstoflist(glosses[lang]))[:12] #Just the first 12 characters
             tonegroup=t(firstoflist(tonegroups))
             """This is what we're pulling from:
             <example>
@@ -1759,7 +1759,7 @@ class Check():
             form=firstoflist(forms[self.analang])
             voice=firstoflist(forms[self.audiolang])
             for lang in glosses:
-                gloss[lang]=firstoflist(glosses[lang])
+                gloss[lang]=firstoflist(glosses[lang])[:12] #Just the first 12 characters
                 log.log(2,'gloss[{}]: {}'.format(lang,gloss[lang]))
             tonegroup=firstoflist(tonegroups)
         else:
