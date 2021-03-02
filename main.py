@@ -322,8 +322,8 @@ class Check():
             log.debug("{} ps found in valid pss; "
                     "selecting next one in this list: {}".format(self.ps,pss))
             self.ps=pss[index+1]
-        if index >= self.maxpss:
-            return 1 #We hit the max already, but give a valid profile
+            if index >= self.maxpss:
+                return 1 #We hit the max already, but give a valid profile
     def nextprofile(self,guess=False):
         """Make this smarter, but for now, just take value from the most
         populous valid tuple"""
