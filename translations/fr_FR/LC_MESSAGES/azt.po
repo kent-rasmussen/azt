@@ -738,7 +738,7 @@ msgid ""
 msgstr ""
 "Félicitations! Tous vos {} avec profil {} sont triés dans les groupes "
 "illustrés ci-dessous (dans le cadre ‘{}’). Est-ce que l'un d'entre eux a la "
-"même mélodie de ton? Si oui, cliquez sur l'un des deux groupes. Sinon, "
+"même mélodie de ton? Si oui, cliquez sur les deux groupes. Sinon, "
 "cliquez sur ‘{}’. "
 
 #: /home/kentr/bin/raspy/azt/main.py:3525
