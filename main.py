@@ -1310,8 +1310,7 @@ class Check():
         except:
             print("Problem importing",self.statusfile)
             self.status={}
-    def updatestatus(self,verified=False):
-        #This function updates the status file, not the lift file.
+    def makestatusdict(self):
         if self.type not in self.status:
             self.status[self.type]={}
         if self.ps not in self.status[self.type]:
@@ -1320,6 +1319,9 @@ class Check():
             self.status[self.type][self.ps][self.profile]={}
         if self.name not in self.status[self.type][self.ps][self.profile]:
             self.status[self.type][self.ps][self.profile][self.name]=list()
+    def updatestatus(self,verified=False):
+        #This function updates the status file, not the lift file.
+        self.makestatusdict()
         if verified == True:
             if self.subcheck not in (
                 self.status[self.type][self.ps][self.profile][self.name]):
@@ -3179,6 +3181,7 @@ class Check():
         self.runwindow.config(menu=verifymenu)
         self.settonevariablesbypsprofile()
         """self.subcheck is set here, but probably OK"""
+        self.makestatusdict()
         for self.subcheck in self.tonegroups:
             if self.subcheck in (self.status[self.type][self.ps][self.profile]
                                             [self.name]):
