@@ -4752,11 +4752,15 @@ class ScrollingFrame(Frame):
                 or (self.winfo_height() > self.maxheight)):
             self.config(height=min(self.maxheight,contentrh))
     def _configure_canvas(self, event):
+        if not hasattr(self,'configured'):
+            self.configured=False
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
             # update the inner frame's width to fill the canvas
             self.canvas.itemconfigure(self.content_id,
                                         width=self.canvas.winfo_width())
-        self.windowsize()
+        if self.configured==False:
+            self.windowsize()
+        self.configured=True
     def __init__(self,parent):
         """Make this a Frame, with all the inheritances, I need"""
         self.parent=parent
