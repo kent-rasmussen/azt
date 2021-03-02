@@ -1,5 +1,8 @@
 # Changelog
 
+## Issues from Zulgo March 2021 workshop
+- truncate definitions, or otherwise treat long definitions sanely
+
 ## Issues from Chufie' workshop (Feb 2021)
 + zero form silently doesn't make a button
 - verify screen doesn't make button
