@@ -328,8 +328,6 @@ class Check():
             if index >= self.maxpss:
                 return 1 #We hit the max already, but give a valid profile
     def nextprofile(self,guess=False):
-        """Make this smarter, but for now, just take value from the most
-        populous valid tuple"""
         self.getprofilestodo()
         if len(self.profilecountsValid) >0:
             profiles=[x[1] for x in self.profilecountsValid]
