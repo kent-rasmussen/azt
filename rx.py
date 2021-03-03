@@ -59,6 +59,9 @@ def s(check,stype,lang=None):
         list=set(check.s[lang]['C'])-set(check.s[lang]['N'])
     elif stype in check.s[lang]:
         list=check.s[lang][stype]
+    else:
+        log.error("Dunno why, but this isn't in lists: {}".format(stype))
+        return
     return "("+'|'.join(sorted(list,key=len,reverse=True))+")"
 def make(regex, word=False, compile=False):
     if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
@@ -94,15 +97,16 @@ def fromCV(check, lang, word=False, compile=False):
     if check.distinguish['Nwd'] and not check.distinguish['N']:
         rxthis=s(check,'C-N',lang) #Pull out C# first;exclude N# if appropriate.
         CVs=re.sub('C$',rxthis,CVs)
-        log.debug('CVs: {}'.format(CVs))
-    for x in ["V","N","G","S","C"]: #just pull out big ones first
-        rxthis=s(check,x,lang) #this should have parens for each S
-        CVs=re.sub(x,rxthis,CVs)
-        log.debug('CVs: {}'.format(CVs))
+        log.log(2,'CVs: {}'.format(CVs))
+    for x in ["V","N","G","S","C"]:
+        if x in check.s[lang]: #just pull out big ones first
+            rxthis=s(check,x,lang) #this should have parens for each S
+            CVs=re.sub(x,rxthis,CVs)
+            log.log(2,'CVs: {}'.format(CVs))
     for x in references: #get capture group expressions
         CVrepl='\\\\{}'.format(str(x)) #this needs to be escaped to survive...
-        log.debug('x: {}; repl: {}'.format(x,CVrepl))
-        log.debug('CVs: {}'.format(CVs))
+        log.log(3,'x: {}; repl: {}'.format(x,CVrepl))
+        log.log(3,'CVs: {}'.format(CVs))
     CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs)
     log.debug('CVs: {}'.format(CVs))
     return make(CVs,word=word, compile=compile)
