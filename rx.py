@@ -7,10 +7,11 @@ log = logging.getLogger(__name__)
 def id(x):
     return re.sub('[][  .!=\(\),\'/?ꞌ\n:]','_',x) #remove charcters that are invalid for ids
 def glossifydefn(x):
-    x=re.sub('(([^ \(]+)( [^ \(]+){2}) .*$','\\1',x) #just before the first space or parentheses
+    x=re.sub('^(([^() ]+)( [^() ]+){,2})(.*)*$','\\1',x) #up to three words, no parens
     x=re.sub(',$','',x)
     x=re.sub(', ',',',x)
-    return re.sub(' ','.',x)
+    x=re.sub(' ','.',x)
+    return x
 def makeprecomposed(x):
     if x is None:
         return
