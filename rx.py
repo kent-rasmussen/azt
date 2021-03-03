@@ -5,7 +5,7 @@ import logging
 log = logging.getLogger(__name__)
 """This is called from a number of places"""
 def id(x):
-    return re.sub('[ .!=\(\),\'/?ꞌ]','_',x) #remove charcters that are invalid for ids
+    return re.sub('[  .!=\(\),\'/?ꞌ]','_',x) #remove charcters that are invalid for ids
 def makeprecomposed(x):
     if x is None:
         return
