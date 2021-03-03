@@ -138,6 +138,7 @@ class Check():
         log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
+        self.settingsbyfile()
         self.loadstatus()
         self.loadtoneframes()
         if nsyls is not None:
@@ -1146,34 +1147,7 @@ class Check():
         fields are NOT saved to file!).
         These are check related defaults; others in lift.get"""
         self.loadtypedict()
-        self.defaults={None:[
-                            'analang', # independent of lift.analang?
-                            'glosslang', # independent of lift.glosslang?
-                            'glosslang2',
-                            'audiolang',
-                            'ps',
-                            'profile',
-                            'type',
-                            'name',
-                            'regexCV',
-                            # 'toneframes', #this has [ps] keys, don't reset below!
-                            'subcheck',
-                            'additionalps',
-                            # 'profilesbysense',
-                            'entriestoshow',
-                            'additionalprofiles',
-                            'sample_format',
-                            'fs',
-                            'audio_card_index',
-                            'interfacelang',
-                            'examplespergrouptorecord',
-                            'distinguish',
-                            'interpret',
-                            'adnlangnames',
-                            'exs',
-                            'maxprofiles'
-                            ],
-                        'ps':[
+        self.defaultstoclear={'ps':[
                             'profile' #do I want this?
                             # 'name',
                             # 'subcheck'
@@ -1211,8 +1185,52 @@ class Check():
                         'exs':[],
                         'maxprofiles':[]
                         }
+    def settingsbyfile(self):
+        #Here we set which settings are stored in which files
+        self.settings={'defaults':{
+                            'file':'defaultfile',
+                            'attributes':['analang',
+                                'glosslang',
+                                'glosslang2',
+                                'audiolang',
+                                'ps',
+                                'profile',
+                                'type',
+                                'name',
+                                'regexCV',
+                                'subcheck',
+                                'additionalps',
+                                'entriestoshow',
+                                'additionalprofiles',
+                                'sample_format',
+                                'fs',
+                                'audio_card_index',
+                                'interfacelang',
+                                'examplespergrouptorecord',
+                                'distinguish',
+                                'interpret',
+                                'adnlangnames',
+                                'exs',
+                                'maxprofiles'
+                                ]},
+            'profiledata':{
+                                'file':'profiledatafile',
+                                'attributes':[
+                                    "profilecounts","profilecountInvalid",
+                                    "scount","profilesbysense"]},
+            'status':{
+                                'file':'statusfile',
+                                'attributes':['status']},
+            'toneframes':{
+                                'file':'toneframesfile',
+                                'attributes':['toneframes']}
+                                }
     def cleardefaults(self,field=None):
-        for default in self.defaults[field]:
+        if field==None:
+            fields=self.settings['defaults']['attributes']
+        else:
+            fields=self.defaultstoclear[field]
+        for default in fields: #self.defaultstoclear[field]:
             setattr(self, default, None)
             """These can be done in checkcheck..."""
     def restart(self):
