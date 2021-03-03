@@ -64,11 +64,13 @@ import gettext
 import sys
 import inspect
 import os
+import pprint #for settings and status files, etc.
 class Check():
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
     def __init__(self, parent, frame, nsyls=None):
         self.start_time=time.time() #this enables boot time evaluation
+        self.pp=pprint.PrettyPrinter()
         self.iterations=0
         # print(time.time()-self.start_time) # with this
         self.debug=parent.debug
@@ -1241,23 +1243,7 @@ class Check():
         file.remove(self.profiledatafile)
         self.restart()
     def loadprofiledata(self):
-        """This should just be imported, with all defaults in a dictionary
-        variable in the file."""
-        try:
-            spec = importlib.util.spec_from_file_location("profiledata",
-                                                        self.profiledatafile)
-            module = importlib.util.module_from_spec(spec)
-            sys.modules['profiledata'] = module
-            spec.loader.exec_module(module)
-            self.profilesbysense=module.profilesbysense
-            self.profilecounts=module.profilecounts
-            self.profilecountInvalid=module.profilecountInvalid
-            self.scount=module.scount
-        except:
-            log.info("There doesn't seem to be a profile data file; "
-                    "making one now (wait maybe three minutes).")
-            self.profilesbysense=None
-        return
+        self.loadsettingsfile(setting='profiledata')
     def loadtypedict(self):
         """I just need this to load once somewhere..."""
         self.typedict={
@@ -1267,67 +1253,43 @@ class Check():
                 'T':{'sg':_('Tone'),'pl':_('Tones')},
                 }
     def loaddefaults(self,field=None):
-        # _=self._
-        """This should just be imported, with all defaults in a dictionary
-        variable in the file."""
-        try:
-            spec = importlib.util.spec_from_file_location("checkdefaults",
-                                                        self.defaultfile)
-            d = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(d)
-            for default in self.defaults[field]:
-                if hasattr(d, default):
-                    setattr(self,default,getattr(d,default))
-                print(default, getattr(self,default))
-        except:
-            log.info("There doesn't seem to be a default file; "
-                    "continuing without one.")
-        return
-    def storedefault(self,default):
-        """This depends on storedefaults"""
-        if self.debug == True:
-            print("trying to store "+default)
-            print(getattr(self,default))
-        value=getattr(self,default)
-        if type(value) is str:
-            text=(default+'="'+getattr(self,default)+'"')
-        else: #at least for dictionary values... what else?
-            text=(default+'='+str(getattr(self,default)))
-        self.f.write(text+'\n')
+        self.loadsettingsfile()
     def storedefaults(self):
-        """I don't think this does what I thought it did..."""
-        self.f = open(self.defaultfile, "w", encoding='utf-8')
-        for default in self.defaults[None]:
-            if self.debug==True:
-                print(type(default))
-                print(default+": "+str(hasattr(self, default))+": "+str(getattr(self,default)))
-            if hasattr(self, default) and (getattr(self,default) is not None):
-                self.storedefault(default)
+        self.storesettingsfile()
+    def storesettingsfile(self,setting='defaults'):
+        fileattr=self.settings[setting]['file']
+        if hasattr(self,fileattr):
+            filename=getattr(self,fileattr)
+        self.f = open(filename, "w", encoding='utf-8')
+        for s in self.settings[setting]['attributes']:
+            v=getattr(self,s)
+            if v != None:
+                self.f.write(s+'=')
+                pprint.pprint(v,stream=self.f)
+                log.debug("{}={} stored in {}.".format(s,v,filename))
+            else:
+                log.debug("{}={}! Not stored in {}.".format(s,v,filename))
         self.f.close()
+    def loadsettingsfile(self,setting='defaults'):
+        fileattr=self.settings[setting]['file']
+        if hasattr(self,fileattr):
+            filename=getattr(self,fileattr)
+        try:
+            spec = importlib.util.spec_from_file_location(setting,filename)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[setting] = module
+            spec.loader.exec_module(module)
+            for s in self.settings[setting]['attributes']:
+                if hasattr(module,s):
+                    setattr(self,s,getattr(module,s))
+        except:
+            log.error("Problem importing {}".format(filename))
+            for s in self.settings[setting]['attributes']:
+                setattr(self,s,{})
     def loadtoneframes(self):
-        try:
-            spec = importlib.util.spec_from_file_location("toneframes",
-                                                        self.toneframesfile)
-            # print(spec)
-            module = importlib.util.module_from_spec(spec)
-            sys.modules['toneframes'] = module
-            spec.loader.exec_module(module)
-            self.toneframes=module.toneframes
-        except:
-            print("Problem importing",self.toneframesfile)
-            self.toneframes={}
+        self.loadsettingsfile(setting='toneframes')
     def loadstatus(self):
-        try:
-            spec = importlib.util.spec_from_file_location("verificationstatus",
-                                                        self.statusfile)
-            # print(spec)
-            module = importlib.util.module_from_spec(spec)
-            sys.modules['verificationstatus'] = module
-            spec.loader.exec_module(module)
-            self.status=module.status
-        except:
-            print("Problem importing",self.statusfile)
-            self.status={}
+        self.loadsettingsfile(setting='status')
     def makestatusdict(self):
         if self.type not in self.status:
             self.status[self.type]={}
@@ -1363,32 +1325,11 @@ class Check():
                         "there.")
         self.storestatus()
     def storeprofiledata(self):
-        self.f = open(self.profiledatafile, "w", encoding='utf-8')
-        text=[f"profilesbysense={self.profilesbysense}",
-            f"profilecounts={self.profilecounts}",
-            f"profilecountInvalid={self.profilecountInvalid}",
-            f"scount={self.scount}"]
-        for t in text:
-            self.f.write(t+'\n')
-        self.f.close()
-        if self.debug==True:
-            print(type(self.profilesbysense),self.profilesbysense)
-            print(type(self.profilecounts),self.profilecounts)
-            print(type(self.profilecountInvalid),self.profilecountInvalid)
+        self.storesettingsfile(setting='profiledata')
     def storetoneframes(self):
-        self.f = open(self.toneframesfile, "w", encoding='utf-8')
-        text=f"toneframes={self.toneframes}"
-        self.f.write(text+'\n')
-        self.f.close()
-        if self.debug==True:
-            print(type(self.toneframes),self.toneframes)
+        self.storesettingsfile(setting='toneframes')
     def storestatus(self):
-        self.f = open(self.statusfile, "w", encoding='utf-8')
-        text=f"status={self.status}"
-        self.f.write(text+'\n')
-        self.f.close()
-        if self.debug==True:
-            print(type(self.status),self.status)
+        self.storesettingsfile(setting='status')
     """Get from LIFT database functions"""
     def addpstoprofileswdata(self):
         if self.ps not in self.profilesbysense:
