@@ -1,7 +1,6 @@
 # Changelog
 
 ## Issues from Zulgo March 2021 workshop
-- truncate definitions, or otherwise treat long definitions sanely
 
 ## Issues from Chufie' workshop (Feb 2021)
 + zero form silently doesn't make a button
@@ -72,6 +71,9 @@
 - distinguish between lc and lx
     - make CV report only reference lx field
     - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
+
+# Version 0.7
+- truncate definitions after 12 letters when shown on screen (not XLP exports)
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
