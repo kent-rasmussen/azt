@@ -6,6 +6,11 @@ log = logging.getLogger(__name__)
 """This is called from a number of places"""
 def id(x):
     return re.sub('[  .!=\(\),\'/?ꞌ]','_',x) #remove charcters that are invalid for ids
+def glossifydefn(x):
+    x=re.sub('(([^ \(]+)( [^ \(]+){2}) .*$','\\1',x) #just before the first space or parentheses
+    x=re.sub(',$','',x)
+    x=re.sub(', ',',',x)
+    return re.sub(' ','.',x)
 def makeprecomposed(x):
     if x is None:
         return

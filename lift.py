@@ -1432,9 +1432,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         forms=self.get('gloss',guid=guid,senseid=senseid,glosslang=lang,ps=ps,
                         showurl=showurl) #,showurl=True
         if forms == []: #for the whole db this will not work if even one gloss is filled out
-            forms=self.get('definition',guid=guid,senseid=senseid,
+            formsd=self.get('definition',guid=guid,senseid=senseid,
                         glosslang=lang,
                         showurl=showurl)
+            forms=list()
+            for form in formsd:
+                forms.append(rx.glossifydefn(form))
         return forms
     def citationorlexeme(self,guid=None,senseid=None,lang=None,ps=None
                         ,showurl=False):
