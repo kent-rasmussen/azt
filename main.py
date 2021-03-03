@@ -821,7 +821,7 @@ class Check():
                     db['before'][lang]['text']+'__'+db['after'][lang]['text'])
             senseid=self.gimmesenseid()
             # This needs self.toneframes
-            framed=self.getframeddata(senseid) #after defn above, before below!
+            framed=self.getframeddata(senseid,truncdefn=True) #after defn above, before below!
             #At this point, remove this frame (in case we don't submit it)
             del self.toneframes[self.ps][self.name]
             self.name=self.nameori
@@ -1669,7 +1669,7 @@ class Check():
             l+=group
         return list(dict.fromkeys(l))
     """Mediating between LIFT and the user"""
-    def getframeddata(self,source,noframe=False,notonegroup=False):
+    def getframeddata(self,source,noframe=False,notonegroup=False,truncdefn=False):
         """This generates a dictionary of form {'form':outputform,
         'gloss':outputgloss} for display, by senseid"""
         """Sometimes this script is called to make the example fields, other
@@ -1722,7 +1722,10 @@ class Check():
                 voice=None
             for lang in glosses:
                 if (lang == self.glosslang) or (lang == self.glosslang2):
-                    gloss[lang]=t(firstoflist(glosses[lang]))[:12] #Just the first 12 characters
+                    if truncdefn==True: #should only be where windows are drawn.
+                        gloss[lang]=t(firstoflist(glosses[lang]))[:12] #Just the first 12 characters
+                    else: #reports should have full field, however long.
+                        gloss[lang]=t(firstoflist(glosses[lang])) #Just the first 12 characters
             tonegroup=t(firstoflist(tonegroups))
             """This is what we're pulling from:
             <example>
@@ -2864,7 +2867,7 @@ class Check():
                             )
         senseidsincheck=self.senseidsincheck(senseids)
         return list(senseidsincheck)
-    def getex(self,value,notonegroup=True):
+    def getex(self,value,notonegroup=True,truncdefn=False):
         """This function finds examples in the lexicon for a given tone value,
         in a given tone frame (from check)"""
         senseids=self.getexsall(value)
@@ -2875,10 +2878,12 @@ class Check():
                 log.info("Using stored value for {} group: {}".format(value,
                                 self.exs[value]))
                 return self.getframeddata(self.exs[value],
-                                            notonegroup=notonegroup)
+                                            notonegroup=notonegroup,
+                                            truncdefn=truncdefn)
         for i in range(len(senseids)): #just keep trying until you succeed
             senseid=senseids[randint(0, len(senseids))-1]
-            framed=self.getframeddata(senseid,notonegroup=notonegroup)
+            framed=self.getframeddata(senseid,notonegroup=notonegroup,
+                                                            truncdefn=truncdefn)
             if (
                 # (framed[self.analang] != None) and
                     (framed[self.glosslang] != None)
@@ -3085,7 +3090,7 @@ class Check():
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'
                         +str(todo))
             print(senseid,progress)
-            framed=self.getframeddata(senseid)
+            framed=self.getframeddata(senseid,truncdefn=True)
             """After the first entry, sort by groups."""
             print('self.tonegroups:',self.tonegroups)
             # if self.tonegroups != []:
@@ -3254,7 +3259,7 @@ class Check():
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
             kwargs['anchor']='w'
-        framed=self.getframeddata(senseid,notonegroup=True)
+        framed=self.getframeddata(senseid,notonegroup=True,truncdefn=True)
         text=(framed['formatted'])
         if label==True:
             b=Label(parent, text=text,
@@ -3572,7 +3577,7 @@ class Check():
                                                             self.exs[group]))
                 del self.exs[group]
             del kwargs['renew']
-        framed=self.getex(group,notonegroup=notonegroup)
+        framed=self.getex(group,notonegroup=notonegroup,truncdefn=True)
         if framed is None:
             return
         text=(framed['formatted'])
@@ -3832,7 +3837,8 @@ class Check():
                     )#.grid(row=row,column=0,sticky='w')
                 progressl.grid(row=0,column=1,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
-            framed=self.getframeddata(senseid,noframe=True,notonegroup=True)
+            framed=self.getframeddata(senseid,noframe=True,notonegroup=True,
+                                        truncdefn=True)
             if framed[self.analang]=='noform':
                 entryframe.destroy()
                 continue
@@ -3857,7 +3863,7 @@ class Check():
             examples.reverse()
             for example in examples:
                 """These should already be framed!"""
-                framed=self.getframeddata(example,noframe=True)
+                framed=self.getframeddata(example,noframe=True,truncdefn=True)
                 if framed[self.analang] is None:
                     continue
                 row+=1
