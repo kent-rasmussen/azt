@@ -111,8 +111,8 @@ def fromCV(check, lang, word=False, compile=False):
     log.debug('CVs: {}'.format(CVs))
     return make(CVs,word=word, compile=compile)
 if __name__ == '__main__':
-    x='ne pas plaire, ne pas agréer, ne pas'
-    print(glossifydefn(x))
+    x='ne [pas] plaire, ne pas agréer, ne pas'
+    print(id(x))
     # s='ááààééèèííììóóòòúúùù'
     # s2=makeprecomposed(s)
     # print(s,s2)
