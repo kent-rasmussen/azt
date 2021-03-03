@@ -2685,7 +2685,8 @@ class Check():
         log.debug(self.profilecounts)
         self.profilecountsValid=[]
         #self.profilecountsValid filters out Invalid, and also by self.ps...
-        for x in [x for x in self.profilecounts if x[2]==self.ps]:
+        for x in [x for x in self.profilecounts if x[2]==self.ps
+                                                if x[1]!='Invalid']:
             log.debug("profile count tuple: {}".format(x))
             self.profilecountsValid.append(x)
         log.debug("Valid profiles for ps {}: {}".format(self.ps,
