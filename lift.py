@@ -115,6 +115,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         "/example"
                         ),['guid','senseid']),
                 'attr':'node'},
+            'examplebylocation': {
+                'cm': 'use to get examples with a given guid or senseid',
+                'url':(("entry[@guid='{guid}']"
+                        "/sense[@id='{senseid}']"
+                        "/example"
+                        "/field[@type='location']"
+                        "/form[text='{location}']"
+                        "/../.."
+                        ),['guid','senseid','location']),
+                'attr':'node'},
             'guidbyps': {
                 'cm': 'use to get guids of entries with a given ps',
                 'url':(("entry[@guid='{guid}']"
