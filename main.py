@@ -1661,10 +1661,7 @@ class Check():
                 voice=None
             for lang in glosses:
                 if (lang == self.glosslang) or (lang == self.glosslang2):
-                    if truncdefn==True: #should only be where windows are drawn.
-                        gloss[lang]=t(firstoflist(glosses[lang]))[:12] #Just the first 12 characters
-                    else: #reports should have full field, however long.
-                        gloss[lang]=t(firstoflist(glosses[lang])) #Just the first 12 characters
+                    gloss[lang]=t(firstoflist(glosses[lang]))
             tonegroup=t(firstoflist(tonegroups))
             """This is what we're pulling from:
             <example>
@@ -1701,7 +1698,7 @@ class Check():
             form=firstoflist(forms[self.analang])
             voice=firstoflist(forms[self.audiolang])
             for lang in glosses:
-                gloss[lang]=firstoflist(glosses[lang])[:12] #Just the first 12 characters
+                gloss[lang]=firstoflist(glosses[lang])
                 log.log(2,'gloss[{}]: {}'.format(lang,gloss[lang]))
             tonegroup=firstoflist(tonegroups)
         else:
