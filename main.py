@@ -772,8 +772,9 @@ class Check():
                         glosslangs=self.runwindow.glosslangs,
                         form=self.runwindow.form)
         # Update profile information in the running instance, and in the file.
-        self.addtoprofilesbysense(senseid)
-        self.storeprofiledata() #since we changed this.
+        self.getprofile(senseid)
+        self.updatecounts()
+        self.storesettingsfile(setting='profiledata') #since we changed this.
         self.runwindow.destroy()
     def addframe(self):
         log.info('Tone frame to add!')
@@ -1218,7 +1219,8 @@ class Check():
                                 'file':'profiledatafile',
                                 'attributes':[
                                     "profilecounts","profilecountInvalid",
-                                    "scount","profilesbysense"]},
+                                    "scount","profilesbysense",
+                                    "sextracted"]},
             'status':{
                                 'file':'statusfile',
                                 'attributes':['status']},
@@ -1340,6 +1342,9 @@ class Check():
         self.addpstoprofileswdata()
         self.addprofiletoprofileswdata()
         self.profilesbysense[self.ps][self.profile]+=[senseid]
+    def updatecounts(self):
+        self.getscounts()
+        self.makecountssorted()
     def getscounts(self):
         """This depends on self.sextracted, from getprofiles"""
         self.scount={}
@@ -1347,6 +1352,25 @@ class Check():
             self.scount[ps]={}
             for s in self.rx:
                 self.scount[ps][s]=collections.Counter(self.sextracted[ps][s]).most_common()
+    def getprofile(self,senseid):
+        profileori=self.profile #We iterate across this here
+        psori=self.ps #We iterate across this here
+        forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
+        if forms == []:
+            self.profile='Invalid'
+            for self.ps in self.db.get('ps',senseid=senseid):
+                self.addtoprofilesbysense(senseid)
+            self.ps=psori
+            return
+        for form in forms:
+            self.profile=self.profileofform(form)
+            if not set(self.profilelegit).issuperset(self.profile):
+                self.profile='Invalid'
+            for self.ps in self.db.get('ps',senseid=senseid):
+                self.addtoprofilesbysense(senseid)
+        self.profile=profileori
+        self.ps=psori
+        return firstoflist(forms)
     def getprofiles(self):
         self.profileswdatabyentry={}
         self.profilesbysense={}
@@ -1365,22 +1389,11 @@ class Check():
         x=0
         for senseid in self.db.senseids:
             x+=1
-            forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
-            if forms == []:
-                self.profile='Invalid'
-                for self.ps in self.db.get('ps',senseid=senseid):
-                    self.addtoprofilesbysense(senseid)
-                continue
-            for form in forms:
-                self.profile=self.profileofform(form)
-                if x % 10 is 0:
-                    log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
-                                                    self.profile))
-                if not set(self.profilelegit).issuperset(self.profile):
-                    self.profile='Invalid'
-                for self.ps in self.db.get('ps',senseid=senseid):
-                    self.addtoprofilesbysense(senseid)
-        self.getscounts()
+            form=self.getprofile(senseid)
+            if x % 10 is 0:
+                log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
+                                            self.profile))
+        self.updatecounts()
         print('Done:',time.time()-self.start_time)
         # self.debug=True
         if self.debug==True:
