@@ -141,8 +141,8 @@ class Check():
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.settingsbyfile()
-        self.loadstatus()
-        self.loadtoneframes()
+        self.loadsettingsfile(setting='status')
+        self.loadsettingsfile(setting='toneframes')
         if nsyls is not None:
             self.nsyls=nsyls
         else:
@@ -174,7 +174,7 @@ class Check():
         # self.toneframes=toneframesbylang.toneframes[self.analang]
         self.frameregex=re.compile('__') #replace this w/data in frames.
         # self.basicreport() #doing this by menu now
-        self.loadprofiledata()
+        self.loadsettingsfile(setting='profiledata')
         # print('self.profilesbysense:',self.profilesbysense)
         """I think I need this before setting up regexs"""
         self.guessanalang() #needed for regexs
@@ -182,7 +182,7 @@ class Check():
                     "the menus)".format(self.analang))
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
-        self.loaddefaults() # overwrites guess above, stored on runcheck
+        self.loadsettingsfile() # overwrites guess above, stored on runcheck
         self.langnames()
         self.checkinterpretations() #checks (and sets) values for self.distinguish
         if 'bfj' in self.db.s:
@@ -202,18 +202,10 @@ class Check():
             self.makecountssorted() #creates self.profilecounts
             for var in ['rx','profilesbysense','profilecounts']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
-        self.storeprofiledata()
+            self.storesettingsfile(setting='profiledata')
         self.setnamesall() #sets self.checknamesall
-        # self.V=self.db.v #based on what is actually in the language (no groups)
-        # self.C=self.db.c #this regex is basically each valid glyph in analang,
         log.info("Done initializing check; running first check check.")
-        # self.profileofform()
-        # exs=
-        # print(len(exs))
         """Testing Zone"""
-        # self.setupCVrxs()
-        # self.profileofform('zukw')
-        # exit()
         self.checkcheck()
     """Guessing functions"""
     def guessinterfacelang(self):
@@ -477,7 +469,7 @@ class Check():
             log.debug('self.interpret:',self.interpret)
             if change == True:
                 log.info('There was a change; we need to redo the analysis now.')
-                self.storedefaults()
+                self.storesettingsfile()
                 if self.debug != True:
                     self.reloadprofiledata()
             self.runwindow.destroy()
@@ -619,7 +611,7 @@ class Check():
             log.log(2,"ids: {}".format(self.senseidstosort))
             self.profile=profilevar.get()
             self.profilesbysense[self.ps][self.profile]=self.senseidstosort
-            self.storeprofiledata() #since we changed this.
+            self.storesettingsfile(setting='profiledata') #since we changed this.
             self.checkcheck()
         # if not hasattr(self,'senseidstosort'):
         #     print(self.senseidstosort)
@@ -883,7 +875,7 @@ class Check():
             # Having made and unset these, we now reset and write them to file.
             self.name=name
             self.toneframes[self.ps][self.name]=frame
-            self.storetoneframes()
+            self.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
             self.checkcheck()
         self.addwindow=Window(self.frame, title=_("Define a New Tone Frame"))
@@ -1040,7 +1032,7 @@ class Check():
             self.set('interfacelang',choice,window) #set the check variable
             setinterfacelang(choice) #change the UI *ONLY* no object attributes
             # inherit(self,'interfacelang')
-            self.storedefaults()
+            self.storesettingsfile()
             for base in [self,self.parent.parent]:
                 setattr(base,'interfacelang',choice)
                 log.info("pre checkcheck {base}: {}".format(getattr(base,
@@ -1240,11 +1232,9 @@ class Check():
         self.parent.parent.destroy()
         main()
     def reloadprofiledata(self):
-        self.storedefaults()
+        self.storesettingsfile()
         file.remove(self.profiledatafile)
         self.restart()
-    def loadprofiledata(self):
-        self.loadsettingsfile(setting='profiledata')
     def loadtypedict(self):
         """I just need this to load once somewhere..."""
         self.typedict={
@@ -1253,10 +1243,6 @@ class Check():
                 'CV':{'sg':_('Consonant-Vowel combination'),'pl':_('Consonant-Vowel combinations')},
                 'T':{'sg':_('Tone'),'pl':_('Tones')},
                 }
-    def loaddefaults(self,field=None):
-        self.loadsettingsfile()
-    def storedefaults(self):
-        self.storesettingsfile()
     def storesettingsfile(self,setting='defaults'):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
@@ -1287,10 +1273,6 @@ class Check():
             log.error("Problem importing {}".format(filename))
             for s in self.settings[setting]['attributes']:
                 setattr(self,s,{})
-    def loadtoneframes(self):
-        self.loadsettingsfile(setting='toneframes')
-    def loadstatus(self):
-        self.loadsettingsfile(setting='status')
     def makestatusdict(self):
         if self.type not in self.status:
             self.status[self.type]={}
@@ -1301,7 +1283,7 @@ class Check():
         if self.name not in self.status[self.type][self.ps][self.profile]:
             self.status[self.type][self.ps][self.profile][self.name]=list()
     def updatestatus(self,verified=False):
-        #This function updates the status file, not the lift file.
+        #This function updates the status variable, not the lift file.
         self.makestatusdict()
         if verified == True:
             if self.subcheck not in (
@@ -1324,12 +1306,6 @@ class Check():
                 print("Tried to set",self.subcheck,"UNverified in",self.type,
                         self.ps,self.profile,self.name,"but it wasn't "
                         "there.")
-        self.storestatus()
-    def storeprofiledata(self):
-        self.storesettingsfile(setting='profiledata')
-    def storetoneframes(self):
-        self.storesettingsfile(setting='toneframes')
-    def storestatus(self):
         self.storesettingsfile(setting='status')
     """Get from LIFT database functions"""
     def addpstoprofileswdata(self):
@@ -2090,7 +2066,7 @@ class Check():
         self.maybeboard()
         self.parent.setmenus(self)
     def soundcheckrefreshdone(self):
-        self.storedefaults()
+        self.storesettingsfile()
         self.checkcheck()
     def soundcheckrefresh(self):
         self.soundsettingswindow.resetframe() # Frame(self.soundsettingswindow.frame)
@@ -3622,7 +3598,7 @@ class Check():
             self.runwindow.title(t)
         self.runwindow.wait()
     def runcheck(self):
-        self.storedefaults() #This is not called in checkcheck.
+        self.storesettingsfile() #This is not called in checkcheck.
         t=(_('Run Check'))
         log.info("Running check...")
         i=0
@@ -3668,7 +3644,7 @@ class Check():
         if ((self.fs == None) or (self.sample_format == None)
                 or (self.audio_card_index == None)):
             self.soundcheck()
-        self.storedefaults()
+        self.storesettingsfile()
         if self.type == 'T':
             self.showtonegroupexs()
         else:
@@ -3863,7 +3839,7 @@ class Check():
         if (not(hasattr(self,'examplespergrouptorecord')) or
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=5
-            self.storedefaults()
+            self.storesettingsfile()
         self.settonevariablesbypsprofile() #maybe not done before
         self.gettoneUFgroups()
         if self.toneUFgroups != []:
@@ -4046,7 +4022,7 @@ class Check():
                             word=True, compile=True)
     def tonegroupreport(self,silent=False):
         log.info("Starting report...")
-        self.storedefaults()
+        self.storesettingsfile()
         self.getrunwindow()
         self.tonereportfile=''.join([str(self.reportbasefilename),'_',
                             self.ps,'_',
