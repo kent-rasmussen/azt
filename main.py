@@ -194,12 +194,10 @@ class Check():
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
         self.setupCVrxs() #creates self.rx dictionaries
         """The line above may need to go after this block"""
-        if self.profilesbysense is None:
+        if self.profilesbysense == {}:
             log.info("Starting profile analysis at {}".format(time.time()
                                                             -self.start_time))
-            self.setupCVrxs() #creates self.rx dictionaries
             self.getprofiles() #creates self.profilesbysense nested dicts
-            self.makecountssorted() #creates self.profilecounts
             for var in ['rx','profilesbysense','profilecounts']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
             self.storesettingsfile(setting='profiledata')
@@ -1353,9 +1351,6 @@ class Check():
         self.profilesbysense['Invalid']=[]
         self.profiledguids=[]
         self.profiledsenseids=[]
-        profileori=self.profile #We iterate across this here
-        psori=self.ps #We iterate across this here
-        # onlyCV={'C','N','G','S','V','#'} #now self.profilelegit
         self.sextracted={} #Will store matching segments here
         for ps in self.db.pss:
             self.sextracted[ps]={}
@@ -1371,14 +1366,11 @@ class Check():
                                             self.profile))
         self.updatecounts()
         print('Done:',time.time()-self.start_time)
-        # self.debug=True
         if self.debug==True:
             for ps in self.profilesbysense:
                 for profile in self.profilesbysense[ps]:
                     log.debug("ps: {}; profile: {} ({})".format(ps,profile,
                             len(self.profilesbysense[ps][profile])))
-        self.profile=profileori
-        self.ps=psori
     def slists(self):
         """This sets up the lists of segments, by types. For the moment, it
         just pulls from the segment types in the lift database."""
