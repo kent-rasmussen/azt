@@ -2285,12 +2285,14 @@ class Check():
             1:[("V1", "First/only Vowel")],
             2:[
                 ("V1=V2", "Same First/only Two Vowels"),
+                ("V1xV2", "Correspondence of First/only Two Vowels"),
                 ("V2", "Second Vowel")
                 ],
             3:[
                 ("V1=V2=V3", "Same First/only Three Vowels"),
                 ("V3", "Third Vowel"),
-                ("V2=V3", "Same Second Two Vowels")
+                ("V2=V3", "Same Second Two Vowels"),
+                ("V2xV3", "Correspondence of Second Two Vowels")
                 ],
             4:[
                 ("V1=V2=V3=V4", "Same First/only Four Vowels"),
@@ -2331,9 +2333,11 @@ class Check():
             },
         "CV":{
             1:[("#CV1", "Word-initial CV"),
+                ("C1xV1", "Correspondence of C1 and V1"),
                 ("CV1", "First/only CV")
                 ],
             2:[("CV2", "Second CV"),
+                ("C2xV2", "Correspondence of C2 and V2"),
                 ("CV1=CV2","Same First/only Two CVs"),
                 ("CV2#", "Word-final CV")
                 ],
