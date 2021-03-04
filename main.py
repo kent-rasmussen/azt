@@ -4007,7 +4007,7 @@ class Check():
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
-    def tonegroupreport(self,silent=False):
+    def tonegroupreport(self,silent=False,bylocation=False):
         log.info("Starting report...")
         self.storesettingsfile()
         self.getrunwindow()
@@ -4075,7 +4075,7 @@ class Check():
         self.runwindow.scroll=ScrollingFrame(self.runwindow.frame)
         window=self.runwindow.scroll.content
         window.row=0
-        xlpr=self.xlpstart(reporttype='Tone')
+        xlpr=self.xlpstart(reporttype='Tone',bylocation=bylocation)
         s1=xlp.Section(xlpr,title='Introduction')
         text=_("This report follows an analysis of sortings of {} morphemes "
         "(roots or affixes) across the following frames: {}. {} stores these "
@@ -4110,9 +4110,9 @@ class Check():
             window.row+=1
         for group in groups:
             groupname=self.ps+'_'+self.profile+'_'+str(group)
-            text=_('\nGroup {}'.format(str(groupname)))
-            s1=xlp.Section(xlpr,title=text)
-            output(window,r,text)
+            sectitle=_('\nGroup {}'.format(str(groupname)))
+            s1=xlp.Section(xlpr,title=sectitle)
+            output(window,r,sectitle)
             l=list()
             # print(groups[group]['values'])
             for x in groups[group]['values']:
@@ -4127,29 +4127,42 @@ class Check():
             text=_('Values by frame: {}'.format('\t'.join(l)))
             p1=xlp.Paragraph(s1,text)
             output(window,r,text)
-            for senseid in groups[group]['senseids']:
-                framed=self.getframeddata(senseid,noframe=True,
-                                                notonegroup=True)
-                text=framed['formatted']
-                examples=self.db.get('example',senseid=senseid)
-                log.log(2,"{} examples found: {}".format(len(examples),
-                                                                    examples))
-                if examples != []:
-                    id=self.idXLP(framed)+'_examples'
-                    log.log(2,"Using id {}".format(id))
+            if bylocation == True:
+                textout=list()
+                for location in self.locations:
+                    id=rx.id('x'+sectitle+location)
                     e1=xlp.Example(s1,id)
-                    for example in examples:
-                        """These should already be framed!"""
-                        framed=self.getframeddata(example,noframe=True)
-                        self.framedtoXLP(framed,parent=e1,listword=True)
-                # for form in self.db.citationorlexeme(senseid=senseid):
-                #     for gloss in self.db.glossordefn(senseid=senseid,
-                #                                     lang=self.glosslang):
-                #         for gloss2 in self.db.glossordefn(senseid=senseid,
-                #                                     lang=self.glosslang2):
-                #             text='\t'+'\t'.join((form,"‘"+gloss+"’",
-                #                                         "‘"+gloss2+"’"))
-                output(window,r,text)
+                    for senseid in groups[group]['senseids']:
+                        framed=self.getframeddata(senseid,noframe=True,
+                                                        notonegroup=True)
+                        text=framed['formatted']
+                        examples=self.db.get('examplebylocation',
+                                                location=location,
+                                                senseid=senseid)
+                        for example in examples:
+                            """These should already be framed!"""
+                            framed=self.getframeddata(example,noframe=True)
+                            self.framedtoXLP(framed,parent=e1,listword=True)
+                        if text not in textout:
+                            output(window,r,text)
+                            textout.append(text)
+            else:
+                for senseid in groups[group]['senseids']:
+                    framed=self.getframeddata(senseid,noframe=True,
+                                                    notonegroup=True)
+                    text=framed['formatted']
+                    examples=self.db.get('example',senseid=senseid)
+                    log.log(2,"{} examples found: {}".format(len(examples),
+                                                                    examples))
+                    if examples != []:
+                        id=self.idXLP(framed)+'_examples'
+                        log.log(2,"Using id {}".format(id))
+                        e1=xlp.Example(s1,id)
+                        for example in examples:
+                            """These should already be framed!"""
+                            framed=self.getframeddata(example,noframe=True)
+                            self.framedtoXLP(framed,parent=e1,listword=True)
+                    output(window,r,text)
                 self.db.addtoneUF(senseid,groupname,analang=self.analang)
         self.runwindow.ww.close()
         xlpr.close()
@@ -4158,8 +4171,10 @@ class Check():
         text=_("(Report is also available at ("+self.tonereportfile+")")
         output(window,r,text)
         r.close()
-    def xlpstart(self,reporttype='adhoc'):
+    def xlpstart(self,reporttype='adhoc',bylocation=False):
         if reporttype == 'Tone':
+            if bylocation == True:
+                reporttype='Tone-bylocation'
             reporttype=''.join([str(self.ps),'-',
                             str(self.profile),' ',
                             reporttype])
@@ -4828,8 +4843,11 @@ class MainApplication(Frame):
         domenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label=_("Do"), menu=domenu)
         reportmenu = Menu(menubar, tearoff=0)
-        reportmenu.add_command(label=_("Tone report"),
+        reportmenu.add_command(label=_("Tone report by sense"),
                         command=lambda x=check:Check.tonegroupreport(x))
+        reportmenu.add_command(label=_("Tone report by location"),
+                        command=lambda x=check:Check.tonegroupreport(x,
+                                                            bylocation=True))
         reportmenu.add_command(label=_("Basic CV report (to file)"),
                         command=lambda x=check:Check.basicreport(x))
         domenu.add_cascade(label=_("Reports"), menu=reportmenu)
