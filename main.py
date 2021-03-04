@@ -3560,7 +3560,7 @@ class Check():
                                 self.subchecksprioritized['C']+
                                 self.subchecksprioritized['T']
                                 ]):
-                self.getsubcheck()
+                self.subcheck=self.scount[self.ps]['C'][0]+self.scount[self.ps]['V'][0]
         else:
             self.subcheck=firstoflist(self.subchecksprioritized[self.type],
                                                             othersOK=True)[0]
