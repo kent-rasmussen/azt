@@ -2649,6 +2649,38 @@ class Check():
                 self.framestodo.append(self.name)
         log.debug("Frames to do: {}".format(self.framestodo))
         self.name=self.nameori
+    def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
+        xlp.Paragraph(parent,t)
+        print(t)
+        log.debug(t)
+        self.buildregex()
+        log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
+                                                        self.regexCV))
+        matches=set(self.db.senseidformsbyregex(self.regex,
+                                            self.analang,
+                                            ps=self.ps).keys())
+        for typenum in self.typenumsRun:
+            # this removes senses already reported (e.g., in V1=V2, not in V1)
+            matches-=self.basicreported[typenum]
+        log.log(2,"{} matches found!: {}".format(len(matches),matches))
+        if 'x' in self.name:
+            n=self.checkcounts[self.ps][self.profile][self.name][
+                            self.subcheck][self.subcheckcomparison]=len(matches)
+        else:
+            n=self.checkcounts[self.ps][self.profile][self.name][
+                            self.subcheck]=len(matches)
+        if n>0:
+            titlebits='x'+self.ps+self.profile+self.name+self.subcheck
+            if 'x' in self.name:
+                titlebits+='x'+self.subcheckcomparison
+            id=rx.id(titlebits)
+            ex=xlp.Example(parent,id)
+            for senseid in matches:
+                for typenum in self.typenumsRun:
+                    self.basicreported[typenum].add(senseid)
+                framed=self.getframeddata(senseid,noframe=True)
+                print('\t',framed['formatted'])
+                self.framedtoXLP(framed,parent=ex,listword=True)
     def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
         """This function iterates across self.name and self.subcheck values
         appropriate for the specified self.type, self.profile and self.name
@@ -2663,13 +2695,8 @@ class Check():
         profiles..."""
         nameori=self.name
         subcheckori=self.subcheck
-        subchecks=self.s[self.analang][self.type]
-        # if self.type == 'V':
-        #     subchecks=self.s[self.analang]['V'] #(just the vowels
-        # elif self.type == 'C':
-        #     subchecks=self.s[self.analang]['C']
-        # else:
-        #     print("Sorry, not sure what I'm doing:",self.type)
+        if self.type in ['V','C']:
+            subchecks=self.s[self.analang][self.type]
         """This sets each of the checks that are applicable for the given
         profile; self.basicreported is from self.basicreport()"""
         for typenum in self.basicreported:
@@ -2679,6 +2706,8 @@ class Check():
                         key=lambda s: len(s[0]),reverse=True):
             """self.name set here"""
             self.name=codenname[0] #just codes, not names
+            if self.name not in self.checkcounts[self.ps][self.profile]:
+                self.checkcounts[self.ps][self.profile][self.name]={}
             self.typenumsRun=[typenum for typenum in self.typenums
                                         if re.search(typenum,self.name)]
             log.debug('self.name: {}; self.type: {}; self.typenums: {}; '
@@ -2687,32 +2716,37 @@ class Check():
             if len(self.name) == 1:
                 log.debug("Error! {} Doesn't seem to be list formatted.".format(
                                                                     self.name))
-            for self.subcheck in subchecks:
-                t=_("{}={}".format(self.name,self.subcheck))
-                xlp.Paragraph(parent,t)
-                print(t)
-                log.debug(t)
-                self.buildregex()
-                log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
-                                                                self.regexCV))
-                matches=set(self.db.senseidformsbyregex(self.regex,
-                                                    self.analang,
-                                                    ps=self.ps).keys())
-                for typenum in self.typenumsRun:
-                    # matchestofind=
-                    matches-=self.basicreported[typenum]
-                log.log(2,"{} matches found!: {}".format(len(matches),matches))
-                            # len(matches-self.basicreported[typenum]),
-                            # matches-self.basicreported[typenum]))
-                if len(matches)>0:
-                    id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck)
-                    ex=xlp.Example(parent,id)
-                    for senseid in matches:
-                        for typenum in self.typenumsRun:
-                            self.basicreported[typenum].add(senseid)
-                        framed=self.getframeddata(senseid,noframe=True)
-                        print('\t',framed['formatted'])
-                        self.framedtoXLP(framed,parent=ex,listword=True)
+            if 'x' in self.name:
+                log.debug('Hey, I cound a correspondence number!')
+                if self.type in ['V','C']:
+                    subcheckcomparisons=subchecks
+                elif self.type == 'CV':
+                    subchecks=self.s[self.analang]['C']
+                    subcheckcomparisons=self.s[self.analang]['V']
+                else:
+                    log.error("Sorry, I don't know how to compare type: {}"
+                                                        "".format(self.type))
+                for self.subcheck in subchecks:
+                    if self.subcheck not in self.checkcounts[self.ps][
+                                                    self.profile][self.name]:
+                        self.checkcounts[self.ps][self.profile][self.name][
+                                                            self.subcheck]={}
+                    for self.subcheckcomparison in subcheckcomparisons:
+                        # if self.subcheckcomparison not in self.checkcounts[
+                        #     self.ps][self.profile][self.name][self.subcheck]:
+                        #     self.checkcounts[self.ps][self.profile][self.name][
+                        #                 self.subcheck][self.subcheckcomparison]=
+                        t=_("{}={}-{}".format(self.name,self.subcheck,
+                                                self.subcheckcomparison))
+                        self.wordsbypsprofilechecksubcheckp(parent=parent,t=t)
+            else:
+                for self.subcheck in subchecks:
+                    # if self.subcheck not in self.checkcounts[self.ps][
+                    #                                 self.profile][self.name]:
+                    #     self.checkcounts[self.ps][self.profile][self.name][
+                    #                 self.subcheck]
+                    t=_("{}={}".format(self.name,self.subcheck))
+                    self.wordsbypsprofilechecksubcheckp(parent=parent,t=t)
         self.name=nameori
         self.subcheck=subcheckori
     def idXLP(self,framed):
@@ -4027,13 +4061,21 @@ class Check():
         if self.type != 'T': #We don't want these subs for tone sorting
             S=str(self.type)
             regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
+            compared=False
             for occurrence in reversed(range(maxcount)):
                 occurrence+=1
                 if re.search(S+str(occurrence),self.name) != None:
                     """Get the (n=occurrence) S, regardless of intervening
                     non S..."""
                     regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
-                    replS='\\1'+self.subcheck
+                    if 'x' in self.name:
+                        if compared == False: #occurrence == 2:
+                            replS='\\1'+self.subcheckcomparison
+                            compared=True
+                        else: #if occurrence == 1:
+                            replS='\\1'+self.subcheck
+                    else:
+                        replS='\\1'+self.subcheck
                     self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
         if self.debug ==True:
             print('self.profile='+str(self.profile)+str(type(self.profile)))
@@ -4234,6 +4276,7 @@ class Check():
         typeori=self.type
         psori=self.ps
         profileori=self.profile
+        start_time=time.time() #move this to function?
         instr=_("The data in this report is given by most restrictive test "
                 "first, followed by less restrictive tests (e.g., V1=V2 "
                 "before V1 or V2). Additionally, each word only "
@@ -4254,6 +4297,7 @@ class Check():
         log.info(instr)
         ww=Wait(self.frame) #non-widget parent deiconifies no window...
         self.basicreported={}
+        self.checkcounts={}
         self.printprofilesbyps()
         self.makecountssorted() #This populates self.profilecounts
         self.printcountssorted()
@@ -4272,6 +4316,8 @@ class Check():
         print(t)
         p=xlp.Paragraph(si,t)
         for self.ps in self.pss[0:2]: #just the first two (Noun and Verb)
+            if self.ps not in self.checkcounts:
+                self.checkcounts[self.ps]={}
             self.getprofilestodo()
             t=_("{} data: (profiles: {})".format(self.ps,self.profilestodo))
             log.info(t)
@@ -4283,12 +4329,13 @@ class Check():
             log.info(t)
             print(t)
             for self.profile in self.profilestodo:
+                if self.profile not in self.checkcounts[self.ps]:
+                    self.checkcounts[self.ps][self.profile]={}
                 t=_("{} {}s".format(self.profile,self.ps))
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
                 log.info(t)
-                for self.type in [x for x in self.s[self.analang] if x!= 'b'
-                                                                if len(x) == 1]:
+                for self.type in ['C','V']:
                     t=_("{} checks".format(self.typedict[self.type]['sg']))
                     print(t)
                     log.info(t)
@@ -4301,7 +4348,59 @@ class Check():
                         if typenum not in self.basicreported:
                             self.basicreported[typenum]=set()
                     self.wordsbypsprofilechecksubcheck(s3)
+        t=_("Summary coocurrence tables")
+        s1s=xlp.Section(xlpr,t)
+        for self.ps in self.checkcounts:
+            for self.profile in self.checkcounts[self.ps]:
+                for name in self.checkcounts[self.ps][self.profile]:
+                    rows=list(self.checkcounts[self.ps][self.profile][name])
+                    nrows=len(rows)
+                    if nrows == 0:
+                        continue
+                    if 'x' in self.name:
+                        cols=list(self.checkcounts[self.ps][self.profile][name][rows[0]])
+                    else:
+                        cols=['n']
+                    ncols=len(cols)
+                    if ncols == 0:
+                        continue
+                    caption=' '.join([self.ps,self.profile,name])
+                    t=xlp.Table(s1s,caption)
+                    for x1 in ['header']+list(range(nrows)):
+                        if x1 != 'header':
+                            x1=rows[x1]
+                        h=xlp.Row(t)
+                        for x2 in ['header']+list(range(ncols)):
+                            log.debug("x1: {}; x2: {}".format(x1,x2))
+                            if x2 != 'header':
+                                x2=cols[x2]
+                            log.debug("x1: {}; x2: {}".format(x1,x2))
+                            log.debug("countbyname: {}".format(self.checkcounts[
+                                    self.ps][self.profile][name]))
+                            if x1 != 'header' and x2 not in ['header','n']:
+                                log.debug("value: {}".format(self.checkcounts[
+                                    self.ps][self.profile][name][x1][x2]))
+                            if x1 == 'header' and x2 == 'header':
+                                log.debug("header corner")
+                                cell=xlp.Cell(h,content=name,header=True)
+                            elif x1 == 'header':
+                                log.debug("header row")
+                                cell=xlp.Cell(h,content=x2,header=True)
+                            elif x2 == 'header':
+                                log.debug("header column")
+                                cell=xlp.Cell(h,content=x1,header=True)
+                            else:
+                                log.debug("Not a header")
+                                if x2 == 'n':
+                                    value=self.checkcounts[self.ps][
+                                                    self.profile][name][x1][x2]
+                                else:
+                                    value=self.checkcounts[self.ps][
+                                                    self.profile][name][x1]
+                                cell=xlp.Cell(h,content=value)
+        log.info(self.checkcounts)
         xlpr.close()
+        log.info("Finished in {} seconds.".format(str(time.time()-start_time)))
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         ww.close()
