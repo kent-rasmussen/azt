@@ -2879,6 +2879,7 @@ class Check():
             quit=self.sortT()
             if quit == True:
                 return 1
+            self.checkcheck() #since we probably added groups
         #status is populated by verifyT, and unpopulated by joinT
         if ((self.type in self.status) and
             (self.ps in self.status[self.type]) and
@@ -2893,6 +2894,7 @@ class Check():
             # This is recursive because we don't know how many joins we'll need,
             # nor the results of susequent verifications or sorts
             if joined == True:
+                self.checkcheck()
                 self.maybesort()
                 self.runwindow.ww.close()
                 return
