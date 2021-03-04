@@ -4200,7 +4200,7 @@ class Check():
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
         print(instr)
         log.info(instr)
-        self.frame.wait() #non-widget parent deiconifies no window...
+        ww=Wait(self.frame) #non-widget parent deiconifies no window...
         self.basicreported={}
         self.printprofilesbyps()
         self.makecountssorted() #This populates self.profilecounts
@@ -4251,7 +4251,7 @@ class Check():
         xlpr.close()
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        self.frame.ww.close()
+        ww.close()
         self.type=typeori
         self.profile=profileori
         self.ps=psori
