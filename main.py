@@ -766,7 +766,7 @@ class Check():
                         glosslangs=self.runwindow.glosslangs,
                         form=self.runwindow.form)
         # Update profile information in the running instance, and in the file.
-        self.getprofile(senseid)
+        self.getprofileofsense(senseid)
         self.updatecounts()
         self.storesettingsfile(setting='profiledata') #since we changed this.
         self.runwindow.destroy()
@@ -1330,7 +1330,7 @@ class Check():
             self.scount[ps]={}
             for s in self.rx:
                 self.scount[ps][s]=collections.Counter(self.sextracted[ps][s]).most_common()
-    def getprofile(self,senseid):
+    def getprofileofsense(self,senseid):
         profileori=self.profile #We iterate across this here
         psori=self.ps #We iterate across this here
         forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
@@ -1364,7 +1364,7 @@ class Check():
         x=0
         for senseid in self.db.senseids:
             x+=1
-            form=self.getprofile(senseid)
+            form=self.getprofileofsense(senseid)
             if x % 10 is 0:
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
                                             self.profile))
