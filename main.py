@@ -3820,6 +3820,8 @@ class Check():
             d.grid(row=row,column=0)
             self.runwindow.ww.close()
             examplesframe.wait_window(entryframe)
+            if not self.runwindow.winfo_exists():
+                return 1
     def showtonegroupexs(self):
         def next():
             self.nextprofile()
