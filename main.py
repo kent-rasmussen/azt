@@ -4608,6 +4608,10 @@ class Window(tkinter.Toplevel):
             self.backButton.grid(column=3,row=2)
 class Frame(tkinter.Frame):
     def windowsize(self):
+        if not hasattr(self,'configured'):
+            self.configured=0
+        if self.configured>10:
+            return
         availablexy(self)
         """The above script calculates how much screen is left to fill, these
         next two lines give a max widget size to stay in the window."""
@@ -4640,6 +4644,7 @@ class Frame(tkinter.Frame):
         if ((self.winfo_height() < contentrh)
                 or (self.winfo_height() > self.maxheight)):
             self.config(height=min(self.maxheight,contentrh))
+        self.configured+=1
     def __init__(self, parent, **kwargs):
         self.parent = parent
         inherit(self)
@@ -4664,15 +4669,19 @@ class ScrollingFrame(Frame):
     def _on_mousewheeldown(self, event):
         self.canvas.yview_scroll(-1,"units")
     def _configure_interior(self, event):
+        if not hasattr(self,'configured'):
+            self.configured=0
         # print("Configuring interior")
         # update the scrollbars to match the size of the inner frame
         size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
         self.canvas.config(scrollregion="0 0 %s %s" % size)
         """This makes sure the canvas is as large as what you put on it"""
-        if self.content.winfo_reqwidth() != self.canvas.winfo_width():
-            # update the canvas's width to fit the inner frame
-            self.canvas.config(width=self.content.winfo_reqwidth())
-        self.windowsize()
+        if self.configured <10:
+            if self.content.winfo_reqwidth() != self.canvas.winfo_width():
+                # update the canvas's width to fit the inner frame
+                self.canvas.config(width=self.content.winfo_reqwidth())
+            self.windowsize()
+            self.configured+=1
     def windowsize(self):
         availablexy(self)
         """The above script calculates how much screen is left to fill, these
@@ -4715,14 +4724,14 @@ class ScrollingFrame(Frame):
             self.config(height=min(self.maxheight,contentrh))
     def _configure_canvas(self, event):
         if not hasattr(self,'configured'):
-            self.configured=False
+            self.configured=0
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
             # update the inner frame's width to fill the canvas
             self.canvas.itemconfigure(self.content_id,
                                         width=self.canvas.winfo_width())
-        if self.configured==False:
+        if self.configured <10:
             self.windowsize()
-        self.configured=True
+        self.configured+=1
     def __init__(self,parent):
         """Make this a Frame, with all the inheritances, I need"""
         self.parent=parent
