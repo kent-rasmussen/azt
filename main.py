@@ -5778,12 +5778,12 @@ def availablexy(self,w=None):
         log.log(2,"self.winfo_x(): {}".format(self.winfo_x()))
         log.log(2,"titlebarHeight: {}".format(titlebarHeight))
         log.log(2,"borderSize: {}".format(borderSize))
-    log.debug("width: {}; self.maxheight: {}; self.maxwidth: {}".format(
+    log.log(2,"width: {}; self.maxheight: {}; self.maxwidth: {}".format(
                                 self.parent.winfo_screenwidth(),
                                 self.maxheight,
                                 self.maxwidth))
-    log.debug("cols: {}".format(colwidth))
-    log.debug("rows: {}".format(rowheight))
+    log.log(2,"cols: {}".format(colwidth))
+    log.log(2,"rows: {}".format(rowheight))
 def returndictnsortnext(self,parent,values,canary=None,canary2=None):
     """Kills self.sorting, not parent."""
     for value in values:
