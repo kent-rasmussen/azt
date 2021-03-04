@@ -2238,7 +2238,6 @@ class Check():
         frames=list(self.toneframes[self.ps].keys())
         for profile in profiles:
             column=0
-            # print('row=',row,'column=',column,profile,'outside')
             if (profile == 'header') or (profile in
                                         self.status[self.type][self.ps]):
                 if profile in self.status[self.type][self.ps]:
@@ -2247,12 +2246,9 @@ class Check():
                     )
                 for frame in frames:
                     column+=1
-                    # print('row=',row,'column=',column,profile,frame,'inside')
                     if profile == 'header':
                         Label(self.leaderboardtable,text=frame,
                                     font=self.fonts['reportheader']
-                                    # angle=90,
-                                    # wraplength=1
                                     ).grid(
                         row=row,column=column,sticky='s'
                         )
@@ -4222,9 +4218,9 @@ class Check():
         self.printcountssorted()
         # num=1
         # num='ALL'
-        num=5
-        log.debug('self.topps(num):       {}'.format(self.topps(num)))
-        log.debug('self.topprofiles(num): {}'.format(self.topprofiles(num)))
+        # num=5
+        # log.debug('self.topps(num):       {}'.format(self.topps(num)))
+        # log.debug('self.topprofiles(num): {}'.format(self.topprofiles(num)))
         # profilestodo={'Verb':['CVC']}
         # profilestodo=self.topprofiles(num)
         t=_("This report covers the following top two Grammatical categories, "
@@ -4856,8 +4852,10 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.soundcheck(x))
         recordmenu.add_command(label=_("Record tone group examples"),
                         command=lambda x=check:Check.showtonegroupexs(x))
-        recordmenu.add_command(label=_("Record dictionary words, largest group first"),
-                        command=lambda x=check:Check.showentryformstorecord(x,justone=False))
+        recordmenu.add_command(label=_("Record dictionary words, largest group "
+                                                                    "first"),
+                        command=lambda x=check:Check.showentryformstorecord(x,
+                                                                justone=False))
         recordmenu.add_command(label=_("Record examples for particular "
                                                     "entries, 1 at at time"),
                         command=lambda x=check:Check.showsenseswithexamplestorecord(x))
