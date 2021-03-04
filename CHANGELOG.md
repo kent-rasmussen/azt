@@ -1,11 +1,14 @@
 # Changelog
 
+## In Process
+- TIME?:For recording windows, consider adding a "skip to next undone"
+
 ## Issues from Zulgo March 2021 workshop
+- make basic report include co-ocurrance tables
 
 ## Issues from Chufie' workshop (Feb 2021)
 + zero form silently doesn't make a button
 - verify screen doesn't make button
-- skip verification if zero or one item in group.
 - set current visible on numbers to record
 - extra space being added for None forms in Frame construction
 - remove underlining in table headers (bold)
@@ -13,7 +16,6 @@
 - fix zip problem on Windows: "OSError: [Errno 22] Invalid argument: 'log_-:.7z'"
 - for addframe, add button/menu to allow viewing all frames already done, to help with consistency across frames.
 - remove invalid characters from character names
-- TIME?:For recording windows, consider adding a "skip to next undone"
 - TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
 - cycle through tone groups to record based on volume of the group.
 - set up summary table for XLP tone export
@@ -73,7 +75,9 @@
     - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
 
 # Version 0.7
-- truncate definitions after 12 letters when shown on screen (not XLP exports)
+- truncate definitions after three words or before parentheses
+- group names in status table now listed if any is non-integer; otherwise counts
+- skip verification if zero or one item in group.
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
