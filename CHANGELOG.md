@@ -1,7 +1,6 @@
 # Changelog
 
 ## In Process
-- TIME?:For recording windows, consider adding a "skip to next undone"
 
 ## Issues from Zulgo March 2021 workshop
 - make basic report include co-ocurrance tables
@@ -19,7 +18,7 @@
 - TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
 - cycle through tone groups to record based on volume of the group.
 - set up summary table for XLP tone export
-- record button makes a window in addmodd, if it is open
+- record button makes a window in addmodd, if it is open (and it shouldn't, but they both use runwindow)
 - record window exit doesn't exit process (so it is the same as done/next)
 - widen "Do" menu item
 
@@ -43,6 +42,7 @@
 - model form construct with fields for CV info and tone info, which may contain variables (HAB,CONT) in addition to H, L, etc.
 
 ### Some Day, if possible
+- rectify (scrolling) Frame redundant windowsize fn
 - have automatic choice of ps-profile go through all defined frames, then next most populous ps-profile
 - include tone grouping in recording pages?
 - XLP export (these are not likely to happen)
@@ -78,6 +78,9 @@
 - truncate definitions after three words or before parentheses
 - group names in status table now listed if any is non-integer; otherwise counts
 - skip verification if zero or one item in group.
+- kicked quit up to tone recording
+- quit after ten scroll frame configurations
+- For recording windows, added a "skip to next undone"
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography

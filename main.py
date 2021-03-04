@@ -2894,11 +2894,13 @@ class Check():
             # This is recursive because we don't know how many joins we'll need,
             # nor the results of susequent verifications or sorts
             if joined == True:
+                #if the user joins groups, update the main window and repeat
                 self.checkcheck()
                 self.maybesort()
                 self.runwindow.ww.close()
                 return
             elif joined == None:
+                #This happens when the user exits the window
                 window=self.getrunwindow()
                 buttontxt=_("Sort!")
                 text=_("Hey, you're not Done!\nCome back when you have time; "
@@ -3829,7 +3831,6 @@ class Check():
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
                 text=framed['formatted']
-                log.info('recordbuttonframetry')
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
                                     form=nn(framed[self.analang]),
                                     gloss=nn(framed[self.glosslang])
