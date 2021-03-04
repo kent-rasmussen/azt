@@ -1349,6 +1349,16 @@ indent-before=".125in"
 ></interlinearSourceStyle
 ><endnoteRefLayout
 ></endnoteRefLayout
+><tablenumberedLayout
+><tablenumberedLabelLayout
+textafter=" "
+></tablenumberedLabelLayout
+><tablenumberedNumberLayout
+></tablenumberedNumberLayout
+><tablenumberedCaptionLayout
+textbefore=": "
+></tablenumberedCaptionLayout
+></tablenumberedLayout
 ><langDataLayout
 ><langDataInExampleLayout
 textbeforeafterusesfontinfo="no"
