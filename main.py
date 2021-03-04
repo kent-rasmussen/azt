@@ -3119,12 +3119,18 @@ class Check():
         """self.subcheck is set here, but probably OK"""
         self.makestatusdict()
         for self.subcheck in self.tonegroups:
-            if self.subcheck in (self.status[self.type][self.ps][self.profile]
-                                            [self.name]):
-                print(self.subcheck, "already verified, continuing.")
-                continue
             if not self.runwindow.winfo_exists():
                 return
+            if self.subcheck in (self.status[self.type][self.ps][self.profile]
+                                            [self.name]):
+                log.info("{} already verified, continuing.".format(self.subcheck))
+                continue
+            senseids=self.getexsall(self.subcheck)
+            if len(senseids) <2:
+                self.updatestatus(verified=True)
+                log.info("Group {} only has {} example; marking verified and "
+                        "continuing.".format(self.subcheck,len(senseids)))
+                continue
             self.runwindow.resetframe() #just once per group
             self.runwindow.wait()
             title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
@@ -3157,7 +3163,7 @@ class Check():
             self.sframe.grid(row=1,column=1,columnspan=2,sticky='w')
             row+=1
             """put entry buttons here."""
-            for senseid in self.getexsall(self.subcheck):
+            for senseid in senseids:
                 self.verifybutton(self.sframe.content,senseid,
                                     row, column,
                                     label=False)
