@@ -3749,21 +3749,47 @@ class Check():
                     self.showentryformstorecordpage()
             self.ps=psori
             self.profile=profileori
-    def showsenseswithexamplestorecord(self,senses=None,progress=None):
+    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
+        def setskip(event):
+            self.runwindow.frame.skip=True
+            entryframe.destroy()
         self.getrunwindow()
+        log.debug("Working with skip: {}".format(skip))
+        if skip == 'skip':
+            self.runwindow.frame.skip=True
+        else:
+            self.runwindow.frame.skip=skip
         """?Make this scroll!"""
         text=_("Words and phrases to record: click ‘Record’, talk, and release")
         instr=Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w')
+        instr.grid(row=0,column=0,sticky='w',columnspan=2)
         if (self.entriestoshow is None) and (senses is None):
             Label(self.runwindow.frame, anchor='w',
                     text=_("Sorry, there are no entries to show!")).grid(row=1,
                                     column=0,sticky='w')
             return
+        if self.runwindow.frame.skip == False:
+            skipf=Frame(self.runwindow.frame)
+            skipb=Button(skipf, text="Skip to next undone",
+                        cmd=skipf.destroy)
+            skipf.grid(row=1,column=1,sticky='w')
+            skipb.grid(row=0,column=0,sticky='w')
+            skipb.bind('<ButtonRelease>', setskip)
         if senses is None:
             senses=self.entriestoshow
         for senseid in senses:
-            print("Working on ",senseid)
+            log.debug("Working on {} with skip: {}".format(senseid,
+                                                    self.runwindow.frame.skip))
+            examples=self.db.get('example',senseid=senseid)
+            if examples == []:
+                log.debug(_("No examples! Add some, then come back."))
+                entryframe.destroy()
+                continue
+            if ((self.runwindow.frame.skip == True) and
+                (lift.atleastoneexamplehaslangformmissing(
+                                                    examples,
+                                                    self.audiolang) == False)):
+                continue
             row=0
             if not self.runwindow.winfo_exists():
                 return 1
@@ -3773,8 +3799,8 @@ class Check():
                 progressl=Label(self.runwindow.frame, anchor='e',
                     font=self.fonts['small'],
                     text="({}/{})".format(*progress)
-                    )#.grid(row=row,column=0,sticky='w')
-                progressl.grid(row=0,column=1,sticky='ne')
+                    )
+                progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
             framed=self.getframeddata(senseid,noframe=True,notonegroup=True,
                                         truncdefn=True)
@@ -3790,17 +3816,11 @@ class Check():
             self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
             examplesframe=Frame(self.runwindow.frame.scroll.content)
             examplesframe.grid(row=0,column=0,sticky='w')
-            examples=self.db.get('example',senseid=senseid)
-            print('examples:',examples)
-            if examples == []:
-                text=_("No examples! Add some, then come back.")
-                print(text)
-                entryframe.destroy()
-                Label(self.runwindow.frame, anchor='w', font=self.fonts['read'],
-                        text=text).grid(row=1,column=0,sticky='w')
-                continue #return #I want the "next" button...
             examples.reverse()
             for example in examples:
+                if (skip == True and
+                    lift.examplehaslangform(example,self.audiolang) == True):
+                    continue
                 """These should already be framed!"""
                 framed=self.getframeddata(example,noframe=True,truncdefn=True)
                 if framed[self.analang] is None:
@@ -3824,6 +3844,8 @@ class Check():
             examplesframe.wait_window(entryframe)
             if not self.runwindow.winfo_exists():
                 return 1
+            if self.runwindow.frame.skip == True:
+                return 'skip'
     def showtonegroupexs(self):
         def next():
             self.nextprofile()
@@ -3835,6 +3857,7 @@ class Check():
             self.storesettingsfile()
         self.settonevariablesbypsprofile() #maybe not done before
         self.gettoneUFgroups()
+        skip=False
         if self.toneUFgroups != []:
             torecord={}
             for toneUFgroup in self.toneUFgroups:
@@ -3854,8 +3877,11 @@ class Check():
             for i in range(self.examplespergrouptorecord):
                 log.info(_('Giving user the number {} example from each tone '
                         'group ({}) with index'.format(i,self.toneUFgroups)))
-                exited=self.showsenseswithexamplestorecord(batch[i],(i,
-                                                self.examplespergrouptorecord))
+                exited=self.showsenseswithexamplestorecord(batch[i],
+                                            (i, self.examplespergrouptorecord),
+                                            skip=skip)
+                if exited == 'skip':
+                    skip=True
                 if exited == True:
                     return
             if self.runwindow.winfo_exists():
