@@ -4235,7 +4235,8 @@ class Check():
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
                 log.info(t)
-                for self.type in self.s[self.analang]: # was ['V','C']:
+                for self.type in [x for x in self.s[self.analang] if x!= 'b'
+                                                                if len(x) == 1]:
                     t=_("{} checks".format(self.typedict[self.type]['sg']))
                     print(t)
                     log.info(t)
