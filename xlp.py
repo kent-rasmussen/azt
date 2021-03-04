@@ -214,16 +214,39 @@ class Example(ET.Element):
     def __init__(self,parent,id):
         rxid=rx.id(id)
         self.node=ET.SubElement(parent.node,'example',attrib={'num':rxid})
-
+class Table(ET.Element):
+    """<tablenumbered id="nt-ndk-melodies">
+            <table border="1">
+                <caption/>
+                <tr><td/></tr>
+            </table>
+        </tablenumbered>"""
+    def __init__(self,parent,caption):
+        id=rx.id('nt'+caption)
+        self.numbered=ET.SubElement(parent.node,'tablenumbered',attrib={'id':id})
+        self.node=ET.SubElement(self.numbered,'table')
+        self.caption=ET.SubElement(self.node,'caption')
+        self.caption.text=caption
+class Row(ET.Element):
+    def __init__(self,parent):
+        self.node=ET.SubElement(parent.node,'tr')
+class Cell(ET.Element):
+    def __init__(self,parent,content,header=False):
+        if header == False:
+            self.node=ET.SubElement(parent.node,'td')
+        elif header == True:
+            self.node=ET.SubElement(parent.node,'th')
+        else:
+            log.error("Not sure what kind of cell you're looking for: {}"
+                        "".format(header))
+        self.node.text=str(content)
 class Word(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'word')
-
 class ListWord(ET.Element):
     def __init__(self,parent,id):
         rxid=rx.id(id)
         self.node=ET.SubElement(parent.node,'listWord',attrib={'letter':rxid})
-
 class LangData(ET.Element):
     def __init__(self,parent,lang,text,phonetic=False):
         self.node=ET.SubElement(parent.node,'langData',attrib={'lang':lang})
@@ -231,7 +254,6 @@ class LangData(ET.Element):
             ph=XLPobject(self,'tPhonetic',text)
         else:
             self.node.text=text
-
 class LinkedData(ET.Element):
     def __init__(self,parent,lang,text,url,phonetic=False):
         self.node=ET.SubElement(parent.node,'langData',attrib={'lang':lang})
