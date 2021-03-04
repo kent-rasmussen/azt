@@ -1967,6 +1967,17 @@ class Unused():
     def removedups(x): #This removes duplicates from a list
         return list(dict.fromkeys(x))
 """Functions I'm using, but not in a class"""
+def atleastoneexamplehaslangformmissing(examples,lang):
+    for example in examples:
+        if examplehaslangform(example,lang) == False:
+            return True
+    return False
+def examplehaslangform(example,lang):
+    if example.find("form[@lang='{}']".format(lang)):
+        log.debug("langform found!")
+        return True
+    log.debug("No langform found!")
+    return False
 def buildurl(url):
     log.log(2,'BaseURL: {}'.format(url[0]))
     log.log(2,'Arguments: {}'.format(url[1]))
