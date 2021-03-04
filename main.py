@@ -4261,7 +4261,7 @@ class Check():
         # profilestodo={'Verb':['CVC']}
         # profilestodo=self.topprofiles(num)
         t=_("This report covers the following top two Grammatical categories, "
-            "with the top {} syllable profiles. "
+            "with the top {} syllable profiles in each. "
             "This is of course configurable, but I assume you don't want "
             "everything.".format(self.maxprofiles))
         log.info(t)
