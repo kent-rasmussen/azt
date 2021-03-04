@@ -201,6 +201,7 @@ class Check():
             for var in ['rx','profilesbysense','profilecounts']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
             self.storesettingsfile(setting='profiledata')
+        self.getpss() #This is a prioritized list of all ps'
         self.setnamesall() #sets self.checknamesall
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
@@ -294,28 +295,31 @@ class Check():
             self.glosslang2=self.db.glosslangs[1]
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
-    def nextps(self,guess=False):
-        """Make this smarter, but for now, just take value from the most
-        populous tuple"""
+    def getpss(self):
         self.profilecountsValid=[]
         for x in [x for x in self.profilecounts if x[1]!='Invalid']:
             self.profilecountsValid.append(x)
         pssdups=[x[2] for x in self.profilecountsValid]
-        pss=[]
+        self.pss=[]
         for ps in pssdups:
-            if ps not in pss:
-                pss.append(ps)
-        log.debug('Profiles in priority order: {}'.format(pss))
-        if (guess == True) or (self.ps not in pss):
+            if ps not in self.pss:
+                self.pss.append(ps)
+    def nextps(self,guess=False):
+        """Make this smarter, but for now, just take value from the most
+        populous tuple"""
+        getpss()
+        log.debug('Profiles in priority order: {}'.format(self.pss))
+        if (guess == True) or (self.ps not in self.pss):
             # if len(pss) >0:
-                self.ps=pss[0]
+                self.ps=self.pss[0]
             # else:
             #     self.profile=self.profilecounts[0][2]
         else:
-            index=pss.index(self.ps)
+            index=self.pss.index(self.ps)
             log.debug("{} ps found in valid pss; "
-                    "selecting next one in this list: {}".format(self.ps,pss))
-            self.ps=pss[index+1]
+                    "selecting next one in this list: {}".format(self.ps,
+                                                                self.pss))
+            self.ps=self.pss[index+1]
             if index >= self.maxpss:
                 return 1 #We hit the max already, but give a valid profile
     def nextprofile(self,guess=False):
@@ -2595,15 +2599,6 @@ class Check():
                 senseid=senseid, fieldtype='tone'):
                 self.locations+=[location]
         self.locations=list(dict.fromkeys(self.locations))
-    def topps(self,x='ALL'):
-        """take the top x ps', irrespective of profile"""
-        pss=list()
-        if x == 'ALL':
-            x=len(self.profilecounts)
-        for count in range(x):
-            pss+=[self.profilecounts[count][2]] #(count, profile, ps)
-        # print(pss)
-        return list(dict.fromkeys(pss))
     def topprofiles(self,x='ALL'):
         """take the top x ps-profile combos, return in ps:profile dict"""
         profiles={}
@@ -4216,25 +4211,26 @@ class Check():
         log.debug('self.topps(num):       {}'.format(self.topps(num)))
         log.debug('self.topprofiles(num): {}'.format(self.topprofiles(num)))
         # profilestodo={'Verb':['CVC']}
-        profilestodo=self.topprofiles(num)
-        t=_("This report covers the following top {} syllable profiles:"
-            " {}. This is of course configurable, but I assume you don't want "
-            "everything.".format(num,profilestodo))
+        # profilestodo=self.topprofiles(num)
+        t=_("This report covers the following top two Grammatical categories, "
+            "with the top {} syllable profiles. "
+            "This is of course configurable, but I assume you don't want "
+            "everything.".format(self.maxprofiles))
         log.info(t)
         print(t)
         p=xlp.Paragraph(si,t)
-        for self.ps in profilestodo: #keys are ps
-            t=_("{} data".format(self.ps))
+        for self.ps in self.pss[0:2]: #just the first two (Noun and Verb)
+            self.getprofilestodo()
+            t=_("{} data: (profiles: {})".format(self.ps,self.profilestodo))
             log.info(t)
             print(t)
             s1=xlp.Section(xlpr,t)
-            t=_("This section covers the following top {} syllable profiles "
-                "which are found in {}s: {}".format(num,self.ps,
-                                                    profilestodo[self.ps]))
+            t=_("This section covers the following top syllable profiles "
+                "which are found in {}s: {}".format(self.ps,self.profilestodo))
             p=xlp.Paragraph(s1,t)
             log.info(t)
             print(t)
-            for self.profile in profilestodo[self.ps]:
+            for self.profile in self.profilestodo:
                 t=_("{} {}s".format(self.profile,self.ps))
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
