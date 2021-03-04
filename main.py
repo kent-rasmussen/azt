@@ -2216,11 +2216,14 @@ class Check():
         )
     def maketoneprogresstable(self):
         def groupfn(x):
-            print(x)
-            if x != [] and len(x[0])>1:
-                return nn(x,oneperline=True) #to show groups...
-            else:
-                return len(x) #to show counts
+            for i in x:
+                try:
+                    int(i)
+                    log.debug("Integer {} fine".format(i))
+                except:
+                    log.debug("Problem with integer {}".format(i))
+                    return nn(x,oneperline=True) #if any is not an integer, all.
+            return len(x) #to show counts only
         title=_('Tone Progress for {} Words'.format(self.ps))
         Label(self.leaderboard, text=title, font=self.fonts['title'],padx=25
                         ).grid(row=0,column=0,sticky='nwe')
