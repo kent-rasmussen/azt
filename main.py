@@ -4365,7 +4365,9 @@ class Check():
         t=_("Summary coocurrence tables")
         s1s=xlp.Section(xlpr,t)
         for self.ps in self.checkcounts:
+            s2s=xlp.Section(s1s,self.ps,level=2)
             for self.profile in self.checkcounts[self.ps]:
+                s3s=xlp.Section(s2s,' '.join([self.ps,self.profile]),level=3)
                 for name in self.checkcounts[self.ps][self.profile]:
                     rows=list(self.checkcounts[self.ps][self.profile][name])
                     nrows=len(rows)
@@ -4379,7 +4381,7 @@ class Check():
                     if ncols == 0:
                         continue
                     caption=' '.join([self.ps,self.profile,name])
-                    t=xlp.Table(s1s,caption)
+                    t=xlp.Table(s3s,caption)
                     for x1 in ['header']+list(range(nrows)):
                         if x1 != 'header':
                             x1=rows[x1]
