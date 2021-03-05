@@ -4251,7 +4251,7 @@ class Check():
             reporttype=''.join([str(self.ps),'-',
                             str(self.profile),' ',
                             reporttype])
-        elif reporttype != 'Basic': #If it is, we don't want these in the title.
+        elif not re.search('Basic',reporttype): #If it is, we don't want these in the title.
             reporttype=''.join([str(self.ps),'-',
                             str(self.profile),' ',
                             str(self.name)])
@@ -4264,7 +4264,7 @@ class Check():
             if lang != None:
                 xlpreport.addlang({'id':lang,'name': self.languagenames[lang]})
         return xlpreport
-    def basicreport(self):
+    def basicreport(self,typestodo=['V']):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
         typeori=self.type
@@ -4281,9 +4281,9 @@ class Check():
                 "V1≠V2, those words will appear multiple times, e.g., for "
                 "both V1=x and V2=y.")
         self.basicreportfile=''.join([str(self.reportbasefilename)
-                                            # ,'_',self.type,'_',str(pss)
-                                            ,'.BasicReport.txt'])
-        xlpr=self.xlpstart(reporttype='Basic')
+                                            ,'_',''.join(typestodo)
+                                            ,'_BasicReport.txt'])
+        xlpr=self.xlpstart(reporttype='Basic '+''.join(typestodo))
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
