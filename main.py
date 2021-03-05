@@ -2669,6 +2669,24 @@ class Check():
         else:
             n=self.checkcounts[self.ps][self.profile][self.name][
                             self.subcheck]=len(matches)
+            if '=' in self.name:
+                xname=re.sub('=','x',self.name, count=1)
+                log.debug("looking for name {} in {}".format(xname,
+                                                    self.checkcodesbyprofile))
+                if xname in self.checkcodesbyprofile:
+                    log.debug("Adding {} value to name {}".format(len(matches),
+                                                                        xname))
+                    #put the results in that group, too
+                    log.debug(self.checkcounts)
+                    if xname not in self.checkcounts[self.ps][self.profile]:
+                        self.checkcounts[self.ps][self.profile][xname]={}
+                    if self.subcheck not in self.checkcounts[self.ps][
+                                    self.profile][xname]:
+                        self.checkcounts[self.ps][self.profile][xname][
+                                                        self.subcheck]={}
+                    self.checkcounts[self.ps][self.profile][xname][
+                                    self.subcheck][self.subcheck]=len(matches)
+                    log.debug(self.checkcounts)
         if n>0:
             titlebits='x'+self.ps+self.profile+self.name+self.subcheck
             if 'x' in self.name:
