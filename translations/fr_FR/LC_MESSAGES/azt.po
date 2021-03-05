@@ -333,7 +333,7 @@ msgid ""
 "in the frame?"
 msgstr ""
 "Quel texte *précède* \n"
-"<==la *forme* du mot \n"
+"<==la {} *{}* \n"
 "dans le cadre?"
 
 #: /home/kentr/bin/raspy/azt/main.py:938
@@ -343,7 +343,7 @@ msgid ""
 "in the frame?"
 msgstr ""
 "Quel texte va *après* \n"
-"la *forme* du mot ==> \n"
+"la {} *{}* ==> \n"
 "dans le cadre?"
 
 #: /home/kentr/bin/raspy/azt/main.py:973
