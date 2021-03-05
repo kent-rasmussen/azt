@@ -90,7 +90,7 @@ def fromCV(check, lang, word=False, compile=False):
     whole word word=True)."""
     """lang should be check.analang"""
     CVs=check.regexCV
-    log.debug('CVs: {}'.format(CVs))
+    log.log(5,'CVs: {}'.format(CVs))
     if type(CVs) is not str:
         log.error("regexCV is not string! ({})".format(check.regexCV))
     regex=list()
@@ -110,7 +110,7 @@ def fromCV(check, lang, word=False, compile=False):
         log.log(3,'x: {}; repl: {}'.format(x,CVrepl))
         log.log(3,'CVs: {}'.format(CVs))
     CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs)
-    log.debug('CVs: {}'.format(CVs))
+    log.log(5,'CVs: {}'.format(CVs))
     return make(CVs,word=word, compile=compile)
 if __name__ == '__main__':
     x='ne [pas] plaire, ne pas agréer, ne pas'
