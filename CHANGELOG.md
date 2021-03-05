@@ -3,7 +3,6 @@
 ## In Process
 
 ## Issues from Zulgo March 2021 workshop
-- make basic report include co-ocurrance tables
 
 ## Issues from Chufie' workshop (Feb 2021)
 + zero form silently doesn't make a button
@@ -81,6 +80,8 @@
 - kicked quit up to tone recording
 - quit after ten scroll frame configurations
 - For recording windows, added a "skip to next undone"
+- basic report includes co-ocurrance tables
+- fixed addframe button not showing up with longer defninitions (moved to left)
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
