@@ -2702,10 +2702,10 @@ class Check():
         for typenum in self.basicreported:
             log.log(2, '{}: {}'.format(typenum,self.basicreported[typenum]))
         """setnamesbyprofile doesn't depend on self.ps"""
-        for codenname in sorted(self.setnamesbyprofile(),
-                        key=lambda s: len(s[0]),reverse=True):
-            """self.name set here"""
-            self.name=codenname[0] #just codes, not names
+        self.checkcodesbyprofile=sorted([x[0] for x in self.setnamesbyprofile()],
+                                        key=len,reverse=True)
+        """self.name set here"""
+        for self.name in self.checkcodesbyprofile:
             if self.name not in self.checkcounts[self.ps][self.profile]:
                 self.checkcounts[self.ps][self.profile][self.name]={}
             self.typenumsRun=[typenum for typenum in self.typenums
@@ -2732,10 +2732,12 @@ class Check():
                         self.checkcounts[self.ps][self.profile][self.name][
                                                             self.subcheck]={}
                     for self.subcheckcomparison in subcheckcomparisons:
-                        t=_("{} {} {}={}-{}".format(self.ps,self.profile,
+                        if self.subcheck != self.subcheckcomparison:
+                            t=_("{} {} {}={}-{}".format(self.ps,self.profile,
                                                 self.name,self.subcheck,
                                                 self.subcheckcomparison))
-                        self.wordsbypsprofilechecksubcheckp(parent=parent,t=t)
+                            self.wordsbypsprofilechecksubcheckp(parent=parent,
+                                                                            t=t)
             else:
                 for self.subcheck in subchecks:
                     t=_("{} {} {}={}".format(self.ps,self.profile,self.name,
