@@ -2732,20 +2732,14 @@ class Check():
                         self.checkcounts[self.ps][self.profile][self.name][
                                                             self.subcheck]={}
                     for self.subcheckcomparison in subcheckcomparisons:
-                        # if self.subcheckcomparison not in self.checkcounts[
-                        #     self.ps][self.profile][self.name][self.subcheck]:
-                        #     self.checkcounts[self.ps][self.profile][self.name][
-                        #                 self.subcheck][self.subcheckcomparison]=
-                        t=_("{}={}-{}".format(self.name,self.subcheck,
+                        t=_("{} {} {}={}-{}".format(self.ps,self.profile,
+                                                self.name,self.subcheck,
                                                 self.subcheckcomparison))
                         self.wordsbypsprofilechecksubcheckp(parent=parent,t=t)
             else:
                 for self.subcheck in subchecks:
-                    # if self.subcheck not in self.checkcounts[self.ps][
-                    #                                 self.profile][self.name]:
-                    #     self.checkcounts[self.ps][self.profile][self.name][
-                    #                 self.subcheck]
-                    t=_("{}={}".format(self.name,self.subcheck))
+                    t=_("{} {} {}={}".format(self.ps,self.profile,self.name,
+                                                                self.subcheck))
                     self.wordsbypsprofilechecksubcheckp(parent=parent,t=t)
         self.name=nameori
         self.subcheck=subcheckori
