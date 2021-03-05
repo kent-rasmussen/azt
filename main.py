@@ -5856,7 +5856,9 @@ def setfonts(self):
                                         size=normal), #Charis
             'report':tkinter.font.Font(family="Andika SIL", size=small),
             'reportheader':tkinter.font.Font(family="Andika SIL", size=small,
-                                                underline = True),
+                                                # underline = True,
+                                                slant = 'italic'
+                                                ),
             'read':tkinter.font.Font(family="Andika SIL", size=big),
             'readbig':tkinter.font.Font(family="Andika SIL", size=bigger,
                                         weight='bold'),
