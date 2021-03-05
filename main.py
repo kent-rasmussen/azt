@@ -2458,7 +2458,7 @@ class Check():
         if self.type=='T': #if it's a tone check, get from frames.
             self.checkspossible=self.framenamesbyps(self.ps)
         else:
-            self.checkspossible=self.setnamesbyprofile() #This shouln't return tone checks
+            self.checkspossible=self.setnamesbyprofile() #tuples of CV checks
     def getcheck(self):
         log.info("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
@@ -2660,7 +2660,7 @@ class Check():
                                             self.analang,
                                             ps=self.ps).keys())
         for typenum in self.typenumsRun:
-            # this removes senses already reported (e.g., in V1=V2, not in V1)
+            # this removes senses already reported (e.g., in V1=V2)
             matches-=self.basicreported[typenum]
         log.log(2,"{} matches found!: {}".format(len(matches),matches))
         if 'x' in self.name:
