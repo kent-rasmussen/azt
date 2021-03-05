@@ -4393,10 +4393,10 @@ class Check():
                                 log.debug("Not a header")
                                 if x2 == 'n':
                                     value=self.checkcounts[self.ps][
-                                                    self.profile][name][x1][x2]
+                                                    self.profile][name][x1]
                                 else:
                                     value=self.checkcounts[self.ps][
-                                                    self.profile][name][x1]
+                                                    self.profile][name][x1][x2]
                                 cell=xlp.Cell(h,content=value)
         log.info(self.checkcounts)
         xlpr.close()
