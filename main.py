@@ -4331,7 +4331,7 @@ class Check():
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
                 log.info(t)
-                for self.type in ['C','V']:
+                for self.type in typestodo: #['V','C',]
                     t=_("{} checks".format(self.typedict[self.type]['sg']))
                     print(t)
                     log.info(t)
