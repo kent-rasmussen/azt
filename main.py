@@ -4987,8 +4987,12 @@ class MainApplication(Frame):
         reportmenu.add_command(label=_("Tone report by location"),
                         command=lambda x=check:Check.tonegroupreport(x,
                                                             bylocation=True))
-        reportmenu.add_command(label=_("Basic CV report (to file)"),
-                        command=lambda x=check:Check.basicreport(x))
+        reportmenu.add_command(label=_("Basic Vowel report (to file)"),
+                        command=lambda x=check:Check.basicreport(x,typestodo=['V']))
+        reportmenu.add_command(label=_("Basic Consonant report (to file)"),
+                        command=lambda x=check:Check.basicreport(x,typestodo=['C']))
+        reportmenu.add_command(label=_("Basic report on Consonants and Vowels (to file)"),
+                        command=lambda x=check:Check.basicreport(x,typestodo=['C','V']))
         domenu.add_cascade(label=_("Reports"), menu=reportmenu)
         recordmenu = Menu(menubar, tearoff=0)
         recordmenu.add_command(label=_("Sound Card Settings"),
