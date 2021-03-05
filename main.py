@@ -4357,7 +4357,7 @@ class Check():
                     nrows=len(rows)
                     if nrows == 0:
                         continue
-                    if 'x' in self.name:
+                    if 'x' in name:
                         cols=list(self.checkcounts[self.ps][self.profile][name][rows[0]])
                     else:
                         cols=['n']
