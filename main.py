@@ -1104,15 +1104,7 @@ class Check():
             Label(window.frame, text=_('What ({}) syllable profile do you '
                                     'want to work with?'.format(self.ps))
                                     ).grid(column=0, row=0)
-            optionslist = sorted([({
-                'code':profile,
-                'description':len(self.profilesbysense[self.ps][profile])
-                            }) for profile in self.profilesbysense[self.ps]],
-                            key=lambda s: s['description'],reverse=True)
-            if self.additionalprofiles is not None:
-                optionslist+=[({
-                'code':profile,
-                'description':profile}) for profile in self.additionalprofiles]
+            optionslist = [(x[1],x[0]) for x in self.profilecountsValid]
             window.scroll=Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ScrollingButtonFrame(window.scroll,
@@ -3798,7 +3790,7 @@ class Check():
         if justone==True:
             self.showentryformstorecordpage()
         else:
-            for psprofile in self.profilecounts:
+            for psprofile in self.profilecountsValid:
                 if self.runwindow.winfo_exists():
                     self.ps=psprofile[2]
                     self.profile=psprofile[1]
