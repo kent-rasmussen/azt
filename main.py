@@ -1361,7 +1361,7 @@ class Check():
         for ps in self.db.pss:
             self.sextracted[ps]={}
             for s in self.rx:
-                self.sextracted[ps][s]=list()
+                self.sextracted[ps][s]={}
         todo=len(self.db.senseids)
         x=0
         for senseid in self.db.senseids:
@@ -1554,7 +1554,10 @@ class Check():
                         ):
             log.log(3,'s: {}; rx: {}'.format(s, self.rx[s]))
             for ps in self.db.pss:
-                self.sextracted[ps][s]+=self.rx[s].findall(form) #collect matches for that one variable
+                for i in self.rx[s].findall(form):
+                    if i not in self.sextracted[ps][s]:
+                        self.sextracted[ps][s][i]=0
+                    self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
             if s is 'N#': #different regex key for this one.
                 log.log(2,"Not in d or b, returning variable: {}".format(s))
                 form=self.rx['Nwd'].sub(s,form) #replace with profile variable
