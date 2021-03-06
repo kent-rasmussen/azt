@@ -1213,8 +1213,10 @@ class Check():
                                 'file':'profiledatafile',
                                 'attributes':[
                                     "profilecounts","profilecountInvalid",
-                                    "scount","profilesbysense",
-                                    "sextracted"]},
+                                    "scount",
+                                    "sextracted",
+                                    "profilesbysense",
+                                    ]},
             'status':{
                                 'file':'statusfile',
                                 'attributes':['status']},
