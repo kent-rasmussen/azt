@@ -1323,7 +1323,8 @@ class Check():
         for ps in self.db.pss:
             self.scount[ps]={}
             for s in self.rx:
-                self.scount[ps][s]=collections.Counter(self.sextracted[ps][s]).most_common()
+                self.scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
+                    for x in self.sextracted[ps][s]],key=lambda x:x[1],reverse=True)
     def getprofileofsense(self,senseid):
         profileori=self.profile #We iterate across this here
         psori=self.ps #We iterate across this here
