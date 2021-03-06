@@ -358,8 +358,8 @@ class Check():
         #                         key=lambda s: len(s[0]),reverse=True),
         #                         othersOK=True))
         self.name=firstoflist(sorted(self.checkspossible,
-        key=lambda s: len(s[0]),reverse=True),
-        othersOK=True)[0]
+                                key=lambda s: len(s[0]),reverse=True),
+                                othersOK=True)[0]
     def guesstype(self):
                     """For now, if type isn't set, start with Vowels."""
                     self.type='V'
