@@ -307,7 +307,7 @@ class Check():
     def nextps(self,guess=False):
         """Make this smarter, but for now, just take value from the most
         populous tuple"""
-        getpss()
+        self.getpss()
         log.debug('Profiles in priority order: {}'.format(self.pss))
         if (guess == True) or (self.ps not in self.pss):
             # if len(pss) >0:
