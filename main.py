@@ -2172,7 +2172,7 @@ class Check():
         self.leaderboard=Frame(self.frame)
         self.leaderboard.grid(row=0,column=1,sticky="new")
         done=int()
-        if self.type in self.status:
+        if hasattr(self,'status') and self.type in self.status:
             if self.ps in self.status[self.type]:
                 for profile in self.status[self.type][self.ps]:
                     done+=len(self.status[self.type][self.ps][profile])
