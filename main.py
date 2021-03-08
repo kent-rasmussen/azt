@@ -1269,7 +1269,6 @@ class Check():
         except:
             log.error("Problem importing {}".format(filename))
             for s in self.settings[setting]['attributes']:
-                setattr(self,s,{})
     def makestatusdict(self):
         if self.type not in self.status:
             self.status[self.type]={}
