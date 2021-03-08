@@ -1367,6 +1367,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This returns the root node of an ElementTree tree (the entire
         tree as nodes), to edit the XML."""
         self.nodes=self.tree.getroot()
+    def writegzip(self,dir=None,filename=None):
+        import gzip
+        if filename is None:
+            filename=self.filename
+        compressed=filename+'_'+getnow()+'.gz'
+        if dir != None:
+             compressed=os.path.join(dir,compressed)
+        data=self.write()
+        with open(filename,'r') as d:
+            data=d.read()
+            with gzip.open(compressed, "wt") as f:
+                f.write(data)
+                f.close()
+                d.close()
+        return compressed
     def writelzma(self,filename=None):
         try:
             import lzma
