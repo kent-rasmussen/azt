@@ -1260,6 +1260,7 @@ class Check():
         try:
             spec = importlib.util.spec_from_file_location(setting,filename)
             module = importlib.util.module_from_spec(spec)
+            #If this fails, check your file syntax carefully!
             sys.modules[setting] = module
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
