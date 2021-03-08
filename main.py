@@ -4057,10 +4057,8 @@ class Check():
         and subcheck (e.g., a: CaC\2)."""
         """Provides self.regexCV and self.regex"""
         self.regexCV=None #in case this was run before.
-        # self.debug=True
-        if self.debug == True:
-            print('self.profile:',self.profile)
-            print('self.type:',self.type)
+        log.log(2,'self.profile:',self.profile)
+        log.log(2,'self.type:',self.type)
         maxcount=re.subn(self.type, self.type, self.profile)[1]
         if self.profile is None:
             print("It doesn't look like you've picked a syllable profile yet.")
