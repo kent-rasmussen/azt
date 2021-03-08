@@ -1,6 +1,10 @@
 # Changelog
 
 ## In Process
+- Sortǃ should select frame and continue, rather than making user hit sort again.
+- fix analang detection problem?
+- CV gui report seems to be looking for an old runwindow
+- make recordbuttons pass recordcheck, which verifies that settings are plausible.
 
 ## Issues from Zulgo March 2021 workshop
 
@@ -9,13 +13,12 @@
 - verify screen doesn't make button
 - set current visible on numbers to record
 - extra space being added for None forms in Frame construction
-- remove underlining in table headers (bold)
 - give error message if crashing because selecting part of speech that isn't populated in profile analysis.
 - fix zip problem on Windows: "OSError: [Errno 22] Invalid argument: 'log_-:.7z'"
 - for addframe, add button/menu to allow viewing all frames already done, to help with consistency across frames.
 - remove invalid characters from character names
 - TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
-- cycle through tone groups to record based on volume of the group.
+- ?cycle through tone groups to record based on volume of the group.
 - set up summary table for XLP tone export
 - record button makes a window in addmodd, if it is open (and it shouldn't, but they both use runwindow)
 - record window exit doesn't exit process (so it is the same as done/next)
@@ -29,6 +32,7 @@
 - ways to change a frame after the fact... this seems to be a common problem
 
 ### Verify Problem
+- ?put next undone buttons in dictionary recording pages, too
 - fix multiple links to the same recording
 - check that changes to S regexs don't break too much.
 - diagnose pl/imp not appearing on recording screen
@@ -82,6 +86,10 @@
 - For recording windows, added a "skip to next undone"
 - basic report includes co-ocurrance tables
 - fixed addframe button not showing up with longer defninitions (moved to left)
+- removed underlining in table headers (to italics)
+- Removed invalid from prioritized lists (of words to record, profiles to select)
+- removed function which was creating duplicate references to the same recording
+
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
