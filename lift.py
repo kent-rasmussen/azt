@@ -2478,12 +2478,13 @@ if __name__ == '__main__':
     from logsetup import *
     log=logsetup(loglevel)
     filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift.bak.txt"
     filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     lift=Lift(filename,nsyls=2)
     """Functions to run on a database from time to time"""
-    lift.findduplicateexamples()
+    # lift.findduplicateforms()
+    # lift.findduplicateexamples()
     # lift.convertalltodecomposed()
     """Careful with this!"""
     # lift.write()
