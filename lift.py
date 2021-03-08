@@ -69,6 +69,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ]
         self.slists() #sets: self.c self.v, not done with self.segmentsnotinregexes[lang]
         self.extrasegments() #tell me if there's anything not in a V or C regex.
+        self.findduplicateforms()
         self.findduplicateexamples()
         """Think through where this belongs; what classes/functions need it?"""
         log.info("Language initialization done.")
@@ -872,6 +873,39 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             else: #if not, just keep looking, at next example node
                 log.debug('=> This is not the example we are looking '
                             'for: {}'.format(valuenode))
+    def findduplicateforms(self):
+        for entry in self.nodes:
+            for node in entry:
+                if ((node.tag == 'lexical-unit') or (node.tag == 'citation')):
+                    forms=node.findall('form')
+                    removed=list()
+                    for form in forms:
+                        f1i=forms.index(form)
+                        for form2 in forms:
+                            f2i=forms.index(form2)
+                            if (f2i <= f1i) or (form2 in removed):
+                                log.log(3,"{} <= {} or form {} already removed; "
+                                            "continuing.".format(f2i,f2i,f1i))
+                                continue
+                            if (form.get('lang') == form2.get('lang') and
+                            form.find('text').text == form2.find('text').text):
+                                log.debug("Found {} {} {}".format(f1i,
+                                                    form.get('lang'),
+                                                    form.find('text').text,
+                                                    ))
+                                log.debug("Found {} {} {}".format(f2i,
+                                                    form2.get('lang'),
+                                                    form2.find('text').text
+                                                    ))
+                                log.debug("Removing form {} {} {}".format(f2i,
+                                                    form2.get('lang'),
+                                                    form2.find('text').text
+                                                    ))
+                                node.remove(form2)
+                                removed.append(form2)
+                            else:
+                                log.log(3,"Not removing form")
+        self.write()
     def findduplicateexamples(self):
         def getexdict(example):
             analangs=[]
