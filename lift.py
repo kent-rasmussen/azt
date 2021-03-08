@@ -1215,6 +1215,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         already the relevant node --since it is agnostic of what is already
         there."""
         log.info("Adding {} value to {} location".format(url,node))
+        possibles=node.findall("form[@lang='{lang}']/text".format(lang=lang))
+        for possible in possibles:
+            log.debug(possibles.index(possible))
+            if hasattr(possible,'text'):
+                if possible.text == url:
+                    log.debug("This one is already here; not adding.")
+                    return #if this is already there, we're done.
         form=ET.SubElement(node,'form',attrib={'lang':lang})
         t=ET.SubElement(form,'text')
         t.text=url
