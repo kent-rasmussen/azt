@@ -141,8 +141,8 @@ class Check():
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.settingsbyfile()
-        self.loadsettingsfile(setting='status')
         self.loadsettingsfile(setting='toneframes')
+        self.loadsettingsfile(setting='status')
         if nsyls is not None:
             self.nsyls=nsyls
         else:
@@ -1258,6 +1258,7 @@ class Check():
         if hasattr(self,fileattr):
             filename=getattr(self,fileattr)
         try:
+            log.debug("Trying for {} settings in {}".format(setting, filename))
             spec = importlib.util.spec_from_file_location(setting,filename)
             module = importlib.util.module_from_spec(spec)
             #If this fails, check your file syntax carefully!
@@ -1265,10 +1266,13 @@ class Check():
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
                 if hasattr(module,s):
+                    log.debug("Found attribute {} with value {}".format(s,
+                                getattr(module,s)))
                     setattr(self,s,getattr(module,s))
         except:
             log.error("Problem importing {}".format(filename))
             for s in self.settings[setting]['attributes']:
+                log.log(3,"looking for self.{}".format(s))
                 if hasattr(self,s):
                     log.log(3,"Using {}: {}".format(s,getattr(self,s)))
     def makestatusdict(self):
@@ -2621,7 +2625,7 @@ class Check():
         #self.profilecountsValid filters out Invalid, and also by self.ps...
         for x in [x for x in self.profilecounts if x[2]==self.ps
                                                 if x[1]!='Invalid']:
-            log.debug("profile count tuple: {}".format(x))
+            log.log(3,"profile count tuple: {}".format(x))
             self.profilecountsValid.append(x)
         log.debug("Valid profiles for ps {}: {}".format(self.ps,
                                                     self.profilecountsValid))
