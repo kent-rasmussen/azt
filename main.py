@@ -4070,7 +4070,13 @@ class Check():
             print(self.name)
         self.regexCV=str(self.profile) #Let's set this before changing it.
         """One pass for all regexes, S3, then S2, then S1, as needed."""
-        if self.type != 'T': #We don't want these subs for tone sorting
+        types=['V','C']
+        if 'x' in self.name:
+            if self.subcheckcomparison in self.s[self.analang]['C']:
+                types=['C','V']
+        for type in types:
+            if type not in self.type:
+                continue
             S=str(self.type)
             regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
             compared=False
