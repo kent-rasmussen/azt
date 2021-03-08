@@ -4319,13 +4319,6 @@ class Check():
         self.printprofilesbyps()
         self.makecountssorted() #This populates self.profilecounts
         self.printcountssorted()
-        # num=1
-        # num='ALL'
-        # num=5
-        # log.debug('self.topps(num):       {}'.format(self.topps(num)))
-        # log.debug('self.topprofiles(num): {}'.format(self.topprofiles(num)))
-        # profilestodo={'Verb':['CVC']}
-        # profilestodo=self.topprofiles(num)
         t=_("This report covers the following top two Grammatical categories, "
             "with the top {} syllable profiles in each. "
             "This is of course configurable, but I assume you don't want "
@@ -4353,7 +4346,7 @@ class Check():
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
                 log.info(t)
-                for self.type in typestodo: #['V','C',]
+                for self.type in typestodo:
                     t=_("{} checks".format(self.typedict[self.type]['sg']))
                     print(t)
                     log.info(t)
