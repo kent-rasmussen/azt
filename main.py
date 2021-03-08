@@ -194,7 +194,7 @@ class Check():
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
         self.setupCVrxs() #creates self.rx dictionaries
         """The line above may need to go after this block"""
-        if self.profilesbysense == {}:
+        if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
             log.info("Starting profile analysis at {}".format(time.time()
                                                             -self.start_time))
             self.getprofiles() #creates self.profilesbysense nested dicts
