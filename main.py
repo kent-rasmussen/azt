@@ -2968,7 +2968,7 @@ class Check():
                 # self.updatestatus(verified=True,alldone=True)
                 if self.runwindow.winfo_exists():
                     def nframe():
-                        self.name=self.framestodo[0]
+                        self.nextframe()
                         self.runwindow.destroy()
                         self.runcheck()
                     def aframe():
