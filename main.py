@@ -362,6 +362,7 @@ class Check():
                 self.addframe()
         else:
             self.name=self.framestodo[0]
+        self.checkcheck()
     def guesscheckname(self):
         """Picks the longest name (the most restrictive fiter)"""
         # print(self.checkspossible)
