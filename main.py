@@ -2227,9 +2227,9 @@ class Check():
             for i in x:
                 try:
                     int(i)
-                    log.debug("Integer {} fine".format(i))
+                    log.log(3,"Integer {} fine".format(i))
                 except:
-                    log.debug("Problem with integer {}".format(i))
+                    log.log(3,"Problem with integer {}".format(i))
                     return nn(x,oneperline=True) #if any is not an integer, all.
             return len(x) #to show counts only
         title=_('Tone Progress for {} Words'.format(self.ps))
