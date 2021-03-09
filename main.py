@@ -349,6 +349,19 @@ class Check():
                         "profile analysis.".format(self.ps))
             self.profile=self.profilecounts[0][1]
         self.checkcheck()
+    def nextframe(self):
+        self.getframestodo() #this makes self.framestodo
+        if len(self.framestodo) == 0:
+            self.addframe()
+            return #The above should change self.name, if completed.
+        if self.name in self.framestodo:
+            i=self.framestodo.index(self.name)
+            if len(self.framestodo)>i+1:
+                self.name=self.framestodo[i+1]
+            else:
+                self.addframe()
+        else:
+            self.name=self.framestodo[0]
     def guesscheckname(self):
         """Picks the longest name (the most restrictive fiter)"""
         # print(self.checkspossible)
