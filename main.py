@@ -3685,6 +3685,7 @@ class Check():
             if self.type == 'T':
                 if self.name not in self.toneframes[self.ps]:
                     self.getcheck()
+                    self.runcheck()
                     return
                 self.maybesort()
             else: #do the CV checks
