@@ -3847,7 +3847,7 @@ class Check():
             return
         if self.runwindow.frame.skip == False:
             skipf=Frame(self.runwindow.frame)
-            skipb=Button(skipf, text="Skip to next undone",
+            skipb=Button(skipf, text=linebreakwords(_("Skip to next undone")),
                         cmd=skipf.destroy)
             skipf.grid(row=1,column=1,sticky='w')
             skipb.grid(row=0,column=0,sticky='w')
