@@ -11,7 +11,6 @@ def logsetup(loglevel):
     """This function needs to run before importing any of my modules, which
     I'd like to have log stuff. So I put it here, so it won't clog up the
     top of main.py"""
-    print(loglevel)
     logfile='log_'+datetime.datetime.utcnow().isoformat()[:-16]+'.txt'
     levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
     if (type(loglevel) is not int) and (loglevel.upper() not in levels):
