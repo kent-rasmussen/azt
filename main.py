@@ -2269,7 +2269,7 @@ class Check():
                         Label(self.leaderboardtable,text=linebreakwords(frame),
                                     font=self.fonts['reportheader']
                                     ).grid(
-                        row=row,column=column,sticky='s'
+                        row=row,column=column,sticky='s',ipadx=5
                         )
                     elif frame in self.status[self.type][self.ps][profile]:
                         done=self.status[self.type][self.ps][profile][frame]
