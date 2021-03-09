@@ -1487,7 +1487,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             lang=None #this is how the script gives all, irrespective of lang.
         forms=self.get('gloss',guid=guid,senseid=senseid,glosslang=lang,ps=ps,
                         showurl=showurl) #,showurl=True
-        if forms == []: #for the whole db this will not work if even one gloss is filled out
+        if forms == []: 
             formsd=self.get('definition',guid=guid,senseid=senseid,
                         glosslang=lang,
                         showurl=showurl)
