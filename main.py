@@ -2264,7 +2264,7 @@ class Check():
                 for frame in frames:
                     column+=1
                     if profile == 'header':
-                        Label(self.leaderboardtable,text=frame,
+                        Label(self.leaderboardtable,text=linebreakwords(frame),
                                     font=self.fonts['reportheader']
                                     ).grid(
                         row=row,column=column,sticky='s'
@@ -5785,6 +5785,8 @@ def nonspace(x):
         return x
     else:
         return " "
+def linebreakwords(x):
+    return re.sub(' ','\n',x)
 def nn(x,oneperline=False):
     """Don't print "None" in the UI..."""
     if type(x) is list or type(x) is tuple:
