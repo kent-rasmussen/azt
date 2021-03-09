@@ -3841,7 +3841,6 @@ class Check():
             examples=self.db.get('example',senseid=senseid)
             if examples == []:
                 log.debug(_("No examples! Add some, then come back."))
-                entryframe.destroy()
                 continue
             if ((self.runwindow.frame.skip == True) and
                 (lift.atleastoneexamplehaslangformmissing(
