@@ -4978,8 +4978,6 @@ class MainApplication(Frame):
         """Language stuff"""
         languagemenu = Menu(changemenu, tearoff=0)
         """Maybe this should be implied from first gloss language?"""
-        # languagemenu.add_command(label=_("Interface language"),
-        #                 command=lambda x=check:Check.getanalang(x))
         languagemenu.add_command(label=_("Interface/computer language"),
                         command=lambda x=check:Check.getinterfacelang(x))
         languagemenu.add_command(label=_("Analysis language"),
@@ -4991,35 +4989,34 @@ class MainApplication(Frame):
         changemenu.add_cascade(label=_("Languages"), menu=languagemenu)
         menubar.add_cascade(label=_("Change"), menu=changemenu)
         """Word/data choice stuff"""
-        # filtermenu = Menu(menubar, tearoff=0)
         changemenu.add_command(label=_("Part of speech"),
                         command=lambda x=check:Check.getps(x))
-        # profilemenu.add_cascade(label=_("Languages"), menu=languagemenu)
         profilemenu = Menu(changemenu, tearoff=0)
         changemenu.add_cascade(label=_("Syllable profile"), menu=profilemenu)
-        profilemenu.add_command(label=_("Choose"),
-                        command=lambda x=check:Check.getprofile(x))
         profilemenu.add_command(label=_("Next"),
                         command=lambda x=check:Check.nextprofile(x))
-        # changemenu.add_cascade(label=_("Words"), menu=filtermenu)
+        profilemenu.add_command(label=_("Choose"),
+                        command=lambda x=check:Check.getprofile(x))
         """What to check stuff"""
-        checkmenu = Menu(menubar, tearoff=0)
-        checkmenu.add_command(label=_("Sound type (Consonant, Vowel, or Tone)"),
+        changemenu.add_command(label=_("Consonant-Vowel-Tone"),
                         command=lambda x=check:Check.gettype(x))
-        if (check.ps is not None and check.profile is not None and
-                                            check.type is not None):
+        if (check.ps != None and check.profile != None and
+                                            check.type != None):
             if check.type == 'T':
-                checkmenutitle=_("Tone Frame")
+                changemenu.add_separator()
+                framemenu = Menu(changemenu, tearoff=0)
+                changemenu.add_cascade(label=_("Tone Frame"), menu=framemenu)
+                framemenu.add_command(label=_("Next"),
+                                command=lambda x=check:Check.nextframe(x))
+                framemenu.add_command(label=_("Choose"),
+                                command=lambda x=check:Check.getcheck(x))
             else:
-                checkmenutitle=_("Location in word")
-            checkmenu.add_command(label=checkmenutitle,
+                changemenu.add_separator()
+                changemenu.add_command(label=_("Location in word"),
                         command=lambda x=check:Check.getcheck(x))
-        if check.type != 'T' and check.name is not None:
-            checkmenu.add_command(label=_("Segment(s) to check"),
+                if check.name is not None:
+                    changemenu.add_command(label=_("Segment(s) to check"),
                         command=lambda x=check:Check.getsubcheck(x))
-            # checkmenu.add_command(label=_("Other report"),
-            #             command=lambda x=check:Check.runcheck(x))
-        changemenu.add_cascade(label=_("Options"), menu=checkmenu)
         """Do"""
         domenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label=_("Do"), menu=domenu)
