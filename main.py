@@ -2655,7 +2655,10 @@ class Check():
         for self.name in self.toneframes[self.ps]:
             self.gettonegroups() #depends on self.ps/self.profile/self.name
             log.debug("frame: {}; groups: {}".format(self.name, self.tonegroups))
-            if self.name in self.status[self.type][self.ps][self.profile]:
+            if (self.type in self.status and
+                    self.ps in self.status[self.type] and
+                    self.profile in self.status[self.type][self.ps] and
+                    self.name in self.status[self.type][self.ps][self.profile]):
                 done=self.status[self.type][self.ps][self.profile][self.name] #verified.
             else:
                 done=[]
