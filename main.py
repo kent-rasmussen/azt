@@ -2227,8 +2227,9 @@ class Check():
                     bg='red' #self.theme['background']
                     ).grid(row=0,column=1,sticky='we')
     def makeCVprogresstable(self):
-        Label(self.leaderboard, text=_('{} Progress').format(self.typedict[self.type]['sg']), font=self.fonts['title']
-                        ).grid(row=0,column=0,sticky='nwe')
+        Label(self.leaderboard, text=_('{} Progress').format(
+            self.typedict[self.type]['sg']), font=self.fonts['title']
+            ).grid(row=0,column=0,sticky='nwe')
         self.leaderboardtable=Frame(self.leaderboard)
         self.leaderboardtable.grid(row=1,column=0)
         Label(self.leaderboardtable,text=_("Nothing to see here..."),
