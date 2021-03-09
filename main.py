@@ -3958,6 +3958,7 @@ class Check():
             self.tonegroupreport(silent=True)
             self.showtonegroupexs()
     def getresults(self):
+        self.getrunwindow()
         self.makeresultsframe()
         self.adhocreportfileXLP=''.join([str(self.reportbasefilename)
                                         ,'_',str(self.ps)
