@@ -1638,10 +1638,9 @@ class Check():
         information from the entry. If source is an example, it pulls that info
         from the example. The info is formatted uniformly in either case."""
         output={}
-        if self.debug == True:
-            print(source, type(source))
-            print('self.glosslang:',self.glosslang)
-            print('self.glosslang2:',self.glosslang2)
+        log.log(2,"{} {}".format(source, type(source)))
+        log.log(2,'self.glosslang: {}'.format(self.glosslang))
+        log.log(2,'self.glosslang2: {}'.format(self.glosslang2))
         """Just in case there's a problem later..."""
         forms={}
         glosses={}
@@ -1649,8 +1648,6 @@ class Check():
         tonegroups=None
         """Build dual logic here:"""
         if isinstance(source,lift.ET.Element):
-            if self.debug == True:
-                log.info('Element found!')
             element=source
             for node in element:
                 if (node.tag == 'form') and ((node.get('lang') == self.analang)
@@ -1667,7 +1664,7 @@ class Check():
                                 (subnode.get('type') == 'tone')):
                     tonegroups=node.findall('text')
             log.log(2,'forms: {}'.format(forms))
-            for lang in glosses: #gloss doesn't seem to be defined above; glosses?
+            for lang in glosses:
                 log.log(2,'gloss[{}]: {}'.format(lang,glosses[lang]))
             log.log(2,'tonegroups: {}'.format(tonegroups))
             """convert from lists to single items without loosing data,
@@ -1699,8 +1696,7 @@ class Check():
             </example>
             """
         elif (type(source) is str) and (len(source) == 36): #source is sensedid
-            if self.debug == True:
-                log.info('36 character senseid string!')
+            log.log(3,'36 character senseid string!')
             senseid=source
             output['senseid']=senseid
             forms[self.analang]=self.db.citationorlexeme(senseid=senseid,
@@ -1735,8 +1731,6 @@ class Check():
                 int(tonegroup)
             except:
                 output['tonegroup']=tonegroup #this is only for named groups
-        if self.debug == True:
-            print(forms,glosses[lang])
         if (self.glosslang2 == None) and (self.glosslang2 in gloss):
             del gloss[self.glosslang2] #remove this now, and lose checks later
         output[self.analang]=None
@@ -1751,8 +1745,7 @@ class Check():
             for lang in gloss:
                 if gloss[lang] == None:
                     gloss[lang]=nn(gloss[lang]) #'nogloss'
-            if self.debug ==True:
-                print(frame)
+            log.log(2,frame)
             output[self.analang]=self.frameregex.sub(form,frame[self.analang])
             for lang in gloss:
                 """only give these if the frame has this gloss, *and* if
@@ -2805,7 +2798,6 @@ class Check():
         if self.audiolang in framed:
             url=file.getdiredrelURL(self.reporttoaudiorelURL,framed[self.audiolang])
             el=xlp.LinkedData(ex,self.analang,framed[self.analang],str(url))
-                            # framed[self.audiolang])
         else:
             el=xlp.LangData(ex,self.analang,framed[self.analang])
         eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
@@ -4181,7 +4173,7 @@ class Check():
                 output[senseid][location]={}
                 group=self.db.get('exfieldvalue',senseid=senseid,
                     location=location,fieldtype='tone')
-                log.debug(group)
+                # log.debug(group)
                 """Also include location:value for non-example fields"""
                 """How to do this in a principled way?"""
                 # for guid in self.db.get('guidbysenseid',senseid=senseid):
@@ -4312,7 +4304,6 @@ class Check():
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
             l=list()
-            # print(groups[group]['values'])
             for x in groups[group]['values']:
                 """This shouldn't crash if a word is lacking a value for a
                 location. Just don't include that location in the group
@@ -4320,7 +4311,8 @@ class Check():
                 if (('values' in groups[group]) and
                         (x in groups[group]['values'])
                     and (groups[group]['values'][x] !=[])):
-                    log.debug('x: {}; values: {}'.format(x,str(groups[group]['values'][x])))
+                    log.log(2,'x: {}; values: {}'.format(x,str(groups[group][
+                                                                'values'][x])))
                     l.append(x+': '+str(groups[group]['values'][x][0]))
             text=_('Values by frame: {}'.format('\t'.join(l)))
             p1=xlp.Paragraph(s1,text)
@@ -4338,7 +4330,7 @@ class Check():
                                                 location=location,
                                                 senseid=senseid)
                         for example in examples:
-                            """These should already be framed!"""
+                            # These should already be framed!
                             framed=self.getframeddata(example,noframe=True)
                             self.framedtoXLP(framed,parent=e1,listword=True)
                         if text not in textout:
@@ -4357,7 +4349,7 @@ class Check():
                         log.log(2,"Using id {}".format(id))
                         e1=xlp.Example(s1,id)
                         for example in examples:
-                            """These should already be framed!"""
+                            # These should already be framed!
                             framed=self.getframeddata(example,noframe=True)
                             self.framedtoXLP(framed,parent=e1,listword=True)
                     output(window,r,text)
@@ -5923,15 +5915,14 @@ def nonspace(x):
     else:
         return " "
 def linebreakwords(x):
+    log.debug("working on {}".format(x))
     return re.sub(' ','\n',x)
 def nn(x,oneperline=False):
     """Don't print "None" in the UI..."""
     if type(x) is list or type(x) is tuple:
         output=[]
-        # print('List!')
-        for y in x: #o='\t'.join(outputs)
+        for y in x:
             output+=[nonspace(y)]
-        # return output
         if oneperline == True:
             return '\n'.join(output)
         else:
