@@ -1,10 +1,11 @@
 # Changelog
 
 ## In Process
-- Sortǃ should select frame and continue, rather than making user hit sort again.
 - fix analang detection problem?
-- CV gui report seems to be looking for an old runwindow
 - make recordbuttons pass recordcheck, which verifies that settings are plausible.
+- look at how to break lines importing to XLP (for column headers)
+- include checks on empty or repeated XLP nodes
+- convert basic report to XLP table function
 
 ## Issues from Zulgo March 2021 workshop
 
@@ -89,7 +90,12 @@
 - removed underlining in table headers (to italics)
 - Removed invalid from prioritized lists (of words to record, profiles to select)
 - removed function which was creating duplicate references to the same recording
-
+- Sortǃ Now selects frame and continues, rather than making user hit sort again.
+- CV gui report now making its own runwindow (not trying to reuse old one)
+- change frame menu should be like change profile
+- prioritized group and frame ordering on tone output, according to new function for comparing sets of dictionaries.
+    - similar groups in each axis should now be more or less together.
+- Added explanation with explicit statement of structured ordering of groups to XLP output.
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
