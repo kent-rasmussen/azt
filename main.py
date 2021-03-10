@@ -5787,6 +5787,63 @@ def setinterfacelang(lang):
     print(_("Translation seems to be working"))
     file.writeinterfacelangtofile(lang)
     # return _
+def addxofytocorrectplaceinlistoflists(x,y,o):
+    for k in o:
+        if y in k and k.index(y) == len(k)-1:
+            k.append(x)
+            return o
+        elif y in k and k.index(y) == 0:
+            k.insert(0,x)
+            return o
+        elif y in k:
+            o.append([x])
+            return o
+    #only add for y not in k after going through all of o
+    o.append([x])
+    return o
+def addxofytolistoflists(x,y,o):
+    if x not in [i for j in o for i in j]:
+        if y in [i for j in o for i in j]:
+            o=addxofytocorrectplaceinlistoflists(x,y,o)
+        else:
+            o.append([x])
+    return o
+def dictscompare(dicts,ignore=[],flat=True):
+    l=dictscompare11(dicts,ignore=ignore)
+    o=list([],)
+    for c in l:
+        for x,y in [c[0]]:
+            o=addxofytolistoflists(x,y,o)
+            o=addxofytolistoflists(y,x,o)
+    if flat == False:
+        return o
+    else:
+        return [i for j in o for i in j]
+def dictscompare11(dicts,ignore=[]):
+    values={}
+    for d1 in dicts:
+        for d2 in dicts:
+            if d2 == d1 or (d2,d1) in values:
+                continue
+            values[(d1,d2)]=dictcompare(dicts[d1],dicts[d2],ignore=ignore)[0]
+    valuelist=[(x,values[x]) for x in values.keys()]
+    valuelist.sort(key=lambda x: x[1],reverse=True)
+    return valuelist
+def dictcompare(x,y,ignore=[]):
+    pairs = dict()
+    unpairs=dict()
+    for k in x:
+        if k not in ignore and x[k] not in ignore:
+            if k in y and y[k] not in ignore: #Only compare *same* keys
+                if x[k] == y[k]:
+                    pairs[k] = x[k]
+                else:
+                    unpairs[k] = (x[k],y[k])
+    if len(pairs)+len(unpairs) == 0:
+        r=0 #this beats a div0 error
+    else:
+        r=len(pairs)/(len(pairs)+len(unpairs))
+    return (r,pairs,unpairs)
 def name(x):
     try:
         name=x.__name__ #If x is a function
