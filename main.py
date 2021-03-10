@@ -4173,10 +4173,11 @@ class Check():
         self.getidstosort() #in case you didn't just run a check
         self.getlocations()
         output={}
+        locations=self.locations[:]
         """Collect location:value correspondences, by sense"""
         for senseid in self.senseidstosort:
             output[senseid]={}
-            for location in self.locations:
+            for location in locations:
                 output[senseid][location]={}
                 group=self.db.get('exfieldvalue',senseid=senseid,
                     location=location,fieldtype='tone')
@@ -4262,7 +4263,50 @@ class Check():
                 Label(window,text=text,font=window.fonts['report']).grid(
                                         row=window.row,column=0, sticky="w")
             window.row+=1
+        t=_("Summary of Frames by Draft Underlying Melody")
+        s1s=xlp.Section(xlpr,t)
+        caption=' '.join([self.ps,self.profile])
+        """Prioritize groups by similarity, locations by lower total numbers"""
+        locationsums={}
+        groupsums={}
+        valuesbygroup={}
+        valuesbylocation={}
         for group in groups:
+            valuesbygroup[group]=groups[group]['values']
+        for location in locations:
+            valuesbylocation[location]={}
+            for group in groups:
+                valuesbylocation[location][group]=groups[group]['values'][
+                                                                    location]
+        log.debug("locations: {}".format(locations))
+        log.debug("groups: {}".format(groups))
+        # valuesbylocation actually doesn't mean anything, necessarily, but by
+        # coicidence it does --i.e., the words are presented in the same order
+        # on each sort, so the group numbers correspond more naturally than
+        # they have to.
+        locations=dictscompare(valuesbylocation,ignore=['NA',None])
+        groupstructuredlist=dictscompare(valuesbygroup,ignore=['NA',None],flat=False)
+        grouplist=[i for j in groupstructuredlist for i in j]
+        log.debug("organized locations: {}".format(locations))
+        log.debug("organized groups: {}".format(grouplist))
+        log.debug("structured groups: {}".format(groupstructuredlist))
+        ptext=_("The following table shows correspondences across sortings by "
+                "tone frames, with a row for each unique pairing. {} "
+                "intentionally splits these groups, so you can see wherever "
+                "differences lie, even if those differences are likely "
+                "meaningless (e.g., 'NA' means the user skipped sorting those "
+                "words in that frame, but this will still distinguish one "
+                "group from another). To help the qualified analyst navigate "
+                "such a large selection of small slices of the data, the data "
+                "is sorted (both here and in the section ordering) by "
+                "similarity of groups. That similarity is structured, and "
+                "it is provided here, so you can see the analysis of group "
+                "relationships for yourself: {}"
+                "".format(self.program['name'],str(groupstructuredlist)))
+        p0=xlp.Paragraph(s1s,text=ptext)
+        self.buildXLPtable(s1s,caption,yterms=grouplist,xterms=locations,
+                            values=lambda x,y:groups[y]['values'][x])
+        for group in grouplist:
             groupname=self.ps+'_'+self.profile+'_'+str(group)
             sectitle=_('\nGroup {}'.format(str(groupname)))
             s1=xlp.Section(xlpr,title=sectitle)
@@ -4283,7 +4327,7 @@ class Check():
             output(window,r,text)
             if bylocation == True:
                 textout=list()
-                for location in self.locations:
+                for location in locations:
                     id=rx.id('x'+sectitle+location)
                     e1=xlp.Example(s1,id)
                     for senseid in groups[group]['senseids']:
