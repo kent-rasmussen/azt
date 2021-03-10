@@ -1672,7 +1672,6 @@ class Check():
             log.log(2,'tonegroups: {}'.format(tonegroups))
             """convert from lists to single items without loosing data,
             then pull text from nodes"""
-            print(forms)
             if self.analang in forms:
                 form=t(firstoflist(forms[self.analang]))
             else:
