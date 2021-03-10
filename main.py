@@ -4126,6 +4126,41 @@ class Check():
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
+    def buildXLPtable(self,parent,caption,yterms,xterms,values):
+        #values should be a (lambda?) function that depends on x and y terms
+        t=xlp.Table(parent,caption)
+        rows=list(yterms)
+        nrows=len(rows)
+        cols=list(xterms)
+        ncols=len(cols)
+        if nrows == 0:
+            return
+        if ncols == 0:
+            return
+        for row in ['header']+list(range(nrows)):
+            if row != 'header':
+                row=rows[row]
+            r=xlp.Row(t)
+            for col in ['header']+list(range(ncols)):
+                log.log(4,"row: {}; col: {}".format(row,col))
+                if col != 'header':
+                    col=cols[col]
+                log.log(4,"row: {}; col: {}".format(row,col))
+                if row == 'header' and col == 'header':
+                    log.log(2,"header corner")
+                    cell=xlp.Cell(r,content='',header=True)
+                elif row == 'header':
+                    log.log(2,"header row")
+                    cell=xlp.Cell(r,content=linebreakwords(col),header=True)
+                elif col == 'header':
+                    log.log(2,"header column")
+                    cell=xlp.Cell(r,content=row,header=True)
+                else:
+                    log.log(2,"Not a header")
+                    log.log(2,"value ({},{}):{}".format(col,row,
+                                                        values(col,row)))
+                    value=values(col,row)
+                    cell=xlp.Cell(r,content=value)
     def tonegroupreport(self,silent=False,bylocation=False):
         log.info("Starting report...")
         self.storesettingsfile()
