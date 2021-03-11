@@ -36,7 +36,7 @@ def stripdiacritics(check,x):
 def segmentin(forms, glyph):
     # """This actually allows for dygraphs, etc., so I'm keeping it."""
     # for form in forms: # as: self.citationforms[lang] + self.lexemes[lang]
-        if re.search(glyph,' '.join(forms)): #see if the glyph is there
+        if re.search(glyph,' '.join([x for x in forms if x != None])): #see if the glyph is there
             return glyph #find it and stop looking, or return nothing
 def inxyz(db, lang, segmentlist): #This calls the above script for each character.
     start_time=time.time() #this enables boot time evaluation
