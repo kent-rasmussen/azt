@@ -1748,7 +1748,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             # nonwordforming=re.compile('[() \[\]\|,\-!@#$*?]')
             invalid=['(',')',' ','[',']','|',',','-','!','@','#','$','*','?'
                         ,'\n']
-            for form in self.citationforms[lang]+self.lexemes[lang]:
+            for form in [x for x in self.citationforms[lang]+self.lexemes[lang]
+                            if x != None]:
                 for x in form:
                     if ((x not in invalid) and
                             (x not in [item for sublist in self.s[lang].values()
