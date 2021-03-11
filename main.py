@@ -216,7 +216,7 @@ class Check():
                     (self.glosslang not in self.db.glosslangs)):
                 self.guessglosslangs()
             self.parent.parent.interfacelang=self.glosslang
-        setinterfacelang(self.glosslang)
+            setinterfacelang(self.glosslang)
     def guessanalang(self):
         langspriority=collections.Counter(self.db.get('lexemelang')+
                                 self.db.get('citationlang')).most_common()
@@ -1046,14 +1046,15 @@ class Check():
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setinterfacelangwrapper(self,choice,window):
             self.set('interfacelang',choice,window) #set the check variable
-            setinterfacelang(choice) #change the UI *ONLY* no object attributes
-            # inherit(self,'interfacelang')
-            self.storesettingsfile()
-            for base in [self,self.parent.parent]:
-                setattr(base,'interfacelang',choice)
-                log.info("pre checkcheck {base}: {}".format(getattr(base,
-                                                'interfacelang'),base=base))
-            self.checkcheck()
+            if getattr(self,'interfacelang') != choice:
+                setinterfacelang(choice) #change the UI *ONLY* no object attributes
+                file.writeinterfacelangtofile(choice)
+                self.storesettingsfile()
+                for base in [self,self.parent.parent]:
+                    setattr(base,'interfacelang',choice)
+                    log.info("pre checkcheck {base}: {}".format(getattr(base,
+                                                    'interfacelang'),base=base))
+                self.checkcheck()
     def setprofile(self,choice,window):
         self.set('profile',choice,window)
     def settype(self,choice,window):
@@ -5821,7 +5822,6 @@ def setinterfacelang(lang):
     print("Using interface", lang)
     i18n[lang].install()
     print(_("Translation seems to be working"))
-    file.writeinterfacelangtofile(lang)
     # return _
 def addxofytocorrectplaceinlistoflists(x,y,o):
     for k in o:
