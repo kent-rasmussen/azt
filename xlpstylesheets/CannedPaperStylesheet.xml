@@ -1379,6 +1379,8 @@ textbefore="‘"
 textbeforeafterusesfontinfo="no"
 ></glossInExampleLayout
 ><glossInTableLayout
+textafter="’"
+textbefore="‘"
 textbeforeafterusesfontinfo="no"
 ></glossInTableLayout
 ><glossInProseLayout
