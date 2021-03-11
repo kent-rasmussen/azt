@@ -231,15 +231,24 @@ class Row(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'tr')
 class Cell(ET.Element):
-    def __init__(self,parent,content,header=False):
+    def __init__(self,parent,content,header=False,linebreakwords=False):
         if header == False:
-            self.node=ET.SubElement(parent.node,'td')
+            tag='td'
         elif header == True:
-            self.node=ET.SubElement(parent.node,'th')
+            tag='th'
         else:
             log.error("Not sure what kind of cell you're looking for: {}"
                         "".format(header))
-        self.node.text=str(content)
+        self.node=ET.SubElement(parent.node,tag)
+        if linebreakwords == True:
+            for i in content.split(): #this returns a list, even one ['word',].
+                if self.node.text != None:
+                    br=Linebreak(self)
+                    br.node.tail=i
+                else:
+                    self.node.text=i
+        else:
+            self.node.text=str(content)
 class Word(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'word')
@@ -276,6 +285,9 @@ class Link(ET.Element):
             ph=XLPobject(self,'tPhonetic',text)
         else:
             self.node.text=text
+class Linebreak(ET.Element):
+    def __init__(self,parent):
+        self.node=ET.SubElement(parent.node,'br')
 def indent(elem, level=0):
     """from http://effbot.org/zone/element-lib.htm#prettyprint"""
     i = "\n" + level*"  "
