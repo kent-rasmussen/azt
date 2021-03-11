@@ -1413,8 +1413,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return compressed
     def write(self,filename=None):
         """This writes changes back to XML."""
-        """When this goes into production, change this:"""
-        #self.tree.write(self.filename, encoding="UTF-8")
         if filename is None:
             filename=self.filename
         write=0
@@ -1426,22 +1424,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         except:
             log.error("There was a problem writing to file: {}"
                     "".format(os.listdir(pathlib.Path(filename))))
-        if write==1:
+        if write == 1:
             try:
                 os.replace(filename+'.part',filename)
-                replace=1
             except:
                 log.error("There was a problem writing to file. This is what's "
-                "here: {}".format(os.listdir(str(pathlib.Path(filename)+'.part'))))
-        if replace==1:
-        #     try:
-        #         os.remove(filename+'.part')
-        #         remove=1
-        #     except:
-        #         log.error("There was a problem writing to file. This is what's "
-        #             "here: {}".format(os.listdir(pathlib.Path(filename+'*'))))
-        # if remove==1:
-            log.info("No problems writing to file!")
+                "here: {}".format(os.listdir(str(pathlib.Path(filename)+'.part')
+                                                                            )))
     def analangs(self):
         log.log(1,_("Looking for analangs in lift file"))
         self.audiolangs=[]
@@ -1487,7 +1476,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             lang=None #this is how the script gives all, irrespective of lang.
         forms=self.get('gloss',guid=guid,senseid=senseid,glosslang=lang,ps=ps,
                         showurl=showurl) #,showurl=True
-        if forms == []: 
+        if forms == []:
             formsd=self.get('definition',guid=guid,senseid=senseid,
                         glosslang=lang,
                         showurl=showurl)
