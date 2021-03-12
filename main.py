@@ -4152,10 +4152,13 @@ class Check():
                     cell=xlp.Cell(r,content='',header=True)
                 elif row == 'header':
                     log.log(2,"header row")
-                    cell=xlp.Cell(r,content=linebreakwords(col),header=True)
+                    cell=xlp.Cell(r,content=linebreakwords(col),
+                                header=True,
+                                linebreakwords=True)
                 elif col == 'header':
                     log.log(2,"header column")
-                    cell=xlp.Cell(r,content=row,header=True)
+                    cell=xlp.Cell(r,content='{} ({})'.format(row,ycounts(row)),
+                                header=True)
                 else:
                     log.log(2,"Not a header")
                     log.log(2,"value ({},{}):{}".format(col,row,
