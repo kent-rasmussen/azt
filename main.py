@@ -5905,8 +5905,9 @@ def firstoflist(l,othersOK=False):
     elif len(l) == 1 or (othersOK == True):
         return l[0]
     elif othersOK == False: #(i.e., with `len(list) != 1`)
-        print('Sorry, something other than one list item found:',l,
-                '\nDid you mean to use "othersOK=True"?')
+        print('Sorry, something other than one list item found: {}'
+                '\nDid you mean to use "othersOK=True"? Returning nothing!'
+                ''.format(l))
 def t(element):
     try:
         return element.text
