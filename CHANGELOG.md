@@ -1,6 +1,9 @@
 # Changelog
 
 ## In Process
+- indicate progress verified/present and sorted status in main window
+- Don't die on no count for table
+- Don't keep writing ui_lang.py
 - fix analang detection problem?
 - make recordbuttons pass recordcheck, which verifies that settings are plausible.
 - look at how to break lines importing to XLP (for column headers)
