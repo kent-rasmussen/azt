@@ -5914,8 +5914,14 @@ def t(element):
     except:
         if element is None:
             return
+        elif element is str:
+            log.debug("Apparently you tried to pull text out of a non element; "
+            "turns out it's a simple string, so returning it: {}"
+            "".format(element))
+            return element
         else:
-            print('Apparently you tried to pull text out of a non element:',element)
+            log.debug("Apparently you tried to pull text out of a non element, "
+            "and it's not a simple string, either: {}".format(element))
 def nonspace(x):
     """Return a space instead of None (for the GUI)"""
     if x is not None:
