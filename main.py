@@ -4301,11 +4301,17 @@ class Check():
                 "is sorted (both here and in the section ordering) by "
                 "similarity of groups. That similarity is structured, and "
                 "it is provided here, so you can see the analysis of group "
-                "relationships for yourself: {}"
-                "".format(self.program['name'],str(groupstructuredlist)))
+                "relationships for yourself: {}. "
+                "And here are the structured similarity relationships for the "
+                "Frames: {}"
+                "".format(self.program['name'],str(groupstructuredlist),
+                                                str(locationstructuredlist)))
         p0=xlp.Paragraph(s1s,text=ptext)
         self.buildXLPtable(s1s,caption,yterms=grouplist,xterms=locations,
-                            values=lambda x,y:groups[y]['values'][x])
+                            values=lambda x,y:nn(firstoflist(groups[y]['values'
+                            ][x])),
+                            ycounts=lambda x:len(groups[x]['senseids'])
+                            )
         for group in grouplist:
             groupname=self.ps+'_'+self.profile+'_'+str(group)
             sectitle=_('\nGroup {}'.format(str(groupname)))
