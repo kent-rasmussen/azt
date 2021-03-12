@@ -1649,6 +1649,7 @@ class Check():
         tonegroups=None
         """Build dual logic here:"""
         if isinstance(source,lift.ET.Element):
+            #This is an example element, not a sense or entry element...
             element=source
             for node in element:
                 if (node.tag == 'form') and ((node.get('lang') == self.analang)
@@ -1663,11 +1664,11 @@ class Check():
                             glosses[subnode.get('lang')]=subnode.findall('text')
                 if ((node.tag == 'field') and
                                 (subnode.get('type') == 'tone')):
+                    #This should always be only one value:
                     tonegroups=node.findall('text')
             log.log(2,'forms: {}'.format(forms))
             for lang in glosses:
                 log.log(2,'gloss[{}]: {}'.format(lang,glosses[lang]))
-            log.log(2,'tonegroups: {}'.format(tonegroups))
             """convert from lists to single items without loosing data,
             then pull text from nodes"""
             if self.analang in forms:
@@ -1696,6 +1697,7 @@ class Check():
             </example>
             """
         elif (type(source) is str) and (len(source) == 36): #source is sensedid
+            #Asking for a sense, you get all tone groups, if self.name isn't set
             log.log(3,'36 character senseid string!')
             senseid=source
             output['senseid']=senseid
@@ -1709,6 +1711,8 @@ class Check():
                 if lang != None:
                     glosses[lang]=self.db.glossordefn(senseid=senseid,lang=lang,
                                             ps=self.ps)
+            #If frame is not defined (in self.name) this will output ALL values
+            #for this sense!
             tonegroups=self.db.get('exfieldvalue', senseid=senseid,
                                 fieldtype='tone', location=self.name)
             """convert from lists to single items without loosing data"""
@@ -1723,7 +1727,6 @@ class Check():
         log.log(2,'form: {}'.format(form))
         for lang in gloss:
             log.log(2,'gloss:'.format(gloss[lang]))
-        log.log(2,'tonegroup: {}'.format(tonegroup))
         """The following is the same for senses or examples"""
         if notonegroup == False:
             #If I haven't defined self.name nor set notonegroup=True, this will
@@ -4129,6 +4132,7 @@ class Check():
     def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None):
         #values should be a (lambda?) function that depends on x and y terms
         #ycounts should be a lambda function that depends on yterms
+        log.info("Making table with caption {}".format(caption))
         t=xlp.Table(parent,caption)
         rows=list(yterms)
         nrows=len(rows)
@@ -4293,9 +4297,8 @@ class Check():
         groupstructuredlist=dictscompare(valuesbygroup,ignore=['NA',None],
                                                                     flat=False)
         grouplist=[i for j in groupstructuredlist for i in j]
-        log.debug("organized locations: {}".format(locations))
-        log.debug("organized groups: {}".format(grouplist))
         locations=[i for j in locationstructuredlist for i in j]
+        log.debug("structured locations: {}".format(locationstructuredlist))
         log.debug("structured groups: {}".format(groupstructuredlist))
         ptext=_("The following table shows correspondences across sortings by "
                 "tone frames, with a row for each unique pairing. {} "
@@ -4321,6 +4324,7 @@ class Check():
                             )
         for group in grouplist:
             groupname=self.ps+'_'+self.profile+'_'+str(group)
+            log.info("building report for {}".format(groupname))
             sectitle=_('\nGroup {}'.format(str(groupname)))
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
@@ -4344,9 +4348,11 @@ class Check():
                     id=rx.id('x'+sectitle+location)
                     e1=xlp.Example(s1,id)
                     for senseid in groups[group]['senseids']:
+                        #This is for window/text output only, not in XLP file
                         framed=self.getframeddata(senseid,noframe=True,
                                                         notonegroup=True)
                         text=framed['formatted']
+                        #This is put in XLP file:
                         examples=self.db.get('examplebylocation',
                                                 location=location,
                                                 senseid=senseid)
@@ -4359,9 +4365,11 @@ class Check():
                             textout.append(text)
             else:
                 for senseid in groups[group]['senseids']:
+                    #This is for window/text output only, not in XLP file
                     framed=self.getframeddata(senseid,noframe=True,
                                                     notonegroup=True)
                     text=framed['formatted']
+                    #This is put in XLP file:
                     examples=self.db.get('example',senseid=senseid)
                     log.log(2,"{} examples found: {}".format(len(examples),
                                                                     examples))
