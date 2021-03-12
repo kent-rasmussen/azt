@@ -4126,8 +4126,9 @@ class Check():
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
-    def buildXLPtable(self,parent,caption,yterms,xterms,values):
+    def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None):
         #values should be a (lambda?) function that depends on x and y terms
+        #ycounts should be a lambda function that depends on yterms
         t=xlp.Table(parent,caption)
         rows=list(yterms)
         nrows=len(rows)
