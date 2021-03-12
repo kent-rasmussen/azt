@@ -1681,7 +1681,6 @@ class Check():
             for lang in glosses:
                 if (lang == self.glosslang) or (lang == self.glosslang2):
                     gloss[lang]=t(firstoflist(glosses[lang]))
-            tonegroup=t(firstoflist(tonegroups))
             """This is what we're pulling from:
             <example>
                 <form lang="gnd"><text>ga təv</text></form>
@@ -1718,7 +1717,6 @@ class Check():
             for lang in glosses:
                 gloss[lang]=firstoflist(glosses[lang])
                 log.log(2,'gloss[{}]: {}'.format(lang,gloss[lang]))
-            tonegroup=firstoflist(tonegroups)
         else:
             log.info('Neither Element nor senseid was found!')
             return output
@@ -1727,11 +1725,16 @@ class Check():
             log.log(2,'gloss:'.format(gloss[lang]))
         log.log(2,'tonegroup: {}'.format(tonegroup))
         """The following is the same for senses or examples"""
-        if (notonegroup == False) and (tonegroup != None):
-            try:
-                int(tonegroup)
-            except:
-                output['tonegroup']=tonegroup #this is only for named groups
+        if notonegroup == False:
+            #If I haven't defined self.name nor set notonegroup=True, this will
+            # throw an error on a senseid above.
+            tonegroup=t(firstoflist(tonegroups))
+            log.log(2,'tonegroup: {}'.format(tonegroup))
+            if tonegroup != None:
+                try:
+                    int(tonegroup)
+                except:
+                    output['tonegroup']=tonegroup #this is only for named groups
         if (self.glosslang2 == None) and (self.glosslang2 in gloss):
             del gloss[self.glosslang2] #remove this now, and lose checks later
         output[self.analang]=None
@@ -2014,8 +2017,8 @@ class Check():
             if self.name not in self.toneframes[self.ps]:
                 t=(_("Checking {}, no defined tone frame yet.").format(
                                     self.typedict[self.type]['pl']))
-                # self.getcheck()
-            else:    # return
+                self.name=None
+            else:
                 t=(_("Checking {}, working on ‘{}’ tone frame").format(
                                     self.typedict[self.type]['pl'],self.name))
             proselabel(opts,t)
