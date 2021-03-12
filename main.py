@@ -2510,6 +2510,8 @@ class Check():
                                     )
             buttonFrame1.grid(column=0, row=4)
             buttonFrame1.wait_window(window)
+        if self.name != None:
+            return 1
     def getexamplespergrouptorecord(self):
         log.info("this sets the number of examples per group to record")
         self.npossible=[
@@ -3697,8 +3699,10 @@ class Check():
             #         row+=1
             if self.type == 'T':
                 if self.name not in self.toneframes[self.ps]:
-                    self.getcheck()
-                    self.runcheck()
+                    exit=self.getcheck()
+                    print(exit, self.name)
+                    if exit is 1:
+                        self.runcheck()
                     return
                 self.maybesort()
             else: #do the CV checks
