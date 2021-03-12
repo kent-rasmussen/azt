@@ -4288,11 +4288,14 @@ class Check():
         # coicidence it does --i.e., the words are presented in the same order
         # on each sort, so the group numbers correspond more naturally than
         # they have to.
-        locations=dictscompare(valuesbylocation,ignore=['NA',None])
-        groupstructuredlist=dictscompare(valuesbygroup,ignore=['NA',None],flat=False)
+        locationstructuredlist=dictscompare(valuesbylocation,ignore=['NA',None],
+                                                                    flat=False)
+        groupstructuredlist=dictscompare(valuesbygroup,ignore=['NA',None],
+                                                                    flat=False)
         grouplist=[i for j in groupstructuredlist for i in j]
         log.debug("organized locations: {}".format(locations))
         log.debug("organized groups: {}".format(grouplist))
+        locations=[i for j in locationstructuredlist for i in j]
         log.debug("structured groups: {}".format(groupstructuredlist))
         ptext=_("The following table shows correspondences across sortings by "
                 "tone frames, with a row for each unique pairing. {} "
