@@ -2317,7 +2317,7 @@ class Check():
                                                             'tosort'] == True:
                             donenum='!'+str(donenum)
                         Label(self.leaderboardtable,
-                                text=groupfn(done)
+                                text=donenum
                                 ).grid(
                         row=row,column=column
                         )
