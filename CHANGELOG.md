@@ -1,12 +1,15 @@
 # Changelog
 
 ## In Process
-- indicate progress verified/present and sorted status in main window
+- add test for resolutionsucks, implement smaller font theme
+- include test to see if a tone analysis has been run since latest triage;
+    - if not run the report
+- Frame object has no attribute 'skip'
+- reduce unnecessary self.gettonegroups() calls
+- make "next frame" do checkcheck
 - Don't die on no count for table
-- Don't keep writing ui_lang.py
 - fix analang detection problem?
 - make recordbuttons pass recordcheck, which verifies that settings are plausible.
-- look at how to break lines importing to XLP (for column headers)
 - include checks on empty or repeated XLP nodes
 - convert basic report to XLP table function
 
@@ -99,6 +102,10 @@
 - prioritized group and frame ordering on tone output, according to new function for comparing sets of dictionaries.
     - similar groups in each axis should now be more or less together.
 - Added explanation with explicit statement of structured ordering of groups to XLP output.
+- moved self.tonegroups to self.status[self.type][self.ps][self.profile][self.name]['groups']
+- No longer writing ui_lang.py on each run
+- Breaking lines importing to XLP (for column headers)
+- indicating progress verified/present and sorted status in main window (with !)
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
