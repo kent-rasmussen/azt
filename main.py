@@ -1298,15 +1298,25 @@ class Check():
         if self.profile not in self.status[self.type][self.ps]:
             self.status[self.type][self.ps][self.profile]={}
         if self.name not in self.status[self.type][self.ps][self.profile]:
-            self.status[self.type][self.ps][self.profile][self.name]=list()
+            self.status[self.type][self.ps][self.profile][self.name]={}
+        for key in ['groups','done']:
+            if key not in self.status[self.type][self.ps][self.profile][
+                                                                self.name]:
+                self.status[self.type][self.ps][self.profile][self.name][
+                                                                key]=list()
+            if 'tosort' not in self.status[self.type][self.ps][self.profile][
+                                                                self.name]:
+                self.status[self.type][self.ps][self.profile][self.name][
+                                                                'tosort']=True
     def updatestatus(self,verified=False):
         #This function updates the status variable, not the lift file.
         self.makestatusdict()
         if verified == True:
             if self.subcheck not in (
-                self.status[self.type][self.ps][self.profile][self.name]):
-                self.status[self.type][self.ps][self.profile][self.name].append(
-                                                                self.subcheck)
+                self.status[self.type][self.ps][self.profile][self.name][
+                                                                    'done']):
+                self.status[self.type][self.ps][self.profile][self.name][
+                                                'done'].append(self.subcheck)
             else:
                 log.info("Tried to set {} verified in {} {} {} {} but it was "
                         "already there, and we're not done with the {} frame."
@@ -2270,7 +2280,38 @@ class Check():
                         row=row,column=column,sticky='s',ipadx=5
                         )
                     elif frame in self.status[self.type][self.ps][profile]:
-                        done=self.status[self.type][self.ps][profile][frame]
+                        if ((not 'tosort' in self.status[self.type][self.ps][
+                                                            profile][frame]) or
+                            (not 'groups' in self.status[self.type][self.ps][
+                                                            profile][frame]) or
+                            (not 'done' in self.status[self.type][self.ps][
+                                                            profile][frame])):
+                            profileori=self.profile
+                            frameori=self.name
+                            self.profile=profile
+                            self.name=frame
+                            self.settonevariablesbypsprofile()
+                            self.profile=profileori
+                            self.name=frameori
+                            self.storesettingsfile(setting='status')
+                        #At this point, these should be there
+                        done=self.status[self.type][self.ps][profile][
+                                                                frame]['done']
+                        total=self.status[self.type][self.ps][profile][
+                                                                frame]['groups']
+                        donenum=groupfn(done)
+                        totalnum=groupfn(total)
+                        log.log(3,"Done groups: {}/{}".format(donenum,type(
+                                                                    donenum)))
+                        log.log(3,"Total groups: {}/{}".format(totalnum,type(
+                                                                    totalnum)))
+                        if type(donenum) is int:
+                            donenum=str(donenum)+'/'+str(totalnum)
+                            log.debug("Total groups found")
+                        # This should only be needed on a new database
+                        if self.status[self.type][self.ps][profile][frame][
+                                                            'tosort'] == True:
+                            donenum='!'+str(donenum)
                         Label(self.leaderboardtable,
                                 text=groupfn(done)
                                 ).grid(
@@ -2948,7 +2989,8 @@ class Check():
         done=(_("All tone groups in {} have been verified!").format(self.name))
         self.getrunwindow()
         self.settonevariablesbypsprofile()
-        if self.senseidsunsorted != []:
+        if self.status[self.type][self.ps][self.profile][self.name][
+                                                            'tosort'] == True:
             quit=self.sortT()
             if quit == True:
                 return 1
