@@ -4011,6 +4011,8 @@ class Check():
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=5
             self.storesettingsfile()
+        if self.name is None:
+            self.name=list(self.toneframes[self.ps])[0]
         self.settonevariablesbypsprofile() #maybe not done before
         self.gettoneUFgroups()
         skip=False
