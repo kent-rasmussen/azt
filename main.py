@@ -4317,6 +4317,7 @@ class Check():
             for group in groups:
                 if str(output[senseid]) == str(groups[group]['values']):
                     groups[group]['senseids']+=[senseid] #maybe don't need list here..…
+                    self.db.addtoneUF(senseid,groupname(group),analang=self.analang)
                 else:
                     pass
         """Add the guid information to the groups!!"""
@@ -4470,7 +4471,6 @@ class Check():
                             framed=self.getframeddata(example,noframe=True)
                             self.framedtoXLP(framed,parent=e1,listword=True)
                     output(window,r,text)
-                self.db.addtoneUF(senseid,groupname,analang=self.analang)
         self.runwindow.ww.close()
         xlpr.close()
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
