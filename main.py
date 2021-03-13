@@ -5374,6 +5374,9 @@ class MainApplication(Frame):
         self.parent.photo['checkedbox'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/unchecked.png')
         self.parent.photo['uncheckedbox'] = tkinter.PhotoImage(file = imgurl)
+        #if resolutionsucks==True or windows==True:
+            # setfonts(self.parent,fonttheme='small')
+        #else:
         setfonts(self.parent)
         """allow for exit button (~200px)"""
         self.parent.wraplength=self.parent.winfo_screenwidth()-300
@@ -6122,13 +6125,21 @@ def setthemes(self):
                         'activebackground':None,
                         'offwhite':None}
                 }
-def setfonts(self):
-    default=18
-    normal=24
-    big=30
-    bigger=36
-    title=36
-    small=12
+def setfonts(self,fonttheme='default'):
+    if fonttheme == 'small':
+        default=12
+        normal=14
+        big=16
+        bigger=24
+        title=24
+        small=10
+    else:
+        default=18
+        normal=24
+        big=30
+        bigger=36
+        title=36
+        small=12
     self.fonts={
             'title':tkinter.font.Font(family="Charis SIL", size=title), #Charis
             'instructions':tkinter.font.Font(family="Andika SIL",
