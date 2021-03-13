@@ -1315,10 +1315,9 @@ class Check():
         if verified == False:
             if self.subcheck in (
                             self.status[self.type][self.ps][self.profile]
-                            [self.name]):
+                            [self.name]['done']):
                 self.status[self.type][self.ps][self.profile][self.name
-                                                                ].remove(
-                                                                self.subcheck)
+                                                ]['done'].remove(self.subcheck)
             else:
                 print("Tried to set",self.subcheck,"UNverified in",self.type,
                         self.ps,self.profile,self.name,"but it wasn't "
