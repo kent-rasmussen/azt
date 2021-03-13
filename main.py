@@ -3257,8 +3257,9 @@ class Check():
             if not self.runwindow.winfo_exists():
                 return
             if self.subcheck in (self.status[self.type][self.ps][self.profile]
-                                            [self.name]):
-                log.info("{} already verified, continuing.".format(self.subcheck))
+                                            [self.name]['done']):
+                log.info("{} already verified, continuing.".format(
+                                                                self.subcheck))
                 continue
             senseids=self.getexsall(self.subcheck)
             if len(senseids) <2:
