@@ -5,7 +5,7 @@ import logging
 log = logging.getLogger(__name__)
 """This is called from a number of places"""
 def id(x):
-    return re.sub('[][  .!=\(\),\'/?ꞌ\n:]','_',x) #remove charcters that are invalid for ids
+    return re.sub('[][  .!=\(\),\'/?ꞌ\n:+]','_',x) #remove charcters that are invalid for ids
 def glossifydefn(x):
     x=re.sub('^(([^() ]+)( [^() ]+){,2})(.*)*$','\\1',x) #up to three words, no parens
     x=re.sub(',$','',x)
