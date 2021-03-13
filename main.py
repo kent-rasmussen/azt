@@ -5748,7 +5748,7 @@ class RecordButtonFrame(Frame):
                 wavfilename+=arg
                 if args.index(arg) < len(args):
                     wavfilename+='_'
-            self.filename = re.sub('[\. /?]+','_',str(wavfilename))+'.wav'
+            self.filename = re.sub('[][\. /?]+','_',str(wavfilename))+'.wav'
             self.filenameURL=str(file.getdiredurl(check.audiodir,self.filename))
             # self.filename=str('audio/'+filename)
             if ((id==None) or (node==None) or (form==None)
