@@ -5087,7 +5087,7 @@ class ScrollingFrame(Frame):
         if self.configured <10:
             self.windowsize()
         self.configured+=1
-    def __init__(self,parent):
+    def __init__(self,parent,xscroll=False):
         """Make this a Frame, with all the inheritances, I need"""
         self.parent=parent
         inherit(self)
@@ -5100,8 +5100,9 @@ class ScrollingFrame(Frame):
         self.grid_propagate(0) #make it not shrink to nothing
 
         """We might want horizonal bars some day? (also below)"""
-        # xscrollbar = tkinter.Scrollbar(self, orient=tkinter.HORIZONTAL)
-        # xscrollbar.grid(row=1, column=0, sticky=tkinter.E+tkinter.W)
+        if xscroll == True:
+            xscrollbar = tkinter.Scrollbar(self, orient=tkinter.HORIZONTAL)
+            xscrollbar.grid(row=1, column=0, sticky=tkinter.E+tkinter.W)
         yscrollbar = tkinter.Scrollbar(self)
         yscrollbar.grid(row=0, column=1, sticky=tkinter.N+tkinter.S)
         """Should decide some day which we want when..."""
@@ -5125,13 +5126,20 @@ class ScrollingFrame(Frame):
                                            anchor=tkinter.NW)
         self.canvas.config(bd=0) #no border
         self.canvas.config(yscrollcommand=yscrollbar.set)
+        if xscroll == True:
+            self.canvas.config(xscrollcommand=xscrollbar.set)
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
         """Make all this show up, and take up all the space in parent"""
         self.grid(row=0, column=0,sticky='nw')
         self.canvas.grid(row=0, column=0,sticky='nsew')
         # self.content.grid(row=0, column=0,sticky='nw')
         """We might want horizonal bars some day? (also above)"""
-        # xscrollbar.config(command=self.canvas.xview)
+        if xscroll == True:
+            xscrollbar.config(width=self.yscrollbarwidth)
+            xscrollbar.config(background=self.theme['background'])
+            xscrollbar.config(activebackground=self.theme['activebackground'])
+            xscrollbar.config(troughcolor=self.theme['background'])
+            xscrollbar.config(command=self.canvas.xview)
         yscrollbar.config(command=self.canvas.yview)
         """I'm not sure if I need this; rather not hardcode these ..."""
         # print('canvas.winfo_reqwidth:',self.canvas.winfo_reqwidth())
