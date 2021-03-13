@@ -2694,7 +2694,6 @@ class Check():
         log.debug("self.profilestodo: {}".format(self.profilestodo))
     def getframestodo(self):
         #This sets self.senseidstosort,self.senseids(un)sorted,&self.tonegroups
-        self.settonevariablesbypsprofile()
         self.framestodo=[]
         self.nameori=self.name
         for self.name in self.toneframes[self.ps]:
