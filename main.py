@@ -2708,8 +2708,10 @@ class Check():
             groupstodo=list(set(self.status[self.type][self.ps][self.profile][
                                                 self.name]['groups'])-set(done))
             log.debug("groupstodo: {}; self.tonegroups: {}; done: {}".format(
-                                    groupstodo, self.tonegroups, done))
-            if len(self.tonegroups) == 0 or len(groupstodo) >0:
+                groupstodo, self.status[self.type][self.ps][self.profile][
+                                                    self.name]['groups'], done))
+            if len(self.status[self.type][self.ps][self.profile][self.name][
+                                        'groups']) == 0 or len(groupstodo) >0:
                 log.debug("{} frame has not been started, or has elements "
                             "left to verify: {}".format(self.name,groupstodo))
                 self.framestodo.append(self.name)
@@ -2944,14 +2946,16 @@ class Check():
     def renamegroup(self):
         def submitform():
             newtonevalue=formfield.get()
-            if newtonevalue in self.tonegroups:
+            if newtonevalue in self.status[self.type][self.ps][self.profile][
+                                                        self.name]['groups']:
                 er=Window(self.runwindow)
                 l=Label(er,text=_("Sorry, there is already a group with that "
                                 "label; If you want to join the groups, "
                                 "give it a different name now, and join "
                                 "it after they are both verified ({} is "
                                 "already in {})".format(newtonevalue,
-                                                        self.tonegroups)))
+                                self.status[self.type][self.ps][self.profile][
+                                                        self.name]['groups'])))
                 l.grid(row=0,column=0)
                 self.gettonegroups()
                 return
@@ -3128,7 +3132,8 @@ class Check():
                                                                 sticky="ew")
         self.runwindow.frame.scroll.content.groups.row=0 #rows for this frame
         """If we have tone groups already, make them now."""
-        for group in self.tonegroups:
+        for group in self.status[self.type][self.ps][self.profile][self.name][
+                                                                    'groups']:
             self.tonegroupbuttonframe(self.runwindow.frame.scroll.content.groups,
             group,row=self.runwindow.frame.scroll.content.groups.row) #notonegroup?
             self.runwindow.frame.scroll.content.groups.row+=1
@@ -3137,7 +3142,9 @@ class Check():
                                             self.runwindow.frame.scroll.content)
         self.runwindow.frame.scroll.content.anotherskip.grid(row=1,column=0)
         self.getanotherskip(self.runwindow.frame.scroll.content.anotherskip)
-        while self.senseidsunsorted != [] and self.runwindow.winfo_exists():
+        while (self.status[self.type][self.ps][self.profile][self.name][
+                'tosort'] == True and self.runwindow.winfo_exists()):
+        # while self.senseidsunsorted != [] and self.runwindow.winfo_exists():
             self.groupselected=[] #reset this for each word!
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'
@@ -3145,8 +3152,8 @@ class Check():
             print(senseid,progress)
             framed=self.getframeddata(senseid,truncdefn=True)
             """After the first entry, sort by groups."""
-            print('self.tonegroups:',self.tonegroups)
-            # if self.tonegroups != []:
+            log.debug('self.tonegroups: {}'.format(self.status[self.type][
+                                self.ps][self.profile][self.name]['groups']))
             entryview=Frame(self.runwindow.frame)
             titles=Frame(self.runwindow.frame)
             Label(titles, text=title,
@@ -3220,7 +3227,8 @@ class Check():
         that got pulled from the group), then on to the next largest unverified
         pile.
         """
-        if len(self.tonegroups) == 0:
+        if len(self.status[self.type][self.ps][self.profile][self.name][
+                                                                'groups']) == 0:
             log.debug("No tone groups to verify!")
             return
         # The title for this page changes by group, below.
@@ -3240,7 +3248,8 @@ class Check():
         self.settonevariablesbypsprofile()
         """self.subcheck is set here, but probably OK"""
         self.makestatusdict()
-        for self.subcheck in self.tonegroups:
+        for self.subcheck in self.status[self.type][self.ps][self.profile][
+                                                        self.name]['groups']:
             if not self.runwindow.winfo_exists():
                 return
             if self.subcheck in (self.status[self.type][self.ps][self.profile]
@@ -3269,9 +3278,12 @@ class Check():
             self.groupselected='' #reset this so it doesn't get in our way later.
             row=0
             column=0
-            if self.subcheck in self.tonegroups:
-                progress=('('+str(self.tonegroups.index(self.subcheck)+1)+'/'
-                                            +str(len(self.tonegroups))+')')
+            if self.subcheck in self.status[self.type][self.ps][self.profile][
+                                                        self.name]['groups']:
+                progress=('('+str(self.status[self.type][self.ps][self.profile][
+                    self.name]['groups'].index(self.subcheck)+1)+'/'+str(len(
+                    self.status[self.type][self.ps][self.profile][self.name][
+                                                                'groups']))+')')
                 Label(titles, text=progress,anchor='w'
                                     ).grid(row=0,column=1,sticky="ew")
             Label(titles, text=instructions).grid(row=1,column=0, columnspan=2,
@@ -3345,7 +3357,8 @@ class Check():
         also, the joining would provide for one less group to match against
         (hopefully semi automatically).
         """
-        if len(self.tonegroups) == 0:
+        if len(self.status[self.type][self.ps][self.profile][self.name][
+                                                            'groups']) == 0:
             log.debug("No tone groups to distinguish!")
             return
         self.getrunwindow()
@@ -3382,7 +3395,8 @@ class Check():
         canary.grid(row=5,column=5)
         canary2=Label(self.runwindow,text='')
         canary2.grid(row=5,column=5)
-        for group in self.tonegroups:
+        for group in self.status[self.type][self.ps][self.profile][self.name][
+                                                                    'groups']:
             self.tonegroupbuttonframe(self.sorting,group,row,notonegroup=False,
                                         canary=canary,canary2=canary2)
             row+=1
@@ -3401,13 +3415,14 @@ class Check():
         self.runwindow.frame.wait_window(canary)
         if self.groupselected != "ALLOK" and self.runwindow.winfo_exists():
             group1=self.groupselected
-            row=self.tonegroups.index(group1)
+            row=self.status[self.type][self.ps][self.profile][self.name][
+                                                        'groups'].index(group1)
             self.tonegroupbuttonframe(self.sorting,group1,row,notonegroup=False,
                                         label=True, font=self.fonts['readbig'],
                                         canary=canary,canary2=canary2)
             self.groupselected=None #don't want to leave this there...
-            log.debug('self.tonegroups: {}; group1: {}'.format(self.tonegroups,
-                                                                        group1))
+            log.debug('self.tonegroups: {}; group1: {}'.format(self.status[
+                self.type][self.ps][self.profile][self.name]['groups'],group1))
             self.runwindow.wait_window(canary2)
             if self.groupselected == "ALLOK":
                 print(f"User selected '{oktext}', moving on.")
@@ -3455,13 +3470,15 @@ class Check():
         log.info("Adding a tone group!")
         self.gettonegroups()
         values=[0,] #always have something here
-        for i in self.tonegroups:
+        for i in self.status[self.type][self.ps][self.profile][self.name][
+                                                                    'groups']:
             try:
                 values+=[int(i)]
             except:
                 print('Tone group',i,'cannot be interpreted as an integer!')
         newgroup=max(values)+1
-        self.tonegroups.append(str(newgroup))
+        self.status[self.type][self.ps][self.profile][self.name]['groups'
+                                                        ].append(str(newgroup))
         return str(newgroup)
     def addtonefieldex(self,senseid,framed):
         guid=None
@@ -3519,11 +3536,14 @@ class Check():
         for senseid in self.senseidstosort: #I should be able to make this a regex...
             tonegroups+=self.db.get('exfieldvalue', senseid=senseid,
                 fieldtype='tone', location=self.name)#, showurl=True)
-        self.tonegroups=list(dict.fromkeys(tonegroups))
-        if 'NA' in self.tonegroups:
-            self.tonegroups.remove('NA')
-        if self.debug ==True:
-            print('gettonegroups:',self.tonegroups)
+        self.status[self.type][self.ps][self.profile][self.name]['groups']=list(
+                                                    dict.fromkeys(tonegroups))
+        if 'NA' in self.status[self.type][self.ps][self.profile][self.name][
+                                                                    'groups']:
+            self.status[self.type][self.ps][self.profile][self.name]['groups'
+                                                                ].remove('NA')
+        log.debug('gettonegroups: {}'.format(self.status[self.type][self.ps][
+                                            self.profile][self.name]['groups']))
     def marksortedguid(self,guid):
         """I think these are only valuable during a check, so we don't have to
         constantly refresh sortingstatus() from the lift file."""
@@ -3566,11 +3586,17 @@ class Check():
                 self.senseidssorted+=[senseid]
             else:
                 self.senseidsunsorted+=[senseid]
+        if len(self.senseidsunsorted) >0:
+            self.status[self.type][self.ps][self.profile][self.name][
+                                                                'tosort']=True
+        else:
+            self.status[self.type][self.ps][self.profile][self.name][
+                                                                'tosort']=False
     def settonevariablesbypsprofile(self):
         """ps and profile should already be set before this is called, and if
         they change, this should be run again."""
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
-        self.gettonegroups() #sets self.tonegroups
+        self.gettonegroups() #sets self.status...['groups']
     def tryNAgain(self):
         self.settonevariablesbypsprofile()
         subcheckori=self.subcheck
@@ -3594,7 +3620,8 @@ class Check():
         skip=_("Skip this word/phrase")
         """This should just add a button, not reload the frame"""
         row+=10
-        if self.tonegroups == []:
+        if self.status[self.type][self.ps][self.profile][self.name]['groups'
+                                                                        ] == []:
             bf=Frame(parent)
             bf.grid(column=0, row=row, sticky="ew")
             b=Button(bf, text=firstOK,
