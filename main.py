@@ -1277,6 +1277,7 @@ class Check():
             spec = importlib.util.spec_from_file_location(setting,filename)
             module = importlib.util.module_from_spec(spec)
             #If this fails, check your file syntax carefully!
+            # you may need coding=UTF-8 run run it for syntax errors
             sys.modules[setting] = module
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
@@ -2693,6 +2694,7 @@ class Check():
                             self.profilecountsValid.index(x)<=self.maxprofiles]
         log.debug("self.profilestodo: {}".format(self.profilestodo))
     def getframestodo(self):
+        #This iterates over self.name, but depends on self.ps and self.profile
         #This sets self.senseidstosort,self.senseids(un)sorted,&self.tonegroups
         self.framestodo=[]
         self.nameori=self.name
@@ -2957,13 +2959,10 @@ class Check():
                                 self.status[self.type][self.ps][self.profile][
                                                         self.name]['groups'])))
                 l.grid(row=0,column=0)
-                self.gettonegroups()
                 return
             self.updatebysubchecksenseid(self.subcheck,newtonevalue)
             self.subcheck=newtonevalue
-            # print('Pre-rename tonegroups:',self.tonegroups)
             self.gettonegroups()
-            # print('Post-rename tonegroups:',self.tonegroups)
             self.verifysubwindow.destroy()
             self.verifyT()
         self.getrunwindow()
@@ -3528,13 +3527,7 @@ class Check():
                 fieldtype='tone' # Including any lang at this point.
                 # ,showurl=True
                 )
-            # print(tonegroups)
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
-        # if 'NA' in self.tonegroups:
-        #     self.tonegroups.remove('NA')
-        # self.debug = True
-        if self.debug ==True:
-            print('gettoneUFgroups:',self.toneUFgroups)
     def gettonegroups(self):
         print("Looking for tone groups for",self.name)
         tonegroups=[]
@@ -3583,6 +3576,7 @@ class Check():
         self.senseidstosort=list(self.profilesbysense[self.ps]
                                                     [self.profile])
     def sortingstatus(self):
+        #This should have self.profile and self.name set already
         self.getidstosort()
         self.senseidssorted=[]
         self.senseidsunsorted=[]
@@ -3918,7 +3912,6 @@ class Check():
             self.runwindow.frame.skip=True
         else:
             self.runwindow.frame.skip=skip
-        """?Make this scroll!"""
         text=_("Words and phrases to record: click ‘Record’, talk, and release")
         instr=Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w',columnspan=2)
@@ -4378,7 +4371,7 @@ class Check():
         log.debug("locations: {}".format(locations))
         log.debug("groups: {}".format(groups))
         # valuesbylocation actually doesn't mean anything, necessarily, but by
-        # coicidence it does --i.e., the words are presented in the same order
+        # coincidence it does --i.e., the words are presented in the same order
         # on each sort, so the group numbers correspond more naturally than
         # they have to.
         locationstructuredlist=dictscompare(valuesbylocation,ignore=['NA',None],
