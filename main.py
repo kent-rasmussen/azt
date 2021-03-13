@@ -3006,12 +3006,16 @@ class Check():
         if ((self.type in self.status) and
             (self.ps in self.status[self.type]) and
             (self.profile in self.status[self.type][self.ps]) and
-            (self.name in self.status[self.type][self.ps][self.profile])):
-            verified=self.status[self.type][self.ps][self.profile][self.name]
+            (self.name in self.status[self.type][self.ps][self.profile]) and
+            ('done' in self.status[self.type][self.ps][self.profile][self.name])
+            ):
+            verified=self.status[self.type][self.ps][self.profile][self.name][
+                                                                        'done']
         else:
             verified=set() #so the following doesn't crash...
         # if all items in the self.tonegroups exists in verified
-        if set(self.tonegroups).issubset(verified):
+        if set(self.status[self.type][self.ps][self.profile][self.name][
+                                                'groups']).issubset(verified):
             joined=self.joinT()
             # This is recursive because we don't know how many joins we'll need,
             # nor the results of susequent verifications or sorts
