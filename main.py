@@ -4256,6 +4256,8 @@ class Check():
                     value=values(col,row)
                     cell=xlp.Cell(r,content=value)
     def tonegroupreport(self,silent=False,bylocation=False):
+        def groupname(x):
+            return self.ps+'_'+self.profile+'_'+str(x)
         log.info("Starting report...")
         self.storesettingsfile()
         self.getrunwindow()
@@ -4409,9 +4411,9 @@ class Check():
                             ycounts=lambda x:len(groups[x]['senseids'])
                             )
         for group in grouplist:
-            groupname=self.ps+'_'+self.profile+'_'+str(group)
-            log.info("building report for {}".format(groupname))
-            sectitle=_('\nGroup {}'.format(str(groupname)))
+            name=groupname(group)
+            log.info("building report for {}".format(name))
+            sectitle=_('\nGroup {}'.format(str(name)))
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
             l=list()
