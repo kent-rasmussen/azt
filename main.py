@@ -3563,11 +3563,15 @@ class Check():
         self.senseidssorted.append(senseid)
         if senseid in self.senseidsunsorted:
             self.senseidsunsorted.remove(senseid)
+            if len(self.senseidsunsorted) == 0:
+                self.status[self.type][self.ps][self.profile][self.name][
+                                                        'tosort']=False
         else:
             log.error("Sense id {} not found in unsorted senseids! ({}) "
                         "".format(senseid,self.senseidsunsorted))
     def markunsortedsenseid(self,senseid):
         self.senseidsunsorted.append(senseid)
+        self.status[self.type][self.ps][self.profile][self.name]['tosort']=True
         if senseid in self.senseidssorted:
             self.senseidssorted.remove(senseid)
         else:
