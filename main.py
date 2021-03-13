@@ -2201,8 +2201,12 @@ class Check():
         if hasattr(self,'status') and self.type in self.status:
             if self.ps in self.status[self.type]:
                 for profile in self.status[self.type][self.ps]:
-                    done+=len(self.status[self.type][self.ps][profile])
-                log.debug('done: {}'.format(done))
+                    for frame in self.status[self.type][self.ps][profile]:
+                        if 'done' in self.status[self.type][self.ps][profile][
+                                                                        frame]:
+                            done+=len(self.status[self.type][self.ps][profile][
+                                                                frame]['done'])
+                log.debug('maybeboard done: {}'.format(done))
                 if done >0:
                     if (hasattr(self,'noboard') and (self.noboard is not None)): #.winfo_exists())):
                         self.noboard.destroy()
