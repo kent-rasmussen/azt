@@ -4243,7 +4243,11 @@ class Check():
                                 linebreakwords=True)
                 elif col == 'header':
                     log.log(2,"header column")
-                    cell=xlp.Cell(r,content='{} ({})'.format(row,ycounts(row)),
+                    if ycounts != None:
+                        ccontents='{} ({})'.format(row,ycounts(row))
+                    else:
+                        ccontents='{}'.format(row)
+                    cell=xlp.Cell(r,content=ccontents,
                                 header=True)
                 else:
                     log.log(2,"Not a header")
