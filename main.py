@@ -2698,16 +2698,16 @@ class Check():
         self.framestodo=[]
         self.nameori=self.name
         for self.name in self.toneframes[self.ps]:
-            self.gettonegroups() #depends on self.ps/self.profile/self.name
-            log.debug("frame: {}; groups: {}".format(self.name, self.tonegroups))
-            if (self.type in self.status and
-                    self.ps in self.status[self.type] and
-                    self.profile in self.status[self.type][self.ps] and
-                    self.name in self.status[self.type][self.ps][self.profile]):
-                done=self.status[self.type][self.ps][self.profile][self.name] #verified.
-            else:
-                done=[]
-            groupstodo=list(set(self.tonegroups)-set(done))
+            #All these depend on self.ps/self.profile/self.name
+            self.makestatusdict()
+            self.settonevariablesbypsprofile()
+            self.gettonegroups()
+            log.debug("frame: {}; groups: {}".format(self.name,
+            self.status[self.type][self.ps][self.profile][self.name]['groups']))
+            done=self.status[self.type][self.ps][self.profile][self.name][
+                                                                        'done']
+            groupstodo=list(set(self.status[self.type][self.ps][self.profile][
+                                                self.name]['groups'])-set(done))
             log.debug("groupstodo: {}; self.tonegroups: {}; done: {}".format(
                                     groupstodo, self.tonegroups, done))
             if len(self.tonegroups) == 0 or len(groupstodo) >0:
