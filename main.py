@@ -2007,11 +2007,9 @@ class Check():
         #     ))
         #     exit()
         """Get profile (this depends on ps)"""
-        if self.profile not in self.profilesbysense[self.ps]:
+        if ((self.profile not in self.profilesbysense[self.ps]) or
+                                                        (self.profile == None)):
             self.nextprofile(guess=True)
-        if self.profile == None:
-            log.info("Select a syllable profile.")
-            self.getprofile()
             return
         if not set(self.profilelegit).issuperset(self.profile):
             self.type='T'
