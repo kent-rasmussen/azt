@@ -1292,23 +1292,42 @@ class Check():
                 if hasattr(self,s):
                     log.log(3,"Using {}: {}".format(s,getattr(self,s)))
     def makestatusdict(self):
+        # This operates for exactly one context: wherever it is called.
+        changed=False
         if self.type not in self.status:
             self.status[self.type]={}
+            changed=True
         if self.ps not in self.status[self.type]:
             self.status[self.type][self.ps]={}
+            changed=True
         if self.profile not in self.status[self.type][self.ps]:
             self.status[self.type][self.ps][self.profile]={}
+            changed=True
         if self.name not in self.status[self.type][self.ps][self.profile]:
             self.status[self.type][self.ps][self.profile][self.name]={}
+            changed=True
+        print("Dict type:",type(self.status[self.type][self.ps][self.profile][
+                                                                    self.name]))
+        if type(self.status[self.type][self.ps][self.profile][self.name
+                                                                    ]) is list:
+            log.info("Updating status dict to new schema")
+            dn=self.status[self.type][self.ps][self.profile][self.name]
+            self.status[self.type][self.ps][self.profile][self.name]={}
+            self.status[self.type][self.ps][self.profile][self.name]['done']=dn
+            changed=True
         for key in ['groups','done']:
             if key not in self.status[self.type][self.ps][self.profile][
                                                                 self.name]:
                 self.status[self.type][self.ps][self.profile][self.name][
                                                                 key]=list()
+                changed=True
             if 'tosort' not in self.status[self.type][self.ps][self.profile][
                                                                 self.name]:
                 self.status[self.type][self.ps][self.profile][self.name][
                                                                 'tosort']=True
+                changed=True
+        if changed == True:
+            self.storesettingsfile(setting='status')
     def updatestatus(self,verified=False):
         #This function updates the status variable, not the lift file.
         self.makestatusdict()
@@ -2199,13 +2218,15 @@ class Check():
         self.leaderboard=Frame(self.frame)
         self.leaderboard.grid(row=0,column=1,sticky="new")
         done=int()
+        #Given the line above, much of the below can go, but not all?
         if hasattr(self,'status') and self.type in self.status:
             if self.ps in self.status[self.type]:
                 for profile in self.status[self.type][self.ps]:
                     for frame in self.status[self.type][self.ps][profile]:
-                        if 'done' in self.status[self.type][self.ps][profile][
-                                                                        frame]:
-                            done+=len(self.status[self.type][self.ps][profile][
+                        self.makestatusdict()
+                        # if 'done' in self.status[self.type][self.ps][profile][
+                        #                                                 frame]:
+                        done+=len(self.status[self.type][self.ps][profile][
                                                                 frame]['done'])
                 log.debug('maybeboard done: {}'.format(done))
                 if done >0:
