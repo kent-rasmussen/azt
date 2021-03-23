@@ -1,4 +1,4 @@
-# Changelog
+# A→Z+T Changelog
 
 ## In Process
 - add test for resolutionsucks, implement smaller font theme
@@ -7,11 +7,18 @@
 - Frame object has no attribute 'skip'
 - reduce unnecessary self.gettonegroups() calls
 - make "next frame" do checkcheck
+- test for table content before starting it; if all zeros, skip
 - Don't die on no count for table
 - fix analang detection problem?
 - make recordbuttons pass recordcheck, which verifies that settings are plausible.
 - include checks on empty or repeated XLP nodes
 - convert basic report to XLP table function
+- set up function to change tone sort group names (to transcriptions/meaningful names)
+  - give buttons for each tone letter, plus back and enter
+  - give scrolling frame of buttons for framed words in the group, clickable to play to make the transcription
+- make status table scroll (in both directions?)
+- Look at tkinter tabs (for status page?)
+- add progress of recording (on its own tab?)
 
 ## Issues from Zulgo March 2021 workshop
 
@@ -50,8 +57,16 @@
 ### Next Features
 - add C and V sorting (and CV?)
 - model form construct with fields for CV info and tone info, which may contain variables (HAB,CONT) in addition to H, L, etc.
+- proper modeling of the relationship between lx and lc
+  - show pronounceable words only
+  - build words on the basis of roots —should some frames use lc, e.g., if affixes are unpredictable?
 
 ### Some Day, if possible
+- Look into tkinter tabs to separate out different task sets, like
+    - sorting v recording
+    - PS1 v PS2
+    - C v V v T
+    - this ps-profile slice, v whole database work
 - rectify (scrolling) Frame redundant windowsize fn
 - have automatic choice of ps-profile go through all defined frames, then next most populous ps-profile
 - include tone grouping in recording pages?
@@ -106,6 +121,7 @@
 - No longer writing ui_lang.py on each run
 - Breaking lines importing to XLP (for column headers)
 - indicating progress verified/present and sorted status in main window (with !)
+- dictionaries written to settings files are now pretty printed, for easier (human) reading.
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
