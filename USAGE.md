@@ -99,6 +99,10 @@ The first time you try to record, you will be asked to tell A→Z+T what sound c
 
 The sound card settings should be stored in your repository, so you won't have to keep setting them. However, if you are sharing a repository across computers with different recording capacities, you will want to pay attention to this; the sound card settings dialog is also available through a menu item.
 
+Regarding external (e.g., USB) sound interfaces, I have noticed a couple of issues worth pointing out:
+- There may be multiple ways of telling A→Z+T to use the interface, and they may not each give you the same mileage. For instance, you may get more consistency from setting the interface as the default sound card in your OS settings, then selecting `OS default` (or whatever) in A→Z+T.
+- In some contexts (perhaps particularly in places with lower quality power, or running off a generator?), I have noticed inconsistencies building up over time in recordings. They may start with pops or other problems in the recordings, and ultimately not record at all. In any case, there is an easy fix: shut down and restart A→Z+T. But this is a good reminder to listen to your recordings in real time, before moving on.
+
 # Subsequent Runs: CV analysis (View data and run reports)
 A→Z+T doesn't do CV sorting and verification (Yet!), but you can make recordings and filter your data and look at it through a number of checks (e.g., by C1, or by V1=V2, etc.).
 
