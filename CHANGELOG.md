@@ -44,6 +44,11 @@
 
 ## Consider
 - ways to change a frame after the fact... this seems to be a common problem
+- functions that depend on a slice of data:
+  - require renewal of certain variables before running
+  - careful iterating over them
+  - distinct from other functions, which iterate over multiple slices
+
 
 ### Verify Problem
 - ?put next undone buttons in dictionary recording pages, too
@@ -122,6 +127,7 @@
 - Breaking lines importing to XLP (for column headers)
 - indicating progress verified/present and sorted status in main window (with !)
 - dictionaries written to settings files are now pretty printed, for easier (human) reading.
+- conversion to new status schema is now automatic, once any work is done on a ps-profile slice.
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
