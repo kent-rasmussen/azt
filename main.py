@@ -2310,7 +2310,10 @@ class Check():
                             (not 'groups' in self.status[self.type][self.ps][
                                                             profile][frame]) or
                             (not 'done' in self.status[self.type][self.ps][
-                                                            profile][frame])):
+                                                            profile][frame]) or
+                            (len(self.status[self.type][self.ps][profile][
+                                frame]['done']) > len(self.status[self.type][
+                                self.ps][profile][frame]['groups']))):
                             profileori=self.profile
                             frameori=self.name
                             self.profile=profile
