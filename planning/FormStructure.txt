@@ -1,0 +1,14 @@
+◻ *Form modeling issues* - Need to account for segments and tone tier
+Need to account for ordered and unordered tone, eg variables of unknown placement (can't just be put "before __after".
+For python, dictionary is probably best, add it would be extensible for other tiers
+Expert to two different writing systems for flex? Flex wouldn't be able to make anything of it, but should import and export fine through lift.
+All form data in AZT would come in form['cv'/'tn'] dictionaries.
+For data keyed in dictionnaires by xyz (like in getframeddata), would we use xyz-cv and xyz-tn, or tire they into a nested dictionary there, to?
+For regex searches, weeks need to change form to form['cv'] --maybe in lots of places, but should be straightforward.
+Or, we could make a form object, auth CV and tone attributes. Maybe the better, in oop
+Would we want to distinguish between forms with and without tonal data, which might have just been left off?
+We also need to be able to account for discontinuous content, and/or content with unknown placement, e.g. much of non-segmental TAM categories.
+-for this, we don't want to have an explicit placement
+-What are the odds of comparing multiple discontinuous sets of morphemes (or morphemes which obligatorily require each other, such that they cannot be studied incrementally), with the same placement for each set? It might be a very small use case, and if we have different placement, constructing a useful grammatical frame for comparison would be difficult, if at all possible.
+--I think the larger use case would be morphemes which have simply unknown placement, which would require rethinking how we use frames. Have cv tier for placing in the blank, and another line(?) For info that doesn't go in that order?
+Can I put line breaks in buttons and labels? This might help. Or a parenthesis afterwards? If it was stored in a 'tn' tier, or another 'phrase'/'clitic' tier, it wouldn't have to be but I'm a particular ordering, assuming we always used that tier that way.
