@@ -2211,6 +2211,15 @@ class Check():
         if self.soundsettingswindow.winfo_exists:
             self.soundsettingswindow.destroy()
     def maybeboard(self):
+        def checkfordone():
+            for self.profile in self.status[self.type][self.ps]:
+                for self.name in self.status[self.type][self.ps][self.profile]:
+                    self.makestatusdict() #this should result in 'done' key:
+                    if len(self.status[self.type][self.ps][self.profile][
+                                                    self.name]['done']) >0:
+                        return True
+        profileori=self.profile
+        nameori=self.name
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
         self.leaderboard=Frame(self.frame)
@@ -2219,16 +2228,12 @@ class Check():
         #Given the line above, much of the below can go, but not all?
         if hasattr(self,'status') and self.type in self.status:
             if self.ps in self.status[self.type]:
-                for profile in self.status[self.type][self.ps]:
-                    for frame in self.status[self.type][self.ps][profile]:
-                        self.makestatusdict()
-                        # if 'done' in self.status[self.type][self.ps][profile][
-                        #                                                 frame]:
-                        done+=len(self.status[self.type][self.ps][profile][
-                                                                frame]['done'])
+                done=checkfordone()
+                self.profile=profileori
+                self.name=nameori
                 log.debug('maybeboard done: {}'.format(done))
-                if done >0:
-                    if (hasattr(self,'noboard') and (self.noboard is not None)): #.winfo_exists())):
+                if done == True:
+                    if (hasattr(self,'noboard') and (self.noboard is not None)):
                         self.noboard.destroy()
                     # except:
                     #     print("Apparently noboard hasn't been made.",
