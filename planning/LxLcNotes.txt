@@ -1,0 +1,14 @@
+◻ *Lx v lc thoughts* - I need to solve this question now, because it impacts the verb frames. In fact, any time the lc contains more segmental content than the lx (which is not then obligatory in all frames), that information should not be included in the data to sort, export, etc.
+So the frames really do need to pull lx information, and I need to be smart enough to know when more complete lc information is necessary.
+Isolation tone frames should pull from lc, others should pull from lx? Maybe except for imp and pl?
+
+Is this a clean divide between nouns and verbs?
+Morphology which is obligatory for pronunciation might not be obligatory in all contexts. Maybe noun class morphology affixes are uniformly obligatory, though maybe it is hard to distinguish between (zero) derivation and the same word without an otherwise obligatory affix.
+This issue is less relevant where there are no obligatory affixes, but I think important to put into the foundation of AZT
+
+Ideally, we would be sitting the same word categorisation (including subcategorization that impacts any obligatory morphology), as well as the same for syllable profile. This is not the same as the same citation form syllable profile, as one would may include obligatory morphology, and another may not, but each may result in the same set of syllables for the word.
+The problem with this for Bantu, it elsewhere where NC morphologically is obligatory, is that is reduced the size of groups you compare. This could be shipped in some cases, or some NCs sorted together in any case, but where one noun class has obligatory segmental morphology and another doesn't, they really aren't comparable within a syllable profile. Even before Grassfields, there is a common N- for class 9/10(?), As well as some affixes having form v-, while others have form cv-. These might be comparable in some cases, with care. But what we don't want to do is to ask speakers to pronounce and compare utterances which are:
+-Ungrammatical/incomplete, or
+-Not the same number/type of syllable.
+This means the final, surface, utterable forms should have a common syllable profile, for a set words to be sorted together --as well as the roots for those words.
+I think I'm going to have to include a note to have both forms in the dictionary, then, even if one is just a copy of the other.

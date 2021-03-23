@@ -1,0 +1,7 @@
+◻ *CV sorting notes* - Set up groups in advance, based on orthography
+Need to meaningfully name groups upfront? No, just give variable when removing from a group, like _, or VC, or { }...
+When confirming verification of a group, ask user what symbol to use for that group.
+Maybe force check on not using symbols already in use, or maybe allow joining with another group by using the same symbol (as is currently possible for tone)
+When user gives form, replace only form with new form, for lc, lx, pl, and imp --same find replace for each.
+In any case, probably should back up original pre-check form in another field (just another writing system, in a comment, or elsewhere?)
+Not likely in examples...
