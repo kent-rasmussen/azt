@@ -1306,11 +1306,10 @@ class Check():
         if self.name not in self.status[self.type][self.ps][self.profile]:
             self.status[self.type][self.ps][self.profile][self.name]={}
             changed=True
-        print("Dict type:",type(self.status[self.type][self.ps][self.profile][
-                                                                    self.name]))
         if type(self.status[self.type][self.ps][self.profile][self.name
                                                                     ]) is list:
-            log.info("Updating status dict to new schema")
+            log.info("Updating {}-{} status dict to new schema".format(
+                                                        self.profile,self.name))
             dn=self.status[self.type][self.ps][self.profile][self.name]
             self.status[self.type][self.ps][self.profile][self.name]={}
             self.status[self.type][self.ps][self.profile][self.name]['done']=dn
@@ -1318,15 +1317,20 @@ class Check():
         for key in ['groups','done']:
             if key not in self.status[self.type][self.ps][self.profile][
                                                                 self.name]:
+                log.info("Adding {} key to {}-{} status dict".format(
+                                                key,self.profile,self.name))
                 self.status[self.type][self.ps][self.profile][self.name][
                                                                 key]=list()
                 changed=True
-            if 'tosort' not in self.status[self.type][self.ps][self.profile][
+        if 'tosort' not in self.status[self.type][self.ps][self.profile][
                                                                 self.name]:
-                self.status[self.type][self.ps][self.profile][self.name][
+            log.info("Adding tosort key to {}-{} status dict".format(
+                                                key,self.profile,self.name))
+            self.status[self.type][self.ps][self.profile][self.name][
                                                                 'tosort']=True
-                changed=True
+            changed=True
         if changed == True:
+            log.info("Saving status dict to file")
             self.storesettingsfile(setting='status')
     def updatestatus(self,verified=False):
         #This function updates the status variable, not the lift file.
@@ -2000,12 +2004,6 @@ class Check():
             log.info("find the ps")
             self.getps()
             return
-        # if self.ps not in self.profilesbysense:
-        #     log.error("{} doesn't seem to be in profiles by sense: {}. Do you "
-        #                 "need to rerun your syllable profiles? Exiting.".format(
-        #                 self.ps,self.profilesbysense.keys()
-        #     ))
-        #     exit()
         """Get profile (this depends on ps)"""
         if ((self.profile not in self.profilesbysense[self.ps]) or
                                                         (self.profile == None)):
@@ -2064,10 +2062,8 @@ class Check():
             #             self.typedict[self.type]['pl'],self.name)))
         """Get subcheck"""
         self.getsubchecksprioritized()
-        print(self.subcheck,self.subchecksprioritized[self.type])
         if self.subcheck not in [x[0] for x in self.subchecksprioritized[self.type]]:
             self.guesssubcheck()
-        print(self.subcheck,self.subchecksprioritized[self.type])
         if self.type != 'T':
             if self.subcheck == None:
                 log.info("Aparently I don't know yet what (e.g., consonant or "
@@ -2224,7 +2220,6 @@ class Check():
             self.leaderboard.destroy()
         self.leaderboard=Frame(self.frame)
         self.leaderboard.grid(row=0,column=1,sticky="new")
-        done=int()
         #Given the line above, much of the below can go, but not all?
         if hasattr(self,'status') and self.type in self.status:
             if self.ps in self.status[self.type]:
@@ -2235,9 +2230,6 @@ class Check():
                 if done == True:
                     if (hasattr(self,'noboard') and (self.noboard is not None)):
                         self.noboard.destroy()
-                    # except:
-                    #     print("Apparently noboard hasn't been made.",
-                    #         hasattr(self,'noboard'))#,self.noboard.winfo_exists())
                     if self.type == 'T':
                         if self.ps in self.toneframes:
                             self.maketoneprogresstable()
@@ -2335,7 +2327,7 @@ class Check():
                                                                     totalnum)))
                         if type(donenum) is int:
                             donenum=str(donenum)+'/'+str(totalnum)
-                            log.debug("Total groups found")
+                            log.debug("Total groups found: {}".format(donenum))
                         # This should only be needed on a new database
                         if self.status[self.type][self.ps][profile][frame][
                                                             'tosort'] == True:
