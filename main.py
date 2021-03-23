@@ -3559,10 +3559,11 @@ class Check():
                 fieldtype='tone', location=self.name)#, showurl=True)
         self.status[self.type][self.ps][self.profile][self.name]['groups']=list(
                                                     dict.fromkeys(tonegroups))
-        if 'NA' in self.status[self.type][self.ps][self.profile][self.name][
-                                                                    'groups']:
-            self.status[self.type][self.ps][self.profile][self.name]['groups'
-                                                                ].remove('NA')
+        for value in ['NA', '', None]:
+            if value in self.status[self.type][self.ps][self.profile][
+                                                        self.name]['groups']:
+                self.status[self.type][self.ps][self.profile][self.name][
+                                                        'groups'].remove(value)
         log.debug('gettonegroups: {}'.format(self.status[self.type][self.ps][
                                             self.profile][self.name]['groups']))
     def marksortedguid(self,guid):
