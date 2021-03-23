@@ -19,6 +19,7 @@ LIFT databases can be minimal or very complex. For the purposes of running A→Z
 - `citation` or `lexeme` forms (tagged with your language code, of course)
     - forms with spaces or other non-wordforming characters are ignored.
 - `gloss`es or `definition`s in at least one language (again coded for gloss language)
+    - N.B.: Long definitions cause enough problems with the UI, that they are now truncated to the first three words. If you don't like this (I wouldn't!), set up proper gloss fields, and A→Z+T will use them.
 - `Grammatical Category`/`Part of Speech` (ps) indication:
     - stored in `sense/grammatical-info@[value]`
     - whatever ps names (e.g., 'Noun', 'Nom', 'Njina', 'noun', 'n', etc) are in your database is what you will select from to study, so name them appropriately for your work
