@@ -2243,19 +2243,15 @@ class Check():
                             self.maketoneprogresstable()
                         else:
                             self.makenoboard()
-                            return
                     else:
                         log.info("Found CV verifications")
                         self.makeCVprogresstable()
                 else:
                     self.makenoboard()
-                    return
             else:
                 self.makenoboard()
-                return
         else:
             self.makenoboard()
-            return
     def makenoboard(self):
         log.info("No Progress board")
         # self.leaderboard.destroy()
