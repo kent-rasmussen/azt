@@ -1,6 +1,9 @@
 # A→Z+T Changelog
 
 ## In Process
+- Add logic for manual adjustment of tone groups
+  - Separate out logic to draft tone groups; only call when asked for
+  - Allow creation of reports without auto drafting
 - add test for resolutionsucks, implement smaller font theme
 - include test to see if a tone analysis has been run since latest triage;
     - if not run the report
