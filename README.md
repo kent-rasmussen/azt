@@ -20,4 +20,4 @@ See [INSTALL](INSTALL.md) for more help installing; see [USAGE](USAGE.md) for ho
 See [CHANGELOG](CHANGELOG.md) to see features by version, and what I'm working on next.
 
 ## Bugs
-See [this doc](BUGS.md) for information to send me if you have problems; see [KNOWNISSUES](KNOWNISSUES.md) with recommended workarounds to a couple known issues.
+See [this doc](BUGS.md) for information to send me if you have problems; see [KNOWNISSUES](KNOWNISSUES.md) with recommended work-arounds to a couple known issues.
