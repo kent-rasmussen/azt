@@ -4285,18 +4285,13 @@ class Check():
             output[senseid]={}
             for location in locations:
                 output[senseid][location]={}
+                """Do we need to also include location:value for non-example
+                fields? If so, can we do this in a principled way?"""
                 group=self.db.get('exfieldvalue',senseid=senseid,
                     location=location,fieldtype='tone')
-                # log.debug(group)
-                """Also include location:value for non-example fields"""
-                """How to do this in a principled way?"""
-                # for guid in self.db.get('guidbysenseid',senseid=senseid):
-                #     group+=self.db.get('pronunciationfieldvalue',guid=guid,
-                #         location=location,fieldtype='tone')
-                # print(group)
                 """Save this info by senseid"""
                 output[senseid][location]=group
-        log.info("Done organizing data; ready to report.")
+        log.info("Done collecting groups by location for each senseid.")
         groups={}
         groupvalues=[]
         """Look through all the location:value combos (skip over senseids)
@@ -4311,9 +4306,16 @@ class Check():
         group in a given context) to the underlying form (which behaves the same
         as others in its group, across all contexts)."""
         # groupvalues=list(dict.fromkeys(output.values())) #can't hash this...
+        # The following iterates across `output` *keys*, which are senseids.
+        # The *value* for each key is a dictionary with key:value pairs of form
+        # location:group. By iterating across the *values*, we collect all the
+        # unique combinations of location:group pairings.
         for value in output.values(): #so we find unique values manually
-            if value not in groupvalues:
+            if value not in groupvalues: #This is a list of dictionaries
                 groupvalues+=[value]
+            else:
+                log.debug("Found value {} again!".format(value))
+        log.info("Done collecting combinations of groups values by location.")
         """For each set of location:value correspondences, find the senseids
         that have it."""
         x=1 #first group
@@ -4322,15 +4324,37 @@ class Check():
             groups[x]['values']=value
             groups[x]['senseids']=[]
             x+=1
-        log.info('Groups Done; Checking guids against groups.')
+        log.info('Groups set up; adding senseids to groups now.')
         for senseid in output.keys():
             for group in groups:
                 if str(output[senseid]) == str(groups[group]['values']):
-                    groups[group]['senseids']+=[senseid] #maybe don't need list here..…
+                    groups[group]['senseids']+=[senseid]
                     self.db.addtoneUF(senseid,groupname(group),analang=self.analang)
                 else:
                     pass
-        """Add the guid information to the groups!!"""
+        log.info("Done adding senseids to groups.")
+        """Prioritize groups by similarity of location:value pairings"""
+        valuesbygroup={}
+        valuesbylocation={}
+        #The following two fors bring the values dictionaries up a level, so
+        # they can be used to compare group similarity below.
+        for group in groups:
+            valuesbygroup[group]=groups[group]['values']
+        for location in locations:
+            valuesbylocation[location]={}
+            for group in groups:
+                valuesbylocation[location][group]=groups[group]['values'][
+                                                                    location]
+        log.debug("locations: {}".format(locations))
+        log.debug("groups: {}".format(groups))
+        locationstructuredlist=dictscompare(valuesbylocation,ignore=['NA',None],
+                                                                    flat=False)
+        groupstructuredlist=dictscompare(valuesbygroup,ignore=['NA',None],
+                                                                    flat=False)
+        grouplist=[i for j in groupstructuredlist for i in j]
+        locations=[i for j in locationstructuredlist for i in j]
+        log.debug("structured locations: {}".format(locationstructuredlist))
+        log.debug("structured groups: {}".format(groupstructuredlist))
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
         self.runwindow.title(title)
@@ -4373,32 +4397,6 @@ class Check():
         t=_("Summary of Frames by Draft Underlying Melody")
         s1s=xlp.Section(xlpr,t)
         caption=' '.join([self.ps,self.profile])
-        """Prioritize groups by similarity, locations by lower total numbers"""
-        locationsums={}
-        groupsums={}
-        valuesbygroup={}
-        valuesbylocation={}
-        for group in groups:
-            valuesbygroup[group]=groups[group]['values']
-        for location in locations:
-            valuesbylocation[location]={}
-            for group in groups:
-                valuesbylocation[location][group]=groups[group]['values'][
-                                                                    location]
-        log.debug("locations: {}".format(locations))
-        log.debug("groups: {}".format(groups))
-        # valuesbylocation actually doesn't mean anything, necessarily, but by
-        # coincidence it does --i.e., the words are presented in the same order
-        # on each sort, so the group numbers correspond more naturally than
-        # they have to.
-        locationstructuredlist=dictscompare(valuesbylocation,ignore=['NA',None],
-                                                                    flat=False)
-        groupstructuredlist=dictscompare(valuesbygroup,ignore=['NA',None],
-                                                                    flat=False)
-        grouplist=[i for j in groupstructuredlist for i in j]
-        locations=[i for j in locationstructuredlist for i in j]
-        log.debug("structured locations: {}".format(locationstructuredlist))
-        log.debug("structured groups: {}".format(groupstructuredlist))
         ptext=_("The following table shows correspondences across sortings by "
                 "tone frames, with a row for each unique pairing. {} "
                 "intentionally splits these groups, so you can see wherever "
