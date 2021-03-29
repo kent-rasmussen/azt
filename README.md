@@ -8,7 +8,7 @@ Additional features are still in development. A→Z+T work results in a checked 
 See [RATIONALE](RATIONALE.md) for more information on why one should use this tool; see [Why Work with Computers](WHYCOMPUTERS.md) to see A→Z+T compared with pen and paper participatory methods. See [Why Work with Communities](WHYCOMMUNITIES.md) to see A→Z+T compared with more traditional field methods
 
 ## What
-A→Z+T is written in [Python](https://python.org) (3+) and [Tkinter](https://docs.python.org/3/library/tkinter.html), with [PyAudio](https://pypi.org/project/PyAudio/) for recording and playing sound files. A→Z+T produces reports to the screen, plain text files, and [XLingPaper](https://software.sil.org/xlingpaper/) XML documents —which can in turn be easily converted to PDF and HTML, each with clickable links for sounds files.
+A→Z+T is written in [Python](https://python.org) (3+) and [Tkinter](https://docs.python.org/3/library/tkinter.html), with [PyAudio](https://pypi.org/project/PyAudio/) for recording and playing sound files. A→Z+T produces reports to the screen, plain text files, and [XLingPaper](https://software.sil.org/xlingpaper/) XML documents —which can in turn be easily converted to PDF and HTML, each with clickable links to sound files.
 
 ## How
 To get the program: `git clone https://github.com/kent-rasmussen/azt.git`
