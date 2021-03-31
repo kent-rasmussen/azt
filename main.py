@@ -5958,6 +5958,15 @@ def setinterfacelang(lang):
     i18n[lang].install()
     print(_("Translation seems to be working"))
     # return _
+def flatten(l):
+    if type(l) is not list:
+        log.debug("{} is not a list; returning nothing.".format(l))
+        return
+    if type(l[0]) is not list:
+        log.debug("The first element of {} is not a list; returning nothing."
+                    "".format(l))
+        return
+    return [i for j in l for i in j] #flatten list of lists
 def addxofytocorrectplaceinlistoflists(x,y,o):
     for k in o:
         if y in k and k.index(y) == len(k)-1:
