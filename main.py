@@ -4330,7 +4330,7 @@ class Check():
             for group in groups:
                 if str(output[senseid]) == str(groups[group]['values']):
                     groups[group]['senseids']+=[senseid]
-                    self.db.addtoneUF(senseid,groupname(group),analang=self.analang)
+                    self.db.addtoneUF(senseid,group,analang=self.analang)
                 else:
                     pass
         log.info("Done adding senseids to groups.")
@@ -4421,9 +4421,9 @@ class Check():
                             ycounts=lambda x:len(groups[x]['senseids'])
                             )
         for group in grouplist:
-            name=groupname(group)
-            log.info("building report for {}".format(name))
-            sectitle=_('\nGroup {}'.format(str(name)))
+            # name=groupname(group) #This should already include ps-profile
+            log.info("building report for {}".format(group))
+            sectitle=_('\nGroup {}'.format(str(group)))
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
             l=list()
