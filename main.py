@@ -4320,9 +4320,10 @@ class Check():
         that have it."""
         x=1 #first group
         for value in groupvalues:
-            groups[x]={}
-            groups[x]['values']=value
-            groups[x]['senseids']=[]
+            group=groupname(x)
+            groups[group]={}
+            groups[group]['values']=value
+            groups[group]['senseids']=[]
             x+=1
         log.info('Groups set up; adding senseids to groups now.')
         for senseid in output.keys():
