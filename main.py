@@ -4266,12 +4266,83 @@ class Check():
                                                         values(col,row)))
                     value=values(col,row)
                     cell=xlp.Cell(r,content=value)
+    def tonegroupsjoinrename(self):
+        def submitform():
+            uf=named.get()
+            log.debug("name: {}".format(uf))
+            if uf == "":
+                log.debug("Give a name for this UF tone group!")
+                return
+            if uf in self.toneUFgroups:
+                log.debug("That name is already there!")
+                return
+            for group in groups: #all group variables
+                groupstr=group.get() #value, name if selected, 0 if not
+                if groupstr in senseidsbygroup: #selected ones only
+                    log.debug("Changing values from {} to {} for the following "
+                            "senseids: {}".format(groupstr,uf,
+                                                    senseidsbygroup[groupstr]))
+                    for senseid in senseidsbygroup[groupstr]:
+                        self.db.addtoneUF(senseid,uf,analang=self.analang)
+            self.runwindow.destroy()
+            self.tonegroupsjoinrename() #call again, in case needed
+        def done():
+            self.runwindow.destroy()
+        def refreshgroups():
+            senseidsbygroup=self.getsenseidsbytoneUFgroups() #>self.toneUFgroups
         self.getrunwindow()
-        self.tonereportfile=''.join([str(self.reportbasefilename),'_',
-                            self.ps,'_',
-                            self.profile,
-                            ".ToneReport.txt"])
-        start_time=time.time() #move this to function?
+        title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
+                                                        self.ps,self.profile))
+        self.runwindow.title(title)
+        padx=50
+        pady=10
+        Label(self.runwindow,text=title,font=self.fonts['title'],
+                ).grid(row=0,column=0,sticky='ew')
+        text=_("This page allows you to join the {0}-{1} draft underlying tone "
+                "groups created for you by {2}, \nwhich are almost certainly "
+                "too small for you. \nLooking at a draft report, and making "
+                "your own judgement about which groups belong together, select "
+                "all the groups that belong together, and give that new group "
+                "a name. Afterwards, you can do this again for other groups "
+                "that should be joined. \nIf for any reason you want to undo "
+                "the groups you create here (e.g., you make a mistake or sort "
+                "new data), just run the default report, which will redo the "
+                "default analysis, which will replace these groupings with new "
+                "split groupings. \nTo see a report based on what you do "
+                "here, run the tone reports in the Advanced menu (without "
+                "analysis). ".format(self.ps,self.profile,self.program['name']))
+        Label(self.runwindow,text=text).grid(row=1,column=0,sticky='ew')
+        qframe=Frame(self.runwindow)
+        qframe.grid(row=2,column=0,sticky='ew')
+        text=_("What do you want to call this UF tone group for {}-{} words?"
+                "".format(self.ps,self.profile))
+        Label(qframe,text=text).grid(row=0,column=0,sticky='ew',pady=20)
+        named=tkinter.StringVar() #store the new name here
+        namefield = EntryField(qframe,textvariable=named)
+        namefield.grid(row=0,column=1)
+        text=_("Select the groups below that you want in this group, then "
+                "click ==>".format(self.ps))
+        Label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
+        senseidsbygroup=self.getsenseidsbytoneUFgroups() #>self.toneUFgroups
+        sub_btn=Button(qframe,text = _("OK"), command = submitform, anchor ='c')
+        sub_btn.grid(row=1,column=1,sticky='w')
+        done_btn=Button(qframe,text = _("Done —no change"), command = done,
+                                                                    anchor ='c')
+        done_btn.grid(row=1,column=2,sticky='w')
+        groups=list()
+        row=0
+        scroll=ScrollingFrame(self.runwindow)
+        for group in self.toneUFgroups: #make a variable and button to select
+            idn=self.toneUFgroups.index(group)
+            groups.append(tkinter.StringVar())
+            CheckButton(scroll.content, text = group,
+                                variable = groups[idn],
+                                onvalue = group, offvalue = 0,
+                                ).grid(row=row,column=0,sticky='ew')
+            row+=1
+        scroll.grid(row=3,column=0,sticky='ew')
+        self.runwindow.ww.close()
+        self.runwindow.wait_window(scroll)
     def tonegroupsbyUFlocation(self,senseidsbygroup):
         #returns dictionary keyed by [group][location]=groupvalue
         values={}
