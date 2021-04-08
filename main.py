@@ -3,8 +3,8 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A→Z+T'}
 program['tkinter']=True
-program['production']=False #True for making screenshots
-program['version']='0.6.2+w' #This is a string...
+program['production']=True #True for making screenshots
+program['version']='0.7' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 import platform
