@@ -629,10 +629,6 @@ class Check():
             self.profilesbysense[self.ps][self.profile]=self.senseidstosort
             self.storesettingsfile(setting='profiledata') #since we changed this.
             self.checkcheck()
-        # if not hasattr(self,'senseidstosort'):
-        #     print(self.senseidstosort)
-        # else:
-        #     self.senseidstosort=[]
         self.getrunwindow()
         title=_("Add Ad Hoc Sort Group to {} group".format(self.ps))
         self.runwindow.title(title)
@@ -3525,8 +3521,6 @@ class Check():
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
-    def gettoneUFgroups(self):
-        print("Looking for UF tone groups for",self.profile,self.ps)
     def getsenseidsbytoneUFgroups(self):
         print("Looking for sensids by UF tone groups for",self.profile,self.ps)
         sorted={}
@@ -3545,6 +3539,9 @@ class Check():
         log.debug("UFtonegroups (getsenseidsbytoneUFgroups): {}".format(
                                                             self.toneUFgroups))
         return sorted
+    def gettoneUFgroups(self): #obsolete?
+        log.debug("Looking for UF tone groups for {}-{} slice".format(self.profile,
+                                                                    self.ps))
         toneUFgroups=[]
         """Still working on one ps-profile combo at a time."""
         for senseid in self.senseidstosort: #I should be able to make this a regex...
@@ -3554,7 +3551,7 @@ class Check():
                 )
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
     def gettonegroups(self):
-        print("Looking for tone groups for",self.name)
+        print("Looking for tone groups for {} frame".format(self.name))
         tonegroups=[]
         for senseid in self.senseidstosort: #I should be able to make this a regex...
             tonegroups+=self.db.get('exfieldvalue', senseid=senseid,
@@ -4037,49 +4034,43 @@ class Check():
         self.settonevariablesbypsprofile() #maybe not done before
         torecord=self.getsenseidsbytoneUFgroups()
         skip=False
-        if self.toneUFgroups != []:
-            torecord={}
-            for toneUFgroup in self.toneUFgroups:
-                torecord[toneUFgroup]=self.db.get('senseidbytoneUFgroup',
-                                        fieldtype='tone', form=toneUFgroup)
-            batch={}
-            for i in range(self.examplespergrouptorecord):
-                batch[i]=[]
-                for toneUFgroup in self.toneUFgroups:
-                    print(i,len(torecord[toneUFgroup]),toneUFgroup,torecord[toneUFgroup])
-                    if len(torecord[toneUFgroup]) > i: #don't worry about small piles.
-                        batch[i]+=[torecord[toneUFgroup][i]]
-                    else:
-                        print("Not enough examples, moving on:",i,toneUFgroup)
-            print(_('Preparing to record examples from each tone group ({}) '
-                    'with index').format(self.toneUFgroups),i)
-            for i in range(self.examplespergrouptorecord):
-                log.info(_('Giving user the number {} example from each tone '
-                        'group ({}) with index'.format(i,self.toneUFgroups)))
-                exited=self.showsenseswithexamplestorecord(batch[i],
-                                            (i, self.examplespergrouptorecord),
-                                            skip=skip)
-                if exited == 'skip':
-                    skip=True
-                if exited == True:
-                    return
-            if self.runwindow.winfo_exists():
-                self.runwindow.ww.close()
-                self.runwindow.resetframe()
-                Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
-                text=_("All done! Sort some more words, and come back.")
-                ).grid(row=0,column=0,sticky='w') #?rowspan=2,
-                Button(self.runwindow.frame,
-                        text=_("Continue to next syllable profile"),
-                        command=next).grid(row=1,column=0)
-            # self.runwindow.wait_window()
-            #
-        else:
+        if len(torecord) == 0: #self.toneUFgroups != []:
             print("How did we get no UR tone groups?",self.profile,self.ps,
                     "\nHave you run the tone report recently?"
                     "\nDoing that for you now...")
             self.tonegroupreport(silent=True)
             self.showtonegroupexs()
+            return
+        batch={}
+        for i in range(self.examplespergrouptorecord):
+            batch[i]=[]
+            for toneUFgroup in torecord: #self.toneUFgroups:
+                print(i,len(torecord[toneUFgroup]),toneUFgroup,torecord[toneUFgroup])
+                if len(torecord[toneUFgroup]) > i: #no small piles.
+                    batch[i]+=[torecord[toneUFgroup][i]]
+                else:
+                    print("Not enough examples, moving on:",i,toneUFgroup)
+        print(_('Preparing to record examples from each tone group ({}) '
+                ).format(torecord.keys()))
+        for i in range(self.examplespergrouptorecord):
+            log.info(_('Giving user the number {} example from each tone '
+                    'group ({})'.format(i,torecord.keys())))
+            exited=self.showsenseswithexamplestorecord(batch[i],
+                                        (i, self.examplespergrouptorecord),
+                                        skip=skip)
+            if exited == 'skip':
+                skip=True
+            if exited == True:
+                return
+        if self.runwindow.winfo_exists():
+            self.runwindow.ww.close()
+            self.runwindow.resetframe()
+            Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
+            text=_("All done! Sort some more words, and come back.")
+            ).grid(row=0,column=0,sticky='w')
+            Button(self.runwindow.frame,
+                    text=_("Continue to next syllable profile"),
+                    command=next).grid(row=1,column=0)
     def getresults(self):
         self.getrunwindow()
         self.makeresultsframe()
@@ -4275,11 +4266,6 @@ class Check():
                                                         values(col,row)))
                     value=values(col,row)
                     cell=xlp.Cell(r,content=value)
-    def tonegroupreport(self,silent=False,bylocation=False):
-        def groupname(x):
-            return self.ps+'_'+self.profile+'_'+str(x)
-        log.info("Starting report...")
-        self.storesettingsfile()
         self.getrunwindow()
         self.tonereportfile=''.join([str(self.reportbasefilename),'_',
                             self.ps,'_',
@@ -4313,59 +4299,54 @@ class Check():
         self.getlocations()
         output={}
         locations=self.locations[:]
-        """Collect location:value correspondences, by sense"""
+        # Collect location:value correspondences, by sense
         for senseid in self.senseidstosort:
             output[senseid]={}
             for location in locations:
                 output[senseid][location]={}
-                """Do we need to also include location:value for non-example
-                fields? If so, can we do this in a principled way?"""
                 group=self.db.get('exfieldvalue',senseid=senseid,
                     location=location,fieldtype='tone')
                 output[senseid][location]=group #Save this info by senseid
         log.info("Done collecting groups by location for each senseid.")
+        return output
+    def groupUFsfromtonegroupsbylocation(self,output):
+        # returns groups by location:value correspondences.
+        # Look through all the location:value combos (skip over senseids)
+        # this is, critically, a dictionary of each location:value
+        # correspondence for a given sense. So each groupvalue contains
+        # multiple location keys, each with a value value, and the sum of all
+        # the location:value correspondences for a sense defines the group
+        # --which is distinct from another group which shares some
+        # (but not all) of those location:value correspondences.
+        # This is the key analytical step that moves us from a collection of
+        # surface forms (each pronunciation group in a given context) to the
+        # underlying form (which behaves the same as others in its group,
+        # across all contexts).
         groups={}
         groupvalues=[]
-        """Look through all the location:value combos (skip over senseids)
-        this is, critically, a dictionary of each location:value correspondence
-        for a given sense. So each groupvalue contains multiple location keys,
-        each with a value value, and the sum of all the location:value
-        correspondences for a sense defines the group --which is distinct from
-        another group which shares some (but not all) of those location:value
-        correspondences."""
-        """For any non-linguists reading this, this is the key analytical step
-        that moves us from a collection of surface forms (each pronunciation
-        group in a given context) to the underlying form (which behaves the same
-        as others in its group, across all contexts)."""
-        # groupvalues=list(dict.fromkeys(output.values())) #can't hash this...
-        # The following iterates across `output` *keys*, which are senseids.
-        # The *value* for each key is a dictionary with key:value pairs of form
-        # location:group. By iterating across the *values*, we collect all the
-        # unique combinations of location:group pairings.
-        for value in output.values(): #so we find unique values manually
-            if value not in groupvalues: #This is a list of dictionaries
+        # Collect all unique combinations of location:group pairings.
+        for value in output.values(): #iterate over all loc:group dictionaries
+            if value not in groupvalues: #Just give each once
                 groupvalues+=[value]
-            else:
-                log.debug("Found value {} again!".format(value))
         log.info("Done collecting combinations of groups values by location.")
-        """For each set of location:value correspondences, find the senseids
-        that have it."""
-        x=1 #first group
+        # find the senseids for each set of location:value correspondences.
+        x=1 #first group number
         for value in groupvalues:
             group=self.ps+'_'+self.profile+'_'+str(x)
             groups[group]={}
             groups[group]['values']=value
             groups[group]['senseids']=[]
             x+=1
-        log.info('Groups set up; adding senseids to groups now.')
-        for senseid in output.keys():
+        log.info('Groups set up; adding senseids to groups now. ({})'.format(groups.keys()))
+        return groups
+    def senseidstogroupUFs(self,output,groups):
+        for senseid in self.senseidstosort:
             for group in groups:
                 if str(output[senseid]) == str(groups[group]['values']):
                     groups[group]['senseids']+=[senseid]
                     self.db.addtoneUF(senseid,group,analang=self.analang)
-                else:
-                    pass
         log.info("Done adding senseids to groups.")
+        return groups #after filling it out with senseids
         """Prioritize groups by similarity of location:value pairings"""
         valuesbygroup={}
         valuesbylocation={}
@@ -4378,6 +4359,20 @@ class Check():
             for group in groups:
                 valuesbylocation[location][group]=groups[group]['values'][
                                                                     location]
+    def tonegroupreport(self,silent=False,bylocation=False,default=True):
+        #default=True redoes the UF analysis (removing any joining/renaming)
+        log.info("Starting report...")
+        self.storesettingsfile()
+        self.getrunwindow()
+        self.tonereportfile=''.join([str(self.reportbasefilename),'_',
+                            self.ps,'_',
+                            self.profile,
+                            ".ToneReport.txt"])
+        start_time=time.time()
+        """Split here"""
+        if default == True:
+            #Do the draft UF analysis, from scratch
+            output=self.tonegroupsbysenseidlocation() #collect senseid-locations
             groups=self.groupUFsfromtonegroupsbylocation(output) #make groups
             groups=self.senseidstogroupUFs(output,groups) #fillin group senseids
             groupstructuredlist=self.prioritizegroupUFs(groups)
@@ -4387,14 +4382,23 @@ class Check():
             locations=flatten(locationstructuredlist)
             log.debug("structured locations: {}".format(locationstructuredlist))
             log.debug("structured groups: {}".format(groupstructuredlist))
+            toreport={}
+            groupvalues={}
             for group in groups:
                 toreport[group]=groups[group]['senseids']
                 groupvalues[group]={}
                 for location in locations:
                     groupvalues[group][location]=list(groups[group]['values'][
                                                                     location])
+        else:
+            #make a report without having redone the UF analysis
+            #The following line puts out a dictionary keyed by UF group name:
             toreport=self.getsenseidsbytoneUFgroups()
             groupvalues=self.tonegroupsbyUFlocation(toreport)
+            grouplist=self.toneUFgroups
+            locations=self.locations[:]
+        log.debug("groups (tonegroupreport): {}".format(grouplist))
+        log.debug("locations (tonegroupreport): {}".format(locations))
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
         self.runwindow.title(title)
@@ -4438,7 +4442,9 @@ class Check():
         s1s=xlp.Section(xlpr,t)
         caption=' '.join([self.ps,self.profile])
         ptext=_("The following table shows correspondences across sortings by "
-                "tone frames, with a row for each unique pairing. {} "
+                "tone frames, with a row for each unique pairing. ")
+        if default == True:
+            ptext+=_("This is a default report, where {} "
                 "intentionally splits these groups, so you can see wherever "
                 "differences lie, even if those differences are likely "
                 "meaningless (e.g., 'NA' means the user skipped sorting those "
@@ -4453,6 +4459,10 @@ class Check():
                 "Frames: {}"
                 "".format(self.program['name'],str(groupstructuredlist),
                                                 str(locationstructuredlist)))
+        else:
+            ptext+=_("This is a non-default report, where a user has changed "
+            "the default (hyper-split) groups created by {}.".format(
+                                                        self.program['name']))
         p0=xlp.Paragraph(s1s,text=ptext)
         self.buildXLPtable(s1s,caption,yterms=grouplist,xterms=locations,
                             values=lambda x,y:nn(firstoflist(
@@ -4462,7 +4472,7 @@ class Check():
                             toreport[x]
                             )
                             )
-            # name=groupname(group) #This should already include ps-profile
+        for group in grouplist: #These already include ps-profile
             log.info("building report for {}".format(group))
             sectitle=_('\nGroup {}'.format(str(group)))
             s1=xlp.Section(xlpr,title=sectitle)
