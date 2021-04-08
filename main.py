@@ -698,17 +698,9 @@ class Check():
                 vars[idn].set(0)
             framed=self.getframeddata(id, noframe=True)
             log.debug("forms: {}".format(framed['formatted']))
-            tkinter.Checkbutton(scroll.content, text = framed['formatted'],
+            CheckButton(scroll.content, text = framed['formatted'],
                                 variable = vars[allpssensids.index(id)],
                                 onvalue = id, offvalue = 0,
-                                bg=self.theme['background'],
-                                activebackground=self.theme['activebackground'],
-                                image=self.photo['uncheckedbox'],
-                                selectimage=self.photo['checkedbox'],
-                                indicatoron=False,
-                                compound='left',
-                                font=self.fonts['read'],
-                                anchor='w'
                                 ).grid(row=row,column=0,sticky='ew')
             row+=1
         scroll.grid(row=3,column=0,sticky='ew')
@@ -5593,6 +5585,21 @@ class Button(tkinter.Button):
         tkinter.Button.__init__(self, parent, text=nfc(text), command=cmd,
                                 **kwargs)
         self.grid(column=column, row=row, sticky=sticky)
+class CheckButton(tkinter.Checkbutton):
+    def __init__(self, parent, **kwargs):
+        self.parent=parent
+        inherit(self)
+        super(CheckButton,self).__init__(parent,
+                                bg=self.theme['background'],
+                                activebackground=self.theme['activebackground'],
+                                image=self.photo['uncheckedbox'],
+                                selectimage=self.photo['checkedbox'],
+                                indicatoron=False,
+                                compound='left',
+                                font=self.fonts['read'],
+                                anchor='w',
+                                **kwargs
+                                )
 class RecordButtonFrame(Frame):
     def playcallback(self, in_data, frame_count, time_info, status):
         data = self.wf.readframes(frame_count)
