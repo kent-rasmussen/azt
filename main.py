@@ -5217,10 +5217,10 @@ class MainApplication(Frame):
         domenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label=_("Do"), menu=domenu)
         reportmenu = Menu(menubar, tearoff=0)
-        reportmenu.add_command(label=_("Tone report by sense"),
+        reportmenu.add_command(label=_("Tone report by sense (redo anlaysis)"),
                         command=lambda x=check:Check.tonegroupreport(x))
-        reportmenu.add_command(label=_("Tone report by location"),
-                        command=lambda x=check:Check.tonegroupreport(x,
+        reportmenu.add_command(label=_("Tone report by location (redo anlaysis)"
+                        ),command=lambda x=check:Check.tonegroupreport(x,
                                                             bylocation=True))
         reportmenu.add_command(label=_("Basic Vowel report (to file)"),
                         command=lambda x=check:Check.basicreport(x,typestodo=['V']))
@@ -5252,6 +5252,19 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.addmorpheme(x))
         advancedmenu.add_command(label=_("Add Tone frame"),
                         command=lambda x=check:Check.addframe(x))
+        advtonemenu = Menu(menubar, tearoff=0)
+        advancedmenu.add_cascade(label=_("Tone Reports"), menu=advtonemenu)
+        advtonemenu.add_command(label=_("Join/Rename Draft Underlying Tone "
+                                        "Groups"),
+                        command=lambda x=check:Check.tonegroupsjoinrename(x))
+        advtonemenu.add_command(label=_("Make tone report by sense (without "
+                                        "analysis)"),
+                                command=lambda x=check:Check.tonegroupreport(x,
+                                                                default=False))
+        advtonemenu.add_command(label=_("Make tone report by location (without "
+                                        "analysis)"),
+                                command=lambda x=check:Check.tonegroupreport(x,
+                                                bylocation=True, default=False))
         redomenu = Menu(menubar, tearoff=0)
         redomenu.add_command(label=_("Previously skipped data"),
                                 command=lambda x=check:Check.tryNAgain(x))
