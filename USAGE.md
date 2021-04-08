@@ -128,9 +128,22 @@ You will, of course from time to time want to move to another part of speech or 
 Recording data in frames can be done at any point where at least one frame has been at least partially sorted, but when a word is presented for recording, each example (sorting context) is presented for recording. So if you sort one field, then record, then sort the next, you will see your earlier recordings again. Recordings seem to move rather quickly, so I recommend putting them last in your workflow, and do them all at once —at least once you've tested that they're working correctly with your sound card, etc.
 
 ## Tone Reports
-Once you have done some sortings, it makes sense to run a report. The tone report will show your groupings in just one frame, if that's all you have done, but its real value lies in comparing values across multiple frames, so you'll want to check a couple tone frames before doing much with the tone report.
+Once you have done some sortings, it makes sense to run a report. The tone report will show your groupings in just one frame, if that's all you have done, but its real value lies in comparing values across multiple frames, so you'll want to check a couple tone frames before doing much with the tone reports.
+
+The report by default has two phases: analysis and reporting. When analyzing your lexicon (from 'Do'/'Reports'), it compares sets of frame-value correspondences across the ps-profile slice being analyzed. That is, it separates the data until each group has exactly the same sorting values for each tone frame.
+
+Once separated into these groups, the data is presented either by sense (including each sorted tone frame under each sense) or by tone frame/location (including each sense which has been sorted in each tone frame), depending on the report requested by the user.
 
 This report is also exported to text and [XLingPaper](https://software.sil.org/xlingpaper/) XML files, which has similar organization, but more detail, that what you will see on the report window.
+
+### Joining and Renaming Draft Tone Groups
+The tone groupings provided by default in A→Z+T are definitely of the 'splitting' kind, as we want to make judgments ourselves as to which are the same underlying group, rather than have the computer do that. This will certainly lead to groups in the output which you would like to join.
+
+To join groups, use the 'Advanced' menu item 'Tone Reports':'Join/Rename...' This will present a window where you can tell A→Z+T which groups should be presented together in the report. These groupings are also written to the LIFT file, overwriting the place draft tone UF groupings for each sense impacted by the change.
+
+Once you have made these groupings, it is important to only run the tone report from the 'Advanced' menu, if you want it to be based on your groupings. Otherwise, the default report will reanalyze your data and present draft groups from scratch.
+
+To undo any grouping, simply run a tone report from the 'Do' (not 'Advanced') menu. This is a good idea to do whenever you have added sorting data to your database, so you can be sure that your 'lumping' data are based on the most recent 'splitting' draft groups. Or if you accidentally joined the wrong groups, or if you want to restart joining groups for any other reason.
 
 ## Ad Hoc Sorting Groups
 After you have done the analysis of noun and verb roots, you may want to move to a smaller grammatical category, and you may find that the slicing of data into strict ps-profile groups makes it difficult to see what's going on in your data. If you want to manually select a set of morphemes to sort, either a subset of a CV profile group, or including data from multiple CV profiles (or both), click on "Add/Modify Ad Hoc Sorting Groups" (In the Advanced menu, of course!). This provides a window where you can give a (unique!) name to your _ad hoc_ group, and select the senses from your dictionary that you want to compare in it.
