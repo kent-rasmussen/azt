@@ -5328,11 +5328,14 @@ class MainApplication(Frame):
         theme='evenlighterpink'
         theme='purple'
         self.parent.themename='purple' #for low light environments
+        multiplier=99 #The default theme will be this more frequent than others.
         pot=list(self.parent.themes.keys())+(['greygreen']*
-                                                (99*len(self.parent.themes)-1))
+                                        (multiplier*len(self.parent.themes)-1))
+        self.parent.themename='Kent' #for the colorblind (to punish others...)
         self.parent.themename='highcontrast' #for low light environments
         self.parent.themename=pot[randint(0, len(pot))-1] #mostly 'greygreen'
-        if platform.uname().node == 'karlap' and program['production'] is not True:
+        if ((platform.uname().node == 'karlap')
+                and (program['production'] is not True)):
             self.parent.themename='Kim' #for my development
         """These versions might be necessary later, but with another module"""
         if self.parent.themename not in self.parent.themes:
