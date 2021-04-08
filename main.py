@@ -4347,18 +4347,23 @@ class Check():
                     self.db.addtoneUF(senseid,group,analang=self.analang)
         log.info("Done adding senseids to groups.")
         return groups #after filling it out with senseids
+    def prioritizegroupUFs(self,groups):
         """Prioritize groups by similarity of location:value pairings"""
         valuesbygroup={}
-        valuesbylocation={}
-        #The following two fors bring the values dictionaries up a level, so
-        # they can be used to compare group similarity below.
+        #Move values dictionaries up a level, for comparison
         for group in groups:
             valuesbygroup[group]=groups[group]['values']
+        return dictscompare(valuesbygroup,ignore=['NA',None],flat=False)
+    def prioritizelocations(self,groups,locations):
+        """Prioritize locations by similarity of location:value pairings"""
+        valuesbylocation={}
+        #Move values dictionaries up a level, for comparison
         for location in locations:
             valuesbylocation[location]={}
             for group in groups:
                 valuesbylocation[location][group]=groups[group]['values'][
                                                                     location]
+        return dictscompare(valuesbylocation,ignore=['NA',None],flat=False)
     def tonegroupreport(self,silent=False,bylocation=False,default=True):
         #default=True redoes the UF analysis (removing any joining/renaming)
         log.info("Starting report...")
