@@ -4429,7 +4429,7 @@ class Check():
         self.buildXLPtable(s1s,caption,yterms=grouplist,xterms=locations,
                             values=lambda x,y:nn(firstoflist(groups[y]['values'
                             ][x])),
-                            ycounts=lambda x:len(groups[x]['senseids'])
+                            values=lambda x,y:nn(firstoflist(
                             )
         for group in grouplist:
             # name=groupname(group) #This should already include ps-profile
