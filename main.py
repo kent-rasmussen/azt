@@ -4613,7 +4613,7 @@ class Check():
             reporttype=''.join([str(self.ps),'-',
                             str(self.profile),' ',
                             reporttype])
-        elif not re.search('Basic',reporttype): #If it is, we don't want these in the title.
+        elif not re.search('Basic',reporttype): #We don't want this in the title
             reporttype=''.join([str(self.ps),'-',
                             str(self.profile),' ',
                             str(self.name)])
@@ -5457,7 +5457,7 @@ class MainApplication(Frame):
                 wraplength=int(self.winfo_screenwidth()/2)
                 ).grid(row=1,column=0,sticky='we')
     def setmasterconfig(self,program):
-        self.parent.debug=True #This puts out lots of console info...
+        # self.parent.debug=True #This puts out lots of console info...
         self.parent.debug=False #keep default here
         """Configure variables for the root window (master)"""
         for rc in [0,2]:
@@ -5712,8 +5712,6 @@ class Button(tkinter.Button):
             cmd=kwargs['cmd']
             del kwargs['cmd'] #we don't want this going to the button as is.
         else:
-            # print("Making command in button class")
-            # print('Button class',window,choice)
             """This doesn't seem to be working, but OK to avoid it..."""
             if window != None:
                 if choice is not None:
