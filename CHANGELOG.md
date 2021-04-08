@@ -1,9 +1,6 @@
 # A→Z+T Changelog
 
 ## In Process
-- Add logic for manual adjustment of tone groups
-  - Separate out logic to draft tone groups; only call when asked for
-  - Allow creation of reports without auto drafting
 - add test for resolutionsucks, implement smaller font theme
 - include test to see if a tone analysis has been run since latest triage;
     - if not run the report
@@ -131,6 +128,10 @@
 - indicating progress verified/present and sorted status in main window (with !)
 - dictionaries written to settings files are now pretty printed, for easier (human) reading.
 - conversion to new status schema is now automatic, once any work is done on a ps-profile slice.
+- Added logic for manual adjustment of tone groups
+  - Separatee out logic to draft tone groups; you can now run tone report with or without analysis (without in advanced menu)
+  - Allow creation of reports without auto drafting (in advanced menu)
+  - document new tone groups functions
 
 # Version 0.6.2
 - Added new digraphs and trigraphs for idiosyncratic Chufie' orthography
