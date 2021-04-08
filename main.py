@@ -4286,6 +4286,29 @@ class Check():
                             self.profile,
                             ".ToneReport.txt"])
         start_time=time.time() #move this to function?
+    def tonegroupsbyUFlocation(self,senseidsbygroup):
+        #returns dictionary keyed by [group][location]=groupvalue
+        values={}
+        self.getlocations()
+        locations=self.locations[:]
+        # Collect location:value correspondences, by sense
+        for group in senseidsbygroup:
+            values[group]={}
+            for senseid in senseidsbygroup[group]:
+                for location in locations:
+                    if location not in values[group]:
+                        values[group][location]=list()
+                    groupvalue=self.db.get('exfieldvalue',senseid=senseid,
+                        location=location,fieldtype='tone')
+                    # Save this info by group
+                    if ((groupvalue is not []) and
+                            (firstoflist(groupvalue) not in values[group][
+                                                                    location])):
+                        values[group][location]+=groupvalue
+        log.info("Done collecting groups by location for each UF group.")
+        return values
+    def tonegroupsbysenseidlocation(self):
+        #outputs dictionary keyed to [senseid][location]=group
         self.getidstosort() #in case you didn't just run a check
         self.getlocations()
         output={}
@@ -4299,8 +4322,7 @@ class Check():
                 fields? If so, can we do this in a principled way?"""
                 group=self.db.get('exfieldvalue',senseid=senseid,
                     location=location,fieldtype='tone')
-                """Save this info by senseid"""
-                output[senseid][location]=group
+                output[senseid][location]=group #Save this info by senseid
         log.info("Done collecting groups by location for each senseid.")
         groups={}
         groupvalues=[]
@@ -4330,7 +4352,7 @@ class Check():
         that have it."""
         x=1 #first group
         for value in groupvalues:
-            group=groupname(x)
+            group=self.ps+'_'+self.profile+'_'+str(x)
             groups[group]={}
             groups[group]['values']=value
             groups[group]['senseids']=[]
@@ -4356,17 +4378,23 @@ class Check():
             for group in groups:
                 valuesbylocation[location][group]=groups[group]['values'][
                                                                     location]
-        log.debug("locations: {}".format(locations))
-        log.debug("groups: {}".format(groups))
-        locationstructuredlist=dictscompare(valuesbylocation,ignore=['NA',None],
-                                                                    flat=False)
-        groupstructuredlist=dictscompare(valuesbygroup,ignore=['NA',None],
-                                                                    flat=False)
-        grouplist=[i for j in groupstructuredlist for i in j]
-        locations=[i for j in locationstructuredlist for i in j]
-        log.debug("structured locations: {}".format(locationstructuredlist))
-        log.debug("structured groups: {}".format(groupstructuredlist))
+            groups=self.groupUFsfromtonegroupsbylocation(output) #make groups
+            groups=self.senseidstogroupUFs(output,groups) #fillin group senseids
+            groupstructuredlist=self.prioritizegroupUFs(groups)
+            locationstructuredlist=self.prioritizelocations(groups,
+                                                                self.locations)
+            grouplist=flatten(groupstructuredlist)
+            locations=flatten(locationstructuredlist)
+            log.debug("structured locations: {}".format(locationstructuredlist))
+            log.debug("structured groups: {}".format(groupstructuredlist))
+            for group in groups:
+                toreport[group]=groups[group]['senseids']
+                groupvalues[group]={}
+                for location in locations:
+                    groupvalues[group][location]=list(groups[group]['values'][
+                                                                    location])
             toreport=self.getsenseidsbytoneUFgroups()
+            groupvalues=self.tonegroupsbyUFlocation(toreport)
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
         self.runwindow.title(title)
@@ -4427,27 +4455,21 @@ class Check():
                                                 str(locationstructuredlist)))
         p0=xlp.Paragraph(s1s,text=ptext)
         self.buildXLPtable(s1s,caption,yterms=grouplist,xterms=locations,
-                            values=lambda x,y:nn(firstoflist(groups[y]['values'
-                            ][x])),
                             values=lambda x,y:nn(firstoflist(
+                            groupvalues[y][x],all=True
+                            )),
+                            ycounts=lambda x:len(
+                            toreport[x]
                             )
-        for group in grouplist:
+                            )
             # name=groupname(group) #This should already include ps-profile
             log.info("building report for {}".format(group))
             sectitle=_('\nGroup {}'.format(str(group)))
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
             l=list()
-            for x in groups[group]['values']:
-                """This shouldn't crash if a word is lacking a value for a
-                location. Just don't include that location in the group
-                definition."""
-                if (('values' in groups[group]) and
-                        (x in groups[group]['values'])
-                    and (groups[group]['values'][x] !=[])):
-                    log.log(2,'x: {}; values: {}'.format(x,str(groups[group][
-                                                                'values'][x])))
-                    l.append(x+': '+str(groups[group]['values'][x][0]))
+            for x in groupvalues[group]:
+                l.append(x+': '+str(groupvalues[group][x]))
             text=_('Values by frame: {}'.format('\t'.join(l)))
             p1=xlp.Paragraph(s1,text)
             output(window,r,text)
