@@ -3527,6 +3527,24 @@ class Check():
                                     )
     def gettoneUFgroups(self):
         print("Looking for UF tone groups for",self.profile,self.ps)
+    def getsenseidsbytoneUFgroups(self):
+        print("Looking for sensids by UF tone groups for",self.profile,self.ps)
+        sorted={}
+        """Still working on one ps-profile combo at a time."""
+        self.getidstosort() #just in case this changed
+        for senseid in self.senseidstosort: #I should be able to make this a regex...
+            toneUFgroup=firstoflist(self.db.get('toneUFfieldvalue', senseid=senseid,
+                fieldtype='tone' # Including any lang at this point.
+                # ,showurl=True
+                ))
+            if toneUFgroup not in sorted:
+                sorted[toneUFgroup]=[senseid]
+            else:
+                sorted[toneUFgroup]+=[senseid]
+        self.toneUFgroups=list(dict.fromkeys(sorted))
+        log.debug("UFtonegroups (getsenseidsbytoneUFgroups): {}".format(
+                                                            self.toneUFgroups))
+        return sorted
         toneUFgroups=[]
         """Still working on one ps-profile combo at a time."""
         for senseid in self.senseidstosort: #I should be able to make this a regex...
@@ -4017,7 +4035,7 @@ class Check():
         if self.name is None:
             self.name=list(self.toneframes[self.ps])[0]
         self.settonevariablesbypsprofile() #maybe not done before
-        self.gettoneUFgroups()
+        torecord=self.getsenseidsbytoneUFgroups()
         skip=False
         if self.toneUFgroups != []:
             torecord={}
@@ -4348,6 +4366,7 @@ class Check():
         locations=[i for j in locationstructuredlist for i in j]
         log.debug("structured locations: {}".format(locationstructuredlist))
         log.debug("structured groups: {}".format(groupstructuredlist))
+            toreport=self.getsenseidsbytoneUFgroups()
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
         self.runwindow.title(title)
@@ -4437,7 +4456,7 @@ class Check():
                 for location in locations:
                     id=rx.id('x'+sectitle+location)
                     e1=xlp.Example(s1,id)
-                    for senseid in groups[group]['senseids']:
+                    for senseid in toreport[group]:
                         #This is for window/text output only, not in XLP file
                         framed=self.getframeddata(senseid,noframe=True,
                                                         notonegroup=True)
@@ -4454,7 +4473,7 @@ class Check():
                             output(window,r,text)
                             textout.append(text)
             else:
-                for senseid in groups[group]['senseids']:
+                for senseid in toreport[group]: #groups[group]['senseids']:
                     #This is for window/text output only, not in XLP file
                     framed=self.getframeddata(senseid,noframe=True,
                                                     notonegroup=True)
