@@ -1306,6 +1306,13 @@ class Check():
             self.status[self.type][self.ps][self.profile][self.name][
                                                                 'tosort']=True
             changed=True
+        for key in ['groups','done']:
+            for invalid in ['',None]:
+                if invalid in self.status[self.type][self.ps][self.profile][
+                                                                self.name][key]:
+                    self.status[self.type][self.ps][self.profile][
+                                                self.name][key].remove(invalid)
+                    changed=True
         if changed == True:
             log.info("Saving status dict to file")
             self.storesettingsfile(setting='status')
