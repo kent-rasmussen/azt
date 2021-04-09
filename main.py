@@ -5452,6 +5452,13 @@ class MainApplication(Frame):
         l=Label(f.content, text=text, pady=50, padx=50,
                 wraplength=int(self.winfo_screenwidth()/2)
                 ).grid(row=1,column=0,sticky='we')
+    def maketitle(self):
+        title=_("{name} Dictionary and Orthography Checker").format(
+                                                    name=self.program['name'])
+        if self.master.themename != 'greygreen':
+            print(f"Using theme '{self.master.themename}'.")
+            title+=_(' ('+self.master.themename+')')
+        self.parent.title(title)
     def setmasterconfig(self,program):
         # self.parent.debug=True #This puts out lots of console info...
         self.parent.debug=False #keep default here
@@ -5564,11 +5571,7 @@ class MainApplication(Frame):
         # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
         # self.frame.grid(column=0, row=0)
         parent.iconphoto(True, self.photo['backgrounded'])
-        title=_("{name} Dictionary and Orthography Checker").format(name=self.program['name'])
-        if self.master.themename != 'greygreen':
-            print(f"Using theme '{self.master.themename}'.")
-            title+=_(' ('+self.master.themename+')')
-        parent.title(title)
+        self.maketitle()
         # self.introtext=_()
         # l=Label(self.frame, text=self.introtext, font=self.fonts['title'])
         # l.grid(row=0, column=0, columnspan=2)
