@@ -183,6 +183,10 @@ class Check():
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
+        if self.interfacelang not in [None, getinterfacelang()]:
+            #set only when new value is loaded:
+            setinterfacelang(self.interfacelang)
+            self.parent.maketitle()
         self.langnames()
         self.checkinterpretations() #checks (and sets) values for self.distinguish
         if 'bfj' in self.db.s:
