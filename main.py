@@ -2247,7 +2247,7 @@ class Check():
                     log.log(3,"Problem with integer {}".format(i))
                     return nn(x,oneperline=True) #if any is not an integer, all.
             return len(x) #to show counts only
-        title=_('Tone Progress for {} Words'.format(self.ps))
+        title=_('Tone Progress: {}'.format(self.ps))
         Label(self.leaderboard, text=title, font=self.fonts['title'],padx=25
                         ).grid(row=0,column=0,sticky='nwe')
         self.leaderboardtable=Frame(self.leaderboard)
@@ -2561,14 +2561,14 @@ class Check():
         title=_('Select Number of Examples per Group to Record')
         window=Window(self.frame, title=title)
         text=_("The {0} tone report splits sorted data into "
-                "draft underlying tone melody groups, "
-                "with distinct values for each of your tone frames. This "
-                "exhaustively finds differences between groups of lexical "
-                "senses, but often "
-                "misses similarities between groups, which might be "
-                "distinguished only because a single word was skipped or sorted "
-                "incorrectly."
-                "\n\nEven before a linguist has been able to evaluate these "
+                "draft underlying tone melody groups. "
+                # ", with distinct values for each of your tone frames. This "
+                # "exhaustively finds differences between groups of lexical "
+                # "senses, but often "
+                # "misses similarities between groups, which might be "
+                # "distinguished only because a single word was skipped or sorted "
+                # "incorrectly.\n\n"
+                "Even before a linguist has been able to evaluate these "
                 "groups, it may be helpful to record your sorted data. "
                 "{0} can give you a window for each lexicon sense in a tone "
                 "group, with a record button for each sorted sense-frame "
@@ -2580,9 +2580,9 @@ class Check():
                 "{0} will "
                 "repeat this process, until it has done a number of "
                 "rounds equal to the number selected below. "
-                "\n\nIf a "
-                "group has fewer examples than this number, that group will be "
-                "skipped once done. "
+                # "\n\nIf a "
+                # "group has fewer examples than this number, that group will be "
+                # "skipped once done. "
                 "\nPicking a larger number could delay opening "
                 "the recording window; picking a smaller number could mean "
                 "data not getting recorded. "
