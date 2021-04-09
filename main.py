@@ -2249,7 +2249,7 @@ class Check():
             return len(x) #to show counts only
         title=_('Tone Progress: {}'.format(self.ps))
         Label(self.leaderboard, text=title, font=self.fonts['title'],padx=25
-                        ).grid(row=0,column=0,sticky='nwe')
+                        ).grid(row=0,column=0)
         self.leaderboardtable=Frame(self.leaderboard)
         self.leaderboardtable.grid(row=1,column=0)
         row=0
