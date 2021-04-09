@@ -106,7 +106,7 @@ def getinterfacelangs():
 def getinterfacelang():
     # I haven't figured out a way to translate the strings here, hope that's OK.
     # This is because this fn is called by the mainapplication class before
-    # anything else happens, including setting the ui interface language 
+    # anything else happens, including setting the ui interface language
     # (that's what this enables).
     try:
         import ui_lang
