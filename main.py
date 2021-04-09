@@ -1026,16 +1026,12 @@ class Check():
         else:
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setinterfacelangwrapper(self,choice,window):
-            self.set('interfacelang',choice,window) #set the check variable
-            if getattr(self,'interfacelang') != choice:
-                setinterfacelang(choice) #change the UI *ONLY* no object attributes
-                file.writeinterfacelangtofile(choice)
-                self.storesettingsfile()
-                for base in [self,self.parent.parent]:
-                    setattr(base,'interfacelang',choice)
-                    log.info("pre checkcheck {base}: {}".format(getattr(base,
-                                                    'interfacelang'),base=base))
-                self.checkcheck()
+        setinterfacelang(choice) #change the UI *ONLY*; no object attributes
+        file.writeinterfacelangtofile(choice) #>ui_lang.py, for startup
+        self.set('interfacelang',choice,window) #set variable for the future
+        self.storesettingsfile() #>xyz.CheckDefaults.py
+        self.parent.maketitle() #because otherwise, this stays as is...
+        self.checkcheck()
     def setprofile(self,choice,window):
         self.set('profile',choice,window)
     def settype(self,choice,window):
