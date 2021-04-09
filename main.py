@@ -6082,6 +6082,16 @@ class Splash(Window):
         self.update()
 
 """These are non-method utilities I'm actually using."""
+def getinterfacelang():
+    for lang in i18n:
+        try:
+            _
+            if i18n[lang] == _.__self__:
+                return lang
+        except:
+            log.debug("_ doesn't look defined yet, returning 'en' as current "
+                                                        "interface language.")
+            return 'en'
 def setinterfacelang(lang):
     global aztdir
     global i18n
