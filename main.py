@@ -1924,6 +1924,15 @@ class Check():
         except:
             return
         self.makestatus()
+        #Don't guess this; default or user set only
+        log.info('Interfacelang: {}'.format(getinterfacelang()))
+        """This just gets the prose language name from the code"""
+        for l in self.parent.interfacelangs:
+            if l['code']==getinterfacelang():
+                interfacelanguagename=l['name']
+        t=(_("Using {}").format(interfacelanguagename))
+        proselabel(opts,t)
+        opts['row']+=1
         """We start with the settings that we can likely guess"""
         """Get Analang"""
         if self.analang not in self.db.analangs:
@@ -1934,14 +1943,6 @@ class Check():
             return
         if self.audiolang == None:
             self.guessaudiolang() #don't display this, but make it
-        """This just gets the prose language name from the code"""
-        # self.parent.parent.interfacelangs is set in file.py
-        for l in self.parent.parent.interfacelangs:
-            if l['code']==self.parent.parent.interfacelang:
-                interfacelanguagename=l['name']
-        t=(_("Using {}").format(interfacelanguagename))
-        proselabel(opts,t)
-        opts['row']+=1
         t=(_("Working on {}").format(self.languagenames[self.analang]))
         proselabel(opts,t)
         opts['row']+=1
