@@ -103,10 +103,11 @@ def getinterfacelang(self):
     including setting the ui interface language (that's what this enables). So
     I haven't figured out a way to translate the strings here, and I trust that
     will be OK."""
-    self.interfacelangs=[{'code':'fr','name':'Français'},
-                            {'code':'en','name':'English'},
-                            {'code':'fub','name':'Fulfulde'}
-                            ]
+def getinterfacelangs():
+    return [{'code':'fr','name':'Français'},
+            {'code':'en','name':'English'},
+            {'code':'fub','name':'Fulfulde'}
+            ]
     try:
         import ui_lang
         log.debug("ui_lang.py imported fine.") #Sorry, no translation!
