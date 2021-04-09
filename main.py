@@ -6438,8 +6438,7 @@ def inherit(self,attr=None):
     from the root window, through all windows, frames, and scrolling frames, etc
     """
     if attr == None:
-        attrs=['fonts','theme','debug','wraplength','photo','program',
-                '_','interfacelang']
+        attrs=['fonts','theme','debug','wraplength','photo','program']
     else:
         attrs=[attr]
     for attr in attrs:
