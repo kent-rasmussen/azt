@@ -6089,20 +6089,19 @@ def setinterfacelang(lang):
     """Attention: for this to work, _ has to be defined globally (here, not in
     a class or module.) So I'm getting the language setting in the class, then
     calling the module (imported globally) from here."""
-    print('setinterfacelang:',lang)
-    # if lang == 'en':
-    #     # interfacelang(lang=self.interfacelang)
-    #     # _ = gettext.gettext #for untranslated American English
-    #     _ = lambda s: s
-    #     print(_("Translated!"))
-    # else:
-    # interfacelang(lang=lang)
-    print('aztdir',aztdir, 'lang:',lang)
-    print(i18n[lang])
-    print("Using interface", lang)
-    i18n[lang].install()
-    print(_("Translation seems to be working"))
-    # return _
+    curlang=getinterfacelang()
+    try:
+        log.debug("Magic: {}".format(str(_)))
+    except:
+        log.debug("Looks like translation magic isn't defined yet; making")
+        nomagic=True
+    if lang != curlang or nomagic == True:
+        i18n[lang].install()
+    else:
+        log.debug("Apparently we're trying to set the same interface "
+                                        "language: {}={}".format(lang,curlang))
+    log.debug(_("Translation seems to be working, using {}"
+                                                "".format(getinterfacelang())))
 def flatten(l):
     if type(l) is not list:
         log.debug("{} is not a list; returning nothing.".format(l))
