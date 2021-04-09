@@ -79,9 +79,6 @@ class Check():
         self.parent=parent #should be mainapplication frame
         self.frame=frame
         inherit(self)
-        # _=self._
-        # self.fonts=parent.fonts
-        # self.theme=parent.theme #Needed?
         filename=file.getfilename()
         if not file.exists(filename):
             log.error("Select a lexical database to check; exiting.")
@@ -157,23 +154,13 @@ class Check():
         self.db.languagecodes=self.db.analangs+self.db.glosslangs
         self.db.languagepaths=file.getlangnamepaths(filename,
                                                         self.db.languagecodes)
-        # profiles.get(self.db, nsyls=nsyls) #sets: db.profileswdata db.profiles
         setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
         self.initdefaults() #provides self.defaults, list to load/save
         self.cleardefaults() #this resets all to none (to be set below)
-        # self.analang=self.db.analang #inherit from the lang if not specified
-        # self.glosslang=self.db.glosslang #inherit from the lang if not specified
-        # self.glosslang2=self.db.glosslang2 #inherit from the lang if not specified
-        # self.audiolang=self.db.audiolang
-        log.info(_('Interface Language: {}'.format(self.parent.parent.interfacelang)))
         """These two lines can import structured frame dictionaries; do this
         just to make the import, then comment them out again."""
-        # import toneframesbylang
-        # self.toneframes=toneframesbylang.toneframes[self.analang]
         self.frameregex=re.compile('__') #replace this w/data in frames.
-        # self.basicreport() #doing this by menu now
         self.loadsettingsfile(setting='profiledata')
-        # print('self.profilesbysense:',self.profilesbysense)
         """I think I need this before setting up regexs"""
         self.guessanalang() #needed for regexs
         log.debug("analang guessed: {} (If you don't like this, change it in "
@@ -186,7 +173,7 @@ class Check():
             setinterfacelang(self.interfacelang)
             self.parent.maketitle()
         self.langnames()
-        self.checkinterpretations() #checks (and sets) values for self.distinguish
+        self.checkinterpretations() #checks/sets values for self.distinguish
         if 'bfj' in self.db.s:
             bfjvdigraphs=(['ou','ei','ɨʉ','ai']+
             ['óu','éi','ɨ́ʉ','ái']+
@@ -407,18 +394,17 @@ class Check():
                 self.languagenames[xyz]=self.adnlangnames[xyz]
     """User Input functions"""
     def getinterfacelang(self):
-            log.info("Asking for interface language...")
-            window=Window(self.frame, title=_('Select Interface Language'))
-            Label(window.frame, text=_('What language do you want this program '
-                                    'to address you in?')
-                    ).grid(column=0, row=0)
-            # self.parent.parent.interfacelangs is set in file.py
-            buttonFrame1=ButtonFrame(window.frame,
-                                    self.parent.parent.interfacelangs,
-                                    self.setinterfacelangwrapper,
-                                    window
-                                    )
-            buttonFrame1.grid(column=0, row=1)
+        log.info("Asking for interface language...")
+        window=Window(self.frame, title=_('Select Interface Language'))
+        Label(window.frame, text=_('What language do you want this program '
+                                'to address you in?')
+                ).grid(column=0, row=0)
+        buttonFrame1=ButtonFrame(window.frame,
+                                self.parent.interfacelangs,
+                                self.setinterfacelangwrapper,
+                                window
+                                )
+        buttonFrame1.grid(column=0, row=1)
     def checkinterpretations(self):
         if (not hasattr(self,'distinguish')) or (self.distinguish == None):
             self.distinguish={}
@@ -5513,7 +5499,7 @@ class MainApplication(Frame):
             # setfonts(self.parent,fonttheme='small')
         #else:
         setfonts(self.parent)
-        """allow for exit button (~200px)"""
+        # allow for exit button (~200px):
         self.parent.wraplength=self.parent.winfo_screenwidth()-300
         self.parent.program=program
     def __init__(self,parent,program):
@@ -5522,7 +5508,6 @@ class MainApplication(Frame):
         self.parent=parent
         self.setmasterconfig(program)
         inherit(self) # do this after setting config.
-        # _=self._
         #set up languages before splash window:
         self.interfacelangs=file.getinterfacelangs()
         interfacelang=file.getinterfacelang()
@@ -6485,14 +6470,9 @@ if __name__ == "__main__":
                                     datetime.datetime.utcnow().isoformat()))
     transdir=aztdir+'/translations/'
     i18n={}
-    # t = gettext.translation('dictionarychecker', aztdir)
-    # _ = t.gettext
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
-    # interfacelang('en')
-    # # print(_('Tone'))
-    # interfacelang('fr')
     try:
         main()
     except Exception as e:
