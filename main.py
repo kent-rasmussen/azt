@@ -166,7 +166,6 @@ class Check():
         # self.glosslang=self.db.glosslang #inherit from the lang if not specified
         # self.glosslang2=self.db.glosslang2 #inherit from the lang if not specified
         # self.audiolang=self.db.audiolang
-        # self.guessinterfacelang()
         log.info(_('Interface Language: {}'.format(self.parent.parent.interfacelang)))
         """These two lines can import structured frame dictionaries; do this
         just to make the import, then comment them out again."""
@@ -211,16 +210,6 @@ class Check():
         """Testing Zone"""
         self.checkcheck()
     """Guessing functions"""
-    def guessinterfacelang(self):
-        """I'm asked to do this when the root window has the attribute set,
-        but the check doesn't. So I'm testing for the check attribute here."""
-        log.debug('guessinterfacelang: {}'.format(self.parent.parent.interfacelang))
-        if self.interfacelang == None:
-            if ((self.glosslang == None) or
-                    (self.glosslang not in self.db.glosslangs)):
-                self.guessglosslangs()
-            self.parent.parent.interfacelang=self.glosslang
-            setinterfacelang(self.glosslang)
     def guessanalang(self):
         langspriority=collections.Counter(self.db.get('lexemelang')+
                                 self.db.get('citationlang')).most_common()
