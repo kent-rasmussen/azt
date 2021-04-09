@@ -2207,7 +2207,7 @@ class Check():
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
         self.leaderboard=Frame(self.frame)
-        self.leaderboard.grid(row=0,column=1,sticky="new")
+        self.leaderboard.grid(row=0,column=1,sticky="") #nesw
         #Given the line above, much of the below can go, but not all?
         if hasattr(self,'status') and self.type in self.status:
             if self.ps in self.status[self.type]:
