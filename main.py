@@ -79,7 +79,6 @@ class Check():
         self.parent=parent #should be mainapplication frame
         self.frame=frame
         inherit(self)
-        log.info("check.interfacelang: {}".format(self.interfacelang))
         # _=self._
         # self.fonts=parent.fonts
         # self.theme=parent.theme #Needed?
@@ -1926,14 +1925,6 @@ class Check():
             return
         self.makestatus()
         """We start with the settings that we can likely guess"""
-        for base in [self,self.parent.parent]:
-            log.info("{base}: {}".format(getattr(base,'interfacelang'),base=base))
-        if self.interfacelang == None:
-            log.info("No interface language! Guessing.")
-            self.guessinterfacelang()
-        else:
-            if self.debug == True:
-                log.info('interfacelang already set')
         """Get Analang"""
         if self.analang not in self.db.analangs:
             self.guessanalang()
@@ -5527,12 +5518,7 @@ class MainApplication(Frame):
         setfonts(self.parent)
         """allow for exit button (~200px)"""
         self.parent.wraplength=self.parent.winfo_screenwidth()-300
-        file.getinterfacelang(self.parent)
-        if self.parent.interfacelang == None:
-            self.parent.interfacelang='fr' #default for now (just for first use).
         self.parent.program=program
-        # self.setinterfacelang()
-        self.parent._= setinterfacelang(self.parent.interfacelang)
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
@@ -5540,6 +5526,13 @@ class MainApplication(Frame):
         self.setmasterconfig(program)
         inherit(self) # do this after setting config.
         # _=self._
+        #set up languages before splash window:
+        self.interfacelangs=file.getinterfacelangs()
+        interfacelang=file.getinterfacelang()
+        if interfacelang == None:
+            setinterfacelang('fr')
+        else:
+            setinterfacelang(interfacelang)
         """Pick one of the following three screensizes (or don't):"""
         # self.fullscreen()
         # self.quarterscreen()
