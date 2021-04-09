@@ -112,7 +112,7 @@ def getinterfacelang():
         import ui_lang
         log.log(2,"ui_lang.py imported fine.") #Sorry, no translation!
         try:
-            log.debug('ui_lang: {}'.format(ui_lang.__dict__))
+            log.debug('Boot ui_lang: {}'.format(ui_lang.interfacelang))
             return ui_lang.interfacelang
         except:
             log.error("Didn't find ui_lang.interfacelang") #No translation!
