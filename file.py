@@ -98,24 +98,24 @@ def getlangnamepaths(filename, langs):
         log.log(1,filename)
     log.log(1,output)
     return output
-    """This is called by the mainapplication class before anything else happens,
-    including setting the ui interface language (that's what this enables). So
-    I haven't figured out a way to translate the strings here, and I trust that
-    will be OK."""
 def getinterfacelangs():
     return [{'code':'fr','name':'Français'},
             {'code':'en','name':'English'},
             {'code':'fub','name':'Fulfulde'}
             ]
 def getinterfacelang():
+    # I haven't figured out a way to translate the strings here, hope that's OK.
+    # This is because this fn is called by the mainapplication class before
+    # anything else happens, including setting the ui interface language 
+    # (that's what this enables).
     try:
         import ui_lang
-        log.debug("ui_lang.py imported fine.") #Sorry, no translation!
+        log.log(2,"ui_lang.py imported fine.") #Sorry, no translation!
         try:
-            log.log(2,'ui_lang: {}'.format(ui_lang.__dict__))
+            log.debug('ui_lang: {}'.format(ui_lang.__dict__))
             return ui_lang.interfacelang
         except:
-            log.error("Didn't find ui_lang.interfacelang") #Sorry, no translation!
+            log.error("Didn't find ui_lang.interfacelang") #No translation!
     except:
         log.error("Didn't find ui_lang.py") #Sorry, no translation!
 def writeinterfacelangtofile(lang):
