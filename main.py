@@ -5271,8 +5271,8 @@ class Menu(tkinter.Menu):
         self.parent=parent
         inherit(self)
         self['font']=self.fonts['default']
-        self['activebackground']=self.theme['activebackground']
-        self['background']=self.theme['background']
+        self['activebackground']=self.theme['background'] #self.theme['activebackground']
+        self['background']='white' #self.theme['background']
 class MainApplication(Frame):
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
@@ -5285,9 +5285,10 @@ class MainApplication(Frame):
     def setmenus(self,check):
         menubar = Menu(self.parent)
         changemenu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label=_("Change"), menu=changemenu)
         """Language stuff"""
         languagemenu = Menu(changemenu, tearoff=0)
-        """Maybe this should be implied from first gloss language?"""
+        changemenu.add_cascade(label=_("Languages"), menu=languagemenu)
         languagemenu.add_command(label=_("Interface/computer language"),
                         command=lambda x=check:Check.getinterfacelang(x))
         languagemenu.add_command(label=_("Analysis language"),
@@ -5296,11 +5297,11 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.getglosslang(x))
         languagemenu.add_command(label=_("Another gloss language"),
                         command=lambda x=check:Check.getglosslang2(x))
-        changemenu.add_cascade(label=_("Languages"), menu=languagemenu)
-        menubar.add_cascade(label=_("Change"), menu=changemenu)
         """Word/data choice stuff"""
         changemenu.add_command(label=_("Part of speech"),
                         command=lambda x=check:Check.getps(x))
+        changemenu.add_command(label=_("Consonant-Vowel-Tone"),
+                        command=lambda x=check:Check.gettype(x))
         profilemenu = Menu(changemenu, tearoff=0)
         changemenu.add_cascade(label=_("Syllable profile"), menu=profilemenu)
         profilemenu.add_command(label=_("Next"),
@@ -5308,8 +5309,6 @@ class MainApplication(Frame):
         profilemenu.add_command(label=_("Choose"),
                         command=lambda x=check:Check.getprofile(x))
         """What to check stuff"""
-        changemenu.add_command(label=_("Consonant-Vowel-Tone"),
-                        command=lambda x=check:Check.gettype(x))
         if (check.ps != None and check.profile != None and
                                             check.type != None):
             if check.type == 'T':
@@ -5331,9 +5330,9 @@ class MainApplication(Frame):
         domenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label=_("Do"), menu=domenu)
         reportmenu = Menu(menubar, tearoff=0)
-        reportmenu.add_command(label=_("Tone report by sense (redo anlaysis)"),
+        reportmenu.add_command(label=_("Tone by sense"),
                         command=lambda x=check:Check.tonegroupreport(x))
-        reportmenu.add_command(label=_("Tone report by location (redo anlaysis)"
+        reportmenu.add_command(label=_("Tone by location"
                         ),command=lambda x=check:Check.tonegroupreport(x,
                                                             bylocation=True))
         reportmenu.add_command(label=_("Basic Vowel report (to file)"),
@@ -5368,15 +5367,12 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.addframe(x))
         advtonemenu = Menu(menubar, tearoff=0)
         advancedmenu.add_cascade(label=_("Tone Reports"), menu=advtonemenu)
-        advtonemenu.add_command(label=_("Join/Rename Draft Underlying Tone "
-                                        "Groups"),
+        advtonemenu.add_command(label=_("Join/Rename Tone Groups"),
                         command=lambda x=check:Check.tonegroupsjoinrename(x))
-        advtonemenu.add_command(label=_("Make tone report by sense (without "
-                                        "analysis)"),
+        advtonemenu.add_command(label=_("Custom groups by sense"),
                                 command=lambda x=check:Check.tonegroupreport(x,
                                                                 default=False))
-        advtonemenu.add_command(label=_("Make tone report by location (without "
-                                        "analysis)"),
+        advtonemenu.add_command(label=_("Custom groups by location"),
                                 command=lambda x=check:Check.tonegroupreport(x,
                                                 bylocation=True, default=False))
         redomenu = Menu(menubar, tearoff=0)
@@ -5394,7 +5390,7 @@ class MainApplication(Frame):
                         label=_("Add/Modify Ad Hoc Sorting Group"),
                         command=lambda x=check:Check.addmodadhocsort(x))
         advancedmenu.add_command(
-                label=_("Select the Number of Examples per Group to Record"),
+                label=_("Number of Examples to Record"),
                 command=lambda x=check:Check.getexamplespergrouptorecord(x))
         """Unused for now"""
         # settingsmenu = Menu(menubar, tearoff=0)
