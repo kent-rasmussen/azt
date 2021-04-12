@@ -6012,7 +6012,8 @@ class Wait(Window): #Window? tkinter.Toplevel
         except:
             log.debug("Not withdrawing parent.")
         super(Wait, self).__init__(parent) #,bg=self.theme['background'])
-        self['background']=self.theme['background']
+        self['background']=parent['background']
+        # self['background']=self.theme['background']
         self.photo = parent.photo #need this before making the frame
         self.outsideframe=Frame(self)
         title=(_("Please Wait! {name} Dictionary and Orthography Checker "
