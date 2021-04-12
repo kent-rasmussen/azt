@@ -6028,11 +6028,8 @@ class Wait(Window): #tkinter.Toplevel?
 class Splash(Window):
     def __init__(self, parent):
         super(Splash, self).__init__(parent,exit=0)
-        # _=self._
-        # print(self.theme['background'])
-        # print(self.theme['activebackground'])
-        title=(_("{name} Dictionary and Orthography Checker").format(name=program[
-                                                                    'name']))
+        title=(_("{name} Dictionary and Orthography Checker").format(
+                                                        name=program['name']))
         self.title(title)
         v=_("Version: {}".format(program['version']))
         text=_("Your dictionary database is loading...\n\n"
@@ -6044,7 +6041,6 @@ class Splash(Window):
                         font=self.fonts['title'],anchor='c',padx=25
                         ).grid(row=0,column=0,sticky='we')
         Label(self, text=v, pady=30,
-                        # font=self.fonts['read'],
                         anchor='c',padx=25
                         ).grid(row=1,column=0,sticky='we')
         Label(self, image=self.photo['transparent'],text='',
