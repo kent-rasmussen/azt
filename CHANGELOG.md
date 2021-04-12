@@ -1,5 +1,8 @@
 # A→Z+T Changelog
 
+# for 0.8
+- look at how to generalize tone sorting, joining, etc. process.
+
 ## In Process
 - add test for resolutionsucks, implement smaller font theme
 - include test to see if a tone analysis has been run since latest triage;
