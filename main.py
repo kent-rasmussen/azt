@@ -6011,9 +6011,9 @@ class Wait(Window): #Window? tkinter.Toplevel
             #     self.parent.iconify() #A window doesn't return on deiconify...
         except:
             log.debug("Not withdrawing parent.")
-        super(Wait, self).__init__(parent,bg=self.theme['background'])
+        super(Wait, self).__init__(parent) #,bg=self.theme['background'])
+        self['background']=self.theme['background']
         self.photo = parent.photo #need this before making the frame
-        # self['background']=self.theme['background']
         self.outsideframe=Frame(self)
         title=(_("Please Wait! {name} Dictionary and Orthography Checker "
                         "in Process").format(name=self.program['name']))
