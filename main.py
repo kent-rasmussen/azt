@@ -3721,14 +3721,10 @@ class Check():
                                 }
     """Doing stuff"""
     def getrunwindow(self):
-        # print(self.__dict__)
-        # print(hasattr(self,'runwindow'))
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
         need to test for both."""
-        if hasattr(self,'runwindow') and (self.runwindow.winfo_exists()):#(type(self.runwindow) is Window):
-            # print(self.runwindow.winfo_exists())
-            # print(type(self.runwindow))
+        if hasattr(self,'runwindow') and (self.runwindow.winfo_exists()):
             if self.debug == True:
                 log.info("Runwindow already there! Resetting frame...")
             self.runwindow.resetframe() #I think I'll always want this here...
