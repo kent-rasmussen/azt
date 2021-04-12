@@ -6022,6 +6022,9 @@ class Wait(Window): #Window? tkinter.Toplevel
         self.l=Label(self, text=text,
                 font=self.fonts['title'],anchor='c',padx=50,pady=50)
         self.l.grid(row=0,column=0,sticky='we')
+        Label(self, image=self.photo['transparent'],text='',
+                        bg=self['background'] #.theme
+                        ).grid(row=1,column=0,sticky='we')
         self.update_idletasks()
 class Splash(Window):
     def __init__(self, parent):
