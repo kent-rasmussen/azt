@@ -4972,7 +4972,7 @@ class Check():
                 #entry.newform = re.sub(check.subcheck, choice, entry.lexeme, count=1)
         print(entry.newform)
         window.destroy()
-class Entry(lift.Entry):
+class Entry(lift.Entry): #Not in use
     def __init__(self, db, guid, window=None, check=None, problem=None,
         *args, **kwargs):
         self.problem=problem #?!?
@@ -5010,7 +5010,7 @@ class Window(tkinter.Toplevel):
     def wait(self):
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
             log.debug("There is already a wait window: {}".format(self.ww))
-            return #don't make another one...
+            return
         self.ww=Wait(self)
     def waitdone(self):
         pass
@@ -5020,7 +5020,6 @@ class Window(tkinter.Toplevel):
                 *args, **kwargs):
         self.parent=parent
         inherit(self)
-        # _=self._
         """Things requiring tkinter.Window below here"""
         super(Window, self).__init__()
         self['background']=self.theme['background']
