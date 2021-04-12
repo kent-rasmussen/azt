@@ -5328,8 +5328,9 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.basicreport(x,typestodo=['V']))
         reportmenu.add_command(label=_("Basic Consonant report (to file)"),
                         command=lambda x=check:Check.basicreport(x,typestodo=['C']))
-        reportmenu.add_command(label=_("Basic report on Consonants and Vowels (to file)"),
-                        command=lambda x=check:Check.basicreport(x,typestodo=['C','V']))
+        reportmenu.add_command(label=_("Basic report on Consonants and Vowels "
+                                                                "(to file)"),
+                command=lambda x=check:Check.basicreport(x,typestodo=['C','V']))
         domenu.add_cascade(label=_("Reports"), menu=reportmenu)
         recordmenu = Menu(menubar, tearoff=0)
         recordmenu.add_command(label=_("Sound Card Settings"),
@@ -5419,7 +5420,6 @@ class MainApplication(Frame):
         Label(window.frame, text=title,
                         font=self.fonts['title'],anchor='c',padx=50
                         ).grid(row=0,column=0,sticky='we')
-        # self.photo.thumbnail(50,50)
         f=ScrollingFrame(window.frame)
         f.grid(row=2,column=0,sticky='we')
         Label(f.content, image=self.photo['small'],text='',
@@ -5435,37 +5435,10 @@ class MainApplication(Frame):
             print(f"Using theme '{self.master.themename}'.")
             title+=_(' ('+self.master.themename+')')
         self.parent.title(title)
-    def setmasterconfig(self,program):
-        # self.parent.debug=True #This puts out lots of console info...
-        self.parent.debug=False #keep default here
-        """Configure variables for the root window (master)"""
-        for rc in [0,2]:
-            self.parent.grid_rowconfigure(rc, weight=3)
-            self.parent.grid_columnconfigure(rc, weight=3)
-        setthemes(self.parent)
-        theme='tkinterdefaults'
-        theme='evenlighterpink'
-        theme='purple'
-        self.parent.themename='purple' #for low light environments
-        multiplier=99 #The default theme will be this more frequent than others.
-        pot=list(self.parent.themes.keys())+(['greygreen']*
-                                        (multiplier*len(self.parent.themes)-1))
-        self.parent.themename='Kent' #for the colorblind (to punish others...)
-        self.parent.themename='highcontrast' #for low light environments
-        self.parent.themename=pot[randint(0, len(pot))-1] #mostly 'greygreen'
-        if ((platform.uname().node == 'karlap')
-                and (program['production'] is not True)):
-            self.parent.themename='Kim' #for my development
-        """These versions might be necessary later, but with another module"""
-        if self.parent.themename not in self.parent.themes:
-            print("Sorry, that theme doesn't seem to be set up. Pick from "
-            "these options:",self.parent.themes.keys())
-            exit()
-        self.parent.theme=self.parent.themes[self.parent.themename]
-        self.parent['background']=self.parent.theme['background']
-        """Set program icon(s) (First should be transparent!)"""
-        imgurl=file.fullpathname('images/AZT stacks6.png')
+    def setimages(self):
+        # Program icon(s) (First should be transparent!)
         self.parent.photo={}
+        imgurl=file.fullpathname('images/AZT stacks6.png')
         self.parent.photo['transparent'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/AZT stacks6_sm.png')
         self.parent.photo['small'] = tkinter.PhotoImage(file = imgurl)
@@ -5479,16 +5452,14 @@ class MainApplication(Frame):
         self.parent.photo['CV'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/AZT stacks6.png')
         self.parent.photo['backgrounded'] = tkinter.PhotoImage(file = imgurl)
+        #Set images for tasks
         imgurl=file.fullpathname('images/Verify List.png')
         self.parent.photo['verifyT'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/Sort List.png')
         self.parent.photo['sortT'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/Join List.png')
         self.parent.photo['joinT'] = tkinter.PhotoImage(file = imgurl)
-        # imgurl=file.fullpathname(
-        #     '/usr/share/icons/gnome/24x24/devices/audio-input-microphone.png')
-        # imgurl=file.fullpathname('images/Microphone card_sm.png')
-        # imgurl=file.fullpathname('images/Microphone alone.png')
+        # Other images
         imgurl=file.fullpathname('images/Microphone alone_sm.png')
         self.parent.photo['record'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/Change Circle_sm.png')
@@ -5497,12 +5468,41 @@ class MainApplication(Frame):
         self.parent.photo['checkedbox'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/unchecked.png')
         self.parent.photo['uncheckedbox'] = tkinter.PhotoImage(file = imgurl)
+    def settheme(self):
+        setthemes(self.parent)
+        #Select from lightgreen, green, pink, lighterpink, evenlighterpink,
+        #purple, Howard, Kent, Kim, yellow, greygreen1, lightgreygreen,
+        #greygreen, highcontrast, tkinterdefault
+        defaulttheme='greygreen'
+        multiplier=99 #The default theme will be this more frequent than others.
+        pot=list(self.parent.themes.keys())+([defaulttheme]*
+                                        (multiplier*len(self.parent.themes)-1))
+        self.parent.themename='Kent' #for the colorblind (to punish others...)
+        self.parent.themename='highcontrast' #for low light environments
+        self.parent.themename=pot[randint(0, len(pot))-1] #mostly defaulttheme
+        if ((platform.uname().node == 'karlap')
+                and (program['production'] is not True)):
+            self.parent.themename='Kim' #for my development
+        """These versions might be necessary later, but with another module"""
+        if self.parent.themename not in self.parent.themes:
+            print("Sorry, that theme doesn't seem to be set up. Pick from "
+            "these options:",self.parent.themes.keys())
+            exit()
+        self.parent.theme=self.parent.themes[self.parent.themename]
+        self.parent['background']=self.parent.theme['background']
+    def setmasterconfig(self,program):
+        self.parent.debug=False #needed?
+        """Configure variables for the root window (master)"""
+        for rc in [0,2]:
+            self.parent.grid_rowconfigure(rc, weight=3)
+            self.parent.grid_columnconfigure(rc, weight=3)
+        self.settheme()
+        self.setimages()
         #if resolutionsucks==True or windows==True:
             # setfonts(self.parent,fonttheme='small')
         #else:
         setfonts(self.parent)
-        # allow for exit button (~200px):
-        self.parent.wraplength=self.parent.winfo_screenwidth()-300
+        self.parent.wraplength=self.parent.winfo_screenwidth()-300 #exit button
         self.parent.program=program
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
@@ -5586,7 +5586,6 @@ class MainApplication(Frame):
 class Label(tkinter.Label):
     def wrap(self):
         availablexy(self)
-        # self.maxheight=self.parent.winfo_screenheight()-self.otherrowheight
         self.config(wraplength=self.maxwidth)
         log.debug('self.maxwidth (Label): {}'.format(self.maxwidth))
     def __init__(self, parent, text, column=0, row=1, **kwargs):
@@ -5597,17 +5596,12 @@ class Label(tkinter.Label):
             kwargs['wraplength']=parent.wraplength
         self.theme=parent.theme
         self.parent=parent
-        # print(kwargs.keys())
-        # if 'photo' in kwargs:
-        #     del kwargs['photo']
-        # print(kwargs.keys())
         tkinter.Label.__init__(self, parent, text=nfc(text), **kwargs)
         self['background']=self.theme['background']
 class EntryField(tkinter.Entry):
     def __init__(self, parent, **kwargs):
         self.parent=parent
         inherit(self)
-        # self.theme=parent.theme
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['default']
         super().__init__(parent,**kwargs)
@@ -5616,10 +5610,8 @@ class RadioButton(tkinter.Radiobutton):
     def __init__(self, parent, column=0, row=0, sticky='w', **kwargs):
         self.parent=parent
         inherit(self)
-        # self.theme=parent.theme
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['default']
-        # self['background']=self.theme['background']
         kwargs['activebackground']=self.theme['activebackground']
         kwargs['selectcolor']=self.theme['activebackground']
         super().__init__(parent,**kwargs)
@@ -5803,21 +5795,18 @@ class RecordButtonFrame(Frame):
         self.makerecordbutton()
         self.r.destroy()
     def fileopen(self):
-        # print("I'm opening the file to save the recording in now")
         file.remove(self.filenameURL) #don't do this until recording new file.
         self.wf = wave.open(self.filenameURL, 'wb')
         self.wf.setnchannels(self.channels)
         self.wf.setsampwidth(self.pa.get_sample_size(self.sample_format))
         self.wf.setframerate(self.fs)
     def fileclose(self):
-        # print("I'm writing and closing the recording file now")
         while self.stream.is_active():
             time.sleep(0.1)
         if hasattr(self,'fulldata'):
             self.wf.writeframes(self.fulldata)
         else:
             log.debug("Nothing recorded!")
-            # print(self.wf._nchannels)
         self.wf.close()
         if self.test is not True:
             self.db.addmediafields(self.node,self.filename,self.audiolang)
@@ -5913,7 +5902,6 @@ class ButtonFrame(Frame):
     def __init__(self,parent,
                     optionlist,command,
                     window=None,
-                    # width='25',
                     **kwargs
                     ):
         self.parent=parent
@@ -5956,7 +5944,7 @@ class ButtonFrame(Frame):
                 optionlist = [({'code':optionlist[i][0],
                                 'description':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
-        if not 'name' in optionlist[0].keys(): #duplicate from code.
+        if not 'name' in optionlist[0].keys(): #duplicate name from code.
             for i in range(0, len(optionlist)):
                 optionlist[i]['name']=optionlist[i]['code']
         if gimmenull == True:
