@@ -3103,8 +3103,7 @@ class Check():
                                         self.name)
         instructions=_("Select the one with the same tone melody as")
         self.runwindow.frame.scroll=ScrollingFrame(self.runwindow.frame)
-        self.runwindow.frame.scroll.grid(
-                                column=1,row=2, sticky="new")
+        self.runwindow.frame.scroll.grid(column=1,row=2, sticky="new")
         """The frame for the groups buttons"""
         self.runwindow.frame.scroll.content.groups=Frame(
                                             self.runwindow.frame.scroll.content)
