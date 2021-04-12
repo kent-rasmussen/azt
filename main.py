@@ -6436,17 +6436,6 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent
     return unicodedata.normalize('NFD', str(x))
-    # print("self.fonts: {}, self.parent.fonts: {}".format(self.fonts,self.parent.fonts))
-    # self.fonts=self.parent.fonts
-    # self.theme=self.parent.theme
-    # self.debug=self.parent.debug
-    # self.wraplength=self.parent.wraplength
-    # self.photo=self.parent.photo
-    # # self.photowhite=self.parent.photowhite
-    # self.program=self.parent.program
-    # # self.photosmall=self.parent.photosmall
-    # self._=self.parent._
-    # self.interfacelang=self.parent.interfacelang
 def main():
     global program
     log.info("Running main function") #Don't translate yet!
