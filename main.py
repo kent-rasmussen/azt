@@ -6015,7 +6015,6 @@ class Wait(Window): #Window? tkinter.Toplevel
         self['background']=parent['background']
         # self['background']=self.theme['background']
         self.photo = parent.photo #need this before making the frame
-        self.outsideframe=Frame(self)
         title=(_("Please Wait! {name} Dictionary and Orthography Checker "
                         "in Process").format(name=self.program['name']))
         self.title(title)
