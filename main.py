@@ -3595,8 +3595,9 @@ class Check():
     def settonevariablesbypsprofile(self):
         """ps and profile should already be set before this is called, and if
         they change, this should be run again."""
-        self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.makestatusdict() #Fills any existing holes in status file sructure
+        #The following depends on the above for structure
+        self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.gettonegroups() #sets self.status...['groups']
     def tryNAgain(self):
         self.settonevariablesbypsprofile()
