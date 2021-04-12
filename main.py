@@ -5260,8 +5260,12 @@ class Menu(tkinter.Menu):
         self.parent=parent
         inherit(self)
         self['font']=self.fonts['default']
-        self['activebackground']=self.theme['background'] #self.theme['activebackground']
-        self['background']='white' #self.theme['background']
+        #Blend with other widgets:
+        # self['activebackground']=self.theme['activebackground']
+        # self['background']=self.theme['background']
+        # stand out from other widgets:
+        self['activebackground']=self.theme['background']
+        self['background']='white'
 class MainApplication(Frame):
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
