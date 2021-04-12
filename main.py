@@ -5053,7 +5053,7 @@ class Window(tkinter.Toplevel):
             self.exitButton=tkinter.Button(self.outsideframe, width=10, text=e,
                                 command=self.destroy,
                                 activebackground=self.theme['activebackground'],
-                                background=self.theme['background']
+                                background=self['background']
                                             )
             self.exitButton.grid(column=2,row=2)
         if backcmd is not False: #This one, too...
@@ -6018,10 +6018,10 @@ class Wait(Window): #tkinter.Toplevel?
                         "in Process").format(name=self.program['name']))
         self.title(title)
         text=_("Please Wait...")
-        self.l=Label(self, text=text,
+        self.l=Label(self.outsideframe, text=text,
                 font=self.fonts['title'],anchor='c')
         self.l.grid(row=0,column=0,sticky='we')
-        Label(self, image=self.photo['small'],text='',
+        Label(self.outsideframe, image=self.photo['small'],text='',
                         bg=self['background']
                         ).grid(row=1,column=0,sticky='we',padx=50,pady=50)
         self.update_idletasks()
