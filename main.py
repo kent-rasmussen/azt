@@ -5992,7 +5992,7 @@ class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
                             window=window,
                             **kwargs)
         self.bf.grid(row=0, column=0)
-class Wait(Window): #Window? tkinter.Toplevel
+class Wait(Window): #tkinter.Toplevel?
     def close(self):
         try:
             self.parent.deiconify()
@@ -6011,20 +6011,19 @@ class Wait(Window): #Window? tkinter.Toplevel
             #     self.parent.iconify() #A window doesn't return on deiconify...
         except:
             log.debug("Not withdrawing parent.")
-        super(Wait, self).__init__(parent) #,bg=self.theme['background'])
+        super(Wait, self).__init__(parent)
         self['background']=parent['background']
-        # self['background']=self.theme['background']
         self.photo = parent.photo #need this before making the frame
         title=(_("Please Wait! {name} Dictionary and Orthography Checker "
                         "in Process").format(name=self.program['name']))
         self.title(title)
         text=_("Please Wait...")
         self.l=Label(self, text=text,
-                font=self.fonts['title'],anchor='c',padx=50,pady=50)
+                font=self.fonts['title'],anchor='c')
         self.l.grid(row=0,column=0,sticky='we')
-        Label(self, image=self.photo['transparent'],text='',
-                        bg=self['background'] #.theme
-                        ).grid(row=1,column=0,sticky='we')
+        Label(self, image=self.photo['small'],text='',
+                        bg=self['background']
+                        ).grid(row=1,column=0,sticky='we',padx=50,pady=50)
         self.update_idletasks()
 class Splash(Window):
     def __init__(self, parent):
