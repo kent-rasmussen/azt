@@ -4625,6 +4625,7 @@ class Check():
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
         print(instr)
         log.info(instr)
+        #There is no runwindow here...
         ww=Wait(self.frame) #non-widget parent deiconifies no window...
         self.basicreported={}
         self.checkcounts={}
@@ -5990,7 +5991,7 @@ class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
                             window=window,
                             **kwargs)
         self.bf.grid(row=0, column=0)
-class Wait(tkinter.Toplevel): #Window?
+class Wait(Window): #Window? tkinter.Toplevel
     def close(self):
         try:
             self.parent.deiconify()
@@ -6009,7 +6010,7 @@ class Wait(tkinter.Toplevel): #Window?
             #     self.parent.iconify() #A window doesn't return on deiconify...
         except:
             log.debug("Not withdrawing parent.")
-        super(Wait, self).__init__(bg=self.theme['background'])
+        super(Wait, self).__init__(parent,bg=self.theme['background'])
         self.photo = parent.photo #need this before making the frame
         # self['background']=self.theme['background']
         self.outsideframe=Frame(self)
