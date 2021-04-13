@@ -6057,7 +6057,7 @@ def getinterfacelang():
             log.debug("_ doesn't look defined yet, returning 'en' as current "
                                                         "interface language.")
             return 'en'
-def setinterfacelang(lang):
+def setinterfacelang(lang,magic=False):
     global aztdir
     global i18n
     global _
@@ -6067,10 +6067,10 @@ def setinterfacelang(lang):
     curlang=getinterfacelang()
     try:
         log.debug("Magic: {}".format(str(_)))
+        magic=True
     except:
         log.debug("Looks like translation magic isn't defined yet; making")
-        nomagic=True
-    if lang != curlang or nomagic == True:
+    if lang != curlang or magic == False:
         i18n[lang].install()
     else:
         log.debug("Apparently we're trying to set the same interface "
