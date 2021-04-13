@@ -848,6 +848,7 @@ class Check():
             sub_btn=Button(self.addwindow.framechk,text = stext,
                       command = lambda x=frame,n=namevar: submit(x,n))
             sub_btn.grid(row=row,column=columnleft,sticky='w')
+            self.addwindow.scroll.windowsize() #make sure scroll's big enough
         def unchk(event):
             #This is here to keep people from thinking they are approving what's
             #next to this button, in case any variable has been changed.
