@@ -1222,13 +1222,14 @@ class Check():
             filename=getattr(self,fileattr)
         self.f = open(filename, "w", encoding='utf-8')
         for s in self.settings[setting]['attributes']:
-            v=getattr(self,s)
-            if v != None:
-                self.f.write(s+'=')
-                pprint.pprint(v,stream=self.f)
-                log.debug("{}={} stored in {}.".format(s,v,filename))
-            else:
-                log.debug("{}={}! Not stored in {}.".format(s,v,filename))
+            if hasattr(self,s)ː
+                v=getattr(self,s)
+                if v != None:
+                    self.f.write(s+'=')
+                    pprint.pprint(v,stream=self.f)
+                    log.debug("{}={} stored in {}.".format(s,v,filename))
+                else:
+                    log.debug("{}={}! Not stored in {}.".format(s,v,filename))
         self.f.close()
     def loadsettingsfile(self,setting='defaults'):
         fileattr=self.settings[setting]['file']
