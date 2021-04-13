@@ -4421,6 +4421,11 @@ class Check():
         if default == True:
             #Do the draft UF analysis, from scratch
             output=self.tonegroupsbysenseidlocation() #collect senseid-locations
+            if self.locations == []:
+                log.error("Hey, sort some morphemes in at least one frame before "
+                            "trying to make a tone report!")
+                self.runwindow.ww.close()
+                return
             groups=self.groupUFsfromtonegroupsbylocation(output) #make groups
             groups=self.senseidstogroupUFs(output,groups) #fillin group senseids
             groupstructuredlist=self.prioritizegroupUFs(groups)
@@ -6079,10 +6084,11 @@ def setinterfacelang(lang,magic=False):
     log.debug(_("Translation seems to be working, using {}"
                                                 "".format(getinterfacelang())))
 def flatten(l):
+    log.debug("list to flatten: {}".format(l))
     if type(l) is not list:
         log.debug("{} is not a list; returning nothing.".format(l))
         return
-    if type(l[0]) is not list:
+    if l == [] or type(l[0]) is not list:
         log.debug("The first element of {} is not a list; returning nothing."
                     "".format(l))
         return
@@ -6109,6 +6115,9 @@ def addxofytolistoflists(x,y,o):
             o.append([x])
     return o
 def dictscompare(dicts,ignore=[],flat=True):
+    if len(dicts) == 1:
+        log.debug("Just one dict: {}; just returning key.".format(dicts))
+        return [list(dicts.keys()),] #This should be a list of lists
     l=dictscompare11(dicts,ignore=ignore)
     o=list([],)
     for c in l:
