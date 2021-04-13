@@ -1222,7 +1222,7 @@ class Check():
             filename=getattr(self,fileattr)
         self.f = open(filename, "w", encoding='utf-8')
         for s in self.settings[setting]['attributes']:
-            if hasattr(self,s)ː
+            if hasattr(self,s):
                 v=getattr(self,s)
                 if v != None:
                     self.f.write(s+'=')
