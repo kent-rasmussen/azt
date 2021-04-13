@@ -6159,7 +6159,7 @@ def firstoflist(l,othersOK=False,all=False):
     if (l == None) or (l == []):
         return
     if all == True:
-        return ', '.join(l)
+        return ', '.join(x for x in l if x is not None)
     elif len(l) == 1 or (othersOK == True):
         return l[0]
     elif othersOK == False: #(i.e., with `len(list) != 1`)
