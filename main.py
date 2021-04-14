@@ -2107,53 +2107,39 @@ class Check():
         self.storesettingsfile()
         self.checkcheck()
     def soundcheckrefresh(self):
-        self.soundsettingswindow.resetframe() # Frame(self.soundsettingswindow.frame)
-        # self.soundsettingswindow.frame.grid(row=1,column=0)
+        self.soundsettingswindow.resetframe()
         row=0
         Label(self.soundsettingswindow.frame,
                 text="Current Sound Card Settings:").grid(row=row,column=0)
         row+=1
-        # row=0
-        if self.fs is None:
-            Label(self.soundsettingswindow.frame,
-                                text='<unset>').grid(row=row,column=0)
-        else:
-            for ratedict in self.fss:
-                if self.fs==ratedict['code']:
-                    self.fsname=ratedict['name']
-            Label(self.soundsettingswindow.frame,
-                                text=self.fsname).grid(row=row,column=0)
         text=_("Change")
-        Button(self.soundsettingswindow.frame, choice=text,
-                        text=text, anchor='c',
-                        cmd=self.getsoundhz).grid(row=row,column=1)
-        row+=1
-        if self.sample_format is None:
-            Label(self.soundsettingswindow.frame,
+        for var, varset, cmd in [(self.fs,self.fss,self.getsoundhz),
+            (self.sample_format,self.sample_formats,self.getsoundformat),
+            (self.audio_card_index,self.audio_card_indexes,
+                                                        self.getsoundcardindex),
+            (self.audioout_card_index,self.audioout_card_indexes,
+                                                    self.getsoundcardoutindex),
+            ]:
+            print("var: {}".format(var))
+            print("varset: {}".format(varset))
+            print("cmd: {}".format(cmd))
+            if var is None:
+                Label(self.soundsettingswindow.frame,
                                 text='<unset>').grid(row=row,column=0)
-        else:
-            for ratedict in self.sample_formats:
-                if self.sample_format==ratedict['code']:
-                    self.sample_formatname=ratedict['name']
-            Label(self.soundsettingswindow.frame,
-                        text=self.sample_formatname).grid(row=row,column=0)
-        Button(self.soundsettingswindow.frame, choice=text,
-                        text=text, anchor='c',
-                        cmd=self.getsoundformat).grid(row=row,column=1)
-        row+=1
-        if self.audio_card_index is None:
-            Label(self.soundsettingswindow.frame,
-                                text='<unset>').grid(row=row,column=0)
-        else:
-            for ratedict in self.audio_card_indexes:
-                if self.audio_card_index==ratedict['code']:
-                    self.audio_card_indexname=ratedict['name']
-            Label(self.soundsettingswindow.frame,
-                        text=self.audio_card_indexname).grid(row=row,column=0)
-        Button(self.soundsettingswindow.frame, choice=text,
-                        text=text, anchor='c',
-                        cmd=self.getsoundcardindex).grid(row=row,column=1)
-        row+=1
+            else:
+                for ratedict in varset:
+                    if var==ratedict['code']:
+                        l=ratedict['name'] # self.fsname=ratedict['name']
+                        if cmd is self.getsoundcardindex:
+                            l=_("Recording on {}").format(l)
+                        if cmd is self.getsoundcardoutindex:
+                            l=_("Playing on {}").format(l)
+                        Label(self.soundsettingswindow.frame,
+                                text=l).grid(row=row,column=0)
+            Button(self.soundsettingswindow.frame, choice=text,
+                            text=text, anchor='c',
+                            cmd=cmd).grid(row=row,column=1)
+            row+=1
         b=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
         b.grid(row=row,column=0)
         row+=1
@@ -2176,6 +2162,7 @@ class Check():
                             {'code':pyaudio.paInt8, 'name':'8 bit integer'}
                             ]
         self.audio_card_indexes=[]
+        self.audioout_card_indexes=[]
         p = pyaudio.PyAudio()
         info = p.get_host_api_info_by_index(0)
         numdevices = info.get('deviceCount')
@@ -2186,6 +2173,15 @@ class Check():
                         p.get_device_info_by_host_api_device_index(0, i).get(
                                                                     'name')))
                     self.audio_card_indexes+=[{
+                            'code':i,
+                            'name':p.get_device_info_by_host_api_device_index(
+                            0, i).get('name')}]
+            if (p.get_device_info_by_host_api_device_index(0, i).get(
+                                                    'maxOutputChannels')) > 0:
+                    log.info("Output Device id {} - {}".format(i,
+                        p.get_device_info_by_host_api_device_index(0, i).get(
+                                                                    'name')))
+                    self.audioout_card_indexes+=[{
                             'code':i,
                             'name':p.get_device_info_by_host_api_device_index(
                             0, i).get('name')}]
@@ -2204,6 +2200,10 @@ class Check():
                 (self.audio_card_index not in [v['code'] for v
                                                 in self.audio_card_indexes])):
             self.audio_card_index=None
+        if (not hasattr(self,'audioout_card_index') or
+                (self.audioout_card_index not in [v['code'] for v
+                                                in self.audioout_card_indexes])):
+            self.audioout_card_index=None
         log.log(2,"fs: {}; sf: {}; ci: {}".format(
                         self.fs,self.sample_format,self.audio_card_index))
         # ButtonFram
@@ -5823,6 +5823,7 @@ class RecordButtonFrame(Frame):
         # print('getframerate:',self.wf.getsampwidth())
         # print('format:',self.pa.get_format_from_width(self.wf.getsampwidth()))
         stream = self.pa.open(
+                output_device_index=self.audioout_card_index,
                 format=self.pa.get_format_from_width(self.wf.getsampwidth()),
                 channels=self.wf.getnchannels(),
                 rate=self.wf.getframerate(),
@@ -5930,19 +5931,20 @@ class RecordButtonFrame(Frame):
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
         if ((check.fs == None) or (check.sample_format == None)
-                or (check.audio_card_index == None)):
+                or (check.audio_card_index == None)
+                or (check.audioout_card_index == None)):
             text=_("Sorry, you need to set the fs, sample_rate, and sound card!"
                     "\n(Change Stuff|Recording|Sound Card Settings)"
                     "\nSet these, and try again, and "
                     "\na record button will be here.")
             print(text)
             Label(self,text=text).grid(row=0,column=0)
-            # check.soundcheck()
             return
         else:
             self.fs=check.fs
             self.sample_format=check.sample_format
             self.audio_card_index=check.audio_card_index
+            self.audioout_card_index=check.audioout_card_index
         self.makebuttons()
 class ButtonFrame(Frame):
     def __init__(self,parent,
