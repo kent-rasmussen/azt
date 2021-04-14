@@ -2,6 +2,11 @@
 
 # for 0.8
 - look at how to generalize tone sorting, joining, etc. process.
+- bring new documentation pages:
+  - What A→Z+T will and won't do for you
+  - The Cyclical process of analysis
+    - incremental
+    - complete cycles
 
 ## In Process
 - add test for resolutionsucks, implement smaller font theme
