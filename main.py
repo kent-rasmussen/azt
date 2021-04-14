@@ -607,8 +607,13 @@ class Check():
                 self.senseidstosort.append(var.get())
             log.log(2,"ids: {}".format(self.senseidstosort))
             self.profile=profilevar.get()
-            self.profilesbysense[self.ps][self.profile]=self.senseidstosort
-            self.storesettingsfile(setting='profiledata') #since we changed this.
+            self.makeadhocgroupsdict() # in case the variable or ps isn't there.
+            self.adhocgroups[self.ps][self.profile]=self.profilesbysense[
+                                    self.ps][self.profile]=self.senseidstosort
+            self.makecountssorted() #we need these to show up in the counts.
+            self.storesettingsfile(setting='profiledata')#since we changed this.
+            #so we don't have to do this again after each profile analysis
+            self.storesettingsfile(setting='adhocgroups')
             self.checkcheck()
         self.getrunwindow()
         title=_("Add Ad Hoc Sort Group to {} group".format(self.ps))
