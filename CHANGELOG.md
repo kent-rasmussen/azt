@@ -8,6 +8,7 @@
     - incremental
     - complete cycles
 adding sbj to frames, including in lift and status file.
+- get dependencies offline
 
 ## In Process
 - add test for resolutionsucks, implement smaller font theme
@@ -119,6 +120,7 @@ adding sbj to frames, including in lift and status file.
   - reloaded after reanalysis
 - fixed scrolling window not wide enough in frame dialog
 - numerous minor fixes
+- set up on different input and output sound cards
 
 # Version 0.7
 - truncate definitions after three words or before parentheses
