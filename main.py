@@ -990,16 +990,30 @@ class Check():
     def setsoundcardindex(self,choice,window):
         self.set('audio_card_index',choice,window)
         self.soundcheckrefresh()
+    def setsoundcardoutindex(self,choice,window):
+        self.set('audioout_card_index',choice,window)
+        self.soundcheckrefresh()
     def getsoundcardindex(self):
-        log.info("Asking for sampling frequency...")
-        window=Window(self.frame, title=_('Select Sound Card'))
+        log.info("Asking for input sound card...")
+        window=Window(self.frame, title=_('Select Input Sound Card'))
         Label(window.frame, text=_('What sound card do you '
-                                    'want to work with?')
+                                    'want to record sound with with?')
                 ).grid(column=0, row=0)
         buttonFrame1=ButtonFrame(window.frame,
                                 self.audio_card_indexes,self.setsoundcardindex,
                                 window
                                 )
+        buttonFrame1.grid(column=0, row=1)
+    def getsoundcardoutindex(self):
+        log.info("Asking for output sound card...")
+        window=Window(self.frame, title=_('Select Output Sound Card'))
+        Label(window.frame, text=_('What sound card do you '
+                                    'want to play sound with?')
+                ).grid(column=0, row=0)
+        buttonFrame1=ButtonFrame(window.frame,
+                    self.audioout_card_indexes,self.setsoundcardoutindex,
+                    window
+                    )
         buttonFrame1.grid(column=0, row=1)
     """Set User Input"""
     def set(self,attribute,choice,window):
@@ -1152,6 +1166,7 @@ class Check():
                         'fs':[],
                         'sample_format':[],
                         'audio_card_index':[],
+                        'audioout_card_index':[],
                         'examplespergrouptorecord':[],
                         'distinguish':[],
                         'interpret':[],
@@ -1179,6 +1194,7 @@ class Check():
                                 'sample_format',
                                 'fs',
                                 'audio_card_index',
+                                'audioout_card_index',
                                 'interfacelang',
                                 'examplespergrouptorecord',
                                 'distinguish',
