@@ -1394,6 +1394,14 @@ class Check():
             if x % 10 is 0:
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
                                             self.profile))
+        psori=self.ps #We iterate across this here
+        for self.ps in self.adhocgroups:
+            self.makeadhocgroupsdict()
+            for adhoc in self.adhocgroups[self.ps]:
+                self.addpstoprofileswdata()
+                self.profilesbysense[self.ps][self.profile]=self.adhocgroups[
+                                                                self.ps][adhoc]
+        self.ps=psori
         self.updatecounts()
         print('Done:',time.time()-self.start_time)
         if self.debug==True:
