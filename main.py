@@ -1261,6 +1261,12 @@ class Check():
                 log.log(3,"looking for self.{}".format(s))
                 if hasattr(self,s):
                     log.log(3,"Using {}: {}".format(s,getattr(self,s)))
+    def makeadhocgroupsdict(self):
+        # self.ps and self.profile should be set when this is called
+        if not hasattr(self,'adhocgroups'):
+            self.adhocgroups={}
+        if self.ps not in self.adhocgroups:
+            self.adhocgroups[self.ps]={}
     def makestatusdict(self):
         # This operates for exactly one context: wherever it is called.
         changed=False
