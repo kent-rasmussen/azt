@@ -838,7 +838,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                         "".format(form.get('lang')))
                             return
             else:
-                log.debug("Not sure what kind of node I'm dealing with!".format(node.tag))
+                log.debug("Not sure what kind of node I'm dealing with! ({})"
+                                                            "".format(node.tag))
         return tonevalue
     def exampleissameasnew(self,showurl=False, **kwargs):
         # ,guid,senseid,analang, glosslang,glosslang2,forms, fieldtype,
