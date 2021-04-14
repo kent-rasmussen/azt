@@ -122,8 +122,10 @@ class Check():
                                         filenamebase+".VerificationStatus.py")
         self.profiledatafile=file.getdiredurl(filedir,
                                         filenamebase+".ProfileData.py")
+        self.adhocgroupsfile=file.getdiredurl(filedir,
+                                        filenamebase+".AdHocGroups.py")
         for savefile in [self.defaultfile,self.toneframesfile,self.statusfile,
-                        self.profiledatafile]:
+                        self.profiledatafile,self.adhocgroupsfile]:
             if not file.exists(savefile):
                 print(savefile, "doesn't exist!")
         self.imagesdir=file.getimagesdir(filename)
@@ -139,6 +141,7 @@ class Check():
         self.settingsbyfile()
         self.loadsettingsfile(setting='toneframes')
         self.loadsettingsfile(setting='status')
+        self.loadsettingsfile(setting='adhocgroups')
         if nsyls is not None:
             self.nsyls=nsyls
         else:
@@ -1190,6 +1193,9 @@ class Check():
             'status':{
                                 'file':'statusfile',
                                 'attributes':['status']},
+            'adhocgroups':{
+                                'file':'adhocgroupsfile',
+                                'attributes':['adhocgroups']},
             'toneframes':{
                                 'file':'toneframesfile',
                                 'attributes':['toneframes']}
