@@ -7,6 +7,7 @@
   - The Cyclical process of analysis
     - incremental
     - complete cycles
+adding sbj to frames, including in lift and status file.
 
 ## In Process
 - add test for resolutionsucks, implement smaller font theme
@@ -111,6 +112,13 @@
 - distinguish between lc and lx
     - make CV report only reference lx field
     - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
+
+# Version 0.8
+- set up ad hoc groups to be more permanent:
+  - saved to file
+  - reloaded after reanalysis
+- fixed scrolling window not wide enough in frame dialog
+- numerous minor fixes
 
 # Version 0.7
 - truncate definitions after three words or before parentheses
