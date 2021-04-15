@@ -5880,6 +5880,53 @@ class RecordButtonFrame(Frame):
         self.db.addmediafields(self.node,self.filename,self.audiolang)
     def function(self):
         pass
+    def makefilenames(self):
+        if self.test==True:
+            self.filename=self.filenameURL="test_{}_{}.wav".format(
+                                        self.check.fs,self.check.sample_format)
+        else:
+            if ((self.id==None) or (self.node==None) #or (self.form==None)
+                or (self.gloss==None)):
+                print("Sorry, unless testing we need all these "
+                        "arguments; exiting.")
+            if self.form==None:
+                self.form=self.node.find(f"form[@lang='{check.analang}']/text").text
+            # make psprofile (if no audio file, the last in this list is used):
+            psprofiles=[self.check.ps]
+            if (self.node.tag == 'example'):
+                l=self.node.find("field[@type='location']//text")
+                if l is not None:
+                    psprofiles+=[self.check.ps+'-'+l.text]
+            if not hasattr(self.check, 'rx'):
+                #ad hoc dictionary to remove diacritics:
+                self.check.rx={'d':rx.make(rx.s(self.check,'d'),compile=True)}
+            self.filenames=[]
+            for psprofile in psprofiles:
+                args=[psprofile, self.id, self.node.tag, rx.stripdiacritics(
+                                                    self.check,self.form),
+                                                    #check.profile, <=Changes!
+                                                    self.gloss]
+                wavfilename=''
+                for arg in [x for x in args if x != None]:
+                    wavfilename+=arg
+                    if args.index(arg) < len(args):
+                        wavfilename+='_'
+                self.filenames+=[re.sub('[][\. /?]+','_',
+                                                    str(wavfilename))+'.wav']
+            #test if any of the filenames are there
+            for self.filename in self.filenames:
+                self.filenameURL=str(file.getdiredurl(self.check.audiodir,
+                                                                self.filename))
+                if file.exists(self.filenameURL):
+                    log.debug("Audio file found! using name: {}; names: {}; "
+                        "url:{}".format(self.filename, self.filenames,
+                                                            self.filenameURL))
+                    self.addlink()
+                    return
+            #if you don't find any, take the last values
+            log.debug("No audio file found! using name: {}; names: {}; url:{}"
+                    "".format(self.filename, self.filenames, self.filenameURL))
+            return
     def __init__(self, parent, check, id=None, node=None, form=None,
                 gloss=None, test=False,
                 #choice=None, window=None, #some buttons have these, some don't
@@ -5890,6 +5937,10 @@ class RecordButtonFrame(Frame):
         sound-python/"""
         self.db=check.db
         self.node=node #This should never be more than one node...
+        self.form=form
+        self.id=id
+        self.gloss=gloss
+        self.check=check
         self.callbackrecording=True
         self.chunk = 1024  # Record in chunks of 1024 samples
         # self.sample_format = pyaudio.paInt16  # 16 bits per sample
@@ -5901,34 +5952,7 @@ class RecordButtonFrame(Frame):
         """I'm trusting here that no one has been screwing with the check
         parameters"""
         self.test=test
-        if self.test==True:
-            self.filename=self.filenameURL=f'test_{check.fs}_{check.sample_format}.wav'
-        else:
-            if form==None:
-                form=node.find(f"form[@lang='{check.analang}']/text").text
-            wavfilename=''
-            if (self.node.tag == 'example') and (check.analang != 'bfj'): #for now, since in process
-                l=self.node.find("field[@type='location']//text")
-                if l is not None:
-                    psprofile=check.ps+'-'+l.text
-                else: psprofile=check.ps
-            else: psprofile=check.ps
-            log.debug(check.s[check.analang])
-            if not hasattr(check, 'rx'):
-                check.rx={'d':rx.make(rx.s(check,'d'),compile=True)} #ad hoc dictionary
-            args=[psprofile, id, self.node.tag, rx.stripdiacritics(check,form),
-                                            gloss] #check.profile, <=Changes!
-            for arg in [x for x in args if x != None]:
-                wavfilename+=arg
-                if args.index(arg) < len(args):
-                    wavfilename+='_'
-            self.filename = re.sub('[][\. /?]+','_',str(wavfilename))+'.wav'
-            self.filenameURL=str(file.getdiredurl(check.audiodir,self.filename))
-            # self.filename=str('audio/'+filename)
-            if ((id==None) or (node==None) or (form==None)
-                or (gloss==None)):
-                print("Sorry, unless testing we need all these "
-                        "arguments; exiting.")
+        self.makefilenames()
         Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
