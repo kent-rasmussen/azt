@@ -5855,7 +5855,7 @@ class RecordButtonFrame(Frame):
             log.debug("Nothing recorded!")
         self.wf.close()
         if self.test is not True:
-            self.db.addmediafields(self.node,self.filename,self.audiolang)
+            self.addlink()
     def makebuttons(self):
         if file.exists(self.filenameURL):
             self.makeplaybutton()
@@ -5875,6 +5875,9 @@ class RecordButtonFrame(Frame):
         self.r=Button(self,text=_('Redo'),command=self.function)
         self.r.grid(row=0, column=2,sticky='w')
         self.r.bind('<ButtonRelease>', self._redo)
+    def addlink(self):
+        #this checks for and doesn't add it already there.
+        self.db.addmediafields(self.node,self.filename,self.audiolang)
     def function(self):
         pass
     def __init__(self, parent, check, id=None, node=None, form=None,
