@@ -1707,10 +1707,9 @@ class Check():
                     for subnode in node:
                         if (subnode.tag == 'form'):
                             glosses[subnode.get('lang')]=subnode.findall('text')
-                if ((node.tag == 'field') and
-                                (subnode.get('type') == 'tone')):
+                if ((node.tag == 'field') and (node.get('type') == 'tone')):
                     #This should always be only one value:
-                    tonegroups=node.findall('text')
+                    tonegroups=node.findall('form/text')
             log.log(2,'forms: {}'.format(forms))
             for lang in glosses:
                 log.log(2,'gloss[{}]: {}'.format(lang,glosses[lang]))
