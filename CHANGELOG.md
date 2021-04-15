@@ -2,6 +2,7 @@
 
 # for 0.8
 - make function to add link if sound file is there, but link isn't.
+  - set up alternation, to accept either sound file nomenclature (make futureproof now)
 - look at how to generalize tone sorting, joining, etc. process.
 - bring new documentation pages:
   - What A→Z+T will and won't do for you
