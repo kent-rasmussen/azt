@@ -9,8 +9,9 @@
   - The Cyclical process of analysis
     - incremental
     - complete cycles
-adding sbj to frames, including in lift and status file.
 - get dependencies offline
+- don't crash on invalid sample rate; clear if not valid.
+- make tone frames window scroll
 
 ## In Process
 - add test for resolutionsucks, implement smaller font theme
