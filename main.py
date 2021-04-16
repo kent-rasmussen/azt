@@ -2570,7 +2570,7 @@ class Check():
         else:
             text=_('What check do you want to do?')
             Label(window.frame, text=text).grid(column=0, row=0)
-            buttonFrame1=ButtonFrame(window.frame,
+            buttonFrame1=ScrollingButtonFrame(window.frame,
                                     self.checkspossible,
                                     self.setcheck,
                                     window
