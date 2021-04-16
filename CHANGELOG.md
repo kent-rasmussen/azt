@@ -12,6 +12,9 @@
 - get dependencies offline
 - don't crash on invalid sample rate; clear if not valid.
 - make tone frames window scroll
+- When making record button:
+  - remove links to the *wrong* sound file
+  - test for presence of currently linked file (i.e., not recorded in AZT), give play buttons
 
 ## In Process
 - add test for resolutionsucks, implement smaller font theme
