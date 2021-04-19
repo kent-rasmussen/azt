@@ -641,11 +641,11 @@ class Check():
                 "\nIf you want to compare words that are currently in "
                 "different grammatical categories, put them first into the "
                 "same grammatical category in another tool (e.g., FLEx or "
-                "WeSay), "
-                "then put them in an ad hoc group here."
-                "\nIf you're looking at a group you created earlier, and you "
-                "want to create a new group, exit here, switch to a regular "
-                "sorting group, and try this window again.".format(self.ps))
+                "WeSay), then put them in an Ad Hoc group here."
+                # "\nIf you're looking at a group you created earlier, and "
+                "\nIf you want to create a new group, exit here, select a "
+                "non-Ad Hoc syllable profile, and try this window again."
+                "".format(self.ps))
         Label(self.runwindow,text=text).grid(row=1,column=0,sticky='ew')
         qframe=Frame(self.runwindow)
         qframe.grid(row=2,column=0,sticky='ew')
