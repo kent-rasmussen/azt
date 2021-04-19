@@ -189,10 +189,13 @@ class Check():
         if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
             log.info("Starting profile analysis at {}".format(time.time()
                                                             -self.start_time))
+            log.info("Starting ps-profile: {}-{}".format(self.ps,self.profile))
             self.getprofiles() #creates self.profilesbysense nested dicts
             for var in ['rx','profilesbysense','profilecounts']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
+            log.info("Middle ps-profile: {}-{}".format(self.ps,self.profile))
             self.storesettingsfile(setting='profiledata')
+            log.info("Ending ps-profile: {}-{}".format(self.ps,self.profile))
         self.getpss() #This is a prioritized list of all ps'
         self.setnamesall() #sets self.checknamesall
         log.info("Done initializing check; running first check check.")
@@ -1255,9 +1258,9 @@ class Check():
                 if v != None:
                     self.f.write(s+'=')
                     pprint.pprint(v,stream=self.f)
-                    log.debug("{}={} stored in {}.".format(s,v,filename))
+                    log.log(3,"{}={} stored in {}.".format(s,v,filename))
                 else:
-                    log.debug("{}={}! Not stored in {}.".format(s,v,filename))
+                    log.log(3,"{}={}! Not stored in {}.".format(s,v,filename))
         self.f.close()
     def loadsettingsfile(self,setting='defaults'):
         fileattr=self.settings[setting]['file']
@@ -1424,11 +1427,16 @@ class Check():
         psori=self.ps #We iterate across this here
         self.makeadhocgroupsdict() #if no file, before iterating over variable
         for self.ps in self.adhocgroups:
-            self.makeadhocgroupsdict()
+            self.makeadhocgroupsdict() #in case there is no ps key
             for adhoc in self.adhocgroups[self.ps]:
-                self.addpstoprofileswdata()
+                log.debug("Adding {} to {} ps-profile: {}".format(adhoc,self.ps,
+                                            self.adhocgroups[self.ps][adhoc]))
+                self.addpstoprofileswdata() #in case the ps isn't already there
+                #copy over stored values:
                 self.profilesbysense[self.ps][adhoc]=self.adhocgroups[
                                                                 self.ps][adhoc]
+                log.debug("resulting profilesbysense: {}".format(
+                                        self.profilesbysense[self.ps][adhoc]))
         self.ps=psori
         self.updatecounts()
         print('Done:',time.time()-self.start_time)
@@ -2120,9 +2128,6 @@ class Check():
             (self.audioout_card_index,self.audioout_card_indexes,
                                                     self.getsoundcardoutindex),
             ]:
-            print("var: {}".format(var))
-            print("varset: {}".format(varset))
-            print("cmd: {}".format(cmd))
             if var is None:
                 Label(self.soundsettingswindow.frame,
                                 text='<unset>').grid(row=row,column=0)
@@ -2332,7 +2337,7 @@ class Check():
                                                                     totalnum)))
                         if type(donenum) is int:
                             donenum=str(donenum)+'/'+str(totalnum)
-                            log.debug("Total groups found: {}".format(donenum))
+                            log.log(3,"Total groups found: {}".format(donenum))
                         # This should only be needed on a new database
                         if self.status[self.type][self.ps][profile][frame][
                                                             'tosort'] == True:
@@ -3567,7 +3572,7 @@ class Check():
                 )
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
     def gettonegroups(self):
-        print("Looking for tone groups for {} frame".format(self.name))
+        log.debug("Looking for tone groups for {} frame".format(self.name))
         tonegroups=[]
         for senseid in self.senseidstosort: #I should be able to make this a regex...
             tonegroups+=self.db.get('exfieldvalue', senseid=senseid,
@@ -3579,8 +3584,8 @@ class Check():
                                                         self.name]['groups']:
                 self.status[self.type][self.ps][self.profile][self.name][
                                                         'groups'].remove(value)
-        log.debug('gettonegroups: {}'.format(self.status[self.type][self.ps][
-                                            self.profile][self.name]['groups']))
+        log.debug('gettonegroups ({}): {}'.format(self.name,
+            self.status[self.type][self.ps][self.profile][self.name]['groups']))
     def marksortedguid(self,guid):
         """I think these are only valuable during a check, so we don't have to
         constantly refresh sortingstatus() from the lift file."""
