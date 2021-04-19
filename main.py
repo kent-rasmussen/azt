@@ -630,12 +630,20 @@ class Check():
             allpssensids+=list(self.profilesbysense[self.ps][profile])
         allpssensids=list(dict.fromkeys(allpssensids))
         if len(allpssensids)>70:
+            self.runwindow.ww.close()
             text=_("This is a large group ({})! Are you in the right "
                     "grammatical category?".format(len(allpssensids)))
             log.error(text)
-            Label(self.runwindow,text=text).grid(row=1,column=0,sticky='ew')
-            self.runwindow.ww.close()
+            w=Label(self.runwindow,text=text)
+            w.grid(row=1,column=0,sticky='ew')
+            b=Button(self.runwindow, text="OK", command=w.destroy, anchor='c')
+            b.grid(row=2,column=0,sticky='ew')
+            self.runwindow.wait_window(w)
+            w.destroy()
+        if not self.runwindow.winfo_exists():
             return
+        else:
+            self.runwindow.wait()
         text=_("This page will allow you to set up your own sets of dictionary "
                 "senses to sort, within the '{0}' grammatical category. \nYou "
                 "should only do this if the '{0}' grammatical category is so "
