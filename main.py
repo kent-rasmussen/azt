@@ -3289,6 +3289,7 @@ class Check():
                 self.updatestatus(verified=True)
                 log.info("Group {} only has {} example; marking verified and "
                         "continuing.".format(self.subcheck,len(senseids)))
+                self.updatestatus(verified=True)
                 continue
             self.runwindow.resetframe() #just once per group
             self.runwindow.wait()
