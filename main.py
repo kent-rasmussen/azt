@@ -3229,6 +3229,7 @@ class Check():
                         self.runwindow.frame.scroll.content.groups,
                         self.groupselected,
                         row=self.runwindow.frame.scroll.content.groups.row)
+                self.runwindow.frame.scroll.windowsize()
                 print('Group added:',self.groupselected)
             else: #before making a new button, or now, add fields to the sense.
                 """This needs to *not* operate on "exit" button."""
