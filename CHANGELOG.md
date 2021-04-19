@@ -1,6 +1,9 @@
 # A→Z+T Changelog
 
 # for 0.8
+- Find out how Chorus decides what files to pick up, make sure our config files are getting in.
+- move config files to aztconfig directory?
+- Join page is (at least sometimes) removing an item (at least) from a group (at least), then giving the join page again, resulting in one less group in at least one case (sorting five elements over four groups). The tone report shows a group of [''] for that element, which is no longer in the join list of buttons.
 - make function to add link if sound file is there, but link isn't.
   - set up alternation, to accept either sound file nomenclature (make futureproof now)
 - look at how to generalize tone sorting, joining, etc. process.
@@ -11,7 +14,7 @@
     - complete cycles
 - get dependencies offline
 - don't crash on invalid sample rate; clear if not valid.
-- make tone frames window scroll
+  - use is_format_supported on parameters, reset, or limit options?
 - When making record button:
   - remove links to the *wrong* sound file
   - test for presence of currently linked file (i.e., not recorded in AZT), give play buttons
@@ -127,6 +130,7 @@
 - fixed scrolling window not wide enough in frame dialog
 - numerous minor fixes
 - set up on different input and output sound cards
+- tone frames window now scrolls
 
 # Version 0.7
 - truncate definitions after three words or before parentheses
