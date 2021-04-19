@@ -1422,11 +1422,12 @@ class Check():
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
                                             self.profile))
         psori=self.ps #We iterate across this here
+        self.makeadhocgroupsdict() #if no file, before iterating over variable
         for self.ps in self.adhocgroups:
             self.makeadhocgroupsdict()
             for adhoc in self.adhocgroups[self.ps]:
                 self.addpstoprofileswdata()
-                self.profilesbysense[self.ps][self.profile]=self.adhocgroups[
+                self.profilesbysense[self.ps][adhoc]=self.adhocgroups[
                                                                 self.ps][adhoc]
         self.ps=psori
         self.updatecounts()
