@@ -5663,7 +5663,7 @@ class Label(tkinter.Label):
     def wrap(self):
         availablexy(self)
         self.config(wraplength=self.maxwidth)
-        log.debug('self.maxwidth (Label): {}'.format(self.maxwidth))
+        log.debug('self.maxwidth (Label class): {}'.format(self.maxwidth))
     def __init__(self, parent, text, column=0, row=1, **kwargs):
         """These have non-None defaults"""
         if 'font' not in kwargs:
@@ -6442,6 +6442,7 @@ def availablexy(self,w=None):
             # print('wcols & sib.cols:',wcols & sib.cols)
             if wrows & sib.rows == set(): #the empty set
                 sib.reqheight=sib.winfo_reqheight()
+                log.debug("sib {} reqheight: {}".format(sib,sib.reqheight))
                 """Give me the tallest cell in this row"""
                 if ((sib.row not in rowheight) or (sib.reqheight >
                                                         rowheight[sib.row])):
@@ -6450,6 +6451,7 @@ def availablexy(self,w=None):
             #     print(wrows,'and',sib.rows,'share rows')
             if wcols & sib.cols == set(): #the empty set
                 sib.reqwidth=sib.winfo_reqwidth()
+                log.debug("sib {} width: {}".format(sib,sib.reqwidth))
                 """Give me the widest cell in this column"""
                 if ((sib.col not in colwidth) or (sib.reqwidth >
                                                         colwidth[sib.col])):
@@ -6460,6 +6462,8 @@ def availablexy(self,w=None):
         self.otherrowheight+=rowheight[row]
     for col in colwidth:
         self.othercolwidth+=colwidth[col]
+    log.debug("self.othercolwidth: {}; self.otherrowheight: {}".format(
+                self.othercolwidth,self.otherrowheight))
     if w.parent.winfo_class() != 'Toplevel':
         availablexy(self,w.parent)
     else:
