@@ -196,6 +196,7 @@ class Check():
             log.info("Middle ps-profile: {}-{}".format(self.ps,self.profile))
             self.storesettingsfile(setting='profiledata')
             log.info("Ending ps-profile: {}-{}".format(self.ps,self.profile))
+        self.getprofilestodo()
         self.getpss() #This is a prioritized list of all ps'
         self.setnamesall() #sets self.checknamesall
         log.info("Done initializing check; running first check check.")
@@ -281,9 +282,11 @@ class Check():
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def getpss(self):
-        self.profilecountsValid=[]
-        for x in [x for x in self.profilecounts if x[1]!='Invalid']:
-            self.profilecountsValid.append(x)
+        #Why rebuild this here?
+        if not hasattr(self,'profilecountsValid'):
+            self.profilecountsValid=[]
+            for x in [x for x in self.profilecounts if x[1]!='Invalid']:
+                self.profilecountsValid.append(x)
         pssdups=[x[2] for x in self.profilecountsValid]
         self.pss=[]
         for ps in pssdups:
@@ -1115,7 +1118,7 @@ class Check():
             Label(window.frame, text=_('What ({}) syllable profile do you '
                                     'want to work with?'.format(self.ps))
                                     ).grid(column=0, row=0)
-            optionslist = [(x[1],x[0]) for x in self.profilecountsValid]
+            optionslist = [(x[1],x[0]) for x in self.profilecountsValidwAdHoc]
             window.scroll=Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ScrollingButtonFrame(window.scroll,
@@ -2716,11 +2719,14 @@ class Check():
     def getprofilestodo(self):
         log.debug(self.profilecounts)
         self.profilecountsValid=[]
+        self.profilecountsValidwAdHoc=[]
         #self.profilecountsValid filters out Invalid, and also by self.ps...
         for x in [x for x in self.profilecounts if x[2]==self.ps
                                                 if x[1]!='Invalid']:
             log.log(3,"profile count tuple: {}".format(x))
-            self.profilecountsValid.append(x)
+            if set(self.profilelegit).issuperset(x[1]):
+                self.profilecountsValid.append(x)
+            self.profilecountsValidwAdHoc.append(x)
         log.debug("Valid profiles for ps {}: {}".format(self.ps,
                                                     self.profilecountsValid))
         self.profilestodo=[x[1] for x in self.profilecountsValid if
