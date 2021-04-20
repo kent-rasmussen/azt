@@ -6449,7 +6449,7 @@ def availablexy(self,w=None):
             # else:
             #     print(wrows,'and',sib.rows,'share rows')
             if wcols & sib.cols == set(): #the empty set
-                sib.reqwidth=sib.winfo_reqheight()
+                sib.reqwidth=sib.winfo_reqwidth()
                 """Give me the widest cell in this column"""
                 if ((sib.col not in colwidth) or (sib.reqwidth >
                                                         colwidth[sib.col])):
