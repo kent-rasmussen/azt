@@ -1,11 +1,18 @@
 # A→Z+T Changelog
 
 # for 0.8
+- Set title in add/mod ad hoc group window to indicate if adding or modding
+- Set sort logic to exit on exit (currently moves on)
+- For verification window, if last example is selected (all gone), exit
+  - don't ask for nonsensical "these are all the same".
+- for Join window, don't ask if only one.
+  - don't ask nonsensical these are all different.
+- Join page is (at least sometimes) removing an item (at least) from a group (at least), then giving the join page again, resulting in one less group in at least one case (sorting five elements over four groups). The tone report shows a group of [''] for that element, which is no longer in the join list of buttons.
+- for next ps/profile, move to modified settings (if there), rather than re-figuring each time (this costs nontrivial time).
+  - if nothing has changed, there's no reason to waste that time.
+  - we can refigure once per ps change? To hold it longer we would need to store it in a dict keyed by ps.
 - Find out how Chorus decides what files to pick up, make sure our config files are getting in.
 - move config files to aztconfig directory?
-- Join page is (at least sometimes) removing an item (at least) from a group (at least), then giving the join page again, resulting in one less group in at least one case (sorting five elements over four groups). The tone report shows a group of [''] for that element, which is no longer in the join list of buttons.
-- make function to add link if sound file is there, but link isn't.
-  - set up alternation, to accept either sound file nomenclature (make futureproof now)
 - look at how to generalize tone sorting, joining, etc. process.
 - bring new documentation pages:
   - What A→Z+T will and won't do for you
@@ -38,6 +45,12 @@
 - make status table scroll (in both directions?)
 - Look at tkinter tabs (for status page?)
 - add progress of recording (on its own tab?)
+
+## For some time
+- Set means for user to check verification stage again.
+  - Once done, there is currently no AZT way to redo it.
+- Look up how to get real required heights and widths, availablexy isn't working correctly.
+- fix reconfigure scrolling window frame problem (remove need for if self.configured <1:)
 
 ## Issues from Zulgo March 2021 workshop
 
@@ -131,6 +144,9 @@
 - numerous minor fixes
 - set up on different input and output sound cards
 - tone frames window now scrolls
+- temporary fix for reconfigure scrolling window frame problem
+- made function to add link if sound file is there (does nothing if link already there).
+  - set up alternation, to accept either sound file nomenclature: w/wo location
 
 # Version 0.7
 - truncate definitions after three words or before parentheses
