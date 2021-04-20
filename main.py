@@ -5185,6 +5185,7 @@ class ScrollingFrame(Frame):
     def _on_mousewheeldown(self, event):
         self.canvas.yview_scroll(-1,"units")
     def _configure_interior(self, event):
+        #This configures self.content
         if not hasattr(self,'configured'):
             self.configured=0
         # print("Configuring interior")
@@ -5192,62 +5193,60 @@ class ScrollingFrame(Frame):
         size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
         self.canvas.config(scrollregion="0 0 %s %s" % size)
         """This makes sure the canvas is as large as what you put on it"""
-        if self.configured <10:
-            if self.content.winfo_reqwidth() != self.canvas.winfo_width():
-                # update the canvas's width to fit the inner frame
-                self.canvas.config(width=self.content.winfo_reqwidth())
-            self.windowsize()
+        if self.configured <1:
+            self.windowsize() #this needs to not keep running
             self.configured+=1
+        if self.content.winfo_reqwidth() != self.canvas.winfo_width():
+            # update the canvas's width to fit the inner frame
+            self.canvas.config(width=self.content.winfo_reqwidth())
+        if self.content.winfo_reqheight() != self.canvas.winfo_height():
+            # update the canvas's width to fit the inner frame
+            self.canvas.config(height=self.content.winfo_reqheight())
     def windowsize(self):
-        availablexy(self)
-        """The above script calculates how much screen is left to fill, these
-        next two lines give a max widget size to stay in the window."""
-        # height=self.parent.winfo_screenheight()-self.otherrowheight
-        # width=self.parent.winfo_screenwidth()-self.othercolwidth
-        # print('height=',self.parent.winfo_screenheight(),-self.otherrowheight)
-        # print('width=',self.parent.winfo_screenwidth(),-self.othercolwidth)
-        # print(height,width)
-        """This is how much space the contents of the scrolling canvas is asking
+        availablexy(self) #>self.maxheight, self.maxwidth
+        """This section deals with the content on the canvas (self.content)!!
+        This is how much space the contents of the scrolling canvas is asking
         for. We don't need the scrolling frame to be any bigger than this."""
         contentrw=self.content.winfo_reqwidth()+self.yscrollbarwidth
         contentrh=self.content.winfo_reqheight()
         for child in self.content.winfo_children():
+            log.debug("parent h: {}; child: {}; w:{}; h:{}".format(
+                                        self.content.winfo_reqheight(),
+                                        child,
+                                        child.winfo_reqwidth(),
+                                        child.winfo_reqheight()))
             contentrw=max(contentrw,child.winfo_reqwidth())
+            contentrh+=child.winfo_reqheight()
             log.log(2,"{} ({})".format(child.winfo_reqwidth(),child))
         log.log(2,contentrw)
         log.log(2,self.parent.winfo_children())
         log.log(2,'self.winfo_width(): {}; contentrw: {}; self.maxwidth: {}'
                     ''.format(self.winfo_width(),contentrw,self.maxwidth))
-        """If the current scrolling frame dimensions are smaller than the
+        """This section deals with the outer scrolling frame (self)!!
+        If the current scrolling frame dimensions are smaller than the
         scrolling content, or else pushing the window off the screen, then make
         the scrolling window the smaller of
             -the scrolling content or
             -the max dimensions, from above."""
-        # if self.winfo_width() < contentrw:
-        #      self.config(width=contentrw)
-        # if self.winfo_width() > self.maxwidth:
-        #     self.config(width=self.maxwidth)
+        #This should maybe be pulled out to another method?
+        #scrolling window width
         if self.winfo_width() < contentrw:
             self.config(width=contentrw)
         if self.winfo_width() > self.maxwidth:
             self.config(width=self.maxwidth)
-        # if self.winfo_height() < contentrh:
-        #     self.config(height=contentrh)
-        # if self.winfo_height() > self.maxheight:
-        #     self.config(height=self.maxheight)
-        if ((self.winfo_height() < contentrh)
-                or (self.winfo_height() > self.maxheight)):
-            self.config(height=min(self.maxheight,contentrh))
+        #scrolling window height
+        if self.winfo_height() < contentrh:
+            self.config(height=contentrh)
+        if self.winfo_height() > self.maxheight:
+            self.config(height=self.maxheight)
     def _configure_canvas(self, event):
-        if not hasattr(self,'configured'):
-            self.configured=0
+        #this configures self.canvas
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
             # update the inner frame's width to fill the canvas
             self.canvas.itemconfigure(self.content_id,
                                         width=self.canvas.winfo_width())
-        if self.configured <10:
-            self.windowsize()
-        self.configured+=1
+        if self.winfo_height() > self.maxheight:
+            self.config(height=self.maxheight)
     def __init__(self,parent,xscroll=False):
         """Make this a Frame, with all the inheritances, I need"""
         self.parent=parent
