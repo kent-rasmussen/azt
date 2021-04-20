@@ -622,7 +622,11 @@ class Check():
             self.storesettingsfile(setting='adhocgroups')
             self.checkcheck()
         self.getrunwindow()
-        title=_("Add Ad Hoc Sort Group to {} group".format(self.ps))
+        if self.profile in [x[1] for x in self.profilecountsValid]:
+            title=_("New Ad Hoc Sort Group for {} Group".format(self.ps))
+        else:
+            title=_("Modify Existing Ad Hoc Sort Group for {} Group".format(
+                                                                    self.ps))
         self.runwindow.title(title)
         padx=50
         pady=10
