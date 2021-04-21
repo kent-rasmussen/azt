@@ -3228,8 +3228,10 @@ class Check():
         """If we have tone groups already, make them now."""
         for group in self.status[self.type][self.ps][self.profile][self.name][
                                                                     'groups']:
-            self.tonegroupbuttonframe(self.runwindow.frame.scroll.content.groups,
-            group,row=self.runwindow.frame.scroll.content.groups.row) #notonegroup?
+            self.tonegroupbuttonframe(
+                            self.runwindow.frame.scroll.content.groups,group,
+                            row=self.runwindow.frame.scroll.content.groups.row,
+                            alwaysrefreshable=True) #notonegroup?
             self.runwindow.frame.scroll.content.groups.row+=1
         """The second frame, for the other two buttons, which also scroll"""
         self.runwindow.frame.scroll.content.anotherskip=Frame(
