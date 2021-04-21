@@ -1256,6 +1256,11 @@ class Check():
         self.storesettingsfile()
         file.remove(self.profiledatafile)
         self.restart()
+    def reloadstatusdata(self):
+        self.storesettingsfile()
+        file.remove(self.statusfile)
+        #Call fn here.
+        self.settingsbyfile(setting='status')
     def loadtypedict(self):
         """I just need this to load once somewhere..."""
         self.typedict={
