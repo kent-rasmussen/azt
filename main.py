@@ -3010,26 +3010,28 @@ class Check():
         """This function finds examples in the lexicon for a given tone value,
         in a given tone frame (from check)"""
         senseids=self.getexsall(value)
+        output={'n': len(senseids)}
         if (not hasattr(self,'exs')) or (self.exs == None):
             self.exs={} #in case this hasn't been set up by now
         if value in self.exs:
             if self.exs[value] in senseids: #if stored value is in group
                 log.info("Using stored value for {} group: {}".format(value,
                                 self.exs[value]))
-                return self.getframeddata(self.exs[value],
+                framed=self.getframeddata(self.exs[value],
                                             notonegroup=notonegroup,
                                             truncdefn=truncdefn)
+                if (framed[self.glosslang] != None):
+                    output['framed']=framed
+                    return output
         for i in range(len(senseids)): #just keep trying until you succeed
             senseid=senseids[randint(0, len(senseids))-1]
             framed=self.getframeddata(senseid,notonegroup=notonegroup,
                                                             truncdefn=truncdefn)
-            if (
-                # (framed[self.analang] != None) and
-                    (framed[self.glosslang] != None)
-                    ):
+            if (framed[self.glosslang] != None):
                 """As soon as you find one with form and gloss, quit."""
                 self.exs[value]=senseid
-                return framed
+                output['framed']=framed
+                return output
             else:
                 log.info("Example sense with empty field problem")
     def renamegroup(self):
