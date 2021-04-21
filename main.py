@@ -2768,28 +2768,38 @@ class Check():
                             self.profilecountsValid.index(x)<=self.maxprofiles]
         log.debug("self.profilestodo: {}".format(self.profilestodo))
     def getframestodo(self):
-        #This iterates over self.name, but depends on self.ps and self.profile
+        #This iterates without using self.name, self.ps or self.profile.
         #This sets self.senseidstosort,self.senseids(un)sorted,&self.tonegroups
         self.framestodo=[]
-        self.nameori=self.name
-        for self.name in self.toneframes[self.ps]:
-            #All these depend on self.ps/self.profile/self.name
-            log.debug("frame: {}; groups: {}".format(self.name,
-            self.status[self.type][self.ps][self.profile][self.name]['groups']))
-            done=self.status[self.type][self.ps][self.profile][self.name][
-                                                                        'done']
+        if self.ps not in self.toneframes:
+            log.error("The ps {} doesn't seem to be in your tone frames "
+            "file: {}".format(self.ps,self.toneframes.keys()))
+            return
+        for frame in self.toneframes[self.ps]:
+            if frame not in self.status[self.type][self.ps][self.profile]:
+                log.debug("{} frame Not started yet: {}".format(frame,tosort))
+                self.framestodo.append(frame)
+                continue
+            groups=self.status[self.type][self.ps][self.profile][frame][
+                                                                    'groups']
+            done=self.status[self.type][self.ps][self.profile][frame]['done']
             groupstodo=list(set(self.status[self.type][self.ps][self.profile][
-                                                self.name]['groups'])-set(done))
-            log.debug("groupstodo: {}; self.tonegroups: {}; done: {}".format(
-                groupstodo, self.status[self.type][self.ps][self.profile][
-                                                    self.name]['groups'], done))
-            if len(self.status[self.type][self.ps][self.profile][self.name][
-                                        'groups']) == 0 or len(groupstodo) >0:
-                log.debug("{} frame has not been started, or has elements "
-                            "left to verify: {}".format(self.name,groupstodo))
-                self.framestodo.append(self.name)
+                                                frame]['groups'])-set(done))
+            tosort=self.status[self.type][self.ps][self.profile][frame][
+                                                                    'tosort']
+            log.debug("Frame: {}; groupstodo: {}; groups: {}; done: {}; "
+                    "tosort: {}".format(frame, groupstodo, groups, done,
+                                                                        tosort))
+            if tosort == True:
+                log.debug("{} frame has elements left to sort: {}".format(
+                                                            frame,tosort))
+                self.framestodo.append(frame)
+            elif len(groups) == 0 or len(groupstodo) >0:
+                log.debug("{} frame is unstarted or has elements left to "
+                        "verify: {} (groups: {})".format(frame,groupstodo,
+                                                                        groups))
+                self.framestodo.append(frame)
         log.debug("Frames to do: {}".format(self.framestodo))
-        self.name=self.nameori
     def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
         xlp.Paragraph(parent,t)
         print(t)
