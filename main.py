@@ -339,8 +339,8 @@ class Check():
         self.checkcheck()
     def nextframe(self):
         if len(self.framestodo) == 0:
-            self.addframe()
-            return #The above should change self.name, if completed.
+            self.addframe() #The above should change self.name, if completed.
+            return
         if self.name in self.framestodo:
             i=self.framestodo.index(self.name)
             if len(self.framestodo)>i+1:
