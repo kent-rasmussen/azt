@@ -2302,6 +2302,7 @@ class Check():
         )
         self.frame.parent.waitdone() # put this on every return!
     def maketoneprogresstable(self):
+        #This should depend on self.ps only, and refresh from self.status.
         def groupfn(x):
             for i in x:
                 try:
@@ -2321,7 +2322,8 @@ class Check():
         self.leaderboardtable=Frame(self.leaderboard)
         self.leaderboardtable.grid(row=1,column=0)
         row=0
-        profiles=['header']+list(self.profilesbysense[self.ps].keys())
+        #put in a footer for next profile/frame
+        profiles=['header']+list(self.profilesbysense[self.ps].keys())#+['footr']
         frames=list(self.toneframes[self.ps].keys())
         for profile in profiles:
             column=0
