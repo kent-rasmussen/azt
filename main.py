@@ -3242,6 +3242,8 @@ class Check():
         while (self.status[self.type][self.ps][self.profile][self.name][
                 'tosort'] == True and self.runwindow.winfo_exists()):
         # while self.senseidsunsorted != [] and self.runwindow.winfo_exists():
+            if hasattr(self,'groupselected'):
+                delattr(self,'groupselected') #=[] #reset this for each word!
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'
                         +str(todo))
@@ -3278,34 +3280,36 @@ class Check():
             self.runwindow.waitdone()
             self.runwindow.wait_window(window=self.sorting)
             if not self.runwindow.winfo_exists():
-                return
-            print("Group selected:",self.groupselected)
-            if (self.groupselected == "NONEOFTHEABOVE"):
-                """If there are no groups yet, or if the user asks for another
-                group, make a new group."""
-                self.groupselected=self.addtonegroup()
-                """place this one just before the last two"""
-                print('Rows so far:',
-                    self.runwindow.frame.scroll.content.groups.grid_size()[1])
-                self.runwindow.frame.scroll.content.groups.row+=1 #add to above.
-                """Add the new group to the database"""
-                self.addtonefieldex(senseid,framed)
-                """And give the user a button for it, for future words
-                (N.B.: This is only used for groups added during the current
-                run. At the beginning of a run, all used groups have buttons
-                created above.)"""
-                self.tonegroupbuttonframe(
-                        self.runwindow.frame.scroll.content.groups,
-                        self.groupselected,
-                        row=self.runwindow.frame.scroll.content.groups.row)
-                self.runwindow.frame.scroll.windowsize()
-                print('Group added:',self.groupselected)
-            else: #before making a new button, or now, add fields to the sense.
-                """This needs to *not* operate on "exit" button."""
-                if self.groupselected != []:
+                return 1
+            log.debug("Group selected:",self.groupselected)
+            if hasattr(self,'groupselected'): # != []:
+                if self.groupselected == "NONEOFTHEABOVE":
+                    """If there are no groups yet, or if the user asks for another
+                    group, make a new group."""
+                    self.groupselected=self.addtonegroup()
+                    """place this one just before the last two"""
+                    print('Rows so far:',
+                        self.runwindow.frame.scroll.content.groups.grid_size()[1])
+                    self.runwindow.frame.scroll.content.groups.row+=1 #add to above.
+                    """Add the new group to the database"""
                     self.addtonefieldex(senseid,framed)
-                else:
-                    return 1 # this should only happen on Exit
+                    """And give the user a button for it, for future words
+                    (N.B.: This is only used for groups added during the current
+                    run. At the beginning of a run, all used groups have buttons
+                    created above.)"""
+                    self.tonegroupbuttonframe(
+                            self.runwindow.frame.scroll.content.groups,
+                            self.groupselected,
+                            row=self.runwindow.frame.scroll.content.groups.row,
+                            alwaysrefreshable=True)
+                    #adjust window for new button
+                    self.runwindow.frame.scroll.windowsize()
+                    print('Group added:',self.groupselected)
+                else: #before making a new button, or now, add fields to the sense.
+                    """This needs to *not* operate on "exit" button."""
+                    self.addtonefieldex(senseid,framed)
+            else:
+                return 1 # this should only happen on Exit
             self.marksortedsenseid(senseid)
         self.runwindow.resetframe()
     def verifyT(self):
@@ -3324,6 +3328,7 @@ class Check():
         that got pulled from the group), then on to the next largest unverified
         pile.
         """
+        #This function should exit 1 on a window close, 0/None on all ok.
         if len(self.status[self.type][self.ps][self.profile][self.name][
                                                                 'groups']) == 0:
             log.debug("No tone groups to verify!")
@@ -3372,7 +3377,8 @@ class Check():
                     font=self.fonts['title']
                     ).grid(column=0, row=0, sticky="w")
             print(instructions)
-            self.groupselected='' #reset this so it doesn't get in our way later.
+            if hasattr(self,'groupselected'): #='' #so it doesn't get in way later.
+                delattr(self,'groupselected')
             row=0
             column=0
             if self.subcheck in self.status[self.type][self.ps][self.profile][
@@ -3411,18 +3417,34 @@ class Check():
                             font=self.fonts['instructions']
                             )
             b.grid(column=0, row=0, sticky="ew")
+            # b.bind('<mouseclick>',remove senseid from sensids)
+            self.sframe.windowsize()
             self.runwindow.waitdone()
             b.wait_window(bf)
-            if self.groupselected == "ALLOK":
-                print(f"User selected '{oktext}', moving on.")
+            if not self.runwindow.winfo_exists():
+                return 1
+            # I need to work on this later. How to distinguish buttons after
+            # the window is gone? I think I have to cound senseids in the group.
+            # if not self.sframe.content.winfo_exists(): #This goes with window
+            #     log.debug("It looks like all buttons were removed "
+            #                 "(self.sframe.content.winfo_exists(): {}); "
+            #                 "not marking verified.".format(
+            #                             self.sframe.content.winfo_exists()))
+            elif self.groupselected == "ALLOK":
+                log.debug("User selected '{}', moving on.".format(oktext))
                 self.updatestatus(verified=True)
                 self.checkcheck()
             else:
                 print(f"User did NOT select '{oktext}', assuming we'll come "
                         "back to this!!")
+        #Once done verifying each group:
         if self.runwindow.winfo_exists():
+            #verifyT is the last in maybesort, so try again in case it's needed.
             self.maybesort()
     def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
+        # This must run one subcheck at a time. If the subcheck changes,
+        # it will fail.
+        # should move to specify location and fieldvalue in button lambda
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
@@ -3454,6 +3476,7 @@ class Check():
         also, the joining would provide for one less group to match against
         (hopefully semi automatically).
         """
+        #This function should exit 1 on a window close, 0/None on all ok.
         if len(self.status[self.type][self.ps][self.profile][self.name][
                                                             'groups']) <2:
             log.debug("No tone groups to distinguish!")
@@ -3469,8 +3492,9 @@ class Check():
                 "of these have the same tone melody? "
                 "If so, click on the two groups. If not, click ‘{}’."
                 ).format(self.ps,self.profile,self.name,oktext)
-        print(introtext)
-        self.groupselected=None
+        log.debug(introtext)
+        if hasattr(self,'groupselected'):
+            delattr(self,'groupselected') # self.groupselected=None
         self.runwindow.resetframe()
         self.runwindow.frame.titles=Frame(self.runwindow.frame)
         self.runwindow.frame.titles.grid(column=0, row=0, columnspan=2, sticky="w")
@@ -3509,41 +3533,58 @@ class Check():
         b.grid(column=0, row=row, sticky="ew")
         self.runwindow.waitdone()
         self.runwindow.frame.wait_window(canary)
-        if self.groupselected != "ALLOK" and self.runwindow.winfo_exists():
-            group1=self.groupselected
-            row=self.status[self.type][self.ps][self.profile][self.name][
-                                                        'groups'].index(group1)
-            self.tonegroupbuttonframe(self.sorting,group1,row,notonegroup=False,
-                                        label=True, font=self.fonts['readbig'],
-                                        canary=canary,canary2=canary2)
-            self.groupselected=None #don't want to leave this there...
-            log.debug('self.tonegroups: {}; group1: {}'.format(self.status[
-                self.type][self.ps][self.profile][self.name]['groups'],group1))
-            self.runwindow.wait_window(canary2)
+        #On first button press/exit:
+        if not self.runwindow.winfo_exists():
+            return 1
+        if hasattr(self,'groupselected'):
             if self.groupselected == "ALLOK":
                 print(f"User selected '{oktext}', moving on.")
-                self.groupselected='' #reset
+                delattr(self,'groupselected')
                 return 0
-            if self.groupselected != None:
-                self.runwindow.wait()
-                print("Now we're going to join groups",group1,"an"
-                    "d",self.groupselected,".")
-                """All the senses we're looking at, by ps/profile"""
-                self.updatebysubchecksenseid(group1,self.groupselected)
-                self.subcheck=group1
-                self.updatestatus() #not verified=True --if any joined.
-                self.subcheck=self.groupselected
-                self.updatestatus() #not verified=True --if any joined.
-                print('Mark',self.groupselected,'as unverified!!?!')
-                # self.runwindow.ww.close()
-                return 1
-        elif self.groupselected == "ALLOK":
-            print(f"User selected '{oktext}', moving on.")
-            self.groupselected='' #reset
-            return 0
-        else:
-            log.info("I don't understand the user input (closed window?): "
-                    "{}".format(self.groupselected))
+            else:
+                group1=self.groupselected
+                delattr(self,'groupselected')
+                if group1 in self.status[self.type][self.ps][self.profile][
+                                                self.name]['groups']:
+                    row=self.status[self.type][self.ps][self.profile][
+                                            self.name]['groups'].index(group1)
+                else:
+                    log.error("Group {} isn't found in list {}!".format(group1,
+                                self.status[self.type][self.ps][self.profile][
+                                                        self.name]['groups']))
+                    row=len(self.status[self.type][self.ps][self.profile][
+                                                        self.name]['groups'])+1
+                self.tonegroupbuttonframe(self.sorting,group1,row,
+                                        notonegroup=False,
+                                        label=True, font=self.fonts['readbig'],
+                                        canary=canary,canary2=canary2)
+                log.debug('self.tonegroups: {}; group1: {}'.format(self.status[
+                    self.type][self.ps][self.profile][self.name]['groups'],
+                    group1))
+                self.runwindow.wait_window(canary2)
+                #On second button press/exit:
+                if not self.runwindow.winfo_exists(): #i.e., user exits by now
+                    return 1
+                if hasattr(self,'groupselected'):
+                    if self.groupselected == "ALLOK":
+                        print(f"User selected '{oktext}', moving on.")
+                        delattr(self,'groupselected')
+                        return 0
+                    else:
+                        self.runwindow.wait()
+                        log.debug("Now we're going to join groups {} and {}, "
+                            "marking them both unverified.".format(group1,
+                                                            self.groupselected))
+                        """All the senses we're looking at, by ps/profile"""
+                        self.updatebysubchecksenseid(group1,self.groupselected)
+                        self.status[self.type][self.ps][self.profile][
+                                self.name]['groups'].remove(group1)
+                        self.subcheck=group1
+                        self.updatestatus() #not verified=True --if any joined.
+                        self.subcheck=self.groupselected
+                        self.updatestatus() #not verified=True --if any joined.
+                        exit=self.joinT() #keep joining until OK or exit
+                        return exit #pass return back up the chain
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. just move on to verification, where each group's
         sameness will be verified and recorded."""
@@ -3578,9 +3619,16 @@ class Check():
         return str(newgroup)
     def addtonefieldex(self,senseid,framed):
         guid=None
-        print("Adding",self.groupselected,"value to", self.name,"location "
-                "in",'tone',"fieldtype",senseid,"senseid",
-                guid,"guid (in main_lift.py)")
+        if self.groupselected == None or self.groupselected == '':
+            log.error("groupselected: {}; this should never happen"
+                        "".format(self.groupselected))
+            exit()
+        log.debug("Adding {} value to {} location in 'tone' fieldtype, "
+                "senseid: {} guid: {} (in main_lift.py)".format(
+                    self.groupselected,
+                    self.name,
+                    senseid,
+                    guid))
         self.db.addexamplefields(
                                     guid=guid,senseid=senseid,
                                     analang=self.analang,
@@ -3591,9 +3639,17 @@ class Check():
                                     # glossform=framed[self.glosslang],
                                     # gloss2form=framed[self.glosslang2],
                                     fieldtype='tone',location=self.name,
-                                    fieldvalue=self.groupselected#,
+                                    fieldvalue=self.groupselected #,
                                     # ps=None #,showurl=True
                                     )
+        tonegroup=firstoflist(self.db.get('exfieldvalue', senseid=senseid,
+                    fieldtype='tone', location=self.name))
+        if tonegroup != self.groupselected:
+            log.error("Field addition failed! LIFT says {}, not {}.".format(
+                                                tonegroup,self.groupselected))
+        else:
+            log.error("Field addition succeeded! LIFT says {}, == {}.".format(
+                                                tonegroup,self.groupselected))
         self.subcheck=self.groupselected
         self.updatestatus() #this marks the group unverified.
     def addtonefieldpron(self,guid,framed):
