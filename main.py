@@ -348,17 +348,11 @@ class Check():
         self.checkcheck()
     def guesscheckname(self):
         """Picks the longest name (the most restrictive fiter)"""
-        # print(self.checkspossible)
-        # print(sorted(self.checkspossible,
-        #                         key=lambda s: len(s[0]),reverse=True))
-        # print(firstoflist(sorted(self.checkspossible,
-        #                         key=lambda s: len(s[0]),reverse=True),
-        #                         othersOK=True))
         self.set('name',firstoflist(sorted(self.checkspossible,
                                 key=lambda s: len(s[0]),reverse=True),
                                 othersOK=True)[0])
     def guesstype(self):
-                    """For now, if type isn't set, start with Vowels."""
+        """For now, if type isn't set, start with Vowels."""
         self.set('type','V')
     def langnames(self):
         """This is for getting the prose name for a language from a code."""
@@ -608,6 +602,7 @@ class Check():
                 self.senseidstosort.append(var.get())
             log.log(2,"ids: {}".format(self.senseidstosort))
             self.set('profile',profilevar.get())
+            #Add to dictionaries before updating them below
             self.makeadhocgroupsdict() # in case the variable or ps isn't there.
             self.adhocgroups[self.ps][self.profile]=self.profilesbysense[
                                     self.ps][self.profile]=self.senseidstosort
@@ -1111,7 +1106,6 @@ class Check():
             pss=self.db.pss+self.additionalps #these should be lists
         else:
             pss=self.db.pss
-        print(pss)
         buttonFrame1=ScrollingButtonFrame(window.frame,pss,self.setps,window)
         buttonFrame1.grid(column=0, row=1)
     def getprofile(self):
@@ -1311,7 +1305,9 @@ class Check():
         if self.ps not in self.adhocgroups:
             self.adhocgroups[self.ps]={}
     def makestatusdict(self):
+        # This depends on self.ps, self.profile, and self.name
         # This operates for exactly one context: wherever it is called.
+        # Do this only where needed, when needed!
         changed=False
         if self.type not in self.status:
             self.status[self.type]={}
@@ -1406,6 +1402,7 @@ class Check():
                 self.scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
                     for x in self.sextracted[ps][s]],key=lambda x:x[1],reverse=True)
     def getprofileofsense(self,senseid):
+        #Convert to iterate over local variables
         profileori=self.profile #We iterate across this here
         psori=self.ps #We iterate across this here
         forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
@@ -1443,6 +1440,7 @@ class Check():
             if x % 10 is 0:
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
                                             self.profile))
+        #Convert to iterate over local variables
         psori=self.ps #We iterate across this here
         self.makeadhocgroupsdict() #if no file, before iterating over variable
         for self.ps in self.adhocgroups:
@@ -2090,8 +2088,6 @@ class Check():
                 log.info("check selection dialog here, for now just running V1=V2")
                 self.getcheck()
                 return
-            # t=(_("Checking {}, working on {}".format(
-            #             self.typedict[self.type]['pl'],self.name)))
         """Get subcheck"""
         self.getsubchecksprioritized()
         if self.subcheck not in [x[0] for x in self.subchecksprioritized[self.type]]:
@@ -2909,6 +2905,9 @@ class Check():
                 and (framed[self.glosslang2] != None)):
                 eg2=xlp.Gloss(ex,self.glosslang2,framed[self.glosslang2])
     def makecountssorted(self):
+        # This iterates across self.profilesbysense to provide counts for each
+        # ps-profile combination (aggravated for profile='Invalid')
+        # it should only be called when creating/adding to self.profilesbysense
         self.profilecounts={}
         self.profilecountInvalid=0
         wcounts=list()
@@ -4696,7 +4695,6 @@ class Check():
         self.basicreported={}
         self.checkcounts={}
         self.printprofilesbyps()
-        self.makecountssorted() #This populates self.profilecounts
         self.printcountssorted()
         t=_("This report covers the following top two Grammatical categories, "
             "with the top {} syllable profiles in each. "
@@ -6488,7 +6486,9 @@ def availablexy(self,w=None):
         log.log(2,"self.winfo_x(): {}".format(self.winfo_x()))
         log.log(2,"titlebarHeight: {}".format(titlebarHeight))
         log.log(2,"borderSize: {}".format(borderSize))
-    log.log(2,"width: {}; self.maxheight: {}; self.maxwidth: {}".format(
+    log.log(2,"height: {}; width: {}; self.maxheight: {}; self.maxwidth: {}"
+                "".format(
+                                self.parent.winfo_screenheight(),
                                 self.parent.winfo_screenwidth(),
                                 self.maxheight,
                                 self.maxwidth))
@@ -6522,7 +6522,7 @@ def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
         parent.destroy() #from or window with button...
         return value
 def removesenseidfromsubcheck(self,parent,senseid):
-    self.db.rmexfields(senseid=senseid,fieldtype='tone', #I might want to generalize this later...
+    self.db.rmexfields(senseid=senseid,fieldtype='tone',
                         location=self.name,fieldvalue=self.subcheck,
                         showurl=True
                         )
