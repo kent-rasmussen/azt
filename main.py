@@ -3192,6 +3192,7 @@ class Check():
         # with an integer --we just need a unique name, in any case, and the
         # groups are by frame (surface distinctions), rather than by lexeme
         # (underlying distinctions) in any case.
+        #This function should exit 1 on a window close, or finish with None
         log.info('Running sortT:')
         self.getrunwindow()
         """sortingstatus() checks by self.ps,self.profile,self.name (frame),
@@ -3241,7 +3242,6 @@ class Check():
         while (self.status[self.type][self.ps][self.profile][self.name][
                 'tosort'] == True and self.runwindow.winfo_exists()):
         # while self.senseidsunsorted != [] and self.runwindow.winfo_exists():
-            self.groupselected=[] #reset this for each word!
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'
                         +str(todo))
