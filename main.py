@@ -3087,7 +3087,7 @@ class Check():
                                                             'tosort'] == True:
             quit=self.sortT()
             if quit == True:
-                return 1
+                return # didn't do anything: 1
             self.checkcheck() #since we probably added groups
         #status is populated by verifyT, and unpopulated by joinT
         if ((self.type in self.status) and
@@ -3103,16 +3103,16 @@ class Check():
         # if all items in the self.tonegroups exists in verified
         if set(self.status[self.type][self.ps][self.profile][self.name][
                                                 'groups']).issubset(verified):
-            joined=self.joinT()
+            exit=self.joinT()
             # This is recursive because we don't know how many joins we'll need,
             # nor the results of susequent verifications or sorts
-            if joined == True:
+            if exit == True:
                 #if the user joins groups, update the main window and repeat
-                self.checkcheck()
-                self.maybesort()
-                self.runwindow.ww.close()
-                return
-            elif joined == None:
+                # self.checkcheck()
+                # self.maybesort()
+                # self.runwindow.ww.close()
+            #     return #if join window was closed.
+            # elif joined == None:
                 #This happens when the user exits the window
                 window=self.getrunwindow()
                 buttontxt=_("Sort!")
@@ -3121,26 +3121,30 @@ class Check():
                 Label(self.runwindow.frame, text=text).grid(row=0,column=0)
                 self.runwindow.waitdone()
                 return
-            elif joined == False:
+            elif exit == False:
                 # self.updatestatus(verified=True,alldone=True)
                 if self.runwindow.winfo_exists():
                     def nframe():
                         self.nextframe()
                         self.runwindow.destroy()
+                        self.checkcheck() #redraw the table
                         self.runcheck()
                     def aframe():
                         self.runwindow.destroy()
                         self.addframe()
                         self.addwindow.wait_window(self.addwindow)
+                        self.checkcheck() #redraw the table
                         self.runcheck()
                     def nprofile():
                         self.nextprofile()
                         self.runwindow.destroy()
+                        self.checkcheck() #redraw the table
                         self.runcheck()
                     def nps():
                         self.nextps()
                         self.nextprofile(guess=True)
                         self.runwindow.destroy()
+                        self.checkcheck() #redraw the table
                         self.runcheck()
                     self.runwindow.resetframe()
                     Label(self.runwindow.frame, text=done).grid(row=0,column=0,
@@ -3148,8 +3152,7 @@ class Check():
                     Label(self.runwindow.frame, text='',
                                 image=self.photo[self.type]
                                 ).grid(row=1,column=0,columnspan=2)
-                    #I need to build some logic here;I should only show two of these
-                    #buttons at a time. Are the frames all sorted?
+                    self.runwindow.wait()
                     self.getframestodo()
                     self.getprofilestodo()
                     if len(self.framestodo) >0:
@@ -3169,6 +3172,7 @@ class Check():
                         Button(self.runwindow.frame,
                             text=_("Continue to next Grammatical Category"),
                             command=nps).grid(row=2,column=1)
+                    self.runwindow.waitdone()
                     return
         # we only get here if a group is not verified (otherwise, return above)
         self.verifyT()
