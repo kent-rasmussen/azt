@@ -2325,12 +2325,15 @@ class Check():
         #put in a footer for next profile/frame
         profiles=['header']+list(self.profilesbysense[self.ps].keys())#+['footr']
         frames=list(self.toneframes[self.ps].keys())
+        ungroups=0
         for profile in profiles:
             column=0
             if (profile == 'header') or (profile in
                                         self.status[self.type][self.ps]):
                 if profile in self.status[self.type][self.ps]:
-                    Label(self.leaderboardtable,text=profile).grid(
+                    t="{} ({})".format(profile,len(self.profilesbysense[
+                                                            self.ps][profile]))
+                    Label(self.leaderboardtable,text=t).grid(
                     row=row,column=column,sticky='e'
                     )
                 for frame in frames:
@@ -2342,28 +2345,26 @@ class Check():
                         row=row,column=column,sticky='s',ipadx=5
                         )
                     elif frame in self.status[self.type][self.ps][profile]:
-                        if ((not 'tosort' in self.status[self.type][self.ps][
-                                                            profile][frame]) or
-                            (not 'groups' in self.status[self.type][self.ps][
-                                                            profile][frame]) or
-                            (not 'done' in self.status[self.type][self.ps][
-                                                            profile][frame]) or
-                            (len(self.status[self.type][self.ps][profile][
+                        if not 'tosort' in self.status[self.type][self.ps][
+                                                            profile][frame]:
+                            tosort='?'
+                        if not 'groups' in self.status[self.type][self.ps][
+                                                            profile][frame]:
+                            total='?'
+                        if not 'done' in self.status[self.type][self.ps][
+                                                            profile][frame]:
+                            done='?'
+                        if len(self.status[self.type][self.ps][profile][
                                 frame]['done']) > len(self.status[self.type][
-                                self.ps][profile][frame]['groups']))):
-                            profileori=self.profile
-                            frameori=self.name
-                            self.profile=profile
-                            self.name=frame
-                            self.settonevariablesbypsprofile()
-                            self.profile=profileori
-                            self.name=frameori
-                            self.storesettingsfile(setting='status')
+                                self.ps][profile][frame]['groups']):
+                            ungroups+=1
                         #At this point, these should be there
                         done=self.status[self.type][self.ps][profile][
                                                                 frame]['done']
                         total=self.status[self.type][self.ps][profile][
                                                                 frame]['groups']
+                        tosort=self.status[self.type][self.ps][profile][frame][
+                                                                'tosort']
                         donenum=groupfn(done)
                         totalnum=groupfn(total)
                         log.log(3,"Done groups: {}/{}".format(donenum,type(
@@ -2374,15 +2375,25 @@ class Check():
                             donenum=str(donenum)+'/'+str(totalnum)
                             log.log(3,"Total groups found: {}".format(donenum))
                         # This should only be needed on a new database
-                        if self.status[self.type][self.ps][profile][frame][
-                                                            'tosort'] == True:
+                        if tosort == True:
                             donenum='!'+str(donenum)
-                        Label(self.leaderboardtable,
-                                text=donenum
+                        elif tosort == '?':
+                            donenum='?'+str(donenum)
+                        Button(self.leaderboardtable,
+                                text=donenum,
+                                cmd=lambda p=profile, f=frame:updateprofilename(
+                                                                    profile=p,
+                                                                    name=f),
+                                anchor='c',
+                                padx=0,pady=0
                                 ).grid(
-                        row=row,column=column
+                        row=row,column=column,
+                        ipadx=0,ipady=0
                         )
             row+=1
+        log.error(_("You have more groups verified than there are: {}".format(
+                                                                    ungroups)))
+        self.frame.parent.waitdone() # put this on every return!
     def setsu(self):
         self.su=True
         self.checkcheck()
