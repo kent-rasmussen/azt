@@ -2941,12 +2941,14 @@ class Check():
         for ps in self.profilesbysense:
             for profile in self.profilesbysense[ps]:
                 if profile == 'Invalid':
-                    self.profilecountInvalid+=len(self.profilesbysense[ps][profile])
+                    self.profilecountInvalid+=len(self.profilesbysense[ps][
+                                                                    profile])
                 count=len(self.profilesbysense[ps][profile])
                 wcounts.append((count, profile, ps))
         self.profilecounts=sorted(wcounts,reverse=True)
-        self.Scounts={}
+        # self.Scounts={} #?
     def printcountssorted(self):
+        #This is only used in the basic report
         log.info("Ranked and numbered syllable profiles, by grammatical category:")
         #{}
         # allkeys=[]
@@ -2973,6 +2975,7 @@ class Check():
                     print(line[0],line[1])
             print(ps,"(total):",nTotals[ps])
     def printprofilesbyps(self):
+        #This is only used in the basic report
         log.info("Syllable profiles actually in senses, by grammatical category:")
         for ps in self.profilesbysense:
             if ps is 'Invalid':
