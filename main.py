@@ -3703,18 +3703,34 @@ class Check():
         # It should not be used to affirm that often; sortT/joinT manage this.
         log.log(3,"Looking for tone groups for {} frame".format(self.name))
         tonegroups=[]
-        for senseid in self.senseidstosort: #I should be able to make this a regex...
-            tonegroups+=self.db.get('exfieldvalue', senseid=senseid,
-                fieldtype='tone', location=self.name)#, showurl=True)
-        self.status[self.type][self.ps][self.profile][self.name]['groups']=list(
-                                                    dict.fromkeys(tonegroups))
-        for value in ['NA', '', None]:
-            if value in self.status[self.type][self.ps][self.profile][
-                                                        self.name]['groups']:
-                self.status[self.type][self.ps][self.profile][self.name][
-                                                        'groups'].remove(value)
-        log.debug('gettonegroups ({}): {}'.format(self.name,
-            self.status[self.type][self.ps][self.profile][self.name]['groups']))
+        for senseid in self.senseidstosort: #This is a ps-profile slice
+            tonegroup=self.db.get('exfieldvalue', senseid=senseid,
+                        fieldtype='tone', location=self.name)#, showurl=True)
+            if tonegroup in ['NA','', None]:
+                log.error("tonegroup {} found in sense {} under location {}!"
+                    "".format(tonegroup,senseid,self.name))
+            else:
+                tonegroups+=tonegroup
+        groups=self.status[self.type][self.ps][self.profile][self.name][
+                                    'groups']=list(dict.fromkeys(tonegroups))
+        log.debug("gettonegroups groups: {}".format(groups))
+        if groups != []:
+            for value in ['NA', '', None]: #can None be an element in alist?
+                if value in groups:
+                    log.error("Found (and removing) value {} in {}-{} for {} "
+                            "frame: {}".format(value,self.ps,self.profile,
+                            self.name,groups))
+                    # exit()
+                    groups.remove(value)
+        log.debug('gettonegroups ({}): {}'.format(self.name,groups))
+        verified=self.status[self.type][self.ps][self.profile][self.name][
+                                                                    'done']
+        for v in verified:
+            if v not in groups:
+                log.error("Removing verified group {} not in actual groups: {}!"
+                            "".format(v, groups))
+                verified.remove(v)
+        self.storesettingsfile(setting='status')
     def marksortedguid(self,guid):
         """I think these are only valuable during a check, so we don't have to
         constantly refresh sortingstatus() from the lift file."""
