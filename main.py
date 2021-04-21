@@ -298,27 +298,23 @@ class Check():
         self.getpss()
         log.debug('Profiles in priority order: {}'.format(self.pss))
         if (guess == True) or (self.ps not in self.pss):
-            # if len(pss) >0:
-                self.ps=self.pss[0]
-            # else:
-            #     self.profile=self.profilecounts[0][2]
+            self.set('ps',self.pss[0])
         else:
             index=self.pss.index(self.ps)
             log.debug("{} ps found in valid pss; "
                     "selecting next one in this list: {}".format(self.ps,
                                                                 self.pss))
-            self.ps=self.pss[index+1]
+            self.set('ps',self.pss[index+1])
             if index >= self.maxpss:
                 return 1 #We hit the max already, but give a valid profile
     def nextprofile(self,guess=False):
-        self.getprofilestodo()
         if len(self.profilecountsValid) >0:
             profiles=[x[1] for x in self.profilecountsValid]
             if (guess == True) or (self.profile not in profiles):
                 if self.profile not in profiles:
                     log.debug("{} profile not in valid profiles for "
                                 "ps {}.".format(self.profile,self.ps))
-                self.profile=self.profilecountsValid[0][1]
+                self.set('profile',self.profilecountsValid[0][1])
                 if guess == True:
                     log.debug("Guessing {} profile, from valid profiles for "
                                 "ps {}: {}.".format(self.profile,self.ps,
@@ -328,28 +324,27 @@ class Check():
                 log.debug("{} profile found in valid profiles for ps {}; "
                             "selecting next one in this list: {}".format(
                             self.profile,self.ps,self.profilecountsValid))
-                self.profile=self.profilecountsValid[index+1][1]
+                self.set('profile',self.profilecountsValid[index+1][1])
                 if index >= self.maxprofiles:
                     return 1 #We hit the max already, but give a valid profile
         else:
             log.error("For some reason, I don't see any Valid profiles for "
                         "ps {}. This is likely a problem with your syllable "
                         "profile analysis.".format(self.ps))
-            self.profile=self.profilecounts[0][1]
+            self.set('profile',self.profilecounts[0][1])
         self.checkcheck()
     def nextframe(self):
-        self.getframestodo() #this makes self.framestodo
         if len(self.framestodo) == 0:
             self.addframe()
             return #The above should change self.name, if completed.
         if self.name in self.framestodo:
             i=self.framestodo.index(self.name)
             if len(self.framestodo)>i+1:
-                self.name=self.framestodo[i+1]
+                self.set('name',self.framestodo[i+1])
             else:
                 self.addframe()
         else:
-            self.name=self.framestodo[0]
+            self.set('name',self.framestodo[0])
         self.checkcheck()
     def guesscheckname(self):
         """Picks the longest name (the most restrictive fiter)"""
@@ -359,12 +354,12 @@ class Check():
         # print(firstoflist(sorted(self.checkspossible,
         #                         key=lambda s: len(s[0]),reverse=True),
         #                         othersOK=True))
-        self.name=firstoflist(sorted(self.checkspossible,
+        self.set('name',firstoflist(sorted(self.checkspossible,
                                 key=lambda s: len(s[0]),reverse=True),
-                                othersOK=True)[0]
+                                othersOK=True)[0])
     def guesstype(self):
                     """For now, if type isn't set, start with Vowels."""
-                    self.type='V'
+        self.set('type','V')
     def langnames(self):
         """This is for getting the prose name for a language from a code."""
         """It uses a xyz.ldml file, produced (at least) by WeSay."""
@@ -612,7 +607,7 @@ class Check():
                 log.log(2,"var {}: {}".format(vars.index(var),var.get()))
                 self.senseidstosort.append(var.get())
             log.log(2,"ids: {}".format(self.senseidstosort))
-            self.profile=profilevar.get()
+            self.set('profile',profilevar.get())
             self.makeadhocgroupsdict() # in case the variable or ps isn't there.
             self.adhocgroups[self.ps][self.profile]=self.profilesbysense[
                                     self.ps][self.profile]=self.senseidstosort
@@ -882,7 +877,7 @@ class Check():
                 self.addwindow.framechk.destroy()
         def submit(frame,name):
             # Having made and unset these, we now reset and write them to file.
-            self.name=name
+            self.set('name',name)
             self.toneframes[self.ps][self.name]=frame
             self.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
@@ -1034,18 +1029,27 @@ class Check():
                     )
         buttonFrame1.grid(column=0, row=1)
     """Set User Input"""
-    def set(self,attribute,choice,window):
-        """Before I can use this, I need to pass attribute through the button
-        frame."""
-        window.destroy()
+    def set(self,attribute,choice,window=None,refresh=True):
+        #Normally, pass the attribute through the button frame,
+        #otherwise, don't set window (which would be destroyed)
+        #Set refresh=False (or anything but True) to not redo the main window
+        #afterwards. Do this to save time if you are setting multiple variables.
+        log.info("Setting {} variable with value: {}".format(attribute,choice))
+        if window != None:
+            window.destroy()
         if getattr(self,attribute) != choice: #only set if different
             setattr(self,attribute,choice)
             """If there's something getting reset that shouldn't be, remove it
-            from self.defaults[attribute]"""
+            from self.defaultstoclear[attribute]"""
             self.cleardefaults(attribute)
-            if attribute not in ['fs',
-                                'sample_format',
-                                'audio_card_index']:
+            if attribute == 'ps': #so we don't have to keep resetting this
+                self.getprofilestodo()
+            if attribute == 'profile': #so we don't have to keep resetting this
+                self.getframestodo()
+            if attribute == 'name' and self.type == 'T':
+                self.settonevariablesbypsprofile() #only on changing tone frame
+            if (attribute not in ['fs','sample_format','audio_card_index']
+                                                        and refresh == True):
                 self.checkcheck()
             if attribute in ['analang', 'interpret','distinguish']: #do the last two cause problems?
                 self.reloadprofiledata()
@@ -2297,6 +2301,10 @@ class Check():
                     log.log(3,"Problem with integer {}".format(i))
                     return nn(x,oneperline=True) #if any is not an integer, all.
             return len(x) #to show counts only
+        def updateprofilename(profile,name):
+            #use refresh=False rather than run checkcheck twice.
+            self.set('profile',profile,refresh=False)
+            self.set('name',name)
         title=_('Tone Progress: {}'.format(self.ps))
         Label(self.leaderboard, text=title, font=self.fonts['title'],padx=25
                         ).grid(row=0,column=0)
@@ -2743,9 +2751,6 @@ class Check():
         self.nameori=self.name
         for self.name in self.toneframes[self.ps]:
             #All these depend on self.ps/self.profile/self.name
-            self.makestatusdict()
-            self.settonevariablesbypsprofile()
-            self.gettonegroups()
             log.debug("frame: {}; groups: {}".format(self.name,
             self.status[self.type][self.ps][self.profile][self.name]['groups']))
             done=self.status[self.type][self.ps][self.profile][self.name][
@@ -3037,7 +3042,6 @@ class Check():
     def maybesort(self):
         done=(_("All tone groups in {} have been verified!").format(self.name))
         self.getrunwindow()
-        self.settonevariablesbypsprofile()
         if self.status[self.type][self.ps][self.profile][self.name][
                                                             'tosort'] == True:
             quit=self.sortT()
@@ -3291,7 +3295,6 @@ class Check():
         verifymenu.add_command(label=_("Rename Group"),
                         command=lambda :self.renamegroup())
         self.runwindow.config(menu=verifymenu)
-        self.settonevariablesbypsprofile()
         """self.subcheck is set here, but probably OK"""
         self.makestatusdict()
         for self.subcheck in self.status[self.type][self.ps][self.profile][
@@ -3308,7 +3311,6 @@ class Check():
                 self.updatestatus(verified=True)
                 log.info("Group {} only has {} example; marking verified and "
                         "continuing.".format(self.subcheck,len(senseids)))
-                self.updatestatus(verified=True)
                 continue
             self.runwindow.resetframe() #just once per group
             self.runwindow.wait()
@@ -3437,7 +3439,6 @@ class Check():
         self.sframe=ScrollingFrame(self.runwindow.frame)
         self.sframe.grid(row=2,column=1)
         self.sorting=self.sframe.content
-        self.settonevariablesbypsprofile()
         row=0
         canary=Label(self.runwindow,text='')
         canary.grid(row=5,column=5)
@@ -3667,7 +3668,6 @@ class Check():
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.gettonegroups() #sets self.status...['groups']
     def tryNAgain(self):
-        self.settonevariablesbypsprofile()
         subcheckori=self.subcheck
         for self.subcheck in ['NA']:
             for senseid in self.senseidstosort: #this is a ps-profile slice
@@ -4067,9 +4067,6 @@ class Check():
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=5
             self.storesettingsfile()
-        if self.name is None:
-            self.name=list(self.toneframes[self.ps])[0]
-        self.settonevariablesbypsprofile() #maybe not done before
         torecord=self.getsenseidsbytoneUFgroups()
         skip=False
         if len(torecord) == 0: #self.toneUFgroups != []:
