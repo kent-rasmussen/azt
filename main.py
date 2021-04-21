@@ -589,7 +589,7 @@ class Check():
         sub_nb=Label(self.runwindow.frame2d,text = nbtext, anchor='e')
         sub_nb.grid(row=0,column=0,sticky='e',
                     pady=self.runwindow.options['pady'])
-        self.runwindow.ww.close()
+        self.runwindow.waitdone()
     def addmodadhocsort(self):
         def submitform():
             if profilevar.get() == "":
@@ -627,7 +627,7 @@ class Check():
             allpssensids+=list(self.profilesbysense[self.ps][profile])
         allpssensids=list(dict.fromkeys(allpssensids))
         if len(allpssensids)>70:
-            self.runwindow.ww.close()
+            self.runwindow.waitdone()
             text=_("This is a large group ({})! Are you in the right "
                     "grammatical category?".format(len(allpssensids)))
             log.error(text)
@@ -694,7 +694,7 @@ class Check():
                                 ).grid(row=row,column=0,sticky='ew')
             row+=1
         scroll.grid(row=3,column=0,sticky='ew')
-        self.runwindow.ww.close()
+        self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def addmorpheme(self):
         def makewindow(lang):
@@ -738,7 +738,7 @@ class Check():
                             self.languagenames[lang]),
                             command = lambda lang=lang: skipform(lang))
                 sub_btnNo.grid(row=1,column=1,sticky='')
-            self.runwindow.ww.close()
+            self.runwindow.waitdone()
             sub_btn.wait_window(self.runwindow.frame2) #then move to next step
         self.getrunwindow()
         self.runwindow.form={}
@@ -3077,7 +3077,7 @@ class Check():
                 text=_("Hey, you're not Done!\nCome back when you have time; "
                 "restart where you left off by pressing '{}'".format(buttontxt))
                 Label(self.runwindow.frame, text=text).grid(row=0,column=0)
-                self.runwindow.ww.close()
+                self.runwindow.waitdone()
                 return
             elif joined == False:
                 # self.updatestatus(verified=True,alldone=True)
@@ -3227,7 +3227,7 @@ class Check():
             entryview.grid(column=1, row=1, sticky="new")
             self.sorting.grid(column=0,row=0, sticky="w",pady=50)
             self.sorting.wrap()
-            self.runwindow.ww.close()
+            self.runwindow.waitdone()
             self.runwindow.wait_window(window=self.sorting)
             if not self.runwindow.winfo_exists():
                 return
@@ -3363,7 +3363,7 @@ class Check():
                             font=self.fonts['instructions']
                             )
             b.grid(column=0, row=0, sticky="ew")
-            self.runwindow.ww.close()
+            self.runwindow.waitdone()
             b.wait_window(bf)
             if self.groupselected == "ALLOK":
                 print(f"User selected '{oktext}', moving on.")
@@ -3459,7 +3459,7 @@ class Check():
                     font=self.fonts['instructions']
                     )
         b.grid(column=0, row=row, sticky="ew")
-        self.runwindow.ww.close()
+        self.runwindow.waitdone()
         self.runwindow.frame.wait_window(canary)
         if self.groupselected != "ALLOK" and self.runwindow.winfo_exists():
             group1=self.groupselected
@@ -3943,7 +3943,7 @@ class Check():
                     self.makelabelsnrecordingbuttons(buttonframes.content,
                                                     sense)
             row+=1
-        self.runwindow.ww.close()
+        self.runwindow.waitdone()
         self.runwindow.wait_window(self.runwindow.frame)
     def showentryformstorecord(self,justone=True):
         """Save these values before iterating over them"""
@@ -4051,7 +4051,7 @@ class Check():
             row+=1
             d=Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
             d.grid(row=row,column=0)
-            self.runwindow.ww.close()
+            self.runwindow.waitdone()
             examplesframe.wait_window(entryframe)
             if not self.runwindow.winfo_exists():
                 return 1
@@ -4097,7 +4097,7 @@ class Check():
             if exited == True:
                 return
         if self.runwindow.winfo_exists():
-            self.runwindow.ww.close()
+            self.runwindow.waitdone()
             self.runwindow.resetframe()
             Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
             text=_("All done! Sort some more words, and come back.")
@@ -4198,7 +4198,7 @@ class Check():
                             width=15, row=i,
                             column=1, command=self.notpicked)
         xlpr.close()
-        self.runwindow.ww.close()
+        self.runwindow.waitdone()
         if senseid == 0: #i.e., nothing was found above
             print(_('No results!'))
             Label(self.results, text=_("No results for ")+self.regexCV+"!"
@@ -4375,7 +4375,7 @@ class Check():
                                 ).grid(row=row,column=0,sticky='ew')
             row+=1
         scroll.grid(row=3,column=0,sticky='ew')
-        self.runwindow.ww.close()
+        self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def tonegroupsbyUFlocation(self,senseidsbygroup):
         #returns dictionary keyed by [group][location]=groupvalue
@@ -4486,7 +4486,7 @@ class Check():
             if self.locations == []:
                 log.error("Hey, sort some morphemes in at least one frame before "
                             "trying to make a tone report!")
-                self.runwindow.ww.close()
+                self.runwindow.waitdone()
                 return
             groups=self.groupUFsfromtonegroupsbylocation(output) #make groups
             groups=self.senseidstogroupUFs(output,groups) #fillin group senseids
@@ -4638,7 +4638,7 @@ class Check():
                             framed=self.getframeddata(example,noframe=True)
                             self.framedtoXLP(framed,parent=e1,listword=True)
                     output(window,r,text)
-        self.runwindow.ww.close()
+        self.runwindow.waitdone()
         xlpr.close()
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
         output(window,r,text)
@@ -4692,6 +4692,7 @@ class Check():
         log.info(instr)
         #There is no runwindow here...
         ww=Wait(self.frame) #non-widget parent deiconifies no window...
+        self.frame.parent.wait() #non-widget parent deiconifies no window...
         self.basicreported={}
         self.checkcounts={}
         self.printprofilesbyps()
@@ -4793,7 +4794,7 @@ class Check():
         log.info("Finished in {} seconds.".format(str(time.time()-start_time)))
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        ww.close()
+        self.frame.parent.waitdone()
         self.type=typeori
         self.profile=profileori
         self.ps=psori
@@ -5207,7 +5208,7 @@ class ScrollingFrame(Frame):
         if self.content.winfo_reqheight() != self.canvas.winfo_height():
             # update the canvas's width to fit the inner frame
             self.canvas.config(height=self.content.winfo_reqheight())
-    def windowsize(self):
+    def windowsize(self, event=None):
         availablexy(self) #>self.maxheight, self.maxwidth
         """This section deals with the content on the canvas (self.content)!!
         This is how much space the contents of the scrolling canvas is asking
@@ -5344,6 +5345,13 @@ class Menu(tkinter.Menu):
         self['activebackground']=self.theme['background']
         self['background']='white'
 class MainApplication(Frame):
+    def wait(self):
+        if hasattr(self,'ww') and self.ww.winfo_exists() == True:
+            log.debug("There is already a wait window: {}".format(self.ww))
+            return
+        self.ww=Wait(self.parent)
+    def waitdone(self):
+        self.ww.close()
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
