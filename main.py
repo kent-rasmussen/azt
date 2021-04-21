@@ -3761,18 +3761,19 @@ class Check():
             log.error("Sense id {} not found in sorted senseids! ({}) "
                         "".format(senseid,self.senseidsunsorted))
     def getidstosort(self):
+        #This depends on self.ps and self.profile, but not self.name
         """These variables should not have to be reset between checks"""
         self.senseidstosort=list(self.profilesbysense[self.ps]
                                                     [self.profile])
     def sortingstatus(self):
-        #This should have self.profile and self.name set already
-        self.getidstosort()
+        #This should have self.ps, self.profile and self.name set already
+        self.getidstosort() #This is a ps-profile slice, but reset per frame
         self.senseidssorted=[]
         self.senseidsunsorted=[]
         for senseid in self.senseidstosort:
             if (self.db.get('exfieldvalue',
                             senseid=senseid,
-                            location=self.name,
+                            location=self.name, #because it's relevant to this
                             fieldtype='tone')
                             ) != []:
                 self.senseidssorted+=[senseid]
