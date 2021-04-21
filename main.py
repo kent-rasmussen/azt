@@ -3455,7 +3455,7 @@ class Check():
         (hopefully semi automatically).
         """
         if len(self.status[self.type][self.ps][self.profile][self.name][
-                                                            'groups']) == 0:
+                                                            'groups']) <2:
             log.debug("No tone groups to distinguish!")
             return
         self.getrunwindow()
