@@ -4085,6 +4085,7 @@ class Check():
         self.runwindow.wait_window(self.runwindow.frame)
     def showentryformstorecord(self,justone=True):
         """Save these values before iterating over them"""
+        #Convert to iterate over local variables
         psori=self.ps
         profileori=self.profile
         self.getrunwindow()
@@ -4206,7 +4207,7 @@ class Check():
             self.storesettingsfile()
         torecord=self.getsenseidsbytoneUFgroups()
         skip=False
-        if len(torecord) == 0: #self.toneUFgroups != []:
+        if len(torecord) == 0:
             print("How did we get no UR tone groups?",self.profile,self.ps,
                     "\nHave you run the tone report recently?"
                     "\nDoing that for you now...")
@@ -4806,6 +4807,7 @@ class Check():
     def basicreport(self,typestodo=['V']):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
+        #Convert to iterate over local variables
         typeori=self.type
         psori=self.ps
         profileori=self.profile
