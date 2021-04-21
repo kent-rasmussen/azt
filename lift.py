@@ -1274,13 +1274,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if showurl==True:
             log.info(url2)
         for example in node.findall(url2):
+            node.remove(example)
             # """<field type="tone"><form lang="fr"><text>1</text></form></field>"""
             # """<field type="location"><form lang="fr"><text>Plural</text></form></field>"""
             for child in node:
                 print (child.tag, child.attrib)
             for child in example:
                 print (child.tag, child.attrib)
-            node.remove(example)
         self.updatemoddatetime(guid=guid,senseid=senseid)
         # self.write()
     def updateexfieldvalue(self,guid=None,senseid=None,analang=None,
