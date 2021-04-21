@@ -3839,7 +3839,7 @@ class Check():
                         font=self.fonts['instructions']
                         )
         b2.grid(column=0, row=row+1, sticky="ew")
-    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,**kwargs):
+    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,**kwargs):
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
@@ -3849,14 +3849,21 @@ class Check():
         else:
             notonegroup=kwargs['notonegroup']
             del kwargs['notonegroup']
+        example=self.getex(group,notonegroup=notonegroup,truncdefn=True)
+        if example is None:
+            log.error("Apparently the example for tone group {} in frame {} "
+                        "came back {}".format(group,self.name,example))
+            return
         if 'renew' in kwargs:
             if kwargs['renew'] == True:
-                log.info("Resetting tone group example ({}): {}".format(group,
-                                                            self.exs[group]))
+                log.info("Resetting tone group example ({}): {} of {} examples"
+                        "".format(group,self.exs[group],example['n']))
                 del self.exs[group]
             del kwargs['renew']
-        framed=self.getex(group,notonegroup=notonegroup,truncdefn=True)
+        framed=example['framed']
         if framed is None:
+            log.error("Apparently the framed example for tone group {} in "
+                        "frame {} came back {}".format(group,self.name,example))
             return
         text=(framed['formatted'])
         """This should maybe be brought up a level in frames?"""
@@ -3871,13 +3878,19 @@ class Check():
                                         {'groupselected':group},
                                         canary=canary,canary2=canary2),**kwargs)
             b.grid(column=0, row=0, sticky="ew", ipady=15) #Inside the buttons
-            bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck...
-                    cmd=lambda p=parent:self.tonegroupbuttonframe(parent=parent,
-                                group=group,notonegroup=notonegroup,
-                                canary=canary,canary2=canary2,
-                                row=row,column=column,label=label, renew=True)
-                    ,**kwargs) #to Button
-            bc.grid(column=1, row=0, sticky="nsew", ipady=15) #Inside buttons
+            if example['n'] > 1 or alwaysrefreshable == True:
+                bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck
+                                cmd=lambda p=parent:self.tonegroupbuttonframe(
+                                    parent=parent,
+                                    group=group,notonegroup=notonegroup,
+                                    canary=canary,canary2=canary2,
+                                    row=row,column=column,label=label,
+                                    alwaysrefreshable=alwaysrefreshable,
+                                    renew=True),
+                                text=example['n'],
+                                compound='left',
+                                **kwargs)
+                bc.grid(column=1, row=0, sticky="nsew", ipady=15) #In buttonframe
         return bf
     def printentryinfo(self,guid):
         outputs=[
