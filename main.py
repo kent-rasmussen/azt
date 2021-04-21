@@ -2199,7 +2199,9 @@ class Check():
         info = p.get_host_api_info_by_index(0)
         numdevices = info.get('deviceCount')
         for i in range(0, numdevices):
-            if (p.get_device_info_by_host_api_device_index(0, i).get(
+            iinfo=p.get_device_info_by_host_api_device_index(0, i)
+            log.debug("Looking at sound card {}".format(iinfo))
+            if (iinfo.get(
                                                     'maxInputChannels')) > 0:
                     log.info("Input Device id {} - {}".format(i,
                         p.get_device_info_by_host_api_device_index(0, i).get(
@@ -2208,7 +2210,7 @@ class Check():
                             'code':i,
                             'name':p.get_device_info_by_host_api_device_index(
                             0, i).get('name')}]
-            if (p.get_device_info_by_host_api_device_index(0, i).get(
+            if (iinfo.get(
                                                     'maxOutputChannels')) > 0:
                     log.info("Output Device id {} - {}".format(i,
                         p.get_device_info_by_host_api_device_index(0, i).get(
