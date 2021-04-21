@@ -5338,7 +5338,7 @@ class ScrollingFrame(Frame):
         size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
         self.canvas.config(scrollregion="0 0 %s %s" % size)
         """This makes sure the canvas is as large as what you put on it"""
-        if self.configured <1:
+        if self.configured <20:
             self.windowsize() #this needs to not keep running
             self.configured+=1
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
@@ -5391,23 +5391,28 @@ class ScrollingFrame(Frame):
             -the max dimensions, from above."""
         #This should maybe be pulled out to another method?
         #scrolling window width
-        if self.winfo_width() < contentrw:
-            self.config(width=contentrw)
-        if self.winfo_width() > self.maxwidth:
-            self.config(width=self.maxwidth)
+        if contentrw > self.maxwidth: #self.winfo_width() <
+            width=self.maxwidth
+        else:
+            width=contentrw #self.config(width=contentrw)
+        # if self.winfo_width() > self.maxwidth:
+        #     self.config(width=self.maxwidth)
         #scrolling window height
-        if self.winfo_height() < contentrh:
-            self.config(height=contentrh)
-        if self.winfo_height() > self.maxheight:
-            self.config(height=self.maxheight)
+        if contentrh > self.maxheight:
+            height=self.maxheight #self.config(height=self.maxheight)
+        else: #if self.winfo_height() < contentrh:
+            height=contentrh# self.config(height=contentrh)
+        self.config(height=height, width=width)
+        # if self.winfo_height() > self.maxheight:
+        #     self.config(height=self.maxheight)
     def _configure_canvas(self, event):
         #this configures self.canvas
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
             # update the inner frame's width to fill the canvas
             self.canvas.itemconfigure(self.content_id,
                                         width=self.canvas.winfo_width())
-        if self.winfo_height() > self.maxheight:
-            self.config(height=self.maxheight)
+        # if self.winfo_height() > self.maxheight:
+        #     self.config(height=self.maxheight)
     def __init__(self,parent,xscroll=False):
         """Make this a Frame, with all the inheritances, I need"""
         self.parent=parent
@@ -5471,6 +5476,7 @@ class ScrollingFrame(Frame):
         self.canvas.bind('<Destroy>', self._unbound_to_mousewheel)
         self.canvas.bind('<Configure>', self._configure_canvas)
         self.content.bind('<Configure>', self._configure_interior)
+        self.bind('<Visibility>', self.windowsize)
 class Menu(tkinter.Menu):
     def __init__(self,parent,**kwargs):
         super().__init__(parent,**kwargs)
