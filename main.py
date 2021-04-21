@@ -3424,7 +3424,7 @@ class Check():
             if not self.runwindow.winfo_exists():
                 return 1
             # I need to work on this later. How to distinguish buttons after
-            # the window is gone? I think I have to cound senseids in the group.
+            # the window is gone? I think I have to count senseids in the group.
             # if not self.sframe.content.winfo_exists(): #This goes with window
             #     log.debug("It looks like all buttons were removed "
             #                 "(self.sframe.content.winfo_exists(): {}); "
@@ -3586,7 +3586,7 @@ class Check():
                         exit=self.joinT() #keep joining until OK or exit
                         return exit #pass return back up the chain
         """'These are all different' doesn't need to be saved anywhere, as this
-        can happen at any time. just move on to verification, where each group's
+        can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
     def updatebysubchecksenseid(self,oldtonevalue,newtonevalue):
         """This is all the words in the database with the given
@@ -3612,7 +3612,8 @@ class Check():
             try:
                 values+=[int(i)]
             except:
-                print('Tone group',i,'cannot be interpreted as an integer!')
+                log.info('Tone group {} cannot be interpreted as an integer!'
+                        ''.format(i))
         newgroup=max(values)+1
         self.status[self.type][self.ps][self.profile][self.name]['groups'
                                                         ].append(str(newgroup))
@@ -3696,7 +3697,11 @@ class Check():
                 )
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
     def gettonegroups(self):
-        log.debug("Looking for tone groups for {} frame".format(self.name))
+        # This depends on self.ps, self.profile, and self.name
+        # And sortingstatus, or at least
+        # This is where we go into the LIFT file to see what's actually there.
+        # It should not be used to affirm that often; sortT/joinT manage this.
+        log.log(3,"Looking for tone groups for {} frame".format(self.name))
         tonegroups=[]
         for senseid in self.senseidstosort: #I should be able to make this a regex...
             tonegroups+=self.db.get('exfieldvalue', senseid=senseid,
