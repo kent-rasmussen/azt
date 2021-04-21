@@ -1259,6 +1259,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def rmexfields(self,guid=None,senseid=None,analang=None,
                     glosslang=None,langform=None,glossform=None,fieldtype=None,
                     location=None,fieldvalue=None,ps=None,showurl=False):
+        #We need fieldvalue here to be able to remove 'NA'.
         urlnattr=self.geturlnattr('senseid',senseid=senseid) #just give me the sense.
         url=urlnattr['url']
         if showurl==True:
