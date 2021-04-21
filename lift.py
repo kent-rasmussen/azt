@@ -1272,15 +1272,20 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                     )
         url2=urlnattr2['url']
         if showurl==True:
-            log.info(url2)
+            log.info("url for examples: {} (n={}".format(url2,len(node.findall(
+                                                                        url2))))
         for example in node.findall(url2):
             node.remove(example)
             # """<field type="tone"><form lang="fr"><text>1</text></form></field>"""
             # """<field type="location"><form lang="fr"><text>Plural</text></form></field>"""
-            for child in node:
-                print (child.tag, child.attrib)
-            for child in example:
-                print (child.tag, child.attrib)
+            # for child in node:
+            #     print (child.tag, child.attrib)
+            # for child in example:
+            #     print ('child:',child.tag, child.attrib, child.text)
+            #     for grandchild in child:
+            #         print ('grandchild:',grandchild.tag, grandchild.attrib, grandchild.text)
+            # log.info("Continuing on to the next example node now:")
+            # log.info("Continuing again to the next example node now:")
         self.updatemoddatetime(guid=guid,senseid=senseid)
         # self.write()
     def updateexfieldvalue(self,guid=None,senseid=None,analang=None,
