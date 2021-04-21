@@ -1983,6 +1983,7 @@ class Check():
                             cmd=fn, width=opts['width'], **kwargs
                             ).grid(column=column, row=opts['row'])
         log.info("Running Check Check!")
+        self.frame.parent.wait() #parent of application; root window
         #If the user exits out before this point, just stop.
         try:
             self.frame.winfo_exists()
@@ -2287,6 +2288,7 @@ class Check():
                     text='', pady=50,
                     bg='red' #self.theme['background']
                     ).grid(row=0,column=1,sticky='we')
+        self.frame.parent.waitdone() # put this on every return!
     def makeCVprogresstable(self):
         Label(self.leaderboard, text=_('{} Progress').format(
             self.typedict[self.type]['sg']), font=self.fonts['title']
@@ -2298,6 +2300,7 @@ class Check():
                     ).grid(
         row=1,column=0#,sticky='s'
         )
+        self.frame.parent.waitdone() # put this on every return!
     def maketoneprogresstable(self):
         def groupfn(x):
             for i in x:
@@ -4702,7 +4705,6 @@ class Check():
         print(instr)
         log.info(instr)
         #There is no runwindow here...
-        ww=Wait(self.frame) #non-widget parent deiconifies no window...
         self.frame.parent.wait() #non-widget parent deiconifies no window...
         self.basicreported={}
         self.checkcounts={}
@@ -5088,7 +5090,7 @@ class Window(tkinter.Toplevel):
             return
         self.ww=Wait(self)
     def waitdone(self):
-        pass
+        self.ww.close()
     def __init__(self, parent,
                 backcmd=False, exit=True,
                 title="No Title Yet!", choice=None,
