@@ -199,6 +199,10 @@ class Check():
         self.getprofilestodo()
         self.getpss() #This is a prioritized list of all ps'
         self.setnamesall() #sets self.checknamesall
+        if (hasattr(self,'ps') and (self.ps != None) and
+            hasattr(self,'profile') and (self.profile != None) and
+            hasattr(self,'name') and (self.name != None)):
+            self.sortingstatus() #because this won't get set later #>checkdefaults?
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
         self.checkcheck()
