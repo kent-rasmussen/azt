@@ -3786,12 +3786,12 @@ class Check():
             self.status[self.type][self.ps][self.profile][self.name][
                                                                 'tosort']=False
     def settonevariablesbypsprofile(self):
-        """ps and profile should already be set before this is called, and if
-        they change, this should be run again."""
-        self.makestatusdict() #Fills any existing holes in status file sructure
+        # This depends on self.ps, self.profile, and self.name
+        # Do this only on changing frames:
+        self.makestatusdict() #Fills an existing hole in status file sructure
         #The following depends on the above for structure
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
-        self.gettonegroups() #sets self.status...['groups']
+        self.gettonegroups() #sets self.status...['groups'] for a frame
     def tryNAgain(self):
         subcheckori=self.subcheck
         for self.subcheck in ['NA']:
