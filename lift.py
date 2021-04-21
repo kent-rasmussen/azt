@@ -446,7 +446,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     ),['guid','analang','senseid','ps','glosslang',
                                             'location','fieldtype']),
             'attr':'nodetext'}
-        a['exfieldvaluefromsense']={
+        a['examplewfieldlocvaluefromsense']={
             'cm': 'use to get an example with a given tone/exfield '
                                 'when you have the sense node.',
             'url':(("example/field[@type='location']"
@@ -1264,7 +1264,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if showurl==True:
             log.info(url)
         node=self.nodes.find(url) #this should always find just one node
-        urlnattr2=self.geturlnattr('exfieldvaluefromsense',location=None,
+        log.debug("removing LIFT fields location={},fieldtype={},fieldvalue={}"
+                    "".format(location,fieldtype,fieldvalue))
+        urlnattr2=self.geturlnattr('examplewfieldlocvaluefromsense',
+                                    location=location,
                                     fieldtype=fieldtype,fieldvalue=fieldvalue
                                     )
         url2=urlnattr2['url']
