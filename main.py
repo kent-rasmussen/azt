@@ -2018,7 +2018,7 @@ class Check():
                             cmd=fn, width=opts['width'], **kwargs
                             ).grid(column=column, row=opts['row'])
         log.info("Running Check Check!")
-        self.frame.parent.wait() #parent of application; root window
+        self.parent.wait() #parent of application; root window
         #If the user exits out before this point, just stop.
         try:
             self.frame.winfo_exists()
@@ -5539,12 +5539,13 @@ class Menu(tkinter.Menu):
         self['background']='white'
 class MainApplication(Frame):
     def wait(self):
+        # This and the following are only to build the main screen
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
             log.debug("There is already a wait window: {}".format(self.ww))
             return
-        self.ww=Wait(self.parent)
+        self.parent.ww=Wait(self.parent)
     def waitdone(self):
-        self.ww.close()
+        self.parent.ww.close()
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
