@@ -3290,13 +3290,11 @@ class Check():
         self.getanotherskip(self.runwindow.frame.scroll.content.anotherskip)
         while (self.status[self.type][self.ps][self.profile][self.name][
                 'tosort'] == True and self.runwindow.winfo_exists()):
-        # while self.senseidsunsorted != [] and self.runwindow.winfo_exists():
             if hasattr(self,'groupselected'):
-                delattr(self,'groupselected') #=[] #reset this for each word!
+                delattr(self,'groupselected') #reset this for each word!
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'
                         +str(todo))
-            print(senseid,progress)
             framed=self.getframeddata(senseid,truncdefn=True)
             """After the first entry, sort by groups."""
             log.debug('self.tonegroups: {}'.format(self.status[self.type][
