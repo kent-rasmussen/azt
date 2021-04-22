@@ -3124,8 +3124,9 @@ class Check():
     def maybesort(self):
         done=(_("All tone groups in {} have been verified!").format(self.name))
         self.getrunwindow()
-        if self.status[self.type][self.ps][self.profile][self.name][
-                                                            'tosort'] == True:
+        if (self.name not in self.status[self.type][self.ps][self.profile] or
+                self.status[self.type][self.ps][self.profile][self.name][
+                                                            'tosort'] == True):
             quit=self.sortT()
             if quit == True:
                 return # didn't do anything: 1
