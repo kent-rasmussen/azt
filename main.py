@@ -2348,9 +2348,10 @@ class Check():
                     return nn(x,oneperline=True) #if any is not an integer, all.
             return len(x) #to show counts only
         def updateprofilename(profile,name):
-            #use refresh=False rather than run checkcheck twice.
             self.set('profile',profile,refresh=False)
-            self.set('name',name)
+            self.set('name',name,refresh=False)
+            #run this in any case, rather than rning it not at all, or twice
+            self.checkcheck()
         title=_('Tone Progress: {}'.format(self.ps))
         Label(self.leaderboard, text=title, font=self.fonts['title'],padx=25
                         ).grid(row=0,column=0)
