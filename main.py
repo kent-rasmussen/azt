@@ -1042,8 +1042,10 @@ class Check():
             from self.defaultstoclear[attribute]"""
             self.cleardefaults(attribute)
             if attribute == 'ps': #so we don't have to keep resetting this
+                self.makestatusdictps()
                 self.getprofilestodo()
             if attribute == 'profile': #so we don't have to keep resetting this
+                self.makestatusdictprofile()
                 self.getframestodo()
             if attribute == 'name' and self.type == 'T':
                 self.settonevariablesbypsprofile() #only on changing tone frame
@@ -1315,6 +1317,37 @@ class Check():
             self.adhocgroups={}
         if ps not in self.adhocgroups:
             self.adhocgroups[ps]={}
+    def makestatusdictps(self):
+        # This depends on self.ps only
+        # This operates for exactly one context: wherever it is called.
+        # Do this only where needed, when needed!
+        changed=False
+        if self.type not in self.status:
+            self.status[self.type]={}
+            changed=True
+        if self.ps not in self.status[self.type]:
+            self.status[self.type][self.ps]={}
+            changed=True
+        if changed == True:
+            log.info("Saving status dict to file")
+            self.storesettingsfile(setting='status')
+    def makestatusdictprofile(self):
+        # This depends on self.ps and self.profile
+        # This operates for exactly one context: wherever it is called.
+        # Do this only where needed, when needed!
+        changed=False
+        if self.type not in self.status:
+            self.status[self.type]={}
+            changed=True
+        if self.ps not in self.status[self.type]:
+            self.status[self.type][self.ps]={}
+            changed=True
+        if self.profile not in self.status[self.type][self.ps]:
+            self.status[self.type][self.ps][self.profile]={}
+            changed=True
+        if changed == True:
+            log.info("Saving status dict to file")
+            self.storesettingsfile(setting='status')
     def makestatusdict(self):
         # This depends on self.ps, self.profile, and self.name
         # This operates for exactly one context: wherever it is called.
