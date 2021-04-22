@@ -2361,14 +2361,18 @@ class Check():
         self.leaderboardtable.grid(row=1,column=0)
         row=0
         #put in a footer for next profile/frame
-        profiles=['header']+list(self.profilesbysense[self.ps].keys())#+['footr']
+        profiles=['colheader']+list(self.profilesbysense[self.ps].keys())#+['colfooter']
         frames=list(self.toneframes[self.ps].keys())
         ungroups=0
         for profile in profiles:
             column=0
-            if (profile == 'header') or (profile in
+            if (profile == 'colheader') or (profile in
                                         self.status[self.type][self.ps]):
                 if profile in self.status[self.type][self.ps]:
+                    if (profile == 'colheader' or profile == 'colfooter' or
+                        self.status[self.type][self.ps][profile]) == {}:
+                        continue
+                    #Make row header
                     t="{} ({})".format(profile,len(self.profilesbysense[
                                                             self.ps][profile]))
                     Label(self.leaderboardtable,text=t).grid(
@@ -2376,7 +2380,7 @@ class Check():
                     )
                 for frame in frames:
                     column+=1
-                    if profile == 'header':
+                    if profile == 'colheader':
                         Label(self.leaderboardtable,text=linebreakwords(frame),
                                     font=self.fonts['reportheader']
                                     ).grid(
@@ -2432,6 +2436,7 @@ class Check():
                         ipadx=0,ipady=0
                         )
             row+=1
+        # put profile footer here?
         log.error(_("You have more groups verified than there are: {}".format(
                                                                     ungroups)))
         self.frame.parent.waitdone() # put this on every return!
