@@ -3129,102 +3129,87 @@ class Check():
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def maybesort(self):
-        done=(_("All tone groups in {} have been verified!").format(self.name))
-        self.getrunwindow()
         if (self.name not in self.status[self.type][self.ps][self.profile] or
                 self.status[self.type][self.ps][self.profile][self.name][
                                                             'tosort'] == True):
             quit=self.sortT()
             if quit == True:
-                return # didn't do anything: 1
-            self.checkcheck() #since we probably added groups
-        #status is populated by verifyT, and unpopulated by joinT
-        if ((self.type in self.status) and
-            (self.ps in self.status[self.type]) and
-            (self.profile in self.status[self.type][self.ps]) and
-            (self.name in self.status[self.type][self.ps][self.profile]) and
-            ('done' in self.status[self.type][self.ps][self.profile][self.name])
-            ):
-            verified=self.status[self.type][self.ps][self.profile][self.name][
-                                                                        'done']
-        else:
-            verified=set() #so the following doesn't crash...
-        # if all items in the self.tonegroups exists in verified
-        if set(self.status[self.type][self.ps][self.profile][self.name][
-                                                'groups']).issubset(verified):
-            exit=self.joinT()
-            # This is recursive because we don't know how many joins we'll need,
-            # nor the results of susequent verifications or sorts
-            if exit == True:
-                #if the user joins groups, update the main window and repeat
-                # self.checkcheck()
-                # self.maybesort()
-                # self.runwindow.ww.close()
-            #     return #if join window was closed.
-            # elif joined == None:
-                #This happens when the user exits the window
-                window=self.getrunwindow()
-                buttontxt=_("Sort!")
-                text=_("Hey, you're not Done!\nCome back when you have time; "
-                "restart where you left off by pressing '{}'".format(buttontxt))
-                Label(self.runwindow.frame, text=text).grid(row=0,column=0)
-                self.runwindow.waitdone()
                 return
-            elif exit == False:
-                # self.updatestatus(verified=True,alldone=True)
-                if self.runwindow.winfo_exists():
-                    def nframe():
-                        self.nextframe()
-                        self.runwindow.destroy()
-                        self.checkcheck() #redraw the table
-                        self.runcheck()
-                    def aframe():
-                        self.runwindow.destroy()
-                        self.addframe()
-                        self.addwindow.wait_window(self.addwindow)
-                        self.checkcheck() #redraw the table
-                        self.runcheck()
-                    def nprofile():
-                        self.nextprofile()
-                        self.runwindow.destroy()
-                        self.checkcheck() #redraw the table
-                        self.runcheck()
-                    def nps():
-                        self.nextps()
-                        self.nextprofile(guess=True)
-                        self.runwindow.destroy()
-                        self.checkcheck() #redraw the table
-                        self.runcheck()
-                    self.runwindow.resetframe()
-                    Label(self.runwindow.frame, text=done).grid(row=0,column=0,
-                                                                columnspan=2)
-                    Label(self.runwindow.frame, text='',
-                                image=self.photo[self.type]
-                                ).grid(row=1,column=0,columnspan=2)
-                    self.runwindow.wait()
-                    self.getframestodo()
-                    self.getprofilestodo()
-                    if len(self.framestodo) >0:
-                        Button(self.runwindow.frame,
-                            text=_("Continue to next frame"),
-                            command=nframe).grid(row=2,column=0)
-                    else:
-                        Button(self.runwindow.frame,
-                            text=_("Define a new frame"),
-                            command=aframe).grid(row=2,column=0)
-                    if ((self.profile in self.profilestodo) and
-                    (self.profilestodo.index(self.profile) < self.maxprofiles)):
-                        Button(self.runwindow.frame,
-                            text=_("Continue to next syllable profile"),
-                            command=nprofile).grid(row=2,column=1)
-                    else:
-                        Button(self.runwindow.frame,
-                            text=_("Continue to next Grammatical Category"),
-                            command=nps).grid(row=2,column=1)
-                    self.runwindow.waitdone()
-                    return
-        # we only get here if a group is not verified (otherwise, return above)
-        self.verifyT()
+            self.checkcheck() #since we probably added groups
+        verified=self.status[self.type][self.ps][self.profile][self.name][
+                                                                        'done']
+        # if not all items in the self.tonegroups exists in verified
+        if not set(self.status[self.type][self.ps][self.profile][self.name][
+                                                'groups']).issubset(verified):
+            exitv=self.verifyT()
+            if exitv == True:
+                return
+            self.maybesort()
+            return
+        # Offer to join in any case:
+        exit=self.joinT()
+        log.debug("exit: {}".format(exit))
+        if exit == True:
+            #This happens when the user exits the window
+            log.debug("exiting joinT True")
+            self.getrunwindow(nowait=True)
+            buttontxt=_("Sort!")
+            text=_("Hey, you're not Done!\nCome back when you have time; "
+            "restart where you left off by pressing ‘{}’".format(buttontxt))
+            Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+            return
+        elif exit == False:
+            def nframe():
+                self.nextframe()
+                self.runwindow.destroy()
+                self.checkcheck() #redraw the table
+                self.runcheck()
+            def aframe():
+                self.runwindow.destroy()
+                self.addframe()
+                self.addwindow.wait_window(self.addwindow)
+                self.checkcheck() #redraw the table
+                self.runcheck()
+            def nprofile():
+                self.nextprofile()
+                self.runwindow.destroy()
+                self.checkcheck() #redraw the table
+                self.runcheck()
+            def nps():
+                self.nextps()
+                self.nextprofile(guess=True)
+                self.runwindow.destroy()
+                self.checkcheck() #redraw the table
+                self.runcheck()
+            self.getrunwindow()
+            done=(_("All tone groups in ‘{}’ are verified and distinct!").format(
+                                                                    self.name))
+            Label(self.runwindow.frame, text=done).grid(row=0,column=0,
+                                                        columnspan=2)
+            Label(self.runwindow.frame, text='',
+                        image=self.photo[self.type]
+                        ).grid(row=1,column=0,columnspan=2)
+            self.getframestodo()
+            self.getprofilestodo()
+            if len(self.framestodo) >0:
+                Button(self.runwindow.frame,
+                    text=_("Continue to next frame"),
+                    command=nframe).grid(row=2,column=0)
+            else:
+                Button(self.runwindow.frame,
+                    text=_("Define a new frame"),
+                    command=aframe).grid(row=2,column=0)
+            if ((self.profile in self.profilestodo) and
+            (self.profilestodo.index(self.profile) < self.maxprofiles)):
+                Button(self.runwindow.frame,
+                    text=_("Continue to next syllable profile"),
+                    command=nprofile).grid(row=2,column=1)
+            else:
+                Button(self.runwindow.frame,
+                    text=_("Continue to next Grammatical Category"),
+                    command=nps).grid(row=2,column=1)
+            self.runwindow.waitdone()
+            return
     def sortT(self):
         # This window/frame/function shows one entry at a time (with pic?)
         # for the user to select a tone group based on buttons defined below.
