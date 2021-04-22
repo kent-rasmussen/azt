@@ -79,28 +79,28 @@ class Check():
         self.parent=parent #should be mainapplication frame
         self.frame=frame
         inherit(self)
-        filename=file.getfilename()
-        if not file.exists(filename):
+        self.filename=file.getfilename()
+        if not file.exists(self.filename):
             log.error("Select a lexical database to check; exiting.")
             exit()
-        filedir=file.getfilenamedir(filename)
+        filedir=file.getfilenamedir(self.filename)
         """We need this variable to make filenames for files that will be
         imported as python modules. To do that, they need to not have periods
         (.) in their filenames. So we take the base name from the lift file,
         and replace periods with underscores, to make our modules basename."""
-        filenamebase=re.sub('\.','_',str(file.getfilenamebase(filename)))
+        filenamebase=re.sub('\.','_',str(file.getfilenamebase(self.filename)))
         if not file.exists(filedir):
             log.info(_("Looks like there's a problem with your directory... {}"
-                    "\n{}".format(filename,filemod)))
+                    "\n{}".format(self.filename,filemod)))
             exit()
         """This and the following bit should probably be in another lift
         class, in the main script. They make non lift-specific changes
         and assumptions about the database."""
         try:
-            self.db=lift.Lift(filename,nsyls=nsyls)
+            self.db=lift.Lift(self.filename,nsyls=nsyls)
         except lift.BadParseError:
             text=_("{} doesn't look like a well formed lift file; please "
-                    "try again.").format(filename)
+                    "try again.").format(self.filename)
             print(text)
             log.info("'lift_url.py' removed.")
             window=Window(self)
@@ -128,10 +128,10 @@ class Check():
                         self.profiledatafile,self.adhocgroupsfile]:
             if not file.exists(savefile):
                 print(savefile, "doesn't exist!")
-        self.imagesdir=file.getimagesdir(filename)
-        self.audiodir=file.getaudiodir(filename)
+        self.imagesdir=file.getimagesdir(self.filename)
+        self.audiodir=file.getaudiodir(self.filename)
         log.info('self.audiodir: {}'.format(self.audiodir))
-        self.reportsdir=file.getreportdir(filename)
+        self.reportsdir=file.getreportdir(self.filename)
         self.reportbasefilename=file.getdiredurl(self.reportsdir, filenamebase)
         self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
         log.log(2,'self.reportsdir: {}'.format(self.reportsdir))
@@ -155,7 +155,7 @@ class Check():
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
         self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
         self.db.languagecodes=self.db.analangs+self.db.glosslangs
-        self.db.languagepaths=file.getlangnamepaths(filename,
+        self.db.languagepaths=file.getlangnamepaths(self.filename,
                                                         self.db.languagecodes)
         setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
         self.initdefaults() #provides self.defaults, list to load/save
