@@ -2779,7 +2779,7 @@ class Check():
             return
         for frame in self.toneframes[self.ps]:
             if frame not in self.status[self.type][self.ps][self.profile]:
-                log.debug("{} frame Not started yet: {}".format(frame,tosort))
+                log.debug("{} frame Not started yet!".format(frame))
                 self.framestodo.append(frame)
                 continue
             groups=self.status[self.type][self.ps][self.profile][frame][
