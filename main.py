@@ -2410,6 +2410,9 @@ class Check():
                             donenum=str(donenum)+'/'+str(totalnum)
                             log.log(3,"Total groups found: {}".format(donenum))
                         # This should only be needed on a new database
+                        if donenum == '0/0':
+                            log.info("skipping cell with values {}".format(donenum))
+                            continue
                         if tosort == True:
                             donenum='!'+str(donenum)
                         elif tosort == '?':
