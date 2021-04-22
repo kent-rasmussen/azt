@@ -6369,6 +6369,8 @@ class Splash(Window):
         self.geometry('+%d+%d' % (x, y))
         self.deiconify() #show after placement
         self.update()
+class TestSuite(Window):
+    pass
 
 """These are non-method utilities I'm actually using."""
 def getinterfacelang():
