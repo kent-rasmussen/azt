@@ -3521,11 +3521,12 @@ class Check():
         (hopefully semi automatically).
         """
         #This function should exit 1 on a window close, 0/None on all ok.
+        self.getrunwindow()
         if len(self.status[self.type][self.ps][self.profile][self.name][
                                                             'groups']) <2:
             log.debug("No tone groups to distinguish!")
-            return
-        self.getrunwindow()
+            self.runwindow.waitdone()
+            return 0
         title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
                                         self.languagenames[self.analang],
                                         self.name
@@ -3624,11 +3625,10 @@ class Check():
                         self.status[self.type][self.ps][self.profile][
                                 self.name]['groups'].remove(group1)
                         self.subcheck=group1
-                        self.updatestatus() #not verified=True --if any joined.
+                        self.updatestatus() #not verified=True --since joined.
                         self.subcheck=self.groupselected
-                        self.updatestatus() #not verified=True --if any joined.
-                        exit=self.joinT() #keep joining until OK or exit
-                        return exit #pass return back up the chain
+                        self.updatestatus() #not verified=True --since joined.
+                        self.maybesort() #go back to verify, etc.
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
