@@ -6645,37 +6645,38 @@ def availablexy(self,w=None):
             'wcols: {} ({})'.format(wrow,wrowmax,wrows,wcol,wcolmax,wcols,w))
     rowheight={}
     colwidth={}
-    for sib in w.parent.winfo_children():
-        if sib.winfo_class() != 'Menu':
-            sib.row=sib.grid_info()['row']
-            sib.col=sib.grid_info()['column']
-            """These are actual the row/col after the max in span,
-            but this is what we want for range()"""
-            sib.rowmax=sib.row+sib.grid_info()['rowspan']
-            sib.colmax=sib.col+sib.grid_info()['columnspan']
-            sib.rows=set(range(sib.row,sib.rowmax))
-            sib.cols=set(range(sib.col,sib.colmax))
-            # print('sib:',sib.row,sib.rowmax,sib.rows,sib.col,sib.colmax,sib.cols)
-            # print('wrows & sib.rows:',wrows & sib.rows)
-            # print('wcols & sib.cols:',wcols & sib.cols)
-            if wrows & sib.rows == set(): #the empty set
-                sib.reqheight=sib.winfo_reqheight()
-                log.debug("sib {} reqheight: {}".format(sib,sib.reqheight))
-                """Give me the tallest cell in this row"""
-                if ((sib.row not in rowheight) or (sib.reqheight >
-                                                        rowheight[sib.row])):
-                    rowheight[sib.row]=sib.reqheight
-            # else:
-            #     print(wrows,'and',sib.rows,'share rows')
-            if wcols & sib.cols == set(): #the empty set
-                sib.reqwidth=sib.winfo_reqwidth()
-                log.debug("sib {} width: {}".format(sib,sib.reqwidth))
-                """Give me the widest cell in this column"""
-                if ((sib.col not in colwidth) or (sib.reqwidth >
-                                                        colwidth[sib.col])):
-                    colwidth[sib.col]=sib.reqwidth
-            # else:
-            #     print(wcols,'and',sib.cols,'share columns')
+    for sib in w.parent.winfo_children(): #one of these should be sufficient
+        if sib.winfo_class() not in['Menu','Wait']:
+            if hasattr(w.parent,'grid_info'):
+                sib.row=sib.grid_info()['row']
+                sib.col=sib.grid_info()['column']
+                """These are actual the row/col after the max in span,
+                but this is what we want for range()"""
+                sib.rowmax=sib.row+sib.grid_info()['rowspan']
+                sib.colmax=sib.col+sib.grid_info()['columnspan']
+                sib.rows=set(range(sib.row,sib.rowmax))
+                sib.cols=set(range(sib.col,sib.colmax))
+                # print('sib:',sib.row,sib.rowmax,sib.rows,sib.col,sib.colmax,sib.cols)
+                # print('wrows & sib.rows:',wrows & sib.rows)
+                # print('wcols & sib.cols:',wcols & sib.cols)
+                if wrows & sib.rows == set(): #the empty set
+                    sib.reqheight=sib.winfo_reqheight()
+                    log.debug("sib {} reqheight: {}".format(sib,sib.reqheight))
+                    """Give me the tallest cell in this row"""
+                    if ((sib.row not in rowheight) or (sib.reqheight >
+                                                            rowheight[sib.row])):
+                        rowheight[sib.row]=sib.reqheight
+                # else:
+                #     print(wrows,'and',sib.rows,'share rows')
+                if wcols & sib.cols == set(): #the empty set
+                    sib.reqwidth=sib.winfo_reqwidth()
+                    log.debug("sib {} width: {}".format(sib,sib.reqwidth))
+                    """Give me the widest cell in this column"""
+                    if ((sib.col not in colwidth) or (sib.reqwidth >
+                                                            colwidth[sib.col])):
+                        colwidth[sib.col]=sib.reqwidth
+                # else:
+                #     print(wcols,'and',sib.cols,'share columns')
     for row in rowheight:
         self.otherrowheight+=rowheight[row]
     for col in colwidth:
