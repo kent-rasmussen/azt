@@ -2359,8 +2359,10 @@ class Check():
         title=_('Tone Progress: {}'.format(self.ps))
         Label(self.leaderboard, text=title, font=self.fonts['title'],padx=25
                         ).grid(row=0,column=0)
-        self.leaderboardtable=Frame(self.leaderboard)
-        self.leaderboardtable.grid(row=1,column=0)
+        leaderscroll=ScrollingFrame(self.leaderboard)
+        leaderscroll.grid(row=1,column=0)
+        self.leaderboardtable=leaderscroll.content
+        # self.leaderboardtable.grid(row=1,column=0)
         row=0
         #put in a footer for next profile/frame
         profiles=['colheader']+list(self.profilesbysense[self.ps].keys())#+['colfooter']
