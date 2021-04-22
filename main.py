@@ -4020,6 +4020,7 @@ class Check():
                     if exit is 1:
                         self.runcheck()
                     return
+                self.settonevariablesbypsprofile()
                 self.getidstosort() #not a bad idea to refresh this here
                 self.maybesort()
             else: #do the CV checks
