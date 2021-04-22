@@ -3410,13 +3410,13 @@ class Check():
                 return
             if self.subcheck in (self.status[self.type][self.ps][self.profile]
                                             [self.name]['done']):
-                log.info("{} already verified, continuing.".format(
+                log.info("‘{}’ already verified, continuing.".format(
                                                                 self.subcheck))
                 continue
             senseids=self.getexsall(self.subcheck)
             if len(senseids) <2:
                 self.updatestatus(verified=True)
-                log.info("Group {} only has {} example; marking verified and "
+                log.info("Group ‘{}’ only has {} example; marking verified and "
                         "continuing.".format(self.subcheck,len(senseids)))
                 continue
             self.runwindow.resetframe() #just once per group
@@ -3486,11 +3486,11 @@ class Check():
             #                 "not marking verified.".format(
             #                             self.sframe.content.winfo_exists()))
             elif self.groupselected == "ALLOK":
-                log.debug("User selected '{}', moving on.".format(oktext))
+                log.debug("User selected ‘{}’, moving on.".format(oktext))
                 self.updatestatus(verified=True)
                 self.checkcheck()
             else:
-                print(f"User did NOT select '{oktext}', assuming we'll come "
+                print(f"User did NOT select ‘{oktext}’, assuming we'll come "
                         "back to this!!")
         #Once done verifying each group:
         if self.runwindow.winfo_exists():
@@ -3542,9 +3542,9 @@ class Check():
                                         self.name
                                         )
         oktext=_('These are all different')
-        introtext=_("Congratulations! \nAll your {} with profile {} are sorted "
-                "into the groups exemplified below (in the ‘{}’ frame). Do any "
-                "of these have the same tone melody? "
+        introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
+                "sorted into the groups exemplified below (in the ‘{}’ frame). "
+                "Do any of these have the same tone melody? "
                 "If so, click on the two groups. If not, click ‘{}’."
                 ).format(self.ps,self.profile,self.name,oktext)
         log.debug(introtext)
@@ -3593,7 +3593,7 @@ class Check():
             return 1
         if hasattr(self,'groupselected'):
             if self.groupselected == "ALLOK":
-                print(f"User selected '{oktext}', moving on.")
+                print(f"User selected ‘{oktext}’, moving on.")
                 delattr(self,'groupselected')
                 return 0
             else:
@@ -3604,7 +3604,7 @@ class Check():
                     row=self.status[self.type][self.ps][self.profile][
                                             self.name]['groups'].index(group1)
                 else:
-                    log.error("Group {} isn't found in list {}!".format(group1,
+                    log.error("Group ‘{}’ isn't found in list {}!".format(group1,
                                 self.status[self.type][self.ps][self.profile][
                                                         self.name]['groups']))
                     row=len(self.status[self.type][self.ps][self.profile][
@@ -3622,13 +3622,13 @@ class Check():
                     return 1
                 if hasattr(self,'groupselected'):
                     if self.groupselected == "ALLOK":
-                        print(f"User selected '{oktext}', moving on.")
+                        print(f"User selected ‘{oktext}’, moving on.")
                         delattr(self,'groupselected')
                         return 0
                     else:
                         self.runwindow.wait()
-                        log.debug("Now we're going to join groups {} and {}, "
-                            "marking them both unverified.".format(group1,
+                        log.debug("Now we're going to join groups ‘{}’ and "
+                            "‘{}’, marking them both unverified.".format(group1,
                                                             self.groupselected))
                         """All the senses we're looking at, by ps/profile"""
                         self.updatebysubchecksenseid(group1,self.groupselected)
