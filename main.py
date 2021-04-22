@@ -1841,7 +1841,7 @@ class Check():
             log.error('Neither Element nor senseid was found!'
                         '\nThis is almost certainly not what you want!'
                         '\nFYI, I was looking for {}'.format(source))
-            return output
+            return source
         log.log(2,'form: {}'.format(form))
         for lang in gloss:
             log.log(2,'gloss:'.format(gloss[lang]))
@@ -3301,7 +3301,6 @@ class Check():
             """After the first entry, sort by groups."""
             log.debug('self.tonegroups: {}'.format(self.status[self.type][
                                 self.ps][self.profile][self.name]['groups']))
-            entryview=Frame(self.runwindow.frame)
             titles=Frame(self.runwindow.frame)
             Label(titles, text=title,
                     font=self.fonts['title'],
@@ -3319,10 +3318,19 @@ class Check():
                             text='',
                             bg=self.theme['background']
                             ).grid(row=1,column=0,rowspan=3,sticky='nw')
-            text=(framed['formatted'])
-            self.sorting=Label(entryview, text=text,
-                    font=self.fonts['readbig']
-                    )
+            if 'formatted' in framed:
+                text=(framed['formatted'])
+            else:
+                text=_("Sorry; I can't find {}".format(framed))
+                l=Label(self.runwindow.frame, text=text,font=self.fonts['readbig'])
+                l.grid(column=1,row=1, sticky="w",pady=50)
+                l.wrap()
+                self.runwindow.frame.scroll.destroy()
+                self.runwindow.waitdone()
+                self.runwindow.wait_window(window=l)
+                return 1
+            entryview=Frame(self.runwindow.frame)
+            self.sorting=Label(entryview, text=text,font=self.fonts['readbig'])
             entryview.grid(column=1, row=1, sticky="new")
             self.sorting.grid(column=0,row=0, sticky="w",pady=50)
             self.sorting.wrap()
