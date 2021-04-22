@@ -3978,19 +3978,19 @@ class Check():
                                 "T":[(None,None),] #We should fix this some day
                                 }
     """Doing stuff"""
-    def getrunwindow(self):
+    def getrunwindow(self,nowait=False):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
         need to test for both."""
         if hasattr(self,'runwindow') and (self.runwindow.winfo_exists()):
-            if self.debug == True:
-                log.info("Runwindow already there! Resetting frame...")
+            log.info("Runwindow already there! Resetting frame...")
             self.runwindow.resetframe() #I think I'll always want this here...
         else:
             t=(_("Run Window"))
             self.runwindow=Window(self.frame,title=t)
             self.runwindow.title(t)
-        self.runwindow.wait()
+        if nowait != True:
+            self.runwindow.wait()
     def runcheck(self):
         self.storesettingsfile() #This is not called in checkcheck.
         t=(_('Run Check'))
@@ -5272,7 +5272,8 @@ class Window(tkinter.Toplevel):
             return
         self.ww=Wait(self)
     def waitdone(self):
-        self.ww.close()
+        if hasattr(self,'ww') and self.ww.winfo_exists():
+            self.ww.close()
     def __init__(self, parent,
                 backcmd=False, exit=True,
                 title="No Title Yet!", choice=None,
