@@ -4,7 +4,7 @@
 program={'name':'A→Z+T'}
 program['tkinter']=True
 program['production']=True #True for making screenshots
-program['version']='0.7+w_3' #This is a string...
+program['version']='0.7+w_4' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 import platform
