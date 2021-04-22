@@ -1838,7 +1838,8 @@ class Check():
                 gloss[lang]=firstoflist(glosses[lang])
                 log.log(2,'gloss[{}]: {}'.format(lang,gloss[lang]))
         else:
-            log.info('Neither Element nor senseid was found!')
+            log.error('Neither Element nor senseid was found!'
+                        '\nThis is almost certainly not what you want!')
             return output
         log.log(2,'form: {}'.format(form))
         for lang in gloss:
