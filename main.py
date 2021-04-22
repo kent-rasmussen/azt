@@ -2025,6 +2025,7 @@ class Check():
         try:
             self.frame.winfo_exists()
         except:
+            self.parent.waitdone()
             return
         self.makestatus()
         #Don't guess this; default or user set only
@@ -2043,6 +2044,7 @@ class Check():
         if (self.analang == None) or ():
             log.info("find the language")
             self.getanalang()
+            self.parent.waitdone()
             return
         if self.audiolang == None:
             self.guessaudiolang() #don't display this, but make it
@@ -2055,6 +2057,7 @@ class Check():
         if self.glosslang == None:
             log.info("find the gloss language")
             self.getglosslang()
+            self.parent.waitdone()
             return
         """Get glosslang2 (None is OK here, meaning no second gloss language)"""
         if ((self.glosslang2 != None) and
@@ -2082,11 +2085,13 @@ class Check():
         if self.ps == None:
             log.info("find the ps")
             self.getps()
+            self.parent.waitdone()
             return
         """Get profile (this depends on ps)"""
         if ((self.profile not in self.profilesbysense[self.ps]) or
                                                         (self.profile == None)):
             self.nextprofile(guess=True)
+            self.parent.waitdone()
             return
         if not set(self.profilelegit).issuperset(self.profile):
             self.type='T'
@@ -2106,6 +2111,7 @@ class Check():
         if self.type == None:
             log.info("Select a check type (C, V, CV, Tone).")
             self.gettype()
+            self.parent.waitdone()
             return
         """Get check"""
         self.getcheckspossible() #This sets self.checkspossible
@@ -2136,6 +2142,7 @@ class Check():
             if self.name == None: #no backup assumptions for CV checks, for now
                 log.info("check selection dialog here, for now just running V1=V2")
                 self.getcheck()
+                self.parent.waitdone()
                 return
         """Get subcheck"""
         self.getsubchecksprioritized()
@@ -2146,6 +2153,7 @@ class Check():
                 log.info("Aparently I don't know yet what (e.g., consonant or "
                         "vowel) I'm testing.")
                 self.getsubcheck()
+                self.parent.waitdone()
                 return
             else:
                 t=(_("Checking {}, working on {} = {}".format(
@@ -2327,7 +2335,7 @@ class Check():
                     text='', pady=50,
                     bg='red' #self.theme['background']
                     ).grid(row=0,column=1,sticky='we')
-        self.frame.parent.waitdone() # put this on every return!
+        self.parent.waitdone()
     def makeCVprogresstable(self):
         Label(self.leaderboard, text=_('{} Progress').format(
             self.typedict[self.type]['sg']), font=self.fonts['title']
@@ -2339,7 +2347,7 @@ class Check():
                     ).grid(
         row=1,column=0#,sticky='s'
         )
-        self.frame.parent.waitdone() # put this on every return!
+        self.parent.waitdone() # put this on every return!
     def maketoneprogresstable(self):
         #This should depend on self.ps only, and refresh from self.status.
         def groupfn(x):
@@ -2422,7 +2430,8 @@ class Check():
                             log.log(3,"Total groups found: {}".format(donenum))
                         # This should only be needed on a new database
                         if donenum == '0/0':
-                            log.info("skipping cell with values {}".format(donenum))
+                            log.info("skipping cell with values {}".format(
+                                                                    donenum))
                             continue
                         if tosort == True:
                             donenum='!'+str(donenum)
@@ -2443,7 +2452,7 @@ class Check():
         # put profile footer here?
         log.error(_("You have more groups verified than there are: {}".format(
                                                                     ungroups)))
-        self.frame.parent.waitdone() # put this on every return!
+        self.parent.waitdone() # put this on every return!
     def setsu(self):
         self.su=True
         self.checkcheck()
@@ -3596,7 +3605,8 @@ class Check():
                     row=self.status[self.type][self.ps][self.profile][
                                             self.name]['groups'].index(group1)
                 else:
-                    log.error("Group ‘{}’ isn't found in list {}!".format(group1,
+                    log.error("Group ‘{}’ isn't found in list {}!".format(
+                                group1,
                                 self.status[self.type][self.ps][self.profile][
                                                         self.name]['groups']))
                     row=len(self.status[self.type][self.ps][self.profile][
@@ -4878,7 +4888,7 @@ class Check():
         print(instr)
         log.info(instr)
         #There is no runwindow here...
-        self.frame.parent.wait() #non-widget parent deiconifies no window...
+        self.parent.waitdone() #non-widget parent deiconifies no window...
         self.basicreported={}
         self.checkcounts={}
         self.printprofilesbyps()
@@ -5545,7 +5555,8 @@ class MainApplication(Frame):
             return
         self.parent.ww=Wait(self.parent)
     def waitdone(self):
-        self.parent.ww.close()
+        if hasattr(self.parent,'ww'):
+            self.parent.ww.close()
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
@@ -6671,8 +6682,10 @@ def availablexy(self,w=None):
         self.othercolwidth+=colwidth[col]
     log.debug("self.othercolwidth: {}; self.otherrowheight: {}".format(
                 self.othercolwidth,self.otherrowheight))
-    if w.parent.winfo_class() != 'Toplevel':
-        availablexy(self,w.parent)
+    log.debug("w.parent.winfo_class: {}".format(w.parent.winfo_class()))
+    if w.parent.winfo_class() not in ['Toplevel','Tk','Wait']:
+        if hasattr(w.parent,'grid_info'): #one of these should be sufficient
+            availablexy(self,w.parent)
     else:
         """This may not be the right way to do this, but this set of adjustments
         puts the window edge widgets on the edge of the screen. This calculation
