@@ -4,6 +4,7 @@ import datetime
 import logging
 import lzma
 import re
+log = logging.getLogger(__name__)
 
 def logshutdown(): #Not sure I'll ever need this...
     logging.shutdown()
