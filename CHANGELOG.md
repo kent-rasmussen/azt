@@ -4,7 +4,6 @@
 - don't write blanks to verification file
 - reduce calls to gettonegroups; just after check name is set
 - confirm that all varible calls that are only set on frame/ps-profile switch are stored, and available on open.
-- Join page is (at least sometimes) removing an item (at least) from a group (at least), then giving the join page again, resulting in one less group in at least one case (sorting five elements over four groups). The tone report shows a group of [''] for that element, which is no longer in the join list of buttons.
 - for next ps/profile, move to modified settings (if there), rather than re-figuring each time (this costs nontrivial time).
   - if nothing has changed, there's no reason to waste that time.
   - we can refigure once per ps change? To hold it longer we would need to store it in a dict keyed by ps.
@@ -29,8 +28,6 @@
 - Reduce checkcheck calls, and/or separate table refresh from northwest status?
   - or make sorting add to stats files, so we don't need to recompile them but when changing ps-profile or frame
   - make wait window work in the mean time
-- For verification window, if last example is selected (all gone), exit
-  - don't ask for nonsensical "these are all the same".
 - Find out how Chorus decides what files to pick up, make sure our config files are getting in.
 - move config files to aztconfig directory?
 - look at how to generalize tone sorting, joining, etc. process.
@@ -47,9 +44,6 @@
   - test for presence of currently linked file (i.e., not recorded in AZT), give play buttons
 
 ## In Process
-- add test for resolutionsucks, implement smaller font theme
-- include test to see if a tone analysis has been run since latest triage;
-    - if not run the report
 - Frame object has no attribute 'skip'
 - reduce unnecessary self.gettonegroups() calls
 - make "next frame" do checkcheck
@@ -72,6 +66,11 @@
 - Look up how to get real required heights and widths, availablexy isn't working correctly.
 - fix reconfigure scrolling window frame problem (remove need for if self.configured <1:)
   - constrain frames with less data, to only scroll as needed.
+- add test for resolutionsucks, implement smaller font theme
+- include test to see if a tone analysis has been run since latest triage;
+    - if not run the report
+    - For verification window, if last example is selected (all gone), exit
+      - don't ask for nonsensical "these are all the same".
 
 ## Issues from Zulgo March 2021 workshop
 
@@ -180,6 +179,9 @@
 - toneframetodo is now sensitive to the need to sort, as well as verification.
   - so "next frame" will give you the next frame with unsorted data, even if the known groups are all marked as verified.
 - gettonegroups now removes groups from the list of verified groups, if they aren't actually in the lift file.
+- observation that joinT page was (at least sometimes) removing an item (at least) from a group (at least), then giving the join page again, resulting in one less group in at least one case (sorting five elements over four groups). The tone report shows a group of [''] for that element, which is no longer in the join list of buttons.
+  - This issue was caused by underspecificity in lift.rmexfields()
+
 # Version 0.7
 - truncate definitions after three words or before parentheses
 - group names in status table now listed if any is non-integer; otherwise counts
