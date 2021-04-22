@@ -1,6 +1,7 @@
 # A→Z+T Changelog
 
 # for 0.8
+- fix windows minimaztion problem (new with availxy)
 - don't write blanks to verification file
 - reduce calls to gettonegroups; just after check name is set
 - confirm that all varible calls that are only set on frame/ps-profile switch are stored, and available on open.
