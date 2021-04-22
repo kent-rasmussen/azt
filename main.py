@@ -3392,7 +3392,7 @@ class Check():
         for self.subcheck in self.status[self.type][self.ps][self.profile][
                                                         self.name]['groups']:
             if not self.runwindow.winfo_exists():
-                return
+                return 1
             if self.subcheck in (self.status[self.type][self.ps][self.profile]
                                             [self.name]['done']):
                 log.info("‘{}’ already verified, continuing.".format(
@@ -3401,6 +3401,7 @@ class Check():
             senseids=self.getexsall(self.subcheck)
             if len(senseids) <2:
                 self.updatestatus(verified=True)
+                self.checkcheck()
                 log.info("Group ‘{}’ only has {} example; marking verified and "
                         "continuing.".format(self.subcheck,len(senseids)))
                 continue
@@ -3479,8 +3480,11 @@ class Check():
                         "back to this!!")
         #Once done verifying each group:
         if self.runwindow.winfo_exists():
+            self.runwindow.waitdone()
+        else:
+            return 1
             #verifyT is the last in maybesort, so try again in case it's needed.
-            self.maybesort()
+            # self.maybesort()
     def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
