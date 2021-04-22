@@ -61,6 +61,8 @@
 - add progress of recording (on its own tab?)
 
 ## For some time
+- look into having hg commit changes to verification status file
+  - don't track checkdefaults? (make per user file?)
 - Set means for user to check verification stage again.
   - Once done, there is currently no AZT way to redo it.
 - Look up how to get real required heights and widths, availablexy isn't working correctly.
