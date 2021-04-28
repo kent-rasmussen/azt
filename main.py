@@ -288,8 +288,9 @@ class Check():
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def getpss(self):
         #Why rebuild this here?
-        if not hasattr(self,'profilecountsValid'):
+        if not hasattr(self,'profilecountsValid'): #in case it isn't there.
             self.profilecountsValid=[]
+        if self.profilecountsValid == []:
             for x in [x for x in self.profilecounts if x[1]!='Invalid']:
                 self.profilecountsValid.append(x)
         pssdups=[x[2] for x in self.profilecountsValid]
