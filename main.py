@@ -2209,9 +2209,9 @@ class Check():
                 for ratedict in varset:
                     if var==ratedict['code']:
                         l=ratedict['name'] # self.fsname=ratedict['name']
-                        if cmd is self.getsoundcardindex:
+                        if cmd == self.getsoundcardindex:
                             l=_("Recording on {}").format(l)
-                        if cmd is self.getsoundcardoutindex:
+                        if cmd == self.getsoundcardoutindex:
                             l=_("Playing on {}").format(l)
                         Label(self.soundsettingswindow.frame,
                                 text=l).grid(row=row,column=0)
