@@ -2195,12 +2195,9 @@ class Check():
                 text="Current Sound Card Settings:").grid(row=row,column=0)
         row+=1
         text=_("Change")
-        for var, varset, cmd in [(self.fs,self.fss,self.getsoundhz),
-            (self.sample_format,self.sample_formats,self.getsoundformat),
-            (self.audio_card_index,self.audio_card_indexes,
                                                         self.getsoundcardindex),
-            (self.audioout_card_index,self.audioout_card_indexes,
-                                                    self.getsoundcardoutindex),
+            (self.audioout_card_index,'audioout_card_index',
+                        self.audioout_card_indexes,self.getsoundcardoutindex),
             ]:
             if var is None:
                 Label(self.soundsettingswindow.frame,
