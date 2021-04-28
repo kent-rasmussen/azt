@@ -6231,7 +6231,7 @@ class RecordButtonFrame(Frame):
                 or (check.audio_card_index == None)
                 or (check.audioout_card_index == None)):
             text=_("Sorry, you need to set the fs, sample_rate, and sound card!"
-                    "\n(Change Stuff|Recording|Sound Card Settings)"
+                    "\n(Do|Recording|Sound Card Settings)"
                     "\nSet these, and try again, and "
                     "\na record button will be here.")
             print(text)
