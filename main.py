@@ -2195,6 +2195,29 @@ class Check():
                 text="Current Sound Card Settings:").grid(row=row,column=0)
         row+=1
         text=_("Change")
+        self.fss=self.fsshypothetical[:]
+        if hasattr(self,'audio_card_index') and None not in [
+                                    self.audio_card_index,self.sample_format]:
+            p = pyaudio.PyAudio()
+            log.debug("Pyaudio initialized.")
+            for fs in self.fsshypothetical:
+                log.debug("Checking on sample rate {}, index {}, format {}"
+                            "".format(fs['code'],self.audio_card_index,
+                                                            self.sample_format))
+                s=p.is_format_supported(rate=fs['code'],
+                        input_device=self.audio_card_index, #iinfo['index'],
+                        input_channels=0, #iinfo['maxInputChannels'],
+                        input_format=self.sample_format
+                        )
+                log.debug("Answer: {}".format(s))
+                if s != True:
+                    log.debug("Removing {} from list of sample rates.".format(
+                                                                    fs['code']))
+                    self.fss.remove(fs)
+                else:
+                    log.debug("Sample rate {} looks good.".format(fs['code']))
+        else:
+            log.debug("No sound card specified, so not checking for sample rates.")
                                                         self.getsoundcardindex),
             (self.audioout_card_index,'audioout_card_index',
                         self.audioout_card_indexes,self.getsoundcardoutindex),
@@ -2228,7 +2251,7 @@ class Check():
     def soundcheck(self):
         self.soundsettingswindow=Window(self.frame,
                                 title=_('Select Sound Card Settings'))
-        self.fss=[{'code':192000, 'name':'192khz'},
+        self.fsshypothetical=[{'code':192000, 'name':'192khz'},
                     {'code':96000, 'name':'96khz'},
                     {'code':44100, 'name':'44.1khz'},
                     {'code':28000, 'name':'28khz'},
