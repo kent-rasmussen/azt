@@ -2254,6 +2254,7 @@ class Check():
                                             cmd=self.soundcheckrefreshdone)
         bd.grid(row=row,column=0)
     def soundcheck(self):
+        #Set the parameters of what could be
         self.soundsettingswindow=Window(self.frame,
                                 title=_('Select Sound Card Settings'))
         self.fsshypothetical=[{'code':192000, 'name':'192khz'},
@@ -2268,6 +2269,7 @@ class Check():
                             {'code':pyaudio.paInt16, 'name':'16 bit integer'},
                             {'code':pyaudio.paInt8, 'name':'8 bit integer'}
                             ]
+        #Find which devices are inputs and outputs
         self.audio_card_indexes=[]
         self.audioout_card_indexes=[]
         p = pyaudio.PyAudio()
@@ -2283,8 +2285,7 @@ class Check():
                                 iinfo['maxInputChannels'],
                                 iinfo['maxOutputChannels']
                                 ))
-            if (iinfo.get(
-                                                    'maxInputChannels')) > 0:
+            if (iinfo.get('maxInputChannels')) > 0: #microphone
                     log.info("Input Device id {} - {}".format(i,
                         p.get_device_info_by_host_api_device_index(0, i).get(
                                                                     'name')))
@@ -2292,8 +2293,7 @@ class Check():
                             'code':i,
                             'name':p.get_device_info_by_host_api_device_index(
                             0, i).get('name')}]
-            if (iinfo.get(
-                                                    'maxOutputChannels')) > 0:
+            if (iinfo.get('maxOutputChannels')) > 0: #speaker
                     log.info("Output Device id {} - {}".format(i,
                         p.get_device_info_by_host_api_device_index(0, i).get(
                                                                     'name')))
@@ -2308,7 +2308,6 @@ class Check():
                         self.audio_card_indexes))
         log.log(2,"fs: {}; sf: {}; ci: {}".format(
                         self.fs,self.sample_format,self.audio_card_index))
-        # ButtonFram
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.frame.status)
         if self.soundsettingswindow.winfo_exists:
