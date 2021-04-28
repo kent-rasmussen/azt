@@ -2218,6 +2218,11 @@ class Check():
                     log.debug("Sample rate {} looks good.".format(fs['code']))
         else:
             log.debug("No sound card specified, so not checking for sample rates.")
+        for var, varname, varset, cmd in [
+            (self.fs,'fs',self.fss,self.getsoundhz),
+            (self.sample_format,'sample_format',self.sample_formats,
+                                                        self.getsoundformat),
+            (self.audio_card_index,'audio_card_index',self.audio_card_indexes,
                                                         self.getsoundcardindex),
             (self.audioout_card_index,'audioout_card_index',
                         self.audioout_card_indexes,self.getsoundcardoutindex),
@@ -2270,7 +2275,14 @@ class Check():
         numdevices = info.get('deviceCount')
         for i in range(0, numdevices):
             iinfo=p.get_device_info_by_host_api_device_index(0, i)
-            log.debug("Looking at sound card {}".format(iinfo))
+            log.debug("Looking at sound card {} ({}/{}); in: {}; out: {}"
+                        "".format(
+                                iinfo['name'],
+                                iinfo['index'],
+                                self.audioout_card_index,
+                                iinfo['maxInputChannels'],
+                                iinfo['maxOutputChannels']
+                                ))
             if (iinfo.get(
                                                     'maxInputChannels')) > 0:
                     log.info("Input Device id {} - {}".format(i,
@@ -2292,22 +2304,8 @@ class Check():
         log.log(2,"fs: {}; sf: {}; ci: {}".format(
                         self.fs,self.sample_format,self.audio_card_index))
         log.log(2,"fss: {}; sfs: {}; cis: {}".format(
-                        self.fss,self.sample_formats,self.audio_card_indexes))
-        if not hasattr(self,'fs') or self.fs not in [v['code'] for v
-                                                in self.fss]:
-            self.fs=None
-        if (not hasattr(self,'sample_format') or
-                (self.sample_format not in [v['code'] for v
-                                                in self.sample_formats])):
-            self.sample_format=None
-        if (not hasattr(self,'audio_card_index') or
-                (self.audio_card_index not in [v['code'] for v
-                                                in self.audio_card_indexes])):
-            self.audio_card_index=None
-        if (not hasattr(self,'audioout_card_index') or
-                (self.audioout_card_index not in [v['code'] for v
-                                                in self.audioout_card_indexes])):
-            self.audioout_card_index=None
+                        self.fsshypothetical,self.sample_formats,
+                        self.audio_card_indexes))
         log.log(2,"fs: {}; sf: {}; ci: {}".format(
                         self.fs,self.sample_format,self.audio_card_index))
         # ButtonFram
