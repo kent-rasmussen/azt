@@ -1051,7 +1051,8 @@ class Check():
             if attribute == 'name' and self.type == 'T':
                 #This can probably wait until runcheck
                 self.settonevariablesbypsprofile() #only on changing tone frame
-            if (attribute not in ['fs','sample_format','audio_card_index']
+            if (attribute not in ['fs','sample_format','audio_card_index',
+            'audioout_card_index']
                                                         and refresh == True):
                 self.checkcheck()
             if attribute in ['analang', 'interpret','distinguish']: #do the last two cause problems?
