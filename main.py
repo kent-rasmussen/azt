@@ -5550,8 +5550,8 @@ class Menu(tkinter.Menu):
 class MainApplication(Frame):
     def wait(self):
         # This and the following are only to build the main screen
-        if hasattr(self,'ww') and self.ww.winfo_exists() == True:
-            log.debug("There is already a wait window: {}".format(self.ww))
+        if hasattr(self.parent,'ww') and self.parent.ww.winfo_exists() == True:
+            log.debug("Already a wait window: {}".format(self.parent.ww))
             return
         self.parent.ww=Wait(self.parent)
     def waitdone(self):
@@ -5876,7 +5876,6 @@ class MainApplication(Frame):
         """finished loading so destroy splash"""
         splash.destroy()
         """show window again"""
-        parent.deiconify()
 class Label(tkinter.Label):
     def wrap(self):
         availablexy(self)
