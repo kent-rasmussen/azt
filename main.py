@@ -2199,6 +2199,9 @@ class Check():
             (self.audioout_card_index,'audioout_card_index',
                         self.audioout_card_indexes,self.getsoundcardoutindex),
             ]:
+            var=getattr(self,varname)
+            if var not in [v['code'] for v in varset]:
+                setattr(self,varname,None)
             if var is None:
                 Label(self.soundsettingswindow.frame,
                                 text='<unset>').grid(row=row,column=0)
