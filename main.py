@@ -2187,6 +2187,7 @@ class Check():
         self.parent.setmenus(self)
     def soundcheckrefreshdone(self):
         self.storesettingsfile()
+        self.soundsettingswindow.destroy()
         self.checkcheck()
     def soundcheckrefresh(self):
         self.soundsettingswindow.resetframe()
@@ -2309,10 +2310,10 @@ class Check():
         log.log(2,"fs: {}; sf: {}; ci: {}".format(
                         self.fs,self.sample_format,self.audio_card_index))
         self.soundcheckrefresh()
-        self.soundsettingswindow.wait_window(self.frame.status)
-        if self.soundsettingswindow.winfo_exists:
-            self.soundsettingswindow.destroy()
+        self.soundsettingswindow.wait_window(self.soundsettingswindow)
         donewpyaudio(self)
+        if not self.exitFlag and self.soundsettingswindow.winfo_exists():
+                self.soundsettingswindow.destroy()
     def maybeboard(self):
         def checkfordone():
             for self.profile in self.status[self.type][self.ps]:
@@ -5823,6 +5824,10 @@ class MainApplication(Frame):
         setfonts(self.parent)
         self.parent.wraplength=self.parent.winfo_screenwidth()-300 #exit button
         self.parent.program=program
+    def on_quit(self):
+        log.debug("Setting exit flag true!")
+        self.exitFlag = self.check.exitFlag = True
+        self.parent.destroy()
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
@@ -5881,6 +5886,8 @@ class MainApplication(Frame):
         (more is more load time.)
         """
         self.check=Check(self,self.frame,nsyls=nsyls)
+        self.exitFlag = self.check.exitFlag = False
+        parent.wm_protocol("WM_DELETE_WINDOW", self.on_quit)
         """Do any check tests here"""
         """Make the rest of the mainApplication window"""
         e=(_("Exit"))
@@ -5889,7 +5896,7 @@ class MainApplication(Frame):
             self.check.frame.winfo_exists()
         except:
             return
-        exit=tkinter.Button(self.frame, text=e, command=parent.destroy,
+        exit=tkinter.Button(self.frame, text=e, command=self.on_quit,
                             width=15,bg=self.theme['background'],
                             activebackground=self.theme['activebackground'])
         exit.grid(row=2, column=1, sticky='ne')
