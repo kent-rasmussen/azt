@@ -3,6 +3,7 @@
 """This module controls manipulation of LIFT files and objects"""
 """"(Lexical Interchange FormaT), both for reading and writing"""
 from xml.etree import ElementTree as ET
+import xmlfns
 import sys
 import pathlib
 import threading
@@ -1386,6 +1387,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         write=0
         replace=0
         remove=0
+        xmlfns.indent(self.nodes)
+        self.tree=ET.ElementTree(self.nodes)
         try:
             self.tree.write(filename+'.part', encoding="UTF-8")
             write=1
