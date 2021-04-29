@@ -2198,8 +2198,6 @@ class Check():
         self.fss=self.fsshypothetical[:]
         if hasattr(self,'audio_card_index') and None not in [
                                     self.audio_card_index,self.sample_format]:
-            p = pyaudio.PyAudio()
-            log.debug("Pyaudio initialized.")
             for fs in self.fsshypothetical:
                 log.debug("Checking on sample rate {}, index {}, format {}"
                             "".format(fs['code'],self.audio_card_index,
@@ -2272,8 +2270,10 @@ class Check():
         #Find which devices are inputs and outputs
         self.audio_card_indexes=[]
         self.audioout_card_indexes=[]
-        p = pyaudio.PyAudio()
-        info = p.get_host_api_info_by_index(0)
+        try:
+            check.pyaudio.get_host_api_count()
+        except:
+            self.pyaudio = pyaudio.PyAudio()
         numdevices = info.get('deviceCount')
         for i in range(0, numdevices):
             iinfo=p.get_device_info_by_host_api_device_index(0, i)
@@ -2312,6 +2312,7 @@ class Check():
         self.soundsettingswindow.wait_window(self.frame.status)
         if self.soundsettingswindow.winfo_exists:
             self.soundsettingswindow.destroy()
+        donewpyaudio(self)
     def maybeboard(self):
         def checkfordone():
             for self.profile in self.status[self.type][self.ps]:
@@ -4181,6 +4182,7 @@ class Check():
                     self.showentryformstorecordpage()
             self.ps=psori
             self.profile=profileori
+        donewpyaudio(self)
     def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
         def setskip(event):
             self.runwindow.frame.skip=True
@@ -4323,6 +4325,7 @@ class Check():
             Button(self.runwindow.frame,
                     text=_("Continue to next syllable profile"),
                     command=next).grid(row=1,column=0)
+        donewpyaudio(self)
     def getresults(self):
         self.getrunwindow()
         self.makeresultsframe()
@@ -6038,7 +6041,6 @@ class RecordButtonFrame(Frame):
         # print("I'm recording now")
         if hasattr(self,'fulldata'):
             delattr(self,'fulldata') #let's start each recording afresh.
-        self.pa = pyaudio.PyAudio()
         def callback(self):
             self.stream = self.pa.open(
                     input_device_index=self.audio_card_index,
@@ -6104,7 +6106,6 @@ class RecordButtonFrame(Frame):
         stream.stop_stream()
         stream.close()
         self.wf.close()
-        self.pa.terminate()
     def _redo(self, event):
         # print("I'm deleting the recording now")
         self.p.destroy()
@@ -6203,6 +6204,7 @@ class RecordButtonFrame(Frame):
                 #command=None,
                 # column=0, row=1,
                 **kwargs):
+        # This class needs to be cleanup after closing, with donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.db=check.db
@@ -6214,6 +6216,11 @@ class RecordButtonFrame(Frame):
         self.callbackrecording=True
         self.chunk = 1024  # Record in chunks of 1024 samples
         # self.sample_format = pyaudio.paInt16  # 16 bits per sample
+        try:
+            check.pyaudio.get_host_api_count()
+            self.pa = check.pyaudio
+        except:
+            self.pa = check.pyaudio = pyaudio.PyAudio()
         self.channels = 1 #Always record in mono
         self.audiolang=check.audiolang
         # self.fs = 44100  # Record at 44100 samples per second
