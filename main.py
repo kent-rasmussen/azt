@@ -608,9 +608,10 @@ class Check():
                 log.log(2,"var {}: {}".format(vars.index(var),var.get()))
                 self.senseidstosort.append(var.get())
             log.log(2,"ids: {}".format(self.senseidstosort))
-            self.set('profile',profilevar.get())
+            self.set('profile',profilevar.get(),refresh=False) #checkcheck below
             #Add to dictionaries before updating them below
-            self.makeadhocgroupsdict() # in case the variable or ps isn't there.
+            log.debug("profile: {}".format(self.profile))
+            self.makeadhocgroupsdict() # put variable & ps in self.adhocgroups.
             self.adhocgroups[self.ps][self.profile]=self.profilesbysense[
                                     self.ps][self.profile]=self.senseidstosort
             self.makecountssorted() #we need these to show up in the counts.
@@ -627,7 +628,7 @@ class Check():
         self.runwindow.title(title)
         padx=50
         pady=10
-        Label(self.runwindow,text=title,font=self.fonts['title'],
+        Label(self.runwindow.frame,text=title,font=self.fonts['title'],
                 ).grid(row=0,column=0,sticky='ew')
         allpssensids=list()
         for profile in self.profilesbysense[self.ps]:
@@ -638,9 +639,9 @@ class Check():
             text=_("This is a large group ({})! Are you in the right "
                     "grammatical category?".format(len(allpssensids)))
             log.error(text)
-            w=Label(self.runwindow,text=text)
+            w=Label(self.runwindow.frame,text=text)
             w.grid(row=1,column=0,sticky='ew')
-            b=Button(self.runwindow, text="OK", command=w.destroy, anchor='c')
+            b=Button(self.runwindow.frame, text="OK", command=w.destroy, anchor='c')
             b.grid(row=2,column=0,sticky='ew')
             self.runwindow.wait_window(w)
             w.destroy()
@@ -648,6 +649,8 @@ class Check():
             return
         else:
             self.runwindow.wait()
+        Label(self.runwindow.frame,text=title,font=self.fonts['title'],
+                ).grid(row=0,column=0,sticky='ew')
         text=_("This page will allow you to set up your own sets of dictionary "
                 "senses to sort, within the '{0}' grammatical category. \nYou "
                 "should only do this if the '{0}' grammatical category is so "
@@ -661,8 +664,8 @@ class Check():
                 "\nIf you want to create a new group, exit here, select a "
                 "non-Ad Hoc syllable profile, and try this window again."
                 "".format(self.ps))
-        Label(self.runwindow,text=text).grid(row=1,column=0,sticky='ew')
-        qframe=Frame(self.runwindow)
+        Label(self.runwindow.frame,text=text).grid(row=1,column=0,sticky='ew')
+        qframe=Frame(self.runwindow.frame)
         qframe.grid(row=2,column=0,sticky='ew')
         text=_("What do you want to call this group for sorting {} words?"
                 "".format(self.ps))
@@ -683,7 +686,7 @@ class Check():
         sub_btn.grid(row=1,column=1,sticky='w')
         vars=list()
         row=0
-        scroll=ScrollingFrame(self.runwindow)
+        scroll=ScrollingFrame(self.runwindow.frame)
         for id in allpssensids:
             log.debug("id: {}; index: {}; row: {}".format(id,
                                                     allpssensids.index(id),row))
