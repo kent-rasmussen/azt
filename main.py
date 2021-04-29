@@ -6107,33 +6107,64 @@ class RecordButtonFrame(Frame):
     def _play(self, event):
         # print("I'm playing the recording now")
         self.wf = wave.open(self.filenameURL, 'rb')
-        self.pa = pyaudio.PyAudio()
-        """"block"""
-        # stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
-        #         channels=wf.getnchannels(),
-        #         rate=wf.getframerate(),
-        #         output=True)
-        # data = wf.readframes(self.chunk)
-        # while len(data) > 0:
-        #     stream.write(data)
-            # data = wf.readframes(self.chunk)
+        frames = self.wf.getnframes()
+        rate=self.wf.getframerate()
+        duration = frames / float(rate)
+        format=self.pa.get_format_from_width(self.wf.getsampwidth())
+        channels=self.wf.getnchannels()
+        if None in [rate,format,channels]: #This should never happen here.
+            log.debug("Problem playing on {} card on {} channels with {} rate, "
+            "{} format".format(self.audioout_card_index,channels,rate,format))
+            return
+        """block"""
+        def block():
+            self.stream = self.pa.open(format=format,
+                    output_device_index=self.audioout_card_index,
+                    channels=channels,
+                    rate=rate,
+                    output=True)
+            data = self.wf.readframes(self.chunk)
+            while len(data) > 0:
+                self.stream.write(data)
+                data = self.wf.readframes(self.chunk)
         """Callback"""
-        # print('channels:',self.wf.getnchannels())
-        # print('getframerate:',self.wf.getframerate())
-        # print('getframerate:',self.wf.getsampwidth())
-        # print('format:',self.pa.get_format_from_width(self.wf.getsampwidth()))
-        stream = self.pa.open(
-                output_device_index=self.audioout_card_index,
-                format=self.pa.get_format_from_width(self.wf.getsampwidth()),
-                channels=self.wf.getnchannels(),
-                rate=self.wf.getframerate(),
-                output=True,
-                stream_callback=self.playcallback)
-        stream.start_stream()
-        while stream.is_active():
-            time.sleep(0.1)
-        stream.stop_stream()
-        stream.close()
+        def callback(): #This just isn't working faithfully, for some reason.
+            log.info("Playing {} sample rate with card {} on {} channels with "
+                "{} format".format(rate,self.audioout_card_index,channels,
+                                                                        format))
+            try:
+                self.pa.get_host_api_count()
+            except:
+                log.info("Reinitializing PyAudio")
+                self.pa = self.check.pyaudio = pyaudio.PyAudio()
+            try:
+                log.debug("trying stream...")
+                self.stream = self.pa.open(
+                    output_device_index=self.audioout_card_index,
+                    format=format,
+                    channels=channels,
+                    rate=rate,
+                    output=True,
+                    stream_callback=self.playcallback)
+                log.debug("Starting stream...")
+                self.stream.start_stream()
+                log.debug("Keeping stream active...")
+                while (self.stream.is_active()) and (not self.stream.is_stopped()):
+                    try:
+                        log.debug(format/8*1024)
+                    except:
+                        log.debug("No stream to write!")
+                        return
+                    time.sleep(0.1)
+                    log.debug("Keeping stream active (again)...")
+                log.debug("Stopping stream...")
+                self.stream.stop_stream()
+                log.debug("Stream stopped.")
+            except Exception as e:
+                log.exception("Can't play file! %s",e)
+                return
+        block()
+        self.stream.close()
         self.wf.close()
     def _redo(self, event):
         # print("I'm deleting the recording now")
