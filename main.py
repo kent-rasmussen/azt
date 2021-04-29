@@ -3,7 +3,7 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A→Z+T'}
 program['tkinter']=True
-program['production']=True #True for making screenshots
+program['production']=False #True for making screenshots
 program['version']='0.7+w_5' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
@@ -65,6 +65,7 @@ import sys
 import inspect
 import os
 import pprint #for settings and status files, etc.
+
 class Check():
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
@@ -5926,7 +5927,7 @@ class MainApplication(Frame):
                                                                     "seconds.")
         """finished loading so destroy splash"""
         splash.destroy()
-        """show window again"""
+        """Don't show window again until check is done"""
 class Label(tkinter.Label):
     def wrap(self):
         availablexy(self)
@@ -6452,8 +6453,6 @@ class Splash(Window):
         self.geometry('+%d+%d' % (x, y))
         self.deiconify() #show after placement
         self.update()
-class TestSuite(Window):
-    pass
 
 """These are non-method utilities I'm actually using."""
 def getinterfacelang():
@@ -6844,6 +6843,9 @@ def donewpyaudio(self):
         self.pyaudio.terminate()
     except:
         log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
+def donothing():
+    log.debug("Doing Nothing!")
+    pass
 def nfc(x):
     #This makes (pre)composed characters, e.g., vowel and accent in one
     return unicodedata.normalize('NFC', str(x))
