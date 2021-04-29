@@ -6410,6 +6410,7 @@ class Wait(Window): #tkinter.Toplevel?
         except:
             log.debug("Not withdrawing parent.")
         super(Wait, self).__init__(parent)
+        self.attributes("-topmost", True)
         self['background']=parent['background']
         self.photo = parent.photo #need this before making the frame
         title=(_("Please Wait! {name} Dictionary and Orthography Checker "
