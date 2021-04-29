@@ -2195,61 +2195,93 @@ class Check():
         Label(self.soundsettingswindow.frame,
                 text="Current Sound Card Settings:").grid(row=row,column=0)
         row+=1
-        text=_("Change")
+        # clean this up and replicate for sound formats
         self.fss=self.fsshypothetical[:]
         if hasattr(self,'audio_card_index') and None not in [
                                     self.audio_card_index,self.sample_format]:
             for fs in self.fsshypothetical:
-                log.debug("Checking on sample rate {}, index {}, format {}"
-                            "".format(fs['code'],self.audio_card_index,
-                                                            self.sample_format))
-                s=p.is_format_supported(rate=fs['code'],
-                        input_device=self.audio_card_index, #iinfo['index'],
-                        input_channels=0, #iinfo['maxInputChannels'],
+                # .is_format_supported() Returns True if the configuration is
+                # supported; throws a ValueError exception otherwise.
+                try:
+                    s=self.pyaudio.is_format_supported(rate=fs['code'],
+                        input_device=self.audio_card_index,
+                        input_channels=1, #iinfo['maxInputChannels'],
                         input_format=self.sample_format
                         )
-                log.debug("Answer: {}".format(s))
-                if s != True:
-                    log.debug("Removing {} from list of sample rates.".format(
-                                                                    fs['code']))
+                    if self.audioout_card_index != None:
+                        s=self.pyaudio.is_format_supported(rate=fs['code'],
+                            output_device=self.audioout_card_index,
+                            output_channels=1, #iinfo['maxOutputChannels'],
+                            output_format=self.sample_format
+                            )
+                except ValueError as e:
+                    log.info("Removing {} from list of sample rates for "
+                            "index {}, outdex {}, format {} (%s)".format(
+                            fs['code'],
+                            self.audio_card_index,
+                            self.audioout_card_index,
+                            self.sample_format),e)
                     self.fss.remove(fs)
-                else:
-                    log.debug("Sample rate {} looks good.".format(fs['code']))
+                    s=False
+            log.debug("Sample rates for ‘{}’ input and ‘{}’ output with "
+                    "format ‘{}’: {}".format(self.audio_card_index,
+                                                self.audioout_card_index,
+                                                self.sample_format,
+                                                self.fss
+                                                ))
         else:
-            log.debug("No sound card specified, so not checking for sample rates.")
-        for var, varname, varset, cmd in [
-            (self.fs,'fs',self.fss,self.getsoundhz),
-            (self.sample_format,'sample_format',self.sample_formats,
-                                                        self.getsoundformat),
-            (self.audio_card_index,'audio_card_index',self.audio_card_indexes,
-                                                        self.getsoundcardindex),
-            (self.audioout_card_index,'audioout_card_index',
-                        self.audioout_card_indexes,self.getsoundcardoutindex),
-            ]:
+            log.debug("No sound card specified; not checking for sample rates.")
+        for varname, varset, cmd in [
+            ('fs',self.fss,self.getsoundhz),
+            ('sample_format',self.sample_formats,self.getsoundformat),
+            ('audio_card_index',self.audio_card_indexes,self.getsoundcardindex),
+            ('audioout_card_index',self.audioout_card_indexes,
+                                                    self.getsoundcardoutindex),
+                                    ]:
+            text=_("Change")
             var=getattr(self,varname)
             if var not in [v['code'] for v in varset]:
                 setattr(self,varname,None)
+                var=None
             if var is None:
                 Label(self.soundsettingswindow.frame,
                                 text='<unset>').grid(row=row,column=0)
             else:
                 for ratedict in varset:
                     if var==ratedict['code']:
-                        l=ratedict['name'] # self.fsname=ratedict['name']
+                        l=ratedict['name']
                         if cmd == self.getsoundcardindex:
-                            l=_("Recording on {}").format(l)
+                            l=_("Microphone: ‘{}’").format(l)
                         if cmd == self.getsoundcardoutindex:
-                            l=_("Playing on {}").format(l)
+                            l=_("Speakers: ‘{}’").format(l)
                         Label(self.soundsettingswindow.frame,
                                 text=l).grid(row=row,column=0)
-            Button(self.soundsettingswindow.frame, choice=text,
+            if varset == []:
+                text=_("Change something else!")
+                cmd=donothing
+            bc=Button(self.soundsettingswindow.frame, choice=text, #choice unused.
                             text=text, anchor='c',
-                            cmd=cmd).grid(row=row,column=1)
+                            cmd=cmd)
+            bc.grid(row=row,column=1)
+            if varset == []:
+                bc.config(state="disabled")
+                bc.update()
             row+=1
-        b=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
-        b.grid(row=row,column=0)
+        br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
+        br.grid(row=row,column=0)
         row+=1
-        bd=Button(self.soundsettingswindow.frame,text=_("Done"),
+        l=_("You may need to change your microphone "
+            "\nand/or speaker sound card to get the "
+            "\nsampling and format you want.")
+        Label(self.soundsettingswindow.frame,
+                text=l).grid(row=row,column=0)
+        row+=1
+        l=_("Make sure ‘record’ and ‘play’ \nwork well here, "
+            "\nbefore recording real data!")
+        Label(self.soundsettingswindow.frame,
+                text=l,font=self.fonts['read']).grid(row=row,column=0)
+        row+=1
+        bd=Button(self.soundsettingswindow.frame,text=_("Done"),anchor='c',
                                             cmd=self.soundcheckrefreshdone)
         bd.grid(row=row,column=0)
     def soundcheck(self):
