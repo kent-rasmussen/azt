@@ -4,7 +4,7 @@
 program={'name':'A→Z+T'}
 program['tkinter']=True
 program['production']=True #True for making screenshots
-program['version']='0.7+w_4' #This is a string...
+program['version']='0.7+w_5' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 import platform
@@ -3061,7 +3061,6 @@ class Check():
                 count=len(self.profilesbysense[ps][profile])
                 wcounts.append((count, profile, ps))
         self.profilecounts=sorted(wcounts,reverse=True)
-        # self.Scounts={} #?
     def printcountssorted(self):
         #This is only used in the basic report
         log.info("Ranked and numbered syllable profiles, by grammatical category:")
@@ -3540,8 +3539,6 @@ class Check():
             self.runwindow.waitdone()
         else:
             return 1
-            #verifyT is the last in maybesort, so try again in case it's needed.
-            # self.maybesort()
     def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
@@ -6264,7 +6261,7 @@ class RecordButtonFrame(Frame):
                 #command=None,
                 # column=0, row=1,
                 **kwargs):
-        # This class needs to be cleanup after closing, with donewpyaudio()
+        # This class needs to be cleanup after closing, with donewpyaudio(self)
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.db=check.db
@@ -6274,8 +6271,7 @@ class RecordButtonFrame(Frame):
         self.gloss=gloss
         self.check=check
         self.callbackrecording=True
-        self.chunk = 1024  # Record in chunks of 1024 samples
-        # self.sample_format = pyaudio.paInt16  # 16 bits per sample
+        self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         try:
             check.pyaudio.get_host_api_count()
             self.pa = check.pyaudio
@@ -6283,9 +6279,6 @@ class RecordButtonFrame(Frame):
             self.pa = check.pyaudio = pyaudio.PyAudio()
         self.channels = 1 #Always record in mono
         self.audiolang=check.audiolang
-        # self.fs = 44100  # Record at 44100 samples per second
-        # self.seconds = 3
-        # self.toneframesfile=re.sub('\.','_',str(filename+".ToneFrames"))+'.py'
         """I'm trusting here that no one has been screwing with the check
         parameters"""
         self.test=test
