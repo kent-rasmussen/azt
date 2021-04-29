@@ -1,14 +1,26 @@
 # A→Z+T Changelog
 
 # for 0.8
-- fix windows minimaztion problem (new with availxy)
-- don't write blanks to verification file
 - reduce calls to gettonegroups; just after check name is set
-- confirm that all varible calls that are only set on frame/ps-profile switch are stored, and available on open.
+- confirm that all variable calls that are only set on frame/ps-profile switch are stored, and available on open.
+- don't write blanks to verification file
 - for next ps/profile, move to modified settings (if there), rather than re-figuring each time (this costs nontrivial time).
   - if nothing has changed, there's no reason to waste that time.
   - we can refigure once per ps change? To hold it longer we would need to store it in a dict keyed by ps.
-- make 'next' buttons on the end of each axis in the table.
+- propagate exitFlag to the rest of the check
+- better document skip function
+- improve status table with buttons
+  - make 'next' buttons on the end of each axis in the table.
+  - make "hide" buttons for each header (x and y)
+  - make "show all" button at the origin
+- commit diffs to hg on closing (or when?)!
+  - think through which settings should be shared:
+    - profile data?
+    - verification status
+    - ad hoc groups?
+  - and which shouldn't
+    - check defaults
+- fix windows minimization problem (new with availxy)
 - consider adding ps=None, profile=None, and name=None to scripts used in iterating across these variables, so they can be sent as variables, rather than changing self.{ps,profile,name}, given that these changes will now come at a greater cost.
   - all changes to self.{ps,profile,name} should come through self.set()
   - avoid unforeseen effects of self.x=y calls
@@ -184,6 +196,7 @@
 - gettonegroups now removes groups from the list of verified groups, if they aren't actually in the lift file.
 - observation that joinT page was (at least sometimes) removing an item (at least) from a group (at least), then giving the join page again, resulting in one less group in at least one case (sorting five elements over four groups). The tone report shows a group of [''] for that element, which is no longer in the join list of buttons.
   - This issue was caused by underspecificity in lift.rmexfields()
+- Status table scrolls now
 
 # Version 0.7
 - truncate definitions after three words or before parentheses
