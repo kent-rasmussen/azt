@@ -2307,40 +2307,30 @@ class Check():
             check.pyaudio.get_host_api_count()
         except:
             self.pyaudio = pyaudio.PyAudio()
+        info = self.pyaudio.get_host_api_info_by_index(0)
         numdevices = info.get('deviceCount')
         for i in range(0, numdevices):
-            iinfo=p.get_device_info_by_host_api_device_index(0, i)
-            log.debug("Looking at sound card {} ({}/{}); in: {}; out: {}"
-                        "".format(
-                                iinfo['name'],
-                                iinfo['index'],
-                                self.audioout_card_index,
-                                iinfo['maxInputChannels'],
-                                iinfo['maxOutputChannels']
-                                ))
+            iinfo=self.pyaudio.get_device_info_by_host_api_device_index(0, i)
+            log.debug(iinfo)
+            d={'code':i,'name':iinfo['name']}
             if (iinfo.get('maxInputChannels')) > 0: #microphone
-                    log.info("Input Device id {} - {}".format(i,
-                        p.get_device_info_by_host_api_device_index(0, i).get(
-                                                                    'name')))
-                    self.audio_card_indexes+=[{
-                            'code':i,
-                            'name':p.get_device_info_by_host_api_device_index(
-                            0, i).get('name')}]
+                log.info("Input Device id {} - {} ({}/{}); channels in: {}; "
+                        "out: {}".format(i,d['name'],
+                        iinfo['index'],
+                        numdevices-1,
+                        iinfo['maxInputChannels'],
+                        iinfo['maxOutputChannels']
+                        ))
+                self.audio_card_indexes+=[d]
             if (iinfo.get('maxOutputChannels')) > 0: #speaker
-                    log.info("Output Device id {} - {}".format(i,
-                        p.get_device_info_by_host_api_device_index(0, i).get(
-                                                                    'name')))
-                    self.audioout_card_indexes+=[{
-                            'code':i,
-                            'name':p.get_device_info_by_host_api_device_index(
-                            0, i).get('name')}]
-        log.log(2,"fs: {}; sf: {}; ci: {}".format(
-                        self.fs,self.sample_format,self.audio_card_index))
-        log.log(2,"fss: {}; sfs: {}; cis: {}".format(
-                        self.fsshypothetical,self.sample_formats,
-                        self.audio_card_indexes))
-        log.log(2,"fs: {}; sf: {}; ci: {}".format(
-                        self.fs,self.sample_format,self.audio_card_index))
+                log.info("Output Device id {} - {} ({}/{}); channels in: {}; "
+                        "out: {}".format(i,d['name'],
+                        iinfo['index'],
+                        numdevices-1,
+                        iinfo['maxInputChannels'],
+                        iinfo['maxOutputChannels']
+                        ))
+                self.audioout_card_indexes+=[d]
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.soundsettingswindow)
         donewpyaudio(self)
