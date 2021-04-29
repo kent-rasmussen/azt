@@ -6228,13 +6228,15 @@ class RecordButtonFrame(Frame):
         might cause the init to stop."""
         if ((check.fs == None) or (check.sample_format == None)
                 or (check.audio_card_index == None)
-                or (check.audioout_card_index == None)):
-            text=_("Sorry, you need to set the fs, sample_rate, and sound card!"
+                or (check.audioout_card_index == None)
+                ):
+            text=_("Set all sound card settings"
                     "\n(Do|Recording|Sound Card Settings)"
-                    "\nSet these, and try again, and "
-                    "\na record button will be here.")
-            print(text)
-            Label(self,text=text).grid(row=0,column=0)
+                    "\nand a record button will be here.")
+            log.debug(text)
+            Label(self,text=text,borderwidth=1,
+                relief='raised' #flat, raised, sunken, groove, and ridge
+                ).grid(row=0,column=0)
             return
         else:
             self.fs=check.fs
