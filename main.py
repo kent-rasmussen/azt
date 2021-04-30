@@ -3241,32 +3241,62 @@ class Check():
                 self.checkcheck() #redraw the table
                 self.runcheck()
             self.getrunwindow()
-            done=(_("All tone groups in ‘{}’ are verified and distinct!").format(
-                                                                    self.name))
-            Label(self.runwindow.frame, text=done).grid(row=0,column=0,
+            done=_("All ‘{}’ tone groups in the ‘{}’ frame are verified and "
+                    "distinct!".format(self.profile,self.name))
+            row=0
+            Label(self.runwindow.frame, text=done).grid(row=row,column=0,
                                                         columnspan=2)
+            row+=1
             Label(self.runwindow.frame, text='',
                         image=self.photo[self.type]
-                        ).grid(row=1,column=0,columnspan=2)
+                        ).grid(row=row,column=0,columnspan=2)
+            row+=1
             self.getframestodo()
             self.getprofilestodo()
+            Label(self.runwindow.frame,text=_("Continue to")).grid(columnspan=2,
+                                                            row=row,column=0)
+            row+=1
             if len(self.framestodo) >0:
-                Button(self.runwindow.frame,
-                    text=_("Continue to next frame"),
-                    command=nframe).grid(row=2,column=0)
+                b1=Button(self.runwindow.frame, anchor='c',
+                    text=_("Next frame"),
+                    command=nframe)
+                b1t=ToolTip(b1,_("Automatically pick "
+                                "the next tone frame for "
+                                "the ‘{}’ profile.".format(self.profile)))
             else:
-                Button(self.runwindow.frame,
-                    text=_("Define a new frame"),
-                    command=aframe).grid(row=2,column=0)
+                b1=Button(self.runwindow.frame, anchor='c',
+                    text=_("A new frame"),
+                    command=aframe)
+                b1t=ToolTip(b1,_("You're done with tone frames already defined "
+                                "for the ‘{}’ profile. If you want to continue "
+                                "with this profile, define a new frame here."
+                                "".format(self.profile)))
+            b1.grid(row=row,column=0,sticky='e')
             if ((self.profile in self.profilestodo) and
             (self.profilestodo.index(self.profile) < self.maxprofiles)):
-                Button(self.runwindow.frame,
-                    text=_("Continue to next syllable profile"),
-                    command=nprofile).grid(row=2,column=1)
+                b2=Button(self.runwindow.frame, anchor='c',
+                    text=_("Next syllable profile"),
+                    command=nprofile)
+                b2t=ToolTip(b2,_("You're done with ‘{0}’ tone frames already "
+                                "defined for the ‘{1}’ profile. Click here to "
+                                "Automatically select the next syllable "
+                                "profile for ‘{0}’.".format(self.ps,
+                                                            self.profile)))
             else:
-                Button(self.runwindow.frame,
-                    text=_("Continue to next Grammatical Category"),
-                    command=nps).grid(row=2,column=1)
+                b2=Button(self.runwindow.frame, anchor='c',
+                    text=_("Next Grammatical Category"),
+                    command=nps)
+                b2t=ToolTip(b2,_("You're done with tone frames already "
+                                "defined for the top ‘{}’ syllable profiles. "
+                                "Click here to automatically select the next "
+                                "grammatical category.".format(self.ps)))
+            b2.grid(row=row,column=1,sticky='w')
+            w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
+                                            self.frame.winfo_screenwidth()/120))
+            log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
+                                    b1.winfo_reqwidth(),b2.winfo_reqwidth(),w))
+            b1.config(width=w)
+            b2.config(width=w)
             self.runwindow.waitdone()
             return
     def sortT(self):
