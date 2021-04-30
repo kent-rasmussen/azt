@@ -2435,7 +2435,8 @@ class Check():
         # self.leaderboardtable.grid(row=1,column=0)
         row=0
         #put in a footer for next profile/frame
-        profiles=['colheader']+list(self.profilesbysense[self.ps].keys())#+['colfooter']
+        profiles=['colheader']+[x[1] for x in self.profilecounts
+                                if x[2] == self.ps]+['next']
         frames=list(self.toneframes[self.ps].keys())
         ungroups=0
         for profile in profiles:
