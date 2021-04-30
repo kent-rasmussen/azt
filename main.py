@@ -2550,12 +2550,16 @@ class Check():
         self.su=False
         self.checkcheck()
     def makestatus(self):
-        try:
+        #This will probably need to be reworked
+        if hasattr(self.frame,'status') and self.frame.status.winfo_exists():
             self.frame.status.destroy()
-        except:
+            self.frame.status=Frame(self.frame)
+            self.frame.status.grid(row=0, column=0,sticky='nw')
+            self.frame.parent.wait()
+        else:
             log.info("Apparently, this is my first time making the status frame.")
-        self.frame.status=Frame(self.frame)
-        self.frame.status.grid(row=0, column=0,sticky='nw')
+            self.frame.status=Frame(self.frame)
+            self.frame.status.grid(row=0, column=0,sticky='nw')
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
             self.results = Frame(self.runwindow.frame,width=800)
