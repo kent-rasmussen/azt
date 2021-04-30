@@ -2412,9 +2412,18 @@ class Check():
             self.set('name',name,refresh=False)
             #run this in any case, rather than rning it not at all, or twice
             self.checkcheck()
-        title=_('Tone Progress: {}'.format(self.ps))
-        Label(self.leaderboard, text=title, font=self.fonts['title'],padx=25
-                        ).grid(row=0,column=0)
+        titleframe=Frame(self.leaderboard)
+        titleframe.grid(row=0,column=0)
+        title=_('Tone Progress:')
+        titlebutton=self.ps
+        Label(titleframe, text=title, font=self.fonts['title']
+                        ).grid(row=0,column=0,padx=(25,0))
+        b=Button(titleframe,relief='flat',bd=0,text=titlebutton,anchor='c',padx=0,
+            pady=0,cmd=self.getps, font=self.fonts['title']
+            # lambda p=profile, f=frame:updateprofilename(profile=p,name=f),
+                )
+        b.grid(row=0,column=1,ipadx=0,ipady=0,padx=(0,25))
+        tt=ToolTip(b,_("Change Part of Speech"))
         leaderscroll=ScrollingFrame(self.leaderboard)
         leaderscroll.grid(row=1,column=0)
         self.leaderboardtable=leaderscroll.content
@@ -2435,9 +2444,12 @@ class Check():
                     #Make row header
                     t="{} ({})".format(profile,len(self.profilesbysense[
                                                             self.ps][profile]))
-                    Label(self.leaderboardtable,text=t).grid(
-                    row=row,column=column,sticky='e'
-                    )
+                    h=Label(self.leaderboardtable,text=t)
+                    h.grid(row=row,column=column,sticky='e')
+                    if profile == self.profile and self.name == None:
+                        h.config(background=tb['activebackground'])
+                        tip=_("Current profile \n(no frame set)")
+                        ttb=ToolTip(h,tip)
                 for frame in frames:
                     column+=1
                     if profile == 'colheader':
@@ -2485,17 +2497,25 @@ class Check():
                             donenum='!'+str(donenum)
                         elif tosort == '?':
                             donenum='?'+str(donenum)
-                        Button(self.leaderboardtable,
+                        tb=Button(self.leaderboardtable,
+                                relief='flat',
+                                bd=0, #border
                                 text=donenum,
                                 cmd=lambda p=profile, f=frame:updateprofilename(
                                                                     profile=p,
                                                                     name=f),
                                 anchor='c',
                                 padx=0,pady=0
-                                ).grid(
-                        row=row,column=column,
-                        ipadx=0,ipady=0
-                        )
+                                )
+                        if profile == self.profile and frame == self.name:
+                            tb.config(background=tb['activebackground'])
+                            tip=_("Current settings \nprofile: ‘{}’; \nframe: ‘{}’"
+                                "".format(profile,frame))
+                        else:
+                            tip=_("Change to \nprofile: ‘{}’; \nframe: ‘{}’"
+                                "".format(profile,frame))
+                        tb.grid(row=row,column=column,ipadx=0,ipady=0)
+                        ttb=ToolTip(tb,tip)
             row+=1
         # put profile footer here?
         log.error(_("You have more groups verified than there are: {}".format(
