@@ -339,7 +339,6 @@ class Check():
                         "ps {}. This is likely a problem with your syllable "
                         "profile analysis.".format(self.ps))
             self.set('profile',self.profilecounts[0][1])
-        self.checkcheck()
     def nextframe(self):
         if len(self.framestodo) == 0:
             self.addframe() #The above should change self.name, if completed.
@@ -352,7 +351,6 @@ class Check():
                 self.addframe()
         else:
             self.set('name',self.framestodo[0])
-        self.checkcheck()
     def guesscheckname(self):
         """Picks the longest name (the most restrictive fiter)"""
         self.set('name',firstoflist(sorted(self.checkspossible,
@@ -2727,7 +2725,6 @@ class Check():
                     anchor='c')
             b2.grid(column=1, row=1,sticky='')
             b.wait_window(window)
-            self.checkcheck()
         else:
             text=_('What check do you want to do?')
             Label(window.frame, text=text).grid(column=0, row=0)
@@ -3158,8 +3155,10 @@ class Check():
                 l.grid(row=0,column=0)
                 return
             self.updatebysubchecksenseid(self.subcheck,newtonevalue)
+            groups.remove(self.subcheck)
+            groups.append(newtonevalue)
             self.subcheck=newtonevalue
-            self.gettonegroups()
+            self.storesettingsfile(setting='status')
             self.verifysubwindow.destroy()
             self.verifyT()
         self.getrunwindow()
@@ -3708,7 +3707,6 @@ class Check():
                                 newfieldvalue=newtonevalue)
     def addtonegroup(self):
         log.info("Adding a tone group!")
-        self.gettonegroups()
         values=[0,] #always have something here
         for i in self.status[self.type][self.ps][self.profile][self.name][
                                                                     'groups']:
