@@ -4035,6 +4035,7 @@ class Check():
             t=(_("Run Window"))
             self.runwindow=Window(self.frame,title=t)
             self.runwindow.title(t)
+        self.runwindow.lift()
         if nowait != True:
             self.runwindow.wait()
     def runcheck(self):
