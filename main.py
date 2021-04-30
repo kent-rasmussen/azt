@@ -3978,7 +3978,8 @@ class Check():
                     cmd=lambda p=parent:returndictnsortnext(self,p,
                                         {'groupselected':group},
                                         canary=canary,canary2=canary2),**kwargs)
-            b.grid(column=0, row=0, sticky="ew", ipady=15) #Inside the buttons
+            b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+            bt=ToolTip(b,_("Pick this Group"))
             if example['n'] > 1 or alwaysrefreshable == True:
                 bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck
                                 cmd=lambda p=parent:self.tonegroupbuttonframe(
@@ -3991,7 +3992,8 @@ class Check():
                                 text=example['n'],
                                 compound='left',
                                 **kwargs)
-                bc.grid(column=1, row=0, sticky="nsew", ipady=15) #In buttonframe
+                bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
+                bct=ToolTip(bc,_("Change example word"))
         return bf
     def printentryinfo(self,guid):
         outputs=[
