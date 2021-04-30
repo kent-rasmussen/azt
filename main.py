@@ -2445,11 +2445,10 @@ class Check():
         ungroups=0
         for profile in profiles:
             column=0
-            if (profile == 'colheader') or (profile in
-                                        self.status[self.type][self.ps]):
+            if profile in ['colheader','next']+list(self.status[self.type][
+                                                            self.ps].keys()):
                 if profile in self.status[self.type][self.ps]:
-                    if (profile == 'colheader' or profile == 'colfooter' or
-                        self.status[self.type][self.ps][profile]) == {}:
+                    if self.status[self.type][self.ps][profile] == {}:
                         continue
                     #Make row header
                     t="{} ({})".format(profile,len(self.profilesbysense[
@@ -2457,17 +2456,29 @@ class Check():
                     h=Label(self.leaderboardtable,text=t)
                     h.grid(row=row,column=column,sticky='e')
                     if profile == self.profile and self.name == None:
-                        h.config(background=tb['activebackground'])
+                        h.config(background=h['activebackground']) #highlight
                         tip=_("Current profile \n(no frame set)")
                         ttb=ToolTip(h,tip)
-                for frame in frames:
+                elif profile == 'next': # end of row headers
+                    brh=Button(self.leaderboardtable,text=profile,
+                                            relief='flat',cmd=self.nextprofile)
+                    brh.grid(row=row,column=column,sticky='e')#,ipadx=5)
+                    brht=ToolTip(brh,_("Go to the next syllable profile"))
+                for frame in frames+['next']:
                     column+=1
                     if profile == 'colheader':
-                        Label(self.leaderboardtable,text=linebreakwords(frame),
+                        if frame == 'next': # end of column headers
+                            bch=Button(self.leaderboardtable,text=frame,
+                                        relief='flat',cmd=self.nextframe,
+                                        font=self.fonts['reportheader'])
+                            bch.grid(row=row,column=column,sticky='s')
+                            bcht=ToolTip(bch,_("Go to the next tone frame"))
+                        else:
+                            Label(self.leaderboardtable,text=linebreakwords(frame),
                                     font=self.fonts['reportheader']
-                                    ).grid(
-                        row=row,column=column,sticky='s',ipadx=5
-                        )
+                                ).grid(row=row,column=column,sticky='s',ipadx=5)
+                    elif profile == 'next':
+                        pass
                     elif frame in self.status[self.type][self.ps][profile]:
                         if not 'tosort' in self.status[self.type][self.ps][
                                                             profile][frame]:
@@ -2518,7 +2529,8 @@ class Check():
                                 padx=0,pady=0
                                 )
                         if profile == self.profile and frame == self.name:
-                            tb.config(background=tb['activebackground'])
+                            tb.configure(background=tb['activebackground'])
+                            tb.configure(command=donothing)
                             tip=_("Current settings \nprofile: ‘{}’; \nframe: ‘{}’"
                                 "".format(profile,frame))
                         else:
