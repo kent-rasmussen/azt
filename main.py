@@ -340,6 +340,8 @@ class Check():
                         "profile analysis.".format(self.ps))
             self.set('profile',self.profilecounts[0][1])
     def nextframe(self):
+        if not hasattr(self,'framestodo'):
+            self.getframestodo()
         if len(self.framestodo) == 0:
             self.addframe() #The above should change self.name, if completed.
             return
