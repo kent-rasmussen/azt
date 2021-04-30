@@ -2172,6 +2172,7 @@ class Check():
         else:
             t=(_("Report!")) #because CV doesn't actually sort yet...
         button(opts,t,self.runcheck,column=0,
+                font=self.fonts['title'],
                 compound='bottom', #image bottom, left, right, or top of text
                 image=self.photo[self.type]
                 )
