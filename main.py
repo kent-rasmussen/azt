@@ -1267,8 +1267,8 @@ class Check():
     def reloadstatusdata(self):
         self.storesettingsfile()
         file.remove(self.statusfile)
-        #Call fn here.
-        self.settingsbyfile(setting='status')
+        #Call fn here. iterate across type, ps, profile, and reconstruct?
+        self.storesettingsfile(setting='status')
     def loadtypedict(self):
         """I just need this to load once somewhere..."""
         self.typedict={
