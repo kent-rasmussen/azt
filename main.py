@@ -2339,12 +2339,12 @@ class Check():
         if not self.exitFlag and self.soundsettingswindow.winfo_exists():
                 self.soundsettingswindow.destroy()
     def maybeboard(self):
-        def checkfordone():
+        def checkfordone(): #has *anything* been sorted?
             for self.profile in self.status[self.type][self.ps]:
                 for self.name in self.status[self.type][self.ps][self.profile]:
                     self.makestatusdict() #this should result in 'done' key:
                     if len(self.status[self.type][self.ps][self.profile][
-                                                    self.name]['done']) >0:
+                                                    self.name]['groups']) >0:
                         return True
         profileori=self.profile
         nameori=self.name
