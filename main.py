@@ -5544,7 +5544,7 @@ class ScrollingFrame(Frame):
             contentrh+=child.winfo_reqheight()
             log.log(2,"{} ({})".format(child.winfo_reqwidth(),child))
             for grandchild in child.winfo_children():
-                log.debug("child h: {}; grandchild: {}; w:{}; h:{}".format(
+                log.log(3,"child h: {}; grandchild: {}; w:{}; h:{}".format(
                                     child.winfo_reqheight(),
                                     grandchild,
                                     grandchild.winfo_reqwidth(),
@@ -5552,7 +5552,7 @@ class ScrollingFrame(Frame):
                 contentrw=max(contentrw,grandchild.winfo_reqwidth())
                 contentrh+=grandchild.winfo_reqheight()
                 for greatgrandchild in grandchild.winfo_children():
-                    log.debug("grandchild h: {}; greatgrandchild: {}; w:{}; h:{}".format(
+                    log.log(3,"grandchild h: {}; greatgrandchild: {}; w:{}; h:{}".format(
                                         grandchild.winfo_reqheight(),
                                         greatgrandchild,
                                         greatgrandchild.winfo_reqwidth(),
