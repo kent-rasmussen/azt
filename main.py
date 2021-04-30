@@ -3142,16 +3142,15 @@ class Check():
     def renamegroup(self):
         def submitform():
             newtonevalue=formfield.get()
-            if newtonevalue in self.status[self.type][self.ps][self.profile][
-                                                        self.name]['groups']:
+            groups=self.status[self.type][self.ps][self.profile][self.name][
+                                                                    'groups']
+            if newtonevalue in groups:
                 er=Window(self.runwindow)
                 l=Label(er,text=_("Sorry, there is already a group with that "
                                 "label; If you want to join the groups, "
                                 "give it a different name now, and join "
                                 "it after they are both verified ({} is "
-                                "already in {})".format(newtonevalue,
-                                self.status[self.type][self.ps][self.profile][
-                                                        self.name]['groups'])))
+                                "already in {})".format(newtonevalue,groups)))
                 l.grid(row=0,column=0)
                 return
             self.updatebysubchecksenseid(self.subcheck,newtonevalue)
