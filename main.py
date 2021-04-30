@@ -2188,6 +2188,7 @@ class Check():
                 )
         self.maybeboard()
         self.parent.setmenus(self)
+        self.parent.waitdone()
     def soundcheckrefreshdone(self):
         self.storesettingsfile()
         self.soundsettingswindow.destroy()
