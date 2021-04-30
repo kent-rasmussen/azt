@@ -1,9 +1,63 @@
 # A→Z+T Changelog
 
+# for 0.8
+- fix skip button
+- reduce calls to gettonegroups; just after check name is set
+- confirm that all variable calls that are only set on frame/ps-profile switch are stored, and available on open.
+- don't write blanks to verification file
+- for next ps/profile, move to modified settings (if there), rather than re-figuring each time (this costs nontrivial time).
+  - if nothing has changed, there's no reason to waste that time.
+  - we can refigure once per ps change? To hold it longer we would need to store it in a dict keyed by ps.
+- propagate exitFlag to the rest of the check
+- better document skip function
+- improve status table with buttons
+  - make 'next' buttons on the end of each axis in the table.
+  - make "hide" buttons for each header (x and y)
+  - make "show all" button at the origin
+- commit diffs to hg on closing (or when?)!
+  - think through which settings should be shared:
+    - profile data?
+    - verification status
+    - ad hoc groups?
+  - and which shouldn't
+    - check defaults
+- fix windows minimization problem (new with availxy)
+- consider adding ps=None, profile=None, and name=None to scripts used in iterating across these variables, so they can be sent as variables, rather than changing self.{ps,profile,name}, given that these changes will now come at a greater cost.
+  - all changes to self.{ps,profile,name} should come through self.set()
+  - avoid unforeseen effects of self.x=y calls
+  - We need to distinguish between user changes to these variables, and changes from iteration under the hood, which should be through arguments of local variables.
+  - search for any script wrapped by psori=self.ps type statements, amend.
+    - settonevariablesbypsprofile
+    - updatestatus
+    - makestatusdict
+    - makeadhocgroupsdict (done)
+    - sortingstatus
+    - gettonegroups
+    - getframestodo
+- move all ad hoc changes by attribute (e.g., self.ps=x) into set (to generalize it)
+- Make function to manually refresh status file, don't do it otherwise
+  - this is getting cumbersome, like the profile data
+- Remove None from status list of profiles --this should never go there.
+  - define self.profile before writing to status?
+- Reduce checkcheck calls, and/or separate table refresh from northwest status?
+  - or make sorting add to stats files, so we don't need to recompile them but when changing ps-profile or frame
+  - make wait window work in the mean time
+- Find out how Chorus decides what files to pick up, make sure our config files are getting in.
+- move config files to aztconfig directory?
+- look at how to generalize tone sorting, joining, etc. process.
+- bring new documentation pages:
+  - What A→Z+T will and won't do for you
+  - The Cyclical process of analysis
+    - incremental
+    - complete cycles
+- get dependencies offline for pyaudio
+- don't crash on invalid sample rate; clear if not valid.
+  - use is_format_supported on parameters, reset, or limit options?
+- When making record button:
+  - remove links to the *wrong* sound file
+  - test for presence of currently linked file (i.e., not recorded in AZT), give play buttons
+
 ## In Process
-- add test for resolutionsucks, implement smaller font theme
-- include test to see if a tone analysis has been run since latest triage;
-    - if not run the report
 - Frame object has no attribute 'skip'
 - reduce unnecessary self.gettonegroups() calls
 - make "next frame" do checkcheck
@@ -19,6 +73,20 @@
 - make status table scroll (in both directions?)
 - Look at tkinter tabs (for status page?)
 - add progress of recording (on its own tab?)
+
+## For some time
+- look into having hg commit changes to verification status file
+  - don't track checkdefaults? (make per user file?)
+- Set means for user to check verification stage again.
+  - Once done, there is currently no AZT way to redo it.
+- Look up how to get real required heights and widths, availablexy isn't working correctly.
+- fix reconfigure scrolling window frame problem (remove need for if self.configured <1:)
+  - constrain frames with less data, to only scroll as needed.
+- add test for resolutionsucks, implement smaller font theme
+- include test to see if a tone analysis has been run since latest triage;
+    - if not run the report
+    - For verification window, if last example is selected (all gone), exit
+      - don't ask for nonsensical "these are all the same".
 
 ## Issues from Zulgo March 2021 workshop
 
@@ -103,6 +171,39 @@
 - distinguish between lc and lx
     - make CV report only reference lx field
     - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
+
+# Version 0.8
+- set up ad hoc groups to be more permanent:
+  - saved to file
+  - reloaded after reanalysis
+- fixed scrolling window not wide enough in frame dialog
+- numerous minor fixes
+- set up on different input and output sound cards
+- tone frames window now scrolls
+- temporary fix for reconfigure scrolling window frame problem
+- made function to add link if sound file is there (does nothing if link already there).
+  - set up alternation, to accept either sound file nomenclature: w/wo location
+- moved check analyses up to point of changing frame or profile (as appropriate), to keep from continuing to run it at other times.
+- Set title in add/mod ad hoc group window to indicate if adding or modding
+- split and regularized profilecountsValid and profilecountsValidwAdHoc.
+- for Join window, don't ask if only one (avoid nonsensical "these are all different").
+- Join window now removes second group from groups variable.
+- included profile count in status table.
+- make refresh example button only appear if there are at least two examples to pick from
+- make status table into buttons for cells, which set profile and frame. (from CH)
+- fixed sort logic to exit on exit (moved on), including recursive joinT funtions
+- toneframetodo is now sensitive to the need to sort, as well as verification.
+  - so "next frame" will give you the next frame with unsorted data, even if the known groups are all marked as verified.
+- gettonegroups now removes groups from the list of verified groups, if they aren't actually in the lift file.
+- observation that joinT page was (at least sometimes) removing an item (at least) from a group (at least), then giving the join page again, resulting in one less group in at least one case (sorting five elements over four groups). The tone report shows a group of [''] for that element, which is no longer in the join list of buttons.
+  - This issue was caused by underspecificity in lift.rmexfields()
+- Status table scrolls now
+- made ps title a button to change ps
+- made sort button in largest title case, with more padding
+- highlight active cell (or row, if no frame)
+- put refresh button on left (to not move)
+- On 'finished sorting' window: include profile in title, rework next buttons
+- Tooltips added in multiple locations
 
 # Version 0.7
 - truncate definitions after three words or before parentheses
