@@ -1086,7 +1086,6 @@ class Check():
         self.set('type',choice,window)
     def setanalang(self,choice,window):
         self.set('analang',choice,window)
-        # self.reloadprofiledata()
     def setS(self,choice,window):
         self.set('subcheck',choice,window)
     def setcheck(self,choice,window):
@@ -2157,7 +2156,8 @@ class Check():
                 return
         """Get subcheck"""
         self.getsubchecksprioritized()
-        if self.subcheck not in [x[0] for x in self.subchecksprioritized[self.type]]:
+        if self.subcheck not in [x[0] for x in self.subchecksprioritized[
+                                                                    self.type]]:
             self.guesssubcheck()
         if self.type != 'T':
             if self.subcheck == None:
@@ -2419,7 +2419,7 @@ class Check():
         def updateprofilename(profile,name):
             self.set('profile',profile,refresh=False)
             self.set('name',name,refresh=False)
-            #run this in any case, rather than rning it not at all, or twice
+            #run this in any case, rather than running it not at all, or twice
             self.checkcheck()
         titleframe=Frame(self.leaderboard)
         titleframe.grid(row=0,column=0)
@@ -2555,7 +2555,7 @@ class Check():
         except:
             log.info("Apparently, this is my first time making the status frame.")
         self.frame.status=Frame(self.frame)
-        self.frame.status.grid(row=0, column=0,sticky='nw') # as row 1?
+        self.frame.status.grid(row=0, column=0,sticky='nw')
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
             self.results = Frame(self.runwindow.frame,width=800)
@@ -4080,7 +4080,8 @@ class Check():
                                 self.subchecksprioritized['C']+
                                 self.subchecksprioritized['T']
                                 ]):
-                self.subcheck=self.scount[self.ps]['C'][0]+self.scount[self.ps]['V'][0]
+                self.subcheck=self.scount[self.ps]['C'][0]+self.scount[
+                                                                self.ps]['V'][0]
         else:
             self.subcheck=firstoflist(self.subchecksprioritized[self.type],
                                                             othersOK=True)[0]
@@ -5672,6 +5673,7 @@ class MainApplication(Frame):
             return
         self.parent.ww=Wait(self.parent)
     def waitdone(self):
+        log.log(3,"Closing Wait window, and bringing up main window again.")
         if hasattr(self.parent,'ww'):
             self.parent.ww.close()
     def fullscreen(self):
