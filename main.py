@@ -2032,14 +2032,13 @@ class Check():
                             cmd=fn, width=opts['width'], **kwargs
                             ).grid(column=column, row=opts['row'])
         log.info("Running Check Check!")
-        self.parent.wait() #parent of application; root window
         #If the user exits out before this point, just stop.
         try:
             self.frame.winfo_exists()
         except:
-            self.parent.waitdone()
+            self.frame.parent.waitdone()
             return
-        self.makestatus()
+        self.makestatus() # wait is here, after the first time.
         #Don't guess this; default or user set only
         log.info('Interfacelang: {}'.format(getinterfacelang()))
         """This just gets the prose language name from the code"""
@@ -2056,7 +2055,6 @@ class Check():
         if (self.analang == None) or ():
             log.info("find the language")
             self.getanalang()
-            # self.parent.waitdone()
             return
         if self.audiolang == None:
             self.guessaudiolang() #don't display this, but make it
@@ -2069,7 +2067,6 @@ class Check():
         if self.glosslang == None:
             log.info("find the gloss language")
             self.getglosslang()
-            self.parent.waitdone()
             return
         """Get glosslang2 (None is OK here, meaning no second gloss language)"""
         if ((self.glosslang2 != None) and
@@ -2097,13 +2094,11 @@ class Check():
         if self.ps == None:
             log.info("find the ps")
             self.getps()
-            self.parent.waitdone()
             return
         """Get profile (this depends on ps)"""
         if ((self.profile not in self.profilesbysense[self.ps]) or
                                                         (self.profile == None)):
             self.nextprofile(guess=True)
-            self.parent.waitdone()
             return
         if not set(self.profilelegit).issuperset(self.profile):
             self.type='T' #ad hoc groups are only for tone (for now!)
@@ -2121,7 +2116,6 @@ class Check():
         if self.type == None:
             log.info("Select a check type (C, V, CV, Tone).")
             self.gettype()
-            self.parent.waitdone()
             return
         """Get check"""
         self.getcheckspossible() #This sets self.checkspossible
@@ -2152,7 +2146,6 @@ class Check():
             if self.name == None: #no backup assumptions for CV checks, for now
                 log.info("check selection dialog here, for now just running V1=V2")
                 self.getcheck()
-                self.parent.waitdone()
                 return
         """Get subcheck"""
         self.getsubchecksprioritized()
@@ -2164,7 +2157,6 @@ class Check():
                 log.info("Aparently I don't know yet what (e.g., consonant or "
                         "vowel) I'm testing.")
                 self.getsubcheck()
-                self.parent.waitdone()
                 return
             else:
                 t=(_("Checking {}, working on {} = {}".format(
@@ -2195,7 +2187,6 @@ class Check():
                 )
         self.maybeboard()
         self.parent.setmenus(self)
-        self.parent.waitdone()
     def soundcheckrefreshdone(self):
         self.storesettingsfile()
         self.soundsettingswindow.destroy()
@@ -2542,7 +2533,9 @@ class Check():
         # put profile footer here?
         log.error(_("You have more groups verified than there are: {}".format(
                                                                     ungroups)))
-        self.parent.waitdone() # put this on every return!
+        self.frame.update()
+        self.frame.parent.waitdone()
+        self.frame.parent.parent.deiconify() #waitdone() # put this on every return!
     def setsu(self):
         self.su=True
         self.checkcheck()
@@ -6485,7 +6478,6 @@ class Wait(Window): #tkinter.Toplevel?
             #     self.parent.iconify() #A window doesn't return on deiconify...
         except:
             log.debug("Not withdrawing parent.")
-        super(Wait, self).__init__(parent)
         self.attributes("-topmost", True)
         self['background']=parent['background']
         self.photo = parent.photo #need this before making the frame
@@ -6499,7 +6491,9 @@ class Wait(Window): #tkinter.Toplevel?
         Label(self.outsideframe, image=self.photo['small'],text='',
                         bg=self['background']
                         ).grid(row=1,column=0,sticky='we',padx=50,pady=50)
-        self.update_idletasks()
+        self.update()
+        self.deiconify() #show after placement
+        self.parent.withdraw()
 class Splash(Window):
     def __init__(self, parent):
         super(Splash, self).__init__(parent,exit=0)
