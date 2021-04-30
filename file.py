@@ -7,15 +7,13 @@ import os
 import logging
 log = logging.getLogger(__name__)
 
-# import os
 def fullpathname(filename):
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
-        base_path = pathlib.Path(__file__).parent #os.path.abspath(".")
+        base_path = pathlib.Path(__file__).parent
     return pathlib.Path.joinpath(
-                                # pathlib.Path(__file__).parent,
                                 base_path,
                                 filename)
 def askfilename(self):
@@ -79,17 +77,7 @@ def getdiredurl(dir,filename):
     return pathlib.Path.joinpath(dir,filename)
 def getdiredrelURL(reldir,filename):
     return pathlib.PurePath(reldir).joinpath(filename)
-# def getimagefilename(*args):
-#     wavfilename=''
-#     for arg in args:
-#         log.debug(type(arg),type(args))
-#         wavfilename+=arg
-#         if args.index(arg) < len(args):
-#             wavfilename+='_'
-#     # wavfilename+='.wav' #add this elsewhere
-#     return pathlib.Path.joinpath(wavfilename)
 def getlangnamepaths(filename, langs):
-    #lift=getfilename()
     output={}
     wsdir=pathlib.Path.joinpath(pathlib.Path(filename).parent, 'WritingSystems')
     for lang in langs:
@@ -98,30 +86,29 @@ def getlangnamepaths(filename, langs):
         log.log(1,filename)
     log.log(1,output)
     return output
-def getinterfacelang(self):
-    """This is called by the mainapplication class before anything else happens,
-    including setting the ui interface language (that's what this enables). So
-    I haven't figured out a way to translate the strings here, and I trust that
-    will be OK."""
-    self.interfacelangs=[{'code':'fr','name':'Français'},
-                            {'code':'en','name':'English'},
-                            {'code':'fub','name':'Fulfulde'}
-                            ]
+def getinterfacelangs():
+    return [{'code':'fr','name':'Français'},
+            {'code':'en','name':'English'},
+            {'code':'fub','name':'Fulfulde'}
+            ]
+def getinterfacelang():
+    # I haven't figured out a way to translate the strings here, hope that's OK.
+    # This is because this fn is called by the mainapplication class before
+    # anything else happens, including setting the ui interface language
+    # (that's what this enables).
     try:
         import ui_lang
-        log.debug("ui_lang.py imported fine.") #Sorry, no translation!
+        log.log(2,"ui_lang.py imported fine.") #Sorry, no translation!
         try:
-            log.log(2,'ui_lang: {}'.format(ui_lang.__dict__))
-            self.interfacelang=ui_lang.interfacelang
+            log.debug('Boot ui_lang: {}'.format(ui_lang.interfacelang))
+            return ui_lang.interfacelang
         except:
-            log.error("Didn't find ui_lang.interfacelang") #Sorry, no translation!
-            self.interfacelang=None
+            log.error("Didn't find ui_lang.interfacelang") #No translation!
     except:
         log.error("Didn't find ui_lang.py") #Sorry, no translation!
-        self.interfacelang=None
 def writeinterfacelangtofile(lang):
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "ui_lang.py")
-    f = open(file, 'w', encoding='utf-8') # to create writeable file (deleting existing), "a") #to append
+    f = open(file, 'w', encoding='utf-8') # to append, "a"
     f.write('interfacelang="'+lang+'"'+'\n')
     f.close()
 def getfilename():
@@ -137,14 +124,6 @@ def getfilename():
     except:
         log.debug("lift_url didn't import")
         return lift()
-    # try:
-    #     return filename
-    # except:
-    #     text=(_("Sorry, you don't seem to have selected a LIFT lexicon file."))
-    #     tkinter.Label(self.status, text=text).grid(column=0,row=1)
-    #     #window.
-    #     self.window.wait_window(window=self.window)
-    #     self.destroy()
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     filename=filedialog.askopenfilename(initialdir = "$HOME",#filetypes=[('LIFT','*.lift')],
@@ -156,30 +135,20 @@ def lift():
                                     title = _("Select LIFT Lexicon File"),)
         if filename == (): #still, then give up.
             log.warning("Sorry, did you select a file? Giving up.")
-            # return None
     log.debug('filename: {}'.format(str(filename)))
     """Assuming this file is still in lift/, this works. Once out,
     remove a parent"""
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
-    f = open(file, 'w', encoding='utf-8') # to create writeable file (deleting existing), "a") #to append
+    f = open(file, 'w', encoding='utf-8') # to append, "a"
     f.write('filename="'+filename+'"'+'\n')
     f.close()
     return filename
-    #print (filename)
-    #saveasfilename =  filedialog.asksaveasfilename(initialdir = "$HOME",title = "Select file to save as",)
-    #print (saveasfilename)
-
 if __name__ == "__main__":
     import sys
-    # import ws_environment
     import datetime
     import shutil
     def _(x):
         return x
-    # import globalvariables
-    # wsfolder=ws_environment.getwsfolder()
-    # langdir=ws_environment.getlangdir()
-    # xyz=globalvariables.xyz
     def usage():
         log.info("usage for one entry:")
         log.info(" python3 " + pathlib.Path(__file__).name + " <forms|ids|tones|prontones|glosses|gloss2s|plurals|pses|all|cards|lxnglosses> <lift file> <guid>")

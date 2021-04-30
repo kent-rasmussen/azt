@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 from xml.etree import ElementTree as ET
+import xmlfns
 import rx
 import file
 import logging
@@ -39,7 +40,7 @@ class Report(object):
                     ' "XLingPap.dtd">'.format(doctype).encode('utf8'))
             # ElementTree.ElementTree(tree).write(f, 'utf-8')
             #in 3.9: self.tree=ET.indent(ET.ElementTree(self.node))
-            indent(self.node)
+            xmlfns.indent(self.node)
             self.tree=ET.ElementTree(self.node)
             self.tree.write(f, encoding="UTF-8")
     def frontmatter(self):
@@ -288,21 +289,6 @@ class Link(ET.Element):
 class Linebreak(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'br')
-def indent(elem, level=0):
-    """from http://effbot.org/zone/element-lib.htm#prettyprint"""
-    i = "\n" + level*"  "
-    if len(elem):
-        if not elem.text or not elem.text.strip():
-            elem.text = i + "  "
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
-        for elem in elem:
-            indent(elem, level+1)
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
-    else:
-        if level and (not elem.tail or not elem.tail.strip()):
-            elem.tail = i
 if __name__ == "__main__":
     def _(x):
         return str(x)

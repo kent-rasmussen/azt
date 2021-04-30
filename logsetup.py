@@ -4,6 +4,7 @@ import datetime
 import logging
 import lzma
 import re
+log = logging.getLogger(__name__)
 
 def logshutdown(): #Not sure I'll ever need this...
     logging.shutdown()
@@ -62,16 +63,24 @@ def logsetup(loglevel):
 def logwritelzma(filename):
     try:
         import lzma
+        log.debug("LZMA imported fine.")
     except ImportError:
+        log.error("LZMA import error.")
         from backports import lzma
     """This writes changes back to XML."""
     """When this goes into production, change this:"""
     compressed='log_'+datetime.datetime.utcnow().isoformat()[:-7]+'Z'+'.7z'
     compressed=re.sub(':','-',compressed)
     with open(filename,'r') as d:
+        log.debug("Logfile opened.")
         data=d.read()
+        log.debug("Logfile read.")
         with lzma.open(compressed, "wt") as f:
+            log.debug("LZMA file opened.")
             f.write(data)
+            log.debug("LZMA file written.")
             f.close()
+            log.debug("LZMA file closed.")
             d.close()
+            log.debug("Logfile closed (ready to return LZMA file).")
     return compressed

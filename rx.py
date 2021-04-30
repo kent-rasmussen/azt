@@ -58,7 +58,10 @@ def s(check,stype,lang=None):
         log.log(2,_("Using analang: {}".format(check.analang)))
     log.log(2,_("Looking in check.s[{}]: {}".format(lang,check.s[lang])))
     if stype == "C-N":
-        list=set(check.s[lang]['C'])-set(check.s[lang]['N'])
+        if 'N' in check.s[lang]:
+            list=set(check.s[lang]['C'])-set(check.s[lang]['N'])
+        else:
+            list=set(check.s[lang]['C'])    
     elif stype in check.s[lang]:
         list=check.s[lang][stype]
     else:
