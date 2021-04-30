@@ -1,6 +1,7 @@
 # A→Z+T Changelog
 
 # for 0.8
+- fix skip button
 - reduce calls to gettonegroups; just after check name is set
 - confirm that all variable calls that are only set on frame/ps-profile switch are stored, and available on open.
 - don't write blanks to verification file
@@ -197,6 +198,12 @@
 - observation that joinT page was (at least sometimes) removing an item (at least) from a group (at least), then giving the join page again, resulting in one less group in at least one case (sorting five elements over four groups). The tone report shows a group of [''] for that element, which is no longer in the join list of buttons.
   - This issue was caused by underspecificity in lift.rmexfields()
 - Status table scrolls now
+- made ps title a button to change ps
+- made sort button in largest title case, with more padding
+- highlight active cell (or row, if no frame)
+- put refresh button on left (to not move)
+- On 'finished sorting' window: include profile in title, rework next buttons
+- Tooltips added in multiple locations
 
 # Version 0.7
 - truncate definitions after three words or before parentheses
