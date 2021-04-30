@@ -2103,14 +2103,12 @@ class Check():
             self.parent.waitdone()
             return
         if not set(self.profilelegit).issuperset(self.profile):
-            self.type='T'
-        count=self.countbypsprofile(self.ps,self.profile)
-        if count == None:
-            if ((self.ps in self.profilesbysense) and
-                    (self.profile in self.profilesbysense[self.ps])):
-                count=len(self.profilesbysense[self.ps][self.profile])
-            else:
-                count=0
+            self.type='T' #ad hoc groups are only for tone (for now!)
+        if ((self.ps in self.profilesbysense) and
+                (self.profile in self.profilesbysense[self.ps])):
+            count=len(self.profilesbysense[self.ps][self.profile])
+        else:
+            count=0
         t=(_("Looking at {} {} words ({})").format(self.profile,self.ps,count))
         proselabel(opts,t)
         opts['row']+=1
