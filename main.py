@@ -139,7 +139,7 @@ class Check():
         log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
-        self.settingsbyfile()
+        self.settingsbyfile() #This just sets the variable
         self.loadsettingsfile(setting='toneframes')
         self.loadsettingsfile(setting='status')
         self.loadsettingsfile(setting='adhocgroups')
@@ -1055,7 +1055,7 @@ class Check():
                 #This can probably wait until runcheck
                 self.settonevariablesbypsprofile() #only on changing tone frame
             if (attribute not in ['fs','sample_format','audio_card_index',
-            'audioout_card_index']
+                        'audioout_card_index'] #called in soundcheckrefreshdone
                                                         and refresh == True):
                 self.checkcheck()
             if attribute in ['analang', 'interpret','distinguish']: #do the last two cause problems?
