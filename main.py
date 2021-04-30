@@ -2878,10 +2878,6 @@ class Check():
         # print(profiles)
         # profiles=list(dict.fromkeys(profiles))
         return profiles
-    def countbypsprofile(self, ps, profile):
-        for line in self.profilecounts:
-            if line[1] == profile and line[2] == ps:
-                return line[0]
     def getprofilestodo(self):
         log.debug(self.profilecounts)
         self.profilecountsValid=[]
