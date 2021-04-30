@@ -1047,11 +1047,17 @@ class Check():
             """If there's something getting reset that shouldn't be, remove it
             from self.defaultstoclear[attribute]"""
             self.cleardefaults(attribute)
-            if attribute in ['glosslang','glosslang2']: #Nothing to change here
-                pass
+            if attribute in ['glosslang','glosslang2']:
+                pass #Nothing to change here
             elif attribute in ['analang',  #do the last two cause problems?
                                 'interpret','distinguish']:
                 self.reloadprofiledata()
+            elif attribute == 'type':
+                pass
+                # Do we want a sanity check on profiles after type change?
+                # We had the following:
+                # if not set(self.profilelegit).issuperset(self.profile):
+                #     self.nextprofile(guess=True) #no good with ad hoc groups!
             elif attribute == 'ps': #only here
                 self.makestatusdictps()
                 self.getprofilestodo()
