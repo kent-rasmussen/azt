@@ -1045,21 +1045,24 @@ class Check():
             """If there's something getting reset that shouldn't be, remove it
             from self.defaultstoclear[attribute]"""
             self.cleardefaults(attribute)
-            if attribute == 'ps': #so we don't have to keep resetting this
+            if attribute in ['glosslang','glosslang2']: #Nothing to change here
+                pass
+            elif attribute in ['analang',  #do the last two cause problems?
+                                'interpret','distinguish']:
+                self.reloadprofiledata()
+            elif attribute == 'ps': #only here
                 self.makestatusdictps()
                 self.getprofilestodo()
-            if attribute == 'profile': #so we don't have to keep resetting this
+            elif attribute == 'profile': #only here
                 self.makestatusdictprofile()
                 self.getframestodo()
-            if attribute == 'name' and self.type == 'T':
+            elif attribute == 'name' and self.type == 'T':
                 #This can probably wait until runcheck
                 self.settonevariablesbypsprofile() #only on changing tone frame
             if (attribute not in ['fs','sample_format','audio_card_index',
                         'audioout_card_index'] #called in soundcheckrefreshdone
                                                         and refresh == True):
                 self.checkcheck()
-            if attribute in ['analang', 'interpret','distinguish']: #do the last two cause problems?
-                self.reloadprofiledata()
         else:
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setinterfacelangwrapper(self,choice,window):
@@ -1077,7 +1080,7 @@ class Check():
         self.set('type',choice,window)
     def setanalang(self,choice,window):
         self.set('analang',choice,window)
-        self.reloadprofiledata()
+        # self.reloadprofiledata()
     def setS(self,choice,window):
         self.set('subcheck',choice,window)
     def setcheck(self,choice,window):
@@ -2048,7 +2051,7 @@ class Check():
         if (self.analang == None) or ():
             log.info("find the language")
             self.getanalang()
-            self.parent.waitdone()
+            # self.parent.waitdone()
             return
         if self.audiolang == None:
             self.guessaudiolang() #don't display this, but make it
