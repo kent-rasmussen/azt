@@ -2456,7 +2456,7 @@ class Check():
                     h=Label(self.leaderboardtable,text=t)
                     h.grid(row=row,column=column,sticky='e')
                     if profile == self.profile and self.name == None:
-                        h.config(background=h['activebackground']) #highlight
+                        h.config(background=h.theme['activebackground']) #highlight
                         tip=_("Current profile \n(no frame set)")
                         ttb=ToolTip(h,tip)
                 elif profile == 'next': # end of row headers
