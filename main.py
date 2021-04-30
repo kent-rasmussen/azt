@@ -6473,6 +6473,8 @@ class Wait(Window): #tkinter.Toplevel?
         self.destroy()
     def __init__(self, parent=None):
         global program
+        super(Wait, self).__init__(parent)
+        self.withdraw() #don't show until placed
         self.parent=parent
         inherit(self)
         try:
