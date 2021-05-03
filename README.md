@@ -17,7 +17,7 @@ To run: `python main.py` (or `python3 main.py`, as appropriate for the (3+) vers
 
 See [INSTALL](INSTALL.md) for more help installing; see [USAGE](USAGE.md) for how to use this tool.
 
-See [CHANGELOG](CHANGELOG.md) to see features by version, and what I'm working on next.
+See [CHANGELOG](CHANGELOG.md) to see features by version, and [ROADMAP](ROADMAP.md) to see what I'm working on next.
 
 ## Bugs
 See [this doc](BUGS.md) for information to send me if you have problems; see [KNOWNISSUES](KNOWNISSUES.md) with recommended work-arounds to a couple known issues.
