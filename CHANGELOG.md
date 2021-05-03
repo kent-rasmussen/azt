@@ -75,6 +75,7 @@
 - add progress of recording (on its own tab?)
 
 ## For some time
+- set up mail of bug report (better than WeSay)
 - look into having hg commit changes to verification status file
   - don't track checkdefaults? (make per user file?)
 - Set means for user to check verification stage again.
