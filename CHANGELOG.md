@@ -1,6 +1,20 @@
 # A→Z+T Changelog
 
-# for 0.8
+#To Test
+- check that changes to S regexs don't break too much.
+- diagnose pl/imp not appearing on recording screen
+    - not really there?
+    - pushed off the screen?
+
+# for future versions
+- fix zip problem on Windows: "OSError: [Errno 22] Invalid argument: 'log_-:.7z'"
+- extra space being added for None forms in Frame construction
+- Sort out why not all nouns show in ad hoc selection list.
+- functions that depend on a slice of data:
+  - require renewal of certain variables before running
+  - careful iterating over them
+  - distinct from other functions, which iterate over multiple slices
+- make nextps and nextprofile (and nextframe?) reference most popular *unfinished* ps-profile combo
 - fix skip button
 - reduce calls to gettonegroups; just after check name is set
 - confirm that all variable calls that are only set on frame/ps-profile switch are stored, and available on open.
@@ -56,6 +70,7 @@
 - When making record button:
   - remove links to the *wrong* sound file
   - test for presence of currently linked file (i.e., not recorded in AZT), give play buttons
+  - widen "Do" menu item (give all a minimum width)
 
 ## In Process
 - Frame object has no attribute 'skip'
@@ -88,47 +103,13 @@
     - if not run the report
     - For verification window, if last example is selected (all gone), exit
       - don't ask for nonsensical "these are all the same".
-
-## Issues from Zulgo March 2021 workshop
-
-## Issues from Chufie' workshop (Feb 2021)
-+ zero form silently doesn't make a button
-- verify screen doesn't make button
-- set current visible on numbers to record
-- extra space being added for None forms in Frame construction
-- give error message if crashing because selecting part of speech that isn't populated in profile analysis.
-- fix zip problem on Windows: "OSError: [Errno 22] Invalid argument: 'log_-:.7z'"
+- ways to change a frame after the fact... this seems to be a common problem
+- ?put next undone buttons in dictionary recording pages, too
 - for addframe, add button/menu to allow viewing all frames already done, to help with consistency across frames.
-- remove invalid characters from character names
-- TIME:set up syllable profile analysis to allow for empty segments, assuming there is tone.
 - ?cycle through tone groups to record based on volume of the group.
-- set up summary table for XLP tone export
-- record button makes a window in addmodd, if it is open (and it shouldn't, but they both use runwindow)
-- record window exit doesn't exit process (so it is the same as done/next)
-- widen "Do" menu item
-
-- setup question: is <VN> [Ṽ] or [VN] (hopefully not both!)? —This is important for tone.
-    - set lift.s['V'] distinct from, lift.v['V:'], and lift.v['Ṽ'] or lift.v['VN']?
 - done? Update regex functions a=to allow for C(V)C\1, CVC(V)C\1, and C(V)C\1C\1, for vowel and consonant reports and checks
 
-## Consider
-- ways to change a frame after the fact... this seems to be a common problem
-- functions that depend on a slice of data:
-  - require renewal of certain variables before running
-  - careful iterating over them
-  - distinct from other functions, which iterate over multiple slices
-
-
-### Verify Problem
-- ?put next undone buttons in dictionary recording pages, too
-- fix multiple links to the same recording
-- check that changes to S regexs don't break too much.
-- diagnose pl/imp not appearing on recording screen
-    - not really there?
-    - pushed off the screen?
-- Report not showing all examples in profile and sorting (50ish of 139 CV in bfj)
-
-### Next Features
+## Next Features
 - add C and V sorting (and CV?)
 - model form construct with fields for CV info and tone info, which may contain variables (HAB,CONT) in addition to H, L, etc.
 - proper modeling of the relationship between lx and lc
@@ -136,6 +117,8 @@
   - build words on the basis of roots —should some frames use lc, e.g., if affixes are unpredictable?
 
 ### Some Day, if possible
+- transition to gloss only (no definition references)
+    - make docs specify gloss should be populated (maybe instructions to bulk copy?)
 - Look into tkinter tabs to separate out different task sets, like
     - sorting v recording
     - PS1 v PS2
@@ -152,6 +135,10 @@
 - Fix 'ŋ' display problem in entry fields in MS windows (working fine in Linux)
     [x] noted issue in USAGE.md
 - Make Wait window show background color and label message in MS Windows (working fine in Linux)
+- put `setdefaults.py` into Check class
+- distinguish between lc and lx
+    - make CV report only reference lx field
+    - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
 
 ### For specific databases
     - fix key 7 problem for sxw
@@ -159,19 +146,8 @@
         - '6e2a67cb-6695-4536-bc55-423fad4f019b',<+
         - '7cdcddfc-5b9f-44bf-bfe5-d5ce164720cd',
 
-### Prioritization
-- make checkcheck reference most popular *unfinished* ps-profile combo
-
 ### Documentation
 - Add what and why pages in different places, with rationales and instructions specific to context?
-
-### Under the Hood
-- put `setdefaults.py` into Check class
-- transition to gloss only (no definition references)
-    - make docs specify gloss should be populated (maybe instructions to bulk copy?)
-- distinguish between lc and lx
-    - make CV report only reference lx field
-    - make docs specify the difference, start with lc references (maybe instructions to bulk copy?)
 
 # Version 0.8
 - set up ad hoc groups to be more permanent:
