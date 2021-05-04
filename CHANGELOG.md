@@ -1,16 +1,21 @@
 # A→Z+T Changelog
 
+# Version 0.8.1
+- Added glottal stop distinctions similar to Nasal distinctions
+- Added redo status file (will not redo verification status, but will recover groups.)
+    - Iterates across profilesbysense entries for ps and profile
+    - looks
 # Version 0.8
 - set up ad hoc groups to be more permanent:
-  - saved to file
-  - reloaded after reanalysis
+    - saved to file
+    - reloaded after reanalysis
 - fixed scrolling window not wide enough in frame dialog
 - numerous minor fixes
 - set up on different input and output sound cards
 - tone frames window now scrolls
 - temporary fix for reconfigure scrolling window frame problem
 - made function to add link if sound file is there (does nothing if link already there).
-  - set up alternation, to accept either sound file nomenclature: w/wo location
+    - set up alternation, to accept either sound file nomenclature: w/wo location
 - moved check analyses up to point of changing frame or profile (as appropriate), to keep from continuing to run it at other times.
 - Set title in add/mod ad hoc group window to indicate if adding or modding
 - split and regularized profilecountsValid and profilecountsValidwAdHoc.
@@ -21,10 +26,10 @@
 - make status table into buttons for cells, which set profile and frame. (from CH)
 - fixed sort logic to exit on exit (moved on), including recursive joinT funtions
 - toneframetodo is now sensitive to the need to sort, as well as verification.
-  - so "next frame" will give you the next frame with unsorted data, even if the known groups are all marked as verified.
+    - so "next frame" will give you the next frame with unsorted data, even if the known groups are all marked as verified.
 - gettonegroups now removes groups from the list of verified groups, if they aren't actually in the lift file.
 - observation that joinT page was (at least sometimes) removing an item (at least) from a group (at least), then giving the join page again, resulting in one less group in at least one case (sorting five elements over four groups). The tone report shows a group of [''] for that element, which is no longer in the join list of buttons.
-  - This issue was caused by underspecificity in lift.rmexfields()
+    - This issue was caused by underspecificity in lift.rmexfields()
 - Status table scrolls now
 - made ps title a button to change ps
 - made sort button in largest title case, with more padding
