@@ -1525,8 +1525,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c={}
         c['p']={}
         c['p'][2]=['bh','dh','kp','gh','gb','kk']
-        c['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','ɖ','c','k','g','ɡ','G',
-                                                                'ʔ',"ꞌ",'ʼ']
+        c['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','ɖ','c','k','g','ɡ','G']
         c['f']={}
         c['f'][2]=['ch','ph','bh','vh','sh','zh','hh']
         c['f'][1]=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
@@ -1549,6 +1548,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # s['g']={}
         # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
         #         'mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']
+        x['ʔ']=['ʔ',"ꞌ",'ʼ']
         x['G']=['ẅ','y','Y','w','W']
         # x['CG']=list((char+g for char in x['C'] for g in x['G']))
         x['N']=["ng'",'mm','ny','ŋŋ','m','M','n','ŋ','ɲ']
