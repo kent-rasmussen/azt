@@ -150,7 +150,7 @@ class Check():
         self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
         self.invalidregex='( |\.|,|\)|\()+'
         # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
-        self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b','o'] #'alphabetical' order
+        self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','ʔ','d','b','o'] #'alphabetical' order
         """Are we OK without these?"""
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
@@ -415,9 +415,7 @@ class Check():
             self.distinguish={}
         if (not hasattr(self,'interpret')) or (self.interpret == None):
             self.interpret={}
-        for var in ['G','N','S','Nwd','d','ː']:
-            log.log(5,_("Variable {} current value: {}").format(var,
-                                                            self.distinguish))
+        for var in ['G','N','S','Nwd','d','ː','ʔ','ʔwd']:
             if ((var not in self.distinguish) or
                 (type(self.distinguish[var]) is not bool)):
                 self.distinguish[var]=False
@@ -535,6 +533,18 @@ class Check():
         yet distinguish word final nasals. Or CG sequences, but not other G's
         --or distinguish G, but leave as CG (≠C). So I think these are all
         independent boolean selections."""
+        self.runwindow.options['ss']='ʔ'
+        self.runwindow.options['text']=_('Do you want to distinguish '
+                                        'all glottal stops (ʔ) \nfrom '
+                                        'other (simple/single) consonants?')
+        self.runwindow.options['opts']=[(True,'ʔ≠C'),(False,'ʔ=C')]
+        buttonframeframe(self)
+        self.runwindow.options['ss']='ʔwd'
+        self.runwindow.options['text']=_('Do you want to distinguish Word '
+                                        'Final glottal stops (ʔ#) \nfrom other '
+                                        'word final consonants?')
+        self.runwindow.options['opts']=[(True,'ʔ#≠C#'),(False,'ʔ#=C#')]
+        buttonframeframe(self)
         self.runwindow.options['ss']='N'
         self.runwindow.options['text']=_('Do you want to distinguish '
                                         'all Nasals (N) \nfrom '
@@ -1652,11 +1662,14 @@ class Check():
             del self.s[self.analang]['NCSG']
         #Finished joining lists; now make the regexs
         self.rx={}
+        if self.distinguish['ʔwd'] == True:
+            self.s[self.analang]['ʔwd']=self.db.s[self.analang]['ʔ'] #make ʔwd before deleting N
         if self.distinguish['Nwd'] == True:
             self.s[self.analang]['Nwd']=self.db.s[self.analang]['N'] #make Nwd before deleting N
         for sclass in list(self.s[self.analang]):
             if ((sclass in self.distinguish) and
-                    (self.distinguish[sclass]==False)):
+                    (self.distinguish[sclass]==False) and
+                    (sclass not in ['ʔ','N'])):
                 del self.s[self.analang][sclass]
             else:
                 # check again for combinations not in the database
@@ -1671,7 +1684,12 @@ class Check():
                 else:
                     log.debug("{} class sorted elements: {}".format(sclass,
                                                         str(rx.s(self,sclass))))
-                    if sclass == 'Nwd': #word final, not just a list of glyphs:
+                    # These regexs with longer names will be searched first, so
+                    # word final distinctions will be found, even if the segment
+                    # in question isn't being distinguished from C elsewhere.
+                    if sclass == 'ʔwd': #word final, not just a list of glyphs:
+                        self.rx['ʔ#']=rx.make(rx.s(self,sclass)+'$',compile=True)
+                    elif sclass == 'Nwd': #word final, not just a list of glyphs:
                         self.rx['N#']=rx.make(rx.s(self,sclass)+'$',compile=True)
                     else:
                         self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
