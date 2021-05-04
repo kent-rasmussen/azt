@@ -2440,7 +2440,9 @@ class Check():
                     text='', pady=50,
                     bg='red' #self.theme['background']
                     ).grid(row=0,column=1,sticky='we')
-        self.parent.waitdone()
+        self.frame.update()
+        self.frame.parent.waitdone()
+        self.frame.parent.parent.deiconify() #waitdone() # put this on every return!
     def makeCVprogresstable(self):
         Label(self.leaderboard, text=_('{} Progress').format(
             self.typedict[self.type]['sg']), font=self.fonts['title']
@@ -2452,7 +2454,9 @@ class Check():
                     ).grid(
         row=1,column=0#,sticky='s'
         )
-        self.parent.waitdone() # put this on every return!
+        self.frame.update()
+        self.frame.parent.waitdone()
+        self.frame.parent.parent.deiconify() #waitdone() # put this on every return!
     def maketoneprogresstable(self):
         #This should depend on self.ps only, and refresh from self.status.
         def groupfn(x):
