@@ -1283,10 +1283,49 @@ class Check():
         file.remove(self.profiledatafile)
         self.restart()
     def reloadstatusdata(self):
+        # This fn is very inefficient, as it iterates over everything in
+        # profilesbysense, creating status dictionaries for all of that, in
+        # order to populate it if found —before removing empty entires.
+        # This also has no access to verification information, which comes only
+        # from verifyT()
         self.storesettingsfile()
-        file.remove(self.statusfile)
-        #Call fn here. iterate across type, ps, profile, and reconstruct?
+        ps=self.ps
+        profile=self.profile
+        pss=[x for x in self.profilesbysense if x != 'Invalid']
+        for self.ps in pss:
+            self.makestatusdictps()
+            profiles=[x for x in self.profilesbysense[self.ps] if x != 'Invalid']
+            for self.profile in profiles:
+                self.makestatusdictprofile()
+                if self.ps in self.toneframes:
+                    names=[x for x in self.toneframes[self.ps]] #no profile here
+                    for self.name in names:
+                        self.settonevariablesbypsprofile()
+                        if self.status[self.type][self.ps][self.profile][
+                                self.name]['groups'] == []:
+                            log.debug("No groups, deleting frame entry!")
+                            del self.status[self.type][self.ps][
+                                                    self.profile][self.name]
+                        else:
+                            log.debug("Groups: {}".format(self.status[
+                                self.type][self.ps][self.profile][
+                                                    self.name]['groups']))
+                if self.status[self.type][self.ps][self.profile] == {}:
+                    log.debug("No Frames; deleting profile entry!")
+                    del self.status[self.type][self.ps][self.profile]
+                else:
+                    log.debug("Frames: {}".format(self.status[self.type][
+                                                        self.ps][self.profile]))
+            if self.status[self.type][self.ps] == {}:
+                log.debug("No Profiles; deleting part of speech entry!")
+                del self.status[self.type][self.ps]
+            else:
+                log.debug("Profiles: {}".format(self.status[self.type][
+                                                                    self.ps]))
+        self.ps=ps
+        self.profile=profile
         self.storesettingsfile(setting='status')
+        self.checkcheck()
     def loadtypedict(self):
         """I just need this to load once somewhere..."""
         self.typedict={
@@ -3889,7 +3928,7 @@ class Check():
         for senseid in self.senseidstosort: #This is a ps-profile slice
             tonegroup=self.db.get('exfieldvalue', senseid=senseid,
                         fieldtype='tone', location=self.name)#, showurl=True)
-            if tonegroup in ['NA','', None]:
+            if tonegroup in ['NA','','ALLOK', None]:
                 log.error("tonegroup {} found in sense {} under location {}!"
                     "".format(tonegroup,senseid,self.name))
             else:
@@ -5801,6 +5840,9 @@ class MainApplication(Frame):
         redomenu.add_command(
                         label=_("Syllable Profile Analysis (Restart)"),
                         command=lambda x=check:Check.reloadprofiledata(x))
+        redomenu.add_command(
+                        label=_("Verification Status file (several minutes)"),
+                        command=lambda x=check:Check.reloadstatusdata(x))
         advancedmenu.add_command(
                         label=_("Segment Interpretation Settings"),
                         command=lambda x=check:Check.setSdistinctions(x))
