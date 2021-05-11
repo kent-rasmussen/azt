@@ -6244,6 +6244,8 @@ class RecordButtonFrame(Frame):
         self.makedeletebutton()
     def _play(self, event):
         # print("I'm playing the recording now")
+        # from multiprocessing import Process
+        from threading import Thread
         self.wf = wave.open(self.filenameURL, 'rb')
         frames = self.wf.getnframes()
         rate=self.wf.getframerate()
@@ -6255,16 +6257,102 @@ class RecordButtonFrame(Frame):
             "{} format".format(self.audioout_card_index,channels,rate,format))
             return
         """block"""
+        log.debug("PA Version: {}".format(pyaudio.get_portaudio_version()))
+        log.debug("PA Version: {}".format(pyaudio.get_portaudio_version_text()))
+        try:
+            log.debug("checking for support")
+            self.pa.is_format_supported(rate,
+                output_format=format,
+                output_device=self.audioout_card_index,
+                output_channels=channels)
+        except TypeError as e:
+                log.exception("Unsupported config TypeError trying to play sound! %s",
+                e)
+                raise
+                return
+        except ValueError as e:
+                log.exception("Unsupported config ValueError trying to play sound! %s",
+                e)
+                raise
+                return
         def block():
-            self.stream = self.pa.open(format=format,
-                    output_device_index=self.audioout_card_index,
-                    channels=channels,
-                    rate=rate,
-                    output=True)
-            data = self.wf.readframes(self.chunk)
-            while len(data) > 0:
-                self.stream.write(data)
+            log.debug("running play block with args format={}, "
+                        "output_device_index={}, channels={}, "
+                        "rate={},".format(format,self.audioout_card_index,
+                        channels,rate))
+            try:
+                log.debug("trying to open stream")
+                try:
+                    self.pa.is_format_supported(rate,
+                        output_format=format,
+                        output_device=self.audioout_card_index,
+                        output_channels=channels)
+                except ValueError as e:
+                    log.debug("Valuerror on support query: %s {}",e)
+                    raise
+                    return
+                try:
+                    self.stream = self.pa.open(format=format,
+                        output_device_index=self.audioout_card_index,
+                        channels=channels,
+                        rate=rate,
+                        output=True)
+                except ValueError as e:
+                    log.debug("Valuerror: {}",e)
+                    raise
+                    return
                 data = self.wf.readframes(self.chunk)
+                while len(data) > 0:
+                    log.debug("Trying to play")
+                    log.debug("Stopped: {}".format(self.stream.is_stopped()))
+                    log.debug("Active: {}".format(self.stream.is_active()))
+                    log.debug("CPU_load: {}".format(self.stream.get_cpu_load()))
+                    log.debug("output_latency: {}".format(
+                                            self.stream.get_output_latency()))
+                    log.debug("input_latency: {}".format(
+                                            self.stream.get_input_latency()))
+                    log.debug("get_write_available: {}".format(
+                                            self.stream.get_write_available()))
+                    # These ones doesn't work:
+                    # log.debug("get_read_available: {}".format(
+                    #                        self.stream.get_read_available()))
+                    # log.debug("Time: {}".format(self.stream.get_time()))
+                    try:
+                        self.stream.write(data,exception_on_underflow=True)
+                    except (BaseException, IOError,
+                            pyaudio.paNoError, paNotInitialized,
+                            paUnanticipatedHostError, paInvalidChannelCount,
+                            paInvalidSampleRate, paInvalidDevice, paInvalidFlag,
+                            paSampleFormatNotSupported,
+                            paBadIODeviceCombination,
+                            paInsufficientMemory, paBufferTooBig,
+                            paBufferTooSmall, paNullCallback, paBadStreamPtr,
+                            paTimedOut, paInternalError,
+                            paDeviceUnavailable,
+                            paIncompatibleHostApiSpecificStreamInfo,
+                            paStreamIsStopped, paStreamIsNotStopped,
+                            paInputOverflowed, paOutputUnderflowed,
+                            paHostApiNotFound, paInvalidHostApi,
+                            paCanNotReadFromACallbackStream,
+                            paCanNotWriteToACallbackStream,
+                            paCanNotReadFromAnOutputOnlyStream,
+                            paCanNotWriteToAnInputOnlyStream,
+                            paIncompatibleStreamHostApi) as e:
+                        log.exception("Unexpected exception trying to play "
+                                        "sound! %s",e)
+                        raise
+                        exit()
+                    except:
+                        log.exception("Unexpected exception trying to play "
+                                    "sound! %s")
+                        raise
+                    log.debug("Recalcullating data remaining.")
+                    data = self.wf.readframes(self.chunk)
+                    log.debug("Data length: {}".format(len(data)))
+            except (ValueError, IOError, AttributeError, Exception,
+                                        pyaudio.paUnanticipatedHostError) as e:
+                log.exception("Unexpected Error trying to play sound! %s",e)
+                raise
         """Callback"""
         def callback(): #This just isn't working faithfully, for some reason.
             log.info("Playing {} sample rate with card {} on {} channels with "
@@ -6301,7 +6389,13 @@ class RecordButtonFrame(Frame):
             except Exception as e:
                 log.exception("Can't play file! %s",e)
                 return
-        block()
+        # p = Process(target=block)
+        p = Thread(target=block)
+        p.start()
+        p.join(1) #finish this after 1s, in any case
+        # p.terminate() #for processes, not threads
+        # block()
+        # callback()
         self.stream.close()
         self.wf.close()
     def _redo(self, event):
