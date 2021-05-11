@@ -7059,7 +7059,7 @@ def main():
     root = tkinter.Tk()
     myapp = MainApplication(root,program)
     myapp.mainloop()
-    logshutdown()
+    logshutdown() #in logsetup
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
