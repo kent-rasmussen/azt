@@ -5,6 +5,7 @@
 - Added redo status file (will not redo verification status, but will recover groups.)
     - Iterates across profilesbysense entries for ps and profile
     - looks
+- added main_buggy.py and more logging in exception tracker
 # Version 0.8
 - set up ad hoc groups to be more permanent:
     - saved to file
