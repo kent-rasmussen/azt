@@ -1411,53 +1411,49 @@ class Check():
         if changed == True:
             log.info("Saving status dict to file")
             self.storesettingsfile(setting='status')
-    def makestatusdict(self):
-        # This depends on self.ps, self.profile, and self.name
-        # This operates for exactly one context: wherever it is called.
+    def makestatusdict(self,type=None,ps=None,profile=None,name=None):
+        # This depends on self.type, self.ps, self.profile, and self.name
+        # To operate other than from where it is called, specify args.
         # Do this only where needed, when needed!
+        if type == None:
+            type=self.type
+        if ps == None:
+            ps=self.ps
+        if profile == None:
+            profile=self.profile
+        if name == None:
+            name=self.name
         changed=False
-        if self.type not in self.status:
-            self.status[self.type]={}
+        if type not in self.status:
+            self.status[type]={}
             changed=True
-        if self.ps not in self.status[self.type]:
-            self.status[self.type][self.ps]={}
+        if ps not in self.status[type]:
+            self.status[type][ps]={}
             changed=True
-        if self.profile not in self.status[self.type][self.ps]:
-            self.status[self.type][self.ps][self.profile]={}
+        if profile not in self.status[type][ps]:
+            self.status[type][ps][profile]={}
             changed=True
-        if self.name not in self.status[self.type][self.ps][self.profile]:
-            self.status[self.type][self.ps][self.profile][self.name]={}
+        if name not in self.status[type][ps][profile]:
+            self.status[type][ps][profile][name]={}
             changed=True
-        if type(self.status[self.type][self.ps][self.profile][self.name
-                                                                    ]) is list:
+        if type(self.status[type][ps][profile][name]) is list:
             log.info("Updating {}-{} status dict to new schema".format(
-                                                        self.profile,self.name))
-            dn=self.status[self.type][self.ps][self.profile][self.name]
-            self.status[self.type][self.ps][self.profile][self.name]={}
-            self.status[self.type][self.ps][self.profile][self.name]['done']=dn
+                                                        profile,name))
+            groups=self.status[type][ps][profile][name]
+            self.status[type][ps][profile][name]={}
+            self.status[type][ps][profile][name]['groups']=groups
             changed=True
         for key in ['groups','done']:
-            if key not in self.status[self.type][self.ps][self.profile][
-                                                                self.name]:
+            if key not in self.status[type][ps][profile][name]:
                 log.info("Adding {} key to {}-{} status dict".format(
-                                                key,self.profile,self.name))
-                self.status[self.type][self.ps][self.profile][self.name][
-                                                                key]=list()
+                                                key,profile,name))
+                self.status[type][ps][profile][name][key]=list()
                 changed=True
-        if 'tosort' not in self.status[self.type][self.ps][self.profile][
-                                                                self.name]:
+        if 'tosort' not in self.status[type][ps][profile][name]:
             log.info("Adding tosort key to {}-{} status dict".format(
-                                                key,self.profile,self.name))
-            self.status[self.type][self.ps][self.profile][self.name][
-                                                                'tosort']=True
+                                                key,profile,name))
+            self.status[type][ps][profile][name]['tosort']=True
             changed=True
-        for key in ['groups','done']:
-            for invalid in ['',None]:
-                if invalid in self.status[self.type][self.ps][self.profile][
-                                                                self.name][key]:
-                    self.status[self.type][self.ps][self.profile][
-                                                self.name][key].remove(invalid)
-                    changed=True
         if changed == True:
             log.info("Saving status dict to file")
             self.storesettingsfile(setting='status')
