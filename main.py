@@ -141,7 +141,11 @@ class Check():
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.settingsbyfile() #This just sets the variable
         self.loadsettingsfile(setting='toneframes')
+        if not hasattr(self,'toneframes'):
+            self.toneframes={}
         self.loadsettingsfile(setting='status')
+        if not hasattr(self,'status'):
+            self.status={}
         self.loadsettingsfile(setting='adhocgroups')
         if nsyls is not None:
             self.nsyls=nsyls
@@ -2528,12 +2532,13 @@ class Check():
                     elif profile == 'next':
                         pass
                     elif frame in self.status[self.type][self.ps][profile]:
+                        if not 'groups' in self.status[self.type][self.ps][
+                                                            profile][frame]:
+                            self.makestatusdict(profile=profile, name=frame)
+                            total='?'
                         if not 'tosort' in self.status[self.type][self.ps][
                                                             profile][frame]:
                             tosort='?'
-                        if not 'groups' in self.status[self.type][self.ps][
-                                                            profile][frame]:
-                            total='?'
                         if not 'done' in self.status[self.type][self.ps][
                                                             profile][frame]:
                             done='?'
@@ -2950,6 +2955,8 @@ class Check():
         # profiles=list(dict.fromkeys(profiles))
         return profiles
     def getprofilestodo(self):
+        if not hasattr(self,'profilecounts'):
+            self.getprofiles()
         log.debug(self.profilecounts)
         self.profilecountsValid=[]
         self.profilecountsValidwAdHoc=[]
@@ -2978,6 +2985,9 @@ class Check():
                 log.debug("{} frame Not started yet!".format(frame))
                 self.framestodo.append(frame)
                 continue
+            if 'groups' not in self.status[self.type][self.ps][self.profile][
+                                                                        frame]:
+                self.makestatusdict(name=frame)
             groups=self.status[self.type][self.ps][self.profile][frame][
                                                                     'groups']
             done=self.status[self.type][self.ps][self.profile][frame]['done']
