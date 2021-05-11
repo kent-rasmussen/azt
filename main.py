@@ -6349,7 +6349,7 @@ class RecordButtonFrame(Frame):
                 print("Sorry, unless testing we need all these "
                         "arguments; exiting.")
             if self.form==None:
-                self.form=self.node.find(f"form[@lang='{check.analang}']/text").text
+                self.form=self.node.find(f"form[@lang='{self.check.analang}']/text").text
             # make psprofile (if no audio file, the last in this list is used):
             psprofiles=[self.check.ps]
             if (self.node.tag == 'example'):
