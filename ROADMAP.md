@@ -7,7 +7,6 @@
     - pushed off the screen?
 
 ## release stoppers
-- CV? doesn't produce data
 - decent debugging information on play problems
 
 ## In Process (fix)
