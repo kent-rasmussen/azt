@@ -58,7 +58,6 @@ def logsetup(loglevel):
         log.error("Error!")
         log.exception("Exception!") #this expects exception info
         log.critical("Critical!")
-    # test(log)
     return log
 def logwritelzma(filename):
     try:
@@ -69,18 +68,35 @@ def logwritelzma(filename):
         from backports import lzma
     """This writes changes back to XML."""
     """When this goes into production, change this:"""
-    compressed='log_'+datetime.datetime.utcnow().isoformat()[:-7]+'Z'+'.7z'
+    compressed='log_'+datetime.datetime.utcnow().isoformat()[:-7]+'Z'+'.xz'
     compressed=re.sub(':','-',compressed)
     with open(filename,'r') as d:
-        log.debug("Logfile opened.")
-        data=d.read()
-        log.debug("Logfile read.")
+        log.debug("Logfile {} opened.".format(filename))
         with lzma.open(compressed, "wt") as f:
-            log.debug("LZMA file opened.")
+            log.debug("LZMA file {} opened.".format(compressed))
+            data=d.read()
+            log.debug("Logfile {} read (this and following will not be written "
+                    "to compressed log file).".format(filename))
             f.write(data)
-            log.debug("LZMA file written.")
+            log.debug("LZMA file {} written.".format(compressed))
             f.close()
-            log.debug("LZMA file closed.")
+            log.debug("LZMA file {} closed.".format(compressed))
             d.close()
-            log.debug("Logfile closed (ready to return LZMA file).")
+            log.debug("Logfile {} closed (ready to return LZMA file).".format(
+                                                                    filename))
+        with lzma.open(compressed) as ch:
+            data2 = ch.read().decode("utf-8")
+            log.debug("LZMA file {} decompressed.".format(compressed))
+        if data2 == data:
+            log.debug("Data before compression the same as after "
+                        "decompression.")
+        else:
+            decompressed=filename+'_decompressed'
+            log.error("Data before compression NOT the same as after "
+                    "decompression; writing decompressed back to file {}!"
+                    "".format(decompressed))
+            with open(decompressed,'w') as chd:
+                chd.write(data2)
+                log.debug("Decompressed file {} written to disk."
+                    "".format(decompressed))
     return compressed
