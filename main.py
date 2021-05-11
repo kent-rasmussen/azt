@@ -1415,12 +1415,12 @@ class Check():
         if changed == True:
             log.info("Saving status dict to file")
             self.storesettingsfile(setting='status')
-    def makestatusdict(self,type=None,ps=None,profile=None,name=None):
+    def makestatusdict(self,checktype=None,ps=None,profile=None,name=None):
         # This depends on self.type, self.ps, self.profile, and self.name
         # To operate other than from where it is called, specify args.
         # Do this only where needed, when needed!
-        if type == None:
-            type=self.type
+        if checktype == None:
+            checktype=self.type
         if ps == None:
             ps=self.ps
         if profile == None:
@@ -1428,35 +1428,35 @@ class Check():
         if name == None:
             name=self.name
         changed=False
-        if type not in self.status:
-            self.status[type]={}
+        if checktype not in self.status:
+            self.status[checktype]={}
             changed=True
-        if ps not in self.status[type]:
-            self.status[type][ps]={}
+        if ps not in self.status[checktype]:
+            self.status[checktype][ps]={}
             changed=True
-        if profile not in self.status[type][ps]:
-            self.status[type][ps][profile]={}
+        if profile not in self.status[checktype][ps]:
+            self.status[checktype][ps][profile]={}
             changed=True
-        if name not in self.status[type][ps][profile]:
-            self.status[type][ps][profile][name]={}
+        if name not in self.status[checktype][ps][profile]:
+            self.status[checktype][ps][profile][name]={}
             changed=True
-        if type(self.status[type][ps][profile][name]) is list:
+        if type(self.status[checktype][ps][profile][name]) is list:
             log.info("Updating {}-{} status dict to new schema".format(
                                                         profile,name))
-            groups=self.status[type][ps][profile][name]
-            self.status[type][ps][profile][name]={}
-            self.status[type][ps][profile][name]['groups']=groups
+            groups=self.status[checktype][ps][profile][name]
+            self.status[checktype][ps][profile][name]={}
+            self.status[checktype][ps][profile][name]['groups']=groups
             changed=True
         for key in ['groups','done']:
-            if key not in self.status[type][ps][profile][name]:
+            if key not in self.status[checktype][ps][profile][name]:
                 log.info("Adding {} key to {}-{} status dict".format(
                                                 key,profile,name))
-                self.status[type][ps][profile][name][key]=list()
+                self.status[checktype][ps][profile][name][key]=list()
                 changed=True
-        if 'tosort' not in self.status[type][ps][profile][name]:
+        if 'tosort' not in self.status[checktype][ps][profile][name]:
             log.info("Adding tosort key to {}-{} status dict".format(
                                                 key,profile,name))
-            self.status[type][ps][profile][name]['tosort']=True
+            self.status[checktype][ps][profile][name]['tosort']=True
             changed=True
         if changed == True:
             log.info("Saving status dict to file")
