@@ -4249,6 +4249,7 @@ class Check():
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def showentryformstorecordpage(self):
+        #The info we're going for is stored above sense, hence guid.
         if not self.runwindow.winfo_exists():
             log.info('no runwindow; quitting!')
             return
@@ -4299,18 +4300,18 @@ class Check():
                     (('gloss2' in sense) and (sense['gloss2'] is None))):
                 continue #We can't save the file well anyway; don't bother
             if self.db.pluralname is not None:
-                sense['plnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
+                sense['plnode']=firstoflist(self.db.get('fieldnode',
+                                        guid=sense['guid'],
                                         lang=self.analang,
                                         fieldtype=self.db.pluralname))
             if self.db.imperativename is not None:
-                sense['impnode']=firstoflist(self.db.get('fieldnode',senseid=sense['guid'],
+                sense['impnode']=firstoflist(self.db.get('fieldnode',
+                                        guid=sense['guid'],
                                         lang=self.analang,
                                         fieldtype=self.db.imperativename))
             if sense['lcnode'] != None:
-                # print('lcnode!')
                 sense['nodetoshow']=sense['lcnode']
             else:
-                # print('lxnode!')
                 sense['nodetoshow']=sense['lxnode']
             self.makelabelsnrecordingbuttons(buttonframes.content,sense)
             for node in ['plnode','impnode']:
