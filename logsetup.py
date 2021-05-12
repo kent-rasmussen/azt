@@ -91,7 +91,7 @@ def logwritelzma(filename):
             log.debug("Data before compression the same as after "
                         "decompression.")
         else:
-            decompressed=filename+'_decompressed'
+            decompressed=compressed+'_decompressed'
             log.error("Data before compression NOT the same as after "
                     "decompression; writing decompressed back to file {}!"
                     "".format(decompressed))
