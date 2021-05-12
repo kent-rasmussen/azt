@@ -2452,15 +2452,12 @@ class Check():
         lps.bind('<ButtonRelease>',self.getps)
     def makenoboard(self):
         log.info("No Progress board")
-        # self.leaderboard.destroy()
         self.boardtitle()
         self.noboard=Label(self.leaderboard, image=self.photo['transparent'],
-                    text='', pady=50,
-                    bg='red' #self.theme['background']
-                    ).grid(row=0,column=1,sticky='we')
+                    text='', pady=50, bg='red').grid(row=1,column=0,sticky='we')
         self.frame.update()
         self.frame.parent.waitdone()
-        self.frame.parent.parent.deiconify() #waitdone() # put this on every return!
+        self.frame.parent.parent.deiconify()
     def makeCVprogresstable(self):
         self.boardtitle()
         self.leaderboardtable=Frame(self.leaderboard)
@@ -2469,7 +2466,7 @@ class Check():
         Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
         self.frame.update()
         self.frame.parent.waitdone()
-        self.frame.parent.parent.deiconify() #waitdone() # put this on every return!
+        self.frame.parent.parent.deiconify()
     def maketoneprogresstable(self):
         #This should depend on self.ps only, and refresh from self.status.
         def groupfn(x):
@@ -2490,7 +2487,6 @@ class Check():
         leaderscroll=ScrollingFrame(self.leaderboard)
         leaderscroll.grid(row=1,column=0)
         self.leaderboardtable=leaderscroll.content
-        # self.leaderboardtable.grid(row=1,column=0)
         row=0
         #put in a footer for next profile/frame
         profiles=['colheader']+[x[1] for x in self.profilecounts
@@ -2516,7 +2512,7 @@ class Check():
                 elif profile == 'next': # end of row headers
                     brh=Button(self.leaderboardtable,text=profile,
                                             relief='flat',cmd=self.nextprofile)
-                    brh.grid(row=row,column=column,sticky='e')#,ipadx=5)
+                    brh.grid(row=row,column=column,sticky='e')
                     brht=ToolTip(brh,_("Go to the next syllable profile"))
                 for frame in frames+['next']:
                     column+=1
@@ -2594,12 +2590,11 @@ class Check():
                         tb.grid(row=row,column=column,ipadx=0,ipady=0)
                         ttb=ToolTip(tb,tip)
             row+=1
-        # put profile footer here?
         log.error(_("You have more groups verified than there are: {}".format(
                                                                     ungroups)))
         self.frame.update()
         self.frame.parent.waitdone()
-        self.frame.parent.parent.deiconify() #waitdone() # put this on every return!
+        self.frame.parent.parent.deiconify()
     def setsu(self):
         self.su=True
         self.checkcheck()
