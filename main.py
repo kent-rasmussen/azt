@@ -1130,7 +1130,7 @@ class Check():
             self.subcheck=CV
             self.type = "CV"
             self.checkcheck()
-    def getps(self):
+    def getps(self,event=None):
         log.info("Asking for ps...")
         window=Window(self.frame, title=_('Select Grammatical Category'))
         Label(window.frame, text=_('What grammatical category do you '
@@ -1162,7 +1162,7 @@ class Check():
                                     window
                                     )
             buttonFrame1.grid(column=0, row=0)
-    def gettype(self):
+    def gettype(self,event=None):
         print(_("Asking for check type"))
         window=Window(self.frame,title=_('Select Check Type'))
         types=[]
@@ -2434,9 +2434,26 @@ class Check():
                 self.makenoboard()
         else:
             self.makenoboard()
+    def boardtitle(self):
+        titleframe=Frame(self.leaderboard)
+        titleframe.grid(row=0,column=0)
+        lt=Label(titleframe, text=_(self.typedict[self.type]['sg']),
+                font=self.fonts['title'])
+        lt.grid(row=0,column=0,sticky='nwe')
+        Label(titleframe, text=_('Progress for'), font=self.fonts['title']
+            ).grid(row=0,column=1,sticky='nwe',padx=10)
+        lps=Label(titleframe,relief='flat',bd=0,text=self.ps,
+                anchor='c',
+                font=self.fonts['title'])
+        lps.grid(row=0,column=2,ipadx=0,ipady=0)
+        ttt=ToolTip(lt,_("Change Check Type"))
+        ttps=ToolTip(lps,_("Change Part of Speech"))
+        lt.bind('<ButtonRelease>',self.gettype)
+        lps.bind('<ButtonRelease>',self.getps)
     def makenoboard(self):
         log.info("No Progress board")
         # self.leaderboard.destroy()
+        self.boardtitle()
         self.noboard=Label(self.leaderboard, image=self.photo['transparent'],
                     text='', pady=50,
                     bg='red' #self.theme['background']
@@ -2445,16 +2462,11 @@ class Check():
         self.frame.parent.waitdone()
         self.frame.parent.parent.deiconify() #waitdone() # put this on every return!
     def makeCVprogresstable(self):
-        Label(self.leaderboard, text=_('{} Progress').format(
-            self.typedict[self.type]['sg']), font=self.fonts['title']
-            ).grid(row=0,column=0,sticky='nwe')
+        self.boardtitle()
         self.leaderboardtable=Frame(self.leaderboard)
         self.leaderboardtable.grid(row=1,column=0)
-        Label(self.leaderboardtable,text=_("Nothing to see here..."),
-                    # font=self.fonts['reportheader']
-                    ).grid(
-        row=1,column=0#,sticky='s'
-        )
+        notext=_("Nothing to see here...")
+        Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
         self.frame.update()
         self.frame.parent.waitdone()
         self.frame.parent.parent.deiconify() #waitdone() # put this on every return!
@@ -2474,18 +2486,7 @@ class Check():
             self.set('name',name,refresh=False)
             #run this in any case, rather than running it not at all, or twice
             self.checkcheck()
-        titleframe=Frame(self.leaderboard)
-        titleframe.grid(row=0,column=0)
-        title=_('Tone Progress:')
-        titlebutton=self.ps
-        Label(titleframe, text=title, font=self.fonts['title']
-                        ).grid(row=0,column=0,padx=(25,0))
-        b=Button(titleframe,relief='flat',bd=0,text=titlebutton,anchor='c',padx=0,
-            pady=0,cmd=self.getps, font=self.fonts['title']
-            # lambda p=profile, f=frame:updateprofilename(profile=p,name=f),
-                )
-        b.grid(row=0,column=1,ipadx=0,ipady=0,padx=(0,25))
-        tt=ToolTip(b,_("Change Part of Speech"))
+        self.boardtitle()
         leaderscroll=ScrollingFrame(self.leaderboard)
         leaderscroll.grid(row=1,column=0)
         self.leaderboardtable=leaderscroll.content
