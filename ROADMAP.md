@@ -5,9 +5,7 @@
 
 ## Things to Test
 - check that changes to S regexs don't break too much.
-- diagnose pl/imp not appearing on recording screen
-    - not really there?
-    - pushed off the screen?
+- Make every setting have at least one button
 
 ## In Process (fix)
 - freeze header on status scroll
