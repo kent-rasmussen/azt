@@ -4,11 +4,13 @@
 - Added glottal stop distinctions similar to Nasal distinctions
 - Added redo status file (will not redo verification status, but will recover groups.)
     - Iterates across profilesbysense entries for ps and profile
-    - looks
+    - looks into LIFT file for groups present
 - added main_buggy.py and more logging in exception tracker
 - cleaned up blipping on wait window
 - checked on wait window in verifyT
 - added ps and type buttons to all status boards
+- fixed pl/imp not appearing on recording screen
+- added field name (pl/imp) to filenames
 
 # Version 0.8
 - set up ad hoc groups to be more permanent:
