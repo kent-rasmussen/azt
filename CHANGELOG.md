@@ -7,6 +7,8 @@
     - looks
 - added main_buggy.py and more logging in exception tracker
 - cleaned up blipping on wait window
+- checked on wait window in verifyT
+- added ps and type buttons to all status boards
 
 # Version 0.8
 - set up ad hoc groups to be more permanent:

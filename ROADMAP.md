@@ -1,17 +1,15 @@
 #Roadmap
 
+## release stoppers
+- decent debugging information on play problems
+
 ## Things to Test
 - check that changes to S regexs don't break too much.
 - diagnose pl/imp not appearing on recording screen
     - not really there?
     - pushed off the screen?
 
-## release stoppers
-- decent debugging information on play problems
-- check on wait window in verifyT
-
 ## In Process (fix)
-- add ps button to makenoboard
 - freeze header on status scroll
 - don't write ps='Invalid' to profilesbysense
 - make settonevariablesbypsprofile take arguments ps, profile
