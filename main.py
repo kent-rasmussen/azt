@@ -1461,7 +1461,7 @@ class Check():
         if changed == True:
             log.info("Saving status dict to file")
             self.storesettingsfile(setting='status')
-    def updatestatus(self,verified=False):
+    def updatestatus(self,verified=False,refresh=True):
         #This function updates the status variable, not the lift file.
         self.makestatusdict()
         if verified == True:
@@ -1485,7 +1485,8 @@ class Check():
                 print("Tried to set",self.subcheck,"UNverified in",self.type,
                         self.ps,self.profile,self.name,"but it wasn't "
                         "there.")
-        self.storesettingsfile(setting='status')
+        if refresh == True:
+            self.storesettingsfile(setting='status')
     """Get from LIFT database functions"""
     def addpstoprofileswdata(self):
         if self.ps not in self.profilesbysense:
@@ -3814,7 +3815,7 @@ class Check():
                         self.status[self.type][self.ps][self.profile][
                                 self.name]['groups'].remove(group1)
                         self.subcheck=group1
-                        self.updatestatus() #not verified=True --since joined.
+                        self.updatestatus(refresh=False) #not verified=True --since joined.
                         self.subcheck=self.groupselected
                         self.updatestatus() #not verified=True --since joined.
                         self.maybesort() #go back to verify, etc.
