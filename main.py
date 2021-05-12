@@ -6395,7 +6395,7 @@ class RecordButtonFrame(Frame):
         # p = Process(target=block)
         p = Thread(target=block)
         p.start()
-        p.join(1) #finish this after 1s, in any case
+        p.join(5) #finish this after 1s, in any case
         # p.terminate() #for processes, not threads
         # block()
         # callback()
