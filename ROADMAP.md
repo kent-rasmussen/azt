@@ -8,7 +8,7 @@
 
 ## release stoppers
 - decent debugging information on play problems
-- blipping on wait window
+- check on wait window in verifyT
 
 ## In Process (fix)
 - add ps button to makenoboard

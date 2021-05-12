@@ -6,6 +6,8 @@
     - Iterates across profilesbysense entries for ps and profile
     - looks
 - added main_buggy.py and more logging in exception tracker
+- cleaned up blipping on wait window
+
 # Version 0.8
 - set up ad hoc groups to be more permanent:
     - saved to file
