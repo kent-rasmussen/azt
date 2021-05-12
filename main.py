@@ -3560,12 +3560,13 @@ class Check():
         pile.
         """
         #This function should exit 1 on a window close, 0/None on all ok.
-        if len(self.status[self.type][self.ps][self.profile][self.name][
-                                                                'groups']) == 0:
+        groups=self.status[self.type][self.ps][self.profile][self.name][
+                                                                'groups']
+        if len(groups) == 0:
             log.debug("No tone groups to verify!")
             return
         # The title for this page changes by group, below.
-        self.getrunwindow()
+        self.getrunwindow(msg="preparing to verify groups: {}".format(groups))
         oktext='These all have the same tone'
         instructions=_("Read down this list to verify they all have the same "
             "tone melody. Select any word with a different tone melody to "
@@ -3597,7 +3598,7 @@ class Check():
                         "continuing.".format(self.subcheck,len(senseids)))
                 continue
             self.runwindow.resetframe() #just once per group
-            self.runwindow.wait()
+            self.runwindow.wait(msg="Preparing to verify group {}".format(self.subcheck))
             title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
                                         self.languagenames[self.analang],
                                         self.subcheck,
@@ -3806,10 +3807,11 @@ class Check():
                         delattr(self,'groupselected')
                         return 0
                     else:
-                        self.runwindow.wait()
-                        log.debug("Now we're going to join groups ‘{}’ and "
-                            "‘{}’, marking them both unverified.".format(group1,
-                                                            self.groupselected))
+                        msg=_("Now we're going to join groups ‘{}’ and "
+                            "‘{}’, marking the new group unverified.".format(group1,
+                            self.groupselected))
+                        self.runwindow.wait(msg=msg)
+                        log.debug(msg)
                         """All the senses we're looking at, by ps/profile"""
                         self.updatebysubchecksenseid(group1,self.groupselected)
                         self.status[self.type][self.ps][self.profile][
@@ -4159,7 +4161,7 @@ class Check():
                                 "T":[(None,None),] #We should fix this some day
                                 }
     """Doing stuff"""
-    def getrunwindow(self,nowait=False):
+    def getrunwindow(self,nowait=False,msg=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
         need to test for both."""
@@ -4172,7 +4174,7 @@ class Check():
             self.runwindow.title(t)
         self.runwindow.lift()
         if nowait != True:
-            self.runwindow.wait()
+            self.runwindow.wait(msg=msg)
     def runcheck(self):
         self.storesettingsfile() #This is not called in checkcheck.
         t=(_('Run Check'))
@@ -5450,11 +5452,11 @@ class Window(tkinter.Toplevel):
                 self.frame.destroy()
             self.frame=Frame(self.outsideframe)
             self.frame.grid(column=0,row=0,sticky='we')
-    def wait(self):
+    def wait(self,msg=None):
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
             log.debug("There is already a wait window: {}".format(self.ww))
             return
-        self.ww=Wait(self)
+        self.ww=Wait(self,msg)
     def waitdone(self):
         if hasattr(self,'ww') and self.ww.winfo_exists():
             self.ww.close()
@@ -5731,12 +5733,12 @@ class Menu(tkinter.Menu):
         self['activebackground']=self.theme['background']
         self['background']='white'
 class MainApplication(Frame):
-    def wait(self):
+    def wait(self,msg=None):
         # This and the following are only to build the main screen
         if hasattr(self.parent,'ww') and self.parent.ww.winfo_exists() == True:
             log.debug("Already a wait window: {}".format(self.parent.ww))
             return
-        self.parent.ww=Wait(self.parent)
+        self.parent.ww=Wait(self.parent,msg)
     def waitdone(self):
         log.log(3,"Closing Wait window, and bringing up main window again.")
         if hasattr(self.parent,'ww'):
@@ -6629,7 +6631,7 @@ class Wait(Window): #tkinter.Toplevel?
         except:
             log.debug("Not deiconifying parent.")
         self.destroy()
-    def __init__(self, parent=None):
+    def __init__(self, parent=None,msg=None):
         global program
         super(Wait, self).__init__(parent)
         self.withdraw() #don't show until placed
@@ -6654,6 +6656,10 @@ class Wait(Window): #tkinter.Toplevel?
                 font=self.fonts['title'],anchor='c')
         self.l.grid(row=0,column=0,sticky='we')
         Label(self.outsideframe, image=self.photo['small'],text='',
+        if msg != None:
+            self.l1=Label(self.outsideframe, text=msg,
+                font=self.fonts['default'],anchor='c')
+            self.l1.grid(row=1,column=0,sticky='we')
                         bg=self['background']
                         ).grid(row=1,column=0,sticky='we',padx=50,pady=50)
         self.update()
