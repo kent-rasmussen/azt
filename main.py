@@ -6626,25 +6626,16 @@ class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
         self.bf.grid(row=0, column=0)
 class Wait(Window): #tkinter.Toplevel?
     def close(self):
-        try:
-            self.parent.deiconify()
-        except:
-            log.debug("Not deiconifying parent.")
+        self.update_idletasks()
+        self.parent.deiconify()
         self.destroy()
     def __init__(self, parent=None,msg=None):
         global program
         super(Wait, self).__init__(parent)
-        self.withdraw() #don't show until placed
+        self.parent.withdraw()
+        self.withdraw() #don't show until we're done making it
         self.parent=parent
         inherit(self)
-        try:
-            self.parent.withdraw()
-            # if platform.uname().system == 'Linux':
-            #     self.parent.withdraw()
-            # else:
-            #     self.parent.iconify() #A window doesn't return on deiconify...
-        except:
-            log.debug("Not withdrawing parent.")
         self.attributes("-topmost", True)
         self['background']=parent['background']
         self.photo = parent.photo #need this before making the frame
@@ -6655,16 +6646,17 @@ class Wait(Window): #tkinter.Toplevel?
         self.l=Label(self.outsideframe, text=text,
                 font=self.fonts['title'],anchor='c')
         self.l.grid(row=0,column=0,sticky='we')
-        Label(self.outsideframe, image=self.photo['small'],text='',
         if msg != None:
             self.l1=Label(self.outsideframe, text=msg,
                 font=self.fonts['default'],anchor='c')
             self.l1.grid(row=1,column=0,sticky='we')
+        self.l2=Label(self.outsideframe, image=self.photo['small'],text='',
                         bg=self['background']
-                        ).grid(row=1,column=0,sticky='we',padx=50,pady=50)
-        self.update()
-        self.deiconify() #show after placement
-        self.parent.withdraw()
+                        )
+        self.l2.grid(row=2,column=0,sticky='we',padx=50,pady=50)
+        self.deiconify() #show after the window is built
+        #for some reason this has to follow the above, or you get a blank window
+        self.update_idletasks() #updates just geometry
 class Splash(Window):
     def __init__(self, parent):
         super(Splash, self).__init__(parent,exit=0)
