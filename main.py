@@ -2484,6 +2484,8 @@ class Check():
             #run this in any case, rather than running it not at all, or twice
             self.checkcheck()
         self.boardtitle()
+        # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
+        # leaderheader.grid(row=1,column=0)
         leaderscroll=ScrollingFrame(self.leaderboard)
         leaderscroll.grid(row=1,column=0)
         self.leaderboardtable=leaderscroll.content
@@ -2524,8 +2526,8 @@ class Check():
                             bch.grid(row=row,column=column,sticky='s')
                             bcht=ToolTip(bch,_("Go to the next tone frame"))
                         else:
-                            Label(self.leaderboardtable,text=linebreakwords(frame),
-                                    font=self.fonts['reportheader']
+                            Label(self.leaderboardtable,text=linebreakwords(
+                                frame), font=self.fonts['reportheader']
                                 ).grid(row=row,column=column,sticky='s',ipadx=5)
                     elif profile == 'next':
                         pass
