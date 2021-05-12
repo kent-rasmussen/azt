@@ -3598,7 +3598,8 @@ class Check():
                         "continuing.".format(self.subcheck,len(senseids)))
                 continue
             self.runwindow.resetframe() #just once per group
-            self.runwindow.wait(msg="Preparing to verify group {}".format(self.subcheck))
+            self.runwindow.wait(msg="Preparing to verify group {}".format(
+                                                                self.subcheck))
             title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
                                         self.languagenames[self.analang],
                                         self.subcheck,
@@ -6630,11 +6631,11 @@ class Wait(Window): #tkinter.Toplevel?
         self.parent.deiconify()
         self.destroy()
     def __init__(self, parent=None,msg=None):
+        self.parent=parent
+        self.parent.withdraw()
         global program
         super(Wait, self).__init__(parent)
-        self.parent.withdraw()
         self.withdraw() #don't show until we're done making it
-        self.parent=parent
         inherit(self)
         self.attributes("-topmost", True)
         self['background']=parent['background']
