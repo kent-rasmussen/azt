@@ -6697,7 +6697,6 @@ class ToolTip(object):
     www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
     Modified to include a delay time by Victor Zaccardo, 25mar16
     """
-    #This flashes if you put your mouse over where the tooltip shows up; fix?
     def __init__(self, widget, text='widget info'):
         self.waittime = 500     #miliseconds
         self.wraplength = 180   #pixels
@@ -6710,33 +6709,33 @@ class ToolTip(object):
         self.widget.bind("<ButtonPress>", self.leave)
         self.id = None
         self.tw = None
-
     def enter(self, event=None):
+        self.event=event
         self.schedule()
-
     def entertip(self, event=None):
         self.dispx=-self.dispx
         self.dispy=-self.dispy
     def leave(self, event=None):
         self.unschedule()
         self.hidetip()
-
     def schedule(self):
         self.unschedule()
         self.id = self.widget.after(self.waittime, self.showtip)
-
     def unschedule(self):
         id = self.id
         self.id = None
         if id:
             self.widget.after_cancel(id)
-
     def showtip(self, event=None):
         self.widget.unbind("<Leave>")
         x = y = 0
         x, y, cx, cy = self.widget.bbox("insert")
-        x += self.widget.winfo_rootx() + self.dispx
-        y += self.widget.winfo_rooty() + self.dispy
+        # #based on widgets (flashy):
+        # x += self.widget.winfo_rootx() + self.dispx
+        # y += self.widget.winfo_rooty() + self.dispy
+        #based on mouse click (much better):
+        x += self.event.x_root +5 #+ self.dispx
+        y += self.event.y_root #+ self.dispy
         # creates a toplevel window
         self.tw = tkinter.Toplevel(self.widget)
         self.tw.bind("<Enter>", self.entertip)
@@ -6747,7 +6746,6 @@ class ToolTip(object):
                        background="#ffffff", relief='solid', borderwidth=1,
                        wraplength = self.wraplength)
         label.pack(ipadx=1)
-
         self.widget.bind("<Leave>", self.leave)
     def hidetip(self):
         tw = self.tw
