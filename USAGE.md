@@ -1,7 +1,11 @@
 # Usage
 - [Practical Prerequisites](#practical-prerequisites)
-* auto-gen TOC:
-{:toc}
+- [Expectations](#expectations)
+- [First Run](#first-run-be-patient-and-orient-yourself)
+- [Subsequent Runs (CV)](#subsequent-runs-cv-analysis-view-data-and-run-reports)
+- [Subsequent Runs (Tone)](#subsequent-runs-tone-sort-and-follow-directions)
+- [Miscellaneous](#miscellaneous)
+
 ## Practical Prerequisites
 ### LIFT Database to Check
 In case it isn't obvious, in order to use this program to actually do anything, one needs a [LIFT](https://code.google.com/archive/p/lift-standard/) database to check. Fortunately these are not hard to generate; [LIFT](https://code.google.com/archive/p/lift-standard/) is an open XML specification for storing lexical data. You can create a LIFT database by a number of routes:
@@ -30,8 +34,7 @@ LIFT databases can be minimal or very complex. For the purposes of running A→Z
 ### Collaboration and Archival
 I **strongly** recommend using a version controlled repository (e.g., mercurial, git), as is normally done in WeSay and in recommended FLEx collaboration schemes. Even if you are the only one to ever see this data (why would that be?), the advantages in history and preservation of your data are already there. But if you will be sharing changes with others, you really **must** have an easy way to do this, or you will get bogged down in the logistics of sharing data changes. I recommend using [Language Depot](https://languagedepot.org), though there are certainly other ways to meet this need. In any case, setting this up early is always easier than trying to merge divergent data later.
 
-##Expectations
-
+## Expectations
 ### Changes to Expect in Your LIFT Database
 A→Z+T will place links to `citation`/`lexeme`, `plural`, and `imperative` recordings in the appropriate fields, coded as a voice writing system (e.g., xyz-Zxxx-x-audio).
 
@@ -132,8 +135,8 @@ For a more thorough report, use the Basic Report menu item. This will select you
 
 I want this tool to be ultimately able to help with the sorting and correction of consonants and vowels, but my hope is that until those functions are implemented, these reports will be helpful.
 
-# Subsequent Runs: Tone (Sort, and Follow Directions)
-## Sorting progression: The Status Table
+## Subsequent Runs: Tone (Sort, and Follow Directions)
+### Sorting progression: The Status Table
 Once you have done any sorting for the selected part of speech, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
 
 The program is designed to step through the process relatively automatically; once things are set up, you should be able to just open the program, and click `Sort`. If you need a break, click `quit` on whatever window you're in, and your progress should be there when you return.
