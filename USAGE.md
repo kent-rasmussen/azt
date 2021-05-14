@@ -1,4 +1,7 @@
 # Usage
+- [Practical Prerequisites](#practical-prerequisites)
+* auto-gen TOC:
+{:toc}
 ## Practical Prerequisites
 ### LIFT Database to Check
 In case it isn't obvious, in order to use this program to actually do anything, one needs a [LIFT](https://code.google.com/archive/p/lift-standard/) database to check. Fortunately these are not hard to generate; [LIFT](https://code.google.com/archive/p/lift-standard/) is an open XML specification for storing lexical data. You can create a LIFT database by a number of routes:
