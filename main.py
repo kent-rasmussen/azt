@@ -2067,15 +2067,29 @@ class Check():
         'valuecolumn':1,
         'buttoncolumn':2,
         'labelxpad':15,
-        'width':None #10
-        }
-        def proselabel(opts,label):
-            print(label)
-            Label(self.frame.status, text=label,font=self.fonts['report']).grid(
-                    column=opts['labelcolumn'], row=opts['row'],
-                    ipadx=opts['labelxpad'], sticky='w'
-                    )
-        def labels(opts,label,value):
+        'width':None, #10
+        'columnspan':3,
+        'columnplus':0}
+        def proselabel(opts,label,parent=None,cmd=None):
+            if parent == None:
+                parent=self.frame.status
+                column=opts['labelcolumn']
+                row=opts['row']
+                columnspan=opts['columnspan']
+                ipadx=opts['labelxpad']
+            else:
+                column=0+opts['columnplus']
+                row=0
+                columnspan=1
+                ipadx=0
+            print(label, opts['labelcolumn'],opts['columnspan'])
+            l=Label(parent, text=label,font=self.fonts['report'],anchor='w')
+            l.grid(column=column, row=row, columnspan=columnspan,
+                    ipadx=ipadx, sticky='w')
+            if cmd != None:
+                l.bind('<ButtonRelease>',getattr(self,str(cmd)))
+                # ttl=ToolTip(l,"do {} command".format(cmd)) #not really needed
+        def labels(parent,opts,label,value):
             Label(self.frame.status, text=label).grid(
                     column=opts['labelcolumn'], row=opts['row'],
                     ipadx=opts['labelxpad'], sticky='w'
@@ -2084,11 +2098,12 @@ class Check():
                     column=opts['valuecolumn'], row=opts['row'],
                     ipadx=opts['labelxpad'], sticky='w'
                     )
-        def button(opts,text,fn=None,column=opts['buttoncolumn'],**kwargs):
+        def button(opts,text,fn=None,column=opts['labelcolumn'],**kwargs):
             """cmd overrides the standard button command system."""
             Button(self.frame.status, choice=text, text=text, anchor='c',
                             cmd=fn, width=opts['width'], **kwargs
-                            ).grid(column=column, row=opts['row'])
+                            ).grid(column=column, row=opts['row'],
+                                    columnspan=opts['columnspan'])
         log.info("Running Check Check!")
         #If the user exits out before this point, just stop.
         try:
@@ -2104,7 +2119,7 @@ class Check():
             if l['code']==getinterfacelang():
                 interfacelanguagename=l['name']
         t=(_("Using {}").format(interfacelanguagename))
-        proselabel(opts,t)
+        proselabel(opts,t,cmd='getinterfacelang')
         opts['row']+=1
         """We start with the settings that we can likely guess"""
         """Get Analang"""
@@ -2117,7 +2132,7 @@ class Check():
         if self.audiolang == None:
             self.guessaudiolang() #don't display this, but make it
         t=(_("Working on {}").format(self.languagenames[self.analang]))
-        proselabel(opts,t)
+        proselabel(opts,t,cmd='getanalang')
         opts['row']+=1
         """Get glosslang"""
         if self.glosslang not in self.db.glosslangs:
@@ -2131,16 +2146,17 @@ class Check():
                 (self.glosslang not in self.db.glosslangs)):
             """I.e., if glosslang2 is set with a value not in the database"""
             self.guessglosslangs()
+        t=(_("Meanings in {}").format(self.languagenames[self.glosslang]))
+        tf=Frame(self.frame.status)
+        tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
+        proselabel(opts,t,cmd='getglosslang',parent=tf)
+        opts['columnplus']=1
         if self.glosslang2 != None:
-            t=(_("Meanings in {} and {}").format(
-                                self.languagenames[self.glosslang],
-                                self.languagenames[self.glosslang2]
-                                ))
+            t=(_("and {}").format(self.languagenames[self.glosslang2]))
         else:
-                t=(_("Meanings in {} only").format(
-                                    self.languagenames[self.glosslang]
-                                    ))
-        proselabel(opts,t)
+            t=_("only")
+        proselabel(opts,t,cmd='getglosslang2',parent=tf)
+        opts['columnplus']=0
         opts['row']+=1
         """These settings must be set (for now); we can't guess them (yet)"""
         """Ultimately, we will pick the largest ps/profile combination as an
@@ -2165,8 +2181,14 @@ class Check():
             count=len(self.profilesbysense[self.ps][self.profile])
         else:
             count=0
-        t=(_("Looking at {} {} words ({})").format(self.profile,self.ps,count))
-        proselabel(opts,t)
+        tf=Frame(self.frame.status)
+        tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
+        t=(_("Looking at {}").format(self.profile))
+        proselabel(opts,t,cmd='getprofile',parent=tf)
+        opts['columnplus']=1
+        t=(_("{} words ({})").format(self.ps,count))
+        proselabel(opts,t,cmd='getps',parent=tf)
+        opts['columnplus']=0
         opts['row']+=1
         """Get type"""
         if self.type not in self.checknamesall:
@@ -2177,7 +2199,8 @@ class Check():
             return
         """Get check"""
         self.getcheckspossible() #This sets self.checkspossible
-        # if self.name not in self.checkspossible
+        tf=Frame(self.frame.status)
+        tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
         if self.name == 'adhoc':
             tkadhoc()
         elif self.type == 'T': #self.name has different options by self.type
@@ -2189,17 +2212,19 @@ class Check():
             list of defined frames."""
             if len(self.toneframes[self.ps]) == 1:
                 self.name=list(self.toneframes[self.ps].keys())[0]
+            t=(_("Checking {},").format(self.typedict[self.type]['pl']))
+            proselabel(opts,t,cmd='gettype',parent=tf)
+            opts['columnplus']=1
             if self.name not in self.toneframes[self.ps]:
-                t=(_("Checking {}, no defined tone frame yet.").format(
-                                    self.typedict[self.type]['pl']))
+                t=_("no defined tone frame yet.")
                 self.name=None
             else:
-                t=(_("Checking {}, working on ‘{}’ tone frame").format(
-                                    self.typedict[self.type]['pl'],self.name))
-            proselabel(opts,t)
+                t=(_("working on ‘{}’ tone frame").format(self.name))
+            proselabel(opts,t,cmd='getcheck',parent=tf)
+            opts['columnplus']=0
         else:
             print(self.name,'in', self.checkspossible,'?')
-            if self.name not in [x[0] for x in self.checkspossible]: #setnamesbyprofile
+            if self.name not in [x[0] for x in self.checkspossible]:
                 self.guesscheckname()
             if self.name == None: #no backup assumptions for CV checks, for now
                 log.info("check selection dialog here, for now just running V1=V2")
@@ -2217,11 +2242,13 @@ class Check():
                 self.getsubcheck()
                 return
             else:
-                t=(_("Checking {}, working on {} = {}".format(
-                            self.typedict[self.type]['pl'],self.name,self.subcheck)))
-                t=(_("Checking {}, working on {}".format(
-                            self.typedict[self.type]['pl'],self.name)))
-                proselabel(opts,t)
+                tf=Frame(self.frame.status)
+                tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
+                t=(_("Checking {},".format(self.typedict[self.type]['pl'])))
+                proselabel(opts,t,cmd='gettype',parent=tf)
+                opts['columnplus']=1
+                t=(_("working on {}".format(self.name)))
+                proselabel(opts,t,cmd='getcheck',parent=tf)
         """Final Button"""
         opts['row']+=1
         if self.type == 'T':
