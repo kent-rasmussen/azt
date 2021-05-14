@@ -6135,6 +6135,63 @@ class MainApplication(Frame):
         """finished loading so destroy splash"""
         splash.destroy()
         """Don't show window again until check is done"""
+class ContextMenu:
+    def updatebindings(self):
+        def bindthisncheck(w):
+            log.log(2,"{};{}".format(w,w.winfo_children()))
+            w.bind('<Enter>', self._bind_to_makemenus)
+            for child in w.winfo_children():
+                bindthisncheck(child)
+        self.parent.bind('<Leave>', self._unbind_to_makemenus) #parent only
+        bindthisncheck(self.parent)
+    def undo_popup(self,event=None):
+        if hasattr(self,'menu'):
+            log.log(2,"undo_popup Checking for ContextMenu.menu: {}".format(
+                                                            self.menu.__dict__))
+            try:
+                self.root.destroy() #Tk()
+                log.log(3,"popup parent/root destroyed")
+            finally:
+                self.parent.unbind_all('<Button-1>')
+    def menuinit(self):
+        try:
+            self.root=tkinter.Tk()
+            self.root.withdraw()
+            inherit(self.root,self.parent)
+            self.menu = Menu(self.root, tearoff=0)
+            log.log(3,"menuinit done: {}".format(self.menu.__dict__))
+        except:
+            log.error("Problem initializing context menu")
+    def menuitem(self,msg,cmd):
+        self.menu.add_command(label=msg,command=cmd)
+    def dosetcontext(self):
+        try:
+            log.log(3,"setcontext: {}".format(self.parent.setcontext))
+            self.parent.setcontext(context=self.context)
+        except:
+            log.error("You need to have a setcontext() method for the "
+                        "parent of this context menu ({}), to set menu "
+                        "items under appropriate conditions ({}): {}.".format(
+                            self.parent,self.context,self.parent.setcontext))
+    def do_popup(self,event):
+        try:
+            self.menu.tk_popup(event.x_root, event.y_root)
+        except:
+            log.log(4,"Problem with self.menu.tk_popup; setting context")
+            self.dosetcontext()
+            self.menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.menu.grab_release() #allows click on main window
+    def _bind_to_makemenus(self,event):
+        self.parent.bind_all('<Button-3>',self.do_popup)
+        self.parent.bind_all('<Button-1>',self.undo_popup)
+    def _unbind_to_makemenus(self,event):
+        self.parent.unbind_all('<Button-3>')
+    def __init__(self,parent,context=None):
+        self.parent=parent
+        self.parent.context=self
+        self.context=context #where the menu is showing (e.g., verifyT)
+        self.updatebindings()
 class Label(tkinter.Label):
     def wrap(self):
         availablexy(self)
