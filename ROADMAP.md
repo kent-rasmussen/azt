@@ -5,10 +5,17 @@
 
 ## Things to Test
 - check that changes to S regexs don't break too much.
-- Make every setting have at least one button
 
 ## In Process (fix)
-- freeze header on status scroll
+- Get context menu working correctly
+- Set up schema to test line expenses on boot time, for each line
+    - this-then, store then=this
+    - determine costliest lines, which can be threaded
+- Set up schema on largest (time) expenses, to do any of (to test real world difference, as well as to have available for quick changes, if needed later):
+    - as is
+    - threaded
+    - multiprocessed
+- freeze header on status scroll (not currently practicable, without serious reworking of the table/scroll)
 - don't write ps='Invalid' to profilesbysense
 - make settonevariablesbypsprofile take arguments ps, profile
 - Frame object has no attribute 'skip'

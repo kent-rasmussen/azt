@@ -11,6 +11,7 @@
 - added ps and type buttons to all status boards
 - fixed pl/imp not appearing on recording screen
 - added field name (pl/imp) to filenames
+- Every setting now has at least one button
 
 # Version 0.8
 - set up ad hoc groups to be more permanent:
