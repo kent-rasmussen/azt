@@ -402,7 +402,7 @@ class Check():
             for xyz in self.adnlangnames: #overwrite with user specified names
                 self.languagenames[xyz]=self.adnlangnames[xyz]
     """User Input functions"""
-    def getinterfacelang(self):
+    def getinterfacelang(self,event=None):
         log.info("Asking for interface language...")
         window=Window(self.frame, title=_('Select Interface Language'))
         Label(window.frame, text=_('What language do you want this program '
@@ -1112,7 +1112,7 @@ class Check():
         self.set('ps',choice,window)
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
-    def getsubcheck(self):
+    def getsubcheck(self,event=None):
         log.info("this sets the subcheck")
         if self.type == "V":
             windowV=Window(self.frame,title=_('Select Vowel'))
@@ -1142,7 +1142,7 @@ class Check():
             pss=self.db.pss
         buttonFrame1=ScrollingButtonFrame(window.frame,pss,self.setps,window)
         buttonFrame1.grid(column=0, row=1)
-    def getprofile(self):
+    def getprofile(self,event=None):
         log.info("Asking for profile...")
         window=Window(self.frame,title=_('Select Syllable Profile'))
         if self.profilesbysense[self.ps] is None: #likely never happen...
@@ -2728,7 +2728,7 @@ class Check():
             ilist=self.checknamesall[self.type][i+1]
             names+=ilist  #.append(, This is causing a list in a list..…
         return names
-    def getanalang(self):
+    def getanalang(self,event=None):
         log.info("this sets the language")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title=_('Select Analysis Language'))
@@ -2749,7 +2749,7 @@ class Check():
                                      langs,self.setanalang,
                                      window
                                      ).grid(column=0, row=4)
-    def getglosslang(self):
+    def getglosslang(self,event=None):
         log.info("this sets the gloss")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title=_('Select Gloss Language'))
@@ -2770,7 +2770,7 @@ class Check():
                                  langs,self.setglosslang,
                                  window
                                  ).grid(column=0, row=4)
-    def getglosslang2(self):
+    def getglosslang2(self,event=None):
         log.info("this sets the gloss")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title='Select Gloss Language')
@@ -2800,7 +2800,7 @@ class Check():
             self.checkspossible=self.framenamesbyps(self.ps)
         else:
             self.checkspossible=self.setnamesbyprofile() #tuples of CV checks
-    def getcheck(self):
+    def getcheck(self,event=None):
         log.info("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
         log.info("Getting the check name...")
@@ -2886,7 +2886,7 @@ class Check():
                                 )
         buttonFrame1.grid(column=0, row=4)
         buttonFrame1.wait_window(window)
-    def getV(self,window):
+    def getV(self,window,event=None):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getsubcheck"""
         if self.ps is None or self.ps == "Null":
@@ -2909,7 +2909,7 @@ class Check():
                                      self.setS,
                                      window=window
                                      ).grid(column=0, row=4)
-    def getC(self,window):
+    def getC(self,window,event=None):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getsubcheck"""
         if self.ps is None or self.ps == "Null":
