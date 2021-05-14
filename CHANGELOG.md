@@ -13,6 +13,8 @@
 - added field name (pl/imp) to filenames
 - Every setting now has at least one button
 - Context menu working correctly
+- fixed but where CV type wouldn't set with ad hoc group as profile (it now resets/guesses the profile)
+- New file name schema is working correctly field name (and type if name='field')
 
 # Version 0.8
 - set up ad hoc groups to be more permanent:
