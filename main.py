@@ -359,9 +359,13 @@ class Check():
             self.set('name',self.framestodo[0])
     def guesscheckname(self):
         """Picks the longest name (the most restrictive fiter)"""
-        self.set('name',firstoflist(sorted(self.checkspossible,
+        if hasattr(self,'checkspossible') and len(self.checkspossible) != 0:
+            self.set('name',firstoflist(sorted(self.checkspossible,
                                 key=lambda s: len(s[0]),reverse=True),
                                 othersOK=True)[0])
+        else:
+            log.info("Continuing without possible checks for now:{} ({})"
+                    "".format(self.checkspossible,len(self.checkspossible)))
     def guesstype(self):
         """For now, if type isn't set, start with Vowels."""
         self.set('type','V')
