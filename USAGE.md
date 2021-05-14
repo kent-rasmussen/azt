@@ -130,8 +130,8 @@ For a more thorough report, use the Basic Report menu item. This will select you
 I want this tool to be ultimately able to help with the sorting and correction of consonants and vowels, but my hope is that until those functions are implemented, these reports will be helpful.
 
 # Subsequent Runs: Tone (Sort, and Follow Directions)
-
 ##Sorting progression: The Status Table
+
 Once you have done any sorting for the selected part of speech, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
 
 The program is designed to step through the process relatively automatically; once things are set up, you should be able to just open the program, and click `Sort`. If you need a break, click `quit` on whatever window you're in, and your progress should be there when you return.
