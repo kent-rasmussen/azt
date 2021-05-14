@@ -3680,7 +3680,8 @@ class Check():
             self.sframe.windowsize()
             self.runwindow.waitdone()
             b.wait_window(bf)
-            if not self.runwindow.winfo_exists():
+            if (not self.runwindow.winfo_exists() or
+                                    not hasattr(self,'groupselected')):
                 return 1
             # I need to work on this later. How to distinguish buttons after
             # the window is gone? I think I have to count senseids in the group.
