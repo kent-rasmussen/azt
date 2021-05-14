@@ -5800,7 +5800,13 @@ class MainApplication(Frame):
         w=w/2
         h=h/2
         self.parent.geometry("%dx%d+0+0" % (w, h))
-    def setmenus(self,check):
+    def _removemenus(self,event=None):
+        if hasattr(self,'menubar'):
+            self.menubar.destroy()
+            self.menu=False
+            self.setcontext()
+    def _setmenus(self,event=None):
+        check=self.check
         self.menubar = Menu(self.parent)
         changemenu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label=_("Change"), menu=changemenu)
@@ -5923,6 +5929,9 @@ class MainApplication(Frame):
                         command=self.helpabout)
         self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
         self.parent.config(menu=self.menubar)
+        self.menu=True
+        self.setcontext()
+        self.unbind_all('<Enter>')
     def helpabout(self):
         window=Window(self)
         title=(_("{name} Dictionary and Orthography Checker".format(name=self.program['name'])))
@@ -6040,6 +6049,12 @@ class MainApplication(Frame):
         log.debug("Setting exit flag true!")
         self.exitFlag = self.check.exitFlag = True
         self.parent.destroy()
+    def setcontext(self,context=None):
+        self.context.menuinit() #This is a ContextMenu() method
+        if not hasattr(self,'menu') or self.menu == False:
+            self.context.menuitem(_("Show Menus"),self._setmenus)
+        else:
+            self.context.menuitem(_("Hide Menus"),self._removemenus)
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
@@ -6114,7 +6129,7 @@ class MainApplication(Frame):
         exit.grid(row=2, column=1, sticky='ne')
         """Do this after we instantiate the check, so menus can run check
         methods"""
-        self.setmenus(self.check)
+        ContextMenu(self)
         print("Finished loading main window in",time.time() - start_time," "
                                                                     "seconds.")
         """finished loading so destroy splash"""
