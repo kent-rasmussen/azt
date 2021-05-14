@@ -2271,7 +2271,6 @@ class Check():
                 image=self.photo['record']
                 )
         self.maybeboard()
-        self.parent.setmenus(self)
     def soundcheckrefreshdone(self):
         self.storesettingsfile()
         self.soundsettingswindow.destroy()
@@ -3592,18 +3591,12 @@ class Check():
             return
         # The title for this page changes by group, below.
         self.getrunwindow(msg="preparing to verify groups: {}".format(groups))
+        ContextMenu(self.runwindow, context='verifyT') #once for all
         oktext='These all have the same tone'
         instructions=_("Read down this list to verify they all have the same "
             "tone melody. Select any word with a different tone melody to "
             "remove it from the list."
             ).format(self.subcheck,self.name,oktext)
-        """Put a menu on this window to rename the group we're checking.
-        This should be to a sensible transcription/description of the surface
-        tone in this context, e.g., [˦˦˦  ˨˨˨]"""
-        verifymenu = Menu(self.runwindow, tearoff=0)
-        verifymenu.add_command(label=_("Rename Group"),
-                        command=lambda :self.renamegroup())
-        self.runwindow.config(menu=verifymenu)
         """self.subcheck is set here, but probably OK"""
         self.makestatusdict()
         for self.subcheck in self.status[self.type][self.ps][self.profile][
@@ -3677,6 +3670,7 @@ class Check():
                             )
             b.grid(column=0, row=0, sticky="ew")
             # b.bind('<mouseclick>',remove senseid from sensids)
+            self.runwindow.context.updatebindings() #make sure to bind children
             self.sframe.windowsize()
             self.runwindow.waitdone()
             b.wait_window(bf)
@@ -5488,6 +5482,33 @@ class Window(tkinter.Toplevel):
     def waitdone(self):
         if hasattr(self,'ww') and self.ww.winfo_exists():
             self.ww.close()
+    def removeverifymenu(self,event=None):
+        #This removes menu from the verify window
+        if hasattr(self,'menubar'):
+            self.menubar.destroy()
+            self.parent.verifymenu=False
+            self.setcontext(context='verifyT')
+    def doverifymenu(self):
+        #This adds a menu to the verify window
+        log.debug("Trying self.menubar")
+        self.menubar = Menu(self, tearoff=0)
+        log.debug("Done self.menubar")
+        # This points to check via the window's parent (check.frame) and its
+        # parent, the MainApplication, which has a check attribute...
+        self.menubar.add_command(label=_("Rename Group"),
+            command=lambda c=self.parent.parent.check:Check.renamegroup(c))
+        self.config(menu=self.menubar)
+        self.parent.verifymenu=True
+        self.setcontext(context='verifyT')
+    def setcontext(self,context=None): #set context for different windows
+        # This is called by contextMenu(), & maybe other things context changers
+        self.context.menuinit() #This is a ContextMenu() method
+        if context == 'verifyT': #parameter, NOT self.context, menu object...
+            if ((not hasattr(self.parent,'verifymenu')) or
+                    (self.parent.verifymenu == False)):
+                self.context.menuitem(_("Show Menu"),self.doverifymenu)
+            else:
+                self.context.menuitem(_("Hide Menu"),self.removeverifymenu)
     def __init__(self, parent,
                 backcmd=False, exit=True,
                 title="No Title Yet!", choice=None,
