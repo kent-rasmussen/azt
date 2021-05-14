@@ -6485,20 +6485,23 @@ class RecordButtonFrame(Frame):
             if self.form==None:
                 self.form=self.node.find(f"form[@lang='{self.check.analang}']/text").text
             # make psprofile (if no audio file, the last in this list is used):
-            psprofiles=[self.check.ps]
+            filenameopts=[self.check.ps]
             if (self.node.tag == 'example'):
                 l=self.node.find("field[@type='location']//text")
                 if l is not None:
-                    psprofiles+=[self.check.ps+'-'+l.text]
+                    filenameopts+=[self.check.ps+'-'+l.text]
             if not hasattr(self.check, 'rx'):
                 #ad hoc dictionary to remove diacritics:
                 self.check.rx={'d':rx.make(rx.s(self.check,'d'),compile=True)}
             self.filenames=[]
-            for psprofile in psprofiles:
-                args=[psprofile, self.id, self.node.tag, rx.stripdiacritics(
-                                                    self.check,self.form),
-                                                    #check.profile, <=Changes!
-                                                    self.gloss]
+            args=[self.id]
+            args+=[self.node.tag]
+            if self.node.tag == 'field':
+                args+=[self.node.get("type")]
+            args+=[rx.stripdiacritics(self.check,self.form)]#profile <=Changes!
+            args+=[self.gloss]
+            for opt in filenameopts:
+                args=args+[opt]
                 wavfilename=''
                 for arg in [x for x in args if x != None]:
                     wavfilename+=arg
