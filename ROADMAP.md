@@ -2,12 +2,14 @@
 
 ## release stoppers
 - decent debugging information on play problems
+    - find how to capture exceptions from PyAudio
+- Confirm that new file name schema is working correctly
 
 ## Things to Test
 - check that changes to S regexs don't break too much.
 
 ## In Process (fix)
-- Get context menu working correctly
+- make verify window go away when last button is clicked
 - Set up schema to test line expenses on boot time, for each line
     - this-then, store then=this
     - determine costliest lines, which can be threaded

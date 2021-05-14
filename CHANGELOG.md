@@ -12,6 +12,7 @@
 - fixed pl/imp not appearing on recording screen
 - added field name (pl/imp) to filenames
 - Every setting now has at least one button
+- Context menu working correctly
 
 # Version 0.8
 - set up ad hoc groups to be more permanent:
