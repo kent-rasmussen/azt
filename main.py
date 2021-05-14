@@ -3649,14 +3649,14 @@ class Check():
                 Label(titles, text=progress,anchor='w'
                                     ).grid(row=0,column=1,sticky="ew")
             Label(titles, text=instructions).grid(row=1,column=0, columnspan=2,
-                                                                    sticky="w")
+                                                                    sticky="wns")
             Label(self.runwindow.frame, image=self.parent.photo['verifyT'],
                             text='',
                             bg=self.theme['background']
-                            ).grid(row=1,column=0,rowspan=3,sticky='nw')
+                            ).grid(row=1,column=0,rowspan=3,sticky='nwse')
             """Scroll after instructions"""
             self.sframe=ScrollingFrame(self.runwindow.frame)
-            self.sframe.grid(row=1,column=1,columnspan=2,sticky='w')
+            self.sframe.grid(row=1,column=1,columnspan=2,sticky='wsne')
             row+=1
             """put entry buttons here."""
             for senseid in senseids:
