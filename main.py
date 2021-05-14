@@ -5779,9 +5779,9 @@ class MainApplication(Frame):
         h=h/2
         self.parent.geometry("%dx%d+0+0" % (w, h))
     def setmenus(self,check):
-        menubar = Menu(self.parent)
-        changemenu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label=_("Change"), menu=changemenu)
+        self.menubar = Menu(self.parent)
+        changemenu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label=_("Change"), menu=changemenu)
         """Language stuff"""
         languagemenu = Menu(changemenu, tearoff=0)
         changemenu.add_cascade(label=_("Languages"), menu=languagemenu)
@@ -5823,9 +5823,9 @@ class MainApplication(Frame):
                     changemenu.add_command(label=_("Segment(s) to check"),
                         command=lambda x=check:Check.getsubcheck(x))
         """Do"""
-        domenu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label=_("Do"), menu=domenu)
-        reportmenu = Menu(menubar, tearoff=0)
+        domenu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label=_("Do"), menu=domenu)
+        reportmenu = Menu(self.menubar, tearoff=0)
         reportmenu.add_command(label=_("Tone by sense"),
                         command=lambda x=check:Check.tonegroupreport(x))
         reportmenu.add_command(label=_("Tone by location"
@@ -5839,7 +5839,7 @@ class MainApplication(Frame):
                                                                 "(to file)"),
                 command=lambda x=check:Check.basicreport(x,typestodo=['C','V']))
         domenu.add_cascade(label=_("Reports"), menu=reportmenu)
-        recordmenu = Menu(menubar, tearoff=0)
+        recordmenu = Menu(self.menubar, tearoff=0)
         recordmenu.add_command(label=_("Sound Card Settings"),
                         command=lambda x=check:Check.soundcheck(x))
         recordmenu.add_command(label=_("Record tone group examples"),
@@ -5855,14 +5855,14 @@ class MainApplication(Frame):
         domenu.add_command(label=_("Join Groups"),
                         command=lambda x=check:Check.joinT(x))
         """Advanced"""
-        advancedmenu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label=_("Advanced"), menu=advancedmenu)
-        filemenu = Menu(menubar, tearoff=0)
+        advancedmenu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label=_("Advanced"), menu=advancedmenu)
+        filemenu = Menu(self.menubar, tearoff=0)
         filemenu.add_command(label=_("Dictionary Morpheme"),
                         command=lambda x=check:Check.addmorpheme(x))
         advancedmenu.add_command(label=_("Add Tone frame"),
                         command=lambda x=check:Check.addframe(x))
-        advtonemenu = Menu(menubar, tearoff=0)
+        advtonemenu = Menu(self.menubar, tearoff=0)
         advancedmenu.add_cascade(label=_("Tone Reports"), menu=advtonemenu)
         advtonemenu.add_command(label=_("Join/Rename Tone Groups"),
                         command=lambda x=check:Check.tonegroupsjoinrename(x))
@@ -5872,7 +5872,7 @@ class MainApplication(Frame):
         advtonemenu.add_command(label=_("Custom groups by location"),
                                 command=lambda x=check:Check.tonegroupreport(x,
                                                 bylocation=True, default=False))
-        redomenu = Menu(menubar, tearoff=0)
+        redomenu = Menu(self.menubar, tearoff=0)
         redomenu.add_command(label=_("Previously skipped data"),
                                 command=lambda x=check:Check.tryNAgain(x))
         advancedmenu.add_cascade(label=_("Redo"), menu=redomenu)
@@ -5896,11 +5896,11 @@ class MainApplication(Frame):
         # settingsmenu = Menu(menubar, tearoff=0)
         # changestuffmenu.add_cascade(label=_("Settings"), menu=settingsmenu)
         """help"""
-        helpmenu = Menu(menubar, tearoff=0)
+        helpmenu = Menu(self.menubar, tearoff=0)
         helpmenu.add_command(label=_("About"),
                         command=self.helpabout)
-        menubar.add_cascade(label=_("Help"), menu=helpmenu)
-        self.parent.config(menu=menubar)
+        self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
+        self.parent.config(menu=self.menubar)
     def helpabout(self):
         window=Window(self)
         title=(_("{name} Dictionary and Orthography Checker".format(name=self.program['name'])))
