@@ -6151,6 +6151,8 @@ class ContextMenu:
             try:
                 self.root.destroy() #Tk()
                 log.log(3,"popup parent/root destroyed")
+            except:
+                log.log(3,"popup parent/root not destroyed!")
             finally:
                 self.parent.unbind_all('<Button-1>')
     def menuinit(self):
@@ -6413,7 +6415,7 @@ class RecordButtonFrame(Frame):
                         output_channels=channels)
                 except ValueError as e:
                     log.debug("Valuerror on support query: %s {}",e)
-                    raise
+                    # raise
                     return
                 try:
                     self.stream = self.pa.open(format=format,
@@ -6423,11 +6425,12 @@ class RecordButtonFrame(Frame):
                         output=True)
                 except ValueError as e:
                     log.debug("Valuerror: {}",e)
-                    raise
+                    # raise
                     return
-                data = self.wf.readframes(self.chunk)
-                while len(data) > 0:
+                self.data = self.wf.readframes(self.chunk)
+                while len(self.data) > 0:
                     log.debug("Trying to play")
+                    log.debug("len(self.data): {}".format(len(self.data)))
                     log.debug("Stopped: {}".format(self.stream.is_stopped()))
                     log.debug("Active: {}".format(self.stream.is_active()))
                     log.debug("CPU_load: {}".format(self.stream.get_cpu_load()))
@@ -6442,39 +6445,56 @@ class RecordButtonFrame(Frame):
                     #                        self.stream.get_read_available()))
                     # log.debug("Time: {}".format(self.stream.get_time()))
                     try:
-                        self.stream.write(data,exception_on_underflow=True)
-                    except (BaseException, IOError,
-                            pyaudio.paNoError, paNotInitialized,
-                            paUnanticipatedHostError, paInvalidChannelCount,
-                            paInvalidSampleRate, paInvalidDevice, paInvalidFlag,
-                            paSampleFormatNotSupported,
-                            paBadIODeviceCombination,
-                            paInsufficientMemory, paBufferTooBig,
-                            paBufferTooSmall, paNullCallback, paBadStreamPtr,
-                            paTimedOut, paInternalError,
-                            paDeviceUnavailable,
-                            paIncompatibleHostApiSpecificStreamInfo,
-                            paStreamIsStopped, paStreamIsNotStopped,
-                            paInputOverflowed, paOutputUnderflowed,
-                            paHostApiNotFound, paInvalidHostApi,
-                            paCanNotReadFromACallbackStream,
-                            paCanNotWriteToACallbackStream,
-                            paCanNotReadFromAnOutputOnlyStream,
-                            paCanNotWriteToAnInputOnlyStream,
-                            paIncompatibleStreamHostApi) as e:
+                        self.stream.write(self.data,exception_on_underflow=True)
+                    except (BaseException, IOError, OSError,
+                            pyaudio.paNoError, pyaudio.paNotInitialized,
+                            pyaudio.paUnanticipatedHostError,
+                            pyaudio.paInvalidChannelCount,
+                            pyaudio.paInvalidSampleRate,
+                            pyaudio.paInvalidDevice, pyaudio.paInvalidFlag,
+                            pyaudio.paSampleFormatNotSupported,
+                            pyaudio.paBadIODeviceCombination,
+                            pyaudio.paInsufficientMemory,
+                            pyaudio.paBufferTooBig,
+                            pyaudio.paBufferTooSmall, pyaudio.paNullCallback,
+                            pyaudio.paBadStreamPtr,
+                            pyaudio.paTimedOut, pyaudio.paInternalError,
+                            pyaudio.paDeviceUnavailable,
+                            pyaudio.paIncompatibleHostApiSpecificStreamInfo,
+                            pyaudio.paStreamIsStopped,
+                            pyaudio.paStreamIsNotStopped,
+                            pyaudio.paInputOverflowed,
+                            pyaudio.paOutputUnderflowed,
+                            pyaudio.paHostApiNotFound, pyaudio.paInvalidHostApi,
+                            pyaudio.paCanNotReadFromACallbackStream,
+                            pyaudio.paCanNotWriteToACallbackStream,
+                            pyaudio.paCanNotReadFromAnOutputOnlyStream,
+                            pyaudio.paCanNotWriteToAnInputOnlyStream,
+                            pyaudio.paIncompatibleStreamHostApi) as e:
                         log.exception("Unexpected exception trying to play "
                                         "sound! %s",e)
-                        raise
-                        exit()
+                        log.debug("Stopped (2): {}".format(self.stream.is_stopped()))
+                        log.debug("Active (2): {}".format(self.stream.is_active()))
+                        log.debug("get_write_available (2): {}".format(
+                                                self.stream.get_write_available()))
+                        # raise
+                        # exit()
                     except:
-                        log.exception("Unexpected exception trying to play "
+                        log.exception("Other exception trying to play "
                                     "sound! %s")
-                        raise
-                    log.debug("Recalcullating data remaining.")
-                    data = self.wf.readframes(self.chunk)
-                    log.debug("Data length: {}".format(len(data)))
-            except (ValueError, IOError, AttributeError, Exception,
-                                        pyaudio.paUnanticipatedHostError) as e:
+                        # raise
+                    try:
+                        log.debug("Recalculating data remaining.")
+                        self.data = self.wf.readframes(self.chunk)
+                        log.debug("Data remaining: {}".format(len(self.data)))
+                    except:
+                        log.exception("Unexpected exception trying to read "
+                                    "frames %s")
+                        # raise
+                log.debug("apparently we're out of data")
+            except Exception as e:
+                # (ValueError, IOError, AttributeError, Exception,
+                #                         pyaudio.paUnanticipatedHostError) as e:
                 log.exception("Unexpected Error trying to play sound! %s",e)
                 raise
         """Callback"""
