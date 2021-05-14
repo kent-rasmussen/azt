@@ -103,7 +103,7 @@ If you absolutely regret a tone frame you have set up, all your frames are store
 ### Tone Frame Groups
 A→Z+T by default labels the groups into which you sort your data by frame with numbers. This is because, at least initially, the fact that it is its own thing (all one thing, and unlike the other groups) is more important than any description of the group, however objective it may be.
 That said, there may come a time where you want to give one or more of these groups a particular name, like `HL` or `[˦˦ ˨˨]`, perhaps because you want to remember how you thought of the surface form at the time, or because you don't want the group names in your database to be just numbers. To do this, right click on the verification window *while verifying the group you want to rename*, and click on `Show Menu`. This will provide a menu which will allow you to change the name.
-Regarding name changes, please be cognizant of the fact that these names are for a *part of speech* and *syllable profile*, **in a given frame**. These should describe the *surface* tone only; hypotheses regarding underlying tone come later (see [`Joining and Renaming Draft Tone Groups`](#joining-groups), below).
+Regarding name changes, please be cognizant of the fact that these names are for a *part of speech* and *syllable profile*, **in a given frame**. These should describe the *surface* tone only; hypotheses regarding underlying tone come later (see [`Joining and Renaming Draft Tone Groups`](#joining-and-renaming-draft-tone-groups), below).
 
 ### Recording
 The first time you try to record, you will be asked to tell A→Z+T what sound card parameters you want. You can set frequency, bit depth, and sound card number (to select between multiple cards, for your microphone and for your speakers. This window is designed with test `play` and `record` buttons, so you can set parameters and test them, before moving on. I suggest you budget some time to play with the settings there, and confirm that recording is working, before moving on. I suggest you select the highest quality that your card can do (assuming that's what you want!), and test to see if it records and plays back OK. I have found several computers with cards that can record at 96khz, somewhat to my surprise —though be sure to think about your microphone and environment, etc, too! If you are making recordings for easy sharing over low bandwidth (as opposed to linguistic study), consider the implications of these setting on the size of your files.
@@ -130,8 +130,7 @@ For a more thorough report, use the Basic Report menu item. This will select you
 I want this tool to be ultimately able to help with the sorting and correction of consonants and vowels, but my hope is that until those functions are implemented, these reports will be helpful.
 
 # Subsequent Runs: Tone (Sort, and Follow Directions)
-##Sorting progression: The Status Table
-
+## Sorting progression: The Status Table
 Once you have done any sorting for the selected part of speech, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
 
 The program is designed to step through the process relatively automatically; once things are set up, you should be able to just open the program, and click `Sort`. If you need a break, click `quit` on whatever window you're in, and your progress should be there when you return.
@@ -150,7 +149,7 @@ Once separated into these groups, the data is presented either by sense (includi
 
 This report is also exported to text and [XLingPaper](https://software.sil.org/xlingpaper/) XML files, which has similar organization, but more detail, that what you will see on the report window.
 
-### [Joining and Renaming Draft Tone Groups](#joining-groups)
+### Joining and Renaming Draft Tone Groups
 The tone groupings provided by default in A→Z+T are definitely of the 'splitting' kind, as we want to make judgments ourselves as to which are the same underlying group, rather than have the computer do that. This will certainly lead to groups in the output which you would like to join.
 
 To join groups, use the 'Advanced' menu item 'Tone Reports':'Join/Rename...' This will present a window where you can tell A→Z+T which groups should be presented together in the report. These groupings are also written to the LIFT file, overwriting the place draft tone UF groupings for each sense impacted by the change.
