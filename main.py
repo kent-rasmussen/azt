@@ -1071,11 +1071,9 @@ class Check():
                                 'interpret','distinguish']:
                 self.reloadprofiledata()
             elif attribute == 'type':
-                pass
-                # Do we want a sanity check on profiles after type change?
-                # We had the following:
-                # if not set(self.profilelegit).issuperset(self.profile):
-                #     self.nextprofile(guess=True) #no good with ad hoc groups!
+                if (choice != 'T' and
+                        not set(self.profilelegit).issuperset(self.profile)):
+                    self.nextprofile()
             elif attribute == 'ps': #only here
                 self.makestatusdictps()
                 self.getprofilestodo()
@@ -2178,8 +2176,6 @@ class Check():
                                                         (self.profile == None)):
             self.nextprofile(guess=True)
             return
-        if not set(self.profilelegit).issuperset(self.profile):
-            self.type='T' #ad hoc groups are only for tone (for now!)
         if ((self.ps in self.profilesbysense) and
                 (self.profile in self.profilesbysense[self.ps])):
             count=len(self.profilesbysense[self.ps][self.profile])
