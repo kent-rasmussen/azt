@@ -1,10 +1,10 @@
 # Usage
-- [Practical Prerequisites](#practical-prerequisites)
-- [Expectations](#expectations)
-- [First Run](#first-run-be-patient-and-orient-yourself)
-- [Subsequent Runs (CV)](#subsequent-runs-cv-analysis-view-data-and-run-reports)
-- [Subsequent Runs (Tone)](#subsequent-runs-tone-sort-and-follow-directions)
-- [Miscellaneous](#miscellaneous)
+- [**Practical Prerequisites**](#practical-prerequisites)
+- [**Expectations**](#expectations)
+- [**First Run**](#first-run-be-patient-and-orient-yourself)
+- [**Subsequent Runs (CV)**](#subsequent-runs-cv-analysis-view-data-and-run-reports)
+- [**Subsequent Runs (Tone)**](#subsequent-runs-tone-sort-and-follow-directions)
+- [**Miscellaneous**](#miscellaneous)
 
 ## Practical Prerequisites
 ### LIFT Database to Check
