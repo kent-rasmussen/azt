@@ -28,6 +28,7 @@ LIFT databases can be minimal or very complex. For the purposes of running A→Z
 I **strongly** recommend using a version controlled repository (e.g., mercurial, git), as is normally done in WeSay and in recommended FLEx collaboration schemes. Even if you are the only one to ever see this data (why would that be?), the advantages in history and preservation of your data are already there. But if you will be sharing changes with others, you really **must** have an easy way to do this, or you will get bogged down in the logistics of sharing data changes. I recommend using [Language Depot](https://languagedepot.org), though there are certainly other ways to meet this need. In any case, setting this up early is always easier than trying to merge divergent data later.
 
 ##Expectations
+
 ### Changes to Expect in Your LIFT Database
 A→Z+T will place links to `citation`/`lexeme`, `plural`, and `imperative` recordings in the appropriate fields, coded as a voice writing system (e.g., xyz-Zxxx-x-audio).
 
@@ -129,6 +130,7 @@ For a more thorough report, use the Basic Report menu item. This will select you
 I want this tool to be ultimately able to help with the sorting and correction of consonants and vowels, but my hope is that until those functions are implemented, these reports will be helpful.
 
 # Subsequent Runs: Tone (Sort, and Follow Directions)
+
 ##Sorting progression: The Status Table
 Once you have done any sorting for the selected part of speech, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
 
@@ -148,7 +150,7 @@ Once separated into these groups, the data is presented either by sense (includi
 
 This report is also exported to text and [XLingPaper](https://software.sil.org/xlingpaper/) XML files, which has similar organization, but more detail, that what you will see on the report window.
 
-### [Joining and Renaming Draft Tone Groups}(#joining-groups)
+### [Joining and Renaming Draft Tone Groups](#joining-groups)
 The tone groupings provided by default in A→Z+T are definitely of the 'splitting' kind, as we want to make judgments ourselves as to which are the same underlying group, rather than have the computer do that. This will certainly lead to groups in the output which you would like to join.
 
 To join groups, use the 'Advanced' menu item 'Tone Reports':'Join/Rename...' This will present a window where you can tell A→Z+T which groups should be presented together in the report. These groupings are also written to the LIFT file, overwriting the place draft tone UF groupings for each sense impacted by the change.
