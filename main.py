@@ -6633,7 +6633,7 @@ class Wait(Window): #tkinter.Toplevel?
         self.parent=parent
         self.parent.withdraw()
         global program
-        super(Wait, self).__init__(parent)
+        super(Wait, self).__init__(parent,exit=False)
         self.withdraw() #don't show until we're done making it
         inherit(self)
         self.attributes("-topmost", True)
