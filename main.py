@@ -3636,7 +3636,7 @@ class Check():
                     font=self.fonts['title']
                     ).grid(column=0, row=0, sticky="w")
             print(instructions)
-            if hasattr(self,'groupselected'): #='' #so it doesn't get in way later.
+            if hasattr(self,'groupselected'): #so it doesn't get in way later.
                 delattr(self,'groupselected')
             row=0
             column=0
