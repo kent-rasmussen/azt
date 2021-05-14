@@ -3310,7 +3310,7 @@ class Check():
         formfield.grid(row=1,column=0)
         sub_btn=Button(self.verifysubwindow,text = 'Use this name',
                   command = submitform,anchor ='c')
-        sub_btn.grid(row=2,column=0,sticky='')
+        sub_btn.grid(row=2,column=0,sticky='',padx=padx,pady=pady)
         sub_btn.wait_window(self.verifysubwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
