@@ -5770,6 +5770,17 @@ class ScrollingFrame(Frame):
         self.content.bind('<Configure>', self._configure_interior)
         self.bind('<Visibility>', self.windowsize)
 class Menu(tkinter.Menu):
+    def pad(self,label):
+        w=5 #Make menus at least w characters wide
+        if len(label) <w:
+            label+=" "*(w-len(label))
+        return label
+    def add_command(self,label,command):
+        label=self.pad(label)
+        tkinter.Menu.add_command(self,label=label,command=command)
+    def add_cascade(self,label,menu):
+        label=self.pad(label)
+        tkinter.Menu.add_cascade(self,label=label,menu=menu)
     def __init__(self,parent,**kwargs):
         super().__init__(parent,**kwargs)
         self.parent=parent
