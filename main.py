@@ -5773,7 +5773,8 @@ class Menu(tkinter.Menu):
     def pad(self,label):
         w=5 #Make menus at least w characters wide
         if len(label) <w:
-            label+=" "*(w-len(label))
+            spaces=" "*(w-len(label))
+            label=spaces+label+spaces
         return label
     def add_command(self,label,command):
         label=self.pad(label)
