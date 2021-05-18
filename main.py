@@ -7341,6 +7341,11 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent
     return unicodedata.normalize('NFD', str(x))
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    log.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
 def main():
     global program
     log.info("Running main function") #Don't translate yet!
@@ -7348,9 +7353,11 @@ def main():
     myapp = MainApplication(root,program)
     myapp.mainloop()
     logshutdown() #in logsetup
+
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
+    sys.excepthook = handle_exception
     if hasattr(sys,'_MEIPASS') and sys._MEIPASS != None:
         aztdir=sys._MEIPASS
     else:
@@ -7371,6 +7378,9 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         log.exception("Unexpected exception! %s",e)
+        logwritelzma(log.filename) #in logsetup
+    except:
+        log.error("uncaught exception: %s", traceback.format_exc())
         logwritelzma(log.filename) #in logsetup
     exit()
     """The following are just for testing"""
