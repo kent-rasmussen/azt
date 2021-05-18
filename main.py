@@ -6332,10 +6332,225 @@ class CheckButton(tkinter.Checkbutton):
                                 anchor='w',
                                 **kwargs
                                 )
-class RecordButtonFrame(Frame):
+class SoundFilePlayer(object):
     def playcallback(self, in_data, frame_count, time_info, status):
         data = self.wf.readframes(frame_count)
         return (data, pyaudio.paContinue)
+    def soundcheck(self,rate,channels):
+        log.debug("checking for support")
+        self.paopen()
+        format=self.getformat()
+        if None in [rate,format,channels]: #This should never happen here.
+            log.debug("Problem playing on {} card on {} channels with {} rate, "
+            "{} format".format(self.audioout_card_index,channels,rate,format))
+            return
+        # ok=False
+        for setting in [rate,format,channels]:
+            log.debug(setting)
+        try:
+            ok=self.pa.is_format_supported(rate,
+                output_format=format,
+                output_device=self.audioout_card_index,
+                output_channels=channels)
+        except TypeError as e:
+            log.exception("Unsupported config TypeError trying to play sound! %s",
+            e)
+            # raise
+            self.paclose()
+            return
+        except ValueError as e:
+            log.exception("Unsupported config ValueError trying to play sound! %s",
+            e)
+            self.paclose()
+            # raise
+            return
+        self.paclose()
+        return ok
+    def paopen(self):
+        self.paclose()
+        self.pa = pyaudio.PyAudio()
+    def paclose(self):
+        self.streamclose() #i.e., if there
+        if hasattr(self,'pa'):
+            self.pa.terminate()
+    def streamopen(self,rate,channels):
+        self.paopen()
+        format=self.getformat()
+        try:
+            self.stream = self.pa.open(format=format,
+                output_device_index=self.audioout_card_index,
+                channels=channels,
+                rate=rate,
+                output=True)
+        except ValueError as e:
+            log.debug("Valuerror: {}",e)
+            raise
+            return
+    def streamclose(self):
+        if hasattr(self,'stream'):
+            self.stream.close()
+    def getformat(self):
+        return self.pa.get_format_from_width(self.wf.getsampwidth())
+    def _play(self, event):
+        print("I'm playing the recording now")
+        timeout=5 #seconds or None
+        process=False
+        # process=True #This takes precedence
+        thread=False #over this
+        self.wf = wave.open(self.filenameURL, 'rb')
+        frames = self.wf.getnframes()
+        rate=self.wf.getframerate()
+        duration = frames / float(rate)
+        channels=self.wf.getnchannels()
+        log.debug("PA Version: {}".format(pyaudio.get_portaudio_version()))
+        log.debug("PA Version: {}".format(pyaudio.get_portaudio_version_text()))
+        if not hasattr(self,'settingsok'):
+            self.settingsok=self.soundcheck(rate,channels)
+            if self.settingsok == True:
+                log.info("Sound check was fine.")
+        if self.settingsok != True:
+            log.error(_("Problem with sound settings!"))
+            return
+        def block():
+            log.debug("running play block with args "
+                        "output_device_index={}, channels={}, "
+                        "rate={}".format(self.audioout_card_index,
+                        channels,rate))
+            self.streamopen(rate,channels)
+            self.data = self.wf.readframes(self.chunk)
+            while len(self.data) > 0:
+                log.debug("Trying to play")
+                log.debug("len(self.data): {}".format(len(self.data)))
+                log.debug("Stopped: {}".format(self.stream.is_stopped()))
+                log.debug("Active: {}".format(self.stream.is_active()))
+                log.debug("CPU_load: {}".format(self.stream.get_cpu_load()))
+                log.debug("output_latency: {}".format(
+                                        self.stream.get_output_latency()))
+                log.debug("input_latency: {}".format(
+                                        self.stream.get_input_latency()))
+                log.debug("get_write_available: {}".format(
+                                        self.stream.get_write_available()))
+                # These ones doesn't work:
+                # log.debug("get_read_available: {}".format(
+                #                        self.stream.get_read_available()))
+                # log.debug("Time: {}".format(self.stream.get_time()))
+                self.stream.write(self.data,exception_on_underflow=True)
+                # try:
+                # except (BaseException, IOError, OSError,
+                #         pyaudio.paNoError, pyaudio.paNotInitialized,
+                #         pyaudio.paUnanticipatedHostError,
+                #         pyaudio.paInvalidChannelCount,
+                #         pyaudio.paInvalidSampleRate,
+                #         pyaudio.paInvalidDevice, pyaudio.paInvalidFlag,
+                #         pyaudio.paSampleFormatNotSupported,
+                #         pyaudio.paBadIODeviceCombination,
+                #         pyaudio.paInsufficientMemory,
+                #         pyaudio.paBufferTooBig,
+                #         pyaudio.paBufferTooSmall, pyaudio.paNullCallback,
+                #         pyaudio.paBadStreamPtr,
+                #         pyaudio.paTimedOut, pyaudio.paInternalError,
+                #         pyaudio.paDeviceUnavailable,
+                #         pyaudio.paIncompatibleHostApiSpecificStreamInfo,
+                #         pyaudio.paStreamIsStopped,
+                #         pyaudio.paStreamIsNotStopped,
+                #         pyaudio.paInputOverflowed,
+                #         pyaudio.paOutputUnderflowed,
+                #         pyaudio.paHostApiNotFound, pyaudio.paInvalidHostApi,
+                #         pyaudio.paCanNotReadFromACallbackStream,
+                #         pyaudio.paCanNotWriteToACallbackStream,
+                #         pyaudio.paCanNotReadFromAnOutputOnlyStream,
+                #         pyaudio.paCanNotWriteToAnInputOnlyStream,
+                #         pyaudio.paIncompatibleStreamHostApi) as e:
+                #     log.exception("Unexpected exception trying to play "
+                #                     "sound! %s",e)
+                #     log.debug("Stopped (2): {}".format(self.stream.is_stopped()))
+                #     log.debug("Active (2): {}".format(self.stream.is_active()))
+                #     log.debug("get_write_available (2): {}".format(
+                #                             self.stream.get_write_available()))
+                #     # raise
+                #     # exit()
+                # except:
+                #     log.exception("Other exception trying to play "
+                #                 "sound! %s")
+                    # raise
+                try:
+                    log.debug("Recalculating data remaining.")
+                    self.data = self.wf.readframes(self.chunk)
+                    log.debug("Data remaining: {}".format(len(self.data)))
+                except:
+                    log.exception("Unexpected exception trying to read "
+                                "frames %s")
+                    # raise
+            log.debug("apparently we're out of data")
+            self.streamclose()
+        def callback(): #This just isn't working faithfully, for some reason.
+            log.info("Playing {} sample rate with card {} on {} channels with "
+                "{} format".format(rate,self.audioout_card_index,channels,
+                                                                        format))
+            try:
+                self.pa.get_host_api_count()
+            except:
+                log.info("Reinitializing PyAudio")
+                self.pa = self.check.pyaudio = pyaudio.PyAudio()
+            try:
+                log.debug("trying stream...")
+                self.stream = self.pa.open(
+                    output_device_index=self.audioout_card_index,
+                    format=format,
+                    channels=channels,
+                    rate=rate,
+                    output=True,
+                    stream_callback=self.playcallback)
+                log.debug("Starting stream...")
+                self.stream.start_stream()
+                log.debug("Keeping stream active...")
+                while (self.stream.is_active()) and (not self.stream.is_stopped()):
+                    try:
+                        log.debug(format/8*1024)
+                    except:
+                        log.debug("No stream to write!")
+                        return
+                    time.sleep(0.1)
+                    log.debug("Keeping stream active (again)...")
+                log.debug("Stopping stream...")
+                self.stream.stop_stream()
+                log.debug("Stream stopped.")
+            except Exception as e:
+                log.exception("Can't play file! %s",e)
+                return
+        if process: # == True:
+            from multiprocessing import Process
+            log.info("Running as multi-process")
+            p = Process(target=block)
+        elif thread: # == True:
+            from threading import Thread
+            log.info("Running as threaded")
+            p = Thread(target=block)
+        else:
+            log.info("Running in line")
+            block()
+            # callback()
+        if process or thread:
+            p.exception = None
+            try:
+                p.start()
+            except BaseException as e:
+                log.error("Exception!", traceback.format_exc())
+                p.exception = e
+            p.join(timeout) #finish this after 1s, in any case
+            if p.exception:
+                log.error("Exception2!", traceback.format_exc())
+                raise p.exception
+            if process: # == True:
+                p.terminate() #for processes, not threads
+        # self.streamclose()
+        self.wf.close()
+    def __init__(self,filenameURL,audioout_card_index,chunk):
+        self.filenameURL=filenameURL
+        self.audioout_card_index=audioout_card_index
+        self.chunk=chunk
+        # self.paopen() in _play
+class RecordButtonFrame(Frame):
     def recordcallback(self, in_data, frame_count, time_info, flag):
         if not hasattr(self,'fulldata'):
             self.fulldata= in_data
@@ -6380,186 +6595,13 @@ class RecordButtonFrame(Frame):
         self.b.destroy()
         self.makeplaybutton()
         self.makedeletebutton()
-    def _play(self, event):
-        # print("I'm playing the recording now")
-        # from multiprocessing import Process
-        from threading import Thread
-        self.wf = wave.open(self.filenameURL, 'rb')
-        frames = self.wf.getnframes()
-        rate=self.wf.getframerate()
-        duration = frames / float(rate)
-        format=self.pa.get_format_from_width(self.wf.getsampwidth())
-        channels=self.wf.getnchannels()
-        if None in [rate,format,channels]: #This should never happen here.
-            log.debug("Problem playing on {} card on {} channels with {} rate, "
-            "{} format".format(self.audioout_card_index,channels,rate,format))
-            return
-        """block"""
-        log.debug("PA Version: {}".format(pyaudio.get_portaudio_version()))
-        log.debug("PA Version: {}".format(pyaudio.get_portaudio_version_text()))
-        try:
-            log.debug("checking for support")
-            self.pa.is_format_supported(rate,
-                output_format=format,
-                output_device=self.audioout_card_index,
-                output_channels=channels)
-        except TypeError as e:
-                log.exception("Unsupported config TypeError trying to play sound! %s",
-                e)
-                raise
-                return
-        except ValueError as e:
-                log.exception("Unsupported config ValueError trying to play sound! %s",
-                e)
-                raise
-                return
-        def block():
-            log.debug("running play block with args format={}, "
-                        "output_device_index={}, channels={}, "
-                        "rate={},".format(format,self.audioout_card_index,
-                        channels,rate))
-            try:
-                log.debug("trying to open stream")
-                try:
-                    self.pa.is_format_supported(rate,
-                        output_format=format,
-                        output_device=self.audioout_card_index,
-                        output_channels=channels)
-                except ValueError as e:
-                    log.debug("Valuerror on support query: %s {}",e)
-                    # raise
-                    return
-                try:
-                    self.stream = self.pa.open(format=format,
-                        output_device_index=self.audioout_card_index,
-                        channels=channels,
-                        rate=rate,
-                        output=True)
-                except ValueError as e:
-                    log.debug("Valuerror: {}",e)
-                    # raise
-                    return
-                self.data = self.wf.readframes(self.chunk)
-                while len(self.data) > 0:
-                    log.debug("Trying to play")
-                    log.debug("len(self.data): {}".format(len(self.data)))
-                    log.debug("Stopped: {}".format(self.stream.is_stopped()))
-                    log.debug("Active: {}".format(self.stream.is_active()))
-                    log.debug("CPU_load: {}".format(self.stream.get_cpu_load()))
-                    log.debug("output_latency: {}".format(
-                                            self.stream.get_output_latency()))
-                    log.debug("input_latency: {}".format(
-                                            self.stream.get_input_latency()))
-                    log.debug("get_write_available: {}".format(
-                                            self.stream.get_write_available()))
-                    # These ones doesn't work:
-                    # log.debug("get_read_available: {}".format(
-                    #                        self.stream.get_read_available()))
-                    # log.debug("Time: {}".format(self.stream.get_time()))
-                    try:
-                        self.stream.write(self.data,exception_on_underflow=True)
-                    except (BaseException, IOError, OSError,
-                            pyaudio.paNoError, pyaudio.paNotInitialized,
-                            pyaudio.paUnanticipatedHostError,
-                            pyaudio.paInvalidChannelCount,
-                            pyaudio.paInvalidSampleRate,
-                            pyaudio.paInvalidDevice, pyaudio.paInvalidFlag,
-                            pyaudio.paSampleFormatNotSupported,
-                            pyaudio.paBadIODeviceCombination,
-                            pyaudio.paInsufficientMemory,
-                            pyaudio.paBufferTooBig,
-                            pyaudio.paBufferTooSmall, pyaudio.paNullCallback,
-                            pyaudio.paBadStreamPtr,
-                            pyaudio.paTimedOut, pyaudio.paInternalError,
-                            pyaudio.paDeviceUnavailable,
-                            pyaudio.paIncompatibleHostApiSpecificStreamInfo,
-                            pyaudio.paStreamIsStopped,
-                            pyaudio.paStreamIsNotStopped,
-                            pyaudio.paInputOverflowed,
-                            pyaudio.paOutputUnderflowed,
-                            pyaudio.paHostApiNotFound, pyaudio.paInvalidHostApi,
-                            pyaudio.paCanNotReadFromACallbackStream,
-                            pyaudio.paCanNotWriteToACallbackStream,
-                            pyaudio.paCanNotReadFromAnOutputOnlyStream,
-                            pyaudio.paCanNotWriteToAnInputOnlyStream,
-                            pyaudio.paIncompatibleStreamHostApi) as e:
-                        log.exception("Unexpected exception trying to play "
-                                        "sound! %s",e)
-                        log.debug("Stopped (2): {}".format(self.stream.is_stopped()))
-                        log.debug("Active (2): {}".format(self.stream.is_active()))
-                        log.debug("get_write_available (2): {}".format(
-                                                self.stream.get_write_available()))
-                        # raise
-                        # exit()
-                    except:
-                        log.exception("Other exception trying to play "
-                                    "sound! %s")
-                        # raise
-                    try:
-                        log.debug("Recalculating data remaining.")
-                        self.data = self.wf.readframes(self.chunk)
-                        log.debug("Data remaining: {}".format(len(self.data)))
-                    except:
-                        log.exception("Unexpected exception trying to read "
-                                    "frames %s")
-                        # raise
-                log.debug("apparently we're out of data")
-            except Exception as e:
-                # (ValueError, IOError, AttributeError, Exception,
-                #                         pyaudio.paUnanticipatedHostError) as e:
-                log.exception("Unexpected Error trying to play sound! %s",e)
-                raise
-        """Callback"""
-        def callback(): #This just isn't working faithfully, for some reason.
-            log.info("Playing {} sample rate with card {} on {} channels with "
-                "{} format".format(rate,self.audioout_card_index,channels,
-                                                                        format))
-            try:
-                self.pa.get_host_api_count()
-            except:
-                log.info("Reinitializing PyAudio")
-                self.pa = self.check.pyaudio = pyaudio.PyAudio()
-            try:
-                log.debug("trying stream...")
-                self.stream = self.pa.open(
-                    output_device_index=self.audioout_card_index,
-                    format=format,
-                    channels=channels,
-                    rate=rate,
-                    output=True,
-                    stream_callback=self.playcallback)
-                log.debug("Starting stream...")
-                self.stream.start_stream()
-                log.debug("Keeping stream active...")
-                while (self.stream.is_active()) and (not self.stream.is_stopped()):
-                    try:
-                        log.debug(format/8*1024)
-                    except:
-                        log.debug("No stream to write!")
-                        return
-                    time.sleep(0.1)
-                    log.debug("Keeping stream active (again)...")
-                log.debug("Stopping stream...")
-                self.stream.stop_stream()
-                log.debug("Stream stopped.")
-            except Exception as e:
-                log.exception("Can't play file! %s",e)
-                return
-        # p = Process(target=block)
-        p = Thread(target=block)
-        p.start()
-        p.join(5) #finish this after 1s, in any case
-        # p.terminate() #for processes, not threads
-        # block()
-        # callback()
-        self.stream.close()
-        self.wf.close()
     def _redo(self, event):
         # print("I'm deleting the recording now")
         self.p.destroy()
         self.makerecordbutton()
         self.r.destroy()
     def fileopen(self):
+        #This fn is for recording, not playing
         file.remove(self.filenameURL) #don't do this until recording new file.
         self.wf = wave.open(self.filenameURL, 'wb')
         self.wf.setnchannels(self.channels)
@@ -6587,9 +6629,11 @@ class RecordButtonFrame(Frame):
         self.b.bind('<ButtonPress>', self._start)
         self.b.bind('<ButtonRelease>', self._stop)
     def makeplaybutton(self):
+        player=SoundFilePlayer(self.filenameURL,self.audioout_card_index,
+                                                                    self.chunk)
         self.p=Button(self,text=_('Play'),command=self.function)
         self.p.grid(row=0, column=1,sticky='w')
-        self.p.bind('<ButtonPress>', self._play)
+        self.p.bind('<ButtonPress>', player._play)
     def makedeletebutton(self):
         self.r=Button(self,text=_('Redo'),command=self.function)
         self.r.grid(row=0, column=2,sticky='w')
@@ -6666,11 +6710,6 @@ class RecordButtonFrame(Frame):
         self.check=check
         self.callbackrecording=True
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
-        try:
-            check.pyaudio.get_host_api_count()
-            self.pa = check.pyaudio
-        except:
-            self.pa = check.pyaudio = pyaudio.PyAudio()
         self.channels = 1 #Always record in mono
         self.audiolang=check.audiolang
         """I'm trusting here that no one has been screwing with the check
