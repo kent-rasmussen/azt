@@ -13,6 +13,7 @@ import re #needed?
 import os
 import rx
 import logging
+import ast #For string list interpretation
 log = logging.getLogger(__name__)
 try: #Allow this module to be used without translation
     _
@@ -682,6 +683,39 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getguids()
         self.getsenseids()
         return senseid
+    def modverificationnode(self,senseid,add=None,rm=None):
+        vf=self.addverificationnode(senseid)
+        if vf is None:
+            log.info("Sorry, this didn't return a node: {}".format(senseid))
+            return
+        if vf.text is not None:
+            log.log(2,"{}; {}".format(vf.text, type(vf.text)))
+            try:
+                l=ast.literal_eval(vf.text)
+            except SyntaxError: #if the literal eval doesn't work, it's a string
+                l=vf.text
+            log.log(2,"{}; {}".format(l, type(l)))
+            if type(l) != list: #in case eval worked, but didn't produce a list
+                log.log(2,"One item: {}; {}".format(l, type(l)))
+                l=[l,]
+        else:
+            log.log(2,"empty verification list found")
+            l=list()
+        if rm != None and rm in l:
+            l.remove(rm)
+        if add != None and add not in l:
+            l.append(add)
+        vf.text=str(l)
+        self.updatemoddatetime(senseid=senseid)
+    def addverificationnode(self,senseid):
+        node=self.getsensenode(senseid=senseid)
+        if node is None:
+            log.info("Sorry, this didn't return a node: {}".format(senseid))
+            return
+        vf=node.find("field[@type='{}']".format("verification"))
+        if vf == None:
+            vf=ET.SubElement(node, 'field', attrib={'type':"verification"})
+        return vf
     def getentrynode(self,senseid,showurl=False):
         """Get the sense node"""
         urlnattr=self.geturlnattr('entry',senseid=senseid)
