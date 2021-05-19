@@ -3313,6 +3313,8 @@ class Check():
             self.storesettingsfile(setting='status')
             self.verifysubwindow.destroy()
             self.verifyT()
+        def addchar(x):
+            formfield.get()+=x
         self.getrunwindow()
         newname=tkinter.StringVar()
         padx=50
@@ -3333,6 +3335,14 @@ class Check():
         getform.grid(row=0,column=0,padx=padx,pady=pady)
         formfield = EntryField(self.verifysubwindow,textvariable=newname)
         formfield.grid(row=1,column=0)
+        for char in ['[','˥', '˦', '˧', '˨', '˩',' ',']']:
+            if char == ' ':
+                text=(non-breaking space)
+            else:
+                text=char
+            Button(self.verifysubwindow,text = text,
+                      command = lambda x=char:addchar(x), anchor ='c'
+                ).grid(row=2,column=0,sticky='',padx=padx,pady=pady)
         sub_btn=Button(self.verifysubwindow,text = 'Use this name',
                   command = submitform,anchor ='c')
         sub_btn.grid(row=2,column=0,sticky='',padx=padx,pady=pady)
