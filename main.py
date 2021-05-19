@@ -5623,7 +5623,7 @@ class Window(tkinter.Toplevel):
             print ("    parent.name: "+parentname)
             print ("    self.name: "+selfname)
             log.info("End current window descriptions")
-        self.iconphoto(False, self.photo['backgrounded']) #don't want this transparent
+        self.iconphoto(False, self.photo['icon']) #don't want this transparent
         self.title(title)
         # self.parent=parent
         self.resetframe()
@@ -6195,7 +6195,7 @@ class MainApplication(Frame):
         """Pick one of these two placements:"""
         # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
         # self.frame.grid(column=0, row=0)
-        parent.iconphoto(True, self.photo['backgrounded'])
+        parent.iconphoto(True, self.photo['icon'])
         self.maketitle()
         # self.introtext=_()
         # l=Label(self.frame, text=self.introtext, font=self.fonts['title'])
