@@ -108,27 +108,27 @@ Once you have the form and gloss content in the appropriate boxes, click on 'see
 
 If you absolutely regret a tone frame you have set up, all your frames are stored in `<lift filename>_ToneFrames.py` next to your [LIFT](https://code.google.com/archive/p/lift-standard/) file. Be careful editing this, though; you may need to redefine all your frames if you corrupt this file (This would be a great time to ask for help if you don't absolutely certainly know what you're doing).
 
-### Tone Frame Groups ![Tone Frame Groups](images/T%20alone%20clear6_icon.png "Tone Frame Groups"){#id .class width=50 }
+### Tone Frame Groups ![Tone Frame Groups](images/T%20alone%20clear6_icon.png "Tone Frame Groups")
 [A→Z+T](https://github.com/kent-rasmussen/azt) by default labels the groups into which you sort your data by frame with numbers. This is because, at least initially, the fact that it is its own thing (all one thing, and unlike the other groups) is more important than any description of the group, however objective it may be.
 That said, there may come a time where you want to give one or more of these groups a particular name, like `HL` or `[˦˦ ˨˨]`, perhaps because you want to remember how you thought of the surface form at the time, or because you don't want the group names in your database to be just numbers. To do this, right click on the verification window *while verifying the group you want to rename*, and click on `Show Menu`. This will provide a menu which will allow you to change the name.
 Regarding name changes, please be cognizant of the fact that these names are for a *part of speech* and *syllable profile*, **in a given frame**. These should describe the *surface* tone only; hypotheses regarding underlying tone come later (see [`Joining and Renaming Draft Tone Groups`](#joining-and-renaming-draft-tone-groups), below; see also the [AZT Process Flow Chart](https://github.com/kent-rasmussen/azt/docs/AZT%20Process%20Flow%20Chart.png)).
 
-### Recording ![Recording](images/Microphone%20alone_sm.png "microphone"){#id .class width=50 }
-The first time you try to record, you will be asked to tell [A→Z+T](https://github.com/kent-rasmussen/azt) what sound card parameters you want. You can set frequency, bit depth, and sound card number (to select between multiple cards, for your microphone and for your speakers. This window is designed with test `play` and `record` buttons, so you can set parameters and test them, before moving on. I suggest you budget some time to play with the settings there, and confirm that recording is working, before moving on. I suggest you select the highest quality that your card can do (assuming that's what you want!), and test to see if it records and plays back OK. I have found several computers with cards that can record at 96khz, somewhat to my surprise —though be sure to think about your microphone and environment, etc, too! If you are making recordings for easy sharing over low bandwidth (as opposed to linguistic study), consider the implications of these setting on the size of your files.
+### Recording ![Recording](images/Microphone%20alone_sm.png "microphone")
+The first time you try to record, you will be asked to tell [A→Z+T](https://github.com/kent-rasmussen/azt) what sound card parameters you want. You can set frequency, bit depth, and sound card number (to select between multiple cards, for your microphone and for your speakers. This window is designed with test `play` and `record` buttons, so you can set parameters and test them, before moving on. I suggest you budget some time to play with the settings there, and confirm that recording is working, before moving on. I recommend you select the highest quality that your card can do, and test to see if it records and plays back OK. I have found several computers with cards that can record at 96khz, somewhat to my surprise —though be sure to think about your microphone and environment, etc, too! If you are making recordings for easy sharing over low bandwidth (as opposed to linguistic study), consider the implications of these setting on the size of your files.
 
 You can store the sound card settings in your repository, so you won't have to keep setting them, once you discover what works best in your context. However, if you are sharing a repository across computers with different sound cards, you may not want to do this. The sound card settings dialog is also available through a menu item.
 
 Regarding which sound card to choose (as [A→Z+T](https://github.com/kent-rasmussen/azt) will most likely give you multiple options):
-- There may be multiple ways of telling [A→Z+T](https://github.com/kent-rasmussen/azt) to use what looks to you like the interface, and they may not each give you the same mileage. For instance, you may get more consistency from setting the interface as the `default` sound card in your OS settings, then selecting `OS default` (or `System default` whatever) in [A→Z+T](https://github.com/kent-rasmussen/azt) —or the reverse; test and find out what works best for you.
+- There may be multiple ways of telling [A→Z+T](https://github.com/kent-rasmussen/azt) to use a given interface, and they may not each give you the same mileage. For instance, you may get more consistency from setting the interface as the `default` sound card in your OS settings, then selecting `OS default` (or `System default` whatever) in [A→Z+T](https://github.com/kent-rasmussen/azt) —or the reverse; test and find out what works best for you.
 
-Regarding external (e.g., USB) sound interfaces, I have noticed an issue worth pointing out:
+Regarding external (e.g., USB) sound interfaces, there is an issue worth pointing out:
 - In some contexts (perhaps particularly in places with lower quality power, or running off a generator?), I have noticed inconsistencies building up over time in recordings. They may start with pops or other problems in the recordings, and ultimately not record at all. In any case, there is an easy fix: shut down and restart [A→Z+T](https://github.com/kent-rasmussen/azt). But this is a good reminder to listen to your recordings in real time, as you make them.
 
-## Subsequent Runs: CV analysis ![CV](images/ZA alone clear6_icon.png){#id .class width=50 }
+## Subsequent Runs: CV analysis ![CV](images/ZA alone clear6_icon.png)
 ### (View data and run reports)
 [A→Z+T](https://github.com/kent-rasmussen/azt) doesn't do CV sorting and verification (Yet!), but you can make recordings and filter your data and look at it through a number of checks (e.g., by C1, or by V1=V2, etc.).
 
-### Recording Citation and Secondary Forms
+### Recording Citation and Secondary Forms ![Recording](images/Microphone%20alone_sm.png "microphone")
 When Consonants or Vowels are selected, you can click on "Record Dictionary Words", which will give you a page of `Record` buttons next to words filtered by ps-profile combinations, largest first. To skip to the next slice of data, just click "Next Group". For each entry in the data slice, this page provides a button to record a sound file for citation or lexeme fields, but also plural and imperative fields, if in the database. These recordings should then appear in reports, [FLEx](https://software.sil.org/fieldworks/), and other uses of the [LIFT](https://code.google.com/archive/p/lift-standard/) database (e.g., the [Dictionary App Builder](https://software.sil.org/dictionaryappbuilder/)).
 
 ### Consonant and Vowel Reports
@@ -136,9 +136,9 @@ To look at filtered data, set up the desired parameters so they appear on the ma
 
 For a more thorough report, use the Basic Report menu item. This will select your top ps-profile combinations, and present each of those slices of your data in order, with the relevant checks for consonants and vowels for each. So the CVCV profile will start with C1=C2, before moving to other data sorted by C1, then by C2 —then it will do the same for vowels. Longer syllable profiles will thus include more checks, though maybe not containing much data (e.g., if you don't have much C1=C2=C3 data).
 
-I want this tool to be ultimately able to help with the sorting and correction of consonants and vowels, but my hope is that until those functions are implemented, these reports will be helpful.
+This tool will ultimately be able to help with the sorting and correction of consonants and vowels, but until those functions are implemented, these reports should be helpful.
 
-## Subsequent Runs: Tone (Sort, and Follow Directions) ![Tone](images/T%20alone%20clear6_icon.png "Tone"){#id .class width=50 }
+## Subsequent Runs: Tone (Sort, and Follow Directions) ![Tone](images/T%20alone%20clear6_icon.png "Tone")
 ### Sorting progression: The Status Table
 Once you have done any sorting for the selected part of speech, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
 
@@ -146,8 +146,8 @@ The program is designed to step through the process relatively automatically; on
 
 You will, of course from time to time want to move to another part of speech or syllable profile, or check type. Click on any cell in the status table to select that combination of profile and check/frame (this can also be done on the main window menus) and the next time you click `Sort` or `Record`, the appropriate data will be selected, and those changes saved to the preferences file.
 
-## Recording Data Sorted in Frames
-Recording data in frames can be done at any point where at least one frame has been at least partially sorted, but when a word is presented for recording, each example (sorting context) is presented for recording. So if you sort one field, then record, then sort the next, you will see your earlier recordings again. Recordings can move rather quickly, so I recommend putting them last in your workflow, and doing them all at once —at least once you've tested that they're working correctly with your recording equipment, etc.
+## Recording Data Sorted in Frames ![Recording](images/Microphone%20alone_sm.png "microphone")
+Recording data in frames can be done at any point once sorting has begun. However, when a word is presented for recording, a button for each example (sorting context) in the sense appears. So if you sort one field, then record, then sort the next, you will see your earlier recordings again. Recordings can move rather quickly, so I recommend putting them last in your workflow, and doing them all at once —at least once you've tested that they're working correctly with your recording equipment, etc.
 
 ## Tone Reports
 Once you have done some sortings, it makes sense to run a report. The tone report will show your groupings in just one frame, if that's all you have done, but its real value lies in comparing values across multiple frames, so you'll want to check a couple tone frames before doing much with the tone reports.
@@ -156,19 +156,19 @@ The report by default has two phases: analysis and reporting. When analyzing you
 
 Once separated into these groups, the data is presented either by sense (including each sorted tone frame under each sense) or by tone frame/location (including each sense which has been sorted in each tone frame), depending on the report requested by the user.
 
-This report is also exported to text and [XLingPaper](https://software.sil.org/xlingpaper/) XML files, which has similar organization, but more detail, that what you will see on the report window.
+In addition to the window that appears when the report is finished, each report is also exported to text and [XLingPaper](https://software.sil.org/xlingpaper/) XML files. [XLingPaper](https://software.sil.org/xlingpaper/) reports have similar organization, but more detail, as to what you will see in the report window.
 
 ### Joining and Renaming Draft Tone Groups
-The tone groupings provided by default in [A→Z+T](https://github.com/kent-rasmussen/azt) are definitely of the 'splitting' kind, as we want to make judgments ourselves as to which are the same underlying group, rather than have the computer do that. This will certainly lead to groups in the output which you would like to join.
+The tone groupings provided by default in [A→Z+T](https://github.com/kent-rasmussen/azt) are definitely of the 'splitting' kind, as we want to make judgments ourselves as to which are the same underlying group, rather than have the computer do that. This will certainly lead to groups in the output which you would like to join/merge into a single group.
 
 To join groups, use the 'Advanced' menu item 'Tone Reports':'Join/Rename...' This will present a window where you can tell [A→Z+T](https://github.com/kent-rasmussen/azt) which groups should be presented together in the report. These groupings are also written to the [LIFT](https://code.google.com/archive/p/lift-standard/) file, overwriting the place draft tone UF groupings for each sense impacted by the change.
 
-Once you have made these groupings, it is important to only run the tone report from the 'Advanced' menu, if you want it to be based on your manual groupings. Otherwise, the default report will reanalyze your data and present draft groups from scratch.
+Once you have made these groupings, it is important to **only run the tone report from the 'Advanced' menu**, if you want it to be based on your manual groupings. Otherwise, the default report will reanalyze your data and present draft groups from scratch.
 
-To undo any grouping, simply run a tone report from the 'Do' (not 'Advanced') menu. This is a good idea to do whenever you have added sorting data to your database, so you can be sure that your 'lumping' data are based on the most recent 'splitting' draft groups. Or if you accidentally joined the wrong groups, or if you want to restart joining groups for any other reason.
+To undo any grouping, simply run a tone report from the 'Do' (not 'Advanced') menu. This is a good idea to do whenever you have added sorting data to your database, so you can be sure that the groups you join/merge are based on the most recent 'splitting' draft groups. Or if you accidentally joined the wrong groups, or if you want to restart joining groups for any other reason.
 
 ## Ad Hoc Sorting Groups
-After you have done the analysis of noun and verb roots, you may want to move to a smaller grammatical category, and you may find that the slicing of data into strict ps-profile groups makes it difficult to see what's going on in your data. If you want to manually select a set of morphemes to sort, either a subset of a CV profile group, or including data from multiple CV profiles (or both), click on "Add/Modify Ad Hoc Sorting Groups" (In the Advanced menu, of course!). This provides a window where you can give a (unique!) name to your _ad hoc_ group, and select the senses from your dictionary that you want to compare in it.
+After you have done the analysis of noun and verb roots, you may want to move to a smaller grammatical category, and you may find that the slicing of data into strict ps-profile groups makes it difficult to see what's going on in your data. If you want to manually select a set of morphemes to sort, either a subset of a CV profile group, or including data from multiple CV profiles (or both), click on "Add/Modify Ad Hoc Sorting Groups" (In the Advanced menu). This provides a window where you can give a (unique!) name to your _ad hoc_ group, and select the senses from your dictionary that you want to compare in it.
 
 This window will leave you with that group selected, so you are immediately ready to sort the senses included in it. To avoid a conflict, [A→Z+T](https://github.com/kent-rasmussen/azt) will also switch your check type to tone.
 
