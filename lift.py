@@ -701,12 +701,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         else:
             log.log(2,"empty verification list found")
             l=list()
+        changed=False
         if rm != None and rm in l:
             l.remove(rm)
+            changed=True
         if add != None and add not in l:
             l.append(add)
+            changed=True
         vf.text=str(l)
-        self.updatemoddatetime(senseid=senseid)
+        if changed == True:
+            self.updatemoddatetime(senseid=senseid)
     def addverificationnode(self,senseid):
         node=self.getsensenode(senseid=senseid)
         if node is None:
