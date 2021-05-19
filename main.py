@@ -3945,7 +3945,7 @@ class Check():
             log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                 tonegroup,self.groupselected))
         else:
-            log.error("Field addition succeeded! LIFT says {}, == {}.".format(
+            log.info("Field addition succeeded! LIFT says {}, == {}.".format(
                                                 tonegroup,self.groupselected))
         self.subcheck=self.groupselected
         self.updatestatus() #this marks the group unverified.
