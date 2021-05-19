@@ -1319,23 +1319,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     location=None,fieldvalue=None,ps=None,
                     newfieldvalue=None,showurl=False):
         """This updates the fieldvalue, ignorant of current value."""
-        urlnattr=self.geturlnattr('entry',guid=guid,senseid=senseid #,
-                                    # fieldtype=fieldtype,
-                                    # location=location,
-                                    # fieldvalue=fieldvalue
-        ) #just give me the sense.
+        urlnattr=self.geturlnattr('entry',guid=guid,senseid=senseid) #just entry
         url=urlnattr['url']
         if showurl==True:
             log.info(url)
         node=self.nodes.find(url) #this should always find just one node
-        # for value in node.findall(f"field[@type=location]/"
-        #                             f"form[text='{location}']"
-        #                                 f"[@type='{fieldtype}']/"
-        #                             f"form[text='{fieldvalue}']/text"):
-        #     # """<field type="tone"><form lang="fr"><text>1</text></form></field>"""
-        #     # """<field type="location"><form lang="fr"><text>Plural</text></form></field>"""
-        node.attrib['dateModified']=getnow() #text=newfieldvalue #remove(example)
-        self.write()
+        node.attrib['dateModified']=getnow()
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
