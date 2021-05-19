@@ -16,6 +16,7 @@
 - check that changes to S regexs don't break too much.
 
 ## In Process (fix)
+- add mini keyboard of common symbols (class, to add to Entry)
 - make verify window go away when last button is clicked
 - Set up schema to test line expenses on boot time, for each line
     - this-then, store then=this
