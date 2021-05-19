@@ -1463,7 +1463,6 @@ class Check():
         if changed == True:
             log.info("Saving status dict to file")
             self.storesettingsfile(setting='status')
-    def updatestatus(self,verified=False,refresh=True):
     def verifictioncode(self,name=None,subcheck=None):
         if subcheck == None: #do I ever want this to really be None?
             subcheck=self.subcheck
@@ -1488,29 +1487,32 @@ class Check():
             self.db.modverificationnode(senseid,add=add,rm=rm)
         if refresh == True:
             self.db.write() #for when not iterated over, or on last repeat
+    def updatestatus(self,subcheck=None,verified=False,refresh=True):
         #This function updates the status variable, not the lift file.
+        if subcheck == None:
+            subcheck=self.subcheck
         self.makestatusdict()
         if verified == True:
-            if self.subcheck not in (
+            if subcheck not in (
                 self.status[self.type][self.ps][self.profile][self.name][
                                                                     'done']):
                 self.status[self.type][self.ps][self.profile][self.name][
-                                                'done'].append(self.subcheck)
+                                                'done'].append(subcheck)
             else:
                 log.info("Tried to set {} verified in {} {} {} {} but it was "
                         "already there, and we're not done with the {} frame."
-                        "".format(self.subcheck,self.type,
+                        "".format(subcheck,self.type,
                         self.ps,self.profile,self.name,self.name))
         if verified == False:
-            if self.subcheck in (
+            if subcheck in (
                             self.status[self.type][self.ps][self.profile]
                             [self.name]['done']):
                 self.status[self.type][self.ps][self.profile][self.name
-                                                ]['done'].remove(self.subcheck)
+                                                ]['done'].remove(subcheck)
             else:
-                print("Tried to set",self.subcheck,"UNverified in",self.type,
-                        self.ps,self.profile,self.name,"but it wasn't "
-                        "there.")
+                log.info("Tried to set {} UNverified in {} {} {} {}, but it "
+                        "wasn't there.".format(subcheck,self.type,self.ps,
+                                                        self.profile,self.name))
         if refresh == True:
             self.storesettingsfile(setting='status')
     """Get from LIFT database functions"""
