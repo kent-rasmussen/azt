@@ -7393,12 +7393,18 @@ def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
         setattr(self,value,values[value])
         parent.destroy() #from or window with button...
         return value
-def removesenseidfromsubcheck(self,parent,senseid):
+def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     #This is the action of a verification button, so needs to be self contained.
+    if name == None:
+        name=self.name
+    if subcheck == None:
+        subcheck=self.subcheck
     self.db.rmexfields(senseid=senseid,fieldtype='tone',
-                        location=self.name,fieldvalue=self.subcheck,
+                        location=name,fieldvalue=subcheck,
                         showurl=True
                         )
+    rm=self.verifictioncode(name,subcheck)
+    self.db.modverificationnode(senseid,rm=rm)
     self.db.write() #This is not iterated over
     self.markunsortedsenseid(senseid)
     parent.destroy() #.runwindow.resetframe()
