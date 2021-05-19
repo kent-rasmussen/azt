@@ -1464,6 +1464,30 @@ class Check():
             log.info("Saving status dict to file")
             self.storesettingsfile(setting='status')
     def updatestatus(self,verified=False,refresh=True):
+    def verifictioncode(self,name=None,subcheck=None):
+        if subcheck == None: #do I ever want this to really be None?
+            subcheck=self.subcheck
+        if name == None:
+            name=self.name
+        return name+'='+subcheck
+    def updatestatuslift(self,name=None,subcheck=None,verified=False,refresh=True):
+        if subcheck == None: #do I ever want this to really be None?
+            subcheck=self.subcheck
+        if name == None:
+            name=self.name
+        senseids=self.db.get('senseidbyexfieldvalue',fieldtype='tone',
+                                location=name,fieldvalue=subcheck)
+        value=self.verifictioncode(name,subcheck)
+        if verified == True:
+            add=value
+            rm=None
+        else:
+            add=None
+            rm=value
+        for senseid in self.senseidsincheck(senseids): #only for this ps-profile
+            self.db.modverificationnode(senseid,add=add,rm=rm)
+        if refresh == True:
+            self.db.write() #for when not iterated over, or on last repeat
         #This function updates the status variable, not the lift file.
         self.makestatusdict()
         if verified == True:
@@ -3724,6 +3748,12 @@ class Check():
                             ipady=15 #Inside the buttons...
                             )
     def joinT(self):
+        def verify():
+            groups=self.status[self.type][self.ps][self.profile][self.name][
+                                                                    'groups']
+            for group in groups:
+                self.updatestatuslift(self.name,group,verified=True)
+            self.db.write() #after iterating
         log.info("Running joinT!")
         """This window shows up after sorting, or maybe after verification, to
         allow the user to join groups that look the same. I think before
@@ -3796,6 +3826,7 @@ class Check():
             if self.groupselected == "ALLOK":
                 print(f"User selected ‘{oktext}’, moving on.")
                 delattr(self,'groupselected')
+                verify()
                 return 0
             else:
                 group1=self.groupselected
@@ -3826,6 +3857,7 @@ class Check():
                     if self.groupselected == "ALLOK":
                         print(f"User selected ‘{oktext}’, moving on.")
                         delattr(self,'groupselected')
+                        verify()
                         return 0
                     else:
                         msg=_("Now we're going to join groups ‘{}’ and "
@@ -3839,8 +3871,10 @@ class Check():
                                 self.name]['groups'].remove(group1)
                         self.subcheck=group1
                         self.updatestatus(refresh=False) #not verified=True --since joined.
+                        self.updatestatuslift(refresh=False)
                         self.subcheck=self.groupselected
                         self.updatestatus() #not verified=True --since joined.
+                        self.updatestatuslift()
                         self.maybesort() #go back to verify, etc.
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
@@ -3860,6 +3894,10 @@ class Check():
             self.db.updateexfieldvalue(senseid=senseid,fieldtype='tone',
                                 location=self.name,fieldvalue=oldtonevalue,
                                 newfieldvalue=newtonevalue)
+            rm=self.verifictioncode(self.name,oldtonevalue)
+            add=self.verifictioncode(self.name,newtonevalue)
+            self.db.modverificationnode(senseid=senseid,add=add,rm=rm)
+        self.db.write() #once done iterating over senseids
     def addtonegroup(self):
         log.info("Adding a tone group!")
         values=[0,] #always have something here
