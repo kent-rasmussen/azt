@@ -2021,6 +2021,10 @@ if __name__ == '__main__':
     filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     lift=Lift(filename,nsyls=2)
+    senseid='26532c2e-fedf-4111-85d2-75b34ed31dd8'
+    lift.modverificationnode(senseid,add="another value3",rm="Added value")
+    lift.modverificationnode(senseid,rm="another value3",add="another value2")
+    lift.modverificationnode(senseid,rm="another value3",add="another value4")
     """Functions to run on a database from time to time"""
     # lift.findduplicateforms()
     # lift.findduplicateexamples()
