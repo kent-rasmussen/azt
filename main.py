@@ -3883,15 +3883,15 @@ class Check():
                                 self.name]['groups'].remove(group1)
                         self.subcheck=group1
                         self.updatestatus(refresh=False) #not verified=True --since joined.
-                        self.updatestatuslift(refresh=False)
+                        # self.updatestatuslift(refresh=False) #done above
                         self.subcheck=self.groupselected
                         self.updatestatus() #not verified=True --since joined.
-                        self.updatestatuslift()
+                        # self.updatestatuslift() #done above
                         self.maybesort() #go back to verify, etc.
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
-    def updatebysubchecksenseid(self,oldtonevalue,newtonevalue):
+    def updatebysubchecksenseid(self,oldtonevalue,newtonevalue,verified=False):
         """This is all the words in the database with the given
         location:value correspondence (any ps/profile)"""
         lst2=self.db.get('senseidbyexfieldvalue',fieldtype='tone',
@@ -3899,6 +3899,14 @@ class Check():
         """This intersects the two, to get only one location:value
         correspondence, only within the ps/profile combo we're looking
         at."""
+        # I should always remove the old code, but not always add the new
+        # In verification or joining, use verified=False
+        # I don't have a context yet for verified=True (renaming verified group)
+        rm=self.verifictioncode(self.name,oldtonevalue)
+        if verified == True:
+            add=self.verifictioncode(self.name,newtonevalue)
+        else:
+            add=None
         senseids=self.senseidsincheck(lst2)
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
@@ -3906,8 +3914,6 @@ class Check():
             self.db.updateexfieldvalue(senseid=senseid,fieldtype='tone',
                                 location=self.name,fieldvalue=oldtonevalue,
                                 newfieldvalue=newtonevalue)
-            rm=self.verifictioncode(self.name,oldtonevalue)
-            add=self.verifictioncode(self.name,newtonevalue)
             self.db.modverificationnode(senseid=senseid,add=add,rm=rm)
         self.db.write() #once done iterating over senseids
     def addtonegroup(self):
