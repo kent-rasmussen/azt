@@ -3728,12 +3728,13 @@ class Check():
                             )
             b.grid(column=0, row=0, sticky="ew")
             # b.bind('<mouseclick>',remove senseid from sensids)
+            if self.exitFlag:
+                return 1
             self.runwindow.context.updatebindings() #make sure to bind children
             self.sframe.windowsize()
             self.runwindow.waitdone()
             b.wait_window(bf)
-            if (not self.runwindow.winfo_exists() or
-                                    not hasattr(self,'groupselected')):
+            if self.exitFlag or not hasattr(self,'groupselected'):
                 return 1
             # I need to work on this later. How to distinguish buttons after
             # the window is gone? I think I have to count senseids in the group.
