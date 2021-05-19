@@ -3381,8 +3381,10 @@ class Check():
         if not set(self.status[self.type][self.ps][self.profile][self.name][
                                                 'groups']).issubset(verified):
             exitv=self.verifyT()
+            self.runwindow.removeverifymenu() #remove verification windows here, if made
             if exitv == True:
                 return
+            self.checkcheck()
             self.maybesort()
             return
         # Offer to join in any case:
@@ -3621,7 +3623,7 @@ class Check():
                 return 1 # this should only happen on Exit
             self.marksortedsenseid(senseid)
         self.runwindow.resetframe()
-    def verifyT(self):
+    def verifyT(self,menu=False):
         log.info("Running verifyT!")
         """Show entries each in a row, users mark those that are different, and we
         remove that group designation from the entry (so the entry will show up on
@@ -3645,6 +3647,8 @@ class Check():
             return
         # The title for this page changes by group, below.
         self.getrunwindow(msg="preparing to verify groups: {}".format(groups))
+        if menu == True:
+            self.runwindow.doverifymenu()
         ContextMenu(self.runwindow, context='verifyT') #once for all
         oktext='These all have the same tone'
         instructions=_("Read down this list to verify they all have the same "
@@ -3665,7 +3669,7 @@ class Check():
             senseids=self.getexsall(self.subcheck)
             if len(senseids) <2:
                 self.updatestatus(verified=True)
-                self.checkcheck()
+                # self.checkcheck() #now after verifyT is done
                 log.info("Group ‘{}’ only has {} example; marking verified and "
                         "continuing.".format(self.subcheck,len(senseids)))
                 continue
@@ -3741,7 +3745,7 @@ class Check():
             elif self.groupselected == "ALLOK":
                 log.debug("User selected ‘{}’, moving on.".format(oktext))
                 self.updatestatus(verified=True)
-                self.checkcheck()
+                # self.checkcheck() #now after verifyT is done
             else:
                 print(f"User did NOT select ‘{oktext}’, assuming we'll come "
                         "back to this!!")
@@ -5565,6 +5569,7 @@ class Window(tkinter.Toplevel):
             self.menubar.destroy()
             self.parent.verifymenu=False
             self.setcontext(context='verifyT')
+            return True #i.e., removed, to maybe replace later
     def doverifymenu(self):
         #This adds a menu to the verify window
         log.debug("Trying self.menubar")
@@ -5579,6 +5584,9 @@ class Window(tkinter.Toplevel):
         self.setcontext(context='verifyT')
     def setcontext(self,context=None): #set context for different windows
         # This is called by contextMenu(), & maybe other things context changers
+        if not hasattr(self, 'context') or type(self.context) != ContextMenu:
+            log.info("There isn't a context menu, so not setting the context.")
+            return
         self.context.menuinit() #This is a ContextMenu() method
         if context == 'verifyT': #parameter, NOT self.context, menu object...
             if ((not hasattr(self.parent,'verifymenu')) or
