@@ -7352,6 +7352,7 @@ def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
         parent.destroy() #from or window with button...
         return value
 def removesenseidfromsubcheck(self,parent,senseid):
+    #This is the action of a verification button, so needs to be self contained.
     self.db.rmexfields(senseid=senseid,fieldtype='tone',
                         location=self.name,fieldvalue=self.subcheck,
                         showurl=True
