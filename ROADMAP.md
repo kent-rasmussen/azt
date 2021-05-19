@@ -3,7 +3,15 @@
 ## release stoppers
 - decent debugging information on play problems
     - find how to capture exceptions from PyAudio
-
+- check that every reference to updatestatus as appropriate updatestatuslift call
+   - check name changes on groups and frame names
+- decide where to put self.db.write()
+    - any function that called self.db.updatemoddatetime()
+        - updateexfieldvalue
+        - modverificationnode
+        - addexamplefields
+        - addtoneUF
+        - rmexfields
 ## Things to Test
 - check that changes to S regexs don't break too much.
 
