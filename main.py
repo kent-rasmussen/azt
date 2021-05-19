@@ -3307,46 +3307,63 @@ class Check():
                 l.grid(row=0,column=0)
                 return
             self.updatebysubchecksenseid(self.subcheck,newtonevalue)
+            i=groups.index(self.subcheck) #put new value in the same place.
             groups.remove(self.subcheck)
-            groups.append(newtonevalue)
+            groups.insert(i,newtonevalue)
             self.subcheck=newtonevalue
             self.storesettingsfile(setting='status')
-            self.verifysubwindow.destroy()
-            self.verifyT()
+            self.runwindow.destroy()
+            self.verifyT(menu=menu)
         def addchar(x):
-            formfield.get()+=x
-        self.getrunwindow()
-        newname=tkinter.StringVar()
+            if x == '':
+                formfield.delete(0,tkinter.END)
+            else:
+                formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
+        newname=tkinter.StringVar(value=self.subcheck)
         padx=50
         pady=10
         title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
                         ).format(self.ps,self.profile,self.subcheck,
                                     self.name)
-        self.verifysubwindow=Window(self.runwindow.frame)
-        self.verifysubwindow.title(title)
-        Label(self.verifysubwindow,text=title,font=self.fonts['title'],
+        self.getrunwindow(title=title)
+        menu=self.runwindow.removeverifymenu()
+        Label(self.runwindow,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c'
                 ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
         getformtext=_("What the new name do you want to call this surface tone "
                         "group? A label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
-        getform=Label(self.verifysubwindow,text=getformtext,
+        getform=Label(self.runwindow,text=getformtext,
                 font=self.fonts['read'])
         getform.grid(row=0,column=0,padx=padx,pady=pady)
-        formfield = EntryField(self.verifysubwindow,textvariable=newname)
-        formfield.grid(row=1,column=0)
-        for char in ['[','˥', '˦', '˧', '˨', '˩',' ',']']:
+        buttonframe=Frame(self.runwindow)
+        buttonframe.grid(row=1,column=0,sticky='')
+        chars=['[','˥', '˦', '˧', '˨', '˩',' ',']','']
+        for char in chars:
             if char == ' ':
-                text=(non-breaking space)
+                text='(non-breaking space)'
+                column=0
+                columnspan=len(chars)
+                row=1
+            elif char == '':
+                text=_('clear entry')
+                column=0
+                columnspan=len(chars)
+                row=2
             else:
+                column=chars.index(char)
                 text=char
-            Button(self.verifysubwindow,text = text,
-                      command = lambda x=char:addchar(x), anchor ='c'
-                ).grid(row=2,column=0,sticky='',padx=padx,pady=pady)
-        sub_btn=Button(self.verifysubwindow,text = 'Use this name',
+                columnspan=1
+                row=0
+            Button(buttonframe,text = text,command = lambda x=char:addchar(x),
+                    anchor ='c').grid(row=row,column=column,sticky='',
+                                    columnspan=columnspan)
+        formfield = EntryField(self.runwindow,textvariable=newname)
+        formfield.grid(row=2,column=0)
+        sub_btn=Button(self.runwindow,text = 'Use this name',
                   command = submitform,anchor ='c')
-        sub_btn.grid(row=2,column=0,sticky='',padx=padx,pady=pady)
         sub_btn.wait_window(self.verifysubwindow) #then move to next step
+        sub_btn.grid(row=3,column=0,sticky='',padx=padx,pady=pady)
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def maybesort(self):
