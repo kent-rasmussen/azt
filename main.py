@@ -3362,8 +3362,9 @@ class Check():
         formfield.grid(row=2,column=0)
         sub_btn=Button(self.runwindow,text = 'Use this name',
                   command = submitform,anchor ='c')
-        sub_btn.wait_window(self.verifysubwindow) #then move to next step
         sub_btn.grid(row=3,column=0,sticky='',padx=padx,pady=pady)
+        self.runwindow.waitdone()
+        sub_btn.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def maybesort(self):
