@@ -3949,6 +3949,7 @@ class Check():
                                                 tonegroup,self.groupselected))
         self.subcheck=self.groupselected
         self.updatestatus() #this marks the group unverified.
+        self.db.write() #This is never iterated over; just one entry at a time.
     def addtonefieldpron(self,guid,framed):
         senseid=None
         self.db.addpronunciationfields(
@@ -4761,6 +4762,7 @@ class Check():
                                                     senseidsbygroup[groupstr]))
                     for senseid in senseidsbygroup[groupstr]:
                         self.db.addtoneUF(senseid,uf,analang=self.analang)
+            self.db.write()
             self.runwindow.destroy()
             self.tonegroupsjoinrename() #call again, in case needed
         def done():
@@ -4893,6 +4895,7 @@ class Check():
                 if str(output[senseid]) == str(groups[group]['values']):
                     groups[group]['senseids']+=[senseid]
                     self.db.addtoneUF(senseid,group,analang=self.analang)
+        self.db.write()
         log.info("Done adding senseids to groups.")
         return groups #after filling it out with senseids
     def prioritizegroupUFs(self,groups):
@@ -7353,6 +7356,7 @@ def removesenseidfromsubcheck(self,parent,senseid):
                         location=self.name,fieldvalue=self.subcheck,
                         showurl=True
                         )
+    self.db.write() #This is not iterated over
     self.markunsortedsenseid(senseid)
     parent.destroy() #.runwindow.resetframe()
 def inherit(self,parent=None,attr=None):
