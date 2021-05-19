@@ -4261,17 +4261,18 @@ class Check():
                                 "T":[(None,None),] #We should fix this some day
                                 }
     """Doing stuff"""
-    def getrunwindow(self,nowait=False,msg=None):
+    def getrunwindow(self,nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
         need to test for both."""
+        if title == None:
+            title=(_("Run Window"))
         if hasattr(self,'runwindow') and (self.runwindow.winfo_exists()):
             log.info("Runwindow already there! Resetting frame...")
             self.runwindow.resetframe() #I think I'll always want this here...
         else:
-            t=(_("Run Window"))
-            self.runwindow=Window(self.frame,title=t)
-            self.runwindow.title(t)
+            self.runwindow=Window(self.frame,title=title)
+        self.runwindow.title(title)
         self.runwindow.lift()
         if nowait != True:
             self.runwindow.wait(msg=msg)
