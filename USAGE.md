@@ -108,14 +108,12 @@ Once you have the form and gloss content in the appropriate boxes, click on 'see
 
 If you absolutely regret a tone frame you have set up, all your frames are stored in `<lift filename>_ToneFrames.py` next to your [LIFT](https://code.google.com/archive/p/lift-standard/) file. Be careful editing this, though; you may need to redefine all your frames if you corrupt this file (This would be a great time to ask for help if you don't absolutely certainly know what you're doing).
 
-### Tone Frame Groups
+### Tone Frame Groups ![Tone Frame Groups](images/T%20alone%20clear6_icon.png "Tone Frame Groups"){#id .class width=50 }
 [A→Z+T](https://github.com/kent-rasmussen/azt) by default labels the groups into which you sort your data by frame with numbers. This is because, at least initially, the fact that it is its own thing (all one thing, and unlike the other groups) is more important than any description of the group, however objective it may be.
 That said, there may come a time where you want to give one or more of these groups a particular name, like `HL` or `[˦˦ ˨˨]`, perhaps because you want to remember how you thought of the surface form at the time, or because you don't want the group names in your database to be just numbers. To do this, right click on the verification window *while verifying the group you want to rename*, and click on `Show Menu`. This will provide a menu which will allow you to change the name.
 Regarding name changes, please be cognizant of the fact that these names are for a *part of speech* and *syllable profile*, **in a given frame**. These should describe the *surface* tone only; hypotheses regarding underlying tone come later (see [`Joining and Renaming Draft Tone Groups`](#joining-and-renaming-draft-tone-groups), below; see also the [AZT Process Flow Chart](https://github.com/kent-rasmussen/azt/docs/AZT%20Process%20Flow%20Chart.png)).
 
-### Recording ![Recording](images/Microphone%20alone_sm.png "microphone")
-![Recording](images/Microphone alone_sm.png "Microphone")
-<img align="right" width="100" height="100" src="https://github.com/kent-rasmussen/azt/blob/WOCAL10/images/Microphone%20alone_sm.png"/>
+### Recording ![Recording](images/Microphone%20alone_sm.png "microphone"){#id .class width=50 }
 The first time you try to record, you will be asked to tell [A→Z+T](https://github.com/kent-rasmussen/azt) what sound card parameters you want. You can set frequency, bit depth, and sound card number (to select between multiple cards, for your microphone and for your speakers. This window is designed with test `play` and `record` buttons, so you can set parameters and test them, before moving on. I suggest you budget some time to play with the settings there, and confirm that recording is working, before moving on. I suggest you select the highest quality that your card can do (assuming that's what you want!), and test to see if it records and plays back OK. I have found several computers with cards that can record at 96khz, somewhat to my surprise —though be sure to think about your microphone and environment, etc, too! If you are making recordings for easy sharing over low bandwidth (as opposed to linguistic study), consider the implications of these setting on the size of your files.
 
 You can store the sound card settings in your repository, so you won't have to keep setting them, once you discover what works best in your context. However, if you are sharing a repository across computers with different sound cards, you may not want to do this. The sound card settings dialog is also available through a menu item.
@@ -126,7 +124,8 @@ Regarding which sound card to choose (as [A→Z+T](https://github.com/kent-rasmu
 Regarding external (e.g., USB) sound interfaces, I have noticed an issue worth pointing out:
 - In some contexts (perhaps particularly in places with lower quality power, or running off a generator?), I have noticed inconsistencies building up over time in recordings. They may start with pops or other problems in the recordings, and ultimately not record at all. In any case, there is an easy fix: shut down and restart [A→Z+T](https://github.com/kent-rasmussen/azt). But this is a good reminder to listen to your recordings in real time, as you make them.
 
-## Subsequent Runs: CV analysis (View data and run reports)
+## Subsequent Runs: CV analysis ![CV](images/ZA alone clear6_icon.png){#id .class width=50 }
+### (View data and run reports)
 [A→Z+T](https://github.com/kent-rasmussen/azt) doesn't do CV sorting and verification (Yet!), but you can make recordings and filter your data and look at it through a number of checks (e.g., by C1, or by V1=V2, etc.).
 
 ### Recording Citation and Secondary Forms
@@ -139,7 +138,7 @@ For a more thorough report, use the Basic Report menu item. This will select you
 
 I want this tool to be ultimately able to help with the sorting and correction of consonants and vowels, but my hope is that until those functions are implemented, these reports will be helpful.
 
-## Subsequent Runs: Tone (Sort, and Follow Directions)
+## Subsequent Runs: Tone (Sort, and Follow Directions) ![Tone](images/T%20alone%20clear6_icon.png "Tone"){#id .class width=50 }
 ### Sorting progression: The Status Table
 Once you have done any sorting for the selected part of speech, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
 
