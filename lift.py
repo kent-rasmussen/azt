@@ -746,27 +746,22 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                         kwargs['senseid'],kwargs['guid']))
         node=self.getsensenode(senseid=kwargs['senseid'])
         if node is None:
-            log.info("Sorry, this didn't return a node:".format(
-                            kwargs['guid'],kwargs['senseid']))
+            log.info("Sorry, this didn't return a node: {}".format(
+                                                            kwargs['senseid']))
             return
-        # """Logic to check if this example already exists"""
-        # """This function returns a text node (from any one of a number of
+        # Logic to check if this example already here
+        # This function returns a text node (from any one of a number of
         # example nodes, which match form, gloss and location) containing a
         # tone sorting value, or None (if no example nodes match form, gloss
-        # and location)"""
+        # and location)
         #We're adding a node to kwargs here.
         exfieldvalue=self.exampleissameasnew(**kwargs,node=node,showurl=False)
-        # guid,senseid,analang,glosslang,
-        # glosslang2,
-        # forms,
-        # fieldtype,
-        # location,fieldvalue,node,ps=None
         if exfieldvalue is None: #If not already there, make it.
             log.info("Didn't find that example already there, creating it...")
             p=ET.SubElement(node, 'example')
             form=ET.SubElement(p,'form',attrib={'lang':kwargs['analang']})
             t=ET.SubElement(form,'text')
-            t.text=kwargs['forms'][kwargs['analang']] #?
+            t.text=kwargs['forms'][kwargs['analang']]
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
             fieldgloss=ET.SubElement(p,'translation',attrib={'type':
@@ -792,27 +787,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 log.info("=> Found that example already there")
         exfieldvalue.text=kwargs['fieldvalue'] #change this *one* value, either way.
         self.updatemoddatetime(guid=kwargs['guid'],senseid=kwargs['senseid'])
-        # self.write()
         if self.debug == True:
             log.info("add langform: {}".format(kwargs['forms'][kwargs['analang']]))
             log.info("add tone: {}".format(['fieldvalue']))
             log.info("add gloss: {}".format(kwargs['forms'][kwargs['glosslang']]))
             if glosslang2 != None:
                 log.info(' '.join("add gloss2:", kwargs['forms'][kwargs['glosslang2']]))
-        # """This is what we're adding/modifying here:
-        # <example>
-        #     <form lang="gnd"><text>dìve</text></form>
-        #     <translation type="Frame translation">
-        #         <form lang="gnd"><text>constructed gloss here</text></form>
-        #     </translation>
-        #     <field type="tone">
-        #         <form lang="gnd"><text>LM</text></form>
-        #     </field>
-        #     <field type="location">
-        #         <form lang="gnd"><text>Isolation</text></form>
-        #     </field>
-        # </example>
-        # """
     def forminnode(self,node,value):
         # Returns True if `value` is in *any* text node child of any form child
         # of node: [node/'form'/'text' = value]
