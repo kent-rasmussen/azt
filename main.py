@@ -6080,6 +6080,8 @@ class MainApplication(Frame):
         self.parent.photo['transparent'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/AZT stacks6_sm.png')
         self.parent.photo['small'] = tkinter.PhotoImage(file = imgurl)
+        imgurl=file.fullpathname('images/AZT stacks6_icon.png')
+        self.parent.photo['icon'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/T alone clear6.png')
         self.parent.photo['T'] = tkinter.PhotoImage(file = imgurl)
         imgurl=file.fullpathname('images/Z alone clear6.png')
