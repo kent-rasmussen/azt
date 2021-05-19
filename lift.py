@@ -682,6 +682,22 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getguids()
         self.getsenseids()
         return senseid
+    def getentrynode(self,senseid,showurl=False):
+        """Get the sense node"""
+        urlnattr=self.geturlnattr('entry',senseid=senseid)
+        url=urlnattr['url']
+        if showurl==True:
+            log.info(url)
+        node=self.nodes.find(url) #this should always find just one node
+        return node
+    def getsensenode(self,senseid,showurl=False):
+        """Get the sense node"""
+        urlnattr=self.geturlnattr('senseid',senseid=senseid)
+        url=urlnattr['url']
+        if showurl==True:
+            log.info(url)
+        node=self.nodes.find(url) #this should always find just one node
+        return node
     def addexamplefields(self,showurl=False,**kwargs):
         # ,guid,senseid,analang,glosslang,glosslang2,forms,
         # fieldtype,location,fieldvalue,ps=None
@@ -694,12 +710,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 "guid (in lift.py)".format(kwargs['fieldvalue'],
                                         kwargs['location'],kwargs['fieldtype'],
                                         kwargs['senseid'],kwargs['guid']))
-        """Get the sense node"""
-        urlnattr=self.geturlnattr('senseid',senseid=kwargs['senseid'])
-        url=urlnattr['url']
-        if showurl==True:
-            log.info(url)
-        node=self.nodes.find(url) #this should always find just one node
+        node=self.getsensenode(senseid=kwargs['senseid'])
         if node is None:
             log.info("Sorry, this didn't return a node:".format(
                             kwargs['guid'],kwargs['senseid']))
