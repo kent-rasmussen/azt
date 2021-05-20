@@ -18,8 +18,11 @@ For some reason, I have had trouble getting pyaudio installed on Windows machine
 - Download and install Python 3.6.8 (e.g., from [here](https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe)).
     - **Be sure to check "add to PATH"** (or whatever options are appropriate), so Windows knows where Python is installed.
     - If you have more than one version of python installed (e.g. 2.7 and 3.6.8), be sure to know how to run version 3 for this program.
-- To install the `pyaudio` dependency, open a terminal (e.g., `⊞ win`+`R` then type 'cmd') and run
+- Then, to install the `pyaudio` dependency, open a terminal (e.g., `⊞ win`+`R` then type 'cmd') and run
     - `python -m pip install pyaudio`
+- Alternatively (instead of the above two steps), it may work to do the following:
+    - `python -m pip install pipwin`
+    - `pipwin install pyaudio`
 
 ## XLingPaper and the XMLmind XML Editor (XXE)
 To make full use of A→Z+T's report output, I strongly advise you to be ready to use [XLingPaper](https://software.sil.org/xlingpaper/), if you are not already. It can be downloaded [here](https://software.sil.org/xlingpaper/download); this page also includes information on downloading [the XMLmind XML Editor (XXE)](http://www.xmlmind.com/xmleditor/), which is critical to most uses of [XLingPaper](https://software.sil.org/xlingpaper/).
@@ -35,4 +38,4 @@ If you download an archive (e.g., zip file), extract it so you have a folder of 
 
 To run: Assuming your system is configured correctly, just run `main.py`. Depending on your system, that may be just a click on the file (or a link to it on your desktop or wherever), or you may need to type that into a terminal. Your operating system should know to open `main.py` with python, but you can also explicitly tell it to with `python main.py`.
 
-For usage information, see [USAGE.md](USAGE.md)
+For usage information, see [USAGE](USAGE.md)
