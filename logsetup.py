@@ -70,7 +70,7 @@ def logwritelzma(filename):
     """When this goes into production, change this:"""
     compressed='log_'+datetime.datetime.utcnow().isoformat()[:-7]+'Z'+'.xz'
     compressed=re.sub(':','-',compressed)
-    with open(filename,'r') as d:
+    with open(filename,'r', encoding='utf-8') as d:
         log.debug("Logfile {} opened.".format(filename))
         with lzma.open(compressed, "wt") as f:
             log.debug("LZMA file {} opened.".format(compressed))
