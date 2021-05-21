@@ -1484,7 +1484,7 @@ class Check():
             add=None
             rm=value
         for senseid in self.senseidsincheck(senseids): #only for this ps-profile
-            self.db.modverificationnode(senseid,add=add,rm=rm)
+            self.db.modverificationnode(senseid,vtype=self.profile,add=add,rm=rm)
         if refresh == True:
             self.db.write() #for when not iterated over, or on last repeat
     def updatestatus(self,subcheck=None,verified=False,refresh=True):
@@ -3937,7 +3937,8 @@ class Check():
             self.db.updateexfieldvalue(senseid=senseid,fieldtype='tone',
                                 location=self.name,fieldvalue=oldtonevalue,
                                 newfieldvalue=newtonevalue)
-            self.db.modverificationnode(senseid=senseid,add=add,rm=rm)
+            self.db.modverificationnode(senseid=senseid,vtype=self.profile,
+                                                                add=add,rm=rm)
         self.db.write() #once done iterating over senseids
     def addtonegroup(self):
         log.info("Adding a tone group!")
@@ -7411,7 +7412,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
                         showurl=True
                         )
     rm=self.verifictioncode(name,subcheck)
-    self.db.modverificationnode(senseid,rm=rm)
+    self.db.modverificationnode(senseid,vtype=self.profile,rm=rm)
     self.db.write() #This is not iterated over
     self.markunsortedsenseid(senseid)
     parent.destroy() #.runwindow.resetframe()
