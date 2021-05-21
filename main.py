@@ -6468,6 +6468,12 @@ class SoundFilePlayer(object):
             log.debug("Valuerror: {}",e)
             raise
             return
+        except OSError as e:
+            log.debug("OSError: {}",e)
+            if '(no default output device)' in e:
+                self.audioout_card_index=None
+            # raise
+            return
     def streamclose(self):
         if hasattr(self,'stream'):
             self.stream.close()
