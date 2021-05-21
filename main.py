@@ -3592,7 +3592,7 @@ class Check():
             self.runwindow.wait_window(window=self.sorting)
             if not self.runwindow.winfo_exists():
                 return 1
-            log.debug("Group selected:",self.groupselected)
+            log.debug("Group selected: {}".format(self.groupselected))
             if hasattr(self,'groupselected'): # != []:
                 if self.groupselected == "NONEOFTHEABOVE":
                     """If there are no groups yet, or if the user asks for another
