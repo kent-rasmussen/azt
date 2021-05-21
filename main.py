@@ -6690,7 +6690,7 @@ class RecordButtonFrame(Frame):
         self.wf.setsampwidth(self.pa.get_sample_size(self.sample_format))
         self.wf.setframerate(self.fs)
     def fileclose(self):
-        while self.stream.is_active():
+        while hasattr(self,'stream') and self.stream.is_active():
             time.sleep(0.1)
         if hasattr(self,'fulldata'):
             self.wf.writeframes(self.fulldata)
