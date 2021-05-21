@@ -3895,9 +3895,9 @@ class Check():
                         verify()
                         return 0
                     else:
-                        msg=_("Now we're going to join groups ‘{}’ and "
-                            "‘{}’, marking the new group unverified.".format(group1,
-                            self.groupselected))
+                        msg=_("Now we're going to move group ‘{0}’ into "
+                            "‘{1}’, marking ‘{1}’ unverified.".format(
+                            group1,self.groupselected))
                         self.runwindow.wait(msg=msg)
                         log.debug(msg)
                         """All the senses we're looking at, by ps/profile"""
