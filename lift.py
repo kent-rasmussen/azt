@@ -799,7 +799,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if self.debug == True:
                 log.info("=> Found that example already there")
         exfieldvalue.text=kwargs['fieldvalue'] #change this *one* value, either way.
-        self.updatemoddatetime(guid=kwargs['guid'],senseid=kwargs['senseid'])
+        if 'guid' in kwargs:
+            self.updatemoddatetime(guid=kwargs['guid'],senseid=kwargs['senseid'])
+        else:
+            self.updatemoddatetime(senseid=kwargs['senseid'])
         if self.debug == True:
             log.info("add langform: {}".format(kwargs['forms'][kwargs['analang']]))
             log.info("add tone: {}".format(['fieldvalue']))
