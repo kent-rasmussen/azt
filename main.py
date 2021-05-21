@@ -6502,10 +6502,12 @@ class SoundFilePlayer(object):
         def block():
             log.debug("running play block with args "
                         "output_device_index={}, channels={}, "
-                        "rate={}".format(self.audioout_card_index,
-                        channels,rate))
+                        "rate={}, duration={}, format={}".format(
+                        self.audioout_card_index,
+                        channels,rate,duration,self.getformat()))
+            framesleft = frames
             self.streamopen(rate,channels)
-            self.data = self.wf.readframes(self.chunk)
+            self.data = self.wf.readframes(self.chunk) #self.chunk
             while len(self.data) > 0:
                 log.debug("Trying to play")
                 log.debug("len(self.data): {}".format(len(self.data)))
