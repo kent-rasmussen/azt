@@ -5604,6 +5604,8 @@ class Window(tkinter.Toplevel):
         inherit(self)
         """Things requiring tkinter.Window below here"""
         super(Window, self).__init__()
+        # super(Window, self).__init__(class_="AZT")
+        # self.config(className="azt")
         self['background']=self.theme['background']
         """Is this section necessary for centering on resize?"""
         for rc in [0,2]:
@@ -6181,6 +6183,7 @@ class MainApplication(Frame):
         #Might be needed for M$ windows:root.state('zoomed')
         """Things that belong to a tkinter.Frame go after this:"""
         super().__init__(parent)
+        # super().__init__(parent,class_="AZT")
         parent.withdraw()
         splash = Splash(self)
         self.grid(row=1, column=1,  #This is inbetween rc=[0,2], above.
@@ -7447,6 +7450,10 @@ def main():
     global program
     log.info("Running main function") #Don't translate yet!
     root = tkinter.Tk()
+    # log.info(root.winfo_class())
+    # root.className="azt"
+    # root.winfo_class("azt")
+    # log.info(root.winfo_class())
     myapp = MainApplication(root,program)
     myapp.mainloop()
     logshutdown() #in logsetup
