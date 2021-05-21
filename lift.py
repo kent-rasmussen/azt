@@ -683,8 +683,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getguids()
         self.getsenseids()
         return senseid
-    def modverificationnode(self,senseid,add=None,rm=None):
-        vf=self.addverificationnode(senseid)
+    def modverificationnode(self,senseid,vtype,add=None,rm=None):
+        nodes=self.addverificationnode(senseid,vtype=vtype)
+        vf=nodes[0]
+        sensenode=nodes[1]
         if vf is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
@@ -711,15 +713,22 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         vf.text=str(l)
         if changed == True:
             self.updatemoddatetime(senseid=senseid)
-    def addverificationnode(self,senseid):
+        log.log(2,"Empty node? {}; {}".format(vf.text,l))
+        if l == []:
+            log.debug("removing empty node")
+            sensenode.remove(vf)
+        else:
+            log.log(2,"Not removing empty node")
+    def addverificationnode(self,senseid,vtype):
         node=self.getsensenode(senseid=senseid)
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
-        vf=node.find("field[@type='{}']".format("verification"))
+        vf=node.find("field[@type='{} {}']".format(vtype,"verification"))
         if vf == None:
-            vf=ET.SubElement(node, 'field', attrib={'type':"verification"})
-        return vf
+            vf=ET.SubElement(node, 'field',
+                                attrib={'type':"{} verification".format(vtype)})
+        return (vf,node)
     def getentrynode(self,senseid,showurl=False):
         """Get the sense node"""
         urlnattr=self.geturlnattr('entry',senseid=senseid)
