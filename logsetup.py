@@ -72,7 +72,7 @@ def logwritelzma(filename):
     compressed=re.sub(':','-',compressed)
     with open(filename,'r', encoding='utf-8') as d:
         log.debug("Logfile {} opened.".format(filename))
-        with lzma.open(compressed, "wt") as f:
+        with lzma.open(compressed, "wt", encoding='utf-8') as f:
             log.debug("LZMA file {} opened.".format(compressed))
             data=d.read()
             log.debug("Logfile {} read (this and following will not be written "
