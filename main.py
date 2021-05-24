@@ -3972,7 +3972,7 @@ class Check():
                                     guid=guid,senseid=senseid,
                                     analang=self.analang,
                                     glosslang=self.glosslang,
-                                    glosslang2=self.glosslang2,
+                                    glosslang2=self.glosslang2, #OK if None
                                     forms=framed,
                                     # langform=framed[self.analang],
                                     # glossform=framed[self.glosslang],
@@ -3992,7 +3992,7 @@ class Check():
         self.subcheck=self.groupselected
         self.updatestatus() #this marks the group unverified.
         self.db.write() #This is never iterated over; just one entry at a time.
-    def addtonefieldpron(self,guid,framed):
+    def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
         self.db.addpronunciationfields(
                                     guid,senseid,self.analang,self.glosslang,
