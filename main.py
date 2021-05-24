@@ -1988,6 +1988,8 @@ class Check():
         if 'tonegroup' in output:
             text=[str(output['tonegroup'])]+text
         output['formatted']='\t'.join(text)
+        if None in output:
+            log.error("Apparently None is an output key! {}".format(output))
         return output
     def getframedentry(self,guid):
         """This is most likely obsolete"""
@@ -3197,7 +3199,7 @@ class Check():
         else:
             el=xlp.LangData(ex,self.analang,framed[self.analang])
         eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
-        if ((self.glosslang2 != '') and (self.glosslang2 in framed)
+        if ((self.glosslang2 != None) and (self.glosslang2 in framed)
                 and (framed[self.glosslang2] is not None)):
                 eg2=xlp.Gloss(ex,self.glosslang2,framed[self.glosslang2])
     def makecountssorted(self):
