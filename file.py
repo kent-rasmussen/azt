@@ -6,6 +6,11 @@ import pathlib
 import os
 import logging
 log = logging.getLogger(__name__)
+try: #Allow this module to be used without translation
+    _
+except:
+    def _(x):
+        return x
 
 def fullpathname(filename):
     try:
@@ -147,8 +152,6 @@ if __name__ == "__main__":
     import sys
     import datetime
     import shutil
-    def _(x):
-        return x
     def usage():
         log.info("usage for one entry:")
         log.info(" python3 " + pathlib.Path(__file__).name + " <forms|ids|tones|prontones|glosses|gloss2s|plurals|pses|all|cards|lxnglosses> <lift file> <guid>")
