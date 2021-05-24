@@ -3,7 +3,7 @@
 ## release stoppers
 - decent debugging information on play problems
     - find how to capture exceptions from PyAudio
-- check that every reference to updatestatus as appropriate updatestatuslift call
+- check that every reference to updatestatus has appropriate updatestatuslift call
    - check name changes on groups and frame names
 - decide where to put self.db.write()
     - any function that called self.db.updatemoddatetime()
@@ -14,9 +14,18 @@
         - rmexfields
 ## Things to Test
 - check that changes to S regexs don't break too much.
-
+-import ctypes // scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 ## In Process (fix)
+-remove this line from logs:
+    maybeboard done: True
+    -[<__main__.Frame object .!mainapplication.!frame.!frame4.!frame>, <__main__.ScrollingFrame object .!mainapplication.!frame.!frame4.!scrollingframe>]
+working on Plural
 - add mini keyboard of common symbols (class, to add to Entry)
+- fn to change tone frame name, everywhere where needed
+    - toneframes.py
+    - verification file
+    - example nodes
+    - verification nodes
 - make verify window go away when last button is clicked
 - Set up schema to test line expenses on boot time, for each line
     - this-then, store then=this

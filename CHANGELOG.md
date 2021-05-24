@@ -15,6 +15,11 @@
 - Context menu working correctly
 - fixed but where CV type wouldn't set with ad hoc group as profile (it now resets/guesses the profile)
 - New file name schema is working correctly field name (and type if name='field')
+- new updatestatuslift, to add verification info to lift file, including removing on unverification, etc. Status is now stored in the LIFT file, for each sense.
+- reduced writes to LIFT file, where AZT iterated across multiple changes
+- fixed some syntax errors
+- fixed MS Windows Unicode issue
+- added user accessible switch between labels and buttons on the main screen (via context menu)
 
 # Version 0.8
 - set up ad hoc groups to be more permanent:
