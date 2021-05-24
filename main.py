@@ -211,6 +211,8 @@ class Check():
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
+        #set None to make labels, else "raised" "groove" "sunken" "ridge" "flat"
+        self.mainlabelrelief()
         self.checkcheck()
     """Guessing functions"""
     def guessanalang(self):
@@ -2088,6 +2090,13 @@ class Check():
         for ps in self.db.pss:
             self.guidsvalidbyps[ps]=self.db.get('guidbyps',ps=ps)
     """Making the main window"""
+    def mainlabelrelief(self,relief=None,refresh=False,event=None):
+        #set None to make this a label instead of button:
+        log.log(3,"setting button relief to {}, with refresh={}".format(relief,
+                                                                    refresh))
+        self.mainrelief=relief # None "raised" "groove" "sunken" "ridge" "flat"
+        if refresh == True:
+            self.checkcheck()
     def checkcheck(self):
         """This checks for incompatible or missing variable values, and asks
         for them. If values are OK, they are displayed."""
@@ -2113,7 +2122,11 @@ class Check():
                 columnspan=1
                 ipadx=0
             print(label, opts['labelcolumn'],opts['columnspan'])
-            l=Label(parent, text=label,font=self.fonts['report'],anchor='w')
+            if self.mainrelief == None:
+                l=Label(parent, text=label,font=self.fonts['report'],anchor='w')
+            else:
+                l=Button(parent,text=label,font=self.fonts['report'],anchor='w',
+                    relief=self.mainrelief)
             l.grid(column=column, row=row, columnspan=columnspan,
                     ipadx=ipadx, sticky='w')
             if cmd is not None:
@@ -2491,14 +2504,21 @@ class Check():
     def boardtitle(self):
         titleframe=Frame(self.leaderboard)
         titleframe.grid(row=0,column=0)
-        lt=Label(titleframe, text=_(self.typedict[self.type]['sg']),
-                font=self.fonts['title'])
+        if self.mainrelief == None:
+            lt=Label(titleframe, text=_(self.typedict[self.type]['sg']),
+                                                    font=self.fonts['title'])
+        else:
+            lt=Button(titleframe, text=_(self.typedict[self.type]['sg']),
+                                font=self.fonts['title'],relief=self.mainrelief)
         lt.grid(row=0,column=0,sticky='nwe')
         Label(titleframe, text=_('Progress for'), font=self.fonts['title']
             ).grid(row=0,column=1,sticky='nwe',padx=10)
-        lps=Label(titleframe,relief='flat',bd=0,text=self.ps,
-                anchor='c',
-                font=self.fonts['title'])
+        if self.mainrelief == None:
+            lps=Label(titleframe,text=self.ps,anchor='c',
+                                                    font=self.fonts['title'])
+        else:
+            lps=Button(titleframe,text=self.ps, anchor='c',
+                            relief=self.mainrelief, font=self.fonts['title'])
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttt=ToolTip(lt,_("Change Check Type"))
         ttps=ToolTip(lps,_("Change Part of Speech"))
@@ -5894,6 +5914,12 @@ class MainApplication(Frame):
         w=w/2
         h=h/2
         self.parent.geometry("%dx%d+0+0" % (w, h))
+    def _showbuttons(self,event=None):
+        self.check.mainlabelrelief(relief='flat',refresh=True)
+        self.setcontext()
+    def _hidebuttons(self,event=None):
+        self.check.mainlabelrelief(relief=None,refresh=True)
+        self.setcontext()
     def _removemenus(self,event=None):
         if hasattr(self,'menubar'):
             self.menubar.destroy()
@@ -6150,6 +6176,10 @@ class MainApplication(Frame):
             self.context.menuitem(_("Show Menus"),self._setmenus)
         else:
             self.context.menuitem(_("Hide Menus"),self._removemenus)
+        if hasattr(self.check,'mainrelief') and self.check.mainrelief == None:
+            self.context.menuitem(_("Show Buttons"),self._showbuttons)
+        else:
+            self.context.menuitem(_("Hide Buttons"),self._hidebuttons)
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
