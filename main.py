@@ -6355,6 +6355,8 @@ class RadioButtonFrame(Frame):
                                                 **kwargs)
             row+=1
 class Button(tkinter.Button):
+    def nofn(self):
+        pass
     def __init__(self, parent, text=None,
                 choice=None, window=None, #some buttons have these, some don't
                 command=None, column=0, row=1,
@@ -6386,6 +6388,8 @@ class Button(tkinter.Button):
         if 'cmd' in kwargs and kwargs['cmd'] is not None:
             cmd=kwargs['cmd']
             del kwargs['cmd'] #we don't want this going to the button as is.
+        elif command is None:
+            cmd=self.nofn
         else:
             """This doesn't seem to be working, but OK to avoid it..."""
             if window is not None:
