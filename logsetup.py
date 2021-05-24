@@ -95,7 +95,7 @@ def logwritelzma(filename):
             log.error("Data before compression NOT the same as after "
                     "decompression; writing decompressed back to file {}!"
                     "".format(decompressed))
-            with open(decompressed,'w') as chd:
+            with open(decompressed,'w', encoding='utf-8') as chd:
                 chd.write(data2)
                 log.debug("Decompressed file {} written to disk."
                     "".format(decompressed))
