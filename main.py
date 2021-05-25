@@ -6510,6 +6510,11 @@ class RecordButtonFrame(Frame):
         self.id=id
         self.gloss=gloss
         self.check=check
+        try:
+            check.pyaudio.pa.get_format_from_width(1) #get_device_count()
+        except:
+            check.pyaudio=sound.AudioInterface()
+        self.pa=check.pyaudio
         if not hasattr(check,'soundsettings'):
             check.loadsoundsettings()
         self.callbackrecording=True
