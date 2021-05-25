@@ -2312,6 +2312,11 @@ class Check():
                 image=self.photo['record']
                 )
         self.maybeboard()
+    def donewpyaudio(self):
+        try:
+            self.pyaudio.terminate()
+        except:
+            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
     def soundcheckrefreshdone(self):
         self.storesettingsfile()
         self.soundsettingswindow.destroy()
@@ -2355,7 +2360,7 @@ class Check():
         except:
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.soundsettingswindow)
-        donewpyaudio(self)
+        self.donewpyaudio()
         if not self.exitFlag and self.soundsettingswindow.winfo_exists():
                 self.soundsettingswindow.destroy()
     def maybeboard(self):
@@ -4353,7 +4358,7 @@ class Check():
                     self.showentryformstorecordpage()
             self.ps=psori
             self.profile=profileori
-        donewpyaudio(self)
+        self.donewpyaudio()
     def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
         def setskip(event):
             self.runwindow.frame.skip=True
@@ -4496,7 +4501,7 @@ class Check():
             Button(self.runwindow.frame,
                     text=_("Continue to next syllable profile"),
                     command=next).grid(row=1,column=0)
-        donewpyaudio(self)
+        self.donewpyaudio()
     def getresults(self):
         self.getrunwindow()
         self.makeresultsframe()
@@ -6447,7 +6452,7 @@ class RecordButtonFrame(Frame):
                 #command=None,
                 # column=0, row=1,
                 **kwargs):
-        # This class needs to be cleanup after closing, with donewpyaudio(self)
+        # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.db=check.db
@@ -7081,11 +7086,6 @@ def inherit(self,parent=None,attr=None):
         parent=self.parent
     for attr in attrs:
         setattr(self,attr,getattr(parent,attr))
-def donewpyaudio(self):
-    try:
-        self.pyaudio.terminate()
-    except:
-        log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
 def donothing():
     log.debug("Doing Nothing!")
     pass
