@@ -5759,7 +5759,7 @@ class ScrollingFrame(Frame):
         inherit(self)
         Frame.__init__(self,parent)
         """Not sure if I want these... rather not hardcode."""
-        log.debug(self.parent.winfo_children())
+        # log.debug(self.parent.winfo_children())
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         """With or without the following, it still scrolls through..."""
