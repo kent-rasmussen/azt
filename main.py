@@ -7166,6 +7166,12 @@ def main():
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
+    try:
+        import ctypes
+        log.debug("Scale factor: {}".format(
+                    ctypes.windll.shcore.GetScaleFactorForDevice(0)))
+    except:
+        pass
     sys.excepthook = handle_exception
     if hasattr(sys,'_MEIPASS') and sys._MEIPASS is not None:
         aztdir=sys._MEIPASS
