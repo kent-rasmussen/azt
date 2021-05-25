@@ -669,7 +669,7 @@ class Check():
             b.grid(row=2,column=0,sticky='ew')
             self.runwindow.wait_window(w)
             w.destroy()
-        if self.exitFlag():
+        if self.exitFlag:
             return
         else:
             self.runwindow.wait()
@@ -3516,7 +3516,7 @@ class Check():
         self.runwindow.frame.scroll.content.anotherskip.grid(row=1,column=0)
         self.getanotherskip(self.runwindow.frame.scroll.content.anotherskip)
         while (self.status[self.type][self.ps][self.profile][self.name][
-                'tosort'] == True and self.runwindow.winfo_exists()):
+                'tosort'] == True and not self.exitFlag):
             if hasattr(self,'groupselected'):
                 delattr(self,'groupselected') #reset this for each word!
             senseid=self.senseidsunsorted[0]
@@ -3561,9 +3561,8 @@ class Check():
             self.sorting.wrap()
             self.runwindow.waitdone()
             self.runwindow.wait_window(window=self.sorting)
-            if self.exitFlag():
+            if self.exitFlag:
                 return 1
-            log.debug("Group selected: {}".format(self.groupselected))
             if hasattr(self,'groupselected'): # != []:
                 if self.groupselected == "NONEOFTHEABOVE":
                     """If there are no groups yet, or if the user asks for another
@@ -3630,7 +3629,7 @@ class Check():
         self.makestatusdict()
         for self.subcheck in self.status[self.type][self.ps][self.profile][
                                                         self.name]['groups']:
-            if self.exitFlag():
+            if self.exitFlag:
                 return 1
             if self.subcheck in (self.status[self.type][self.ps][self.profile]
                                             [self.name]['done']):
@@ -3722,10 +3721,10 @@ class Check():
                 print(f"User did NOT select ‘{oktext}’, assuming we'll come "
                         "back to this!!")
         #Once done verifying each group:
-        if self.runwindow.winfo_exists():
-            self.runwindow.waitdone()
-        else:
+        if self.exitFlag:
             return 1
+        else:
+            self.runwindow.waitdone()
     def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
@@ -3826,7 +3825,7 @@ class Check():
         self.runwindow.waitdone()
         self.runwindow.frame.wait_window(canary)
         #On first button press/exit:
-        if self.exitFlag():
+        if self.exitFlag:
             return 1
         if hasattr(self,'groupselected'):
             if self.groupselected == "ALLOK":
@@ -3857,7 +3856,7 @@ class Check():
                     group1))
                 self.runwindow.wait_window(canary2)
                 #On second button press/exit:
-                if self.exitFlag(): #i.e., user exits by now
+                if self.exitFlag: #i.e., user exits by now
                     return 1
                 if hasattr(self,'groupselected'):
                     if self.groupselected == "ALLOK":
@@ -4312,7 +4311,7 @@ class Check():
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def showentryformstorecordpage(self):
         #The info we're going for is stored above sense, hence guid.
-        if self.exitFlag():
+        if self.exitFlag:
             log.info('no runwindow; quitting!')
             return
         if not self.runwindow.frame.winfo_exists():
@@ -4395,13 +4394,14 @@ class Check():
             self.showentryformstorecordpage()
         else:
             for psprofile in self.profilecountsValid:
-                if self.runwindow.winfo_exists():
-                    self.ps=psprofile[2]
-                    self.profile=psprofile[1]
-                    nextb=Button(self.runwindow,text=_("Next Group"),
-                                            cmd=self.runwindow.resetframe) # .frame.destroy
-                    nextb.grid(row=0,column=1,sticky='ne')
-                    self.showentryformstorecordpage()
+                if self.exitFlag:
+                    return 1
+                self.ps=psprofile[2]
+                self.profile=psprofile[1]
+                nextb=Button(self.runwindow,text=_("Next Group"),
+                                        cmd=self.runwindow.resetframe) # .frame.destroy
+                nextb.grid(row=0,column=1,sticky='ne')
+                self.showentryformstorecordpage()
             self.ps=psori
             self.profile=profileori
         self.donewpyaudio()
@@ -4445,7 +4445,7 @@ class Check():
                                                     self.audiolang) == False)):
                 continue
             row=0
-            if self.exitFlag():
+            if self.exitFlag:
                 return 1
             entryframe=Frame(self.runwindow.frame)
             entryframe.grid(row=1,column=0)
@@ -4538,7 +4538,7 @@ class Check():
                 skip=True
             if exited == True:
                 return
-        if self.runwindow.winfo_exists():
+        if not self.exitFlag:
             self.runwindow.waitdone()
             self.runwindow.resetframe()
             Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
