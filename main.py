@@ -6432,10 +6432,15 @@ class RecordButtonFrame(Frame):
         self.b.grid(row=0, column=0,sticky='w')
         self.b.bind('<ButtonPress>', self._start)
         self.b.bind('<ButtonRelease>', self._stop)
+    def _play(self,event):
+        log.debug("Asking PA to play now")
+        self.player=sound.SoundFilePlayer(self.filenameURL,self.pa,
+                                                                self.settings)
+        self.player.play()
     def makeplaybutton(self):
         self.p=Button(self,text=_('Play'),command=self.function)
         self.p.grid(row=0, column=1,sticky='w')
-        self.p.bind('<ButtonPress>', player._play)
+        self.p.bind('<ButtonPress>', self._play)
     def makedeletebutton(self):
         self.r=Button(self,text=_('Redo'),command=self.function)
         self.r.grid(row=0, column=2,sticky='w')
