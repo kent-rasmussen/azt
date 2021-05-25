@@ -2379,9 +2379,6 @@ class Check():
                             text=text, anchor='c',
                             cmd=cmd)
             bc.grid(row=row,column=1)
-            if varset == []:
-                bc.config(state="disabled")
-                bc.update()
             row+=1
         br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
         br.grid(row=row,column=0)
@@ -6446,7 +6443,7 @@ class RecordButtonFrame(Frame):
         self.r.grid(row=0, column=2,sticky='w')
         self.r.bind('<ButtonRelease>', self._redo)
     def addlink(self):
-        #this checks for and doesn't add it already there.
+        #this checks for and doesn't add if already there.
         self.db.addmediafields(self.node,self.filename,self.audiolang)
     def function(self):
         pass
@@ -6489,7 +6486,7 @@ class RecordButtonFrame(Frame):
                         wavfilename+='_'
                 self.filenames+=[re.sub('[][\. /?]+','_',
                                                     str(wavfilename))+'.wav']
-            #test if any of the filenames are there
+            #test if any of the generated filenames are there
             for self.filename in self.filenames:
                 self.filenameURL=str(file.getdiredurl(self.check.audiodir,
                                                                 self.filename))
@@ -6503,12 +6500,7 @@ class RecordButtonFrame(Frame):
             log.debug("No audio file found! using name: {}; names: {}; url:{}"
                     "".format(self.filename, self.filenames, self.filenameURL))
             return
-    def __init__(self, parent, check, id=None, node=None, form=None,
-                gloss=None, test=False,
-                #choice=None, window=None, #some buttons have these, some don't
-                #command=None,
-                # column=0, row=1,
-                **kwargs):
+    def __init__(self,parent,check,id=None,node=None,form=None,gloss=None,test=False,**kwargs):
         # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
@@ -6530,8 +6522,6 @@ class RecordButtonFrame(Frame):
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
         self.audiolang=check.audiolang
-        """I'm trusting here that no one has been screwing with the check
-        parameters"""
         self.test=test
         self.makefilenames()
         Frame.__init__(self,parent, **kwargs)
