@@ -1,6 +1,7 @@
 # A→Z+T Changelog
 
 # Version 0.8.1
+- moved PyAudio functions to module, improved function
 - Added glottal stop distinctions similar to Nasal distinctions
 - Added redo status file (will not redo verification status, but will recover groups.)
     - Iterates across profilesbysense entries for ps and profile
@@ -20,6 +21,11 @@
 - fixed some syntax errors
 - fixed MS Windows Unicode issue
 - added user accessible switch between labels and buttons on the main screen (via context menu)
+- cleaned up exiting fuctions
+- fixed recording filename problems
+- updated writing to lift file
+- updated references to updatestatus with appropriate updatestatuslift calls
+   - check name changes on groups and frame names
 
 # Version 0.8
 - set up ad hoc groups to be more permanent:

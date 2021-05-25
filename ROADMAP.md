@@ -1,20 +1,9 @@
 #Roadmap
 
 ## release stoppers
-- decent debugging information on play problems
-    - find how to capture exceptions from PyAudio
-- check that every reference to updatestatus has appropriate updatestatuslift call
-   - check name changes on groups and frame names
-- decide where to put self.db.write()
-    - any function that called self.db.updatemoddatetime()
-        - updateexfieldvalue
-        - modverificationnode
-        - addexamplefields
-        - addtoneUF
-        - rmexfields
+
 ## Things to Test
 - check that changes to S regexs don't break too much.
--import ctypes // scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 ## In Process (fix)
 -remove this line from logs:
     maybeboard done: True
