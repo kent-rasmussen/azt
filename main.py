@@ -4498,7 +4498,7 @@ class Check():
             d.grid(row=row,column=0)
             self.runwindow.waitdone()
             examplesframe.wait_window(entryframe)
-            if not self.runwindow.winfo_exists():
+            if self.exitFlag:
                 return 1
             if self.runwindow.frame.skip == True:
                 return 'skip'
