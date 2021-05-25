@@ -30,6 +30,7 @@ import file
 import profiles
 import setdefaults
 import xlp
+import sound
 """Other people's stuff"""
 import threading
 import itertools
@@ -125,8 +126,11 @@ class Check():
                                         filenamebase+".ProfileData.py")
         self.adhocgroupsfile=file.getdiredurl(filedir,
                                         filenamebase+".AdHocGroups.py")
+        self.soundsettingsfile=file.getdiredurl(filedir,
+                                        filenamebase+".SoundSettings.py")
         for savefile in [self.defaultfile,self.toneframesfile,self.statusfile,
-                        self.profiledatafile,self.adhocgroupsfile]:
+                        self.profiledatafile,self.adhocgroupsfile,
+                        self.soundsettingsfile]:
             if not file.exists(savefile):
                 print(savefile, "doesn't exist!")
         self.imagesdir=file.getimagesdir(self.filename)
@@ -998,10 +1002,12 @@ class Check():
         chk_btn=Button(self.addwindow.frame1,text = text, command = chk)
         chk_btn.grid(row=row+1,column=columnleft,pady=100)
     def setsoundhz(self,choice,window):
-        self.set('fs',choice,window)
+        self.soundsettings.fs=choice
+        window.destroy()
         self.soundcheckrefresh()
     def setsoundformat(self,choice,window):
-        self.set('sample_format',choice,window)
+        self.soundsettings.sample_format=choice
+        window.destroy()
         self.soundcheckrefresh()
     def getsoundformat(self):
         log.info("Asking for audio format...")
@@ -1009,10 +1015,12 @@ class Check():
         Label(window.frame, text=_('What audio format do you '
                                     'want to work with?')
                 ).grid(column=0, row=0)
-        buttonFrame1=ButtonFrame(window.frame,
-                                self.sample_formats,self.setsoundformat,
-                                window
-                                )
+        l=list()
+        ss=self.soundsettings
+        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
+            name=ss.hypothetical['sample_formats'][sf]
+            l+=[(sf, name)]
+        buttonFrame1=ButtonFrame(window.frame,l,self.setsoundformat,window)
         buttonFrame1.grid(column=0, row=1)
     def getsoundhz(self):
         log.info("Asking for sampling frequency...")
@@ -1020,16 +1028,20 @@ class Check():
         Label(window.frame, text=_('What sampling frequency you '
                                     'want to work with?')
                 ).grid(column=0, row=0)
-        buttonFrame1=ButtonFrame(window.frame,
-                                self.fss,self.setsoundhz,
-                                window
-                                )
+        l=list()
+        ss=self.soundsettings
+        for fs in ss.cards['in'][ss.audio_card_in]:
+            name=ss.hypothetical['fss'][fs]
+            l+=[(fs, name)]
+        buttonFrame1=ButtonFrame(window.frame,l,self.setsoundhz,window)
         buttonFrame1.grid(column=0, row=1)
     def setsoundcardindex(self,choice,window):
-        self.set('audio_card_index',choice,window)
+        self.soundsettings.audio_card_in=choice
+        window.destroy()
         self.soundcheckrefresh()
     def setsoundcardoutindex(self,choice,window):
-        self.set('audioout_card_index',choice,window)
+        self.soundsettings.audio_card_out=choice
+        window.destroy()
         self.soundcheckrefresh()
     def getsoundcardindex(self):
         log.info("Asking for input sound card...")
@@ -1037,10 +1049,11 @@ class Check():
         Label(window.frame, text=_('What sound card do you '
                                     'want to record sound with with?')
                 ).grid(column=0, row=0)
-        buttonFrame1=ButtonFrame(window.frame,
-                                self.audio_card_indexes,self.setsoundcardindex,
-                                window
-                                )
+        l=list()
+        for card in self.soundsettings.cards['in']:
+            name=self.soundsettings.cards['dict'][card]
+            l+=[(card, name)]
+        buttonFrame1=ButtonFrame(window.frame,l,self.setsoundcardindex,window)
         buttonFrame1.grid(column=0, row=1)
     def getsoundcardoutindex(self):
         log.info("Asking for output sound card...")
@@ -1048,10 +1061,12 @@ class Check():
         Label(window.frame, text=_('What sound card do you '
                                     'want to play sound with?')
                 ).grid(column=0, row=0)
-        buttonFrame1=ButtonFrame(window.frame,
-                    self.audioout_card_indexes,self.setsoundcardoutindex,
-                    window
-                    )
+        l=list()
+        for card in self.soundsettings.cards['out']:
+            name=self.soundsettings.cards['dict'][card]
+            l+=[(card, name)]
+        buttonFrame1=ButtonFrame(window.frame,l,self.setsoundcardoutindex,
+                                                                        window)
         buttonFrame1.grid(column=0, row=1)
     """Set User Input"""
     def set(self,attribute,choice,window=None,refresh=True):
@@ -1085,9 +1100,10 @@ class Check():
             elif attribute == 'name' and self.type == 'T':
                 #This can probably wait until runcheck
                 self.settonevariablesbypsprofile() #only on changing tone frame
-            if (attribute not in ['fs','sample_format','audio_card_index',
-                        'audioout_card_index'] #called in soundcheckrefreshdone
-                                                        and refresh == True):
+            elif attribute in ['fs','sample_format','audio_card_index',
+                        'audioout_card_index']: #called in soundcheckrefreshdone
+                self.storesettingsfile(setting='soundsettings')
+            if refresh == True:
                 self.checkcheck()
         else:
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
@@ -1245,10 +1261,6 @@ class Check():
                                 'additionalps',
                                 'entriestoshow',
                                 'additionalprofiles',
-                                'sample_format',
-                                'fs',
-                                'audio_card_index',
-                                'audioout_card_index',
                                 'interfacelang',
                                 'examplespergrouptorecord',
                                 'distinguish',
@@ -1271,6 +1283,13 @@ class Check():
             'adhocgroups':{
                                 'file':'adhocgroupsfile',
                                 'attributes':['adhocgroups']},
+            'soundsettings':{
+                                'file':'soundsettingsfile',
+                                'attributes':['sample_format',
+                                            'fs',
+                                            'audio_card_in',
+                                            'audio_card_out',
+                                            ]},
             'toneframes':{
                                 'file':'toneframesfile',
                                 'attributes':['toneframes']}
@@ -1347,9 +1366,13 @@ class Check():
         if hasattr(self,fileattr):
             filename=getattr(self,fileattr)
         self.f = open(filename, "w", encoding='utf-8')
+        if setting == 'soundsettings':
+            o=self.soundsettings
+        else:
+            o=self
         for s in self.settings[setting]['attributes']:
-            if hasattr(self,s):
-                v=getattr(self,s)
+            if hasattr(o,s):
+                v=getattr(o,s)
                 if v is not None:
                     self.f.write(s+'=')
                     pprint.pprint(v,stream=self.f)
@@ -1357,10 +1380,18 @@ class Check():
                 else:
                     log.log(3,"{}={}! Not stored in {}.".format(s,v,filename))
         self.f.close()
+    def loadsoundsettings(self):
+        if not hasattr(self,'soundsettings'):
+            self.soundsettings=sound.SoundSettings(self.pyaudio)
+        self.loadsettingsfile(setting='soundsettings')
     def loadsettingsfile(self,setting='defaults'):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
             filename=getattr(self,fileattr)
+        if setting == 'soundsettings':
+            o=self.soundsettings
+        else:
+            o=self
         try:
             log.debug("Trying for {} settings in {}".format(setting, filename))
             spec = importlib.util.spec_from_file_location(setting,filename)
@@ -1373,13 +1404,13 @@ class Check():
                 if hasattr(module,s):
                     log.debug("Found attribute {} with value {}".format(s,
                                 getattr(module,s)))
-                    setattr(self,s,getattr(module,s))
+                    setattr(o,s,getattr(module,s))
         except:
             log.error("Problem importing {}".format(filename))
             for s in self.settings[setting]['attributes']:
                 log.log(3,"looking for self.{}".format(s))
-                if hasattr(self,s):
-                    log.log(3,"Using {}: {}".format(s,getattr(self,s)))
+                if hasattr(o,s):
+                    log.log(3,"Using {}: {}".format(s,getattr(o,s)))
     def makeadhocgroupsdict(self, ps=None):
         # self.ps and self.profile should be set when this is called
         if ps is None:
@@ -2318,16 +2349,32 @@ class Check():
         except:
             log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
     def soundcheckrefreshdone(self):
-        self.storesettingsfile()
+        self.storesettingsfile(setting='soundsettings')
         self.soundsettingswindow.destroy()
-        self.checkcheck()
     def soundcheckrefresh(self):
         self.soundsettingswindow.resetframe()
         row=0
         Label(self.soundsettingswindow.frame,
                 text="Current Sound Card Settings:").grid(row=row,column=0)
         row+=1
+        ss=self.soundsettings
+        ss.check() #make defaults if not valid options
+        for varname, dict, cmd in [
+            ('audio_card_in', ss.cards['dict'], self.getsoundcardindex),
+            ('fs',ss.hypothetical['fss'], self.getsoundhz),
+            ('sample_format', ss.hypothetical['sample_formats'],
+                                                         self.getsoundformat),
+            ('audio_card_out', ss.cards['dict'], self.getsoundcardoutindex),
+                                                    ]:
             text=_("Change")
+            var=getattr(ss,varname)
+            log.debug("{} in {}".format(var,dict))
+            l=dict[var]
+            if cmd == self.getsoundcardindex:
+                l=_("Microphone: ‘{}’").format(l)
+            if cmd == self.getsoundcardoutindex:
+                l=_("Speakers: ‘{}’").format(l)
+            Label(self.soundsettingswindow.frame,text=l).grid(row=row,column=0)
             bc=Button(self.soundsettingswindow.frame, choice=text, #choice unused.
                             text=text, anchor='c',
                             cmd=cmd)
@@ -2356,8 +2403,13 @@ class Check():
     def soundcheck(self):
         #Set the parameters of what could be
         try:
-            check.pyaudio.get_host_api_count()
+            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
         except:
+            self.pyaudio=sound.AudioInterface()
+        if not hasattr(self,'soundsettings'):
+            self.loadsoundsettings()
+        self.soundsettingswindow=Window(self.frame,
+                                title=_('Select Sound Card Settings'))
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.soundsettingswindow)
         self.donewpyaudio()
@@ -4240,9 +4292,6 @@ class Check():
             i+=1
             return
     def record(self):
-        if None in [self.fs, self.sample_format, self.audio_card_index]:
-            self.soundcheck()
-        self.storesettingsfile()
         if self.type == 'T':
             self.showtonegroupexs()
         else:
@@ -6461,7 +6510,10 @@ class RecordButtonFrame(Frame):
         self.id=id
         self.gloss=gloss
         self.check=check
+        if not hasattr(check,'soundsettings'):
+            check.loadsoundsettings()
         self.callbackrecording=True
+        self.settings=check.soundsettings
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
         self.audiolang=check.audiolang
@@ -6472,8 +6524,9 @@ class RecordButtonFrame(Frame):
         Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
-        if None in [check.fs, check.sample_format,check.audio_card_index,
-                    check.audioout_card_index]:
+        if None in [self.settings.fs, self.settings.sample_format,
+                    self.settings.audio_card_in,
+                    self.settings.audio_card_out]:
             text=_("Set all sound card settings"
                     "\n(Do|Recording|Sound Card Settings)"
                     "\nand a record button will be here.")
@@ -6482,11 +6535,6 @@ class RecordButtonFrame(Frame):
                 relief='raised' #flat, raised, sunken, groove, and ridge
                 ).grid(row=0,column=0)
             return
-        else:
-            self.fs=check.fs
-            self.sample_format=check.sample_format
-            self.audio_card_index=check.audio_card_index
-            self.audioout_card_index=check.audioout_card_index
         self.makebuttons()
 class ButtonFrame(Frame):
     def __init__(self,parent,
