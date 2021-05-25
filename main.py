@@ -6333,10 +6333,8 @@ class RadioButtonFrame(Frame):
 class Button(tkinter.Button):
     def nofn(self):
         pass
-    def __init__(self, parent, text=None,
-                choice=None, window=None, #some buttons have these, some don't
-                command=None, column=0, row=1,
-                **kwargs):
+    def __init__(self, parent, text=None, choice=None, window=None,
+                command=None, column=0, row=1, **kwargs):
         """Remove these arguments; buttons shouldn't be passing them..."""
         """command is my hacky command specification, with lots of args added.
         cmd is just the command passing through."""
