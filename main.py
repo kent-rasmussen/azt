@@ -6448,36 +6448,39 @@ class RecordButtonFrame(Frame):
     def makefilenames(self):
         if self.test==True:
             self.filename=self.filenameURL="test_{}_{}.wav".format(
-                                        self.check.fs,self.check.sample_format)
+                                self.settings.fs,self.settings.sample_format)
         else:
             if ((self.id==None) or (self.node==None) #or (self.form==None)
                 or (self.gloss==None)):
                 print("Sorry, unless testing we need all these "
                         "arguments; exiting.")
             if self.form==None:
-                self.form=self.node.find(f"form[@lang='{self.check.analang}']/text").text
-            # make psprofile (if no audio file, the last in this list is used):
-            filenameopts=[self.check.ps]
+                self.form=self.node.find(f"form[@lang='{self.check.analang}']"
+                                                                "/text").text
+            args=[self.check.ps]
+            filenameopts=[None]
             if (self.node.tag == 'example'):
                 l=self.node.find("field[@type='location']//text")
                 if l is not None:
-                    filenameopts+=[self.check.ps+'-'+l.text]
-            if not hasattr(self.check, 'rx'):
-                #ad hoc dictionary to remove diacritics:
+                    filenameopts.insert(0,l.text) #make this the first option.
+            if not hasattr(self.check, 'rx'): #remove diacritics:
                 self.check.rx={'d':rx.make(rx.s(self.check,'d'),compile=True)}
             self.filenames=[]
-            args=[self.id]
+            args+=[self.id]
             args+=[self.node.tag]
             if self.node.tag == 'field':
                 args+=[self.node.get("type")]
             args+=[rx.stripdiacritics(self.check,self.form)]#profile <=Changes!
             args+=[self.gloss]
-            for opt in filenameopts:
-                args=args+[opt]
+            log.debug(filenameopts)
+            for opt in filenameopts: #get options to support older name schema
+                optargs=args[:]
+                optargs.insert(3,opt) #put after self.node.tag
+                log.log(3,optargs)
                 wavfilename=''
-                for arg in [x for x in args if x is not None]:
+                for arg in [x for x in optargs if x is not None]:
                     wavfilename+=arg
-                    if args.index(arg) < len(args):
+                    if optargs.index(arg) < len(optargs):
                         wavfilename+='_'
                 self.filenames+=[re.sub('[][\. /?]+','_',
                                                     str(wavfilename))+'.wav']
