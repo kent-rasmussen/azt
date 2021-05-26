@@ -4783,8 +4783,9 @@ class Check():
         self.runwindow.title(title)
         padx=50
         pady=10
-        Label(self.runwindow,text=title,font=self.fonts['title'],
-                ).grid(row=0,column=0,sticky='ew')
+        rwrow=gprow=qrow=0
+        t=Label(self.runwindow.frame,text=title,font=self.fonts['title'])
+        t.grid(row=rwrow,column=0,sticky='ew')
         text=_("This page allows you to join the {0}-{1} draft underlying tone "
                 "groups created for you by {2}, \nwhich are almost certainly "
                 "too small for you. \nLooking at a draft report, and making "
@@ -4798,36 +4799,45 @@ class Check():
                 "split groupings. \nTo see a report based on what you do "
                 "here, run the tone reports in the Advanced menu (without "
                 "analysis). ".format(self.ps,self.profile,self.program['name']))
-        Label(self.runwindow,text=text).grid(row=1,column=0,sticky='ew')
-        qframe=Frame(self.runwindow)
-        qframe.grid(row=2,column=0,sticky='ew')
+        rwrow+=1
+        i=Label(self.runwindow.frame,text=text)
+        i.grid(row=rwrow,column=0,sticky='ew')
+        rwrow+=1
+        qframe=Frame(self.runwindow.frame)
+        qframe.grid(row=rwrow,column=0,sticky='ew')
         text=_("What do you want to call this UF tone group for {}-{} words?"
                 "".format(self.ps,self.profile))
-        Label(qframe,text=text).grid(row=0,column=0,sticky='ew',pady=20)
+        qrow+=1
+        q=Label(qframe,text=text)
+        q.grid(row=qrow,column=0,sticky='ew',pady=20)
         named=tkinter.StringVar() #store the new name here
         namefield = EntryField(qframe,textvariable=named)
-        namefield.grid(row=0,column=1)
-        text=_("Select the groups below that you want in this group, then "
+        namefield.grid(row=qrow,column=1)
+        text=_("Select the groups below that you want in this {} group, then "
                 "click ==>".format(self.ps))
-        Label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
-        senseidsbygroup=self.getsenseidsbytoneUFgroups() #>self.toneUFgroups
+        qrow+=1
+        d=Label(qframe,text=text)
+        d.grid(row=qrow,column=0,sticky='ew',pady=20)
+        senseidsbygroup=self.getsenseidsbytoneUFgroups() #dict keyed by group
         sub_btn=Button(qframe,text = _("OK"), command = submitform, anchor ='c')
-        sub_btn.grid(row=1,column=1,sticky='w')
+        sub_btn.grid(row=qrow,column=1,sticky='w')
         done_btn=Button(qframe,text = _("Done —no change"), command = done,
                                                                     anchor ='c')
-        done_btn.grid(row=1,column=2,sticky='w')
+        done_btn.grid(row=qrow,column=2,sticky='w')
         groups=list()
-        row=0
-        scroll=ScrollingFrame(self.runwindow)
+        rwrow+=1
+        scroll=ScrollingFrame(self.runwindow.frame)
+        scroll.grid(row=rwrow,column=0,sticky='ew')
         for group in self.toneUFgroups: #make a variable and button to select
             idn=self.toneUFgroups.index(group)
             groups.append(tkinter.StringVar())
-            CheckButton(scroll.content, text = group,
+            n=len(senseidsbygroup[group])
+            cb=CheckButton(scroll.content, text = group+' ({})'.format(n),
                                 variable = groups[idn],
                                 onvalue = group, offvalue = 0,
                                 ).grid(row=row,column=0,sticky='ew')
-            row+=1
-        scroll.grid(row=3,column=0,sticky='ew')
+                                )
+            cb.grid(row=idn,column=0,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def tonegroupsbyUFlocation(self,senseidsbygroup):
@@ -5814,7 +5824,7 @@ class ScrollingFrame(Frame):
             self.canvas.config(xscrollcommand=xscrollbar.set)
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
         """Make all this show up, and take up all the space in parent"""
-        self.grid(row=0, column=0,sticky='nsew')
+        # self.grid(row=0, column=0,sticky='nsew') # should be done outside
         self.canvas.grid(row=0, column=0,sticky='nsew')
         # self.content.grid(row=0, column=0,sticky='nsew')
         """We might want horizonal bars some day? (also above)"""
