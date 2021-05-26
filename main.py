@@ -6510,7 +6510,7 @@ class RecordButtonFrame(Frame):
         self.gloss=gloss
         self.check=check
         try:
-            check.pyaudio.pa.get_format_from_width(1) #get_device_count()
+            check.pyaudio.get_format_from_width(1) #get_device_count()
         except:
             check.pyaudio=sound.AudioInterface()
         self.pa=check.pyaudio
