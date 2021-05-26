@@ -669,7 +669,7 @@ class Check():
             b.grid(row=2,column=0,sticky='ew')
             self.runwindow.wait_window(w)
             w.destroy()
-        if self.exitFlag:
+        if self.runwindowexitFlag.istrue():
             return
         else:
             self.runwindow.wait()
@@ -2410,8 +2410,8 @@ class Check():
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.soundsettingswindow)
         self.donewpyaudio()
-        if not self.exitFlag and self.soundsettingswindow.winfo_exists():
-                self.soundsettingswindow.destroy()
+        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
+            self.soundsettingswindow.destroy()
     def maybeboard(self):
         def checkfordone(): #has *anything* been sorted?
             for self.profile in self.status[self.type][self.ps]:
@@ -3561,7 +3561,7 @@ class Check():
             self.sorting.wrap()
             self.runwindow.waitdone()
             self.runwindow.wait_window(window=self.sorting)
-            if self.exitFlag:
+            if self.runwindowexitFlag.istrue():
                 return 1
             if hasattr(self,'groupselected'): # != []:
                 if self.groupselected == "NONEOFTHEABOVE":
@@ -3629,7 +3629,7 @@ class Check():
         self.makestatusdict()
         for self.subcheck in self.status[self.type][self.ps][self.profile][
                                                         self.name]['groups']:
-            if self.exitFlag:
+            if self.runwindowexitFlag.istrue():
                 return 1
             if self.subcheck in (self.status[self.type][self.ps][self.profile]
                                             [self.name]['done']):
@@ -3698,13 +3698,14 @@ class Check():
                             )
             b.grid(column=0, row=0, sticky="ew")
             # b.bind('<mouseclick>',remove senseid from sensids)
-            if self.exitFlag:
+            if self.runwindowexitFlag.istrue():
                 return 1
             self.runwindow.context.updatebindings() #make sure to bind children
             self.sframe.windowsize()
             self.runwindow.waitdone()
             b.wait_window(bf)
-            if self.exitFlag or not hasattr(self,'groupselected'):
+            if (self.runwindowexitFlag.istrue() or
+                                            not hasattr(self,'groupselected')):
                 return 1
             # I need to work on this later. How to distinguish buttons after
             # the window is gone? I think I have to count senseids in the group.
@@ -3721,7 +3722,7 @@ class Check():
                 print(f"User did NOT select ‘{oktext}’, assuming we'll come "
                         "back to this!!")
         #Once done verifying each group:
-        if self.exitFlag:
+        if self.runwindowexitFlag.istrue():
             return 1
         else:
             self.runwindow.waitdone()
@@ -3825,7 +3826,7 @@ class Check():
         self.runwindow.waitdone()
         self.runwindow.frame.wait_window(canary)
         #On first button press/exit:
-        if self.exitFlag:
+        if self.runwindowexitFlag.istrue():
             return 1
         if hasattr(self,'groupselected'):
             if self.groupselected == "ALLOK":
@@ -3856,7 +3857,7 @@ class Check():
                     group1))
                 self.runwindow.wait_window(canary2)
                 #On second button press/exit:
-                if self.exitFlag: #i.e., user exits by now
+                if self.runwindowexitFlag.istrue(): #i.e., user exits by now
                     return 1
                 if hasattr(self,'groupselected'):
                     if self.groupselected == "ALLOK":
@@ -4245,6 +4246,10 @@ class Check():
         else:
             self.runwindow=Window(self.frame,title=title)
         self.runwindow.title(title)
+        self.runwindowexitFlag=ExitFlag()
+        setexitflag(self.runwindow,self.runwindowexitFlag)
+        log.debug("self.runwindowexitFlag: {}".format(
+                                            self.runwindowexitFlag.istrue()))
         self.runwindow.lift()
         if nowait != True:
             self.runwindow.wait(msg=msg)
@@ -4311,7 +4316,7 @@ class Check():
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def showentryformstorecordpage(self):
         #The info we're going for is stored above sense, hence guid.
-        if self.exitFlag:
+        if self.runwindowexitFlag.istrue():
             log.info('no runwindow; quitting!')
             return
         if not self.runwindow.frame.winfo_exists():
@@ -4394,7 +4399,7 @@ class Check():
             self.showentryformstorecordpage()
         else:
             for psprofile in self.profilecountsValid:
-                if self.exitFlag:
+                if self.runwindowexitFlag.istrue():
                     return 1
                 self.ps=psprofile[2]
                 self.profile=psprofile[1]
@@ -4445,7 +4450,7 @@ class Check():
                                                     self.audiolang) == False)):
                 continue
             row=0
-            if self.exitFlag:
+            if self.runwindowexitFlag.istrue():
                 return 1
             entryframe=Frame(self.runwindow.frame)
             entryframe.grid(row=1,column=0)
@@ -4495,7 +4500,7 @@ class Check():
             d.grid(row=row,column=0)
             self.runwindow.waitdone()
             examplesframe.wait_window(entryframe)
-            if self.exitFlag:
+            if self.runwindowexitFlag.istrue():
                 return 1
             if self.runwindow.frame.skip == True:
                 return 'skip'
@@ -4538,7 +4543,7 @@ class Check():
                 skip=True
             if exited == True:
                 return
-        if not self.exitFlag:
+        if not self.runwindowexitFlag.istrue():
             self.runwindow.waitdone()
             self.runwindow.resetframe()
             Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
@@ -5509,6 +5514,17 @@ class Entry(lift.Entry): #Not in use
             self.checkresults[check.name][check.subcheck]={}
         self.checkresults[check.name][check.subcheck]['result']=result
         log.info("Don't forget to write these changes to a file somewhere...")
+class ExitFlag(object):
+    def istrue(self):
+        # log.debug("Returning {} exitflag".format(self.value))
+        return self.value
+    value=get=istrue
+    def true(self):
+        self.value=True
+    def false(self):
+        self.value=False
+    def __init__(self):
+        self.false()
 class Window(tkinter.Toplevel):
     def resetframe(self):
         if self.winfo_exists(): #If this has been destroyed, don't bother.
@@ -5593,7 +5609,7 @@ class Window(tkinter.Toplevel):
         if exit is True:
             e=(_("Exit")) #This should be the class, right?
             self.exitButton=tkinter.Button(self.outsideframe, width=10, text=e,
-                                command=self.destroy,
+                                command=lambda s=self:on_quit(s),
                                 activebackground=self.theme['activebackground'],
                                 background=self['background']
                                             )
@@ -6112,10 +6128,6 @@ class MainApplication(Frame):
         setfonts(self.parent)
         self.parent.wraplength=self.parent.winfo_screenwidth()-300 #exit button
         self.parent.program=program
-    def on_quit(self):
-        log.debug("Setting exit flag true!")
-        self.exitFlag = self.check.exitFlag = True
-        self.parent.destroy()
     def setcontext(self,context=None):
         self.context.menuinit() #This is a ContextMenu() method
         if not hasattr(self,'menu') or self.menu == False:
@@ -6185,8 +6197,8 @@ class MainApplication(Frame):
         (more is more load time.)
         """
         self.check=Check(self,self.frame,nsyls=nsyls)
-        self.exitFlag = self.check.exitFlag = False
-        parent.wm_protocol("WM_DELETE_WINDOW", self.on_quit)
+        self.exitFlag = self.check.exitFlag = ExitFlag()
+        setexitflag(parent,self.exitFlag)
         """Do any check tests here"""
         """Make the rest of the mainApplication window"""
         e=(_("Exit"))
@@ -6195,7 +6207,8 @@ class MainApplication(Frame):
             self.check.frame.winfo_exists()
         except:
             return
-        exit=tkinter.Button(self.frame, text=e, command=self.on_quit,
+        exit=tkinter.Button(self.frame, text=e,
+                            command=lambda s=self.parent:on_quit(s),
                             width=15,bg=self.theme['background'],
                             activebackground=self.theme['activebackground'])
         exit.grid(row=2, column=1, sticky='ne')
@@ -7150,6 +7163,21 @@ def handle_exception(exc_type, exc_value, exc_traceback):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
     log.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+def setexitflag(self,exitFlag):
+    # This is here because it needs to be available to multiple classes
+    # when functions may continue after window closure, but GUI shouldn't
+    print("Setting window exit flag False (on window creation)!")
+    self.exitFlag = exitFlag
+    self.protocol("WM_DELETE_WINDOW", lambda s=self:on_quit(s))
+def on_quit(self):
+    # Do this when a window closes, so any window functions can know
+    # to just stop, rather than trying and throwing an error. This doesn't
+    # do anything but set the flag value on exit, the logic to stop needs
+    # to be elsewhere, e.g., if `self.exitFlag.istrue(): return`
+    if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
+        print("Setting window exit flag True!")
+        self.exitFlag.true()
+    self.destroy() #do this for everything
 def main():
     global program
     log.info("Running main function") #Don't translate yet!
