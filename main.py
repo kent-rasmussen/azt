@@ -6427,7 +6427,7 @@ class RecordButtonFrame(Frame):
         self.b.grid(row=0, column=0,sticky='w')
         self.b.bind('<ButtonPress>', self._start)
         self.b.bind('<ButtonRelease>', self._stop)
-    def _play(self,event):
+    def _play(self,event=None):
         log.debug("Asking PA to play now")
         self.player=sound.SoundFilePlayer(self.filenameURL,self.pa,
                                                                 self.settings)
