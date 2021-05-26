@@ -5813,9 +5813,9 @@ class ScrollingFrame(Frame):
             self.canvas.config(xscrollcommand=xscrollbar.set)
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
         """Make all this show up, and take up all the space in parent"""
-        self.grid(row=0, column=0,sticky='nw')
+        self.grid(row=0, column=0,sticky='nsew')
         self.canvas.grid(row=0, column=0,sticky='nsew')
-        # self.content.grid(row=0, column=0,sticky='nw')
+        # self.content.grid(row=0, column=0,sticky='nsew')
         """We might want horizonal bars some day? (also above)"""
         if xscroll == True:
             xscrollbar.config(width=self.yscrollbarwidth)
@@ -6225,7 +6225,8 @@ class ContextMenu:
     def updatebindings(self):
         def bindthisncheck(w):
             log.log(2,"{};{}".format(w,w.winfo_children()))
-            w.bind('<Enter>', self._bind_to_makemenus)
+            if type(w) is not tkinter.Canvas: #ScrollingFrame:
+                w.bind('<Enter>', self._bind_to_makemenus)
             for child in w.winfo_children():
                 bindthisncheck(child)
         self.parent.bind('<Leave>', self._unbind_to_makemenus) #parent only
@@ -6270,8 +6271,8 @@ class ContextMenu:
             self.menu.tk_popup(event.x_root, event.y_root)
         finally:
             self.menu.grab_release() #allows click on main window
-    def _bind_to_makemenus(self,event):
-        self.parent.bind_all('<Button-3>',self.do_popup)
+    def _bind_to_makemenus(self,event): #all needed to cover all of window
+        self.parent.bind_all('<Button-3>',self.do_popup) #_all
         self.parent.bind_all('<Button-1>',self.undo_popup)
     def _unbind_to_makemenus(self,event):
         self.parent.unbind_all('<Button-3>')
