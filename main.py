@@ -3659,7 +3659,6 @@ class Check():
             Label(titles, text=title,
                     font=self.fonts['title']
                     ).grid(column=0, row=0, sticky="w")
-            print(instructions)
             if hasattr(self,'groupselected'): #so it doesn't get in way later.
                 delattr(self,'groupselected')
             row=0
@@ -5575,10 +5574,8 @@ class Window(tkinter.Toplevel):
                 self.context.menuitem(_("Show Menu"),self.doverifymenu)
             else:
                 self.context.menuitem(_("Hide Menu"),self.removeverifymenu)
-    def __init__(self, parent,
-                backcmd=False, exit=True,
-                title="No Title Yet!", choice=None,
-                *args, **kwargs):
+    def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
+                choice=None, *args, **kwargs):
         self.parent=parent
         inherit(self)
         """Things requiring tkinter.Window below here"""
