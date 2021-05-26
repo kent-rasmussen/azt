@@ -4981,6 +4981,7 @@ class Check():
         title=_("Tone Report")
         self.runwindow.title(title)
         self.runwindow.scroll=ScrollingFrame(self.runwindow.frame)
+        self.runwindow.scroll.grid(row=0,column=0)
         window=self.runwindow.scroll.content
         window.row=0
         xlpr=self.xlpstart(reporttype='Tone',bylocation=bylocation)
