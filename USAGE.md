@@ -55,6 +55,7 @@ Results of the analysis of multiple frame groupings (e.g., from the Tone Report)
 - A settings file (`CheckDefaults`), any time a check is run, to preserve settings, including current `ps`/`profile` selection. This allows you to continue where you left off.
 - A tone frame definitions file (`ToneFrames`), once at least one has been defined. I strongly recommend not modifying this file outside of A→Z+T.
 - A verification status file (`VerificationStatus`), where your progress in verification is stored.
+- A Sound card settings file (`SoundSettings`), where your sound card settings are stored.
 - An `audio` folder, where sound files are saved, once at least one has been recorded.
 - A `report` folder, where report files (txt and xml) are stored whenever run by the user. These are set apart from the rest of the repository to reduce clutter. N.B.: relative links to audio work in this hierarchy, if you move a report from this directory, be sure to update the links accordingly.
 - An ad hoc groups file (`AdHocGroups`), if you have defined any ad hoc groups.
@@ -116,11 +117,11 @@ Regarding name changes, please be cognizant of the fact that these names are for
 ### Recording ![Recording](images/Microphone%20alone_sm.png "microphone")
 The first time you try to record, you will be asked to tell [A→Z+T](https://github.com/kent-rasmussen/azt) what sound card parameters you want. You can set frequency, bit depth, and sound card number (to select between multiple cards, for your microphone and for your speakers. This window is designed with test `play` and `record` buttons, so you can set parameters and test them, before moving on. I suggest you budget some time to play with the settings there, until you are satisfied with them.
 
-N.B.: There are some combinations of settings (likely those beyond the physical limits of your sound card) which play fine in AZT, but do not produce good sound files. This is simple enough to discover, by playing the sound file in another tool, such as praat. 
+N.B.: There are some combinations of settings (likely those beyond the physical limits of your sound card) which play fine in AZT, but do not produce good sound files. This is simple enough to discover, by playing the sound file in another tool, such as praat.
 
-I recommend you select the highest quality that your card can do, and test to see if it records and plays back OK. I have found several computers with cards that can record at 96khz, somewhat to my surprise —though be sure to think about your microphone and environment, etc, too! If you are making recordings for easy sharing over low bandwidth (as opposed to linguistic study), consider the implications of these setting on the size of your files.
+The settings window will you select the highest quality that it thinks your card can do; test to see if it records and plays back OK, then confirm by playing the sound file in anoter player. I have found several computers with cards that can record at 96khz, somewhat to my surprise —though be sure to think about your microphone and environment, etc, too! If you are making recordings for easy sharing over low bandwidth (as opposed to linguistic study), consider the implications of these setting on the size of your files.
 
-You can store the sound card settings in your repository, so you won't have to keep setting them, once you discover what works best in your context. However, if you are sharing a repository across computers with different sound cards, you may not want to do this. The sound card settings dialog is also available through a menu item.
+I recommend not storing your sound card settings in your repository. They will be saved in a file, so you won't have to keep setting them, once you discover what works best in your context. However, because they are specific to a given computer, sharing them across computers with different sound cards is probably not what you want. The sound card settings dialog is also available through a menu item.
 
 Regarding which sound card to choose (as [A→Z+T](https://github.com/kent-rasmussen/azt) will most likely give you multiple options):
 - There may be multiple ways of telling [A→Z+T](https://github.com/kent-rasmussen/azt) to use a given interface, and they may not each give you the same mileage. For instance, you may get more consistency from setting the interface as the `default` sound card in your OS settings, then selecting `OS default` (or `System default` whatever) in [A→Z+T](https://github.com/kent-rasmussen/azt) —or the reverse; test and find out what works best for you.

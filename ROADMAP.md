@@ -4,11 +4,23 @@
 
 ## Things to Test
 - check that changes to S regexs don't break too much.
+- Why do bad sound files play OK?
+
+## Migrate further toward OOP
+- Consider making the following objects?
+    - languages
+    - ps-profile slices
+    - check name - frame
+    - sense (create these objects in threads)
+    - group
+    - runwindow
+    - groupselected should be an attribute of a sense?
+    - lift-form?
+    - lift-field?
+    - lift-node?
+    - lift-example?
+
 ## In Process (fix)
--remove this line from logs:
-    maybeboard done: True
-    -[<__main__.Frame object .!mainapplication.!frame.!frame4.!frame>, <__main__.ScrollingFrame object .!mainapplication.!frame.!frame4.!scrollingframe>]
-working on Plural
 - add mini keyboard of common symbols (class, to add to Entry)
 - fn to change tone frame name, everywhere where needed
     - toneframes.py

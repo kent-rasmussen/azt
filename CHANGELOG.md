@@ -26,6 +26,7 @@
 - updated writing to lift file
 - updated references to updatestatus with appropriate updatestatuslift calls
    - check name changes on groups and frame names
+- removed "different" button from sort page, until at least one button is there
 
 # Version 0.8
 - set up ad hoc groups to be more permanent:
