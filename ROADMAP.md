@@ -8,6 +8,7 @@
 
 ## Migrate further toward OOP
 - Consider making the following objects?
+    - tables (base on buildXLPtable(self,parent,caption,yterms,xterms...))
     - languages
     - ps-profile slices
     - check name - frame
