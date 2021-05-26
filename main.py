@@ -2587,7 +2587,7 @@ class Check():
                             log.log(3,"Total groups found: {}".format(donenum))
                         # This should only be needed on a new database
                         if donenum == '0/0':
-                            log.info("skipping cell with values {}".format(
+                            log.log(3,"skipping cell with values {}".format(
                                                                     donenum))
                             continue
                         if tosort == True:
@@ -2612,7 +2612,8 @@ class Check():
                         else:
                             tip=_("Change to \nprofile: ‘{}’; \nframe: ‘{}’"
                                 "".format(profile,frame))
-                        tb.grid(row=row,column=column,ipadx=0,ipady=0)
+                        tb.grid(row=row,column=column,ipadx=0,ipady=0,
+                                                                sticky='nesw')
                         ttb=ToolTip(tb,tip)
             row+=1
         log.error(_("You have more groups verified than there are: {}".format(
