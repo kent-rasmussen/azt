@@ -4776,7 +4776,7 @@ class Check():
         def done():
             self.runwindow.destroy()
         def refreshgroups():
-            senseidsbygroup=self.getsenseidsbytoneUFgroups() #>self.toneUFgroups
+            senseidsbygroup=self.getsenseidsbytoneUFgroups()
         self.getrunwindow()
         title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
                                                         self.ps,self.profile))
@@ -4835,7 +4835,6 @@ class Check():
             cb=CheckButton(scroll.content, text = group+' ({})'.format(n),
                                 variable = groups[idn],
                                 onvalue = group, offvalue = 0,
-                                ).grid(row=row,column=0,sticky='ew')
                                 )
             cb.grid(row=idn,column=0,sticky='ew')
         self.runwindow.waitdone()
