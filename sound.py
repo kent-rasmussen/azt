@@ -500,63 +500,44 @@ if __name__ == "__main__":
             return x
     pa = AudioInterface()
     times=100
-    class Test:
-        def test1():
-            pa.get_device_count()
-        def test2():
-            pa.get_host_api_count()
-        def test3():
-            pa.get_default_host_api_info()
-        def test4():
-            pass #pa.get_host_api_info_by_type(pyaudio.paInDevelopment)
-        def test5():
-            pa.get_host_api_info_by_index(0)
-        def test6():
-            pa.get_device_info_by_host_api_device_index(0,0)
-        def test7():
-            pa.get_device_count()
-        def test8():
-            pa.get_default_input_device_info()
-        def test9():
-            pa.get_default_output_device_info()
-        def test10():
-            pa.get_device_info_by_index(0)
-        def test11():
-            pa.get_sample_size(1)
-        def test12():
-            pa.get_format_from_width(1)
-    for i in range(1,13):
-        cmd=getattr(Test,'test'+str(i))
-        # cmd
-        out=timeit.timeit(cmd, number=times)
-        print(i,out)
-    exit()
+    # class Test:
+    #     def test1():
+    #         pa.get_device_count()
+    #     def test2():
+    #         pa.get_host_api_count()
+    #     def test3():
+    #         pa.get_default_host_api_info()
+    #     def test4():
+    #         pass #pa.get_host_api_info_by_type(pyaudio.paInDevelopment)
+    #     def test5():
+    #         pa.get_host_api_info_by_index(0)
+    #     def test6():
+    #         pa.get_device_info_by_host_api_device_index(0,0)
+    #     def test7():
+    #         pa.get_device_count()
+    #     def test8():
+    #         pa.get_default_input_device_info()
+    #     def test9():
+    #         pa.get_default_output_device_info()
+    #     def test10():
+    #         pa.get_device_info_by_index(0)
+    #     def test11():
+    #         pa.get_sample_size(1)
+    #     def test12():
+    #         pa.get_format_from_width(1)
+    # for i in range(1,13):
+    #     cmd=getattr(Test,'test'+str(i))
+    #     # cmd
+    #     out=timeit.timeit(cmd, number=times)
+    #     print(i,out)
+    # exit()
 
     try:
         pa = AudioInterface()
         settings=SoundSettings(pa)
-        # settings.fs=96000
-        # settings.sample_format=pyaudio.paInt24
-        settings.audio_card_in=0
-        settings.audio_card_out=7
-        # stream = pa.open(
-        #     input_device_index=settings.audio_card_in,
-        #     format=settings.sample_format,
-        #     channels=settings.channels,
-        #     rate=settings.fs,
-        #     input=True,
-        #     stream_callback=SoundFileRecorder.recordcallback)# settings.channels=0
-        # log.debug(stream)
         time.sleep(1)
         done=settings.test(pa)
         time.sleep(1)
-        # player=SoundFilePlayer('test_44100_4_6.wav',settings)
-        # for i in range(5):
-        # player.play()
-        # try:
-        # except BaseException as e:
-        #     log.debug("Hey, It didn't work! ({})".format(e))
-        # exit()
         while done != True:
             done=settings.next()
             settings.test(pa)
