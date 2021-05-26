@@ -3514,9 +3514,12 @@ class Check():
         self.runwindow.frame.scroll.content.anotherskip=Frame(
                                             self.runwindow.frame.scroll.content)
         self.runwindow.frame.scroll.content.anotherskip.grid(row=1,column=0)
-        self.getanotherskip(self.runwindow.frame.scroll.content.anotherskip)
         while (self.status[self.type][self.ps][self.profile][self.name][
-                'tosort'] == True and not self.exitFlag):
+                'tosort'] == True and not self.runwindowexitFlag.istrue()):
+            if len(self.status[self.type][self.ps][self.profile][self.name][
+                                                                'groups'])<2:
+                self.getanotherskip(
+                                self.runwindow.frame.scroll.content.anotherskip)
             if hasattr(self,'groupselected'):
                 delattr(self,'groupselected') #reset this for each word!
             senseid=self.senseidsunsorted[0]
@@ -4132,14 +4135,15 @@ class Check():
                             )
             b.grid(column=0, row=0, sticky="ew")
             row+=1
-        b=Button(parent, text=newgroup,
+        else:
+            b=Button(parent, text=newgroup,
                         cmd=lambda:returndictnsortnext(self,parent,
                                     {'groupselected':"NONEOFTHEABOVE"}),
                         anchor="w",
                         font=self.fonts['instructions']
                         )
-        b.grid(column=0, row=row, sticky="ew")
-        row+=1
+            b.grid(column=0, row=row, sticky="ew")
+            row+=1
         b2=Button(parent, text=skip,
                         cmd=lambda:returndictnsortnext(self,parent,
                                     {'groupselected':"NA"}),
