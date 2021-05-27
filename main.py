@@ -5066,7 +5066,8 @@ class Check():
                 textout=list()
                 for location in locations:
                     id=rx.id('x'+sectitle+location)
-                    e1=xlp.Example(s1,id)
+                    headtext='{}:{}'.format(location,groupvalues[group][location])
+                    e1=xlp.Example(s1,id,heading=headtext)
                     for senseid in toreport[group]:
                         #This is for window/text output only, not in XLP file
                         framed=self.getframeddata(senseid,noframe=True,
@@ -5096,7 +5097,8 @@ class Check():
                     if examples != []:
                         id=self.idXLP(framed)+'_examples'
                         log.log(2,"Using id {}".format(id))
-                        e1=xlp.Example(s1,id)
+                        headtext=text.replace('\t',' ')
+                        e1=xlp.Example(s1,id,heading=headtext)
                         for example in examples:
                             # These should already be framed!
                             framed=self.getframeddata(example,noframe=True)
