@@ -683,7 +683,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getguids()
         self.getsenseids()
         return senseid
-    def modverificationnode(self,senseid,vtype,add=None,rm=None):
+    def modverificationnode(self,senseid,vtype,add=None,rm=None,addifrmd=False):
         nodes=self.addverificationnode(senseid,vtype=vtype)
         vf=nodes[0]
         sensenode=nodes[1]
@@ -705,10 +705,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l=list()
         changed=False
         if rm != None and rm in l:
+            i=l.index(rm) #be ready to replace
             l.remove(rm)
             changed=True
-        if add != None and add not in l:
-            l.append(add)
+        else:
+            i=len(l)
+        if (add != None and add not in l #if there, v-if rmd, or not changing
+                and (addifrmd == False or changed == True)):
+            l.insert(i,add) #put where removed from, if done.
             changed=True
         vf.text=str(l)
         if changed == True:
