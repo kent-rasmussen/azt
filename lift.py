@@ -371,6 +371,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "/gloss[@lang='{glosslang}']/text"
                     ),['guid','senseid','ps','glosslang']),
             'attr':'nodetext'}
+        a['glossofexample']={
+            'cm': 'use to get glosses/translations of examples',
+            'url':(("translation[@type='Frame translation']"
+                        "/form[@lang='{glosslang}']/text"
+                    ),['glosslang']),
+            'attr':'nodetext'}
+        a['formofexample']={
+            'cm': 'use to get analang forms of examples',
+            'url':(("form[@lang='{analang}']/text"
+                    ),['analang']),
+            'attr':'nodetext'}
         a['fieldnode']={
             'cm': 'use to get whole field nodes (to modify)',
             'url':(("entry[@guid='{guid}']"
