@@ -349,7 +349,7 @@ class Check():
                         "ps {}. This is likely a problem with your syllable "
                         "profile analysis.".format(self.ps))
             self.set('profile',self.profilecounts[0][1])
-    def nextframe(self):
+    def nextframe(self,guess=False):
         if not hasattr(self,'framestodo'):
             self.getframestodo()
         if len(self.framestodo) == 0:
@@ -363,6 +363,30 @@ class Check():
                 self.addframe()
         else:
             self.set('name',self.framestodo[0])
+    def nextsubcheck(self,guess=False):
+        def default():
+            log.debug("self.subcheck: {}".format(self.subcheck))
+            self.set('subcheck',priorities[0])
+            log.debug("self.subcheck (after default): {}".format(self.subcheck))
+        if self.type != 'T': #only tone for now
+            log.debug("Only working on tone for now, not {}".format(self.type))
+            return
+        log.debug("self.subcheck: {}".format(self.subcheck))
+        log.debug(self.subchecksprioritized)
+        log.debug(self.subchecksprioritized[self.type])
+        priorities=[x[0] for x in self.subchecksprioritized[self.type]
+                            if x[0] is not None]
+        if self.subcheck in priorities:
+            log.debug("self.subcheck: {}".format(self.subcheck))
+            i=priorities.index(self.subcheck)
+            if len(priorities)>i+1:
+                self.set('subcheck',priorities[i+1])
+            else:
+                default() #just iterate through for now
+        else:
+            default() #or guess == True): ever?
+        log.debug("self.subcheck: {}".format(self.subcheck))
+
     def guesscheckname(self):
         """Picks the longest name (the most restrictive fiter)"""
         if hasattr(self,'checkspossible') and len(self.checkspossible) != 0:
@@ -1120,8 +1144,10 @@ class Check():
         self.set('type',choice,window)
     def setanalang(self,choice,window):
         self.set('analang',choice,window)
-    def setS(self,choice,window):
+    def setsubcheck(self,choice,window):
+        log.debug("subcheck: {}".format(self.subcheck))
         self.set('subcheck',choice,window)
+        log.debug("subcheck: {}".format(self.subcheck))
     def setcheck(self,choice,window):
         self.set('name',choice,window)
     def setglosslang(self,choice,window):
@@ -1138,11 +1164,11 @@ class Check():
             windowV=Window(self.frame,title=_('Select Vowel'))
             self.getV(window=windowV)
             windowV.wait_window(window=windowV)
-        if self.type == "C":
+        elif self.type == "C":
             windowC=Window(self.frame,title=_('Select Consonant'))
             self.getC(windowC)
             self.frame.wait_window(window=windowC)
-        if self.type == "CV":
+        elif self.type == "CV":
             CV=''
             for self.type in ['C','V']:
                 self.getsubcheck()
@@ -1150,6 +1176,10 @@ class Check():
             self.subcheck=CV
             self.type = "CV"
             self.checkcheck()
+        elif self.type == "T":
+            windowT=Window(self.frame,title=_('Select Framed Tone Group'))
+            self.getframedtonegroup(window=windowT)
+            windowT.wait_window(window=windowT)
     def getps(self,event=None):
         log.info("Asking for ps...")
         window=Window(self.frame, title=_('Select Grammatical Category'))
@@ -2293,7 +2323,6 @@ class Check():
             else:
                 t=(_("working on ‘{}’ tone frame").format(self.name))
             proselabel(opts,t,cmd='getcheck',parent=tf)
-            opts['columnplus']=0
         else:
             print(self.name,'in', self.checkspossible,'?')
             if self.name not in [x[0] for x in self.checkspossible]:
@@ -2307,7 +2336,16 @@ class Check():
         if self.subcheck not in [x[0] for x in self.subchecksprioritized[
                                                                     self.type]]:
             self.guesssubcheck()
-        if self.type != 'T':
+
+        if self.type == 'T':
+            opts['columnplus']=2
+            if self.subcheck is None:
+                t=_("(no framed group)")
+            else:
+                t=(_("(framed group: ‘{}’)").format(self.subcheck))
+            proselabel(opts,t,cmd='getsubcheck',parent=tf)
+            opts['columnplus']=0
+        else:
             if self.subcheck is None:
                 log.info("Aparently I don't know yet what (e.g., consonant or "
                         "vowel) I'm testing.")
@@ -2397,14 +2435,18 @@ class Check():
         bd=Button(self.soundsettingswindow.frame,text=_("Done"),anchor='c',
                                             cmd=self.soundcheckrefreshdone)
         bd.grid(row=row,column=0)
-    def soundcheck(self):
-        #Set the parameters of what could be
+    def pyaudiocheck(self):
         try:
             self.pyaudio.pa.get_format_from_width(1) #just check if its OK
         except:
             self.pyaudio=sound.AudioInterface()
+    def soundsettingscheck(self):
         if not hasattr(self,'soundsettings'):
             self.loadsoundsettings()
+    def soundcheck(self):
+        #Set the parameters of what could be
+        self.pyaudiocheck()
+        self.soundsettingscheck()
         self.soundsettingswindow=Window(self.frame,
                                 title=_('Select Sound Card Settings'))
         self.soundcheckrefresh()
@@ -2910,6 +2952,33 @@ class Check():
                                 )
         buttonFrame1.grid(column=0, row=4)
         buttonFrame1.wait_window(window)
+    def getframedtonegroup(self,window,event=None):
+        """Window is called in getsubcheck"""
+        if (None in [self.type, self.ps, self.profile, self.name]
+                or self.type != 'T'):
+            Label(window.frame,
+                          text="You need to set "
+                          "\nCheck type (as Tone, currently {}) "
+                          "\nGrammatical category (currently {})"
+                          "\nSyllable Profile (currently {}), and "
+                          "\nTone Frame (currently {})"
+                          "\nBefore this function will do anything!"
+                          "".format(self.typedict[self.type]['sg'], self.ps,
+                          self.profile, self.name)).grid(column=0, row=0)
+            return 1
+        else:
+            Label(window.frame,
+                          text="'What {}-{} tone group in the ‘{}’ frame do "
+                          "you want to work with?".format(self.ps,self.profile,
+                          self.name)).grid(column=0, row=0)
+            window.scroll=Frame(window.frame)
+            window.scroll.grid(column=0, row=1)
+            buttonFrame1=ScrollingButtonFrame(window.scroll,
+                                            self.status[self.type][self.ps][
+                                            self.profile][self.name]['groups'],
+                                            self.setsubcheck,
+                                            window=window
+                                            ).grid(column=0, row=4)
     def getV(self,window,event=None):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getsubcheck"""
@@ -2930,7 +2999,7 @@ class Check():
             buttonFrame1=ScrollingButtonFrame(window.scroll,
                                      #self.db.v[self.analang],
                                      self.scount[self.ps][self.type],
-                                     self.setS,
+                                     self.setsubcheck,
                                      window=window
                                      ).grid(column=0, row=4)
     def getC(self,window,event=None):
@@ -2954,7 +3023,7 @@ class Check():
             buttonFrame1=ScrollingButtonFrame(window.scroll,
                                     # self.db.c[self.analang],
                                     self.scount[self.ps][self.type],
-                                    self.setS,
+                                    self.setsubcheck,
                                     window=window
                                     )
             buttonFrame1.grid(column=0, row=0)
@@ -3225,6 +3294,10 @@ class Check():
         """This function takes a list of senseids that match a criteria, and
         limits them to those that match the ps/profile combination we're
         working on"""
+        if not hasattr(self,'senseidstosort'):
+            self.getidstosort()
+            # log.error("Called senseidsincheck, but no senseidstosort!")
+            # return
         lst1=self.senseidstosort #all in this ps/profile
         senseidstochange=set(lst1).intersection(senseids)
         return senseidstochange
@@ -3245,13 +3318,14 @@ class Check():
             self.exs={} #in case this hasn't been set up by now
         if value in self.exs:
             if self.exs[value] in senseids: #if stored value is in group
-                log.info("Using stored value for {} group: {}".format(value,
+                log.info("Using stored value for ‘{}’ group: ‘{}’".format(value,
                                 self.exs[value]))
                 framed=self.getframeddata(self.exs[value],
                                             notonegroup=notonegroup,
                                             truncdefn=truncdefn)
                 if (framed[self.glosslang] is not None):
-                    output['framed']=framed
+                    framed['senseid']=self.exs[value]
+                    output['framed']=framed #this includes [n], above
                     return output
         for i in range(len(senseids)): #just keep trying until you succeed
             senseid=senseids[randint(0, len(senseids))-1]
@@ -3260,37 +3334,71 @@ class Check():
             if (framed[self.glosslang] is not None):
                 """As soon as you find one with form and gloss, quit."""
                 self.exs[value]=senseid
-                output['framed']=framed
+                framed['senseid']=senseid
+                output['framed']=framed #this includes [n], above
                 return output
             else:
                 log.info("Example sense with empty field problem")
-    def renamegroup(self):
+    def renamegroup(self,reverify=False):
+        #reverify indicates when it is called from the verification window
+        # (i.e.,) before the group is verified. This does two things differently:
+        # 1. verifyT is only called when reverify=True
+        # 2. self.nextsubcheck() button is only there when reverify=False
         def submitform():
             newtonevalue=formfield.get()
             groups=self.status[self.type][self.ps][self.profile][self.name][
                                                                     'groups']
-            if newtonevalue in groups:
-                er=Window(self.runwindow)
-                l=Label(er,text=_("Sorry, there is already a group with that "
-                                "label; If you want to join the groups, "
-                                "give it a different name now, and join "
-                                "it after they are both verified ({} is "
-                                "already in {})".format(newtonevalue,groups)))
-                l.grid(row=0,column=0)
-                return
-            self.updatebysubchecksenseid(self.subcheck,newtonevalue)
-            i=groups.index(self.subcheck) #put new value in the same place.
-            groups.remove(self.subcheck)
-            groups.insert(i,newtonevalue)
-            self.subcheck=newtonevalue
-            self.storesettingsfile(setting='status')
+            done=self.status[self.type][self.ps][self.profile][self.name][
+                                                                    'done']
+            if newtonevalue != self.subcheck: #only make changes!
+                if newtonevalue in groups:
+                    er=Window(self.runwindow)
+                    l=Label(er,text=_("Sorry, there is already a group with "
+                                    "that label; If you want to join the "
+                                    "groups, give it a different name now, "
+                                    "and join it after they are both verified "
+                                    "(‘{}’ is already in {})"
+                                    "".format(newtonevalue,groups)))
+                    l.grid(row=0,column=0)
+                    return 1
+                self.updatebysubchecksenseid(self.subcheck,newtonevalue)
+                i=groups.index(self.subcheck) #put new value in the same place.
+                groups.remove(self.subcheck)
+                groups.insert(i,newtonevalue)
+                if self.subcheck in done: #if verified, change the name there, too
+                    i=done.index(self.subcheck) #put new value in the same place.
+                    done.remove(self.subcheck)
+                    done.insert(i,newtonevalue)
+                self.subcheck=newtonevalue
+                self.getsubchecksprioritized() #We've changed this, so update
+                self.storesettingsfile(setting='status')
+            else: #move on, but notify in logs
+                log.info("User selected ‘{}’, but with no change.".format(ok))
             self.runwindow.destroy()
-            self.verifyT(menu=menu)
+            if reverify == True: #don't do this if running from menus
+                self.verifyT(menu=menu)
+            return
         def addchar(x):
             if x == '':
                 formfield.delete(0,tkinter.END)
             else:
                 formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
+        def done():
+            submitform()
+            self.donewpyaudio()
+        def next():
+            log.debug("running next")
+            error=submitform()
+            if not error:
+                log.debug("self.subcheck: {}".format(self.subcheck))
+                self.nextsubcheck()
+                log.debug("self.subcheck: {}".format(self.subcheck))
+                self.renamegroup(reverify=reverify)
+        if self.subcheck == None:
+            self.getsubcheck()
+            if self.subcheck == None:
+                log.info("I asked for a framed tone group, but didn't get one.")
+                return
         newname=tkinter.StringVar(value=self.subcheck)
         padx=50
         pady=10
@@ -3299,17 +3407,19 @@ class Check():
                                     self.name)
         self.getrunwindow(title=title)
         menu=self.runwindow.removeverifymenu()
-        Label(self.runwindow,text=title,font=self.fonts['title'],
+        Label(self.runwindow.frame,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c'
                 ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
         getformtext=_("What the new name do you want to call this surface tone "
                         "group? A label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
-        getform=Label(self.runwindow,text=getformtext,
+        getform=Label(self.runwindow.frame,text=getformtext,
                 font=self.fonts['read'])
-        getform.grid(row=0,column=0,padx=padx,pady=pady)
-        buttonframe=Frame(self.runwindow)
-        buttonframe.grid(row=1,column=0,sticky='')
+        getform.grid(row=1,column=0,padx=padx,pady=pady)
+        entryframe=Frame(self.runwindow.frame)
+        entryframe.grid(row=2,column=0,sticky='')
+        buttonframe=Frame(entryframe)
+        buttonframe.grid(row=2,column=0,sticky='')
         chars=['[','˥', '˦', '˧', '˨', '˩',' ',']','']
         for char in chars:
             if char == ' ':
@@ -3330,11 +3440,22 @@ class Check():
             Button(buttonframe,text = text,command = lambda x=char:addchar(x),
                     anchor ='c').grid(row=row,column=column,sticky='',
                                     columnspan=columnspan)
-        formfield = EntryField(self.runwindow,textvariable=newname)
-        formfield.grid(row=2,column=0)
-        sub_btn=Button(self.runwindow,text = 'Use this name',
-                  command = submitform,anchor ='c')
-        sub_btn.grid(row=3,column=0,sticky='',padx=padx,pady=pady)
+        formfield = EntryField(entryframe,textvariable=newname)
+        formfield.grid(row=3,column=0)
+        ok='Use this name'
+        sub_btn=Button(entryframe,text = ok,
+                  command = done,anchor ='c')
+        sub_btn.grid(row=4,column=0,sticky='',padx=padx,pady=pady)
+        if reverify == False: #don't give this option if verifying
+            g=[x[0] for x in self.subchecksprioritized[self.type] if x[0]
+                                                                    is not None]
+            t=_('{}, and give me another group:\n({})'.format(ok,'\n'.join(g)))
+            sub_btn=Button(entryframe,text = t,
+                            command = next,anchor ='c')#,
+                            # wraplength=int(self.frame.winfo_screenwidth()/4))
+            sub_btn.grid(row=4,column=1,sticky='',padx=padx,pady=pady)
+        self.tonegroupbuttonframe(self.runwindow.frame,self.subcheck,
+                            row=5,column=0,playable=True,alwaysrefreshable=True)
         self.runwindow.waitdone()
         sub_btn.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
@@ -3889,21 +4010,20 @@ class Check():
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
     def updatebysubchecksenseid(self,oldtonevalue,newtonevalue,verified=False):
-        """This is all the words in the database with the given
-        location:value correspondence (any ps/profile)"""
+        # This function updates the field value and verification status (which
+        # containst the field value) in the lift file.
+        # This is all the words in the database with the given
+        # location:value correspondence (any ps/profile)
         lst2=self.db.get('senseidbyexfieldvalue',fieldtype='tone',
                                 location=self.name,fieldvalue=oldtonevalue)
-        """This intersects the two, to get only one location:value
-        correspondence, only within the ps/profile combo we're looking
-        at."""
-        # I should always remove the old code, but not always add the new
-        # In verification or joining, use verified=False
-        # I don't have a context yet for verified=True (renaming verified group)
+        # We are agnostic of verification status of any given entry, so don't
+        # use this to change names, not to mark verification status (do that
+        # with self.updatestatuslift())
         rm=self.verifictioncode(self.name,oldtonevalue)
-        if verified == True:
-            add=self.verifictioncode(self.name,newtonevalue)
-        else:
-            add=None
+        add=self.verifictioncode(self.name,newtonevalue)
+        # This intersects the two, to get only one location:value
+        # correspondence, only within the ps/profile combo we're looking
+        # at.
         senseids=self.senseidsincheck(lst2)
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
@@ -3912,7 +4032,7 @@ class Check():
                                 location=self.name,fieldvalue=oldtonevalue,
                                 newfieldvalue=newtonevalue)
             self.db.modverificationnode(senseid=senseid,vtype=self.profile,
-                                                                add=add,rm=rm)
+                                                add=add,rm=rm,addifrmd=True)
         self.db.write() #once done iterating over senseids
     def addtonegroup(self):
         log.info("Adding a tone group!")
@@ -4026,7 +4146,7 @@ class Check():
                                     'groups']=list(dict.fromkeys(tonegroups))
         log.debug("gettonegroups groups: {}".format(groups))
         if groups != []:
-            for value in ['NA', '', None]: #can None be an element in alist?
+            for value in ['NA', '', None]:
                 if value in groups:
                     log.error("Found (and removing) value {} in {}-{} for {} "
                             "frame: {}".format(value,self.ps,self.profile,
@@ -4123,10 +4243,10 @@ class Check():
         skip=_("Skip this word/phrase")
         """This should just add a button, not reload the frame"""
         row+=10
+        bf=Frame(parent)
+        bf.grid(column=0, row=row, sticky="ew")
         if self.status[self.type][self.ps][self.profile][self.name]['groups'
                                                                         ] == []:
-            bf=Frame(parent)
-            bf.grid(column=0, row=row, sticky="ew")
             b=Button(bf, text=firstOK,
                             cmd=lambda:returndictdestroynsortnext(self,bf,
                                         {'groupselected':"NONEOFTHEABOVE"}),
@@ -4134,24 +4254,24 @@ class Check():
                             font=self.fonts['instructions']
                             )
             b.grid(column=0, row=0, sticky="ew")
-            row+=1
+            # row+=1
         else:
-            b=Button(parent, text=newgroup,
+            b=Button(bf, text=newgroup,
                         cmd=lambda:returndictnsortnext(self,parent,
                                     {'groupselected':"NONEOFTHEABOVE"}),
                         anchor="w",
                         font=self.fonts['instructions']
                         )
-            b.grid(column=0, row=row, sticky="ew")
-            row+=1
-        b2=Button(parent, text=skip,
+            b.grid(column=0, row=0, sticky="ew")
+        # row+=1
+        b2=Button(bf, text=skip,
                         cmd=lambda:returndictnsortnext(self,parent,
                                     {'groupselected':"NA"}),
                         anchor="w",
                         font=self.fonts['instructions']
                         )
-        b2.grid(column=0, row=row+1, sticky="ew")
-    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,**kwargs):
+        b2.grid(column=0, row=1, sticky="ew")
+    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,playable=False,**kwargs):
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
@@ -4183,7 +4303,22 @@ class Check():
         bf.grid(column=column, row=row, sticky="ew")
         if label==True:
             b=Label(bf, text=text, **kwargs)
-            b.grid(column=0, row=0, sticky="ew", ipady=15) #Inside the buttons
+            b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+
+        elif playable == True:
+            url=RecordButtonFrame.makefilenames(None,self, #not Classy...
+                                                framed['senseid'])
+            thefileisthere=file.exists(url)
+            b=Label(bf, text=text, **kwargs)
+            if thefileisthere:
+                self.pyaudiocheck()
+                self.soundsettingscheck()
+                self.player=sound.SoundFilePlayer(url,self.pyaudio,self.
+                                                                soundsettings)
+                b=Button(bf, text=text, cmd=self.player.play)
+                bt=ToolTip(b,_("Click to hear this utterance"))
+            b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+
         else:
             b=Button(bf, text=text,
                     cmd=lambda p=parent:returndictnsortnext(self,p,
@@ -4191,20 +4326,20 @@ class Check():
                                         canary=canary,canary2=canary2),**kwargs)
             b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
             bt=ToolTip(b,_("Pick this Group"))
-            if example['n'] > 1 or alwaysrefreshable == True:
-                bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck
-                                cmd=lambda p=parent:self.tonegroupbuttonframe(
-                                    parent=parent,
-                                    group=group,notonegroup=notonegroup,
-                                    canary=canary,canary2=canary2,
-                                    row=row,column=column,label=label,
-                                    alwaysrefreshable=alwaysrefreshable,
-                                    renew=True),
-                                text=example['n'],
-                                compound='left',
-                                **kwargs)
-                bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
-                bct=ToolTip(bc,_("Change example word"))
+        if example['n'] > 1 or alwaysrefreshable == True:
+            bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck
+                            cmd=lambda p=parent:self.tonegroupbuttonframe(
+                                parent=parent,
+                                group=group,notonegroup=notonegroup,
+                                canary=canary,canary2=canary2,
+                                row=row,column=column,label=label,
+                                alwaysrefreshable=alwaysrefreshable,
+                                playable=playable,renew=True),
+                            text=example['n'],
+                            compound='left',
+                            **kwargs)
+            bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
+            bct=ToolTip(bc,_("Change example word"))
         return bf
     def printentryinfo(self,guid):
         outputs=[
@@ -4232,11 +4367,13 @@ class Check():
     def getsubchecksprioritized(self):
         """Tone doesn't have subchecks, so we just make it 'None' here."""
         """I really should be able to order these..."""
-        self.subchecksprioritized={"V":self.scount[self.ps]['V'], #self.db.v[self.analang],
-                                "C":self.scount[self.ps]['C'], #self.db.c[self.analang],
-                                "CV":'',
-                                "T":[(None,None),] #We should fix this some day
-                                }
+        self.subchecksprioritized={
+        "V":self.scount[self.ps]['V'], #self.db.v[self.analang],
+        "C":self.scount[self.ps]['C'], #self.db.c[self.analang],
+        "CV":'',
+        "T":[(x,None) for x in self.status['T'][self.ps][self.profile][self.name][
+                                'groups']+[None] #We should fix this some day
+            ]                    }
     """Doing stuff"""
     def getrunwindow(self,nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
@@ -5571,7 +5708,8 @@ class Window(tkinter.Toplevel):
         # This points to check via the window's parent (check.frame) and its
         # parent, the MainApplication, which has a check attribute...
         self.menubar.add_command(label=_("Rename Group"),
-            command=lambda c=self.parent.parent.check:Check.renamegroup(c))
+            command=lambda c=self.parent.parent.check,v=True:Check.renamegroup(
+                    c,reverify=True))
         self.config(menu=self.menubar)
         self.parent.verifymenu=True
         self.setcontext(context='verifyT')
@@ -5985,6 +6123,8 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.addmorpheme(x))
         advancedmenu.add_command(label=_("Add Tone frame"),
                         command=lambda x=check:Check.addframe(x))
+        advancedmenu.add_command(label=_("Name Framed Tone Group"),
+                                command=lambda x=check:Check.renamegroup(x))
         advtonemenu = Menu(self.menubar, tearoff=0)
         advancedmenu.add_cascade(label=_("Tone Reports"), menu=advtonemenu)
         advtonemenu.add_command(label=_("Join/Rename Tone Groups"),
@@ -6471,62 +6611,91 @@ class RecordButtonFrame(Frame):
         self.r.bind('<ButtonRelease>', self._redo)
     def addlink(self):
         #this checks for and doesn't add if already there.
-        self.db.addmediafields(self.node,self.filename,self.audiolang)
+        self.db.addmediafields(self.node,self.filenameURL,self.audiolang)
     def function(self):
         pass
-    def makefilenames(self):
-        if self.test==True:
-            self.filename=self.filenameURL="test_{}_{}.wav".format(
-                                self.settings.fs,self.settings.sample_format)
-        else:
-            if ((self.id==None) or (self.node==None) #or (self.form==None)
-                or (self.gloss==None)):
-                print("Sorry, unless testing we need all these "
+    def makefilenames(self,check=None,senseid=None):
+        if self is not None:
+            if self.test==True:
+                return "test_{}_{}.wav".format(self.settings.fs,
+                                                self.settings.sample_format)
+            if None in [self.id, self.node, self.gloss]:
+                log.debug("Sorry, unless testing we need all these "
                         "arguments; exiting.")
-            if self.form==None:
-                self.form=self.node.find(f"form[@lang='{self.check.analang}']"
-                                                                "/text").text
-            args=[self.check.ps]
-            filenameopts=[None]
-            if (self.node.tag == 'example'):
-                l=self.node.find("field[@type='location']//text")
-                if l is not None:
-                    filenameopts.insert(0,l.text) #make this the first option.
-            if not hasattr(self.check, 'rx'): #remove diacritics:
-                self.check.rx={'d':rx.make(rx.s(self.check,'d'),compile=True)}
-            self.filenames=[]
-            args+=[self.id]
-            args+=[self.node.tag]
-            if self.node.tag == 'field':
-                args+=[self.node.get("type")]
-            args+=[rx.stripdiacritics(self.check,self.form)]#profile <=Changes!
-            args+=[self.gloss]
-            log.debug(filenameopts)
-            for opt in filenameopts: #get options to support older name schema
+                return
+            form=self.form
+            node=self.node
+            check=self.check
+            id=self.id
+            gloss=self.gloss
+        else:
+            if None in [check, senseid]:
+                return
+            id=senseid
+            #if an example:
+            node=firstoflist(check.db.get('examplebylocation',senseid=senseid,
+                                location=check.name))
+            # log.debug(check.db.geturlnattr('glossofexample'))
+            # log.debug(check.db.geturlnattr('glossofexample')['url'])
+            # log.debug(node.find(check.db.geturlnattr('glossofexample')[
+            #                                                     'url']))
+            gloss=node.find(check.db.geturlnattr('glossofexample')['url']).text
+            # log.debug(gloss)
+            form=node.find(check.db.geturlnattr('formofexample')['url']).text
+            # log.debug(form)
+            #if an unglossed node, take from sense/entry:
+        if gloss is None:
+            gloss=check.db.get('gloss',senseid=senseid,
+                                    glosslang=check.glosslang).text
+            # sensenode=self.db.getsensenode(senseid=senseid)
+            # node=self.db.exampleissameasnew(node=sensenode)
+        if form is None:
+            form=node.find(f"form[@lang='{check.analang}']/text").text
+        # args=[check.ps]
+        pslocopts=[check.ps]
+        fieldlocopts=[None]
+        if (node.tag == 'example'):
+            l=node.find("field[@type='location']//text")
+            if l is not None:
+                #the last option is taken, if none are found
+                pslocopts.insert(0,check.ps+'-'+l.text) #the first option.
+                fieldlocopts.append(l.text) #make this the last option.
+                # Yes, these allow for location to be present twice, but
+                # that should never be found, nor offered
+        if not hasattr(check, 'rx'): #remove diacritics:
+            check.rx={'d':rx.make(rx.s(check,'d'),compile=True)}
+        filenames=[]
+        args=[id]
+        args+=[node.tag]
+        if node.tag == 'field':
+            args+=[node.get("type")]
+        args+=[rx.stripdiacritics(check,form)]#profile <=Changes!
+        args+=[gloss]
+        # log.debug(filenameopts)
+        for pslocopt in pslocopts:
+            for fieldlocopt in fieldlocopts: #get options to support older name schema
                 optargs=args[:]
-                optargs.insert(3,opt) #put after self.node.tag
+                optargs.insert(0,pslocopt) #put first
+                optargs.insert(3,fieldlocopt) #put after self.node.tag
                 log.log(3,optargs)
                 wavfilename=''
                 for arg in [x for x in optargs if x is not None]:
                     wavfilename+=arg
                     if optargs.index(arg) < len(optargs):
                         wavfilename+='_'
-                self.filenames+=[re.sub('[][\. /?]+','_',
+                filenames+=[re.sub('[][\. /?]+','_',
                                                     str(wavfilename))+'.wav']
-            #test if any of the generated filenames are there
-            for self.filename in self.filenames:
-                self.filenameURL=str(file.getdiredurl(self.check.audiodir,
-                                                                self.filename))
-                if file.exists(self.filenameURL):
-                    log.debug("Audio file found! using name: {}; names: {}; "
-                        "url:{}".format(self.filename, self.filenames,
-                                                            self.filenameURL))
-                    self.addlink()
-                    return
-            #if you don't find any, take the last values
-            log.debug("No audio file found! using name: {}; names: {}; url:{}"
-                    "".format(self.filename, self.filenames, self.filenameURL))
-            return
+        #test if any of the generated filenames are there
+        for filename in filenames:
+            filenameURL=str(file.getdiredurl(check.audiodir,filename))
+            if file.exists(filenameURL):
+                log.debug("Audio file found! using name: {}; names: {}; "
+                    "url:{}".format(filename, filenames, filenameURL))
+                return filenameURL
+        #if you don't find any, take the *last* values
+        log.debug("No audio file found! using name: {}; names: {}; url:{}"
+                "".format(filename, filenames, filenameURL))
+        return filenameURL
     def __init__(self,parent,check,id=None,node=None,form=None,gloss=None,test=False,**kwargs):
         # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
@@ -6550,7 +6719,9 @@ class RecordButtonFrame(Frame):
         self.channels = 1 #Always record in mono
         self.audiolang=check.audiolang
         self.test=test
-        self.makefilenames()
+        self.filenameURL=self.makefilenames()
+        if file.exists(filenameURL):
+            self.addlink() #just in case an old file doesn't have links
         Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
