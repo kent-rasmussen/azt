@@ -1,6 +1,8 @@
 #Roadmap
 
 ## release stoppers
+- find `different` buttons on sort (runwindow.frame?)
+- make nbsp appear correctly in XLP output
 
 ## Things to Test
 - check that changes to S regexs don't break too much.
@@ -20,7 +22,11 @@
     - lift-field?
     - lift-node?
     - lift-example?
-
+- Think through `guess`ing and `next` functions, and maybe verify?
+    - Sometimes guessing is appropriate, especially current is not valid
+        - and not necessarily the same as `next` (i.e., not current)
+        - nor verify, which makes valid, but doesn't change if already valid.
+    - These should probably all go together, with common [arg,argprioritylist] parameters
 ## In Process (fix)
 - add mini keyboard of common symbols (class, to add to Entry)
 - fn to change tone frame name, everywhere where needed

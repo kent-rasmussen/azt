@@ -27,6 +27,7 @@
 - updated references to updatestatus with appropriate updatestatuslift calls
    - check name changes on groups and frame names
 - removed "different" button from sort page, until at least one button is there
+- added window to rename surface groups with a single button (with refresh) for the group, to play sound. This is a modification of the rename while verifying window (but with sound button, and next group button)
 
 # Version 0.8
 - set up ad hoc groups to be more permanent:
