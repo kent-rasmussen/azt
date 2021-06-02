@@ -7190,8 +7190,8 @@ def setfonts(self,fonttheme='default'):
             'title':tkinter.font.Font(family=charis, size=title), #Charis
             'instructions':tkinter.font.Font(family=charis,
                                         size=normal), #Charis
-            'report':tkinter.font.Font(family="Andika SIL", size=small),
-            'reportheader':tkinter.font.Font(family="Andika SIL", size=small,
+            'report':tkinter.font.Font(family=charis, size=small),
+            'reportheader':tkinter.font.Font(family=charis, size=small,
                                                 # underline = True,
                                                 slant = 'italic'
                                                 ),
