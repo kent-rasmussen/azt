@@ -7213,7 +7213,12 @@ def availablexy(self,w=None):
         w=self
         self.otherrowheight=0
         self.othercolwidth=0
-    wrow=w.grid_info()['row']
+    try: #Any kind of error making a widget often shows up here
+        wrow=w.grid_info()['row']
+    except:
+        log.error("Problem with grid on {} widget, with these siblings: {}"
+                    "".format(w.winfo_class(),w.parent.winfo_children()))
+        raise{}
     wcol=w.grid_info()['column']
     wrowmax=wrow+w.grid_info()['rowspan']
     wcolmax=wcol+w.grid_info()['columnspan']
