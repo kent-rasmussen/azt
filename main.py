@@ -7184,20 +7184,22 @@ def setfonts(self,fonttheme='default'):
         bigger=36
         title=36
         small=12
+    andika="Andika"# not "Andika SIL"
+    charis="Charis SIL"
     self.fonts={
-            'title':tkinter.font.Font(family="Charis SIL", size=title), #Charis
-            'instructions':tkinter.font.Font(family="Andika SIL",
+            'title':tkinter.font.Font(family=charis, size=title), #Charis
+            'instructions':tkinter.font.Font(family=charis,
                                         size=normal), #Charis
             'report':tkinter.font.Font(family="Andika SIL", size=small),
             'reportheader':tkinter.font.Font(family="Andika SIL", size=small,
                                                 # underline = True,
                                                 slant = 'italic'
                                                 ),
-            'read':tkinter.font.Font(family="Andika SIL", size=big),
-            'readbig':tkinter.font.Font(family="Andika SIL", size=bigger,
+            'read':tkinter.font.Font(family=charis, size=big),
+            'readbig':tkinter.font.Font(family=charis, size=bigger,
                                         weight='bold'),
-            'small':tkinter.font.Font(family="Andika SIL", size=small),
-            'default':tkinter.font.Font(family="Andika SIL", size=default)
+            'small':tkinter.font.Font(family=charis, size=small),
+            'default':tkinter.font.Font(family=charis, size=default)
                 }
     # print(self.fonts)
     """additional keyword options (ignored if font is specified):
