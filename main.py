@@ -6434,6 +6434,94 @@ class ContextMenu:
         self.parent.context=self
         self.context=context #where the menu is showing (e.g., verifyT)
         self.updatebindings()
+class Renderer(object):
+    def __init__(self,test=False,**kwargs):
+        import PIL.ImageFont
+        import PIL.ImageTk
+        import PIL.ImageDraw
+        import PIL.Image
+        font=kwargs['font'].actual() #should always be there
+        xpad=ypad=fspacing=font['size']
+        fname=font['family']
+        fsize=int(font['size']*1.33)
+        fspacing=10
+        fonttype=''
+        if font['weight'] == 'bold':
+            fonttype+='B'
+        if font['slant'] == 'italic':
+            fonttype+='I'
+        if fonttype == '':
+            fonttype='R'
+        print(font)
+        text=kwargs['text'] #should always be there
+        wraplength=kwargs['wraplength'] #should always be there
+        log.debug("Rendering ‘{}’ text with font: {}".format(text,font))
+        if (('justify' in kwargs and
+                        kwargs['justify'] in [tkinter.LEFT,'left']) or
+            ('anchor' in kwargs and
+                        kwargs['anchor'] in [tkinter.E,"e"])):
+            align="left"
+        else:
+            align="center" #also supports "right"
+        if fname in ["Andika","Andika SIL"]:
+            file='Andika-{}.ttf'.format('R') #There's only this one
+            filenostaves='Andika-tstv-{}.ttf'.format(fonttype)
+        if fname in ["Charis","Charis SIL"]:
+            file='CharisSIL-{}.ttf'.format(fonttype)
+            filenostaves='CharisSIL-tstv-{}.ttf'.format(fonttype)
+        if fname in ["Gentium","Gentium SIL"]:
+            if fonttype == 'B':
+                fonttype='R'
+            if fonttype == 'BI':
+                fonttype='I'
+            file='Gentium-{}.ttf'.format(fonttype)
+            filenostaves='Gentium-tstv-{}.ttf'.format(fonttype)
+        if fname in ["Gentium Basic","Gentium Basic SIL"]:
+            file='GenBas{}.ttf'.format(fonttype)
+            filenostaves='GenBas-tstv-{}.ttf'.format(fonttype)
+        if fname in ["Gentium Book Basic","Gentium Book Basic SIL"]:
+            file='GenBkBas{}.ttf'.format(fonttype)
+            filenostaves='GenBkBas-tstv-{}.ttf'.format(fonttype)
+        try:
+            font = PIL.ImageFont.truetype(font=filenostaves, size=fsize)
+            log.debug("Using No Staves font")
+        except:
+            log.debug("Couldn't find No Staves font, going without")
+            font = PIL.ImageFont.truetype(font=file, size=fsize)
+        img = PIL.Image.new("1", (10,10), 255)
+        draw = PIL.ImageDraw.Draw(img)
+        w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
+        textori=text
+        lines=textori.split('\n') #get everything between manual linebreaks
+        for line in lines:
+            li=lines.index(line)
+            words=line.split(' ')
+            nl=x=y=0
+            while y < len(words):
+                y+=1
+                l=' '.join(words[x+nl:y+nl])
+                w, h = draw.multiline_textsize(l, font=font, spacing=fspacing)
+                log.log(2,"Round {} Words {}-{}:{}, width: {}/{}".format(y,x+nl,
+                                                y+nl,l,w,wraplength))
+                if w>wraplength:
+                    words.insert(y+nl-1,'\n')
+                    x=y-1
+                    nl+=1
+            line=' '.join(words)
+            lines[li]=line
+        text='\n'.join(lines)
+        log.debug(text)
+        w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
+        log.debug("Final size w: {}, h: {}".format(w,h))
+        black = 'rgb(0, 0, 0)'
+        white = 'rgb(255, 255, 255)'
+        img = PIL.Image.new("RGBA", (w+xpad, h+ypad), (255, 255, 255,0 )) #alpha
+        draw = PIL.ImageDraw.Draw(img)
+        draw.multiline_text((0+xpad//2, 0+ypad//4), text,font=font,fill=black,
+                                                                align=align)
+        # self.img=font.getmask(text) #features
+        self.img = PIL.ImageTk.PhotoImage(img) #._PhotoImage__photo
+        # print(self.img.__dict__)
 class Label(tkinter.Label):
     def wrap(self):
         availablexy(self)
