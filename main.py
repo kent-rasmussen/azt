@@ -6589,27 +6589,41 @@ class RadioButtonFrame(Frame):
 class Button(tkinter.Button):
     def nofn(self):
         pass
-    def __init__(self, parent, text=None, choice=None, window=None,
-                command=None, column=0, row=1, **kwargs):
+    def __init__(self, parent, choice=None, window=None,
+                command=None, column=0, row=1, norender=False,**kwargs):
         """Remove these arguments; buttons shouldn't be passing them..."""
         """command is my hacky command specification, with lots of args added.
         cmd is just the command passing through."""
         self.parent=parent
         inherit(self)
-        self.text=text
+        """For button"""
+        if 'anchor' not in kwargs:
+            kwargs['anchor']="w"
+        if 'text' not in kwargs:
+            kwargs['text']=''
+        if 'wraplength' not in kwargs:
+            kwargs['wraplength']=parent.wraplength
+        if 'font' not in kwargs:
+            kwargs['font']=parent.fonts['default']
+        """For image rendering of button text"""
+        sticks=set(['˥','˦','˧','˨','˩',' '])
+        if set(kwargs['text']) & sticks and not norender:
+            if 'image' in kwargs and kwargs['image'] is not None:
+                log.error("You gave an image and tone characters in the same "
+                "button text? ({},{})".format(image,kwargs['text']))
+                return
+            else:
+                log.debug("sticks found! (Generating image for button)")
+                i=Renderer(**kwargs)
+                kwargs['image']=self.tkimg=i.img
+                kwargs['text']=''
+        kwargs['text']=nfc(kwargs['text'])
         """For Grid"""
         if 'sticky' in kwargs:
             sticky=kwargs['sticky']
             del kwargs['sticky'] #we don't want this going to the button.
         else:
             sticky="W"+"E"
-        """For button"""
-        if 'anchor' not in kwargs:
-            kwargs['anchor']="w"
-        if 'wraplength' not in kwargs:
-            kwargs['wraplength']=parent.wraplength #we need this defined always or never...
-        if 'font' not in kwargs:
-            kwargs['font']=parent.fonts['default']
         kwargs['activebackground']=self.theme['activebackground']
         kwargs['background']=self.theme['background']
         if self.debug == True:
@@ -6632,7 +6646,7 @@ class Button(tkinter.Button):
                     cmd=lambda :command('choice')
                 else:
                     cmd=lambda :command()
-        tkinter.Button.__init__(self, parent, text=nfc(text), command=cmd,
+        tkinter.Button.__init__(self, parent, command=cmd,
                                 **kwargs)
         self.grid(column=column, row=row, sticky=sticky)
 class CheckButton(tkinter.Checkbutton):
