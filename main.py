@@ -4415,13 +4415,15 @@ class Check():
     def getsubchecksprioritized(self):
         """Tone doesn't have subchecks, so we just make it 'None' here."""
         """I really should be able to order these..."""
+        log.debug("ps: {}, profile: {}, name: {}".format(self.ps,self.profile,
+                                                                    self.name))
         self.subchecksprioritized={
         "V":self.scount[self.ps]['V'], #self.db.v[self.analang],
         "C":self.scount[self.ps]['C'], #self.db.c[self.analang],
-        "CV":'',
-        "T":[(x,None) for x in self.status['T'][self.ps][self.profile][self.name][
-                                'groups']+[None] #We should fix this some day
-            ]                    }
+        "CV":''}#,
+        if self.type == 'T':
+            self.subchecksprioritized['T']=[(x,None) for x in self.status['T'][
+                self.ps][self.profile][self.name]['groups']+[None]]
     """Doing stuff"""
     def getrunwindow(self,nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
