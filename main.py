@@ -429,12 +429,21 @@ class Check():
                 self.languagenames[xyz]="Fulfulde"
             elif xyz == 'bfj':
                 self.languagenames[xyz]="Chufie’"
+            elif xyz is None:
+                self.languagenames[xyz]=None #just so we don't fail on None...
             else:
-                self.languagenames[xyz]=_("Language with code [{}]").format(xyz) #I need to fix this...
-            self.languagenames[None]=None #just so we don't fail on None...
-        if (hasattr(self,'adnlangnames') and (self.adnlangnames is not None)):
-            for xyz in self.adnlangnames: #overwrite with user specified names
-                self.languagenames[xyz]=self.adnlangnames[xyz]
+                if (not hasattr(self,'adnlangnames')
+                        or self.adnlangnames is None):
+                    adnl=self.adnlangnames={}
+                else:
+                    adnl=self.adnlangnames
+                if xyz in adnl and adnl[xyz] is not None:
+                    self.languagenames[xyz]=adnl[xyz]
+                else:
+                    self.languagenames[xyz]=_("Language with code [{}]").format(
+                                                                            xyz)
+                    adnl[xyz]=self.languagenames[xyz]
+
     """User Input functions"""
     def getinterfacelang(self,event=None):
         log.info("Asking for interface language...")
@@ -2170,7 +2179,7 @@ class Check():
         'width':None, #10
         'columnspan':3,
         'columnplus':0}
-        def proselabel(opts,label,parent=None,cmd=None):
+        def proselabel(opts,label,parent=None,cmd=None,tt=None):
             if parent is None:
                 parent=self.frame.status
                 column=opts['labelcolumn']
@@ -2192,7 +2201,8 @@ class Check():
                     ipadx=ipadx, sticky='w')
             if cmd is not None:
                 l.bind('<ButtonRelease>',getattr(self,str(cmd)))
-                # ttl=ToolTip(l,"do {} command".format(cmd)) #not really needed
+            if tt is not None:
+                ttl=ToolTip(l,tt)
         def labels(parent,opts,label,value):
             Label(self.frame.status, text=label).grid(
                     column=opts['labelcolumn'], row=opts['row'],
@@ -2236,7 +2246,12 @@ class Check():
         if self.audiolang is None:
             self.guessaudiolang() #don't display this, but make it
         t=(_("Working on {}").format(self.languagenames[self.analang]))
-        proselabel(opts,t,cmd='getanalang')
+        if (self.languagenames[self.analang] == _("Language with code [{}]"
+                                                    "").format(self.analang)):
+            proselabel(opts,t,cmd='getanalangname',
+                                            tt=_("Set analysis language Name"))
+        else:
+            proselabel(opts,t,cmd='getanalang')
         opts['row']+=1
         """Get glosslang"""
         if self.glosslang not in self.db.glosslangs:
@@ -2794,7 +2809,36 @@ class Check():
             ilist=self.checknamesall[self.type][i+1]
             names+=ilist  #.append(, This is causing a list in a list..…
         return names
+    def getanalangname(self,event=None):
+        log.info("this sets the language name")
+        def submit(event=None):
+            self.languagenames[self.analang]=namevar.get()
+            if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
+                self.adnlangnames={}
+            self.adnlangnames[self.analang]=self.languagenames[self.analang]
+                # if self.analang in self.adnlangnames:
+            self.storesettingsfile()
+            window.destroy()
+            self.checkcheck()
+        window=Window(self.frame,title=_('Enter Analysis Language Name'))
+        namevar=tkinter.StringVar()
+        curname=self.languagenames[self.analang]
+        defaultname=_("Language with code [{}]").format(self.analang)
+        t=_("How do you want to display the name of {}").format(
+                                                                        curname)
+        if curname != defaultname:
+            t+=_(", with ISO 639-3 code [{}]").format(self.analang)
+        t+='?' # _("Language with code [{}]").format(xyz)
+        Label(window.frame,text=t).grid(row=0,column=0,sticky='e',columnspan=2)
+        name = EntryField(window.frame,textvariable=namevar)
+        name.grid(row=1,column=0,sticky='e')
+        Button(window.frame,text='OK',cmd=submit).grid(
+                                                    row=1,column=1,sticky='w')
+        name.bind('<Return>',submit)
     def getanalang(self,event=None):
+        if len(self.db.analangs) <2: #The user probably wants to change display.
+            self.getanalangname()
+            return
         log.info("this sets the language")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title=_('Select Analysis Language'))
@@ -6051,6 +6095,8 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.getinterfacelang(x))
         languagemenu.add_command(label=_("Analysis language"),
                         command=lambda x=check:Check.getanalang(x))
+        languagemenu.add_command(label=_("Analysis language Name"),
+                        command=lambda x=check:Check.getanalangname(x))
         languagemenu.add_command(label=_("Gloss language"),
                         command=lambda x=check:Check.getglosslang(x))
         languagemenu.add_command(label=_("Another gloss language"),
