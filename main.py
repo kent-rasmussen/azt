@@ -4365,7 +4365,7 @@ class Check():
                                                                 soundsettings)
                 b=Button(bf, text=text, cmd=self.player.play)
                 bt=ToolTip(b,_("Click to hear this utterance"))
-            b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+            b.grid(column=1, row=0, sticky="nesw", ipady=15) #Inside the buttons
 
         else:
             b=Button(bf, text=text,
@@ -4383,7 +4383,7 @@ class Check():
                                 row=row,column=column,label=label,
                                 alwaysrefreshable=alwaysrefreshable,
                                 playable=playable,renew=True),
-                            text=example['n'],
+                            text=str(example['n']),
                             compound='left',
                             **kwargs)
             bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
