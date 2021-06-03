@@ -6454,6 +6454,7 @@ class Renderer(object):
             fonttype='R'
         print(font)
         text=kwargs['text'] #should always be there
+        text=text.replace('\t','    ') #Not sure why, but tabs aren't working.
         wraplength=kwargs['wraplength'] #should always be there
         log.debug("Rendering ‘{}’ text with font: {}".format(text,font))
         if (('justify' in kwargs and
@@ -6527,7 +6528,7 @@ class Label(tkinter.Label):
         availablexy(self)
         self.config(wraplength=self.maxwidth)
         log.debug('self.maxwidth (Label class): {}'.format(self.maxwidth))
-    def __init__(self, parent, text, column=0, row=1, **kwargs):
+    def __init__(self, parent, column=0, row=1, norender=False,**kwargs):
         """These have non-None defaults"""
         if 'font' not in kwargs:
             kwargs['font']=parent.fonts['default']
@@ -6535,7 +6536,22 @@ class Label(tkinter.Label):
             kwargs['wraplength']=parent.wraplength
         self.theme=parent.theme
         self.parent=parent
-        tkinter.Label.__init__(self, parent, text=nfc(text), **kwargs)
+        sticks=set(['˥','˦','˧','˨','˩',' '])
+        if set(kwargs['text']) & sticks and not norender:
+            if 'image' in kwargs and kwargs['image'] is not None:
+                log.error("You gave an image and tone characters in the same "
+                "label? ({},{})".format(image,kwargs['text']))
+                return
+            else:
+                log.debug("sticks found! (Generating image for label)")
+                i=Renderer(**kwargs)
+                self.tkimg=i.img
+                kwargs['image']=self.tkimg
+                # kwargs['compound']=None
+                kwargs['text']=''
+        else:
+            kwargs['text']=nfc(kwargs['text'])
+        tkinter.Label.__init__(self, parent, **kwargs)
         self['background']=self.theme['background']
 class EntryField(tkinter.Entry):
     def __init__(self, parent, **kwargs):
