@@ -4429,6 +4429,8 @@ class Check():
         need to test for both."""
         if title is None:
             title=(_("Run Window"))
+        if self.exitFlag is True:
+            return
         if hasattr(self,'runwindow') and (self.runwindow.winfo_exists()):
             log.info("Runwindow already there! Resetting frame...")
             self.runwindow.resetframe() #I think I'll always want this here...
