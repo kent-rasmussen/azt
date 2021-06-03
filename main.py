@@ -2650,8 +2650,8 @@ class Check():
                         if donenum == '0/0':
                             log.log(3,"skipping cell with values {}".format(
                                                                     donenum))
-                            continue
-                        if tosort == True:
+                            donenum='' #continue
+                        if tosort == True and donenum != '':
                             donenum='!'+str(donenum)
                         elif tosort == '?':
                             donenum='?'+str(donenum)
