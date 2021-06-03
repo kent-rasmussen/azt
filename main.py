@@ -2677,8 +2677,9 @@ class Check():
                                                                 sticky='nesw')
                         ttb=ToolTip(tb,tip)
             row+=1
-        log.error(_("You have more groups verified than there are: {}".format(
-                                                                    ungroups)))
+        if ungroups > 0:
+            log.error(_("You have more groups verified than there are: {}"
+                        "".format(ungroups)))
         self.frame.update()
         self.frame.parent.waitdone()
         self.frame.parent.parent.deiconify()
