@@ -368,9 +368,7 @@ class Check():
             default()
     def nextsubcheck(self,guess=False):
         def default():
-            log.debug("self.subcheck: {}".format(self.subcheck))
             self.set('subcheck',priorities[0])
-            log.debug("self.subcheck (after default): {}".format(self.subcheck))
         if self.type != 'T': #only tone for now
             log.debug("Only working on tone for now, not {}".format(self.type))
             return
@@ -389,7 +387,6 @@ class Check():
         else:
             default() #or guess == True): ever?
         log.debug("self.subcheck: {}".format(self.subcheck))
-
     def guesscheckname(self):
         """Picks the longest name (the most restrictive fiter)"""
         if hasattr(self,'checkspossible') and len(self.checkspossible) != 0:
