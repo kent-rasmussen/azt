@@ -423,6 +423,10 @@ class Check():
                 self.languagenames[xyz]="Français"
             elif xyz == 'en':
                 self.languagenames[xyz]="English"
+            elif xyz == 'swc':
+                self.languagenames[xyz]="Congo Swahili"
+            elif xyz == 'swh':
+                self.languagenames[xyz]="Swahili"
             elif xyz == 'gnd':
                 self.languagenames[xyz]="Zulgo"
             elif xyz == 'fub':
