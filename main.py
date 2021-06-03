@@ -851,7 +851,7 @@ class Check():
             # created...
             self.nameori=self.name
             self.name=str(namevar)
-            if self.name == '':
+            if self.name in ['', None]:
                 text=_('Sorry, empty name! \nPlease provide at least \na frame '
                     'name, to distinguish it \nfrom other frames.')
                 print(re.sub('\n','',text))
