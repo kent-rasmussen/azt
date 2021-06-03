@@ -1,8 +1,6 @@
 #Roadmap
 
 ## release stoppers
-- find `different` buttons on sort (runwindow.frame?)
-- make nbsp appear correctly in XLP output
 
 ## Things to Test
 - check that changes to S regexs don't break too much.
@@ -28,6 +26,7 @@
         - nor verify, which makes valid, but doesn't change if already valid.
     - These should probably all go together, with common [arg,argprioritylist] parameters
 ## In Process (fix)
+- go to https://fontforge.org/docs/scripting/python/fontforge.html to see if we can pull contour tone staves
 - add mini keyboard of common symbols (class, to add to Entry)
 - fn to change tone frame name, everywhere where needed
     - toneframes.py
