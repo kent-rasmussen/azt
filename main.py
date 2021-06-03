@@ -350,9 +350,12 @@ class Check():
                         "profile analysis.".format(self.ps))
             self.set('profile',self.profilecounts[0][1])
     def nextframe(self,guess=False):
+        def default():
+            self.set('name',self.framestodo[0])
         if not hasattr(self,'framestodo'):
             self.getframestodo()
         if len(self.framestodo) == 0:
+            log.info("No frames to do; asking to define another one")
             self.addframe() #The above should change self.name, if completed.
             return
         if self.name in self.framestodo:
@@ -360,9 +363,9 @@ class Check():
             if len(self.framestodo)>i+1:
                 self.set('name',self.framestodo[i+1])
             else:
-                self.addframe()
+                default() #cycle through framestodo
         else:
-            self.set('name',self.framestodo[0])
+            default()
     def nextsubcheck(self,guess=False):
         def default():
             log.debug("self.subcheck: {}".format(self.subcheck))
