@@ -3015,8 +3015,16 @@ class Check():
                           self.profile, self.name)).grid(column=0, row=0)
             return 1
         else:
-            Label(window.frame,
-                          text="'What {}-{} tone group in the ‘{}’ frame do "
+            g=self.status[self.type][self.ps][self.profile][self.name]['groups']
+            if len(g) == 0:
+                Label(window.frame,
+                          text="It looks like you haven't sorted {}-{} lexemes "
+                          "into any groups in the ‘{}’ frame yet."
+                          "".format(self.ps,self.profile,self.name)
+                          ).grid(column=0, row=0)
+            else:
+                Label(window.frame,
+                          text="What {}-{} tone group in the ‘{}’ frame do "
                           "you want to work with?".format(self.ps,self.profile,
                           self.name)).grid(column=0, row=0)
                 window.scroll=Frame(window.frame)
