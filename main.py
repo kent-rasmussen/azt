@@ -2346,38 +2346,30 @@ class Check():
             print(self.name,'in', self.checkspossible,'?')
             if self.name not in [x[0] for x in self.checkspossible]:
                 self.guesscheckname()
-            if self.name is None: #no backup assumptions for CV checks, for now
-                log.info("check selection dialog here, for now just running V1=V2")
-                self.getcheck()
-                return
         """Get subcheck"""
-        self.getsubchecksprioritized()
-        if self.subcheck not in [x[0] for x in self.subchecksprioritized[
+        if None not in [self.type, self.ps,self.profile,self.name]:
+            self.makestatusdict()
+            self.getsubchecksprioritized()
+            if self.subcheck not in [x[0] for x in self.subchecksprioritized[
                                                                     self.type]]:
-            self.guesssubcheck()
+                self.guesssubcheck()
 
         if self.type == 'T':
             opts['columnplus']=2
-            if self.subcheck is None:
+            if None in [self.name, self.subcheck]:
                 t=_("(no framed group)")
             else:
                 t=(_("(framed group: ‘{}’)").format(self.subcheck))
             proselabel(opts,t,cmd='getsubcheck',parent=tf)
             opts['columnplus']=0
         else:
-            if self.subcheck is None:
-                log.info("Aparently I don't know yet what (e.g., consonant or "
-                        "vowel) I'm testing.")
-                self.getsubcheck()
-                return
-            else:
-                tf=Frame(self.frame.status)
-                tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
-                t=(_("Checking {},".format(self.typedict[self.type]['pl'])))
-                proselabel(opts,t,cmd='gettype',parent=tf)
-                opts['columnplus']=1
-                t=(_("working on {}".format(self.name)))
-                proselabel(opts,t,cmd='getcheck',parent=tf)
+            tf=Frame(self.frame.status)
+            tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
+            t=(_("Checking {},".format(self.typedict[self.type]['pl'])))
+            proselabel(opts,t,cmd='gettype',parent=tf)
+            opts['columnplus']=1
+            t=(_("working on {}".format(self.name)))
+            proselabel(opts,t,cmd='getcheck',parent=tf)
         """Final Button"""
         opts['row']+=1
         if self.type == 'T':
