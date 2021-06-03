@@ -2920,17 +2920,26 @@ class Check():
         log.info("Getting the check name...")
         self.getcheckspossible()
         window=Window(self.frame,title='Select Check')
-        btext=_("Define a New Tone Frame")
         if self.checkspossible == []:
-            text=_("You don't seem to have any tone frames set up.\n"
-            "Click '{}' below to define a tone frame. \nPlease "
-            "pay attention to the instructions, and if \nthere's anything "
-            "you don't understand, or if you're not \nsure what a tone "
-            "frame is, please ask for help. \nWhen you are done making frames, "
-            "click 'Exit' to continue.".format(btext))
+            if self.type == 'T':
+                btext=_("Define a New Tone Frame")
+                text=_("You don't seem to have any tone frames set up.\n"
+                "Click '{}' below to define a tone frame. \nPlease "
+                "pay attention to the instructions, and if \nthere's anything "
+                "you don't understand, or if you're not \nsure what a tone "
+                "frame is, please ask for help. \nWhen you are done making frames, "
+                "click 'Exit' to continue.".format(btext))
+                cmd=self.addframe
+            else:
+                btext=_("Return to A→Z+T, to fix settings")
+                text=_("I can't find any checks for type {}, ps {}, profile {}."
+                        " Probably that means there is a problem with your "
+                        " settings, or with your syllable profile analysis"
+                        "".format(self.type,self.ps,self.profile))
+                cmd=window.destroy
             Label(window.frame, text=text).grid(column=0, row=0, ipady=25)
             b=Button(window.frame, text=btext,
-                    cmd=self.addframe,
+                    cmd=cmd,
                     anchor='c')
             b.grid(column=0, row=1,sticky='')
             """I need to make this quit the whole program, immediately."""
