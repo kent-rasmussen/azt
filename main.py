@@ -950,6 +950,7 @@ class Check():
             self.checkcheck()
         self.addwindow=Window(self.frame, title=_("Define a New Tone Frame"))
         self.addwindow.scroll=ScrollingFrame(self.addwindow)
+        self.addwindow.scroll.grid(row=0,column=0)
         self.addwindow.frame1=Frame(self.addwindow.scroll.content)
         self.addwindow.frame1.grid(row=0,column=0)
         row=0
