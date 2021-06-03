@@ -3019,14 +3019,12 @@ class Check():
                           text="'What {}-{} tone group in the ‘{}’ frame do "
                           "you want to work with?".format(self.ps,self.profile,
                           self.name)).grid(column=0, row=0)
-            window.scroll=Frame(window.frame)
-            window.scroll.grid(column=0, row=1)
-            buttonFrame1=ScrollingButtonFrame(window.scroll,
-                                            self.status[self.type][self.ps][
-                                            self.profile][self.name]['groups'],
-                                            self.setsubcheck,
-                                            window=window
-                                            ).grid(column=0, row=4)
+                window.scroll=Frame(window.frame)
+                window.scroll.grid(column=0, row=1)
+                buttonFrame1=ScrollingButtonFrame(window.scroll,g,
+                                                self.setsubcheck,
+                                                window=window
+                                                ).grid(column=0, row=4)
     def getV(self,window,event=None):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getsubcheck"""
@@ -3473,7 +3471,7 @@ class Check():
                         "group? A label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
         getform=Label(self.runwindow.frame,text=getformtext,
-                font=self.fonts['read'])
+                font=self.fonts['read'],norender=True)
         getform.grid(row=1,column=0,padx=padx,pady=pady)
         entryframe=Frame(self.runwindow.frame)
         entryframe.grid(row=2,column=0,sticky='')
@@ -3669,64 +3667,57 @@ class Check():
                         self.senseidsunsorted)
                 print('self.guidssorted:',len(self.senseidssorted),
                         self.senseidssorted)
-            exit()
+            exit() #obsolete
+        """things that don't change in this fn"""
         todo=len(self.senseidstosort)
+        status=self.status[self.type][self.ps][self.profile][self.name]
+        groups=status['groups']
+        """Children of runwindow.frame"""
+        titles=Frame(self.runwindow.frame)
+        titles.grid(row=0, column=0, sticky="ew", columnspan=2)
+        Label(self.runwindow.frame, image=self.parent.photo['sortT'],
+                        text='',bg=self.theme['background']
+                        ).grid(row=1,column=0,rowspan=3,sticky='nw')
+        scroll=self.runwindow.frame.scroll=ScrollingFrame(self.runwindow.frame)
+        scroll.grid(row=2, column=1, sticky="new")
+        """Titles"""
         title=_("Sort {} Tone (in ‘{}’ frame)").format(
                                         self.languagenames[self.analang],
                                         self.name)
+        Label(titles, text=title,font=self.fonts['title'],anchor='c').grid(
+                                            column=0, row=0, sticky="ew")
         instructions=_("Select the one with the same tone melody as")
-        self.runwindow.frame.scroll=ScrollingFrame(self.runwindow.frame)
-        self.runwindow.frame.scroll.grid(column=1,row=2, sticky="new")
-        """The frame for the groups buttons"""
-        self.runwindow.frame.scroll.content.groups=Frame(
-                                            self.runwindow.frame.scroll.content)
-        self.runwindow.frame.scroll.content.groups.grid(row=0,column=0,
-                                                                sticky="ew")
-        self.runwindow.frame.scroll.content.groups.row=0 #rows for this frame
-        """If we have tone groups already, make them now."""
-        for group in self.status[self.type][self.ps][self.profile][self.name][
-                                                                    'groups']:
-            self.tonegroupbuttonframe(
-                            self.runwindow.frame.scroll.content.groups,group,
-                            row=self.runwindow.frame.scroll.content.groups.row,
-                            alwaysrefreshable=True) #notonegroup?
-            self.runwindow.frame.scroll.content.groups.row+=1
-        """The second frame, for the other two buttons, which also scroll"""
-        self.runwindow.frame.scroll.content.anotherskip=Frame(
-                                            self.runwindow.frame.scroll.content)
-        self.runwindow.frame.scroll.content.anotherskip.grid(row=1,column=0)
-        while (self.status[self.type][self.ps][self.profile][self.name][
-                'tosort'] == True and not self.runwindowexitFlag.istrue()):
-            if len(self.status[self.type][self.ps][self.profile][self.name][
-                                                                'groups'])<2:
-                self.getanotherskip(
-                                self.runwindow.frame.scroll.content.anotherskip)
+        Label(titles, text=instructions, font=self.fonts['instructions'],
+                anchor='c').grid(column=0, row=1, sticky="ew")
+        """Children of self.runwindow.frame.scroll.content"""
+        groupbuttons=scroll.content.groups=Frame(scroll.content)
+        groupbuttons.grid(row=0,column=0,sticky="ew")
+        scroll.content.anotherskip=Frame(scroll.content)
+        scroll.content.anotherskip.grid(row=1,column=0)
+        """Children of self.runwindow.frame.scroll.content.groups"""
+        groupbuttons.row=0 #rows for this frame
+        for group in groups:
+            self.tonegroupbuttonframe(groupbuttons,group,row=groupbuttons.row,
+                                        alwaysrefreshable=True) #notonegroup?
+            groupbuttons.row+=1
+        """Children of self.runwindow.frame.scroll.content.anotherskip"""
+        if len(status['groups']) != 1: #in that case, done below
+            self.getanotherskip(scroll.content.anotherskip)
+        """Stuff that changes by lexical entry
+        The second frame, for the other two buttons, which also scroll"""
+        while (status['tosort'] == True and
+                                        not self.runwindowexitFlag.istrue()):
+            if len(status['groups']) == 1: #only rerun when moving to 1 button
+                self.getanotherskip(scroll.content.anotherskip)
             if hasattr(self,'groupselected'):
                 delattr(self,'groupselected') #reset this for each word!
             senseid=self.senseidsunsorted[0]
-            progress=(str(self.senseidstosort.index(senseid)+1)+'/'
-                        +str(todo))
+            progress=(str(self.senseidstosort.index(senseid)+1)+'/'+str(todo))
             framed=self.getframeddata(senseid,truncdefn=True)
             """After the first entry, sort by groups."""
-            log.debug('self.tonegroups: {}'.format(self.status[self.type][
-                                self.ps][self.profile][self.name]['groups']))
-            titles=Frame(self.runwindow.frame)
-            Label(titles, text=title,
-                    font=self.fonts['title'],
-                    anchor='c').grid(column=0, row=0, sticky="ew")
-            Label(titles, text=instructions,
-                    font=self.fonts['instructions'],
-                    anchor='c').grid(column=0, row=1, sticky="ew")
-            Label(titles, text=progress,
-                    font=self.fonts['report'],
-                    anchor='w'
-                    ).grid(column=1, row=0, sticky="ew")
-            titles.grid(column=0, row=0, sticky="ew",
-                                            columnspan=2)
-            Label(self.runwindow.frame, image=self.parent.photo['sortT'],
-                            text='',
-                            bg=self.theme['background']
-                            ).grid(row=1,column=0,rowspan=3,sticky='nw')
+            log.debug('self.tonegroups: {}'.format(status['groups']))
+            Label(titles, text=progress, font=self.fonts['report'], anchor='w'
+                                            ).grid(column=1, row=0, sticky="ew")
             if 'formatted' in framed:
                 text=(framed['formatted'])
             else:
@@ -3753,23 +3744,19 @@ class Check():
                     group, make a new group."""
                     self.groupselected=self.addtonegroup()
                     """place this one just before the last two"""
-                    print('Rows so far:',
-                        self.runwindow.frame.scroll.content.groups.grid_size()[1])
-                    self.runwindow.frame.scroll.content.groups.row+=1 #add to above.
+                    log.debug('So far: {}'.format(groupbuttons.grid_size()[1]))
+                    groupbuttons.row+=1 #add to above.
                     """Add the new group to the database"""
                     self.addtonefieldex(senseid,framed)
                     """And give the user a button for it, for future words
                     (N.B.: This is only used for groups added during the current
                     run. At the beginning of a run, all used groups have buttons
                     created above.)"""
-                    self.tonegroupbuttonframe(
-                            self.runwindow.frame.scroll.content.groups,
-                            self.groupselected,
-                            row=self.runwindow.frame.scroll.content.groups.row,
-                            alwaysrefreshable=True)
+                    self.tonegroupbuttonframe(groupbuttons,self.groupselected,
+                                    row=groupbuttons.row,alwaysrefreshable=True)
                     #adjust window for new button
-                    self.runwindow.frame.scroll.windowsize()
-                    print('Group added:',self.groupselected)
+                    scroll.windowsize()
+                    log.debug('Group added: {}'.format(self.groupselected))
                 else: #before making a new button, or now, add fields to the sense.
                     """This needs to *not* operate on "exit" button."""
                     self.addtonefieldex(senseid,framed)
