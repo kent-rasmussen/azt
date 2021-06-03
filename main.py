@@ -371,9 +371,9 @@ class Check():
         if self.type != 'T': #only tone for now
             log.debug("Only working on tone for now, not {}".format(self.type))
             return
-        log.debug("self.subcheck: {}".format(self.subcheck))
-        log.debug(self.subchecksprioritized)
-        log.debug(self.subchecksprioritized[self.type])
+        if (not hasattr(self,'subchecksprioritized') or
+                                self.type not in self.subchecksprioritized):
+            self.getsubchecksprioritized()
         priorities=[x[0] for x in self.subchecksprioritized[self.type]
                             if x[0] is not None]
         if self.subcheck in priorities:
