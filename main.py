@@ -3357,7 +3357,7 @@ class Check():
                             )
         senseidsincheck=self.senseidsincheck(senseids)
         return list(senseidsincheck)
-    def getex(self,value,notonegroup=True,truncdefn=False):
+    def getex(self,value,notonegroup=True,truncdefn=False,renew=False):
         """This function finds examples in the lexicon for a given tone value,
         in a given tone frame (from check)"""
         senseids=self.getexsall(value)
@@ -3366,9 +3366,20 @@ class Check():
             self.exs={} #in case this hasn't been set up by now
         if value in self.exs:
             if self.exs[value] in senseids: #if stored value is in group
-                log.info("Using stored value for ‘{}’ group: ‘{}’".format(value,
-                                self.exs[value]))
-                framed=self.getframeddata(self.exs[value],
+                if renew == True:
+                    log.info("Using next value for ‘{}’ group: ‘{}’".format(
+                                value, self.exs[value]))
+                    i=senseids.index(self.exs[value])
+                    if i == len(senseids)-1: #loop back on last
+                        senseid=senseids[0]
+                    else:
+                        senseid=senseids[i+1]
+                    self.exs[value]=senseid
+                else:
+                    log.info("Using stored value for ‘{}’ group: ‘{}’".format(
+                                value, self.exs[value]))
+                    senseid=self.exs[value]
+                framed=self.getframeddata(senseid,
                                             notonegroup=notonegroup,
                                             truncdefn=truncdefn)
                 if (framed[self.glosslang] is not None):
@@ -4319,7 +4330,7 @@ class Check():
                         font=self.fonts['instructions']
                         )
         b2.grid(column=0, row=1, sticky="ew")
-    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,playable=False,**kwargs):
+    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,playable=False,renew=False,**kwargs):
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
@@ -4329,7 +4340,7 @@ class Check():
         else:
             notonegroup=kwargs['notonegroup']
             del kwargs['notonegroup']
-        example=self.getex(group,notonegroup=notonegroup,truncdefn=True)
+        example=self.getex(group,notonegroup=notonegroup,truncdefn=True,renew=renew)
         if example is None:
             log.error("Apparently the example for tone group {} in frame {} "
                         "came back {}".format(group,self.name,example))
