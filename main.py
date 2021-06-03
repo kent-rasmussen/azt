@@ -1462,6 +1462,17 @@ class Check():
             self.adhocgroups={}
         if ps not in self.adhocgroups:
             self.adhocgroups[ps]={}
+    def makestatusdicttype(self):
+        # This depends on self.type only
+        # This operates for exactly one context: wherever it is called.
+        # Do this only where needed, when needed!
+        changed=False
+        if self.type not in self.status:
+            self.status[self.type]={}
+            changed=True
+        if changed == True:
+            log.info("Saving status dict to file")
+            self.storesettingsfile(setting='status')
     def makestatusdictps(self):
         # This depends on self.ps only
         # This operates for exactly one context: wherever it is called.
