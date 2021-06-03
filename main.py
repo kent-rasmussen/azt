@@ -3734,7 +3734,7 @@ class Check():
                 l=Label(self.runwindow.frame, text=text,font=self.fonts['readbig'])
                 l.grid(column=1,row=1, sticky="w",pady=50)
                 l.wrap()
-                self.runwindow.frame.scroll.destroy()
+                scroll.destroy()
                 self.runwindow.waitdone()
                 self.runwindow.wait_window(window=l)
                 return 1
