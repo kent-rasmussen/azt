@@ -1125,6 +1125,7 @@ class Check():
                                 'interpret','distinguish']:
                 self.reloadprofiledata()
             elif attribute == 'type':
+                self.makestatusdicttype()
                 if (choice != 'T' and
                         not set(self.profilelegit).issuperset(self.profile)):
                     self.nextprofile()
