@@ -943,7 +943,7 @@ class Check():
                 self.addwindow.framechk.destroy()
         def submit(frame,name):
             # Having made and unset these, we now reset and write them to file.
-            self.set('name',name)
+            self.set('name',name,refresh=False)
             self.toneframes[self.ps][self.name]=frame
             self.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
