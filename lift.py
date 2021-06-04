@@ -13,6 +13,7 @@ import re #needed?
 import os
 import rx
 import logging
+import ast #For string list interpretation
 log = logging.getLogger(__name__)
 try: #Allow this module to be used without translation
     _
@@ -370,6 +371,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "/gloss[@lang='{glosslang}']/text"
                     ),['guid','senseid','ps','glosslang']),
             'attr':'nodetext'}
+        a['glossofexample']={
+            'cm': 'use to get glosses/translations of examples',
+            'url':(("translation[@type='Frame translation']"
+                        "/form[@lang='{glosslang}']/text"
+                    ),['glosslang']),
+            'attr':'nodetext'}
+        a['formofexample']={
+            'cm': 'use to get analang forms of examples',
+            'url':(("form[@lang='{analang}']/text"
+                    ),['analang']),
+            'attr':'nodetext'}
         a['fieldnode']={
             'cm': 'use to get whole field nodes (to modify)',
             'url':(("entry[@guid='{guid}']"
@@ -682,6 +694,72 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getguids()
         self.getsenseids()
         return senseid
+    def modverificationnode(self,senseid,vtype,add=None,rm=None,addifrmd=False):
+        nodes=self.addverificationnode(senseid,vtype=vtype)
+        vf=nodes[0]
+        sensenode=nodes[1]
+        if vf is None:
+            log.info("Sorry, this didn't return a node: {}".format(senseid))
+            return
+        if vf.text is not None:
+            log.log(2,"{}; {}".format(vf.text, type(vf.text)))
+            try:
+                l=ast.literal_eval(vf.text)
+            except SyntaxError: #if the literal eval doesn't work, it's a string
+                l=vf.text
+            log.log(2,"{}; {}".format(l, type(l)))
+            if type(l) != list: #in case eval worked, but didn't produce a list
+                log.log(2,"One item: {}; {}".format(l, type(l)))
+                l=[l,]
+        else:
+            log.log(2,"empty verification list found")
+            l=list()
+        changed=False
+        if rm != None and rm in l:
+            i=l.index(rm) #be ready to replace
+            l.remove(rm)
+            changed=True
+        else:
+            i=len(l)
+        if (add != None and add not in l #if there, v-if rmd, or not changing
+                and (addifrmd == False or changed == True)):
+            l.insert(i,add) #put where removed from, if done.
+            changed=True
+        vf.text=str(l)
+        if changed == True:
+            self.updatemoddatetime(senseid=senseid)
+        log.log(2,"Empty node? {}; {}".format(vf.text,l))
+        if l == []:
+            log.debug("removing empty node")
+            sensenode.remove(vf)
+        else:
+            log.log(2,"Not removing empty node")
+    def addverificationnode(self,senseid,vtype):
+        node=self.getsensenode(senseid=senseid)
+        if node is None:
+            log.info("Sorry, this didn't return a node: {}".format(senseid))
+            return
+        vf=node.find("field[@type='{} {}']".format(vtype,"verification"))
+        if vf == None:
+            vf=ET.SubElement(node, 'field',
+                                attrib={'type':"{} verification".format(vtype)})
+        return (vf,node)
+    def getentrynode(self,senseid,showurl=False):
+        """Get the sense node"""
+        urlnattr=self.geturlnattr('entry',senseid=senseid)
+        url=urlnattr['url']
+        if showurl==True:
+            log.info(url)
+        node=self.nodes.find(url) #this should always find just one node
+        return node
+    def getsensenode(self,senseid,showurl=False):
+        """Get the sense node"""
+        urlnattr=self.geturlnattr('senseid',senseid=senseid)
+        url=urlnattr['url']
+        if showurl==True:
+            log.info(url)
+        node=self.nodes.find(url) #this should always find just one node
+        return node
     def addexamplefields(self,showurl=False,**kwargs):
         # ,guid,senseid,analang,glosslang,glosslang2,forms,
         # fieldtype,location,fieldvalue,ps=None
@@ -694,34 +772,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 "guid (in lift.py)".format(kwargs['fieldvalue'],
                                         kwargs['location'],kwargs['fieldtype'],
                                         kwargs['senseid'],kwargs['guid']))
-        """Get the sense node"""
-        urlnattr=self.geturlnattr('senseid',senseid=kwargs['senseid'])
-        url=urlnattr['url']
-        if showurl==True:
-            log.info(url)
-        node=self.nodes.find(url) #this should always find just one node
+        node=self.getsensenode(senseid=kwargs['senseid'])
         if node is None:
-            log.info("Sorry, this didn't return a node:".format(
-                            kwargs['guid'],kwargs['senseid']))
+            log.info("Sorry, this didn't return a node: {}".format(
+                                                            kwargs['senseid']))
             return
-        # """Logic to check if this example already exists"""
-        # """This function returns a text node (from any one of a number of
+        # Logic to check if this example already here
+        # This function returns a text node (from any one of a number of
         # example nodes, which match form, gloss and location) containing a
         # tone sorting value, or None (if no example nodes match form, gloss
-        # and location)"""
+        # and location)
         #We're adding a node to kwargs here.
         exfieldvalue=self.exampleissameasnew(**kwargs,node=node,showurl=False)
-        # guid,senseid,analang,glosslang,
-        # glosslang2,
-        # forms,
-        # fieldtype,
-        # location,fieldvalue,node,ps=None
         if exfieldvalue is None: #If not already there, make it.
             log.info("Didn't find that example already there, creating it...")
             p=ET.SubElement(node, 'example')
             form=ET.SubElement(p,'form',attrib={'lang':kwargs['analang']})
             t=ET.SubElement(form,'text')
-            t.text=kwargs['forms'][kwargs['analang']] #?
+            t.text=kwargs['forms'][kwargs['analang']]
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
             fieldgloss=ET.SubElement(p,'translation',attrib={'type':
@@ -746,28 +814,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if self.debug == True:
                 log.info("=> Found that example already there")
         exfieldvalue.text=kwargs['fieldvalue'] #change this *one* value, either way.
-        self.updatemoddatetime(guid=kwargs['guid'],senseid=kwargs['senseid'])
-        # self.write()
+        if 'guid' in kwargs:
+            self.updatemoddatetime(guid=kwargs['guid'],senseid=kwargs['senseid'])
+        else:
+            self.updatemoddatetime(senseid=kwargs['senseid'])
         if self.debug == True:
             log.info("add langform: {}".format(kwargs['forms'][kwargs['analang']]))
             log.info("add tone: {}".format(['fieldvalue']))
             log.info("add gloss: {}".format(kwargs['forms'][kwargs['glosslang']]))
             if glosslang2 != None:
                 log.info(' '.join("add gloss2:", kwargs['forms'][kwargs['glosslang2']]))
-        # """This is what we're adding/modifying here:
-        # <example>
-        #     <form lang="gnd"><text>dìve</text></form>
-        #     <translation type="Frame translation">
-        #         <form lang="gnd"><text>constructed gloss here</text></form>
-        #     </translation>
-        #     <field type="tone">
-        #         <form lang="gnd"><text>LM</text></form>
-        #     </field>
-        #     <field type="location">
-        #         <form lang="gnd"><text>Isolation</text></form>
-        #     </field>
-        # </example>
-        # """
     def forminnode(self,node,value):
         # Returns True if `value` is in *any* text node child of any form child
         # of node: [node/'form'/'text' = value]
@@ -1319,23 +1375,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     location=None,fieldvalue=None,ps=None,
                     newfieldvalue=None,showurl=False):
         """This updates the fieldvalue, ignorant of current value."""
-        urlnattr=self.geturlnattr('entry',guid=guid,senseid=senseid #,
-                                    # fieldtype=fieldtype,
-                                    # location=location,
-                                    # fieldvalue=fieldvalue
-        ) #just give me the sense.
+        urlnattr=self.geturlnattr('entry',guid=guid,senseid=senseid) #just entry
         url=urlnattr['url']
         if showurl==True:
             log.info(url)
         node=self.nodes.find(url) #this should always find just one node
-        # for value in node.findall(f"field[@type=location]/"
-        #                             f"form[text='{location}']"
-        #                                 f"[@type='{fieldtype}']/"
-        #                             f"form[text='{fieldvalue}']/text"):
-        #     # """<field type="tone"><form lang="fr"><text>1</text></form></field>"""
-        #     # """<field type="location"><form lang="fr"><text>Plural</text></form></field>"""
-        node.attrib['dateModified']=getnow() #text=newfieldvalue #remove(example)
-        self.write()
+        node.attrib['dateModified']=getnow()
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
@@ -1525,8 +1570,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c={}
         c['p']={}
         c['p'][2]=['bh','dh','kp','gh','gb','kk']
-        c['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','ɖ','c','k','g','ɡ','G',
-                                                                'ʔ',"ꞌ",'ʼ']
+        c['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','ɖ','c','k','g','ɡ','G']
         c['f']={}
         c['f'][2]=['ch','ph','bh','vh','sh','zh','hh']
         c['f'][1]=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
@@ -1549,6 +1593,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # s['g']={}
         # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
         #         'mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']
+        x['ʔ']=['ʔ',"ꞌ",'ʼ']
         x['G']=['ẅ','y','Y','w','W']
         # x['CG']=list((char+g for char in x['C'] for g in x['G']))
         x['N']=["ng'",'mm','ny','ŋŋ','m','M','n','ŋ','ɲ']
@@ -2021,6 +2066,10 @@ if __name__ == '__main__':
     filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     lift=Lift(filename,nsyls=2)
+    senseid='26532c2e-fedf-4111-85d2-75b34ed31dd8'
+    lift.modverificationnode(senseid,add="another value3",rm="Added value")
+    lift.modverificationnode(senseid,rm="another value3",add="another value2")
+    lift.modverificationnode(senseid,rm="another value3",add="another value4")
     """Functions to run on a database from time to time"""
     # lift.findduplicateforms()
     # lift.findduplicateexamples()

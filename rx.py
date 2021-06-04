@@ -56,12 +56,16 @@ def s(check,stype,lang=None):
         log.log(2,_('telling rx.s which lang to use'))
         lang=check.analang
         log.log(2,_("Using analang: {}".format(check.analang)))
-    log.log(2,_("Looking in check.s[{}]: {}".format(lang,check.s[lang])))
-    if stype == "C-N":
+    if stype == "C-ʔ":
+        if 'ʔ' in check.s[lang]:
+            list=set(check.s[lang]['C'])-set(check.s[lang]['ʔ'])
+        else:
+            list=set(check.s[lang]['C'])
+    elif stype == "C-N":
         if 'N' in check.s[lang]:
             list=set(check.s[lang]['C'])-set(check.s[lang]['N'])
         else:
-            list=set(check.s[lang]['C'])    
+            list=set(check.s[lang]['C'])
     elif stype in check.s[lang]:
         list=check.s[lang][stype]
     else:
@@ -99,11 +103,17 @@ def fromCV(check, lang, word=False, compile=False):
     regex=list()
     references=('\1','\2','\3','\4')
     references=range(1,5)
+    # Replace word final C first, to get it out of the way:
+    if check.distinguish['ʔwd'] and not check.distinguish['ʔ']:
+        rxthis=s(check,'C-ʔ',lang) #Pull out C# first;exclude N# if appropriate.
+        CVs=re.sub('C$',rxthis,CVs)
     if check.distinguish['Nwd'] and not check.distinguish['N']:
         rxthis=s(check,'C-N',lang) #Pull out C# first;exclude N# if appropriate.
         CVs=re.sub('C$',rxthis,CVs)
         log.log(2,'CVs: {}'.format(CVs))
-    for x in ["V","N","G","S","C"]:
+    # if C includes [N,?], find C first; if it doesn't, move on to [N,?].
+    # if we distinguish [N,?]# (only), C# is already gone, so other C's here.
+    for x in ["V","C","N","ʔ","G","S"]:
         if x in check.s[lang]: #just pull out big ones first
             rxthis=s(check,x,lang) #this should have parens for each S
             CVs=re.sub(x,rxthis,CVs)

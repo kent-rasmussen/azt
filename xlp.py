@@ -212,9 +212,13 @@ class Paragraph(ET.Element):
         self.node=ET.SubElement(parent.node,'p')
         self.node.text=text
 class Example(ET.Element):
-    def __init__(self,parent,id):
+    def __init__(self,parent,id,heading=None):
         rxid=rx.id(id)
         self.node=ET.SubElement(parent.node,'example',attrib={'num':rxid})
+        if heading is not None:
+            headnode=ET.SubElement(self.node,'exampleHeading')
+            headnode.text=heading
+
 class Table(ET.Element):
     """<tablenumbered id="nt-ndk-melodies">
             <table border="1">
