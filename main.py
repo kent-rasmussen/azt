@@ -6797,9 +6797,10 @@ class RecordButtonFrame(Frame):
         self.player.play()
     def makeplaybutton(self):
         self.p=Button(self,text=_('Play'),command=self._play)
-        self.p.grid(row=0, column=1,sticky='w')
+        #Not using these for now
         # self.p.bind('<ButtonPress>', self._play)
         # self.p.bind('<ButtonRelease>', self.function)
+        self.p.grid(row=0, column=1,sticky='w')
     def makedeletebutton(self):
         self.r=Button(self,text=_('Redo'),command=self.function)
         self.r.grid(row=0, column=2,sticky='w')
