@@ -6915,7 +6915,7 @@ class RecordButtonFrame(Frame):
         self.audiolang=check.audiolang
         self.test=test
         self.filenameURL=self.makefilenames()
-        if file.exists(self.filenameURL):
+        if file.exists(self.filenameURL) and self.test == False:
             self.addlink() #just in case an old file doesn't have links
         Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
