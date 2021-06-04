@@ -6573,7 +6573,7 @@ class Renderer(object):
         lines=textori.split('\n') #get everything between manual linebreaks
         for line in lines:
             li=lines.index(line)
-            words=line.split(' ')
+            words=line.split(' ') #split by words/spaces
             nl=x=y=0
             while y < len(words):
                 y+=1
@@ -6585,9 +6585,9 @@ class Renderer(object):
                     words.insert(y+nl-1,'\n')
                     x=y-1
                     nl+=1
-            line=' '.join(words)
+            line=' '.join(words) #Join back words
             lines[li]=line
-        text='\n'.join(lines)
+        text='\n'.join(lines) #join back sections between manual linebreaks
         log.debug(text)
         w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
         log.debug("Final size w: {}, h: {}".format(w,h))
@@ -6597,14 +6597,12 @@ class Renderer(object):
         draw = PIL.ImageDraw.Draw(img)
         draw.multiline_text((0+xpad//2, 0+ypad//4), text,font=font,fill=black,
                                                                 align=align)
-        # self.img=font.getmask(text) #features
-        self.img = PIL.ImageTk.PhotoImage(img) #._PhotoImage__photo
-        # print(self.img.__dict__)
+        self.img = PIL.ImageTk.PhotoImage(img)
 class Label(tkinter.Label):
     def wrap(self):
         availablexy(self)
         self.config(wraplength=self.maxwidth)
-        log.debug('self.maxwidth (Label class): {}'.format(self.maxwidth))
+        log.log(3,'self.maxwidth (Label class): {}'.format(self.maxwidth))
     def __init__(self, parent, column=0, row=1, norender=False,**kwargs):
         """These have non-None defaults"""
         if 'font' not in kwargs:
@@ -6620,11 +6618,10 @@ class Label(tkinter.Label):
                 "label? ({},{})".format(image,kwargs['text']))
                 return
             else:
-                log.debug("sticks found! (Generating image for label)")
+                log.log(5,"Sticks found! (Generating image for label)")
                 i=Renderer(**kwargs)
                 self.tkimg=i.img
                 kwargs['image']=self.tkimg
-                # kwargs['compound']=None
                 kwargs['text']=''
         else:
             kwargs['text']=nfc(kwargs['text'])
@@ -6684,9 +6681,6 @@ class Button(tkinter.Button):
         pass
     def __init__(self, parent, choice=None, window=None,
                 command=None, column=0, row=1, norender=False,**kwargs):
-        """Remove these arguments; buttons shouldn't be passing them..."""
-        """command is my hacky command specification, with lots of args added.
-        cmd is just the command passing through."""
         self.parent=parent
         inherit(self)
         """For button"""
@@ -6722,6 +6716,8 @@ class Button(tkinter.Button):
         if self.debug == True:
             for arg in kwargs:
                 print("Button "+arg+": "+kwargs[arg])
+        # `command` is my hacky command specification, with lots of args added.
+        # cmd is just the command passing through.
         if 'cmd' in kwargs and kwargs['cmd'] is not None:
             cmd=kwargs['cmd']
             del kwargs['cmd'] #we don't want this going to the button as is.
@@ -6739,8 +6735,7 @@ class Button(tkinter.Button):
                     cmd=lambda :command('choice')
                 else:
                     cmd=lambda :command()
-        tkinter.Button.__init__(self, parent, command=cmd,
-                                **kwargs)
+        tkinter.Button.__init__(self, parent, command=cmd, **kwargs)
         self.grid(column=column, row=row, sticky=sticky)
 class CheckButton(tkinter.Checkbutton):
     def __init__(self, parent, **kwargs):
@@ -6811,7 +6806,7 @@ class RecordButtonFrame(Frame):
     def function(self):
         pass
     def makefilenames(self,check=None,senseid=None):
-        if self is not None:
+        if self is not None: #i.e., this is called by class
             if self.test==True:
                 return "test_{}_{}.wav".format(self.settings.fs,
                                                 self.settings.sample_format)
@@ -6824,30 +6819,20 @@ class RecordButtonFrame(Frame):
             check=self.check
             id=self.id
             gloss=self.gloss
-        else:
+        else: #self is None, i.e., this method called on something else.
             if None in [check, senseid]:
                 return
             id=senseid
-            #if an example:
             node=firstoflist(check.db.get('examplebylocation',senseid=senseid,
                                 location=check.name))
-            # log.debug(check.db.geturlnattr('glossofexample'))
-            # log.debug(check.db.geturlnattr('glossofexample')['url'])
-            # log.debug(node.find(check.db.geturlnattr('glossofexample')[
-            #                                                     'url']))
             gloss=node.find(check.db.geturlnattr('glossofexample')['url']).text
-            # log.debug(gloss)
             form=node.find(check.db.geturlnattr('formofexample')['url']).text
-            # log.debug(form)
             #if an unglossed node, take from sense/entry:
         if gloss is None:
             gloss=check.db.get('gloss',senseid=senseid,
                                     glosslang=check.glosslang).text
-            # sensenode=self.db.getsensenode(senseid=senseid)
-            # node=self.db.exampleissameasnew(node=sensenode)
         if form is None:
             form=node.find(f"form[@lang='{check.analang}']/text").text
-        # args=[check.ps]
         pslocopts=[check.ps]
         fieldlocopts=[None]
         if (node.tag == 'example'):
@@ -6867,9 +6852,8 @@ class RecordButtonFrame(Frame):
             args+=[node.get("type")]
         args+=[rx.stripdiacritics(check,form)]#profile <=Changes!
         args+=[gloss]
-        # log.debug(filenameopts)
         for pslocopt in pslocopts:
-            for fieldlocopt in fieldlocopts: #get options to support older name schema
+            for fieldlocopt in fieldlocopts: #for older name schema
                 optargs=args[:]
                 optargs.insert(0,pslocopt) #put first
                 optargs.insert(3,fieldlocopt) #put after self.node.tag
