@@ -247,7 +247,7 @@ class SoundFilePlayer(object):
             return
         except OSError as e:
             log.debug("OSError: {}".format(e))
-            if '(no default output device)' in sys.exc_info()[0]:
+            if '(no default output device)' in e:
                 self.settings.audio_card_out=None
             return
     def streamclose(self):
