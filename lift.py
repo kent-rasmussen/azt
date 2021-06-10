@@ -615,7 +615,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         url=urlnattr['url']
         if 'showurl' in kwargs and kwargs['showurl']==True:
             log.info(url)
-        nodeset=self.nodes.findall(url) #This is the only place we need self=lift
+        try:
+            nodeset=self.nodes.findall(url) #This is the only place we need self=lift
+        except BaseException as e:
+            log.error("Problem getting url: {} ({})".format(url,e))
+            return
         output=[]
         attr=urlnattr['attr']
         for node in nodeset:
