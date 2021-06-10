@@ -1,6 +1,12 @@
 # A→Z+T Changelog
 
-# Version 0.8.1
+# Version 0.8.3
+- fixed wav file link problem; now filename only in LIFT, relative link in reports.
+- constrained search for language forms to analang (for multilingual dictionaries)
+- don't crash on weird senseids
+- fixed error on sound card not found to just not play (instead of crashing)
+
+# Version 0.8.2
 - moved PyAudio functions to module, improved function
 - Added glottal stop distinctions similar to Nasal distinctions
 - Added redo status file (will not redo verification status, but will recover groups.)
