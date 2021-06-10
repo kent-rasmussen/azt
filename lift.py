@@ -1705,10 +1705,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # forms=self.citationorlexeme(lang=lang,ps=ps)
         """This actually needs this logic here, since formstosearch hasn't
         been made yet."""
-        forms=self.get('citation',lang=lang,ps=ps)
+        forms=self.get('citation',analang=lang,ps=ps)
         # if len(forms) == 0: #no items returned, I should probably combine
                             #this at some point, list(dict.fromkeys(form1+form2))
-        forms+=self.get('lexeme',lang=lang,ps=ps)
+        forms+=self.get('lexeme',analang=lang,ps=ps)
         # forms1=self.get('citation',lang=lang,ps=ps)
         # forms2=self.get('lexeme',lang=lang,ps=ps)
         # forms=list(dict.fromkeys(forms1+forms2))
