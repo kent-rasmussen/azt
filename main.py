@@ -1828,8 +1828,8 @@ class Check():
             self.s[self.analang]['Nwd']=self.db.s[self.analang]['N'] #make Nwd before deleting N
         for sclass in list(self.s[self.analang]):
             if ((sclass in self.distinguish) and
-                    (self.distinguish[sclass]==False) and
-                    (sclass not in ['ʔ','N'])):
+                    (self.distinguish[sclass]==False)):
+                    #and (sclass not in ['ʔ','N'])): #Why were these excluded?!?
                 del self.s[self.analang][sclass]
             else:
                 # check again for combinations not in the database
