@@ -1312,6 +1312,7 @@ class Check():
                                 'interpret',
                                 'adnlangnames',
                                 'exs',
+                                'maxpss',
                                 'maxprofiles'
                                 ]},
             'profiledata':{
