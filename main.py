@@ -6879,7 +6879,7 @@ class RecordButtonFrame(Frame):
         #if you don't find any, take the *last* values
         log.debug("No audio file found! using name: {}; names: {}; url:{}"
                 "".format(filename, filenames, filenameURL))
-        return filenameURL
+        return filename
     def __init__(self,parent,check,id=None,node=None,form=None,gloss=None,test=False,**kwargs):
         # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
