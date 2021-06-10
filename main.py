@@ -6806,7 +6806,7 @@ class RecordButtonFrame(Frame):
         self.r.bind('<ButtonRelease>', self._redo)
     def addlink(self):
         #this checks for and doesn't add if already there.
-        self.db.addmediafields(self.node,self.filenameURL,self.audiolang)
+        self.db.addmediafields(self.node,self.filename,self.audiolang)
     def function(self):
         pass
     def makefilenames(self,check=None,senseid=None):
@@ -6875,7 +6875,7 @@ class RecordButtonFrame(Frame):
             if file.exists(filenameURL):
                 log.debug("Audio file found! using name: {}; names: {}; "
                     "url:{}".format(filename, filenames, filenameURL))
-                return filenameURL
+                return filename
         #if you don't find any, take the *last* values
         log.debug("No audio file found! using name: {}; names: {}; url:{}"
                 "".format(filename, filenames, filenameURL))
@@ -6903,7 +6903,8 @@ class RecordButtonFrame(Frame):
         self.channels = 1 #Always record in mono
         self.audiolang=check.audiolang
         self.test=test
-        self.filenameURL=self.makefilenames()
+        self.filename=self.makefilenames()
+        self.filenameURL=str(file.getdiredurl(check.audiodir,self.filename))
         if file.exists(self.filenameURL) and self.test == False:
             self.addlink() #just in case an old file doesn't have links
         Frame.__init__(self,parent, **kwargs)
