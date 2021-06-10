@@ -1637,6 +1637,8 @@ class Check():
                 self.addtoprofilesbysense(senseid)
             self.ps=psori
             return
+        if forms is None:
+            return
         for form in forms:
             self.profile=self.profileofform(form)
             if not set(self.profilelegit).issuperset(self.profile):
@@ -1999,7 +2001,8 @@ class Check():
                 </field>
             </example>
             """
-        elif (type(source) is str) and (len(source) == 36): #source is sensedid
+        elif (type(source) is str): # and (len(source) == 36): #source is sensedid
+            #some dbs have senseids with form info, too...
             #Asking for a sense, you get all tone groups, if self.name isn't set
             log.log(3,'36 character senseid string!')
             senseid=source
