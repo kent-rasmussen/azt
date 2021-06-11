@@ -2066,8 +2066,8 @@ class Check():
             for lang in gloss:
                 """only give these if the frame has this gloss, *and* if
                 the gloss is in the data (user selection is above)"""
-                if ((lang == self.glosslang) or ((self.glosslang2 in frame)
-                                                    and (gloss[lang] is not None))):
+                if ((lang in frame) and (lang in gloss) and (
+                        None not in [gloss[lang],frame[lang]])):
                     output[lang]=self.frameregex.sub(gloss[lang],frame[lang])
         else:
             output[self.analang]=nn(form) #for non-segmental forms
