@@ -321,7 +321,10 @@ class Check():
             log.debug("{} ps found in valid pss; "
                     "selecting next one in this list: {}".format(self.ps,
                                                                 self.pss))
-            self.set('ps',self.pss[index+1])
+            if index+1 == len(self.pss):
+                self.set('ps',self.pss[0]) #cycle back
+            else:
+                self.set('ps',self.pss[index+1])
             if index >= self.maxpss:
                 return 1 #We hit the max already, but give a valid profile
     def nextprofile(self,guess=False):
@@ -341,7 +344,10 @@ class Check():
                 log.debug("{} profile found in valid profiles for ps {}; "
                             "selecting next one in this list: {}".format(
                             self.profile,self.ps,self.profilecountsValid))
-                self.set('profile',self.profilecountsValid[index+1][1])
+                if index+1 == len(self.profilecountsValid):
+                    self.set('profile',self.profilecountsValid[0][1]) #cycle back
+                else:
+                    self.set('profile',self.profilecountsValid[index+1][1])
                 if index >= self.maxprofiles:
                     return 1 #We hit the max already, but give a valid profile
         else:
