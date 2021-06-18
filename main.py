@@ -6517,10 +6517,15 @@ class ContextMenu:
         self.updatebindings()
 class Renderer(object):
     def __init__(self,test=False,**kwargs):
-        import PIL.ImageFont
-        import PIL.ImageTk
-        import PIL.ImageDraw
-        import PIL.Image
+        try:
+            import PIL.ImageFont
+            import PIL.ImageTk
+            import PIL.ImageDraw
+            import PIL.Image
+        except:
+            log.info("Seems like PIL is not installed; skipping Renderer init.")
+            self.img=None
+            return
         font=kwargs['font'].actual() #should always be there
         xpad=ypad=fspacing=font['size']
         fname=font['family']
@@ -6625,8 +6630,9 @@ class Label(tkinter.Label):
                 log.log(5,"Sticks found! (Generating image for label)")
                 i=Renderer(**kwargs)
                 self.tkimg=i.img
-                kwargs['image']=self.tkimg
-                kwargs['text']=''
+                if self.tkimg is not None:
+                    kwargs['image']=self.tkimg
+                    kwargs['text']=''
         else:
             kwargs['text']=nfc(kwargs['text'])
         tkinter.Label.__init__(self, parent, **kwargs)
@@ -6706,8 +6712,10 @@ class Button(tkinter.Button):
             else:
                 log.debug("sticks found! (Generating image for button)")
                 i=Renderer(**kwargs)
-                kwargs['image']=self.tkimg=i.img
-                kwargs['text']=''
+                self.tkimg=i.img
+                if self.tkimg is not None:
+                    kwargs['image']=self.tkimg
+                    kwargs['text']=''
         kwargs['text']=nfc(kwargs['text'])
         """For Grid"""
         if 'sticky' in kwargs:
