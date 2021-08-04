@@ -3,7 +3,7 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A→Z+T'}
 program['tkinter']=True
-program['production']=False #True for making screenshots
+program['production']=True #True for making screenshots
 program['version']='0.8.2' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
@@ -3576,6 +3576,7 @@ class Check():
         if exit == True:
             #This happens when the user exits the window
             log.debug("exiting joinT True")
+            #Give an error window here
             self.getrunwindow(nowait=True)
             buttontxt=_("Sort!")
             text=_("Hey, you're not Done!\nCome back when you have time; "
@@ -4303,13 +4304,24 @@ class Check():
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.gettonegroups() #sets self.status...['groups'] for a frame
     def tryNAgain(self):
+        if hasattr(self,'name') and self.name is not None:
+            if not hasattr(self,'senseidstosort'):
+                self.getidstosort()
+        else:
+            #Give an error window here
+            log.error("Not Trying again; set a tone frame first!")
+            self.getrunwindow(nowait=True)
+            buttontxt=_("Sort!")
+            text=_("Not Trying Again; set a tone frame first!")
+            Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+            return
         for senseid in self.senseidstosort: #this is a ps-profile slice
             self.db.rmexfields(senseid=senseid,fieldtype='tone',
                                 location=self.name,fieldvalue='NA',
                                 showurl=True
                                 )
         self.checkcheck() #redraw the table
-        self.maybesort()
+        self.maybesort() #Because we want to go right into sorting...
     def getanotherskip(self,parent):
         """This function presents a group of buttons for the user to choose
         from, one for each tone group in that location/ps/profile in the
