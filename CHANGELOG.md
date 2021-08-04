@@ -5,6 +5,7 @@
 - constrained search for language forms to analang (for multilingual dictionaries)
 - don't crash on weird senseids
 - fixed error on sound card not found to just not play (instead of crashing)
+- fixed error of crash on PIL not installed.
 
 # Version 0.8.2
 - moved PyAudio functions to module, improved function

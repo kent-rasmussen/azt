@@ -8,9 +8,20 @@ If you need to install [Python](https://python.org), you can find it [here](http
 
 Note: your python 3+ executable may be called `python` or `python3`. Be sure to use the correct form for your system when following the instructions below.
 
+## Error Tracking
+If you have *any* trouble with anything on this page, please copy all error messages and paste them into an Email to me and/or Google.
+
+If you click on an icon and get a flash and nothing more, you may need to run python from a command terminal (`⊞ win`+`R` then type 'cmd' in Windows) to see what errors are keeping it from running.
+
 ## Dependencies
 - [PyAudio](https://pypi.org/project/PyAudio/): run `python -m pip install pyaudio` to install.
     - On Linux (and Mac?), `pyaudio` may in turn have a dependency of `portaudio19-dev`, which you should install with your package manager (e.g., `sudo apt-get install portaudio19-dev`).
+
+### Optional dependency: PIL/Pillow
+This install allows for visual rendering of tone glyphs that aren't currently working in tkinter:
+`python -m pip install --upgrade pip` (if your pip hasn't been upgraded recently)
+`python -m pip install --upgrade Pillow`
+If you have any problem installing this, it is not a problem for using AZT —you will simply see tone marks badly ligatured, like (˦ ˦ ˨ ˨ ˥ ˩ ˦) instead of like (˦˦ ˨˨ ˥˩˦).
 
 ### Installation on Microsoft Windows
 For some reason, I have had trouble getting pyaudio installed on Windows machines with most recent versions of Python (3.9). You may have better mileage than I. In any case, I have found that it works smoothly to

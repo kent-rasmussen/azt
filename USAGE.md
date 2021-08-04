@@ -34,6 +34,11 @@
 ### Collaboration and Archival
 I **strongly** recommend using a version controlled repository (e.g., mercurial, git), as is normally done in [WeSay](https://software.sil.org/wesay/) and in recommended [FLEx](https://software.sil.org/fieldworks/) collaboration schemes. Even if you are the only one to ever see this data (why would that be?), the advantages in history and preservation of your data are already there. But if you will be sharing changes with others, you really **must** have an easy way to do this, or you will get bogged down in the logistics of sharing data changes. I  use [Language Depot](https://languagedepot.org), though there are certainly other ways to meet this need. In any case, setting this up early is always easier than trying to merge divergent data later.
 
+## Error Tracking
+Once [A→Z+T](https://github.com/kent-rasmussen/azt) is running normally, it will create a log with more information that you probably want), in a file called `log_<date>.txt`. If something unexpected happens, that file should contain information that will help understand what happened and why. That is recreated on each [A→Z+T](https://github.com/kent-rasmussen/azt) startup, though, so add a meaningful name and send it to me before running [A→Z+T](https://github.com/kent-rasmussen/azt) again.
+
+If [A→Z+T](https://github.com/kent-rasmussen/azt) has an exception, it should create another file, `log_date_time.xz`. It is already named for time, so you should find one of these for each such error. Any time you get one of these, please send it to me with a brief description of what you observed.
+
 ## Expectations
 ### Changes to Expect in Your [LIFT](https://code.google.com/archive/p/lift-standard/) Database
 [A→Z+T](https://github.com/kent-rasmussen/azt) will place links to `citation`/`lexeme`, `plural`, and `imperative` recordings in the appropriate fields, coded as a voice writing system (e.g., xyz-Zxxx-x-audio).

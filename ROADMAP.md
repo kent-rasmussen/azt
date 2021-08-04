@@ -5,6 +5,17 @@
 ## Things to Test
 - check that changes to S regexs don't break too much.
 - Why do bad sound files play OK?
+- figure out why mainloop is still running on window closure
+
+## Simplify (non-OOP related)
+- on import, check for entries without:
+  - citation, copy over from lexical-unit (all langs)
+  - gloss, copy over from definitions (truncate, all langs)
+- remove references to definition, lexeme?
+- Do I want to ultimately be modifying lexeme form?
+- check how many of the urls in lift.py I'm actually using, consider moving them to a method for each —
+  - maybe call get with a url parameter?
+  - kwarg for node or not, text or not, attr?
 
 ## Migrate further toward OOP
 - Consider making the following objects?
@@ -16,7 +27,8 @@
     - group
     - runwindow
     - groupselected should be an attribute of a sense?
-    - lift-form?
+    - lift-form? include attributes lexical, citation, root, affix(es)?
+      - this will need some treatment by language, for dictionaries with forms in multiple languages.
     - lift-field?
     - lift-node?
     - lift-example?
@@ -25,6 +37,7 @@
         - and not necessarily the same as `next` (i.e., not current)
         - nor verify, which makes valid, but doesn't change if already valid.
     - These should probably all go together, with common [arg,argprioritylist] parameters
+
 ## In Process (fix)
 - go to https://fontforge.org/docs/scripting/python/fontforge.html to see if we can pull contour tone staves
 - add mini keyboard of common symbols (class, to add to Entry)
