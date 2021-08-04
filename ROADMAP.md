@@ -19,6 +19,7 @@
 
 ## Migrate further toward OOP
 - Consider making the following objects?
+    - ErrorWindow class (tryNAgain, maybesort ...)
     - tables (base on buildXLPtable(self,parent,caption,yterms,xterms...))
     - languages
     - ps-profile slices
