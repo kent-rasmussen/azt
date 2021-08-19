@@ -30,6 +30,7 @@
     - stored in `sense/grammatical-info@[value]`
     - whatever ps names (e.g., 'Noun', 'Nom', 'Njina', 'noun', 'n', etc) are in your database is what you will select from to study, so name them in a way that will help your work
     - entries with no ps value will be left out of the [A→Z+T](https://github.com/kent-rasmussen/azt) analysis
+- No markup. If you have data from another tool that added any kind of markup (formatting, references, etc), that will likely cause you problems with [A→Z+T](https://github.com/kent-rasmussen/azt). If you have and want to preserve markup inside any of the above fields, I would recommend copying it into another field before stripping it for use with [A→Z+T](https://github.com/kent-rasmussen/azt).
 
 ### Collaboration and Archival
 I **strongly** recommend using a version controlled repository (e.g., mercurial, git), as is normally done in [WeSay](https://software.sil.org/wesay/) and in recommended [FLEx](https://software.sil.org/fieldworks/) collaboration schemes. Even if you are the only one to ever see this data (why would that be?), the advantages in history and preservation of your data are already there. But if you will be sharing changes with others, you really **must** have an easy way to do this, or you will get bogged down in the logistics of sharing data changes. I  use [Language Depot](https://languagedepot.org), though there are certainly other ways to meet this need. In any case, setting this up early is always easier than trying to merge divergent data later.
