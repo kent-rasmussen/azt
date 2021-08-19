@@ -3,8 +3,8 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A→Z+T'}
 program['tkinter']=True
-program['production']=False #True for making screenshots
-program['version']='0.8.2' #This is a string...
+program['production']=True #True for making screenshots
+program['version']='0.8.3' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 import platform
@@ -321,7 +321,10 @@ class Check():
             log.debug("{} ps found in valid pss; "
                     "selecting next one in this list: {}".format(self.ps,
                                                                 self.pss))
-            self.set('ps',self.pss[index+1])
+            if index+1 == len(self.pss):
+                self.set('ps',self.pss[0]) #cycle back
+            else:
+                self.set('ps',self.pss[index+1])
             if index >= self.maxpss:
                 return 1 #We hit the max already, but give a valid profile
     def nextprofile(self,guess=False):
@@ -341,7 +344,10 @@ class Check():
                 log.debug("{} profile found in valid profiles for ps {}; "
                             "selecting next one in this list: {}".format(
                             self.profile,self.ps,self.profilecountsValid))
-                self.set('profile',self.profilecountsValid[index+1][1])
+                if index+1 == len(self.profilecountsValid):
+                    self.set('profile',self.profilecountsValid[0][1]) #cycle back
+                else:
+                    self.set('profile',self.profilecountsValid[index+1][1])
                 if index >= self.maxprofiles:
                     return 1 #We hit the max already, but give a valid profile
         else:
@@ -1828,8 +1834,8 @@ class Check():
             self.s[self.analang]['Nwd']=self.db.s[self.analang]['N'] #make Nwd before deleting N
         for sclass in list(self.s[self.analang]):
             if ((sclass in self.distinguish) and
-                    (self.distinguish[sclass]==False) and
-                    (sclass not in ['ʔ','N'])):
+                    (self.distinguish[sclass]==False)):
+                    #and (sclass not in ['ʔ','N'])): #Why were these excluded?!?
                 del self.s[self.analang][sclass]
             else:
                 # check again for combinations not in the database
@@ -2066,8 +2072,8 @@ class Check():
             for lang in gloss:
                 """only give these if the frame has this gloss, *and* if
                 the gloss is in the data (user selection is above)"""
-                if ((lang == self.glosslang) or ((self.glosslang2 in frame)
-                                                    and (gloss[lang] is not None))):
+                if ((lang in frame) and (lang in gloss) and (
+                        None not in [gloss[lang],frame[lang]])):
                     output[lang]=self.frameregex.sub(gloss[lang],frame[lang])
         else:
             output[self.analang]=nn(form) #for non-segmental forms
@@ -3570,6 +3576,7 @@ class Check():
         if exit == True:
             #This happens when the user exits the window
             log.debug("exiting joinT True")
+            #Give an error window here
             self.getrunwindow(nowait=True)
             buttontxt=_("Sort!")
             text=_("Hey, you're not Done!\nCome back when you have time; "
@@ -4297,13 +4304,24 @@ class Check():
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.gettonegroups() #sets self.status...['groups'] for a frame
     def tryNAgain(self):
+        if hasattr(self,'name') and self.name is not None:
+            if not hasattr(self,'senseidstosort'):
+                self.getidstosort()
+        else:
+            #Give an error window here
+            log.error("Not Trying again; set a tone frame first!")
+            self.getrunwindow(nowait=True)
+            buttontxt=_("Sort!")
+            text=_("Not Trying Again; set a tone frame first!")
+            Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+            return
         for senseid in self.senseidstosort: #this is a ps-profile slice
             self.db.rmexfields(senseid=senseid,fieldtype='tone',
                                 location=self.name,fieldvalue='NA',
                                 showurl=True
                                 )
         self.checkcheck() #redraw the table
-        self.maybesort()
+        self.maybesort() #Because we want to go right into sorting...
     def getanotherskip(self,parent):
         """This function presents a group of buttons for the user to choose
         from, one for each tone group in that location/ps/profile in the
@@ -6517,10 +6535,15 @@ class ContextMenu:
         self.updatebindings()
 class Renderer(object):
     def __init__(self,test=False,**kwargs):
-        import PIL.ImageFont
-        import PIL.ImageTk
-        import PIL.ImageDraw
-        import PIL.Image
+        try:
+            import PIL.ImageFont
+            import PIL.ImageTk
+            import PIL.ImageDraw
+            import PIL.Image
+        except:
+            log.info("Seems like PIL is not installed; skipping Renderer init.")
+            self.img=None
+            return
         font=kwargs['font'].actual() #should always be there
         xpad=ypad=fspacing=font['size']
         fname=font['family']
@@ -6625,8 +6648,9 @@ class Label(tkinter.Label):
                 log.log(5,"Sticks found! (Generating image for label)")
                 i=Renderer(**kwargs)
                 self.tkimg=i.img
-                kwargs['image']=self.tkimg
-                kwargs['text']=''
+                if self.tkimg is not None:
+                    kwargs['image']=self.tkimg
+                    kwargs['text']=''
         else:
             kwargs['text']=nfc(kwargs['text'])
         tkinter.Label.__init__(self, parent, **kwargs)
@@ -6706,8 +6730,10 @@ class Button(tkinter.Button):
             else:
                 log.debug("sticks found! (Generating image for button)")
                 i=Renderer(**kwargs)
-                kwargs['image']=self.tkimg=i.img
-                kwargs['text']=''
+                self.tkimg=i.img
+                if self.tkimg is not None:
+                    kwargs['image']=self.tkimg
+                    kwargs['text']=''
         kwargs['text']=nfc(kwargs['text'])
         """For Grid"""
         if 'sticky' in kwargs:
@@ -6879,7 +6905,7 @@ class RecordButtonFrame(Frame):
         #if you don't find any, take the *last* values
         log.debug("No audio file found! using name: {}; names: {}; url:{}"
                 "".format(filename, filenames, filenameURL))
-        return filenameURL
+        return filename
     def __init__(self,parent,check,id=None,node=None,form=None,gloss=None,test=False,**kwargs):
         # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
