@@ -74,6 +74,8 @@ A→Z+T stores this location in `lift_url.py`, so you only have to do this once.
 ### Syllable Profile Analysis
 If you open [A→Z+T](https://github.com/kent-rasmussen/azt) without a saved syllable profile analysis file (e.g., for the first time), it will open your database and go through the entries there, and sort them by syllable profile and part of speech (CVC v CVCV for each of Nouns and Verbs, for example). This can take a couple of minutes. If you are running [A→Z+T](https://github.com/kent-rasmussen/azt) in a terminal, you should see its progress.
 
+If you use symbols that [A→Z+T](https://github.com/kent-rasmussen/azt) doesn't recognize as word-forming (including a space), words using those symbols will be excluded from the syllable profile analysis, and thus from any work in [A→Z+T](https://github.com/kent-rasmussen/azt). If you feel words are being excluded inappropriately (e.g., you have an orthographic symbol I haven't already accounted for), please write me with the details, and include a log.
+
 ### Settings File
 If you open [A→Z+T](https://github.com/kent-rasmussen/azt) without a saved settings file, the program makes assumptions for you (based on your [LIFT](https://code.google.com/archive/p/lift-standard/) file), so you can get started right away, if you want to, e.g.:
 
