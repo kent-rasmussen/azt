@@ -4159,8 +4159,8 @@ class Check():
             log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                 tonegroup,self.groupselected))
         else:
-            log.info("Field addition succeeded! LIFT says {}, == {}.".format(
-                                                tonegroup,self.groupselected))
+            log.info("Field addition succeeded! LIFT says {}, which is {}."
+                                        "".format(tonegroup,self.groupselected))
         self.subcheck=self.groupselected
         self.updatestatus() #this marks the group unverified.
         self.db.write() #This is never iterated over; just one entry at a time.
