@@ -1618,10 +1618,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #     lp['labpal']+=list(char+'w' for char in lp['pal'])
         #     for stype in sorted(lp.keys()): #larger graphs first
         #         c=lp[stype]+c
-        x['V']=['a', 'á', 'i', 'ɨ', 'ï', 'í','ɪ', 'u', 'ʉ', 'ʊ', 'ɑ', 'e', 'ɛ', 'o',
-                'ɔ', 'ʌ', 'ə', 'æ', 'a͂', 'o͂', 'i͂', 'u͂', 'ə̃', 'ã', 'ĩ', 'ɪ̃',
-                'õ', 'ɛ̃', 'ẽ', 'ɔ̃', 'ũ', 'ʊ̃', 'I', 'U', 'E', 'O'
-                ,'à', 'á', 'é', 'è', 'ì', 'í', 'ó', 'ò', 'ú', 'ù' #for those using precomposed letters
+        x['V']=[
+                #decomposed first:
+                #tilde (decomposed):
+                'ã', 'ẽ', 'ɛ̃', 'ə̃', 'ɪ̃', 'ĩ', 'õ', 'ɔ̃', 'ũ', 'ʊ̃',
+                #Combining Greek Perispomeni (decomposed):
+                'a͂', 'i͂', 'o͂', 'u͂',
+                #single code point vowels:
+                'a', 'e', 'i', 'ə', 'o', 'u',
+                'A', 'E', 'I', 'Ə', 'O', 'U',
+                'ɑ', 'ɛ', 'ɨ', 'ɔ', 'ʉ',
+                'æ', 'ʌ', 'ɪ', 'ï', 'ʊ', 
+                #for those using precomposed letters:
+                'à', 'è', 'ì', 'ò', 'ù',
+                'À', 'È', 'Ì', 'Ò', 'Ù',
+                'á', 'é', 'í', 'ó', 'ú',
+                'Á', 'É', 'Í', 'Ó', 'Ú',
+                'â', 'ê', 'î', 'ô', 'û',
+                'Â', 'Ê', 'Î', 'Ô', 'Û'
                 ]
         x['d']=["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         x['ː']=[":","ː"] # vowel length markers
