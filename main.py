@@ -7639,6 +7639,13 @@ def main():
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
     root = tkinter.Tk()
+    log.info("screen height: {}".format(root.winfo_screenheight()))
+    log.info("screen width: {}".format(root.winfo_screenwidth()))
+    if platform.system() != 'Linux': #this is only for MS Windows!
+        import ctypes
+        user32 = ctypes.windll.user32
+        screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+        log.info("MS Windows screen size: {}".format(screensize))
     # log.info(root.winfo_class())
     # root.className="azt"
     # root.winfo_class("azt")
