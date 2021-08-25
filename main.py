@@ -7393,7 +7393,8 @@ def setthemes(self):
                         'offwhite':None}
                 }
 def setfonts(self,fonttheme='default'):
-    if fonttheme == 'small':
+    log.info("Setting fonts with {} theme".format(fonttheme))
+    if fonttheme == 'smaller':
         default=12
         normal=14
         big=16
@@ -7407,6 +7408,7 @@ def setfonts(self,fonttheme='default'):
         bigger=36
         title=36
         small=12
+    log.log(2,"Default font size: {}".format(default))
     andika="Andika"# not "Andika SIL"
     charis="Charis SIL"
     self.fonts={
