@@ -6422,6 +6422,10 @@ class MainApplication(Frame):
             self.context.menuitem(_("Show Buttons"),self._showbuttons)
         else:
             self.context.menuitem(_("Hide Buttons"),self._hidebuttons)
+        if self.fonttheme == 'default':
+            self.context.menuitem(_("Smaller Fonts"),self.setfontssmaller)
+        else:
+            self.context.menuitem(_("Larger Fonts"),self.setfontsdefault)
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
