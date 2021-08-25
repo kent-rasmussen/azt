@@ -2209,6 +2209,7 @@ class Check():
     def checkcheck(self):
         """This checks for incompatible or missing variable values, and asks
         for them. If values are OK, they are displayed."""
+        inherit(self) #in case anything has changed (like font size)
         opts={
         'row':0,
         'labelcolumn':0,
