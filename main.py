@@ -232,6 +232,7 @@ class Check():
             l.grid(row=0, column=0)
     """Guessing functions"""
     def guessanalang(self):
+        #have this call set()?
         langspriority=collections.Counter(self.db.get('lexemelang')+
                                 self.db.get('citationlang')).most_common()
         self.analang=langspriority[0][0]
