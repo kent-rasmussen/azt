@@ -6379,6 +6379,25 @@ class MainApplication(Frame):
             exit()
         self.parent.theme=self.parent.themes[self.parent.themename]
         self.parent['background']=self.parent.theme['background']
+    def setfontsdefault(self):
+        log.log(2,self.parent.winfo_children())
+        setfonts(self.parent)
+        if len(self.parent.winfo_children()) >0:
+            propagate(self.parent,attr='fonts')
+            log.log(2,self.fonts['default']['size'])
+        self.fonttheme='default'
+        if hasattr(self,'context'): #don't do this before ContextMenu is there
+            self.setcontext()
+            if hasattr(self,'check'):
+                self.check.checkcheck() #redraw the main window (not on boot)
+    def setfontssmaller(self):
+        setfonts(self.parent,fonttheme='smaller')
+        propagate(self.parent,attr='fonts')
+        log.log(2,self.fonts['default']['size'])
+        self.fonttheme='smaller'
+        self.setcontext()
+        if hasattr(self,'check'):
+            self.check.checkcheck() #redraw the main window
     def setmasterconfig(self,program):
         self.parent.debug=False #needed?
         """Configure variables for the root window (master)"""
