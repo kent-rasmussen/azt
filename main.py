@@ -7636,7 +7636,8 @@ def on_quit(self):
     self.destroy() #do this for everything
 def main():
     global program
-    log.info("Running main function") #Don't translate yet!
+    log.info("Running main function on {} ({})".format(platform.system(),
+                                    platform.platform())) #Don't translate yet!
     root = tkinter.Tk()
     # log.info(root.winfo_class())
     # root.className="azt"
