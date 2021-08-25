@@ -180,6 +180,7 @@ class Check():
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
+        self.notifyuserofextrasegments() #self.analang set by now
         if self.interfacelang not in [None, getinterfacelang()]:
             #set only when new value is loaded:
             setinterfacelang(self.interfacelang)
@@ -218,6 +219,17 @@ class Check():
         #set None to make labels, else "raised" "groove" "sunken" "ridge" "flat"
         self.mainlabelrelief()
         self.checkcheck()
+    def notifyuserofextrasegments(self):
+        invalids=self.db.segmentsnotinregexes[self.analang]
+        ninvalids=len(invalids)
+        extras=list(dict.fromkeys(invalids).keys())
+        if ninvalids >0:
+            warning=Window(self, title="Invalid Characters Found!")
+            t=_("Your {} database has the following symbols, which are "
+            "excluding {} words from being analyzed: \n{}"
+                                    "".format(self.analang,ninvalids,extras))
+            l=Label(warning, text=t)
+            l.grid(row=0, column=0)
     """Guessing functions"""
     def guessanalang(self):
         langspriority=collections.Counter(self.db.get('lexemelang')+
