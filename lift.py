@@ -1443,7 +1443,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             write=1
         except:
             log.error("There was a problem writing to file: {}"
-                    "".format(os.listdir(pathlib.Path(filename))))
+                    "".format(filename))
         if write == 1:
             try:
                 os.replace(filename+'.part',filename)
