@@ -7565,6 +7565,19 @@ def inherit(self,parent=None,attr=None):
         parent=self.parent
     for attr in attrs:
         setattr(self,attr,getattr(parent,attr))
+def propagate(self,attr):
+    """This function pushes an attribute value to all children with that
+    attribute already set.
+    """
+    log.info(self.winfo_children())
+    for child in self.winfo_children():
+        log.log(2,"working on {}".format(child))
+        if hasattr(child,attr):
+            log.log(2,"Found {} value for {} attr, setting {} value".format(
+            getattr(child,attr),attr,getattr(self,attr)
+            ))
+            setattr(child,attr,getattr(self,attr))
+            propagate(child,attr=attr)
 def donothing():
     log.debug("Doing Nothing!")
     pass
