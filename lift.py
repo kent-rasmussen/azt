@@ -1597,7 +1597,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # s['g']={}
         # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
         #         'mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']
-        x['ʔ']=['ʔ',"ꞌ",'ʼ']
+        x['ʔ']=['ʔ',
+                "ꞌ", #Latin Small Letter Saltillo
+                "'", #Tag Apostrophe
+                'ʼ'  #modifier letter apostrophe
+                ]
         x['G']=['ẅ','y','Y','w','W']
         # x['CG']=list((char+g for char in x['C'] for g in x['G']))
         x['N']=["ng'",'mm','ny','ŋŋ','m','M','n','ŋ','ɲ']
@@ -1628,7 +1632,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'a', 'e', 'i', 'ə', 'o', 'u',
                 'A', 'E', 'I', 'Ə', 'O', 'U',
                 'ɑ', 'ɛ', 'ɨ', 'ɔ', 'ʉ',
-                'æ', 'ʌ', 'ɪ', 'ï', 'ʊ', 
+                'æ', 'ʌ', 'ɪ', 'ï', 'ö', 'ʊ',
                 #for those using precomposed letters:
                 'à', 'è', 'ì', 'ò', 'ù',
                 'À', 'È', 'Ì', 'Ò', 'Ù',
