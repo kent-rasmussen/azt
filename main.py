@@ -6409,7 +6409,7 @@ class MainApplication(Frame):
         #if resolutionsucks==True or windows==True:
             # setfonts(self.parent,fonttheme='small')
         #else:
-        setfonts(self.parent)
+        self.setfontsdefault()
         self.parent.wraplength=self.parent.winfo_screenwidth()-300 #exit button
         self.parent.program=program
     def setcontext(self,context=None):
