@@ -1,6 +1,7 @@
 #Roadmap
 
 ## release stoppers
+- Make a simple output with characters that make invalid words, so people can see them before noticing that words are just not there.
 
 ## Things to Test
 - check that changes to S regexs don't break too much.
