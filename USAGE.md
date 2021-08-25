@@ -74,7 +74,7 @@ A→Z+T stores this location in `lift_url.py`, so you only have to do this once.
 ### Syllable Profile Analysis
 If you open [A→Z+T](https://github.com/kent-rasmussen/azt) without a saved syllable profile analysis file (e.g., for the first time), it will open your database and go through the entries there, and sort them by syllable profile and part of speech (CVC v CVCV for each of Nouns and Verbs, for example). This can take a couple of minutes. If you are running [A→Z+T](https://github.com/kent-rasmussen/azt) in a terminal, you should see its progress.
 
-If you use symbols that [A→Z+T](https://github.com/kent-rasmussen/azt) doesn't recognize as word-forming (including a space), words using those symbols will be excluded from the syllable profile analysis, and thus from any work in [A→Z+T](https://github.com/kent-rasmussen/azt). If you feel words are being excluded inappropriately (e.g., you have an orthographic symbol I haven't already accounted for), please write me with the details, and include a log.
+If you use symbols that [A→Z+T](https://github.com/kent-rasmussen/azt) doesn't recognize as word-forming (including a space), entries using those symbols will be excluded from the syllable profile analysis, and thus from any work in [A→Z+T](https://github.com/kent-rasmussen/azt). For your convenience, a window appears on boot if this applies to you, including which characters are found, and how many entries they impact. If you feel entries are being excluded inappropriately (e.g., you have an orthographic symbol I haven't already accounted for), please write me with the details, and include a log.
 
 ### Settings File
 If you open [A→Z+T](https://github.com/kent-rasmussen/azt) without a saved settings file, the program makes assumptions for you (based on your [LIFT](https://code.google.com/archive/p/lift-standard/) file), so you can get started right away, if you want to, e.g.:
@@ -96,8 +96,9 @@ On the upper left of the main window, each of these settings are indicated:
  - part of speech and syllable profile (with count)
  - type of check (i.e., C, V, or T) and current stage/frame
 
-There are by default **no menus**; if you see something you want to change, click on it, and a menu will appear for you to change it.
+There are by default **no menus**; if you see something you want to change (including the way the language name appears), click on it, and a menu will appear for you to change it.
 *If you prefer menus*, you can *show menus* through a context menu via right click anywhere in the main window –these menus allow you to change all these settings, and more.
+If the **font size** is too big for you (e.g., things are getting pushed off the screen), the context menu also allows you to select a theme with smaller fonts.
 
 ### Tone Frames
 If you don't have any tone frames set up yet, you will be asked to do so when you try to sort on tone. You can also do that in the Advanced menu, for as many frames as you want to define. Note the *name* is important, as this is how you will refer to this frame in A→Z+T, and how it will be identified in your database in the future (unless and until you change that). So if you're testing the plural form, something like "Pl" or "Plural", or "Pluriel" might be appropriate --but this is just a name, so make it distinct but useful to your workflow.
