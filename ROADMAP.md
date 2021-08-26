@@ -1,7 +1,10 @@
 #Roadmap
 
 ## release stoppers
-- Make a simple output with characters that make invalid words, so people can see them before noticing that words are just not there.
+- check that sound file names didn't get corrupted, and that final _ is gone (but read, if that legacy file is there..…).
+- add something to detect lower resolution screens
+    - give smaller fonts?
+    - give smaller icons?
 
 ## Things to Test
 - check that changes to S regexs don't break too much.

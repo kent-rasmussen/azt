@@ -8,6 +8,8 @@
 - fixed error of crash on PIL not installed.
 - fixed error on trying data again
 - updated documentation
+- Made a simple output with characters that make invalid words (and the number of words impacted), so people can see them before noticing that words are just not there.
+- Added context menu to make smaller font theme, for where that is helpful.
 
 # Version 0.8.2
 - moved PyAudio functions to module, improved function
