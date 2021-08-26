@@ -6921,16 +6921,20 @@ class RecordButtonFrame(Frame):
         args+=[gloss]
         for pslocopt in pslocopts:
             for fieldlocopt in fieldlocopts: #for older name schema
-                optargs=args[:]
-                optargs.insert(0,pslocopt) #put first
-                optargs.insert(3,fieldlocopt) #put after self.node.tag
-                log.log(3,optargs)
-                wavfilename=''
-                for arg in [x for x in optargs if x is not None]:
-                    wavfilename+=arg
-                    if optargs.index(arg) < len(optargs):
+                for legacy in ['_', None]:
+                    optargs=args[:]
+                    optargs.insert(0,pslocopt) #put first
+                    optargs.insert(3,fieldlocopt) #put after self.node.tag
+                    log.log(3,optargs)
+                    wavfilename=''
+                    argsthere=[x for x in optargs if x is not None]
+                    for arg in argsthere:
+                        wavfilename+=arg
+                        if argsthere.index(arg) < len(argsthere)-1:
+                            wavfilename+='_'
+                    if legacy == '_': #There was a schema that had an extra '_'.
                         wavfilename+='_'
-                filenames+=[re.sub('[][\. /?]+','_',
+                    filenames+=[re.sub('[][\. /?]+','_',
                                                     str(wavfilename))+'.wav']
         #test if any of the generated filenames are there
         for filename in filenames:
