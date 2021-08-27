@@ -6432,6 +6432,8 @@ class MainApplication(Frame):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
         self.parent=parent
+        self.exitFlag = ExitFlag()
+        setexitflag(parent,self.exitFlag)
         self.setmasterconfig(program)
         inherit(self) # do this after setting config.
         #set up languages before splash window:
@@ -6487,8 +6489,6 @@ class MainApplication(Frame):
         (more is more load time.)
         """
         self.check=Check(self,self.frame,nsyls=nsyls)
-        self.exitFlag = self.check.exitFlag = ExitFlag()
-        setexitflag(parent,self.exitFlag)
         """Do any check tests here"""
         """Make the rest of the mainApplication window"""
         e=(_("Exit"))
