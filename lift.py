@@ -1255,6 +1255,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         form=ET.SubElement(node,'form',attrib={'lang':lang})
         t=ET.SubElement(form,'text')
         t.text=url
+        prettyprint(node)
         """Can't really do this without knowing what entry or sense I'm in..."""
         self.write()
     def addmodcitationfields(self,entry,langform,lang):
@@ -2054,6 +2055,20 @@ class Unused():
     def removedups(x): #This removes duplicates from a list
         return list(dict.fromkeys(x))
 """Functions I'm using, but not in a class"""
+def prettyprint(node):
+    # This fn is for seeing the Element contents before writing them (in case of 
+    # ElementTree errors that aren't otherwise understandable).
+    t=0
+    def do(node,t):
+        for child in node:
+            log.info("{}{} {}: {}".format('\t'*t,child.tag,child.attrib,
+                "" if child.text is None
+                    or set(['\n','\t',' ']).issuperset(child.text)
+                    else child.text))
+            t=t+1
+            do(child,t)
+            t=t-1
+    do(node,t)
 def atleastoneexamplehaslangformmissing(examples,lang):
     for example in examples:
         if examplehaslangform(example,lang) == False:
