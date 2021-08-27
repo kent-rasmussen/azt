@@ -1604,7 +1604,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ]
         x['G']=['ẅ','y','Y','w','W']
         # x['CG']=list((char+g for char in x['C'] for g in x['G']))
-        x['N']=["ng'",'mm','ny','ŋŋ','m','M','n','ŋ','ɲ']
+        x['N']=["ng'",'mm','ny','ŋŋ','m','M','N','n','ŋ','ɲ']
         # x['NC']=list((n+char for char in x['C'] for n in x['N']))
         # x['NCG']=list((n+char+g for char in x['C'] for n in x['N']
         #                                             for g in x['G']))
@@ -1639,9 +1639,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'á', 'é', 'í', 'ó', 'ú',
                 'Á', 'É', 'Í', 'Ó', 'Ú',
                 'â', 'ê', 'î', 'ô', 'û',
-                'Â', 'Ê', 'Î', 'Ô', 'Û'
+                'Â', 'Ê', 'Î', 'Ô', 'Û',
+                'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
                 ]
-        x['d']=["̀","́","̂","̌","̄","̃"] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
+        x['d']=["̀","́","̂","̌","̄","̃"
+                ,'̈' #COMBINING DIAERESIS
+                ] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         x['ː']=[":","ː"] # vowel length markers
         x['b']=['=','-'] #affix boundary markers
         x['o']=['<','&lt;','&gt;','>','›','»','‹','«',''] #macron here?
