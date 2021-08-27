@@ -5869,6 +5869,8 @@ class Window(tkinter.Toplevel):
         self.title(title)
         # self.parent=parent
         self.resetframe()
+        self.exitFlag=ExitFlag() #This overwrites inherited exitFlag
+        setexitflag(self,self.exitFlag)
         if exit is True:
             e=(_("Exit")) #This should be the class, right?
             self.exitButton=tkinter.Button(self.outsideframe, width=10, text=e,
