@@ -1439,12 +1439,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         remove=0
         xmlfns.indent(self.nodes)
         self.tree=ET.ElementTree(self.nodes)
-        try:
-            self.tree.write(filename+'.part', encoding="UTF-8")
-            write=1
-        except:
-            log.error("There was a problem writing to file: {}"
-                    "".format(filename))
+        # try:
+        self.tree.write(filename+'.part', encoding="UTF-8")
+        write=1
+        # except:
+        #     log.error("There was a problem writing to file: {}"
+        #             "".format(filename))
         if write == 1:
             try:
                 os.replace(filename+'.part',filename)
