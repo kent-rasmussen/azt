@@ -4490,7 +4490,7 @@ class Check():
             title=(_("Run Window"))
         if self.exitFlag is True:
             return
-        if hasattr(self,'runwindow') and (self.runwindow.winfo_exists()):
+        if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
             log.info("Runwindow already there! Resetting frame...")
             self.runwindow.resetframe() #I think I'll always want this here...
         else:
@@ -4666,6 +4666,8 @@ class Check():
             self.runwindow.frame.skip=True
             entryframe.destroy()
         self.getrunwindow()
+        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
+            return
         log.debug("Working with skip: {}".format(skip))
         if skip == 'skip':
             self.runwindow.frame.skip=True
