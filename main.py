@@ -4496,10 +4496,6 @@ class Check():
         else:
             self.runwindow=Window(self.frame,title=title)
         self.runwindow.title(title)
-        self.runwindowexitFlag=ExitFlag()
-        setexitflag(self.runwindow,self.runwindowexitFlag)
-        log.debug("self.runwindowexitFlag: {}".format(
-                                            self.runwindowexitFlag.istrue()))
         self.runwindow.lift()
         if nowait != True:
             self.runwindow.wait(msg=msg)
