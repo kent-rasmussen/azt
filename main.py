@@ -5802,8 +5802,15 @@ class Window(tkinter.Toplevel):
             return
         self.ww=Wait(self,msg)
     def waitdone(self):
-        if hasattr(self,'ww') and self.ww.winfo_exists():
+        # if self.exitFlag.istrue():
+        #     return
+        # else:
+        #     print(self.exitFlag.istrue())
+        # if hasattr(self,'ww') and self.ww.winfo_exists():
+        try:
             self.ww.close()
+        except tkinter.TclError:
+            pass
     def removeverifymenu(self,event=None):
         #This removes menu from the verify window
         if hasattr(self,'menubar'):
