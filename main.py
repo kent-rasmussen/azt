@@ -290,6 +290,11 @@ class Check():
                     (self.analang not in self.db.audiolangs[0])):
                 log.info('Looks like I found an iso code for analang!')
                 self.audiolang=self.db.audiolangs[1] #assume this is the iso code
+            elif ((self.analang in self.db.audiolangs[1]) and
+                    (self.analang in self.db.audiolangs[0])):
+                self.audiolang=sorted(self.db.audiolangs,key = len)[0]
+                log.info("Analang in both of two audiolangs only, selecting "
+                "shorter: {}".format(self.audiolang))  #assume is more basic
         else: #for three or more analangs, take the first plausible iso code
             for n in range(nlangs):
                 if self.analang in self.db.analangs[n]:
