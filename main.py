@@ -725,7 +725,7 @@ class Check():
             b.grid(row=2,column=0,sticky='ew')
             self.runwindow.wait_window(w)
             w.destroy()
-        if self.runwindowexitFlag.istrue():
+        if self.runwindow.exitFlag.istrue():
             return
         else:
             self.runwindow.wait()
@@ -3754,7 +3754,7 @@ class Check():
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
         while (status['tosort'] == True and
-                                        not self.runwindowexitFlag.istrue()):
+                                        not self.runwindow.exitFlag.istrue()):
             if len(status['groups']) == 1: #only rerun when moving to 1 button
                 self.getanotherskip(scroll.content.anotherskip)
             if hasattr(self,'groupselected'):
@@ -3784,7 +3784,7 @@ class Check():
             self.sorting.wrap()
             self.runwindow.waitdone()
             self.runwindow.wait_window(window=self.sorting)
-            if self.runwindowexitFlag.istrue():
+            if self.runwindow.exitFlag.istrue():
                 return 1
             if hasattr(self,'groupselected'): # != []:
                 if self.groupselected == "NONEOFTHEABOVE":
@@ -3848,7 +3848,7 @@ class Check():
         self.makestatusdict()
         for self.subcheck in self.status[self.type][self.ps][self.profile][
                                                         self.name]['groups']:
-            if self.runwindowexitFlag.istrue():
+            if self.runwindow.exitFlag.istrue():
                 return 1
             if self.subcheck in (self.status[self.type][self.ps][self.profile]
                                             [self.name]['done']):
@@ -3916,13 +3916,13 @@ class Check():
                             )
             b.grid(column=0, row=0, sticky="ew")
             # b.bind('<mouseclick>',remove senseid from sensids)
-            if self.runwindowexitFlag.istrue():
+            if self.runwindow.exitFlag.istrue():
                 return 1
             self.runwindow.context.updatebindings() #make sure to bind children
             self.sframe.windowsize()
             self.runwindow.waitdone()
             b.wait_window(bf)
-            if (self.runwindowexitFlag.istrue() or
+            if (self.runwindow.exitFlag.istrue() or
                                             not hasattr(self,'groupselected')):
                 return 1
             # I need to work on this later. How to distinguish buttons after
@@ -3940,7 +3940,7 @@ class Check():
                 print(f"User did NOT select ‘{oktext}’, assuming we'll come "
                         "back to this!!")
         #Once done verifying each group:
-        if self.runwindowexitFlag.istrue():
+        if self.runwindow.exitFlag.istrue():
             return 1
         else:
             self.runwindow.waitdone()
@@ -4044,7 +4044,7 @@ class Check():
         self.runwindow.waitdone()
         self.runwindow.frame.wait_window(canary)
         #On first button press/exit:
-        if self.runwindowexitFlag.istrue():
+        if self.runwindow.exitFlag.istrue():
             return 1
         if hasattr(self,'groupselected'):
             if self.groupselected == "ALLOK":
@@ -4075,7 +4075,7 @@ class Check():
                     group1))
                 self.runwindow.wait_window(canary2)
                 #On second button press/exit:
-                if self.runwindowexitFlag.istrue(): #i.e., user exits by now
+                if self.runwindow.exitFlag.istrue(): #i.e., user exits by now
                     return 1
                 if hasattr(self,'groupselected'):
                     if self.groupselected == "ALLOK":
@@ -4567,7 +4567,7 @@ class Check():
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def showentryformstorecordpage(self):
         #The info we're going for is stored above sense, hence guid.
-        if self.runwindowexitFlag.istrue():
+        if self.runwindow.exitFlag.istrue():
             log.info('no runwindow; quitting!')
             return
         if not self.runwindow.frame.winfo_exists():
@@ -4650,7 +4650,7 @@ class Check():
             self.showentryformstorecordpage()
         else:
             for psprofile in self.profilecountsValid:
-                if self.runwindowexitFlag.istrue():
+                if self.runwindow.exitFlag.istrue():
                     return 1
                 self.ps=psprofile[2]
                 self.profile=psprofile[1]
@@ -4701,7 +4701,7 @@ class Check():
                                                     self.audiolang) == False)):
                 continue
             row=0
-            if self.runwindowexitFlag.istrue():
+            if self.runwindow.exitFlag.istrue():
                 return 1
             entryframe=Frame(self.runwindow.frame)
             entryframe.grid(row=1,column=0)
@@ -4751,7 +4751,7 @@ class Check():
             d.grid(row=row,column=0)
             self.runwindow.waitdone()
             examplesframe.wait_window(entryframe)
-            if self.runwindowexitFlag.istrue():
+            if self.runwindow.exitFlag.istrue():
                 return 1
             if self.runwindow.frame.skip == True:
                 return 'skip'
@@ -4794,7 +4794,7 @@ class Check():
                 skip=True
             if exited == True:
                 return
-        if not self.runwindowexitFlag.istrue():
+        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
             self.runwindow.waitdone()
             self.runwindow.resetframe()
             Label(self.runwindow.frame, anchor='w',font=self.fonts['read'],
