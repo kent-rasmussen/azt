@@ -7589,13 +7589,15 @@ def inherit(self,parent=None,attr=None):
     from the root window, through all windows, frames, and scrolling frames, etc
     """
     if attr is None:
-        attrs=['fonts','theme','debug','wraplength','photo','program']
+        attrs=['fonts','theme','debug','wraplength','photo','program',
+                'exitFlag']
     else:
         attrs=[attr]
     if parent==None:
         parent=self.parent
     for attr in attrs:
-        setattr(self,attr,getattr(parent,attr))
+        if hasattr(parent,attr):
+            setattr(self,attr,getattr(parent,attr))
 def propagate(self,attr):
     """This function pushes an attribute value to all children with that
     attribute already set.
