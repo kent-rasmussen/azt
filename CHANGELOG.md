@@ -10,6 +10,10 @@
 - updated documentation
 - Made a simple output with characters that make invalid words (and the number of words impacted), so people can see them before noticing that words are just not there.
 - Added context menu to make smaller font theme, for where that is helpful.
+- set record button frame to notify user (and not make live buttons) where there is not audiolang set.
+- only auto-add link if audiolang is specified.
+- fixed window exit issues
+- fixed numerous crashes on window exit
 
 # Version 0.8.2
 - moved PyAudio functions to module, improved function
