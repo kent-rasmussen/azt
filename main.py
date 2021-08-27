@@ -275,8 +275,8 @@ class Check():
                                             '({})'.format(self.db.analangs[n])))
                     return
     def guessaudiolang(self):
-        """if there's only one audio language, use it."""
         nlangs=len(self.db.audiolangs)
+        """if there's only one audio language, use it."""
         if nlangs == 1: # print('Only one analang in database!')
             self.audiolang=self.db.audiolangs[0]
             """If there are more than two analangs in the database, check if one
@@ -284,12 +284,14 @@ class Check():
         elif nlangs == 2:
             if ((self.analang in self.db.audiolangs[0]) and
                 (self.analang not in self.db.audiolangs[1])):
-                log.info('Looks like I found an  audiolang!')
-                self.audiolang=self.db.audiolangs[0] #assume this is the iso code
+                self.audiolang=self.db.audiolangs[0]
+                log.info("Analang in first of two audiolangs only, selecting "
+                                            "{}".format(self.audiolang))
             elif ((self.analang in self.db.audiolangs[1]) and
                     (self.analang not in self.db.audiolangs[0])):
-                log.info('Looks like I found an iso code for analang!')
-                self.audiolang=self.db.audiolangs[1] #assume this is the iso code
+                self.audiolang=self.db.audiolangs[1]
+                log.info("Analang in second of two audiolangs only, selecting "
+                                            "{}".format(self.audiolang))
             elif ((self.analang in self.db.audiolangs[1]) and
                     (self.analang in self.db.audiolangs[0])):
                 self.audiolang=sorted(self.db.audiolangs,key = len)[0]
