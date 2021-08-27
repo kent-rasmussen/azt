@@ -6987,6 +6987,13 @@ class RecordButtonFrame(Frame):
         Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
+        if check.audiolang is None and self.test is not True:
+            tlang=_("Set audio language to get record buttons!")
+            log.error(tlang)
+            Label(self,text=tlang,borderwidth=1,
+                relief='raised' #flat, raised, sunken, groove, and ridge
+                ).grid(row=0,column=0)
+            return
         if None in [self.settings.fs, self.settings.sample_format,
                     self.settings.audio_card_in,
                     self.settings.audio_card_out]:
