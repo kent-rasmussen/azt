@@ -5791,6 +5791,8 @@ class ExitFlag(object):
         self.false()
 class Window(tkinter.Toplevel):
     def resetframe(self):
+        if self.parent.exitFlag.istrue():
+            return
         if self.winfo_exists(): #If this has been destroyed, don't bother.
             if hasattr(self,'frame') and type(self.frame) is Frame:
                 self.frame.destroy()
