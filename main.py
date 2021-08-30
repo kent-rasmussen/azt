@@ -3337,7 +3337,8 @@ class Check():
             el=xlp.LinkedData(ex,self.analang,framed[self.analang],str(url))
         else:
             el=xlp.LangData(ex,self.analang,framed[self.analang])
-        eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
+        if self.glosslang in framed:
+            eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
         if ((self.glosslang2 != None) and (self.glosslang2 in framed)
                 and (framed[self.glosslang2] is not None)):
                 eg2=xlp.Gloss(ex,self.glosslang2,framed[self.glosslang2])
