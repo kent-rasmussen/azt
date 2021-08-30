@@ -4424,7 +4424,6 @@ class Check():
         if label==True:
             b=Label(bf, text=text, **kwargs)
             b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
-
         elif playable == True:
             url=RecordButtonFrame.makefilenames(None,self, #not Classy...
                                                 framed['senseid'])
