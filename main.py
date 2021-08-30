@@ -5343,6 +5343,8 @@ class Check():
                         if text not in textout:
                             output(window,r,text)
                             textout.append(text)
+                    if not e1.node.find('listWord'):
+                        s1.node.remove(e1.node) #Don't show examples w/o data
             else:
                 for senseid in toreport[group]: #groups[group]['senseids']:
                     #This is for window/text output only, not in XLP file
