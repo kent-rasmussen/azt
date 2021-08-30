@@ -3315,12 +3315,14 @@ class Check():
         self.name=nameori
         self.subcheck=subcheckori
     def idXLP(self,framed):
-        idbits='x'
-        for x in [self.ps,self.profile,self.name,self.subcheck,
-                    framed[self.analang],framed[self.glosslang]]:
+        id='x' #string!
+        bits=[self.ps,self.profile,self.name,self.subcheck,framed[self.analang]]
+        if self.glosslang in framed and framed[self.glosslang] is not None:
+            bits+=framed[self.glosslang]
+        for x in bits:
             if x is not None:
-                idbits+=x
-        return rx.id(idbits) #for either example or listword
+                id+=x
+        return rx.id(id) #for either example or listword
     def framedtoXLP(self,framed,parent,listword=False):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
