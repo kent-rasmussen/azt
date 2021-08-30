@@ -6408,6 +6408,7 @@ class MainApplication(Frame):
                         ]:
             mkimg(name,relurl)
         log.info("Done scaling images")
+        self.parent.renderings={} #initialize this somewhere...
     def settheme(self):
         setthemes(self.parent)
         #Select from lightgreen, green, pink, lighterpink, evenlighterpink,
@@ -7641,8 +7642,8 @@ def inherit(self,parent=None,attr=None):
     from the root window, through all windows, frames, and scrolling frames, etc
     """
     if attr is None:
-        attrs=['fonts','theme','debug','wraplength','photo','program',
-                'exitFlag']
+        attrs=['fonts','theme','debug','wraplength','photo','renderings',
+                'program','exitFlag']
     else:
         attrs=[attr]
     if parent==None:
