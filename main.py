@@ -5363,7 +5363,9 @@ class Check():
                         for example in examples:
                             # These should already be framed!
                             framed=self.getframeddata(example,noframe=True)
-                            self.framedtoXLP(framed,parent=e1,listword=True)
+                            if not (framed[self.analang] is None and
+                                    framed[self.glosslang] is None):
+                                self.framedtoXLP(framed,parent=e1,listword=True)
                     output(window,r,text)
         self.runwindow.waitdone()
         xlpr.close()
