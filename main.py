@@ -5306,6 +5306,7 @@ class Check():
                             toreport[x]
                             )
                             )
+        #Can I break this for multithreading?
         for group in grouplist: #These already include ps-profile
             log.info("building report for {} ({}/{})".format(group,
                                     grouplist.index(group)+1,len(grouplist)))
