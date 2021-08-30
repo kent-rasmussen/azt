@@ -6644,7 +6644,6 @@ class Renderer(object):
             fonttype+='I'
         if fonttype == '':
             fonttype='R'
-        print(font)
         text=kwargs['text'] #should always be there
         text=text.replace('\t','    ') #Not sure why, but tabs aren't working.
         wraplength=kwargs['wraplength'] #should always be there
