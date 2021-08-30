@@ -5337,7 +5337,9 @@ class Check():
                         for example in examples:
                             # These should already be framed!
                             framed=self.getframeddata(example,noframe=True)
-                            self.framedtoXLP(framed,parent=e1,listword=True)
+                            if not (framed[self.analang] is None and
+                                    framed[self.glosslang] is None):#glosslang2?
+                                self.framedtoXLP(framed,parent=e1,listword=True)
                         if text not in textout:
                             output(window,r,text)
                             textout.append(text)
