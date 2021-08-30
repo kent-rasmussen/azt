@@ -4423,12 +4423,14 @@ class Check():
         elif playable == True:
             url=RecordButtonFrame.makefilenames(None,self, #not Classy...
                                                 framed['senseid'])
-            thefileisthere=file.exists(url)
+            diredurl=str(file.getdiredurl(self.audiodir,url))
+            thefileisthere=file.exists(diredurl)
+            log.info("fileisthere: {} ({})".format(diredurl,url))
             b=Label(bf, text=text, **kwargs)
             if thefileisthere:
                 self.pyaudiocheck()
                 self.soundsettingscheck()
-                self.player=sound.SoundFilePlayer(url,self.pyaudio,self.
+                self.player=sound.SoundFilePlayer(diredurl,self.pyaudio,self.
                                                                 soundsettings)
                 b=Button(bf, text=text, cmd=self.player.play)
                 bt=ToolTip(b,_("Click to hear this utterance"))
