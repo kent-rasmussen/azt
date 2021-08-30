@@ -6727,7 +6727,26 @@ class Label(tkinter.Label):
         self.parent=parent
         sticks=set(['˥','˦','˧','˨','˩',' '])
         if set(kwargs['text']) & sticks and not norender:
-            if 'image' in kwargs and kwargs['image'] is not None:
+            # log.info(kwargs['font']['size'])
+            style=(kwargs['font']['family'], # from kwargs['font'].actual()
+                    kwargs['font']['size'],kwargs['font']['weight'],
+                    kwargs['font']['slant'],kwargs['font']['underline'],
+                    kwargs['font']['overstrike'])
+            # log.info("style: {}".format(style))
+            renderings=self.parent.renderings
+            # log.info("renderings: {}".format(renderings))
+            if style not in renderings:
+                renderings[style]={}
+            if kwargs['wraplength'] not in renderings[style]:
+                renderings[style][kwargs['wraplength']]={}
+            thisrenderings=renderings[style][kwargs['wraplength']]
+            if (kwargs['text'] in thisrenderings and
+                    thisrenderings[kwargs['text']] is not None):
+                log.info("text {} already rendered with {} wraplength, using."
+                        "".format(kwargs['text'],kwargs['wraplength']))
+                kwargs['image']=thisrenderings[kwargs['text']]
+                kwargs['text']=''
+            elif 'image' in kwargs and kwargs['image'] is not None:
                 log.error("You gave an image and tone characters in the same "
                 "label? ({},{})".format(image,kwargs['text']))
                 return
@@ -6736,7 +6755,7 @@ class Label(tkinter.Label):
                 i=Renderer(**kwargs)
                 self.tkimg=i.img
                 if self.tkimg is not None:
-                    kwargs['image']=self.tkimg
+                    thisrenderings[kwargs['text']]=kwargs['image']=self.tkimg
                     kwargs['text']=''
         else:
             kwargs['text']=nfc(kwargs['text'])
@@ -6810,7 +6829,25 @@ class Button(tkinter.Button):
         """For image rendering of button text"""
         sticks=set(['˥','˦','˧','˨','˩',' '])
         if set(kwargs['text']) & sticks and not norender:
-            if 'image' in kwargs and kwargs['image'] is not None:
+            style=(kwargs['font']['family'], # from kwargs['font'].actual()
+                    kwargs['font']['size'],kwargs['font']['weight'],
+                    kwargs['font']['slant'],kwargs['font']['underline'],
+                    kwargs['font']['overstrike'])
+            # log.info("style: {}".format(style))
+            renderings=self.parent.renderings
+            # log.info("renderings: {}".format(renderings))
+            if style not in renderings:
+                renderings[style]={}
+            if kwargs['wraplength'] not in renderings[style]:
+                renderings[style][kwargs['wraplength']]={}
+            thisrenderings=renderings[style][kwargs['wraplength']]
+            if (kwargs['text'] in thisrenderings and
+                    thisrenderings[kwargs['text']] is not None):
+                log.info("text {} already rendered with {} wraplength, using."
+                        "".format(kwargs['text'],kwargs['wraplength']))
+                kwargs['image']=thisrenderings[kwargs['text']]
+                kwargs['text']=''
+            elif 'image' in kwargs and kwargs['image'] is not None:
                 log.error("You gave an image and tone characters in the same "
                 "button text? ({},{})".format(image,kwargs['text']))
                 return
@@ -6819,7 +6856,7 @@ class Button(tkinter.Button):
                 i=Renderer(**kwargs)
                 self.tkimg=i.img
                 if self.tkimg is not None:
-                    kwargs['image']=self.tkimg
+                    thisrenderings[kwargs['text']]=kwargs['image']=self.tkimg
                     kwargs['text']=''
         kwargs['text']=nfc(kwargs['text'])
         """For Grid"""
