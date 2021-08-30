@@ -6342,39 +6342,62 @@ class MainApplication(Frame):
         self.parent.title(title)
     def setimages(self):
         # Program icon(s) (First should be transparent!)
+        #Use this:
+        log.info("Scaling images; please wait...") #threading?
+        # threading.Thread(target=thread_function, args=(arg1,),kwargs={'arg2': arg2})
+        # if process:
+        #     from multiprocessing import Process
+        #     log.info("Running as multi-process")
+        #     p = Process(target=block)
+        # elif thread:
+        #     from threading import Thread
+        #     log.info("Running as threaded")
+        #     p = Thread(target=block)
+        # else:
+        #     log.info("Running in line")
+        #     block()
+        # if process or thread:
+        #     p.exception = None
+        #     try:
+        #         p.start()
+        #     except BaseException as e:
+        #         log.error("Exception!", traceback.format_exc())
+        #         p.exception = e
+        #     p.join(timeout) #finish this after timeout, in any case
+        #     if p.exception:
+        #         log.error("Exception2!", traceback.format_exc())
+        #         raise p.exception
+        #     if process:
+        #         p.terminate() #for processes, not threads
+        # x and y here express a float as two integers, so 0.7 = 7/10, because
+        # the zoom and subsample fns only work on integers
+        y=10 #Higher number is better resolution (x*y/y), more time to process
+        y=int(y) # These all must be integers
+        x=int(program['scale']*y)
         self.parent.photo={}
-        imgurl=file.fullpathname('images/AZT stacks6.png')
-        self.parent.photo['transparent'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/AZT stacks6_sm.png')
-        self.parent.photo['small'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/AZT stacks6_icon.png')
-        self.parent.photo['icon'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/T alone clear6.png')
-        self.parent.photo['T'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/Z alone clear6.png')
-        self.parent.photo['C'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/A alone clear6.png')
-        self.parent.photo['V'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/ZA alone clear6.png')
-        self.parent.photo['CV'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/AZT stacks6.png')
-        self.parent.photo['backgrounded'] = tkinter.PhotoImage(file = imgurl)
-        #Set images for tasks
-        imgurl=file.fullpathname('images/Verify List.png')
-        self.parent.photo['verifyT'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/Sort List.png')
-        self.parent.photo['sortT'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/Join List.png')
-        self.parent.photo['joinT'] = tkinter.PhotoImage(file = imgurl)
-        # Other images
-        imgurl=file.fullpathname('images/Microphone alone_sm.png')
-        self.parent.photo['record'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/Change Circle_sm.png')
-        self.parent.photo['change'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/checked.png')
-        self.parent.photo['checkedbox'] = tkinter.PhotoImage(file = imgurl)
-        imgurl=file.fullpathname('images/unchecked.png')
-        self.parent.photo['uncheckedbox'] = tkinter.PhotoImage(file = imgurl)
+        def mkimg(name,relurl):
+            imgurl=file.fullpathname(relurl)
+            self.parent.photo[name] = tkinter.PhotoImage(
+                                        file = imgurl).zoom(x,x).subsample(y,y)
+        for name,relurl in [ ('transparent','images/AZT stacks6.png'),
+                            ('small','images/AZT stacks6_sm.png'),
+                            ('icon','images/AZT stacks6_icon.png'),
+                            ('T','images/T alone clear6.png'),
+                            ('C','images/Z alone clear6.png'),
+                            ('V','images/A alone clear6.png'),
+                            ('CV','images/ZA alone clear6.png'),
+                            ('backgrounded','images/AZT stacks6.png'),
+                            #Set images for tasks
+                            ('verifyT','images/Verify List.png'),
+                            ('sortT','images/Sort List.png'),
+                            ('joinT','images/Join List.png'),
+                            ('record','images/Microphone alone_sm.png'),
+                            ('change','images/Change Circle_sm.png'),
+                            ('checkedbox','images/checked.png'),
+                            ('uncheckedbox','images/unchecked.png')
+                        ]:
+            mkimg(name,relurl)
+        log.info("Done scaling images")
     def settheme(self):
         setthemes(self.parent)
         #Select from lightgreen, green, pink, lighterpink, evenlighterpink,
