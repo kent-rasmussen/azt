@@ -4396,6 +4396,11 @@ class Check():
         else:
             notonegroup=kwargs['notonegroup']
             del kwargs['notonegroup']
+        if 'refreshcount' not in kwargs:
+            refreshcount=0
+        else:
+            refreshcount=kwargs['refreshcount']+1
+            del kwargs['refreshcount']
         example=self.getex(group,notonegroup=notonegroup,truncdefn=True,renew=renew)
         if example is None:
             log.error("Apparently the example for tone group {} in frame {} "
