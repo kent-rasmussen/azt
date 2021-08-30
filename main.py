@@ -5307,7 +5307,8 @@ class Check():
                             )
                             )
         for group in grouplist: #These already include ps-profile
-            log.info("building report for {}".format(group))
+            log.info("building report for {} ({}/{})".format(group,
+                                    grouplist.index(group)+1,len(grouplist)))
             sectitle=_('\nGroup {}'.format(str(group)))
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
