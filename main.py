@@ -4434,6 +4434,14 @@ class Check():
                                                                 soundsettings)
                 b=Button(bf, text=text, cmd=self.player.play)
                 bt=ToolTip(b,_("Click to hear this utterance"))
+            else: #Refresh if this should be playable but there no sound file.
+                self.tonegroupbuttonframe(
+                    parent=parent,
+                    group=group,notonegroup=notonegroup,
+                    canary=canary,canary2=canary2,
+                    row=row,column=column,label=label,
+                    alwaysrefreshable=alwaysrefreshable,
+                    playable=playable,renew=True)
             b.grid(column=1, row=0, sticky="nesw", ipady=15) #Inside the buttons
 
         else:
