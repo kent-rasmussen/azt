@@ -6994,7 +6994,7 @@ class RecordButtonFrame(Frame):
             #if an unglossed node, take from sense/entry:
         if gloss is None:
             gloss=check.db.get('gloss',senseid=senseid,
-                                    glosslang=check.glosslang)[0].text
+                                    glosslang=check.glosslang).text
         if form is None:
             form=node.find(f"form[@lang='{check.analang}']/text")[0].text
         pslocopts=[check.ps]
