@@ -7687,8 +7687,20 @@ def main():
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
     root = tkinter.Tk()
-    log.info("screen height: {}".format(root.winfo_screenheight()))
-    log.info("screen width: {}".format(root.winfo_screenwidth()))
+    #this computer: (this doesn't pick up changes, so just doing it here)
+    h = root.winfo_screenheight()
+    w = root.winfo_screenwidth()
+    wmm = root.winfo_screenmmwidth()
+    hmm = root.winfo_screenmmheight()
+    #this computer as a ratio of mine, 1080 (286mm) x 1920 (508mm):
+    hx=h/1080
+    wx=w/1920
+    hmmx=hmm/286
+    wmmx=wmm/508
+    log.info("screen height: {} ({}mm, ratio: {}/{})".format(h,hmm,hx,hmmx))
+    log.info("screen width: {} ({}mm, ratio: {}/{})".format(w,wmm,wx,wmmx))
+    program['scale']=x=min(hx,wx,hmmx,wmmx)
+    log.info("smallest ratio: {} (this will be used to scale stuff.)".format(x))
     if platform.system() != 'Linux': #this is only for MS Windows!
         import ctypes
         user32 = ctypes.windll.user32
