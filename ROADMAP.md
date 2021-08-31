@@ -1,15 +1,16 @@
 #Roadmap
 
 ## release stoppers
-- check that sound file names didn't get corrupted, and that final _ is gone (but read, if that legacy file is there..…).
-- add something to detect lower resolution screens
-    - give smaller fonts?
-    - give smaller icons?
+put image creation after splash creation?
 
 ## Things to Test
 - check that changes to S regexs don't break too much.
 - Why do bad sound files play OK?
 - figure out why mainloop is still running on window closure
+- method of speeding up image scaling:
+    - CPU detection, set y in xy/y function according to processing speed.
+    - multithreading
+- make font changes more general, tied to <ctrl>+/-
 
 ## Simplify (non-OOP related)
 - on import, check for entries without:
@@ -20,6 +21,9 @@
 - check how many of the urls in lift.py I'm actually using, consider moving them to a method for each —
   - maybe call get with a url parameter?
   - kwarg for node or not, text or not, attr?
+- find ways to speed up tone reports:
+    - multithreading?
+- make dictionary of images created with PIL, so they aren't continually remade (source if already there)
 
 ## Migrate further toward OOP
 - Consider making the following objects?
@@ -42,6 +46,7 @@
         - and not necessarily the same as `next` (i.e., not current)
         - nor verify, which makes valid, but doesn't change if already valid.
     - These should probably all go together, with common [arg,argprioritylist] parameters
+- Consider when/where it makes sense to do multithreading, if it is possible to generalize it in a class
 
 ## In Process (fix)
 - go to https://fontforge.org/docs/scripting/python/fontforge.html to see if we can pull contour tone staves

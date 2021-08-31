@@ -1,5 +1,7 @@
 # A→Z+T Changelog
 
+# Version 0.8.4
+
 # Version 0.8.3
 - fixed wav file link problem; now filename only in LIFT, relative link in reports.
 - constrained search for language forms to analang (for multilingual dictionaries)
@@ -14,6 +16,12 @@
 - only auto-add link if audiolang is specified.
 - fixed window exit issues
 - fixed numerous crashes on window exit
+- removed final "\_" in sound filenames, left in legacy forms
+- improved detection of screen resolution
+- ratio of actual/expected resolution used to scale fonts an images, so it should look the (more or less) same whatever the resolution is.
+- store font image renderings for later use, and use them
+- XLP: don't print empty listWords, and don't print examples without at least one listWord
+- autorefresh on playable buttons, if there is no sound file to play (up to the number of words to pick from, then give up)
 
 # Version 0.8.2
 - moved PyAudio functions to module, improved function
