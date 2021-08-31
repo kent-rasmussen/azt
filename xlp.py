@@ -43,6 +43,17 @@ class Report(object):
             xmlfns.indent(self.node)
             self.tree=ET.ElementTree(self.node)
             self.tree.write(f, encoding="UTF-8")
+    def compile(self):
+        pass
+        #This doesn't do anything yet, but needs to
+        # Apply transforms/XLingPapRemoveAnyContent.xsl to the input to deal with any content control.
+        # To the result of this, apply either transforms/XLingPapXeLaTeX1.xsl (for an input without a style sheet) or transforms/XLingPapPublisherStylesheetXeLaTeX.xsl (for an input with a style sheet).
+        # Convert this to pure XeLaTeX form:
+        #     A Java class that reads the input and changes certain sequences to what they need to be for XeLaTeX .  The class name is TeXMLLikeCharacterConversion (and it's in the file named TeXMLLikeCharacterConversion.java).
+        #     The result of this is processed by transforms/TeXMLLike.xsl.  The output is plain (XeLaTeX ) text.
+        #     Another Java class that reads the output of that transform and makes sure all IDs are in a form that XeLaTeX can handle.  The class name is NonASCIIIDandIDREFConversion (and it's in the file named NonASCIIIDandIDREFConversion.java).
+        # Run this XeLaTeX form through xelatex.  The result is the PDF.
+        #     DoTeXPDF (Linux/Mac) or DoTeXPDF.bat (Windows)
     def frontmatter(self):
         fm=ET.SubElement(self.node, 'frontMatter')
         ti=ET.SubElement(fm, 'title')
