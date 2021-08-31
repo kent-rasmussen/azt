@@ -1199,7 +1199,7 @@ class Check():
         self.set('ps',choice,window)
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
-    def getsubcheck(self,event=None):
+    def getsubcheck(self,guess=False,event=None):
         log.info("this sets the subcheck")
         if self.type == "V":
             windowV=Window(self.frame,title=_('Select Vowel'))
@@ -1219,7 +1219,7 @@ class Check():
             self.checkcheck()
         elif self.type == "T":
             windowT=Window(self.frame,title=_('Select Framed Tone Group'))
-            self.getframedtonegroup(window=windowT)
+            self.getframedtonegroup(window=windowT,guess=guess)
             windowT.wait_window(window=windowT)
     def getps(self,event=None):
         log.info("Asking for ps...")
@@ -3046,7 +3046,7 @@ class Check():
                                 )
         buttonFrame1.grid(column=0, row=4)
         buttonFrame1.wait_window(window)
-    def getframedtonegroup(self,window,event=None):
+    def getframedtonegroup(self,window,event=None,guess=False):
         """Window is called in getsubcheck"""
         if (None in [self.type, self.ps, self.profile, self.name]
                 or self.type != 'T'):
@@ -3068,6 +3068,8 @@ class Check():
                           "into any groups in the ‘{}’ frame yet."
                           "".format(self.ps,self.profile,self.name)
                           ).grid(column=0, row=0)
+            elif guess == True:
+                self.setsubcheck(g[0],window) #don't ask, just set
             else:
                 Label(window.frame,
                           text="What {}-{} tone group in the ‘{}’ frame do "
@@ -3509,7 +3511,7 @@ class Check():
                 log.debug("self.subcheck: {}".format(self.subcheck))
                 self.renamegroup(reverify=reverify)
         if self.subcheck == None:
-            self.getsubcheck()
+            self.getsubcheck(guess=True)
             if self.subcheck == None:
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
