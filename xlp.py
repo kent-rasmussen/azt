@@ -98,103 +98,6 @@ class Report(object):
             self.xlptype(tps,t)
     def xlptype(self, parent, t):
         tp=ET.SubElement(parent, 'type',attrib=t)
-        # <type
-        # XeLaTeXSpecial="graphite font-feature='Hide tone contour staves=True'"
-        # after="]"
-        # before="["
-        # font-family="Charis SIL"
-        # font-style="normal"
-        # id="tPhonetic"
-        # >
-        # <?xml version="1.0"?>
-        # <types
-        # ><comment
-        # >The following types are provided as pre-set examples. You may well want to create your own types that refer to one or more of these. You do that by typing in the names of the types in the types attribute of your type.</comment
-        # ><type
-        # font-weight="bold"
-        # id="tBold"
-        # ></type
-        # ><type
-        # font-style="italic"
-        # font-weight="bold"
-        # id="tBoldItalic"
-        # ></type
-        # ><type
-        # font-weight="bold"
-        # id="tEmphasis"
-        # ></type
-        # ><type
-        # id="tGrammaticalGloss"
-        # types="tSmallCaps"
-        # ></type
-        # ><type
-        # font-style="italic"
-        # id="tItalic"
-        # ></type
-        # ><type
-        # cssSpecial="text-decoration:none"
-        # id="tNoOverline"
-        # xsl-foSpecial="text-decoration=&quot;no-overline&quot;"
-        # ></type
-        # ><type
-        # font-variant="normal"
-        # id="tNoSmallCaps"
-        # ></type
-        # ><type
-        # cssSpecial="text-decoration:none"
-        # id="tNoStrikethrough"
-        # xsl-foSpecial="text-decoration=&quot;no-line-through&quot;"
-        # ></type
-        # ><type
-        # cssSpecial="text-decoration:none"
-        # id="tNoUnderline"
-        # xsl-foSpecial="text-decoration=&quot;no-underline&quot;"
-        # ></type
-        # ><type
-        # cssSpecial="text-decoration:overline"
-        # id="tOverline"
-        # xsl-foSpecial="text-decoration=&quot;overline&quot;"
-        # ></type
-        # ><type
-        # font-style="normal"
-        # font-variant="normal"
-        # font-weight="normal"
-        # id="tRegular"
-        # ></type
-        # ><type
-        # font-family="Charis SIL Small Caps"
-        # id="tSmallCaps"
-        # ></type
-        # ><type
-        # XeLaTeXSpecial="line-through"
-        # cssSpecial="text-decoration:line-through"
-        # id="tStrikethrough"
-        # xsl-foSpecial="text-decoration=&quot;line-through&quot;"
-        # ></type
-        # ><type
-        # XeLaTeXSpecial="subscript"
-        # cssSpecial="vertical-align:sub;"
-        # font-size="65%"
-        # id="tSubscript"
-        # xsl-foSpecial="baseline-shift='sub'"
-        # ></type
-        # ><type
-        # XeLaTeXSpecial="superscript"
-        # cssSpecial="vertical-align:super;"
-        # font-size="65%"
-        # id="tSuperscript"
-        # xsl-foSpecial="baseline-shift='super'"
-        # ></type
-        # ><type
-        # XeLaTeXSpecial="underline"
-        # cssSpecial="text-decoration:underline"
-        # id="tUnderline"
-        # xsl-foSpecial="text-decoration=&quot;underline&quot;"
-        # ></type
-        # ><comment
-        # >Add your custom types here.</comment
-        # ></types
-        # >
     def stylesheet(self):
         if hasattr(self,'stylesheetdir'):
             print('self.stylesheetdir:',self.stylesheetdir)
@@ -308,7 +211,7 @@ if __name__ == "__main__":
     def _(x):
         return str(x)
     print('trying manual report generation...')
-    d=Report('filetest.xml',"a non-language")
+    d=Report('filetest.xml',"a non-language","Language Name")
     s1=Section(d,"Section One title")
     t="This is the first paragraph in the report."
     p=Paragraph(s1,t)
@@ -338,5 +241,5 @@ if __name__ == "__main__":
     es=LangData(elw,'gnd','baba')
     es=LangData(elw,'gnd','˨˨ ˦˦',phonetic=True)
     eg=Gloss(elw,'en','father')
-    d.finish()
-    d.write()
+    d.close()
+    # d.write()
