@@ -5243,10 +5243,10 @@ class Check():
         log.info("Starting report...")
         self.storesettingsfile()
         self.getrunwindow()
-        self.tonereportfile=''.join([str(self.reportbasefilename),'_',
-                            self.ps,'_',
-                            self.profile,
-                            ".ToneReport.txt"])
+        bits=[str(self.reportbasefilename),self.ps,self.profile,"ToneReport"]
+        if default == False:
+            bits.append('mod')
+        self.tonereportfile='_'.join(bits)+".txt"
         start_time=time.time()
         """Split here"""
         if default == True:
@@ -5290,7 +5290,8 @@ class Check():
         self.runwindow.scroll.grid(row=0,column=0)
         window=self.runwindow.scroll.content
         window.row=0
-        xlpr=self.xlpstart(reporttype='Tone',bylocation=bylocation)
+        xlpr=self.xlpstart(reporttype='Tone',bylocation=bylocation,
+                                                                default=default)
         s1=xlp.Section(xlpr,title='Introduction')
         text=_("This report follows an analysis of sortings of {} morphemes "
         "(roots or affixes) across the following frames: {}. {} stores these "
@@ -5426,20 +5427,17 @@ class Check():
         text=_("(Report is also available at ("+self.tonereportfile+")")
         output(window,r,text)
         r.close()
-    def xlpstart(self,reporttype='adhoc',bylocation=False):
+    def xlpstart(self,reporttype='adhoc',bylocation=False,default=True):
         if reporttype == 'Tone':
             if bylocation == True:
                 reporttype='Tone-bylocation'
-            reporttype=''.join([str(self.ps),'-',
-                            str(self.profile),' ',
-                            reporttype])
         elif not re.search('Basic',reporttype): #We don't want this in the title
-            reporttype=''.join([str(self.ps),'-',
-                            str(self.profile),' ',
-                            str(self.name)])
-        reportfileXLP=''.join([str(self.reportbasefilename)
-                                            ,'_',rx.id(reporttype)
-                                            ,'_','ReportXLP.xml'])
+            reporttype=str(self.name)
+        reporttype=' '.join([self.ps,self.profile,reporttype])
+        bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
+        if default == False:
+            bits.append('mod')
+        reportfileXLP='_'.join(bits)+".xml"
         xlpreport=xlp.Report(reportfileXLP,reporttype,
                         self.languagenames[self.analang])
         for lang in [self.analang,self.glosslang,self.glosslang2]:
