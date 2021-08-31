@@ -7377,6 +7377,27 @@ def setinterfacelang(lang,magic=False):
                                         "language: {}={}".format(lang,curlang))
     log.debug(_("Translation seems to be working, using {}"
                                                 "".format(getinterfacelang())))
+def dictofchilddicts(self,remove=None):
+    # This takes a dict[x][y] and returns a dict[y], with all unique values
+    # listed for all dict[*][y].
+    o={}
+    for x in self:
+        for y in self[x]:
+            if y not in o:
+                o[y]=[]
+            if type(self[x][y]) is list:
+                for z in self[x][y]:
+                    o[y].append(z)
+            else:
+                o[y].append(self[x][y])
+    log.info("o:{}".format(o))
+    for y in o:
+        o[y]= list(dict.fromkeys(o[y]))
+        if type(remove) is list:
+            for a in remove:
+                if a in o[y]:
+                    o[y].remove(a)
+    return o
 def flatten(l):
     log.debug("list to flatten: {}".format(l))
     if type(l) is not list:
