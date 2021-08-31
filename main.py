@@ -3503,12 +3503,28 @@ class Check():
             submitform()
             self.donewpyaudio()
         def next():
-            log.debug("running next")
+            log.debug("running next group")
             error=submitform()
             if not error:
                 log.debug("self.subcheck: {}".format(self.subcheck))
                 self.nextsubcheck()
                 log.debug("self.subcheck: {}".format(self.subcheck))
+                self.renamegroup(reverify=reverify)
+        def nextframe():
+            log.debug("running next frame")
+            error=submitform()
+            if not error:
+                log.debug("self.name: {}".format(self.name))
+                self.nextframe()
+                log.debug("self.name: {}".format(self.name))
+                self.renamegroup(reverify=reverify)
+        def nextprofile():
+            log.debug("running next frame")
+            error=submitform()
+            if not error:
+                log.debug("self.profile: {}".format(self.profile))
+                self.nextprofile()
+                log.debug("self.profile: {}".format(self.profile))
                 self.renamegroup(reverify=reverify)
         if self.subcheck == None:
             self.getsubcheck(guess=True)
@@ -3566,10 +3582,19 @@ class Check():
             g=[x[0] for x in self.subchecksprioritized[self.type] if x[0]
                                                                     is not None]
             t=_('{}, and give me another group:\n({})'.format(ok,'\n'.join(g)))
-            sub_btn=Button(entryframe,text = t,
-                            command = next,anchor ='c')#,
-                            # wraplength=int(self.frame.winfo_screenwidth()/4))
+            sub_btn=Button(entryframe,text = t,command = next,anchor ='c',
+                            wraplength=int(self.frame.winfo_screenwidth()/6))
             sub_btn.grid(row=4,column=1,sticky='',padx=padx,pady=pady)
+            t=_('{}, and give me another tone frame'.format(ok))
+            cont=Frame(entryframe)
+            cont.grid(row=4,column=2)
+            sub_f=Button(cont,text = t,command = nextframe,anchor ='c',
+                            wraplength=int(self.frame.winfo_screenwidth()/6))
+            sub_f.grid(row=0,column=0)#,sticky='',padx=padx,pady=pady)
+            t=_('{}, and give me another syllable profile'.format(ok))
+            sub_p=Button(cont,text = t,command = nextprofile,anchor ='c',
+                            wraplength=int(self.frame.winfo_screenwidth()/6))
+            sub_p.grid(row=1,column=0)#,sticky='',padx=padx,pady=pady)
         self.tonegroupbuttonframe(self.runwindow.frame,self.subcheck,
                             row=5,column=0,playable=True,alwaysrefreshable=True)
         self.runwindow.waitdone()
