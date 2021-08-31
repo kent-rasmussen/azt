@@ -5014,7 +5014,7 @@ class Check():
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
-    def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None):
+    def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None,xcounts=None):
         #values should be a (lambda?) function that depends on x and y terms
         #ycounts should be a lambda function that depends on yterms
         log.info("Making table with caption {}".format(caption))
@@ -5041,16 +5041,20 @@ class Check():
                     cell=xlp.Cell(r,content='',header=True)
                 elif row == 'header':
                     log.log(2,"header row")
-                    cell=xlp.Cell(r,content=linebreakwords(col),
+                    if xcounts is not None:
+                        hxcontents='{} ({})'.format(col,xcounts(col))
+                    else:
+                        hxcontents='{}'.format(col)
+                    cell=xlp.Cell(r,content=linebreakwords(hxcontents),
                                 header=True,
                                 linebreakwords=True)
                 elif col == 'header':
                     log.log(2,"header column")
                     if ycounts is not None:
-                        ccontents='{} ({})'.format(row,ycounts(row))
+                        hycontents='{} ({})'.format(row,ycounts(row))
                     else:
-                        ccontents='{}'.format(row)
-                    cell=xlp.Cell(r,content=ccontents,
+                        hycontents='{}'.format(row)
+                    cell=xlp.Cell(r,content=hycontents,
                                 header=True)
                 else:
                     log.log(2,"Not a header")
@@ -5279,6 +5283,7 @@ class Check():
             #The following line puts out a dictionary keyed by UF group name:
             toreport=self.getsenseidsbytoneUFgroups()
             groupvalues=self.tonegroupsbyUFlocation(toreport)
+            valuesbylocation=dictofchilddicts(groupvalues,remove=['NA'])
             grouplist=self.toneUFgroups
             locations=self.locations[:]
         log.debug("groups (tonegroupreport): {}".format(grouplist))
@@ -5356,8 +5361,10 @@ class Check():
                             )),
                             ycounts=lambda x:len(
                             toreport[x]
-                            )
-                            )
+                            ),
+                            xcounts=lambda y:len(
+                            valuesbylocation[y]
+                            ))
         #Can I break this for multithreading?
         for group in grouplist: #These already include ps-profile
             log.info("building report for {} ({}/{})".format(group,
