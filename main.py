@@ -5283,9 +5283,9 @@ class Check():
             #The following line puts out a dictionary keyed by UF group name:
             toreport=self.getsenseidsbytoneUFgroups()
             groupvalues=self.tonegroupsbyUFlocation(toreport)
-            valuesbylocation=dictofchilddicts(groupvalues,remove=['NA'])
             grouplist=self.toneUFgroups
             locations=self.locations[:]
+        valuesbylocation=dictofchilddicts(groupvalues,remove=['NA'])
         log.debug("groups (tonegroupreport): {}".format(grouplist))
         log.debug("locations (tonegroupreport): {}".format(locations))
         r = open(self.tonereportfile, "w", encoding='utf-8')
