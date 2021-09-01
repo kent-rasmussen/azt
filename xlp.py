@@ -31,6 +31,7 @@ class Report(object):
         self.xlptypes()
         self.stylesheet()
         self.write()
+        # self.compile() #This isn't working yet.
     def write(self):
         """This writes changes to XML which can be read by XXE as XLP."""
         doctype=self.node.tag
@@ -44,7 +45,41 @@ class Report(object):
             self.tree=ET.ElementTree(self.node)
             self.tree.write(f, encoding="UTF-8")
     def compile(self):
-        pass
+        import lxml.etree
+        self.transformsdir=file.gettransformsdir()
+        dom = lxml.etree.parse(self.filename)
+        log.info(self.filename)
+        # xslt = lxml.etree.parse(xsl_filename)
+        # transform = lxml.etree.XSLT(xslt)
+        transform={}
+        outfile=self.filename+'out'
+        xslts=[
+            (1,'XLingPapRemoveAnyContent.xsl'),
+            (2,'XLingPapXeLaTeX1.xsl'),
+            (3,'XLingPapPublisherStylesheetXeLaTeX.xsl'),
+            (4,'TeXMLLike.xsl')
+            ]
+        for n,xslt in xslts:
+            trans=lxml.etree.parse(str(self.transformsdir)+'/'+xslt)
+            transform[n] = lxml.etree.XSLT(trans)
+        # transform = lxml.etree.XSLT(lxml.etree.parse(xsl_filename))
+        newdom = transform[1](dom)
+        with open(outfile+'a', 'wb') as f:
+            f.write(lxml.etree.tostring(newdom, pretty_print=True))
+        # newdom2 = transform[2](newdom1) #not used; always using stylesheets!
+        dom=newdom
+        newdom = transform[3](dom)
+        # except lxml.etree.XSLTApplyError:
+        #     log.error("Looks like a problem applying an XSLT.")
+        with open(outfile+'b', 'wb') as f:
+            f.write(lxml.etree.tostring(newdom, pretty_print=True))
+        dom=newdom
+        # Convert this to pure XeLaTeX form *here*, using converted java classes
+        # log.info("dom1:{},newdom1:{}".format(dom,newdom))
+        newdom = transform[4](dom)
+        # log.info("dom2:{},newdom2:{}".format(dom,newdom))
+        with open(outfile+'.tex', 'wb') as f:
+            f.write(lxml.etree.tostring(newdom, pretty_print=True))
         #This doesn't do anything yet, but needs to
         # Apply transforms/XLingPapRemoveAnyContent.xsl to the input to deal with any content control.
         # To the result of this, apply either transforms/XLingPapXeLaTeX1.xsl (for an input without a style sheet) or transforms/XLingPapPublisherStylesheetXeLaTeX.xsl (for an input with a style sheet).
