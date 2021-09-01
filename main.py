@@ -6745,7 +6745,7 @@ class Renderer(object):
             filenostaves='GenBkBas-tstv-{}.ttf'.format(fonttype)
         try:
             font = PIL.ImageFont.truetype(font=filenostaves, size=fsize)
-            log.debug("Using No Staves font")
+            log.log(2,"Using No Staves font")
         except:
             log.debug("Couldn't find No Staves font, going without")
             font = PIL.ImageFont.truetype(font=file, size=fsize)
