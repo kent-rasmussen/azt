@@ -65,6 +65,13 @@ def getstylesheetdir(filename):
             log.debug("{} not there, not using a stylesheet!".format(dir))
             return
     return dir
+def gettransformsdir():
+    dir=pathlib.Path.joinpath(pathlib.Path(__file__).parent,'xlptransforms')
+    log.debug("Looking for {}".format(dir))
+    if not os.path.exists(dir):
+        log.error("HELP! not sure why {} is not there!".format(dir))
+        # os.mkdir(dir)
+    return dir
 
 def exists(file):
     if os.path.exists(file):
