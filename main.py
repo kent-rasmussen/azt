@@ -5151,15 +5151,29 @@ class Check():
         rwrow+=1
         scroll=ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=rwrow,column=0,sticky='ew')
+        groupvalues=self.tonegroupsbyUFlocation(senseidsbygroup)
+        locations=list(dictofchilddicts(groupvalues).keys())
+        nheaders=0
         for group in self.toneUFgroups: #make a variable and button to select
             idn=self.toneUFgroups.index(group)
+            if idn % 5 == 0: #every five rows
+                for location in locations:
+                    cbh=Label(scroll.content, text=location, font='small')
+                    cbh.grid(row=idn+nheaders,
+                            column=locations.index(location)+2,sticky='ew')
+                nheaders+=1
             groups.append(tkinter.StringVar())
             n=len(senseidsbygroup[group])
-            cb=CheckButton(scroll.content, text = group+' ({})'.format(n),
+            buttontext=group+' ({})'.format(n)
+            cb=CheckButton(scroll.content, text = buttontext,
                                 variable = groups[idn],
                                 onvalue = group, offvalue = 0,
                                 )
-            cb.grid(row=idn,column=0,sticky='ew')
+            cb.grid(row=idn+nheaders,column=0,sticky='ew')
+            for location in groupvalues[group]:
+                gvalue=unlist(groupvalues[group][location])
+                cbl=Label(scroll.content, text=gvalue) #font='small'?
+                cbl.grid(row=idn+nheaders,column=locations.index(location)+2,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def tonegroupsbyUFlocation(self,senseidsbygroup):
