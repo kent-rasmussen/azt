@@ -6760,7 +6760,7 @@ class Renderer(object):
         text='\n'.join(lines) #join back sections between manual linebreaks
         log.debug(text)
         w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
-        log.debug("Final size w: {}, h: {}".format(w,h))
+        log.log(2,"Final size w: {}, h: {}".format(w,h))
         black = 'rgb(0, 0, 0)'
         white = 'rgb(255, 255, 255)'
         img = PIL.Image.new("RGBA", (w+xpad, h+ypad), (255, 255, 255,0 )) #alpha
