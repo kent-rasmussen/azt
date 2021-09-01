@@ -6782,6 +6782,8 @@ class Label(tkinter.Label):
         log.log(3,'self.maxwidth (Label class): {}'.format(self.maxwidth))
     def __init__(self, parent, column=0, row=1, norender=False,**kwargs):
         """These have non-None defaults"""
+        if 'text' not in kwargs or kwargs['text'] is None:
+            kwargs['text']=''
         if 'font' in kwargs:
             if isinstance(kwargs['font'],tkinter.font.Font):
                 pass #use as is
