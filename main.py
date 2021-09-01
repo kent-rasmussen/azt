@@ -5369,15 +5369,9 @@ class Check():
                                                         self.program['name']))
         p0=xlp.Paragraph(s1s,text=ptext)
         self.buildXLPtable(s1s,caption,yterms=grouplist,xterms=locations,
-                            values=lambda x,y:nn(firstoflist(
-                            groupvalues[y][x],all=True
-                            )),
-                            ycounts=lambda x:len(
-                            toreport[x]
-                            ),
-                            xcounts=lambda y:len(
-                            valuesbylocation[y]
-                            ))
+                            values=lambda x,y:nn(unlist(groupvalues[y][x])),
+                            ycounts=lambda x:len(toreport[x]),
+                            xcounts=lambda y:len(valuesbylocation[y]))
         #Can I break this for multithreading?
         for group in grouplist: #These already include ps-profile
             log.info("building report for {} ({}/{})".format(group,
