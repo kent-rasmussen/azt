@@ -5063,14 +5063,16 @@ class Check():
                     value=values(col,row)
                     cell=xlp.Cell(r,content=value)
     def tonegroupsjoinrename(self):
+        def clearerror(event=None):
+            errorlabel['text'] = ''
         def submitform():
+            clearerror()
             uf=named.get()
             log.debug("name: {}".format(uf))
             if uf == "":
-                log.debug("Give a name for this UF tone group!")
-                return
-            if uf in self.toneUFgroups:
-                log.debug("That name is already there!")
+                noname=_("Give a name for this UF tone group!")
+                log.debug(noname)
+                errorlabel['text'] = noname
                 return
             groupsselected=[]
             for group in groups: #all group variables
@@ -5132,6 +5134,9 @@ class Check():
         named=tkinter.StringVar() #store the new name here
         namefield = EntryField(qframe,textvariable=named)
         namefield.grid(row=qrow,column=1)
+        namefield.bind('<Key>', clearerror)
+        errorlabel=Label(qframe,text='',fg='red')
+        errorlabel.grid(row=qrow,column=2,sticky='ew',pady=20)
         text=_("Select the groups below that you want in this {} group, then "
                 "click ==>".format(self.ps))
         qrow+=1
