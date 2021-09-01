@@ -5068,7 +5068,6 @@ class Check():
         def submitform():
             clearerror()
             uf=named.get()
-            log.debug("name: {}".format(uf))
             if uf == "":
                 noname=_("Give a name for this UF tone group!")
                 log.debug(noname)
