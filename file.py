@@ -59,7 +59,7 @@ def getstylesheetdir(filename):
         log.debug("{} not there, not using your stylesheet!\nIf you want to "
         "use your own XLingPaper styesheet for these reports, make that "
         "directory, and put the stylesheet in it. For now, using a default "
-        "styelsheet.".format(dir))
+        "stylesheet.".format(dir))
         dir=pathlib.Path.joinpath(pathlib.Path(__file__).parent,'xlpstylesheets')
         if not os.path.exists(dir):
             log.debug("{} not there, not using a stylesheet!".format(dir))
