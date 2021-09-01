@@ -3325,7 +3325,7 @@ class Check():
             if x is not None:
                 id+=x
         return rx.id(id) #for either example or listword
-    def framedtoXLP(self,framed,parent,listword=False):
+    def framedtoXLP(self,framed,parent,listword=False,default=True):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
@@ -3341,6 +3341,8 @@ class Check():
             el=xlp.LinkedData(ex,self.analang,framed[self.analang],str(url))
         else:
             el=xlp.LangData(ex,self.analang,framed[self.analang])
+        if 'tonegroup' in framed and default is False: #joined groups show each
+            elt=xlp.LangData(ex,self.analang,framed['tonegroup'])
         if self.glosslang in framed:
             eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
         if ((self.glosslang2 != None) and (self.glosslang2 in framed)
@@ -5420,7 +5422,8 @@ class Check():
                             framed=self.getframeddata(example,noframe=True)
                             if not (framed[self.analang] is None and
                                     framed[self.glosslang] is None):#glosslang2?
-                                self.framedtoXLP(framed,parent=e1,listword=True)
+                                self.framedtoXLP(framed,parent=e1,listword=True,
+                                                default=default)
                         if text not in textout:
                             output(window,r,text)
                             textout.append(text)
@@ -5446,7 +5449,8 @@ class Check():
                             framed=self.getframeddata(example,noframe=True)
                             if not (framed[self.analang] is None and
                                     framed[self.glosslang] is None):
-                                self.framedtoXLP(framed,parent=e1,listword=True)
+                                self.framedtoXLP(framed,parent=e1,listword=True,
+                                                default=default)
                     output(window,r,text)
         self.runwindow.waitdone()
         xlpr.close()
