@@ -5072,13 +5072,22 @@ class Check():
             if uf in self.toneUFgroups:
                 log.debug("That name is already there!")
                 return
+            groupsselected=[]
             for group in groups: #all group variables
-                groupstr=group.get() #value, name if selected, 0 if not
-                if groupstr in senseidsbygroup: #selected ones only
+                groupsselected+=[group.get()] #value, name if selected, 0 if not
+            groupsselected=[x for x in groupsselected if x != '']
+            log.info("groupsselected:{}".format(groupsselected))
+            if uf in self.toneUFgroups and uf not in groupsselected:
+                deja=_("That name is already there!")
+                log.debug(deja)
+                errorlabel['text'] = deja
+                return
+            for group in groupsselected:
+                if group in senseidsbygroup: #selected ones only
                     log.debug("Changing values from {} to {} for the following "
-                            "senseids: {}".format(groupstr,uf,
-                                                    senseidsbygroup[groupstr]))
-                    for senseid in senseidsbygroup[groupstr]:
+                            "senseids: {}".format(group,uf,
+                                                    senseidsbygroup[group]))
+                    for senseid in senseidsbygroup[group]:
                         self.db.addtoneUF(senseid,uf,analang=self.analang)
             self.db.write()
             self.runwindow.destroy()
