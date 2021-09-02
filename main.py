@@ -7117,6 +7117,7 @@ class RecordButtonFrame(Frame):
         if form is None and node is not None:
             form=t(node.find(f"form[@lang='{check.analang}']/text"))
         pslocopts=[check.ps]
+        pslocopts.insert(0,check.ps+'_'+check.profile) #the first option (legacy).
         fieldlocopts=[None]
         if (node.tag == 'example'):
             l=node.find("field[@type='location']//text")
