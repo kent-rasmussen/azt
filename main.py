@@ -3462,22 +3462,28 @@ class Check():
         # (i.e.,) before the group is verified. This does two things differently:
         # 1. verifyT is only called when reverify=True
         # 2. self.nextsubcheck() button is only there when reverify=False
+        def clearerror(event=None):
+            errorlabel['text'] = ''
         def submitform():
+            clearerror()
             newtonevalue=formfield.get()
             groups=self.status[self.type][self.ps][self.profile][self.name][
                                                                     'groups']
             done=self.status[self.type][self.ps][self.profile][self.name][
                                                                     'done']
+            if newtonevalue == "":
+                noname=_("Give a name for this tone melody!")
+                log.debug(noname)
+                errorlabel['text'] = noname
+                return 1
             if newtonevalue != self.subcheck: #only make changes!
-                if newtonevalue in groups:
-                    er=Window(self.runwindow)
-                    l=Label(er,text=_("Sorry, there is already a group with "
+                if newtonevalue in groups :
+                    deja=_("Sorry, there is already a group with "
                                     "that label; If you want to join the "
                                     "groups, give it a different name now, "
-                                    "and join it after they are both verified "
-                                    "(‘{}’ is already in {})"
-                                    "".format(newtonevalue,groups)))
-                    l.grid(row=0,column=0)
+                                    "and join it later".format(newtonevalue))
+                    log.debug(deja)
+                    errorlabel['text'] = deja
                     return 1
                 self.updatebysubchecksenseid(self.subcheck,newtonevalue)
                 i=groups.index(self.subcheck) #put new value in the same place.
@@ -3576,6 +3582,9 @@ class Check():
                                     columnspan=columnspan)
         formfield = EntryField(entryframe,textvariable=newname)
         formfield.grid(row=3,column=0)
+        formfield.bind('<Key>', clearerror)
+        errorlabel=Label(entryframe,text='',fg='red')
+        errorlabel.grid(row=3,column=1,sticky='ew',pady=20,columnspan=2)
         ok='Use this name'
         sub_btn=Button(entryframe,text = ok,
                   command = done,anchor ='c')
