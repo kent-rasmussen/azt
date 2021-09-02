@@ -7112,10 +7112,10 @@ class RecordButtonFrame(Frame):
             gloss=node.find(check.db.geturlnattr('glossofexample')['url']).text
             form=node.find(check.db.geturlnattr('formofexample')['url']).text
         if gloss is None:
-            gloss=check.db.get('gloss',senseid=senseid,
-                                    glosslang=check.glosslang).text
-        if form is None:
-            form=node.find(f"form[@lang='{check.analang}']/text")[0].text
+            gloss=t(check.db.get('gloss',senseid=senseid,
+                                    glosslang=check.glosslang))
+        if form is None and node is not None:
+            form=t(node.find(f"form[@lang='{check.analang}']/text"))
         pslocopts=[check.ps]
         fieldlocopts=[None]
         if (node.tag == 'example'):
