@@ -5167,6 +5167,7 @@ class Check():
         locations=list(dictofchilddicts(groupvalues).keys())
         nheaders=0
         # ufgroups= # order by structured groups? Store this somewhere?
+        self.toneUFgroups.sort(key=len)
         for group in self.toneUFgroups: #make a variable and button to select
             idn=self.toneUFgroups.index(group)
             if idn % 5 == 0: #every five rows
