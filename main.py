@@ -7130,28 +7130,31 @@ class RecordButtonFrame(Frame):
         if not hasattr(check, 'rx'): #remove diacritics:
             check.rx={'d':rx.make(rx.s(check,'d'),compile=True)}
         filenames=[]
-        args=[id]
-        args+=[node.tag]
-        if node.tag == 'field':
-            args+=[node.get("type")]
-        args+=[rx.stripdiacritics(check,form)]#profile <=Changes!
-        args+=[gloss]
+        # We iterate over lots of filename schemas, to preserve legacy data.
         for pslocopt in pslocopts:
             for fieldlocopt in fieldlocopts: #for older name schema
                 for legacy in ['_', None]:
-                    optargs=args[:]
-                    optargs.insert(0,pslocopt) #put first
-                    optargs.insert(3,fieldlocopt) #put after self.node.tag
-                    log.log(3,optargs)
-                    wavfilename=''
-                    argsthere=[x for x in optargs if x is not None]
-                    for arg in argsthere:
-                        wavfilename+=arg
-                        if argsthere.index(arg) < len(argsthere)-1:
+                    for tags in [ None, 1 ]:
+                        args=[id]
+                        if tags is not None:
+                            args+=[node.tag]
+                            if node.tag == 'field':
+                                args+=[node.get("type")]
+                        args+=[rx.stripdiacritics(check,form)]#profile <=Changes!
+                        args+=[gloss]
+                        optargs=args[:]
+                        optargs.insert(0,pslocopt) #put first
+                        optargs.insert(3,fieldlocopt) #put after self.node.tag
+                        log.log(3,optargs)
+                        wavfilename=''
+                        argsthere=[x for x in optargs if x is not None]
+                        for arg in argsthere:
+                            wavfilename+=arg
+                            if argsthere.index(arg) < len(argsthere)-1:
+                                wavfilename+='_'
+                        if legacy == '_': #There was a schema that had an extra '_'.
                             wavfilename+='_'
-                    if legacy == '_': #There was a schema that had an extra '_'.
-                        wavfilename+='_'
-                    filenames+=[re.sub('[][\. /?]+','_',
+                        filenames+=[re.sub('[][\. /?]+','_',
                                                     str(wavfilename))+'.wav']
         #test if any of the generated filenames are there
         for filename in filenames:
