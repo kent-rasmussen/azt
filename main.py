@@ -7078,8 +7078,9 @@ class RecordButtonFrame(Frame):
             id=senseid
             node=firstoflist(check.db.get('examplebylocation',senseid=senseid,
                                 location=check.name))
-            gloss=node.find(check.db.geturlnattr('glossofexample')['url']).text
-            form=node.find(check.db.geturlnattr('formofexample')['url']).text
+            if node is not None:
+                gloss=node.find(check.db.geturlnattr('glossofexample')['url']).text
+                form=node.find(check.db.geturlnattr('formofexample')['url']).text
             #if an unglossed node, take from sense/entry:
         if gloss is None:
             gloss=check.db.get('gloss',senseid=senseid,
