@@ -7087,10 +7087,30 @@ class RecordButtonFrame(Frame):
             id=senseid
             node=firstoflist(check.db.get('examplebylocation',senseid=senseid,
                                 location=check.name))
-            if node is not None:
-                gloss=node.find(check.db.geturlnattr('glossofexample')['url']).text
-                form=node.find(check.db.geturlnattr('formofexample')['url']).text
-            #if an unglossed node, take from sense/entry:
+            if node is None:
+                # This should never be!
+                log.error("Looks like a node came back 'None'; this may be "
+                            "from multiple examples with the same frame; check"
+                            "the log for details on what {} found".format(
+                            check.program['name']
+                            ))
+                nodes=check.db.get('examplebylocation',senseid=senseid,
+                                    location=check.name)
+                for node in nodes:
+                    for child in node:
+                        log.error("Node{}: {}; tag:{}; attrib:{}".format(
+                            nodes.index(node),child,child.tag, child.attrib,
+                                                                    child.text))
+                        for grandchild in child:
+                            log.error("Node{}c: {}; tag:{}; attrib:{}".format(
+                                nodes.index(node),grandchild,grandchild.tag,
+                                            grandchild.attrib,grandchild.text))
+                            for ggchild in grandchild:
+                                log.error("Node{}cg: {}; tag:{}; attrib:{}; text:{}".format(
+                                    nodes.index(node),ggchild,ggchild.tag,
+                                                ggchild.attrib,ggchild.text))
+            gloss=node.find(check.db.geturlnattr('glossofexample')['url']).text
+            form=node.find(check.db.geturlnattr('formofexample')['url']).text
         if gloss is None:
             gloss=check.db.get('gloss',senseid=senseid,
                                     glosslang=check.glosslang).text
