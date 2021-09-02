@@ -5081,7 +5081,8 @@ class Check():
             groupsselected=[x for x in groupsselected if x != '']
             log.info("groupsselected:{}".format(groupsselected))
             if uf in self.toneUFgroups and uf not in groupsselected:
-                deja=_("That name is already there!")
+                deja=_("That name is already there! (did you forget to include "
+                        "the ‘{}’ group?)".format(uf))
                 log.debug(deja)
                 errorlabel['text'] = deja
                 return
