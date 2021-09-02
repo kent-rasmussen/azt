@@ -60,35 +60,43 @@ class Report(object):
             (4,'TeXMLLike.xsl')
             ]
         for n,xslt in xslts:
-            trans=lxml.etree.parse(str(self.transformsdir)+'/'+xslt)
+            try:
+                trans=lxml.etree.parse(str(self.transformsdir)+'/'+xslt)
+            except lxml.etree.XMLSyntaxError as e:
+                for entry in e.error_log:
+                    log.error("{}: {} ({})".format(entry.domain_name,
+                                            entry.type_name, entry.filename))
             transform[n] = lxml.etree.XSLT(trans)
-        # transform = lxml.etree.XSLT(lxml.etree.parse(xsl_filename))
+            for error in transform[n].error_log:
+                log.error("XSLT Error {}: {}".format(error.message, error.line))
         newdom = transform[1](dom)
         with open(outfile+'a', 'wb') as f:
             f.write(lxml.etree.tostring(newdom, pretty_print=True))
         # newdom2 = transform[2](newdom1) #not used; always using stylesheets!
         dom=newdom
-        newdom = transform[3](dom)
-        # except lxml.etree.XSLTApplyError:
-        #     log.error("Looks like a problem applying an XSLT.")
-        with open(outfile+'b', 'wb') as f:
-            f.write(lxml.etree.tostring(newdom, pretty_print=True))
+        try:
+            newdom = transform[3](dom)
+            with open(outfile+'b', 'wb') as f:
+                f.write(lxml.etree.tostring(newdom, pretty_print=True))
+        except:
+            for error in transform[3].error_log:
+                log.error("XSLT Error {}: {}".format(error.message, error.line))
         dom=newdom
         # Convert this to pure XeLaTeX form *here*, using converted java classes
-        # log.info("dom1:{},newdom1:{}".format(dom,newdom))
+        # A Java class that reads the input and changes certain sequences to
+        # what they need to be for XeLaTeX .  The class name is
+        # TeXMLLikeCharacterConversion (and it's in the file named
+        # TeXMLLikeCharacterConversion.java).
         newdom = transform[4](dom)
-        # log.info("dom2:{},newdom2:{}".format(dom,newdom))
         with open(outfile+'.tex', 'wb') as f:
             f.write(lxml.etree.tostring(newdom, pretty_print=True))
-        #This doesn't do anything yet, but needs to
-        # Apply transforms/XLingPapRemoveAnyContent.xsl to the input to deal with any content control.
-        # To the result of this, apply either transforms/XLingPapXeLaTeX1.xsl (for an input without a style sheet) or transforms/XLingPapPublisherStylesheetXeLaTeX.xsl (for an input with a style sheet).
-        # Convert this to pure XeLaTeX form:
-        #     A Java class that reads the input and changes certain sequences to what they need to be for XeLaTeX .  The class name is TeXMLLikeCharacterConversion (and it's in the file named TeXMLLikeCharacterConversion.java).
-        #     The result of this is processed by transforms/TeXMLLike.xsl.  The output is plain (XeLaTeX ) text.
-        #     Another Java class that reads the output of that transform and makes sure all IDs are in a form that XeLaTeX can handle.  The class name is NonASCIIIDandIDREFConversion (and it's in the file named NonASCIIIDandIDREFConversion.java).
+        # Another Java class that reads the output of that transform and makes
+        # sure all IDs are in a form that XeLaTeX can handle.  The class name
+        # is NonASCIIIDandIDREFConversion (and it's in the file named
+        # NonASCIIIDandIDREFConversion.java).
         # Run this XeLaTeX form through xelatex.  The result is the PDF.
         #     DoTeXPDF (Linux/Mac) or DoTeXPDF.bat (Windows)
+
     def frontmatter(self):
         fm=ET.SubElement(self.node, 'frontMatter')
         ti=ET.SubElement(fm, 'title')
