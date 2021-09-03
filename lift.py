@@ -2056,7 +2056,7 @@ class Unused():
         return list(dict.fromkeys(x))
 """Functions I'm using, but not in a class"""
 def prettyprint(node):
-    # This fn is for seeing the Element contents before writing them (in case of 
+    # This fn is for seeing the Element contents before writing them (in case of
     # ElementTree errors that aren't otherwise understandable).
     t=0
     def do(node,t):
