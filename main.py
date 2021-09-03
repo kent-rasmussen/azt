@@ -7130,6 +7130,15 @@ class RecordButtonFrame(Frame):
                                     glosslang=check.glosslang))
         if form is None and node is not None:
             form=t(node.find(f"form[@lang='{check.analang}']/text"))
+        if audio is not None:
+            filenameURL=str(file.getdiredurl(check.audiodir,audio.text))
+            if file.exists(filenameURL):
+                log.debug("Audio file found! using name: {}; diredname: {}"
+                    "".format(audio.text, filenameURL))
+                return audio.text
+            else:
+                log.debug("Audio link found, but no file found! Making options."
+                    "\n{}; diredname: {}".format(audio, filenameURL))
         pslocopts=[check.ps]
         pslocopts.insert(0,check.ps+'_'+check.profile) #the first option (legacy).
         fieldlocopts=[None]
@@ -7174,7 +7183,7 @@ class RecordButtonFrame(Frame):
         for filename in filenames:
             filenameURL=str(file.getdiredurl(check.audiodir,filename))
             if file.exists(filenameURL):
-                log.debug("Audio file found! using name: {}; names: {}; "
+                log.debug("Audio file found! using name: {}; diredname: {}; "
                     "url:{}".format(filename, filenames, filenameURL))
                 return filename
         #if you don't find any, take the *last* values
