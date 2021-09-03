@@ -4448,6 +4448,11 @@ class Check():
         else:
             refreshcount=kwargs['refreshcount']+1
             del kwargs['refreshcount']
+        if 'sticky' not in kwargs:
+            sticky="ew"
+        else:
+            sticky=kwargs['sticky']
+            del kwargs['sticky']
         example=self.getex(group,notonegroup=notonegroup,truncdefn=True,renew=renew)
         if example is None:
             log.error("Apparently the example for tone group {} in frame {} "
