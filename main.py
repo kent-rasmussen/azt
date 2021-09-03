@@ -7121,7 +7121,10 @@ class RecordButtonFrame(Frame):
                                     nodes.index(node),ggchild,ggchild.tag,
                                                 ggchild.attrib,ggchild.text))
             gloss=node.find(check.db.geturlnattr('glossofexample')['url']).text
-            form=node.find(check.db.geturlnattr('formofexample')['url']).text
+            form=node.find(check.db.geturlnattr('formofexample',
+                                                lang=check.analang)['url']).text
+        audio=node.find(check.db.geturlnattr('formofexample',
+                                            lang=check.audiolang)['url'])
         if gloss is None:
             gloss=t(check.db.get('gloss',senseid=senseid,
                                     glosslang=check.glosslang))
