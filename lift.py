@@ -914,7 +914,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             # fieldtype,
                             # location,fieldvalue,example,ps=None
                             ,showurl=False)
-            if valuenode != '': #None: #i.e., they *are* the same node
+            if type(valuenode) is ET.Element: #None: #i.e., they *are* the same node
+                log.info(_("Found it! {}: {}".format(type(valuenode),valuenode.text)))
                 return valuenode #if you find the example, we're done looking
             else: #if not, just keep looking, at next example node
                 log.debug('=> This is not the example we are looking '
