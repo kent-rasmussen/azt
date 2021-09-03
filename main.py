@@ -3892,6 +3892,8 @@ class Check():
             return
         # The title for this page changes by group, below.
         self.getrunwindow(msg="preparing to verify groups: {}".format(groups))
+        self.getrunwindow(msg="preparing to verify groups: {}".format(
+                                                                unlist(groups)))
         if menu == True:
             self.runwindow.doverifymenu()
         ContextMenu(self.runwindow, context='verifyT') #once for all
