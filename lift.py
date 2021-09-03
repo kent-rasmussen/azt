@@ -379,8 +379,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             'attr':'nodetext'}
         a['formofexample']={
             'cm': 'use to get analang forms of examples',
-            'url':(("form[@lang='{analang}']/text"
-                    ),['analang']),
+            'url':(("form[@lang='{lang}']/text"
+                    ),['lang']),
             'attr':'nodetext'}
         a['fieldnode']={
             'cm': 'use to get whole field nodes (to modify)',
