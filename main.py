@@ -2681,17 +2681,24 @@ class Check():
                                                                 frame]['groups']
                         tosort=self.status[self.type][self.ps][profile][frame][
                                                                 'tosort']
+                        totalwverified=[]
+                        for g in total:
+                            if g in done:
+                                g='+'+g #these should be strings
+                            totalwverified+=[g]
                         donenum=groupfn(done)
                         totalnum=groupfn(total)
                         log.log(3,"Done groups: {}/{}".format(donenum,type(
                                                                     donenum)))
                         log.log(3,"Total groups: {}/{}".format(totalnum,type(
                                                                     totalnum)))
-                        if type(donenum) is int:
-                            donenum=str(donenum)+'/'+str(totalnum)
+                        if type(totalnum) is int and type(donenum) is int:
+                            donenum="{} (+{})".format(totalnum,donenum)
                             log.log(3,"Total groups found: {}".format(donenum))
+                        else:
+                            donenum=nn(totalwverified,oneperline=True)
                         # This should only be needed on a new database
-                        if donenum == '0/0':
+                        if donenum == '0 (+0)':
                             log.log(3,"skipping cell with values {}".format(
                                                                     donenum))
                             donenum='' #continue
