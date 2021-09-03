@@ -904,10 +904,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # location,fieldvalue,node,ps=None
         """This looks for any example in the given sense node, with the same
         form, gloss, and location values"""
-        if self.debug == True:
-            log.info('Looking for an example node matching these form and gloss'
-                'elements: {}'.format(forms))
-        for example in kwargs['node'].findall('example'):
+        log.info('Looking for an example node matching these form and gloss'
+                'elements: {}'.format(kwargs['forms']))
+        examples=kwargs['node'].findall('example')
+        for example in examples:
+            log.info(_("Looking at example {} ({} of {})").format(example,
+                                        examples.index(example), len(examples)))
             valuenode=self.exampleisnotsameasnew(**kwargs, example=example
                             # guid,senseid,analang,
                             # glosslang,glosslang2,forms,
