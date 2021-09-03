@@ -4468,7 +4468,7 @@ class Check():
         text=(framed['formatted'])
         """This should maybe be brought up a level in frames?"""
         bf=Frame(parent)
-        bf.grid(column=column, row=row, sticky="ew")
+        bf.grid(column=column, row=row, sticky=sticky)
         if label==True:
             b=Label(bf, text=text, **kwargs)
             b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
