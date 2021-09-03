@@ -3542,6 +3542,9 @@ class Check():
                 self.nextprofile()
                 log.debug("self.profile: {}".format(self.profile))
                 self.renamegroup(reverify=reverify)
+        def unverify():
+            self.updatestatus(refresh=False)
+            b_unverify.destroy()
         if self.subcheck == None:
             self.getsubcheck(guess=True)
             if self.subcheck == None:
@@ -3597,6 +3600,8 @@ class Check():
         sub_btn=Button(entryframe,text = ok,
                   command = done,anchor ='c')
         sub_btn.grid(row=4,column=0,sticky='',padx=padx,pady=pady)
+        vframe=Frame(self.runwindow.frame)
+        vframe.grid(row=5,column=0)
         if reverify == False: #don't give this option if verifying
             g=[x[0] for x in self.subchecksprioritized[self.type] if x[0]
                                                                     is not None]
@@ -3614,8 +3619,15 @@ class Check():
             sub_p=Button(cont,text = t,command = nextprofile,anchor ='c',
                             wraplength=int(self.frame.winfo_screenwidth()/6))
             sub_p.grid(row=1,column=0)#,sticky='',padx=padx,pady=pady)
-        self.tonegroupbuttonframe(self.runwindow.frame,self.subcheck,
-                            row=5,column=0,playable=True,alwaysrefreshable=True)
+            t=_("<= These don't all sound the same, \nmark this group "
+                "*unverified*.")
+            done=self.status[self.type][self.ps][self.profile][self.name]['done']
+            if self.subcheck in done:
+                b_unverify=Button(vframe,text = t, command = unverify,
+                    anchor ='c')
+                b_unverify.grid(row=0,column=1,padx=50)
+        self.tonegroupbuttonframe(vframe,self.subcheck,sticky='w',
+                            row=0,column=0,playable=True,alwaysrefreshable=True)
         self.runwindow.waitdone()
         sub_btn.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
