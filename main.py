@@ -2603,6 +2603,8 @@ class Check():
             self.set('name',name,refresh=False)
             #run this in any case, rather than running it not at all, or twice
             self.checkcheck()
+        def refresh(event=None):
+            self.checkcheck()
         self.boardtitle()
         # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
         # leaderheader.grid(row=1,column=0)
@@ -2615,6 +2617,12 @@ class Check():
                                 if x[2] == self.ps]+['next']
         frames=list(self.toneframes[self.ps].keys())
         ungroups=0
+        t=_("+ = verified \n! = unsorted data")
+        h=Label(self.leaderboardtable,text=t,font="small")
+        h.grid(row=row,column=0,sticky='e')
+        h.bind('<ButtonRelease>', refresh)
+        htip=_("Refresh table")
+        th=ToolTip(h,htip)
         for profile in profiles:
             column=0
             if profile in ['colheader','next']+list(self.status[self.type][
