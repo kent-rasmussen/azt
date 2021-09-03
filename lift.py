@@ -772,10 +772,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # The program should know before calling this, that there isn't
         # already the relevant node --since it is agnostic of what is already
         # there.
-        log.info("Adding {} value to {} location in {} fieldtype {} senseid {} "
-                "guid (in lift.py)".format(kwargs['fieldvalue'],
-                                        kwargs['location'],kwargs['fieldtype'],
-                                        kwargs['senseid'],kwargs['guid']))
+        log.info(_("Adding values (in lift.py) : {}").format(kwargs))
         node=self.getsensenode(senseid=kwargs['senseid'])
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(
