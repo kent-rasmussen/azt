@@ -2604,6 +2604,7 @@ class Check():
             #run this in any case, rather than running it not at all, or twice
             self.checkcheck()
         def refresh(event=None):
+            self.storesettingsfile()
             self.checkcheck()
         self.boardtitle()
         # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
