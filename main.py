@@ -3552,13 +3552,18 @@ class Check():
                 self.nextprofile()
                 log.debug("self.profile: {}".format(self.profile))
                 self.renamegroup(reverify=reverify)
-        def unverify():
-            self.updatestatus(refresh=False)
-            b_unverify.destroy()
+        # def unverify(): I think we don't want this here, just unsort items.
+        #     self.updatestatus(refresh=False)
+        #     b_unverify.destroy()
         if self.subcheck == None:
             self.getsubcheck(guess=True)
             if self.subcheck == None:
                 log.info("I asked for a framed tone group, but didn't get one.")
+                return
+        if self.name == None:
+            self.getcheck(guess=True)
+            if self.name == None:
+                log.info("I asked for a check name, but didn't get one.")
                 return
         newname=tkinter.StringVar(value=self.subcheck)
         padx=50
@@ -3581,41 +3586,47 @@ class Check():
         entryframe.grid(row=2,column=0,sticky='')
         buttonframe=Frame(entryframe)
         buttonframe.grid(row=2,column=0,sticky='')
-        chars=['[','˥', '˦', '˧', '˨', '˩',' ',']','']
-        for char in chars:
+        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
+        spaces=[' ',' ','']
+        for char in tonechars+spaces:
             if char == ' ':
-                text='(non-breaking space)'
+                text=_('syllable break')
                 column=0
-                columnspan=len(chars)
+                columnspan=int(len(tonechars)/2)+1
+                row=1
+            elif char == ' ':
+                text=_('word break')
+                columnspan=int(len(tonechars)/2)
+                column=columnspan+1
                 row=1
             elif char == '':
                 text=_('clear entry')
                 column=0
-                columnspan=len(chars)
+                columnspan=len(tonechars)
                 row=2
             else:
-                column=chars.index(char)
+                column=tonechars.index(char)
                 text=char
                 columnspan=1
                 row=0
             Button(buttonframe,text = text,command = lambda x=char:addchar(x),
-                    anchor ='c').grid(row=row,column=column,sticky='',
+                    anchor ='c').grid(row=row,column=column,sticky='nsew',
                                     columnspan=columnspan)
         formfield = EntryField(entryframe,textvariable=newname)
         formfield.grid(row=3,column=0)
         formfield.bind('<Key>', clearerror)
         errorlabel=Label(entryframe,text='',fg='red')
         errorlabel.grid(row=3,column=1,sticky='ew',pady=20,columnspan=2)
-        ok='Use this name'
-        sub_btn=Button(entryframe,text = ok,
-                  command = done,anchor ='c')
+        ok=_('Use this name')
+        t=_('{}\n(and finish)'.format(ok))
+        sub_btn=Button(entryframe,text = t, command = done, anchor ='c')
         sub_btn.grid(row=4,column=0,sticky='',padx=padx,pady=pady)
         vframe=Frame(self.runwindow.frame)
-        vframe.grid(row=5,column=0)
+        vframe.grid(row=5,column=0,sticky='w')
         if reverify == False: #don't give this option if verifying
-            g=[x[0] for x in self.subchecksprioritized[self.type] if x[0]
-                                                                    is not None]
-            t=_('{}, and give me another group:\n({})'.format(ok,'\n'.join(g)))
+            checkstat=self.status[self.type][self.ps][self.profile][self.name]
+            g=unlist(checkstat['groups'])
+            t=_('{}, and give me another group:\n({})'.format(ok,g))
             sub_btn=Button(entryframe,text = t,command = next,anchor ='c',
                             wraplength=int(self.frame.winfo_screenwidth()/6))
             sub_btn.grid(row=4,column=1,sticky='',padx=padx,pady=pady)
@@ -3629,13 +3640,11 @@ class Check():
             sub_p=Button(cont,text = t,command = nextprofile,anchor ='c',
                             wraplength=int(self.frame.winfo_screenwidth()/6))
             sub_p.grid(row=1,column=0)#,sticky='',padx=padx,pady=pady)
-            t=_("<= These don't all sound the same, \nmark this group "
-                "*unverified*.")
-            done=self.status[self.type][self.ps][self.profile][self.name]['done']
-            if self.subcheck in done:
-                b_unverify=Button(vframe,text = t, command = unverify,
-                    anchor ='c')
-                b_unverify.grid(row=0,column=1,padx=50)
+            # t=_("<= Mark this *whole*group* \nto be verified again")
+            # done=checkstat['done']
+            # if self.subcheck in done:
+            #     b_unverify=Button(vframe, text=t, command=unverify, anchor ='c')
+            #     b_unverify.grid(row=0,column=2,padx=100)
         self.tonegroupbuttonframe(vframe,self.subcheck,sticky='w',
                             row=0,column=0,playable=True,alwaysrefreshable=True)
         self.runwindow.waitdone()
