@@ -2621,7 +2621,7 @@ class Check():
         h=Label(self.leaderboardtable,text=t,font="small")
         h.grid(row=row,column=0,sticky='e')
         h.bind('<ButtonRelease>', refresh)
-        htip=_("Refresh table")
+        htip=_("Refresh table, \nsave settings")
         th=ToolTip(h,htip)
         for profile in profiles:
             column=0
