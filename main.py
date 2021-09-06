@@ -375,21 +375,27 @@ class Check():
                         "ps {}. This is likely a problem with your syllable "
                         "profile analysis.".format(self.ps))
             self.set('profile',self.profilecounts[0][1])
-    def nextframe(self,guess=False):
+    def nextframe(self,sort=True,guess=False):
         def default():
-            self.set('name',self.framestodo[0])
+            self.set('name',todo[0])
         if not hasattr(self,'framestodo'):
             self.getframestodo()
-        if len(self.framestodo) == 0:
+        if sort is True: #Just give frames with unsorted data
+            todo=self.framestodo
+        else: #base on all frames
+            todo=list(self.status[self.type][self.ps][self.profile].keys())
+        if len(todo) == 0:
             log.info("No frames to do; asking to define another one")
             self.addframe() #The above should change self.name, if completed.
             return
-        if self.name in self.framestodo:
-            i=self.framestodo.index(self.name)
-            if len(self.framestodo)>i+1:
-                self.set('name',self.framestodo[i+1])
+        log.info("Frames to do: {} (sort={})".format(todo,sort))
+        if self.name in todo:
+            i=todo.index(self.name)
+            log.info("Current frame is {} of {}".format(i,todo))
+            if len(todo)>i+1:
+                self.set('name',todo[i+1])
             else:
-                default() #cycle through framestodo
+                default() #cycle through framestodo again
         else:
             default()
     def nextsubcheck(self,guess=False):
@@ -3541,7 +3547,7 @@ class Check():
             error=submitform()
             if not error:
                 log.debug("self.name: {}".format(self.name))
-                self.nextframe()
+                self.nextframe(sort=False)
                 log.debug("self.name: {}".format(self.name))
                 self.renamegroup(reverify=reverify)
         def nextprofile():
