@@ -7863,15 +7863,33 @@ def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
         parent.destroy() #from or window with button...
         return value
 def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
-    #This is the action of a verification button, so needs to be self contained.
+    #?This is the action of a verification button, so needs to be self contained.
+    framed=self.getframeddata(senseid,truncdefn=True)
     if name is None:
         name=self.name
     if subcheck is None:
         subcheck=self.subcheck
-    self.db.rmexfields(senseid=senseid,fieldtype='tone',
-                        location=name,fieldvalue=subcheck,
-                        showurl=True
-                        )
+    log.info(_("Removing senseid {} from subcheck {}".format(senseid,subcheck)))
+    #This should only *mod* if already there
+    self.db.addexamplefields(senseid=senseid,
+                            analang=self.analang,
+                            glosslang=self.glosslang,
+                            glosslang2=self.glosslang2, #OK if None
+                            forms=framed,
+                            fieldtype='tone',location=self.name,
+                            fieldvalue='') #this value should be the only change
+    tgroups=self.db.get('exfieldvalue', senseid=senseid,
+                fieldtype='tone', location=self.name)
+    if type(tgroups) is list:
+        if len(tgroups) > 1:
+            log.error(_("Found {} tone values: {}".format(len(tgroups),tgroups)))
+            return
+        else:
+            tgroup=tgroups[0]
+    if tgroup is '':
+        log.error("Field removal failed! LIFT says {}, != ''.".format(tgroup))
+    else:
+        log.info("Field removal succeeded! LIFT says {}, = ''.".format(tgroup))
     rm=self.verifictioncode(name,subcheck)
     self.db.modverificationnode(senseid,vtype=self.profile,rm=rm)
     self.db.write() #This is not iterated over
