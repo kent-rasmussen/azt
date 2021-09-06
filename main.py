@@ -2966,7 +2966,7 @@ class Check():
             self.checkspossible=self.framenamesbyps(self.ps)
         else:
             self.checkspossible=self.setnamesbyprofile() #tuples of CV checks
-    def getcheck(self,event=None):
+    def getcheck(self,guess=False,event=None):
         log.info("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
         log.info("Getting the check name...")
@@ -3000,6 +3000,8 @@ class Check():
                     anchor='c')
             b2.grid(column=1, row=1,sticky='')
             b.wait_window(window)
+        elif guess is True:
+            self.setcheck(self.checkspossible[0],window) #just pick the first, for now
         else:
             text=_('What check do you want to do?')
             Label(window.frame, text=text).grid(column=0, row=0)
