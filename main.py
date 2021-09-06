@@ -4453,6 +4453,15 @@ class Check():
                         )
         b2.grid(column=0, row=1, sticky="ew")
     def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,playable=False,renew=False,**kwargs):
+        def unsort():
+            removesenseidfromsubcheck(self,bf,senseid)
+            self.tonegroupbuttonframe(
+                parent=parent,
+                group=group,notonegroup=notonegroup,
+                canary=canary,canary2=canary2,
+                row=row,column=column,label=label,
+                alwaysrefreshable=alwaysrefreshable,
+                playable=playable,renew=True,refreshcount=refreshcount)
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
@@ -4501,7 +4510,6 @@ class Check():
             diredurl=str(file.getdiredurl(self.audiodir,url))
             thefileisthere=file.exists(diredurl)
             log.info("fileisthere: {} ({})".format(diredurl,url))
-            b=Label(bf, text=text, **kwargs)
             if thefileisthere:
                 self.pyaudiocheck()
                 self.soundsettingscheck()
@@ -4509,6 +4517,10 @@ class Check():
                                                                 soundsettings)
                 b=Button(bf, text=text, cmd=self.player.play)
                 bt=ToolTip(b,_("Click to hear this utterance"))
+                senseid=framed['senseid']
+                t=_("<= This *word* doesn't belong \nmark to sort again")
+                b_unsort=Button(bf,text = t, cmd=unsort, anchor ='c')
+                b_unsort.grid(row=0,column=2,padx=50)
             else: #Refresh if this should be playable but there no sound file.
                 if refreshcount < len(self.getexsall(group)):
                     self.tonegroupbuttonframe(
@@ -4527,6 +4539,7 @@ class Check():
                     alwaysrefreshable=alwaysrefreshable,
                     playable=False, #give up on playing
                     renew=True,refreshcount=refreshcount)
+                return #In either case, stop making the current frame.
             b.grid(column=1, row=0, sticky="nesw", ipady=15) #Inside the buttons
 
         else:
