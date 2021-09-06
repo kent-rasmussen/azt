@@ -1,7 +1,12 @@
 #Roadmap
 
 ## release stoppers
-put image creation after splash creation?
+- put image creation after splash creation?
+- give warning if user is going to undo analysis regroupings
+- check out why tooltips aren't working before first refresh
+
+## Documentation
+- Steps to use AZT in a workshop, from start to finish (not absolutes, but recommendations)
 
 ## Things to Test
 - check that changes to S regexs don't break too much.
@@ -22,11 +27,14 @@ put image creation after splash creation?
   - maybe call get with a url parameter?
   - kwarg for node or not, text or not, attr?
 - find ways to speed up tone reports:
-    - multithreading?
+    - multithreading?  !(CPU limited)
 - make dictionary of images created with PIL, so they aren't continually remade (source if already there)
 
 ## Migrate further toward OOP
+- mark a sensid to sort again without losing the sound file attached to it.
+- distinguish between frames to do for sorting (with unsorted data) and frames to do for other tasks...
 - Consider making the following objects?
+    - fn to process kwargs w/default (currently hardcoded in buttons/labels,etc.)
     - ErrorWindow class (tryNAgain, maybesort ...)
     - tables (base on buildXLPtable(self,parent,caption,yterms,xterms...))
     - languages
@@ -41,6 +49,8 @@ put image creation after splash creation?
     - lift-field?
     - lift-node?
     - lift-example?
+    - status dictionary:
+        - methods to check done, there, etc, without having to check whole dict.
 - Think through `guess`ing and `next` functions, and maybe verify?
     - Sometimes guessing is appropriate, especially current is not valid
         - and not necessarily the same as `next` (i.e., not current)
@@ -84,6 +94,11 @@ put image creation after splash creation?
 - add progress of recording (on its own tab?)
 
 ## For Future Versions
+- consider adding actual groups by datapoint for non-default tone reports
+    - I.e., which data points are different
+- think through ease of use questions:
+    - How to make naming groups straightforward from the main interface?
+- implement XML2XLP.txt (to produce PDF without further user input)
 - add interpretation of glottal stop into sdistinctions.
 - fix zip problem on Windows: "OSError: [Errno 22] Invalid argument: 'log_-:.7z'"
 - extra space being added for None forms in Frame construction

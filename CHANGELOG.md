@@ -1,6 +1,13 @@
 # A→Z+T Changelog
 
 # Version 0.8.4
+- added number of groups to XLP table
+- non-default reports now end with 'mod' in filename
+- added table of frame values for join UF groups window
+- name groups doesn't crash on no groups selected; guesses
+- redo group rename UI, add unsort button
+- Various UI and documentation improvements
+- Added button to rename groups which pulls a sense from that group (if the analyst decides it doesn't belong, to mark for resorting)
 
 # Version 0.8.3
 - fixed wav file link problem; now filename only in LIFT, relative link in reports.
