@@ -4230,7 +4230,7 @@ class Check():
                     self.name,
                     senseid,
                     guid))
-        self.db.addexamplefields(
+        self.db.addexamplefields( #This should only mod if already there
                                     guid=guid,senseid=senseid,
                                     analang=self.analang,
                                     glosslang=self.glosslang,
