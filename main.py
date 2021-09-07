@@ -5353,7 +5353,8 @@ class Check():
         for location in locations:
             valuesbylocation[location]={}
             for group in groups:
-                valuesbylocation[location][group]=groups[group]['values'][
+                if location in groups[group]['values']:
+                    valuesbylocation[location][group]=groups[group]['values'][
                                                                     location]
         return dictscompare(valuesbylocation,ignore=['NA',None],flat=False)
     def tonegroupreport(self,silent=False,bylocation=False,default=True):
