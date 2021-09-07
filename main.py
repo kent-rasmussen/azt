@@ -7931,10 +7931,10 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
             return
         else:
             tgroup=tgroups[0]
-    if tgroup is '':
-        log.error("Field removal failed! LIFT says {}, != ''.".format(tgroup))
+    if tgroup is '' :
+        log.info("Field removal succeeded! LIFT says '{}', = ''.".format(tgroup))
     else:
-        log.info("Field removal succeeded! LIFT says {}, = ''.".format(tgroup))
+        log.error("Field removal failed! LIFT says '{}', != ''.".format(tgroup))
     rm=self.verifictioncode(name,subcheck)
     self.db.modverificationnode(senseid,vtype=self.profile,rm=rm)
     self.db.write() #This is not iterated over
