@@ -5475,8 +5475,8 @@ class Check():
                             xcounts=lambda y:len(valuesbylocation[y]))
         #Can I break this for multithreading?
         for group in grouplist: #These already include ps-profile
-            log.info("building report for {} ({}/{})".format(group,
-                                    grouplist.index(group)+1,len(grouplist)))
+            log.info("building report for {} ({}/{}, n={})".format(group,
+                grouplist.index(group)+1,len(grouplist),len(toreport[group])))
             sectitle=_('\nGroup {}'.format(str(group)))
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
