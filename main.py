@@ -5136,10 +5136,16 @@ class Check():
                                 header=True)
                 else:
                     log.log(2,"Not a header")
-                    log.log(2,"value ({},{}):{}".format(col,row,
+                    try:
+                        value=values(col,row)
+                        log.log(2,"value ({},{}):{}".format(col,row,
                                                         values(col,row)))
-                    value=values(col,row)
-                    cell=xlp.Cell(r,content=value)
+                    except KeyError:
+                        log.info("Apparently no value for col:{}, row:{}"
+                                "".format(col,row))
+                        value=''
+                    finally: # we need each cell to be there...
+                        cell=xlp.Cell(r,content=value)
     def tonegroupsjoinrename(self):
         def clearerror(event=None):
             errorlabel['text'] = ''
