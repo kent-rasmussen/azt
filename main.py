@@ -5383,7 +5383,7 @@ class Check():
             for group in groups:
                 toreport[group]=groups[group]['senseids']
                 groupvalues[group]={}
-                for location in locations:
+                for location in groups[group]['values']: #locations:
                     groupvalues[group][location]=list(groups[group]['values'][
                                                                     location])
         else:
@@ -5482,7 +5482,7 @@ class Check():
             output(window,r,text)
             if bylocation == True:
                 textout=list()
-                for location in locations:
+                for location in groupvalues[group]: #locations:
                     id=rx.id('x'+sectitle+location)
                     headtext='{}: {}'.format(location,', '.join(groupvalues[
                                                             group][location]))
