@@ -5294,10 +5294,10 @@ class Check():
         for senseid in self.senseidstosort:
             output[senseid]={}
             for location in locations:
-                output[senseid][location]={}
                 group=self.db.get('exfieldvalue',senseid=senseid,
                     location=location,fieldtype='tone')
-                output[senseid][location]=group #Save this info by senseid
+                if group != [None]:
+                    output[senseid][location]=group #Save this info by senseid
         log.info("Done collecting groups by location for each senseid.")
         return output
     def groupUFsfromtonegroupsbylocation(self,output):
