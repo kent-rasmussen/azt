@@ -3488,10 +3488,19 @@ class Check():
         # (i.e.,) before the group is verified. This does two things differently:
         # 1. verifyT is only called when reverify=True
         # 2. self.nextsubcheck() button is only there when reverify=False
-        def clearerror(event=None):
+        def updatelabels(event=None):
             errorlabel['text'] = ''
+            a=newname.get()
+            try:
+                int(a) #Is this interpretable as an integer (default group)?
+                namehash.set('')
+            except ValueError:
+                x=hash_t.sub('T',newname.get())
+                y=hash_sp.sub('#',x)
+                z=hash_nbsp.sub('.',y)
+                namehash.set(z)
         def submitform():
-            clearerror()
+            updatelabels()
             newtonevalue=formfield.get()
             groups=self.status[self.type][self.ps][self.profile][self.name][
                                                                     'groups']
@@ -3533,6 +3542,7 @@ class Check():
                 formfield.delete(0,tkinter.END)
             else:
                 formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
+            updatelabels()
         def done():
             submitform()
             self.donewpyaudio()
@@ -3575,6 +3585,7 @@ class Check():
                 return
         newname=tkinter.StringVar(value=self.subcheck)
         namehash=tkinter.StringVar()
+        hash_t,hash_sp,hash_nbsp=rx.tonerxs()
         padx=50
         pady=10
         title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
@@ -3623,11 +3634,12 @@ class Check():
                                     columnspan=columnspan)
         formfield = EntryField(entryframe,textvariable=newname)
         formfield.grid(row=3,column=0)
-        formfield.bind('<Key>', clearerror)
+        formfield.bind('<KeyRelease>', updatelabels) #apply function after key
         errorlabel=Label(entryframe,text='',fg='red')
         errorlabel.grid(row=3,column=1,sticky='ew',pady=20,columnspan=2)
         formhashlabel=Label(entryframe,textvariable=namehash)
         formhashlabel.grid(row=4,column=0,sticky='ew')
+        updatelabels()
         ok=_('Use this name')
         t=_('{}\n(and finish)'.format(ok))
         sub_btn=Button(entryframe,text = t, command = done, anchor ='c')
