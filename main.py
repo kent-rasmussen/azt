@@ -4554,7 +4554,7 @@ class Check():
                 b=Button(bf, text=text, cmd=self.player.play)
                 bt=ToolTip(b,_("Click to hear this utterance"))
                 senseid=framed['senseid']
-                t=_("<= This *word* doesn't belong \nmark to sort again")
+                t=_("<= This *word* doesn't belong; \nmark to sort again")
                 b_unsort=Button(bf,text = t, cmd=unsort, anchor ='c')
                 b_unsort.grid(row=0,column=2,padx=50)
             else: #Refresh if this should be playable but there no sound file.
