@@ -3932,9 +3932,9 @@ class Check():
         # The title for this page changes by group, below.
         self.getrunwindow(msg="preparing to verify groups: {}".format(
                                                                 unlist(groups)))
-        if menu == True:
-            self.runwindow.doverifymenu()
-        ContextMenu(self.runwindow, context='verifyT') #once for all
+        # if menu == True:
+        #     self.runwindow.doverifymenu()
+        # ContextMenu(self.runwindow, context='verifyT') #once for all
         oktext='These all have the same tone'
         instructions=_("Read down this list to verify they all have the same "
             "tone melody. Select any word with a different tone melody to "
@@ -6006,31 +6006,31 @@ class Window(tkinter.Toplevel):
             self.parent.verifymenu=False
             self.setcontext(context='verifyT')
             return True #i.e., removed, to maybe replace later
-    def doverifymenu(self):
-        #This adds a menu to the verify window
-        log.debug("Trying self.menubar")
-        self.menubar = Menu(self, tearoff=0)
-        log.debug("Done self.menubar")
-        # This points to check via the window's parent (check.frame) and its
-        # parent, the MainApplication, which has a check attribute...
-        self.menubar.add_command(label=_("Rename Group"),
-            command=lambda c=self.parent.parent.check,v=True:Check.renamegroup(
-                    c,reverify=True))
-        self.config(menu=self.menubar)
-        self.parent.verifymenu=True
-        self.setcontext(context='verifyT')
-    def setcontext(self,context=None): #set context for different windows
-        # This is called by contextMenu(), & maybe other things context changers
-        if not hasattr(self, 'context') or type(self.context) != ContextMenu:
-            log.info("There isn't a context menu, so not setting the context.")
-            return
-        self.context.menuinit() #This is a ContextMenu() method
-        if context == 'verifyT': #parameter, NOT self.context, menu object...
-            if ((not hasattr(self.parent,'verifymenu')) or
-                    (self.parent.verifymenu == False)):
-                self.context.menuitem(_("Show Menu"),self.doverifymenu)
-            else:
-                self.context.menuitem(_("Hide Menu"),self.removeverifymenu)
+    # def doverifymenu(self):
+    #     #This adds a menu to the verify window
+    #     log.debug("Trying self.menubar")
+    #     self.menubar = Menu(self, tearoff=0)
+    #     log.debug("Done self.menubar")
+    #     # This points to check via the window's parent (check.frame) and its
+    #     # parent, the MainApplication, which has a check attribute...
+    #     self.menubar.add_command(label=_("Rename Group"),
+    #         command=lambda c=self.parent.parent.check,v=True:Check.renamegroup(
+    #                 c,reverify=True))
+    #     self.config(menu=self.menubar)
+    #     self.parent.verifymenu=True
+    #     self.setcontext(context='verifyT')
+    # def setcontext(self,context=None): #set context for different windows
+    #     # This is called by contextMenu(), & maybe other things context changers
+    #     if not hasattr(self, 'context') or type(self.context) != ContextMenu:
+    #         log.info("There isn't a context menu, so not setting the context.")
+    #         return
+    #     self.context.menuinit() #This is a ContextMenu() method
+    #     if context == 'verifyT': #parameter, NOT self.context, menu object...
+    #         if ((not hasattr(self.parent,'verifymenu')) or
+    #                 (self.parent.verifymenu == False)):
+    #             self.context.menuitem(_("Show Menu"),self.doverifymenu)
+    #         else:
+    #             self.context.menuitem(_("Hide Menu"),self.removeverifymenu)
     def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
                 choice=None, *args, **kwargs):
         self.parent=parent
