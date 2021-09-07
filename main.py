@@ -3574,6 +3574,7 @@ class Check():
                 log.info("I asked for a check name, but didn't get one.")
                 return
         newname=tkinter.StringVar(value=self.subcheck)
+        namehash=tkinter.StringVar()
         padx=50
         pady=10
         title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
@@ -3625,22 +3626,24 @@ class Check():
         formfield.bind('<Key>', clearerror)
         errorlabel=Label(entryframe,text='',fg='red')
         errorlabel.grid(row=3,column=1,sticky='ew',pady=20,columnspan=2)
+        formhashlabel=Label(entryframe,textvariable=namehash)
+        formhashlabel.grid(row=4,column=0,sticky='ew')
         ok=_('Use this name')
         t=_('{}\n(and finish)'.format(ok))
         sub_btn=Button(entryframe,text = t, command = done, anchor ='c')
-        sub_btn.grid(row=4,column=0,sticky='',padx=padx,pady=pady)
+        sub_btn.grid(row=5,column=0,sticky='',padx=padx,pady=pady)
         vframe=Frame(self.runwindow.frame)
-        vframe.grid(row=5,column=0,sticky='w')
+        vframe.grid(row=6,column=0,sticky='w')
         if reverify == False: #don't give this option if verifying
             checkstat=self.status[self.type][self.ps][self.profile][self.name]
             g=unlist(checkstat['groups'])
             t=_('{}, and give me another group:\n({})'.format(ok,g))
             sub_btn=Button(entryframe,text = t,command = next,anchor ='c',
                             wraplength=int(self.frame.winfo_screenwidth()/6))
-            sub_btn.grid(row=4,column=1,sticky='',padx=padx,pady=pady)
+            sub_btn.grid(row=5,column=1,sticky='',padx=padx,pady=pady)
             t=_('{}, and give me another tone frame'.format(ok))
             cont=Frame(entryframe)
-            cont.grid(row=4,column=2)
+            cont.grid(row=5,column=2)
             sub_f=Button(cont,text = t,command = nextframe,anchor ='c',
                             wraplength=int(self.frame.winfo_screenwidth()/6))
             sub_f.grid(row=0,column=0)#,sticky='',padx=padx,pady=pady)
