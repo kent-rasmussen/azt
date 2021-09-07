@@ -2624,7 +2624,9 @@ class Check():
                                 if x[2] == self.ps]+['next']
         frames=list(self.toneframes[self.ps].keys())
         ungroups=0
-        t=_("+ = verified \n! = unsorted data")
+        tv=_("verified")
+        tu=_("unsorted data")
+        t="+ = {} \n! = {}".format(tv,tu)
         h=Label(self.leaderboardtable,text=t,font="small")
         h.grid(row=row,column=0,sticky='e')
         h.bind('<ButtonRelease>', refresh)
