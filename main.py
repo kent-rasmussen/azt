@@ -5399,7 +5399,7 @@ class Check():
             groupvalues=self.tonegroupsbyUFlocation(toreport)
             grouplist=self.toneUFgroups
             locations=self.locations[:]
-        valuesbylocation=dictofchilddicts(groupvalues,remove=['NA'])
+        valuesbylocation=dictofchilddicts(groupvalues,remove=['NA',None])
         log.debug("groups (tonegroupreport): {}".format(grouplist))
         log.debug("locations (tonegroupreport): {}".format(locations))
         r = open(self.tonereportfile, "w", encoding='utf-8')
