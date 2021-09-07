@@ -5271,17 +5271,20 @@ class Check():
         # Collect location:value correspondences, by sense
         for group in senseidsbygroup:
             values[group]={}
-            for senseid in senseidsbygroup[group]:
-                for location in locations:
-                    if location not in values[group]:
-                        values[group][location]=list()
+            for location in locations: #just make them all, delete empty later
+                values[group][location]=list()
+                for senseid in senseidsbygroup[group]:
                     groupvalue=self.db.get('exfieldvalue',senseid=senseid,
                         location=location,fieldtype='tone')
-                    # Save this info by group
-                    if ((groupvalue is not []) and
-                            (firstoflist(groupvalue) not in values[group][
-                                                                    location])):
-                        values[group][location]+=groupvalue
+                    if groupvalue != [None]:
+                        if unlist(groupvalue) not in values[group][location]:
+                            values[group][location]+=groupvalue
+                log.log(3,"values[{}][{}]: {}".format(group,location,
+                                                    values[group][location]))
+                if values[group][location] == []:
+                    log.info(_("Removing empty {} key from {} values"
+                                "").format(location,group))
+                    del values[group][location] #don't leave key:None pairs
         log.info("Done collecting groups by location for each UF group.")
         return values
     def tonegroupsbysenseidlocation(self):
