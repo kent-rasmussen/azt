@@ -7663,9 +7663,9 @@ def name(x):
     except:
         name=x.__class__.__name__ #If x is a class instance
         return "class."+name
-def unlist(l):
-    return firstoflist(l,all=True)
-def firstoflist(l,othersOK=False,all=False):
+def unlist(l,ignore=[None]):
+    return firstoflist(l,all=True,ignore=ignore)
+def firstoflist(l,othersOK=False,all=False,ignore=[None]):
     #rename to unlist
     """This takes a list composed of one item, and returns the item.
     with othersOK=True, it discards n=2+ items; with othersOK=False,
@@ -7675,7 +7675,7 @@ def firstoflist(l,othersOK=False,all=False):
     if (l is None) or (l == []):
         return
     if all == True: #don't worry about othersOK yet
-        return ', '.join(x for x in l if x is not None)
+        return ', '.join(x for x in l if x not in ignore)
     elif len(l) == 1 or (othersOK == True):
         return l[0]
     elif othersOK == False: #(i.e., with `len(list) != 1`)
