@@ -6453,7 +6453,7 @@ class MainApplication(Frame):
                                 command=lambda x=check:Check.renamegroup(x))
         advtonemenu = Menu(self.menubar, tearoff=0)
         advancedmenu.add_cascade(label=_("Tone Reports"), menu=advtonemenu)
-        advtonemenu.add_command(label=_("Join/Rename Tone Groups"),
+        advtonemenu.add_command(label=_("Name/join UF Tone Groups"),
                         command=lambda x=check:Check.tonegroupsjoinrename(x))
         advtonemenu.add_command(label=_("Custom groups by sense"),
                                 command=lambda x=check:Check.tonegroupreport(x,
