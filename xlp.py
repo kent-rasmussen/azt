@@ -5,6 +5,7 @@ import xmlfns
 import rx
 import file
 import logging
+import subprocess
 log = logging.getLogger(__name__)
 class Report(object):
     def __init__(self,filename,report,langname):
@@ -31,7 +32,7 @@ class Report(object):
         self.xlptypes()
         self.stylesheet()
         self.write()
-        # self.compile() #This isn't working yet.
+        self.compile() #This isn't working yet.
     def write(self):
         """This writes changes to XML which can be read by XXE as XLP."""
         doctype=self.node.tag
@@ -89,7 +90,12 @@ class Report(object):
         # TeXMLLikeCharacterConversion.java).
         newdom = transform[4](dom)
         with open(outfile+'.tex', 'wb') as f:
-            f.write(lxml.etree.tostring(newdom, pretty_print=True))
+            f.write(newdom) #this isn't xml anymore!
+        xetexargs=["xelatex", "--interaction=nonstopmode",outfile+'.tex']
+        try:
+            subprocess.call(xetexargs,shell=False)
+        except as e:
+            log.info("The call to xelatex didn't work: {}".format(e))
         # Another Java class that reads the output of that transform and makes
         # sure all IDs are in a form that XeLaTeX can handle.  The class name
         # is NonASCIIIDandIDREFConversion (and it's in the file named
