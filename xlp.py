@@ -290,7 +290,7 @@ if __name__ == "__main__":
     def _(x):
         return str(x)
     print('trying manual report generation...')
-    d=Report('filetest.xml',"a non-language","Language Name")
+    d=Report('filetest.xml',"a non-language","Language Name >")
     s1=Section(d,"Section One title")
     t="This is the first paragraph in the report."
     p=Paragraph(s1,t)
