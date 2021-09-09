@@ -94,6 +94,7 @@ class Report(object):
         xetexargs=["xelatex", "--interaction=nonstopmode",outfile+'.tex']
         try:
             subprocess.call(xetexargs,shell=False)
+            subprocess.call(xetexargs,shell=False)
         except Error as e:
             log.info("The call to xelatex didn't work: {}".format(e))
         # Another Java class that reads the output of that transform and makes
