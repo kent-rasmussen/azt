@@ -256,6 +256,31 @@ class Link(ET.Element):
 class Linebreak(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'br')
+
+def texmllike(x):
+    repls={
+        '\\': "\\textbackslash{}",
+        '{': "\\{",
+        '}': "\\}",
+        '$': "\\textdollar{}",
+        '[': "\\textsquarebracketleft{}",
+        ']': "\\textsquarebracketright{}",
+        '&lt;': "\\textless{}",
+        '&le;': "\\textless{}=",
+        '&gt;': "\\textgreater{}",
+        '&ge;': "\\textgreater{}=",
+        '&amp;': "\\&amp;",
+        '#': "\\#",
+        '^': "\\^{}",
+        '_': "\\_",
+        '~': "\\textasciitilde{}",
+        '%': "\\%",
+        '|': "\\textbar{}"
+    }
+    for y in repls:
+        print("Replacing",y,"with",repls[y])
+        x=x.replace(y,repls[y])
+    return x
 if __name__ == "__main__":
     def _(x):
         return str(x)
