@@ -88,6 +88,10 @@ class Report(object):
         # what they need to be for XeLaTeX .  The class name is
         # TeXMLLikeCharacterConversion (and it's in the file named
         # TeXMLLikeCharacterConversion.java).
+        newdom=texmllike(str(dom))
+        with open(outfile+'c', 'wb') as f:
+            f.write(newdom.encode('utf_8'))
+        dom = lxml.etree.parse(outfile+'c')
         newdom = transform[4](dom)
         with open(outfile+'.tex', 'wb') as f:
             f.write(newdom) #this isn't xml anymore!
