@@ -7721,63 +7721,93 @@ def setthemes(self):
     self.themes={'lightgreen':{
                         'background':'#c6ffb3',
                         'activebackground':'#c6ffb3',
-                        'offwhite':None}, #lighter green
+                        'offwhite':None,
+                        'highlight': 'red',
+                        'white': 'white'}, #lighter green
                 'green':{
                         'background':'#b3ff99',
                         'activebackground':'#c6ffb3',
-                        'offwhite':None},
+                        'offwhite':None,
+                        'highlight': 'red',
+                        'white': 'white'},
                 'pink':{
                         'background':'#ff99cc',
                         'activebackground':'#ff66b3',
-                        'offwhite':None},
+                        'offwhite':None,
+                        'highlight': 'red',
+                        'white': 'white'},
                 'lighterpink':{
                         'background':'#ffb3d9',
                         'activebackground':'#ff99cc',
-                        'offwhite':None},
+                        'offwhite':None,
+                        'highlight': 'red',
+                        'white': 'white'},
                 'evenlighterpink':{
                         'background':'#ffcce6',
                         'activebackground':'#ffb3d9',
-                        'offwhite':'#ffe6f3'},
+                        'offwhite':'#ffe6f3',
+                        'highlight': 'red',
+                        'white': 'white'},
                 'purple':{
                         'background':'#ffb3ec',
                         'activebackground':'#ff99e6',
-                        'offwhite':'#ffe6f9'},
+                        'offwhite':'#ffe6f9',
+                        'highlight': 'red',
+                        'white': 'white'},
                 'Howard':{
                         'background':'green',
                         'activebackground':'red',
-                        'offwhite':'grey'},
+                        'offwhite':'grey',
+                        'highlight': 'red',
+                        'white': 'white'},
                 'Kent':{
                         'background':'red',
                         'activebackground':'green',
-                        'offwhite':'grey'},
+                        'offwhite':'grey',
+                        'highlight': 'red',
+                        'white': 'white'},
                 'Kim':{
                         'background':'#ffbb99',
                         'activebackground':'#ffaa80',
-                        'offwhite':'#ffeee6'},
+                        'offwhite':'#ffeee6',
+                        'highlight': 'red',
+                        'white': 'white'},
                 'yellow':{
                         'background':'#ffff99',
                         'activebackground':'#ffff80',
-                        'offwhite':'#ffffe6'},
+                        'offwhite':'#ffffe6',
+                        'highlight': 'red',
+                        'white': 'white'},
                 'greygreen1':{
                         'background':'#62d16f',
                         'activebackground':'#4dcb5c',
-                        'offwhite':'#ebf9ed'},
+                        'offwhite':'#ebf9ed',
+                        'highlight': 'red',
+                        'white': 'white'},
                 'lightgreygreen':{
                         'background':'#9fdfca',
                         'activebackground':'#8cd9bf',
-                        'offwhite':'#ecf9f4'},
+                        'offwhite':'#ecf9f4',
+                        'highlight': 'red',
+                        'white': 'white'},
                 'greygreen':{
                         'background':'#8cd9bf',
                         'activebackground':'#66ccaa', #10% darker than the above
-                        'offwhite':'#ecf9f4'},
+                        'offwhite':'#ecf9f4',
+                        'highlight': 'red',
+                        'white': 'white'}, #default!
                 'highcontrast':{
                         'background':'white',
                         'activebackground':'#e6fff9', #10% darker than the above
-                        'offwhite':'#ecf9f4'},
+                        'offwhite':'#ecf9f4',
+                        'highlight': 'red',
+                        'white': 'white'},
                 'tkinterdefault':{
                         'background':None,
                         'activebackground':None,
-                        'offwhite':None}
+                        'offwhite':None,
+                        'highlight': 'red',
+                        'white': 'white'}
                 }
 def setfonts(self,fonttheme='default'):
     log.info("Setting fonts with {} theme".format(fonttheme))
