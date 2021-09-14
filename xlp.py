@@ -99,6 +99,10 @@ class Report(object):
         try:
             subprocess.call(xetexargs,shell=False)
             subprocess.call(xetexargs,shell=False)
+            exts=['out','aux','log']
+            # exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
+            for ext in exts:
+                file.remove(outfile.replace('.xml', '.'+ext))
         except Error as e:
             log.info("The call to xelatex didn't work: {}".format(e))
         # Another Java class that reads the output of that transform and makes
