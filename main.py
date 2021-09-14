@@ -6930,7 +6930,9 @@ class Renderer(object):
             filenostaves='GenBkBas-tstv-{}.ttf'.format(fonttype)
         if fname in ["DejaVu Sans"]:
             fonttype=fonttype.replace('B','Bold').replace('I','Oblique').replace('R','')
-            file='DejaVuSans-{}.ttf'.format(fonttype)
+            if len(fonttype)>0:
+                fonttype='-'+fonttype
+            file='DejaVuSans{}.ttf'.format(fonttype)
             filenostaves='DejaVuSans-tstv-{}.ttf'.format(fonttype)
         try:
             font = PIL.ImageFont.truetype(font=filenostaves, size=fsize)
