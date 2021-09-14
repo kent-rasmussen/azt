@@ -8172,6 +8172,7 @@ if __name__ == "__main__":
         log.exception("Unexpected exception! %s",e)
         logwritelzma(log.filename) #in logsetup
     except:
+        import traceback
         log.error("uncaught exception: %s", traceback.format_exc())
         logwritelzma(log.filename) #in logsetup
     exit()
