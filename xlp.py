@@ -206,7 +206,6 @@ class Example(ET.Element):
         if heading is not None:
             headnode=ET.SubElement(self.node,'exampleHeading')
             headnode.text=heading
-
 class Table(ET.Element):
     """<tablenumbered id="nt-ndk-melodies">
             <table border="1">
