@@ -53,7 +53,7 @@ class Report(object):
         # xslt = lxml.etree.parse(xsl_filename)
         # transform = lxml.etree.XSLT(xslt)
         transform={}
-        outfile=self.filename+'out'
+        outfile=self.filename #base for multiple files, below
         xslts=[
             (1,'XLingPapRemoveAnyContent.xsl'),
             (2,'XLingPapXeLaTeX1.xsl'),
@@ -93,9 +93,13 @@ class Report(object):
             f.write(newdom.encode('utf_8'))
         dom = lxml.etree.parse(outfile+'c')
         newdom = transform[4](dom)
-        with open(outfile+'.tex', 'wb') as f:
+        texfile=outfile.replace('.xml','.tex')
+        outdir=file.getfilenamedir(outfile)
+        log.info("writing to tex file {}".format(texfile))
+        with open(texfile, 'wb') as f:
             f.write(newdom) #this isn't xml anymore!
-        xetexargs=["xelatex", "--interaction=nonstopmode",outfile+'.tex']
+        xetexargs=["xelatex", "--interaction=nonstopmode","-output-directory",
+                    outdir, texfile]
         try:
             subprocess.call(xetexargs,shell=False)
             subprocess.call(xetexargs,shell=False)
