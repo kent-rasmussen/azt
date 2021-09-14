@@ -3597,7 +3597,9 @@ class Check():
             try: #successive runs
                 compframe.bf2.destroy()
                 tkinter.update_idletasks()
+                log.info("Comparison frame destroyed!")
             except: #first run
+                log.info("Problem destroying comparison frame, making...")
                 compframeb=Frame(compframe)
                 compframeb.grid(row=1,column=0)
             t=_('Compare with another group')
@@ -6926,6 +6928,10 @@ class Renderer(object):
         if fname in ["Gentium Book Basic","Gentium Book Basic SIL"]:
             file='GenBkBas{}.ttf'.format(fonttype)
             filenostaves='GenBkBas-tstv-{}.ttf'.format(fonttype)
+        if fname in ["DejaVu Sans"]:
+            fonttype=fonttype.replace('B','Bold').replace('I','Oblique').replace('R','')
+            file='DejaVuSans-{}.ttf'.format(fonttype)
+            filenostaves='DejaVuSans-tstv-{}.ttf'.format(fonttype)
         try:
             font = PIL.ImageFont.truetype(font=filenostaves, size=fsize)
             log.log(2,"Using No Staves font")
