@@ -11,7 +11,7 @@ See [RATIONALE](RATIONALE.md) for more information on why one should use this to
 [A→Z+T](https://github.com/kent-rasmussen/azt) is written in [Python](https://python.org) (3+) and [Tkinter](https://docs.python.org/3/library/tkinter.html), with [PyAudio](https://pypi.org/project/PyAudio/) for recording and playing sound files. [A→Z+T](https://github.com/kent-rasmussen/azt) produces reports to the screen, plain text files, and [XLingPaper](https://software.sil.org/xlingpaper/) XML documents —which can in turn be easily converted to PDF and HTML, each with clickable links to sound files.
 
 ## How
-To get the program: `git clone https://github.com/kent-rasmussen/azt.git` (or download through `code` button)
+To get the program, run `git clone https://github.com/kent-rasmussen/azt.git` in a terminal, or download through the green `code` button on the main page.
 
 To run: `python main.py` (or `python3 main.py`, as appropriate for the (3+) version of python on your system)
 

@@ -8,6 +8,15 @@ If you have *any* trouble with anything on this page, please copy all error mess
 
 If you click on an icon and get a flash and nothing more, you may need to run python from a command terminal (`⊞ win`+`R` then type 'cmd' in Windows) to see what errors are keeping it from running.
 
+## Download A→Z+T
+To get the program, either
+
+- run `git clone https://github.com/kent-rasmussen/azt.git` (in terminal)
+    - You may need to install Git (e.g. [here](https://git-scm.com/download/win) or [here](https://desktop.github.com/)) first, or
+- click on the green `code` button on the [main page](https://github.com/kent-rasmussen/azt.git) for download options.
+
+If you download an archive (e.g., zip file), extract it so you have a folder of files. Either way, put it somewhere sensible, so you can find it later. If you use `git clone`, you can update in the future with `git pull`, and just download the changes since you last updated.
+
 ## Python
 *If* you need to install [Python](https://python.org) (you may already have it), you can find it [here](https://python.org).
 - If you have more than one version of python installed (e.g. 2.7 and 3.6.8), be sure to know how to run version 3 for this program (may be called `python` or `python3`).
@@ -40,15 +49,8 @@ If you have any problem installing this, it is not a problem for using AZT —yo
 ## XLingPaper and the XMLmind XML Editor (XXE)
 To make full use of A→Z+T's report output, I strongly advise you to be ready to use [XLingPaper](https://software.sil.org/xlingpaper/), if you are not already. It can be downloaded [here](https://software.sil.org/xlingpaper/download); this page also includes information on downloading [the XMLmind XML Editor (XXE)](http://www.xmlmind.com/xmleditor/), which is critical to most uses of [XLingPaper](https://software.sil.org/xlingpaper/).
 
-## A→Z+T
-To get the program:
 
-- `git clone https://github.com/kent-rasmussen/azt.git`
-    - You may need to install Git (e.g. [here](https://git-scm.com/download/win) or [here](https://desktop.github.com/)) first, or
-- click on the green `code` button on the main page for download options.
-
-If you download an archive (e.g., zip file), extract it so you have a folder of files. Either way, put it somewhere sensible, so you can find it later. If you use `git clone`, you can update in the future with `git pull`, and just download the changes since you last updated.
-
-To run: Assuming your system is configured correctly, just run `main.py`. Depending on your system, that may be just a click on the file (or a link to it on your desktop or wherever), or you may need to type that into a terminal. Your operating system should know to open `main.py` with python, but you can also explicitly tell it to with `python main.py`.
+## To run AZT
+Assuming your system is configured correctly, just run `main.py`. Depending on your system, that may be just a click on the file (or a link to it on your desktop or wherever), or you may need to type that into a terminal. Your operating system should know to open `main.py` with python, but you can also explicitly tell it to with `python main.py`.
 
 For usage information, see [USAGE](USAGE.md)
