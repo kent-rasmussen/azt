@@ -8043,7 +8043,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
             return
         else:
             tgroup=tgroups[0]
-    if tgroup is '' :
+    if tgroup == '' :
         log.info("Field removal succeeded! LIFT says '{}', = ''.".format(tgroup))
     else:
         log.error("Field removal failed! LIFT says '{}', != ''.".format(tgroup))
