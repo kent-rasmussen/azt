@@ -179,7 +179,7 @@ def printprofilesbyps(db):
     #     log.info(ps, db.profilesbyentry[ps])
     log.info("Syllable profiles actually in senses, by grammatical category:")
     for ps in db.profilesbysense.keys():
-        if ps is 'Invalid':
+        if ps == 'Invalid':
             continue
         log.info(ps, db.profilesbysense[ps])
 
