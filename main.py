@@ -3081,7 +3081,7 @@ class Check():
                                 )
         buttonFrame1.grid(column=0, row=4)
         buttonFrame1.wait_window(window)
-    def getframedtonegroup(self,window,event=None,guess=False):
+    def getframedtonegroup(self,window,event=None,guess=False,comparison=False):
         """Window is called in getsubcheck"""
         if (None in [self.type, self.ps, self.profile, self.name]
                 or self.type != 'T'):
@@ -3112,8 +3112,14 @@ class Check():
                           self.name)).grid(column=0, row=0)
                 window.scroll=Frame(window.frame)
                 window.scroll.grid(column=0, row=1)
-                buttonFrame1=ScrollingButtonFrame(window.scroll,g,
+                if comparison is False:
+                    buttonFrame1=ScrollingButtonFrame(window.scroll,g,
                                                 self.setsubcheck,
+                                                window=window
+                                                ).grid(column=0, row=4)
+                else:
+                    buttonFrame1=ScrollingButtonFrame(window.scroll,g,
+                                                self.setsubcheck_comparison,
                                                 window=window
                                                 ).grid(column=0, row=4)
     def getV(self,window,event=None):
