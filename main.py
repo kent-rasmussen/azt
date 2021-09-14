@@ -3669,7 +3669,7 @@ class Check():
             #     b_unverify=Button(vframe, text=t, command=unverify, anchor ='c')
             #     b_unverify.grid(row=0,column=2,padx=100)
         self.tonegroupbuttonframe(vframe,self.subcheck,sticky='w',
-                            row=0,column=0,playable=True,alwaysrefreshable=True)
+            row=0,column=0,playable=True,alwaysrefreshable=True,unsortable=True)
         self.runwindow.waitdone()
         sub_btn.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
@@ -3856,7 +3856,7 @@ class Check():
         groupbuttons.row=0 #rows for this frame
         for group in groups:
             self.tonegroupbuttonframe(groupbuttons,group,row=groupbuttons.row,
-                                        alwaysrefreshable=True) #notonegroup?
+                    unsortable=False,alwaysrefreshable=True) #notonegroup?
             groupbuttons.row+=1
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
         if len(status['groups']) != 1: #in that case, done below
@@ -3911,7 +3911,8 @@ class Check():
                     run. At the beginning of a run, all used groups have buttons
                     created above.)"""
                     self.tonegroupbuttonframe(groupbuttons,self.groupselected,
-                                    row=groupbuttons.row,alwaysrefreshable=True)
+                        unsortable=False,row=groupbuttons.row,
+                        alwaysrefreshable=True)
                     #adjust window for new button
                     scroll.windowsize()
                     log.debug('Group added: {}'.format(self.groupselected))
@@ -4139,7 +4140,7 @@ class Check():
         for group in self.status[self.type][self.ps][self.profile][self.name][
                                                                     'groups']:
             self.tonegroupbuttonframe(self.sorting,group,row,notonegroup=False,
-                                        canary=canary,canary2=canary2)
+                                unsortable=False,canary=canary,canary2=canary2)
             row+=1
         """If all is good, destroy this frame."""
         b=Button(self.sorting, text=oktext,
@@ -4178,7 +4179,7 @@ class Check():
                     row=len(self.status[self.type][self.ps][self.profile][
                                                         self.name]['groups'])+1
                 self.tonegroupbuttonframe(self.sorting,group1,row,
-                                        notonegroup=False,
+                                        notonegroup=False,unsortable=False,
                                         label=True, font=self.fonts['readbig'],
                                         canary=canary,canary2=canary2)
                 log.debug('self.tonegroups: {}; group1: {}'.format(self.status[
@@ -4488,11 +4489,11 @@ class Check():
                         font=self.fonts['instructions']
                         )
         b2.grid(column=0, row=1, sticky="ew")
-    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,playable=False,renew=False,**kwargs):
+    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,playable=False,renew=False,unsortable=False,**kwargs):
         def unsort():
             removesenseidfromsubcheck(self,bf,senseid)
             self.tonegroupbuttonframe(
-                parent=parent,
+                parent=parent,unsortable=unsortable,
                 group=group,notonegroup=notonegroup,
                 canary=canary,canary2=canary2,
                 row=row,column=column,label=label,
@@ -4554,9 +4555,10 @@ class Check():
                 b=Button(bf, text=text, cmd=self.player.play)
                 bt=ToolTip(b,_("Click to hear this utterance"))
                 senseid=framed['senseid']
-                t=_("<= This *word* doesn't belong; \nmark to sort again")
-                b_unsort=Button(bf,text = t, cmd=unsort, anchor ='c')
-                b_unsort.grid(row=0,column=2,padx=50)
+                if unsortable:
+                    t=_("<= This *word* doesn't belong; \nmark to sort again")
+                    b_unsort=Button(bf,text = t, cmd=unsort, anchor ='c')
+                    b_unsort.grid(row=0,column=2,padx=50)
             else: #Refresh if this should be playable but there no sound file.
                 if refreshcount < len(self.getexsall(group)):
                     self.tonegroupbuttonframe(
@@ -4564,7 +4566,7 @@ class Check():
                     group=group,notonegroup=notonegroup,
                     canary=canary,canary2=canary2,
                     row=row,column=column,label=label,
-                    alwaysrefreshable=alwaysrefreshable,
+                    alwaysrefreshable=alwaysrefreshable,unsortable=unsortable,
                     playable=playable,renew=True,refreshcount=refreshcount)
                 else:
                     self.tonegroupbuttonframe(
@@ -4572,7 +4574,7 @@ class Check():
                     group=group,notonegroup=notonegroup,
                     canary=canary,canary2=canary2,
                     row=row,column=column,label=True, #give up on buttons
-                    alwaysrefreshable=alwaysrefreshable,
+                    alwaysrefreshable=alwaysrefreshable,unsortable=unsortable,
                     playable=False, #give up on playing
                     renew=True,refreshcount=refreshcount)
                 return #In either case, stop making the current frame.
@@ -4588,7 +4590,7 @@ class Check():
         if example['n'] > 1 or alwaysrefreshable == True:
             bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck
                             cmd=lambda p=parent:self.tonegroupbuttonframe(
-                                parent=parent,
+                                parent=parent,unsortable=unsortable,
                                 group=group,notonegroup=notonegroup,
                                 canary=canary,canary2=canary2,
                                 row=row,column=column,label=label,
