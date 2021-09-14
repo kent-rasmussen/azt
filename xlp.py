@@ -105,6 +105,18 @@ class Report(object):
         # sure all IDs are in a form that XeLaTeX can handle.  The class name
         # is NonASCIIIDandIDREFConversion (and it's in the file named
         # NonASCIIIDandIDREFConversion.java).
+        # Hopefully this will be enough:
+        #     StringBuffer sb = new StringBuffer();
+    	# for (int i = 0; i < id.length(); i++) {
+    	#     int code = id.codePointAt(i);
+    	#     if (code > 127) {
+    	# 	sb.append((Integer.toHexString(code)).toUpperCase());
+    	#     } else {
+    	# 	sb.append(id.charAt(i));
+    	#     }
+    	# }
+    	# return sb.toString();
+        # }
         # Run this XeLaTeX form through xelatex.  The result is the PDF.
         #     DoTeXPDF (Linux/Mac) or DoTeXPDF.bat (Windows)
 
