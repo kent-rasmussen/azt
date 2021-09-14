@@ -1,7 +1,7 @@
 # Installing A→Z+T
 
 ## TL;DR
-You need Python 3+ and _one_ dependency ([PyAudio](https://pypi.org/project/PyAudio/)) to run A→Z+T. Download [this repository](https://github.com/kent-rasmussen/azt.git), and run `main.py`.
+You need Python 3+ and _one_ dependency ([PyAudio](https://pypi.org/project/PyAudio/)) to run A→Z+T. Download [this repository (https://github.com/kent-rasmussen/azt)](https://github.com/kent-rasmussen/azt.git), and run `main.py`.
 
 ## Error Tracking
 If you have *any* trouble with anything on this page, please copy all error messages and paste them into an Email to me and/or Google.
@@ -9,7 +9,7 @@ If you have *any* trouble with anything on this page, please copy all error mess
 If you click on an icon and get a flash and nothing more, you may need to run python from a command terminal (`⊞ win`+`R` then type 'cmd' in Windows) to see what errors are keeping it from running.
 
 ## Python
-If you need to install [Python](https://python.org), you can find it [here](https://python.org).
+*If* you need to install [Python](https://python.org) (you may already have it), you can find it [here](https://python.org).
 - If you have more than one version of python installed (e.g. 2.7 and 3.6.8), be sure to know how to run version 3 for this program (may be called `python` or `python3`).
 
 ### Installation on Microsoft Windows
@@ -29,6 +29,13 @@ This install allows for visual rendering of tone glyphs that aren't currently wo
 `python -m pip install --upgrade pip` (if your pip hasn't been upgraded recently)
 `python -m pip install --upgrade Pillow`
 If you have any problem installing this, it is not a problem for using AZT —you will simply see tone marks badly ligatured, like (˦ ˦ ˨ ˨ ˥ ˩ ˦) instead of like (˦˦ ˨˨ ˥˩˦).
+
+### Optional dependency: XeLaTeX
+[A→Z+T](https://github.com/kent-rasmussen/azt.git) will eventually try to produce the first draft of reports directly to PDF. In order for this to work, you must have [XeLaTeX](https://www.latex-project.org/get/) installed:
+- Debian/Ubuntu Linux: `sudo apt-get install texlive-xetex`
+- MS Windows: There are many ways to do this, e.g.,
+    - [https://www.latex-project.org/get/](https://www.latex-project.org/get/)
+    - [Google "XeLaTeX Windows"](https://www.google.com/search?q=XeLaTeX+Windows)
 
 ## XLingPaper and the XMLmind XML Editor (XXE)
 To make full use of A→Z+T's report output, I strongly advise you to be ready to use [XLingPaper](https://software.sil.org/xlingpaper/), if you are not already. It can be downloaded [here](https://software.sil.org/xlingpaper/download); this page also includes information on downloading [the XMLmind XML Editor (XXE)](http://www.xmlmind.com/xmleditor/), which is critical to most uses of [XLingPaper](https://software.sil.org/xlingpaper/).
