@@ -12,6 +12,33 @@ def tonerxs():
     return (re.compile('[˥˦˧˨˩]+', re.UNICODE),
             re.compile(' ', re.UNICODE),
             re.compile(' ', re.UNICODE))
+def texmllike(x):
+    repls={
+        '\\': "\\textbackslash{}",
+        '{': "\\{",
+        '}': "\\}",
+        '$': "\\textdollar{}",
+        '[': "{[}", #"\\textsquarebracketleft{}",
+        ']': "{]}", #"\\textsquarebracketright{}",
+        '&lt;': "\\textless{}",
+        '&le;': "\\textless{}=",
+        '&gt;': "\\textgreater{}",
+        '&ge;': "\\textgreater{}=",
+        '&amp;': "\\&amp;",
+        '#': "\\#",
+        '^': "\\^{}",
+        '_': "\\_",
+        '~': "\\textasciitilde{}",
+        '%': "\\%",
+        '|': "\\textbar{}",
+        '<': "\\textless{}",
+        '>': "\\textgreater{}"
+    }
+    for y in repls:
+        print("Replacing",y,"with",repls[y])
+        x=x.replace(y,repls[y])
+    x=re.sub('\\\\textless{}(([\?!/]|tex:)[^\\\\]*)\\\\textgreater{}',"<\\1>",x)
+    return x
 def glossifydefn(x):
     x=re.sub('^(([^() ]+)( [^() ]+){,2})(.*)*$','\\1',x) #up to three words, no parens
     x=re.sub(',$','',x)

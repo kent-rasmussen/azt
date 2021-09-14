@@ -88,7 +88,7 @@ class Report(object):
         # what they need to be for XeLaTeX .  The class name is
         # TeXMLLikeCharacterConversion (and it's in the file named
         # TeXMLLikeCharacterConversion.java).
-        newdom=texmllike(str(dom))
+        newdom=rx.texmllike(str(dom))
         with open(outfile+'c', 'wb') as f:
             f.write(newdom.encode('utf_8'))
         dom = lxml.etree.parse(outfile+'c')
@@ -262,30 +262,6 @@ class Linebreak(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'br')
 
-def texmllike(x):
-    repls={
-        '\\': "\\textbackslash{}",
-        '{': "\\{",
-        '}': "\\}",
-        '$': "\\textdollar{}",
-        '[': "\\textsquarebracketleft{}",
-        ']': "\\textsquarebracketright{}",
-        '&lt;': "\\textless{}",
-        '&le;': "\\textless{}=",
-        '&gt;': "\\textgreater{}",
-        '&ge;': "\\textgreater{}=",
-        '&amp;': "\\&amp;",
-        '#': "\\#",
-        '^': "\\^{}",
-        '_': "\\_",
-        '~': "\\textasciitilde{}",
-        '%': "\\%",
-        '|': "\\textbar{}"
-    }
-    for y in repls:
-        print("Replacing",y,"with",repls[y])
-        x=x.replace(y,repls[y])
-    return x
 if __name__ == "__main__":
     def _(x):
         return str(x)
