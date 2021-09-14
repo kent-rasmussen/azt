@@ -3596,6 +3596,7 @@ class Check():
         def comparisonbuttons():
             try: #successive runs
                 compframe.bf2.destroy()
+                tkinter.update_idletasks()
             except: #first run
                 compframeb=Frame(compframe)
                 compframeb.grid(row=1,column=0)
