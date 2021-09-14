@@ -3514,13 +3514,16 @@ class Check():
                 y=hash_sp.sub('#',x)
                 z=hash_nbsp.sub('.',y)
                 namehash.set(z)
-        def submitform():
-            updatelabels()
-            newtonevalue=formfield.get()
+        def updategroups():
             groups=self.status[self.type][self.ps][self.profile][self.name][
                                                                     'groups']
             done=self.status[self.type][self.ps][self.profile][self.name][
                                                                     'done']
+            return groups, done
+        def submitform():
+            updatelabels()
+            newtonevalue=formfield.get()
+            groups, done = updategroups()
             if newtonevalue == "":
                 noname=_("Give a name for this tone melody!")
                 log.debug(noname)
@@ -3588,6 +3591,7 @@ class Check():
         # def unverify(): I think we don't want this here, just unsort items.
         #     self.updatestatus(refresh=False)
         #     b_unverify.destroy()
+        groups, done = updategroups()
         if self.subcheck == None:
             self.getsubcheck(guess=True)
             if self.subcheck == None:
