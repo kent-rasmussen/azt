@@ -83,8 +83,8 @@ class Check():
         inherit(self)
         self.filename=file.getfilename()
         if not file.exists(self.filename):
-            log.error("Select a lexical database to check; exiting.")
-            exit()
+            log.error("Didn't select a lexical database to check; exiting.")
+            return
         filedir=file.getfilenamedir(self.filename)
         """We need this variable to make filenames for files that will be
         imported as python modules. To do that, they need to not have periods
