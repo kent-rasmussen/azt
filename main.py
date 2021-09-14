@@ -6912,28 +6912,31 @@ class Renderer(object):
         if fname in ["Andika","Andika SIL"]:
             file='Andika-{}.ttf'.format('R') #There's only this one
             filenostaves='Andika-tstv-{}.ttf'.format(fonttype)
-        if fname in ["Charis","Charis SIL"]:
+        elif fname in ["Charis","Charis SIL"]:
             file='CharisSIL-{}.ttf'.format(fonttype)
             filenostaves='CharisSIL-tstv-{}.ttf'.format(fonttype)
-        if fname in ["Gentium","Gentium SIL"]:
+        elif fname in ["Gentium","Gentium SIL"]:
             if fonttype == 'B':
                 fonttype='R'
             if fonttype == 'BI':
                 fonttype='I'
             file='Gentium-{}.ttf'.format(fonttype)
             filenostaves='Gentium-tstv-{}.ttf'.format(fonttype)
-        if fname in ["Gentium Basic","Gentium Basic SIL"]:
+        elif fname in ["Gentium Basic","Gentium Basic SIL"]:
             file='GenBas{}.ttf'.format(fonttype)
             filenostaves='GenBas-tstv-{}.ttf'.format(fonttype)
-        if fname in ["Gentium Book Basic","Gentium Book Basic SIL"]:
+        elif fname in ["Gentium Book Basic","Gentium Book Basic SIL"]:
             file='GenBkBas{}.ttf'.format(fonttype)
             filenostaves='GenBkBas-tstv-{}.ttf'.format(fonttype)
-        if fname in ["DejaVu Sans"]:
+        elif fname in ["DejaVu Sans"]:
             fonttype=fonttype.replace('B','Bold').replace('I','Oblique').replace('R','')
             if len(fonttype)>0:
                 fonttype='-'+fonttype
             file='DejaVuSans{}.ttf'.format(fonttype)
             filenostaves='DejaVuSans-tstv-{}.ttf'.format(fonttype)
+        else:
+            log.error("Sorry, I have no info on font {}".format(fname))
+            return
         try:
             font = PIL.ImageFont.truetype(font=filenostaves, size=fsize)
             log.log(2,"Using No Staves font")
