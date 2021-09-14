@@ -29,10 +29,20 @@
 - find ways to speed up tone reports:
     - multithreading?  !(CPU limited)
 - make dictionary of images created with PIL, so they aren't continually remade (source if already there)
+- distinguish between users and their functions:
+    - language:
+        - sort, etc.
+        - record
+        - make reports
+    - linguistics
+        - transcribe (but not sort, etc)
 
 ## Migrate further toward OOP
 - mark a sensid to sort again without losing the sound file attached to it.
 - distinguish between frames to do for sorting (with unsorted data) and frames to do for other tasks...
+- make 'next' go to next frame, if done sorting, or not, as appropriate
+- make tone analysis one thing, and tone report another thing, and call analysis if not done since data was last added/modified (store this info somewhere, clear after analysis completes)
+    -set report for different forms separately (e.g., making images for screen may not be useful for some, yet takes time)
 - Consider making the following objects?
     - fn to process kwargs w/default (currently hardcoded in buttons/labels,etc.)
     - ErrorWindow class (tryNAgain, maybesort ...)
@@ -94,6 +104,7 @@
 - add progress of recording (on its own tab?)
 
 ## For Future Versions
+- Add comparison group button for rename framed group window (to help with transcriptions)
 - consider adding actual groups by datapoint for non-default tone reports
     - I.e., which data points are different
 - think through ease of use questions:
