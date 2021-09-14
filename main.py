@@ -3588,6 +3588,39 @@ class Check():
                 self.nextprofile()
                 log.debug("self.profile: {}".format(self.profile))
                 self.renamegroup(reverify=reverify)
+        def setsubcheck_comparison():
+            w=self.getsubcheck(comparison=True) #this returns its window
+            w.wait_window(w)
+            comparisonbuttons()
+        def comparisonbuttons():
+            try: #successive runs
+                bf2.destroy()
+            except: #first run
+                compframeb=Frame(compframe)
+                compframeb.grid(row=1,column=0)
+            t=_('Compare with another group')
+            if (hasattr(self, 'subcheck_comparison')
+                    and self.subcheck_comparison in groups and
+                    self.subcheck_comparison != self.subcheck):
+                log.info("Making comparison buttons for group {} now".format(
+                                                    self.subcheck_comparison))
+                t=_('Compare with another group ({})').format(
+                                                    self.subcheck_comparison)
+                bf2=self.tonegroupbuttonframe(compframeb,
+                    self.subcheck_comparison,sticky='w',row=0,column=0,
+                    playable=True,unsortable=False,alwaysrefreshable=True)
+            elif not hasattr(self, 'subcheck_comparison'):
+                log.info("No comparison found !")
+            elif self.subcheck_comparison not in groups:
+                log.info("Comparison ({}) not in group list ({})"
+                            "".format(self.subcheck_comparison,groups))
+            elif self.subcheck_comparison == self.subcheck:
+                log.info("Comparison ({}) same as subgroup ({}); not showing."
+                            "".format(self.subcheck_comparison,self.subcheck))
+            else:
+                log.info("This should never happen (renamegroup/"
+                            "comparisonbuttons)")
+            sub_c['text']=t
         # def unverify(): I think we don't want this here, just unsort items.
         #     self.updatestatus(refresh=False)
         #     b_unverify.destroy()
