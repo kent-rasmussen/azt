@@ -1147,7 +1147,7 @@ class Check():
         log.info("Setting {} variable with value: {}".format(attribute,choice))
         if window is not None:
             window.destroy()
-        if getattr(self,attribute) != choice: #only set if different
+        if not hasattr(self,attribute) or getattr(self,attribute) != choice: #only set if different
             setattr(self,attribute,choice)
             """If there's something getting reset that shouldn't be, remove it
             from self.defaultstoclear[attribute]"""
@@ -1195,6 +1195,11 @@ class Check():
         log.debug("subcheck: {}".format(self.subcheck))
         self.set('subcheck',choice,window)
         log.debug("subcheck: {}".format(self.subcheck))
+    def setsubcheck_comparison(self,choice,window):
+        if hasattr(self,'subcheck_comparison'):
+            log.debug("subcheck_comparison: {}".format(self.subcheck_comparison))
+        self.set('subcheck_comparison',choice,window,refresh=False)
+        log.debug("subcheck_comparison: {}".format(self.subcheck_comparison))
     def setcheck(self,choice,window):
         self.set('name',choice,window)
     def setglosslang(self,choice,window):
@@ -1205,7 +1210,7 @@ class Check():
         self.set('ps',choice,window)
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
-    def getsubcheck(self,guess=False,event=None):
+    def getsubcheck(self,guess=False,event=None,comparison=False):
         log.info("this sets the subcheck")
         if self.type == "V":
             windowV=Window(self.frame,title=_('Select Vowel'))
@@ -1225,8 +1230,10 @@ class Check():
             self.checkcheck()
         elif self.type == "T":
             windowT=Window(self.frame,title=_('Select Framed Tone Group'))
-            self.getframedtonegroup(window=windowT,guess=guess)
-            windowT.wait_window(window=windowT)
+            self.getframedtonegroup(window=windowT,guess=guess,
+                                                        comparison=comparison)
+            # windowT.wait_window(window=windowT) #?!?
+        return windowT #so others can wait for this
     def getps(self,event=None):
         log.info("Asking for ps...")
         window=Window(self.frame, title=_('Select Grammatical Category'))
@@ -1303,6 +1310,7 @@ class Check():
                         'subcheck':[
                             'regexCV'
                             ],
+                        'subcheck_comparison':[],
                         'profile':[
                             # 'name'
                             ],
@@ -1335,6 +1343,7 @@ class Check():
                                 'name',
                                 'regexCV',
                                 'subcheck',
+                                'subcheck_comparison',
                                 'additionalps',
                                 'entriestoshow',
                                 'additionalprofiles',
