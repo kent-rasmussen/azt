@@ -3595,7 +3595,7 @@ class Check():
             comparisonbuttons()
         def comparisonbuttons():
             try: #successive runs
-                bf2.destroy()
+                compframe.bf2.destroy()
             except: #first run
                 compframeb=Frame(compframe)
                 compframeb.grid(row=1,column=0)
@@ -3607,7 +3607,7 @@ class Check():
                                                     self.subcheck_comparison))
                 t=_('Compare with another group ({})').format(
                                                     self.subcheck_comparison)
-                bf2=self.tonegroupbuttonframe(compframeb,
+                compframe.bf2=self.tonegroupbuttonframe(compframeb,
                     self.subcheck_comparison,sticky='w',row=0,column=0,
                     playable=True,unsortable=False,alwaysrefreshable=True)
             elif not hasattr(self, 'subcheck_comparison'):
