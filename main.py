@@ -6449,7 +6449,7 @@ class MainApplication(Frame):
                         command=lambda x=check:Check.addmorpheme(x))
         advancedmenu.add_command(label=_("Add Tone frame"),
                         command=lambda x=check:Check.addframe(x))
-        advancedmenu.add_command(label=_("Name Framed Tone Group"),
+        advancedmenu.add_command(label=_("Transcribe/(re)name Framed Tone Group"),
                                 command=lambda x=check:Check.renamegroup(x))
         advtonemenu = Menu(self.menubar, tearoff=0)
         advancedmenu.add_cascade(label=_("Tone Reports"), menu=advtonemenu)
