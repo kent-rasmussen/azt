@@ -3551,6 +3551,7 @@ class Check():
                 self.storesettingsfile(setting='status')
             else: #move on, but notify in logs
                 log.info("User selected ‘{}’, but with no change.".format(ok))
+            delattr(self,'subcheck_comparison') # in either case
             self.runwindow.destroy()
             if reverify == True: #don't do this if running from menus
                 self.verifyT(menu=menu)
