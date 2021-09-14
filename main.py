@@ -3663,8 +3663,10 @@ class Check():
         t=_('{}\n(and finish)'.format(ok))
         sub_btn=Button(entryframe,text = t, command = done, anchor ='c')
         sub_btn.grid(row=5,column=0,sticky='',padx=padx,pady=pady)
-        vframe=Frame(self.runwindow.frame)
-        vframe.grid(row=6,column=0,sticky='w')
+        buttonframes=Frame(self.runwindow.frame)
+        buttonframes.grid(row=6,column=0,sticky='w')
+        vframe=Frame(buttonframes)
+        vframe.grid(row=0,column=0,sticky='w')
         if reverify == False: #don't give this option if verifying
             checkstat=self.status[self.type][self.ps][self.profile][self.name]
             g=unlist(checkstat['groups'])
