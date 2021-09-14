@@ -3689,6 +3689,14 @@ class Check():
             #     b_unverify.grid(row=0,column=2,padx=100)
         self.tonegroupbuttonframe(vframe,self.subcheck,sticky='w',
             row=0,column=0,playable=True,alwaysrefreshable=True,unsortable=True)
+        compframe=Frame(buttonframes,highlightthickness=10,
+                    highlightbackground=self.theme['white']) #no hlfg here
+        compframe.grid(row=0,column=1,sticky='w')
+        t=_('Compare with another group')
+        sub_c=Button(compframe,text = t,command = setsubcheck_comparison,
+                anchor ='c')#, wraplength=int(self.frame.winfo_screenwidth()/6))
+        sub_c.grid(row=0,column=0)#,sticky='',padx=padx,pady=pady)
+        comparisonbuttons()
         self.runwindow.waitdone()
         sub_btn.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
