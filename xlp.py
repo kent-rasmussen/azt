@@ -102,7 +102,7 @@ class Report(object):
                     outdir, texfile]
         try:
             subprocess.call(xetexargs,shell=False)
-            subprocess.call(xetexargs,shell=False)
+            # subprocess.call(xetexargs,shell=False) #does twice help?
             exts=['out','aux','log']
             exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
             for ext in exts:
