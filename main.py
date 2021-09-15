@@ -3634,6 +3634,12 @@ class Check():
         groupsthere, groupsdone = updategroups()
         notthisgroup=groupsthere[:]
         if self.subcheck in groupsthere:
+            notthisgroup.remove(self.subcheck)
+        else:
+            log.error(_("current group ({}) doesn't seem to be in list of "
+                "groups: ({})\n\tThis may be because we're looking for data that "
+                "isn't there, or maybe a setting is off.".format(self.subcheck,
+                                                                groupsthere)))
         if self.subcheck == None:
             self.getsubcheck(guess=True)
             if self.subcheck == None:
