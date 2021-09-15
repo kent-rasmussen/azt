@@ -4664,7 +4664,7 @@ class Check():
                                 alwaysrefreshable=alwaysrefreshable,
                                 playable=playable,renew=True),
                             text=str(example['n']),
-                            compound='left',
+                            compound='center',
                             **kwargs)
             bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
             bct=ToolTip(bc,_("Change example word"))
