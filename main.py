@@ -3599,9 +3599,6 @@ class Check():
             comparisonbuttons()
         def comparisonbuttons():
             try: #successive runs
-                compframe.bf2.destroy()
-                tkinter.update_idletasks()
-                log.info("Comparison frame destroyed!")
             except: #first run
                 log.info("Problem destroying comparison frame, making...")
                 compframeb=Frame(compframe)
