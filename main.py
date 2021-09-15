@@ -3491,6 +3491,10 @@ class Check():
                     framed['senseid']=self.exs[value]
                     output['framed']=framed #this includes [n], above
                     return output
+                else:
+                    output=self.getex(value=value,notonegroup=notonegroup,
+                                truncdefn=truncdefn,renew=True)
+                    return output
         for i in range(len(senseids)): #just keep trying until you succeed
             senseid=senseids[randint(0, len(senseids))-1]
             framed=self.getframeddata(senseid,notonegroup=notonegroup,
