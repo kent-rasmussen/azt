@@ -1,7 +1,7 @@
 # Installing A→Z+T
 
 ## TL;DR
-You need Python 3+ and _one_ dependency ([PyAudio](https://pypi.org/project/PyAudio/)) to run A→Z+T. Download [this repository (https://github.com/kent-rasmussen/azt)](https://github.com/kent-rasmussen/azt.git), and run `main.py`.
+You need Python 3+ and _one_ dependency ([PyAudio](https://pypi.org/project/PyAudio/)) to run A→Z+T. Download [this repository (https://github.com/kent-rasmussen/azt)](https://github.com/kent-rasmussen/azt.git), and run `main.py`. If this is enough information for you, great; if not, please read this whole document.
 
 ## Error Tracking
 If you have *any* trouble with anything on this page, please copy all error messages and paste them into an Email to me and/or Google.
