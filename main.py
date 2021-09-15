@@ -1327,6 +1327,7 @@ class Check():
                         'interpret':[],
                         'adnlangnames':[],
                         'exs':[],
+                        'hidegroupnames':[],
                         'maxprofiles':[]
                         }
     def settingsbyfile(self):
@@ -1354,6 +1355,7 @@ class Check():
                                 'adnlangnames',
                                 'exs',
                                 'maxpss',
+                                'hidegroupnames',
                                 'maxprofiles'
                                 ]},
             'profiledata':{
@@ -2611,7 +2613,8 @@ class Check():
                     log.log(3,"Integer {} fine".format(i))
                 except:
                     log.log(3,"Problem with integer {}".format(i))
-                    return nn(x,oneperline=True) #if any is not an integer, all.
+                    if not self.hidegroupnames:
+                        return nn(x,oneperline=True) #if any is not an integer, all.
             return len(x) #to show counts only
         def updateprofilename(profile,name):
             self.set('profile',profile,refresh=False)
@@ -2710,7 +2713,8 @@ class Check():
                                                                     donenum)))
                         log.log(3,"Total groups: {}/{}".format(totalnum,type(
                                                                     totalnum)))
-                        if type(totalnum) is int and type(donenum) is int:
+                        if self.hidegroupnames or (type(totalnum) is int and
+                                                        type(donenum) is int):
                             donenum="{} (+{})".format(totalnum,donenum)
                             log.log(3,"Total groups found: {}".format(donenum))
                         else:
@@ -6708,6 +6712,12 @@ class MainApplication(Frame):
         self.setcontext()
         if hasattr(self,'check'):
             self.check.checkcheck() #redraw the main window
+    def hidegroupnames(self):
+        self.check.set('hidegroupnames', True, refresh=True)
+        self.setcontext()
+    def showgroupnames(self):
+        self.check.set('hidegroupnames', False, refresh=True)
+        self.setcontext()
     def setmasterconfig(self,program):
         self.parent.debug=False #needed?
         """Configure variables for the root window (master)"""
@@ -6736,6 +6746,10 @@ class MainApplication(Frame):
             self.context.menuitem(_("Smaller Fonts"),self.setfontssmaller)
         else:
             self.context.menuitem(_("Larger Fonts"),self.setfontsdefault)
+        if self.check.hidegroupnames:
+            self.context.menuitem(_("Show group names"),self.showgroupnames)
+        else:
+            self.context.menuitem(_("Hide group names"),self.hidegroupnames)
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
