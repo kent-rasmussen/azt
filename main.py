@@ -6642,8 +6642,11 @@ class MainApplication(Frame):
         self.parent.photo={}
         def mkimg(name,relurl):
             imgurl=file.fullpathname(relurl)
-            self.parent.photo[name] = tkinter.PhotoImage(
+            if x != y: # should scale if off by >2% either way
+                self.parent.photo[name] = tkinter.PhotoImage(
                                         file = imgurl).zoom(x,x).subsample(y,y)
+            else: #if close enough...
+                self.parent.photo[name] = tkinter.PhotoImage(file = imgurl)
         for name,relurl in [ ('transparent','images/AZT stacks6.png'),
                             ('small','images/AZT stacks6_sm.png'),
                             ('icon','images/AZT stacks6_icon.png'),
