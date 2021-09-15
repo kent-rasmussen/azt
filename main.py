@@ -3520,22 +3520,22 @@ class Check():
                 z=hash_nbsp.sub('.',y)
                 namehash.set(z)
         def updategroups():
-            groups=self.status[self.type][self.ps][self.profile][self.name][
-                                                                    'groups']
-            done=self.status[self.type][self.ps][self.profile][self.name][
+            groupsthere=self.status[self.type][self.ps][self.profile][
+                                                        self.name]['groups']
+            groupsdone=self.status[self.type][self.ps][self.profile][self.name][
                                                                     'done']
-            return groups, done
+            return groupsthere, groupsdone
         def submitform():
             updatelabels()
             newtonevalue=formfield.get()
-            groups, done = updategroups()
+            groupsthere, groupsdone = updategroups()
             if newtonevalue == "":
                 noname=_("Give a name for this tone melody!")
                 log.debug(noname)
                 errorlabel['text'] = noname
                 return 1
             if newtonevalue != self.subcheck: #only make changes!
-                if newtonevalue in groups :
+                if newtonevalue in groupsthere :
                     deja=_("Sorry, there is already a group with "
                                     "that label; If you want to join the "
                                     "groups, give it a different name now, "
@@ -3544,13 +3544,13 @@ class Check():
                     errorlabel['text'] = deja
                     return 1
                 self.updatebysubchecksenseid(self.subcheck,newtonevalue)
-                i=groups.index(self.subcheck) #put new value in the same place.
-                groups.remove(self.subcheck)
-                groups.insert(i,newtonevalue)
-                if self.subcheck in done: #if verified, change the name there, too
-                    i=done.index(self.subcheck) #put new value in the same place.
-                    done.remove(self.subcheck)
-                    done.insert(i,newtonevalue)
+                i=groupsthere.index(self.subcheck) #put new value in the same place.
+                groupsthere.remove(self.subcheck)
+                groupsthere.insert(i,newtonevalue)
+                if self.subcheck in groupsdone: #if verified, change the name there, too
+                    i=groupsdone.index(self.subcheck) #put new value in the same place.
+                    groupsdone.remove(self.subcheck)
+                    groupsdone.insert(i,newtonevalue)
                 self.subcheck=newtonevalue
                 self.getsubchecksprioritized() #We've changed this, so update
                 self.storesettingsfile(setting='status')
@@ -3606,7 +3606,7 @@ class Check():
                 compframeb.grid(row=1,column=0)
             t=_('Compare with another group')
             if (hasattr(self, 'subcheck_comparison')
-                    and self.subcheck_comparison in groups and
+                    and self.subcheck_comparison in groupsthere and
                     self.subcheck_comparison != self.subcheck):
                 log.info("Making comparison buttons for group {} now".format(
                                                     self.subcheck_comparison))
@@ -3617,9 +3617,9 @@ class Check():
                     playable=True,unsortable=False,alwaysrefreshable=True)
             elif not hasattr(self, 'subcheck_comparison'):
                 log.info("No comparison found !")
-            elif self.subcheck_comparison not in groups:
+            elif self.subcheck_comparison not in groupsthere:
                 log.info("Comparison ({}) not in group list ({})"
-                            "".format(self.subcheck_comparison,groups))
+                            "".format(self.subcheck_comparison,groupsthere))
             elif self.subcheck_comparison == self.subcheck:
                 log.info("Comparison ({}) same as subgroup ({}); not showing."
                             "".format(self.subcheck_comparison,self.subcheck))
@@ -3630,7 +3630,9 @@ class Check():
         # def unverify(): I think we don't want this here, just unsort items.
         #     self.updatestatus(refresh=False)
         #     b_unverify.destroy()
-        groups, done = updategroups()
+        groupsthere, groupsdone = updategroups()
+        notthisgroup=groupsthere[:]
+        if self.subcheck in groupsthere:
         if self.subcheck == None:
             self.getsubcheck(guess=True)
             if self.subcheck == None:
