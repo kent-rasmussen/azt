@@ -3601,10 +3601,12 @@ class Check():
             comparisonbuttons()
         def comparisonbuttons():
             try: #successive runs
+                compframe.compframeb.destroy()
+                log.info("Comparison frameb destroyed!")
             except: #first run
                 log.info("Problem destroying comparison frame, making...")
-                compframeb=Frame(compframe)
-                compframeb.grid(row=1,column=0)
+            compframe.compframeb=Frame(compframe)
+            compframe.compframeb.grid(row=1,column=0)
             t=_('Compare with another group')
             if (hasattr(self, 'subcheck_comparison')
                     and self.subcheck_comparison in groupsthere and
@@ -3613,7 +3615,7 @@ class Check():
                                                     self.subcheck_comparison))
                 t=_('Compare with another group ({})').format(
                                                     self.subcheck_comparison)
-                compframe.bf2=self.tonegroupbuttonframe(compframeb,
+                compframe.bf2=self.tonegroupbuttonframe(compframe.compframeb,
                     self.subcheck_comparison,sticky='w',row=0,column=0,
                     playable=True,unsortable=False,alwaysrefreshable=True)
             elif not hasattr(self, 'subcheck_comparison'):
