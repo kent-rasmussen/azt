@@ -3656,23 +3656,21 @@ class Check():
         padx=50
         pady=10
         title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
-                        ).format(self.ps,self.profile,self.subcheck,
-                                    self.name)
+                        ).format(self.ps,self.profile,self.subcheck,self.name)
         self.getrunwindow(title=title)
         menu=self.runwindow.removeverifymenu()
-        Label(self.runwindow.frame,text=title,font=self.fonts['title'],
-                justify=tkinter.LEFT,anchor='c'
-                ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
+        titlel=Label(self.runwindow.frame,text=title,font=self.fonts['title'])
+        titlel.grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
         getformtext=_("What the new name do you want to call this surface tone "
                         "group? A label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
         getform=Label(self.runwindow.frame,text=getformtext,
                 font=self.fonts['read'],norender=True)
-        getform.grid(row=1,column=0,padx=padx,pady=pady)
-        entryframe=Frame(self.runwindow.frame)
-        entryframe.grid(row=2,column=0,sticky='')
-        buttonframe=Frame(entryframe)
-        buttonframe.grid(row=2,column=0,sticky='')
+        getform.grid(row=1,column=0,sticky='ew',padx=padx,pady=pady)
+        inputframe=Frame(self.runwindow.frame)
+        inputframe.grid(row=2,column=0,sticky='')
+        buttonframe=Frame(inputframe)
+        buttonframe.grid(row=0,column=0,sticky='new')
         tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
         spaces=[' ',' ','']
         for char in tonechars+spaces:
@@ -3699,49 +3697,47 @@ class Check():
             Button(buttonframe,text = text,command = lambda x=char:addchar(x),
                     anchor ='c').grid(row=row,column=column,sticky='nsew',
                                     columnspan=columnspan)
-        formfield = EntryField(entryframe,textvariable=newname)
-        formfield.grid(row=3,column=0)
+        g=nn(notthisgroup,twoperline=True)
+        log.info("{},{}".format(groupsthere,g))
+        groupslabel=Label(inputframe,text='Other Groups:\n{}'.format(g))
+        groupslabel.grid(row=0,column=1,sticky='new',padx=padx,rowspan=2)
+        fieldframe=Frame(inputframe)
+        fieldframe.grid(row=1,column=0,sticky='new')
+        formfield = EntryField(fieldframe,textvariable=newname)
+        formfield.grid(row=1,column=0,sticky='new')
         formfield.bind('<KeyRelease>', updatelabels) #apply function after key
-        errorlabel=Label(entryframe,text='',fg='red')
-        errorlabel.grid(row=3,column=1,sticky='ew',pady=20,columnspan=2)
-        formhashlabel=Label(entryframe,textvariable=namehash)
-        formhashlabel.grid(row=4,column=0,sticky='ew')
+        errorlabel=Label(fieldframe,text='',fg='red',
+                            wraplength=int(self.frame.winfo_screenwidth()/3))
+        errorlabel.grid(row=1,column=1,sticky='nsew')
+        formhashlabel=Label(fieldframe,textvariable=namehash, anchor ='c')
+        formhashlabel.grid(row=2,column=0,sticky='new')
+        fieldframe.grid_columnconfigure(0, weight=1)
         updatelabels()
-        ok=_('Use this name')
-        t=_('{}\n(and finish)'.format(ok))
-        sub_btn=Button(entryframe,text = t, command = done, anchor ='c')
-        sub_btn.grid(row=5,column=0,sticky='',padx=padx,pady=pady)
-        buttonframes=Frame(self.runwindow.frame)
-        buttonframes.grid(row=6,column=0,sticky='w')
-        vframe=Frame(buttonframes)
-        vframe.grid(row=0,column=0,sticky='w')
+        responseframe=Frame(self.runwindow.frame)
+        responseframe.grid(row=3,column=0,sticky='',padx=padx,pady=pady)
+        ok=_('Use this name and go to:')
+        sub_lbl=Label(responseframe,text = ok, font=self.fonts['read'],)
+        sub_lbl.grid(row=0,column=0,sticky='ns')
+        t=_('main screen')
+        sub_btn=Button(responseframe,text = t, command = done, anchor ='c')
+        sub_btn.grid(row=0,column=1,sticky='ns')
         if reverify == False: #don't give this option if verifying
-            checkstat=self.status[self.type][self.ps][self.profile][self.name]
-            g=unlist(checkstat['groups'])
-            t=_('{}, and give me another group:\n({})'.format(ok,g))
-            sub_btn=Button(entryframe,text = t,command = next,anchor ='c',
-                            wraplength=int(self.frame.winfo_screenwidth()/6))
-            sub_btn.grid(row=5,column=1,sticky='',padx=padx,pady=pady)
-            t=_('{}, and give me another tone frame'.format(ok))
-            cont=Frame(entryframe)
-            cont.grid(row=5,column=2)
-            sub_f=Button(cont,text = t,command = nextframe,anchor ='c',
-                            wraplength=int(self.frame.winfo_screenwidth()/6))
-            sub_f.grid(row=0,column=0)#,sticky='',padx=padx,pady=pady)
-            t=_('{}, and give me another syllable profile'.format(ok))
-            sub_p=Button(cont,text = t,command = nextprofile,anchor ='c',
-                            wraplength=int(self.frame.winfo_screenwidth()/6))
-            sub_p.grid(row=1,column=0)#,sticky='',padx=padx,pady=pady)
-            # t=_("<= Mark this *whole*group* \nto be verified again")
-            # done=checkstat['done']
-            # if self.subcheck in done:
-            #     b_unverify=Button(vframe, text=t, command=unverify, anchor ='c')
-            #     b_unverify.grid(row=0,column=2,padx=100)
-        self.tonegroupbuttonframe(vframe,self.subcheck,sticky='w',
+            t=_('next group')
+            sub_btn=Button(responseframe,text = t,command = next,anchor ='c')
+            sub_btn.grid(row=0,column=2,sticky='ns')
+            t=_('next tone frame')
+            sub_f=Button(responseframe,text = t,command = nextframe)
+            sub_f.grid(row=0,column=3,sticky='ns')
+            t=_('next syllable profile')
+            sub_p=Button(responseframe,text = t,command = nextprofile)
+            sub_p.grid(row=0,column=4,sticky='ns')
+        examplesframe=Frame(self.runwindow.frame)
+        examplesframe.grid(row=4,column=0,sticky='')
+        self.tonegroupbuttonframe(examplesframe,self.subcheck,sticky='w',
             row=0,column=0,playable=True,alwaysrefreshable=True,unsortable=True)
-        compframe=Frame(buttonframes,highlightthickness=10,
+        compframe=Frame(examplesframe,highlightthickness=10,
                     highlightbackground=self.theme['white']) #no hlfg here
-        compframe.grid(row=0,column=1,sticky='w')
+        compframe.grid(row=0,column=1,sticky='e')
         t=_('Compare with another group')
         sub_c=Button(compframe,text = t,command = setsubcheck_comparison)
         sub_c.grid(row=0,column=0)
