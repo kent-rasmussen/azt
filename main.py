@@ -2090,7 +2090,8 @@ class Check():
                     int(tonegroup)
                 except:
                     output['tonegroup']=tonegroup #this is only for named groups
-        if (self.glosslang2 is None) and (self.glosslang2 in gloss):
+        if self.glosslang2 in gloss and (self.glosslang2 is None or
+                                        gloss[self.glosslang2] is None):
             del gloss[self.glosslang2] #remove this now, and lose checks later
         output[self.analang]=None
         for lang in list(gloss.keys())+[self.glosslang]:
@@ -2119,11 +2120,11 @@ class Check():
         if voice is not None:
             output[self.audiolang]=voice
         text=[str(output[self.analang]),"‘"+str(output[self.glosslang])+"’"]
-        if self.glosslang2 in output:
+        if self.glosslang2 in output and output[self.glosslang2] is not None:
             text+=["‘"+str(output[self.glosslang2])+"’"]
         if 'tonegroup' in output:
             text=[str(output['tonegroup'])]+text
-        output['formatted']='\t'.join(text)
+        output['formatted']=' '.join(text) #used to be '\t'...
         if None in output:
             log.error("Apparently None is an output key! {}".format(output))
         return output
