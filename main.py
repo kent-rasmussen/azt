@@ -8147,6 +8147,7 @@ def main():
     # root.className="azt"
     # root.winfo_class("azt")
     # log.info(root.winfo_class())
+    """Translation starts here:"""
     myapp = MainApplication(root,program)
     myapp.mainloop()
     logshutdown() #in logsetup
