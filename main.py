@@ -4564,10 +4564,13 @@ class Check():
                 group=group,notonegroup=notonegroup,
                 canary=canary,canary2=canary2,
                 row=row,column=column,label=label,
-                alwaysrefreshable=alwaysrefreshable,
-                playable=playable,renew=True,refreshcount=refreshcount)
+                alwaysrefreshable=alwaysrefreshable, font=font,
+                playable=playable,renew=True,refreshcount=refreshcount,**kwargs)
         if 'font' not in kwargs:
-            kwargs['font']=self.fonts['read']
+            font=self.fonts['read']
+        else:
+            font=kwargs['font']
+            del kwargs['font']
         if 'anchor' not in kwargs:
             kwargs['anchor']='w'
         if 'notonegroup' not in kwargs:
@@ -4606,7 +4609,7 @@ class Check():
         bf=Frame(parent)
         bf.grid(column=column, row=row, sticky=sticky)
         if label==True:
-            b=Label(bf, text=text, **kwargs)
+            b=Label(bf, text=text, font=font, **kwargs)
             b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
         elif playable == True:
             url=RecordButtonFrame.makefilenames(None,self, #not Classy...
@@ -4619,7 +4622,7 @@ class Check():
                 self.soundsettingscheck()
                 self.player=sound.SoundFilePlayer(diredurl,self.pyaudio,self.
                                                                 soundsettings)
-                b=Button(bf, text=text, cmd=self.player.play)
+                b=Button(bf, text=text, cmd=self.player.play, font=font)
                 bt=ToolTip(b,_("Click to hear this utterance"))
                 senseid=framed['senseid']
                 if unsortable:
@@ -4632,23 +4635,24 @@ class Check():
                     parent=parent,
                     group=group,notonegroup=notonegroup,
                     canary=canary,canary2=canary2,
-                    row=row,column=column,label=label,
+                    row=row,column=column,label=label, font=font,
                     alwaysrefreshable=alwaysrefreshable,unsortable=unsortable,
-                    playable=playable,renew=True,refreshcount=refreshcount)
+                    playable=playable,renew=True,refreshcount=refreshcount,
+                                                                    **kwargs)
                 else:
                     self.tonegroupbuttonframe(
                     parent=parent,
                     group=group,notonegroup=notonegroup,
-                    canary=canary,canary2=canary2,
+                    canary=canary,canary2=canary2, font=font,
                     row=row,column=column,label=True, #give up on buttons
                     alwaysrefreshable=alwaysrefreshable,unsortable=unsortable,
                     playable=False, #give up on playing
-                    renew=True,refreshcount=refreshcount)
+                    renew=True,refreshcount=refreshcount,**kwargs)
                 return #In either case, stop making the current frame.
             b.grid(column=1, row=0, sticky="nesw", ipady=15) #Inside the buttons
 
         else:
-            b=Button(bf, text=text,
+            b=Button(bf, text=text, font=font,
                     cmd=lambda p=parent:returndictnsortnext(self,p,
                                         {'groupselected':group},
                                         canary=canary,canary2=canary2),**kwargs)
@@ -4659,10 +4663,10 @@ class Check():
                             cmd=lambda p=parent:self.tonegroupbuttonframe(
                                 parent=parent,unsortable=unsortable,
                                 group=group,notonegroup=notonegroup,
-                                canary=canary,canary2=canary2,
+                                canary=canary,canary2=canary2, font=font,
                                 row=row,column=column,label=label,
                                 alwaysrefreshable=alwaysrefreshable,
-                                playable=playable,renew=True),
+                                playable=playable,renew=True,**kwargs),
                             text=str(example['n']),
                             compound='center',
                             **kwargs)
