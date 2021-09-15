@@ -3617,7 +3617,8 @@ class Check():
                                                     self.subcheck_comparison)
                 compframe.bf2=self.tonegroupbuttonframe(compframe.compframeb,
                     self.subcheck_comparison,sticky='w',row=0,column=0,
-                    playable=True,unsortable=False,alwaysrefreshable=True)
+                    playable=True,unsortable=False,alwaysrefreshable=True,
+                    font=self.fonts['default'])
             elif not hasattr(self, 'subcheck_comparison'):
                 log.info("No comparison found !")
             elif self.subcheck_comparison not in groupsthere:
