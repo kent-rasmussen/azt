@@ -8136,8 +8136,18 @@ def main():
     wmmx=wmm/508
     log.info("screen height: {} ({}mm, ratio: {}/{})".format(h,hmm,hx,hmmx))
     log.info("screen width: {} ({}mm, ratio: {}/{})".format(w,wmm,wx,wmmx))
-    program['scale']=x=min(hx,wx,hmmx,wmmx)
-    log.info("smallest ratio: {} (this will be used to scale stuff.)".format(x))
+    xmin=min(hx,wx,hmmx,wmmx)
+    xmax=max(hx,wx,hmmx,wmmx)
+    if xmax-1 > 1-xmin:
+        program['scale']=xmax
+    else:
+        program['scale']=xmin
+    if program['scale'] < 1.02 and program['scale'] > 0.98:
+        log.info("Probably shouldn't scale in this case (scale: {})".format(
+                                                            program['scale']))
+        program['scale']=1
+    log.info("Largest variance from 1:1 ratio: {} (this will be used to scale "
+            "stuff.)".format(program['scale']))
     if platform.system() != 'Linux': #this is only for MS Windows!
         import ctypes
         user32 = ctypes.windll.user32
