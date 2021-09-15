@@ -4631,7 +4631,7 @@ class Check():
                 bt=ToolTip(b,_("Click to hear this utterance"))
                 senseid=framed['senseid']
                 if unsortable:
-                    t=_("<= mark *this* *word* to sort again")
+                    t=_("<= remove *this* *word* from \nthe group (sort into another, later)")
                     b_unsort=Button(bf,text = t, cmd=unsort, anchor ='c')
                     b_unsort.grid(row=0,column=2,padx=50)
             else: #Refresh if this should be playable but there no sound file.
