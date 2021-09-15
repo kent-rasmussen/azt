@@ -6068,7 +6068,7 @@ class Window(tkinter.Toplevel):
             if hasattr(self,'frame') and type(self.frame) is Frame:
                 self.frame.destroy()
             self.frame=Frame(self.outsideframe)
-            self.frame.grid(column=0,row=0,sticky='we')
+            self.frame.grid(column=0,row=0,sticky='nsew')
     def wait(self,msg=None):
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
             log.debug("There is already a wait window: {}".format(self.ww))
