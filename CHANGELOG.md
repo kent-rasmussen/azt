@@ -1,5 +1,12 @@
 # A→Z+T Changelog
 
+# Version 0.8.6
+- reworked buttons and UI on transcription window
+- comparison option for transcription window
+- refresh group buttons now iterate through list (only random on first try)
+- context menu to hide group names, in case they are distracting
+- status table key and refresh/save settings option in upper left corner
+
 # Version 0.8.4
 - added number of groups to XLP table
 - non-default reports now end with 'mod' in filename
