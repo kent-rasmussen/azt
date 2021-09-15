@@ -3627,9 +3627,6 @@ class Check():
                 log.info("This should never happen (renamegroup/"
                             "comparisonbuttons)")
             sub_c['text']=t
-        # def unverify(): I think we don't want this here, just unsort items.
-        #     self.updatestatus(refresh=False)
-        #     b_unverify.destroy()
         groupsthere, groupsdone = updategroups()
         notthisgroup=groupsthere[:]
         if self.subcheck in groupsthere:
@@ -3736,9 +3733,8 @@ class Check():
                     highlightbackground=self.theme['white']) #no hlfg here
         compframe.grid(row=0,column=1,sticky='w')
         t=_('Compare with another group')
-        sub_c=Button(compframe,text = t,command = setsubcheck_comparison,
-                anchor ='c')#, wraplength=int(self.frame.winfo_screenwidth()/6))
-        sub_c.grid(row=0,column=0)#,sticky='',padx=padx,pady=pady)
+        sub_c=Button(compframe,text = t,command = setsubcheck_comparison)
+        sub_c.grid(row=0,column=0)
         comparisonbuttons()
         self.runwindow.waitdone()
         sub_btn.wait_window(self.runwindow) #then move to next step
