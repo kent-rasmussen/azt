@@ -7784,13 +7784,16 @@ def nonspace(x):
 def linebreakwords(x):
     log.debug("working on {}".format(x))
     return re.sub(' ','\n',x)
-def nn(x,oneperline=False):
+def nn(x,oneperline=False,twoperline=False):
     """Don't print "None" in the UI..."""
     if type(x) is list or type(x) is tuple:
         output=[]
         for y in x:
             output+=[nonspace(y)]
-        if oneperline == True:
+        if twoperline: #join every other with ', ', then all with '\n'
+            return '\n'.join([', '.join([str(v) for v in output[i*2:i*2 + 2]])
+                        for i in range(int(len(output)/2))])
+        elif oneperline:
             return '\n'.join(output)
         else:
             return ' '.join(output)
