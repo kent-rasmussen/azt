@@ -160,6 +160,8 @@ The program is designed to step through the process relatively automatically; on
 
 You will, of course from time to time want to move to another part of speech or syllable profile, or check type. Click on any cell in the status table to select that combination of profile and check/frame (this can also be done on the main window menus) and the next time you click `Sort` or `Record`, the appropriate data will be selected, and those changes saved to the preferences file.
 
+At some point you will likely want to give your sorting groups (within a ps-profile-frame) more meaningful names than the default (numbers). Until then, the status table gives you a count of the names, plus a count of the verified groups (w/+, in parentheses). Once you name a group, all groups for that ps-profile-frame will be listed separately, in the appropriate cell. If you don't like that, there is a context menu to "Hide group names," which will go back to just showing counts. In any case, the status table also indicates the presence of unsorted data in a group, via a preceding '!'. 
+
 ## Recording Data Sorted in Frames ![Recording](images/Microphone%20alone_sm.png "microphone")
 Recording data in frames can be done at any point once sorting has begun. However, when a word is presented for recording, a button for each example (sorting context) in the sense appears. So if you sort one field, then record, then sort the next, you will see your earlier recordings again. Recordings can move rather quickly, so I recommend putting them last in your workflow, and doing them all at once —at least once you've tested that they're working correctly with your recording equipment, etc.
 
