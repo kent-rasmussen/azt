@@ -235,7 +235,11 @@ class Check():
         #have this call set()?
         langspriority=collections.Counter(self.db.get('lexemelang')+
                                 self.db.get('citationlang')).most_common()
-        self.analang=langspriority[0][0]
+        try:
+            self.analang=langspriority[0][0]
+        except:
+            log.info(_("Are there any languages in this database? {}").format(
+                                                                langspriority))
         log.debug(_("Analysis language with the most fields ({}): {} ({})".format(langspriority[0][1],self.analang,langspriority)))
         return
         """if there's only one analysis language, use it."""
