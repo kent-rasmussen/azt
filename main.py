@@ -6836,7 +6836,9 @@ class MainApplication(Frame):
         try:
             self.check.frame.winfo_exists()
         except:
-            return
+            l=Label(self.frame,text="Sorry, I couldn't find enough data!")
+            l.grid(row=0,column=0)
+            # return
         exit=tkinter.Button(self.frame, text=e,
                             command=lambda s=self.parent:on_quit(s),
                             width=15,bg=self.theme['background'],
