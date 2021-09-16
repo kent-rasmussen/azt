@@ -180,6 +180,8 @@ class Check():
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
+        if self.analang is None:
+            return
         self.notifyuserofextrasegments() #self.analang set by now
         if self.interfacelang not in [None, getinterfacelang()]:
             #set only when new value is loaded:
@@ -240,9 +242,10 @@ class Check():
             log.debug(_("Analysis language with the most fields ({}): {} ({})"
                     "".format(langspriority[0][1],self.analang,langspriority)))
         except:
+            self.analang=None
             log.info(_("Are there any languages in this database? {}").format(
                                                                 langspriority))
-        return
+            return
         """if there's only one analysis language, use it."""
         nlangs=len(self.db.analangs)
         log.debug(_("Found {} analangs: {}".format(nlangs,self.db.analangs)))
