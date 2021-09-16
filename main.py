@@ -4106,7 +4106,7 @@ class Check():
             # b.bind('<mouseclick>',remove senseid from sensids)
             if self.runwindow.exitFlag.istrue():
                 return 1
-            self.runwindow.context.updatebindings() #make sure to bind children
+            # self.runwindow.context.updatebindings() #make sure to bind children
             self.sframe.windowsize()
             self.runwindow.waitdone()
             b.wait_window(bf)
