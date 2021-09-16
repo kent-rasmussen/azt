@@ -6833,12 +6833,13 @@ class MainApplication(Frame):
         """Make the rest of the mainApplication window"""
         e=(_("Exit"))
         #If the user exits out before this point, just stop.
+        if self.check is None:
+            l=Label(self.frame,text="Sorry, I couldn't find enough data!")
+            l.grid(row=0,column=0)
         try:
             self.check.frame.winfo_exists()
         except:
-            l=Label(self.frame,text="Sorry, I couldn't find enough data!")
-            l.grid(row=0,column=0)
-            # return
+            return
         exit=tkinter.Button(self.frame, text=e,
                             command=lambda s=self.parent:on_quit(s),
                             width=15,bg=self.theme['background'],
