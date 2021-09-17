@@ -5127,7 +5127,7 @@ class Check():
                 col=0
                 for lang in [self.analang, self.glosslang, self.glosslang2]:
                     col+=1
-                    if lang is not None:
+                    if lang in framed:
                         Label(self.results.scroll.content,
                             text=framed[lang], font=font,
                             anchor='w',padx=10).grid(row=i, column=col,
