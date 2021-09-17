@@ -128,8 +128,8 @@ class SoundSettings(object):
                             input_device=card,input_channels=1,
                             input_format=sf)
                     except ValueError as e:
-                        pass
-                    if ifs == True:
+                        ifs=False
+                    if ifs:
                         self.cards['in'][card][fs].append(sf)
                 if self.cards['in'][card][fs] == []:
                     del self.cards['in'][card][fs]
