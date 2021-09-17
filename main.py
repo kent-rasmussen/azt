@@ -7096,9 +7096,7 @@ class RadioButtonFrame(Frame):
                 print('You need to set {} for radio button frame!').format(vars)
             else:
                 setattr(self,vars,kwargs[vars])
-                print(self.__dict__)
                 del kwargs[vars] #we don't want this going to the button.
-                print(self.__dict__)
         column=0
         sticky='w'
         self.parent=parent
@@ -7106,13 +7104,11 @@ class RadioButtonFrame(Frame):
         super(RadioButtonFrame,self).__init__(parent,**kwargs)
         kwargs['background']=self.theme['background']
         kwargs['activebackground']=self.theme['activebackground']
-        print('self.var:',self.var)
-        print('self.opts:',self.opts)
         row=0
         for opt in self.opts:
             value=opt[0]
             name=opt[1]
-            log.info("Value: {}; name: {}".format(value,name))
+            log.log(3,"Value: {}; name: {}".format(value,name))
             RadioButton(self,variable=self.var, value=value, text=nfc(name),
                                                 column=column,
                                                 row=row,
