@@ -46,7 +46,11 @@ class Report(object):
             self.tree=ET.ElementTree(self.node)
             self.tree.write(f, encoding="UTF-8")
     def compile(self):
-        import lxml.etree
+        try:
+            import lxml.etree
+        except:
+            log.info(_("Couldn't find/import lxml, so not compiling report."))
+            return
         self.transformsdir=file.gettransformsdir()
         dom = lxml.etree.parse(self.filename)
         log.info(self.filename)
