@@ -530,34 +530,80 @@ class Check():
             self.interpret['VV']='VV'
         log.log(2,"self.distinguish: {}".format(self.distinguish))
     def setSdistinctions(self):
+        def notice(changed):
+            ti=_("Important Notice!")
+            w=Window(self.frame,title=ti)
+            til=Label(w.frame,text=ti,font=self.fonts['title'])
+            til.grid(row=0,column=0)
+            t=_("You are changing segment interpretation "
+            "settings in a way that could cause you problems: ")
+            d=[x for x in changed.keys()
+                                            if changed[x][1] is False]
+            if len(d) >0:
+                t+=_("\n=> You are no longer distinguishing {}.").format(
+                                    unlist([x.replace('wd','#') for x in d]))
+            i=[y for y in changed.keys() if changed[y][1] is not False]
+            if len(i) >0:
+                t+=_("\n=> Your interpretation of {} changed.").format(
+                                                            unlist(i))
+            t+=_("\nHere is the full info, in form setting: (from, to): {}."
+                    "").format(changed)
+            t+=_("\n\nAnywhere you have sorted a group based on your "
+            "old interpretation settings, you should sort/verify "
+            "that data again, as there is a possiblity that "
+            "you have mixed unrelated groups.").format(changed)
+            Label(w.frame,text=t,wraplength=int(
+                        self.frame.winfo_screenwidth()/2)).grid(row=1,column=0)
+            for ps in self.pss:
+                i=[x for x in self.profilesbysense[ps].keys()
+                                    if set(d).intersection(set(x))]
+                log.info("Profiles to check: {}".format(i))
+                Label(w.frame,text=i).grid(row=2,column=0)
+            w.wait_window(w)
+            # At this point, we eventually want to take these profiles to
+            # check, and find any senseids that have been sorted in them, and
+            # prepend oldvar (or key, for booleans) to their group numbers,
+            # to maintin their distictions. It would be better to test if any
+            # of the newvar profiles being lumped in with them have also been
+            # sorted into those frames:
+            # IF:
+            #   y=set(d,i).intersection(set(x)) exists,
+            #       and has been sorted into z frames
+            #   sed '/{d,i}/newvar' y exists
+            #       and has been sorted into z frames
+            # Then:
+            #   prepend {d,i} to sort values in z frames for y sensids.
         def submitform():
             change=False
-            for type in ['distinguish', 'interpret']:
-                for ss in getattr(self,type):
+            changed={}
+            for typ in ['distinguish', 'interpret']:
+                for ss in getattr(self,typ):
                     log.debug("Variable {} was: {}, now: {}, change: {}"
-                            "".format(ss,
-                            getattr(self,type)[ss],
-                            var[ss].get(),change))
-                    if ss in var:
-                        if ((ss in getattr(self,type)) and
-                                (getattr(self,type)[ss] != var[ss].get())):
-                            getattr(self,type)[ss]=var[ss].get()
-                            change=True
-                        # elif ((ss in self.interpret) and
-                        #         (self.interpret[ss] != var[ss].get())):
-                        #     self.interpret[ss]=var[ss].get()
-                        #     change=True
-                log.debug("Variable {} was: {}, now: {}, change: {}"
-                            "".format(ss,
-                            getattr(self,type)[ss],
-                            var[ss].get(),change))
-                # if ss=='NCG':
-                #     var[ss]=(var['NC'].get() and var['CG'].get())
-            log.debug('self.distinguish:',self.distinguish)
-            log.debug('self.interpret:',self.interpret)
+                            "".format(ss,getattr(self,typ)[ss],var[ss].get(),
+                                                                        change))
+                    if ss in var and ss in getattr(self,typ):
+                        newvar=var[ss].get()
+                        oldvar=getattr(self,typ)[ss]
+                        if oldvar != newvar:
+                            if typ == 'distinguish': #i.e., boolean
+                                if oldvar and not newvar: #True becomes False
+                                    changed[ss]=(oldvar,newvar)
+                            else: #i.e., CC v CG v C, etc.
+                                if (len(oldvar)>len(newvar) or # becomes shorter
+                                    len(set(['V','G','N'] #one of these is there
+                                    ).intersection(set(oldvar))) >0):
+                                    changed[ss]=(oldvar,newvar)
+                            getattr(self,typ)[ss]=newvar
+                            change=True #I.e., something has changed
+            log.debug('self.distinguish: {}'.format(self.distinguish))
+            log.debug('self.interpret: {}'.format(self.interpret))
             if change == True:
                 log.info('There was a change; we need to redo the analysis now.')
                 self.storesettingsfile()
+                log.info('The following changed (from,to): {}'.format(changed))
+                if len(changed) >0:
+                    notice(changed)
+                # self.debug=True
                 if self.debug != True:
                     self.reloadprofiledata()
             self.runwindow.destroy()
