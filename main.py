@@ -7785,6 +7785,10 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
     if (l is None) or (l == []):
         return
     if all == True: #don't worry about othersOK yet
+        if len(l) > 1:
+            ox=[v for v in l[:len(l)-2]]
+            l=ox+[' and '.join([v for v in l[len(l)-2:]])]
+                # for i in range(int(len(output)/2))]
         return ', '.join(x for x in l if x not in ignore)
     elif len(l) == 1 or (othersOK == True):
         return l[0]
