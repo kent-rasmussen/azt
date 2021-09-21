@@ -3437,7 +3437,7 @@ class Check():
             if x is not None:
                 id+=x
         return rx.id(id) #for either example or listword
-    def framedtoXLP(self,framed,parent,listword=False,default=True):
+    def framedtoXLP(self,framed,parent,listword=False,groups=True):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
@@ -3453,7 +3453,7 @@ class Check():
             el=xlp.LinkedData(ex,self.analang,framed[self.analang],str(url))
         else:
             el=xlp.LangData(ex,self.analang,framed[self.analang])
-        if 'tonegroup' in framed and default is False: #joined groups show each
+        if 'tonegroup' in framed and groups is True: #joined groups show each
             elt=xlp.LangData(ex,self.analang,framed['tonegroup'])
         if self.glosslang in framed:
             eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
