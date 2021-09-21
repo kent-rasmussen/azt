@@ -506,7 +506,7 @@ class Check():
             self.distinguish={}
         if (not hasattr(self,'interpret')) or (self.interpret is None):
             self.interpret={}
-        for var in ['G','N','S','Nwd','d','ː','ʔ','ʔwd']:
+        for var in ['G','N','S','D','Nwd','d','ː','ʔ','ʔwd']:
             if ((var not in self.distinguish) or
                 (type(self.distinguish[var]) is not bool)):
                 self.distinguish[var]=False
@@ -693,6 +693,14 @@ class Check():
                                         'Final Nasals (N#) \nfrom other word '
                                         'final consonants?')
         self.runwindow.options['opts']=[(True,'N#≠C#'),(False,'N#=C#')]
+        buttonframeframe(self)
+        self.runwindow.options['ss']='D'
+        self.runwindow.options['text']=_('Do you want to distinguish '
+                                        'all likely depressor consonants (D={})'
+                                        '\nfrom '
+                                        'other (simple/single) consonants?'
+                                        "").format(self.db.s[self.analang]['D'])
+        self.runwindow.options['opts']=[(True,'D≠C'),(False,'D=C')]
         buttonframeframe(self)
         self.runwindow.options['ss']='G'
         self.runwindow.options['text']=_('Do you want to distinguish '
