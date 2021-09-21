@@ -894,6 +894,7 @@ class Check():
             formfield = EntryField(self.runwindow.frame2,
                                     textvariable=form[lang])
             formfield.grid(row=1,column=0)
+            formfield.rendered.grid(row=2,column=0,sticky='new')
             sub_btn=Button(self.runwindow.frame2,text = ok,
                       command = lambda x=lang:submitform(x),anchor ='c')
             sub_btn.grid(row=2,column=0,sticky='')
