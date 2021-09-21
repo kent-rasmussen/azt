@@ -3701,7 +3701,17 @@ class Check():
                 log.info("This should never happen (renamegroup/"
                             "comparisonbuttons)")
             sub_c['text']=t
+        if self.name == None:
+            self.getcheck(guess=True)
+            if self.name == None:
+                log.info("I asked for a check name, but didn't get one.")
+                return
         groupsthere, groupsdone = updategroups()
+        if self.subcheck is None or self.subcheck not in groupsthere:
+            self.getsubcheck(guess=True)
+            if self.subcheck == None:
+                log.info("I asked for a framed tone group, but didn't get one.")
+                return
         notthisgroup=groupsthere[:]
         if self.subcheck in groupsthere:
             notthisgroup.remove(self.subcheck)
@@ -3710,16 +3720,6 @@ class Check():
                 "groups: ({})\n\tThis may be because we're looking for data that "
                 "isn't there, or maybe a setting is off.".format(self.subcheck,
                                                                 groupsthere)))
-        if self.subcheck == None:
-            self.getsubcheck(guess=True)
-            if self.subcheck == None:
-                log.info("I asked for a framed tone group, but didn't get one.")
-                return
-        if self.name == None:
-            self.getcheck(guess=True)
-            if self.name == None:
-                log.info("I asked for a check name, but didn't get one.")
-                return
         newname=tkinter.StringVar(value=self.subcheck)
         namehash=tkinter.StringVar()
         hash_t,hash_sp,hash_nbsp=rx.tonerxs()
