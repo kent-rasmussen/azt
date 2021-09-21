@@ -7135,7 +7135,7 @@ class EntryField(tkinter.Entry):
         v=self.get()
         if hasattr(self,'rendered'): #Get grid info before destroying old one
             mygrid=self.rendered.grid_info()
-            grid=True 
+            grid=True
             self.rendered.destroy()
         self.rendered=Label(self.parent,text=v)
         d=["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"]
