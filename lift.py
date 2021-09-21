@@ -1572,18 +1572,29 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         by category and number of glyphs, with consonant dictionaries nested
         inside it, by category."""
         c={}
+        c['pvd']={}
+        c['pvd'][2]=['bh','dh','gh','gb']
+        c['pvd'][1]=['b','B','d','g','ɡ','G']
         c['p']={}
-        c['p'][2]=['bh','dh','kp','gh','gb','kk']
-        c['p'][1]=['p','P','b','ɓ','Ɓ','B','t','d','ɗ','ɖ','c','k','g','ɡ','G']
+        c['p'][2]=['kp','kk']
+        c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k']
+        c['fvd']={}
+        c['fvd'][2]=['bh','vh','zh']
+        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ']
         c['f']={}
-        c['f'][2]=['ch','ph','bh','vh','sh','zh','hh']
-        c['f'][1]=['j','J','F','f','v','s','z','Z','ʃ','ʒ','θ','ð','x','ɣ','h']
+        c['f'][2]=['ch','ph','sh','hh']
+        c['f'][1]=['F','f','s','ʃ','θ','x','h']
+        c['avd']={}
+        c['avd'][2]=['dj','dz','dʒ']
         c['a']={}
         c['a'][3]=['chk']
-        c['a'][2]=['dj','ts','dz','tʃ','dʒ']
+        c['a'][2]=['ts','tʃ']
+        c['lfvd']={}
+        c['lfvd'][2]=['zl','zl']
+        c['lfvd'][1]=['ɮ']
         c['lf']={}
-        c['lf'][2]=['sl','zl','zl']
-        c['lf'][1]=['ɬ','ɮ']
+        c['lf'][2]=['sl']
+        c['lf'][1]=['ɬ']
         c['pn']={}
         """If these appear, they should be single consonants."""
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
