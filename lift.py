@@ -1590,10 +1590,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     'ⁿj','ⁿs','ⁿz']
         x={} #dict to put all hypothetical segements in, by category
         x['C']=list() #to store valid consonants in
+        x['D']=list() #to store valid depressor consonants in
         for nglyphs in [3,2,1]:
             for stype in c:
                 if c[stype].get(nglyphs) is not None:
-                    x['C']+=c[stype][nglyphs]
+                    # if 'vd' in stype:
+                    #     x['D']+=c[stype][nglyphs]
+                    # else:
+                        x['C']+=c[stype][nglyphs]
         # s['g']={}
         # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
         #         'mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']
