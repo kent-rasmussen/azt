@@ -5525,6 +5525,15 @@ class Check():
         return dictscompare(valuesbylocation,ignore=['NA',None],flat=False)
     def tonegroupreport(self,silent=False,bylocation=False,default=True):
         #default=True redoes the UF analysis (removing any joining/renaming)
+        def examplestoXLP(examples,parent,groups=True):
+            if not default:
+                groups=True #show groups on all non-default reports
+            for example in examples:
+                framed=self.getframeddata(example,noframe=True)
+                if not (framed[self.analang] is None and
+                        framed[self.glosslang] is None):#glosslang2?
+                    self.framedtoXLP(framed,parent=parent,listword=True,
+                                    groups=groups)
         log.info("Starting report...")
         self.storesettingsfile()
         self.getrunwindow()
@@ -5670,13 +5679,7 @@ class Check():
                         examples=self.db.get('examplebylocation',
                                                 location=location,
                                                 senseid=senseid)
-                        for example in examples:
-                            # These should already be framed!
-                            framed=self.getframeddata(example,noframe=True)
-                            if not (framed[self.analang] is None and
-                                    framed[self.glosslang] is None):#glosslang2?
-                                self.framedtoXLP(framed,parent=e1,listword=True,
-                                                default=default)
+                        examplestoXLP(examples,e1,groups=False)
                         if text not in textout:
                             output(window,r,text)
                             textout.append(text)
@@ -5697,13 +5700,7 @@ class Check():
                         log.log(2,"Using id {}".format(id))
                         headtext=text.replace('\t',' ')
                         e1=xlp.Example(s1,id,heading=headtext)
-                        for example in examples:
-                            # These should already be framed!
-                            framed=self.getframeddata(example,noframe=True)
-                            if not (framed[self.analang] is None and
-                                    framed[self.glosslang] is None):
-                                self.framedtoXLP(framed,parent=e1,listword=True,
-                                                default=default)
+                        examplestoXLP(examples,e1)
                     output(window,r,text)
         self.runwindow.waitdone()
         xlpr.close()
