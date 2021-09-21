@@ -901,9 +901,8 @@ class Check():
             sub_btn.grid(row=2,column=0,sticky='')
             if lang != self.analang:
                 sub_btnNo=Button(self.runwindow.frame2,
-                        text = _('Skip {} gloss').format(
-                            self.languagenames[lang]),
-                            command = lambda lang=lang: skipform(lang))
+                    text = _('Skip {} gloss').format(self.languagenames[lang]),
+                    command = lambda lang=lang: skipform(lang))
                 sub_btnNo.grid(row=1,column=1,sticky='')
             self.runwindow.waitdone()
             sub_btn.wait_window(self.runwindow.frame2) #then move to next step
