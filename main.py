@@ -7131,12 +7131,33 @@ class Label(tkinter.Label):
         tkinter.Label.__init__(self, parent, **kwargs)
         self['background']=self.theme['background']
 class EntryField(tkinter.Entry):
-    def __init__(self, parent, **kwargs):
+    def renderlabel(self,grid=False,event=None):
+        v=self.get()
+        if hasattr(self,'rendered'): #Get grid info before destroying old one
+            mygrid=self.rendered.grid_info()
+            grid=True 
+            self.rendered.destroy()
+        self.rendered=Label(self.parent,text=v)
+        d=["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"]
+        if set(d) & set(v):
+            if grid:
+                self.rendered.grid(**mygrid)
+            elif hasattr(self,'rendergrid'):
+                self.rendered.grid(**self.rendergrid)
+            else:
+                log.error("Help! I have no idea what happened!")
+            delattr(self,'rendergrid')
+        elif grid:
+                self.rendergrid=mygrid
+    def __init__(self, parent, render=False, **kwargs):
         self.parent=parent
         inherit(self)
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['default']
         super().__init__(parent,**kwargs)
+        if render is True:
+            self.bind('<KeyRelease>', self.renderlabel)
+            self.renderlabel()
         self['background']=self.theme['offwhite'] #because this is for entry...
 class RadioButton(tkinter.Radiobutton):
     def __init__(self, parent, column=0, row=0, sticky='w', **kwargs):
