@@ -891,8 +891,9 @@ class Check():
                                                 font=self.fonts['read'])
             getform.grid(row=0,column=0,padx=padx,pady=pady)
             form[lang]=tkinter.StringVar()
-            formfield = EntryField(self.runwindow.frame2,
-                                    textvariable=form[lang])
+            eff=Frame(self.runwindow.frame2) #field rendering is better this way
+            eff.grid(row=1,column=0)
+            formfield = EntryField(eff, render=True, textvariable=form[lang])
             formfield.grid(row=1,column=0)
             formfield.rendered.grid(row=2,column=0,sticky='new')
             sub_btn=Button(self.runwindow.frame2,text = ok,
