@@ -921,16 +921,18 @@ class Check():
         # The user has a chance to enter a gloss for any gloss language
         # already in the datbase, and to skip any as needed/desired.
         for lang in [self.analang]+self.db.glosslangs:
-            makewindow(lang)
+            if not self.runwindow.exitFlag.istrue():
+                makewindow(lang)
         """get the new senseid back from this function, which generates it"""
-        senseid=self.db.addentry(ps=self.ps,analang=self.analang,
-                        glosslangs=self.runwindow.glosslangs,
-                        form=self.runwindow.form)
-        # Update profile information in the running instance, and in the file.
-        self.getprofileofsense(senseid)
-        self.updatecounts()
-        self.storesettingsfile(setting='profiledata') #since we changed this.
-        self.runwindow.destroy()
+        if not self.runwindow.exitFlag.istrue(): #don't do this if exited
+            senseid=self.db.addentry(ps=self.ps,analang=self.analang,
+                            glosslangs=self.runwindow.glosslangs,
+                            form=self.runwindow.form)
+            # Update profile information in the running instance, and in the file.
+            self.getprofileofsense(senseid)
+            self.updatecounts()
+            self.storesettingsfile(setting='profiledata') #since we changed this.
+            self.runwindow.destroy()
     def addframe(self):
         log.info('Tone frame to add!')
         """I should add gloss2 option here, likely just with each language.
