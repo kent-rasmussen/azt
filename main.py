@@ -7093,8 +7093,9 @@ class Label(tkinter.Label):
             kwargs['wraplength']=parent.wraplength
         self.theme=parent.theme
         self.parent=parent
+        d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
         sticks=set(['˥','˦','˧','˨','˩',' '])
-        if set(kwargs['text']) & sticks and not norender:
+        if set(kwargs['text']) & (sticks|d) and not norender:
             # log.info(kwargs['font']['size'])
             style=(kwargs['font']['family'], # from kwargs['font'].actual()
                     kwargs['font']['size'],kwargs['font']['weight'],
