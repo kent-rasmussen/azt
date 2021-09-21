@@ -401,7 +401,14 @@ class Check():
             i=todo.index(self.name)
             log.info("Current frame is {} of {}".format(i,todo))
             if len(todo)>i+1:
-                self.set('name',todo[i+1])
+                self.set('name',todo[i+1],refresh=False)
+                groups=self.status[self.type][self.ps][self.profile][self.name][
+                                            'groups']
+                if sort is False and groups == []:
+                    self.nextframe(sort=sort,guess=guess)
+                    return
+                else:
+                    self.set('name',todo[i+1])
             else:
                 default() #cycle through framestodo again
         else:
