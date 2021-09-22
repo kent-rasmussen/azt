@@ -796,7 +796,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             fieldgloss=ET.SubElement(p,'translation',attrib={'type':
                                                         'Frame translation'})
             for lang in [kwargs['glosslang'],kwargs['glosslang2']]:
-                if lang != None:
+                if lang != None and lang in kwargs['forms']:
                     form=ET.SubElement(fieldgloss,'form',
                                         attrib={'lang':lang})
                     glosstext=ET.SubElement(form,'text')
