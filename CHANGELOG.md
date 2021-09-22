@@ -11,6 +11,7 @@
 - Prepped addition of XLP transforms
 - Improved logic for next frame in transcription window, more sensible, less breaky
 - added landscape option for sections, used when summary table is more than 6 columns wide
+- split tables over seven columns wide into multiple tables
 
 # Version 0.8.4
 - added number of groups to XLP table

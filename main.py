@@ -5656,7 +5656,11 @@ class Check():
             "the default (hyper-split) groups created by {}.".format(
                                                         self.program['name']))
         p0=xlp.Paragraph(s1s,text=ptext)
-        self.buildXLPtable(s1s,caption,yterms=grouplist,xterms=locations,
+        m=7 #only this many columns in a table
+        for slice in range(int(len(locations)/m)+1):
+            locslice=locations[slice*m:(slice+1)*m]
+            self.buildXLPtable(s1s,caption+str(slice),yterms=grouplist,
+                            xterms=locslice,
                             values=lambda x,y:nn(unlist(groupvalues[y][x],
                                 ignore=[None, 'NA'])),
                             ycounts=lambda x:len(toreport[x]),
