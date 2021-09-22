@@ -3775,7 +3775,7 @@ class Check():
                     anchor ='c').grid(row=row,column=column,sticky='nsew',
                                     columnspan=columnspan)
         g=nn(notthisgroup,twoperline=True)
-        log.info("{},{}".format(groupsthere,g))
+        log.info("There: {}, NTG: {}; g:{}".format(groupsthere,notthisgroup,g))
         groupslabel=Label(inputframe,text='Other Groups:\n{}'.format(g))
         groupslabel.grid(row=0,column=1,sticky='new',padx=padx,rowspan=2)
         fieldframe=Frame(inputframe)
