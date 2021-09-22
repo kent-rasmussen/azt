@@ -4,6 +4,16 @@ import time
 import logging
 log = logging.getLogger(__name__)
 """This is called from a number of places"""
+def urlok(x):
+    #These should each be tuple of
+    # 1. a simple list of characters to strip,
+    # 2. replacement
+    d=("̀́̂̌̄̃᷉̋̄̏̌̂᷄᷅̌᷆᷇᷉̈","")
+    p=("][\. /?",'_')
+    l=("əéèê",'e')
+    for i in [d,p,l]:
+        x=re.sub('['+i[0]+']',i[1],x)
+    return x
 def id(x):
     x=x.replace('˥','4').replace('˦','3').replace('˧','2'
         ).replace('˨','1').replace('˩','0')
