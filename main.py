@@ -7919,7 +7919,7 @@ def nn(x,oneperline=False,twoperline=False):
             output+=[nonspace(y)]
         if twoperline: #join every other with ', ', then all with '\n'
             return '\n'.join([', '.join([str(v) for v in output[i*2:i*2 + 2]])
-                        for i in range(int(len(output)/2))])
+                        for i in range(int(len(output)/2)+1)])
         elif oneperline:
             return '\n'.join(output)
         else:
