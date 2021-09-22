@@ -6,6 +6,7 @@
 - refresh group buttons now iterate through list (only random on first try)
 - context menu to hide group names, in case they are distracting
 - status table key and refresh/save settings option in upper left corner
+- added landscape option for sections, used when summary table is more than 6 columns wide
 
 # Version 0.8.4
 - added number of groups to XLP table

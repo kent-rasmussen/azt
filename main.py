@@ -5627,7 +5627,11 @@ class Check():
                                         row=window.row,column=0, sticky="w")
             window.row+=1
         t=_("Summary of Frames by Draft Underlying Melody")
-        s1s=xlp.Section(xlpr,t)
+        if len(locations) > 6:
+            landscape=True
+        else:
+            landscape=False
+        s1s=xlp.Section(xlpr,t,landscape=landscape)
         caption=' '.join([self.ps,self.profile])
         ptext=_("The following table shows correspondences across sortings by "
                 "tone frames, with a row for each unique pairing. ")
