@@ -190,10 +190,13 @@ class Report(object):
         sp.append(stylesheet)
         self.node=self.styled
 class Section(ET.Element):
-    def __init__(self,parent,title="No Section Title!",level=1):
+    def __init__(self,parent,title="No Section Title!",level=1,landscape=False):
         id=rx.id(title)
         name='section'+str(level)
-        self.node=ET.SubElement(parent.node,name,attrib={'id':id})
+        attribs={'id':id}
+        if landscape:
+            attribs['showinlandscapemode']='yes'
+        self.node=ET.SubElement(parent.node,name,attrib=attribs)
         st=SecTitle(self,title) #I always need this
 class SecTitle(ET.Element):
     def __init__(self,parent,text):
