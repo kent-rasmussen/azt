@@ -6,6 +6,10 @@
 - refresh group buttons now iterate through list (only random on first try)
 - context menu to hide group names, in case they are distracting
 - status table key and refresh/save settings option in upper left corner
+- added rendering field where entries may contain combining characters that don't otherwise show up (in entry fields).
+- Added SILCAWL (for later use)
+- Prepped addition of XLP transforms
+- Improved logic for next frame in transcription window, more sensible, less breaky
 - added landscape option for sections, used when summary table is more than 6 columns wide
 
 # Version 0.8.4
