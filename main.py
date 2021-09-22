@@ -7449,7 +7449,7 @@ class RecordButtonFrame(Frame):
                             args+=[node.tag]
                             if node.tag == 'field':
                                 args+=[node.get("type")]
-                        args+=[rx.stripdiacritics(check,form)]#profile <=Changes!
+                        args+=[form]
                         args+=[gloss]
                         optargs=args[:]
                         optargs.insert(0,pslocopt) #put first
@@ -7463,8 +7463,8 @@ class RecordButtonFrame(Frame):
                                 wavfilename+='_'
                         if legacy == '_': #There was a schema that had an extra '_'.
                             wavfilename+='_'
-                        filenames+=[re.sub('[][\. /?]+','_',
-                                                    str(wavfilename))+'.wav']
+                        wavfilename=rx.urlok(wavfilename) #one character check
+                        filenames+=[wavfilename+'.wav']
         #test if any of the generated filenames are there
         for filename in filenames:
             filenameURL=str(file.getdiredurl(check.audiodir,filename))
