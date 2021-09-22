@@ -1659,7 +1659,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ]
         x['d']=["̀","́","̂","̌","̄","̃"
                 , "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉" #from IPA keyboard
-                ,'̈' #COMBINING DIAERESIS
+                ,"̈" #COMBINING DIAERESIS
                 ] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         x['ː']=[":","ː"] # vowel length markers
         x['b']=['=','-'] #affix boundary markers
