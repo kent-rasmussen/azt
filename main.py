@@ -7426,7 +7426,10 @@ class RecordButtonFrame(Frame):
                 log.debug("Audio link found, but no file found! Making options."
                     "\n{}; diredname: {}".format(audio, filenameURL))
         pslocopts=[check.ps]
-        pslocopts.insert(0,check.ps+'_'+check.profile) #the first option (legacy).
+        # Except for data generated early in 2021, profile should not be there,
+        # because it can change with analysis. But we include here to pick up
+        # old files, in case they are there but not linked.
+        pslocopts.insert(0,check.ps+'_'+check.profile) # first option (legacy).
         fieldlocopts=[None]
         if (node.tag == 'example'):
             l=node.find("field[@type='location']//text")
