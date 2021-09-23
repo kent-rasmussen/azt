@@ -4751,7 +4751,7 @@ class Check():
                                 group=group,notonegroup=notonegroup,
                                 canary=canary,canary2=canary2, font=font,
                                 row=row,column=column,label=label,
-                                alwaysrefreshable=alwaysrefreshable,
+                                alwaysrefreshable=True, #once refreshed, keep it
                                 playable=playable,renew=True,**kwargs),
                             text=str(example['n']),
                             compound='center',
