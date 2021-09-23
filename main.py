@@ -4737,7 +4737,6 @@ class Check():
                     renew=True,refreshcount=refreshcount,**kwargs)
                 return #In either case, stop making the current frame.
             b.grid(column=1, row=0, sticky="nesw", ipady=15) #Inside the buttons
-
         else:
             b=Button(bf, text=text, font=font,
                     cmd=lambda p=parent:returndictnsortnext(self,p,
@@ -8276,7 +8275,6 @@ def praatopen(file,event=None):
     else:
         log.info(_("Looks like I couln't find Praat..."))
     praatargs=[praat, "--open", file]
-    print(praatargs,file, event)
     try:
         subprocess.Popen(praatargs,shell=False) #not run; continue here
     except Exception as e:
