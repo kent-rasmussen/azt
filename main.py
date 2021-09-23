@@ -4708,7 +4708,7 @@ class Check():
                 b=Button(bf, text=text, cmd=self.player.play, font=font)
                 bt=ToolTip(b,_("Click to hear this utterance; right click to "
                                 "open in praat"))
-                b.bind('<Button-3>',lambda x: praat(diredurl))
+                b.bind('<Button-3>',lambda x: praatopen(diredurl))
                 senseid=framed['senseid']
                 if unsortable:
                     t=_("<= remove *this* *word* from \nthe group (sort into another, later)")
@@ -7361,7 +7361,7 @@ class RecordButtonFrame(Frame):
         self.p.grid(row=0, column=1,sticky='w')
         bt=ToolTip(self.p,_("Click to hear this utterance; right click to "
                         "open in praat"))
-        self.p.bind('<Button-3>',lambda x: praat(self.filenameURL))
+        self.p.bind('<Button-3>',lambda x: praatopen(self.filenameURL))
     def makedeletebutton(self):
         self.r=Button(self,text=_('Redo'),command=self.function)
         self.r.grid(row=0, column=2,sticky='w')
@@ -8241,10 +8241,12 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent
     return unicodedata.normalize('NFD', str(x))
-def praat(file,event=None):
-    log.info(_("Trying to call Praat..."))
-    import subprocess
-    praatargs=["praat", "--open", file]
+def praatopen(file,event=None):
+    try:
+        log.info(_("Trying to call Praat at {}...").format(praat))
+    except:
+        log.info(_("Looks like I couln't find Praat..."))
+    praatargs=[praat, "--open", file]
     print(praatargs,file, event)
     try:
         subprocess.Popen(praatargs,shell=False) #not run; continue here
