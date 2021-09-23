@@ -66,6 +66,7 @@ import sys
 import inspect
 import os
 import pprint #for settings and status files, etc.
+import subprocess
 
 class Check():
     """the parent is the *functional* head, the MainApplication."""
