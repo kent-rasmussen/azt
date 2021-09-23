@@ -4705,7 +4705,9 @@ class Check():
                 self.player=sound.SoundFilePlayer(diredurl,self.pyaudio,self.
                                                                 soundsettings)
                 b=Button(bf, text=text, cmd=self.player.play, font=font)
-                bt=ToolTip(b,_("Click to hear this utterance"))
+                bt=ToolTip(b,_("Click to hear this utterance; right click to "
+                                "open in praat"))
+                b.bind('<Button-3>',lambda x: praat(diredurl))
                 senseid=framed['senseid']
                 if unsortable:
                     t=_("<= remove *this* *word* from \nthe group (sort into another, later)")
@@ -7356,6 +7358,9 @@ class RecordButtonFrame(Frame):
         # self.p.bind('<ButtonPress>', self._play)
         # self.p.bind('<ButtonRelease>', self.function)
         self.p.grid(row=0, column=1,sticky='w')
+        bt=ToolTip(self.p,_("Click to hear this utterance; right click to "
+                        "open in praat"))
+        self.p.bind('<Button-3>',lambda x: praat(self.filenameURL))
     def makedeletebutton(self):
         self.r=Button(self,text=_('Redo'),command=self.function)
         self.r.grid(row=0, column=2,sticky='w')
