@@ -1423,8 +1423,6 @@ class Check():
                                 'additionalprofiles',
                                 'interfacelang',
                                 'examplespergrouptorecord',
-                                'distinguish',
-                                'interpret',
                                 'adnlangnames',
                                 'exs',
                                 'maxpss',
@@ -1434,6 +1432,8 @@ class Check():
             'profiledata':{
                                 'file':'profiledatafile',
                                 'attributes':[
+                                    'distinguish',
+                                    'interpret',
                                     "profilecounts","profilecountInvalid",
                                     "scount",
                                     "sextracted",
