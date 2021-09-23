@@ -61,6 +61,8 @@ This is just required to compile reports into PDF. If you're not doing that (e.g
 ## XLingPaper and the XMLmind XML Editor (XXE)
 To make full use of A→Z+T's report output, I strongly advise you to be ready to use [XLingPaper](https://software.sil.org/xlingpaper/), if you are not already. It can be downloaded [here](https://software.sil.org/xlingpaper/download); this page also includes information on downloading [the XMLmind XML Editor (XXE)](http://www.xmlmind.com/xmleditor/), which is critical to most uses of [XLingPaper](https://software.sil.org/xlingpaper/).
 
+## Praat
+If you have [Praat](https://www.fon.hum.uva.nl/praat/) installed, [A→Z+T](https://github.com/kent-rasmussen/azt.git) can open sound files you have recorded there for you.
 
 ## To run AZT
 Assuming your system is configured correctly, just run `main.py`. Depending on your system, that may be just a click on the file (or a link to it on your desktop or wherever), or you may need to type that into a terminal. Your operating system should know to open `main.py` with python, but you can also explicitly tell it to with `python main.py`.
