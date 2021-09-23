@@ -8235,6 +8235,15 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent
     return unicodedata.normalize('NFD', str(x))
+def praat(file,event=None):
+    log.info(_("Trying to call Praat..."))
+    import subprocess
+    praatargs=["praat", "--open", file]
+    print(praatargs,file, event)
+    try:
+        subprocess.Popen(praatargs,shell=False) #not run; continue here
+    except Exception as e:
+        log.info(_("Call to Praat failed: {}").format(e))
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
