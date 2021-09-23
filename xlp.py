@@ -105,7 +105,7 @@ class Report(object):
         xetexargs=["xelatex", "--interaction=nonstopmode","-output-directory",
                     outdir, texfile]
         try:
-            subprocess.call(xetexargs,shell=False)
+            subprocess.run(xetexargs,shell=False) # was call
             # subprocess.call(xetexargs,shell=False) #does twice help?
             exts=['out','aux','log']
             exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
