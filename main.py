@@ -8241,6 +8241,29 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent
     return unicodedata.normalize('NFD', str(x))
+def findpraat():
+    log.info("Looking for Praat...")
+    spargs={
+            # 'stdout':subprocess.PIPE, 'stderr':subprocess.PIPE,
+            # 'capture_output' : 'True',
+            'shell' : False
+            }
+    try: #am I on typical Linux?
+        praat=subprocess.check_output(["which","praat"], **spargs)
+    except Exception as e:
+        log.info("No praat found! ({})".format(e))
+        try: #am I on typical MS Windows?
+            praat=subprocess.check_output(["which","Praat.exe"], **spargs)
+        except Exception as e:
+            log.info("No Praat.exe found! ({})".format(e))
+            try: #am I on typical Mac OS?
+                praat=subprocess.check_output(["which","Praat"], **spargs)
+            except Exception as e:
+                log.info("No Praat found! ({})".format(e))
+                return
+    praat=praat.decode("utf-8").strip()
+    log.info("Praat found at {}".format(praat))
+    return praat
 def praatopen(file,event=None):
     try:
         log.info(_("Trying to call Praat at {}...").format(praat))
@@ -8340,6 +8363,7 @@ if __name__ == "__main__":
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
+    praat=findpraat()
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     try:
         main()
