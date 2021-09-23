@@ -8248,6 +8248,7 @@ def findpraat():
             # 'capture_output' : 'True',
             'shell' : False
             }
+    program['praatisthere']=False
     try: #am I on typical Linux?
         praat=subprocess.check_output(["which","praat"], **spargs)
     except Exception as e:
@@ -8263,11 +8264,12 @@ def findpraat():
                 return
     praat=praat.decode("utf-8").strip()
     log.info("Praat found at {}".format(praat))
+    program['praatisthere']=True
     return praat
 def praatopen(file,event=None):
-    try:
+    if program['praatisthere']:
         log.info(_("Trying to call Praat at {}...").format(praat))
-    except:
+    else:
         log.info(_("Looks like I couln't find Praat..."))
     praatargs=[praat, "--open", file]
     print(praatargs,file, event)
