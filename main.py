@@ -5659,7 +5659,8 @@ class Check():
         m=7 #only this many columns in a table
         for slice in range(int(len(locations)/m)+1):
             locslice=locations[slice*m:(slice+1)*m]
-            self.buildXLPtable(s1s,caption+str(slice),yterms=grouplist,
+            if len(locslice) >0:
+                self.buildXLPtable(s1s,caption+str(slice),yterms=grouplist,
                             xterms=locslice,
                             values=lambda x,y:nn(unlist(groupvalues[y][x],
                                 ignore=[None, 'NA'])),
