@@ -8371,6 +8371,8 @@ if __name__ == "__main__":
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     try:
         main()
+    except SystemExit:
+        log.info("Shutting down by user request")
     except Exception as e:
         log.exception("Unexpected exception! %s",e)
         logwritelzma(log.filename) #in logsetup
