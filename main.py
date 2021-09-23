@@ -8295,9 +8295,14 @@ def on_quit(self):
     # to just stop, rather than trying and throwing an error. This doesn't
     # do anything but set the flag value on exit, the logic to stop needs
     # to be elsewhere, e.g., if `self.exitFlag.istrue(): return`
+    def killall():
+        self.destroy()
+        sys.exit()
     if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
         print("Setting window exit flag True!")
         self.exitFlag.true()
+    if type(self) is tkinter.Tk: #exit afterwards if main window
+        killall()
     self.destroy() #do this for everything
 def main():
     global program
