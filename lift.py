@@ -1448,9 +1448,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             try:
                 os.replace(filename+'.part',filename)
             except:
-                log.error("There was a problem writing to file. This is what's "
-                "here: {}".format(os.listdir(str(pathlib.Path(filename)+'.part')
-                                                                            )))
+                log.error("There was a problem writing {} file to {} "
+                "directory. This is what's here: {}".format(
+                    pathlib.Path(filename).name, pathlib.Path(filename).parent,
+                    os.listdir(pathlib.Path(filename).parent)))
     def analangs(self):
         log.log(1,_("Looking for analangs in lift file"))
         self.audiolangs=[]
