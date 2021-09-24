@@ -4556,13 +4556,9 @@ class Check():
         self.senseidssorted=[]
         self.senseidsunsorted=[]
         for senseid in self.senseidstosort:
-            if (self.db.get('exfieldvalue',
-                            senseid=senseid,
-                            location=self.name, #because it's relevant to this
-                            fieldtype='tone')
-                            ) != []:
-                self.senseidssorted+=[senseid]
-            else:
+            v=self.db.get('exfieldvalue',senseid=senseid,fieldtype='tone',
+                            location=self.name) #because it's relevant to this
+            log.info("Found tone value: {}".format(v))
             if unlist(v) in ['',None]:
                 self.senseidsunsorted+=[senseid]
         if len(self.senseidsunsorted) >0:
