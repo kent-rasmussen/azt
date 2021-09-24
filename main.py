@@ -4213,6 +4213,7 @@ class Check():
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
             kwargs['anchor']='w'
+        #This should be pulling from the example, as it is there already
         framed=FramedData(senseid,db=self.db,
                         frame=self.toneframes[self.ps][self.name],
                         location=self.name, analangs=[self.analang],
@@ -4910,6 +4911,9 @@ class Check():
                 continue
             else:
                 done.append(sense['guid'])
+            """These following two have been shifted down a level, and will
+            now return a list of form elements, each. Something will need to be
+            adjusted here..."""
             sense['lxnode']=firstoflist(self.db.get('lexemenode',
                                                 guid=sense['guid'],
                                                 lang=self.analang))
