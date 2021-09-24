@@ -6289,6 +6289,9 @@ class FramedData(object):
         toformat.appendformsbylang(self.forms,self.analangs,quote=False)
         toformat.appendformsbylang(self.glosses,self.glosslangs,quote=True)
         self.formatted=' '.join(toformat) #put it all together
+        # just for convenience:
+        self.analang=self.forms[self.analangs[0]]
+        self.glosslang=self.glosses[self.glosslangs[0]]
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
