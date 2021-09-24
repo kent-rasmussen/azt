@@ -4213,6 +4213,14 @@ class Check():
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
             kwargs['anchor']='w'
+        framed=FramedData(senseid,db=self.db,
+                        frame=self.toneframes[self.ps][self.name],
+                        location=self.name, analangs=[self.analang],
+                        glosslangs=[self.glosslang,self.glosslang2],
+                        notonegroup=True,truncdefn=True)
+        # framed=self.getframeddata(senseid,notonegroup=True,truncdefn=True)
+        text=framed.formatted
+        # text=(framed['formatted'])
         if label==True:
             b=Label(parent, text=text,
                     **kwargs
