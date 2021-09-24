@@ -6142,6 +6142,39 @@ class Entry(lift.Entry): #Not in use
             self.checkresults[check.name][check.subcheck]={}
         self.checkresults[check.name][check.subcheck]['result']=result
         log.info("Don't forget to write these changes to a file somewhere...")
+class DataList(list):
+    """docstring for DataList."""
+    def appendformsbylang(self,forms,langs,quote=False):
+        for l in [f for f in forms if f in langs]:
+            if quote:
+                forms[l]="‘"+forms[l]+"’"
+            self.append(forms[l])
+    def __init__(self, *args):
+        super(DataList, self).__init__()
+        self.extend(args)
+class DictbyLang(dict):
+    """docstring for DictbyLang."""
+    def getformfromnode(self,node,truncate=False):
+        #this assumes *one* value/lang, a second will overwrite.
+        #this will comma separate text nodes, if there are multiple text nodes.
+        if isinstance(node,lift.ET.Element):
+            lang=node.get('lang')
+            if truncate: #this gives up to three words, no parens
+                text=rx.glossifydefn(unlist(node.findall('text')))
+            else:
+                text=unlist(node.findall('text'))
+            log.info("Adding {} to {} dict under {}".format(t(text),self,lang))
+            self[lang]=text
+        else:
+            log.info("Not an element node: {} ({})".format(node,type(node)))
+            log.info("node.stripped: {} ({})".format(node.strip(),len(node)))
+    def frame(self,framedict,langs): #langs can/should be ordered
+        """the frame only applies if there is a language value; I hope that's
+        what we want..."""
+        for l in [i for i in langs if i in framedict if i in self]:
+            self[l]=rx.framerx.sub(self[l],framedict[l])
+    def __init__(self):
+        super(DictbyLang, self).__init__()
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
