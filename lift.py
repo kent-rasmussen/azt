@@ -362,7 +362,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "/definition"
                     "/form[@lang='{glosslang}']"
                     ),['guid','senseid','ps','glosslang']),
-            'attr':'nodetext'}
+            'attr':'node'}
         a['definition']={
             'cm': 'use to get definitions of entries',
             'url':(("entry[@guid='{guid}']"
