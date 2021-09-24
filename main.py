@@ -6174,6 +6174,109 @@ class DictbyLang(dict):
             self[l]=rx.framerx.sub(self[l],framedict[l])
     def __init__(self):
         super(DictbyLang, self).__init__()
+class FramedData(object):
+    """This populates an object with attributes to format data for display,
+    by senseid"""
+    """Sometimes this script is called to make the example fields, other
+    times to display it. If source is a senseid, it pulls form/gloss/etc
+    information from the entry. If source is an example, it pulls that info
+    from the example. The info is formatted uniformly in either case."""
+    def parsesense(self,db,senseid,truncdefn=False):
+        self.senseid=senseid
+        lexs=db.get('lexemenode',senseid=senseid)
+        cits=db.get('citationnode',senseid=senseid)
+        log.info("lex: {}, cit: {}".format(lexs,cits))
+        defns=db.get('definitionnode',senseid=senseid)
+        glss=db.get('glossnode',senseid=senseid)
+        log.info("defns: {}, glss: {}".format(defns,glss))
+        for i in lexs+cits: # (later) citation nodes will overwrite lex nodes
+            self.forms.getformfromnode(i)
+        for i in defns: #(later) gloss nodes will overwrite these defn nodes
+            self.glosses.getformfromnode(i,truncate=truncdefn) #only trunc defns
+        for i in glss:
+            self.glosses.getformfromnode(i)
+        if self.location is not None: #otherwise will return all examples
+            self.tonegroups=self.db.get('exfieldvalue', senseid=senseid,
+                                    fieldtype='tone', location=self.location)
+        else:
+            tonegroups=None
+            log.error("Location isn't set; I can't tell which example you want")
+    def parseexample(self,example):
+        self.senseid=None #We don't have access to this here
+        for i in example:
+            if i.tag == 'form': #language forms, not glosses, etc, below.
+                self.forms.getformfromnode(i)
+            elif (((i.tag == 'translation') and
+                (i.get('type') == 'Frame translation')) or
+                ((i.tag == 'gloss'))):
+                for ii in i:
+                    if (ii.tag == 'form'):
+                        self.glosses.getformfromnode(ii)
+            elif ((i.tag == 'field') and (i.get('type') == 'tone')): #should
+                self.tonegroups=node.findall('form/text') #always be list of one
+    def __init__(self, source, **kwargs):
+        super(FramedData, self).__init__()
+        noframe=kwargs.pop('noframe',False)
+        notonegroup=kwargs.pop('notonegroup',False)
+        truncdefn=kwargs.pop('truncdefn',False)
+        self.location=kwargs.pop('location',None)
+        self.db=kwargs.pop('db',None)
+        #These really must be there...
+        self.analangs=kwargs.pop('analangs')
+        self.glosslangs=kwargs.pop('glosslangs')
+        self.frame=kwargs.pop('frame')
+        self.forms=DictbyLang()
+        self.glosses=DictbyLang()
+        self.tonegroup=None
+        """Build dual logic here. We use this to frame senses & examples"""
+        if isinstance(source,lift.ET.Element):
+            noframe=True #Examples should already be framed
+            if self.db is not None:
+                log.info("FYI: You specified database unnecessarily!")
+            self.parseexample(source) #example element, not sense or entry:
+            """This is what we're pulling from:
+            <example>
+                <form lang="gnd"><text>ga təv</text></form>
+                <translation type="Frame translation">
+                    <form lang="fr"><text>lieu (m), place (f) (pl)</text></form>
+                </translation>
+                <field type="tone">
+                    <form lang="fr"><text>1</text></form>
+                </field>
+                <field type="location">
+                    <form lang="fr"><text>Plural</text></form>
+                </field>
+            </example>
+            """
+        elif type(source) is str and len(source) >= 36:#senseid can be guid+form
+            if self.db is not None: #pull from lift by senseid
+                self.parsesense(self.db,source,truncdefn=truncdefn)
+            else:
+                log.error("Can't pull entry ({}) w/o database!".format(source))
+                return
+        else:
+            log.error('Neither Element nor senseid was found!'
+                        '\nThis is almost certainly not what you want!'
+                        '\nFYI, I was looking for {}'.format(source))
+            return source
+        """The following is the same for senses or examples"""
+        if not notonegroup and self.tonegroups is not None: # wanted&found
+            tonegroup=unlist(self.tonegroups)
+            if tonegroup is not None:
+                try:
+                    int(tonegroup)
+                except:
+                    self.tonegroup=tonegroup #only for named groups
+        if not noframe: #Forms and glosses have to be strings, or the rx fails
+            self.forms.frame(self.frame,self.analangs)
+            self.glosses.frame(self.frame,self.glosslangs)
+        if self.tonegroup is None: #i.e., no named group was found above
+            toformat=DataList()
+        else:
+            toformat=DataList(self.tonegroup)
+        toformat.appendformsbylang(self.forms,self.analangs,quote=False)
+        toformat.appendformsbylang(self.glosses,self.glosslangs,quote=True)
+        self.formatted=' '.join(toformat) #put it all together
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
