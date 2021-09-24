@@ -322,7 +322,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             'url':(("entry[@guid='{guid}']"
                     "/sense[@id='{senseid}']"
                     "/grammatical-info[@value='{ps}']/../.."
-                    "/lexical-unit/form[@lang='{analang}']/.."
+                    "/lexical-unit/form[@lang='{analang}']"
                     ),['guid','senseid','ps','analang']),
             'attr':'node'}
         a['lexeme']={
@@ -341,7 +341,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             'url':(("entry[@guid='{guid}']"
                     "/sense[@id='{senseid}']"
                     "/grammatical-info[@value='{ps}']/../.."
-                    "/citation/form[@lang='{analang}']/.."
+                    "/citation/form[@lang='{analang}']"
                     ),['guid','senseid','ps','analang']),
             'attr':'node'}
         a['citation']={
