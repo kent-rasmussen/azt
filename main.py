@@ -4490,7 +4490,7 @@ class Check():
         for senseid in self.senseidstosort: #This is a ps-profile slice
             tonegroup=self.db.get('exfieldvalue', senseid=senseid,
                         fieldtype='tone', location=self.name)#, showurl=True)
-            if tonegroup in ['NA','','ALLOK', None]:
+            if unlist(tonegroup) in ['NA','','ALLOK', None]:
                 log.error("tonegroup {} found in sense {} under location {}!"
                     "".format(tonegroup,senseid,self.name))
             else:
@@ -4563,6 +4563,7 @@ class Check():
                             ) != []:
                 self.senseidssorted+=[senseid]
             else:
+            if unlist(v) in ['',None]:
                 self.senseidsunsorted+=[senseid]
         if len(self.senseidsunsorted) >0:
             self.status[self.type][self.ps][self.profile][self.name][
