@@ -7633,15 +7633,16 @@ class RecordButtonFrame(Frame):
         log.debug("No audio file found! using name: {}; names: {}; url:{}"
                 "".format(filename, filenames, filenameURL))
         return filename
-    def __init__(self,parent,check,id=None,node=None,form=None,gloss=None,test=False,**kwargs):
+    def __init__(self,parent,check,id=None,node=None,test=False,**kwargs):
         # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.db=check.db
         self.node=node #This should never be more than one node...
-        self.form=form
+        framed=kwargs.pop('framed',None) #Either this or the next two...
+        self.form=kwargs.pop('form',framed.analang)
+        self.gloss=kwargs.pop('gloss',framed.glosslang)
         self.id=id
-        self.gloss=gloss
         self.check=check
         try:
             check.pyaudio.get_format_from_width(1) #get_device_count()
