@@ -6300,6 +6300,10 @@ class FramedData(object):
         # just for convenience:
         self.analang=self.forms[self.analangs[0]]
         self.glosslang=self.glosses[self.glosslangs[0]]
+        if len(self.glosslangs) >1 and self.glosslangs[1] in self.glosses:
+            self.glosslang2=self.glosses[self.glosslangs[1]]
+        else:
+            self.glosslang2=None
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
