@@ -4872,7 +4872,7 @@ class Check():
                     t+="!"
                 t+='’'
         lxl=Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,id=sense['guid'],
+        lcb=RecordButtonFrame(parent,self,id=sense['guid'], #reconfigure!
                                             node=sense['nodetoshow'],
                                             gloss=sense['gloss'])
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
