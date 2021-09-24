@@ -6231,12 +6231,13 @@ class FramedData(object):
         noframe=kwargs.pop('noframe',False)
         self.notonegroup=kwargs.pop('notonegroup',False)
         truncdefn=kwargs.pop('truncdefn',False)
-        self.location=kwargs.pop('location',None)
-        self.db=kwargs.pop('db',None)
-        #These really must be there...
+        self.db=kwargs.pop('db',None) #not needed for examples
+        self.location=kwargs.pop('location',None) #not needed for noframe
+        self.frame=kwargs.pop('frame',None) #not needed for noframe
+        #These really must be there, and ordered with first first
         self.analangs=kwargs.pop('analangs')
         self.glosslangs=kwargs.pop('glosslangs')
-        self.frame=kwargs.pop('frame')
+        #to put data:
         self.forms=DictbyLang()
         self.glosses=DictbyLang()
         #defaults to set upfront
