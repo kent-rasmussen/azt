@@ -862,20 +862,20 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # doesn't match (from form, translation and location). If they all match,
         # then return the tone value node to change."""
         tonevalue='' # set now, will change later, or not...
-        log.info("Looking for bits that don't match")
+        log.log(2,"Looking for bits that don't match")
         if kwargs['example'] == None:
             log.info("Hey! You gave me an empty example!")
             return
         for node in kwargs['example']:
             try:
-                log.info('Node: {} ; {}'.format(node.tag,
+                log.log(2,'Node: {} ; {}'.format(node.tag,
                                                 node.find('.//text').text))
             except:
-                log.info('Node: {} ; Likely no text node!'.format(node.tag))
+                log.log(2,'Node: {} ; Likely no text node!'.format(node.tag))
             if (node.tag == 'form'):
                 if ((node.get('lang') == kwargs['analang'])
                 and (node.find('text').text != kwargs['forms'][kwargs['analang']])):
-                    log.info('{} == {}; {} != {}'.format(node.get('lang'),
+                    log.log(2,'{} == {}; {} != {}'.format(node.get('lang'),
                             kwargs['analang'], node.find('text').text, kwargs['forms'][kwargs['analang']]))
                     return
             elif ((node.tag == 'translation') and
@@ -889,13 +889,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         (form.get('lang') == kwargs['glosslang2']) and
                         (not self.forminnode(node,
                             kwargs['forms'][kwargs['glosslang2']])))):
-                        log.info('translation {} != {}'.format(
+                        log.log(2,'translation {} != {}'.format(
                                     node.find('form/text').text, kwargs['forms']))
                         return
             elif (node.tag == 'field'):
                 if (node.get('type') == 'location'):
                     if not self.forminnode(node,kwargs['location']):
-                        log.info('location {} not in {}'.format(
+                        log.log(2,'location {} not in {}'.format(
                                                     kwargs['location'],node))
                         return
                 if (node.get('type') == 'tone'):
@@ -908,7 +908,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             log.debug('tone value found: {}'.format(
                                                             tonevalue.text))
                         else:
-                            log.info("Not the same lang for tone form: {}"
+                            log.log(2,"Not the same lang for tone form: {}"
                                         "".format(form.get('lang')))
                             return
             else:
