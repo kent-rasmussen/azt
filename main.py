@@ -5020,6 +5020,8 @@ class Check():
             row=0
             if self.runwindow.exitFlag.istrue():
                 return 1
+            if self.exitFlag.istrue():
+                return
             entryframe=Frame(self.runwindow.frame)
             entryframe.grid(row=1,column=0)
             if progress is not None:
