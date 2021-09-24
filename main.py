@@ -172,7 +172,6 @@ class Check():
         self.cleardefaults() #this resets all to none (to be set below)
         """These two lines can import structured frame dictionaries; do this
         just to make the import, then comment them out again."""
-        self.frameregex=re.compile('__') #replace this w/data in frames.
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
         self.guessanalang() #needed for regexs
@@ -2180,13 +2179,13 @@ class Check():
                 if gloss[lang] is None:
                     gloss[lang]=nn(gloss[lang]) #'nogloss'
             log.log(2,frame)
-            output[self.analang]=self.frameregex.sub(form,frame[self.analang])
+            output[self.analang]=rx.framerx.sub(form,frame[self.analang])
             for lang in gloss:
                 """only give these if the frame has this gloss, *and* if
                 the gloss is in the data (user selection is above)"""
                 if ((lang in frame) and (lang in gloss) and (
                         None not in [gloss[lang],frame[lang]])):
-                    output[lang]=self.frameregex.sub(gloss[lang],frame[lang])
+                    output[lang]=rx.framerx.sub(gloss[lang],frame[lang])
         else:
             output[self.analang]=nn(form) #for non-segmental forms
             for lang in gloss:
@@ -2218,10 +2217,10 @@ class Check():
             print(forms,glosses,frame)
         outputform=None
         outputgloss={}
-        outputform=self.frameregex.sub(form,frame[self.analang])
+        outputform=rx.framerx.sub(form,frame[self.analang])
         for lang in glosses:
             if (lang != self.glosslang2) or (self.glosslang2 is not None):
-                outputgloss[lang]=self.frameregex.sub(glosses[lang],
+                outputgloss[lang]=rx.framerx.sub(glosses[lang],
                                             frame[lang])
         printoutput=('     ',outputform,
                     "‘"+str(outputgloss[self.glosslang])+"’")
@@ -4214,8 +4213,6 @@ class Check():
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
             kwargs['anchor']='w'
-        framed=self.getframeddata(senseid,notonegroup=True,truncdefn=True)
-        text=(framed['formatted'])
         if label==True:
             b=Label(parent, text=text,
                     **kwargs

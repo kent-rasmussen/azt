@@ -4,6 +4,7 @@ import time
 import logging
 log = logging.getLogger(__name__)
 """This is called from a number of places"""
+framerx=re.compile('__') #replace this w/data in frames.
 def urlok(x):
     #These should each be tuple of
     # 1. a simple list of characters to strip,
