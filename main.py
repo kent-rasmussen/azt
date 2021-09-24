@@ -4561,6 +4561,8 @@ class Check():
             log.info("Found tone value: {}".format(v))
             if unlist(v) in ['',None]:
                 self.senseidsunsorted+=[senseid]
+            else:
+                self.senseidssorted+=[senseid]
         if len(self.senseidsunsorted) >0:
             self.status[self.type][self.ps][self.profile][self.name][
                                                                 'tosort']=True
