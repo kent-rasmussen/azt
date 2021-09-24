@@ -4209,10 +4209,8 @@ class Check():
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
         # should move to specify location and fieldvalue in button lambda
-        if 'font' not in kwargs:
-            kwargs['font']=self.fonts['read']
-        if 'anchor' not in kwargs:
-            kwargs['anchor']='w'
+        kwargs['font']=kwargs.get('font',self.fonts['read'])
+        kwargs['anchor']=kwargs.get('anchor','w')
         #This should be pulling from the example, as it is there already
         framed=FramedData(senseid,db=self.db,
                         frame=self.toneframes[self.ps][self.name],
