@@ -5031,12 +5031,14 @@ class Check():
                     )
                 progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
-            framed=self.getframeddata(senseid,noframe=True,notonegroup=True,
-                                        truncdefn=True)
-            if framed[self.analang]=='noform':
-                entryframe.destroy()
+            titleframed=FramedData(senseid,db=self.db,
+                        location=self.name, analangs=[self.analang],
+                        glosslangs=[self.glosslang,self.glosslang2],
+                        noframe=True,notonegroup=True,truncdefn=True)
+            if titleframed.analang is None:
+                entryframe.destroy() #is this ever needed?
                 continue
-            text=framed['formatted']
+            text=titleframed.formatted
             Label(entryframe, anchor='w', font=self.fonts['read'],
                     text=text).grid(row=row,
                                     column=0,sticky='w')
@@ -5051,13 +5053,15 @@ class Check():
                     lift.examplehaslangform(example,self.audiolang) == True):
                     continue
                 """These should already be framed!"""
-                framed=self.getframeddata(example,noframe=True,truncdefn=True)
-                if framed[self.analang] is None:
+                framed=FramedData(example,analangs=[self.analang],
+                                    glosslangs=[self.glosslang,self.glosslang2],
+                                    noframe=True,truncdefn=True)
+                if framed.analang is None: # when?
                     continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
-                text=framed['formatted']
+                text=framed.formatted
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
                                     framed=framed,
                                     # form=nn(framed.analang),
