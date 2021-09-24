@@ -5059,8 +5059,9 @@ class Check():
                 probably make this a function, like getframeddata"""
                 text=framed['formatted']
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
-                                    form=nn(framed[self.analang]),
-                                    gloss=nn(framed[self.glosslang])
+                                    framed=framed,
+                                    # form=nn(framed.analang),
+                                    # gloss=nn(framed.glosslang)
                                     ) #no gloss2; form/gloss just for filename
                 rb.grid(row=row,column=0,sticky='w')
                 Label(examplesframe, anchor='w',text=text
