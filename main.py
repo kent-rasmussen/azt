@@ -6207,12 +6207,11 @@ class FramedData(object):
             self.glosses.getformfromnode(i,truncate=truncdefn) #only trunc defns
         for i in glss:
             self.glosses.getformfromnode(i)
-        if self.location is not None: #otherwise will return all examples
+        if not self.notonegroup and self.location is not None:
             self.tonegroups=self.db.get('exfieldvalue', senseid=senseid,
                                     fieldtype='tone', location=self.location)
         else:
-            tonegroups=None
-            log.error("Location isn't set; I can't tell which example you want")
+            log.error("Location isn't set, but you asked for a tonegoup...")
     def parseexample(self,example):
         self.senseid=None #We don't have access to this here
         for i in example:
@@ -6224,12 +6223,13 @@ class FramedData(object):
                 for ii in i:
                     if (ii.tag == 'form'):
                         self.glosses.getformfromnode(ii)
-            elif ((i.tag == 'field') and (i.get('type') == 'tone')): #should
-                self.tonegroups=node.findall('form/text') #always be list of one
+            elif ((i.tag == 'field') and (i.get('type') == 'tone') and
+                    not self.notonegroup):
+                self.tonegroups=i.findall('form/text') #always be list of one
     def __init__(self, source, **kwargs):
         super(FramedData, self).__init__()
         noframe=kwargs.pop('noframe',False)
-        notonegroup=kwargs.pop('notonegroup',False)
+        self.notonegroup=kwargs.pop('notonegroup',False)
         truncdefn=kwargs.pop('truncdefn',False)
         self.location=kwargs.pop('location',None)
         self.db=kwargs.pop('db',None)
@@ -6239,6 +6239,8 @@ class FramedData(object):
         self.frame=kwargs.pop('frame')
         self.forms=DictbyLang()
         self.glosses=DictbyLang()
+        #defaults to set upfront
+        self.tonegroups=None
         self.tonegroup=None
         """Build dual logic here. We use this to frame senses & examples"""
         if isinstance(source,lift.ET.Element):
@@ -6272,7 +6274,7 @@ class FramedData(object):
                         '\nFYI, I was looking for {}'.format(source))
             return source
         """The following is the same for senses or examples"""
-        if not notonegroup and self.tonegroups is not None: # wanted&found
+        if self.tonegroups is not None: # wanted&found
             tonegroup=unlist(self.tonegroups)
             if tonegroup is not None:
                 try:
