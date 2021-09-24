@@ -354,8 +354,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "/citation/form[@lang='{analang}']/text"
                     ),['guid','senseid','ps','analang']),
             'attr':'nodetext'}
+        a['definitionnode']={
+            'cm': 'use to get definition nodes of entries',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/definition"
+                    "/form[@lang='{glosslang}']"
+                    ),['guid','senseid','ps','glosslang']),
+            'attr':'nodetext'}
         a['definition']={
-            'cm': 'use to get glosses of entries',
+            'cm': 'use to get definitions of entries',
             'url':(("entry[@guid='{guid}']"
                     "/sense[@id='{senseid}']"
                     "/grammatical-info[@value='{ps}']/.."
@@ -363,6 +372,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "/form[@lang='{glosslang}']/text"
                     ),['guid','senseid','ps','glosslang']),
             'attr':'nodetext'}
+        a['glossnode']={
+            'cm': 'use to get gloss nodes',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/gloss[@lang='{glosslang}']"
+                    ),['guid','senseid','ps','glosslang']),
+            'attr':'node'}
         a['gloss']={
             'cm': 'use to get glosses of entries',
             'url':(("entry[@guid='{guid}']"
