@@ -13,6 +13,9 @@
 - added landscape option for sections, used when summary table is more than 6 columns wide
 - split tables over seven columns wide into multiple tables
 - call praat in recording buttonframe and in playable groupbutton (with tooltips)
+- end cleanly on exit
+- new FramedData and related classes
+- fix problem with empty tone group node not presented for sorting
 
 # Version 0.8.4
 - added number of groups to XLP table
