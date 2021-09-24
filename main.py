@@ -6170,12 +6170,12 @@ class DictbyLang(dict):
         #this will comma separate text nodes, if there are multiple text nodes.
         if isinstance(node,lift.ET.Element):
             lang=node.get('lang')
+            text=unlist(node.findall('text'))
             if truncate: #this gives up to three words, no parens
-                text=rx.glossifydefn(unlist(node.findall('text')))
-            else:
-                text=unlist(node.findall('text'))
-            log.info("Adding {} to {} dict under {}".format(t(text),self,lang))
-            self[lang]=text
+                text=rx.glossifydefn(text)
+            if len(text)>0: # don't add empty contents
+                log.info("Adding {} to {} dict under {}".format(t(text),self,lang))
+                self[lang]=text
         else:
             log.info("Not an element node: {} ({})".format(node,type(node)))
             log.info("node.stripped: {} ({})".format(node.strip(),len(node)))
