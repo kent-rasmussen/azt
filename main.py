@@ -7924,6 +7924,8 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
             ox=[t(v) for v in l[:len(l)-2]] #Should probably always give text
             l=ox+[' and '.join([t(v) for v in l[len(l)-2:]])]
                 # for i in range(int(len(output)/2))]
+        else:
+            l[0]=t(l[0]) #for lists of a single element
         return ', '.join(x for x in l if x not in ignore)
     elif len(l) == 1 or (othersOK == True):
         return l[0]
