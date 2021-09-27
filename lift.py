@@ -167,24 +167,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if 'showurl' in kwargs and kwargs['showurl']==True:
             log.info(url)
         try:
-            nodeset=self.nodes.findall(url) #This is the only place we need self=lift
+            nodeset=node.findall(url) #This is the only place we need self=lift
         except BaseException as e:
             log.error("Problem getting url: {} ({})".format(url,e))
             return
         output=[]
         attr=urlnattr['attr']
-        for node in nodeset:
+        for n in nodeset:
             if attr == 'nodetext':
-                if node is not None:
+                if n is not None:
                     log.log(1,"Returning node text")
-                    output+=[node.text]
+                    output+=[n.text]
             elif attr == 'node':
-                if node is not None:
+                if n is not None:
                     log.log(1,"Returning whole node")
-                    output+=[node]
+                    output+=[n]
             else:
                 log.log(1,"Returning node attribute")
-                output+=[node.get(attr)]
+                output+=[n.get(attr)]
         return output
     def makenewguid(self):
         from random import randint
@@ -315,7 +315,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info(url)
         node=self.nodes.find(url) #this should always find just one node
         return node
-    def addexamplefields(self,showurl=False,**kwargs):
+    def addexamplefields(self,**kwargs):
         # ,guid,senseid,analang,glosslang,glosslang2,forms,
         # fieldtype,location,fieldvalue,ps=None
         # This fuction will add an XML node to the lift tree, like a new
@@ -325,6 +325,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # there.
         log.info(_("Adding values (in lift.py) : {}").format(kwargs))
         node=self.getsensenode(senseid=kwargs['senseid'])
+        node=self.getsensenode(senseid=senseid)
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(
                                                             kwargs['senseid']))
