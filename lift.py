@@ -2146,15 +2146,17 @@ if __name__ == '__main__':
     loglevel=5
     from logsetup import *
     log=logsetup(loglevel)
-    filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift.bak.txt"
-    filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift.bak.txt"
+    # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename,nsyls=2)
-    senseid='26532c2e-fedf-4111-85d2-75b34ed31dd8'
-    lift.modverificationnode(senseid,add="another value3",rm="Added value")
-    lift.modverificationnode(senseid,rm="another value3",add="another value2")
-    lift.modverificationnode(senseid,rm="another value3",add="another value4")
+    # senseid='26532c2e-fedf-4111-85d2-75b34ed31dd8'
+    senseid='skin (of man)_d56b5a5d-7cbf-49b9-a2dd-24eebb0ae462'
+    lift.modverificationnode(senseid,vtype="V",add="another value3",rm="Added value")
+    lift.modverificationnode(senseid,vtype="V",rm="another value3",add="another value2")
+    lift.modverificationnode(senseid,vtype="V",rm="another value3",add="another value4")
     """Functions to run on a database from time to time"""
     # lift.findduplicateforms()
     # lift.findduplicateexamples()
