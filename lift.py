@@ -129,6 +129,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.log(1,'Ori: {}'.format(self.attribdict[attribute]['url']))
         return {'url':url,'attr':self.attribdict[attribute]['attr']}
     def get(self, attribute, **kwargs):
+        getfrom(self.node, attribute, **kwargs)
+    def getfrom(node, attribute, **kwargs):
         """kwargs are guid=None, senseid=None, analang=None,
             glosslang=None, lang=None, ps=None, form=None, fieldtype=None,
             location=None, fieldvalue=None, showurl=False):"""
