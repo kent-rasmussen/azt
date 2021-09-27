@@ -1568,6 +1568,22 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for entry in formsnids():
             if regex.search(entry[1]): #check regex against the form part of the tuple output by formsnids
                 yield entry[0] #print id part of the tuple output by formsnids
+class Node(ET.Element):
+    def makefieldnode(self,type,lang,text=None,gimmetext=False):
+        n=Node(self,'field',attrib={'type':type})
+        nn=n.makeformnode(lang,text,gimmetext=gimmetext)
+        if gimmetext:
+            return nn
+    def makeformnode(self,lang,text=None,gimmetext=False):
+        n=Node(self,'form',attrib={'lang':lang})
+        nn=Node(n,'text')
+        if text is not None:
+            nn.text=text
+        if gimmetext:
+            return nn
+    def __init__(self, parent, tag, attrib={}, **kwargs):
+        super(Node, self).__init__(tag, attrib, **kwargs)
+        parent.append(self)
 class Entry(object): # what does "object do here?"
     #import lift.put as put #class put:
     #import get #class put:
