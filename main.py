@@ -4425,7 +4425,7 @@ class Check():
                                     analang=self.analang,
                                     glosslang=self.glosslang,
                                     glosslang2=self.glosslang2, #OK if None
-                                    forms=framed,
+                                    db=framed,
                                     # langform=framed[self.analang],
                                     # glossform=framed[self.glosslang],
                                     # gloss2form=framed[self.glosslang2],
@@ -8353,7 +8353,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
                             analang=self.analang,
                             glosslang=self.glosslang,
                             glosslang2=self.glosslang2, #OK if None
-                            forms=framed,
+                            db=framed,
                             fieldtype='tone',location=self.name,
                             fieldvalue='') #this value should be the only change
     tgroups=self.db.get('exfieldvalue', senseid=senseid,
