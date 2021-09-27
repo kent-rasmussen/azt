@@ -6163,8 +6163,9 @@ class DataList(list):
     def appendformsbylang(self,forms,langs,quote=False):
         for l in [f for f in forms if f in langs]:
             if quote:
-                forms[l]="‘"+forms[l]+"’"
-            self.append(forms[l])
+                self.append("‘"+forms[l]+"’")
+            else:
+                self.append(forms[l])
     def __init__(self, *args):
         super(DataList, self).__init__()
         self.extend(args)
