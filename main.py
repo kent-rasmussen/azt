@@ -8337,7 +8337,12 @@ def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
 def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     #?This is the action of a verification button, so needs to be self contained.
     #merge with addtonefieldex
-    framed=self.getframeddata(senseid,truncdefn=True)
+    framed=FramedData(senseid,db=self.db,
+                        frame=self.toneframes[self.ps][self.name],
+                        analangs=[self.analang], location=self.name,
+                        glosslangs=[self.glosslang,self.glosslang2],
+                        truncdefn=True) #noframe=True,notonegroup=True,
+    # framed=self.getframeddata(senseid,truncdefn=True)
     if name is None:
         name=self.name
     if subcheck is None:
