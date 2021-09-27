@@ -939,6 +939,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 log.debug('=> This is not the example we are looking '
                             'for: {}'.format(valuenode))
     def findduplicateforms(self):
+        """This removes duplicate form nodes in lx or lc nodes, not much point.
+        """
         for entry in self.nodes:
             for node in entry:
                 if ((node.tag == 'lexical-unit') or (node.tag == 'citation')):
