@@ -63,7 +63,7 @@ Results of the analysis of multiple frame groupings (e.g., from the Tone Report)
 - A verification status file (`VerificationStatus`), where your progress in verification is stored.
 - A Sound card settings file (`SoundSettings`), where your sound card settings are stored.
 - An `audio` folder, where sound files are saved, once at least one has been recorded.
-- A `report` folder, where report files (txt and xml) are stored whenever run by the user. These are set apart from the rest of the repository to reduce clutter. N.B.: relative links to audio work in this hierarchy, if you move a report from this directory, be sure to update the links accordingly.
+- A `report` folder, where report files (txt and xml) are stored whenever run by the user. These are set apart from the rest of the repository to reduce clutter. N.B.: relative links to audio work in this hierarchy, if you move a report from this directory, be sure to update the links accordingly, or copy the relevant audio files into an `audio` folder which is a sibling to the folder where you put the report (`../audio/`).
 - An ad hoc groups file (`AdHocGroups`), if you have defined any ad hoc groups.
 
 ## First Run: Be Patient and Orient Yourself
