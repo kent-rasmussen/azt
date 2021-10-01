@@ -17,7 +17,7 @@ Before you can [Set up A→Z+T for normal use](#set-up-azt-for-normal-use), you 
 ## Install Git and Download A→Z+T
 
 ### Install Git
-1. Download Git from [here](https://git-scm.com/download/win).
+1. Download [Git](https://git-scm.com/download/win) from [here](https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe)
 2. Click the download to install Git
 
 ### Download A→Z+T
