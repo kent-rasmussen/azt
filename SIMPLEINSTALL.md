@@ -35,7 +35,7 @@ Once you have completed everything under [Install Python](#install-python) and [
 
 ## Additional Important Steps to get the most out of A→Z+T
 
-### Get Help Installing Things you Don't Need Right Away
+### Be ready to make and edit reports
 1. ask someone to help you install XeLaTeX (see [INSTALL](INSTALL.md)).
 2. ask someone to help you install the XMLmind XML Editor (XXE) (see [INSTALL](INSTALL.md)).
 
