@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=AZT
 Comment=Dictionary checker 
-Exec=/usr/bin/python3 $HOME/path/to/main.py
-Icon=$HOME/path/to/images/AZT green stacks_transparent_sm.png
+Exec=/usr/bin/python3 $HOME/azt/main.py
+Icon=$HOME/azt/images/AZT green stacks_transparent_sm.png
 Terminal=false
 NoDisplay=true
 Type=Application
