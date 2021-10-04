@@ -8400,7 +8400,7 @@ def findpraat():
     except Exception as e:
         log.info("No praat found! ({})".format(e))
         try: #am I on typical MS Windows?
-            praat=subprocess.check_output(["which","Praat.exe"], **spargs)
+            praat=subprocess.check_output(["where.exe","Praat.exe"], **spargs)
         except Exception as e:
             log.info("No Praat.exe found! ({})".format(e))
             try: #am I on typical Mac OS?
