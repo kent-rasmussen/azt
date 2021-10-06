@@ -30,7 +30,11 @@ import file
 import profiles
 import setdefaults
 import xlp
-import sound
+try:
+    import sound
+except Exception as e:
+    log.exception("Problem importing Sound/pyaudio. Is it installed? %s",e)
+    exceptiononload=True #logwritelzma(log.filename) #in logsetup
 """Other people's stuff"""
 import threading
 import itertools
@@ -38,17 +42,20 @@ import importlib.util
 import collections
 from random import randint
 if program['tkinter']==True:
-    import tkinter #as gui
-    import tkinter.font
-    import tkinter.scrolledtext
-    import tkintermod
-    tkinter.CallWrapper = tkintermod.TkErrorCatcher
+    try:
+        import tkinter #as gui
+        import tkinter.font
+        import tkinter.scrolledtext
+        import tkintermod
+        tkinter.CallWrapper = tkintermod.TkErrorCatcher
+    except Exception as e:
+        log.exception("Problem importing GUI/tkinter. Is it installed? %s",e)
+        exceptiononload=True
 """else:
     import kivy
 """
 import time
 import datetime
-import pyaudio
 import wave
 import unicodedata
 # #for some day..…
@@ -4198,8 +4205,8 @@ class Check():
                 self.updatestatus(verified=True)
                 # self.checkcheck() #now after verifyT is done
             else:
-                print(f"User did NOT select ‘{oktext}’, assuming we'll come "
-                        "back to this!!")
+                log.debug("User did NOT select ‘{}’, assuming we'll come "
+                        "back to this!!".format(oktext))
         #Once done verifying each group:
         if self.runwindow.exitFlag.istrue():
             return 1
@@ -8489,7 +8496,16 @@ def main():
     myapp = MainApplication(root,program)
     myapp.mainloop()
     logshutdown() #in logsetup
-
+def mainproblem():
+    root = tkinter.Tk()
+    root.title("Installation Problem!")
+    t="Hey! you have installation problems!"
+    t+="\nPlease see https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md#dependencies"
+    t+="\nContents of {}:\n{}".format(log.filename,logcontents(log))
+    tkinter.Label(root,text=t,anchor='w',justify='left').grid(row=0,column=0)
+    root.mainloop()
+    logwritelzma(log.filename)
+    exit()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
@@ -8517,17 +8533,20 @@ if __name__ == "__main__":
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
     praat=findpraat()
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
-    try:
-        main()
-    except SystemExit:
-        log.info("Shutting down by user request")
-    except Exception as e:
-        log.exception("Unexpected exception! %s",e)
-        logwritelzma(log.filename) #in logsetup
-    except:
-        import traceback
-        log.error("uncaught exception: %s", traceback.format_exc())
-        logwritelzma(log.filename) #in logsetup
+    if exceptiononload:
+        mainproblem()
+    else:
+        try:
+            main()
+        except SystemExit:
+            log.info("Shutting down by user request")
+        except Exception as e:
+            log.exception("Unexpected exception! %s",e)
+            logwritelzma(log.filename) #in logsetup
+        except:
+            import traceback
+            log.error("uncaught exception: %s", traceback.format_exc())
+            logwritelzma(log.filename) #in logsetup
     exit()
     """The following are just for testing"""
     entry=Entry(db, guid='003307da-3636-40cd-aca9-6b0d798055d2')
