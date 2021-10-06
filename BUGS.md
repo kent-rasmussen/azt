@@ -1,5 +1,5 @@
 # Bugs
-If you run AZT and it crashes, please [find an error log](FINDERRORLOGS.md) and send it to me at kent_rasmussen@sil.org. I will do what I can to fix the problem that caused the crash, and get back to you on how you can move forward.
+If you run AZT and it crashes, please [find an error log](FINDERRORLOGS.md) and send it to me at kent_rasmussen@sil.org, along with a brief description of what you were doing, and what you saw A→Z+T doing, just before the crash. I will do what I can to fix the problem that caused the crash, and get back to you on how you can move forward.
 
 There will of course be problems with this program, as with any set of instructions which seeks, in advance, to account for situations that occur later, and sometimes in an unpredictable manner.
 
