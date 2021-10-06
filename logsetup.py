@@ -5,7 +5,7 @@ import logging
 import lzma
 import re
 log = logging.getLogger(__name__)
-
+exceptiononload=False
 def logshutdown(): #Not sure I'll ever need this...
     logging.shutdown()
 def logsetup(loglevel):
@@ -59,6 +59,9 @@ def logsetup(loglevel):
         log.exception("Exception!") #this expects exception info
         log.critical("Critical!")
     return log
+def logcontents(log):
+    with open(log.filename,'r', encoding='utf-8') as d:
+        return str(d.read())
 def logwritelzma(filename):
     try:
         import lzma
