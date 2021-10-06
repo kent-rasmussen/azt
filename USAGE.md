@@ -2,8 +2,8 @@
 - [**Practical Prerequisites**](#practical-prerequisites)
 - [**Expectations**](#expectations)
 - [**First Run**](#first-run-be-patient-and-orient-yourself)
-- [**Subsequent Runs (CV)**](#subsequent-runs-cv-analysis-view-data-and-run-reports)
-- [**Subsequent Runs (Tone)**](#subsequent-runs-tone-sort-and-follow-directions)
+- [**Subsequent Runs (CV)**](#subsequent-runs-cv-analysis-)
+- [**Subsequent Runs (Tone)**](#subsequent-runs-tone-sort-and-follow-directions-)
 - [**Miscellaneous**](#miscellaneous)
 
 ## Practical Prerequisites
@@ -14,8 +14,9 @@
     - [WeSay](https://software.sil.org/wesay/) uses [LIFT](https://code.google.com/archive/p/lift-standard/) natively, so the same repository can be used for [WeSay](https://software.sil.org/wesay/) and [A→Z+T](https://github.com/kent-rasmussen/azt) (though it is not recommended to use them both at the same time).
     - [WeSay](https://software.sil.org/wesay/) is [Chorus](https://software.sil.org/chorushub/) enabled, which allows easy tracking of changes and off-site archiving, including the changes to your database and reports made by [A→Z+T](https://github.com/kent-rasmussen/azt).
     - N.B.: I highly recommend the excellent library of images that works with WeSay, [the Art of Reading](https://bloomlibrary.org/artofreading)
-- Build a dictionary in [FLEx](https://software.sil.org/fieldworks/), and export to [LIFT](https://code.google.com/archive/p/lift-standard/)/WeSay.
-    - assuming you want to get the checked database *back* into [FLEx](https://software.sil.org/fieldworks/), you want to use `send/receive for WeSay`. `Import/Export` (a different process) can work, but there is no protection against overwriting your data, without doing backups yourself.
+- Build a dictionary in [FLEx](https://software.sil.org/fieldworks/), and share/export to [LIFT](https://code.google.com/archive/p/lift-standard/)/WeSay.
+    - Use the FLEx menu item `send/receive for WeSay`, assuming you may ever want to get the checked database *back* into [FLEx](https://software.sil.org/fieldworks/). 
+    - Using the FLEx menu item `Export to LIFT` (a different process) can work, but would preclude sensible sharing back to FLEx in the future.
     - there is an active [list of users](https://groups.google.com/g/flex-list) to help with problems doing this.
 - Store your data in some other form (text, spreadsheet, database) and convert it to [LIFT](https://code.google.com/archive/p/lift-standard/) (*PLEASE* don't do this unless you *really* know what you're doing, and have a *good* reason to; the other options above are much easier, and much less likely to result in data corruption)
 
