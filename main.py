@@ -8516,8 +8516,9 @@ def mainproblem():
     addr='kent_rasmussen@sil.org'
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
     eurl+='&body=Please replace this text with a description of what you just tried.'.format(file)
+    eurl+="%0d%0aIf the log below is more than a few lines, please attach your compressed log file ({})".format(file)
     eurl+='%0d%0a--log info--%0d%0a{}'.format(lcontents.replace('\n','%0d%0a'))
-    t="\n\nIf this information doesn't help you fix this, please click on this text to Email me your log ({}, to {})".format(file,addr)
+    t="\n\nIf this information doesn't help you fix this, please click on this text to Email me your log (to {})".format(addr)
     n=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=18))
     n.grid(row=2,column=0)
     n.bind("<Button-1>", lambda e: callback(eurl))
