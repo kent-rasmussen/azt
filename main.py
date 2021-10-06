@@ -8497,14 +8497,36 @@ def main():
     myapp.mainloop()
     logshutdown() #in logsetup
 def mainproblem():
-    root = tkinter.Tk()
-    root.title("Installation Problem!")
-    t="Hey! you have installation problems!"
-    t+="\nPlease see https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md#dependencies"
-    t+="\nContents of {}:\n{}".format(log.filename,logcontents(log))
-    tkinter.Label(root,text=t,anchor='w',justify='left').grid(row=0,column=0)
-    root.mainloop()
-    logwritelzma(log.filename)
+    import webbrowser
+    def callback(url):
+        webbrowser.open_new(url)
+    file=logwritelzma(log.filename)
+    errorroot = tkinter.Tk()
+    errorroot.title("Serious Problem!")
+    t="Hey! You found a problem! (details and solution below)"
+    l=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=36))
+    l.grid(row=0,column=0)
+    if exceptiononload:
+        durl='https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md#dependencies'
+        t="\nPlease see {}".format(durl)
+        m=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=24))
+        m.grid(row=1,column=0)
+        m.bind("<Button-1>", lambda e: callback(durl))
+    lcontents=logcontents(log)
+    addr='kent_rasmussen@sil.org'
+    eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
+    eurl+='&body=Please replace this text with a description of what you just tried.'.format(file)
+    eurl+='%0d%0a--log info--%0d%0a{}'.format(lcontents.replace('\n','%0d%0a'))
+    t="\n\nIf this information doesn't help you fix this, please click on this text to Email me your log ({}, to {})".format(file,addr)
+    n=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=18))
+    n.grid(row=2,column=0)
+    n.bind("<Button-1>", lambda e: callback(eurl))
+    t="\n\nContents of {}/{} are below:".format(log.filename,file)
+    t+="\n\n{}".format(lcontents)
+    o=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=12))
+    o.grid(row=3,column=0)
+    o.bind("<Button-1>", lambda e: callback(eurl))
+    errorroot.mainloop()
     exit()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
@@ -8542,11 +8564,11 @@ if __name__ == "__main__":
             log.info("Shutting down by user request")
         except Exception as e:
             log.exception("Unexpected exception! %s",e)
-            logwritelzma(log.filename) #in logsetup
+            mainproblem()
         except:
             import traceback
             log.error("uncaught exception: %s", traceback.format_exc())
-            logwritelzma(log.filename) #in logsetup
+            mainproblem()
     exit()
     """The following are just for testing"""
     entry=Entry(db, guid='003307da-3636-40cd-aca9-6b0d798055d2')
