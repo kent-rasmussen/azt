@@ -27,8 +27,8 @@ Before you can [Set up A→Z+T for normal use](#set-up-azt-for-normal-use), you 
 
 ## Set up A→Z+T for normal use
 Once you have completed everything under [Install Python](#install-python) and [Install Git and Download A→Z+T](#install-git-and-download-azt):
-1. Make a link from `main.py` (in the folder where you put A→Z+T) to your desktop.
-2. Click on the link to run A→Z+T
+1. Make a shortcut/link from `main.py` (in the folder where you put A→Z+T) to your desktop.
+2. Click on the shortcut/link to run A→Z+T
 3. **Celebrate your accomplishment; you're done installing A→Z+T!**
 4. Read [USAGE](USAGE.md) for how to use A→Z+T
 5. Send me information on any [bugs](BUGS.md) you find, so I can help you and improve the program for others.
