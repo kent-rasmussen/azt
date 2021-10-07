@@ -1860,8 +1860,16 @@ class Check():
             if lang not in self.s:
                 self.s[lang]={}
             """These should always be there, no matter what"""
-            for sclass in self.db.s[lang]: #Just populate each list now
-                self.s[lang][sclass]=self.db.s[lang][sclass]
+            for sclass in [x for x in self.db.s[lang]
+                                        if 'dg' not in x and 'tg' not in x]: #Just populate each list now
+                if sclass in self.polygraphs[lang]:
+                    pgthere=[k for k,v in self.polygraphs[lang][sclass].items() if v]
+                    log.debug("Polygraphs for {} in {}: {}".format(lang,sclass,
+                                                                    pgthere))
+                    self.s[lang][sclass]=pgthere
+                else:
+                    self.s[lang][sclass]=list()
+                self.s[lang][sclass]+=self.db.s[lang][sclass]
                 """These lines just add to a C list, for a later regex"""
                 if ((sclass in self.distinguish) and #might distinguish, but
                     (self.distinguish[sclass]==False) and #don't want to
