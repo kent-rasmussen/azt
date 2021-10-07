@@ -687,6 +687,9 @@ class Check():
         """The rest of the page"""
         self.runwindow.scroll=ScrollingFrame(self.runwindow)
         self.runwindow.scroll.grid(row=2,column=0)
+        Label(self.runwindow.scroll.content,text="Test!").grid(
+                    row=0,
+                    column=0)
         log.debug('self.distinguish: {}'.format(self.distinguish))
         log.debug('self.interpret: {}'.format(self.interpret))
         self.runwindow.frames={}
