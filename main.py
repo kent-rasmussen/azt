@@ -1782,18 +1782,19 @@ class Check():
             for self.ps in self.db.get('ps',senseid=senseid):
                 self.addtoprofilesbysense(senseid)
             self.ps=psori
-            return
+            return None,'Invalid'
         if forms is None:
-            return
+            return None,'Invalid'
         for form in forms:
             self.profile=self.profileofform(form)
             if not set(self.profilelegit).issuperset(self.profile):
                 self.profile='Invalid'
             for self.ps in self.db.get('ps',senseid=senseid):
                 self.addtoprofilesbysense(senseid)
+        profile=self.profile
         self.profile=profileori
         self.ps=psori
-        return firstoflist(forms)
+        return firstoflist(forms),profile
     def getprofiles(self):
         self.profileswdatabyentry={}
         self.profilesbysense={}
