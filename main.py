@@ -1810,10 +1810,8 @@ class Check():
         x=0
         for senseid in self.db.senseids:
             x+=1
-            form=self.getprofileofsense(senseid)
             if x % 10 == 0:
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
-                                            self.profile))
         #Convert to iterate over local variables
         psori=self.ps #We iterate across this here
         self.makeadhocgroupsdict() #if no file, before iterating over variable
