@@ -632,6 +632,9 @@ class Check():
                         column=self.runwindow.options['column'],sticky='ew',
                         padx=self.runwindow.options['padx'],
                         pady=self.runwindow.options['pady'])
+            Label(self.runwindow.scroll.content,text="Test!").grid(
+                        row=self.runwindow.options['row']+1,
+                        column=self.runwindow.options['column'])
             Label(self.runwindow.frames[ss],text="Test!").grid(row=0,column=0)
             bffl=Label(self.runwindow.frames[ss],text=self.runwindow.options['text'],
                     justify=tkinter.LEFT,anchor='c'
