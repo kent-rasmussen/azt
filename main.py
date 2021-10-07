@@ -1851,6 +1851,74 @@ class Check():
                         "prompting user or info.".format(pg,pclass,sclass))
                         self.askaboutpolygraphs()
                         return
+    def askaboutpolygraphs(self):
+        def nochanges(changemarker):
+            changemarker.value=False
+            pgw.destroy()
+        changemarker=Object()
+        changemarker.value=True
+        log.info("Asking about Digraphs and Trigraphs!")
+        pgw=Window(self.frame,title="A→Z+T Digraphs and Trigraphs")
+        t=_("Select which of the following graph sequences found in your data "
+                "refer to a single sound (digraph or trigraph) in {}".format(
+            unlist([self.languagenames[y] for y in self.db.analangs])))
+        title=Label(pgw,text=t)
+        title.grid(column=0, row=0)
+        t=_("If you use a digraph or trigraph that isn't listed here, please "
+            "Email me, and I can add it.")
+        t2=Label(pgw,text=t)
+        t2.grid(column=0, row=1)
+        eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
+                                                            program['Email'])
+        t2.bind("<Button-1>", lambda e: openweburl(eurl))
+        t3=Button(pgw,text="Exit with no changes",
+                    command=lambda x=changemarker:nochanges(x))
+        t3.grid(column=1, row=1)
+        if not hasattr(self,'polygraphs'):
+            self.polygraphs={}
+        vars={}
+        unscroll=Frame(pgw)
+        unscroll.grid(row=2, column=0)
+        for lang in self.db.analangs:
+            if lang not in self.polygraphs:
+                self.polygraphs[lang]={}
+            row=0
+            title=Label(unscroll,text=self.languagenames[lang],
+                                                        font=self.fonts['read'])
+            title.grid(column=0, row=row)
+            vars[lang]={}
+            for sclass in [sc for sc in self.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
+                                    if ('dg' in sc or 'tg' in sc)]:
+                pclass=sclass.replace('dg','').replace('tg','')
+                if pclass not in self.polygraphs[lang]:
+                    self.polygraphs[lang][pclass]={}
+                if pclass not in vars[lang]:
+                    vars[lang][pclass]={}
+                if len(self.db.s[lang][sclass])>0:
+                    row+=1
+                    header=Label(unscroll,
+                    text=sclass.replace('dg',' (digraph)').replace('tg',
+                                                            ' (trigraph)')+': ')
+                    header.grid(column=0, row=row)
+                col=1
+                for pg in self.db.s[lang][sclass]:
+                    vars[lang][pclass][pg] = tkinter.BooleanVar()
+                    vars[lang][pclass][pg].set(
+                                    self.polygraphs[lang][pclass].get(pg,False))
+                    cb=CheckButton(unscroll, text = pg, #.content
+                                        variable = vars[lang][pclass][pg],
+                                        onvalue = True, offvalue = False,
+                                        )
+                    cb.grid(column=col, row=row,sticky='nsew')
+                    col+=1
+        pgw.wait_window(pgw)
+        if changemarker.value:
+            for lang in self.db.analangs:
+                for pc in vars[lang]:
+                    for pg in vars[lang][pc]:
+                        self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
+            self.storesettingsfile(setting='profiledata')
+            self.reloadprofiledata()
     def slists(self):
         """This sets up the lists of segments, by types. For the moment, it
         just pulls from the segment types in the lift database."""
