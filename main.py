@@ -198,12 +198,6 @@ class Check():
         self.langnames()
         self.polygraphcheck()
         self.checkinterpretations() #checks/sets values for self.distinguish
-        if 'bfj' in self.db.s:
-            bfjvdigraphs=(['ou','ei','ɨʉ','ai']+
-            ['óu','éi','ɨ́ʉ','ái']+
-            ['òu','èi','ɨ̀ʉ','ài'])
-            self.db.s['bfj']['V']=bfjvdigraphs+self.db.s['bfj']['V']
-            log.debug(self.db.s['bfj']['V'])
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
         self.setupCVrxs() #creates self.rx dictionaries
         """The line above may need to go after this block"""
