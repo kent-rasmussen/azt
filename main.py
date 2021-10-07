@@ -1811,6 +1811,7 @@ class Check():
         x=0
         for senseid in self.db.senseids:
             x+=1
+            form,profile=self.getprofileofsense(senseid)
             if x % 10 == 0:
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
         #Convert to iterate over local variables
