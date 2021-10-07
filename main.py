@@ -8466,6 +8466,8 @@ def setexitflag(self,exitFlag):
     print("Setting window exit flag False (on window creation)!")
     self.exitFlag = exitFlag
     self.protocol("WM_DELETE_WINDOW", lambda s=self:on_quit(s))
+def openweburl(url):
+    webbrowser.open_new(url)
 def on_quit(self):
     # Do this when a window closes, so any window functions can know
     # to just stop, rather than trying and throwing an error. This doesn't
@@ -8523,9 +8525,6 @@ def main():
     myapp.mainloop()
     logshutdown() #in logsetup
 def mainproblem():
-    import webbrowser
-    def callback(url):
-        webbrowser.open_new(url)
     file=logwritelzma(log.filename)
     errorroot = tkinter.Tk()
     errorroot.title("Serious Problem!")
@@ -8537,7 +8536,7 @@ def mainproblem():
         t="\nPlease see {}".format(durl)
         m=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=24))
         m.grid(row=1,column=0)
-        m.bind("<Button-1>", lambda e: callback(durl))
+        m.bind("<Button-1>", lambda e: openweburl(durl))
     lcontents=logcontents(log)
     addr='kent_rasmussen@sil.org'
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
@@ -8547,12 +8546,12 @@ def mainproblem():
     t="\n\nIf this information doesn't help you fix this, please click on this text to Email me your log (to {})".format(addr)
     n=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=18))
     n.grid(row=2,column=0)
-    n.bind("<Button-1>", lambda e: callback(eurl))
+    n.bind("<Button-1>", lambda e: openweburl(eurl))
     t="\n\nContents of {}/{} are below:".format(log.filename,file)
     t+="\n\n{}".format(lcontents)
     o=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=12))
     o.grid(row=3,column=0)
-    o.bind("<Button-1>", lambda e: callback(eurl))
+    o.bind("<Button-1>", lambda e: openweburl(eurl))
     errorroot.mainloop()
     exit()
 if __name__ == "__main__":
