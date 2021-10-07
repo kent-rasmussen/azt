@@ -2065,7 +2065,7 @@ class Check():
             self.iterations+=1
             if self.iterations>15:
                 exit()
-        log.debug("{}: {}".format(formori,form))
+        # log.debug("{}: {}".format(formori,form))
         return form
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
@@ -6821,6 +6821,9 @@ class MainApplication(Frame):
                                 command=lambda x=check:Check.tryNAgain(x))
         advancedmenu.add_cascade(label=_("Redo"), menu=redomenu)
         advancedmenu.add_cascade(label=_("Add other"), menu=filemenu)
+        redomenu.add_command(
+                        label=_("Digraph and Trigraph settings (Restart)"),
+                        command=lambda x=check:Check.askaboutpolygraphs(x))
         redomenu.add_command(
                         label=_("Syllable Profile Analysis (Restart)"),
                         command=lambda x=check:Check.reloadprofiledata(x))
