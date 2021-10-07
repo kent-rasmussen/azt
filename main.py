@@ -1326,11 +1326,11 @@ class Check():
             self.type = "CV"
             self.checkcheck()
         elif self.type == "T":
-            windowT=Window(self.frame,title=_('Select Framed Tone Group'))
-            self.getframedtonegroup(window=windowT,guess=guess,
+            w=Window(self.frame,title=_('Select Framed Tone Group'))
+            self.getframedtonegroup(window=w,guess=guess,
                                                         comparison=comparison)
             # windowT.wait_window(window=windowT) #?!?
-        return windowT #so others can wait for this
+        return w #so others can wait for this
     def getps(self,event=None):
         log.info("Asking for ps...")
         window=Window(self.frame, title=_('Select Grammatical Category'))
