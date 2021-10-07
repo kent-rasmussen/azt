@@ -8538,7 +8538,7 @@ def mainproblem():
         m.grid(row=1,column=0)
         m.bind("<Button-1>", lambda e: openweburl(durl))
     lcontents=logcontents(log)
-    addr='kent_rasmussen@sil.org'
+    addr=program['Email']
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
     eurl+='&body=Please replace this text with a description of what you just tried.'.format(file)
     eurl+="%0d%0aIf the log below is more than a few lines, please attach your compressed log file ({})".format(file)
