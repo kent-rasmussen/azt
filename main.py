@@ -632,15 +632,17 @@ class Check():
                         column=self.runwindow.options['column'],sticky='ew',
                         padx=self.runwindow.options['padx'],
                         pady=self.runwindow.options['pady'])
-            Label(self.runwindow.frames[ss],text=self.runwindow.options['text'],
+            bffl=Label(self.runwindow.frames[ss],text=self.runwindow.options['text'],
                     justify=tkinter.LEFT,anchor='c'
-                    ).grid(row=0,
+                    )
+            bffl.grid(row=0,
                             column=self.runwindow.options['column'],
                             sticky='ew',
                             padx=self.runwindow.options['padx'],
                             pady=self.runwindow.options['pady'])
-            RadioButtonFrame(self.runwindow.frames[ss],var=var[ss],
-            opts=self.runwindow.options['opts']).grid(row=0,column=1)
+            bffrb=RadioButtonFrame(self.runwindow.frames[ss],var=var[ss],
+                                    opts=self.runwindow.options['opts'])
+            bffrb.grid(row=0,column=1)
             self.runwindow.options['row']+=1
         self.getrunwindow()
         self.checkinterpretations()
