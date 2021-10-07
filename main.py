@@ -632,10 +632,10 @@ class Check():
                         column=self.runwindow.options['column'],sticky='ew',
                         padx=self.runwindow.options['padx'],
                         pady=self.runwindow.options['pady'])
-            Label(self.runwindow.scroll.content,text="Test!").grid(
-                        row=self.runwindow.options['row']+1,
-                        column=self.runwindow.options['column'])
-            Label(self.runwindow.frames[ss],text="Test!").grid(row=0,column=0)
+            # Label(self.runwindow.scroll.content,text="Test!").grid(
+            #             row=self.runwindow.options['row']+1,
+            #             column=self.runwindow.options['column'])
+            # Label(self.runwindow.frames[ss],text="Test!").grid(row=0,column=0)
             bffl=Label(self.runwindow.frames[ss],text=self.runwindow.options['text'],
                     justify=tkinter.LEFT,anchor='c'
                     )
@@ -688,10 +688,10 @@ class Check():
         self.runwindow.scroll=ScrollingFrame(self.runwindow) #ScrollingFrame
         self.runwindow.scroll.grid(row=2,column=0)
         # self.runwindow.scroll.content=Frame(self.runwindow.scroll)
-        self.runwindow.scroll.content.grid(row=0,column=0)
-        Label(self.runwindow.scroll.content,text="Test!").grid(
-                    row=0,
-                    column=0)
+        self.runwindow.scroll.content.grid(row=0,column=0,sticky='nsew')
+        # Label(self.runwindow.scroll.content,text="Test!").grid(
+        #             row=0,
+        #             column=0)
         log.debug('self.distinguish: {}'.format(self.distinguish))
         log.debug('self.interpret: {}'.format(self.interpret))
         self.runwindow.frames={}
