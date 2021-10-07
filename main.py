@@ -1477,6 +1477,11 @@ class Check():
     def restart(self):
         self.parent.parent.destroy()
         main()
+    def changedatabase(self):
+        log.debug("Removing lift_url.py, so user will be asked again for LIFT")
+        file.remove('lift_url.py')
+        self.filename=None #since this will still be in memory
+        self.restart()
     def reloadprofiledata(self):
         self.storesettingsfile()
         file.remove(self.profiledatafile)
@@ -6789,6 +6794,9 @@ class MainApplication(Frame):
         redomenu.add_command(
                         label=_("Syllable Profile Analysis (Restart)"),
                         command=lambda x=check:Check.reloadprofiledata(x))
+        redomenu.add_command(
+                        label=_("Change to another Database (Restart)"),
+                        command=lambda x=check:Check.changedatabase(x))
         redomenu.add_command(
                         label=_("Verification Status file (several minutes)"),
                         command=lambda x=check:Check.reloadstatusdata(x))
