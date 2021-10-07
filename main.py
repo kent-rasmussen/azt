@@ -1310,13 +1310,13 @@ class Check():
     def getsubcheck(self,guess=False,event=None,comparison=False):
         log.info("this sets the subcheck")
         if self.type == "V":
-            windowV=Window(self.frame,title=_('Select Vowel'))
-            self.getV(window=windowV)
-            windowV.wait_window(window=windowV)
+            w=Window(self.frame,title=_('Select Vowel'))
+            self.getV(window=w)
+            w.wait_window(window=w)
         elif self.type == "C":
-            windowC=Window(self.frame,title=_('Select Consonant'))
-            self.getC(windowC)
-            self.frame.wait_window(window=windowC)
+            w=Window(self.frame,title=_('Select Consonant'))
+            self.getC(w)
+            self.frame.wait_window(window=w)
         elif self.type == "CV":
             CV=''
             for self.type in ['C','V']:
