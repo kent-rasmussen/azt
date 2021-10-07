@@ -1835,6 +1835,22 @@ class Check():
                 for profile in self.profilesbysense[ps]:
                     log.debug("ps: {}; profile: {} ({})".format(ps,profile,
                             len(self.profilesbysense[ps][profile])))
+    def polygraphcheck(self):
+        log.info("Checking for Digraphs and Trigraphs!")
+        if not hasattr(self,'polygraphs'):
+            self.polygraphs={}
+        for lang in self.db.analangs:
+            if lang not in self.polygraphs:
+                self.polygraphs[lang]={}
+            for sclass in [sc for sc in self.db.s[lang]
+                                    if ('dg' in sc or 'tg' in sc)]:
+                pclass=sclass.replace('dg','').replace('tg','')
+                for pg in self.db.s[lang][sclass]:
+                    if pg not in self.polygraphs[lang][pclass]:
+                        log.info("{} ([]/{}) has no Di/Trigraph setting; "
+                        "prompting user or info.".format(pg,pclass,sclass))
+                        self.askaboutpolygraphs()
+                        return
     def slists(self):
         """This sets up the lists of segments, by types. For the moment, it
         just pulls from the segment types in the lift database."""
