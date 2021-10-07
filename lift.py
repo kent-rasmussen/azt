@@ -1590,42 +1590,51 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         inside it, by category."""
         c={}
         c['pvd']={}
-        # c['pvd'][2]=['bh','dh','gh','gb']
+        c['pvd'][2]=['bh','dh','gh','gb']
         c['pvd'][1]=['b','B','d','g','ɡ','G']
         c['p']={}
-        c['p'][2]=['kk'] #'kp',
+        c['p'][2]=['kk','kp']
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k']
         c['fvd']={}
-        # c['fvd'][2]=['bh','vh','zh']
+        c['fvd'][2]=['bh','vh','zh']
         c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ']
         c['f']={}
-        c['f'][2]=['hh'] #had 'ch','ph','sh',
+        c['f'][2]=['ch','ph','sh','hh']
         c['f'][1]=['F','f','s','ʃ','θ','x','h']
         c['avd']={}
-        c['avd'][2]=['dʒ'] # had 'dj','dz',
+        c['avd'][2]=['dj','dz','dʒ']
         c['a']={}
-        # c['a'][3]=['chk']
-        c['a'][2]=['tʃ'] #had 'ts',
+        c['a'][3]=['chk']
+        c['a'][2]=['ts','tʃ']
         c['lfvd']={}
-        # c['lfvd'][2]=['zl','zl']
+        c['lfvd'][2]=['zl','zl']
         c['lfvd'][1]=['ɮ']
         c['lf']={}
-        # c['lf'][2]=['sl']
+        c['lf'][2]=['sl']
         c['lf'][1]=['ɬ']
         c['pn']={}
-        """If these appear, they should be single consonants."""
+        """If these appear, they should always be single consonants."""
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
                     'ⁿj','ⁿs','ⁿz']
         x={} #dict to put all hypothetical segements in, by category
-        x['C']=list() #to store valid consonants in
-        x['D']=list() #to store valid depressor consonants in
         for nglyphs in [3,2,1]:
+            if nglyphs == 3:
+                consvar='Ctg'
+                dconsvar='Dtg'
+            elif nglyphs == 2:
+                consvar='Cdg'
+                dconsvar='Ddg'
+            elif nglyphs == 1:
+                consvar='C'
+                dconsvar='D'
+            x[consvar]=list() #to store valid consonants in
+            x[dconsvar]=list() #to store valid depressor consonants in
             for stype in c:
                 if c[stype].get(nglyphs) is not None:
                     # if 'vd' in stype:
-                    #     x['D']+=c[stype][nglyphs]
+                    #     x[dconsvar]+=c[stype][nglyphs]
                     # else:
-                        x['C']+=c[stype][nglyphs]
+                        x[consvar]+=c[stype][nglyphs]
         # s['g']={}
         # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
         #         'mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']
@@ -1641,7 +1650,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # x['NCG']=list((n+char+g for char in x['C'] for n in x['N']
         #                                             for g in x['G']))
         """Non-Nasal/Glide Sonorants"""
-        x['S']=['l','r'] #no longer:'rh','wh',
+        x['S']=['l','r']
+        x['Sdg']=['rh','wh']
         # x['CS']=list((char+s for char in x['C'] for s in x['S']))
         # x['NCS']=list((n+char+s for char in x['C'] for n in x['N']
         #                                             for s in x['S']))
@@ -1674,6 +1684,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'Â', 'Ê', 'Î', 'Ô', 'Û',
                 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
                 ]
+        x['Vdg']=['ou','ei','ɨʉ','ai', #requested by bfj
+                'óu','éi','ɨ́ʉ','ái',
+                'òu','èi','ɨ̀ʉ','ài',
+                'yi','yu','yɨ','yʉ'] #requested by Jane
+        x['Vtg']=[]
+
         x['d']=["̀","́","̂","̌","̄","̃"
                 , "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉" #from IPA keyboard
                 ,"̈" #COMBINING DIAERESIS
