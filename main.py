@@ -7380,7 +7380,7 @@ class RadioButton(tkinter.Radiobutton):
         super().__init__(parent,**kwargs)
         self.grid(column=column, row=row, sticky=sticky)
 class RadioButtonFrame(Frame):
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, horizontal=False,**kwargs):
         for vars in ['var','opts']:
             if (vars not in kwargs):
                 print('You need to set {} for radio button frame!').format(vars)
@@ -7405,7 +7405,10 @@ class RadioButtonFrame(Frame):
                                                 sticky=sticky,
                                                 indicatoron=0,
                                                 **kwargs)
-            row+=1
+            if horizontal:
+                column+=1
+            else:
+                row+=1
 class Button(tkinter.Button):
     def nofn(self):
         pass
