@@ -4329,10 +4329,8 @@ class Check():
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
         # should move to specify location and fieldvalue in button lambda
-        if 'font' not in kwargs:
-            kwargs['font']=self.fonts['read']
-        if 'anchor' not in kwargs:
-            kwargs['anchor']='w'
+        kwargs['font']=kwargs.get('font',self.fonts['read'])
+        kwargs['anchor']=kwargs.get('anchor','w')
         #This should be pulling from the example, as it is there already
         framed=FramedData(senseid,db=self.db,
                         frame=self.toneframes[self.ps][self.name],
@@ -4547,7 +4545,7 @@ class Check():
                                     analang=self.analang,
                                     glosslang=self.glosslang,
                                     glosslang2=self.glosslang2, #OK if None
-                                    forms=framed,
+                                    db=framed,
                                     # langform=framed[self.analang],
                                     # glossform=framed[self.glosslang],
                                     # gloss2form=framed[self.glosslang2],
@@ -4994,7 +4992,7 @@ class Check():
                     t+="!"
                 t+='’'
         lxl=Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,id=sense['guid'],
+        lcb=RecordButtonFrame(parent,self,id=sense['guid'], #reconfigure!
                                             node=sense['nodetoshow'],
                                             gloss=sense['gloss'])
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
@@ -5142,6 +5140,8 @@ class Check():
             row=0
             if self.runwindow.exitFlag.istrue():
                 return 1
+            if self.exitFlag.istrue():
+                return
             entryframe=Frame(self.runwindow.frame)
             entryframe.grid(row=1,column=0)
             if progress is not None:
@@ -5151,12 +5151,14 @@ class Check():
                     )
                 progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
-            framed=self.getframeddata(senseid,noframe=True,notonegroup=True,
-                                        truncdefn=True)
-            if framed[self.analang]=='noform':
-                entryframe.destroy()
+            titleframed=FramedData(senseid,db=self.db,
+                        location=self.name, analangs=[self.analang],
+                        glosslangs=[self.glosslang,self.glosslang2],
+                        noframe=True,notonegroup=True,truncdefn=True)
+            if titleframed.analang is None:
+                entryframe.destroy() #is this ever needed?
                 continue
-            text=framed['formatted']
+            text=titleframed.formatted
             Label(entryframe, anchor='w', font=self.fonts['read'],
                     text=text).grid(row=row,
                                     column=0,sticky='w')
@@ -5171,16 +5173,19 @@ class Check():
                     lift.examplehaslangform(example,self.audiolang) == True):
                     continue
                 """These should already be framed!"""
-                framed=self.getframeddata(example,noframe=True,truncdefn=True)
-                if framed[self.analang] is None:
+                framed=FramedData(example,analangs=[self.analang],
+                                    glosslangs=[self.glosslang,self.glosslang2],
+                                    noframe=True,truncdefn=True)
+                if framed.analang is None: # when?
                     continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
-                text=framed['formatted']
+                text=framed.formatted
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
-                                    form=nn(framed[self.analang]),
-                                    gloss=nn(framed[self.glosslang])
+                                    framed=framed,
+                                    # form=nn(framed.analang),
+                                    # gloss=nn(framed.glosslang)
                                     ) #no gloss2; form/gloss just for filename
                 rb.grid(row=row,column=0,sticky='w')
                 Label(examplesframe, anchor='w',text=text
@@ -6278,8 +6283,9 @@ class DataList(list):
     def appendformsbylang(self,forms,langs,quote=False):
         for l in [f for f in forms if f in langs]:
             if quote:
-                forms[l]="‘"+forms[l]+"’"
-            self.append(forms[l])
+                self.append("‘"+forms[l]+"’")
+            else:
+                self.append(forms[l])
     def __init__(self, *args):
         super(DataList, self).__init__()
         self.extend(args)
@@ -6290,12 +6296,12 @@ class DictbyLang(dict):
         #this will comma separate text nodes, if there are multiple text nodes.
         if isinstance(node,lift.ET.Element):
             lang=node.get('lang')
+            text=unlist(node.findall('text'))
             if truncate: #this gives up to three words, no parens
-                text=rx.glossifydefn(unlist(node.findall('text')))
-            else:
-                text=unlist(node.findall('text'))
-            log.info("Adding {} to {} dict under {}".format(t(text),self,lang))
-            self[lang]=text
+                text=rx.glossifydefn(text)
+            if len(text)>0: # don't add empty contents
+                log.info("Adding {} to {} dict under {}".format(t(text),self,lang))
+                self[lang]=text
         else:
             log.info("Not an element node: {} ({})".format(node,type(node)))
             log.info("node.stripped: {} ({})".format(node.strip(),len(node)))
@@ -6327,12 +6333,11 @@ class FramedData(object):
             self.glosses.getformfromnode(i,truncate=truncdefn) #only trunc defns
         for i in glss:
             self.glosses.getformfromnode(i)
-        if self.location is not None: #otherwise will return all examples
+        if not self.notonegroup and self.location is not None:
             self.tonegroups=self.db.get('exfieldvalue', senseid=senseid,
                                     fieldtype='tone', location=self.location)
         else:
-            tonegroups=None
-            log.error("Location isn't set; I can't tell which example you want")
+            log.error("Location isn't set, but you asked for a tonegoup...")
     def parseexample(self,example):
         self.senseid=None #We don't have access to this here
         for i in example:
@@ -6344,21 +6349,25 @@ class FramedData(object):
                 for ii in i:
                     if (ii.tag == 'form'):
                         self.glosses.getformfromnode(ii)
-            elif ((i.tag == 'field') and (i.get('type') == 'tone')): #should
-                self.tonegroups=node.findall('form/text') #always be list of one
+            elif ((i.tag == 'field') and (i.get('type') == 'tone') and
+                    not self.notonegroup):
+                self.tonegroups=i.findall('form/text') #always be list of one
     def __init__(self, source, **kwargs):
         super(FramedData, self).__init__()
         noframe=kwargs.pop('noframe',False)
-        notonegroup=kwargs.pop('notonegroup',False)
+        self.notonegroup=kwargs.pop('notonegroup',False)
         truncdefn=kwargs.pop('truncdefn',False)
-        self.location=kwargs.pop('location',None)
-        self.db=kwargs.pop('db',None)
-        #These really must be there...
+        self.db=kwargs.pop('db',None) #not needed for examples
+        self.location=kwargs.pop('location',None) #not needed for noframe
+        self.frame=kwargs.pop('frame',None) #not needed for noframe
+        #These really must be there, and ordered with first first
         self.analangs=kwargs.pop('analangs')
         self.glosslangs=kwargs.pop('glosslangs')
-        self.frame=kwargs.pop('frame')
+        #to put data:
         self.forms=DictbyLang()
         self.glosses=DictbyLang()
+        #defaults to set upfront
+        self.tonegroups=None
         self.tonegroup=None
         """Build dual logic here. We use this to frame senses & examples"""
         if isinstance(source,lift.ET.Element):
@@ -6392,7 +6401,7 @@ class FramedData(object):
                         '\nFYI, I was looking for {}'.format(source))
             return source
         """The following is the same for senses or examples"""
-        if not notonegroup and self.tonegroups is not None: # wanted&found
+        if self.tonegroups is not None: # wanted&found
             tonegroup=unlist(self.tonegroups)
             if tonegroup is not None:
                 try:
@@ -6409,6 +6418,13 @@ class FramedData(object):
         toformat.appendformsbylang(self.forms,self.analangs,quote=False)
         toformat.appendformsbylang(self.glosses,self.glosslangs,quote=True)
         self.formatted=' '.join(toformat) #put it all together
+        # just for convenience:
+        self.analang=self.forms[self.analangs[0]]
+        self.glosslang=self.glosses[self.glosslangs[0]]
+        if len(self.glosslangs) >1 and self.glosslangs[1] in self.glosses:
+            self.glosslang2=self.glosses[self.glosslangs[1]]
+        else:
+            self.glosslang2=None
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
@@ -7762,15 +7778,16 @@ class RecordButtonFrame(Frame):
         log.debug("No audio file found! using name: {}; names: {}; url:{}"
                 "".format(filename, filenames, filenameURL))
         return filename
-    def __init__(self,parent,check,id=None,node=None,form=None,gloss=None,test=False,**kwargs):
+    def __init__(self,parent,check,id=None,node=None,test=False,**kwargs):
         # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.db=check.db
         self.node=node #This should never be more than one node...
-        self.form=form
+        framed=kwargs.pop('framed',None) #Either this or the next two...
+        self.form=kwargs.pop('form',framed.analang)
+        self.gloss=kwargs.pop('gloss',framed.glosslang)
         self.id=id
-        self.gloss=gloss
         self.check=check
         try:
             check.pyaudio.get_format_from_width(1) #get_device_count()
@@ -8451,7 +8468,12 @@ def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
 def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     #?This is the action of a verification button, so needs to be self contained.
     #merge with addtonefieldex
-    framed=self.getframeddata(senseid,truncdefn=True)
+    framed=FramedData(senseid,db=self.db,
+                        frame=self.toneframes[self.ps][self.name],
+                        analangs=[self.analang], location=self.name,
+                        glosslangs=[self.glosslang,self.glosslang2],
+                        truncdefn=True) #noframe=True,notonegroup=True,
+    # framed=self.getframeddata(senseid,truncdefn=True)
     if name is None:
         name=self.name
     if subcheck is None:
@@ -8462,7 +8484,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
                             analang=self.analang,
                             glosslang=self.glosslang,
                             glosslang2=self.glosslang2, #OK if None
-                            forms=framed,
+                            db=framed,
                             fieldtype='tone',location=self.name,
                             fieldvalue='') #this value should be the only change
     tgroups=self.db.get('exfieldvalue', senseid=senseid,
