@@ -571,7 +571,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "/grammatical-info"
                     ),['guid','senseid']),
             'attr': 'value'}
-        print(self.attribdict)
     def geturlnattr(self, attribute, **kwargs):
         if attribute == 'attributes':
             return self.attribdict.keys()
