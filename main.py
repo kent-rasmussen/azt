@@ -1814,6 +1814,7 @@ class Check():
             form,profile=self.getprofileofsense(senseid)
             if x % 10 == 0:
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
+                                            profile))
         #Convert to iterate over local variables
         psori=self.ps #We iterate across this here
         self.makeadhocgroupsdict() #if no file, before iterating over variable
