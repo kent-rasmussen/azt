@@ -196,6 +196,7 @@ class Check():
             setinterfacelang(self.interfacelang)
             self.parent.maketitle()
         self.langnames()
+        self.polygraphcheck()
         self.checkinterpretations() #checks/sets values for self.distinguish
         if 'bfj' in self.db.s:
             bfjvdigraphs=(['ou','ei','ɨʉ','ai']+
