@@ -622,6 +622,8 @@ class Check():
                     self.reloadprofiledata()
             self.runwindow.destroy()
         def buttonframeframe(self):
+            log.debug("Running buttonframeframe with options {}".format(
+                                                        self.runwindow.options))
             ss=self.runwindow.options['ss']
             self.runwindow.frames[ss]=Frame(self.runwindow.scroll.content)
             self.runwindow.frames[ss].grid(row=self.runwindow.options['row'],
@@ -677,6 +679,8 @@ class Check():
         """The rest of the page"""
         self.runwindow.scroll=ScrollingFrame(self.runwindow)
         self.runwindow.scroll.grid(row=2,column=0)
+        log.debug('self.distinguish: {}'.format(self.distinguish))
+        log.debug('self.interpret: {}'.format(self.interpret))
         self.runwindow.frames={}
         """I considered offering these to the user conditionally, but I don't
         see a subset of them that would only be relevant when another is
