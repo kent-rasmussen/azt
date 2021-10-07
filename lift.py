@@ -1548,7 +1548,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             )
         return forms
     def fields(self,guid=None,lang=None): #get all the field types in a given entry
-        return self.get('fieldname',guid=guid,lang=lang)#nfields=0
+        return list(dict.fromkeys(self.get('fieldname',guid=guid,lang=lang)))#nfields=0
     def getsenseids(self): #get the number entries in a lift file.
         self.senseids=self.get('senseid') #,showurl=True
         self.nsenseids=len(self.senseids) #,guid,lang,fieldtype,location
@@ -1710,9 +1710,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 self.s[lang]={}
             for stype in x:
                 self.s[lang][stype]=rx.inxyz(self,lang,x[stype])
-                log.log(3,'hypotheticals[{}][{}]: {}'.format(lang,stype,
+                log.debug('hypotheticals[{}][{}]: {}'.format(lang,stype,
                                                     str(x[stype])))
-                log.log(3,'actuals[{}][{}]: {}'.format(lang,stype,
+                log.debug('actuals[{}][{}]: {}'.format(lang,stype,
                                                 str(self.s[lang][stype])))
     def slists(self):
         self.segmentsnotinregexes={}
