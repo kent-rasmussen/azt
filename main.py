@@ -74,6 +74,7 @@ import inspect
 import os
 import pprint #for settings and status files, etc.
 import subprocess
+import webbrowser
 
 class Check():
     """the parent is the *functional* head, the MainApplication."""
