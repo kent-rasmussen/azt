@@ -1458,6 +1458,7 @@ class Check():
                                 'attributes':[
                                     'distinguish',
                                     'interpret',
+                                    'polygraphs',
                                     "profilecounts","profilecountInvalid",
                                     "scount",
                                     "sextracted",
