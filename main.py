@@ -209,13 +209,13 @@ class Check():
         if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
             log.info("Starting profile analysis at {}".format(time.time()
                                                             -self.start_time))
-            log.info("Starting ps-profile: {}-{}".format(self.ps,self.profile))
+            log.debug("Starting ps-profile: {}-{}".format(self.ps,self.profile))
             self.getprofiles() #creates self.profilesbysense nested dicts
             for var in ['rx','profilesbysense','profilecounts']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
-            log.info("Middle ps-profile: {}-{}".format(self.ps,self.profile))
+            log.debug("Middle ps-profile: {}-{}".format(self.ps,self.profile))
             self.storesettingsfile(setting='profiledata')
-            log.info("Ending ps-profile: {}-{}".format(self.ps,self.profile))
+            log.debug("Ending ps-profile: {}-{}".format(self.ps,self.profile))
         self.getprofilestodo()
         self.getpss() #This is a prioritized list of all ps'
         self.setnamesall() #sets self.checknamesall
