@@ -1498,7 +1498,8 @@ class Check():
         self.restart()
     def reloadprofiledata(self):
         self.storesettingsfile()
-        file.remove(self.profiledatafile)
+        self.profilesbysense={}
+        self.storesettingsfile(setting='profiledata')
         self.restart()
     def reloadstatusdata(self):
         # This fn is very inefficient, as it iterates over everything in
