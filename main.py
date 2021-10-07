@@ -624,6 +624,8 @@ class Check():
         def buttonframeframe(self):
             log.debug("Running buttonframeframe with options {}".format(
                                                         self.runwindow.options))
+            log.debug("Running buttonframeframe with frames {}".format(
+                                                        self.runwindow.frames))
             ss=self.runwindow.options['ss']
             self.runwindow.frames[ss]=Frame(self.runwindow.scroll.content)
             self.runwindow.frames[ss].grid(row=self.runwindow.options['row'],
