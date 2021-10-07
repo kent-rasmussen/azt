@@ -7941,7 +7941,9 @@ class ToolTip(object):
         self.tw= None
         if tw:
             tw.destroy()
-
+class Object:
+    def __init__(self):
+        self.value=None
 """These are non-method utilities I'm actually using."""
 def getinterfacelang():
     for lang in i18n:
