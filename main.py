@@ -685,9 +685,9 @@ class Check():
                     padx=self.runwindow.options['padx'],
                     pady=self.runwindow.options['pady'])
         """The rest of the page"""
-        self.runwindow.scroll=Frame(self.runwindow) #ScrollingFrame
+        self.runwindow.scroll=ScrollingFrame(self.runwindow) #ScrollingFrame
         self.runwindow.scroll.grid(row=2,column=0)
-        self.runwindow.scroll.content=Frame(self.runwindow.scroll) #ScrollingFrame
+        # self.runwindow.scroll.content=Frame(self.runwindow.scroll)
         self.runwindow.scroll.content.grid(row=0,column=0)
         Label(self.runwindow.scroll.content,text="Test!").grid(
                     row=0,
