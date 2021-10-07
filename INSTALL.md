@@ -1,7 +1,7 @@
 # Installing A→Z+T
 
 ## TL;DR
-You need Python 3+ and _one_ dependency ([PyAudio](https://pypi.org/project/PyAudio/)) to run A→Z+T. Download [this repository (https://github.com/kent-rasmussen/azt)](https://github.com/kent-rasmussen/azt.git), and run `main.py`. If this is enough information for you, great; if not, please read this whole document.
+You need Python 3+ and _one_ dependency ([PyAudio](https://pypi.org/project/PyAudio/)) to run A→Z+T. Download [this repository (https://github.com/kent-rasmussen/azt)](https://github.com/kent-rasmussen/azt.git), and run `main.py`. If this is enough information for you, great; if not, please read this whole document, or follow the [simple install instructions](SIMPLEINSTALL.md).
 
 ## Error Tracking
 If you have *any* trouble with anything on this page, please copy all error messages and paste them into an Email to me and/or Google.
@@ -38,7 +38,7 @@ For some reason, I have had trouble getting pyaudio installed on Windows machine
     - On Windows, if the above gives you problems, it may work to do the following:
         - `python -m pip install pipwin`
         - `pipwin install pyaudio`
-        - to get this and python optional dependencies, too: `pipwin install pyaudio Pillow lxml`
+        - to get optional dependencies, too: `pipwin install Pillow` and `pipwin install lxml` (one at a time)
     - On Linux (and Mac?), `pyaudio` may in turn have a dependency of `portaudio19-dev`, which you should install with your package manager (e.g., `sudo apt-get install portaudio19-dev`).
 
 ### Optional dependency: PIL/Pillow

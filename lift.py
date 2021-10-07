@@ -104,6 +104,473 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # should match --except for duplicates in the URL, which
         # should occur only once in the variable list. I'm keeping the order
         # the same as far as possible, but that doesn't ultimately matter."""
+        a=self.attribdict={}
+        a['template']={
+            'cm': "Give a prose description here",
+            'url': (("url in the XML file, variables OK"
+            ),['guid','senseid','ps']),
+            'attr': 'script'}
+        a['entry']= {
+            'cm': 'use to get entries with a given guid or senseid',
+            'url':(("entry[@guid='{guid}']/sense[@id='{senseid}']/.."
+                    ),['guid','senseid']),
+            'attr':'node'}
+        a['example']={
+            'cm': 'use to get examples with a given guid or senseid',
+            'url':(("entry[@guid='{guid}']/sense[@id='{senseid}']/example"
+                    ),['guid','senseid']),
+            'attr':'node'}
+        a['examplebylocation']={
+            'cm': 'use to get examples with a given guid or senseid',
+            'url':(("entry[@guid='{guid}']/sense[@id='{senseid}']/example"
+                    "/field[@type='location']/form[text='{location}']/../.."
+                    ),['guid','senseid','location']),
+            'attr':'node'}
+        a['guidbyps']={
+            'cm': 'use to get guids of entries with a given ps',
+            'url':(("entry[@guid='{guid}']/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    ),['guid','senseid','ps']),
+            'attr':'guid'}
+        a['senseidbyps']={
+            'cm': 'use to get ids of senses with a given ps',
+            'url':(("entry/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    ),['senseid','ps']),
+            'attr':'id'}
+        a['guidwanyps']={
+            'cm': 'use to get guids of entries with any ps',
+            'url':(("entry[@guid='{guid}']"
+                    "/lexical-unit/form[@lang='{analang}']/../.."
+                    "/sense[@id='{senseid}']/grammatical-info[@value]/../.."
+                    ),['guid','analang','senseid']),
+            'attr':'guid'}
+        a['senseidwanyps']={
+            'cm': 'use to get ids of senses with any ps',
+            'url':(("entry[@guid='{guid}']"
+                    "/lexical-unit/form[@lang='{analang}']/../.."
+                    "/sense[@id='{senseid}']/grammatical-info[@value]/.."
+                    ),['guid','analang','senseid']),
+            'attr':'id'}
+        a['guidbypronfield']={
+            'cm': 'use to get guids of entries with fields at the '
+                'pronunciation level',
+            'url':(("entry[@guid='{guid}']"
+                "/lexical-unit/form[@lang='{analang}']/../.."
+                "/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
+                "/pronunciation"
+                "/trait[@name='location'][@value='{location}']/.."
+                "/form[@lang='{analang}']/.."
+                #lang could be any:
+                "/field[@type='{fieldtype}']/form[@lang='{lang}']/../../.."
+                ),['guid','analang','senseid','ps','location',
+                                            'fieldtype','lang']),
+            'attr':'guid'}
+        a['guidbypronfieldvalue']={
+            'cm': 'use to get guids of entries with fields at the '
+                    'pronunciation level',
+            'url':(("entry[@guid='{guid}']"
+                "/lexical-unit/form[@lang='{analang}']/../.."
+                "/sense[@id='{senseid}']/grammatical-info[@value='{ps}']/../.."
+                    "/pronunciation"
+                    "/trait[@name='location'][@value='{location}']/.."
+                    "/form[@lang='{analang}']/.."
+                    "/field[@type='{fieldtype}']"
+                    "/form[@lang='{lang}'][text='{fieldvalue}']"
+                    "/../../.." # ^ lang could be any
+                    ),['guid','analang','senseid','ps','location',
+                                    'fieldtype','lang','fieldvalue']),
+            'attr':'guid'}
+        a['senseidbyexfieldvalue']={
+            'cm': 'use to get guids of entries with fields at the '
+                    'example level',
+            'url':(("entry[@guid='{guid}']"
+                    # "/lexical-unit/form[@lang='{analang}']/../.."
+                    "/sense[@id='{senseid}']"
+                        "/grammatical-info[@value='{ps}']/.."
+                        "/example"
+                        "/field[@type='location']"
+                        "/form[@lang='{glosslang}'][text='{location}']"
+                        "/../.."
+                        "/field[@type='{fieldtype}']"
+                        "/form[@lang='{glosslang}']"
+                        "[text='{fieldvalue}']/../../.."
+                    ),['guid','analang','senseid','ps','glosslang',
+                                'location','fieldtype','fieldvalue']),
+            'attr':'id'}
+        a['guidbyexfieldvalue']={
+            'cm': 'use to get guids of entries with fields at the '
+                    'example level',
+            'url':(("entry[@guid='{guid}']"
+                    "/lexical-unit/form[@lang='{analang}']/../.."
+                    "/sense"
+                        "/grammatical-info[@value='{ps}']/.."
+                        "/example"
+                        "/field[@type='location']"
+                        "/form[@lang='{glosslang}'][text='{location}']"
+                        "/../.."
+                        "/field[@type='{fieldtype}']"
+                        "/form[@lang='{glosslang}']"
+                        "[text='{fieldvalue}']/../../../.."
+                    ),['guid','analang','ps','location','glosslang',
+                                            'fieldtype','fieldvalue']),
+            'attr':'guid'}
+        a['guidbysensefield']={
+            'cm': 'use to get guids of entries with fields at the '
+                    'sense level',
+            'url':(("entry[@guid='{guid}']"
+                    "/lexical-unit/form[@lang='{analang}']/../.."
+                    "/sense"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/field[@type='{fieldtype}']/../.."
+                    ),['guid','analang','ps','fieldtype']),
+            'attr':'guid'}
+        a['guidbyentryfield']={
+            'cm': 'use to get guids of entries with fields at the '
+                                                        'entry level',
+            'url':(("entry[@guid='{guid}']"
+                    "/lexical-unit/form[@lang='{analang}']/../.."
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/field[@type='{fieldtype}']/.."
+                    ),['guid','analang','senseid','ps','fieldtype']),
+            'attr':'guid'}
+        a['guidbylang']={
+            'cm': 'use to get guids of all entries with lexeme of a '
+                            'given lang (or not)',
+            'url':(("entry[@guid='{guid}']"
+                    "/lexical-unit/form[@lang='{analang}']/../.."
+                    ),['guid','analang']),
+            'attr':'guid'}
+        a['guidbysenseid']={
+            'cm': 'use to get guids of sense with particular id',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']/.."
+                    ),['guid','senseid']),
+            'attr':'guid'}
+        a['guid']={
+            'cm': 'use to get guids of all entries (no qualifications)',
+            'url':(("entry[@guid='{guid}']"
+                    ),['guid']),
+            'attr':'guid'}
+        a['senseid']={
+            'cm': 'use to get ids of all senses (no qualifications)',
+            'url':(("entry"
+                    "/sense[@id='{senseid}']"
+                    ),['senseid']),
+            'attr':'id'}
+        a['senseidbytoneUFgroup']={
+            'cm': 'use to get ids of all senses by tone group',
+            'url':(("entry"
+                    "/sense[@id='{senseid}']"
+                    "/field[@type='{fieldtype}']"
+                    "/form[@lang='{lang}'][text='{form}']/../.."
+                    ),['senseid','fieldtype','lang','form']),
+            'attr':'id'}
+        a['guidbylexeme']={
+            'cm': 'use to get guid by ps and lexeme in the specified '
+                                'language (no reference to fields)',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/lexical-unit"
+                    "/form[@lang='{analang}'][text='{form}']"
+                    "/../.." # ^ [.=’text'] not until python 3.7
+                    ),['guid','senseid','ps','analang','form']),
+            'attr':'guid'}
+        a['guidbysense']={
+            'cm': 'use to get guid by ps and citation form in the '
+                        'specified language (no reference to fields)',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']/.."
+                    ),['guid','senseid']),
+            'attr':'guid'}
+        a['senseidbylexeme']={
+            'cm': 'use to get senseid by ps and lexeme in the '
+                        'specified language (no reference to fields)',
+            'url':(("entry[@guid='{guid}']"
+                    "/lexical-unit"
+                    "/form[@lang='{analang}'][text='{form}']/../.."
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    ),['guid','analang','form','senseid','ps']),
+            'attr':'id'}
+        a['guidbycitation']={
+            'cm': 'use to get guid by ps and citation form in the '
+                        'specified language (no reference to fields)',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/citation"
+                    "/form[@lang=guid'{analang}'][text='{form}']"
+                    "/../.." # ^ [].=’text'] not until python 3.7
+                    ),['guid','senseid','ps','analang','form']),
+            'attr':'guid'}
+        a['toneUFfieldvalue']={
+            'cm': 'use to get tone UF values of all senses within the '
+                    'constraints specified.',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/field[@type='{fieldtype}']"
+                    "/form[@lang='{lang}']/text"
+                    ),['guid','senseid','ps','fieldtype','lang']),
+            'attr':'nodetext'}
+        a['lexemenode']={
+            'cm': 'use to get lexemes of all entries with a form '
+                    'in the specified language (no reference to fields)',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/lexical-unit/form[@lang='{analang}']"
+                    ),['guid','senseid','ps','analang']),
+            'attr':'node'}
+        a['lexeme']={
+            'cm': 'use to get lexemes of all entries with a form in '
+                    'the specified language (no reference to fields)',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/lexical-unit/form[@lang='{analang}']/text"
+                    ),['guid','senseid','ps','analang']),
+            'attr':'nodetext'}
+        a['citationnode']={
+            'cm': 'use to get citation forms of one or all entries '
+                    'with a form in the specified language (no '
+                    'reference to fields)',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/citation/form[@lang='{analang}']"
+                    ),['guid','senseid','ps','analang']),
+            'attr':'node'}
+        a['citation']={
+            'cm': 'use to get citation forms of one or all entries '
+            'with a form in the specified language (no reference '
+            'to fields)',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/citation/form[@lang='{analang}']/text"
+                    ),['guid','senseid','ps','analang']),
+            'attr':'nodetext'}
+        a['definitionnode']={
+            'cm': 'use to get definition nodes of entries',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/definition"
+                    "/form[@lang='{glosslang}']"
+                    ),['guid','senseid','ps','glosslang']),
+            'attr':'node'}
+        a['definition']={
+            'cm': 'use to get definitions of entries',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/definition"
+                    "/form[@lang='{glosslang}']/text"
+                    ),['guid','senseid','ps','glosslang']),
+            'attr':'nodetext'}
+        a['glossnode']={
+            'cm': 'use to get gloss nodes',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/gloss[@lang='{glosslang}']"
+                    ),['guid','senseid','ps','glosslang']),
+            'attr':'node'}
+        a['gloss']={
+            'cm': 'use to get glosses of entries',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/gloss[@lang='{glosslang}']/text"
+                    ),['guid','senseid','ps','glosslang']),
+            'attr':'nodetext'}
+        a['glossofexample']={
+            'cm': 'use to get glosses/translations of examples',
+            'url':(("translation[@type='Frame translation']"
+                        "/form[@lang='{glosslang}']/text"
+                    ),['glosslang']),
+            'attr':'nodetext'}
+        a['formofexample']={
+            'cm': 'use to get analang forms of examples',
+            'url':(("form[@lang='{lang}']/text"
+                    ),['lang']),
+            'attr':'nodetext'}
+        a['fieldnode']={
+            'cm': 'use to get whole field nodes (to modify)',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/field[@type='{fieldtype}']/form[@lang='{lang}']"
+                    "/.."
+                    ),['guid','senseid','ps','fieldtype','lang']),
+            'attr':'node'}
+        a['fieldname']={
+            'cm': 'use to get value(s) for type of field in sense',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/field"
+                    ),['guid','senseid','ps']),
+            'attr':'type'}
+        a['fieldvalue']={
+            'cm': 'use to get value(s) for field(s) of a specified '
+                    '(or all) type(s) with a form in the specified (or '
+                    'any) language for one or all entries (no '
+                    'reference to fields, nor to lexeme form language)',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/field[@type='{fieldtype}']"
+                    "/form[@lang='{lang}']/text" #This can be ANY lang.
+                    ),['guid','senseid','ps','fieldtype','lang']),
+            'attr':'nodetext'}
+        a['pronunciationbylocation']={
+            'cm': 'use to get value(s) for pronunciation information '
+                                            'for a given location',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/pronunciation"
+                    "/trait[@name='location'][@value='{location}']"
+                    "/../form[@lang='{analang}']/text"
+                    ),['guid','senseid','ps','location','analang']),
+            'attr':'nodetext'}
+        a['pronunciationfieldname']={
+            'cm': 'use to get value(s) for a field type of a specified '
+            '(or not) location',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/pronunciation"
+                    "/trait[@name='location'][@value='{location}']"
+                    "/../field"),['guid','senseid','ps','location']),
+            'attr':'type'}
+        a['pronunciationfieldvalue']={
+            'cm': 'use to get value(s) for <<document later>>',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/pronunciation"
+                    "/trait[@name='location'][@value='{location}']/.."
+                    "/field[@type='{fieldtype}']"
+                    "/form[@lang='{lang}']/text"
+                    ),['guid','senseid','ps','location','fieldtype',
+                    'lang']), #not necessarily glosslang or analang...
+            'attr':'nodetext'}
+        a['exfieldvalue']={
+            'cm': 'use to get values of fields at the example level',
+            'url':(("entry[@guid='{guid}']"
+                    # "/lexical-unit/form[@lang='{analang}']/../.."
+                    "/sense[@id='{senseid}']"
+                        "/grammatical-info[@value='{ps}']/.."
+                        "/example"
+                        "/field[@type='location']"
+                        "/form[@lang='{glosslang}']"
+                            "[text='{location}']/../.."
+                        "/field[@type='{fieldtype}']"
+                        "/form[@lang='{glosslang}']/text"
+                    ),['guid','analang','senseid','ps','glosslang',
+                                            'location','fieldtype']),
+            'attr':'nodetext'}
+        a['examplewfieldlocvaluefromsense']={
+            'cm': 'use to get an example with a given tone/exfield '
+                                'when you have the sense node.',
+            'url':(("example/field[@type='location']"
+                        "/form[text='{location}']/../.."
+                        "/field[@type='{fieldtype}']"
+                        "/form[text='{fieldvalue}']/../.."
+                        ),['location','fieldtype','fieldvalue']),
+                'attr':'nodetext'}
+        a['exfieldlocation']={
+            'cm': 'use to get location of fields at the example level',
+            'url':(("entry[@guid='{guid}']"
+                    "/lexical-unit/form[@lang='{analang}']/../.."
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/example"
+                    "/field[@type='location']"
+                    "/form[@lang='{glosslang}']/text"
+                    ),['guid','analang','senseid','ps','glosslang']),
+            'attr':'nodetext'}
+        a['pronunciationfieldlocation']={
+            'cm': 'use to get value(s) for pronunciation location'
+                                                        '/context',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/pronunciation"
+                    "/field[@type='{fieldtype}']/.."
+                    "/trait[@name='location']"
+                    ),['guid','senseid','ps','fieldtype']),
+            'attr':'value'}
+        a['pronunciation']={
+            'cm': 'use to get value(s) for pronunciation in fields '
+                                            'with location specified',
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/pronunciation"
+                    "/trait[@name='location'][@value='{location}']/.."
+                    "/form[@lang='{glosslang}']/text"
+                    ),['guid','senseid','ps','location','glosslang']),
+            'attr':'nodetext'}
+        a['lexemelang']={
+            'cm': "analysis languages used in lexemes",
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/lexical-unit/form"
+                    ),['guid','senseid','ps']),
+            'attr': 'lang'}
+        a['citationlang']={
+            'cm': "analysis languages used in citation forms",
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/citation/form"
+                    ),['guid','senseid','ps']),
+            'attr': 'lang'}
+        a['pronunciationlang']={
+            'cm': "analysis languages used in citation forms",
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/../.."
+                    "/pronunciation/form"
+                    ),['guid','senseid','ps']),
+            'attr': 'lang'}
+        a['glosslang']={
+            'cm': "gloss languages used in glosses",
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/gloss"
+                    ),['guid','senseid','ps']),
+            'attr': 'lang'}
+        a['defnlang']={
+            'cm': "gloss languages used in definitions",
+            'url':(("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info[@value='{ps}']/.."
+                    "/definition"
+                    "/form"),['guid','senseid','ps']),
+            'attr': 'lang'}
+        a['illustration']={
+            'cm': "Illustration by entry",
+            'url': (("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']/illustration"
+                    ),['guid','senseid','ps']),
+            'attr': 'href'}
+        a['ps']={
+            'cm': "Part of speech, or grammatical category",
+            'url': (("entry[@guid='{guid}']"
+                    "/sense[@id='{senseid}']"
+                    "/grammatical-info"
+                    ),['guid','senseid']),
+            'attr': 'value'}
     def geturlnattr(self, attribute, **kwargs):
         if attribute == 'attributes':
             return self.attribdict.keys()
@@ -1086,7 +1553,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             )
         return forms
     def fields(self,guid=None,lang=None): #get all the field types in a given entry
-        return self.get('fieldname',guid=guid,lang=lang)#nfields=0
+        return list(dict.fromkeys(self.get('fieldname',guid=guid,lang=lang)))#nfields=0
     def getsenseids(self): #get the number entries in a lift file.
         self.senseids=self.get('senseid') #,showurl=True
         self.nsenseids=len(self.senseids) #,guid,lang,fieldtype,location
@@ -1131,7 +1598,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['pvd'][2]=['bh','dh','gh','gb']
         c['pvd'][1]=['b','B','d','g','ɡ','G']
         c['p']={}
-        c['p'][2]=['kp','kk']
+        c['p'][2]=['kk','kp']
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k']
         c['fvd']={}
         c['fvd'][2]=['bh','vh','zh']
@@ -1151,19 +1618,28 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['lf'][2]=['sl']
         c['lf'][1]=['ɬ']
         c['pn']={}
-        """If these appear, they should be single consonants."""
+        """If these appear, they should always be single consonants."""
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
                     'ⁿj','ⁿs','ⁿz']
         x={} #dict to put all hypothetical segements in, by category
-        x['C']=list() #to store valid consonants in
-        x['D']=list() #to store valid depressor consonants in
         for nglyphs in [3,2,1]:
+            if nglyphs == 3:
+                consvar='Ctg'
+                dconsvar='Dtg'
+            elif nglyphs == 2:
+                consvar='Cdg'
+                dconsvar='Ddg'
+            elif nglyphs == 1:
+                consvar='C'
+                dconsvar='D'
+            x[consvar]=list() #to store valid consonants in
+            x[dconsvar]=list() #to store valid depressor consonants in
             for stype in c:
                 if c[stype].get(nglyphs) is not None:
                     # if 'vd' in stype:
-                    #     x['D']+=c[stype][nglyphs]
+                    #     x[dconsvar]+=c[stype][nglyphs]
                     # else:
-                        x['C']+=c[stype][nglyphs]
+                        x[consvar]+=c[stype][nglyphs]
         # s['g']={}
         # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
         #         'mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']
@@ -1174,12 +1650,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ]
         x['G']=['ẅ','y','Y','w','W']
         # x['CG']=list((char+g for char in x['C'] for g in x['G']))
-        x['N']=["ng'",'mm','ny','ŋŋ','m','M','N','n','ŋ','ɲ']
+        x['N']=["ng'",'mm','ŋŋ','m','M','N','n','ŋ','ɲ'] #no longer:'ny',
         # x['NC']=list((n+char for char in x['C'] for n in x['N']))
         # x['NCG']=list((n+char+g for char in x['C'] for n in x['N']
         #                                             for g in x['G']))
         """Non-Nasal/Glide Sonorants"""
-        x['S']=['rh','wh','l','r']
+        x['S']=['l','r']
+        x['Sdg']=['rh','wh']
         # x['CS']=list((char+s for char in x['C'] for s in x['S']))
         # x['NCS']=list((n+char+s for char in x['C'] for n in x['N']
         #                                             for s in x['S']))
@@ -1212,6 +1689,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'Â', 'Ê', 'Î', 'Ô', 'Û',
                 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
                 ]
+        x['Vdg']=['ou','ei','ɨʉ','ai', #requested by bfj
+                'óu','éi','ɨ́ʉ','ái',
+                'òu','èi','ɨ̀ʉ','ài',
+                'yi','yu','yɨ','yʉ'] #requested by Jane
+        x['Vtg']=[]
+
         x['d']=["̀","́","̂","̌","̄","̃"
                 , "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉" #from IPA keyboard
                 ,"̈" #COMBINING DIAERESIS
@@ -1232,9 +1715,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 self.s[lang]={}
             for stype in x:
                 self.s[lang][stype]=rx.inxyz(self,lang,x[stype])
-                log.log(3,'hypotheticals[{}][{}]: {}'.format(lang,stype,
+                log.debug('hypotheticals[{}][{}]: {}'.format(lang,stype,
                                                     str(x[stype])))
-                log.log(3,'actuals[{}][{}]: {}'.format(lang,stype,
+                log.debug('actuals[{}][{}]: {}'.format(lang,stype,
                                                 str(self.s[lang][stype])))
     def slists(self):
         self.segmentsnotinregexes={}
