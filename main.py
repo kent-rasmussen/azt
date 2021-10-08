@@ -616,6 +616,8 @@ class Check():
                     self.reloadprofiledata()
             if r:
                 self.runwindow.destroy()
+            else:
+                undo(changed)
         def buttonframeframe(self):
             s=options.s
             f=options.frames[s]=Frame(self.runwindow.scroll.content)
