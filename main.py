@@ -605,7 +605,7 @@ class Check():
                             change=True #I.e., something has changed
             log.debug('self.distinguish: {}'.format(self.distinguish))
             log.debug('self.interpret: {}'.format(self.interpret))
-            if change == True:
+            if change:
                 log.info('There was a change; we need to redo the analysis now.')
                 self.storesettingsfile()
                 log.info('The following changed (from,to): {}'.format(changed))
