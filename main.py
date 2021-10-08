@@ -564,6 +564,7 @@ class Check():
                 log.info("Profiles to check: {}".format(i))
                 Label(w.frame,text=i).grid(row=2,column=0)
             w.wait_window(w)
+            return ok.value
         def submitform():
             def undo(changed):
                 for s in changed:
