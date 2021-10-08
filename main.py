@@ -535,6 +535,9 @@ class Check():
         log.log(2,"self.distinguish: {}".format(self.distinguish))
     def setSdistinctions(self):
         def notice(changed):
+            def confirm():
+                ok.value=True
+                w.destroy()
             ti=_("Important Notice!")
             w=Window(self.frame,title=ti)
             til=Label(w.frame,text=ti,font=self.fonts['title'])
@@ -561,10 +564,33 @@ class Check():
             for ps in self.pss:
                 i=[x for x in self.profilesbysense[ps].keys()
                                     if set(d).intersection(set(x))]
-                log.info("Profiles to check: {}".format(i))
-                Label(w.frame,text=i).grid(row=2,column=0)
+                p="Profiles to check: {}".format(i)
+                log.info(p)
+                Label(w.frame,text=p).grid(row=2,column=0)
+            ok=Object()
+            ok.value=False
+            b=Button(w.frame,text="OK, go ahead", command=confirm)
+            b.grid(row=1,column=1)
             w.wait_window(w)
+            return ok.value
         def submitform():
+            def undo(changed):
+                for s in changed:
+                    if s in self.distinguish:
+                        if self.distinguish[s]==changed[s][1]:
+                            self.distinguish[s]=changed[s][0] #(oldvar,newvar):
+                        else:
+                            log.error("Changed to value ({}) doesn't match "
+                            "current setting for ‘{}’: {}".format(changed[s][1],
+                                                        s,self.distinguish[s]))
+                    elif s in self.interpret:
+                        if self.interpret[s]==changed[s][1]:
+                            self.interpret[s]=changed[s][0] #(oldvar,newvar):
+                        else:
+                            log.error("Changed to value ({}) doesn't match "
+                            "current setting for ‘{}’: {}".format(changed[s][1],
+                                                        s,self.interpret[s]))
+            r=True #only false if changes made, and user exits notice
             change=False
             changed={}
             for typ in ['distinguish', 'interpret']:
@@ -588,15 +614,19 @@ class Check():
                             change=True #I.e., something has changed
             log.debug('self.distinguish: {}'.format(self.distinguish))
             log.debug('self.interpret: {}'.format(self.interpret))
-            if change == True:
+            if change:
                 log.info('There was a change; we need to redo the analysis now.')
                 self.storesettingsfile()
                 log.info('The following changed (from,to): {}'.format(changed))
                 if len(changed) >0:
-                    notice(changed)
-                if self.debug != True:
+                    r=notice(changed)
+                self.debug = True
+                if self.debug != True and r:
                     self.reloadprofiledata()
-            self.runwindow.destroy()
+            if r:
+                self.runwindow.destroy()
+            else:
+                undo(changed)
         def buttonframeframe(self):
             s=options.s
             f=options.frames[s]=Frame(self.runwindow.scroll.content)
@@ -8000,20 +8030,12 @@ class Options:
     def get(self,o):
         o=self.alias(o)
         return getattr(self,o)
-    # def row(self):
-    #     return self.row
-    # def col(self):
-    #     return self.column
     def __init__(self,**kwargs):
         self.odict={'col':'column','c':'column',
                     'r':'row'
                     }
         for arg in kwargs:
             setattr(self,self.alias(arg),kwargs[arg])
-                #     ['row'],
-                # column=self.runwindow.options['column'],sticky='ew',
-                # padx=self.runwindow.options['padx'],
-                # pady=self.runwindow.options['pady']
 class Object:
     def __init__(self):
         self.value=None
@@ -8566,7 +8588,7 @@ def on_quit(self):
     # to be elsewhere, e.g., if `self.exitFlag.istrue(): return`
     def killall():
         self.destroy()
-        # sys.exit()
+        sys.exit()
     if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
         print("Setting window exit flag True!")
         self.exitFlag.true()
@@ -8666,7 +8688,7 @@ def mainproblem():
     o.grid(row=3,column=0)
     o.bind("<Button-1>", lambda e: openweburl(eurl))
     errorroot.mainloop()
-    errorroot.wait_window(errorroot)
+    # errorroot.wait_window(errorroot)
     sys.exit()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
@@ -8709,7 +8731,7 @@ if __name__ == "__main__":
             import traceback
             log.error("uncaught exception: %s", traceback.format_exc())
             mainproblem()
-    exit()
+    sys.exit()
     """The following are just for testing"""
     entry=Entry(db, guid='003307da-3636-40cd-aca9-6b0d798055d2')
     print(entry.lexeme)
