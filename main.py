@@ -8030,6 +8030,32 @@ class ToolTip(object):
         self.tw= None
         if tw:
             tw.destroy()
+class Options:
+    def alias(self,o):
+        return self.odict.get(o,o)
+    def next(self,o):
+        o=self.alias(o)
+        setattr(self,o,getattr(self,o)+1)
+    def prev(self,o):
+        o=self.alias(o)
+        setattr(self,o,getattr(self,o)-1)
+    def get(self,o):
+        o=self.alias(o)
+        return getattr(self,o)
+    # def row(self):
+    #     return self.row
+    # def col(self):
+    #     return self.column
+    def __init__(self,**kwargs):
+        self.odict={'col':'column','c':'column',
+                    'r':'row'
+                    }
+        for arg in kwargs:
+            setattr(self,self.alias(arg),kwargs[arg])
+                #     ['row'],
+                # column=self.runwindow.options['column'],sticky='ew',
+                # padx=self.runwindow.options['padx'],
+                # pady=self.runwindow.options['pady']
 class Object:
     def __init__(self):
         self.value=None
