@@ -1918,7 +1918,7 @@ class Check():
                     cb.grid(column=col, row=row,sticky='nsew')
                     col+=1
         pgw.wait_window(pgw)
-        if changemarker.value:
+        if changemarker.value and not self.exitFlag.istrue():
             for lang in self.db.analangs:
                 for pc in vars[lang]:
                     for pg in vars[lang][pc]:
