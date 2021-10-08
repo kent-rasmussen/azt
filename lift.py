@@ -1599,7 +1599,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['fvd'][2]=['bh','vh','zh']
         c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ']
         c['f']={}
-        c['f'][2]=['ch','ph','sh','hh']
+        c['f'][2]=['ch','ph','sh','hh','pf','bv']
         c['f'][1]=['F','f','s','ʃ','θ','x','h']
         c['avd']={}
         c['avd'][2]=['dj','dz','dʒ']
