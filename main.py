@@ -1489,8 +1489,8 @@ class Check():
         main()
     def changedatabase(self):
         log.debug("Removing lift_url.py, so user will be asked again for LIFT")
-        file.remove('lift_url.py')
         self.filename=None #since this will still be in memory
+        file.remove('lift_url.py')
         self.restart()
     def reloadprofiledata(self):
         self.storesettingsfile()
