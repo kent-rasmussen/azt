@@ -8594,7 +8594,7 @@ def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    root = tkinter.Tk()
+    root = program['root']=tkinter.Tk()
     #this computer: (this doesn't pick up changes, so just doing it here)
     h = root.winfo_screenheight()
     w = root.winfo_screenwidth()
@@ -8635,7 +8635,12 @@ def main():
 def mainproblem():
     log.info("Starting up help line...")
     file=logwritelzma(log.filename)
-    errorroot = tkinter.Tk()
+    try:
+        program['root'].winfo_exists()
+        log.info("Root there!")
+        errorroot = tkinter.Toplevel(program['root'])
+    except:
+        errorroot = tkinter.Tk()
     errorroot.title("Serious Problem!")
     try:
         char="Charis SIL"
