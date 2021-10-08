@@ -640,9 +640,10 @@ class Check():
                             sticky='ew',
                             padx=self.runwindow.options['padx'],
                             pady=self.runwindow.options['pady'])
-            bffrb=RadioButtonFrame(self.runwindow.frames[ss],var=var[ss],
-                                    opts=self.runwindow.options['opts'])
-            bffrb.grid(row=1,column=1)
+            for opt in self.runwindow.options['opts']:
+                bffrb=CheckButton(self.runwindow.frames[ss],var=var[ss])#, #RadioButtonFrame
+                                        # opts=self.runwindow.options['opts'])
+                bffrb.grid(row=1,column=1)
             self.runwindow.options['row']+=1
         self.getrunwindow()
         self.checkinterpretations()
