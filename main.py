@@ -8731,7 +8731,7 @@ if __name__ == "__main__":
             import traceback
             log.error("uncaught exception: %s", traceback.format_exc())
             mainproblem()
-    exit()
+    sys.exit()
     """The following are just for testing"""
     entry=Entry(db, guid='003307da-3636-40cd-aca9-6b0d798055d2')
     print(entry.lexeme)
