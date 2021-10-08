@@ -8631,6 +8631,7 @@ def main():
     myapp.mainloop()
     logshutdown() #in logsetup
 def mainproblem():
+    log.info("Starting up help line...")
     file=logwritelzma(log.filename)
     errorroot = tkinter.Tk()
     errorroot.title("Serious Problem!")
