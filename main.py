@@ -535,6 +535,9 @@ class Check():
         log.log(2,"self.distinguish: {}".format(self.distinguish))
     def setSdistinctions(self):
         def notice(changed):
+            def confirm():
+                ok.value=True
+                w.destroy()
             ti=_("Important Notice!")
             w=Window(self.frame,title=ti)
             til=Label(w.frame,text=ti,font=self.fonts['title'])
@@ -561,8 +564,13 @@ class Check():
             for ps in self.pss:
                 i=[x for x in self.profilesbysense[ps].keys()
                                     if set(d).intersection(set(x))]
-                log.info("Profiles to check: {}".format(i))
-                Label(w.frame,text=i).grid(row=2,column=0)
+                p="Profiles to check: {}".format(i)
+                log.info(p)
+                Label(w.frame,text=p).grid(row=2,column=0)
+            ok=Object()
+            ok.value=False
+            b=Button(w.frame,text="OK, go ahead", command=confirm)
+            b.grid(row=1,column=1)
             w.wait_window(w)
             return ok.value
         def submitform():
