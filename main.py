@@ -565,6 +565,23 @@ class Check():
                 Label(w.frame,text=i).grid(row=2,column=0)
             w.wait_window(w)
         def submitform():
+            def undo(changed):
+                for s in changed:
+                    if s in self.distinguish:
+                        if self.distinguish[s]==changed[s][1]:
+                            self.distinguish[s]=changed[s][0] #(oldvar,newvar):
+                        else:
+                            log.error("Changed to value ({}) doesn't match "
+                            "current setting for ‘{}’: {}".format(changed[s][1],
+                                                        s,self.distinguish[s]))
+                    elif s in self.interpret:
+                        if self.interpret[s]==changed[s][1]:
+                            self.interpret[s]=changed[s][0] #(oldvar,newvar):
+                        else:
+                            log.error("Changed to value ({}) doesn't match "
+                            "current setting for ‘{}’: {}".format(changed[s][1],
+                                                        s,self.interpret[s]))
+            r=True #only false if changes made, and user exits notice
             change=False
             changed={}
             for typ in ['distinguish', 'interpret']:
