@@ -574,13 +574,13 @@ class Check():
             change=False
             changed={}
             for typ in ['distinguish', 'interpret']:
-                for ss in getattr(self,typ):
+                for s in getattr(self,typ):
                     log.debug("Variable {} was: {}, now: {}, change: {}"
-                            "".format(ss,getattr(self,typ)[ss],var[ss].get(),
+                            "".format(s,getattr(self,typ)[s],vars[s].get(),
                                                                         change))
-                    if ss in var and ss in getattr(self,typ):
-                        newvar=var[ss].get()
-                        oldvar=getattr(self,typ)[ss]
+                    if s in var and s in getattr(self,typ):
+                        newvar=options.var[ss].get()
+                        oldvar=getattr(self,typ)[s]
                         if oldvar != newvar:
                             if typ == 'distinguish': #i.e., boolean
                                 if oldvar and not newvar: #True becomes False
@@ -589,8 +589,8 @@ class Check():
                                 if (len(oldvar)>len(newvar) or # becomes shorter
                                     len(set(['V','G','N'] #one of these is there
                                     ).intersection(set(oldvar))) >0):
-                                    changed[ss]=(oldvar,newvar)
-                            getattr(self,typ)[ss]=newvar
+                                    changed[s]=(oldvar,newvar)
+                            getattr(self,typ)[s]=newvar
                             change=True #I.e., something has changed
             log.debug('self.distinguish: {}'.format(self.distinguish))
             log.debug('self.interpret: {}'.format(self.interpret))
