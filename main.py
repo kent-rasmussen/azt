@@ -647,6 +647,7 @@ class Check():
         var={}
             print(ss, self.distinguish[ss])
             print(ss, self.interpret[ss])
+        options=Options(r=0,padx=50,pady=10,c=0,vars={},frames={})
         for s in self.distinguish: #Should be already set.
             options.vars[s] = tkinter.BooleanVar()
             options.vars[s].set(self.distinguish[s])
