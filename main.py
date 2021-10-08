@@ -610,10 +610,12 @@ class Check():
                 self.storesettingsfile()
                 log.info('The following changed (from,to): {}'.format(changed))
                 if len(changed) >0:
-                    notice(changed)
-                if self.debug != True:
+                    r=notice(changed)
+                self.debug = True
+                if self.debug != True and r:
                     self.reloadprofiledata()
-            self.runwindow.destroy()
+            if r:
+                self.runwindow.destroy()
         def buttonframeframe(self):
             s=options.s
             f=options.frames[s]=Frame(self.runwindow.scroll.content)
