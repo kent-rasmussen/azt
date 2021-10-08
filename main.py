@@ -8635,32 +8635,49 @@ def mainproblem():
     file=logwritelzma(log.filename)
     errorroot = tkinter.Tk()
     errorroot.title("Serious Problem!")
-    t="Hey! You found a problem! (details and solution below)"
-    l=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=36))
+    try:
+        char="Charis SIL"
+        titlefont=tkinter.font.Font(family=char, size=36)
+        noticefont=tkinter.font.Font(family=char,size=24)
+        defaultfont=tkinter.font.Font(family=char, size=12)
+    except:
+        titlefont=noticefont=defaultfont=tkinter.font.Font(family=char, size=12)
+    l=tkinter.Label(errorroot,text="Hey! You found a problem! (details and "
+            "solution below)",justify='left',font=titlefont)
+    log.info("Starting up exceptiononload check...")
     l.grid(row=0,column=0)
     if exceptiononload:
-        durl='https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md#dependencies'
-        t="\nPlease see {}".format(durl)
-        m=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=24))
+        durl=('https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md'
+                '#dependencies')
+        m=tkinter.Label(errorroot,text="\nPlease see {}".format(durl),
+            justify='left', font=noticefont)
         m.grid(row=1,column=0)
         m.bind("<Button-1>", lambda e: openweburl(durl))
     lcontents=logcontents(log)
     addr=program['Email']
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
-    eurl+='&body=Please replace this text with a description of what you just tried.'.format(file)
-    eurl+="%0d%0aIf the log below is more than a few lines, please attach your compressed log file ({})".format(file)
+    eurl+=('&body=Please replace this text with a description of what you '
+            'just tried.'.format(file))
+    eurl+=("%0d%0aIf the log below is more than a few lines, please attach "
+            "your compressed log file ({})".format(file))
     eurl+='%0d%0a--log info--%0d%0a{}'.format(lcontents.replace('\n','%0d%0a'))
-    t="\n\nIf this information doesn't help you fix this, please click on this text to Email me your log (to {})".format(addr)
-    n=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=18))
+    n=tkinter.Label(errorroot,text="\n\nIf this information doesn't help "
+        "you fix this, please click on this text to Email me your log (to {})"
+        "".format(addr),justify='left', font=defaultfont)
     n.grid(row=2,column=0)
     n.bind("<Button-1>", lambda e: openweburl(eurl))
-    t="\n\nContents of {}/{} are below:".format(log.filename,file)
-    t+="\n\n{}".format(lcontents)
-    o=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=12))
+    o=tkinter.Label(errorroot,text="\n\nContents of {}/{} are below:"
+                "\n\n{}".format(lcontents,log.filename,file),
+                justify='left',
+                font=defaultfont)
     o.grid(row=3,column=0)
     o.bind("<Button-1>", lambda e: openweburl(eurl))
+    log.info("Starting up mainloop...")
     errorroot.mainloop()
-    exit()
+    log.info("Starting up wait_window...")
+    errorroot.wait_window(errorroot)
+    log.info("Exiting...")
+    sys.exit()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
