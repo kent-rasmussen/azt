@@ -639,9 +639,10 @@ class Check():
             options.vars[s].set(self.interpret[s])
         """Page title and instructions"""
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
+        mwframe=self.runwindow.frame
         title=_("Interpret {} Segments"
                 ).format(self.languagenames[self.analang])
-        titl=Label(self.runwindow,text=title,font=self.fonts['title'],
+        titl=Label(mwframe,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c')
         titl.grid(row=options.get('r'), column=options.get('c'), #self.runwindow.options['column'],
                     sticky='ew', padx=options.padx, pady=10)
@@ -653,11 +654,11 @@ class Check():
         instr.grid(row=options.get('r'), column=options.get('c'),
                     sticky='ew', padx=options.padx, pady=options.pady)
         """The rest of the page"""
-        self.runwindow.scroll=ScrollingFrame(self.runwindow) #ScrollingFrame
+        self.runwindow.scroll=ScrollingFrame(mwframe)
         self.runwindow.scroll.grid(row=2,column=0)
         log.debug('self.distinguish: {}'.format(self.distinguish))
         log.debug('self.interpret: {}'.format(self.interpret))
-        self.runwindow.frames={}
+        frames={}
         """I considered offering these to the user conditionally, but I don't
         see a subset of them that would only be relevant when another is
         selected. For instance, a user may NOT want to distinguish all Nasals,
