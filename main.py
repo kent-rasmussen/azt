@@ -617,70 +617,57 @@ class Check():
                 if self.debug != True:
                     self.reloadprofiledata()
             self.runwindow.destroy()
-        def buttonframeframe(self):
-            log.debug("Running buttonframeframe with options {}".format(
-                                                        self.runwindow.options))
-            log.debug("Running buttonframeframe with frames {}".format(
-                                                        self.runwindow.frames))
-            ss=self.runwindow.options['ss']
-            self.runwindow.frames[ss]=Frame(self.runwindow.scroll.content)
-            self.runwindow.frames[ss].grid(row=self.runwindow.options['row'],
-                        column=self.runwindow.options['column'],sticky='ew',
-                        padx=self.runwindow.options['padx'],
-                        pady=self.runwindow.options['pady'])
-            # Label(self.runwindow.scroll.content,text="Test!").grid(
-            #             row=self.runwindow.options['row']+1,
-            #             column=self.runwindow.options['column'])
-            # Label(self.runwindow.frames[ss],text="Test!").grid(row=0,column=0)
-            bffl=Label(self.runwindow.frames[ss],text=self.runwindow.options['text'],
-                    justify=tkinter.LEFT,anchor='c'
-                    )
-            bffl.grid(row=1,
-                            column=self.runwindow.options['column'],
+        def buttonframeframe(self,frames):
+            log.debug("Running buttonframeframe with opts {}".format(options))
+            log.debug("Running buttonframeframe with frames {}".format(frames))
+            s=options.s
+            frames[s]=Frame(self.runwindow.scroll.content)
+            frames[s].grid(row=options.get('r'),
+                        column=options.get('c'),
+                        sticky='ew', padx=options.padx, pady=options.pady)
+            bffl=Label(frames[s],text=options.text,justify=tkinter.LEFT,
+                                                                anchor='c')
+            bffl.grid(row=1,column=options.column,
                             sticky='ew',
-                            padx=self.runwindow.options['padx'],
-                            pady=self.runwindow.options['pady'])
-            for opt in self.runwindow.options['opts']:
-                bffrb=CheckButton(self.runwindow.frames[ss],var=var[ss])#, #RadioButtonFrame
-                                        # opts=self.runwindow.options['opts'])
+                            padx=options.padx,
+                            pady=options.pady)
+            # for opt in self.runwindow.options['opts']:
+            #     bffrb=CheckButton(self.runwindow.frames[ss],var=var[ss])#, #RadioButtonFrame
+            #                             # opts=self.runwindow.options['opts'])
+            #     bffrb.grid(row=1,column=1)
+            for opt in options.opts:
+                bffrb=RadioButtonFrame(frames[s],
+                                        var=options.vars[s],
+                                        opts=options.opts)
                 bffrb.grid(row=1,column=1)
-            self.runwindow.options['row']+=1
+            options.next('r') #self.runwindow.options['row']+=1
+            return frames
         self.getrunwindow()
         self.checkinterpretations()
         var={}
-        for ss in self.distinguish: #Should be already set.
-            var[ss] = tkinter.BooleanVar()
-            var[ss].set(self.distinguish[ss])
             print(ss, self.distinguish[ss])
-        for ss in self.interpret: #This should already be set, even by default
-            var[ss] = tkinter.StringVar()
-            var[ss].set(self.interpret[ss])
             print(ss, self.interpret[ss])
-        self.runwindow.options={}
-        self.runwindow.options['row']=0
-        self.runwindow.options['padx']=50
-        self.runwindow.options['pady']=10
-        self.runwindow.options['column']=0
+        for s in self.distinguish: #Should be already set.
+            options.vars[s] = tkinter.BooleanVar()
+            options.vars[s].set(self.distinguish[s])
+        for s in self.interpret: #This should already be set, even by default
+            options.vars[s] = tkinter.StringVar()
+            options.vars[s].set(self.interpret[s])
         """Page title and instructions"""
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
         title=_("Interpret {} Segments"
                 ).format(self.languagenames[self.analang])
         titl=Label(self.runwindow,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c')
-        titl.grid(row=self.runwindow.options['row'],
-                    column=self.runwindow.options['column'],sticky='ew',
-                    padx=self.runwindow.options['padx'],
-                    pady=self.runwindow.options['pady'])
-        self.runwindow.options['row']+=1
+        titl.grid(row=options.get('r'), column=options.get('c'), #self.runwindow.options['column'],
+                    sticky='ew', padx=options.padx, pady=10)
+        options.next('r') #self.runwindow.options['row']+=1
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
                 ).format(self.program['name'],self.languagenames[self.analang])
-        instr=Label(self.runwindow,text=text,
-                justify=tkinter.LEFT,anchor='c')
-        instr.grid(row=self.runwindow.options['row'],
-                    column=self.runwindow.options['column'],sticky='ew',
-                    padx=self.runwindow.options['padx'],
-                    pady=self.runwindow.options['pady'])
+        instr=Label(mwframe,text=text,justify=tkinter.LEFT,anchor='c')
+        instr.grid(row=options.get('r'), column=options.get('c'),
+                    sticky='ew', padx=options.padx, pady=options.pady)
         """The rest of the page"""
         self.runwindow.scroll=ScrollingFrame(self.runwindow) #ScrollingFrame
         self.runwindow.scroll.grid(row=2,column=0)
@@ -698,87 +685,84 @@ class Check():
         yet distinguish word final nasals. Or CG sequences, but not other G's
         --or distinguish G, but leave as CG (≠C). So I think these are all
         independent boolean selections."""
-        self.runwindow.options['ss']='ʔ'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all glottal stops (ʔ) \nfrom '
-                                        'other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'ʔ≠C'),(False,'ʔ=C')]
-        buttonframeframe(self)
-        self.runwindow.options['ss']='ʔwd'
-        self.runwindow.options['text']=_('Do you want to distinguish Word '
-                                        'Final glottal stops (ʔ#) \nfrom other '
-                                        'word final consonants?')
-        self.runwindow.options['opts']=[(True,'ʔ#≠C#'),(False,'ʔ#=C#')]
-        buttonframeframe(self)
-        self.runwindow.options['ss']='N'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all Nasals (N) \nfrom '
-                                        'other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'N≠C'),(False,'N=C')]
-        buttonframeframe(self)
-        self.runwindow.options['ss']='Nwd'
-        self.runwindow.options['text']=_('Do you want to distinguish Word '
-                                        'Final Nasals (N#) \nfrom other word '
-                                        'final consonants?')
-        self.runwindow.options['opts']=[(True,'N#≠C#'),(False,'N#=C#')]
-        buttonframeframe(self)
-        self.runwindow.options['ss']='D'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all likely depressor consonants (D={})'
-                                        '\nfrom '
-                                        'other (simple/single) consonants?'
-                                        "").format(self.db.s[self.analang]['D'])
-        self.runwindow.options['opts']=[(True,'D≠C'),(False,'D=C')]
-        buttonframeframe(self)
-        self.runwindow.options['ss']='G'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all Glides (G) \nfrom '
-                                        'other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'G≠C'),(False,'G=C')]
-        buttonframeframe(self)
-        self.runwindow.options['ss']='S'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all Non-Nasal/Glide Sonorants (S) '
-                                    '\nfrom other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'S≠C'),(False,'S=C')]
-        buttonframeframe(self)
-        self.runwindow.options['ss']='NC'
-        self.runwindow.options['text']=_('How do you want to interpret '
+        options.s='ʔ'
+        options.text=_('Do you want to distinguish '
+                        'all glottal stops (ʔ) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'ʔ≠C'),(False,'ʔ=C')]
+        buttonframeframe(self,frames)
+        options.s='ʔwd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final glottal stops (ʔ#) \nfrom other '
+                        'word final consonants?')
+        options.opts=[(True,'ʔ#≠C#'),(False,'ʔ#=C#')]
+        buttonframeframe(self,frames)
+        options.s='N'
+        options.text=_('Do you want to distinguish '
+                        'all Nasals (N) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'N≠C'),(False,'N=C')]
+        buttonframeframe(self,frames)
+        options.s='Nwd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final Nasals (N#) \nfrom other word '
+                        'final consonants?')
+        options.opts=[(True,'N#≠C#'),(False,'N#=C#')]
+        buttonframeframe(self,frames)
+        options.s='D'
+        options.text=_('Do you want to distinguish '
+                        'all likely depressor consonants (D={})'
+                        '\nfrom '
+                        'other (simple/single) consonants?'
+                        "").format(self.db.s[self.analang]['D'])
+        options.opts=[(True,'D≠C'),(False,'D=C')]
+        buttonframeframe(self,frames)
+        options.s='G'
+        options.text=_('Do you want to distinguish '
+                        'all Glides (G) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'G≠C'),(False,'G=C')]
+        buttonframeframe(self,frames)
+        options.s='S'
+        options.text=_('Do you want to distinguish '
+                        'all Non-Nasal/Glide Sonorants (S) '
+                    '\nfrom other (simple/single) consonants?')
+        options.opts=[(True,'S≠C'),(False,'S=C')]
+        buttonframeframe(self,frames)
+        options.s='NC'
+        options.text=_('How do you want to interpret '
                                         '\nNasal-Consonant (NC) sequences?')
-        self.runwindow.options['opts']=[('NC','NC=NC (≠C, ≠CC)'),
-                                    ('C','NC=C (≠NC, ≠CC)'),
-                                    ('CC','NC=CC (≠NC, ≠C)')
-                                    ]
-        buttonframeframe(self)
-        self.runwindow.options['ss']='CG'
-        self.runwindow.options['text']=_('How do you want to interpret '
+        options.opts=[('NC','NC=NC (≠C, ≠CC)'),
+                        ('C','NC=C (≠NC, ≠CC)'),
+                        ('CC','NC=CC (≠NC, ≠C)')
+                        ]
+        buttonframeframe(self,frames)
+        options.s='CG'
+        options.text=_('How do you want to interpret '
                                         '\nConsonant-Glide (CG) sequences?')
-        self.runwindow.options['opts']=[('CG','CG=CG (≠C, ≠CC)'),
-                                    ('C','CG=C (≠CG, ≠CC)'),
-                                    ('CC','CG=CC (≠CG, ≠C)')]
-        buttonframeframe(self)
-        self.runwindow.options['ss']='VN'
-        self.runwindow.options['text']=_('How do you want to interpret '
+        options.opts=[('CG','CG=CG (≠C, ≠CC)'),
+                        ('C','CG=C (≠CG, ≠CC)'),
+                        ('CC','CG=CC (≠CG, ≠C)')]
+        buttonframeframe(self,frames)
+        options.s='VN'
+        options.text=_('How do you want to interpret '
                                         '\nVowel-Nasal (VN) sequences?')
-        self.runwindow.options['opts']=[('VN','VN=VN (≠Ṽ)'),
-                                    ('Ṽ','VN=Ṽ (≠VN)')]
-        buttonframeframe(self)
+        options.opts=[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')]
+        buttonframeframe(self,frames)
         """Submit button, etc"""
         self.runwindow.frame2d=Frame(self.runwindow.scroll.content)
-        self.runwindow.frame2d.grid(row=self.runwindow.options['row'],
-                    column=self.runwindow.options['column'],sticky='ew',
-                    padx=self.runwindow.options['padx'],
-                    pady=self.runwindow.options['pady'])
+        self.runwindow.frame2d.grid(row=options.get('r'),
+                    column=options.get('c'),
+                    sticky='ew', padx=options.padx, pady=options.pady)
         sub_btn=Button(self.runwindow.frame2d,text = 'Use these settings',
                   command = submitform)
-        sub_btn.grid(row=0,column=1,sticky='nw',
-                    pady=self.runwindow.options['pady'])
+        sub_btn.grid(row=0,column=1,sticky='nw',pady=options.pady)
         nbtext=_("If you make changes, this button==> \nwill "
                 "restart the program to reanalyze your data, \nwhich will "
                 "take some time.")
         sub_nb=Label(self.runwindow.frame2d,text = nbtext, anchor='e')
         sub_nb.grid(row=0,column=0,sticky='e',
-                    pady=self.runwindow.options['pady'])
+                    pady=options.pady)
         self.runwindow.waitdone()
     def addmodadhocsort(self):
         def submitform():
