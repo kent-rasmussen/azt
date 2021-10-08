@@ -1866,12 +1866,12 @@ class Check():
         title=Label(pgw.frame,text=t)
         title.grid(column=0, row=0)
         t=_("If you use a digraph or trigraph that isn't listed here, please "
-            "Email me, and I can add it.")
+            "click here to Email me, and I can add it.")
         t2=Label(pgw.frame,text=t)
         t2.grid(column=0, row=1)
         t2.bind("<Button-1>", lambda e: openweburl(eurl))
         t=_("Closing this window will restart {} and trigger another syllable "
-            "profile analysis. If you don't want that, click {}.".format(
+            "profile analysis. \nIf you don't want that, click ‘{}’ ==>".format(
                                                 program['name'],nochangetext))
         t3=Label(pgw.frame,text=t)
         t3.grid(column=0, row=1)
