@@ -8588,7 +8588,7 @@ def on_quit(self):
     # to be elsewhere, e.g., if `self.exitFlag.istrue(): return`
     def killall():
         self.destroy()
-        # sys.exit()
+        sys.exit()
     if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
         print("Setting window exit flag True!")
         self.exitFlag.true()
