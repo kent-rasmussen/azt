@@ -19,7 +19,7 @@ information than 'DEBUG' does):
 Other levels:'WARNING','ERROR','CRITICAL'
 """
 if platform.uname().node == 'karlap':
-    loglevel=5 #
+    loglevel=6 #
 else:
     loglevel='DEBUG'
 from logsetup import *
@@ -522,11 +522,7 @@ class Check():
                 self.distinguish[var]=False
             if var == 'd':
                 self.distinguish[var]=False #don't change this default, yet...
-            log.log(2,_("Variable {} current value: {}").format(var,
-                                                        self.distinguish[var]))
         for var in ['NC','CG','CS','VV','VN']:
-            log.log(5,_("Variable {} current value: {}").format(var,
-                                                            self.interpret))
             if ((var not in self.interpret) or
                 (type(self.interpret[var]) is not str) or
                 not(1 <=len(self.interpret[var])<= 2)):
@@ -534,8 +530,6 @@ class Check():
                     self.interpret[var]=var
                 else:
                     self.interpret[var]='CC'
-                log.log(2,_("Variable {} current value: {}").format(var,
-                                                        self.interpret[var]))
         if self.interpret['VV']=='Vː' and self.distinguish['ː']==False:
             self.interpret['VV']='VV'
         log.log(2,"self.distinguish: {}".format(self.distinguish))
@@ -575,7 +569,7 @@ class Check():
             changed={}
             for typ in ['distinguish', 'interpret']:
                 for s in getattr(self,typ):
-                    log.debug("Variable {} was: {}, now: {}, change: {}"
+                    log.log(5,"Variable {} was: {}, now: {}, change: {}"
                             "".format(s,getattr(self,typ)[s],
                                         options.vars[s].get(),change))
                     if s in options.vars and s in getattr(self,typ):
@@ -604,9 +598,6 @@ class Check():
                     self.reloadprofiledata()
             self.runwindow.destroy()
         def buttonframeframe(self):
-            log.debug("Running buttonframeframe with opts {}".format(options))
-            log.debug("Running buttonframeframe with frames {}".format(
-                                                                options.frames))
             s=options.s
             f=options.frames[s]=Frame(self.runwindow.scroll.content)
             f.grid(row=options.get('r'),
@@ -1554,7 +1545,7 @@ class Check():
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
                 if hasattr(module,s):
-                    log.debug("Found attribute {} with value {}".format(s,
+                    log.log(5,"Found attribute {} with value {}".format(s,
                                 getattr(module,s)))
                     setattr(o,s,getattr(module,s))
         except:
@@ -1791,7 +1782,7 @@ class Check():
                                         self.profilesbysense[self.ps][adhoc]))
         self.ps=psori
         self.updatecounts()
-        print('Done:',time.time()-self.start_time)
+        # print('Done:',time.time()-self.start_time)
         if self.debug==True:
             for ps in self.profilesbysense:
                 for profile in self.profilesbysense[ps]:
@@ -3362,7 +3353,6 @@ class Check():
     def getprofilestodo(self):
         if not hasattr(self,'profilecounts'):
             self.getprofiles()
-        log.debug(self.profilecounts)
         self.profilecountsValid=[]
         self.profilecountsValidwAdHoc=[]
         #self.profilecountsValid filters out Invalid, and also by self.ps...
@@ -3372,8 +3362,8 @@ class Check():
             if set(self.profilelegit).issuperset(x[1]):
                 self.profilecountsValid.append(x)
             self.profilecountsValidwAdHoc.append(x)
-        log.debug("Valid profiles for ps {}: {}".format(self.ps,
-                                                    self.profilecountsValid))
+        log.debug("First five valid profiles for ps {}: {}".format(self.ps,
+                                                self.profilecountsValid[0:5]))
         self.profilestodo=[x[1] for x in self.profilecountsValid if
                             self.profilecountsValid.index(x)<=self.maxprofiles]
         log.debug("self.profilestodo: {}".format(self.profilestodo))
@@ -7256,7 +7246,7 @@ class Renderer(object):
         text=kwargs['text'] #should always be there
         text=text.replace('\t','    ') #Not sure why, but tabs aren't working.
         wraplength=kwargs['wraplength'] #should always be there
-        log.debug("Rendering ‘{}’ text with font: {}".format(text,font))
+        log.log(2,"Rendering ‘{}’ text with font: {}".format(text,font))
         if (('justify' in kwargs and
                         kwargs['justify'] in [tkinter.LEFT,'left']) or
             ('anchor' in kwargs and
@@ -7370,7 +7360,7 @@ class Label(tkinter.Label):
             thisrenderings=renderings[style][kwargs['wraplength']]
             if (kwargs['text'] in thisrenderings and
                     thisrenderings[kwargs['text']] is not None):
-                log.info("text {} already rendered with {} wraplength, using."
+                log.log(5,"text {} already rendered with {} wraplength, using."
                         "".format(kwargs['text'],kwargs['wraplength']))
                 kwargs['image']=thisrenderings[kwargs['text']]
                 kwargs['text']=''
@@ -7498,7 +7488,7 @@ class Button(tkinter.Button):
             thisrenderings=renderings[style][kwargs['wraplength']]
             if (kwargs['text'] in thisrenderings and
                     thisrenderings[kwargs['text']] is not None):
-                log.info("text {} already rendered with {} wraplength, using."
+                log.log(5,"text {} already rendered with {} wraplength, using."
                         "".format(kwargs['text'],kwargs['wraplength']))
                 kwargs['image']=thisrenderings[kwargs['text']]
                 kwargs['text']=''
@@ -7507,7 +7497,7 @@ class Button(tkinter.Button):
                 "button text? ({},{})".format(image,kwargs['text']))
                 return
             else:
-                log.debug("sticks found! (Generating image for button)")
+                log.log(5,"sticks found! (Generating image for button)")
                 i=Renderer(**kwargs)
                 self.tkimg=i.img
                 if self.tkimg is not None:
