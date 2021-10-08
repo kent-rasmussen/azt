@@ -570,19 +570,6 @@ class Check():
                 log.info("Profiles to check: {}".format(i))
                 Label(w.frame,text=i).grid(row=2,column=0)
             w.wait_window(w)
-            # At this point, we eventually want to take these profiles to
-            # check, and find any senseids that have been sorted in them, and
-            # prepend oldvar (or key, for booleans) to their group numbers,
-            # to maintin their distictions. It would be better to test if any
-            # of the newvar profiles being lumped in with them have also been
-            # sorted into those frames:
-            # IF:
-            #   y=set(d,i).intersection(set(x)) exists,
-            #       and has been sorted into z frames
-            #   sed '/{d,i}/newvar' y exists
-            #       and has been sorted into z frames
-            # Then:
-            #   prepend {d,i} to sort values in z frames for y sensids.
         def submitform():
             change=False
             changed={}
@@ -613,7 +600,6 @@ class Check():
                 log.info('The following changed (from,to): {}'.format(changed))
                 if len(changed) >0:
                     notice(changed)
-                # self.debug=True
                 if self.debug != True:
                     self.reloadprofiledata()
             self.runwindow.destroy()
@@ -644,9 +630,6 @@ class Check():
             return frames
         self.getrunwindow()
         self.checkinterpretations()
-        var={}
-            print(ss, self.distinguish[ss])
-            print(ss, self.interpret[ss])
         options=Options(r=0,padx=50,pady=10,c=0,vars={},frames={})
         for s in self.distinguish: #Should be already set.
             options.vars[s] = tkinter.BooleanVar()
@@ -662,7 +645,7 @@ class Check():
                 justify=tkinter.LEFT,anchor='c')
         titl.grid(row=options.get('r'), column=options.get('c'), #self.runwindow.options['column'],
                     sticky='ew', padx=options.padx, pady=10)
-        options.next('r') #self.runwindow.options['row']+=1
+        options.next('r')
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
                 ).format(self.program['name'],self.languagenames[self.analang])
@@ -672,11 +655,6 @@ class Check():
         """The rest of the page"""
         self.runwindow.scroll=ScrollingFrame(self.runwindow) #ScrollingFrame
         self.runwindow.scroll.grid(row=2,column=0)
-        # self.runwindow.scroll.content=Frame(self.runwindow.scroll)
-        # self.runwindow.scroll.content.grid(row=0,column=0,sticky='nsew')
-        # Label(self.runwindow.scroll.content,text="Test!").grid(
-        #             row=0,
-        #             column=0)
         log.debug('self.distinguish: {}'.format(self.distinguish))
         log.debug('self.interpret: {}'.format(self.interpret))
         self.runwindow.frames={}
