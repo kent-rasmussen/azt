@@ -1874,17 +1874,17 @@ class Check():
             "profile analysis. \nIf you don't want that, click ‘{}’ ==>".format(
                                                 program['name'],nochangetext))
         t3=Label(pgw.frame,text=t)
-        t3.grid(column=0, row=1)
+        t3.grid(column=0, row=2)
         eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
                                                             program['Email'])
         b=Button(pgw.frame,text=nochangetext,
                     command=lambda x=changemarker:nochanges(x))
-        b.grid(column=1, row=1)
+        b.grid(column=1, row=2)
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         vars={}
         unscroll=Frame(pgw.frame)
-        unscroll.grid(row=2, column=0)
+        unscroll.grid(row=3, column=0)
         for lang in self.db.analangs:
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
