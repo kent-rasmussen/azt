@@ -8651,7 +8651,6 @@ def mainproblem():
         titlefont=noticefont=defaultfont=tkinter.font.Font(family=char, size=12)
     l=tkinter.Label(errorroot,text="Hey! You found a problem! (details and "
             "solution below)",justify='left',font=titlefont)
-    log.info("Starting up exceptiononload check...")
     l.grid(row=0,column=0)
     if exceptiononload:
         durl=('https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md'
@@ -8682,11 +8681,8 @@ def mainproblem():
                 font=defaultfont)
     o.grid(row=3,column=0)
     o.bind("<Button-1>", lambda e: openweburl(eurl))
-    log.info("Starting up mainloop...")
     errorroot.mainloop()
-    log.info("Starting up wait_window...")
     errorroot.wait_window(errorroot)
-    log.info("Exiting...")
     sys.exit()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
