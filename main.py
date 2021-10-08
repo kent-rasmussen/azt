@@ -8635,7 +8635,7 @@ def main():
 def mainproblem():
     log.info("Starting up help line...")
     file=logwritelzma(log.filename)
-    try:
+    try: #Make this work whether root has run/still runs or not.
         program['root'].winfo_exists()
         log.info("Root there!")
         errorroot = tkinter.Toplevel(program['root'])
