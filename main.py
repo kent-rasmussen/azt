@@ -8000,10 +8000,6 @@ class Options:
     def get(self,o):
         o=self.alias(o)
         return getattr(self,o)
-    # def row(self):
-    #     return self.row
-    # def col(self):
-    #     return self.column
     def __init__(self,**kwargs):
         self.odict={'col':'column','c':'column',
                     'r':'row'
