@@ -1843,6 +1843,8 @@ class Check():
             for sclass in [sc for sc in self.db.s[lang]
                                     if ('dg' in sc or 'tg' in sc)]:
                 pclass=sclass.replace('dg','').replace('tg','')
+                if pclass not in self.polygraphs[lang]:
+                    self.polygraphs[lang][pclass]={}
                 for pg in self.db.s[lang][sclass]:
                     if pg not in self.polygraphs[lang][pclass]:
                         log.info("{} ([]/{}) has no Di/Trigraph setting; "
