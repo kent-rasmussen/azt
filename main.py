@@ -8027,10 +8027,6 @@ class Options:
                     }
         for arg in kwargs:
             setattr(self,self.alias(arg),kwargs[arg])
-                #     ['row'],
-                # column=self.runwindow.options['column'],sticky='ew',
-                # padx=self.runwindow.options['padx'],
-                # pady=self.runwindow.options['pady']
 class Object:
     def __init__(self):
         self.value=None
