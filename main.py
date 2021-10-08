@@ -1838,15 +1838,16 @@ class Check():
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         vars={}
-        unscroll=Frame(pgw.frame)
-        unscroll.grid(row=3, column=0)
+        scroll=ScrollingFrame(pgw.frame)
+        scroll.grid(row=3, column=0)
+        row=0
         for lang in self.db.analangs:
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
-            row=0
-            title=Label(unscroll,text=self.languagenames[lang],
+            row+=1
+            title=Label(scroll.content,text=self.languagenames[lang],
                                                         font=self.fonts['read'])
-            title.grid(column=0, row=row)
+            title.grid(column=0, row=row, columnspan=2)
             vars[lang]={}
             for sclass in [sc for sc in self.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
                                     if ('dg' in sc or 'tg' in sc)]:
@@ -1857,7 +1858,7 @@ class Check():
                     vars[lang][pclass]={}
                 if len(self.db.s[lang][sclass])>0:
                     row+=1
-                    header=Label(unscroll,
+                    header=Label(scroll.content,
                     text=sclass.replace('dg',' (digraph)').replace('tg',
                                                             ' (trigraph)')+': ')
                     header.grid(column=0, row=row)
@@ -1866,12 +1867,16 @@ class Check():
                     vars[lang][pclass][pg] = tkinter.BooleanVar()
                     vars[lang][pclass][pg].set(
                                     self.polygraphs[lang][pclass].get(pg,False))
-                    cb=CheckButton(unscroll, text = pg, #.content
+                    cb=CheckButton(scroll.content, text = pg, #.content
                                         variable = vars[lang][pclass][pg],
                                         onvalue = True, offvalue = False,
                                         )
                     cb.grid(column=col, row=row,sticky='nsew')
-                    col+=1
+                    if col<= 5: # increase this for wider window
+                        col+=1
+                    else:
+                        col=1 #not header
+                        row+=1
         pgw.wait_window(pgw)
         if changemarker.value and not self.exitFlag.istrue():
             for lang in self.db.analangs:
