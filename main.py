@@ -576,15 +576,15 @@ class Check():
             for typ in ['distinguish', 'interpret']:
                 for s in getattr(self,typ):
                     log.debug("Variable {} was: {}, now: {}, change: {}"
-                            "".format(s,getattr(self,typ)[s],vars[s].get(),
-                                                                        change))
-                    if s in var and s in getattr(self,typ):
-                        newvar=options.var[ss].get()
+                            "".format(s,getattr(self,typ)[s],
+                                        options.vars[s].get(),change))
+                    if s in options.vars and s in getattr(self,typ):
+                        newvar=options.vars[s].get()
                         oldvar=getattr(self,typ)[s]
                         if oldvar != newvar:
                             if typ == 'distinguish': #i.e., boolean
                                 if oldvar and not newvar: #True becomes False
-                                    changed[ss]=(oldvar,newvar)
+                                    changed[s]=(oldvar,newvar)
                             else: #i.e., CC v CG v C, etc.
                                 if (len(oldvar)>len(newvar) or # becomes shorter
                                     len(set(['V','G','N'] #one of these is there
