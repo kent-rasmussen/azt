@@ -1857,27 +1857,33 @@ class Check():
             pgw.destroy()
         changemarker=Object()
         changemarker.value=True
+        nochangetext=_("Exit with no changes")
         log.info("Asking about Digraphs and Trigraphs!")
         pgw=Window(self.frame,title="A→Z+T Digraphs and Trigraphs")
         t=_("Select which of the following graph sequences found in your data "
                 "refer to a single sound (digraph or trigraph) in {}".format(
             unlist([self.languagenames[y] for y in self.db.analangs])))
-        title=Label(pgw,text=t)
+        title=Label(pgw.frame,text=t)
         title.grid(column=0, row=0)
         t=_("If you use a digraph or trigraph that isn't listed here, please "
             "Email me, and I can add it.")
-        t2=Label(pgw,text=t)
+        t2=Label(pgw.frame,text=t)
         t2.grid(column=0, row=1)
+        t2.bind("<Button-1>", lambda e: openweburl(eurl))
+        t=_("Closing this window will restart {} and trigger another syllable "
+            "profile analysis. If you don't want that, click {}.".format(
+                                                program['name'],nochangetext))
+        t3=Label(pgw.frame,text=t)
+        t3.grid(column=0, row=1)
         eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
                                                             program['Email'])
-        t2.bind("<Button-1>", lambda e: openweburl(eurl))
-        t3=Button(pgw,text="Exit with no changes",
+        b=Button(pgw.frame,text=nochangetext,
                     command=lambda x=changemarker:nochanges(x))
-        t3.grid(column=1, row=1)
+        b.grid(column=1, row=1)
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         vars={}
-        unscroll=Frame(pgw)
+        unscroll=Frame(pgw.frame)
         unscroll.grid(row=2, column=0)
         for lang in self.db.analangs:
             if lang not in self.polygraphs:
