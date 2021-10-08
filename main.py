@@ -603,15 +603,16 @@ class Check():
                 if self.debug != True:
                     self.reloadprofiledata()
             self.runwindow.destroy()
-        def buttonframeframe(self,frames):
+        def buttonframeframe(self):
             log.debug("Running buttonframeframe with opts {}".format(options))
-            log.debug("Running buttonframeframe with frames {}".format(frames))
+            log.debug("Running buttonframeframe with frames {}".format(
+                                                                options.frames))
             s=options.s
-            frames[s]=Frame(self.runwindow.scroll.content)
-            frames[s].grid(row=options.get('r'),
+            f=options.frames[s]=Frame(self.runwindow.scroll.content)
+            f.grid(row=options.get('r'),
                         column=options.get('c'),
                         sticky='ew', padx=options.padx, pady=options.pady)
-            bffl=Label(frames[s],text=options.text,justify=tkinter.LEFT,
+            bffl=Label(f,text=options.text,justify=tkinter.LEFT,
                                                                 anchor='c')
             bffl.grid(row=1,column=options.column,
                             sticky='ew',
@@ -622,12 +623,11 @@ class Check():
             #                             # opts=self.runwindow.options['opts'])
             #     bffrb.grid(row=1,column=1)
             for opt in options.opts:
-                bffrb=RadioButtonFrame(frames[s],
+                bffrb=RadioButtonFrame(f,
                                         var=options.vars[s],
                                         opts=options.opts)
                 bffrb.grid(row=1,column=1)
             options.next('r') #self.runwindow.options['row']+=1
-            return frames
         self.getrunwindow()
         self.checkinterpretations()
         options=Options(r=0,padx=50,pady=10,c=0,vars={},frames={})
@@ -658,7 +658,6 @@ class Check():
         self.runwindow.scroll.grid(row=2,column=0)
         log.debug('self.distinguish: {}'.format(self.distinguish))
         log.debug('self.interpret: {}'.format(self.interpret))
-        frames={}
         """I considered offering these to the user conditionally, but I don't
         see a subset of them that would only be relevant when another is
         selected. For instance, a user may NOT want to distinguish all Nasals,
@@ -670,25 +669,25 @@ class Check():
                         'all glottal stops (ʔ) \nfrom '
                         'other (simple/single) consonants?')
         options.opts=[(True,'ʔ≠C'),(False,'ʔ=C')]
-        buttonframeframe(self,frames)
+        buttonframeframe(self)
         options.s='ʔwd'
         options.text=_('Do you want to distinguish Word '
                         'Final glottal stops (ʔ#) \nfrom other '
                         'word final consonants?')
         options.opts=[(True,'ʔ#≠C#'),(False,'ʔ#=C#')]
-        buttonframeframe(self,frames)
+        buttonframeframe(self)
         options.s='N'
         options.text=_('Do you want to distinguish '
                         'all Nasals (N) \nfrom '
                         'other (simple/single) consonants?')
         options.opts=[(True,'N≠C'),(False,'N=C')]
-        buttonframeframe(self,frames)
+        buttonframeframe(self)
         options.s='Nwd'
         options.text=_('Do you want to distinguish Word '
                         'Final Nasals (N#) \nfrom other word '
                         'final consonants?')
         options.opts=[(True,'N#≠C#'),(False,'N#=C#')]
-        buttonframeframe(self,frames)
+        buttonframeframe(self)
         options.s='D'
         options.text=_('Do you want to distinguish '
                         'all likely depressor consonants (D={})'
@@ -696,19 +695,19 @@ class Check():
                         'other (simple/single) consonants?'
                         "").format(self.db.s[self.analang]['D'])
         options.opts=[(True,'D≠C'),(False,'D=C')]
-        buttonframeframe(self,frames)
+        buttonframeframe(self)
         options.s='G'
         options.text=_('Do you want to distinguish '
                         'all Glides (G) \nfrom '
                         'other (simple/single) consonants?')
         options.opts=[(True,'G≠C'),(False,'G=C')]
-        buttonframeframe(self,frames)
+        buttonframeframe(self)
         options.s='S'
         options.text=_('Do you want to distinguish '
                         'all Non-Nasal/Glide Sonorants (S) '
                     '\nfrom other (simple/single) consonants?')
         options.opts=[(True,'S≠C'),(False,'S=C')]
-        buttonframeframe(self,frames)
+        buttonframeframe(self)
         options.s='NC'
         options.text=_('How do you want to interpret '
                                         '\nNasal-Consonant (NC) sequences?')
@@ -716,19 +715,19 @@ class Check():
                         ('C','NC=C (≠NC, ≠CC)'),
                         ('CC','NC=CC (≠NC, ≠C)')
                         ]
-        buttonframeframe(self,frames)
+        buttonframeframe(self)
         options.s='CG'
         options.text=_('How do you want to interpret '
                                         '\nConsonant-Glide (CG) sequences?')
         options.opts=[('CG','CG=CG (≠C, ≠CC)'),
                         ('C','CG=C (≠CG, ≠CC)'),
                         ('CC','CG=CC (≠CG, ≠C)')]
-        buttonframeframe(self,frames)
+        buttonframeframe(self)
         options.s='VN'
         options.text=_('How do you want to interpret '
                                         '\nVowel-Nasal (VN) sequences?')
         options.opts=[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')]
-        buttonframeframe(self,frames)
+        buttonframeframe(self)
         """Submit button, etc"""
         self.runwindow.frame2d=Frame(self.runwindow.scroll.content)
         self.runwindow.frame2d.grid(row=options.get('r'),
