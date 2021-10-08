@@ -59,9 +59,9 @@ def logsetup(loglevel):
         log.exception("Exception!") #this expects exception info
         log.critical("Critical!")
     return log
-def logcontents(log):
+def logcontents(log,lastlines=0):
     with open(log.filename,'r', encoding='utf-8') as d:
-        return str(d.read())
+        return d.readlines()[-lastlines:]
 def logwritelzma(filename):
     try:
         import lzma

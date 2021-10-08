@@ -19,7 +19,7 @@ information than 'DEBUG' does):
 Other levels:'WARNING','ERROR','CRITICAL'
 """
 if platform.uname().node == 'karlap':
-    loglevel=5 #
+    loglevel=6 #
 else:
     loglevel='DEBUG'
 from logsetup import *
@@ -522,11 +522,7 @@ class Check():
                 self.distinguish[var]=False
             if var == 'd':
                 self.distinguish[var]=False #don't change this default, yet...
-            log.log(2,_("Variable {} current value: {}").format(var,
-                                                        self.distinguish[var]))
         for var in ['NC','CG','CS','VV','VN']:
-            log.log(5,_("Variable {} current value: {}").format(var,
-                                                            self.interpret))
             if ((var not in self.interpret) or
                 (type(self.interpret[var]) is not str) or
                 not(1 <=len(self.interpret[var])<= 2)):
@@ -534,8 +530,6 @@ class Check():
                     self.interpret[var]=var
                 else:
                     self.interpret[var]='CC'
-                log.log(2,_("Variable {} current value: {}").format(var,
-                                                        self.interpret[var]))
         if self.interpret['VV']=='Vː' and self.distinguish['ː']==False:
             self.interpret['VV']='VV'
         log.log(2,"self.distinguish: {}".format(self.distinguish))
@@ -570,40 +564,27 @@ class Check():
                 log.info("Profiles to check: {}".format(i))
                 Label(w.frame,text=i).grid(row=2,column=0)
             w.wait_window(w)
-            # At this point, we eventually want to take these profiles to
-            # check, and find any senseids that have been sorted in them, and
-            # prepend oldvar (or key, for booleans) to their group numbers,
-            # to maintin their distictions. It would be better to test if any
-            # of the newvar profiles being lumped in with them have also been
-            # sorted into those frames:
-            # IF:
-            #   y=set(d,i).intersection(set(x)) exists,
-            #       and has been sorted into z frames
-            #   sed '/{d,i}/newvar' y exists
-            #       and has been sorted into z frames
-            # Then:
-            #   prepend {d,i} to sort values in z frames for y sensids.
         def submitform():
             change=False
             changed={}
             for typ in ['distinguish', 'interpret']:
-                for ss in getattr(self,typ):
-                    log.debug("Variable {} was: {}, now: {}, change: {}"
-                            "".format(ss,getattr(self,typ)[ss],var[ss].get(),
-                                                                        change))
-                    if ss in var and ss in getattr(self,typ):
-                        newvar=var[ss].get()
-                        oldvar=getattr(self,typ)[ss]
+                for s in getattr(self,typ):
+                    log.log(5,"Variable {} was: {}, now: {}, change: {}"
+                            "".format(s,getattr(self,typ)[s],
+                                        options.vars[s].get(),change))
+                    if s in options.vars and s in getattr(self,typ):
+                        newvar=options.vars[s].get()
+                        oldvar=getattr(self,typ)[s]
                         if oldvar != newvar:
                             if typ == 'distinguish': #i.e., boolean
                                 if oldvar and not newvar: #True becomes False
-                                    changed[ss]=(oldvar,newvar)
+                                    changed[s]=(oldvar,newvar)
                             else: #i.e., CC v CG v C, etc.
                                 if (len(oldvar)>len(newvar) or # becomes shorter
                                     len(set(['V','G','N'] #one of these is there
                                     ).intersection(set(oldvar))) >0):
-                                    changed[ss]=(oldvar,newvar)
-                            getattr(self,typ)[ss]=newvar
+                                    changed[s]=(oldvar,newvar)
+                            getattr(self,typ)[s]=newvar
                             change=True #I.e., something has changed
             log.debug('self.distinguish: {}'.format(self.distinguish))
             log.debug('self.interpret: {}'.format(self.interpret))
@@ -613,171 +594,145 @@ class Check():
                 log.info('The following changed (from,to): {}'.format(changed))
                 if len(changed) >0:
                     notice(changed)
-                # self.debug=True
                 if self.debug != True:
                     self.reloadprofiledata()
             self.runwindow.destroy()
         def buttonframeframe(self):
-            log.debug("Running buttonframeframe with options {}".format(
-                                                        self.runwindow.options))
-            log.debug("Running buttonframeframe with frames {}".format(
-                                                        self.runwindow.frames))
-            ss=self.runwindow.options['ss']
-            self.runwindow.frames[ss]=Frame(self.runwindow.scroll.content)
-            self.runwindow.frames[ss].grid(row=self.runwindow.options['row'],
-                        column=self.runwindow.options['column'],sticky='ew',
-                        padx=self.runwindow.options['padx'],
-                        pady=self.runwindow.options['pady'])
-            # Label(self.runwindow.scroll.content,text="Test!").grid(
-            #             row=self.runwindow.options['row']+1,
-            #             column=self.runwindow.options['column'])
-            # Label(self.runwindow.frames[ss],text="Test!").grid(row=0,column=0)
-            bffl=Label(self.runwindow.frames[ss],text=self.runwindow.options['text'],
-                    justify=tkinter.LEFT,anchor='c'
-                    )
-            bffl.grid(row=1,
-                            column=self.runwindow.options['column'],
+            s=options.s
+            f=options.frames[s]=Frame(self.runwindow.scroll.content)
+            f.grid(row=options.get('r'),
+                        column=options.get('c'),
+                        sticky='ew', padx=options.padx, pady=options.pady)
+            bffl=Label(f,text=options.text,justify=tkinter.LEFT,
+                                                                anchor='c')
+            bffl.grid(row=1,column=options.column,
                             sticky='ew',
-                            padx=self.runwindow.options['padx'],
-                            pady=self.runwindow.options['pady'])
-            bffrb=RadioButtonFrame(self.runwindow.frames[ss],var=var[ss],
-                                    opts=self.runwindow.options['opts'])
-            bffrb.grid(row=1,column=1)
-            self.runwindow.options['row']+=1
+                            padx=options.padx,
+                            pady=options.pady)
+            # for opt in self.runwindow.options['opts']:
+            #     bffrb=CheckButton(self.runwindow.frames[ss],var=var[ss])#, #RadioButtonFrame
+            #                             # opts=self.runwindow.options['opts'])
+            #     bffrb.grid(row=1,column=1)
+            for opt in options.opts:
+                bffrb=RadioButtonFrame(f,
+                                        var=options.vars[s],
+                                        opts=options.opts)
+                bffrb.grid(row=1,column=1)
+            options.next('r') #self.runwindow.options['row']+=1
         self.getrunwindow()
         self.checkinterpretations()
-        var={}
-        for ss in self.distinguish: #Should be already set.
-            var[ss] = tkinter.BooleanVar()
-            var[ss].set(self.distinguish[ss])
-            print(ss, self.distinguish[ss])
-        for ss in self.interpret: #This should already be set, even by default
-            var[ss] = tkinter.StringVar()
-            var[ss].set(self.interpret[ss])
-            print(ss, self.interpret[ss])
-        self.runwindow.options={}
-        self.runwindow.options['row']=0
-        self.runwindow.options['padx']=50
-        self.runwindow.options['pady']=10
-        self.runwindow.options['column']=0
+        options=Options(r=0,padx=50,pady=10,c=0,vars={},frames={})
+        for s in self.distinguish: #Should be already set.
+            options.vars[s] = tkinter.BooleanVar()
+            options.vars[s].set(self.distinguish[s])
+        for s in self.interpret: #This should already be set, even by default
+            options.vars[s] = tkinter.StringVar()
+            options.vars[s].set(self.interpret[s])
         """Page title and instructions"""
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
+        mwframe=self.runwindow.frame
         title=_("Interpret {} Segments"
                 ).format(self.languagenames[self.analang])
-        titl=Label(self.runwindow,text=title,font=self.fonts['title'],
+        titl=Label(mwframe,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c')
-        titl.grid(row=self.runwindow.options['row'],
-                    column=self.runwindow.options['column'],sticky='ew',
-                    padx=self.runwindow.options['padx'],
-                    pady=self.runwindow.options['pady'])
-        self.runwindow.options['row']+=1
+        titl.grid(row=options.get('r'), column=options.get('c'), #self.runwindow.options['column'],
+                    sticky='ew', padx=options.padx, pady=10)
+        options.next('r')
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
                 ).format(self.program['name'],self.languagenames[self.analang])
-        instr=Label(self.runwindow,text=text,
-                justify=tkinter.LEFT,anchor='c')
-        instr.grid(row=self.runwindow.options['row'],
-                    column=self.runwindow.options['column'],sticky='ew',
-                    padx=self.runwindow.options['padx'],
-                    pady=self.runwindow.options['pady'])
+        instr=Label(mwframe,text=text,justify=tkinter.LEFT,anchor='c')
+        instr.grid(row=options.get('r'), column=options.get('c'),
+                    sticky='ew', padx=options.padx, pady=options.pady)
         """The rest of the page"""
-        self.runwindow.scroll=ScrollingFrame(self.runwindow) #ScrollingFrame
+        self.runwindow.scroll=ScrollingFrame(mwframe)
         self.runwindow.scroll.grid(row=2,column=0)
-        # self.runwindow.scroll.content=Frame(self.runwindow.scroll)
-        # self.runwindow.scroll.content.grid(row=0,column=0,sticky='nsew')
-        # Label(self.runwindow.scroll.content,text="Test!").grid(
-        #             row=0,
-        #             column=0)
         log.debug('self.distinguish: {}'.format(self.distinguish))
         log.debug('self.interpret: {}'.format(self.interpret))
-        self.runwindow.frames={}
         """I considered offering these to the user conditionally, but I don't
         see a subset of them that would only be relevant when another is
         selected. For instance, a user may NOT want to distinguish all Nasals,
         yet distinguish word final nasals. Or CG sequences, but not other G's
         --or distinguish G, but leave as CG (≠C). So I think these are all
         independent boolean selections."""
-        self.runwindow.options['ss']='ʔ'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all glottal stops (ʔ) \nfrom '
-                                        'other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'ʔ≠C'),(False,'ʔ=C')]
+        options.s='ʔ'
+        options.text=_('Do you want to distinguish '
+                        'all glottal stops (ʔ) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'ʔ≠C'),(False,'ʔ=C')]
         buttonframeframe(self)
-        self.runwindow.options['ss']='ʔwd'
-        self.runwindow.options['text']=_('Do you want to distinguish Word '
-                                        'Final glottal stops (ʔ#) \nfrom other '
-                                        'word final consonants?')
-        self.runwindow.options['opts']=[(True,'ʔ#≠C#'),(False,'ʔ#=C#')]
+        options.s='ʔwd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final glottal stops (ʔ#) \nfrom other '
+                        'word final consonants?')
+        options.opts=[(True,'ʔ#≠C#'),(False,'ʔ#=C#')]
         buttonframeframe(self)
-        self.runwindow.options['ss']='N'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all Nasals (N) \nfrom '
-                                        'other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'N≠C'),(False,'N=C')]
+        options.s='N'
+        options.text=_('Do you want to distinguish '
+                        'all Nasals (N) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'N≠C'),(False,'N=C')]
         buttonframeframe(self)
-        self.runwindow.options['ss']='Nwd'
-        self.runwindow.options['text']=_('Do you want to distinguish Word '
-                                        'Final Nasals (N#) \nfrom other word '
-                                        'final consonants?')
-        self.runwindow.options['opts']=[(True,'N#≠C#'),(False,'N#=C#')]
+        options.s='Nwd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final Nasals (N#) \nfrom other word '
+                        'final consonants?')
+        options.opts=[(True,'N#≠C#'),(False,'N#=C#')]
         buttonframeframe(self)
-        self.runwindow.options['ss']='D'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all likely depressor consonants (D={})'
-                                        '\nfrom '
-                                        'other (simple/single) consonants?'
-                                        "").format(self.db.s[self.analang]['D'])
-        self.runwindow.options['opts']=[(True,'D≠C'),(False,'D=C')]
+        options.s='D'
+        options.text=_('Do you want to distinguish '
+                        'all likely depressor consonants (D={})'
+                        '\nfrom '
+                        'other (simple/single) consonants?'
+                        "").format(self.db.s[self.analang]['D'])
+        options.opts=[(True,'D≠C'),(False,'D=C')]
         buttonframeframe(self)
-        self.runwindow.options['ss']='G'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all Glides (G) \nfrom '
-                                        'other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'G≠C'),(False,'G=C')]
+        options.s='G'
+        options.text=_('Do you want to distinguish '
+                        'all Glides (G) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'G≠C'),(False,'G=C')]
         buttonframeframe(self)
-        self.runwindow.options['ss']='S'
-        self.runwindow.options['text']=_('Do you want to distinguish '
-                                        'all Non-Nasal/Glide Sonorants (S) '
-                                    '\nfrom other (simple/single) consonants?')
-        self.runwindow.options['opts']=[(True,'S≠C'),(False,'S=C')]
+        options.s='S'
+        options.text=_('Do you want to distinguish '
+                        'all Non-Nasal/Glide Sonorants (S) '
+                    '\nfrom other (simple/single) consonants?')
+        options.opts=[(True,'S≠C'),(False,'S=C')]
         buttonframeframe(self)
-        self.runwindow.options['ss']='NC'
-        self.runwindow.options['text']=_('How do you want to interpret '
+        options.s='NC'
+        options.text=_('How do you want to interpret '
                                         '\nNasal-Consonant (NC) sequences?')
-        self.runwindow.options['opts']=[('NC','NC=NC (≠C, ≠CC)'),
-                                    ('C','NC=C (≠NC, ≠CC)'),
-                                    ('CC','NC=CC (≠NC, ≠C)')
-                                    ]
+        options.opts=[('NC','NC=NC (≠C, ≠CC)'),
+                        ('C','NC=C (≠NC, ≠CC)'),
+                        ('CC','NC=CC (≠NC, ≠C)')
+                        ]
         buttonframeframe(self)
-        self.runwindow.options['ss']='CG'
-        self.runwindow.options['text']=_('How do you want to interpret '
+        options.s='CG'
+        options.text=_('How do you want to interpret '
                                         '\nConsonant-Glide (CG) sequences?')
-        self.runwindow.options['opts']=[('CG','CG=CG (≠C, ≠CC)'),
-                                    ('C','CG=C (≠CG, ≠CC)'),
-                                    ('CC','CG=CC (≠CG, ≠C)')]
+        options.opts=[('CG','CG=CG (≠C, ≠CC)'),
+                        ('C','CG=C (≠CG, ≠CC)'),
+                        ('CC','CG=CC (≠CG, ≠C)')]
         buttonframeframe(self)
-        self.runwindow.options['ss']='VN'
-        self.runwindow.options['text']=_('How do you want to interpret '
+        options.s='VN'
+        options.text=_('How do you want to interpret '
                                         '\nVowel-Nasal (VN) sequences?')
-        self.runwindow.options['opts']=[('VN','VN=VN (≠Ṽ)'),
-                                    ('Ṽ','VN=Ṽ (≠VN)')]
+        options.opts=[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')]
         buttonframeframe(self)
         """Submit button, etc"""
         self.runwindow.frame2d=Frame(self.runwindow.scroll.content)
-        self.runwindow.frame2d.grid(row=self.runwindow.options['row'],
-                    column=self.runwindow.options['column'],sticky='ew',
-                    padx=self.runwindow.options['padx'],
-                    pady=self.runwindow.options['pady'])
+        self.runwindow.frame2d.grid(row=options.get('r'),
+                    column=options.get('c'),
+                    sticky='ew', padx=options.padx, pady=options.pady)
         sub_btn=Button(self.runwindow.frame2d,text = 'Use these settings',
                   command = submitform)
-        sub_btn.grid(row=0,column=1,sticky='nw',
-                    pady=self.runwindow.options['pady'])
+        sub_btn.grid(row=0,column=1,sticky='nw',pady=options.pady)
         nbtext=_("If you make changes, this button==> \nwill "
                 "restart the program to reanalyze your data, \nwhich will "
                 "take some time.")
         sub_nb=Label(self.runwindow.frame2d,text = nbtext, anchor='e')
         sub_nb.grid(row=0,column=0,sticky='e',
-                    pady=self.runwindow.options['pady'])
+                    pady=options.pady)
         self.runwindow.waitdone()
     def addmodadhocsort(self):
         def submitform():
@@ -1489,8 +1444,8 @@ class Check():
         main()
     def changedatabase(self):
         log.debug("Removing lift_url.py, so user will be asked again for LIFT")
-        file.remove('lift_url.py')
         self.filename=None #since this will still be in memory
+        file.remove('lift_url.py')
         self.restart()
     def reloadprofiledata(self):
         self.storesettingsfile()
@@ -1590,7 +1545,7 @@ class Check():
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
                 if hasattr(module,s):
-                    log.debug("Found attribute {} with value {}".format(s,
+                    log.log(5,"Found attribute {} with value {}".format(s,
                                 getattr(module,s)))
                     setattr(o,s,getattr(module,s))
         except:
@@ -1827,7 +1782,7 @@ class Check():
                                         self.profilesbysense[self.ps][adhoc]))
         self.ps=psori
         self.updatecounts()
-        print('Done:',time.time()-self.start_time)
+        # print('Done:',time.time()-self.start_time)
         if self.debug==True:
             for ps in self.profilesbysense:
                 for profile in self.profilesbysense[ps]:
@@ -1857,28 +1812,34 @@ class Check():
             pgw.destroy()
         changemarker=Object()
         changemarker.value=True
+        nochangetext=_("Exit with no changes")
         log.info("Asking about Digraphs and Trigraphs!")
         pgw=Window(self.frame,title="A→Z+T Digraphs and Trigraphs")
         t=_("Select which of the following graph sequences found in your data "
                 "refer to a single sound (digraph or trigraph) in {}".format(
             unlist([self.languagenames[y] for y in self.db.analangs])))
-        title=Label(pgw,text=t)
+        title=Label(pgw.frame,text=t)
         title.grid(column=0, row=0)
         t=_("If you use a digraph or trigraph that isn't listed here, please "
-            "Email me, and I can add it.")
-        t2=Label(pgw,text=t)
+            "click here to Email me, and I can add it.")
+        t2=Label(pgw.frame,text=t)
         t2.grid(column=0, row=1)
+        t2.bind("<Button-1>", lambda e: openweburl(eurl))
+        t=_("Closing this window will restart {} and trigger another syllable "
+            "profile analysis. \nIf you don't want that, click ‘{}’ ==>".format(
+                                                program['name'],nochangetext))
+        t3=Label(pgw.frame,text=t)
+        t3.grid(column=0, row=2)
         eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
                                                             program['Email'])
-        t2.bind("<Button-1>", lambda e: openweburl(eurl))
-        t3=Button(pgw,text="Exit with no changes",
+        b=Button(pgw.frame,text=nochangetext,
                     command=lambda x=changemarker:nochanges(x))
-        t3.grid(column=1, row=1)
+        b.grid(column=1, row=2)
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         vars={}
-        unscroll=Frame(pgw)
-        unscroll.grid(row=2, column=0)
+        unscroll=Frame(pgw.frame)
+        unscroll.grid(row=3, column=0)
         for lang in self.db.analangs:
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
@@ -1912,7 +1873,7 @@ class Check():
                     cb.grid(column=col, row=row,sticky='nsew')
                     col+=1
         pgw.wait_window(pgw)
-        if changemarker.value:
+        if changemarker.value and not self.exitFlag.istrue():
             for lang in self.db.analangs:
                 for pc in vars[lang]:
                     for pg in vars[lang][pc]:
@@ -3392,7 +3353,6 @@ class Check():
     def getprofilestodo(self):
         if not hasattr(self,'profilecounts'):
             self.getprofiles()
-        log.debug(self.profilecounts)
         self.profilecountsValid=[]
         self.profilecountsValidwAdHoc=[]
         #self.profilecountsValid filters out Invalid, and also by self.ps...
@@ -3402,8 +3362,8 @@ class Check():
             if set(self.profilelegit).issuperset(x[1]):
                 self.profilecountsValid.append(x)
             self.profilecountsValidwAdHoc.append(x)
-        log.debug("Valid profiles for ps {}: {}".format(self.ps,
-                                                    self.profilecountsValid))
+        log.debug("First five valid profiles for ps {}: {}".format(self.ps,
+                                                self.profilecountsValid[0:5]))
         self.profilestodo=[x[1] for x in self.profilecountsValid if
                             self.profilecountsValid.index(x)<=self.maxprofiles]
         log.debug("self.profilestodo: {}".format(self.profilestodo))
@@ -7286,7 +7246,7 @@ class Renderer(object):
         text=kwargs['text'] #should always be there
         text=text.replace('\t','    ') #Not sure why, but tabs aren't working.
         wraplength=kwargs['wraplength'] #should always be there
-        log.debug("Rendering ‘{}’ text with font: {}".format(text,font))
+        log.log(2,"Rendering ‘{}’ text with font: {}".format(text,font))
         if (('justify' in kwargs and
                         kwargs['justify'] in [tkinter.LEFT,'left']) or
             ('anchor' in kwargs and
@@ -7400,7 +7360,7 @@ class Label(tkinter.Label):
             thisrenderings=renderings[style][kwargs['wraplength']]
             if (kwargs['text'] in thisrenderings and
                     thisrenderings[kwargs['text']] is not None):
-                log.info("text {} already rendered with {} wraplength, using."
+                log.log(5,"text {} already rendered with {} wraplength, using."
                         "".format(kwargs['text'],kwargs['wraplength']))
                 kwargs['image']=thisrenderings[kwargs['text']]
                 kwargs['text']=''
@@ -7528,7 +7488,7 @@ class Button(tkinter.Button):
             thisrenderings=renderings[style][kwargs['wraplength']]
             if (kwargs['text'] in thisrenderings and
                     thisrenderings[kwargs['text']] is not None):
-                log.info("text {} already rendered with {} wraplength, using."
+                log.log(5,"text {} already rendered with {} wraplength, using."
                         "".format(kwargs['text'],kwargs['wraplength']))
                 kwargs['image']=thisrenderings[kwargs['text']]
                 kwargs['text']=''
@@ -7537,7 +7497,7 @@ class Button(tkinter.Button):
                 "button text? ({},{})".format(image,kwargs['text']))
                 return
             else:
-                log.debug("sticks found! (Generating image for button)")
+                log.log(5,"sticks found! (Generating image for button)")
                 i=Renderer(**kwargs)
                 self.tkimg=i.img
                 if self.tkimg is not None:
@@ -8023,6 +7983,32 @@ class ToolTip(object):
         self.tw= None
         if tw:
             tw.destroy()
+class Options:
+    def alias(self,o):
+        return self.odict.get(o,o)
+    def next(self,o):
+        o=self.alias(o)
+        setattr(self,o,getattr(self,o)+1)
+    def prev(self,o):
+        o=self.alias(o)
+        setattr(self,o,getattr(self,o)-1)
+    def get(self,o):
+        o=self.alias(o)
+        return getattr(self,o)
+    # def row(self):
+    #     return self.row
+    # def col(self):
+    #     return self.column
+    def __init__(self,**kwargs):
+        self.odict={'col':'column','c':'column',
+                    'r':'row'
+                    }
+        for arg in kwargs:
+            setattr(self,self.alias(arg),kwargs[arg])
+                #     ['row'],
+                # column=self.runwindow.options['column'],sticky='ew',
+                # padx=self.runwindow.options['padx'],
+                # pady=self.runwindow.options['pady']
 class Object:
     def __init__(self):
         self.value=None
@@ -8575,18 +8561,19 @@ def on_quit(self):
     # to be elsewhere, e.g., if `self.exitFlag.istrue(): return`
     def killall():
         self.destroy()
-        sys.exit()
+        # sys.exit()
     if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
         print("Setting window exit flag True!")
         self.exitFlag.true()
     if type(self) is tkinter.Tk: #exit afterwards if main window
         killall()
-    self.destroy() #do this for everything
+    else:
+        self.destroy() #do this for everything
 def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    root = tkinter.Tk()
+    root = program['root']=tkinter.Tk()
     #this computer: (this doesn't pick up changes, so just doing it here)
     h = root.winfo_screenheight()
     w = root.winfo_screenwidth()
@@ -8625,35 +8612,57 @@ def main():
     myapp.mainloop()
     logshutdown() #in logsetup
 def mainproblem():
+    log.info("Starting up help line...")
     file=logwritelzma(log.filename)
-    errorroot = tkinter.Tk()
+    try: #Make this work whether root has run/still runs or not.
+        program['root'].winfo_exists()
+        log.info("Root there!")
+        errorroot = tkinter.Toplevel(program['root'])
+    except:
+        errorroot = tkinter.Tk()
     errorroot.title("Serious Problem!")
-    t="Hey! You found a problem! (details and solution below)"
-    l=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=36))
+    try:
+        char="Charis SIL"
+        titlefont=tkinter.font.Font(family=char, size=36)
+        noticefont=tkinter.font.Font(family=char,size=24)
+        defaultfont=tkinter.font.Font(family=char, size=12)
+    except:
+        titlefont=noticefont=defaultfont=tkinter.font.Font(family=char, size=12)
+    l=tkinter.Label(errorroot,text="Hey! You found a problem! (details and "
+            "solution below)",justify='left',font=titlefont)
     l.grid(row=0,column=0)
     if exceptiononload:
-        durl='https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md#dependencies'
-        t="\nPlease see {}".format(durl)
-        m=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=24))
+        durl=('https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md'
+                '#dependencies')
+        m=tkinter.Label(errorroot,text="\nPlease see {}".format(durl),
+            justify='left', font=noticefont)
         m.grid(row=1,column=0)
         m.bind("<Button-1>", lambda e: openweburl(durl))
-    lcontents=logcontents(log)
+    lcontents=logcontents(log,25)
     addr=program['Email']
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
-    eurl+='&body=Please replace this text with a description of what you just tried.'.format(file)
-    eurl+="%0d%0aIf the log below is more than a few lines, please attach your compressed log file ({})".format(file)
-    eurl+='%0d%0a--log info--%0d%0a{}'.format(lcontents.replace('\n','%0d%0a'))
-    t="\n\nIf this information doesn't help you fix this, please click on this text to Email me your log (to {})".format(addr)
-    n=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=18))
+    eurl+=('&body=Please replace this text with a description of what you '
+            'just tried.'.format(file))
+    eurl+=("%0d%0aIf the log below doesn't include the text 'Traceback (most "
+            "recent call last): ', or if it happened after a longer work "
+            "session, please attach "
+            "your compressed log file ({})".format(file))
+    eurl+='%0d%0a--log info--%0d%0a{}'.format('%0d%0a'.join(lcontents))
+    # eurl+='%0d%0a--log info--%0d%0a{}'.format(lcontents.replace('\n','%0d%0a'))
+    n=tkinter.Label(errorroot,text="\n\nIf this information doesn't help "
+        "you fix this, please click on this text to Email me your log (to {})"
+        "".format(addr),justify='left', font=defaultfont)
     n.grid(row=2,column=0)
     n.bind("<Button-1>", lambda e: openweburl(eurl))
-    t="\n\nContents of {}/{} are below:".format(log.filename,file)
-    t+="\n\n{}".format(lcontents)
-    o=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=12))
+    o=tkinter.Label(errorroot,text="\n\nThe end of {} / {} are below:"
+                "\n\n{}".format(log.filename,file,''.join(lcontents)),
+                justify='left',
+                font=defaultfont)
     o.grid(row=3,column=0)
     o.bind("<Button-1>", lambda e: openweburl(eurl))
     errorroot.mainloop()
-    exit()
+    errorroot.wait_window(errorroot)
+    sys.exit()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
