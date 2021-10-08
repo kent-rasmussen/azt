@@ -8660,21 +8660,24 @@ def mainproblem():
             justify='left', font=noticefont)
         m.grid(row=1,column=0)
         m.bind("<Button-1>", lambda e: openweburl(durl))
-    lcontents=logcontents(log)
+    lcontents=logcontents(log,25)
     addr=program['Email']
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
     eurl+=('&body=Please replace this text with a description of what you '
             'just tried.'.format(file))
-    eurl+=("%0d%0aIf the log below is more than a few lines, please attach "
+    eurl+=("%0d%0aIf the log below doesn't include the text 'Traceback (most "
+            "recent call last): ', or if it happened after a longer work "
+            "session, please attach "
             "your compressed log file ({})".format(file))
-    eurl+='%0d%0a--log info--%0d%0a{}'.format(lcontents.replace('\n','%0d%0a'))
+    eurl+='%0d%0a--log info--%0d%0a{}'.format('%0d%0a'.join(lcontents))
+    # eurl+='%0d%0a--log info--%0d%0a{}'.format(lcontents.replace('\n','%0d%0a'))
     n=tkinter.Label(errorroot,text="\n\nIf this information doesn't help "
         "you fix this, please click on this text to Email me your log (to {})"
         "".format(addr),justify='left', font=defaultfont)
     n.grid(row=2,column=0)
     n.bind("<Button-1>", lambda e: openweburl(eurl))
-    o=tkinter.Label(errorroot,text="\n\nContents of {}/{} are below:"
-                "\n\n{}".format(lcontents,log.filename,file),
+    o=tkinter.Label(errorroot,text="\n\nThe end of {} / {} are below:"
+                "\n\n{}".format(log.filename,file,''.join(lcontents)),
                 justify='left',
                 font=defaultfont)
     o.grid(row=3,column=0)
