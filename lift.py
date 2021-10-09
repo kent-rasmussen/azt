@@ -349,7 +349,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             forms=db.forms
             glosses=db.glosses
             glosslangs=db.glosslangs
-            p=Node(node, tag='example') #ET.SubElement
+            p=Node(node, tag='example')
             p.makeformnode(analang,db.analang)
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
