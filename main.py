@@ -7332,6 +7332,7 @@ class Label(tkinter.Label):
         log.log(3,'self.maxwidth (Label class): {}'.format(self.maxwidth))
     def __init__(self, parent, column=0, row=1, norender=False,**kwargs):
         """These have non-None defaults"""
+        self.parent=parent
         if 'text' not in kwargs or kwargs['text'] is None:
             kwargs['text']=''
         if 'font' in kwargs:
@@ -7343,10 +7344,7 @@ class Label(tkinter.Label):
                 kwargs['font']=parent.fonts['default']
         else:
             kwargs['font']=parent.fonts['default']
-        if 'wraplength' not in kwargs:
-            kwargs['wraplength']=parent.wraplength
-        self.theme=parent.theme
-        self.parent=parent
+        inherit(self)
         d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
         sticks=set(['˥','˦','˧','˨','˩',' '])
         if set(kwargs['text']) & (sticks|d) and not norender:
