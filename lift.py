@@ -355,35 +355,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             fields are being filled in in the glosslang language."""
             fieldgloss=Node(p,'translation',attrib={'type':
                                                         'Frame translation'})
-            for lang in [kwargs['glosslang'],kwargs['glosslang2']]:
-                if lang != None and lang in kwargs['forms']:
-                    form=ET.SubElement(fieldgloss,'form',
-                                        attrib={'lang':lang})
-                    glosstext=ET.SubElement(form,'text')
-                    glosstext.text=kwargs['forms'][lang]
-            exfield=ET.SubElement(p,'field',
-                                    attrib={'type':kwargs['fieldtype']})
-            form=ET.SubElement(exfield,'form',
-                                    attrib={'lang':kwargs['glosslang']})
-            exfieldvalue=ET.SubElement(form,'text')
-            locfield=ET.SubElement(p,'field',attrib={'type':'location'})
-            form=ET.SubElement(locfield,'form',
-                                    attrib={'lang':kwargs['glosslang']})
-            fieldlocation=ET.SubElement(form,'text')
-            fieldlocation.text=kwargs['location']
-        else:
+            for lang in glosslangs:
+                if lang != None and hasattr(forms,lang):
+                    fieldgloss.makeformnode(lang,getattr(forms,lang))
+            exfieldvalue=p.makefieldnode(fieldtype,glosslang,gimmetext=True)
+            p.makefieldnode('location',glosslang,text=location)
+            else:
             log.debug("=> Found that example already there")
-        exfieldvalue.text=kwargs['fieldvalue'] #change this *one* value, either way.
+        exfieldvalue.text=fieldvalue #change this *one* value, either way.
+        senseid=kwargs.get('senseid')
         if 'guid' in kwargs:
-            self.updatemoddatetime(guid=kwargs['guid'],senseid=kwargs['senseid'])
+            guid=kwargs.get('guid')
+            self.updatemoddatetime(guid=guid,senseid=senseid)
         else:
             self.updatemoddatetime(senseid=kwargs['senseid'])
         if self.debug == True:
-            log.info("add langform: {}".format(kwargs['forms'][kwargs['analang']]))
-            log.info("add tone: {}".format(['fieldvalue']))
-            log.info("add gloss: {}".format(kwargs['forms'][kwargs['glosslang']]))
+            log.info("add langform: {}".format(forms.analang))
+            log.info("add tone: {}".format(fieldvalue))
+            log.info("add gloss: {}".format(forms.glosslang))
             if glosslang2 != None:
-                log.info(' '.join("add gloss2:", kwargs['forms'][kwargs['glosslang2']]))
+                log.info("add gloss2: {}".format(forms.glosslang2))
     def forminnode(self,node,value):
         # Returns True if `value` is in *any* text node child of any form child
         # of node: [node/'form'/'text' = value]
