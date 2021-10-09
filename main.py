@@ -8664,8 +8664,9 @@ def mainproblem():
     o.grid(row=3,column=0)
     o.bind("<Button-1>", lambda e: openweburl(eurl))
     errorroot.mainloop()
-    errorroot.wait_window(errorroot)
+    # errorroot.wait_window(errorroot)
     sys.exit()
+    exit()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
