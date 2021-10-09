@@ -427,17 +427,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     return
             elif ((node.tag == 'translation') and
                                 (node.get('type') == 'Frame translation')):
-                for form in node.find('form'):
-                    if (((form.get('lang') == kwargs['analang']) and
-                        (not self.forminnode(node,
-                            kwargs['forms'][kwargs['analang']]))) or
-                        (('glosslang2' in kwargs) and
-                        (kwargs['glosslang2'] != None) and
-                        (form.get('lang') == kwargs['glosslang2']) and
-                        (not self.forminnode(node,
-                            kwargs['forms'][kwargs['glosslang2']])))):
-                        log.log(2,'translation {} != {}'.format(
-                                    node.find('form/text').text, kwargs['forms']))
+                for form in node.findall('form'):
+                    l=form.get('lang')
+                    if l is None:
+                        log.info("translation lang empty; can't test it")
+                        continue
+                    glform=db.glosses[l] #getattr(glosses,l,None)
+                    if (l in glosslangs and form.find('text').text != glform):
+                        log.info('{} translation "{}" != "{}"'.format(l,
+                                    node.find('form/text').text, glform))
                         return
             elif (node.tag == 'field'):
                 if (node.get('type') == 'location'):
