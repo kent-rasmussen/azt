@@ -445,22 +445,22 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         return
                 if (node.get('type') == 'tone'):
                     for form in node:
-                        if ((form.get('lang') == kwargs['glosslang'])
-                        or (form.get('lang') == kwargs['glosslang2'])):
+                        l=form.get('lang')
+                        if l in glosslangs:
                             """This is set once per example, since this
                             function runs on an example node"""
                             tonevalue=form.find('text')
                             log.debug('tone value found: {}'.format(
                                                             tonevalue.text))
                         else:
-                            log.log(2,"Not the same lang for tone form: {}"
-                                        "".format(form.get('lang')))
+                            log.info("Not the same lang for tone form: {}"
+                                        "".format(l))
                             return
             else:
                 log.debug("Not sure what kind of node I'm dealing with! ({})"
                                                             "".format(node.tag))
         return tonevalue
-    def exampleissameasnew(self,showurl=False, **kwargs):
+    def exampleissameasnew(self, **kwargs):
         # ,guid,senseid,analang, glosslang,glosslang2,forms, fieldtype,
         # location,fieldvalue,node,ps=None
         """This looks for any example in the given sense node, with the same
