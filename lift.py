@@ -46,6 +46,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             self.read() #load and parse the XML file. (Should this go to check?)
         except:
             raise BadParseError(self.filename)
+        return #for testing, for now
         backupbits=[filename,'_',
                     datetime.datetime.utcnow().isoformat()[:-16], #once/day
                     '.txt']
