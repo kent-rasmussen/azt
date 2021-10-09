@@ -100,9 +100,45 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.log(2,'After removenone: {}'.format(url))
         log.log(1,'Ori: {}'.format(self.attribdict[attribute]['url']))
         return {'url':url,'attr':self.attribdict[attribute]['attr']}
-    def get(self, attribute, **kwargs):
-        getfrom(self.node, attribute, **kwargs)
-    def getfrom(node, attribute, **kwargs):
+    def getwurl(self,node,url,what='node'):
+        n=node.findall(url)
+        if n != []:
+            log.debug("found: {} (x{}), looking for {}".format(n[:1],len(n),what))
+        if n == [] or what is None or what == 'node':
+            return n
+        elif what == 'text':
+            r=[i.text for i in n]
+            log.debug(r)
+            return r
+        else:
+            r=[i.get(what) for i in n]
+            log.debug(r)
+            return r
+    def get(self, target, **kwargs):
+        return self.getfrom(self.nodes, target, **kwargs)
+    def getfrom(self, node, target, **kwargs):
+        base=kwargs['base']=node.tag #in case this is specified, but shouldn't be
+        # log.info("base: {}".format(base))
+        what=kwargs.get('what','node')
+        path=kwargs.get('path',[])
+        if type(path) is not list:
+            path=kwargs['path']=[path]
+        showurl=kwargs.get('showurl',False)
+        kwargs['target']=target #not kwarg here, but we want it to be one for LiftURL
+        kwargscopy=kwargs.copy() #for only differences that change the URL
+        kwargscopy.pop('showurl',False)
+        #unique key, tuple of tuples with str contents only, per url
+        k=tuple(sorted([(str(x),str(y)) for (x,y) in kwargscopy.items()]))
+        # k=tuple(sorted(kwargscopy.items()))
+        if k in self.urls:
+            url=self.urls[k]
+        else:
+            link=LiftURL(**kwargs) #needs base and target to be sensible; attribute?
+            url=self.urls[k]=link.url
+        if showurl:
+            log.info("Using URL {}".format(url))
+        return self.getwurl(node,url,what=what) #'what' comes in a kwarg, if wanted
+        return link.get(node,get) #get="text", "node" or an attribute name
         """kwargs are guid=None, senseid=None, analang=None,
             glosslang=None, lang=None, ps=None, form=None, fieldtype=None,
             location=None, fieldvalue=None, showurl=False):"""
