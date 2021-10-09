@@ -40,6 +40,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.debug=False
         self.filename=filename #lift_file.liftstr()
         self.logfile=filename+".changes"
+        self.urls={} #store urls generated
         """Problems reading a valid LIFT file are dealt with in main.py"""
         try:
             self.read() #load and parse the XML file. (Should this go to check?)
