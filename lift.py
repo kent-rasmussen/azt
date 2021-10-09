@@ -76,33 +76,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # self.findduplicateexamples() #Fix this!
         """Think through where this belongs; what classes/functions need it?"""
         log.info("Language initialization done.")
-    def initattribs(self):
-        # value."""
-        # """Make all urls fully specified for guid, lang, etc; they will be
-        # removed if the relevant variable is None."""
-        # """In the following language attributes, the field <form> can
-        # exist in multiple fields, so pay attention to the difference
-        # between
-        #     form='{analang}'   (always in the language to be analyzed:
-        #                                                 lexeme, citation)
-        #     form='{glosslang}' (always in a gloss language:
-        #                                                 gloss, definition)
-        #     form='{lang}'      (either: field --under entry, sense, or
-        #                                                     pronunciation)
-        # Controlling this difference allows for things like getting an entry
-        # with a form in a particular language, and a gloss in a particular
-        # (other) language, and/or a tone description (<field>) in a
-        # particular (yet another) language.
-        # For now, I'm just going to assume people write meta descriptions
-        # in their primary gloss language.
-        # url here is a tuple with a base URL and a list of variable names
-        # that will be added to it later (and/or removed, if None). The URL
-        # should have each in {braces}, and the variable list each in
-        # 'quotes', as those are strings/names of variables, to be assigned
-        # values later. In any case, the names and number of arguments
-        # should match --except for duplicates in the URL, which
-        # should occur only once in the variable list. I'm keeping the order
-        # the same as far as possible, but that doesn't ultimately matter."""
     def geturlnattr(self, attribute, **kwargs):
         if attribute == 'attributes':
             return self.attribdict.keys()
