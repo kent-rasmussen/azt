@@ -415,10 +415,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             return
         for node in example:
             try:
-                log.log(2,'Node: {} ; {}'.format(node.tag,
+                log.info('Node: {} ; {}'.format(node.tag,
                                                 node.find('.//text').text))
             except:
-                log.log(2,'Node: {} ; Likely no text node!'.format(node.tag))
+                log.info('Node: {} ; Likely no text node!'.format(node.tag))
             if (node.tag == 'form'):
                 if ((node.get('lang') == analang)
                 and (node.find('text').text != forms[analang])):
