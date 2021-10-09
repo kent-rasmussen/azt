@@ -413,7 +413,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         except:
             log.info("Hey! You gave me an empty example?!")
             return
-        for node in kwargs['example']:
+        for node in example:
             try:
                 log.log(2,'Node: {} ; {}'.format(node.tag,
                                                 node.find('.//text').text))
