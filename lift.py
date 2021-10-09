@@ -439,9 +439,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         return
             elif (node.tag == 'field'):
                 if (node.get('type') == 'location'):
-                    if not self.forminnode(node,kwargs['location']):
-                        log.log(2,'location {} not in {}'.format(
-                                                    kwargs['location'],node))
+                    thislocation=node.find('form/text').text
+                    if thislocation != location: #not node.find('form/text').text
+                        log.info('location {} not {}'.format(thislocation,location))
                         return
                 if (node.get('type') == 'tone'):
                     for form in node:
