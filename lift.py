@@ -49,7 +49,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     datetime.datetime.utcnow().isoformat()[:-16], #once/day
                     '.txt']
         self.backupfilename=''.join(backupbits)
-        self.initattribs()
         self.getguids() #sets: self.guids and self.nguids
         self.getsenseids() #sets: self.senseids and self.nsenseids
         log.info("Working on {} with {}, entries "
@@ -76,8 +75,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """Think through where this belongs; what classes/functions need it?"""
         log.info("Language initialization done.")
     def initattribs(self):
-        # """This dictionary defines where to find each node in the xml {url},
-        # and what we're looking for in each case (node, node text, or attribute
         # value."""
         # """Make all urls fully specified for guid, lang, etc; they will be
         # removed if the relevant variable is None."""
