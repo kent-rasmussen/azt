@@ -149,17 +149,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         access them consistently later."""
         """I need to be careful to not mix up lang=glosslang and lang=analang:
         @lang should only be used here when referring to a <field> field."""
-        if attribute == 'Test':
-            from random import randint
-            guid=self.guids[randint(0, len(self.guids))-1]
-            log.info("Showing info for randomly selected *entry*: {}".format(guid))
-            for attribute in self.geturlnattr('attributes'):
-                log.info('{}: {}'.format(attribute,self.get(attribute,guid=guid)))#,showurl=True
-            senseid=self.senseids[randint(0, len(self.senseids))-1]
-            log.info("Showing info for randomly selected *sense*: {}".format(senseid))
-            for attribute in self.geturlnattr('attributes'):
-                log.info('{}: {}'.format(attribute,self.get(attribute,senseid=senseid)))#,showurl=True
-            return
         log.log(3,'kwargs: {}'.format(kwargs))
         """pull output from urlnattr, where first is string with {}, second
         is strings naming fields. convert those names to field values here,
