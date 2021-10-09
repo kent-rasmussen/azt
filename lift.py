@@ -396,9 +396,22 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # doesn't match (from form, translation and location). If they all match,
         # then return the tone value node to change."""
         tonevalue='' # set now, will change later, or not...
-        log.log(2,"Looking for bits that don't match")
-        if kwargs['example'] == None:
-            log.info("Hey! You gave me an empty example!")
+        log.info("Looking for bits that don't match")
+        showurl=kwargs.get('showurl',False)
+        db=kwargs.get('db')
+        log.info("kwargs: {}".format(kwargs))
+        log.info("db: {}; forms: {}".format(db,db.forms))
+        analang=db.analangs[0]
+        location=db.location
+        forms=db.forms
+        glosses=db.glosses
+        glosslangs=db.glosslangs
+        glosslang=kwargs.get('glosslang')
+        glosslang2=kwargs.get('glosslang2',None)
+        try:
+            example=kwargs.get('example')
+        except:
+            log.info("Hey! You gave me an empty example?!")
             return
         for node in kwargs['example']:
             try:
