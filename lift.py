@@ -342,13 +342,18 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                     fieldvalue=fieldvalue)
         if exfieldvalue is None: #If not already there, make it.
             log.info("Didn't find that example already there, creating it...")
-            p=ET.SubElement(node, 'example')
-            form=ET.SubElement(p,'form',attrib={'lang':kwargs['analang']})
-            t=ET.SubElement(form,'text')
-            t.text=kwargs['forms'][kwargs['analang']]
+            analang=kwargs.get('analang')
+            glosslang=kwargs.get('glosslang')
+            glosslang2=kwargs.get('glosslang2',None)
+            db=kwargs.get('db')
+            forms=db.forms
+            glosses=db.glosses
+            glosslangs=db.glosslangs
+            p=Node(node, tag='example') #ET.SubElement
+            p.makeformnode(analang,db.analang)
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
-            fieldgloss=ET.SubElement(p,'translation',attrib={'type':
+            fieldgloss=Node(p,'translation',attrib={'type':
                                                         'Frame translation'})
             for lang in [kwargs['glosslang'],kwargs['glosslang2']]:
                 if lang != None and lang in kwargs['forms']:
@@ -411,10 +416,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             except:
                 log.log(2,'Node: {} ; Likely no text node!'.format(node.tag))
             if (node.tag == 'form'):
-                if ((node.get('lang') == kwargs['analang'])
-                and (node.find('text').text != kwargs['forms'][kwargs['analang']])):
-                    log.log(2,'{} == {}; {} != {}'.format(node.get('lang'),
-                            kwargs['analang'], node.find('text').text, kwargs['forms'][kwargs['analang']]))
+                if ((node.get('lang') == analang)
+                and (node.find('text').text != forms[analang])):
+                    log.info('{} == {}; {} != {}'.format(node.get('lang'),
+                            analang, node.find('text').text, forms[analang]))
                     return
             elif ((node.tag == 'translation') and
                                 (node.get('type') == 'Frame translation')):
