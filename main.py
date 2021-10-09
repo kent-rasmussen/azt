@@ -8700,6 +8700,8 @@ if __name__ == "__main__":
             main()
         except SystemExit:
             log.info("Shutting down by user request")
+        except KeyboardInterrupt:
+            log.info("Shutting down by keyboard interrupt")
         except Exception as e:
             log.exception("Unexpected exception! %s",e)
             mainproblem()
