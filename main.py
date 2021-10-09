@@ -8620,9 +8620,13 @@ def mainproblem():
     try: #Make this work whether root has run/still runs or not.
         program['root'].winfo_exists()
         log.info("Root there!")
-        errorroot = tkinter.Toplevel(program['root'])
+        errorroot = Window(program['root']) #tkinter.Toplevel(program['root'])
     except:
         errorroot = tkinter.Tk()
+        setthemes(errorroot)
+        errorroot.theme=errorroot.themes['greygreen']
+        errorroot['background']=errorroot.theme['background']
+        errorroot.protocol("WM_DELETE_WINDOW", lambda s=errorroot:on_quit(errorroot))
     errorroot.title("Serious Problem!")
     try:
         char="Charis SIL"
@@ -8631,13 +8635,13 @@ def mainproblem():
         defaultfont=tkinter.font.Font(family=char, size=12)
     except:
         titlefont=noticefont=defaultfont=tkinter.font.Font(family=char, size=12)
-    l=tkinter.Label(errorroot,text="Hey! You found a problem! (details and "
+    l=Label(errorroot,text="Hey! You found a problem! (details and "
             "solution below)",justify='left',font=titlefont)
     l.grid(row=0,column=0)
     if exceptiononload:
         durl=('https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md'
                 '#dependencies')
-        m=tkinter.Label(errorroot,text="\nPlease see {}".format(durl),
+        m=Label(errorroot,text="\nPlease see {}".format(durl),
             justify='left', font=noticefont)
         m.grid(row=1,column=0)
         m.bind("<Button-1>", lambda e: openweburl(durl))
@@ -8651,13 +8655,12 @@ def mainproblem():
             "session, please attach "
             "your compressed log file ({})".format(file))
     eurl+='%0d%0a--log info--%0d%0a{}'.format('%0d%0a'.join(lcontents))
-    # eurl+='%0d%0a--log info--%0d%0a{}'.format(lcontents.replace('\n','%0d%0a'))
-    n=tkinter.Label(errorroot,text="\n\nIf this information doesn't help "
+    n=Label(errorroot,text="\n\nIf this information doesn't help "
         "you fix this, please click on this text to Email me your log (to {})"
         "".format(addr),justify='left', font=defaultfont)
     n.grid(row=2,column=0)
     n.bind("<Button-1>", lambda e: openweburl(eurl))
-    o=tkinter.Label(errorroot,text="\n\nThe end of {} / {} are below:"
+    o=Label(errorroot,text="\n\nThe end of {} / {} are below:"
                 "\n\n{}".format(log.filename,file,''.join(lcontents)),
                 justify='left',
                 font=defaultfont)
