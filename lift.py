@@ -321,19 +321,25 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # already the relevant node --since it is agnostic of what is already
         # there.
         log.info(_("Adding values (in lift.py) : {}").format(kwargs))
-        node=self.getsensenode(senseid=kwargs['senseid'])
+        # showurl=kwargs.get('showurl',False)
+        senseid=kwargs.get('senseid')
+        location=kwargs.get('location')
         node=self.getsensenode(senseid=senseid)
         if node is None:
-            log.info("Sorry, this didn't return a node: {}".format(
-                                                            kwargs['senseid']))
+            log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
+        fieldtype=kwargs.get('fieldtype')
+        fieldvalue=kwargs.get('fieldvalue')
         # Logic to check if this example already here
         # This function returns a text node (from any one of a number of
         # example nodes, which match form, gloss and location) containing a
         # tone sorting value, or None (if no example nodes match form, gloss
         # and location)
         #We're adding a node to kwargs here.
-        exfieldvalue=self.exampleissameasnew(**kwargs,node=node,showurl=False)
+        # exfieldvalue=self.get('examplebylocation',senseid=senseid,location=location)
+        exfieldvalue=self.geturlnattr('exfieldvaluenode',senseid=senseid,
+                                    fieldtype=fieldtype,location=location,
+                                    fieldvalue=fieldvalue)
         if exfieldvalue is None: #If not already there, make it.
             log.info("Didn't find that example already there, creating it...")
             p=ET.SubElement(node, 'example')
