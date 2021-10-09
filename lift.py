@@ -388,7 +388,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if form.get('lang') in self.analangs:
                 for t in form.findall('.//text'):
                     t.text=rx.makeprecomposed(t.text)
-    def exampleisnotsameasnew(self, showurl=False, **kwargs):
+    def exampleisnotsameasnew(self, **kwargs):
         # guid,senseid,analang, glosslang, glosslang2, forms, fieldtype,
         # location,fieldvalue,example,ps=None,
         # """This checks all the above information, to see if we're dealing with
