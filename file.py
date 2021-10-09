@@ -4,8 +4,10 @@ from tkinter import filedialog
 from tkinter import Tk
 import pathlib
 import os
+import platform
 import logging
 log = logging.getLogger(__name__)
+from importlib import reload as modulereload
 try: #Allow this module to be used without translation
     _
 except:
@@ -85,6 +87,14 @@ def remove(file):
         os.remove(fullpathname(file))
     else:
         log.debug(_("Tried to remove {}, but I can't find it.").format(file))
+def removelifturl():
+    import lift_url
+    file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
+    f = open(file, 'w', encoding='utf-8') # to append, "a"
+    f.write('filename=""'+'\n')
+    f.close()
+    # remove('lift_url.py')
+    modulereload(lift_url)
 def getdiredurl(dir,filename):
     return pathlib.Path.joinpath(dir,filename)
 def getdiredrelURL(reldir,filename):
