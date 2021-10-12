@@ -1654,6 +1654,505 @@ class Language(object):
 class Unused():
     def removedups(x): #This removes duplicates from a list
         return list(dict.fromkeys(x))
+class LiftURL():
+    def build(self,tag,liftattr=None,myattr=None,attrs=None):
+        buildanother=False
+        noseparator=False
+        log.log(21,"building {}, @dict:{}, @{}={}, on top of {}".format(tag,
+                                attrs,liftattr,myattr, self.currentnodename()))
+        b=tag
+        if attrs is None:
+            attrs={liftattr: myattr}
+        for attr in attrs:
+            if (None not in [attr,attrs[attr]] and attrs[attr] in self.kwargs
+                                and self.kwargs[attrs[attr]] is not None):
+                b+="[@{}='{}']".format(attr,self.kwargs[attrs[attr]])
+        if ((liftattr is None or (liftattr in self.kwargs #no lift attribute
+                                and self.kwargs[liftattr] is None))
+                and tag == 'text' and myattr in self.kwargs #text value to match
+                                        and self.kwargs[myattr] is not None):
+            b="[{}='{}']".format(tag,self.kwargs[myattr])
+            noseparator=True
+            if tag == 'text' and tag in self.targethead:
+                buildanother=True #the only way to get text node w/o value
+        self.url+=[b]
+        if noseparator:
+            l=self.url
+            self.url=[i for i in l[:len(l)-2]]+[''.join([i for i in l[len(l)-2:]])]
+        else:
+            self.level['cur']+=1
+        self.level[self.alias.get(tag,tag)]=self.level['cur']
+        log.log(21,"Path so far: {}".format(self.drafturl()))
+        if buildanother:
+            self.build(tag)
+    def parent(self):
+        self.level['cur']-=2 #go up for this and its parent
+        self.build("..")
+    def entry(self):
+        self.build("entry","guid","guid")
+        self.bearchildrenof("entry")
+    def text(self,value):
+        self.baselevel()
+        self.build("text",myattr="value")
+    def form(self,value=None,lang=None):
+        self.baselevel()
+        self.kwargs['value']=self.kwargs.get(value,None) #location and tonevalue
+        log.log(21,"form kwargs: {}".format(self.kwargs))
+        self.build("form","lang","lang") #OK if lang is None
+        if value is not None:
+            self.text("value")
+    def citation(self):
+        self.baselevel()
+        self.build("citation")
+        self.form("lcform","analang")
+    def lexeme(self):
+        self.baselevel()
+        self.build("lexical-unit")
+        self.form("lxform","analang")
+    def pronunciation(self):
+        self.baselevel()
+        self.build("pronunciation")
+        self.kwargs['ftype']='location'
+        attrs={"name":"ftype",'value':'location'}
+        self.trait(attrs=attrs)
+        self.form("pronunciation",'analang')
+    def trait(self,attrs={}):
+        self.baselevel()
+        self.build("trait",attrs=attrs)
+    def sense(self):
+        self.baselevel()
+        self.build("sense","id","senseid")
+        self.bearchildrenof("sense")
+    def ps(self):
+        self.baselevel()
+        self.build("grammatical-info","value","ps")
+    def gloss(self):
+        self.baselevel()
+        self.build("gloss","lang","glosslang")
+    def definition(self):
+        self.baselevel()
+        self.build("definition","lang","glosslang")
+        self.form("definition","glosslang")
+    def example(self):
+        self.baselevel()
+        self.build("example")
+        self.maybeshow('form')
+        self.maybeshow('translation')
+        self.maybeshow('locationfield')
+        self.maybeshow('tonefield')
+    def translation(self):
+        self.baselevel()
+        self.kwargs['ftype']='Frame translation'
+        self.kwargs['formtext']='translationvalue'
+        self.build("translation","type","ftype")
+        self.form("translationvalue",'glosslang')
+    def field(self):
+        self.baselevel()
+        self.build("field","type","ftype")
+    def locationfield(self):
+        self.baselevel()
+        self.kwargs['ftype']='location'
+        self.kwargs['formtext']='location'
+        self.field()
+        self.form("location",'glosslang')
+    def tonefield(self):
+        self.baselevel()
+        self.kwargs['ftype']='tone'
+        self.kwargs['formtext']='tonevalue'
+        self.field()
+        self.form("tonevalue",'glosslang')
+    def morphtype(self):
+        if morphtype in self.kwargs:
+            attrs={'name':"morph-type",'value':self.kwargs[morphtype]}
+        self.trait(attrs) # <trait name="morph-type" value="stem" />
+    def attrdonothing(self):
+        pass
+    def maybeshow(self,nodename,parent=None):
+        # for arg in args:
+        #     log.info("maybeshow arg: {}".format(arg))
+        if self.shouldshow(nodename): #We need it for a child to show, etc
+            self.show(nodename,parent)
+    def show(self,nodename,parent=None): #call this directly if you know you want it
+        if nodename == 'form': #args:value,lang
+            if parent is None:
+                log.error("Sorry, I can't tell what form to pass to this field;"
+                            "\nWhat is its parent?")
+                return
+            else:
+                args=self.formargsbyparent(parent)
+        elif nodename == 'text': #args:value,lang
+            args=['formtext'] #This needs to be smarter; different kinds of formtext
+        else:
+            args=list()
+        for arg in args:
+            log.debug("show arg: {}".format(arg))
+        if len(args) == 0:
+            getattr(self,nodename)()
+        else:
+            getattr(self,nodename)(*args)
+    def formargsbyparent(self,parent):
+        args=list()
+        if parent in ['gloss', 'definition']:
+            args.append(parent)
+            args.append('glosslang')
+        if parent in ['lexeme', 'citation', 'example']:
+            if parent == 'example':
+                if 'audiolang' not in self.kwargs:
+                    args.append('exampleform')
+                else:
+                    args.append('exampleaudio')
+                    args.append('analang')
+                    return args
+            else:
+                args.append(parent)
+            args.append('analang')
+        return args
+    def lift(self):
+        log.error("LiftURL is trying to make a lift node; this should never "
+                "happen; exiting!")
+        exit()
+    def bearchildrenof(self,parent):
+        log.debug("bearing children of {} ({})".format(parent,
+                                                        self.children[parent]))
+        for i in self.children[parent]:
+            log.debug("bearchildrenof i: {}".format(i))
+            self.maybeshow(i,parent)
+    def levelup(self,target):
+        while self.level.get(target,self.level['cur']+1) < self.level['cur']:
+            self.parent()
+    def baselevel(self):
+        parents=self.parentsof(self.callerfn())
+        for target in parents: #self.levelsokfor[self.callerfn()]: #targets: #targets should be ordered, with best first
+            if target in self.level and self.level[target] == self.level['cur']:
+                return #if we're on an acceptable level, just stop
+            elif target in self.level:
+                self.levelup(target)
+            elif parents.index(target) < len(parents)-1:
+                log.debug("level {} not in {}; checking the next one...".format(
+                                                            target,self.level))
+            else:
+                log.error("last level {} (of {}) not in {}; this is a problem!"
+                            "".format(target,parents,self.level))
+                log.error("this is where we're at: {}\n  {}".format(self.kwargs,
+                                                            self.drafturl()))
+                printurllog()
+                exit()
+    def maybeshowtarget(self,parent):
+        # parent here is a node ancestor to the current origin, which may
+        # or may not be an ancestor of targethead. If it is, show it.
+        f=self.getfamilyof(parent,x=[])
+        log.log(21,"Maybeshowtarget: {} (family: {})".format(parent,f))
+        if self.targethead in f:
+            if parent in self.level:
+                log.log(21,"Maybeshowtarget: leveling up to {}".format(parent))
+                self.levelup(parent)
+            else:
+                log.log(21,"Maybeshowtarget: showing {}".format(parent))
+                self.show(parent)
+            self.showtargetinhighestdecendance(parent)
+            return True
+    def showtargetinlowestancestry(self,nodename):
+        log.log(21,"Running showtargetinlowestancestry for {}/{} on {}".format(
+                                    self.targethead,self.targettail,nodename))
+        #If were still empty at this point, just do the target if we can
+        if nodename == [] and self.targethead in self.children[self.base]:
+            self.show(self.targethead)
+            return
+        gen=nodename
+        g=1
+        r=giveup=False
+        while not r and giveup is False:
+            log.debug("Trying generation {}".format(g))
+            gen=self.parentsof(gen)
+            for p in gen:
+                r=self.maybeshowtarget(p)
+                if r:
+                    break
+            g+=1
+            if g>10:
+                giveup=True
+        if giveup is True:
+            log.error("Hey, I've looked back {} generations, and I don't see"
+                    "an ancestor of {} (target) which is also an ancestor of "
+                    "{} (current node).".format(g,self.targethead,nodename))
+    def showtargetinhighestdecendance(self,nodename):
+        log.debug("Running showtargetinhighestdecendance for {} on {}".format(
+                                                    self.targethead,nodename))
+        children=self.children[nodename]
+        grandchildren=[i for child in children
+                                if child in self.children
+                                for i in self.children[child]
+                                    ]
+        greatgrandchildren=[i for child in children
+                                if child in self.children
+                                for grandchild in self.children[child]
+                                    if grandchild in self.children
+                                    for i in self.children[grandchild]
+                                    ]
+        log.debug("Looking for {} in children of {}: {}".format(
+                                            self.targethead,nodename,children))
+        log.debug("Grandchildren of {}: {}".format(nodename,grandchildren))
+        log.debug("Greatgrandchildren of {}: {}".format(
+                                                nodename,greatgrandchildren))
+        if self.targethead in children:
+            log.debug("Showing '{}', child of {}".format(self.targethead,nodename))
+            self.show(self.targethead,nodename)
+        elif self.targethead in grandchildren:
+            log.debug("Found target ({}) in grandchildren of {}: {}".format(
+                        self.targethead,nodename,grandchildren))
+            for c in children:
+                if c in self.children and self.targethead in self.children[c]:
+                    log.debug("Showing '{}', nearest ancenstor".format(c))
+                    self.show(c,nodename) #others will get picked up below
+                    self.showtargetinhighestdecendance(c)
+        elif self.targethead in greatgrandchildren:
+            log.debug("Found target ({}) in gr8grandchildren of {}: {}".format(
+                                self.targethead,nodename,greatgrandchildren))
+            for c in children:
+                for cc in grandchildren:
+                    if cc in self.children and self.targethead in self.children[cc]:
+                        log.debug("Showing '{}', nearest ancenstor".format(c))
+                        self.show(c,nodename) #others will get picked up below
+                        self.showtargetinhighestdecendance(c)
+        else:
+            log.error("Target not found in children, grandchildren, or "
+                        "greatgrandchildren!")
+    def nodesatlevel(self,levelname='cur'):
+        if levelname not in self.level:
+            return []
+        cur=[x for x,y in self.level.items() if y == self.level[levelname]
+                and x != levelname] #obviously not that one...
+        cur.reverse()
+        return cur
+    def parsetargetlineage(self):
+        if '/' in self.target: #if target lineage is given
+            self.targetbits=self.target.split('/')
+            log.debug("{} : {}".format(self.target,self.targetbits))
+            self.targethead=self.targetbits[0]
+            self.targettail=self.targetbits[1:]
+        else:
+            self.targetbits=self.targethead=self.target
+            self.targettail=None
+        if 'form' in self.targethead:
+            log.error("Looking for {} as the head of a target is going to "
+            "cause problems, as it appears in too many places, and is likely "
+            "to not give the desired results. Fix this, and try again. (whole "
+            "target: {})".format(self.targethead,self.target))
+            exit()
+    def currentnodename(self):
+        last=self.url[-1:]
+        if len(last)>0:
+            n=last[0].split('[')[0]
+            return self.getalias(n)
+    def unalias(self,nodename):
+        if nodename in self.alias.values():
+            for k in self.alias:
+                if self.alias[k] == nodename:
+                    return k
+        return nodename #else
+    def getalias(self,nodename):
+        return self.alias.get(nodename,nodename)
+    def maketarget(self):
+        """start by breaking up target, if expressed as lineage. This is needed
+        to target form, with example/form distinct from example/field/form.
+        Without target='example/form', target form will always find field/form,
+        even if field has a sibling form (as it typically would) under example.
+        Once the level of the lineage head is decided, the rest of the lineage
+        is added."""
+        # Now operate on the head of the target lineage
+        log.debug("URL (before {} target): {}".format(self.target,self.drafturl()))
+        if self.getalias(self.targethead) not in self.level: #If the target hasn't been made yet.
+            log.debug(self.url)
+            i=self.currentnodename()
+            log.debug("URL base: {}; i: {}".format(self.base,i))
+            if i is None: #if it is, skip down in any case.
+                i=self.base
+            log.debug("URL bit list: {}; i: {}".format(self.url,i))
+            if type(i) == list:
+                i=i[0] #This should be a string
+            f=self.getfamilyof(i,x=[])
+            log.debug("Target: {}; {} family: {}".format(self.targethead,i,f))
+            if self.targethead in f:
+                self.showtargetinhighestdecendance(i) #should get targethead
+                    # return #only do this for the first you find (last placed).
+            else:#Continue here if target not a current level node decendent:
+                self.showtargetinlowestancestry(i)
+            # Either way, we finish by making the target tail, and leveling up.
+        if self.targettail is not None:
+            for b in self.targettail:
+                n=self.targetbits.index(b)
+                bp=self.targetbits[n-1].split('[')[0]#just the node, not attrs
+                afterbp=self.drafturl().split(self.unalias(bp))
+                log.log(21,"b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
+                if len(afterbp) <=1 or b not in afterbp[1]:
+                    log.log(21,"showing target element {}: {} (of {})".format(n,b,bp))
+                    self.levelup(bp)
+                    self.show(b,parent=bp)
+        self.levelup(self.targetbits[-1])#leave last in target, whatever else
+    def drafturl(self):
+        return '/'.join(self.url)
+    def makeurl(self):
+        self.url='/'.join(self.url)
+    def printurl(self):
+        print(self.url)
+    def usage(self):
+        log.info("Basic usage of this class includes the following kwargs:\n"
+                "\tbase: node from which we are pulling (should be supplied)\n"
+                "\ttarget: node we are looking for\n"
+                "\tget: thing we want: node (default)/'text'/attribute name\n"
+                "Below here implies an entry node:\n"
+                "\tguid: id used to identify a lift entry\n"
+                "\tlxform: form to find in lexeme form fields\n"
+                "\tlcform: form to find in citation form fields\n"
+                "\tmorphtype: type of morpheme (stem, affix, etc)\n"
+                "\tpronunciation: form to find in pronunciation form fields\n"
+                "Below here implies a sense node:\n"
+                "\tsenseid: id used to identify a lift sense\n"
+                "\tdefinition: definition of sense\n"
+                "\tgloss: gloss (one word definition) of sense\n"
+                "Below here implies an example node:\n"
+                "\ttranslation: Translation of example forms\n"
+                "\ttonevalue: value of an example tone group (from sorting)\n"
+                ""
+                )
+    def shouldshow(self,node):
+        c=self.getfamilyof(node,x=[])
+        # This fn is not called by showtargetinhighestgeneration or maketarget
+        if node == self.targethead: #do this later
+            log.debug("skipping node {}, in target:{}".format(node,self.target))
+            return False #not self.targetlastsibling()
+        elif self.attrneeds(node,c):
+            return True
+        elif self.kwargsneeds(node,c):
+            return True
+        elif self.pathneeds(node,c):
+            return True
+        else:
+            return False
+    def getfamilyof(self,node,x):
+        log.debug("running kwargshaschildrenof.gen on '{}'".format(node))
+        if type(node) is str:
+            node=[node]
+        for i in node:
+            log.debug("running kwargshaschildrenof.gen on '{}'".format(i))
+            if i is not '':
+                ii=self.children.get(i,'')
+                log.debug("Found '{}' this time!".format(ii))
+                if ii is not '':
+                    x+=ii
+                    self.getfamilyof(ii,x)
+        return x
+    def pathneeds(self,node,children):
+        path=self.path
+        log.debug("Path: {}; children: {}".format(path,children))
+        if node in path and node not in self.level:
+            log.debug("Parent ({}) in path: {}".format(node,path))
+            return True
+        if children != []:
+            childreninpath=set(children) & set(path)
+            if childreninpath != set():
+                pathnotdone=childreninpath-set(self.level)
+                if pathnotdone != set():
+                    log.debug("Found descendant of {} in path, which isn't "
+                        "already there: {}".format(node, pathnotdone))
+                    return True
+        return False
+    def attrneeds(self,node,children):
+        log.debug("looking attr(s) of {} in {}".format([node]+children,
+                                                                    self.attrs))
+        for n in [node]+children:
+            if n in self.attrs:
+                log.debug("looking attr(s) of {} in {}".format(n,self.attrs))
+                common=set(self.attrs[n])&set(list(self.kwargs)+[self.what])
+                if common != set():
+                    log.debug("Found attr(s) {} requiring {}".format(common,n))
+                    return True
+            else:
+                log.debug("{} not found in {}".format(n,self.attrs.keys()))
+        return False
+    def kwargsneeds(self,node,children):
+        if node in self.kwargs:
+            log.debug("Parent ({}) in kwargs: {}".format(node,self.kwargs))
+            return True
+        if children != []:
+            log.debug("Looking for descendants of {} ({}) in kwargs: {}".format(
+                                                node,children,self.kwargs))
+            childreninkwargs=set(children) & set(self.kwargs)
+            if childreninkwargs != set():
+                log.debug("Found descendants of {} in kwargs: {}".format(node,
+                                                            childreninkwargs))
+                pathnotdone=childreninkwargs-set(self.level)
+                if pathnotdone != set():
+                    log.debug("Found descendants of {} in kwargs, which aren't "
+                                    "already there: ".format(node,pathnotdone))
+                    return True
+        return False
+    def callerfn(self):
+        return sys._getframe(2).f_code.co_name #2 gens since this is a fn, too
+    def parentsof(self,nodenames):
+        log.debug("children: {}".format(self.children.items()))
+        log.debug("key pair: {}".format(
+                ' '.join([str(x) for x in self.children.items() if nodenames in x[1]])))
+        p=[]
+        if type(nodenames) != list:
+            nodenames=[nodenames]
+        for nodename in nodenames:
+            i=[x for x,y in self.children.items() if nodename in y]
+            i.reverse()
+            p+=i
+        plist=list(dict.fromkeys(p))
+        log.debug("parents of {}: {}".format(nodenames,plist))
+        return plist
+    def setattrsofnodes(self):
+        self.attrs={} #These are atttributes we ask for, which require the field
+        self.attrs['entry']=['guid']
+        self.attrs['sense']=['senseid']
+        self.attrs['tonefield']=['tonevalue']
+        self.attrs['locationfield']=['location']
+    def setchildren(self):
+        """These are the kwargs that imply a field. field names also added to
+        ensure that depenents get picked up.
+        """
+        # use self.alias.get(tag,tag) where needed!
+        self.children={}
+        self.children['lift']=['entry']
+        self.children['entry']=['lexeme','pronunciation','sense',
+                                            'citation','morphtype','trait']
+        self.children['sense']=['ps','definition','gloss',
+                                            'example','field']
+        self.children['example']=['form','translation','locationfield',
+                                            'tonefield','field']
+        self.children['field']=['form']
+        self.children['lexeme']=['form']
+        self.children['citation']=['form']
+        self.children['form']=['text']
+        self.children['pronunciation']=['field','trait']
+        self.children['translation']=['form']
+    def setaliases(self):
+        self.alias={}
+        self.alias['lexical-unit']='lexeme'
+        self.alias['grammatical-info']='ps'
+    def __init__(self, *args,**kwargs):
+        super(LiftURL, self).__init__()
+        log.debug("LiftURL called with {}".format(kwargs))
+        self.kwargs=kwargs
+        base=self.base=self.kwargs.pop('base','lift') # where do we start?
+        target=self.target=self.kwargs.pop('target','entry') # what do we want?
+        self.parsetargetlineage()
+        self.what=self.kwargs.pop('what','node') #This should always be there
+        self.path=kwargs.pop('path',[])
+        self.url=[]
+        self.level={'cur':0,base:0}
+        self.guid=self.senseid=self.attrdonothing
+        self.setchildren()
+        self.setaliases()
+        self.setattrsofnodes()
+        self.bearchildrenof(base)
+        log.debug("Making Target now.")
+        self.maketarget()
+        self.makeurl()
+        log.log(21,"Final URL: {}".format(self.url))
+        # self.printurl()
 """Functions I'm using, but not in a class"""
 def prettyprint(node):
     # This fn is for seeing the Element contents before writing them (in case of
