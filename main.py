@@ -7375,6 +7375,11 @@ class Label(tkinter.Label):
         else:
             kwargs['font']=parent.fonts['default']
         inherit(self)
+        if hasattr(self,'wraplength'):
+            defaultwr=self.wraplength
+        else:
+            defaultwr=0
+        kwargs['wraplength']=kwargs.get('wraplength',defaultwr)
         d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
         sticks=set(['˥','˦','˧','˨','˩',' '])
         if set(kwargs['text']) & (sticks|d) and not norender:
