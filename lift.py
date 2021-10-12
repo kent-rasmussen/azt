@@ -2675,7 +2675,9 @@ if __name__ == '__main__':
     # def _(x):
     #     return str(x)
     """To Test:"""
-    loglevel=5
+    # loglevel='Debug'
+    loglevel='INFO'
+    print('loglevel=',loglevel)
     from logsetup import *
     log=logsetup(loglevel)
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
@@ -2684,6 +2686,125 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename,nsyls=2)
+        'eece7037-3d55-45c7-b765-95546e5fccc6']
+    locations=['1ss','Infinitive','Progressive','Isolation']
+    glosslang='en'
+    pss=["Verb","Noun"]
+    analang='bfj'
+    # b=LiftURL(bob='ḿe',
+    #             # guid=guid,
+    #             # senseid=senseid,
+    #             # location=location,
+    #             # glosslang=glosslang,
+    #             # ps=ps,
+    #             # base='sense',
+    #             target="sense",
+    #             # tonevalue=3,
+    #             )
+    # get entries: lift.get("entry")
+        # lift.get("entry",what='guid')
+    # get senses: lift.get("sense")
+        # lift.get("sense",what='id')
+    # get *all* pss: lift.get("ps",what='value')
+    # Never ask for just the form! give the parent, to get a particular form:
+    # lift.get("lexeme/form",what='text')
+    # lift.get("example/form",what='text')
+    # lift.get("citation/form",what='text')
+    # just 1 of each pss: dict.fromkeys(lift.get("ps",what='value'))
+    # get tone value: lift.get("text", location=location, path=['tonefield'],
+    #                             what='text')
+    for ps in dict.fromkeys(lift.get("ps",what='value')):
+            log.info(ps)
+        # for tonevalue in dict.fromkeys(lift.get('text',path=["tonefield"],what='text')):
+        #     log.info(tonevalue)
+    # log.info('\n'.join([str(x) for x in lift.urls.items()]))
+    # exit()
+        # for location in locations:
+        # # for guid in guids:
+            for senseid in senseids:
+                log.info(lift.get("lexeme/form",what='text',ps=ps,#"sense", #target
+                        # tonevalue=tonevalue,
+                        # guid=guid,#
+                        path=['lexeme','tonefield'], senseid=senseid,
+                        # senseid=senseid,
+                        # showurl=True
+                        ))
+                log.info(lift.get("example/form",what='text',ps=ps,#"sense", #target
+                        # tonevalue=tonevalue,
+                        # guid=guid,#
+                        path=['lexeme','tonefield'], senseid=senseid,
+                        # senseid=senseid,
+                        # showurl=True
+                        ))
+                log.info(lift.get("citation/form",what='text',ps=ps,#"sense", #target
+                        # tonevalue=tonevalue,
+                        # guid=guid,#
+                        path=['lexeme','tonefield'], senseid=senseid,
+                        # senseid=senseid,
+                        # showurl=True
+                        ))
+            # log.info(lift.get("sense", #target
+            #     # guid=guid,
+            #     senseid=senseid,
+            #     # showurl=True
+            #     ))
+                # log.info(lift.get("text", #target
+                #     ps=ps,# guid=guid,
+                #     senseid=senseid,
+                #     location=location,
+                #     path=['tonefield'],
+                #     what='text'
+                #     # showurl=True
+                #     ))
+                # path=['pronunciation'],# senseid=senseid,
+                # guid=guid,
+                # glosslang=glosslang,
+                # ps=ps,
+                # base='sense',
+                # tonevalue=3,
+                # )
+    # log.info(lift.urls)
+    printurllog()
+    # log.info('\n'.join([str(x) for x in lift.urls.items()]))
+    exit()# print('l:',l)
+    showurl=True
+    for i in l:
+        ll=lift.getfrom(i,'example',location="1ss",showurl=showurl)
+        if ll != []:
+            # print("ll:",ll)
+            for ii in ll:
+                lll=lift.getfrom(ii,'text',analang='en',
+                        path=['example/form'],
+                        # exampleform="to begin",
+                        what='text',
+                        showurl=showurl)
+                # print(lll)
+                # for iii in lll:
+                #     print(iii.text)
+                # lllt=lift.getfrom(ii,'text',analang='en',glosslang='fr',
+                #                     path='translation',what='text',
+                #                     showurl=showurl)
+                # if lll != []:
+                #     print("lll:",', '.join(lll))
+                showurl=False
+        # showurl=False
+    log.info(lift.urls)
+    # log.info("Done with above")
+    # fieldtype='tone'
+    # fieldvalue='1'
+    # for i in l:
+    #     r=i.findall("field[@type='location']"
+    #             "/form[text='{}']/../.."
+    #             "/field[@type='{}']"
+    #             "/form[text='{}']/../..".format(location,fieldtype,fieldvalue)
+    #             )
+    #     for ii in r:
+    #         loc=i.find("field[@type='location']/form/text")
+    #         val=i.find("field[@type='{}']/form/text".format(fieldtype))
+    #         log.info("{}: {}, {}".format(i,loc.text,val.text))
+    # print(b.url)
+    # print(bb.url)
+    exit()
     # senseid='26532c2e-fedf-4111-85d2-75b34ed31dd8'
     senseid='skin (of man)_d56b5a5d-7cbf-49b9-a2dd-24eebb0ae462'
     lift.modverificationnode(senseid,vtype="V",add="another value3",rm="Added value")
