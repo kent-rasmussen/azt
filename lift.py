@@ -1028,10 +1028,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for glang in ['fr','en']:
             if glang in possibles:
                 for form in ['citation','lexeme']:
-                    gforms=self.get(form,analang=glang)
+                    gforms=self.get(form,base='entry',target=form+'/form',analang=glang)
                     if 0< len(gforms):
-                        log.info("LWC lang {} found in {} field: {}".format(
-                            glang,form,self.get(form,analang=glang)))
+                        # log.info("LWC lang {} found in {} field: {}".format(
+                        #     glang,form,self.get(form,analang=glang)))
                         """For Saxwe, and others who have fr or en encoding errors"""
                         if len(gforms) <= 10:
                             log.info("Only {} examples of LWC lang {} found "
