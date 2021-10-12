@@ -620,7 +620,7 @@ class Check():
                 log.info('The following changed (from,to): {}'.format(changed))
                 if len(changed) >0:
                     r=notice(changed)
-                self.debug = True
+                # self.debug = True
                 if self.debug != True and r:
                     self.reloadprofiledata()
             if r:
