@@ -3,7 +3,7 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A→Z+T'}
 program['tkinter']=True
-program['production']=True #True for making screenshots
+program['production']=False #True for making screenshots
 program['version']='0.8.6' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
@@ -30,7 +30,11 @@ import file
 import profiles
 import setdefaults
 import xlp
-import sound
+try:
+    import sound
+except Exception as e:
+    log.exception("Problem importing Sound/pyaudio. Is it installed? %s",e)
+    exceptiononload=True #logwritelzma(log.filename) #in logsetup
 """Other people's stuff"""
 import threading
 import itertools
@@ -38,17 +42,20 @@ import importlib.util
 import collections
 from random import randint
 if program['tkinter']==True:
-    import tkinter #as gui
-    import tkinter.font
-    import tkinter.scrolledtext
-    import tkintermod
-    tkinter.CallWrapper = tkintermod.TkErrorCatcher
+    try:
+        import tkinter #as gui
+        import tkinter.font
+        import tkinter.scrolledtext
+        import tkintermod
+        tkinter.CallWrapper = tkintermod.TkErrorCatcher
+    except Exception as e:
+        log.exception("Problem importing GUI/tkinter. Is it installed? %s",e)
+        exceptiononload=True
 """else:
     import kivy
 """
 import time
 import datetime
-import pyaudio
 import wave
 import unicodedata
 # #for some day..…
@@ -67,6 +74,7 @@ import inspect
 import os
 import pprint #for settings and status files, etc.
 import subprocess
+import webbrowser
 
 class Check():
     """the parent is the *functional* head, the MainApplication."""
@@ -188,26 +196,21 @@ class Check():
             setinterfacelang(self.interfacelang)
             self.parent.maketitle()
         self.langnames()
+        self.polygraphcheck()
         self.checkinterpretations() #checks/sets values for self.distinguish
-        if 'bfj' in self.db.s:
-            bfjvdigraphs=(['ou','ei','ɨʉ','ai']+
-            ['óu','éi','ɨ́ʉ','ái']+
-            ['òu','èi','ɨ̀ʉ','ài'])
-            self.db.s['bfj']['V']=bfjvdigraphs+self.db.s['bfj']['V']
-            log.debug(self.db.s['bfj']['V'])
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
         self.setupCVrxs() #creates self.rx dictionaries
         """The line above may need to go after this block"""
         if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
             log.info("Starting profile analysis at {}".format(time.time()
                                                             -self.start_time))
-            log.info("Starting ps-profile: {}-{}".format(self.ps,self.profile))
+            log.debug("Starting ps-profile: {}-{}".format(self.ps,self.profile))
             self.getprofiles() #creates self.profilesbysense nested dicts
             for var in ['rx','profilesbysense','profilecounts']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
-            log.info("Middle ps-profile: {}-{}".format(self.ps,self.profile))
+            log.debug("Middle ps-profile: {}-{}".format(self.ps,self.profile))
             self.storesettingsfile(setting='profiledata')
-            log.info("Ending ps-profile: {}-{}".format(self.ps,self.profile))
+            log.debug("Ending ps-profile: {}-{}".format(self.ps,self.profile))
         self.getprofilestodo()
         self.getpss() #This is a prioritized list of all ps'
         self.setnamesall() #sets self.checknamesall
@@ -615,21 +618,31 @@ class Check():
                     self.reloadprofiledata()
             self.runwindow.destroy()
         def buttonframeframe(self):
+            log.debug("Running buttonframeframe with options {}".format(
+                                                        self.runwindow.options))
+            log.debug("Running buttonframeframe with frames {}".format(
+                                                        self.runwindow.frames))
             ss=self.runwindow.options['ss']
             self.runwindow.frames[ss]=Frame(self.runwindow.scroll.content)
             self.runwindow.frames[ss].grid(row=self.runwindow.options['row'],
                         column=self.runwindow.options['column'],sticky='ew',
                         padx=self.runwindow.options['padx'],
                         pady=self.runwindow.options['pady'])
-            Label(self.runwindow.frames[ss],text=self.runwindow.options['text'],
+            # Label(self.runwindow.scroll.content,text="Test!").grid(
+            #             row=self.runwindow.options['row']+1,
+            #             column=self.runwindow.options['column'])
+            # Label(self.runwindow.frames[ss],text="Test!").grid(row=0,column=0)
+            bffl=Label(self.runwindow.frames[ss],text=self.runwindow.options['text'],
                     justify=tkinter.LEFT,anchor='c'
-                    ).grid(row=0,
+                    )
+            bffl.grid(row=1,
                             column=self.runwindow.options['column'],
                             sticky='ew',
                             padx=self.runwindow.options['padx'],
                             pady=self.runwindow.options['pady'])
-            RadioButtonFrame(self.runwindow.frames[ss],var=var[ss],
-            opts=self.runwindow.options['opts']).grid(row=0,column=1)
+            bffrb=RadioButtonFrame(self.runwindow.frames[ss],var=var[ss],
+                                    opts=self.runwindow.options['opts'])
+            bffrb.grid(row=1,column=1)
             self.runwindow.options['row']+=1
         self.getrunwindow()
         self.checkinterpretations()
@@ -668,8 +681,15 @@ class Check():
                     padx=self.runwindow.options['padx'],
                     pady=self.runwindow.options['pady'])
         """The rest of the page"""
-        self.runwindow.scroll=ScrollingFrame(self.runwindow)
+        self.runwindow.scroll=ScrollingFrame(self.runwindow) #ScrollingFrame
         self.runwindow.scroll.grid(row=2,column=0)
+        # self.runwindow.scroll.content=Frame(self.runwindow.scroll)
+        # self.runwindow.scroll.content.grid(row=0,column=0,sticky='nsew')
+        # Label(self.runwindow.scroll.content,text="Test!").grid(
+        #             row=0,
+        #             column=0)
+        log.debug('self.distinguish: {}'.format(self.distinguish))
+        log.debug('self.interpret: {}'.format(self.interpret))
         self.runwindow.frames={}
         """I considered offering these to the user conditionally, but I don't
         see a subset of them that would only be relevant when another is
@@ -1285,13 +1305,13 @@ class Check():
     def getsubcheck(self,guess=False,event=None,comparison=False):
         log.info("this sets the subcheck")
         if self.type == "V":
-            windowV=Window(self.frame,title=_('Select Vowel'))
-            self.getV(window=windowV)
-            windowV.wait_window(window=windowV)
+            w=Window(self.frame,title=_('Select Vowel'))
+            self.getV(window=w)
+            w.wait_window(window=w)
         elif self.type == "C":
-            windowC=Window(self.frame,title=_('Select Consonant'))
-            self.getC(windowC)
-            self.frame.wait_window(window=windowC)
+            w=Window(self.frame,title=_('Select Consonant'))
+            self.getC(w)
+            self.frame.wait_window(window=w)
         elif self.type == "CV":
             CV=''
             for self.type in ['C','V']:
@@ -1301,11 +1321,11 @@ class Check():
             self.type = "CV"
             self.checkcheck()
         elif self.type == "T":
-            windowT=Window(self.frame,title=_('Select Framed Tone Group'))
-            self.getframedtonegroup(window=windowT,guess=guess,
+            w=Window(self.frame,title=_('Select Framed Tone Group'))
+            self.getframedtonegroup(window=w,guess=guess,
                                                         comparison=comparison)
             # windowT.wait_window(window=windowT) #?!?
-        return windowT #so others can wait for this
+        return w #so others can wait for this
     def getps(self,event=None):
         log.info("Asking for ps...")
         window=Window(self.frame, title=_('Select Grammatical Category'))
@@ -1433,6 +1453,7 @@ class Check():
                                 'attributes':[
                                     'distinguish',
                                     'interpret',
+                                    'polygraphs',
                                     "profilecounts","profilecountInvalid",
                                     "scount",
                                     "sextracted",
@@ -1466,9 +1487,15 @@ class Check():
     def restart(self):
         self.parent.parent.destroy()
         main()
+    def changedatabase(self):
+        log.debug("Removing lift_url.py, so user will be asked again for LIFT")
+        file.remove('lift_url.py')
+        self.filename=None #since this will still be in memory
+        self.restart()
     def reloadprofiledata(self):
         self.storesettingsfile()
-        file.remove(self.profiledatafile)
+        self.profilesbysense={}
+        self.storesettingsfile(setting='profiledata')
         self.restart()
     def reloadstatusdata(self):
         # This fn is very inefficient, as it iterates over everything in
@@ -1752,18 +1779,19 @@ class Check():
             for self.ps in self.db.get('ps',senseid=senseid):
                 self.addtoprofilesbysense(senseid)
             self.ps=psori
-            return
+            return None,'Invalid'
         if forms is None:
-            return
+            return None,'Invalid'
         for form in forms:
             self.profile=self.profileofform(form)
             if not set(self.profilelegit).issuperset(self.profile):
                 self.profile='Invalid'
             for self.ps in self.db.get('ps',senseid=senseid):
                 self.addtoprofilesbysense(senseid)
+        profile=self.profile
         self.profile=profileori
         self.ps=psori
-        return firstoflist(forms)
+        return firstoflist(forms),profile
     def getprofiles(self):
         self.profileswdatabyentry={}
         self.profilesbysense={}
@@ -1779,10 +1807,10 @@ class Check():
         x=0
         for senseid in self.db.senseids:
             x+=1
-            form=self.getprofileofsense(senseid)
+            form,profile=self.getprofileofsense(senseid)
             if x % 10 == 0:
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
-                                            self.profile))
+                                            profile))
         #Convert to iterate over local variables
         psori=self.ps #We iterate across this here
         self.makeadhocgroupsdict() #if no file, before iterating over variable
@@ -1805,6 +1833,90 @@ class Check():
                 for profile in self.profilesbysense[ps]:
                     log.debug("ps: {}; profile: {} ({})".format(ps,profile,
                             len(self.profilesbysense[ps][profile])))
+    def polygraphcheck(self):
+        log.info("Checking for Digraphs and Trigraphs!")
+        if not hasattr(self,'polygraphs'):
+            self.polygraphs={}
+        for lang in self.db.analangs:
+            if lang not in self.polygraphs:
+                self.polygraphs[lang]={}
+            for sclass in [sc for sc in self.db.s[lang]
+                                    if ('dg' in sc or 'tg' in sc)]:
+                pclass=sclass.replace('dg','').replace('tg','')
+                for pg in self.db.s[lang][sclass]:
+                    if pg not in self.polygraphs[lang][pclass]:
+                        log.info("{} ([]/{}) has no Di/Trigraph setting; "
+                        "prompting user or info.".format(pg,pclass,sclass))
+                        self.askaboutpolygraphs()
+                        return
+    def askaboutpolygraphs(self):
+        def nochanges(changemarker):
+            changemarker.value=False
+            pgw.destroy()
+        changemarker=Object()
+        changemarker.value=True
+        log.info("Asking about Digraphs and Trigraphs!")
+        pgw=Window(self.frame,title="A→Z+T Digraphs and Trigraphs")
+        t=_("Select which of the following graph sequences found in your data "
+                "refer to a single sound (digraph or trigraph) in {}".format(
+            unlist([self.languagenames[y] for y in self.db.analangs])))
+        title=Label(pgw,text=t)
+        title.grid(column=0, row=0)
+        t=_("If you use a digraph or trigraph that isn't listed here, please "
+            "Email me, and I can add it.")
+        t2=Label(pgw,text=t)
+        t2.grid(column=0, row=1)
+        eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
+                                                            program['Email'])
+        t2.bind("<Button-1>", lambda e: openweburl(eurl))
+        t3=Button(pgw,text="Exit with no changes",
+                    command=lambda x=changemarker:nochanges(x))
+        t3.grid(column=1, row=1)
+        if not hasattr(self,'polygraphs'):
+            self.polygraphs={}
+        vars={}
+        unscroll=Frame(pgw)
+        unscroll.grid(row=2, column=0)
+        for lang in self.db.analangs:
+            if lang not in self.polygraphs:
+                self.polygraphs[lang]={}
+            row=0
+            title=Label(unscroll,text=self.languagenames[lang],
+                                                        font=self.fonts['read'])
+            title.grid(column=0, row=row)
+            vars[lang]={}
+            for sclass in [sc for sc in self.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
+                                    if ('dg' in sc or 'tg' in sc)]:
+                pclass=sclass.replace('dg','').replace('tg','')
+                if pclass not in self.polygraphs[lang]:
+                    self.polygraphs[lang][pclass]={}
+                if pclass not in vars[lang]:
+                    vars[lang][pclass]={}
+                if len(self.db.s[lang][sclass])>0:
+                    row+=1
+                    header=Label(unscroll,
+                    text=sclass.replace('dg',' (digraph)').replace('tg',
+                                                            ' (trigraph)')+': ')
+                    header.grid(column=0, row=row)
+                col=1
+                for pg in self.db.s[lang][sclass]:
+                    vars[lang][pclass][pg] = tkinter.BooleanVar()
+                    vars[lang][pclass][pg].set(
+                                    self.polygraphs[lang][pclass].get(pg,False))
+                    cb=CheckButton(unscroll, text = pg, #.content
+                                        variable = vars[lang][pclass][pg],
+                                        onvalue = True, offvalue = False,
+                                        )
+                    cb.grid(column=col, row=row,sticky='nsew')
+                    col+=1
+        pgw.wait_window(pgw)
+        if changemarker.value:
+            for lang in self.db.analangs:
+                for pc in vars[lang]:
+                    for pg in vars[lang][pc]:
+                        self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
+            self.storesettingsfile(setting='profiledata')
+            self.reloadprofiledata()
     def slists(self):
         """This sets up the lists of segments, by types. For the moment, it
         just pulls from the segment types in the lift database."""
@@ -1814,8 +1926,16 @@ class Check():
             if lang not in self.s:
                 self.s[lang]={}
             """These should always be there, no matter what"""
-            for sclass in self.db.s[lang]: #Just populate each list now
-                self.s[lang][sclass]=self.db.s[lang][sclass]
+            for sclass in [x for x in self.db.s[lang]
+                                        if 'dg' not in x and 'tg' not in x]: #Just populate each list now
+                if sclass in self.polygraphs[lang]:
+                    pgthere=[k for k,v in self.polygraphs[lang][sclass].items() if v]
+                    log.debug("Polygraphs for {} in {}: {}".format(lang,sclass,
+                                                                    pgthere))
+                    self.s[lang][sclass]=pgthere
+                else:
+                    self.s[lang][sclass]=list()
+                self.s[lang][sclass]+=self.db.s[lang][sclass]
                 """These lines just add to a C list, for a later regex"""
                 if ((sclass in self.distinguish) and #might distinguish, but
                     (self.distinguish[sclass]==False) and #don't want to
@@ -2019,7 +2139,7 @@ class Check():
             self.iterations+=1
             if self.iterations>15:
                 exit()
-        log.debug("{}: {}".format(formori,form))
+        # log.debug("{}: {}".format(formori,form))
         return form
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
@@ -4198,8 +4318,8 @@ class Check():
                 self.updatestatus(verified=True)
                 # self.checkcheck() #now after verifyT is done
             else:
-                print(f"User did NOT select ‘{oktext}’, assuming we'll come "
-                        "back to this!!")
+                log.debug("User did NOT select ‘{}’, assuming we'll come "
+                        "back to this!!".format(oktext))
         #Once done verifying each group:
         if self.runwindow.exitFlag.istrue():
             return 1
@@ -6792,8 +6912,14 @@ class MainApplication(Frame):
         advancedmenu.add_cascade(label=_("Redo"), menu=redomenu)
         advancedmenu.add_cascade(label=_("Add other"), menu=filemenu)
         redomenu.add_command(
+                        label=_("Digraph and Trigraph settings (Restart)"),
+                        command=lambda x=check:Check.askaboutpolygraphs(x))
+        redomenu.add_command(
                         label=_("Syllable Profile Analysis (Restart)"),
                         command=lambda x=check:Check.reloadprofiledata(x))
+        redomenu.add_command(
+                        label=_("Change to another Database (Restart)"),
+                        command=lambda x=check:Check.changedatabase(x))
         redomenu.add_command(
                         label=_("Verification Status file (several minutes)"),
                         command=lambda x=check:Check.reloadstatusdata(x))
@@ -7347,7 +7473,7 @@ class RadioButton(tkinter.Radiobutton):
         super().__init__(parent,**kwargs)
         self.grid(column=column, row=row, sticky=sticky)
 class RadioButtonFrame(Frame):
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, horizontal=False,**kwargs):
         for vars in ['var','opts']:
             if (vars not in kwargs):
                 print('You need to set {} for radio button frame!').format(vars)
@@ -7372,7 +7498,10 @@ class RadioButtonFrame(Frame):
                                                 sticky=sticky,
                                                 indicatoron=0,
                                                 **kwargs)
-            row+=1
+            if horizontal:
+                column+=1
+            else:
+                row+=1
 class Button(tkinter.Button):
     def nofn(self):
         pass
@@ -7909,7 +8038,9 @@ class ToolTip(object):
         self.tw= None
         if tw:
             tw.destroy()
-
+class Object:
+    def __init__(self):
+        self.value=None
 """These are non-method utilities I'm actually using."""
 def getinterfacelang():
     for lang in i18n:
@@ -8422,7 +8553,7 @@ def findpraat():
     except Exception as e:
         log.info("No praat found! ({})".format(e))
         try: #am I on typical MS Windows?
-            praat=subprocess.check_output(["which","Praat.exe"], **spargs)
+            praat=subprocess.check_output(["where.exe","Praat.exe"], **spargs)
         except Exception as e:
             log.info("No Praat.exe found! ({})".format(e))
             try: #am I on typical Mac OS?
@@ -8455,6 +8586,8 @@ def setexitflag(self,exitFlag):
     print("Setting window exit flag False (on window creation)!")
     self.exitFlag = exitFlag
     self.protocol("WM_DELETE_WINDOW", lambda s=self:on_quit(s))
+def openweburl(url):
+    webbrowser.open_new(url)
 def on_quit(self):
     # Do this when a window closes, so any window functions can know
     # to just stop, rather than trying and throwing an error. This doesn't
@@ -8511,7 +8644,36 @@ def main():
     myapp = MainApplication(root,program)
     myapp.mainloop()
     logshutdown() #in logsetup
-
+def mainproblem():
+    file=logwritelzma(log.filename)
+    errorroot = tkinter.Tk()
+    errorroot.title("Serious Problem!")
+    t="Hey! You found a problem! (details and solution below)"
+    l=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=36))
+    l.grid(row=0,column=0)
+    if exceptiononload:
+        durl='https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md#dependencies'
+        t="\nPlease see {}".format(durl)
+        m=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=24))
+        m.grid(row=1,column=0)
+        m.bind("<Button-1>", lambda e: openweburl(durl))
+    lcontents=logcontents(log)
+    addr=program['Email']
+    eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
+    eurl+='&body=Please replace this text with a description of what you just tried.'.format(file)
+    eurl+="%0d%0aIf the log below is more than a few lines, please attach your compressed log file ({})".format(file)
+    eurl+='%0d%0a--log info--%0d%0a{}'.format(lcontents.replace('\n','%0d%0a'))
+    t="\n\nIf this information doesn't help you fix this, please click on this text to Email me your log (to {})".format(addr)
+    n=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=18))
+    n.grid(row=2,column=0)
+    n.bind("<Button-1>", lambda e: openweburl(eurl))
+    t="\n\nContents of {}/{} are below:".format(log.filename,file)
+    t+="\n\n{}".format(lcontents)
+    o=tkinter.Label(errorroot,text=t,justify='left',font=tkinter.font.Font(family="Charis SIL", size=12))
+    o.grid(row=3,column=0)
+    o.bind("<Button-1>", lambda e: openweburl(eurl))
+    errorroot.mainloop()
+    exit()
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
@@ -8539,17 +8701,20 @@ if __name__ == "__main__":
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
     praat=findpraat()
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
-    try:
-        main()
-    except SystemExit:
-        log.info("Shutting down by user request")
-    except Exception as e:
-        log.exception("Unexpected exception! %s",e)
-        logwritelzma(log.filename) #in logsetup
-    except:
-        import traceback
-        log.error("uncaught exception: %s", traceback.format_exc())
-        logwritelzma(log.filename) #in logsetup
+    if exceptiononload:
+        mainproblem()
+    else:
+        try:
+            main()
+        except SystemExit:
+            log.info("Shutting down by user request")
+        except Exception as e:
+            log.exception("Unexpected exception! %s",e)
+            mainproblem()
+        except:
+            import traceback
+            log.error("uncaught exception: %s", traceback.format_exc())
+            mainproblem()
     exit()
     """The following are just for testing"""
     entry=Entry(db, guid='003307da-3636-40cd-aca9-6b0d798055d2')

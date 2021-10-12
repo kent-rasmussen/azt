@@ -1168,7 +1168,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['pvd'][2]=['bh','dh','gh','gb']
         c['pvd'][1]=['b','B','d','g','ɡ','G']
         c['p']={}
-        c['p'][2]=['kp','kk']
+        c['p'][2]=['kk','kp']
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k']
         c['fvd']={}
         c['fvd'][2]=['bh','vh','zh']
@@ -1188,19 +1188,28 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['lf'][2]=['sl']
         c['lf'][1]=['ɬ']
         c['pn']={}
-        """If these appear, they should be single consonants."""
+        """If these appear, they should always be single consonants."""
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
                     'ⁿj','ⁿs','ⁿz']
         x={} #dict to put all hypothetical segements in, by category
-        x['C']=list() #to store valid consonants in
-        x['D']=list() #to store valid depressor consonants in
         for nglyphs in [3,2,1]:
+            if nglyphs == 3:
+                consvar='Ctg'
+                dconsvar='Dtg'
+            elif nglyphs == 2:
+                consvar='Cdg'
+                dconsvar='Ddg'
+            elif nglyphs == 1:
+                consvar='C'
+                dconsvar='D'
+            x[consvar]=list() #to store valid consonants in
+            x[dconsvar]=list() #to store valid depressor consonants in
             for stype in c:
                 if c[stype].get(nglyphs) is not None:
                     # if 'vd' in stype:
-                    #     x['D']+=c[stype][nglyphs]
+                    #     x[dconsvar]+=c[stype][nglyphs]
                     # else:
-                        x['C']+=c[stype][nglyphs]
+                        x[consvar]+=c[stype][nglyphs]
         # s['g']={}
         # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
         #         'mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']
@@ -1211,12 +1220,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ]
         x['G']=['ẅ','y','Y','w','W']
         # x['CG']=list((char+g for char in x['C'] for g in x['G']))
-        x['N']=["ng'",'mm','ny','ŋŋ','m','M','N','n','ŋ','ɲ']
+        x['N']=["ng'",'mm','ŋŋ','m','M','N','n','ŋ','ɲ'] #no longer:'ny',
         # x['NC']=list((n+char for char in x['C'] for n in x['N']))
         # x['NCG']=list((n+char+g for char in x['C'] for n in x['N']
         #                                             for g in x['G']))
         """Non-Nasal/Glide Sonorants"""
-        x['S']=['rh','wh','l','r']
+        x['S']=['l','r']
+        x['Sdg']=['rh','wh']
         # x['CS']=list((char+s for char in x['C'] for s in x['S']))
         # x['NCS']=list((n+char+s for char in x['C'] for n in x['N']
         #                                             for s in x['S']))
@@ -1249,6 +1259,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'Â', 'Ê', 'Î', 'Ô', 'Û',
                 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
                 ]
+        x['Vdg']=['ou','ei','ɨʉ','ai', #requested by bfj
+                'óu','éi','ɨ́ʉ','ái',
+                'òu','èi','ɨ̀ʉ','ài',
+                'yi','yu','yɨ','yʉ'] #requested by Jane
+        x['Vtg']=[]
+
         x['d']=["̀","́","̂","̌","̄","̃"
                 , "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉" #from IPA keyboard
                 ,"̈" #COMBINING DIAERESIS
@@ -1269,9 +1285,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 self.s[lang]={}
             for stype in x:
                 self.s[lang][stype]=rx.inxyz(self,lang,x[stype])
-                log.log(3,'hypotheticals[{}][{}]: {}'.format(lang,stype,
+                log.debug('hypotheticals[{}][{}]: {}'.format(lang,stype,
                                                     str(x[stype])))
-                log.log(3,'actuals[{}][{}]: {}'.format(lang,stype,
+                log.debug('actuals[{}][{}]: {}'.format(lang,stype,
                                                 str(self.s[lang][stype])))
     def slists(self):
         self.segmentsnotinregexes={}
