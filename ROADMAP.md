@@ -1,6 +1,7 @@
 #Roadmap
 
-standarize fns of exit buttons from config changing screens (exit should make changes or not...) 
+standarize fns of exit buttons from config changing screens (exit should make changes or not...)
+maybe add backwards epsilon to vowels?
 ## release stoppers
 - put image creation after splash creation?
 - give warning if user is going to undo analysis regroupings
