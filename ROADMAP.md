@@ -1,5 +1,6 @@
 #Roadmap
 
+standarize fns of exit buttons from config changing screens (exit should make changes or not...) 
 ## release stoppers
 - put image creation after splash creation?
 - give warning if user is going to undo analysis regroupings
