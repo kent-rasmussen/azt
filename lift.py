@@ -22,6 +22,8 @@ except:
         return x
 """This returns the root node of an ElementTree tree (the entire tree as
 nodes), to edit the XML."""
+class Object(object):
+    pass
 class TreeParsed(object):
     def __init__(self, lift):
         self=Tree(lift).parsed
@@ -465,24 +467,32 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # location,fieldvalue,node,ps=None
         """This looks for any example in the given sense node, with the same
         form, gloss, and location values"""
-        log.info('Looking for an example node matching these form and gloss'
-                'elements: {}'.format(kwargs['forms']))
-        examples=kwargs['node'].findall('example')
+        # showurl=kwargs.get('showurl',False)
+        node=kwargs.get('node')
+        # analang=kwargs.get('analang')
+        # glosslang=kwargs.get('glosslang')
+        # location=kwargs.get('location')
+        db=kwargs.get('db')
+        # glosslang2=kwargs.get('glosslang2',None)
+        # try:
+        #     example=kwargs.get('example')
+        log.info('Looking for an example node matching these form and gloss '
+                'elements: {}\n(from these: {})'.format(db.forms,db.__dict__))
+        examples=node.findall('example')
         for example in examples:
             log.info(_("Looking at example {} ({} of {})").format(example,
-                                        examples.index(example), len(examples)))
-            valuenode=self.exampleisnotsameasnew(**kwargs, example=example
-                            # guid,senseid,analang,
-                            # glosslang,glosslang2,forms,
-                            # fieldtype,
-                            # location,fieldvalue,example,ps=None
-                            ,showurl=False)
-            if type(valuenode) is ET.Element: #None: #i.e., they *are* the same node
-                log.info(_("Found it! {}: {}".format(type(valuenode),valuenode.text)))
-                return valuenode #if you find the example, we're done looking
-            else: #if not, just keep looking, at next example node
+                                    examples.index(example)+1, len(examples)))
+            valuenode=self.exampleisnotsameasnew(**kwargs, example=example)
+            if valuenode is None:
                 log.debug('=> This is not the example we are looking '
                             'for: {}'.format(valuenode))
+                continue
+            log.info(_("Found it? {}".format(type(valuenode))))
+            # log.info(_("Found it? {}: {}".format(type(valuenode),valuenode.text)))
+            if isinstance(valuenode,ET.Element): #None: #i.e., they *are* the same node
+                log.info(_("Found it! {}: {}".format(type(valuenode),
+                                                            valuenode.text)))
+                return valuenode #if you find the example, we're done looking
     def findduplicateforms(self):
         """This removes duplicate form nodes in lx or lc nodes, not much point.
         """
@@ -523,7 +533,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             analangs=[]
             otheranalangs=[]
             glosslangs=[]
-            forms={}
+            forms=Object() #?!?!
+            forms.forms=Object()
+            setattr(forms,'analangs',analangs)
+            setattr(forms,'glosslangs',glosslangs)
             analang=''
             glosslang=''
             glosslang2=''
@@ -539,7 +552,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     formnodetext=formnode.find('text')
                     if formnodetext is not None:
                         analangs.append(lang)
-                        forms[lang]=formnodetext.text
+                        setattr(forms,'analang',formnodetext.text)
+                        setattr(forms.forms,lang,forms.analang)
+                        # forms[lang]=formnodetext.text#
                     else:
                         log.log(3,"No formnodetext! (lang: {})".format(lang))
                 if analangs != []:
@@ -557,7 +572,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     formnodetext=formnode.find('text')
                     if formnodetext != None:
                         glosslangs.append(lang)
-                        forms[lang]=formnodetext.text
+                        if len(glosslangs) >0:
+                            forms.glosslang2=formnodetext.text
+                            setattr(forms.forms,lang,forms.glosslang2)
+                        else:
+                            forms.glosslang=formnodetext.text
+                            setattr(forms.forms,lang,forms.glosslang)
+                        # forms[lang]=formnodetext.text#
                     else:
                         log.log(4,"No glossformnodetext! ({}; lang: {})".format(
                                                             lang,formnodetext))
@@ -611,7 +632,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 senseindex=senses.index(sense)
                 log.log(3,"Working on sense {}: {}".format(senseindex,
                                                         sense.get('id')))
-                examples=sense.findall('example')
+                examples=sense.findall('example') #'senselocations'
                 for example in examples:
                     #If empty node, remove it
                     if len(example) == 0:
@@ -644,7 +665,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         othertonevalue=self.exampleisnotsameasnew(
                                                 node=sense,
                                                 example=example2,
-                                                forms=ex1[0],
+                                                db=ex1[0],
                                                 analang=ex1[1],
                                                 glosslang=ex1[2],
                                                 glosslang2=ex1[3],
@@ -920,15 +941,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     newfieldvalue=None,showurl=False):
         """This updates the fieldvalue, based on current value. It assumes
         there is a field already there; use addexamplefields if not"""
-        urlnattr=self.geturlnattr('exfieldvalue',senseid=senseid,
+        node=self.geturlnattr('exfieldvaluenode',senseid=senseid,
                                     fieldtype=fieldtype,
                                     location=location,
                                     fieldvalue=fieldvalue
-        ) #just give me the sense.
-        url=urlnattr['url']
+        )
+        # url=urlnattr['url']
         if showurl==True:
             log.info(url)
-        node=self.nodes.find(url) #this should always find just one node
+        # node=self.nodes.find(url) #this should always find just one node
         # for value in node.findall(f"field[@type=location]/"
         #                             f"form[text='{location}']"
         #                                 f"[@type='{fieldtype}']/"
