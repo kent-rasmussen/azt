@@ -3855,7 +3855,7 @@ class Check():
         menu=self.runwindow.removeverifymenu()
         titlel=Label(self.runwindow.frame,text=title,font=self.fonts['title'])
         titlel.grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
-        getformtext=_("What the new name do you want to call this surface tone "
+        getformtext=_("What new name do you want to call this surface tone "
                         "group? A label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
         getform=Label(self.runwindow.frame,text=getformtext,
