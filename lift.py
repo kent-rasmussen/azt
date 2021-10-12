@@ -1099,7 +1099,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             )
         return forms
     def fields(self,guid=None,lang=None): #get all the field types in a given entry
-        return self.get('fieldname',guid=guid,lang=lang)#nfields=0
+        return dict(self.get('type',base='field',target='field')).fromkeys()#nfields=0
+        # return self.get('fieldname',guid=guid,lang=lang)#nfields=0
     def getsenseids(self): #get the number entries in a lift file.
         self.senseids=self.get('senseid') #,showurl=True
         self.nsenseids=len(self.senseids) #,guid,lang,fieldtype,location
