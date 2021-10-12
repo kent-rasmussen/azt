@@ -1673,7 +1673,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 #single code point vowels:
                 'a', 'e', 'i', 'ə', 'o', 'u',
                 'A', 'E', 'I', 'Ə', 'O', 'U',
-                'ɑ', 'ɛ', 'ɨ', 'ɔ', 'ʉ',
+                'ɑ', 'ɛ', 'ɨ', 'ɔ', 'ʉ', 'ɩ',
                 'æ', 'ʌ', 'ɪ', 'ï', 'ö', 'ʊ',
                 #for those using precomposed letters:
                 'à', 'è', 'ì', 'ò', 'ù',
