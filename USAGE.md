@@ -15,7 +15,7 @@
     - [WeSay](https://software.sil.org/wesay/) is [Chorus](https://software.sil.org/chorushub/) enabled, which allows easy tracking of changes and off-site archiving, including the changes to your database and reports made by [A→Z+T](https://github.com/kent-rasmussen/azt).
     - N.B.: I highly recommend the excellent library of images that works with WeSay, [the Art of Reading](https://bloomlibrary.org/artofreading)
 - Build a dictionary in [FLEx](https://software.sil.org/fieldworks/), and share/export to [LIFT](https://code.google.com/archive/p/lift-standard/)/WeSay.
-    - Use the FLEx menu item `send/receive for WeSay`, assuming you may ever want to get the checked database *back* into [FLEx](https://software.sil.org/fieldworks/). 
+    - Use the FLEx menu item `send/receive for WeSay`, assuming you may ever want to get the checked database *back* into [FLEx](https://software.sil.org/fieldworks/).
     - Using the FLEx menu item `Export to LIFT` (a different process) can work, but would preclude sensible sharing back to FLEx in the future.
     - there is an active [list of users](https://groups.google.com/g/flex-list) to help with problems doing this.
 - Store your data in some other form (text, spreadsheet, database) and convert it to [LIFT](https://code.google.com/archive/p/lift-standard/) (*PLEASE* don't do this unless you *really* know what you're doing, and have a *good* reason to; the other options above are much easier, and much less likely to result in data corruption)
@@ -58,6 +58,7 @@ Results of the analysis of multiple frame groupings (e.g., from the Tone Report)
 ### Changes to Expect near Your [LIFT](https://code.google.com/archive/p/lift-standard/) Database
 [A→Z+T](https://github.com/kent-rasmussen/azt) assumes your [LIFT](https://code.google.com/archive/p/lift-standard/) file is in a directory set apart for its analysis. As a result, expect to find generated in that directory:
 
+- A backup copy of your lift database, on the first opening of A→Z+T each day. You're free to delete these as you like; there just there while A→Z+T is in development, in case you need them (this way, you should never lose more than a day's, however badly your database get's damaged).
 - A syllable profile analysis file (`ProfileData`), on first run, and if CV analysis parameters change. This can take a while to run, so it is stored and loaded on startup, rather than running it on each startup.
 - A settings file (`CheckDefaults`), any time a check is run, to preserve settings, including current `ps`/`profile` selection. This allows you to continue where you left off.
 - A tone frame definitions file (`ToneFrames`), once at least one has been defined. I strongly recommend not modifying this file outside of A→Z+T.
