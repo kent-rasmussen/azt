@@ -2696,7 +2696,9 @@ class Check():
                 text=l).grid(row=row,column=0)
         row+=1
         l=_("Make sure ‘record’ and ‘play’ \nwork well here, "
-            "\nbefore recording real data!")
+            "\nbefore recording real data!"
+            "\n See also note in documentation about verifying these recordings"
+            "in an external application, such as Praat.")
         Label(self.soundsettingswindow.frame,
                 text=l,font=self.fonts['read']).grid(row=row,column=0)
         row+=1
