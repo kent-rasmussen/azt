@@ -2008,7 +2008,16 @@ class Check():
                                         for char in self.s[self.analang]['C']
                                         for s in self.s[self.analang]['S']
                                         for g in self.s[self.analang]['G']))
+        self.s[self.analang]['CGS']=list((char+g+s
+                                        for char in self.s[self.analang]['C']
+                                        for s in self.s[self.analang]['S']
+                                        for g in self.s[self.analang]['G']))
         self.s[self.analang]['NCSG']=list((n+char+s+g
+                                        for char in self.s[self.analang]['C']
+                                        for n in self.s[self.analang]['N']
+                                        for s in self.s[self.analang]['S']
+                                        for g in self.s[self.analang]['G']))
+        self.s[self.analang]['NCGS']=list((n+char+g+s
                                         for char in self.s[self.analang]['C']
                                         for n in self.s[self.analang]['N']
                                         for s in self.s[self.analang]['S']
@@ -2040,6 +2049,7 @@ class Check():
             del self.s[self.analang]['NC']
         elif self.interpret['NC']=='CC':
             del self.s[self.analang]['NC'] # leave it for 'C'
+        """Combinations start here"""
         if (self.interpret['NC']=='C') and (self.interpret['CG']=='C'):
             self.s[self.analang]['C']+=self.s[self.analang]['NCG']
             del self.s[self.analang]['NCG']
