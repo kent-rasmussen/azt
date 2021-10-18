@@ -2046,12 +2046,15 @@ class Check():
         if (self.interpret['CG']=='C') and (self.interpret['CS']=='C'):
             self.s[self.analang]['C']+=self.s[self.analang]['CSG']
             self.s[self.analang]['C']+=self.s[self.analang]['CGS']
+        if (self.interpret['CG']!='CG') or (self.interpret['CS']!='CS'):
             del self.s[self.analang]['CSG']
             del self.s[self.analang]['CGS']
         if ((self.interpret['NC']=='C') and (self.interpret['CG']=='C')
                                         and (self.interpret['CS']=='C')):
             self.s[self.analang]['C']+=self.s[self.analang]['NCSG']
             self.s[self.analang]['C']+=self.s[self.analang]['NCGS']
+        if ((self.interpret['NC']!='NC') or (self.interpret['CG']!='CG')
+                                        or (self.interpret['CS']!='CS')):
             del self.s[self.analang]['NCSG']
             del self.s[self.analang]['NCGS']
         #Finished joining lists; now make the regexs
