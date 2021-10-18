@@ -1588,10 +1588,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This is a dictionary of theoretically possible segment graphs,
         by category and number of glyphs, with consonant dictionaries nested
         inside it, by category."""
+        # Don't include any profile-legit characters in these variables, or they
+        # will get picked up again during the analysis
         c={}
         c['pvd']={}
         c['pvd'][2]=['bh','dh','gh','gb']
-        c['pvd'][1]=['b','B','d','g','ɡ','G']
+        c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
         c['p']={}
         c['p'][2]=['kk','kp']
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k']
@@ -1600,7 +1602,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ']
         c['f']={}
         c['f'][2]=['ch','ph','sh','hh','pf','bv']
-        c['f'][1]=['F','f','s','ʃ','θ','x','h']
+        c['f'][1]=['F','f','s','ʃ','θ','x','h'] #not 'S'
         c['avd']={}
         c['avd'][2]=['dj','dz','dʒ']
         c['a']={}
