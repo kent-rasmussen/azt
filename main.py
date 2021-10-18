@@ -2036,12 +2036,13 @@ class Check():
             if self.interpret[cc]!=cc:
                 del self.s[self.analang][cc] # leave it for 'CC'
         """Combinations start here"""
-        if (self.interpret['NC']=='C') and (self.interpret['CG']=='C'):
-            self.s[self.analang]['C']+=self.s[self.analang]['NCG']
-            del self.s[self.analang]['NCG']
-        if (self.interpret['NC']=='C') and (self.interpret['CS']=='C'):
-            self.s[self.analang]['C']+=self.s[self.analang]['NCS']
-            del self.s[self.analang]['NCS']
+        for cc in ['NCG','NCS']:
+            c12=cc[:2]
+            c23=cc[0:]
+            if (self.interpret[c12]=='C') and (self.interpret[c23]=='C'):
+                self.s[self.analang]['C']+=self.s[self.analang]['NCG']
+            if (self.interpret[c12]!=c12) or (self.interpret[c23]!=c23):
+                del self.s[self.analang][cc]
         if (self.interpret['CG']=='C') and (self.interpret['CS']=='C'):
             self.s[self.analang]['C']+=self.s[self.analang]['CSG']
             del self.s[self.analang]['CSG']
