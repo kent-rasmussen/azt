@@ -2030,21 +2030,11 @@ class Check():
                                             for v in self.s[self.analang]['V']
                                             for n in self.s[self.analang]['N']))
         # Unlike the above, the following have implied else: with ['XY']=XY.
-        if self.interpret['CG']=='C':
-            self.s[self.analang]['C']+=self.s[self.analang]['CG']
-            del self.s[self.analang]['CG']
-        elif self.interpret['CG']=='CC':
-            del self.s[self.analang]['CG'] # leave it for 'C'
-        if self.interpret['CS']=='C':
-            self.s[self.analang]['C']+=self.s[self.analang]['CS']
-            del self.s[self.analang]['CS']
-        elif self.interpret['CS']=='CC':
-            del self.s[self.analang]['CS'] # leave it for 'C'
-        if self.interpret['NC']=='C':
-            self.s[self.analang]['C']+=self.s[self.analang]['NC']
-            del self.s[self.analang]['NC']
-        elif self.interpret['NC']=='CC':
-            del self.s[self.analang]['NC'] # leave it for 'C'
+        for cc in ['CG','CS','NC']:
+            if self.interpret[cc]=='C':
+                self.s[self.analang]['C']+=self.s[self.analang][cc]
+            if self.interpret[cc]!=cc:
+                del self.s[self.analang][cc] # leave it for 'CC'
         """Combinations start here"""
         if (self.interpret['NC']=='C') and (self.interpret['CG']=='C'):
             self.s[self.analang]['C']+=self.s[self.analang]['NCG']
