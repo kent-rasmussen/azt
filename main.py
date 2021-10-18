@@ -2045,11 +2045,15 @@ class Check():
                 del self.s[self.analang][cc]
         if (self.interpret['CG']=='C') and (self.interpret['CS']=='C'):
             self.s[self.analang]['C']+=self.s[self.analang]['CSG']
+            self.s[self.analang]['C']+=self.s[self.analang]['CGS']
             del self.s[self.analang]['CSG']
+            del self.s[self.analang]['CGS']
         if ((self.interpret['NC']=='C') and (self.interpret['CG']=='C')
                                         and (self.interpret['CS']=='C')):
             self.s[self.analang]['C']+=self.s[self.analang]['NCSG']
+            self.s[self.analang]['C']+=self.s[self.analang]['NCGS']
             del self.s[self.analang]['NCSG']
+            del self.s[self.analang]['NCGS']
         #Finished joining lists; now make the regexs
         self.rx={}
         if self.distinguish['ʔwd'] == True:
