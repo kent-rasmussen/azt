@@ -1950,7 +1950,7 @@ class Check():
         # this function.
         """IF VV=V and Vː=V and 'Vá=V', then include ː (and :?) in s['d']."""
         # First, reduce each list to what is actually found in the language
-        for sclass in self.s[self.analang]:
+        for sclass in self.s[self.analang]: #this should be done already...
             self.s[self.analang][sclass]=rx.inxyz(self.db,self.analang,
                                                 self.s[self.analang][sclass])
         # Include plausible sequences of length and diacritics in V, if desired.
