@@ -2038,7 +2038,7 @@ class Check():
         """Combinations start here"""
         for cc in ['NCG','NCS']:
             c12=cc[:2]
-            c23=cc[0:]
+            c23=cc[1:]
             if (self.interpret[c12]=='C') and (self.interpret[c23]=='C'):
                 self.s[self.analang]['C']+=self.s[self.analang]['NCG']
             if (self.interpret[c12]!=c12) or (self.interpret[c23]!=c23):
