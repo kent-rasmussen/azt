@@ -623,10 +623,12 @@ class Check():
                 # self.debug = True
                 if self.debug != True and r:
                     self.reloadprofiledata()
-            if r:
-                self.runwindow.destroy()
+                if r:
+                    self.runwindow.destroy()
+                else:
+                    undo(changed)
             else:
-                undo(changed)
+                self.runwindow.destroy()
         def buttonframeframe(self):
             s=options.s
             f=options.frames[s]=Frame(self.runwindow.scroll.content)
