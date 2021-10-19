@@ -56,7 +56,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.backupfilename=''.join(backupbits)
         self.getguids() #sets: self.guids and self.nguids
         self.getsenseids() #sets: self.senseids and self.nsenseids
-        log.info("Working on {} with {}, entries "
+        log.info("Working on {} with {} entries "
                     "and {} senses".format(filename,self.nguids,self.nsenseids))
         """These three get all possible langs by type"""
         self.glosslangs() #sets: self.glosslangs
