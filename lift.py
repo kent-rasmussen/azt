@@ -102,6 +102,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.log(2,'After removenone: {}'.format(url))
         log.log(1,'Ori: {}'.format(self.attribdict[attribute]['url']))
         return {'url':url,'attr':self.attribdict[attribute]['attr']}
+    def retarget(self,urlobj):
+        k=self.urlkey(urlobj.kwargs)
+        urlobj.kwargs['retarget']=target
+        k2=self.urlkey(urlobj.kwargs)
+        if k2 not in self.urls:
+            self.urls[k2]=copy.deepcopy(urlobj)
+            self.urls[k2].retarget()
+        return self.urls[k2]
     def urlkey(self,kwargs):
         kwargscopy=kwargs.copy() #for only differences that change the URL
         kwargscopy.pop('showurl',False)
