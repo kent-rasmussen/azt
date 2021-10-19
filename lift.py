@@ -317,7 +317,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
         fieldtype=kwargs.get('fieldtype')
-        fieldvalue=kwargs.get('fieldvalue')
+        tonevalue=kwargs.get('fieldvalue')
         # Logic to check if this example already here
         # This function returns a text node (from any one of a number of
         # example nodes, which match form, gloss and location) containing a
