@@ -102,20 +102,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.log(2,'After removenone: {}'.format(url))
         log.log(1,'Ori: {}'.format(self.attribdict[attribute]['url']))
         return {'url':url,'attr':self.attribdict[attribute]['attr']}
-    def getwurl(self,node,url,what='node'):
-        n=node.findall(url)
-        if n != []:
-            log.debug("found: {} (x{}), looking for {}".format(n[:1],len(n),what))
-        if n == [] or what is None or what == 'node':
-            return n
-        elif what == 'text':
-            r=[i.text for i in n]
-            log.debug(r)
-            return r
-        else:
-            r=[i.get(what) for i in n]
-            log.debug(r)
-            return r
     def get(self, target, **kwargs):
         return self.getfrom(self.nodes, target, **kwargs)
     def getfrom(self, node, target, **kwargs):
@@ -1694,6 +1680,22 @@ class Unused():
     def removedups(x): #This removes duplicates from a list
         return list(dict.fromkeys(x))
 class LiftURL():
+    def get(self,what='node'):
+        log.info(self.__dict__)
+        n=self.base.findall(self.url)
+        if n != []:
+            log.debug("found: {} (x{}), looking for {}".format(n[:1],len(n),what))
+        what=self.unalias(what)
+        if n == [] or what is None or what == 'node':
+            return n
+        elif what == 'text':
+            r=[i.text for i in n]
+            log.debug(r)
+            return r
+        else:
+            r=[i.get(what) for i in n]
+            log.debug(r)
+            return r
     def build(self,tag,liftattr=None,myattr=None,attrs=None):
         buildanother=False
         noseparator=False
