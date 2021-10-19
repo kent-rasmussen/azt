@@ -2740,13 +2740,14 @@ if __name__ == '__main__':
             'widen_fceb550d-fc99-40af-a288-0433add4f15',
             'flatten_9fb3d2b4-bc9e-4451-b475-36ee10316e40',
             'swallow_af9c3f8f-71e6-4b9a-805c-f6a148dcab8c',
-            'frighten_ecffd944-2861-495f-ae38-e7e9cdad45db']
+            'frighten_ecffd944-2861-495f-ae38-e7e9cdad45db',
+            'prevent_929504ce-35bb-48fe-ae95-8674a97e625f']
     guids=['dd3c93bb-0019-4dce-8d7d-21c1cb8a6d4d',
         '09926cec-8be1-4f66-964e-4fdd8fa75fdc',
         '2902d6b3-89be-4723-a0bb-97925a905e7f',
         '9ba02d67-3a44-4b7f-8f39-ea8e510df402',
         'eece7037-3d55-45c7-b765-95546e5fccc6']
-    locations=['1ss','Infinitive','Progressive','Isolation']
+    locations=['Progressive','Isolation']#,'Progressive','Isolation']
     glosslang='en'
     pss=["Verb","Noun"]
     analang='bfj'
@@ -2772,36 +2773,63 @@ if __name__ == '__main__':
     # just 1 of each pss: dict.fromkeys(lift.get("ps",what='value'))
     # get tone value: lift.get("text", location=location, path=['tonefield'],
     #                             what='text')
-    for ps in dict.fromkeys(lift.get("ps",what='value')):
-            log.info(ps)
+    # for ps in dict.fromkeys(lift.get("ps",what='value')):
+    #         log.info(ps)
         # for tonevalue in dict.fromkeys(lift.get('text',path=["tonefield"],what='text')):
         #     log.info(tonevalue)
     # log.info('\n'.join([str(x) for x in lift.urls.items()]))
     # exit()
-        # for location in locations:
-        # # for guid in guids:
-            for senseid in senseids:
-                log.info(lift.get("lexeme/form",what='text',ps=ps,#"sense", #target
-                        # tonevalue=tonevalue,
-                        # guid=guid,#
-                        path=['lexeme','tonefield'], senseid=senseid,
-                        # senseid=senseid,
-                        # showurl=True
-                        ))
-                log.info(lift.get("example/form",what='text',ps=ps,#"sense", #target
-                        # tonevalue=tonevalue,
-                        # guid=guid,#
-                        path=['lexeme','tonefield'], senseid=senseid,
-                        # senseid=senseid,
-                        # showurl=True
-                        ))
-                log.info(lift.get("citation/form",what='text',ps=ps,#"sense", #target
-                        # tonevalue=tonevalue,
-                        # guid=guid,#
-                        path=['lexeme','tonefield'], senseid=senseid,
-                        # senseid=senseid,
-                        # showurl=True
-                        ))
+    def test():
+        for fieldvalue in [2,2]:
+            for location in locations:
+            # # for guid in guids:
+                for senseid in ['prevent_929504ce-35bb-48fe-ae95-8674a97e625f']:
+                    url=lift.get('example/field/form/text',
+                                                path=['location','tonefield'], #get this one first
+                                                senseid=senseid,
+                                                fieldtype='tone',location=location,
+                                                tonevalue=fieldvalue,
+                                                # what='node'
+                                                ) #'text'
+                    exfieldvalue=url.get('node')
+                    for e in exfieldvalue:
+                        log.info("exfieldvalue: {}".format(e.text))
+                        url.retarget("sense")
+                        # Bind lift object to each url object; or can we store
+                        # this in a way that allows for non-recursive storage
+                        # only of the url object by the lift object?
+
+                        ids=url.get('senseid')
+                        for id in [x for x in ids if x is not None]:
+                            log.info("senseid: {}".format(id))
+
+                    # example=lift.get('example',
+                    #                             path=['location','tonefield'], #get this one first
+                    #                             senseid=senseid,
+                    #                             fieldtype='tone',location=location,
+                    #                             tonevalue=fieldvalue,
+                    #                             what='node')
+                    # sense=lift.get('sense',
+                    #                             path=['location','tonefield'], #get this one first
+                    #                             senseid=senseid,
+                    #                             fieldtype='tone',location=location,
+                    #                             tonevalue=fieldvalue,
+                    #                             what='node')
+        return
+                # log.info(lift.get("example/form",what='text',ps=ps,#"sense", #target
+                #         # tonevalue=tonevalue,
+                #         # guid=guid,#
+                #         path=['lexeme','tonefield'], senseid=senseid,
+                #         # senseid=senseid,
+                #         # showurl=True
+                #         ))
+                # log.info(lift.get("citation/form",what='text',ps=ps,#"sense", #target
+                #         # tonevalue=tonevalue,
+                #         # guid=guid,#
+                #         path=['lexeme','tonefield'], senseid=senseid,
+                #         # senseid=senseid,
+                #         # showurl=True
+                #         ))
             # log.info(lift.get("sense", #target
             #     # guid=guid,
             #     senseid=senseid,
@@ -2822,8 +2850,17 @@ if __name__ == '__main__':
                 # base='sense',
                 # tonevalue=3,
                 # )
-    # log.info(lift.urls)
+    test()
     printurllog()
+    quit()
+    import timeit
+    def timetest():
+                times=50
+                out1=timeit.timeit(test, number=times)
+                print(out1)
+    timetest()
+    # log.info(lift.urls)
+    # lift.write()
     # log.info('\n'.join([str(x) for x in lift.urls.items()]))
     exit()# print('l:',l)
     showurl=True
