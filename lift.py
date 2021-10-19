@@ -14,6 +14,7 @@ import os
 import rx
 import logging
 import ast #For string list interpretation
+import copy
 log = logging.getLogger(__name__)
 try: #Allow this module to be used without translation
     _
