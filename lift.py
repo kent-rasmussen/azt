@@ -128,14 +128,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         kwargs['target']=target #not kwarg here, but we want it to be one for LiftURL
         k=self.urlkey(kwargs)
         if k in self.urls:
-            url=self.urls[k]
-        else:
-            link=LiftURL(**kwargs) #needs base and target to be sensible; attribute?
-            url=self.urls[k]=link.url
-        if showurl:
-            log.info("Using URL {}".format(url))
-        return self.getwurl(node,url,what=what) #'what' comes in a kwarg, if wanted
-        return link.get(node,get) #get="text", "node" or an attribute name
+            return self.urls[k] #These are LiftURL objects
+        link=LiftURL(base=node,**kwargs) #needs base and target to be sensible; attribute?
+        # if showurl:
+        #     log.info("Using URL {}".format(url))
+        # return link.getwurl(node,what=what) #'what' comes in a kwarg, if wanted
+        return link #.get(node,what=what) #get="text", "node" or an attribute name
         """kwargs are guid=None, senseid=None, analang=None,
             glosslang=None, lang=None, ps=None, form=None, fieldtype=None,
             location=None, fieldvalue=None, showurl=False):"""
