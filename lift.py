@@ -1095,11 +1095,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return dict(self.get('type',base='field',target='field')).fromkeys()#nfields=0
         # return self.get('fieldname',guid=guid,lang=lang)#nfields=0
     def getsenseids(self): #get the number entries in a lift file.
-        self.senseids=self.get('senseid',base='sense',target='sense') #,showurl=True
+        self.senseids=self.get('sense').get('senseid') #,showurl=True
         self.nsenseids=len(self.senseids) #,guid,lang,fieldtype,location
         # log.info(self.nsenseids)
     def getguids(self): #get the number entries in a lift file.
-        self.guids=self.get('guid',base='entry',target='entry') #,showurl=True
+        self.guids=self.get('entry').get('guid') #,showurl=True
         # log.info(self.guids)
         self.nguids=len(self.guids) #,guid,lang,fieldtype,location
     def nc(self):
