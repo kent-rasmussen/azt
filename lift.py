@@ -126,11 +126,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             path=kwargs['path']=[path]
         showurl=kwargs.get('showurl',False)
         kwargs['target']=target #not kwarg here, but we want it to be one for LiftURL
-        kwargscopy=kwargs.copy() #for only differences that change the URL
-        kwargscopy.pop('showurl',False)
-        #unique key, tuple of tuples with str contents only, per url
-        k=tuple(sorted([(str(x),str(y)) for (x,y) in kwargscopy.items()]))
-        # k=tuple(sorted(kwargscopy.items()))
+        k=self.urlkey(kwargs)
         if k in self.urls:
             url=self.urls[k]
         else:
