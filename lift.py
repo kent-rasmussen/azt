@@ -145,57 +145,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         showurl=kwargs.get('showurl',False)
         kwargs['target']=target #not kwarg here, but we want it to be one for LiftURL
         k=self.urlkey(kwargs)
-        if k in self.urls:
-            return self.urls[k] #These are LiftURL objects
-        link=LiftURL(base=node,**kwargs) #needs base and target to be sensible; attribute?
-        # if showurl:
-        #     log.info("Using URL {}".format(url))
-        # return link.getwurl(node,what=what) #'what' comes in a kwarg, if wanted
-        return link #.get(node,what=what) #get="text", "node" or an attribute name
-        """kwargs are guid=None, senseid=None, analang=None,
-            glosslang=None, lang=None, ps=None, form=None, fieldtype=None,
-            location=None, fieldvalue=None, showurl=False):"""
-        """This needs to work when there are multiple languages, etc.
-        I think we should iterate over possibilities, if none are specified.
-        over lang, what else?
-        NB: this would create nested dictionaries... We need to be able to
-        access them consistently later."""
-        """I need to be careful to not mix up lang=glosslang and lang=analang:
-        @lang should only be used here when referring to a <field> field."""
-        log.log(3,'kwargs: {}'.format(kwargs))
-        """pull output from urlnattr, where first is string with {}, second
-        is strings naming fields. convert those names to field values here,
-        once those fields/values have been defined.
-        """
-        """This is slightly faster than kwargs"""
-        # was: urlnattr=attributesettings(attribute,guid,senseid,analang,
-        #         glosslang, lang,ps,form,
-        #         fieldtype,location,
-        #         fieldvalue=fieldvalue
-        urlnattr=self.geturlnattr(attribute, **kwargs)
-        url=urlnattr['url']
-        if 'showurl' in kwargs and kwargs['showurl']==True:
-            log.info(url)
-        try:
-            nodeset=node.findall(url) #This is the only place we need self=lift
-        except BaseException as e:
-            log.error("Problem getting url: {} ({})".format(url,e))
-            return
-        output=[]
-        attr=urlnattr['attr']
-        for n in nodeset:
-            if attr == 'nodetext':
-                if n is not None:
-                    log.log(1,"Returning node text")
-                    output+=[n.text]
-            elif attr == 'node':
-                if n is not None:
-                    log.log(1,"Returning whole node")
-                    output+=[n]
-            else:
-                log.log(1,"Returning node attribute")
-                output+=[n.get(attr)]
-        return output
+        if k not in self.urls:
+            self.urls[k]=LiftURL(base=node,**kwargs) #needs base and target to be sensible; attribute?
+        if showurl:
+            log.info("Using URL {}".format(self.urls[k].url))
+        return self.urls[k] #These are LiftURL objects
     def makenewguid(self):
         from random import randint
         log.info("Making a new unique guid")
