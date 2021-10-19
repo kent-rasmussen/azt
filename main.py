@@ -1873,13 +1873,14 @@ class Check():
         scroll=ScrollingFrame(pgw.frame)
         scroll.grid(row=3, column=0)
         row=0
+        ncols=5 # increase this for wider window
         for lang in self.db.analangs:
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
             row+=1
             title=Label(scroll.content,text=self.languagenames[lang],
                                                         font=self.fonts['read'])
-            title.grid(column=0, row=row, columnspan=2)
+            title.grid(column=0, row=row, columnspan=ncols)
             vars[lang]={}
             for sclass in [sc for sc in self.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
                                     if ('dg' in sc or 'tg' in sc)]:
@@ -1904,7 +1905,7 @@ class Check():
                                         onvalue = True, offvalue = False,
                                         )
                     cb.grid(column=col, row=row,sticky='nsew')
-                    if col<= 5: # increase this for wider window
+                    if col<= ncols:
                         col+=1
                     else:
                         col=1 #not header
