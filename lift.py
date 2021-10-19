@@ -363,9 +363,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     fieldgloss.makeformnode(lang,getattr(forms,lang))
             exfieldvalue=p.makefieldnode(fieldtype,glosslang,gimmetext=True)
             p.makefieldnode('location',glosslang,text=location)
-            else:
-            log.debug("=> Found that example already there")
-        exfieldvalue.text=fieldvalue #change this *one* value, either way.
+            p.makefieldnode('tone',glosslang,text=tonevalue)
+        # exfieldvalue.text=fieldvalue #change this *one* value, either way.
         senseid=kwargs.get('senseid')
         if 'guid' in kwargs:
             guid=kwargs.get('guid')
