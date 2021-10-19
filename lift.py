@@ -1647,7 +1647,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ]
         x['G']=['ẅ','y','Y','w','W']
         # x['CG']=list((char+g for char in x['C'] for g in x['G']))
-        x['N']=['m','M','N','n','ŋ','ɲ','ɱ']
+        x['N']=['m','M','n','ŋ','ɲ','ɱ'] #'N', messed with profiles
         x['Ndg']=['mm','ŋŋ','ny']
         x['Ntg']=["ng'"]
         # x['NC']=list((n+char for char in x['C'] for n in x['N']))
