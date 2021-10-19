@@ -1712,7 +1712,7 @@ class LiftURL():
                                         and self.kwargs[myattr] is not None):
             b="[{}='{}']".format(tag,self.kwargs[myattr])
             noseparator=True
-            if tag == 'text' and tag in self.targethead:
+            if tag == 'text' and tag in self.targettail:
                 buildanother=True #the only way to get text node w/o value
         self.url+=[b]
         if noseparator:
