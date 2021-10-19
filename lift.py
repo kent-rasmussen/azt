@@ -2183,21 +2183,22 @@ class LiftURL():
         self.alias['lexical-unit']='lexeme'
         self.alias['grammatical-info']='ps'
     def __init__(self, *args,**kwargs):
+        basename=self.basename=self.base.tag
         super(LiftURL, self).__init__()
         log.debug("LiftURL called with {}".format(kwargs))
         self.kwargs=kwargs
-        base=self.base=self.kwargs.pop('base','lift') # where do we start?
+        # base=self.basename=self.kwargs.pop('base','lift') # where do we start?
         target=self.target=self.kwargs.pop('target','entry') # what do we want?
         self.parsetargetlineage()
         self.what=self.kwargs.pop('what','node') #This should always be there
         self.path=kwargs.pop('path',[])
         self.url=[]
-        self.level={'cur':0,base:0}
+        self.level={'cur':0,basename:0}
         self.guid=self.senseid=self.attrdonothing
         self.setchildren()
         self.setaliases()
         self.setattrsofnodes()
-        self.bearchildrenof(base)
+        self.bearchildrenof(basename)
         log.debug("Making Target now.")
         self.maketarget()
         self.makeurl()
