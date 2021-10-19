@@ -1894,7 +1894,7 @@ class LiftURL():
         log.log(21,"Running showtargetinlowestancestry for {}/{} on {}".format(
                                     self.targethead,self.targettail,nodename))
         #If were still empty at this point, just do the target if we can
-        if nodename == [] and self.targethead in self.children[self.base]:
+        if nodename == [] and self.targethead in self.children[self.basename]:
             self.show(self.targethead)
             return
         gen=nodename
@@ -2003,9 +2003,9 @@ class LiftURL():
         if self.getalias(self.targethead) not in self.level: #If the target hasn't been made yet.
             log.debug(self.url)
             i=self.currentnodename()
-            log.debug("URL base: {}; i: {}".format(self.base,i))
+            log.debug("URL base: {}; i: {}".format(self.basename,i))
             if i is None: #if it is, skip down in any case.
-                i=self.base
+                i=self.basename
             log.debug("URL bit list: {}; i: {}".format(self.url,i))
             if type(i) == list:
                 i=i[0] #This should be a string
