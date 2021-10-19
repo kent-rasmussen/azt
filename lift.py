@@ -2821,17 +2821,21 @@ if __name__ == '__main__':
                                                 tonevalue=fieldvalue,
                                                 # what='node'
                                                 ) #'text'
-                    exfieldvalue=url.get('node')
+                    exfieldvalue=url.get('text')
                     for e in exfieldvalue:
-                        log.info("exfieldvalue: {}".format(e.text))
-                        url.retarget("sense")
-                        # Bind lift object to each url object; or can we store
-                        # this in a way that allows for non-recursive storage
-                        # only of the url object by the lift object?
-
-                        ids=url.get('senseid')
-                        for id in [x for x in ids if x is not None]:
-                            log.info("senseid: {}".format(id))
+                        log.info("exfieldvalue: {}".format(e))
+                    url_sense=lift.retarget(url,"sense")
+                    # Bind lift object to each url object; or can we store
+                    # this in a way that allows for non-recursive storage
+                    # only of the url object by the lift object?
+                    ids=url_sense.get('senseid')
+                    log.info("senseids: {}".format(ids))
+                    for id in [x for x in ids if x is not None]:
+                        log.info("senseid: {}".format(id))
+                    url_entry=lift.retarget(url,"entry")
+                    idsentry=url_entry.get('guid')
+                    for id in [x for x in idsentry if x is not None]:
+                        log.info("guid: {}".format(id))
 
                     # example=lift.get('example',
                     #                             path=['location','tonefield'], #get this one first
