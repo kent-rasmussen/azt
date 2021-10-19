@@ -116,11 +116,28 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         kwargscopy.pop('showurl',False)
         k=tuple(sorted([(str(x),str(y)) for (x,y) in kwargscopy.items()]))
         return k
-    def get(self, target, **kwargs):
-        return self.getfrom(self.nodes, target, **kwargs)
-    def getfrom(self, node, target, **kwargs):
-        # base=kwargs['base']=node.tag #in case this is specified, but shouldn't be
-        # log.info("base: {}".format(base))
+    def get(self, target, node=None, **kwargs):
+        """This method calls for a URL object, if it's not already there.
+        Followup methods include
+            LiftURL.get() on that object: to get the desired text/attr/node
+            lift.retarget(): to move from one url to a parent (e.g., the sense
+                node containing a found example) before LiftURL.get() again
+        get entries: lift.get("entry").get()
+            lift.get("entry".get('guid'))
+        get senses: lift.get("sense").get()
+            lift.get("sense".get('senseid'))
+        get *all* pss: lift.get("ps").get('value')
+        Never ask for just the form! give the parent, to get a particular form:
+        lift.get("lexeme/form").get('text')
+        lift.get("example/form").get('text')
+        lift.get("citation/form").get('text')
+        just 1 of each pss: dict.fromkeys(lift.get("ps").get('value'))
+        get tone value:
+            lift.get("text", location=location, path=['tonefield']).get('text')
+        for tonevalue in dict.fromkeys(lift.get('text',path=["tonefield"]).get('text')):
+        """
+        if node is None:
+            node=self
         what=kwargs.get('what','node')
         path=kwargs.get('path',[])
         if type(path) is not list:
