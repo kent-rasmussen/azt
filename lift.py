@@ -2195,7 +2195,7 @@ class LiftURL():
         self.alias={}
         self.alias['lexical-unit']='lexeme'
         self.alias['grammatical-info']='ps'
-        self.alias['senseid']='id'
+        self.alias['id']='senseid'
     def __init__(self, *args,**kwargs):
         #First, see if this one already exists:
         self.base=kwargs['base']
