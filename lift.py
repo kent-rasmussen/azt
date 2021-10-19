@@ -2195,6 +2195,10 @@ class LiftURL():
         self.alias['lexical-unit']='lexeme'
         self.alias['grammatical-info']='ps'
     def __init__(self, *args,**kwargs):
+        #First, see if this one already exists:
+        self.base=kwargs['base']
+        if type(kwargs['base']) is Lift:
+            self.base=kwargs['base'].nodes
         basename=self.basename=self.base.tag
         super(LiftURL, self).__init__()
         log.debug("LiftURL called with {}".format(kwargs))
