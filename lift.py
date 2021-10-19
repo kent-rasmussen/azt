@@ -102,6 +102,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.log(2,'After removenone: {}'.format(url))
         log.log(1,'Ori: {}'.format(self.attribdict[attribute]['url']))
         return {'url':url,'attr':self.attribdict[attribute]['attr']}
+    def urlkey(self,kwargs):
+        kwargscopy=kwargs.copy() #for only differences that change the URL
+        kwargscopy.pop('showurl',False)
+        k=tuple(sorted([(str(x),str(y)) for (x,y) in kwargscopy.items()]))
+        return k
     def get(self, target, **kwargs):
         return self.getfrom(self.nodes, target, **kwargs)
     def getfrom(self, node, target, **kwargs):
