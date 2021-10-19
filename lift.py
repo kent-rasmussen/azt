@@ -118,7 +118,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def get(self, target, **kwargs):
         return self.getfrom(self.nodes, target, **kwargs)
     def getfrom(self, node, target, **kwargs):
-        base=kwargs['base']=node.tag #in case this is specified, but shouldn't be
+        # base=kwargs['base']=node.tag #in case this is specified, but shouldn't be
         # log.info("base: {}".format(base))
         what=kwargs.get('what','node')
         path=kwargs.get('path',[])
