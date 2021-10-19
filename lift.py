@@ -325,10 +325,18 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # and location)
         #We're adding a node to kwargs here.
         # exfieldvalue=self.get('examplebylocation',senseid=senseid,location=location)
-        exfieldvalue=self.geturlnattr('exfieldvaluenode',senseid=senseid,
-                                    fieldtype=fieldtype,location=location,
-                                    fieldvalue=fieldvalue)
-        if exfieldvalue is None: #If not already there, make it.
+        exfieldvalue=lift.get('example/field/form/text',
+                                    path=['location','tonefield'],
+                                    senseid=senseid,
+                                    fieldtype='tone',location=location,
+                                    # tonevalue=fieldvalue,
+                                    what='node')
+        # Do this for all duplicates, which should be removed later anyway.
+        # I.e., don't leave inconsisted data in the database.
+        if len(exfieldvalue) > 0:
+            for e in exfieldvalue:
+                e.text=tonevalue
+        else: #If not already there, make it.
             log.info("Didn't find that example already there, creating it...")
             analang=kwargs.get('analang')
             glosslang=kwargs.get('glosslang')
