@@ -2009,6 +2009,12 @@ class LiftURL():
         return nodename #else
     def getalias(self,nodename):
         return self.alias.get(nodename,nodename)
+    def retarget(self,target):
+        self.url=[self.url]
+        self.target=target
+        self.parsetargetlineage()
+        self.maketarget()
+        self.makeurl()
     def maketarget(self):
         """start by breaking up target, if expressed as lineage. This is needed
         to target form, with example/form distinct from example/field/form.
