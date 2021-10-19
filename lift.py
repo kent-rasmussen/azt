@@ -143,7 +143,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if type(path) is not list:
             path=kwargs['path']=[path]
         showurl=kwargs.get('showurl',False)
-        kwargs['target']=target #not kwarg here, but we want it to be one for LiftURL
+        kwargs['target']=target # we want target to be kwarg for LiftURL
         k=self.urlkey(kwargs)
         if k not in self.urls:
             self.urls[k]=LiftURL(base=node,**kwargs) #needs base and target to be sensible; attribute?
@@ -1667,7 +1667,7 @@ class Unused():
         return list(dict.fromkeys(x))
 class LiftURL():
     def get(self,what='node'):
-        log.info(self.__dict__)
+        log.debug(self.__dict__)
         n=self.base.findall(self.url)
         if n != []:
             log.debug("found: {} (x{}), looking for {}".format(n[:1],len(n),what))
@@ -1685,7 +1685,7 @@ class LiftURL():
     def build(self,tag,liftattr=None,myattr=None,attrs=None):
         buildanother=False
         noseparator=False
-        log.log(21,"building {}, @dict:{}, @{}={}, on top of {}".format(tag,
+        log.debug("building {}, @dict:{}, @{}={}, on top of {}".format(tag,
                                 attrs,liftattr,myattr, self.currentnodename()))
         b=tag
         if attrs is None:
@@ -1709,7 +1709,7 @@ class LiftURL():
         else:
             self.level['cur']+=1
         self.level[self.alias.get(tag,tag)]=self.level['cur']
-        log.log(21,"Path so far: {}".format(self.drafturl()))
+        log.debug("Path so far: {}".format(self.drafturl()))
         if buildanother:
             self.build(tag)
     def parent(self):
@@ -1724,7 +1724,7 @@ class LiftURL():
     def form(self,value=None,lang=None):
         self.baselevel()
         self.kwargs['value']=self.kwargs.get(value,None) #location and tonevalue
-        log.log(21,"form kwargs: {}".format(self.kwargs))
+        log.debug("form kwargs: {}".format(self.kwargs))
         self.build("form","lang","lang") #OK if lang is None
         if value is not None:
             self.text("value")
@@ -1868,18 +1868,18 @@ class LiftURL():
         # parent here is a node ancestor to the current origin, which may
         # or may not be an ancestor of targethead. If it is, show it.
         f=self.getfamilyof(parent,x=[])
-        log.log(21,"Maybeshowtarget: {} (family: {})".format(parent,f))
+        log.debug("Maybeshowtarget: {} (family: {})".format(parent,f))
         if self.targethead in f:
             if parent in self.level:
-                log.log(21,"Maybeshowtarget: leveling up to {}".format(parent))
+                log.debug("Maybeshowtarget: leveling up to {}".format(parent))
                 self.levelup(parent)
             else:
-                log.log(21,"Maybeshowtarget: showing {}".format(parent))
+                log.debug("Maybeshowtarget: showing {}".format(parent))
                 self.show(parent)
             self.showtargetinhighestdecendance(parent)
             return True
     def showtargetinlowestancestry(self,nodename):
-        log.log(21,"Running showtargetinlowestancestry for {}/{} on {}".format(
+        log.debug("Running showtargetinlowestancestry for {}/{} on {}".format(
                                     self.targethead,self.targettail,nodename))
         #If were still empty at this point, just do the target if we can
         if nodename == [] and self.targethead in self.children[self.basename]:
@@ -2017,9 +2017,9 @@ class LiftURL():
                 n=self.targetbits.index(b)
                 bp=self.targetbits[n-1].split('[')[0]#just the node, not attrs
                 afterbp=self.drafturl().split(self.unalias(bp))
-                log.log(21,"b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
+                log.debug("b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
                 if len(afterbp) <=1 or b not in afterbp[1]:
-                    log.log(21,"showing target element {}: {} (of {})".format(n,b,bp))
+                    log.debug("showing target element {}: {} (of {})".format(n,b,bp))
                     self.levelup(bp)
                     self.show(b,parent=bp)
         self.levelup(self.targetbits[-1])#leave last in target, whatever else
@@ -2168,15 +2168,13 @@ class LiftURL():
         self.alias['grammatical-info']='ps'
         self.alias['id']='senseid'
     def __init__(self, *args,**kwargs):
-        #First, see if this one already exists:
         self.base=kwargs['base']
         if type(kwargs['base']) is Lift:
             self.base=kwargs['base'].nodes
         basename=self.basename=self.base.tag
         super(LiftURL, self).__init__()
-        log.debug("LiftURL called with {}".format(kwargs))
+        log.info("LiftURL called with {}".format(kwargs))
         self.kwargs=kwargs
-        # base=self.basename=self.kwargs.pop('base','lift') # where do we start?
         target=self.target=self.kwargs.pop('target','entry') # what do we want?
         self.parsetargetlineage()
         self.what=self.kwargs.pop('what','node') #This should always be there
@@ -2191,7 +2189,7 @@ class LiftURL():
         log.debug("Making Target now.")
         self.maketarget()
         self.makeurl()
-        log.log(21,"Final URL: {}".format(self.url))
+        log.debug("Final URL: {}".format(self.url))
         # self.printurl()
 """Functions I'm using, but not in a class"""
 def prettyprint(node):
@@ -2790,7 +2788,7 @@ if __name__ == '__main__':
                                                 senseid=senseid,
                                                 fieldtype='tone',location=location,
                                                 tonevalue=fieldvalue,
-                                                # what='node'
+                                                showurl=True# what='node'
                                                 ) #'text'
                     exfieldvalue=url.get('text')
                     for e in exfieldvalue:
@@ -2800,7 +2798,7 @@ if __name__ == '__main__':
                     # this in a way that allows for non-recursive storage
                     # only of the url object by the lift object?
                     ids=url_sense.get('senseid')
-                    log.info("senseids: {}".format(ids))
+                    # log.info("senseids: {}".format(ids))
                     for id in [x for x in ids if x is not None]:
                         log.info("senseid: {}".format(id))
                     url_entry=lift.retarget(url,"entry")
@@ -2855,7 +2853,10 @@ if __name__ == '__main__':
                 # base='sense',
                 # tonevalue=3,
                 # )
-    test()
+    # test()
+    entries=lift.get("entry").get()
+    log.info(len(entries))
+    log.info(entries[0].get('guid'))
     printurllog()
     quit()
     import timeit
