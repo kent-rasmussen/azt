@@ -2121,8 +2121,8 @@ class Check():
                     self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
             if s == 'N#': #different regex key for this one.
                 log.log(2,"Not in d or b, returning variable: {}".format(s))
-                if 'Nwd' in self.rx:
-                    form=self.rx['Nwd'].sub(s,form) #replace with profile variable
+                if 'N#' in self.rx:
+                    form=self.rx['N#'].sub(s,form) #replace with profile variable
             elif s not in ['d','b']:
                 log.log(2,"Not in d or b, returning variable: {}".format(s))
                 form=self.rx[s].sub(s,form) #replace with profile variable
