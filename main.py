@@ -1995,16 +1995,10 @@ class Check():
         """Look for word boundaries, N and G before C (though this doesn't
         work, since CG is captured by C first...)"""
         # self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b']
-        log.log(4,"Searching {} in this order: {}".format(form,
-                        sorted(self.rx.keys(),
-                        key=lambda cons: (-len(cons),
-                                    [self.profilelegit.index(c) for c in cons])
-                        )))
+        log.log(4,"Searching {} in this order: {}".format(form,self.profilelegit
+                        ))
         log.log(4,"Searching with these regexes: {}".format(self.rx))
-        for s in sorted(self.rx.keys(),
-                        key=lambda cons: (-len(cons),
-                                    [self.profilelegit.index(c) for c in cons])
-                        ):
+        for s in set(self.profilelegit) & set(self.rx.keys()):
             log.log(3,'s: {}; rx: {}'.format(s, self.rx[s]))
             for ps in self.db.pss:
                 for i in self.rx[s].findall(form):
