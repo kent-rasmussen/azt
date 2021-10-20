@@ -1963,28 +1963,20 @@ class Check():
     def setupCVrxs(self):
         self.rx={}
         for sclass in list(self.s[self.analang]):
+            if self.s[self.analang][sclass] != []: #don't make if empty
+                self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
+        #Compile preferred regexs here
+        for cc in ['CG','CS','NC','VN','VV']:
+            ccc=cc.replace('C','[CSGDʔN]{1}')
+            self.rx[cc]=re.compile(ccc)
+        for c in ['N','S','G','ʔ','D']:
+            if c == 'N': #i.e., before C
+                self.rx[c+'_']=re.compile(c+'(?!([CSGDʔ]|\Z))') #{1}|
+            elif c in ['ʔ','D']:
+                self.rx[c+'_']=re.compile(c+'(?!\Z)')
             else:
-                # check again for combinations not in the database
-                self.s[self.analang][sclass]=rx.inxyz(self.db,self.analang,
-                                                self.s[self.analang][sclass])
-                if sclass in ['NCSG','CSG','NCS']:
-                    log.debug("Class element on passing {}: {}".format(sclass,
-                    self.s[self.analang][sclass]))
-                    # exit()
-                if self.s[self.analang][sclass] == []:
-                    del self.s[self.analang][sclass]
-                else:
-                    log.debug("{} class sorted elements: {}".format(sclass,
-                                                        str(rx.s(self,sclass))))
-                    # These regexs with longer names will be searched first, so
-                    # word final distinctions will be found, even if the segment
-                    # in question isn't being distinguished from C elsewhere.
-                    if sclass == 'ʔwd': #word final, not just a list of glyphs:
-                        self.rx['ʔ#']=rx.make(rx.s(self,sclass)+'$',compile=True)
-                    elif sclass == 'Nwd': #word final, not just a list of glyphs:
-                        self.rx['N#']=rx.make(rx.s(self,sclass)+'$',compile=True)
-                    else:
-                        self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
+                self.rx[c+'_']=re.compile('(?<![CSGDNʔ])'+c)
+            self.rx[c+'wd']=re.compile(c+'(?=\Z)')
     def profileofformpreferred(self,form):
         """Simplify combinations where desired"""
         # log.debug("Simplfying {}...".format(form))
