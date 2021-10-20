@@ -719,17 +719,37 @@ class Check():
                         "").format(self.db.s[self.analang]['D'])
         options.opts=[(True,'D≠C'),(False,'D=C')]
         buttonframeframe(self)
+        options.s='Dwd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final likely depressor consonants (D={})'
+                        '\nfrom '
+                        'other (simple/single) consonants?'
+                        "").format(self.db.s[self.analang]['D'])
+        options.opts=[(True,'D#≠C#'),(False,'D#=C#')]
+        buttonframeframe(self)
         options.s='G'
         options.text=_('Do you want to distinguish '
-                        'all Glides (G) \nfrom '
+                        'initial and medial Glides (G) \nfrom '
                         'other (simple/single) consonants?')
         options.opts=[(True,'G≠C'),(False,'G=C')]
         buttonframeframe(self)
+        options.s='Gwd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final Glides (G) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'G#≠C#'),(False,'G#=C#')]
+        buttonframeframe(self)
         options.s='S'
         options.text=_('Do you want to distinguish '
-                        'all Non-Nasal/Glide Sonorants (S) '
+                        'initial and medial Non-Nasal/Glide Sonorants (S) '
                     '\nfrom other (simple/single) consonants?')
         options.opts=[(True,'S≠C'),(False,'S=C')]
+        buttonframeframe(self)
+        options.s='Swd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final Non-Nasal/Glide Sonorants (S) '
+                    '\nfrom other (simple/single) consonants?')
+        options.opts=[(True,'S#≠C#'),(False,'S#=C#')]
         buttonframeframe(self)
         options.s='NC'
         options.text=_('How do you want to interpret '
