@@ -1694,13 +1694,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'yi','yu','yɨ','yʉ'] #requested by Jane
         x['Vtg']=[]
 
-        x['d']=["̀","́","̂","̌","̄","̃"
+        x["̀"]=["̀","́","̂","̌","̄","̃"
                 , "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉" #from IPA keyboard
                 ,"̈" #COMBINING DIAERESIS
                 ] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         x['ː']=[":","ː"] # vowel length markers
-        x['b']=['=','-'] #affix boundary markers
-        x['o']=['<','&lt;','&gt;','>','›','»','‹','«',''] #macron here?
+        x['=']=['=','-'] #affix boundary markers
+        x['<']=['<','&lt;','&gt;','>','›','»','‹','«',''] #macron here?
         # """We need to address long and idiosyncratic vowel orthographies,
         # especially for Cameroon. This should also include diacritics, together
         # or separately."""
