@@ -689,7 +689,7 @@ class Check():
         independent boolean selections."""
         options.s='ʔ'
         options.text=_('Do you want to distinguish '
-                        'all glottal stops (ʔ) \nfrom '
+                        'initial and medial glottal stops (ʔ) \nfrom '
                         'other (simple/single) consonants?')
         options.opts=[(True,'ʔ≠C'),(False,'ʔ=C')]
         buttonframeframe(self)
@@ -701,7 +701,7 @@ class Check():
         buttonframeframe(self)
         options.s='N'
         options.text=_('Do you want to distinguish '
-                        'all Nasals (N) \nfrom '
+                        'initial and medial Nasals (N) \nfrom '
                         'other (simple/single) consonants?')
         options.opts=[(True,'N≠C'),(False,'N=C')]
         buttonframeframe(self)
@@ -713,7 +713,7 @@ class Check():
         buttonframeframe(self)
         options.s='D'
         options.text=_('Do you want to distinguish '
-                        'all likely depressor consonants (D={})'
+                        'initial and medial likely depressor consonants (D={})'
                         '\nfrom '
                         'other (simple/single) consonants?'
                         "").format(self.db.s[self.analang]['D'])
