@@ -1993,6 +1993,7 @@ class Check():
     def profileofform(self,form):
         if form is None:
             return "Invalid"
+        # log.debug("profiling {}...".format(form))
         formori=form
         """priority sort alphabets (need logic to set one or the other)"""
         """Look for any C, don't find N or G"""
