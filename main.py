@@ -2037,6 +2037,9 @@ class Check():
             if self.iterations>15:
                 exit()
         # log.debug("{}: {}".format(formori,form))
+        # log.info("Form before simplification:{}".format(form))
+        form=self.profileofformpreferred(form)
+        # log.info("Form after simplification:{}".format(form))
         return form
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
