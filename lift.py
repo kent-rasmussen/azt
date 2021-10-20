@@ -1633,9 +1633,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             x[dconsvar]=list() #to store valid depressor consonants in
             for stype in c:
                 if c[stype].get(nglyphs) is not None:
-                    # if 'vd' in stype:
-                    #     x[dconsvar]+=c[stype][nglyphs]
-                    # else:
+                    if 'vd' in stype:
+                        x[dconsvar]+=c[stype][nglyphs]
+                    else:
                         x[consvar]+=c[stype][nglyphs]
         # s['g']={}
         # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
