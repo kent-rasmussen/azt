@@ -1985,6 +1985,19 @@ class Check():
                         self.rx['N#']=rx.make(rx.s(self,sclass)+'$',compile=True)
                     else:
                         self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
+    def profileofformpreferred(self,form):
+        """Simplify combinations where desired"""
+        # log.debug("Simplfying {}...".format(form))
+        for c in ['N','S','G','ʔ','D']:
+            if self.distinguish[c] is False:
+                form=self.rx[c+'_'].sub('C',form)
+                # log.debug("{} regex result: {}".format(c,form))
+            if self.distinguish[c+'wd'] is False:
+                form=self.rx[c+'wd'].sub('C',form)
+                # log.debug("{}wd regex result: {}".format(c,form))
+        for cc in ['CG','CS','NC','VN','VV']:
+            form=self.rx[cc].sub(self.interpret[cc],form)
+        return form
     def profileofform(self,form):
         if form is None:
             return "Invalid"
