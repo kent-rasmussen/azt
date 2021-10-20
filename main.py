@@ -2011,25 +2011,7 @@ class Check():
                     if i not in self.sextracted[ps][s]:
                         self.sextracted[ps][s][i]=0
                     self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
-            if s == 'N#': #different regex key for this one.
-                log.log(2,"Not in d or b, returning variable: {}".format(s))
-                if 'N#' in self.rx:
-                    form=self.rx['N#'].sub(s,form) #replace with profile variable
-            elif s not in ['d','b']:
-                log.log(2,"Not in d or b, returning variable: {}".format(s))
-                form=self.rx[s].sub(s,form) #replace with profile variable
-            elif s == 'd':
-                log.log(2,"in d; returning {} or nothing".format(s))
-                if self.distinguish['d']==True:
-                    form=self.rx[s].sub(s,form) #replace with 'Vd', etc.
-                else:
-                    form=self.rx[s].sub('',form) #remove
-            # leaving boundary markers alone in profiles
-            # elif s == 'b':
-            #     form=self.rx[s].sub(s,form) #replace with profile variable
-            # print(form)
-            form=re.sub('#$','',form) #pull word final word boundary
-            # print(form)
+            form=self.rx[s].sub(s,form) #replace with profile variable
         """We could consider combining NC to C (or not), and CG to C (or not)
         here, after the 'splitter' profiles are formed..."""
         if self.debug==True:
