@@ -1014,9 +1014,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.log(1,_("Looking for analangs in lift file"))
         self.audiolangs=[]
         self.analangs=[]
-        lxl=self.get('lang',base='entry',path=['lexeme'],target='form')
-        lcl=self.get('lang',base='entry',path=['citation'],target='form')
-        pronl=self.get('lang',base='entry',path=['pronunciation'],target='form')
+        lxl=self.get('lexeme/form').get('lang')
+        lcl=self.get('citation/form').get('lang')
+        pronl=self.get('pronunciation/form').get('lang')
         possibles=list(dict.fromkeys(lxl+lcl+pronl))
         log.info(_("Possible analysis language codes found: {}".format(possibles)))
         for glang in set(['fr','en']) & set(possibles):
