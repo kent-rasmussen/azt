@@ -265,13 +265,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                 attrib={'type':"{} verification".format(vtype)})
         return (vf,node)
     def getentrynode(self,senseid,showurl=False):
-        """Get the sense node"""
-        urlnattr=self.geturlnattr('entry',senseid=senseid)
-        url=urlnattr['url']
-        if showurl==True:
-            log.info(url)
-        node=self.nodes.find(url) #this should always find just one node
-        return node
+        return self.get('entry',senseid=senseid).get()
     def getsensenode(self,senseid,showurl=False):
         """Get the sense node"""
         urlnattr=self.geturlnattr('senseid',senseid=senseid)
