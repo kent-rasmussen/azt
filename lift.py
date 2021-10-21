@@ -1344,14 +1344,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                             self.formstosearch))
     def citationforms(self): #outputs generator object with each form in LIFT file.
         """This produces a dictionary, of forms for each language."""
-        #return self.get('citationform')
         output={}
         for lang in self.analangs:
-            output[lang]=self.get('citation',analang=lang)
-            #output[lang]=list()
-            #for form in self.nodes.findall(f"entry/citation/form[@lang='{lang}']/text"):
-            #    output[lang]+=[form.text] #print the text of the <text> node above
-        #log.info(output.keys()) #to see which languages are found
+            output[lang]=self.get('citation/form/text',analang=lang).get('text')
+        log.info("Found the following citation forms: {}".format(output))
         return output
     def lexemes(self):
         output={}
