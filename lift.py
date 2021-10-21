@@ -817,8 +817,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             )
         return forms
     def fields(self,guid=None,lang=None): #get all the field types in a given entry
-        return dict(self.get('type',base='field',target='field')).fromkeys()#nfields=0
-        # return self.get('fieldname',guid=guid,lang=lang)#nfields=0
+        f=list(dict.fromkeys(self.get('field').get('type')))
+        return f
     def getlocations(self,guid=None,lang=None): #get all the field types in a given entry
         l=list(dict.fromkeys(self.get('example/locationfield').get('text')))
         log.info('Locations found in Examples: {}'.format(l))
