@@ -1857,7 +1857,6 @@ class LiftURL():
                             "".format(target,parents,self.level))
                 log.error("this is where we're at: {}\n  {}".format(self.kwargs,
                                                             self.drafturl()))
-                printurllog()
                 exit()
     def maybeshowtarget(self,parent):
         # parent here is a node ancestor to the current origin, which may
