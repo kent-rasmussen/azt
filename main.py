@@ -263,7 +263,7 @@ class Check():
             else:
                 self.analang=self.db.analangs[0]
                 log.debug('Neither analang looks like an iso code, taking the '
-                'first one: {}'.format(langspriority))
+                'first one: {}'.format(self.db.analangs))
         else: #for three or more analangs, take the first plausible iso code
             for n in range(nlangs):
                 if len(self.db.analangs[n]) == 3:
@@ -272,7 +272,7 @@ class Check():
                                             '({})'.format(self.db.analangs[n])))
                     return
             log.debug('None of more than three analangs look like an iso code, '
-            'taking the first one: {}'.format(langspriority))
+            'taking the first one: {}'.format(self.db.analangs))
             self.analang=self.db.analangs[0]
     def guessaudiolang(self):
         nlangs=len(self.db.audiolangs)
