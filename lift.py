@@ -1392,7 +1392,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # log.log(2,"{} (lift.extrasegments run time): {}".format(
         #         time.time()-start_time,self.segmentsnotinregexes))
     def pss(self): #get all POS values in the LIFT file
-        return list(dict.fromkeys(self.get('ps')))
+        p=list(dict.fromkeys(self.get('ps').get('value')))
+        log.info("Found these ps values: {}".format(p))
+        return p
         #pss=list()
         #for ps in self.nodes.findall(f"entry/sense/grammatical-info"):
         #    thisps=ps.attrib.get('value')
