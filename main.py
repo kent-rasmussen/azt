@@ -183,7 +183,7 @@ class Check():
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
         self.guessanalang() #needed for regexs
-        log.debug("analang guessed: {} (If you don't like this, change it in "
+        log.info("analang guessed: {} (If you don't like this, change it in "
                     "the menus)".format(self.analang))
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
@@ -238,23 +238,11 @@ class Check():
     """Guessing functions"""
     def guessanalang(self):
         #have this call set()?
-        langspriority=collections.Counter(self.db.get('lexemelang')+
-                                self.db.get('citationlang')).most_common()
-        try:
-            self.analang=langspriority[0][0]
-            log.debug(_("Analysis language with the most fields ({}): {} ({})"
-                    "".format(langspriority[0][1],self.analang,langspriority)))
-        except:
-            self.analang=None
-            log.info(_("Are there any languages in this database? {}").format(
-                                                                langspriority))
-            return
         """if there's only one analysis language, use it."""
         nlangs=len(self.db.analangs)
         log.debug(_("Found {} analangs: {}".format(nlangs,self.db.analangs)))
-        if nlangs == 1: # print('Only one analang in database!')
+        if nlangs == 1:
             self.analang=self.db.analangs[0]
-            self.analangdefault=self.db.analangs[0] #In case the above gets changed.
             log.debug(_('Only one analang in file; using it: ({})'.format(
                                                         self.db.analangs[0])))
             """If there are more than two analangs in the database, check if one
@@ -265,19 +253,17 @@ class Check():
                 log.debug(_('Looks like I found an iso code for analang! '
                                         '({})'.format(self.db.analangs[0])))
                 self.analang=self.db.analangs[0] #assume this is the iso code
+                self.analangdefault=self.db.analangs[0] #In case it gets changed.
             elif ((len(self.db.analangs[1]) == 3) and
                     (len(self.db.analangs[0]) != 3)):
                 log.debug(_('Looks like I found an iso code for analang! '
                                             '({})'.format(self.db.analangs[1])))
                 self.analang=self.db.analangs[1] #assume this is the iso code
+                self.analangdefault=self.db.analangs[1] #In case it gets changed.
             else:
-                langspriority=collections.Counter(self.db.get('lexemelang')+
-                                        self.db.get('citationlang')).most_common()
-                log.debug("All: {}".format(self.db.get('lexemelang')+
-                                        self.db.get('citationlang')))
-                log.debug(collections.Counter(self.db.get('lexemelang')+
-                                        self.db.get('citationlang')))
-                log.debug('Found the following analangs: {}'.format(langspriority))
+                self.analang=self.db.analangs[0]
+                log.debug('Neither analang looks like an iso code, taking the '
+                'first one: {}'.format(langspriority))
         else: #for three or more analangs, take the first plausible iso code
             for n in range(nlangs):
                 if len(self.db.analangs[n]) == 3:
@@ -285,6 +271,9 @@ class Check():
                     log.debug(_('Looks like I found an iso code for analang! '
                                             '({})'.format(self.db.analangs[n])))
                     return
+            log.debug('None of more than three analangs look like an iso code, '
+            'taking the first one: {}'.format(langspriority))
+            self.analang=self.db.analangs[0]
     def guessaudiolang(self):
         nlangs=len(self.db.audiolangs)
         """if there's only one audio language, use it."""
