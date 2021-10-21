@@ -1392,20 +1392,20 @@ class Unused():
         return list(dict.fromkeys(x))
 class LiftURL():
     def get(self,what='node'):
-        log.debug(self.__dict__)
+        log.log(4,self.__dict__)
         n=self.base.findall(self.url)
         if n != []:
-            log.debug("found: {} (x{}), looking for {}".format(n[:1],len(n),what))
+            log.log(4,"found: {} (x{}), looking for {}".format(n[:1],len(n),what))
         what=self.unalias(what)
         if n == [] or what is None or what == 'node':
             return n
         elif what == 'text':
             r=[i.text for i in n]
-            log.debug(r)
+            log.log(4,r)
             return r
         else:
             r=[i.get(what) for i in n]
-            log.debug(r)
+            log.log(4,r)
             return r
     def build(self,tag,liftattr=None,myattr=None,attrs=None):
         buildanother=False
@@ -1434,7 +1434,7 @@ class LiftURL():
         else:
             self.level['cur']+=1
         self.level[self.alias.get(tag,tag)]=self.level['cur']
-        log.debug("Path so far: {}".format(self.drafturl()))
+        log.log(4,"Path so far: {}".format(self.drafturl()))
         if buildanother:
             self.build(tag)
     def parent(self):
@@ -1449,7 +1449,7 @@ class LiftURL():
     def form(self,value=None,lang=None):
         self.baselevel()
         self.kwargs['value']=self.kwargs.get(value,None) #location and tonevalue
-        log.debug("form kwargs: {}".format(self.kwargs))
+        log.log(4,"form kwargs: {}".format(self.kwargs))
         self.build("form","lang",lang) #OK if lang is None
         if value is not None:
             self.text("value")
@@ -1564,10 +1564,10 @@ class LiftURL():
                 "happen; exiting!")
         exit()
     def bearchildrenof(self,parent):
-        log.debug("bearing children of {} ({})".format(parent,
+        log.log(4,"bearing children of {} ({})".format(parent,
                                                         self.children[parent]))
         for i in self.children[parent]:
-            log.debug("bearchildrenof i: {}".format(i))
+            log.log(4,"bearchildrenof i: {}".format(i))
             self.maybeshow(i,parent)
     def levelup(self,target):
         while self.level.get(target,self.level['cur']+1) < self.level['cur']:
@@ -1581,7 +1581,7 @@ class LiftURL():
                 self.levelup(target)
                 return
             elif parents.index(target) < len(parents)-1:
-                log.debug("level {} not in {}; checking the next one...".format(
+                log.log(4,"level {} not in {}; checking the next one...".format(
                                                             target,self.level))
             else:
                 log.error("last level {} (of {}) not in {}; this is a problem!"
@@ -1593,18 +1593,18 @@ class LiftURL():
         # parent here is a node ancestor to the current origin, which may
         # or may not be an ancestor of targethead. If it is, show it.
         f=self.getfamilyof(parent,x=[])
-        log.debug("Maybeshowtarget: {} (family: {})".format(parent,f))
+        log.log(4,"Maybeshowtarget: {} (family: {})".format(parent,f))
         if self.targethead in f:
             if parent in self.level:
-                log.debug("Maybeshowtarget: leveling up to {}".format(parent))
+                log.log(4,"Maybeshowtarget: leveling up to {}".format(parent))
                 self.levelup(parent)
             else:
-                log.debug("Maybeshowtarget: showing {}".format(parent))
+                log.log(4,"Maybeshowtarget: showing {}".format(parent))
                 self.show(parent)
             self.showtargetinhighestdecendance(parent)
             return True
     def showtargetinlowestancestry(self,nodename):
-        log.debug("Running showtargetinlowestancestry for {}/{} on {}".format(
+        log.log(4,"Running showtargetinlowestancestry for {}/{} on {}".format(
                                     self.targethead,self.targettail,nodename))
         #If were still empty at this point, just do the target if we can
         if nodename == [] and self.targethead in self.children[self.basename]:
@@ -1614,7 +1614,7 @@ class LiftURL():
         g=1
         r=giveup=False
         while not r and giveup is False:
-            log.debug("Trying generation {}".format(g))
+            log.log(4,"Trying generation {}".format(g))
             gen=self.parentsof(gen)
             for p in gen:
                 r=self.maybeshowtarget(p)
@@ -1628,12 +1628,12 @@ class LiftURL():
                     "an ancestor of {} (target) which is also an ancestor of "
                     "{} (current node).".format(g,self.targethead,nodename))
     def showtargetinhighestdecendance(self,nodename):
-        log.debug("Running showtargetinhighestdecendance for {} on {}".format(
+        log.log(4,"Running showtargetinhighestdecendance for {} on {}".format(
                                                     self.targethead,nodename))
         if nodename in self.children:
             children=self.children[nodename]
         else:
-            log.debug("Node {} has no children, so not looking further for "
+            log.log(4,"Node {} has no children, so not looking further for "
                         "descendance.".format(nodename))
             return
         grandchildren=[i for child in children
@@ -1654,33 +1654,33 @@ class LiftURL():
                                         if ggrandchild in self.children
                                         for i in self.children[ggrandchild]
                                     ]
-        log.debug("Looking for {} in children of {}: {}".format(
+        log.log(4,"Looking for {} in children of {}: {}".format(
                                             self.targethead,nodename,children))
-        log.debug("Grandchildren of {}: {}".format(nodename,grandchildren))
-        log.debug("Greatgrandchildren of {}: {}".format(
+        log.log(4,"Grandchildren of {}: {}".format(nodename,grandchildren))
+        log.log(4,"Greatgrandchildren of {}: {}".format(
                                                 nodename,greatgrandchildren))
         if self.targethead in children:
-            log.debug("Showing '{}', child of {}".format(self.targethead,nodename))
+            log.log(4,"Showing '{}', child of {}".format(self.targethead,nodename))
             self.show(self.targethead,nodename)
         elif self.targethead in grandchildren:
-            log.debug("Found target ({}) in grandchildren of {}: {}".format(
+            log.log(4,"Found target ({}) in grandchildren of {}: {}".format(
                         self.targethead,nodename,grandchildren))
             for c in children:
                 if c in self.children and self.targethead in self.children[c]:
-                    log.debug("Showing '{}', nearest ancenstor".format(c))
+                    log.log(4,"Showing '{}', nearest ancenstor".format(c))
                     self.show(c,nodename) #others will get picked up below
                     self.showtargetinhighestdecendance(c)
         elif self.targethead in greatgrandchildren:
-            log.debug("Found target ({}) in gr8grandchildren of {}: {}".format(
+            log.log(4,"Found target ({}) in gr8grandchildren of {}: {}".format(
                                 self.targethead,nodename,greatgrandchildren))
             for c in children:
                 for cc in grandchildren:
                     if cc in self.children and self.targethead in self.children[cc]:
-                        log.debug("Showing '{}', nearest ancenstor".format(c))
+                        log.log(4,"Showing '{}', nearest ancenstor".format(c))
                         self.show(c,nodename) #others will get picked up below
                         self.showtargetinhighestdecendance(c)
         elif self.targethead in gggrandchildren:
-            log.info("Found target ({}) in gggrandchildren of {}: {}".format(
+            log.log(4,"Found target ({}) in gggrandchildren of {}: {}".format(
                                 self.targethead,nodename,gggrandchildren))
             for c in children:
                 for cc in grandchildren:
@@ -1742,18 +1742,18 @@ class LiftURL():
         Once the level of the lineage head is decided, the rest of the lineage
         is added."""
         # Now operate on the head of the target lineage
-        log.debug("URL (before {} target): {}".format(self.target,self.drafturl()))
+        log.log(4,"URL (before {} target): {}".format(self.target,self.drafturl()))
         if self.getalias(self.targethead) not in self.level: #If the target hasn't been made yet.
             log.debug(self.url)
             i=self.currentnodename()
-            log.debug("URL base: {}; i: {}".format(self.basename,i))
+            log.log(4,"URL base: {}; i: {}".format(self.basename,i))
             if i is None: #if it is, skip down in any case.
                 i=self.basename
-            log.debug("URL bit list: {}; i: {}".format(self.url,i))
+            log.log(4,"URL bit list: {}; i: {}".format(self.url,i))
             if type(i) == list:
                 i=i[0] #This should be a string
             f=self.getfamilyof(i,x=[])
-            log.debug("Target: {}; {} family: {}".format(self.targethead,i,f))
+            log.log(4,"Target: {}; {} family: {}".format(self.targethead,i,f))
             if self.targethead in f:
                 self.showtargetinhighestdecendance(i) #should get targethead
                     # return #only do this for the first you find (last placed).
@@ -1765,9 +1765,9 @@ class LiftURL():
                 n=self.targetbits.index(b)
                 bp=self.targetbits[n-1].split('[')[0]#just the node, not attrs
                 afterbp=self.drafturl().split(self.unalias(bp))
-                log.debug("b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
+                log.log(4,"b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
                 if len(afterbp) <=1 or b not in afterbp[1]:
-                    log.debug("showing target element {}: {} (of {})".format(n,b,bp))
+                    log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
                     self.levelup(bp)
                     self.show(b,parent=bp)
         self.levelup(self.targetbits[-1])#leave last in target, whatever else
@@ -1801,7 +1801,7 @@ class LiftURL():
         c=self.getfamilyof(node,x=[])
         # This fn is not called by showtargetinhighestgeneration or maketarget
         if node == self.targethead: #do this later
-            log.debug("skipping node {}, in target:{}".format(node,self.target))
+            log.log(4,"skipping node {}, in target:{}".format(node,self.target))
             return False #not self.targetlastsibling()
         elif self.attrneeds(node,c):
             return True
@@ -1812,68 +1812,68 @@ class LiftURL():
         else:
             return False
     def getfamilyof(self,node,x):
-        log.debug("running kwargshaschildrenof.gen on '{}'".format(node))
+        log.log(4,"running kwargshaschildrenof.gen on '{}'".format(node))
         if type(node) is str:
             node=[node]
         for i in node:
-            log.debug("running kwargshaschildrenof.gen on '{}'".format(i))
+            log.log(4,"running kwargshaschildrenof.gen on '{}'".format(i))
             if i is not '':
                 ii=self.children.get(i,'')
-                log.debug("Found '{}' this time!".format(ii))
+                log.log(4,"Found '{}' this time!".format(ii))
                 if ii is not '':
                     x+=ii
                     self.getfamilyof(ii,x)
         return x
     def pathneeds(self,node,children):
         path=self.path
-        log.debug("Path: {}; children: {}".format(path,children))
+        log.log(4,"Path: {}; children: {}".format(path,children))
         if node in path and node not in self.level:
-            log.debug("Parent ({}) in path: {}".format(node,path))
+            log.log(4,"Parent ({}) in path: {}".format(node,path))
             return True
         if children != []:
             childreninpath=set(children) & set(path)
             if childreninpath != set():
                 pathnotdone=childreninpath-set(self.level)
                 if pathnotdone != set():
-                    log.debug("Found descendant of {} in path, which isn't "
+                    log.log(4,"Found descendant of {} in path, which isn't "
                         "already there: {}".format(node, pathnotdone))
                     return True
         return False
     def attrneeds(self,node,children):
-        log.debug("looking attr(s) of {} in {}".format([node]+children,
+        log.log(4,"looking for attr(s) of {} in {}".format([node]+children,
                                                                     self.attrs))
         for n in [node]+children:
             if n in self.attrs:
-                log.debug("looking attr(s) of {} in {}".format(n,self.attrs))
+                log.log(4,"looking for attr(s) of {} in {}".format(n,self.attrs))
                 common=set(self.attrs[n])&set(list(self.kwargs)+[self.what])
                 if common != set():
-                    log.debug("Found attr(s) {} requiring {}".format(common,n))
+                    log.log(4,"Found attr(s) {} requiring {}".format(common,n))
                     return True
             else:
-                log.debug("{} not found in {}".format(n,self.attrs.keys()))
+                log.log(4,"{} not found in {}".format(n,self.attrs.keys()))
         return False
     def kwargsneeds(self,node,children):
         if node in self.kwargs:
-            log.debug("Parent ({}) in kwargs: {}".format(node,self.kwargs))
+            log.log(4,"Parent ({}) in kwargs: {}".format(node,self.kwargs))
             return True
         if children != []:
-            log.debug("Looking for descendants of {} ({}) in kwargs: {}".format(
+            log.log(4,"Looking for descendants of {} ({}) in kwargs: {}".format(
                                                 node,children,self.kwargs))
             childreninkwargs=set(children) & set(self.kwargs)
             if childreninkwargs != set():
-                log.debug("Found descendants of {} in kwargs: {}".format(node,
+                log.log(4,"Found descendants of {} in kwargs: {}".format(node,
                                                             childreninkwargs))
                 pathnotdone=childreninkwargs-set(self.level)
                 if pathnotdone != set():
-                    log.debug("Found descendants of {} in kwargs, which aren't "
+                    log.log(4,"Found descendants of {} in kwargs, which aren't "
                                     "already there: ".format(node,pathnotdone))
                     return True
         return False
     def callerfn(self):
         return sys._getframe(2).f_code.co_name #2 gens since this is a fn, too
     def parentsof(self,nodenames):
-        log.debug("children: {}".format(self.children.items()))
-        log.debug("key pair: {}".format(
+        log.log(4,"children: {}".format(self.children.items()))
+        log.log(4,"key pair: {}".format(
                 ' '.join([str(x) for x in self.children.items() if nodenames in x[1]])))
         p=[]
         if type(nodenames) != list:
@@ -1936,10 +1936,10 @@ class LiftURL():
         self.setaliases()
         self.setattrsofnodes()
         self.bearchildrenof(basename)
-        log.debug("Making Target now.")
+        log.log(4,"Making Target now.")
         self.maketarget()
         self.makeurl()
-        log.debug("Final URL: {}".format(self.url))
+        log.log(4,"Final URL: {}".format(self.url))
         # self.printurl()
 """Functions I'm using, but not in a class"""
 def prettyprint(node):
