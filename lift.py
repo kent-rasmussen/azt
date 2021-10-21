@@ -1037,8 +1037,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             'for each analysis language.'))
             for self.analang in self.analangs:
                 self.audiolangs+=[f'{self.analang}-Zxxx-x-audio']
-        log.debug('Audio languages: {}'.format(self.audiolangs))
-        log.debug('Analysis languages: {}'.format(self.analangs))
+        log.info('Audio languages: {}'.format(self.audiolangs))
+        log.info('Analysis languages: {}'.format(self.analangs))
     def glosslangs(self):
         g=self.get('lang',base='sense',target='gloss')
         d=self.get('lang',base='sense',target='definition')
