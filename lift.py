@@ -15,6 +15,7 @@ import rx
 import logging
 import ast #For string list interpretation
 import copy
+import collections
 log = logging.getLogger(__name__)
 try: #Allow this module to be used without translation
     _
@@ -1031,6 +1032,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                 "in {} field; is this correct?".format(
                                                 len(gforms),glang,form))
                         #     possibles.remove(glang) #not anymore
+            count=collections.Counter(lxl+lcl+pronl)[glang]
+            if 0< count:
+                if count <= 10:
         for lang in possibles:
             if 'audio' in lang:
                 log.debug(_("Audio language {} found.".format(lang)))
