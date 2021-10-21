@@ -469,38 +469,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def findduplicateforms(self):
         """This removes duplicate form nodes in lx or lc nodes, not much point.
         """
+        dup=False
         for entry in self.nodes:
-            for node in entry:
-                if ((node.tag == 'lexical-unit') or (node.tag == 'citation')):
-                    forms=node.findall('form')
-                    removed=list()
-                    for form in forms:
-                        f1i=forms.index(form)
-                        for form2 in forms:
-                            f2i=forms.index(form2)
-                            if (f2i <= f1i) or (form2 in removed):
-                                log.log(3,"{} <= {} or form {} already removed; "
-                                            "continuing.".format(f2i,f2i,f1i))
-                                continue
-                            if (form.get('lang') == form2.get('lang') and
-                            form.find('text').text == form2.find('text').text):
-                                log.debug("Found {} {} {}".format(f1i,
-                                                    form.get('lang'),
-                                                    form.find('text').text,
-                                                    ))
-                                log.debug("Found {} {} {}".format(f2i,
-                                                    form2.get('lang'),
-                                                    form2.find('text').text
-                                                    ))
-                                log.debug("Removing form {} {} {}".format(f2i,
-                                                    form2.get('lang'),
-                                                    form2.find('text').text
-                                                    ))
-                                node.remove(form2)
-                                removed.append(form2)
-                            else:
-                                log.log(3,"Not removing form")
-        self.write()
+            formparents=entry.findall('lexical-unit')+entry.findall('citation')
+            for fp in formparents:
+                for lang in self.analangs:
+                    forms=fp.findall('form[@lang="{}"]'.format(lang))
+                    if len(forms) >1:
+                        log.info("Found multiple form fields in an entry: {}"
+                                "".format([x.find('text').text for x in forms]))
+                        dup=True
+        if not dup:
+            log.info("No duplicate form fields were found in the lexicon.")
+        # self.write() Not doing any changes, anyway...
     def findduplicateexamples(self):
         def getexdict(example):
             analangs=[]
