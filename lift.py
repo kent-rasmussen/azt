@@ -1293,39 +1293,39 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if len(form) == 0: #no items returned
                 form=self.get('lexeme',senseid=senseid,lang=lang,ps=ps)
             self.senseidformstosearch[lang][ps][senseid]=form
-    def getguidformstosearch(self):
-        # import time
-        """This outputs a dictionary of form {analang: {guid:form}*}*, where
-        form is citation if available, or else lexeme. This is to be flexible
-        for entries in process of analysis, and to have a dictionary to check
-        with regexes for output."""
-        self.guidformstosearch={}
-        self.senseidformstosearch={}
-        for lang in self.analangs:
-            self.guidformstosearch[lang]={} #This will erase all previous data!!
-            self.senseidformstosearch[lang]={}
-            for ps in self.pss: #I need to break this up.
-                # start_time=time.time()
-                self.getguidformstosearchbyps(ps,lang=lang)
-                self.getsenseidformstosearchbyps(ps,lang=lang)
-                #"n",str(time.time() - start_time),"seconds.")
-        #log.info(self.guidformstosearch)
-    def getformstosearchbyps(self,ps,lang=None):
-        if lang is None:
-            lang=self.analang
-        self.formstosearch[lang][ps]={} #Erases all previous data!!
-        #for guid in self.get('guidbynofield',lang=lang,ps=ps):
-        # forms=self.citationorlexeme(lang=lang,ps=ps)
-        """This actually needs this logic here, since formstosearch hasn't
-        been made yet."""
-        forms=self.get('citation',analang=lang,ps=ps)
-        # if len(forms) == 0: #no items returned, I should probably combine
-                            #this at some point, list(dict.fromkeys(form1+form2))
-        forms+=self.get('lexeme',analang=lang,ps=ps)
-        # forms1=self.get('citation',lang=lang,ps=ps)
-        # forms2=self.get('lexeme',lang=lang,ps=ps)
-        # forms=list(dict.fromkeys(forms1+forms2))
-        self.formstosearch[lang][ps]=forms
+    # def getguidformstosearch(self):
+    #     # import time
+    #     """This outputs a dictionary of form {analang: {guid:form}*}*, where
+    #     form is citation if available, or else lexeme. This is to be flexible
+    #     for entries in process of analysis, and to have a dictionary to check
+    #     with regexes for output."""
+    #     self.guidformstosearch={}
+    #     self.senseidformstosearch={}
+    #     for lang in self.analangs:
+    #         self.guidformstosearch[lang]={} #This will erase all previous data!!
+    #         self.senseidformstosearch[lang]={}
+    #         for ps in self.pss: #I need to break this up.
+    #             # start_time=time.time()
+    #             self.getguidformstosearchbyps(ps,lang=lang)
+    #             self.getsenseidformstosearchbyps(ps,lang=lang)
+    #             #"n",str(time.time() - start_time),"seconds.")
+    #     #log.info(self.guidformstosearch)
+    # def getformstosearchbyps(self,ps,lang=None):
+    #     if lang is None:
+    #         lang=self.analang
+    #     self.formstosearch[lang][ps]={} #Erases all previous data!!
+    #     #for guid in self.get('guidbynofield',lang=lang,ps=ps):
+    #     # forms=self.citationorlexeme(lang=lang,ps=ps)
+    #     """This actually needs this logic here, since formstosearch hasn't
+    #     been made yet."""
+    #     forms=self.get('citation/form/text',analang=lang,ps=ps)
+    #     # if len(forms) == 0: #no items returned, I should probably combine
+    #                         #this at some point, list(dict.fromkeys(form1+form2))
+    #     forms+=self.get('lexeme/form/text',analang=lang,ps=ps)
+    #     # forms1=self.get('citation',lang=lang,ps=ps)
+    #     # forms2=self.get('lexeme',lang=lang,ps=ps)
+    #     # forms=list(dict.fromkeys(forms1+forms2))
+    #     self.formstosearch[lang][ps]=forms
     def getformstosearch(self):
         # import time
         """This outputs a dictionary of form {analang: {guid:form}*}*, where
