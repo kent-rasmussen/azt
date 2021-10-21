@@ -1327,7 +1327,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     #     # forms=list(dict.fromkeys(forms1+forms2))
     #     self.formstosearch[lang][ps]=forms
     def getformstosearch(self):
-        # import time
         """This outputs a dictionary of form {analang: {guid:form}*}*, where
         form is citation if available, or else lexeme. This is to be flexible
         for entries in process of analysis, and to have a dictionary to check
@@ -1336,10 +1335,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             self.formstosearch[lang]={} #This will erase all previous data!!
             for ps in self.pss+[None]: #I need to break this up.
-                # start_time=time.time()
-                self.getformstosearchbyps(ps,lang=lang)
-                #"n",str(time.time() - start_time),"seconds.")
-        # log.info(self.formstosearch)
+                forms=self.get('citation/form/text',analang=lang,ps=ps
+                                                                ).get('text')
+                forms+=self.get('lexeme/form/text',analang=lang,ps=ps
+                                                                ).get('text')
+                self.formstosearch[lang][ps]=list(dict.fromkeys(forms))
+        log.debug("Found the following forms to search: {}".format(
+                                                            self.formstosearch))
     def citationforms(self): #outputs generator object with each form in LIFT file.
         """This produces a dictionary, of forms for each language."""
         #return self.get('citationform')
