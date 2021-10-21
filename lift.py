@@ -1275,15 +1275,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     #         if s is not None:
     #             actuals.append(s)
     #     return list(dict.fromkeys(actuals))
-    def getguidformstosearchbyps(self,ps,lang=None):
-        if lang is None:
-            lang=self.analang
-        self.guidformstosearch[lang][ps]={} #Erases all previous data!!
-        for guid in self.get('guidbyps',lang=lang,ps=ps):
-            form=self.get('citation',guid=guid,lang=lang,ps=ps)
-            if len(form) == 0: #no items returned
-                form=self.get('lexeme',guid=guid,lang=lang,ps=ps)
-            self.guidformstosearch[lang][ps][guid]=form
+    # def getguidformstosearchbyps(self,ps,lang=None):
+    #     if lang is None:
+    #         lang=self.analang
+    #     self.guidformstosearch[lang][ps]={} #Erases all previous data!!
+    #     for guid in self.get('guidbyps',lang=lang,ps=ps):
+    #         form=self.get('citation',guid=guid,lang=lang,ps=ps)
+    #         if len(form) == 0: #no items returned
+    #             form=self.get('lexeme',guid=guid,lang=lang,ps=ps)
+    #         self.guidformstosearch[lang][ps][guid]=form
     def getsenseidformstosearchbyps(self,ps,lang=None):
         if lang is None:
             lang=self.analang
