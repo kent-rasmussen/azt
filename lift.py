@@ -68,6 +68,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
         self.citationforms=self.citationforms()
         self.lexemes=self.lexemes()
+        self.locations=self.getlocations()
         self.defaults=[ #these are lift related defaults
                     'analang',
                     'glosslang',
@@ -1070,6 +1071,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def fields(self,guid=None,lang=None): #get all the field types in a given entry
         return dict(self.get('type',base='field',target='field')).fromkeys()#nfields=0
         # return self.get('fieldname',guid=guid,lang=lang)#nfields=0
+    def getlocations(self,guid=None,lang=None): #get all the field types in a given entry
+        l=list(dict.fromkeys(self.get('example/locationfield').get('text')))
+        log.info('Locations found in Examples: {}'.format(l))
+        return l
     def getsenseids(self): #get the number entries in a lift file.
         self.senseids=self.get('sense').get('senseid') #,showurl=True
         self.nsenseids=len(self.senseids) #,guid,lang,fieldtype,location
