@@ -1356,7 +1356,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Found the following lexemes: {}".format(output))
         return output
     def extrasegments(self):
-        # start_time=time.time() #this enables boot time evaluation
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
             extras=list()
@@ -1387,10 +1386,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "complex segments which should be counted as a single "
                     "segment.")
                 log.info("--those may not be covered by your regexes.")
-                print("No problems!")
-
-        # log.log(2,"{} (lift.extrasegments run time): {}".format(
-        #         time.time()-start_time,self.segmentsnotinregexes))
     def pss(self): #get all POS values in the LIFT file
         p=list(dict.fromkeys(self.get('ps').get('value')))
         log.info("Found these ps values: {}".format(p))
