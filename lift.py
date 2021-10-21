@@ -1019,22 +1019,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         pronl=self.get('lang',base='entry',path=['pronunciation'],target='form')
         possibles=list(dict.fromkeys(lxl+lcl+pronl))
         log.info(_("Possible analysis language codes found: {}".format(possibles)))
-        for glang in ['fr','en']:
-            if glang in possibles:
-                for form in ['citation','lexeme']:
-                    gforms=self.get(form,base='entry',target=form+'/form',analang=glang)
-                    if 0< len(gforms):
-                        # log.info("LWC lang {} found in {} field: {}".format(
-                        #     glang,form,self.get(form,analang=glang)))
-                        """For Saxwe, and others who have fr or en encoding errors"""
-                        if len(gforms) <= 10:
-                            log.info("Only {} examples of LWC lang {} found "
-                                "in {} field; is this correct?".format(
-                                                len(gforms),glang,form))
-                        #     possibles.remove(glang) #not anymore
-            count=collections.Counter(lxl+lcl+pronl)[glang]
-            if 0< count:
-                if count <= 10:
+        for glang in set(['fr','en']) & set(possibles):
+            c=collections.Counter(lxl+lcl+pronl)[glang]
+            if 0< c:
+                """For Saxwe, and others who have fr or en encoding errors"""
+                if c <= 10:
+                    log.info("Only {} examples of LWC lang {} found "
+                        "in {} field; is this correct?".format(c,glang,form))
         for lang in possibles:
             if 'audio' in lang:
                 log.debug(_("Audio language {} found.".format(lang)))
