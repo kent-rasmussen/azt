@@ -2713,7 +2713,7 @@ def another():
         'url':(("form[@lang='{lang}']/text"
                 ),['lang']),
         'attr':'nodetext'}
-def printurllog():
+def printurllog(lift):
     log.info('\n'+'\n'.join([str(x)+'\n  '+str(y) for x,y in lift.urls.items()]))
 if __name__ == '__main__':
     import time #for testing; remove in production
@@ -2850,10 +2850,10 @@ if __name__ == '__main__':
                 # tonevalue=3,
                 # )
     # test()
-    entries=lift.get("entry").get()
-    log.info(len(entries))
-    log.info(entries[0].get('guid'))
-    printurllog()
+    # entries=lift.get("entry").get()
+    # log.info(len(entries))
+    # log.info(entries[0].get('guid'))
+    printurllog(lift)
     quit()
     import timeit
     def timetest():
