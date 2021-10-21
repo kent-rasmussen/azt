@@ -78,7 +78,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.slists() #sets: self.c self.v, not done with self.segmentsnotinregexes[lang]
         self.extrasegments() #tell me if there's anything not in a V or C regex.
         self.findduplicateforms()
-        # self.findduplicateexamples() #Fix this!
+        self.findduplicateexamples()
         """Think through where this belongs; what classes/functions need it?"""
         log.info("Language initialization done.")
     def geturlnattr(self, attribute, **kwargs):
@@ -484,272 +484,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info("No duplicate form fields were found in the lexicon.")
         # self.write() Not doing any changes, anyway...
     def findduplicateexamples(self):
-        def getexdict(example):
-            analangs=[]
-            otheranalangs=[]
-            glosslangs=[]
-            forms=Object() #?!?!
-            forms.forms=Object()
-            setattr(forms,'analangs',analangs)
-            setattr(forms,'glosslangs',glosslangs)
-            analang=''
-            glosslang=''
-            glosslang2=''
-            location=''
-            tonevalue=''
-            log.log(3,"Working on example {} (this sense: {})".format(exn,exindex))
-            formnodes=example.findall('form') #multiple/sense
-            translationformnodes=example.findall(
-                        "translation[@type='Frame translation']/form") #just one/sense
-            if formnodes != None:
-                for formnode in formnodes:
-                    lang=formnode.get('lang')
-                    formnodetext=formnode.find('text')
-                    if formnodetext is not None:
-                        analangs.append(lang)
-                        setattr(forms,'analang',formnodetext.text)
-                        setattr(forms.forms,lang,forms.analang)
-                        # forms[lang]=formnodetext.text#
-                    else:
-                        log.log(3,"No formnodetext! (lang: {})".format(lang))
-                if analangs != []:
-                    log.log(2,"Analangs: {}".format(analangs))
-                    analang=analangs[0]
-                    if len(analangs) >1:
-                        otheranalangs=analangs[1:]
-                else:
-                    analang=None
-            else:
-                log.error("No form node!")
-            if translationformnodes != None:
-                for formnode in translationformnodes:
-                    lang=formnode.get('lang')
-                    formnodetext=formnode.find('text')
-                    if formnodetext != None:
-                        glosslangs.append(lang)
-                        if len(glosslangs) >0:
-                            forms.glosslang2=formnodetext.text
-                            setattr(forms.forms,lang,forms.glosslang2)
-                        else:
-                            forms.glosslang=formnodetext.text
-                            setattr(forms.forms,lang,forms.glosslang)
-                        # forms[lang]=formnodetext.text#
-                    else:
-                        log.log(4,"No glossformnodetext! ({}; lang: {})".format(
-                                                            lang,formnodetext))
-                log.log(2,"glosslangs: {}".format(glosslangs))
-                if len(glosslangs) >1:
-                    glosslang2=glosslangs[1]
-                else:
-                    glosslang2=None
-                    log.log(3,"No glosslang2formnodetext; hope that's OK!")
-                if len(glosslangs) >0:
-                    glosslang=glosslangs[0]
-                else:
-                    glosslang=None
-                    log.log(4,"No glosslangformnodetext!")
-            else:
-                log.log(4,"No translation node!")
-            #We don't care about form[@lang] for these:
-            locationnode=example.find("field[@type='location']/form/text")
-            valuenode=example.find("field[@type='tone']/form/text")
-            if locationnode != None:
-                location=locationnode.text
-            else:
-                location=None
-            if valuenode != None:
-                tonevalue=valuenode.text
-            else:
-                tonevalue='' #this means an empty/missing tone node only.
-            return (forms, analang, glosslang, glosslang2, location, tonevalue,
-                                                                otheranalangs)
-        def compare(x,y):
-            same=0
-            for i in range(len(x)):
-                if x[i] == y[i]:
-                    log.log(2,"{} =".format(x[i]))
-                    log.log(2,"{}".format(y[i]))
-                    same+=1
-                else:
-                    log.log(2,"{} ≠".format(x[i]))
-                    log.log(2,"{}!".format(y[i]))
-                    same=False
-            return same
-        forms={}
-        entries=self.nodes.findall('entry')
-        exn=0
-        for entry in entries:
-            entindex=entries.index(entry)
-            log.log(2,"Working on entry {}: {}".format(entindex,
-                                                        entry.get('guid')))
-            senses=entry.findall('sense')
-            for sense in senses:
-                senseindex=senses.index(sense)
-                log.log(3,"Working on sense {}: {}".format(senseindex,
-                                                        sense.get('id')))
-                examples=sense.findall('example') #'senselocations'
-                for example in examples:
-                    #If empty node, remove it
-                    if len(example) == 0:
-                        log.info("Deleting Empty example in {}".format(
-                                                            entry.get('guid')))
-                        sense.remove(example)
-                        continue
-                    exn+=1
-                    exindex=list(examples).index(example)
-                    ex1=getexdict(example)
-                    if ex1[1] == None:
-                        log.info("No analang found for example {} in {}"
-                                "".format(ex2index,sense.get('id')))
-                        continue
-                    for example2 in examples:
-                        ex2index=list(examples).index(example2)
-                        if exindex >= ex2index:
-                            log.log(2,"Comparing example {} with example {}; "
-                                    "skipping.".format(exindex,ex2index))
-                            continue
-                        else:
-                            log.log(2,"Comparing example {} with example {}."
-                                    "".format(exindex,ex2index))
-                        #here we replicate/skip exampleissameasnew
-                        ex2=getexdict(example2)
-                        if ex2[1] == None:
-                            log.info("No analang found for example {} in {}"
-                                        "".format(ex2index,sense.get('id')))
-                            continue
-                        othertonevalue=self.exampleisnotsameasnew(
-                                                node=sense,
-                                                example=example2,
-                                                db=ex1[0],
-                                                analang=ex1[1],
-                                                glosslang=ex1[2],
-                                                glosslang2=ex1[3],
-                                                location=ex1[4]
-                                                # ,showurl=True
-                                                )
-                        if othertonevalue == None:
-                            log.log(2,"No same node found!")
-                        elif not ((othertonevalue == ex1[5]) or
-                                ((type(othertonevalue) is ET.Element) and
-                                (othertonevalue.text == ex1[5]))):
-                            try:
-                                log.log(3,"Same node, different value! ({}!={})"
-                                            "; copying over {}?{}".format(
-                                        othertonevalue.text,
-                                        ex1[5],type(othertonevalue.text),
-                                        type(ex1[5])))
-                                if ((othertonevalue.text == '') or
-                                            (othertonevalue.text == None)):
-                                    log.log(3,"empty othertonevalue node")
-                                    othertonevalue.text == ex1[5]
-                                    ex2=getexdict(example)
-                                elif ((ex1[5] == '') or (ex1[5] == None)):
-                                    log.log(3,"empty ex1 tonevalue node")
-                                    t=example.find("field[@type='tone']/form/"
-                                                "text")
-                                    if t is not None:
-                                        log.log(2,"tone node there, adding "
-                                                                    "tonevalue")
-                                        t.text=othertonevalue.text
-                                    else:
-                                        log.log(2,"No tone node there, adding")
-                                        fld=ET.SubElement(example,'field',
-                                                        attrib={'type':'tone'})
-                                        f=ET.SubElement(fld,'form',
-                                                        attrib={'lang':ex1[2]})
-                                        g=ET.SubElement(f,'text')
-                                        g.text=othertonevalue.text
-                                    ex1=getexdict(example)
-                                else:
-                                    log.error("Huh? tonevalue nodes: {}; {} in "
-                                                "{}".format(othertonevalue,
-                                                ex1[5], sense.get('id')))
-                            except:
-                                log.log(2,"Same text, different value! ({}!={})"
-                                            "; copying over {}?{}".format(
-                                            othertonevalue,
-                                            ex1[5],type(othertonevalue),
-                                            type(ex1[5])))
-                                if (ex2[5] == '') or (ex2[5] == None):
-                                    log.log(2,"empty ex2 tonevalue node")
-                                    t=example2.find("field[@type='tone']/"
-                                                "form/text")
-                                    if t is not None:
-                                        t.text=ex1[5]
-                                    else:
-                                        fld=ET.SubElement(example2,'field',
-                                                        attrib={'type':'tone'})
-                                        f=ET.SubElement(fld,'form',
-                                                        attrib={'lang':ex1[2]})
-                                        g=ET.SubElement(f,'text')
-                                        g.text=ex1[5]
-                                    ex2=getexdict(example)
-                                else:
-                                    log.error("Huh? tonevalues: {}; {} in {}"
-                                                "".format(othertonevalue,
-                                                ex1[5], sense.get('id')))
-                            compare(ex1,ex2) #This compares tuples
-                        if (othertonevalue != None) and (ex2[5] == ex1[5]):
-                            try:
-                                log.log(2,"Same node, same value! ({}={}-{})"
-                                            "".format(
-                                            ex1[5],othertonevalue.text,ex2[5]))
-                            except:
-                                log.log(2,"Same text, same value! ({}={}-{})"
-                                            "".format(
-                                            ex1[5],othertonevalue,ex2[5]))
-                            compare(ex1,ex2) #This compares tuples
-                            if (ex1[6] == []) and (ex2[6] == []):
-                                log.info("No second analang; removing second "
-                                    "example from {}.".format(sense.get('id')))
-                                if example2 in sense:
-                                    sense.remove(example2)
-                            for lang in ex1[6]:
-                                if lang in ex2[6]:
-                                    log.log(2,"Language {} found in both "
-                                                    "examples.".format(lang))
-                                    if ex1[0][lang] == ex2[0][lang]:
-                                        log.log(2,"Language {} content same in "
-                                                "both examples.".format(lang))
-                                        if example2 in sense:
-                                            try:
-                                                log.info("Removing second "
-                                                        "example from {}."
-                                                        "".format(
-                                                            sense.get('id')))
-                                            except:
-                                                log.info("Removing second "
-                                                    "example from {}".format(
-                                                    sense.get('id')))
-                                            sense.remove(example2)
-                                    else:
-                                        #Don't remove here
-                                        log.log(3,"Language {} content "
-                                                "DIFFERENT".format(lang))
-                                else:
-                                    if example2 in sense:
-                                        try:
-                                            log.info("Removing second example "
-                                                    "from {}".format(
-                                                            sense.get('id')))
-                                        except:
-                                            log.info("Removing second example "
-                                                    "from {}".format(
-                                                            sense.get('id')))
-                                        sense.remove(example2)
-                            for lang in ex2[6]:
-                                if lang not in ex1[6]:
-                                    if example in sense:
-                                        try:
-                                            log.info("Removing first example."
-                                                    "from {}".format(
-                                                            sense.get('id')))
-                                        except:
-                                            log.info("Removing first example."
-                                                    "from {}".format(
-                                                            sense.get('id')))
-                                        sense.remove(example)
-        self.write()
+        dup=False
+        senses=self.nodes.findall('entry/sense')
+        for sense in senses:
+            for l in self.locations:
+                examples=sense.findall('example/field[@type="location"]/'
+                                        'form[text="{}"]/../..'.format(l)) #'senselocations'
+                if len(examples)>1:
+                    log.info("Found multiple examples of the same location ({})"
+                            " in the same sense: {}".format(l,
+                            [x.find('form/text').text for x in examples]))
+                    dup=True
+        if not dup:
+            log.info("No duplicate examples (same sense and location) were "
+                    "found in the lexicon.")
+        # self.write() Not yet, anyway
     def addtoneUF(self,senseid,group,analang,guid=None,showurl=False):
         urlnattr=self.geturlnattr('senseid',senseid=senseid) #give the sense.
         url=urlnattr['url']
