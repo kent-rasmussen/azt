@@ -2363,7 +2363,7 @@ class Check():
             if senseid not in self.senseidsinvalid:
                 self.senseidsvalid+=[senseid]
         print(len(self.senseidsvalid),'senses with valid data remaining.')
-        self.senseidswanyps=self.db.get('senseidwanyps') #any ps value works here.
+        self.senseidswanyps=self.db.get('sense',path=['ps'],showurl=True).get('senseid') #any ps value works here.
         print(len(self.senseidswanyps),'senses with ps data found.')
         self.senseidsvalidwops=[]
         self.senseidsvalidwps=[]
