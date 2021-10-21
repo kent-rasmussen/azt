@@ -267,13 +267,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def getentrynode(self,senseid,showurl=False):
         return self.get('entry',senseid=senseid).get()
     def getsensenode(self,senseid,showurl=False):
-        """Get the sense node"""
-        urlnattr=self.geturlnattr('senseid',senseid=senseid)
-        url=urlnattr['url']
-        if showurl==True:
-            log.info(url)
-        node=self.nodes.find(url) #this should always find just one node
-        return node
+        return self.get('sense',senseid=senseid).get()
     def addexamplefields(self,**kwargs):
         # ,guid,senseid,analang,glosslang,glosslang2,forms,
         # fieldtype,location,fieldvalue,ps=None
