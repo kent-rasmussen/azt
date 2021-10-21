@@ -1352,10 +1352,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def lexemes(self):
         output={}
         for lang in self.analangs:
-            output[lang]=self.get('lexeme',analang=lang) #list()
-            #for form in self.nodes.findall(f"entry/lexical-unit/form[@lang='{lang}']/text"):
-            #    output[lang]+=[form.text] #print the text of the <text> node above
-        #log.info(output.keys()) #to see which languages are found
+            output[lang]=self.get('lexeme/form/text',analang=lang).get('text')
+        log.info("Found the following lexemes: {}".format(output))
         return output
     def extrasegments(self):
         # start_time=time.time() #this enables boot time evaluation
