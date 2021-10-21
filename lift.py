@@ -1040,10 +1040,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info('Audio languages: {}'.format(self.audiolangs))
         log.info('Analysis languages: {}'.format(self.analangs))
     def glosslangs(self):
-        g=self.get('lang',base='sense',target='gloss')
-        d=self.get('lang',base='sense',target='definition')
+        g=self.get('gloss').get('lang')
+        d=self.get('definition/form').get('lang')
         self.glosslangs=list(dict.fromkeys(g+d))
-        log.debug(_("gloss languages found: {}".format(self.glosslangs)))
+        log.info(_("gloss languages found: {}".format(self.glosslangs)))
     def glossordefn(self,guid=None,senseid=None,lang='ALL',ps=None
                     ,showurl=False):
         if lang == None: #This allows for a specified None='give me nothing'
