@@ -2709,7 +2709,7 @@ def another():
                 ),['lang']),
         'attr':'nodetext'}
 def printurllog(lift):
-    log.info('\n'+'\n'.join([str(x)+'\n  '+str(y) for x,y in lift.urls.items()]))
+    log.info('\n'+'\n'.join([str(x)+'\n  '+str(y.url) for x,y in lift.urls.items()]))
 if __name__ == '__main__':
     import time #for testing; remove in production
     # def _(x):
