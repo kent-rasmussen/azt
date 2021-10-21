@@ -269,64 +269,47 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def getsensenode(self,senseid,showurl=False):
         return self.get('sense',senseid=senseid).get()
     def addexamplefields(self,**kwargs):
-        # ,guid,senseid,analang,glosslang,glosslang2,forms,
-        # fieldtype,location,fieldvalue,ps=None
-        # This fuction will add an XML node to the lift tree, like a new
-        # example field.
-        # The program should know before calling this, that there isn't
-        # already the relevant node --since it is agnostic of what is already
-        # there.
         log.info(_("Adding values (in lift.py) : {}").format(kwargs))
-        # showurl=kwargs.get('showurl',False)
+        #These should always be there:
         senseid=kwargs.get('senseid')
         location=kwargs.get('location')
-        node=self.getsensenode(senseid=senseid)
-        if node is None:
-            log.info("Sorry, this didn't return a node: {}".format(senseid))
-            return
-        fieldtype=kwargs.get('fieldtype')
-        tonevalue=kwargs.get('fieldvalue')
-        # Logic to check if this example already here
-        # This function returns a text node (from any one of a number of
-        # example nodes, which match form, gloss and location) containing a
-        # tone sorting value, or None (if no example nodes match form, gloss
-        # and location)
-        #We're adding a node to kwargs here.
-        # exfieldvalue=self.get('examplebylocation',senseid=senseid,location=location)
-        exfieldvalue=lift.get('example/field/form/text',
+        fieldtype=kwargs.get('fieldtype') # ever not 'tone'?
+        exfieldvalue=self.get('example/field/form/text',
                                     path=['location','tonefield'],
                                     senseid=senseid,
-                                    fieldtype='tone',location=location,
-                                    # tonevalue=fieldvalue,
-                                    what='node')
-        # Do this for all duplicates, which should be removed later anyway.
+                                    fieldtype=fieldtype,location=location,
+                                    ).get('node')
+        # Set values for all duplicates, which should be removed later anyway.
         # I.e., don't leave inconsisted data in the database.
+        tonevalue=kwargs.get('fieldvalue') #don't test for this yet
         if len(exfieldvalue) > 0:
             for e in exfieldvalue:
                 e.text=tonevalue
         else: #If not already there, make it.
             log.info("Didn't find that example already there, creating it...")
+            sensenode=self.getsensenode(senseid=senseid)
+            if sensenode is None:
+                log.info("Sorry, this didn't return a node: {}".format(senseid))
+                return
             analang=kwargs.get('analang')
-            glosslang=kwargs.get('glosslang')
-            glosslang2=kwargs.get('glosslang2',None)
-            db=kwargs.get('db')
+            # glosslang=kwargs.get('glosslang')
+            # glosslang2=kwargs.get('glosslang2',None)
+            db=kwargs.get('db') #This an object with values
             forms=db.forms
             glosses=db.glosses
             glosslangs=db.glosslangs
             p=Node(node, tag='example')
-            p.makeformnode(analang,db.analang)
+            p.makeformnode(analang,forms[analang])
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
-            fieldgloss=Node(p,'translation',attrib={'type':
-                                                        'Frame translation'})
+            fieldgloss=Node(p,'translation',attrib={'type':'Frame translation'})
             for lang in glosslangs:
                 if lang != None and hasattr(forms,lang):
                     fieldgloss.makeformnode(lang,getattr(forms,lang))
             exfieldvalue=p.makefieldnode(fieldtype,glosslang,gimmetext=True)
             p.makefieldnode('location',glosslang,text=location)
             p.makefieldnode('tone',glosslang,text=tonevalue)
-        # exfieldvalue.text=fieldvalue #change this *one* value, either way.
-        senseid=kwargs.get('senseid')
+        # senseid=kwargs.get('senseid')
         if 'guid' in kwargs:
             guid=kwargs.get('guid')
             self.updatemoddatetime(guid=guid,senseid=senseid)
