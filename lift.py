@@ -1628,7 +1628,12 @@ class LiftURL():
     def showtargetinhighestdecendance(self,nodename):
         log.debug("Running showtargetinhighestdecendance for {} on {}".format(
                                                     self.targethead,nodename))
-        children=self.children[nodename]
+        if nodename in self.children:
+            children=self.children[nodename]
+        else:
+            log.debug("Node {} has no children, so not looking further for "
+                        "descendance.".format(nodename))
+            return
         grandchildren=[i for child in children
                                 if child in self.children
                                 for i in self.children[child]
