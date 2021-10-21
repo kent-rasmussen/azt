@@ -1719,7 +1719,7 @@ class LiftURL():
         self.baselevel()
         self.kwargs['value']=self.kwargs.get(value,None) #location and tonevalue
         log.debug("form kwargs: {}".format(self.kwargs))
-        self.build("form","lang","lang") #OK if lang is None
+        self.build("form","lang",lang) #OK if lang is None
         if value is not None:
             self.text("value")
     def citation(self):
