@@ -1848,6 +1848,7 @@ class LiftURL():
                 return #if we're on an acceptable level, just stop
             elif target in self.level:
                 self.levelup(target)
+                return
             elif parents.index(target) < len(parents)-1:
                 log.debug("level {} not in {}; checking the next one...".format(
                                                             target,self.level))
