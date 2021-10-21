@@ -1404,7 +1404,7 @@ class LiftURL():
     def build(self,tag,liftattr=None,myattr=None,attrs=None):
         buildanother=False
         noseparator=False
-        log.debug("building {}, @dict:{}, @{}={}, on top of {}".format(tag,
+        log.log(4,"building {}, @dict:{}, @{}={}, on top of {}".format(tag,
                                 attrs,liftattr,myattr, self.currentnodename()))
         b=tag
         if attrs is None:
@@ -1531,7 +1531,7 @@ class LiftURL():
         else:
             args=list()
         for arg in args:
-            log.debug("show arg: {}".format(arg))
+            log.log(4,"show arg: {}".format(arg))
         if len(args) == 0:
             getattr(self,nodename)()
         else:
@@ -1680,7 +1680,7 @@ class LiftURL():
                 for cc in grandchildren:
                     for ccc in greatgrandchildren:
                         if ccc in self.children and self.targethead in self.children[ccc]:
-                            log.debug("Showing '{}', nearest ancenstor".format(c))
+                            log.log(4,"Showing '{}', nearest ancenstor".format(c))
                             self.show(c,nodename) #others will get picked up below
                             self.showtargetinhighestdecendance(c)
         else:
@@ -1696,7 +1696,7 @@ class LiftURL():
     def parsetargetlineage(self):
         if '/' in self.target: #if target lineage is given
             self.targetbits=self.target.split('/')
-            log.debug("{} : {}".format(self.target,self.targetbits))
+            log.log(4,"{} : {}".format(self.target,self.targetbits))
             self.targethead=self.targetbits[0]
             self.targettail=self.targetbits[1:]
         else:
@@ -1738,7 +1738,7 @@ class LiftURL():
         # Now operate on the head of the target lineage
         log.log(4,"URL (before {} target): {}".format(self.target,self.drafturl()))
         if self.getalias(self.targethead) not in self.level: #If the target hasn't been made yet.
-            log.debug(self.url)
+            log.log(4,self.url)
             i=self.currentnodename()
             log.log(4,"URL base: {}; i: {}".format(self.basename,i))
             if i is None: #if it is, skip down in any case.
@@ -1877,7 +1877,7 @@ class LiftURL():
             i.reverse()
             p+=i
         plist=list(dict.fromkeys(p))
-        log.debug("parents of {}: {}".format(nodenames,plist))
+        log.log(4,"parents of {}: {}".format(nodenames,plist))
         return plist
     def setattrsofnodes(self):
         self.attrs={} #These are atttributes we ask for, which require the field
