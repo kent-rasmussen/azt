@@ -2152,9 +2152,11 @@ class LiftURL():
                                             'tonefield','field']
         self.children['field']=['form']
         self.children['lexeme']=['form']
+        self.children['definition']=['form']
         self.children['citation']=['form']
         self.children['form']=['text']
-        self.children['pronunciation']=['field','trait']
+        self.children['gloss']=['text']
+        self.children['pronunciation']=['field','trait','form']
         self.children['translation']=['form']
     def setaliases(self):
         self.alias={}
