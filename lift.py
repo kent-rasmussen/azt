@@ -1644,6 +1644,14 @@ class LiftURL():
                                     if grandchild in self.children
                                     for i in self.children[grandchild]
                                     ]
+        gggrandchildren=[i for child in children
+                                if child in self.children
+                                for grandchild in self.children[child]
+                                    if grandchild in self.children
+                                    for ggrandchild in self.children[grandchild]
+                                        if ggrandchild in self.children
+                                        for i in self.children[ggrandchild]
+                                    ]
         log.debug("Looking for {} in children of {}: {}".format(
                                             self.targethead,nodename,children))
         log.debug("Grandchildren of {}: {}".format(nodename,grandchildren))
@@ -1669,6 +1677,16 @@ class LiftURL():
                         log.debug("Showing '{}', nearest ancenstor".format(c))
                         self.show(c,nodename) #others will get picked up below
                         self.showtargetinhighestdecendance(c)
+        elif self.targethead in gggrandchildren:
+            log.info("Found target ({}) in gggrandchildren of {}: {}".format(
+                                self.targethead,nodename,gggrandchildren))
+            for c in children:
+                for cc in grandchildren:
+                    for ccc in greatgrandchildren:
+                        if ccc in self.children and self.targethead in self.children[ccc]:
+                            log.debug("Showing '{}', nearest ancenstor".format(c))
+                            self.show(c,nodename) #others will get picked up below
+                            self.showtargetinhighestdecendance(c)
         else:
             log.error("Target not found in children, grandchildren, or "
                         "greatgrandchildren!")
