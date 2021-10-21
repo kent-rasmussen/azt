@@ -58,7 +58,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getsenseids() #sets: self.senseids and self.nsenseids
         log.info("Working on {} with {} entries "
                     "and {} senses".format(filename,self.nguids,self.nsenseids))
-        return #for testing, for now
         """These three get all possible langs by type"""
         self.glosslangs() #sets: self.glosslangs
         self.analangs() #sets: self.analangs, self.audiolangs
