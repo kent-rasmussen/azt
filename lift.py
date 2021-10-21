@@ -741,27 +741,28 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     pathlib.Path(filename).name, pathlib.Path(filename).parent,
                     os.listdir(pathlib.Path(filename).parent)))
     def analangs(self):
-        log.log(1,_("Looking for analangs in lift file"))
+        """These are ordered by frequency in the database"""
         self.audiolangs=[]
         self.analangs=[]
         lxl=self.get('lexeme/form').get('lang')
         lcl=self.get('citation/form').get('lang')
         pronl=self.get('pronunciation/form').get('lang')
-        possibles=[i[0] for i in collections.Counter(lxl+lcl+pronl).most_common()]
-        log.info(_("Possible analysis language codes found: {}".format(possibles)))
-        for glang in set(['fr','en']) & set(possibles):
-            c=collections.Counter(lxl+lcl+pronl)[glang]
+        langsbycount=collections.Counter(lxl+lcl+pronl)
+        self.analangs=[i[0] for i in langsbycount.most_common()]
+        log.info(_("Possible analysis language codes found: {}".format(
+                                                                self.analangs)))
+        for glang in set(['fr','en']) & set(self.analangs):
+            c=langsbycount[glang]
             if 0< c:
                 """For Saxwe, and others who have fr or en encoding errors"""
                 if c <= 10:
-                    log.info("Only {} examples of LWC lang {} found "
-                        "in {} field; is this correct?".format(c,glang,form))
-        for lang in possibles:
+                    log.info("Only {} examples of LWC lang {} found; is this "
+                            "correct?".format(c,glang))
+        for lang in self.analangs:
             if 'audio' in lang:
                 log.debug(_("Audio language {} found.".format(lang)))
                 self.audiolangs+=[lang]
-            else:
-                self.analangs+=[lang]
+                self.analangs.remove(lang)
         if self.audiolangs == []:
             log.debug(_('No audio languages found in Database; creating one '
             'for each analysis language.'))
