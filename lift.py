@@ -747,7 +747,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         lxl=self.get('lexeme/form').get('lang')
         lcl=self.get('citation/form').get('lang')
         pronl=self.get('pronunciation/form').get('lang')
-        possibles=list(dict.fromkeys(lxl+lcl+pronl))
+        possibles=[i[0] for i in collections.Counter(lxl+lcl+pronl).most_common()]
         log.info(_("Possible analysis language codes found: {}".format(possibles)))
         for glang in set(['fr','en']) & set(possibles):
             c=collections.Counter(lxl+lcl+pronl)[glang]
