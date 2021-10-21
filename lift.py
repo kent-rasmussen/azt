@@ -1511,8 +1511,8 @@ class LiftURL():
         self.kwargs['formtext']='tonevalue'
         self.field()
         self.form("tonevalue",'glosslang')
-    def morphtype(self):
-        if morphtype in self.kwargs:
+    def morphtype(self,attrs={}):
+        if 'morphtype' in self.kwargs:
             attrs={'name':"morph-type",'value':self.kwargs[morphtype]}
         self.trait(attrs) # <trait name="morph-type" value="stem" />
     def attrdonothing(self):
