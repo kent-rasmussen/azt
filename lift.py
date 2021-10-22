@@ -316,7 +316,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         dup=True
         if not dup:
             log.info("No duplicate form fields were found in the lexicon.")
-        # self.write() Not doing any changes, anyway...
     def findduplicateexamples(self):
         dup=False
         senses=self.nodes.findall('entry/sense')
@@ -332,7 +331,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if not dup:
             log.info("No duplicate examples (same sense and location) were "
                     "found in the lexicon.")
-        # self.write() Not yet, anyway
     def addtoneUF(self,senseid,group,analang,guid=None,showurl=False):
         node=self.get('sense',senseid=senseid).get() #give the sense.
         if node == []:
