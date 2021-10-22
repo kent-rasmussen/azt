@@ -134,6 +134,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         Never ask for just the form! give the parent, to get a particular form:
         lift.get("lexeme/form").get('text')
         lift.get("example/form").get('text')
+        lift.get("example/translation/form").get('text')
         lift.get("citation/form").get('text')
         just 1 of each pss: dict.fromkeys(lift.get("ps").get('value'))
         get tone value:
