@@ -760,54 +760,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Found these morph-type values: {}".format(m))
         return m
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
-    def formsbyps(self,ps): #self is LIFT! #should be entriesbyps
-        """This function just pulls all entries of a particular
-        grammatical category"""
-        """This function, and others like it, should pull from the profiles
-        data variable, which should be redesigned so it can recompile
-        quickly for changes in form."""
-        output=[]
-        winfoentries=[]
-        x=0
-        y=0
-        z=0
-        zz=0
-        if ps is None:
-            entries=self.nodes.findall(f"entry")
-            #gi1=self.nodes.findall(f".//grammatical-info")
-            #log.info(' '.join('Entries found:',len(entries)))#for gi in entry.find(f"grammatical-info"):
-            #log.info(' '.join('Ps found:',len(gi1)))#for gi in entry.find(f"grammatical-info"):
-            for entry in entries:
-                gi=entry.find(f".//grammatical-info") #.get('value')
-                #if gi is not None and len(gi)>1:
-                #    log.info(gi)
-                #    log.info(' '.join(x,y,z,zz))
-                #    exit()
-                #    x+=1
-                if gi is None: #entry.find(f".//grammatical-info") is None:
-                #    y+=1
-                    output+=[entry] #add this item to a list, not it's elements
-                #elif gi is not None: #entry.find(f".//grammatical-info") is not None:
-                #    z+=1
-                #    log.info(type(gi))
-                #    log.info(gi.get('value'))
-                #    log.info(len(gi))
-                #    winfoentries+=[entry]
-                #else:
-                #    zz+=1
-                #    log.info("Huh?")
-        else:
-            #log.info(ps)
-            # for self.db.get('')
-            for entry in self.nodes.findall(f"entry/sense/grammatical-info[@value='{ps}']/../.."):
-                #log.info('Skipping this for now...')
-                output+=[entry] #add this item to a list, not it's elements
-        #log.info(' '.join('Entries without ps:',len(output)))
-        #log.info(' '.join('Entries with ps:',len(winfoentries)))
-        #log.info(' '.join('Total entries found (Should be 2468):',len(output)+len(winfoentries)))
-        #log.info(' '.join('multiple:',x,'no ps:',y,'wps',z,'totalps:',y+z,'huh:',zz))
-        #exit()
-        return output #list of entry nodes
     def guidformsbyregex(self,regex,ps=None,analang=None): #self is LIFT!
         # from multiprocessing.dummy import Pool as ThreadPool
         """This function takes in a ps and compiled regex,
