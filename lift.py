@@ -806,26 +806,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nguids=len(self.guids) #,guid,lang,fieldtype,location
     def nc(self):
         nounclasses="1 2 3 4 5 6 7 8 9 10 11 12 13 14"
-    # def nlist(self): #This variable gives lists, to iterate over.
-    #     # prenasalized=['mb','mp','mbh','mv','mf','nd','ndz','ndj','nt','ndh','ng','ŋg','ŋg','nk','ngb','npk','ngy','nj','nch','ns','nz']  #(graphs that preceede a consonant)
-    #     ntri=["ng'"]
-    #     ndi=['mm','ny','ŋŋ']
-    #     nm=['m','m','M','n','n','ŋ','ŋ','ɲ']
-    #     nasals=ntri+ndi+nm
-    #     actuals={}
-    #     for lang in self.analangs:
-    #         unsorted=self.inxyz(lang,nasals)
-    #         """Make digraphs appear first, so they are matched if present"""
-    #         actuals[lang]=sorted(unsorted,key=len, reverse=True)
-    #     return actuals
-    # def glist(self): #This variable gives lists, to iterate over.
-    #     glides=['ẅ','y','Y','w','W']
-    #     actuals={}
-    #     for lang in self.analangs:
-    #         unsorted=self.inxyz(lang,glides) #remove the symbols which are not in the data.
-    #         """Make digraphs appear first, so they are matched if present"""
-    #         actuals[lang]=sorted(unsorted,key=len, reverse=True)
-    #     return actuals
     def clist(self): #This variable gives lists, to iterate over.
         log.log(2,"Creating CV lists from scratch")
         """These are all possible forms, that I have ever run across.
@@ -967,30 +947,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def slists(self):
         self.segmentsnotinregexes={}
         self.clist()
-    # def segmentin(self, lang, glyph):
-    #     """This actually allows for dygraphs, etc., so I'm keeping it."""
-    #     """check each form and lexeme in the lift file (not all files
-    #     use both)."""
-    #     for form in self.citationforms[lang] + self.lexemes[lang]:
-    #         if re.search(glyph,form): #see if the glyph is there
-    #             return glyph #find it and stop looking, or return nothing
-    # def inxyz(self, lang, segmentlist): #This calls the above script for each character.
-    #     actuals=list()
-    #     for i in segmentlist:
-    #         s=self.segmentin(lang,i)
-    #         #log.info(s) #to see the following run per segment
-    #         if s is not None:
-    #             actuals.append(s)
-    #     return list(dict.fromkeys(actuals))
-    # def getguidformstosearchbyps(self,ps,lang=None):
-    #     if lang is None:
-    #         lang=self.analang
-    #     self.guidformstosearch[lang][ps]={} #Erases all previous data!!
-    #     for guid in self.get('guidbyps',lang=lang,ps=ps):
-    #         form=self.get('citation',guid=guid,lang=lang,ps=ps)
-    #         if len(form) == 0: #no items returned
-    #             form=self.get('lexeme',guid=guid,lang=lang,ps=ps)
-    #         self.guidformstosearch[lang][ps][guid]=form
     def getsenseidformstosearchbyps(self,ps,lang=None):
         if lang is None:
             lang=self.analang
@@ -1000,39 +956,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if len(form) == 0: #no items returned
                 form=self.get('lexeme',senseid=senseid,lang=lang,ps=ps)
             self.senseidformstosearch[lang][ps][senseid]=form
-    # def getguidformstosearch(self):
-    #     # import time
-    #     """This outputs a dictionary of form {analang: {guid:form}*}*, where
-    #     form is citation if available, or else lexeme. This is to be flexible
-    #     for entries in process of analysis, and to have a dictionary to check
-    #     with regexes for output."""
-    #     self.guidformstosearch={}
-    #     self.senseidformstosearch={}
-    #     for lang in self.analangs:
-    #         self.guidformstosearch[lang]={} #This will erase all previous data!!
-    #         self.senseidformstosearch[lang]={}
-    #         for ps in self.pss: #I need to break this up.
-    #             # start_time=time.time()
-    #             self.getguidformstosearchbyps(ps,lang=lang)
-    #             self.getsenseidformstosearchbyps(ps,lang=lang)
-    #             #"n",str(time.time() - start_time),"seconds.")
-    #     #log.info(self.guidformstosearch)
-    # def getformstosearchbyps(self,ps,lang=None):
-    #     if lang is None:
-    #         lang=self.analang
-    #     self.formstosearch[lang][ps]={} #Erases all previous data!!
-    #     #for guid in self.get('guidbynofield',lang=lang,ps=ps):
-    #     # forms=self.citationorlexeme(lang=lang,ps=ps)
-    #     """This actually needs this logic here, since formstosearch hasn't
-    #     been made yet."""
-    #     forms=self.get('citation/form/text',analang=lang,ps=ps)
-    #     # if len(forms) == 0: #no items returned, I should probably combine
-    #                         #this at some point, list(dict.fromkeys(form1+form2))
-    #     forms+=self.get('lexeme/form/text',analang=lang,ps=ps)
-    #     # forms1=self.get('citation',lang=lang,ps=ps)
-    #     # forms2=self.get('lexeme',lang=lang,ps=ps)
-    #     # forms=list(dict.fromkeys(forms1+forms2))
-    #     self.formstosearch[lang][ps]=forms
     def getformstosearch(self):
         """This outputs a dictionary of form {analang: {guid:form}*}*, where
         form is citation if available, or else lexeme. This is to be flexible
@@ -1097,12 +1020,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         p=list(dict.fromkeys(self.get('ps').get('value')))
         log.info("Found these ps values: {}".format(p))
         return p
-        #pss=list()
-        #for ps in self.nodes.findall(f"entry/sense/grammatical-info"):
-        #    thisps=ps.attrib.get('value')
-        #    if thisps not in pss and thisps is not None:
-        #        pss.append(thisps)
-        #return pss #return the list
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
     def formsbyps(self,ps): #self is LIFT! #should be entriesbyps
         """This function just pulls all entries of a particular
