@@ -1368,7 +1368,7 @@ class LiftURL():
         self.kwargs['ftype']='Frame translation'
         self.kwargs['formtext']='translationvalue'
         self.build("translation","type","ftype")
-        self.form("translationvalue",'glosslang')
+        # self.form("translationvalue",'glosslang')
     def field(self):
         self.baselevel()
         self.build("field","type","ftype")
