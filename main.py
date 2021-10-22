@@ -7670,8 +7670,8 @@ class RecordButtonFrame(Frame):
             if None in [check, senseid]:
                 return
             id=senseid
-            node=firstoflist(check.db.get('examplebylocation',senseid=senseid,
-                                location=check.name))
+            node=firstoflist(check.db.get('example',senseid=senseid,
+                                location=check.name).get())
             if node is None:
                 # This should never be!
                 log.error("Looks like a node came back 'None'; this may be "
@@ -7694,17 +7694,21 @@ class RecordButtonFrame(Frame):
                                 log.error("Node{}cg: {}; tag:{}; attrib:{}; text:{}".format(
                                     nodes.index(node),ggchild,ggchild.tag,
                                                 ggchild.attrib,ggchild.text))
-            gloss=node.find(check.db.geturlnattr('glossofexample')['url']).text
-            form=node.find(check.db.geturlnattr('formofexample',
-                                                lang=check.analang)['url']).text
-        audio=node.find(check.db.geturlnattr('formofexample',
-                                            lang=check.audiolang)['url'])
+            gloss=unlist(check.db.get('translation/form/text',node=node,
+                            glosslang=check.glosslang,showurl=True).get('text'))
+            form=unlist(check.db.get('form/text',node=node,showurl=True,
+                                            analang=check.analang).get('text'))
+            log.log(4,"gloss: {}".format(gloss))
+            log.log(4,"form: {}".format(form))
+        audio=check.db.get('example/form/text',node=node,showurl=True,
+                                            analang=check.audiolang).get('text')
+        log.log(4,"audio: {}".format(audio))
         if gloss is None:
             gloss=t(check.db.get('gloss',senseid=senseid,
                                     glosslang=check.glosslang))
         if form is None and node is not None:
             form=t(node.find(f"form[@lang='{check.analang}']/text"))
-        if audio is not None:
+        if audio != []:
             filenameURL=str(file.getdiredurl(check.audiodir,audio.text))
             if file.exists(filenameURL):
                 log.debug("Audio file found! using name: {}; diredname: {}"
