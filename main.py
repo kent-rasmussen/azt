@@ -222,6 +222,11 @@ class Check():
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
         #set None to make labels, else "raised" "groove" "sunken" "ridge" "flat"
+        # n=self.db.getsensenode()
+        # senseid="begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa"
+        # self.name='Progressive'
+        # RecordButtonFrame.makefilenames(check=self,senseid=senseid)
+        # log.info(n)
         self.mainlabelrelief()
         self.checkcheck()
     def notifyuserofextrasegments(self):
