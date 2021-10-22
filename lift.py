@@ -772,57 +772,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if regex.search(form):
                 output+=self.formstosearch[analang][ps][form]
         return output
-    def formsnids(self): #outputs [guid, form] tuples for each entry in the lexicon. Is this more efficient than using idsbyformregex?
-        for entry in self.nodes.findall(f"entry"):
-            for form in entry.findall(f"./citation/form[@lang='{self.xyz}']/text"): #Not lexeme-unit..…
-                yield entry.get('guid'), form.text #print the text of the <text> node above
-                #figure out how to filter this by part of speech
-    def idsbylexemeregex(self,regex): #outputs [guid, ps, form] tuples for each entry in the LIFT file lexeme which matches the regex.
-        for ps in pss(): #for each POS
-            for entry in self.nodes.findall(f"entry/sense/grammatical-info[@value='{ps}']/../.."): #for each entry
-                for form in entry.findall(f"./lexical-unit/form[@lang='{self.xyz}']/text"): #for each CITATION form this needs to see lexeme forms, too..…
-                #for form in entry.findall(f"./citation/form[@lang='{xyz}']/text"): #for each CITATION form this needs to see lexeme forms, too..…
-                    # if re.search(regex,form.text): #check if the form matches the regex
-                    if regex.search(form.text): #check if the form matches the regex
-                        yield entry.get('guid'), ps, form.text #print the tuple (may want to augment this some day to include other things)
-    def idsbylexemeregexnps(self,ps,regex): #outputs [guid, ps, form] tuples for each entry in the LIFT file lexeme which matches the regex and ps.
-        """This puts out a dictionary with guid keys and (ps,form) tuples
-        for values. I need to rework this. I think not use it anymore..."""
-        output={}
-        for form in self.formstosearch[self.analang][ps]:
-            # form=self.formstosearch[self.analang][ps][guid]
-            # log.info(form)
-            if regex.search(form):
-            # if len(form) == 1 and regex.search(form):
-                output[guid]=form
-        return output
-            #exit()
-
-        for entry in self.nodes.findall(f"entry/sense/grammatical-info[@value='{ps}']/../../lexical-unit/form[@lang='{self.analang}']/../.."):
-            form=entry.find(f"lexical-unit/form[@lang='{self.analang}']/text")
-            if regex.search(form.text): #re.search(regex,form.text):
-                output[entry.get('guid')]=(ps, form.text)
-        return output
-    def wordcountbyps(self,ps):
-        count=0
-        if ps is None:
-            #entries=
-            #gi1=self.nodes.findall(f".//grammatical-info")
-            #log.info(' '.join('Entries found:',len(entries)))#for gi in entry.find(f"grammatical-info"):
-            #log.info(' '.join('Ps found:',len(gi1)))#for gi in entry.find(f"grammatical-info"):
-            for entry in self.nodes.findall(f"entry"):
-                #gi= #.get('value')
-                if entry.find(f".//grammatical-info") is None: #entry.find(f".//grammatical-info") is None:
-                #    y+=1
-                    count+=1
-        else:
-            for entry in self.nodes.findall(f"entry/sense/grammatical-info[@value='{ps}']/../.."): #for each entry
-                count+=1
-        return count
-    def formsregex(self,regex): #UNUSED? outputs [guid, form] tuples where the form matches a regex. This might make sense for a tuple with lexeme-unit, citation, and plural.
-        for entry in formsnids():
-            if regex.search(entry[1]): #check regex against the form part of the tuple output by formsnids
-                yield entry[0] #print id part of the tuple output by formsnids
 class Node(ET.Element):
     def makefieldnode(self,type,lang,text=None,gimmetext=False):
         n=Node(self,'field',attrib={'type':type})
