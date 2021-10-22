@@ -259,9 +259,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                     senseid=senseid,
                                     fieldtype=fieldtype,location=location,
                                     ).get('node')
-        # Set values for all duplicates, which should be removed later anyway.
-        # I.e., don't leave inconsisted data in the database.
-        tonevalue=kwargs.get('fieldvalue') #don't test for this yet
+        # Set values for any duplicates, too. Don't leave inconsisted data.
+        tonevalue=kwargs.get('fieldvalue') #don't test for this above
         if len(exfieldvalue) > 0:
             for e in exfieldvalue:
                 e.text=tonevalue
@@ -272,8 +271,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 log.info("Sorry, this didn't return a node: {}".format(senseid))
                 return
             analang=kwargs.get('analang')
-            # glosslang=kwargs.get('glosslang')
-            # glosslang2=kwargs.get('glosslang2',None)
             db=kwargs.get('db') #This an object with values
             forms=db.forms
             glosses=db.glosses
@@ -290,12 +287,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             p.makefieldnode('location',glosslang,text=location)
             p.makefieldnode('tone',glosslang,text=tonevalue)
         self.updatemoddatetime(senseid=senseid)
-        if self.debug == True:
-            log.info("add langform: {}".format(forms.analang))
-            log.info("add tone: {}".format(fieldvalue))
-            log.info("add gloss: {}".format(forms.glosslang))
-            if glosslang2 != None:
-                log.info("add gloss2: {}".format(forms.glosslang2))
     def forminnode(self,node,value):
         # Returns True if `value` is in *any* text node child of any form child
         # of node: [node/'form'/'text' = value]
