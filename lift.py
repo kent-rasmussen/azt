@@ -2374,9 +2374,13 @@ if __name__ == '__main__':
     from logsetup import *
     log=logsetup(loglevel)
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift.bak.txt"
+    # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename,nsyls=2)
     senseids=["begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
@@ -2501,7 +2505,7 @@ if __name__ == '__main__':
     # entries=lift.get("entry").get()
     # log.info(len(entries))
     # log.info(entries[0].get('guid'))
-    printurllog(lift)
+    # printurllog(lift)
     quit()
     import timeit
     def timetest():
