@@ -516,41 +516,35 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if t is None:
             t=ET.SubElement(form,'text')
         t.text=langform
-    def addpronunciationfields(self,guid,senseid,analang,
-                                glosslang,glosslang2,
-                                lang,forms,
-                                # langform,glossform,gloss2form,
-                                fieldtype,
-                                location,fieldvalue,ps=None,showurl=False):
+    def addpronunciationfields(self,**kwargs):
         """This fuction will add an XML node to the lift tree, like a new
         pronunciation field."""
         """The program should know before calling this, that there isn't
         already the relevant node."""
-        # urlnattr=attributesettings(attribute,guid,analang,glosslang,lang,ps,form,
-        #                                 fieldtype,location)
-        urlnattr=self.geturlnattr('guid',guid=guid) #just give me the entry.
-        url=urlnattr['url']
-        if showurl==True:
-            log.info(url)
-        node=self.nodes.find(url) #this should always find just one node
-        # nodes=self.nodes.findall(url) #this is a list
-        p=ET.SubElement(node, 'pronunciation')
-        form=ET.SubElement(p,'form',attrib={'lang':analang})
-        t=ET.SubElement(form,'text')
-        t.text=langform
-        field=ET.SubElement(p,'field',attrib={'type':fieldtype})
-        form=ET.SubElement(field,'form',attrib={'lang':lang})
-        t2=ET.SubElement(form,'text')
-        t2.text=fieldvalue
-        fieldgloss=ET.SubElement(p,'field',attrib={'type':'gloss'})
-        form=ET.SubElement(fieldgloss,'form',attrib={'lang':glosslang})
-        t3=ET.SubElement(form,'text')
-        t3.text=glossform
-        trait=ET.SubElement(p,'trait',attrib={'name':'location', 'value':location})
-        self.updatemoddatetime(guid=guid,senseid=senseid)
-        # self.write()
+        guid=kwargs.get('guid',None)
+        senseid=kwargs.get('senseid',None)
+        if guid is not None:
+            node=self.get('entry',guid=guid,showurl=True).get()[0]
+        elif senseid is not None:
+            node=self.get('entry',senseid=senseid,showurl=True).get()[0]
+        analang=kwargs.get('analang')
+        glosslang=kwargs.get('glosslang')
+        langform=kwargs.get('langform')
+        glossform=kwargs.get('glossform')
+        fieldtype=kwargs.get('fieldtype','tone')
+        fieldvalue=kwargs.get('fieldvalue')
+        location=kwargs.get('location')
+        p=Node(node, 'pronunciation')
+        p.makeformnode(lang=analang,text=langform)
+        p.makefieldnode(type=fieldtype,lang=glosslang,text=fieldvalue)
+        p.makefieldnode(type='gloss',lang=glosslang,text=glossform)
+        p.maketraitnode(type='location',value=location)
+        if senseid is not None:
+            self.updatemoddatetime(senseid=senseid)
+        elif guid is not None:
+            self.updatemoddatetime(guid=guid)
+        self.write()
         """End here:""" #build up, or down?
-        #node.append('pronunciation')
         """<pronunciation>
             <form lang="gnd"><text>dìve</text></form>
             <field type="tone">
