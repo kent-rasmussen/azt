@@ -690,11 +690,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             self.formstosearch[lang]={} #This will erase all previous data!!
             for ps in self.pss+[None]: #I need to break this up.
-                forms=self.get('citation/form/text',analang=lang,ps=ps
-                                                                ).get('text')
-                forms+=self.get('lexeme/form/text',analang=lang,ps=ps
-                                                                ).get('text')
-                self.formstosearch[lang][ps]=list(dict.fromkeys(forms))
+                self.formstosearch[lang][ps]={}
+                for s in self.get('sense',analang=lang,ps=ps).get('senseid'):
+                    f=self.citation(senseid=s)
+                    if f == []:
+                        f=self.lexeme(senseid=s)
+                    if f in self.formstosearch[lang][ps]:
+                        self.formstosearch[lang][ps][f].append(s)
+                    else:
+                        self.formstosearch[lang][ps][f]=[s]
         log.debug("Found the following forms to search: {}".format(
                                                             self.formstosearch))
     def citation(self,**kwargs):
