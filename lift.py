@@ -79,6 +79,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.findduplicateforms()
         self.findduplicateexamples()
         """Think through where this belongs; what classes/functions need it?"""
+        self.morphtypes=self.getmorphtypes()
         log.info("Language initialization done.")
     def geturlnattr(self, attribute, **kwargs):
         if attribute == 'attributes':
@@ -1020,6 +1021,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         p=list(dict.fromkeys(self.get('ps').get('value')))
         log.info("Found these ps values: {}".format(p))
         return p
+    def getmorphtypes(self): #get all morph-type values in the LIFT file
+        m=collections.Counter(self.get('morphtype',showurl=True).get('value')
+                                                                ).most_common()
+        log.info("Found these morph-type values: {}".format(m))
+        return m
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
     def formsbyps(self,ps): #self is LIFT! #should be entriesbyps
         """This function just pulls all entries of a particular
