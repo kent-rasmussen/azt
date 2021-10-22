@@ -762,39 +762,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
     def senseidformsbyregex(self,regex,analang,ps=None): #self is LIFT!
         """This function takes in a ps and compiled regex,
-        and outputs a dictionary of {senseid:form} form."""
-        # if analang is None:
-        #     analang=self.analang
-        output={}
-        def checkformsbyps(self,analang,ps):
-            for form in self.formstosearch[analang][ps]:
-                if regex.search(form): #re.search(regex,form): #,showurl=True
-                    for senseid in self.get('senseidbylexeme',form=form,ps=ps):
-                        output[senseid]=form
-            return output
-        if ps == 'All': #When I'm looking through each ps, not ps=None (e.g., invalid).
-            for ps in self.pss+[None]:
-                output.update(checkformsbyps(self,analang,ps)) #adds dict entries
-            return output
-        else:
-            output.update(checkformsbyps(self,analang,ps))
-            return output
-        for entry in entries:
-            def debug():
-                log.info(len(entry))
-                log.info(str(entry.tag))
-                log.info(str(entry.get('guid')))
-                log.info(entry.attrib) #('value'))
-                log.info(str(entry.find('lexical-unit')))
-                log.info(str(entry.find('citation')))
-                log.info(str(entry.find('form')))
-                log.info(self.get('lexeme',guid=entry.get('guid')))
-                log.info(self.get('lexeme',guid=entry.get('guid'))[0])
-                exit()
-            #debug()
-            """FIX THIS!!!"""
-            form=self.get('lexeme',guid=entry.get('guid')) #self.formbyid(entry.get('guid'))[0] #just looking for one at this point.
-            log.info("Apparently there are no/multiple forms for this entry...")
+        and outputs a list/dictionary of senseid/{senseid:form} form."""
+        output=[] #This is just a list of senseids now: (Do we need the dict?)
+        for form in self.formstosearch[analang][ps]:
+            if regex.search(form):
+                output+=self.formstosearch[analang][ps][form]
         return output
     def formbyid(self,guid,lang=None): #This is the language version, use without entry.
         """bring this logic into get()"""
