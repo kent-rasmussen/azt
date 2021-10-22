@@ -7652,7 +7652,7 @@ class RecordButtonFrame(Frame):
         self.db.addmediafields(self.node,self.filename,self.audiolang)
     def function(self):
         pass
-    def makefilenames(self,check=None,senseid=None):
+    def makefilenames(self=None,check=None,senseid=None):
         if self is not None: #i.e., this is called by class
             if self.test==True:
                 return "test_{}_{}.wav".format(self.settings.fs,
