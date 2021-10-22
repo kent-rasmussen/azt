@@ -313,11 +313,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             exfieldvalue=p.makefieldnode(fieldtype,glosslang,gimmetext=True)
             p.makefieldnode('location',glosslang,text=location)
             p.makefieldnode('tone',glosslang,text=tonevalue)
-        if 'guid' in kwargs:
-            guid=kwargs.get('guid')
-            self.updatemoddatetime(guid=guid,senseid=senseid)
-        else:
-            self.updatemoddatetime(senseid=senseid)
+        self.updatemoddatetime(senseid=senseid)
         if self.debug == True:
             log.info("add langform: {}".format(forms.analang))
             log.info("add tone: {}".format(fieldvalue))
