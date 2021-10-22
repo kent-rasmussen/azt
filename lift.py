@@ -559,30 +559,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             <trait name="location" value="With Other Stuff" />
         </pronunciation>
         """
-    def updateexfieldvalue(self,guid=None,senseid=None,analang=None,
-                    glosslang=None,langform=None,glossform=None,fieldtype=None,
-                    location=None,fieldvalue=None,ps=None,
-                    newfieldvalue=None,showurl=False):
-        """This updates the fieldvalue, based on current value. It assumes
-        there is a field already there; use addexamplefields if not"""
-        node=self.geturlnattr('exfieldvaluenode',senseid=senseid,
-                                    fieldtype=fieldtype,
-                                    location=location,
-                                    fieldvalue=fieldvalue
-        )
-        # url=urlnattr['url']
-        if showurl==True:
-            log.info(url)
-        # node=self.nodes.find(url) #this should always find just one node
-        # for value in node.findall(f"field[@type=location]/"
-        #                             f"form[text='{location}']"
-        #                                 f"[@type='{fieldtype}']/"
-        #                             f"form[text='{fieldvalue}']/text"):
-        #     # """<field type="tone"><form lang="fr"><text>1</text></form></field>"""
-        #     # """<field type="location"><form lang="fr"><text>Plural</text></form></field>"""
-        node.text=newfieldvalue #remove(example)
-        self.updatemoddatetime(guid=guid,senseid=senseid)
-        # self.write()
     def updatemoddatetime(self,guid=None,senseid=None):
         """This updates the fieldvalue, ignorant of current value."""
         if senseid is not None:
