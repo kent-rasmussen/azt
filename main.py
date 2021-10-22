@@ -4497,9 +4497,9 @@ class Check():
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
-            self.db.updateexfieldvalue(senseid=senseid,fieldtype='tone',
-                                location=self.name,fieldvalue=oldtonevalue,
-                                newfieldvalue=newtonevalue)
+            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
+                                location=self.name,#fieldvalue=oldtonevalue,
+                                fieldvalue=newtonevalue)
             self.db.modverificationnode(senseid=senseid,vtype=self.profile,
                                                 add=add,rm=rm,addifrmd=True)
         self.db.write() #once done iterating over senseids
@@ -4529,7 +4529,7 @@ class Check():
                     self.name,
                     senseid,
                     guid))
-        self.db.addexamplefields( #This should only mod if already there
+        self.db.addmodexamplefields( #This should only mod if already there
                                     guid=guid,senseid=senseid,
                                     analang=self.analang,
                                     glosslang=self.glosslang,
@@ -8469,7 +8469,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
         subcheck=self.subcheck
     log.info(_("Removing senseid {} from subcheck {}".format(senseid,subcheck)))
     #This should only *mod* if already there
-    self.db.addexamplefields(senseid=senseid,
+    self.db.addmodexamplefields(senseid=senseid,
                             analang=self.analang,
                             glosslang=self.glosslang,
                             glosslang2=self.glosslang2, #OK if None
