@@ -2246,8 +2246,8 @@ class Check():
                                             ps=self.ps)
             for lang in [self.glosslang,self.glosslang2]:
                 if lang is not None:
-                    glosses[lang]=self.db.glossordefn(senseid=senseid,lang=lang,
-                                            ps=self.ps)
+                    glosses[lang]=self.db.glossordefn(senseid=senseid,
+                                glosslang=lang,ps=self.ps)
             #If frame is not defined (in self.name) this will output ALL values
             #for this sense!
             tonegroups=self.db.get('exfieldvalue', senseid=senseid,
@@ -2322,10 +2322,10 @@ class Check():
         form=firstoflist(self.db.citationorlexeme(guid,lang=self.analang,
                                                                 ps=self.ps))
         glosses[self.glosslang]=firstoflist(self.db.glossordefn(guid,
-                                        lang=self.glosslang, ps=self.ps))
+                                        glosslang=self.glosslang, ps=self.ps))
         if self.glosslang2 is not None:
             glosses[self.glosslang2]=firstoflist(self.db.glossordefn(guid,
-                                            lang=self.glosslang2,ps=self.ps))
+                                        glosslang=self.glosslang2,ps=self.ps))
         frame=self.toneframes[self.ps][self.name]
         if self.debug ==True:
             print(forms,glosses,frame)
@@ -4879,11 +4879,11 @@ class Check():
     def printentryinfo(self,guid):
         outputs=[
                     nn(self.db.citationorlexeme(guid=guid)),
-                    nn(self.db.glossordefn(guid=guid,lang=self.glosslang))
+                    nn(self.db.glossordefn(guid=guid,glosslang=self.glosslang))
                 ]
         if self.glosslang2 is not None: #only give this if the user wants it.
             outputs.append(nn(self.db.glossordefn(guid=guid,
-                                        lang=self.glosslang2)))
+                                        glosslang=self.glosslang2)))
         outputs.append(nn(self.db.get('pronunciationfieldvalue',
                                         fieldtype='tone',
                                         location=self.subcheck,guid=guid)))
@@ -5034,13 +5034,13 @@ class Check():
                                                 lang=self.analang))
             sense['gloss']=firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
-                                                lang=self.glosslang
+                                                glosslang=self.glosslang
                                                 ),othersOK=True)
             if ((hasattr(self,'glosslang2')) and
                     (self.glosslang2 is not None)):
                 sense['gloss2']=firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
-                                                lang=self.glosslang2
+                                                glosslang=self.glosslang2
                                                 ),othersOK=True)
             if ((sense['gloss'] is None) and
                     (('gloss2' in sense) and (sense['gloss2'] is None))):

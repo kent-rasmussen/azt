@@ -532,18 +532,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         d=self.get('definition/form').get('lang')
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {}".format(self.glosslangs)))
-    def glossordefn(self,guid=None,senseid=None,lang='ALL',ps=None
-                    ,showurl=False):
-        if lang == None: #This allows for a specified None='give me nothing'
-            return
-        elif lang == 'ALL':
-            lang=None #this is how the script gives all, irrespective of lang.
-        forms=self.get('gloss',guid=guid,senseid=senseid,glosslang=lang,ps=ps,
-                        showurl=showurl) #,showurl=True
+    def glossordefn(self,**kwargs):
+        ps=kwargs.get('ps',None)
+        guid=kwargs.get('guid',None)
+        senseid=kwargs.get('senseid',None)
+        glosslang=kwargs.get('glosslang',None)
+        showurl=kwargs.get('showurl',False)
+        forms=self.get('gloss/text',guid=guid,senseid=senseid,
+                        glosslang=glosslang,ps=ps,
+                        showurl=showurl).get('text')
         if forms == []:
             formsd=self.get('definition',guid=guid,senseid=senseid,
-                        glosslang=lang,
-                        showurl=showurl)
+                        glosslang=glosslang,
+                        showurl=showurl).get('text')
             forms=list()
             for form in formsd:
                 forms.append(rx.glossifydefn(form))
