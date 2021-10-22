@@ -271,7 +271,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return self.get('entry',senseid=senseid).get()
     def getsensenode(self,senseid,showurl=False):
         return self.get('sense',senseid=senseid).get()
-    def addexamplefields(self,**kwargs):
+    def addmodexamplefields(self,**kwargs):
         log.info(_("Adding values (in lift.py) : {}").format(kwargs))
         #These should always be there:
         senseid=kwargs.get('senseid')
