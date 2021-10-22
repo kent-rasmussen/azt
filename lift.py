@@ -473,29 +473,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "found in the lexicon.")
         # self.write() Not yet, anyway
     def addtoneUF(self,senseid,group,analang,guid=None,showurl=False):
-        urlnattr=self.geturlnattr('senseid',senseid=senseid) #give the sense.
-        url=urlnattr['url']
-        if showurl==True:
-            log.info(url)
-        node=self.nodes.find(url) #this should always find just one node
-        if node is None:
-            log.info(' '.join("Sorry, this didn't return a node:",guid,senseid))
+        node=self.get('sense',senseid=senseid).get() #give the sense.
+        if node == []:
+            log.info("Sorry, this didn't return a node: guid {}; senseid {}"
+                                        "".format(guid,senseid))
             return
-        t=None
-        for field in node.findall('field'):
-            if field.get('type') == 'tone':
-                f=field.findall('form')
-                f2=field.find('form')
-                t=f2.find('text')
-                for fs in f:
-                    t2=fs.find('text')
-        if t is None:
-            p=ET.SubElement(node, 'field',attrib={'type':'tone'})
-            f=ET.SubElement(p,'form',attrib={'lang':analang})
-            t=ET.SubElement(f,'text')
-        t.text=group
+        t=self.get('field/form/text',node=node[0],ftype='tone').get()
+        if t == []:
+            p=Node(node[0],'field',attrib={'type':'tone'})
+            p.makeformnode(analang,text=group)
+        else:
+            t[0].text=group
         self.updatemoddatetime(guid=guid,senseid=senseid)
-        # self.write()
+        self.write()
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
