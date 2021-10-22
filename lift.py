@@ -697,17 +697,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 self.formstosearch[lang][ps]=list(dict.fromkeys(forms))
         log.debug("Found the following forms to search: {}".format(
                                                             self.formstosearch))
-    def citationforms(self): #outputs generator object with each form in LIFT file.
-        """This produces a dictionary, of forms for each language."""
-        output={}
+    def citation(self,**kwargs):
+        """This produces a list; specify senseid and analang as you like."""
+        output=self.get('citation/form/text',kwargs).get('text')
+        return output
+    def citationforms(self):
+        output={} # This produces a dictionary, of forms for each language
         for lang in self.analangs:
-            output[lang]=self.get('citation/form/text',analang=lang).get('text')
+            output[lang]=self.citation(analang=lang).get('text')
         log.info("Found the following citation forms: {}".format(output))
         return output
+    def lexeme(self,**kwargs):
+        """This produces a list; specify senseid and analang as you like."""
+            output[lang]=self.get('lexeme/form/text',kwargs).get('text')
+        return output
     def lexemes(self):
-        output={}
+        output={} # This produces a dictionary, of forms for each language.
         for lang in self.analangs:
-            output[lang]=self.get('lexeme/form/text',analang=lang).get('text')
+            output[lang]=self.lexeme(analang=lang).get('text')
         log.info("Found the following lexemes: {}".format(output))
         return output
     def extrasegments(self):
