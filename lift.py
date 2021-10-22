@@ -1580,7 +1580,7 @@ class LiftURL():
             self.targethead=self.target
             self.targetbits=[self.targethead,]
             self.targettail=[]
-        if 'form' in self.targethead:
+        if 'form' in self.targethead and 'form' not in self.children[self.basename]:
             log.error("Looking for {} as the head of a target is going to "
             "cause problems, as it appears in too many places, and is likely "
             "to not give the desired results. Fix this, and try again. (whole "
