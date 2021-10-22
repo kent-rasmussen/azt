@@ -371,14 +371,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def addmodcitationfields(self,entry,langform,lang):
         citation=entry.find('citation')
         if citation is None:
-            citation=ET.SubElement(entry, 'citation')
-        form=citation.find("form[@lang='{lang}']".format(lang=lang))
-        if form is None:
-            form=ET.SubElement(citation,'form',attrib={'lang':lang})
-        t=form.find('text')
-        if t is None:
-            t=ET.SubElement(form,'text')
-        t.text=langform
+            citation=Node(entry, 'citation')
+            citation.makeformnode(lang=lang,text=langform)
     def addpronunciationfields(self,**kwargs):
         """This fuction will add an XML node to the lift tree, like a new
         pronunciation field."""
