@@ -1779,6 +1779,7 @@ class LiftURL():
         self.alias['lexical-unit']='lexeme'
         self.alias['grammatical-info']='ps'
         self.alias['id']='senseid'
+        self.alias['ftype']='fieldtype'
     def __init__(self, *args,**kwargs):
         self.base=kwargs['base']
         if type(kwargs['base']) is Lift:
@@ -2474,6 +2475,10 @@ if __name__ == '__main__':
     # log.info(len(entries))
     # log.info(entries[0].get('guid'))
     # printurllog(lift)
+    lift.addtoneUF(#guid='09926cec-8be1-4f66-964e-4fdd8fa75fdc',
+                    senseid='continue, resume_d174612b-b3c0-4073-bff0-58fd098252a9',#senseids[0],
+                    group='4',analang='en')
+    # lift.write()
     quit()
     import timeit
     def timetest():
@@ -2482,7 +2487,6 @@ if __name__ == '__main__':
                 print(out1)
     timetest()
     # log.info(lift.urls)
-    # lift.write()
     # log.info('\n'.join([str(x) for x in lift.urls.items()]))
     exit()# print('l:',l)
     showurl=True
