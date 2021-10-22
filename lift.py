@@ -288,8 +288,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             p.makefieldnode('tone',glosslang,text=tonevalue)
         self.updatemoddatetime(senseid=senseid)
     def forminnode(self,node,value):
-        # Returns True if `value` is in *any* text node child of any form child
-        # of node: [node/'form'/'text' = value]
+        """Returns True if `value` is in *any* text node child of any form child
+        of node: [node/'form'/'text' = value] Is this needed?"""
         for f in node.findall('form'):
             for t in f.findall('text'):
                 if t.text == value:
