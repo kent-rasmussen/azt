@@ -310,12 +310,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             exfieldvalue=p.makefieldnode(fieldtype,glosslang,gimmetext=True)
             p.makefieldnode('location',glosslang,text=location)
             p.makefieldnode('tone',glosslang,text=tonevalue)
-        # senseid=kwargs.get('senseid')
         if 'guid' in kwargs:
             guid=kwargs.get('guid')
             self.updatemoddatetime(guid=guid,senseid=senseid)
         else:
-            self.updatemoddatetime(senseid=kwargs['senseid'])
+            self.updatemoddatetime(senseid=senseid)
         if self.debug == True:
             log.info("add langform: {}".format(forms.analang))
             log.info("add tone: {}".format(fieldvalue))
@@ -764,32 +763,32 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for form in formsd:
                 forms.append(rx.glossifydefn(form))
         return forms
-    def citationorlexeme(self,guid=None,senseid=None,lang=None,ps=None
-                        ,showurl=False):
-        """I think this was a nice idea, but unnecessary; ability to use guid
-        or senseid is more important."""
-        # if guid is None:
-        #     try:
-        #         for guid in self.guidsvalidwps:
-        #             return self.citationorlexeme(guid=guid,senseid=senseid,
-        #                                             lang=lang,ps=ps,
-        #                                             showurl=showurl)
-        #     except:
-        #         for guid in self.guids:
-        #             return self.citationorlexeme(guid=guid,senseid=senseid,
-        #                                             lang=lang,ps=ps,
-        #                                             showurl=showurl)
-        # else:
-        forms=self.get('citation',guid=guid,senseid=senseid,analang=lang,
-                        showurl=showurl,
-                        ps=ps
-                        ) #,showurl=True
-        if forms == []: #for the whole db this will not work if even one gloss is filled out
-            forms=self.get('lexeme',guid=guid,senseid=senseid,analang=lang,
-                            showurl=showurl,
-                            ps=ps
-                            )
-        return forms
+    # def citationorlexeme(self,guid=None,senseid=None,lang=None,ps=None
+    #                     ,showurl=False):
+    #     """I think this was a nice idea, but unnecessary; ability to use guid
+    #     or senseid is more important."""
+    #     # if guid is None:
+    #     #     try:
+    #     #         for guid in self.guidsvalidwps:
+    #     #             return self.citationorlexeme(guid=guid,senseid=senseid,
+    #     #                                             lang=lang,ps=ps,
+    #     #                                             showurl=showurl)
+    #     #     except:
+    #     #         for guid in self.guids:
+    #     #             return self.citationorlexeme(guid=guid,senseid=senseid,
+    #     #                                             lang=lang,ps=ps,
+    #     #                                             showurl=showurl)
+    #     # else:
+    #     forms=self.get('citation',guid=guid,senseid=senseid,analang=lang,
+    #                     showurl=showurl,
+    #                     ps=ps
+    #                     ) #,showurl=True
+    #     if forms == []: #for the whole db this will not work if even one gloss is filled out
+    #         forms=self.get('lexeme',guid=guid,senseid=senseid,analang=lang,
+    #                         showurl=showurl,
+    #                         ps=ps
+    #                         )
+    #     return forms
     def fields(self,guid=None,lang=None): #get all the field types in a given entry
         f=list(dict.fromkeys(self.get('field').get('type')))
         return f
