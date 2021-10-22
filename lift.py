@@ -2469,10 +2469,30 @@ if __name__ == '__main__':
     # log.info(len(entries))
     # log.info(entries[0].get('guid'))
     # printurllog(lift)
-    lift.addtoneUF(#guid='09926cec-8be1-4f66-964e-4fdd8fa75fdc',
-                    senseid='continue, resume_d174612b-b3c0-4073-bff0-58fd098252a9',#senseids[0],
-                    group='4',analang='en')
-    # lift.write()
+    # lift.addtoneUF(#guid='09926cec-8be1-4f66-964e-4fdd8fa75fdc',
+    #                 #senseids[0],
+    #                 group='4',analang='en')
+    lift.addpronunciationfields(#self,guid,
+                                # senseid,
+                                analang='en',
+                                senseid='continue, resume_d174612b-b3c0-4073-bff0-58fd098252a9',
+                                glosslang='fr',glosslang2=None,
+                                lang='de',#forms,
+                                langform="TestForm",
+                                glossform="testgloss",#gloss2form,
+                                fieldtype='tone',
+                                location='Plural',
+                                fieldvalue=45,
+                                ps=None,showurl=False)
+                                # lift.write()
+                                # analang=kwargs.get('analang')
+                                # glosslang=kwargs.get('glosslang')
+                                # langform=kwargs.get('langform')
+                                # glossform=kwargs.get('glossform')
+                                # fieldtype=kwargs.get('fieldtype','tone')
+                                # fieldvalue=kwargs.get('fieldvalue')
+                                # location=kwargs.get('location')
+
     quit()
     import timeit
     def timetest():
