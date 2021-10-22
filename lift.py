@@ -681,15 +681,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def slists(self):
         self.segmentsnotinregexes={}
         self.clist()
-    def getsenseidformstosearchbyps(self,ps,lang=None):
-        if lang is None:
-            lang=self.analang
-        self.senseidformstosearch[lang][ps]={} #Erases all previous data!!
-        for senseid in self.get('senseidbyps',lang=lang,ps=ps):
-            form=self.get('citation',senseid=senseid,lang=lang,ps=ps)
-            if len(form) == 0: #no items returned
-                form=self.get('lexeme',senseid=senseid,lang=lang,ps=ps)
-            self.senseidformstosearch[lang][ps][senseid]=form
     def getformstosearch(self):
         """This outputs a dictionary of form {analang: {guid:form}*}*, where
         form is citation if available, or else lexeme. This is to be flexible
