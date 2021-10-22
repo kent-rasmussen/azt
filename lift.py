@@ -549,10 +549,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for form in formsd:
                 forms.append(rx.glossifydefn(form))
         return forms
-    def fields(self,guid=None,lang=None): #get all the field types in a given entry
+    def fields(self,guid=None,lang=None): # all field types in a given entry
         f=list(dict.fromkeys(self.get('field').get('type')))
         return f
-    def getlocations(self,guid=None,lang=None): #get all the field types in a given entry
+    def getlocations(self,guid=None,lang=None): # all field locations in a given entry
         l=list(dict.fromkeys(self.get('example/locationfield').get('text')))
         log.info('Locations found in Examples: {}'.format(l))
         return l
