@@ -296,6 +296,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     return True
         return False
     def convertalltodecomposed(self):
+        """Do we want/need this? Not using anywhere..."""
         for form in self.nodes.findall('.//form'):
             if form.get('lang') in self.analangs:
                 for t in form.findall('.//text'):
