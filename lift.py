@@ -549,32 +549,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for form in formsd:
                 forms.append(rx.glossifydefn(form))
         return forms
-    # def citationorlexeme(self,guid=None,senseid=None,lang=None,ps=None
-    #                     ,showurl=False):
-    #     """I think this was a nice idea, but unnecessary; ability to use guid
-    #     or senseid is more important."""
-    #     # if guid is None:
-    #     #     try:
-    #     #         for guid in self.guidsvalidwps:
-    #     #             return self.citationorlexeme(guid=guid,senseid=senseid,
-    #     #                                             lang=lang,ps=ps,
-    #     #                                             showurl=showurl)
-    #     #     except:
-    #     #         for guid in self.guids:
-    #     #             return self.citationorlexeme(guid=guid,senseid=senseid,
-    #     #                                             lang=lang,ps=ps,
-    #     #                                             showurl=showurl)
-    #     # else:
-    #     forms=self.get('citation',guid=guid,senseid=senseid,analang=lang,
-    #                     showurl=showurl,
-    #                     ps=ps
-    #                     ) #,showurl=True
-    #     if forms == []: #for the whole db this will not work if even one gloss is filled out
-    #         forms=self.get('lexeme',guid=guid,senseid=senseid,analang=lang,
-    #                         showurl=showurl,
-    #                         ps=ps
-    #                         )
-    #     return forms
     def fields(self,guid=None,lang=None): #get all the field types in a given entry
         f=list(dict.fromkeys(self.get('field').get('type')))
         return f
@@ -2162,34 +2136,6 @@ if __name__ == '__main__':
     glosslang='en'
     pss=["Verb","Noun"]
     analang='bfj'
-    # b=LiftURL(bob='ḿe',
-    #             # guid=guid,
-    #             # senseid=senseid,
-    #             # location=location,
-    #             # glosslang=glosslang,
-    #             # ps=ps,
-    #             # base='sense',
-    #             target="sense",
-    #             # tonevalue=3,
-    #             )
-    # get entries: lift.get("entry")
-        # lift.get("entry",what='guid')
-    # get senses: lift.get("sense")
-        # lift.get("sense",what='id')
-    # get *all* pss: lift.get("ps",what='value')
-    # Never ask for just the form! give the parent, to get a particular form:
-    # lift.get("lexeme/form",what='text')
-    # lift.get("example/form",what='text')
-    # lift.get("citation/form",what='text')
-    # just 1 of each pss: dict.fromkeys(lift.get("ps",what='value'))
-    # get tone value: lift.get("text", location=location, path=['tonefield'],
-    #                             what='text')
-    # for ps in dict.fromkeys(lift.get("ps",what='value')):
-    #         log.info(ps)
-        # for tonevalue in dict.fromkeys(lift.get('text',path=["tonefield"],what='text')):
-        #     log.info(tonevalue)
-    # log.info('\n'.join([str(x) for x in lift.urls.items()]))
-    # exit()
     def test():
         for fieldvalue in [2,2]:
             for location in locations:
@@ -2231,60 +2177,19 @@ if __name__ == '__main__':
                     #                             tonevalue=fieldvalue,
                     #                             what='node')
         return
-                # log.info(lift.get("example/form",what='text',ps=ps,#"sense", #target
-                #         # tonevalue=tonevalue,
-                #         # guid=guid,#
-                #         path=['lexeme','tonefield'], senseid=senseid,
-                #         # senseid=senseid,
-                #         # showurl=True
-                #         ))
-                # log.info(lift.get("citation/form",what='text',ps=ps,#"sense", #target
-                #         # tonevalue=tonevalue,
-                #         # guid=guid,#
-                #         path=['lexeme','tonefield'], senseid=senseid,
-                #         # senseid=senseid,
-                #         # showurl=True
-                #         ))
-            # log.info(lift.get("sense", #target
-            #     # guid=guid,
-            #     senseid=senseid,
-            #     # showurl=True
-            #     ))
-                # log.info(lift.get("text", #target
-                #     ps=ps,# guid=guid,
-                #     senseid=senseid,
-                #     location=location,
-                #     path=['tonefield'],
-                #     what='text'
-                #     # showurl=True
-                #     ))
-                # path=['pronunciation'],# senseid=senseid,
-                # guid=guid,
-                # glosslang=glosslang,
-                # ps=ps,
-                # base='sense',
-                # tonevalue=3,
-                # )
-    # test()
-    # entries=lift.get("entry").get()
-    # log.info(len(entries))
-    # log.info(entries[0].get('guid'))
-    # printurllog(lift)
-    # lift.addtoneUF(#guid='09926cec-8be1-4f66-964e-4fdd8fa75fdc',
-    #                 #senseids[0],
-    #                 group='4',analang='en')
-    lift.addpronunciationfields(#self,guid,
+    g=lift.glossordefn(#self,guid,
                                 # senseid,
                                 analang='en',
                                 senseid='continue, resume_d174612b-b3c0-4073-bff0-58fd098252a9',
                                 glosslang='fr',glosslang2=None,
-                                lang='de',#forms,
-                                langform="TestForm",
-                                glossform="testgloss",#gloss2form,
-                                fieldtype='tone',
-                                location='Plural',
-                                fieldvalue=45,
-                                ps=None,showurl=False)
+                                lang='swh',#forms,
+                                # langform="TestForm",
+                                # glossform="testgloss",#gloss2form,
+                                # fieldtype='tone',
+                                # location='Plural',
+                                # fieldvalue=45,
+                                # ps=None,
+                                showurl=True)
                                 # lift.write()
                                 # analang=kwargs.get('analang')
                                 # glosslang=kwargs.get('glosslang')
@@ -2294,6 +2199,9 @@ if __name__ == '__main__':
                                 # fieldvalue=kwargs.get('fieldvalue')
                                 # location=kwargs.get('location')
 
+    print(g)
+    for i in g:
+        print(i)
     quit()
     import timeit
     def timetest():
