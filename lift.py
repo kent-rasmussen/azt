@@ -348,7 +348,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
-    def addmediafields(self,node, url,lang, showurl=False):#lang=Check.audiolang
+    def addmediafields(self,node, url,lang, showurl=False):
         """This fuction will add an XML node to the lift tree, like a new
         example field."""
         """The program should know before calling this, that there isn't
