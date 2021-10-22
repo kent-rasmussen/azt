@@ -81,30 +81,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """Think through where this belongs; what classes/functions need it?"""
         self.morphtypes=self.getmorphtypes()
         log.info("Language initialization done.")
-    def geturlnattr(self, attribute, **kwargs):
-        if attribute == 'attributes':
-            return self.attribdict.keys()
-        if attribute not in self.attribdict:
-            log.info("Sorry, {} isn't defined yet. This is what's "
-                                "available:".format(attribute))
-            for line in list(self.attribdict.keys()):
-                try:
-                    log.info(' '.join(line, '\t',self.attribdict[line]['cm']))
-                except:
-                    log.info('{}\tUNDOCUMENTED?!?!'.format(line))
-            log.info("This is where that key was called; fix it, and try again:")
-        """I should also add/remove pronunciation or other systematic things here"""
-        url=self.attribdict[attribute]['url']
-        for field in url[1]:
-            if field not in kwargs:
-                kwargs[field]=None
-        url=(url[0],kwargs)
-        url=buildurl(url)
-        log.log(2,'After buildurl: {}'.format(url))
-        url=removenone(url)
-        log.log(2,'After removenone: {}'.format(url))
-        log.log(1,'Ori: {}'.format(self.attribdict[attribute]['url']))
-        return {'url':url,'attr':self.attribdict[attribute]['attr']}
     def retarget(self,urlobj,target,showurl=False):
         k=self.urlkey(urlobj.kwargs)
         urlobj.kwargs['retarget']=target
