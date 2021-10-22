@@ -1189,9 +1189,11 @@ class Node(ET.Element):
         n=Node(self,'form',attrib={'lang':lang})
         nn=Node(n,'text')
         if text is not None:
-            nn.text=text
+            nn.text=str(text)
         if gimmetext:
             return nn
+    def maketraitnode(self,type,value,gimmenode=False):
+        n=Node(self,'trait',attrib={'name':type, 'value':str(value)})
     def __init__(self, parent, tag, attrib={}, **kwargs):
         super(Node, self).__init__(tag, attrib, **kwargs)
         parent.append(self)
