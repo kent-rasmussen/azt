@@ -772,21 +772,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if regex.search(form):
                 output+=self.formstosearch[analang][ps][form]
         return output
-    def formbyid(self,guid,lang=None): #This is the language version, use without entry.
-        """bring this logic into get()"""
-        form=self.get('citation',guid=guid,lang=lang) #self.nodes.findall(f"entry[@guid='{guid}']/citation/form[@lang='{self.xyz}']/text")
-        if form == []: #default to lexical form for missing citation forms.
-            form=self.get('lexeme',guid=guid,lang=lang) #form=self.nodes.findall(f"entry[@guid='{guid}']/lexical-unit/form[@lang='{self.xyz}']/text")
-            if form == []:
-                return None
-        #log.info(form)
-        return form #[0].text #print the text of the <text> node above
-    def psbyid(self,guid): #This is the language version, use without entry.
-        #return self.nodes.find(f"entry[@guid='{guid}']/sense/grammatical-info").get('value')
-        #return ps.attrib.get('value')
-        ps=self.nodes.find(f"entry[@guid='{guid}']/sense/grammatical-info")
-        if ps is not None:
-            return ps.attrib.get('value')
     def formsnids(self): #outputs [guid, form] tuples for each entry in the lexicon. Is this more efficient than using idsbyformregex?
         for entry in self.nodes.findall(f"entry"):
             for form in entry.findall(f"./citation/form[@lang='{self.xyz}']/text"): #Not lexeme-unit..…
