@@ -1415,7 +1415,7 @@ class LiftURL():
             getattr(self,nodename)(*args)
     def formargsbyparent(self,parent):
         args=list()
-        if parent in ['gloss', 'definition']:
+        if parent in ['gloss', 'definition','translation']:
             args.append(parent)
             args.append('glosslang')
         if parent in ['lexeme', 'citation', 'example']:
