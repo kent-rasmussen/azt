@@ -635,17 +635,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         node.text=newfieldvalue #remove(example)
         self.updatemoddatetime(guid=guid,senseid=senseid)
         # self.write()
-    def updatemoddatetime(self,guid=None,senseid=None,analang=None,
-                    glosslang=None,langform=None,glossform=None,fieldtype=None,
-                    location=None,fieldvalue=None,ps=None,
-                    newfieldvalue=None,showurl=False):
+    def updatemoddatetime(self,guid=None,senseid=None):
         """This updates the fieldvalue, ignorant of current value."""
-        urlnattr=self.geturlnattr('entry',guid=guid,senseid=senseid) #just entry
-        url=urlnattr['url']
-        if showurl==True:
-            log.info(url)
-        node=self.nodes.find(url) #this should always find just one node
-        node.attrib['dateModified']=getnow()
+        if senseid is not None:
+            surl=self.get('sense',senseid=senseid) #url object
+            for s in surl.get():
+                s.attrib['dateModified']=getnow() #node
+            eurl=self.get('entry',senseid=senseid) #url object
+            for e in eurl.get():
+                e.attrib['dateModified']=getnow() #node
+        elif guid is not None: #only if no senseid given
+            for e in self.get('entry',guid=guid).get():
+                e.attrib['dateModified']=getnow()
+        self.write()
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
