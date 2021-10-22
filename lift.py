@@ -1194,6 +1194,8 @@ class Node(ET.Element):
             return nn
     def maketraitnode(self,type,value,gimmenode=False):
         n=Node(self,'trait',attrib={'name':type, 'value':str(value)})
+        if gimmenode:
+            return n
     def __init__(self, parent, tag, attrib={}, **kwargs):
         super(Node, self).__init__(tag, attrib, **kwargs)
         parent.append(self)
