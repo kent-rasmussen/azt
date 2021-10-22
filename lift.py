@@ -748,8 +748,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "complex segments which should be counted as a single "
                     "segment.")
                 log.info("--those may not be covered by your regexes.")
+    def ps(self,**kwargs): #get POS values, limited as you like
+        return self.get('ps',kwargs).get('value'))
     def pss(self): #get all POS values in the LIFT file
-        p=list(dict.fromkeys(self.get('ps').get('value')))
+        p=list(dict.fromkeys(self.ps().get('value')))
         log.info("Found these ps values: {}".format(p))
         return p
     def getmorphtypes(self): #get all morph-type values in the LIFT file
