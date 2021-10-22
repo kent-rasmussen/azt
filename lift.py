@@ -797,14 +797,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         l=list(dict.fromkeys(self.get('example/locationfield').get('text')))
         log.info('Locations found in Examples: {}'.format(l))
         return l
-    def getsenseids(self): #get the number entries in a lift file.
-        self.senseids=self.get('sense').get('senseid') #,showurl=True
-        self.nsenseids=len(self.senseids) #,guid,lang,fieldtype,location
-        # log.info(self.nsenseids)
-    def getguids(self): #get the number entries in a lift file.
-        self.guids=self.get('entry').get('guid') #,showurl=True
-        # log.info(self.guids)
-        self.nguids=len(self.guids) #,guid,lang,fieldtype,location
+    def getsenseids(self):
+        self.senseids=self.get('sense').get('senseid')
+        self.nsenseids=len(self.senseids)
+    def getguids(self):
+        self.guids=self.get('entry').get('guid')
+        self.nguids=len(self.guids)
     def nc(self):
         nounclasses="1 2 3 4 5 6 7 8 9 10 11 12 13 14"
     def clist(self): #This variable gives lists, to iterate over.
@@ -865,35 +863,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     #     x[dconsvar]+=c[stype][nglyphs]
                     # else:
                         x[consvar]+=c[stype][nglyphs]
-        # s['g']={}
-        # x['NC']=['mbh','ndz','ndj','ndh','ngb','npk','ngy','nch','mb','mp',
-        #         'mv','mf','nd','nt','ng','ŋg','ŋg','nk','nj','ns','nz']
         x['ʔ']=['ʔ',
                 "ꞌ", #Latin Small Letter Saltillo
                 "'", #Tag Apostrophe
                 'ʼ'  #modifier letter apostrophe
                 ]
         x['G']=['ẅ','y','Y','w','W']
-        # x['CG']=list((char+g for char in x['C'] for g in x['G']))
         x['N']=["ng'",'mm','ŋŋ','m','M','N','n','ŋ','ɲ'] #no longer:'ny',
-        # x['NC']=list((n+char for char in x['C'] for n in x['N']))
-        # x['NCG']=list((n+char+g for char in x['C'] for n in x['N']
-        #                                             for g in x['G']))
         """Non-Nasal/Glide Sonorants"""
         x['S']=['l','r']
         x['Sdg']=['rh','wh']
-        # x['CS']=list((char+s for char in x['C'] for s in x['S']))
-        # x['NCS']=list((n+char+s for char in x['C'] for n in x['N']
-        #                                             for s in x['S']))
-        # self.treatlabializepalatalizedasC=False
-        # if self.treatlabializepalatalizedasC==True:
-        #     lp={}
-        #     lp['lab']=list(char+'w' for char in c)
-        #     lp['pal']=list(char+'y' for char in c)
-        #     lp['labpal']=list(char+'y' for char in lp['lab'])
-        #     lp['labpal']+=list(char+'w' for char in lp['pal'])
-        #     for stype in sorted(lp.keys()): #larger graphs first
-        #         c=lp[stype]+c
         x['V']=[
                 #decomposed first:
                 #tilde (decomposed):
@@ -927,11 +906,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         x['ː']=[":","ː"] # vowel length markers
         x['b']=['=','-'] #affix boundary markers
         x['o']=['<','&lt;','&gt;','>','›','»','‹','«',''] #macron here?
-        # """We need to address long and idiosyncratic vowel orthographies,
-        # especially for Cameroon. This should also include diacritics, together
-        # or separately."""
-        # """At some point, we may want logic to include only certain
-        # elements in c. The first row is in pretty much any language."""
         actuals={}
         log.log(3,'hypotheticals: {}'.format(x))
         self.s={} #wipe out an existing dictionary
