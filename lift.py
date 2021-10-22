@@ -1797,13 +1797,13 @@ class LiftURL():
         log.info("LiftURL called with {}".format(kwargs))
         self.kwargs=kwargs
         target=self.target=self.kwargs.pop('target','entry') # what do we want?
+        self.setchildren()
         self.parsetargetlineage()
         self.what=self.kwargs.pop('what','node') #This should always be there
         self.path=kwargs.pop('path',[])
         self.url=[]
         self.level={'cur':0,basename:0}
         self.guid=self.senseid=self.attrdonothing
-        self.setchildren()
         self.setaliases()
         self.setattrsofnodes()
         self.bearchildrenof(basename)
