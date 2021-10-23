@@ -684,22 +684,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         self.formstosearch[lang][ps][f]=[s]
         log.debug("Found the following forms to search: {}".format(
                                                             self.formstosearch))
+    def gloss(self,**kwargs):
+        return self.get('gloss/text', kwargs).get('text')
+    def definition(self,**kwargs):
+        truncate=kwargs.pop('truncate',False)
+        forms=self.get('definition', kwargs).get('text')
+        if truncate:
+            forms=[rx.glossifydefn(f) for f in forms]
+        return forms
     def glossordefn(self,**kwargs):
-        ps=kwargs.get('ps',None)
-        guid=kwargs.get('guid',None)
-        senseid=kwargs.get('senseid',None)
-        glosslang=kwargs.get('glosslang',None)
-        showurl=kwargs.get('showurl',False)
-        forms=self.get('gloss/text',guid=guid,senseid=senseid,
-                        glosslang=glosslang,ps=ps,
-                        showurl=showurl).get('text')
+        forms=self.gloss(kwargs)
         if forms == []:
-            formsd=self.get('definition',guid=guid,senseid=senseid,
-                        glosslang=glosslang,
-                        showurl=showurl).get('text')
-            forms=list()
-            for form in formsd:
-                forms.append(rx.glossifydefn(form))
+            kwargs['truncate']=True
+            forms=self.definition(kwargs)
         return forms
     def citation(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
