@@ -6303,7 +6303,7 @@ class DictbyLang(dict):
         """the frame only applies if there is a language value; I hope that's
         what we want..."""
         for l in [i for i in langs if i in framedict if i in self]:
-            self[l]=rx.framerx.sub(self[l],framedict[l])
+            self.framed[l]=rx.framerx.sub(self[l],framedict[l])
     def __init__(self):
         super(DictbyLang, self).__init__()
 class FramedData(object):
