@@ -6326,6 +6326,24 @@ class FramedData(object):
     times to display it. If source is a senseid, it pulls form/gloss/etc
     information from the entry. If source is an example, it pulls that info
     from the example. The info is formatted uniformly in either case."""
+    def formatted(notonegroup=True,noframe=True):
+        if notonegroup:
+            toformat=DataList()
+        else:
+            toformat=DataList(self.tonegroup)
+        if noframe:
+            toformat.appendformsbylang(self.forms,self.analangs,quote=False)
+            toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
+        else:
+            toformat.appendformsbylang(self.framed,self.analangs,quote=False)
+            toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
+        return ' '.join(toformat) #put it all together
+    def setframe(self,frame):
+        self.frame=frame
+        self.framed()
+    def framed(self):
+        self.forms.frame(self.frame,self.analangs+self.glosslangs)
+        self.framed=self.forms.framed
     def parsesense(self,db,senseid,truncdefn=False):
         self.senseid=senseid
         lexs=db.lexemes(senseid=senseid)
