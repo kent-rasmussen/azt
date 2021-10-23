@@ -705,17 +705,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def citations(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language
         for lang in self.analangs:
-            output[lang]=self.citation(analang=lang).get('text')
+            output[lang]=self.citation(analang=lang, kwargs).get('text')
         log.info("Found the following citation forms: {}".format(output))
         return output
     def lexeme(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
             output=self.get('lexeme/form/text',kwargs).get('text')
         return output
-    def lexemes(self):
+    def lexemes(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language.
         for lang in self.analangs:
-            output[lang]=self.lexeme(analang=lang).get('text')
+            output[lang]=self.lexeme(analang=lang, kwargs).get('text')
         log.info("Found the following lexemes: {}".format(output))
         return output
     def extrasegments(self):
