@@ -532,23 +532,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         d=self.get('definition/form').get('lang')
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {}".format(self.glosslangs)))
-    def glossordefn(self,**kwargs):
-        ps=kwargs.get('ps',None)
-        guid=kwargs.get('guid',None)
-        senseid=kwargs.get('senseid',None)
-        glosslang=kwargs.get('glosslang',None)
-        showurl=kwargs.get('showurl',False)
-        forms=self.get('gloss/text',guid=guid,senseid=senseid,
-                        glosslang=glosslang,ps=ps,
-                        showurl=showurl).get('text')
-        if forms == []:
-            formsd=self.get('definition',guid=guid,senseid=senseid,
-                        glosslang=glosslang,
-                        showurl=showurl).get('text')
-            forms=list()
-            for form in formsd:
-                forms.append(rx.glossifydefn(form))
-        return forms
     def fields(self,guid=None,lang=None): # all field types in a given entry
         f=list(dict.fromkeys(self.get('field').get('type')))
         return f
@@ -701,6 +684,23 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         self.formstosearch[lang][ps][f]=[s]
         log.debug("Found the following forms to search: {}".format(
                                                             self.formstosearch))
+    def glossordefn(self,**kwargs):
+        ps=kwargs.get('ps',None)
+        guid=kwargs.get('guid',None)
+        senseid=kwargs.get('senseid',None)
+        glosslang=kwargs.get('glosslang',None)
+        showurl=kwargs.get('showurl',False)
+        forms=self.get('gloss/text',guid=guid,senseid=senseid,
+                        glosslang=glosslang,ps=ps,
+                        showurl=showurl).get('text')
+        if forms == []:
+            formsd=self.get('definition',guid=guid,senseid=senseid,
+                        glosslang=glosslang,
+                        showurl=showurl).get('text')
+            forms=list()
+            for form in formsd:
+                forms.append(rx.glossifydefn(form))
+        return forms
     def citation(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
         output=self.get('citation/form/text',kwargs).get('text')
