@@ -65,7 +65,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getformstosearch() #sets: self.formstosearch[lang][ps] #no guids
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
-        self.citationforms=self.citationforms()
+        self.citationforms=self.citations()
         self.lexemes=self.lexemes()
         self.locations=self.getlocations()
         self.defaults=[ #these are lift related defaults
@@ -702,7 +702,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This produces a list; specify senseid and analang as you like."""
         output=self.get('citation/form/text',kwargs).get('text')
         return output
-    def citationforms(self):
+    def citations(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language
         for lang in self.analangs:
             output[lang]=self.citation(analang=lang).get('text')
