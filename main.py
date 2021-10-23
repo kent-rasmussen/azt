@@ -6306,6 +6306,19 @@ class DictbyLang(dict):
             self.framed[l]=rx.framerx.sub(self[l],framedict[l])
     def __init__(self):
         super(DictbyLang, self).__init__()
+class FramedDataDict(dict):
+    def getframeddata(self, source, **kwargs):
+        if source not in self:
+            kwargs['db']=self.db
+            self[source]=FramedData(self,source,kwargs)
+        return self[source]
+    def __init__(self, check, **kwargs):
+        super(FramedDataDict, self).__init__()
+        self.frames=check.toneframes #[ps][name]
+        self.db=check.db
+        self.analangs=check.analangs
+        self.glosslangs=check.glosslangs
+
 class FramedData(object):
     """This populates an object with attributes to format data for display,
     by senseid"""
