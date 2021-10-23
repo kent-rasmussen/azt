@@ -713,7 +713,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return output
     def lexeme(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
-            output[lang]=self.get('lexeme/form/text',kwargs).get('text')
+            output=self.get('lexeme/form/text',kwargs).get('text')
         return output
     def lexemes(self):
         output={} # This produces a dictionary, of forms for each language.
