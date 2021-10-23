@@ -686,18 +686,36 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                             self.formstosearch))
     def gloss(self,**kwargs):
         return self.get('gloss/text', kwargs).get('text')
+    def glosses(self,**kwargs):
+        output={} # This produces a dictionary, of forms for each language
+        for lang in self.glosslangs:
+            output[lang]=self.gloss(glosslang=lang, kwargs).get('text')
+        return output
     def definition(self,**kwargs):
         truncate=kwargs.pop('truncate',False)
         forms=self.get('definition', kwargs).get('text')
         if truncate:
             forms=[rx.glossifydefn(f) for f in forms]
         return forms
+    def definitions(self,**kwargs):
+        output={} # This produces a dictionary, of forms for each language
+        for lang in self.glosslangs:
+            output[lang]=self.definition(glosslang=lang, kwargs).get('text')
+        return output
     def glossordefn(self,**kwargs):
         forms=self.gloss(kwargs)
         if forms == []:
             kwargs['truncate']=True
             forms=self.definition(kwargs)
         return forms
+    def glossesordefns(self,**kwargs):
+        output={} # This produces a dictionary, of forms for each language
+        for lang in self.glosslangs:
+            output[lang]=self.gloss(kwargs)
+            if output[lang] == []:
+                kwargs['truncate']=True
+                forms=self.definition(kwargs)
+        return output
     def citation(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
         output=self.get('citation/form/text',kwargs).get('text')
