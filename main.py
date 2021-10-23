@@ -6359,17 +6359,19 @@ class FramedData(object):
             elif ((i.tag == 'field') and (i.get('type') == 'tone') and
                     not self.notonegroup):
                 self.tonegroups=i.findall('form/text') #always be list of one
-    def __init__(self, source, **kwargs):
+    def __init__(self, parent, source, **kwargs):
         super(FramedData, self).__init__()
+        self.frames=parent.frames
+        self.db=parent.db #kwargs.pop('db',None) #not needed for examples
+        self.analangs=parent.analangs
+        self.glosslangs=parent.glosslangs
+        #Generalize these, and manage with methods:
         noframe=kwargs.pop('noframe',False)
         self.notonegroup=kwargs.pop('notonegroup',False)
         truncdefn=kwargs.pop('truncdefn',False)
-        self.db=kwargs.pop('db',None) #not needed for examples
         self.location=kwargs.pop('location',None) #not needed for noframe
         self.frame=kwargs.pop('frame',None) #not needed for noframe
         #These really must be there, and ordered with first first
-        self.analangs=kwargs.pop('analangs')
-        self.glosslangs=kwargs.pop('glosslangs')
         #to put data:
         self.forms=DictbyLang()
         #defaults to set upfront
@@ -6414,16 +6416,6 @@ class FramedData(object):
                     int(tonegroup)
                 except:
                     self.tonegroup=tonegroup #only for named groups
-        if not noframe: #Forms and glosses have to be strings, or the rx fails
-            self.forms.frame(self.frame,self.analangs)
-            self.glosses.frame(self.frame,self.glosslangs)
-        if self.tonegroup is None: #i.e., no named group was found above
-            toformat=DataList()
-        else:
-            toformat=DataList(self.tonegroup)
-        toformat.appendformsbylang(self.forms,self.analangs,quote=False)
-        toformat.appendformsbylang(self.glosses,self.glosslangs,quote=True)
-        self.formatted=' '.join(toformat) #put it all together
         # just for convenience:
         self.analang=self.forms[self.analangs[0]]
         self.glosslang=self.forms[self.glosslangs[0]]
