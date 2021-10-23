@@ -6341,8 +6341,11 @@ class FramedData(object):
         for i in glss:
             self.forms[i]=glss[i]
         if not self.notonegroup and self.location is not None:
-            self.tonegroups=self.db.get('exfieldvalue', senseid=senseid,
-                                    fieldtype='tone', location=self.location)
+            self.tonegroups=self.db.get('example/field/form/text',
+                                    senseid=senseid,
+                                    # fieldtype='tone',
+                                    path=['tonefield']
+                                    location=self.location).get('text')
         else:
             log.error("Location isn't set, but you asked for a tonegoup...")
     def parseexample(self,example):
