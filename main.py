@@ -6328,16 +6328,13 @@ class FramedData(object):
     from the example. The info is formatted uniformly in either case."""
     def parsesense(self,db,senseid,truncdefn=False):
         self.senseid=senseid
-        lexs=db.lexeme(senseid=senseid)
-        cits=db.citation(senseid=senseid)
-        log.info("lex: {}, cit: {}".format(lexs,cits))
-        defns=db.definition(senseid=senseid)
-        glss=db.gloss(senseid=senseid)
-        log.info("defns: {}, glss: {}".format(defns,glss))
-        for i in lexs+cits: # (later) citation nodes will overwrite lex nodes
-            self.forms.getformfromnode(i)
-        for i in defns: #(later) gloss nodes will overwrite these defn nodes
-            self.glosses.getformfromnode(i,truncate=truncdefn) #only trunc defns
+        lexs=db.lexemes(senseid=senseid)
+        cits=db.citations(senseid=senseid)
+        glss=db.glossesordefns(senseid=senseid)
+        for i in lexs: # (later) citation nodes will overwrite lex nodes
+            self.forms[i]=lexs[i]
+        for i in cits:
+            self.forms[i]=cits[i]
         for i in glss:
             self.forms[i]=glss[i]
         if not self.notonegroup and self.location is not None:
