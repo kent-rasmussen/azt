@@ -6339,7 +6339,7 @@ class FramedData(object):
         for i in defns: #(later) gloss nodes will overwrite these defn nodes
             self.glosses.getformfromnode(i,truncate=truncdefn) #only trunc defns
         for i in glss:
-            self.glosses.getformfromnode(i)
+            self.forms[i]=glss[i]
         if not self.notonegroup and self.location is not None:
             self.tonegroups=self.db.get('exfieldvalue', senseid=senseid,
                                     fieldtype='tone', location=self.location)
@@ -6355,7 +6355,7 @@ class FramedData(object):
                 ((i.tag == 'gloss'))):
                 for ii in i:
                     if (ii.tag == 'form'):
-                        self.glosses.getformfromnode(ii)
+                        self.forms.getformfromnode(ii) #glosses
             elif ((i.tag == 'field') and (i.get('type') == 'tone') and
                     not self.notonegroup):
                 self.tonegroups=i.findall('form/text') #always be list of one
@@ -6372,7 +6372,6 @@ class FramedData(object):
         self.glosslangs=kwargs.pop('glosslangs')
         #to put data:
         self.forms=DictbyLang()
-        self.glosses=DictbyLang()
         #defaults to set upfront
         self.tonegroups=None
         self.tonegroup=None
@@ -6427,9 +6426,9 @@ class FramedData(object):
         self.formatted=' '.join(toformat) #put it all together
         # just for convenience:
         self.analang=self.forms[self.analangs[0]]
-        self.glosslang=self.glosses[self.glosslangs[0]]
-        if len(self.glosslangs) >1 and self.glosslangs[1] in self.glosses:
-            self.glosslang2=self.glosses[self.glosslangs[1]]
+        self.glosslang=self.forms[self.glosslangs[0]]
+        if len(self.glosslangs) >1 and self.glosslangs[1] in self.forms:
+            self.glosslang2=self.forms[self.glosslangs[1]]
         else:
             self.glosslang2=None
 class ExitFlag(object):
