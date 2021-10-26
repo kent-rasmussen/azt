@@ -62,7 +62,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.glosslangs() #sets: self.glosslangs
         self.analangs() #sets: self.analangs, self.audiolangs
         self.pss=self.pss() #log.info(self.pss)
-        self.getformstosearch() #sets: self.formstosearch[lang][ps] #no guids
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
         self.citationforms=self.citations()
@@ -664,27 +663,28 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def slists(self):
         self.segmentsnotinregexes={}
         self.clist()
-    def getformstosearch(self):
-        """This outputs a dictionary of form {analang: {guid:form}*}*, where
-        form is citation if available, or else lexeme. This is to be flexible
-        for entries in process of analysis, and to have a dictionary to check
-        with regexes for output."""
-        self.formstosearch={}
-        for lang in self.analangs:
-            self.formstosearch[lang]={} #This will erase all previous data!!
-            for ps in self.pss+[None]: #I need to break this up.
-                self.formstosearch[lang][ps]={}
-                for s in self.get('sense',analang=lang,ps=ps).get('senseid'):
-                    f=self.citation(senseid=s,analang=lang)
-                    if f == []:
-                        f=self.lexeme(senseid=s,analang=lang)
-                    for fi in f:
-                        if fi in self.formstosearch[lang][ps]:
-                            self.formstosearch[lang][ps][fi].append(s)
-                        else:
-                            self.formstosearch[lang][ps][fi]=[s]
-        log.debug("Found the following forms to search: {}".format(
-                                                            self.formstosearch))
+    # def getformstosearch(self):
+    #     """This outputs a dictionary of form {analang: {guid:form}*}*, where
+    #     form is citation if available, or else lexeme. This is to be flexible
+    #     for entries in process of analysis, and to have a dictionary to check
+    #     with regexes for output."""
+    #     fts={}
+    #     for lang in self.analangs:
+    #         fts[lang]={} #This will erase all previous data!!
+    #         for ps in self.pss+[None]: #I need to break this up.
+    #             fts[lang][ps]={}
+    #             for s in self.get('sense',analang=lang,ps=ps).get('senseid'):
+    #                 f=self.citation(senseid=s,analang=lang)
+    #                 # if f == []:
+    #                 #     f=self.lexeme(senseid=s,analang=lang)
+    #                 for fi in f:
+    #                     if fi in fts[lang][ps]:
+    #                         fts[lang][ps][fi].append(s)
+    #                     else:
+    #                         fts[lang][ps][fi]=[s]
+    #     log.debug("Found the following forms to search: {}".format(
+    #                                                         fts))
+    #     return fts
     def gloss(self,**kwargs):
         return self.get('gloss/text', **kwargs).get('text')
     def glosses(self,**kwargs):
@@ -784,14 +784,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Found these morph-type values: {}".format(m))
         return m
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
-    def senseidformsbyregex(self,regex,analang,ps=None): #self is LIFT!
-        """This function takes in a ps and compiled regex,
-        and outputs a list/dictionary of senseid/{senseid:form} form."""
-        output=[] #This is just a list of senseids now: (Do we need the dict?)
-        for form in self.formstosearch[analang][ps]:
-            if regex.search(form):
-                output+=self.formstosearch[analang][ps][form]
-        return output
 class Node(ET.Element):
     def makefieldnode(self,type,lang,text=None,gimmetext=False):
         n=Node(self,'field',attrib={'type':type})
