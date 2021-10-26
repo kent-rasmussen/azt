@@ -1783,6 +1783,12 @@ class Check():
                 self.profile='Invalid'
             for self.ps in self.db.get('ps',senseid=senseid):
                 self.addtoprofilesbysense(senseid)
+                if ps not in self.formstosearch:
+                    self.formstosearch[ps]={}
+                if form in self.formstosearch[ps]:
+                    self.formstosearch[ps][form].append(s)
+                else:
+                    self.formstosearch[ps][form]=[s]
         profile=self.profile
         self.profile=profileori
         self.ps=psori
@@ -1793,6 +1799,7 @@ class Check():
         self.profilesbysense['Invalid']=[]
         self.profiledguids=[]
         self.profiledsenseids=[]
+        self.formstosearch={}
         self.sextracted={} #Will store matching segments here
         for ps in self.db.pss:
             self.sextracted[ps]={}
@@ -5243,6 +5250,15 @@ class Check():
                     text=_("Continue to next syllable profile"),
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
+    def senseidformsbyregex(self,regex,analang,ps=None): #self is LIFT!
+        """make this a check method?"""
+        """This function takes in a ps and compiled regex,
+        and outputs a list/dictionary of senseid/{senseid:form} form."""
+        output=[] #This is just a list of senseids now: (Do we need the dict?)
+        for form in self.formstosearch[ps]:
+            if regex.search(form):
+                output+=self.formstosearch[ps][form]
+        return output
     def getresults(self):
         self.getrunwindow()
         self.makeresultsframe()
@@ -5280,7 +5296,7 @@ class Check():
             # print(self.profilesbysense[self.ps][self.profile][0])
             # print(self.db.citationorlexeme(self.profilesbysense[self.ps][self.profile][0]))
             # print(firstoflist(self.db.citationorlexeme(self.profilesbysense[self.ps][self.profile][0])))
-            senseidstocheck=self.db.senseidformsbyregex(self.regex,
+            senseidstocheck=self.senseidformsbyregex(self.regex,
                                                 self.analang,
                                                 ps=self.ps)
             # senseidstocheck= filter(lambda x: self.regex.search(
