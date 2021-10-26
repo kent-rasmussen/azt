@@ -6318,7 +6318,7 @@ class FramedDataDict(dict):
         super(FramedDataDict, self).__init__()
         self.frames=check.toneframes #[ps][name]
         self.db=check.db
-        self.analangs=check.analangs
+        self.analang=check.analang
         self.glosslangs=check.glosslangs
 class FramedData(object):
     """This populates an object with attributes to format data for display,
