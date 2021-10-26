@@ -6394,7 +6394,7 @@ class FramedData(object):
         super(FramedData, self).__init__()
         self.frames=parent.frames
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
-        self.analangs=parent.analangs
+        self.analang=parent.analang
         self.glosslangs=parent.glosslangs
         """Generalize these, and manage with methods:"""
         # noframe=kwargs.pop('noframe',False)
