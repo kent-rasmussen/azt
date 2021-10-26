@@ -675,13 +675,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for ps in self.pss+[None]: #I need to break this up.
                 self.formstosearch[lang][ps]={}
                 for s in self.get('sense',analang=lang,ps=ps).get('senseid'):
-                    f=self.citation(senseid=s)
+                    f=self.citation(senseid=s,analang=lang)
                     if f == []:
-                        f=self.lexeme(senseid=s)
-                    if f in self.formstosearch[lang][ps]:
-                        self.formstosearch[lang][ps][f].append(s)
-                    else:
-                        self.formstosearch[lang][ps][f]=[s]
+                        f=self.lexeme(senseid=s,analang=lang)
+                    for fi in f:
+                        if fi in self.formstosearch[lang][ps]:
+                            self.formstosearch[lang][ps][fi].append(s)
+                        else:
+                            self.formstosearch[lang][ps][fi]=[s]
         log.debug("Found the following forms to search: {}".format(
                                                             self.formstosearch))
     def gloss(self,**kwargs):
