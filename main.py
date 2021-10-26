@@ -6339,7 +6339,7 @@ class FramedData(object):
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join(toformat) #put it all together
     def setframe(self,frame):
-        self.frame=frame
+        self.frame=self.frames[self.ps][frame]
         self.framed()
     def framed(self):
         if not self.noframe:
