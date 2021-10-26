@@ -6353,7 +6353,9 @@ class FramedData(object):
                     int(tonegroup)
                 except:
                     self.tonegroup=tonegroup #only for named groups
+    def parsesense(self,db,senseid):
         self.senseid=senseid
+        self.ps=db.ps(senseid=senseid)
         lexs=db.lexemes(senseid=senseid)
         cits=db.citations(senseid=senseid)
         glss=db.glossesordefns(senseid=senseid)
