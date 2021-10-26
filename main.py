@@ -6435,13 +6435,6 @@ class FramedData(object):
                         '\nFYI, I was looking for {}'.format(source))
             return source
         """The following is the same for senses or examples"""
-        if self.tonegroups is not None: # wanted&found
-            tonegroup=unlist(self.tonegroups)
-            if tonegroup is not None:
-                try:
-                    int(tonegroup)
-                except:
-                    self.tonegroup=tonegroup #only for named groups
         # just for convenience:
         self.analang=self.forms[self.analangs[0]]
         self.glosslang=self.forms[self.glosslangs[0]]
