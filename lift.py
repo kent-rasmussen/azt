@@ -685,55 +685,59 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.debug("Found the following forms to search: {}".format(
                                                             self.formstosearch))
     def gloss(self,**kwargs):
-        return self.get('gloss/text', kwargs).get('text')
+        return self.get('gloss/text', **kwargs).get('text')
     def glosses(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language
         for lang in self.glosslangs:
-            output[lang]=self.gloss(glosslang=lang, kwargs).get('text')
+            kwargs['glosslang']=lang
+            output[lang]=self.gloss(**kwargs)#.get('text')
         return output
     def definition(self,**kwargs):
         truncate=kwargs.pop('truncate',False)
-        forms=self.get('definition', kwargs).get('text')
+        forms=self.get('definition', **kwargs).get('text')
         if truncate:
             forms=[rx.glossifydefn(f) for f in forms]
         return forms
     def definitions(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language
         for lang in self.glosslangs:
-            output[lang]=self.definition(glosslang=lang, kwargs).get('text')
+            kwargs['glosslang']=lang
+            output[lang]=self.definition(**kwargs)
         return output
     def glossordefn(self,**kwargs):
-        forms=self.gloss(kwargs)
+        forms=self.gloss(**kwargs)
         if forms == []:
             kwargs['truncate']=True
-            forms=self.definition(kwargs)
+            forms=self.definition(**kwargs)
         return forms
     def glossesordefns(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language
         for lang in self.glosslangs:
-            output[lang]=self.gloss(kwargs)
+            output[lang]=self.gloss(**kwargs)
             if output[lang] == []:
                 kwargs['truncate']=True
-                forms=self.definition(kwargs)
+                forms=self.definition(**kwargs)
         return output
     def citation(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
-        output=self.get('citation/form/text',kwargs).get('text')
+        output=self.get('citation/form/text',**kwargs).get('text')
         return output
     def citations(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language
         for lang in self.analangs:
-            output[lang]=self.citation(analang=lang, kwargs).get('text')
+            kwargs['analang']=lang
+            output[lang]=self.citation(**kwargs) #.get('text')
         log.info("Found the following citation forms: {}".format(output))
         return output
     def lexeme(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
-            output=self.get('lexeme/form/text',kwargs).get('text')
+        output=self.get('lexeme/form/text',**kwargs).get('text')
         return output
     def lexemes(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language.
         for lang in self.analangs:
-            output[lang]=self.lexeme(analang=lang, kwargs).get('text')
+            kwargs['analang']=lang
+            output[lang]=self.lexeme(**kwargs)
         log.info("Found the following lexemes: {}".format(output))
         return output
     def extrasegments(self):
@@ -768,9 +772,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "segment.")
                 log.info("--those may not be covered by your regexes.")
     def ps(self,**kwargs): #get POS values, limited as you like
-        return self.get('ps',kwargs).get('value'))
+        return self.get('ps',**kwargs).get('value')
     def pss(self): #get all POS values in the LIFT file
-        p=list(dict.fromkeys(self.ps().get('value')))
+        p=list(dict.fromkeys(self.ps()))
         log.info("Found these ps values: {}".format(p))
         return p
     def getmorphtypes(self): #get all morph-type values in the LIFT file
