@@ -885,7 +885,10 @@ class LiftURL():
         for attr in attrs:
             if (None not in [attr,attrs[attr]] and attrs[attr] in self.kwargs
                                 and self.kwargs[attrs[attr]] is not None):
-                b+="[@{}='{}']".format(attr,self.kwargs[attrs[attr]])
+                if "'" in self.kwargs[attrs[attr]]:
+                    b+="[@{}=\"{}\"]".format(attr,self.kwargs[attrs[attr]])
+                else:
+                    b+="[@{}='{}']".format(attr,self.kwargs[attrs[attr]])
         if ((liftattr is None or (liftattr in self.kwargs #no lift attribute
                                 and self.kwargs[liftattr] is None))
                 and tag == 'text' and myattr in self.kwargs #text value to match
