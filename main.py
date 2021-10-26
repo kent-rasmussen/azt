@@ -4134,7 +4134,7 @@ class Check():
                 delattr(self,'groupselected') #reset this for each word!
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'+str(todo))
-            framed=self.getframeddata(senseid,truncdefn=True)
+            framed=self.getframeddata(senseid)
             """After the first entry, sort by groups."""
             log.debug('self.tonegroups: {}'.format(status['groups']))
             Label(titles, text=progress, font=self.fonts['report'], anchor='w'
