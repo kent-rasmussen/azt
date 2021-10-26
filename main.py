@@ -1768,7 +1768,7 @@ class Check():
         #Convert to iterate over local variables
         profileori=self.profile #We iterate across this here
         psori=self.ps #We iterate across this here
-        forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
+        forms=self.db.citation(senseid=senseid,lang=self.analang) #orlexeme
         if forms == []:
             self.profile='Invalid'
             for self.ps in self.db.get('ps',senseid=senseid):
@@ -2239,10 +2239,10 @@ class Check():
             log.log(3,'36 character senseid string!')
             senseid=source
             output['senseid']=senseid
-            forms[self.analang]=self.db.citationorlexeme(senseid=senseid,
+            forms[self.analang]=self.db.citation(senseid=senseid,#orlexeme
                                             lang=self.analang,
                                             ps=self.ps)
-            forms[self.audiolang]=self.db.citationorlexeme(senseid=senseid,
+            forms[self.audiolang]=self.db.citation(senseid=senseid, #orlexeme
                                             lang=self.audiolang,
                                             ps=self.ps)
             for lang in [self.glosslang,self.glosslang2]:
