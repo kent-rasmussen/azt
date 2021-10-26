@@ -6342,9 +6342,11 @@ class FramedData(object):
         self.frame=frame
         self.framed()
     def framed(self):
-        self.forms.frame(self.frame,self.analangs+self.glosslangs)
-        self.framed=self.forms.framed
-    def parsesense(self,db,senseid,truncdefn=False):
+        if not self.noframe:
+            self.forms.frame(self.frame,self.analangs+self.glosslangs)
+            self.framed=self.forms.framed
+        else:
+            self.framed=self.forms
     def tonegroup(self):
         if self.tonegroups is not None: # wanted&found
             tonegroup=unlist(self.tonegroups)
