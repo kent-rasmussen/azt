@@ -6367,7 +6367,7 @@ class FramedData(object):
             self.tonegroups=self.db.get('example/field/form/text',
                                     senseid=senseid,
                                     # fieldtype='tone',
-                                    path=['tonefield']
+                                    path=['tonefield'],
                                     location=self.location).get('text')
         else:
             log.error("Location isn't set, but you asked for a tonegoup...")
