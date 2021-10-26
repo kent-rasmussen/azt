@@ -4134,13 +4134,13 @@ class Check():
                 delattr(self,'groupselected') #reset this for each word!
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'+str(todo))
-            framed=self.getframeddata(senseid)
+            framed=self.datadict.getframeddata(senseid)
             """After the first entry, sort by groups."""
             log.debug('self.tonegroups: {}'.format(status['groups']))
             Label(titles, text=progress, font=self.fonts['report'], anchor='w'
                                             ).grid(column=1, row=0, sticky="ew")
             if 'formatted' in framed:
-                text=(framed['formatted'])
+                text=framed.formatted(noframe=False)#(framed['formatted']) #notonegroup=True,
             else:
                 text=_("Sorry; I can't find {}".format(framed))
                 l=Label(self.runwindow.frame, text=text,font=self.fonts['readbig'])
