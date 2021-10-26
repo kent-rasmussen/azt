@@ -6345,6 +6345,14 @@ class FramedData(object):
         self.forms.frame(self.frame,self.analangs+self.glosslangs)
         self.framed=self.forms.framed
     def parsesense(self,db,senseid,truncdefn=False):
+    def tonegroup(self):
+        if self.tonegroups is not None: # wanted&found
+            tonegroup=unlist(self.tonegroups)
+            if tonegroup is not None:
+                try:
+                    int(tonegroup)
+                except:
+                    self.tonegroup=tonegroup #only for named groups
         self.senseid=senseid
         lexs=db.lexemes(senseid=senseid)
         cits=db.citations(senseid=senseid)
