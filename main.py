@@ -6318,7 +6318,6 @@ class FramedDataDict(dict):
         self.db=check.db
         self.analangs=check.analangs
         self.glosslangs=check.glosslangs
-
 class FramedData(object):
     """This populates an object with attributes to format data for display,
     by senseid"""
