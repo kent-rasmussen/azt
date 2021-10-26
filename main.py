@@ -1701,8 +1701,8 @@ class Check():
             subcheck=self.subcheck
         if name is None:
             name=self.name
-        senseids=self.db.get('senseidbyexfieldvalue',fieldtype='tone',
-                                location=name,fieldvalue=subcheck)
+        senseids=self.db.get("sense", location=name, tonevalue=subcheck,
+                            path=['tonefield']).get('senseid')
         value=self.verifictioncode(name,subcheck)
         if verified == True:
             add=value
@@ -3644,10 +3644,9 @@ class Check():
         return senseidstochange
     def getexsall(self,value):
         #This returns all the senseids with a given tone value
-        senseids=self.db.get('senseidbyexfieldvalue',location=self.name,
-                            fieldtype='tone',
-                            fieldvalue=value
-                            )
+        senseids=self.db.get("sense", location=self.name, path=['tonefield'],
+                            tonevalue=value
+                            ).get('text')
         senseidsincheck=self.senseidsincheck(senseids)
         return list(senseidsincheck)
     def getex(self,value,notonegroup=True,truncdefn=False,renew=False):
@@ -4610,8 +4609,9 @@ class Check():
         log.log(3,"Looking for tone groups for {} frame".format(self.name))
         tonegroups=[]
         for senseid in self.senseidstosort: #This is a ps-profile slice
-            tonegroup=self.db.get('exfieldvalue', senseid=senseid,
-                        fieldtype='tone', location=self.name)#, showurl=True)
+            tonegroup=self.db.get("text", path=['tonefield'],
+                                senseid=senseid, location=self.name
+                                ).get('text')
             if unlist(tonegroup) in ['NA','','ALLOK', None]:
                 log.error("tonegroup {} found in sense {} under location {}!"
                     "".format(tonegroup,senseid,self.name))
@@ -4678,8 +4678,8 @@ class Check():
         self.senseidssorted=[]
         self.senseidsunsorted=[]
         for senseid in self.senseidstosort:
-            v=self.db.get('exfieldvalue',senseid=senseid,fieldtype='tone',
-                            location=self.name) #because it's relevant to this
+            v=self.db.get("text", senseid=senseid, location=self.name,
+                                                path=['tonefield']).get('text')
             log.info("Found tone value: {}".format(v))
             if unlist(v) in ['',None]:
                 self.senseidsunsorted+=[senseid]
@@ -5576,8 +5576,9 @@ class Check():
             for location in locations: #just make them all, delete empty later
                 values[group][location]=list()
                 for senseid in senseidsbygroup[group]:
-                    groupvalue=self.db.get('exfieldvalue',senseid=senseid,
-                        location=location,fieldtype='tone')
+                    groupvalue=self.db.get("text", senseid=senseid,
+                                    location=location, path=['tonefield']
+                                    ).get('text')
                     if groupvalue != [None]:
                         if unlist(groupvalue) not in values[group][location]:
                             values[group][location]+=groupvalue
@@ -5599,8 +5600,8 @@ class Check():
         for senseid in self.senseidstosort:
             output[senseid]={}
             for location in locations:
-                group=self.db.get('exfieldvalue',senseid=senseid,
-                    location=location,fieldtype='tone')
+                group=self.db.get("text", senseid=senseid, location=location,
+                                path=['tonefield']).get('text')
                 if group != [None]:
                     output[senseid][location]=group #Save this info by senseid
         log.info("Done collecting groups by location for each senseid.")
@@ -8512,8 +8513,8 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
                             db=framed,
                             fieldtype='tone',location=self.name,
                             fieldvalue='') #this value should be the only change
-    tgroups=self.db.get('exfieldvalue', senseid=senseid,
-                fieldtype='tone', location=self.name)
+    tgroups=self.db.get("text", senseid=senseid, location=self.name,
+                        path=['tonefield']).get('text')
     if type(tgroups) is list:
         if len(tgroups) > 1:
             log.error(_("Found {} tone values: {}".format(len(tgroups),tgroups)))
