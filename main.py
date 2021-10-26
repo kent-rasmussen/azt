@@ -6425,7 +6425,7 @@ class FramedData(object):
             """
         elif type(source) is str and len(source) >= 36:#senseid can be guid+form
             if self.db is not None: #pull from lift by senseid
-                self.parsesense(self.db,source,truncdefn=truncdefn)
+                self.parsesense(self.db,source)
             else:
                 log.error("Can't pull entry ({}) w/o database!".format(source))
                 return
