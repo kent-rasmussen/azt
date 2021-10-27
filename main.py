@@ -6364,7 +6364,7 @@ class FramedData(object):
         self.framed()
     def framed(self):
         if not self.noframe:
-            self.forms.frame(self.frame,self.analangs+self.glosslangs)
+            self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
         else:
             self.framed=self.forms
