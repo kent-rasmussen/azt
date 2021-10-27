@@ -4146,6 +4146,7 @@ class Check():
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'+str(todo))
             framed=self.datadict.getframeddata(senseid)
+            framed.setframe(self.name)
             """After the first entry, sort by groups."""
             log.debug('self.tonegroups: {}'.format(status['groups']))
             Label(titles, text=progress, font=self.fonts['report'], anchor='w'
