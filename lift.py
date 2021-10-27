@@ -64,8 +64,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.pss=self.pss() #log.info(self.pss)
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
-        self.citationforms=self.citations()
-        self.lexemes=self.lexemes()
+        self.lcs=self.citations()
+        self.lxs=self.lexemes()
         self.locations=self.getlocations()
         self.defaults=[ #these are lift related defaults
                     'analang',
@@ -761,7 +761,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             # nonwordforming=re.compile('[() \[\]\|,\-!@#$*?]')
             invalid=['(',')',' ','[',']','|',',','-','!','@','#','$','*','?'
                         ,'\n']
-            for form in [x for x in self.citationforms[lang]+self.lexemes[lang]
+            for form in [x for x in self.lcs[lang]+self.lxs[lang]
                             if x != None]:
                 for x in form:
                     if ((x not in invalid) and
@@ -836,7 +836,7 @@ class Entry(object): # what does "object do here?"
         """get(self,attribute,guid=None,analang=None,glosslang=None,lang=None,
         ps=None,form=None,fieldtype=None,location=None,showurl=False)"""
         # self.lexeme=db.get('lexeme',guid=guid) #don't use this!
-        self.citation=db.citationorlexeme(guid=guid,lang=self.analang)
+        self.lc=db.citationorlexeme(guid=guid,lang=self.analang)
         self.gloss=db.glossordefn(guid=guid,lang=self.glosslang)
         self.gloss2=db.glossordefn(guid=guid,lang=self.glosslang2)
         # self.citation=get.citation(self,self.analang)
