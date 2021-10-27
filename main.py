@@ -3685,8 +3685,8 @@ class Check():
                 framed=self.getframeddata(senseid,
                                             notonegroup=notonegroup,
                                             truncdefn=truncdefn)
-                if (framed[self.glosslang] is not None):
                     framed['senseid']=self.exs[value]
+                if framed.glosses() is not None:
                     output['framed']=framed #this includes [n], above
                     return output
                 else:
@@ -4817,7 +4817,7 @@ class Check():
             log.error("Apparently the framed example for tone group {} in "
                         "frame {} came back {}".format(group,self.name,example))
             return
-        text=(framed['formatted'])
+        text=framed.formatted()
         """This should maybe be brought up a level in frames?"""
         bf=Frame(parent)
         bf.grid(column=column, row=row, sticky=sticky)
