@@ -3696,7 +3696,7 @@ class Check():
             if framed.glosses() is not None:
                 """As soon as you find one with form and gloss, quit."""
                 self.exs[value]=senseid
-                framed['senseid']=senseid
+                # framed['senseid']=senseid
                 output['framed']=framed #this includes [n], above
                 return output
             else:
