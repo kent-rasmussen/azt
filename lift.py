@@ -719,6 +719,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 kwargs['truncate']=True
                 forms=self.definition(**kwargs)
         return output
+    def citationorlexeme(self,**kwargs):
+        """This produces a list; specify senseid and analang as you like."""
+        output=self.citation(**kwargs)
+        if output == []:
+            output=self.lexeme(**kwargs)
+            log.info("Missing citation form; looking for lexeme form.({})"
+                    "".format(kwargs))
+        return output
     def citation(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
         output=self.get('citation/form/text',**kwargs).get('text')
