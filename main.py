@@ -6332,7 +6332,7 @@ class FramedDataDict(dict):
     def getframeddata(self, source, **kwargs):
         if source not in self:
             kwargs['db']=self.db
-            self[source]=FramedData(self,source,kwargs)
+            self[source]=FramedData(self,source,**kwargs)
         return self[source]
     def __init__(self, check, **kwargs):
         super(FramedDataDict, self).__init__()
@@ -6347,7 +6347,7 @@ class FramedData(object):
     times to display it. If source is a senseid, it pulls form/gloss/etc
     information from the entry. If source is an example, it pulls that info
     from the example. The info is formatted uniformly in either case."""
-    def formatted(notonegroup=True,noframe=True):
+    def formatted(self,notonegroup=True,noframe=True):
         if notonegroup:
             toformat=DataList()
         else:
