@@ -3682,10 +3682,7 @@ class Check():
                     log.info("Using stored value for ‘{}’ group: ‘{}’".format(
                                 value, self.exs[value]))
                     senseid=self.exs[value]
-                framed=self.getframeddata(senseid,
-                                            notonegroup=notonegroup,
-                                            truncdefn=truncdefn)
-                    framed['senseid']=self.exs[value]
+                framed=self.datadict.getframeddata(senseid)
                 if framed.glosses() is not None:
                     output['framed']=framed #this includes [n], above
                     return output
@@ -3695,9 +3692,8 @@ class Check():
                     return output
         for i in range(len(senseids)): #just keep trying until you succeed
             senseid=senseids[randint(0, len(senseids))-1]
-            framed=self.getframeddata(senseid,notonegroup=notonegroup,
-                                                            truncdefn=truncdefn)
-            if (framed[self.glosslang] is not None):
+            framed=self.datadict.getframeddata(senseid)
+            if framed.glosses() is not None:
                 """As soon as you find one with form and gloss, quit."""
                 self.exs[value]=senseid
                 framed['senseid']=senseid
@@ -4813,6 +4809,7 @@ class Check():
                 del self.exs[group]
             del kwargs['renew']
         framed=example['framed']
+        framed.setframe(self.name)
         if framed is None:
             log.error("Apparently the framed example for tone group {} in "
                         "frame {} came back {}".format(group,self.name,example))
