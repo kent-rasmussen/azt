@@ -4555,8 +4555,8 @@ class Check():
                                     fieldvalue=self.groupselected #,
                                     # ps=None #,showurl=True
                                     )
-        tonegroup=firstoflist(self.db.get('exfieldvalue', senseid=senseid,
-                    fieldtype='tone', location=self.name))
+        tonegroup=unlist(self.db.get("text", senseid=senseid, location=self.name,
+                            path=['tonefield'],showurl=True).get('text'))
         if tonegroup != self.groupselected:
             log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                 tonegroup,self.groupselected))
