@@ -6440,12 +6440,13 @@ class FramedData(object):
         log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def __init__(self, parent, source, **kwargs):
         super(FramedData, self).__init__()
+        self.parent=parent
         self.frames=parent.frames
         self.updatelangs()
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
         self.location=kwargs.pop('location',None) #not needed for noframe
+        self.noframe=kwargs.pop('noframe',False)
         """Generalize these, and manage with methods:"""
-        # noframe=kwargs.pop('noframe',False)
         # self.notonegroup=kwargs.pop('notonegroup',False)
         # truncdefn=kwargs.pop('truncdefn',False)
         # self.frame=kwargs.pop('frame',None) #not needed for noframe
