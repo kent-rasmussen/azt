@@ -1774,7 +1774,7 @@ class Check():
         forms=self.db.citationorlexeme(senseid=senseid,analang=self.analang)
         if forms == []:
             self.profile='Invalid'
-            for self.ps in self.db.get('ps',senseid=senseid):
+            for self.ps in self.db.ps(senseid=senseid):
                 self.addtoprofilesbysense(senseid)
             self.ps=psori
             return None,'Invalid'
@@ -1784,7 +1784,7 @@ class Check():
             self.profile=self.profileofform(form)
             if not set(self.profilelegit).issuperset(self.profile):
                 self.profile='Invalid'
-            for self.ps in self.db.get('ps',senseid=senseid):
+            for self.ps in self.db.ps(senseid=senseid):
                 self.addtoprofilesbysense(senseid)
                 if ps not in self.formstosearch:
                     self.formstosearch[ps]={}
