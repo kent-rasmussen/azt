@@ -3657,7 +3657,7 @@ class Check():
         #This returns all the senseids with a given tone value
         senseids=self.db.get("sense", location=self.name, path=['tonefield'],
                             tonevalue=value
-                            ).get('text')
+                            ).get('senseid')
         senseidsincheck=self.senseidsincheck(senseids)
         return list(senseidsincheck)
     def getex(self,value,notonegroup=True,truncdefn=False,renew=False):
