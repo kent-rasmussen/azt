@@ -6368,6 +6368,13 @@ class FramedData(object):
             self.framed=self.forms.framed
         else:
             self.framed=self.forms
+    def gettonegroup(self):
+        if self.location is not None:
+            self.tonegroups=self.db.get('example/field/form/text',
+                                    senseid=senseid,
+                                    # fieldtype='tone',
+                                    path=['tonefield'],
+                                    location=self.location).get('text')
     def tonegroup(self):
         if self.tonegroups is not None: # wanted&found
             tonegroup=unlist(self.tonegroups)
@@ -6396,6 +6403,7 @@ class FramedData(object):
                                     location=self.location).get('text')
         else:
             log.error("Location isn't set, but you asked for a tonegoup...")
+        self.gettonegroup()
     def parseexample(self,example):
         self.senseid=None #We don't have access to this here
         for i in example:
