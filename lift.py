@@ -284,7 +284,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             exfieldvalue=p.makefieldnode(fieldtype,glosslangs[0],text=tonevalue,
                                                                 gimmetext=True)
             p.makefieldnode('location',glosslangs[0],text=location)
-            p.makefieldnode('tone',glosslangs[0],text=tonevalue)
         self.write()
         self.updatemoddatetime(senseid=senseid)
     def forminnode(self,node,value):
