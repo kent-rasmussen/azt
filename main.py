@@ -1771,7 +1771,7 @@ class Check():
         #Convert to iterate over local variables
         profileori=self.profile #We iterate across this here
         psori=self.ps #We iterate across this here
-        forms=self.db.citation(senseid=senseid,lang=self.analang) #orlexeme
+        forms=self.db.citationorlexeme(senseid=senseid,analang=self.analang)
         if forms == []:
             self.profile='Invalid'
             for self.ps in self.db.get('ps',senseid=senseid):
