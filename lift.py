@@ -708,6 +708,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def glossordefn(self,**kwargs):
         forms=self.gloss(**kwargs)
         if forms == []:
+            log.info("Missing gloss form; looking for definition form.({})"
+                    "".format(kwargs))
             kwargs['truncate']=True
             forms=self.definition(**kwargs)
         return forms
