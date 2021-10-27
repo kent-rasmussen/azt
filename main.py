@@ -6353,10 +6353,10 @@ class FramedData(object):
         else:
             toformat=DataList(self.tonegroup)
         if noframe:
-            toformat.appendformsbylang(self.forms,self.analangs,quote=False)
+            toformat.appendformsbylang(self.forms,self.analang,quote=False)
             toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
         else:
-            toformat.appendformsbylang(self.framed,self.analangs,quote=False)
+            toformat.appendformsbylang(self.framed,self.analang,quote=False)
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join(toformat) #put it all together
     def setframe(self,frame):
