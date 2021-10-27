@@ -1456,6 +1456,7 @@ class Check():
                                     "scount",
                                     "sextracted",
                                     "profilesbysense",
+                                    "formstosearch"
                                     ]},
             'status':{
                                 'file':'statusfile',
@@ -1786,12 +1787,12 @@ class Check():
                 self.profile='Invalid'
             for self.ps in self.db.ps(senseid=senseid):
                 self.addtoprofilesbysense(senseid)
-                if ps not in self.formstosearch:
-                    self.formstosearch[ps]={}
-                if form in self.formstosearch[ps]:
-                    self.formstosearch[ps][form].append(s)
+                if self.ps not in self.formstosearch:
+                    self.formstosearch[self.ps]={}
+                if form in self.formstosearch[self.ps]:
+                    self.formstosearch[self.ps][form].append(senseid)
                 else:
-                    self.formstosearch[ps][form]=[s]
+                    self.formstosearch[self.ps][form]=[senseid]
         profile=self.profile
         self.profile=profileori
         self.ps=psori
