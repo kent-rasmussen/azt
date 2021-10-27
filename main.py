@@ -4147,17 +4147,7 @@ class Check():
             log.debug('self.tonegroups: {}'.format(status['groups']))
             Label(titles, text=progress, font=self.fonts['report'], anchor='w'
                                             ).grid(column=1, row=0, sticky="ew")
-            if 'formatted' in framed:
-                text=framed.formatted(noframe=False)#(framed['formatted']) #notonegroup=True,
-            else:
-                text=_("Sorry; I can't find {}".format(framed))
-                l=Label(self.runwindow.frame, text=text,font=self.fonts['readbig'])
-                l.grid(column=1,row=1, sticky="w",pady=50)
-                l.wrap()
-                scroll.destroy()
-                self.runwindow.waitdone()
-                self.runwindow.wait_window(window=l)
-                return 1
+            text=framed.formatted(noframe=False)
             entryview=Frame(self.runwindow.frame)
             self.sorting=Label(entryview, text=text,font=self.fonts['readbig'])
             entryview.grid(column=1, row=1, sticky="new")
