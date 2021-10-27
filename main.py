@@ -6331,17 +6331,22 @@ class DictbyLang(dict):
         super(DictbyLang, self).__init__()
         self.framed={}
 class FramedDataDict(dict):
+    def updatelangs(self):
+        self.analang=self.check.analang
+        self.glosslangs=self.check.glosslangs
+        log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def getframeddata(self, source, **kwargs):
+        self.updatelangs()
         if source not in self:
             kwargs['db']=self.db
             self[source]=FramedData(self,source,**kwargs)
+        else:
+            self[source].updatelangs()
         return self[source]
     def __init__(self, check, **kwargs):
         super(FramedDataDict, self).__init__()
         self.frames=check.toneframes #[ps][name]
         self.db=check.db
-        self.analang=check.analang
-        self.glosslangs=check.glosslangs
 class FramedData(object):
     """This populates an object with attributes to format data for display,
     by senseid"""
@@ -6420,12 +6425,15 @@ class FramedData(object):
             elif ((i.tag == 'field') and (i.get('type') == 'tone') and
                     not self.notonegroup):
                 self.tonegroups=i.findall('form/text') #always be list of one
+    def updatelangs(self):
+        self.analang=self.parent.analang
+        self.glosslangs=self.parent.glosslangs
+        log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def __init__(self, parent, source, **kwargs):
         super(FramedData, self).__init__()
         self.frames=parent.frames
+        self.updatelangs()
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
-        self.analang=parent.analang
-        self.glosslangs=parent.glosslangs
         self.location=kwargs.pop('location',None) #not needed for noframe
         """Generalize these, and manage with methods:"""
         # noframe=kwargs.pop('noframe',False)
