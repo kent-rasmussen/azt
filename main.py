@@ -219,6 +219,7 @@ class Check():
         #     hasattr(self,'profile') and (self.profile is not None) and
         #     hasattr(self,'name') and (self.name is not None)):
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
+        self.guessglosslangs() #needed for the following
         self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
@@ -310,17 +311,19 @@ class Check():
                     return
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
+        if not hasattr(self,'glosslangs'):
+            self.glosslangs=[None,None]
         if len(self.db.glosslangs) == 1:
             log.info('Only one glosslang!')
-            self.glosslang=self.db.glosslangs[0]
-            self.glosslang2=None
+            self.glosslangs[0]=self.glosslang=self.db.glosslangs[0]
+            self.glosslangs[1]=self.glosslang2=None
             """if there are two or more gloss languages, just pick the first
             two, and the user can select something else later (the gloss
             languages are not for CV profile analaysis, but for info after
             checking, when this can be reset."""
         elif len(self.db.glosslangs) > 1:
-            self.glosslang=self.db.glosslangs[0]
-            self.glosslang2=self.db.glosslangs[1]
+            self.glosslangs[0]=self.glosslang=self.db.glosslangs[0]
+            self.glosslangs[1]=self.glosslang2=self.db.glosslangs[1]
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def getpss(self):
@@ -1240,7 +1243,7 @@ class Check():
             from self.defaultstoclear[attribute]"""
             self.cleardefaults(attribute)
             if attribute in ['glosslang','glosslang2']:
-                pass #Nothing to change here
+                self.glosslangs=[self.glosslang,self.glosslang2] #Nothing else to change here
             elif attribute in ['analang',  #do the last two cause problems?
                                 'interpret','distinguish']:
                 self.reloadprofiledata()
