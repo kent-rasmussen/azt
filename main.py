@@ -4775,39 +4775,21 @@ class Check():
                 row=row,column=column,label=label,
                 alwaysrefreshable=alwaysrefreshable, font=font,
                 playable=playable,renew=True,refreshcount=refreshcount,**kwargs)
-        if 'font' not in kwargs:
-            font=self.fonts['read']
-        else:
-            font=kwargs['font']
-            del kwargs['font']
-        if 'anchor' not in kwargs:
-            kwargs['anchor']='w'
-        if 'notonegroup' not in kwargs:
-            notonegroup=True
-        else:
-            notonegroup=kwargs['notonegroup']
-            del kwargs['notonegroup']
-        if 'refreshcount' not in kwargs:
-            refreshcount=0
-        else:
-            refreshcount=kwargs['refreshcount']+1
-            del kwargs['refreshcount']
-        if 'sticky' not in kwargs:
-            sticky="ew"
-        else:
-            sticky=kwargs['sticky']
-            del kwargs['sticky']
-        example=self.getex(group,notonegroup=notonegroup,truncdefn=True,renew=renew)
+        font=kwargs.pop('font',self.fonts['read'])
+        kwargs['anchor']=kwargs.get('anchor','w')
+        notonegroup=kwargs.pop('notonegroup',True)
+        refreshcount=kwargs.pop('refreshcount',-1)+1
+        sticky=kwargs.pop('sticky',"ew")
+        example=self.getex(group,notonegroup=notonegroup,renew=renew)
         if example is None:
             log.error("Apparently the example for tone group {} in frame {} "
                         "came back {}".format(group,self.name,example))
             return
-        if 'renew' in kwargs:
-            if kwargs['renew'] == True:
-                log.info("Resetting tone group example ({}): {} of {} examples"
-                        "".format(group,self.exs[group],example['n']))
-                del self.exs[group]
-            del kwargs['renew']
+        renew=kwargs.pop('renew',False)
+        if renew is True:
+            log.info("Resetting tone group example ({}): {} of {} examples"
+                    "".format(group,self.exs[group],example['n']))
+            del self.exs[group]
         framed=example['framed']
         framed.setframe(self.name)
         if framed is None:
