@@ -6385,7 +6385,6 @@ class FramedData(object):
                     self.tonegroup=tonegroup #only for named groups
     def parsesense(self,db,senseid):
         self.senseid=senseid
-        self.ps=db.ps(senseid=senseid)
         lexs=db.lexemes(senseid=senseid)
         cits=db.citations(senseid=senseid)
         glss=db.glossesordefns(senseid=senseid)
@@ -6403,6 +6402,7 @@ class FramedData(object):
                                     location=self.location).get('text')
         else:
             log.error("Location isn't set, but you asked for a tonegoup...")
+        self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
         self.gettonegroup()
     def parseexample(self,example):
         self.senseid=None #We don't have access to this here
