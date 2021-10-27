@@ -6328,6 +6328,7 @@ class DictbyLang(dict):
             self.framed[l]=rx.framerx.sub(self[l],framedict[l])
     def __init__(self):
         super(DictbyLang, self).__init__()
+        self.framed={}
 class FramedDataDict(dict):
     def getframeddata(self, source, **kwargs):
         if source not in self:
