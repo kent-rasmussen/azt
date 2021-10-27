@@ -285,6 +285,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                                 gimmetext=True)
             p.makefieldnode('location',glosslangs[0],text=location)
             p.makefieldnode('tone',glosslangs[0],text=tonevalue)
+        self.write()
         self.updatemoddatetime(senseid=senseid)
     def forminnode(self,node,value):
         """Returns True if `value` is in *any* text node child of any form child
