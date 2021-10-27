@@ -716,6 +716,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def glossesordefns(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language
         for lang in self.glosslangs:
+            kwargs['glosslang']=lang
             output[lang]=self.gloss(**kwargs)
             if output[lang] == []:
                 kwargs['truncate']=True
