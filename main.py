@@ -6361,8 +6361,8 @@ class FramedData(object):
         return ' '.join(toformat) #put it all together
     def setframe(self,frame):
         self.frame=self.frames[self.ps][frame]
-        self.framed()
-    def framed(self):
+        self.applyframe()
+    def applyframe(self):
         if not self.noframe:
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
