@@ -1104,7 +1104,7 @@ class LiftURL():
             if g>10:
                 giveup=True
         if giveup is True:
-            log.error("Hey, I've looked back {} generations, and I don't see"
+            log.error("Hey, I've looked back {} generations, and I don't see "
                     "an ancestor of {} (target) which is also an ancestor of "
                     "{} (current node).".format(g,self.targethead,nodename))
     def showtargetinhighestdecendance(self,nodename):
