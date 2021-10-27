@@ -252,7 +252,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #These should always be there:
         senseid=kwargs.get('senseid')
         location=kwargs.get('location')
-        fieldtype=kwargs.get('fieldtype') # ever not 'tone'?
+        fieldtype=kwargs.get('fieldtype','tone') # needed? ever not 'tone'?
         exfieldvalue=self.get('example/field/form/text',
                                     path=['location','tonefield'],
                                     senseid=senseid,
