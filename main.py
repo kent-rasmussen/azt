@@ -6425,6 +6425,8 @@ class FramedData(object):
             elif ((i.tag == 'field') and (i.get('type') == 'tone') and
                     not self.notonegroup):
                 self.tonegroups=i.findall('form/text') #always be list of one
+    def glosses(self):
+        g=DictbyLang()
         l=0
         for lang in self.glosslangs:
             if lang in self.forms:
