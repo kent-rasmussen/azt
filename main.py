@@ -6416,11 +6416,11 @@ class FramedData(object):
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
         self.analang=parent.analang
         self.glosslangs=parent.glosslangs
+        self.location=kwargs.pop('location',None) #not needed for noframe
         """Generalize these, and manage with methods:"""
         # noframe=kwargs.pop('noframe',False)
         # self.notonegroup=kwargs.pop('notonegroup',False)
         # truncdefn=kwargs.pop('truncdefn',False)
-        # self.location=kwargs.pop('location',None) #not needed for noframe
         # self.frame=kwargs.pop('frame',None) #not needed for noframe
         #These really must be there, and ordered with first first
         #to put data:
