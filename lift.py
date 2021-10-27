@@ -281,7 +281,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for lang in glosslangs:
                 if lang != None and hasattr(forms,lang):
                     fieldgloss.makeformnode(lang,getattr(forms,lang))
-            exfieldvalue=p.makefieldnode(fieldtype,glosslangs[0],gimmetext=True)
+            exfieldvalue=p.makefieldnode(fieldtype,glosslangs[0],text=tonevalue,
+                                                                gimmetext=True)
             p.makefieldnode('location',glosslangs[0],text=location)
             p.makefieldnode('tone',glosslangs[0],text=tonevalue)
         self.updatemoddatetime(senseid=senseid)
