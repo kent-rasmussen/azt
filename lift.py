@@ -364,7 +364,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Adding {} value to {} location".format(url,node))
         possibles=node.findall("form[@lang='{lang}']/text".format(lang=lang))
         for possible in possibles:
-            log.debug(possibles.index(possible))
+            log.debug("Checking possible: {} (index: {})".format(possible,
+                                                    possibles.index(possible)))
             if hasattr(possible,'text'):
                 if possible.text == url:
                     log.debug("This one is already here; not adding.")
