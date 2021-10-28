@@ -2041,6 +2041,19 @@ if __name__ == '__main__':
                     #                             tonevalue=fieldvalue,
                     #                             what='node')
         return
+    for senseid in senseids:
+        exnode=lift.get('example',showurl=True,senseid=senseid,
+                        location=locations[1]).get()
+        print('exnode:',exnode)
+        # if len(exnode)>0:
+        prettyprint(exnode)
+        for e in exnode:
+            # print('e:',e)
+            # prettyprint(e)
+            audio=lift.get('form/text',node=e,showurl=True,#en-Zxxx-x-audio
+                                        analang='en-Zxxx-x-audio').get('text')
+        print('audio:',audio)
+    exit()
     g=lift.glossordefn(#self,guid,
                                 # senseid,
                                 analang='en',
