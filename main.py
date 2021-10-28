@@ -876,9 +876,10 @@ class Check():
                 vars[idn].set(id)
             else:
                 vars[idn].set(0)
-            framed=self.getframeddata(id, noframe=True)
-            log.debug("forms: {}".format(framed['formatted']))
-            CheckButton(scroll.content, text = framed['formatted'],
+            framed=self.datadict.getframeddata(id)
+            forms=framed.formatted(noframe=True)
+            log.debug("forms: {}".format(forms))
+            CheckButton(scroll.content, text = forms,
                                 variable = vars[allpssensids.index(id)],
                                 onvalue = id, offvalue = 0,
                                 ).grid(row=row,column=0,sticky='ew')
@@ -1007,7 +1008,8 @@ class Check():
                     db['before'][lang]['text']+'__'+db['after'][lang]['text'])
             senseid=self.gimmesenseid()
             # This needs self.toneframes
-            framed=self.getframeddata(senseid,truncdefn=True) #after defn above, before below!
+            framed=self.datadict.getframeddata(senseid)
+            framed.setframe(self.name)
             #At this point, remove this frame (in case we don't submit it)
             del self.toneframes[self.ps][self.name]
             self.name=self.nameori
@@ -3494,8 +3496,7 @@ class Check():
             for senseid in matches:
                 for typenum in self.typenumsRun:
                     self.basicreported[typenum].add(senseid)
-                framed=self.getframeddata(senseid,noframe=True)
-                print('\t',framed['formatted'])
+                framed=self.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,listword=True)
     def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
         """This function iterates across self.name and self.subcheck values
@@ -4326,14 +4327,9 @@ class Check():
         kwargs['font']=kwargs.get('font',self.fonts['read'])
         kwargs['anchor']=kwargs.get('anchor','w')
         #This should be pulling from the example, as it is there already
-        framed=FramedData(senseid,db=self.db,
-                        frame=self.toneframes[self.ps][self.name],
-                        location=self.name, analangs=[self.analang],
-                        glosslangs=[self.glosslang,self.glosslang2],
-                        notonegroup=True,truncdefn=True)
-        # framed=self.getframeddata(senseid,notonegroup=True,truncdefn=True)
-        text=framed.formatted
-        # text=(framed['formatted'])
+        framed=self.datadict.getframeddata(senseid)
+        framed.setframe(self.name)
+        text=framed.formatted(notonegroup=True)
         if label==True:
             b=Label(parent, text=text,
                     **kwargs
@@ -4959,8 +4955,8 @@ class Check():
         else:
             self.showentryformstorecord()
     def makelabelsnrecordingbuttons(self,parent,sense):
-        t=self.getframeddata(sense['nodetoshow'],noframe=True)[
-                                            self.analang]#+'\t'+sense['gloss']
+        framed=self.datadict.getframeddata(sense['nodetoshow'])
+        t=framed.formatted(noframe=True)
         for g in ['gloss','gloss2']:
             if (g in sense) and (sense[g] is not None):
                 t+='\t‘'+sense[g]
@@ -5129,10 +5125,8 @@ class Check():
                     )
                 progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
-            titleframed=FramedData(senseid,db=self.db,
-                        location=self.name, analangs=[self.analang],
-                        glosslangs=[self.glosslang,self.glosslang2],
-                        noframe=True,notonegroup=True,truncdefn=True)
+            titleframed=self.datadict.getframeddata(senseid)
+            titleframed.setframe(self.name)
             if titleframed.analang is None:
                 entryframe.destroy() #is this ever needed?
                 continue
@@ -5151,9 +5145,7 @@ class Check():
                     lift.examplehaslangform(example,self.audiolang) == True):
                     continue
                 """These should already be framed!"""
-                framed=FramedData(example,analangs=[self.analang],
-                                    glosslangs=[self.glosslang,self.glosslang2],
-                                    noframe=True,truncdefn=True)
+                framed=self.datadict.getframeddata(example)
                 if framed.analang is None: # when?
                     continue
                 row+=1
@@ -5284,9 +5276,8 @@ class Check():
             for senseid in senseidstocheck: #self.senseidformstosearch[lang][ps]
                 # where self.regex(self.senseidformstosearch[lang][ps][senseid]):
                 """This regex is compiled!"""
-                framed=self.getframeddata(senseid,noframe=True)
-                # if self.regex(framed[self.analang]):
-                o=framed['formatted']
+                framed=self.datadict.getframeddata(senseid)
+                o=framed.formatted(noframe=True)
                 self.framedtoXLP(framed,parent=ex,listword=True)
                 if self.debug ==True:
                     o=entry.lexeme,entry.citation,nn(entry.gloss),
@@ -5661,7 +5652,7 @@ class Check():
             if not default:
                 groups=True #show groups on all non-default reports
             for example in examples:
-                framed=self.getframeddata(example,noframe=True)
+                framed=self.datadict.getframeddata(example)
                 if not (framed.forms[self.analang] is None and
                         framed.forms[self.glosslang] is None):#glosslang2?
                     self.framedtoXLP(framed,parent=parent,listword=True,
@@ -5813,9 +5804,9 @@ class Check():
                     e1=xlp.Example(s1,id,heading=headtext)
                     for senseid in toreport[group]:
                         #This is for window/text output only, not in XLP file
-                        framed=self.getframeddata(senseid,noframe=True,
-                                                        notonegroup=True)
-                        text=framed['formatted']
+                        framed=self.datadict.getframeddata(senseid)
+                        # framed.setframe(self.name) #not needed here, I think
+                        text=framed.formatted(noframe=True,notonegroup=True)
                         #This is put in XLP file:
                         examples=self.db.get('examplebylocation',
                                                 location=location,
@@ -5829,9 +5820,9 @@ class Check():
             else:
                 for senseid in toreport[group]: #groups[group]['senseids']:
                     #This is for window/text output only, not in XLP file
-                    framed=self.getframeddata(senseid,noframe=True,
-                                                    notonegroup=True)
-                    text=framed['formatted']
+                    framed=self.datadict.getframeddata(senseid)
+                    # framed.setframe(self.name) #not needed here, I think
+                    text=framed.formatted(noframe=True, notonegroup=True)
                     #This is put in XLP file:
                     examples=self.db.get('example',senseid=senseid)
                     log.log(2,"{} examples found: {}".format(len(examples),
@@ -8504,12 +8495,9 @@ def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
 def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     #?This is the action of a verification button, so needs to be self contained.
     #merge with addtonefieldex
-    framed=FramedData(senseid,db=self.db,
-                        frame=self.toneframes[self.ps][self.name],
-                        analangs=[self.analang], location=self.name,
-                        glosslangs=[self.glosslang,self.glosslang2],
-                        truncdefn=True) #noframe=True,notonegroup=True,
-    # framed=self.getframeddata(senseid,truncdefn=True)
+    framed=self.datadict.getframeddata(senseid)
+    framed.setframe(self.name)
+    text=framed.formatted(noframe=False)
     if name is None:
         name=self.name
     if subcheck is None:
