@@ -114,7 +114,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         just 1 of each pss: dict.fromkeys(lift.get("ps").get('value'))
         get tone value:
             lift.get("text", location=location, path=['tonefield']).get('text')
+            lift.get("tonefield", senseid=senseid, location=self.name).get('text')
         for tonevalue in dict.fromkeys(lift.get('text',path=["tonefield"]).get('text')):
+        location: lift.get('locationfield', senseid=senseid, showurl=True).get('text')
         """
         if node is None:
             node=self.nodes
