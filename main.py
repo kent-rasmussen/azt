@@ -2153,7 +2153,7 @@ class Check():
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
         return idsbyps[randint(0, len(idsbyps))]
     def gimmesenseid(self):
-        idsbyps=self.db.get('senseidbyps',lang=self.analang,ps=self.ps)
+        idsbyps=self.db.get('sense',ps=self.ps).get('senseid')
         return idsbyps[randint(0, len(idsbyps)-1)]
     def framenamesbyps(self,ps):
         """Names for all tone frames defined for the language."""
@@ -3379,8 +3379,8 @@ class Check():
     def getlocations(self):
         self.locations=[]
         for senseid in self.senseidstosort:
-            for location in self.db.get('exfieldlocation',
-                senseid=senseid, fieldtype='tone'):
+            for location in [i for i in self.db.get('locationfield',
+                senseid=senseid, showurl=True).get('text') if i is not None]:
                 self.locations+=[location]
         self.locations=list(dict.fromkeys(self.locations))
     def topprofiles(self,x='ALL'):
@@ -4572,14 +4572,8 @@ class Check():
         """Still working on one ps-profile combo at a time."""
         self.getidstosort() #just in case this changed
         for senseid in self.senseidstosort: #I should be able to make this a regex...
-            toneUFgroup=firstoflist(self.db.get('toneUFfieldvalue', senseid=senseid,
-                fieldtype='tone' # Including any lang at this point.
-                # ,showurl=True
-                ))
-            if toneUFgroup not in sorted:
-                sorted[toneUFgroup]=[senseid]
-            else:
-                sorted[toneUFgroup]+=[senseid]
+            toneUFgroup=firstoflist(self.db.get('tonefield', senseid=senseid,
+                ).get('text'))
         self.toneUFgroups=list(dict.fromkeys(sorted))
         log.debug("UFtonegroups (getsenseidsbytoneUFgroups): {}".format(
                                                             self.toneUFgroups))
@@ -4590,8 +4584,8 @@ class Check():
         toneUFgroups=[]
         """Still working on one ps-profile combo at a time."""
         for senseid in self.senseidstosort: #I should be able to make this a regex...
-            toneUFgroups+=self.db.get('toneUFfieldvalue', senseid=senseid,
-                fieldtype='tone' # Including any lang at this point.
+            toneUFgroups+=self.db.get('text', senseid=senseid, #toneUFfieldvalue
+                path=['tonefield'],#fieldtype='tone' # Including any lang at this point.
                 # ,showurl=True
                 ).get('text')
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
@@ -4995,7 +4989,8 @@ class Check():
             sense={}
             sense['column']=0
             sense['row']=row
-            sense['guid']=firstoflist(self.db.get('guidbysense',
+            sense['senseid']=senseid
+            sense['guid']=firstoflist(self.db.get('entry',
                                         senseid=senseid).get('guid'))
             if sense['guid'] in done: #only the first of multiple senses
                 continue
@@ -5004,10 +4999,10 @@ class Check():
             """These following two have been shifted down a level, and will
             now return a list of form elements, each. Something will need to be
             adjusted here..."""
-            sense['lxnode']=firstoflist(self.db.get('lexemenode',
+            sense['lxnode']=firstoflist(self.db.get('lexeme',
                                                 guid=sense['guid'],
-            sense['lcnode']=firstoflist(self.db.get('citationnode',
                                                 lang=self.analang).get())
+            sense['lcnode']=firstoflist(self.db.get('citation',
                                                 guid=sense['guid'],
                                                 lang=self.analang).get())
             sense['gloss']=firstoflist(self.db.glossordefn(
@@ -5024,12 +5019,12 @@ class Check():
                     (('gloss2' in sense) and (sense['gloss2'] is None))):
                 continue #We can't save the file well anyway; don't bother
             if self.db.pluralname is not None:
-                sense['plnode']=firstoflist(self.db.get('fieldnode',
+                sense['plnode']=firstoflist(self.db.get('field',
                                         guid=sense['guid'],
                                         lang=self.analang,
                                         fieldtype=self.db.pluralname).get())
             if self.db.imperativename is not None:
-                sense['impnode']=firstoflist(self.db.get('fieldnode',
+                sense['impnode']=firstoflist(self.db.get('field',
                                         guid=sense['guid'],
                                         lang=self.analang,
                                         fieldtype=self.db.imperativename).get())
@@ -5547,8 +5542,8 @@ class Check():
             for location in locations: #just make them all, delete empty later
                 values[group][location]=list()
                 for senseid in senseidsbygroup[group]:
-                    groupvalue=self.db.get("text", senseid=senseid,
-                                    location=location, path=['tonefield']
+                    groupvalue=self.db.get("tonefield", senseid=senseid,
+                                    location=location,
                                     ).get('text')
                     if groupvalue != [None]:
                         if unlist(groupvalue) not in values[group][location]:
@@ -5571,9 +5566,9 @@ class Check():
         for senseid in self.senseidstosort:
             output[senseid]={}
             for location in locations:
-                group=self.db.get("text", senseid=senseid, location=location,
-                                path=['tonefield']).get('text')
                 if group != [None]:
+                group=self.db.get("tonefield", senseid=senseid,
+                                location=location).get('text')
                     output[senseid][location]=group #Save this info by senseid
         log.info("Done collecting groups by location for each senseid.")
         return output
@@ -7721,9 +7716,9 @@ class RecordButtonFrame(Frame):
                                             analang=check.analang).get('text'))
             log.log(4,"gloss: {}".format(gloss))
             log.log(4,"form: {}".format(form))
-        audio=check.db.get('example/form/text',node=node,showurl=True,
-                                            analang=check.audiolang).get('text')
         log.log(4,"audio: {}".format(audio))
+        audio=check.db.get('form/text',node=node,showurl=True,
+                                        analang=check.audiolang).get('text')
         if gloss is None:
             gloss=t(check.db.get('gloss',senseid=senseid,
                                     glosslang=check.glosslang).get('text'))
@@ -8498,8 +8493,6 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
                             db=framed,
                             fieldtype='tone',location=self.name,
                             fieldvalue='') #this value should be the only change
-    tgroups=self.db.get("text", senseid=senseid, location=self.name,
-                        path=['tonefield']).get('text')
     if type(tgroups) is list:
         if len(tgroups) > 1:
             log.error(_("Found {} tone values: {}".format(len(tgroups),tgroups)))
@@ -8510,6 +8503,8 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
         log.info("Field removal succeeded! LIFT says '{}', = ''.".format(tgroup))
     else:
         log.error("Field removal failed! LIFT says '{}', != ''.".format(tgroup))
+    tgroups=self.db.get("tonefield", senseid=senseid, location=self.name
+                        ).get('text')
     rm=self.verifictioncode(name,subcheck)
     self.db.modverificationnode(senseid,vtype=self.profile,rm=rm)
     self.db.write() #This is not iterated over
