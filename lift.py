@@ -811,11 +811,15 @@ class Node(ET.Element):
             return nn
     def makeformnode(self,lang,text=None,gimmetext=False):
         n=Node(self,'form',attrib={'lang':lang})
-        nn=Node(n,'text')
-        if text is not None:
-            nn.text=str(text)
+        nn=n.maketextnode(text,gimmetext=gimmetext) #Node(n,'text')
         if gimmetext:
-            return nn.text
+            return nn
+    def maketextnode(self,text=None,gimmetext=False):
+        n=Node(self,'text')
+        if text is not None:
+            n.text=str(text)
+        if gimmetext:
+            return n.text
     def maketraitnode(self,type,value,gimmenode=False):
         n=Node(self,'trait',attrib={'name':type, 'value':str(value)})
         if gimmenode:
