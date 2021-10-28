@@ -3456,9 +3456,7 @@ class Check():
         self.buildregex()
         log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
                                                         self.regexCV))
-        matches=set(self.db.senseidformsbyregex(self.regex,
-                                            self.analang,
-                                            ps=self.ps).keys())
+        matches=set(self.senseidformsbyregex(self.regex))
         for typenum in self.typenumsRun:
             # this removes senses already reported (e.g., in V1=V2)
             matches-=self.basicreported[typenum]
@@ -5218,14 +5216,13 @@ class Check():
                     text=_("Continue to next syllable profile"),
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
-    def senseidformsbyregex(self,regex,analang,ps=None): #self is LIFT!
-        """make this a check method?"""
-        """This function takes in a ps and compiled regex,
+    def senseidformsbyregex(self,regex,):
+        """This function takes in a compiled regex,
         and outputs a list/dictionary of senseid/{senseid:form} form."""
         output=[] #This is just a list of senseids now: (Do we need the dict?)
-        for form in self.formstosearch[ps]:
+        for form in self.formstosearch[self.ps]:
             if regex.search(form):
-                output+=self.formstosearch[ps][form]
+                output+=self.formstosearch[self.ps][form]
         return output
     def getresults(self):
         self.getrunwindow()
@@ -5260,16 +5257,7 @@ class Check():
         for self.subcheck in self.s[self.analang][self.type]:
             log.debug('self.subcheck: {}'.format(self.subcheck))
             self.buildregex() #It would be nice fo this to iterate through...
-            # for senseid in self.profilesbysense[self.ps][self.profile]:
-            # print(self.profilesbysense[self.ps][self.profile][0])
-            # print(self.db.citationorlexeme(self.profilesbysense[self.ps][self.profile][0]))
-            # print(firstoflist(self.db.citationorlexeme(self.profilesbysense[self.ps][self.profile][0])))
-            senseidstocheck=self.senseidformsbyregex(self.regex,
-                                                self.analang,
-                                                ps=self.ps)
-            # senseidstocheck= filter(lambda x: self.regex.search(
-            #                         firstoflist(self.db.citationorlexeme(x))),
-            #             self.profilesbysense[self.ps][self.profile])
+            senseidstocheck=self.senseidformsbyregex(self.regex)
             if len(senseidstocheck)>0:
                 id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck)
                 ex=xlp.Example(si,id)
