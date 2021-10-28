@@ -1398,7 +1398,7 @@ class LiftURL():
         self.children['entry']=['lexeme','pronunciation','sense',
                                             'citation','morphtype','trait']
         self.children['sense']=['ps','definition','gloss',
-                                            'example','field']
+                                            'example','tonefield','field']
         self.children['example']=['form','translation','locationfield',
                                             'tonefield','field']
         self.children['field']=['form']
