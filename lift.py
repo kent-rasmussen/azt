@@ -117,7 +117,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for tonevalue in dict.fromkeys(lift.get('text',path=["tonefield"]).get('text')):
         """
         if node is None:
-            node=self
+            node=self.nodes
         what=kwargs.get('what','node')
         path=kwargs.get('path',[])
         if type(path) is not list:
