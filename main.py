@@ -3563,9 +3563,11 @@ class Check():
         self.subcheck=subcheckori
     def idXLP(self,framed):
         id='x' #string!
-        bits=[self.ps,self.profile,self.name,self.subcheck,framed[self.analang]]
-        if self.glosslang in framed and framed[self.glosslang] is not None:
-            bits+=framed[self.glosslang]
+        bits=[self.ps,self.profile,self.name,self.subcheck,
+                                                    framed.forms[self.analang]]
+        for lang in self.glosslangs:
+            if lang in framed.forms and framed.forms[lang] is not None:
+                bits+=framed.forms[lang]
         for x in bits:
             if x is not None:
                 id+=x
@@ -3581,18 +3583,18 @@ class Check():
         else:
             exx=xlp.Example(parent,id) #the id goes here...
             ex=xlp.Word(exx) #This doesn't have an id
-        if self.audiolang in framed:
-            url=file.getdiredrelURL(self.reporttoaudiorelURL,framed[self.audiolang])
-            el=xlp.LinkedData(ex,self.analang,framed[self.analang],str(url))
+        if self.audiolang in framed.forms:
+            url=file.getdiredrelURL(self.reporttoaudiorelURL,
+                                                framed.forms[self.audiolang])
+            el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang],
+                                                                    str(url))
         else:
-            el=xlp.LangData(ex,self.analang,framed[self.analang])
         if 'tonegroup' in framed and groups is True: #joined groups show each
             elt=xlp.LangData(ex,self.analang,framed['tonegroup'])
-        if self.glosslang in framed:
-            eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
-        if ((self.glosslang2 != None) and (self.glosslang2 in framed)
-                and (framed[self.glosslang2] is not None)):
-                eg2=xlp.Gloss(ex,self.glosslang2,framed[self.glosslang2])
+            el=xlp.LangData(ex,self.analang,framed.forms[self.analang])
+        for lang in self.glosslangs:
+            if lang in framed.forms:
+                xlp.Gloss(ex,lang,framed.forms[lang])
     def makecountssorted(self):
         # This iterates across self.profilesbysense to provide counts for each
         # ps-profile combination (aggravated for profile='Invalid')
@@ -5314,9 +5316,9 @@ class Check():
                 col=0
                 for lang in [self.analang, self.glosslang, self.glosslang2]:
                     col+=1
-                    if lang in framed:
+                    if lang in framed.forms:
                         Label(self.results.scroll.content,
-                            text=framed[lang], font=font,
+                            text=framed.forms[lang], font=font,
                             anchor='w',padx=10).grid(row=i, column=col,
                                                         sticky='w')
                 if self.su==True:
@@ -5660,8 +5662,8 @@ class Check():
                 groups=True #show groups on all non-default reports
             for example in examples:
                 framed=self.getframeddata(example,noframe=True)
-                if not (framed[self.analang] is None and
-                        framed[self.glosslang] is None):#glosslang2?
+                if not (framed.forms[self.analang] is None and
+                        framed.forms[self.glosslang] is None):#glosslang2?
                     self.framedtoXLP(framed,parent=parent,listword=True,
                                     groups=groups)
         log.info("Starting report...")
@@ -7819,8 +7821,8 @@ class RecordButtonFrame(Frame):
         self.db=check.db
         self.node=node #This should never be more than one node...
         framed=kwargs.pop('framed',None) #Either this or the next two...
-        self.form=kwargs.pop('form',framed.analang)
-        self.gloss=kwargs.pop('gloss',framed.glosslang)
+        self.form=kwargs.pop('form',framed.forms[check.analang])
+        self.gloss=kwargs.pop('gloss',framed.forms[check.glosslang])
         self.id=id
         self.check=check
         try:
