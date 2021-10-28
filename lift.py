@@ -369,9 +369,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if possible.text == url:
                     log.debug("This one is already here; not adding.")
                     return
-        form=ET.SubElement(node,'form',attrib={'lang':lang})
-        t=ET.SubElement(form,'text')
-        t.text=url
+        form=Node(node,'form',attrib={'lang':lang})
+        t=form.maketextnode(text=url)
         prettyprint(node)
         """Can't really do this without knowing what entry or sense I'm in..."""
         self.write()
