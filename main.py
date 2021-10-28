@@ -1013,7 +1013,6 @@ class Check():
             #At this point, remove this frame (in case we don't submit it)
             del self.toneframes[self.ps][self.name]
             self.name=self.nameori
-            print(frame,framed)
             """Display framed data"""
             if hasattr(self.addwindow,'framechk'):
                 self.addwindow.framechk.destroy()
@@ -1032,9 +1031,8 @@ class Check():
                     padx=padx,pady=pady)
             for lang in langs:
                 row+=1
-                print('frame[{}]:'.format(lang),frame[lang])
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
-                tfd[lang]=('(ex: '+framed[lang]+')')
+                tfd[lang]=('(ex: '+framed.forms.framed[lang]+')')
                 l1=Label(self.addwindow.framechk,
                         text=tf[lang],
                         font=self.fonts['read'],
@@ -3588,9 +3586,9 @@ class Check():
             el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang],
                                                                     str(url))
         else:
-        if 'tonegroup' in framed and groups is True: #joined groups show each
-            elt=xlp.LangData(ex,self.analang,framed['tonegroup'])
             el=xlp.LangData(ex,self.analang,framed.forms[self.analang])
+        if hasattr(framed,'tonegroup') and groups is True: #joined groups show each
+            elt=xlp.LangData(ex,self.analang,framed.tonegroup)
         for lang in self.glosslangs:
             if lang in framed.forms:
                 xlp.Gloss(ex,lang,framed.forms[lang])
@@ -5123,7 +5121,7 @@ class Check():
             if titleframed.analang is None:
                 entryframe.destroy() #is this ever needed?
                 continue
-            text=titleframed.formatted
+            text=titleframed.formatted(noframe=True,notonegroup=True)
             Label(entryframe, anchor='w', font=self.fonts['read'],
                     text=text).grid(row=row,
                                     column=0,sticky='w')
@@ -5144,7 +5142,7 @@ class Check():
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
-                text=framed.formatted
+                text=framed.formatted(noframe=True)
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
                                     framed=framed,
                                     # form=nn(framed.analang),
