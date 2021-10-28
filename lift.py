@@ -127,6 +127,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         k=self.urlkey(kwargs)
         if k not in self.urls:
             self.urls[k]=LiftURL(base=node,**kwargs) #needs base and target to be sensible; attribute?
+        else:
+            log.info("URL key found, using: {} ({})".format(k,self.urls[k].url))
+            if self.urls[k].base == node:
+                log.info("Same base {}, moving on.".format(node))
+            else:
+                log.info("Different base of same tag ({}; {}≠{}), rebasing."
+                                    "".format(node.tag,self.urls[k].base,node))
+                self.urls[k].rebase(node)
         if showurl:
             log.info("Using URL {}".format(self.urls[k].url))
         return self.urls[k] #These are LiftURL objects
@@ -1209,6 +1217,14 @@ class LiftURL():
         return nodename #else
     def getalias(self,nodename):
         return self.alias.get(nodename,nodename)
+    def rebase(self,rebase):
+        """This just changes the node set from which the url draws.
+        because different bases (within the whole lift file) would result in
+        the same URL, but not the same data, we need to tell this object which
+        base (e.g. which example) to take data from. This method should *not*
+        change type of base (e.g. from example to sense); that is for retarget.
+        """
+        self.base=rebase
     def retarget(self,target):
         self.url=[self.url]
         self.target=target
@@ -1401,8 +1417,6 @@ class LiftURL():
         self.alias['ftype']='fieldtype'
     def __init__(self, *args,**kwargs):
         self.base=kwargs['base']
-        if type(kwargs['base']) is Lift:
-            self.base=kwargs['base'].nodes
         basename=self.basename=self.base.tag
         super(LiftURL, self).__init__()
         log.info("LiftURL called with {}".format(kwargs))
