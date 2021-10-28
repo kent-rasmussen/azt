@@ -4593,7 +4593,7 @@ class Check():
             toneUFgroups+=self.db.get('toneUFfieldvalue', senseid=senseid,
                 fieldtype='tone' # Including any lang at this point.
                 # ,showurl=True
-                )
+                ).get('text')
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
     def gettonegroups(self):
         # This depends on self.ps, self.profile, and self.name
@@ -4996,7 +4996,7 @@ class Check():
             sense['column']=0
             sense['row']=row
             sense['guid']=firstoflist(self.db.get('guidbysense',
-                                        senseid=senseid))
+                                        senseid=senseid).get('guid'))
             if sense['guid'] in done: #only the first of multiple senses
                 continue
             else:
@@ -5006,10 +5006,10 @@ class Check():
             adjusted here..."""
             sense['lxnode']=firstoflist(self.db.get('lexemenode',
                                                 guid=sense['guid'],
-                                                lang=self.analang))
             sense['lcnode']=firstoflist(self.db.get('citationnode',
+                                                lang=self.analang).get())
                                                 guid=sense['guid'],
-                                                lang=self.analang))
+                                                lang=self.analang).get())
             sense['gloss']=firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
                                                 glosslang=self.glosslang
@@ -5027,12 +5027,12 @@ class Check():
                 sense['plnode']=firstoflist(self.db.get('fieldnode',
                                         guid=sense['guid'],
                                         lang=self.analang,
-                                        fieldtype=self.db.pluralname))
+                                        fieldtype=self.db.pluralname).get())
             if self.db.imperativename is not None:
                 sense['impnode']=firstoflist(self.db.get('fieldnode',
                                         guid=sense['guid'],
                                         lang=self.analang,
-                                        fieldtype=self.db.imperativename))
+                                        fieldtype=self.db.imperativename).get())
             if sense['lcnode'] is not None:
                 sense['nodetoshow']=sense['lcnode']
             else:
@@ -5100,7 +5100,7 @@ class Check():
         for senseid in senses:
             log.debug("Working on {} with skip: {}".format(senseid,
                                                     self.runwindow.frame.skip))
-            examples=self.db.get('example',senseid=senseid)
+            examples=self.db.get('example',senseid=senseid).get()
             if examples == []:
                 log.debug(_("No examples! Add some, then come back."))
                 continue
@@ -5796,9 +5796,8 @@ class Check():
                         # framed.setframe(self.name) #not needed here, I think
                         text=framed.formatted(noframe=True,notonegroup=True)
                         #This is put in XLP file:
-                        examples=self.db.get('examplebylocation',
-                                                location=location,
-                                                senseid=senseid)
+                        examples=self.db.get('example',location=location,
+                                                senseid=senseid).get()
                         examplestoXLP(examples,e1,groups=False)
                         if text not in textout:
                             output(window,r,text)
@@ -5812,7 +5811,7 @@ class Check():
                     # framed.setframe(self.name) #not needed here, I think
                     text=framed.formatted(noframe=True, notonegroup=True)
                     #This is put in XLP file:
-                    examples=self.db.get('example',senseid=senseid)
+                    examples=self.db.get('example',senseid=senseid).get()
                     log.log(2,"{} examples found: {}".format(len(examples),
                                                                     examples))
                     if examples != []:
@@ -7727,7 +7726,7 @@ class RecordButtonFrame(Frame):
         log.log(4,"audio: {}".format(audio))
         if gloss is None:
             gloss=t(check.db.get('gloss',senseid=senseid,
-                                    glosslang=check.glosslang))
+                                    glosslang=check.glosslang).get('text'))
         if form is None and node is not None:
             form=t(node.find(f"form[@lang='{check.analang}']/text"))
         if audio != []:
