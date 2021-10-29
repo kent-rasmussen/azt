@@ -6282,7 +6282,6 @@ class FramedDataDict(dict):
     def getframeddata(self, source, **kwargs):
         self.updatelangs()
         if source not in self:
-            kwargs['db']=self.db
             self[source]=FramedData(self,source,**kwargs)
         else:
             self[source].updatelangs()
