@@ -1435,7 +1435,8 @@ class LiftURL():
         self.alias['ftype']='fieldtype'
     def __init__(self, *args,**kwargs):
         self.base=kwargs['base']
-        basename=self.basename=self.base.tag
+        self.setaliases()
+        basename=self.basename=self.getalias(self.base.tag)
         super(LiftURL, self).__init__()
         log.info("LiftURL called with {}".format(kwargs))
         self.kwargs=kwargs
