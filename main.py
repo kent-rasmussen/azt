@@ -7671,6 +7671,7 @@ class RecordButtonFrame(Frame):
             check=self.check
             id=self.id
             gloss=self.gloss
+            audio=None
         else: #self is None, i.e., this method called on something else.
             if None in [check, senseid]:
                 return
