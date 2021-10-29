@@ -7771,8 +7771,10 @@ class RecordButtonFrame(Frame):
         #test if any of the generated filenames are there
         for filename in filenames:
             filenameURL=str(file.getdiredurl(check.audiodir,filename))
+            log.debug("Looking for Audio file: {}; filename possibilities: {}; "
+                "url:{}".format(filename, filenames, filenameURL))
             if file.exists(filenameURL):
-                log.debug("Audio file found! using name: {}; diredname: {}; "
+                log.debug("Audiofile found! using name: {}; possibilities: {}; "
                     "url:{}".format(filename, filenames, filenameURL))
                 return filename
         #if you don't find any, take the *last* values
