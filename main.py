@@ -4480,8 +4480,8 @@ class Check():
         # containst the field value) in the lift file.
         # This is all the words in the database with the given
         # location:value correspondence (any ps/profile)
-        lst2=self.db.get('senseidbyexfieldvalue',fieldtype='tone',
-                                location=self.name,fieldvalue=oldtonevalue)
+        lst2=self.db.get('sense',location=self.name,tonevalue=oldtonevalue
+                                                                ).get('senseid')
         # We are agnostic of verification status of any given entry, so don't
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
