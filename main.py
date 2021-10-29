@@ -4312,6 +4312,7 @@ class Check():
             elif self.groupselected == "ALLOK":
                 log.debug("User selected ‘{}’, moving on.".format(oktext))
                 self.updatestatus(verified=True)
+                self.updatestatuslift(self.name,self.subcheck,verified=True)
                 # self.checkcheck() #now after verifyT is done
             else:
                 log.debug("User did NOT select ‘{}’, assuming we'll come "
