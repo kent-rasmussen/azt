@@ -6132,18 +6132,22 @@ class FramedData(object):
             toformat.appendformsbylang(self.forms,self.analang,quote=False)
             toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
         else:
+            if not hasattr(self,framed):
+                self.noframe() #Assume no frame if not excplicitly applied
             toformat.appendformsbylang(self.framed,self.analang,quote=False)
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join(toformat) #put it all together
     def setframe(self,frame):
         self.frame=self.frames[self.ps][frame]
         self.applyframe()
+    def noframe(self):
+        self.framed=self.forms
     def applyframe(self):
         if not self.noframe:
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
         else:
-            self.framed=self.forms
+            self.noframe()
     def gettonegroup(self):
         if self.location is not None:
             self.tonegroups=self.db.get('example/tonefield/form/text',
