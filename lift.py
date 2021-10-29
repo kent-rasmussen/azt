@@ -1012,12 +1012,16 @@ class LiftURL():
     def tonefield(self):
         self.baselevel()
         self.kwargs['ftype']='tone'
-        self.kwargs['formtext']='tonevalue'
         """I assume we will never use sense/tonefield and example/tonefield
         in the same url..."""
         self.level['tonefield']=self.level['cur']+1 #so this won't repeat
         self.field()
-        self.form("tonevalue",'glosslang')
+        if 'tonevalue' in self.kwargs:
+            self.kwargs['formtext']='tonevalue'
+            self.form("tonevalue",'glosslang')
+        else: #dont' force a text node with no text value
+            self.kwargs['formtext']=None
+            self.form(lang='glosslang')
     def morphtype(self,attrs={}):
         if 'morphtype' in self.kwargs:
             attrs={'name':"morph-type",'value':self.kwargs[morphtype]}
