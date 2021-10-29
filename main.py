@@ -3683,6 +3683,7 @@ class Check():
                     senseid=self.exs[value]
                 framed=self.datadict.getframeddata(senseid)
                 if framed.glosses() is not None:
+                    output['senseid']=senseid
                     output['framed']=framed #this includes [n], above
                     return output
                 else:
@@ -3695,7 +3696,7 @@ class Check():
             if framed.glosses() is not None:
                 """As soon as you find one with form and gloss, quit."""
                 self.exs[value]=senseid
-                # framed['senseid']=senseid
+                output['senseid']=senseid
                 output['framed']=framed #this includes [n], above
                 return output
             else:
@@ -4785,7 +4786,7 @@ class Check():
             b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
         elif playable == True:
             url=RecordButtonFrame.makefilenames(None,self, #not Classy...
-                                                framed['senseid'])
+                                                example['senseid'])
             diredurl=str(file.getdiredurl(self.audiodir,url))
             thefileisthere=file.exists(diredurl)
             log.info("fileisthere: {} ({})".format(diredurl,url))
