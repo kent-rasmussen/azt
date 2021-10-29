@@ -6405,11 +6405,7 @@ class FramedData(object):
             </example>
             """
         elif type(source) is str and len(source) >= 36:#senseid can be guid+form
-            if self.db is not None: #pull from lift by senseid
-                self.parsesense(self.db,source)
-            else:
-                log.error("Can't pull entry ({}) w/o database!".format(source))
-                return
+            self.parsesense(self.db,source)
         else:
             log.error('Neither Element nor senseid was found!'
                         '\nThis is almost certainly not what you want!'
