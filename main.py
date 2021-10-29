@@ -5545,7 +5545,7 @@ class Check():
                     groupvalue=self.db.get("tonefield", senseid=senseid,
                                     location=location,
                                     ).get('text')
-                    if groupvalue != [None]:
+                    if groupvalue != []:
                         if unlist(groupvalue) not in values[group][location]:
                             values[group][location]+=groupvalue
                 log.log(3,"values[{}][{}]: {}".format(group,location,
@@ -5566,9 +5566,9 @@ class Check():
         for senseid in self.senseidstosort:
             output[senseid]={}
             for location in locations:
-                if group != [None]:
                 group=self.db.get("tonefield", senseid=senseid,
                                 location=location).get('text')
+                if group != []:
                     output[senseid][location]=group #Save this info by senseid
         log.info("Done collecting groups by location for each senseid.")
         return output
