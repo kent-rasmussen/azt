@@ -27,6 +27,7 @@ Then this will get you the needed python modules: `python3 -m pip install pyaudi
 
 ### Installation on Microsoft Windows
 - **Be sure to check "add to PATH"** (or whatever options are appropriate), so Windows knows where Python is installed. If you miss this step, A→Z+T will not work.
+![AZT Process Flow Chart](docs/AZT%20Process%20Flow%20Chart.png "Flow Chart"))
 
 For some reason, I have had trouble getting pyaudio installed on Windows machines with most recent versions of Python (3.9). You may have better mileage than I. In any case, I have found that it works smoothly to download and install Python 3.6.8 (e.g., from [here](https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe)).
 
