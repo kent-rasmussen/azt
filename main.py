@@ -6077,13 +6077,20 @@ class DataList(list):
         self.extend(args)
 class Glosslangs(DataList):
     """docstring for Glosslangs."""
-    def lang1(self,lang):
+    def lang1(self,lang=None):
+        if lang is None:
+            return self[0]
         if len(self) >1 and self[1] == lang:
             self.pop(1)
         self[0]=lang
-    def lang2(self,lang):
+    def lang2(self,lang=None):
+        if lang is None and len(self) >1:
+            return self[1]
         if len(self) >0 and self[0] != lang:
             self[0]=lang
+    def rm(self,lang):
+        """This could be either position, and if lang1 will promote lang2"""
+        self.remove(lang)
     def __init__(self, *args):
         super(Glosslangs, self).__init__()
         self.extend(args)
