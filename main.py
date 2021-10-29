@@ -4532,8 +4532,8 @@ class Check():
                                     fieldvalue=self.groupselected #,
                                     # ps=None #,showurl=True
                                     )
-        tonegroup=unlist(self.db.get("text", senseid=senseid, location=self.name,
-                            path=['tonefield'],showurl=True).get('text'))
+        tonegroup=unlist(self.db.get("example/tonefield/form/text",
+                        senseid=senseid, location=self.name).get('text'))
         if tonegroup != self.groupselected:
             log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                 tonegroup,self.groupselected))
@@ -4659,7 +4659,7 @@ class Check():
         self.senseidssorted=[]
         self.senseidsunsorted=[]
         for senseid in self.senseidstosort:
-            v=unlist(self.db.get("tonefield", senseid=senseid,
+            v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
                                 location=self.name).get('text'))
             log.info("Found tone value: {}".format(v))
             if v in ['',None]:
@@ -8481,9 +8481,9 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
                             fieldtype='tone',location=self.name,
                             fieldvalue='',showurl=True) #this value should be the only change
     log.info("Checking that removal worked")
-    tgroups=self.db.get("tonefield", senseid=senseid, location=self.name
-                        ).get('text')
-    if tgroups == []:
+    tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
+                        location=self.name).get('text')
+    if tgroups in [[],'']:
         log.info("Field removal succeeded! LIFT says '{}', = []."
                                                             "".format(tgroups))
     elif len(tgroups) == 1:
