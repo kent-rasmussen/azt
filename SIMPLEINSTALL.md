@@ -13,6 +13,7 @@ Before you can [Set up A→Z+T for normal use](#set-up-azt-for-normal-use), you 
 1. Download and install Python from [here](https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe). At this step:
 
 ![Add Python to Path](images/Python_path.png "Add Python to Path")
+
 **Be sure to check "add to PATH"** during the install process. **If you don't do this**, you will likely need to ask your local IT support for help adding Python to your path. While you are waiting for the download, you can start on [Install Git and Download A→Z+T](#install-git-and-download-azt) below
 2. Open a terminal (hit the Windows key then type `cmd` in the search box), and paste `python -m pip install pyaudio Pillow lxml` and hit enter.
 
@@ -35,6 +36,8 @@ Once you have completed everything under [Install Python](#install-python) and [
 6. Send me information on any [bugs](BUGS.md) you find, so I can help you and improve the program for others.
 
 ## Additional Important Steps to get the most out of A→Z+T
+
+### If you use Praat, make sure the Praat executable is in your operating system's path. you may need IT help if you don't know how to do this.
 
 ### Be ready to make and edit reports
 1. ask someone to help you install XeLaTeX (see [INSTALL](INSTALL.md)).
