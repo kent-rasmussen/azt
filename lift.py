@@ -204,26 +204,27 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getguids()
         self.getsenseids()
         return senseid
-    def modverificationnode(self,senseid,vtype,add=None,rm=None,addifrmd=False):
-        nodes=self.addverificationnode(senseid,vtype=vtype)
-        vf=nodes[0]
-        sensenode=nodes[1]
-        if vf is None:
-            log.info("Sorry, this didn't return a node: {}".format(senseid))
+    def evaluatenode(self,node):
+        if node is None:
+            log.info("Sorry, this didn't return a node: {}".format(node))
             return
-        if vf.text is not None:
-            log.log(2,"{}; {}".format(vf.text, type(vf.text)))
+        if node.text is not None:
             try:
-                l=ast.literal_eval(vf.text)
+                l=ast.literal_eval(node.text)
             except SyntaxError: #if the literal eval doesn't work, it's a string
-                l=vf.text
-            log.log(2,"{}; {}".format(l, type(l)))
+                l=node.text
             if type(l) != list: #in case eval worked, but didn't produce a list
                 log.log(2,"One item: {}; {}".format(l, type(l)))
                 l=[l,]
         else:
             log.log(2,"empty verification list found")
             l=list()
+        return l
+    def modverificationnode(self,senseid,vtype,add=None,rms=[],addifrmd=False):
+        nodes=self.addverificationnode(senseid,vtype=vtype)
+        vf=nodes[0]
+        sensenode=nodes[1]
+        l=self.evaluatenode(vf)
         changed=False
         if rm != None and rm in l:
             i=l.index(rm) #be ready to replace
