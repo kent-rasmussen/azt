@@ -5684,6 +5684,7 @@ class Check():
         valuesbylocation=dictofchilddicts(groupvalues,remove=['NA',None])
         log.debug("groups (tonegroupreport): {}".format(grouplist))
         log.debug("locations (tonegroupreport): {}".format(locations))
+        log.debug("valuesbylocation: {}".format(valuesbylocation))
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
         self.runwindow.title(title)
