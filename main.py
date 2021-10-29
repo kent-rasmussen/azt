@@ -8486,17 +8486,8 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
                             glosslang2=self.glosslang2, #OK if None
                             db=framed,
                             fieldtype='tone',location=self.name,
-                            fieldvalue='') #this value should be the only change
-    if type(tgroups) is list:
-        if len(tgroups) > 1:
-            log.error(_("Found {} tone values: {}".format(len(tgroups),tgroups)))
-            return
-        else:
-            tgroup=tgroups[0]
-    if tgroup == '' :
-        log.info("Field removal succeeded! LIFT says '{}', = ''.".format(tgroup))
-    else:
-        log.error("Field removal failed! LIFT says '{}', != ''.".format(tgroup))
+                            fieldvalue='',showurl=True) #this value should be the only change
+    log.info("Checking that removal worked")
     tgroups=self.db.get("tonefield", senseid=senseid, location=self.name
                         ).get('text')
     rm=self.verifictioncode(name,subcheck)
