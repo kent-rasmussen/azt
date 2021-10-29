@@ -2073,8 +2073,9 @@ if __name__ == '__main__':
                     #                             what='node')
         return
     for subcheck in range(5):
-        lift.get("sense/tonefield",
-            senseid=senseids[0],showurl=True).get('text')
+        b=lift.get('sense',fieldtype='tone',location=locations[0],
+                    tonevalue=subcheck,showurl=True).get('senseid')
+        print(b)
         # lift.get("sense", location=locations[0], tonevalue=subcheck,
         #                 path=['tonefield'],showurl=True).get('senseid')
     exit()
