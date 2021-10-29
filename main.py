@@ -4345,12 +4345,6 @@ class Check():
                             ipady=15 #Inside the buttons...
                             )
     def joinT(self):
-        def verify():
-            groups=self.status[self.type][self.ps][self.profile][self.name][
-                                                                    'groups']
-            for group in groups:
-                self.updatestatuslift(self.name,group,verified=True)
-            self.db.write() #after iterating
         log.info("Running joinT!")
         """This window shows up after sorting, or maybe after verification, to
         allow the user to join groups that look the same. I think before
@@ -4423,7 +4417,6 @@ class Check():
             if self.groupselected == "ALLOK":
                 print(f"User selected ‘{oktext}’, moving on.")
                 delattr(self,'groupselected')
-                verify()
                 return 0
             else:
                 group1=self.groupselected
@@ -4454,7 +4447,6 @@ class Check():
                     if self.groupselected == "ALLOK":
                         print(f"User selected ‘{oktext}’, moving on.")
                         delattr(self,'groupselected')
-                        verify()
                         return 0
                     else:
                         msg=_("Now we're going to move group ‘{0}’ into "
