@@ -7715,8 +7715,8 @@ class RecordButtonFrame(Frame):
                                     glosslang=check.glosslang).get('text'))
         if form is None and node is not None:
             form=t(node.find(f"form[@lang='{check.analang}']/text"))
-        if audio != []:
-            filenameURL=str(file.getdiredurl(check.audiodir,audio.text))
+        if audio is not None:
+            filenameURL=str(file.getdiredurl(check.audiodir,audio))
             if file.exists(filenameURL):
                 log.debug("Audio file found! using name: {}; diredname: {}"
                     "".format(audio.text, filenameURL))
