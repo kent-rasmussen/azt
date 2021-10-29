@@ -1448,7 +1448,6 @@ class LiftURL():
         self.url=[]
         self.level={'cur':0,basename:0}
         self.guid=self.senseid=self.attrdonothing
-        self.setaliases()
         self.setattrsofnodes()
         self.bearchildrenof(basename)
         log.log(4,"Making Target now.")
