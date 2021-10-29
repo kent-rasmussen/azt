@@ -1437,6 +1437,7 @@ class LiftURL():
         self.alias['grammatical-info']='ps'
         self.alias['id']='senseid'
         self.alias['ftype']='fieldtype'
+        self.alias["field[@type='tone']"]='tonefield'
     def __init__(self, *args,**kwargs):
         self.base=kwargs['base']
         self.setaliases()
