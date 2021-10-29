@@ -11,7 +11,7 @@ Before you can [Set up A→Z+T for normal use](#set-up-azt-for-normal-use), you 
 
 ## Install Python
 1. Download and install Python from [here](https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe). At this step:
-![AZT Process Flow Chart](docs/AZT%20Process%20Flow%20Chart.png "Flow Chart"))
+![Add Python to Path](images/Python_path.png "Add Python to Path")
 **Be sure to check "add to PATH"** during the install process. **If you don't do this**, you will likely need to ask your local IT support for help adding Python to your path. While you are waiting for the download, you can start on [Install Git and Download A→Z+T](#install-git-and-download-azt) below
 2. Open a terminal (hit the Windows key then type `cmd` in the search box), and paste `python -m pip install pyaudio Pillow lxml` and hit enter.
 
