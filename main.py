@@ -5288,7 +5288,7 @@ class Check():
                 #         window=self.runwindow.frame,
                 #         row=i, column=0, font=font, command=self.picked)
                 col=0
-                for lang in [self.analang, self.glosslang, self.glosslang2]:
+                for lang in [self.analang]+self.glosslangs:
                     col+=1
                     if lang in framed.forms:
                         Label(self.results.scroll.content,
