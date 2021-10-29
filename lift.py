@@ -1219,10 +1219,12 @@ class LiftURL():
             "to not give the desired results. Fix this, and try again. (whole "
             "target: {})".format(self.targethead,self.target))
             exit()
+    def tagonly(self,nodename):
+        return nodename.split('[')[0]
     def currentnodename(self):
         last=self.url[-1:]
         if len(last)>0:
-            n=last[0].split('[')[0]
+            n=self.tagonly(last[0])
             return self.getalias(n)
     def unalias(self,nodename):
         if nodename in self.alias.values():
@@ -1275,7 +1277,7 @@ class LiftURL():
         if self.targettail is not None:
             for b in self.targettail:
                 n=self.targetbits.index(b)
-                bp=self.targetbits[n-1].split('[')[0]#just the node, not attrs
+                bp=self.tagonly(self.targetbits[n-1]) #.split('[')[0]#just the node, not attrs
                 afterbp=self.drafturl().split(self.unalias(bp))
                 log.log(4,"b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
                 if len(afterbp) <=1 or b not in afterbp[1]:
