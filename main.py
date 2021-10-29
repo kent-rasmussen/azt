@@ -4463,11 +4463,11 @@ class Check():
                         self.status[self.type][self.ps][self.profile][
                                 self.name]['groups'].remove(group1)
                         self.subcheck=group1
+                        self.updatestatuslift(refresh=False) #done above
                         self.updatestatus(refresh=False) #not verified=True --since joined.
-                        # self.updatestatuslift(refresh=False) #done above
                         self.subcheck=self.groupselected
+                        self.updatestatuslift() #done above
                         self.updatestatus() #not verified=True --since joined.
-                        # self.updatestatuslift() #done above
                         self.maybesort() #go back to verify, etc.
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
