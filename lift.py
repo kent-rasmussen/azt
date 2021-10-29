@@ -945,9 +945,9 @@ class LiftURL():
     def entry(self):
         self.build("entry","guid","guid")
         self.bearchildrenof("entry")
-    def text(self,value):
+    def text(self,value=None):
         self.baselevel()
-        self.build("text",myattr="value")
+        self.build("text",myattr=value)
     def form(self,value=None,lang=None):
         self.baselevel()
         self.kwargs['value']=self.kwargs.get(value,None) #location and tonevalue
