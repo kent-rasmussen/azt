@@ -113,12 +113,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         lift.get("citation/form").get('text')
         just 1 of each pss: dict.fromkeys(lift.get("ps").get('value'))
         get tone value (from example):
-            lift.get('example/tonefield', senseid=senseid).get('text')
-            lift.get("tonefield", senseid=senseid, location=self.name).get('text')
+            lift.get("example/tonefield/form/text",location=location).get('text')
         get tone value (from sense, UF):
-        lift.get('tonefield', senseid=senseid).get('text')
-        lift.get('sense/tonefield', senseid=senseids[0],showurl=True).get('text')
-        location: lift.get('locationfield', senseid=senseid, showurl=True).get('text')
+        lift.get('tonefield/form/text', senseid=senseid).get('text')
+        lift.get('sense/tonefield/form/text', senseid=senseid).get('text')
+        location: lift.get('locationfield', senseid=senseid).get('text')
         """
         if node is None:
             node=self.nodes
