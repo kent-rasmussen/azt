@@ -2060,6 +2060,10 @@ if __name__ == '__main__':
                     #                             tonevalue=fieldvalue,
                     #                             what='node')
         return
+    for subcheck in range(5):
+        lift.get("sense", location=locations[0], tonevalue=subcheck,
+                        path=['tonefield'],showurl=True).get('senseid')
+    exit()
     for senseid in senseids:
         exnode=lift.get('example',showurl=True,senseid=senseid,
                         location=locations[1]).get()
