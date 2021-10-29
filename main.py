@@ -4570,8 +4570,8 @@ class Check():
         """Still working on one ps-profile combo at a time."""
         self.getidstosort() #just in case this changed
         for senseid in self.senseidstosort: #I should be able to make this a regex...
-            toneUFgroup=firstoflist(self.db.get('tonefield', senseid=senseid,
-                ).get('text'))
+            toneUFgroup=firstoflist(self.db.get('sense/tonefield',
+                                                senseid=senseid).get('text'))
             if toneUFgroup is not None:
                 if toneUFgroup not in sorted:
                     sorted[toneUFgroup]=[senseid]
@@ -4587,10 +4587,8 @@ class Check():
         toneUFgroups=[]
         """Still working on one ps-profile combo at a time."""
         for senseid in self.senseidstosort: #I should be able to make this a regex...
-            toneUFgroups+=self.db.get('text', senseid=senseid, #toneUFfieldvalue
-                path=['tonefield'],#fieldtype='tone' # Including any lang at this point.
-                # ,showurl=True
-                ).get('text')
+            toneUFgroups+=self.db.get('sense/tonefield', senseid=senseid
+                                        ).get('text')
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
     def gettonegroups(self):
         # This depends on self.ps, self.profile, and self.name
@@ -4600,9 +4598,8 @@ class Check():
         log.log(3,"Looking for tone groups for {} frame".format(self.name))
         tonegroups=[]
         for senseid in self.senseidstosort: #This is a ps-profile slice
-            tonegroup=self.db.get("text", path=['tonefield'],
-                                senseid=senseid, location=self.name
-                                ).get('text')
+            tonegroup=self.db.get("example/tonefield", senseid=senseid,
+                                    location=self.name).get('text')
             if unlist(tonegroup) in ['NA','','ALLOK', None]:
                 log.error("tonegroup {} found in sense {} under location {}!"
                     "".format(tonegroup,senseid,self.name))
@@ -4669,10 +4666,10 @@ class Check():
         self.senseidssorted=[]
         self.senseidsunsorted=[]
         for senseid in self.senseidstosort:
-            v=self.db.get("text", senseid=senseid, location=self.name,
-                                                path=['tonefield']).get('text')
+            v=unlist(self.db.get("tonefield", senseid=senseid,
+                                location=self.name).get('text'))
             log.info("Found tone value: {}".format(v))
-            if unlist(v) in ['',None]:
+            if v in ['',None]:
                 self.senseidsunsorted+=[senseid]
             else:
                 self.senseidssorted+=[senseid]
@@ -6325,10 +6322,7 @@ class FramedData(object):
             self.framed=self.forms
     def gettonegroup(self):
         if self.location is not None:
-            self.tonegroups=self.db.get('example/field/form/text',
-                                    senseid=senseid,
-                                    # fieldtype='tone',
-                                    path=['tonefield'],
+            self.tonegroups=self.db.get('tonefield', senseid=senseid,
                                     location=self.location).get('text')
     def tonegroup(self):
         if self.tonegroups is not None: # wanted&found
