@@ -2,7 +2,6 @@
 
 ## release stoppers
 - put image creation after splash creation?
-- give warning if user is going to undo analysis regroupings
 - check out why tooltips aren't working before first refresh
 
 ## Documentation
@@ -18,6 +17,8 @@
 - make font changes more general, tied to <ctrl>+/-
 
 ## Simplify (non-OOP related)
+- Set means for user to check verification stage again. This will require invalidating all the data to be redone (not currently implimented).
+    - Once done, there is currently no AZT way to redo it.
 - on import, check for entries without:
   - citation, copy over from lexical-unit (all langs)
   - gloss, copy over from definitions (truncate, all langs)
@@ -38,7 +39,6 @@
         - transcribe (but not sort, etc)
 
 ## Migrate further toward OOP
-- mark a sensid to sort again without losing the sound file attached to it.
 - distinguish between frames to do for sorting (with unsorted data) and frames to do for other tasks...
 - make 'next' go to next frame, if done sorting, or not, as appropriate
 - make tone analysis one thing, and tone report another thing, and call analysis if not done since data was last added/modified (store this info somewhere, clear after analysis completes)
@@ -104,13 +104,7 @@
 - add progress of recording (on its own tab?)
 
 ## For Future Versions
-- Add comparison group button for rename framed group window (to help with transcriptions)
-- consider adding actual groups by datapoint for non-default tone reports
-    - I.e., which data points are different
-- think through ease of use questions:
-    - How to make naming groups straightforward from the main interface?
 - implement XML2XLP.txt (to produce PDF without further user input)
-- add interpretation of glottal stop into sdistinctions.
 - fix zip problem on Windows: "OSError: [Errno 22] Invalid argument: 'log_-:.7z'"
 - extra space being added for None forms in Frame construction
 - Sort out why not all nouns show in ad hoc selection list.
@@ -177,11 +171,8 @@
     - widen "Do" menu item (give all a minimum width)
 
 ## For some time
-- set up mail of bug report (better than WeSay)
 - look into having hg commit changes to verification status file
     - don't track checkdefaults? (make per user file?)
-- Set means for user to check verification stage again.
-    - Once done, there is currently no AZT way to redo it.
 - Look up how to get real required heights and widths, availablexy isn't working correctly.
 - fix reconfigure scrolling window frame problem (remove need for if self.configured <1:)
   - constrain frames with less data, to only scroll as needed.
