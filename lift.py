@@ -560,6 +560,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def getguids(self):
         self.guids=self.get('entry').get('guid')
         self.nguids=len(self.guids)
+    """Set up"""
     def nc(self):
         nounclasses="1 2 3 4 5 6 7 8 9 10 11 12 13 14"
     def clist(self): #This variable gives lists, to iterate over.
@@ -701,6 +702,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     #     log.debug("Found the following forms to search: {}".format(
     #                                                         fts))
     #     return fts
+    """Get stuff"""
     def gloss(self,**kwargs):
         return self.get('gloss/text', **kwargs).get('text')
     def glosses(self,**kwargs):
@@ -1228,12 +1230,14 @@ class LiftURL():
             n=self.tagonly(last[0])
             return self.getalias(n)
     def unalias(self,nodename):
+        """This returns the names used in the LIFT file"""
         if nodename in self.alias.values():
             for k in self.alias:
                 if self.alias[k] == nodename:
                     return k
         return nodename #else
     def getalias(self,nodename):
+        """This returns the names I typically use"""
         return self.alias.get(nodename,nodename)
     def rebase(self,rebase):
         """This just changes the node set from which the url draws.
@@ -1316,11 +1320,9 @@ class LiftURL():
         c=self.getfamilyof(node,x=[])
         # This fn is not called by showtargetinhighestgeneration or maketarget
         if node in self.level:
-            log.info("No (done already).")
             return False
         elif node == self.targethead: #do this later
-            log.log(4,"skipping node {}, in target:{}".format(node,self.target))
-            return False #not self.targetlastsibling()
+            return False
         elif self.attrneeds(node,c):
             return True
         elif self.kwargsneeds(node,c):
