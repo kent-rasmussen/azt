@@ -6389,8 +6389,6 @@ class FramedData(object):
         """Build dual logic here. We use this to frame senses & examples"""
         if isinstance(source,lift.ET.Element):
             self.noframe=True #Examples should already be framed
-            if self.db is not None:
-                log.info("FYI: You specified database unnecessarily!")
             self.parseexample(source) #example element, not sense or entry:
             """This is what we're pulling from:
             <example>
