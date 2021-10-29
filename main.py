@@ -6123,7 +6123,7 @@ class FramedData(object):
     times to display it. If source is a senseid, it pulls form/gloss/etc
     information from the entry. If source is an example, it pulls that info
     from the example. The info is formatted uniformly in either case."""
-    def formatted(self,notonegroup=True,noframe=True):
+    def formatted(self,notonegroup=True,noframe=False):
         if notonegroup:
             toformat=DataList()
         else:
