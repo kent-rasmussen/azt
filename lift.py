@@ -225,6 +225,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         vf=nodes[0]
         sensenode=nodes[1]
         l=self.evaluatenode(vf)
+        log.log(2,"{}; {}".format(vf.text, type(vf.text)))
+        log.log(2,"{}; {}".format(l, type(l)))
         changed=False
         i=len(l)
         for rm in rms:
