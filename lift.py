@@ -2073,8 +2073,10 @@ if __name__ == '__main__':
                     #                             what='node')
         return
     for subcheck in range(5):
-        lift.get("sense", location=locations[0], tonevalue=subcheck,
-                        path=['tonefield'],showurl=True).get('senseid')
+        lift.get("sense/tonefield",
+            senseid=senseids[0],showurl=True).get('text')
+        # lift.get("sense", location=locations[0], tonevalue=subcheck,
+        #                 path=['tonefield'],showurl=True).get('senseid')
     exit()
     for senseid in senseids:
         exnode=lift.get('example',showurl=True,senseid=senseid,
