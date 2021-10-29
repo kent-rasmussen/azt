@@ -6132,7 +6132,7 @@ class FramedData(object):
             toformat.appendformsbylang(self.forms,self.analang,quote=False)
             toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
         else:
-            if not hasattr(self,framed):
+            if not hasattr(self,'framed'):
                 self.noframe() #Assume no frame if not excplicitly applied
             toformat.appendformsbylang(self.framed,self.analang,quote=False)
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
