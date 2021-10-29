@@ -1710,12 +1710,16 @@ class Check():
         value=self.verifictioncode(name,subcheck)
         if verified == True:
             add=value
-            rm=None
+            rms=[]
         else:
             add=None
-            rm=value
+            rms=[value]
         for senseid in self.senseidsincheck(senseids): #only for this ps-profile
-            self.db.modverificationnode(senseid,vtype=self.profile,add=add,rm=rm)
+            rms+=self.db.getverificationnodevaluebyframe(senseid,
+                                                vtype=self.profile, frame=name)
+            log.info("Removing {}".format(rms))
+            self.db.modverificationnode(senseid,vtype=self.profile,add=add,
+                                                                        rms=rms)
         if refresh == True:
             self.db.write() #for when not iterated over, or on last repeat
     def updatestatus(self,subcheck=None,verified=False,refresh=True):
@@ -4491,7 +4495,7 @@ class Check():
                                 location=self.name,#fieldvalue=oldtonevalue,
                                 fieldvalue=newtonevalue)
             self.db.modverificationnode(senseid=senseid,vtype=self.profile,
-                                                add=add,rm=rm,addifrmd=True)
+                                                add=add,rms=[rm],addifrmd=True)
         self.db.write() #once done iterating over senseids
     def addtonegroup(self):
         log.info("Adding a tone group!")
@@ -8494,7 +8498,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
                                                                     tgroups)))
         return
     rm=self.verifictioncode(name,subcheck)
-    self.db.modverificationnode(senseid,vtype=self.profile,rm=rm)
+    self.db.modverificationnode(senseid,vtype=self.profile,rms=[rm])
     self.db.write() #This is not iterated over
     self.markunsortedsenseid(senseid) #This is just for self.status['sorted']
     parent.destroy() #.runwindow.resetframe()
