@@ -312,7 +312,7 @@ class Check():
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
         if not hasattr(self,'glosslangs'):
-            self.glosslangs=[None,None]
+            self.glosslangs=Glosslangs(None,None)
         if len(self.db.glosslangs) == 1:
             log.info('Only one glosslang!')
             self.glosslangs[0]=self.glosslang=self.db.glosslangs[0]
