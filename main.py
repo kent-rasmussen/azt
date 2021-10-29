@@ -4959,8 +4959,8 @@ class Check():
                 t+='’'
         lxl=Label(parent, text=t)
         lcb=RecordButtonFrame(parent,self,id=sense['guid'], #reconfigure!
-                                            node=sense['nodetoshow'],
-                                            gloss=sense['gloss'])
+                                        framed=framed,node=sense['nodetoshow'],
+                                        gloss=sense['gloss'])
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def showentryformstorecordpage(self):
