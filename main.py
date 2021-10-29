@@ -6075,6 +6075,19 @@ class DataList(list):
     def __init__(self, *args):
         super(DataList, self).__init__()
         self.extend(args)
+class Glosslangs(DataList):
+    """docstring for Glosslangs."""
+    def lang1(self,lang):
+        if len(self) >1 and self[1] == lang:
+            self.pop(1)
+        self[0]=lang
+    def lang2(self,lang):
+        if len(self) >0 and self[0] != lang:
+            self[0]=lang
+    def __init__(self, *args):
+        super(Glosslangs, self).__init__()
+        self.extend(args)
+
 class DictbyLang(dict):
     """docstring for DictbyLang."""
     def getformfromnode(self,node,truncate=False):
