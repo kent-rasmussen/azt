@@ -4570,7 +4570,7 @@ class Check():
         """Still working on one ps-profile combo at a time."""
         self.getidstosort() #just in case this changed
         for senseid in self.senseidstosort: #I should be able to make this a regex...
-            toneUFgroup=firstoflist(self.db.get('sense/tonefield',
+            toneUFgroup=firstoflist(self.db.get('sense/tonefield/form/text',
                                                 senseid=senseid).get('text'))
             if toneUFgroup is not None:
                 if toneUFgroup not in sorted:
@@ -4587,8 +4587,8 @@ class Check():
         toneUFgroups=[]
         """Still working on one ps-profile combo at a time."""
         for senseid in self.senseidstosort: #I should be able to make this a regex...
-            toneUFgroups+=self.db.get('sense/tonefield', senseid=senseid
-                                        ).get('text')
+            toneUFgroups+=self.db.get('sense/tonefield/form/text',
+                                                    senseid=senseid).get('text')
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
     def gettonegroups(self):
         # This depends on self.ps, self.profile, and self.name
@@ -4598,8 +4598,8 @@ class Check():
         log.log(3,"Looking for tone groups for {} frame".format(self.name))
         tonegroups=[]
         for senseid in self.senseidstosort: #This is a ps-profile slice
-            tonegroup=self.db.get("example/tonefield", senseid=senseid,
-                                    location=self.name).get('text')
+            tonegroup=self.db.get("example/tonefield/form/text",
+                                senseid=senseid, location=self.name).get('text')
             if unlist(tonegroup) in ['NA','','ALLOK', None]:
                 log.error("tonegroup {} found in sense {} under location {}!"
                     "".format(tonegroup,senseid,self.name))
@@ -5542,9 +5542,9 @@ class Check():
             for location in locations: #just make them all, delete empty later
                 values[group][location]=list()
                 for senseid in senseidsbygroup[group]:
-                    groupvalue=self.db.get("tonefield", senseid=senseid,
-                                    location=location,
-                                    ).get('text')
+                    groupvalue=self.db.get("example/tonefield/form/text",
+                                            senseid=senseid, location=location,
+                                            ).get('text')
                     if groupvalue != []:
                         if unlist(groupvalue) not in values[group][location]:
                             values[group][location]+=groupvalue
@@ -5566,8 +5566,8 @@ class Check():
         for senseid in self.senseidstosort:
             output[senseid]={}
             for location in locations:
-                group=self.db.get("tonefield", senseid=senseid,
-                                location=location).get('text')
+                group=self.db.get("example/tonefield/form/text",
+                    senseid=senseid,location=location,showurl=True).get('text')
                 if group != []:
                     output[senseid][location]=group #Save this info by senseid
         log.info("Done collecting groups by location for each senseid.")
@@ -6322,8 +6322,8 @@ class FramedData(object):
             self.framed=self.forms
     def gettonegroup(self):
         if self.location is not None:
-            self.tonegroups=self.db.get('tonefield', senseid=senseid,
-                                    location=self.location).get('text')
+            self.tonegroups=self.db.get('example/tonefield/form/text',
+                            senseid=senseid, location=self.location).get('text')
     def tonegroup(self):
         if self.tonegroups is not None: # wanted&found
             tonegroup=unlist(self.tonegroups)
