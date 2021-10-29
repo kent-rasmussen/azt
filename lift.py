@@ -226,12 +226,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         sensenode=nodes[1]
         l=self.evaluatenode(vf)
         changed=False
-        if rm != None and rm in l:
-            i=l.index(rm) #be ready to replace
-            l.remove(rm)
-            changed=True
-        else:
-            i=len(l)
+        i=len(l)
+        for rm in rms:
+            if rm != None and rm in l:
+                i=l.index(rm) #be ready to replace
+                l.remove(rm)
+                changed=True
         if (add != None and add not in l #if there, v-if rmd, or not changing
                 and (addifrmd == False or changed == True)):
             l.insert(i,add) #put where removed from, if done.
