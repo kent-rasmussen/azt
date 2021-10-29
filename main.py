@@ -7708,9 +7708,9 @@ class RecordButtonFrame(Frame):
                                             analang=check.analang).get('text'))
             log.log(4,"gloss: {}".format(gloss))
             log.log(4,"form: {}".format(form))
-        log.log(4,"audio: {}".format(audio))
         audio=check.db.get('form/text',node=node,showurl=True,
                                         analang=check.audiolang).get('text')
+        log.log(4,"audio: {}".format(audio))
         audio=unlist(audio)
         if gloss is None:
             gloss=t(check.db.get('gloss',senseid=senseid,
