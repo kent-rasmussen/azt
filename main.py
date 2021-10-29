@@ -4572,6 +4572,11 @@ class Check():
         for senseid in self.senseidstosort: #I should be able to make this a regex...
             toneUFgroup=firstoflist(self.db.get('tonefield', senseid=senseid,
                 ).get('text'))
+            if toneUFgroup is not None:
+                if toneUFgroup not in sorted:
+                    sorted[toneUFgroup]=[senseid]
+                else:
+                    sorted[toneUFgroup]+=[senseid]
         self.toneUFgroups=list(dict.fromkeys(sorted))
         log.debug("UFtonegroups (getsenseidsbytoneUFgroups): {}".format(
                                                             self.toneUFgroups))
