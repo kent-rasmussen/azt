@@ -1012,6 +1012,9 @@ class LiftURL():
         self.baselevel()
         self.kwargs['ftype']='tone'
         self.kwargs['formtext']='tonevalue'
+        """I assume we will never use sense/tonefield and example/tonefield
+        in the same url..."""
+        self.level['tonefield']=self.level['cur'] #so this won't repeat
         self.field()
         self.form("tonevalue",'glosslang')
     def morphtype(self,attrs={}):
@@ -1309,7 +1312,10 @@ class LiftURL():
     def shouldshow(self,node):
         c=self.getfamilyof(node,x=[])
         # This fn is not called by showtargetinhighestgeneration or maketarget
-        if node == self.targethead: #do this later
+        if node in self.level:
+            log.info("No (done already).")
+            return False
+        elif node == self.targethead: #do this later
             log.log(4,"skipping node {}, in target:{}".format(node,self.target))
             return False #not self.targetlastsibling()
         elif self.attrneeds(node,c):
