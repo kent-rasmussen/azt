@@ -288,8 +288,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             fields are being filled in in the glosslang language."""
             fieldgloss=Node(p,'translation',attrib={'type':'Frame translation'})
             for lang in glosslangs:
-                if lang != None and hasattr(forms,lang):
-                    fieldgloss.makeformnode(lang,getattr(forms,lang))
+                if lang in forms:
+                    fieldgloss.makeformnode(lang,forms[lang])
             exfieldvalue=p.makefieldnode(fieldtype,glosslangs[0],text=tonevalue,
                                                                 gimmetext=True)
             p.makefieldnode('location',glosslangs[0],text=location)
