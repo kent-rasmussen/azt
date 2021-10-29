@@ -295,7 +295,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 return
             analang=kwargs.get('analang')
             db=kwargs.get('db') #This an object with values
-            forms=db.forms
+            forms=db.framed #because this should always be framed
             glosslangs=db.glosslangs
             p=Node(sensenode, tag='example')
             p.makeformnode(analang,forms[analang])
