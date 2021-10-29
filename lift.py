@@ -1015,7 +1015,7 @@ class LiftURL():
         self.kwargs['formtext']='tonevalue'
         """I assume we will never use sense/tonefield and example/tonefield
         in the same url..."""
-        self.level['tonefield']=self.level['cur'] #so this won't repeat
+        self.level['tonefield']=self.level['cur']+1 #so this won't repeat
         self.field()
         self.form("tonevalue",'glosslang')
     def morphtype(self,attrs={}):
