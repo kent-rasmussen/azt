@@ -6351,8 +6351,7 @@ class FramedData(object):
                 for ii in i:
                     if (ii.tag == 'form'):
                         self.forms.getformfromnode(ii) #glosses
-            elif ((i.tag == 'field') and (i.get('type') == 'tone') and
-                    not self.notonegroup):
+            elif ((i.tag == 'field') and (i.get('type') == 'tone')):
                 self.tonegroups=i.findall('form/text') #always be list of one
     def glosses(self):
         g=DictbyLang()
