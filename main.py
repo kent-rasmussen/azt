@@ -8187,7 +8187,7 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
     if all == True: #don't worry about othersOK yet
         if len(l) > 1:
             ox=[t(v) for v in l[:len(l)-2]] #Should probably always give text
-            l=ox+[' and '.join([t(v) for v in l[len(l)-2:]])]
+            l=ox+[' and '.join([t(v) for v in l[len(l)-2:] if v not in ignore])]
                 # for i in range(int(len(output)/2))]
         else:
             l[0]=t(l[0]) #for lists of a single element
@@ -8202,7 +8202,7 @@ def t(element):
     if type(element) is str:
         return element
     elif element is None:
-        return
+        return str(None)
     else:
         try:
             return element.text
