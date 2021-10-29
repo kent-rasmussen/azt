@@ -4060,6 +4060,7 @@ class Check():
             senseids=self.getexsall(self.subcheck)
             if len(senseids) <2:
                 self.updatestatus(verified=True)
+                self.updatestatuslift(self.name,self.subcheck,verified=True)
                 # self.checkcheck() #now after verifyT is done
                 log.info("Group ‘{}’ only has {} example; marking verified and "
                         "continuing.".format(self.subcheck,len(senseids)))
