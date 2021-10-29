@@ -133,9 +133,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         else:
             log.info("URL key found, using: {} ({})".format(k,self.urls[k].url))
             if self.urls[k].base == node:
-                log.info("Same base {}, moving on.".format(node))
+                log.log(4,"Same base {}, moving on.".format(node))
             else:
-                log.info("Different base of same tag ({}; {}≠{}), rebasing."
+                log.log(4,"Different base of same tag ({}; {}≠{}), rebasing."
                                     "".format(node.tag,self.urls[k].base,node))
                 self.urls[k].rebase(node)
         if showurl:
