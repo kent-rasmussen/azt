@@ -4477,7 +4477,7 @@ class Check():
         sameness will be verified and recorded."""
     def updatebysubchecksenseid(self,oldtonevalue,newtonevalue,verified=False):
         # This function updates the field value and verification status (which
-        # containst the field value) in the lift file.
+        # contains the field value) in the lift file.
         # This is all the words in the database with the given
         # location:value correspondence (any ps/profile)
         lst2=self.db.get('sense',location=self.name,tonevalue=oldtonevalue
