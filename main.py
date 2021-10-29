@@ -5083,7 +5083,7 @@ class Check():
             for senseid in senseidstocheck: #self.senseidformstosearch[lang][ps]
                 # where self.regex(self.senseidformstosearch[lang][ps][senseid]):
                 """This regex is compiled!"""
-                framed=self.datadict.getframeddata(senseid)
+                framed=self.datadict.getframeddata(senseid) #not framed!
                 o=framed.formatted(noframe=True)
                 self.framedtoXLP(framed,parent=ex,listword=True)
                 if self.debug ==True:
