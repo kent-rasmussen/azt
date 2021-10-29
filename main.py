@@ -8490,6 +8490,16 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     log.info("Checking that removal worked")
     tgroups=self.db.get("tonefield", senseid=senseid, location=self.name
                         ).get('text')
+    if tgroups == []:
+        log.info("Field removal succeeded! LIFT says '{}', = []."
+                                                            "".format(tgroups))
+    elif len(tgroups) == 1:
+        tgroup=tgroups[0]
+        log.error("Field removal failed! LIFT says '{}', != [].".format(tgroup))
+    elif len(tgroups) > 1:
+        log.error(_("Found {} tone values: {}; Fix this!".format(len(tgroups),
+                                                                    tgroups)))
+        return
     rm=self.verifictioncode(name,subcheck)
     self.db.modverificationnode(senseid,vtype=self.profile,rm=rm)
     self.db.write() #This is not iterated over
