@@ -37,7 +37,8 @@ Once you have completed everything under [Install Python](#install-python) and [
 
 ## Additional Important Steps to get the most out of A→Z+T
 
-### If you use Praat, make sure the Praat executable is in your operating system's path. you may need IT help if you don't know how to do this.
+### Praat
+- If you use Praat, make sure the Praat executable is in your operating system's path. You may need to ask your IT support for help, if you don't know how to do this.
 
 ### Be ready to make and edit reports
 1. ask someone to help you install XeLaTeX (see [INSTALL](INSTALL.md)).

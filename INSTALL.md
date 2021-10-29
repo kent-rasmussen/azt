@@ -65,6 +65,7 @@ To make full use of A→Z+T's report output, I strongly advise you to be ready t
 
 ## Praat
 If you have [Praat](https://www.fon.hum.uva.nl/praat/) installed, [A→Z+T](https://github.com/kent-rasmussen/azt.git) can open sound files you have recorded there for you.
+To enable this feature in [A→Z+T](https://github.com/kent-rasmussen/azt.git), the Praat executable must be in your operating system Path. You may need to ask your IT support for help, if you don't know how to do this.
 
 ## To run AZT
 Assuming your system is configured correctly, just run `main.py`. Depending on your system, that may be just a click on the file (or a link to it on your desktop or wherever), or you may need to type that into a terminal. Your operating system should know to open `main.py` with python, but you can also explicitly tell it to with `python main.py`.
