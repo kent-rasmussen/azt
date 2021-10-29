@@ -55,6 +55,8 @@ If [A→Z+T](https://github.com/kent-rasmussen/azt) has an exception, it should 
 
 Results of the analysis of multiple frame groupings (e.g., from the Tone Report) is placed in a separate `entry/sense/field[@type='tone']` (i.e., not in an example field), as this is a summary/analysis of the values contained in the example nodes.
 
+As entries are verified in groups by tone frame, group values by tone frame are stored in a verification field which is named by syllable profile analysis (e.g., `entry/sense/field[@type="CVCV verification"]`)
+
 ### Changes to Expect near Your [LIFT](https://code.google.com/archive/p/lift-standard/) Database
 [A→Z+T](https://github.com/kent-rasmussen/azt) assumes your [LIFT](https://code.google.com/archive/p/lift-standard/) file is in a directory set apart for its analysis. As a result, expect to find generated in that directory:
 
