@@ -332,11 +332,18 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 examples=sense.findall('example/field[@type="location"]/'
                                         'form[text="{}"]/../..'.format(l)) #'senselocations'
                 if len(examples)>1:
-                    log.info("Found multiple examples of the same location ({})"
-                            " in the same sense: {}".format(l,
-                            [x.find('form/text').text for x in examples]))
+                    log.error("Found multiple/duplicate examples (of the same "
+                        "location ({}) in the same sense: {})"
+                    "".format(l,[x.find('form/text').text for x in examples]))
+                    """Before implementing the following, we need a test for
+                    presence of audio file link, and different tone values,
+                    including which to preserve if different (i.e., not '')"""
+                    # for e in examples[1:]:
+                    #     sense.remove(e)
                     dup=True
-        if not dup:
+        if dup:
+            pass #not yet: self.write()
+        else:
             log.info("No duplicate examples (same sense and location) were "
                     "found in the lexicon.")
     def addtoneUF(self,senseid,group,analang,guid=None,showurl=False):
