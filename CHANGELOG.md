@@ -1,5 +1,23 @@
 # A→Z+T Changelog
 
+# Version 0.8.7
+- added referify data for current subgroup
+- give warning if user is going to undo analysis regroupings
+- mark a sensid to sort again without losing the sound file attached to it.
+- major overhaul to LIFT urls, including class to generate them and catalog to store them
+- major overhaul to framed data, including class to generate and catalog to store
+- Added comparison group button for rename framed group window (to help with transcriptions)
+- added actual groups by datapoint for non-default tone reports
+- Reworked and multiple improvements to naming groups:
+  - playable buttons
+  - praat link to sound file
+  - comparison button(s)
+  - navigation buttons to continue through groups
+- added interpretation of glottal stop into sdistinctions.
+- added settings for interpretation of trigraphs and digraphs
+- multiple fixes to segment interpretation settings
+- set up mail of bug report, and links to webpage documentation
+
 # Version 0.8.6
 - reworked buttons and UI on transcription window
 - comparison option for transcription window

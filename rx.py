@@ -18,7 +18,7 @@ def urlok(x):
 def id(x):
     x=x.replace('˥','4').replace('˦','3').replace('˧','2'
         ).replace('˨','1').replace('˩','0')
-    return re.sub('[][  .!=\(\),\'/?ꞌ\n:+]','_',x) #remove charcters that are invalid for ids
+    return re.sub('[][  .!=\(\),\'/?ꞌ\n:;+]','_',x) #remove charcters that are invalid for ids
 def tonerxs():
     return (re.compile('[˥˦˧˨˩]+', re.UNICODE),
             re.compile(' ', re.UNICODE),
@@ -86,7 +86,7 @@ def segmentin(forms, glyph):
 def inxyz(db, lang, segmentlist): #This calls the above script for each character.
     start_time=time.time() #this enables boot time evaluation
     actuals=list()
-    forms=db.citationforms[lang] + db.lexemes[lang]
+    forms=db.lcs[lang] + db.lxs[lang]
     for i in segmentlist:
         s=segmentin(forms,i)
         #log.info(s) #to see the following run per segment

@@ -3,8 +3,8 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A→Z+T'}
 program['tkinter']=True
-program['production']=False #True for making screenshots
-program['version']='0.8.6' #This is a string...
+program['production']=True#False #True for making screenshots
+program['version']='0.8.6oop' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 import platform
@@ -168,6 +168,7 @@ class Check():
         self.invalidregex='( |\.|,|\)|\()+'
         # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
         self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
+
         """Are we OK without these?"""
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
@@ -183,7 +184,7 @@ class Check():
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
         self.guessanalang() #needed for regexs
-        log.debug("analang guessed: {} (If you don't like this, change it in "
+        log.info("analang guessed: {} (If you don't like this, change it in "
                     "the menus)".format(self.analang))
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
@@ -219,9 +220,16 @@ class Check():
         #     hasattr(self,'profile') and (self.profile is not None) and
         #     hasattr(self,'name') and (self.name is not None)):
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
+        self.guessglosslangs() #needed for the following
+        self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
         #set None to make labels, else "raised" "groove" "sunken" "ridge" "flat"
+        # n=self.db.getsensenode()
+        # senseid="begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa"
+        # self.name='Progressive'
+        # RecordButtonFrame.makefilenames(check=self,senseid=senseid)
+        # log.info(n)
         self.mainlabelrelief()
         self.checkcheck()
     def notifyuserofextrasegments(self):
@@ -238,23 +246,11 @@ class Check():
     """Guessing functions"""
     def guessanalang(self):
         #have this call set()?
-        langspriority=collections.Counter(self.db.get('lexemelang')+
-                                self.db.get('citationlang')).most_common()
-        try:
-            self.analang=langspriority[0][0]
-            log.debug(_("Analysis language with the most fields ({}): {} ({})"
-                    "".format(langspriority[0][1],self.analang,langspriority)))
-        except:
-            self.analang=None
-            log.info(_("Are there any languages in this database? {}").format(
-                                                                langspriority))
-            return
         """if there's only one analysis language, use it."""
         nlangs=len(self.db.analangs)
         log.debug(_("Found {} analangs: {}".format(nlangs,self.db.analangs)))
-        if nlangs == 1: # print('Only one analang in database!')
+        if nlangs == 1:
             self.analang=self.db.analangs[0]
-            self.analangdefault=self.db.analangs[0] #In case the above gets changed.
             log.debug(_('Only one analang in file; using it: ({})'.format(
                                                         self.db.analangs[0])))
             """If there are more than two analangs in the database, check if one
@@ -265,19 +261,17 @@ class Check():
                 log.debug(_('Looks like I found an iso code for analang! '
                                         '({})'.format(self.db.analangs[0])))
                 self.analang=self.db.analangs[0] #assume this is the iso code
+                self.analangdefault=self.db.analangs[0] #In case it gets changed.
             elif ((len(self.db.analangs[1]) == 3) and
                     (len(self.db.analangs[0]) != 3)):
                 log.debug(_('Looks like I found an iso code for analang! '
                                             '({})'.format(self.db.analangs[1])))
                 self.analang=self.db.analangs[1] #assume this is the iso code
+                self.analangdefault=self.db.analangs[1] #In case it gets changed.
             else:
-                langspriority=collections.Counter(self.db.get('lexemelang')+
-                                        self.db.get('citationlang')).most_common()
-                log.debug("All: {}".format(self.db.get('lexemelang')+
-                                        self.db.get('citationlang')))
-                log.debug(collections.Counter(self.db.get('lexemelang')+
-                                        self.db.get('citationlang')))
-                log.debug('Found the following analangs: {}'.format(langspriority))
+                self.analang=self.db.analangs[0]
+                log.debug('Neither analang looks like an iso code, taking the '
+                'first one: {}'.format(self.db.analangs))
         else: #for three or more analangs, take the first plausible iso code
             for n in range(nlangs):
                 if len(self.db.analangs[n]) == 3:
@@ -285,6 +279,9 @@ class Check():
                     log.debug(_('Looks like I found an iso code for analang! '
                                             '({})'.format(self.db.analangs[n])))
                     return
+            log.debug('None of more than three analangs look like an iso code, '
+            'taking the first one: {}'.format(self.db.analangs))
+            self.analang=self.db.analangs[0]
     def guessaudiolang(self):
         nlangs=len(self.db.audiolangs)
         """if there's only one audio language, use it."""
@@ -315,17 +312,19 @@ class Check():
                     return
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
+        if not hasattr(self,'glosslangs'):
+            self.glosslangs=Glosslangs(None,None)
         if len(self.db.glosslangs) == 1:
             log.info('Only one glosslang!')
-            self.glosslang=self.db.glosslangs[0]
-            self.glosslang2=None
+            self.glosslangs[0]=self.glosslang=self.db.glosslangs[0]
+            self.glosslangs[1]=self.glosslang2=None
             """if there are two or more gloss languages, just pick the first
             two, and the user can select something else later (the gloss
             languages are not for CV profile analaysis, but for info after
             checking, when this can be reset."""
         elif len(self.db.glosslangs) > 1:
-            self.glosslang=self.db.glosslangs[0]
-            self.glosslang2=self.db.glosslangs[1]
+            self.glosslangs[0]=self.glosslang=self.db.glosslangs[0]
+            self.glosslangs[1]=self.glosslang2=self.db.glosslangs[1]
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def getpss(self):
@@ -885,9 +884,10 @@ class Check():
                 vars[idn].set(id)
             else:
                 vars[idn].set(0)
-            framed=self.getframeddata(id, noframe=True)
-            log.debug("forms: {}".format(framed['formatted']))
-            CheckButton(scroll.content, text = framed['formatted'],
+            framed=self.datadict.getframeddata(id)
+            forms=framed.formatted(noframe=True)
+            log.debug("forms: {}".format(forms))
+            CheckButton(scroll.content, text = forms,
                                 variable = vars[allpssensids.index(id)],
                                 onvalue = id, offvalue = 0,
                                 ).grid(row=row,column=0,sticky='ew')
@@ -1016,11 +1016,11 @@ class Check():
                     db['before'][lang]['text']+'__'+db['after'][lang]['text'])
             senseid=self.gimmesenseid()
             # This needs self.toneframes
-            framed=self.getframeddata(senseid,truncdefn=True) #after defn above, before below!
+            framed=self.datadict.getframeddata(senseid)
+            framed.setframe(self.name)
             #At this point, remove this frame (in case we don't submit it)
             del self.toneframes[self.ps][self.name]
             self.name=self.nameori
-            print(frame,framed)
             """Display framed data"""
             if hasattr(self.addwindow,'framechk'):
                 self.addwindow.framechk.destroy()
@@ -1039,9 +1039,8 @@ class Check():
                     padx=padx,pady=pady)
             for lang in langs:
                 row+=1
-                print('frame[{}]:'.format(lang),frame[lang])
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
-                tfd[lang]=('(ex: '+framed[lang]+')')
+                tfd[lang]=('(ex: '+framed.forms.framed[lang]+')')
                 l1=Label(self.addwindow.framechk,
                         text=tf[lang],
                         font=self.fonts['read'],
@@ -1252,7 +1251,7 @@ class Check():
             from self.defaultstoclear[attribute]"""
             self.cleardefaults(attribute)
             if attribute in ['glosslang','glosslang2']:
-                pass #Nothing to change here
+                self.glosslangs=[self.glosslang,self.glosslang2] #Nothing else to change here
             elif attribute in ['analang',  #do the last two cause problems?
                                 'interpret','distinguish']:
                 self.reloadprofiledata()
@@ -1465,6 +1464,7 @@ class Check():
                                     "scount",
                                     "sextracted",
                                     "profilesbysense",
+                                    "formstosearch"
                                     ]},
             'status':{
                                 'file':'statusfile',
@@ -1713,17 +1713,21 @@ class Check():
             subcheck=self.subcheck
         if name is None:
             name=self.name
-        senseids=self.db.get('senseidbyexfieldvalue',fieldtype='tone',
-                                location=name,fieldvalue=subcheck)
+        senseids=self.db.get("sense", location=name, tonevalue=subcheck,
+                            path=['tonefield']).get('senseid')
         value=self.verifictioncode(name,subcheck)
         if verified == True:
             add=value
-            rm=None
+            rms=[]
         else:
             add=None
-            rm=value
+            rms=[value]
         for senseid in self.senseidsincheck(senseids): #only for this ps-profile
-            self.db.modverificationnode(senseid,vtype=self.profile,add=add,rm=rm)
+            rms+=self.db.getverificationnodevaluebyframe(senseid,
+                                                vtype=self.profile, frame=name)
+            log.info("Removing {}".format(rms))
+            self.db.modverificationnode(senseid,vtype=self.profile,add=add,
+                                                                        rms=rms)
         if refresh == True:
             self.db.write() #for when not iterated over, or on last repeat
     def updatestatus(self,subcheck=None,verified=False,refresh=True):
@@ -1780,10 +1784,10 @@ class Check():
         #Convert to iterate over local variables
         profileori=self.profile #We iterate across this here
         psori=self.ps #We iterate across this here
-        forms=self.db.citationorlexeme(senseid=senseid,lang=self.analang)
+        forms=self.db.citationorlexeme(senseid=senseid,analang=self.analang)
         if forms == []:
             self.profile='Invalid'
-            for self.ps in self.db.get('ps',senseid=senseid):
+            for self.ps in self.db.ps(senseid=senseid):
                 self.addtoprofilesbysense(senseid)
             self.ps=psori
             return None,'Invalid'
@@ -1793,8 +1797,14 @@ class Check():
             self.profile=self.profileofform(form)
             if not set(self.profilelegit).issuperset(self.profile):
                 self.profile='Invalid'
-            for self.ps in self.db.get('ps',senseid=senseid):
+            for self.ps in self.db.ps(senseid=senseid):
                 self.addtoprofilesbysense(senseid)
+                if self.ps not in self.formstosearch:
+                    self.formstosearch[self.ps]={}
+                if form in self.formstosearch[self.ps]:
+                    self.formstosearch[self.ps][form].append(senseid)
+                else:
+                    self.formstosearch[self.ps][form]=[senseid]
         profile=self.profile
         self.profile=profileori
         self.ps=psori
@@ -1805,6 +1815,7 @@ class Check():
         self.profilesbysense['Invalid']=[]
         self.profiledguids=[]
         self.profiledsenseids=[]
+        self.formstosearch={}
         self.sextracted={} #Will store matching segments here
         for ps in self.db.pss:
             self.sextracted[ps]={}
@@ -2027,7 +2038,7 @@ class Check():
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
         return idsbyps[randint(0, len(idsbyps))]
     def gimmesenseid(self):
-        idsbyps=self.db.get('senseidbyps',lang=self.analang,ps=self.ps)
+        idsbyps=self.db.get('sense',ps=self.ps).get('senseid')
         return idsbyps[randint(0, len(idsbyps)-1)]
     def framenamesbyps(self,ps):
         """Names for all tone frames defined for the language."""
@@ -2056,181 +2067,6 @@ class Check():
             l+=group
         return list(dict.fromkeys(l))
     """Mediating between LIFT and the user"""
-    def getframeddata(self,source,noframe=False,notonegroup=False,truncdefn=False):
-        """This generates a dictionary of form {'form':outputform,
-        'gloss':outputgloss} for display, by senseid"""
-        """Sometimes this script is called to make the example fields, other
-        times to display it. If source is a senseid, it pulls form/gloss/etc
-        information from the entry. If source is an example, it pulls that info
-        from the example. The info is formatted uniformly in either case."""
-        output={}
-        log.log(2,"{} {}".format(source, type(source)))
-        log.log(2,'self.glosslang: {}'.format(self.glosslang))
-        log.log(2,'self.glosslang2: {}'.format(self.glosslang2))
-        """Just in case there's a problem later..."""
-        forms={}
-        glosses={}
-        gloss={}
-        tonegroups=None
-        """Build dual logic here:"""
-        if isinstance(source,lift.ET.Element):
-            #This is an example element, not a sense or entry element...
-            element=source
-            for node in element:
-                if (node.tag == 'form') and ((node.get('lang') == self.analang)
-                        or (node.get('lang') == self.audiolang)):
-                    forms[node.get('lang')]=node.findall('text')
-                if (((node.tag == 'translation') and
-                                (node.get('type') == 'Frame translation')) or
-                    ((node.tag == 'gloss') and
-                                    (node.get('lang') == self.glosslang))):
-                    for subnode in node:
-                        if (subnode.tag == 'form'):
-                            glosses[subnode.get('lang')]=subnode.findall('text')
-                if ((node.tag == 'field') and (node.get('type') == 'tone')):
-                    #This should always be only one value:
-                    tonegroups=node.findall('form/text')
-            log.log(2,'forms: {}'.format(forms))
-            for lang in glosses:
-                log.log(2,'gloss[{}]: {}'.format(lang,glosses[lang]))
-            """convert from lists to single items without loosing data,
-            then pull text from nodes"""
-            if self.analang in forms:
-                form=t(firstoflist(forms[self.analang]))
-            else:
-                form=None
-            if self.audiolang in forms:
-                voice=t(firstoflist(forms[self.audiolang]))
-            else:
-                voice=None
-            for lang in glosses:
-                if (lang == self.glosslang) or (lang == self.glosslang2):
-                    gloss[lang]=t(firstoflist(glosses[lang]))
-            """This is what we're pulling from:
-            <example>
-                <form lang="gnd"><text>ga təv</text></form>
-                <translation type="Frame translation">
-                    <form lang="fr"><text>lieu (m), place (f) (pl)</text></form>
-                </translation>
-                <field type="tone">
-                    <form lang="fr"><text>1</text></form>
-                </field>
-                <field type="location">
-                    <form lang="fr"><text>Plural</text></form>
-                </field>
-            </example>
-            """
-        elif (type(source) is str): # and (len(source) == 36): #source is sensedid
-            #some dbs have senseids with form info, too...
-            #Asking for a sense, you get all tone groups, if self.name isn't set
-            log.log(3,'36 character senseid string!')
-            senseid=source
-            output['senseid']=senseid
-            forms[self.analang]=self.db.citationorlexeme(senseid=senseid,
-                                            lang=self.analang,
-                                            ps=self.ps)
-            forms[self.audiolang]=self.db.citationorlexeme(senseid=senseid,
-                                            lang=self.audiolang,
-                                            ps=self.ps)
-            for lang in [self.glosslang,self.glosslang2]:
-                if lang is not None:
-                    glosses[lang]=self.db.glossordefn(senseid=senseid,lang=lang,
-                                            ps=self.ps)
-            #If frame is not defined (in self.name) this will output ALL values
-            #for this sense!
-            tonegroups=self.db.get('exfieldvalue', senseid=senseid,
-                                fieldtype='tone', location=self.name)
-            """convert from lists to single items without loosing data"""
-            form=firstoflist(forms[self.analang])
-            voice=firstoflist(forms[self.audiolang])
-            for lang in glosses:
-                gloss[lang]=firstoflist(glosses[lang])
-                log.log(2,'gloss[{}]: {}'.format(lang,gloss[lang]))
-        else:
-            log.error('Neither Element nor senseid was found!'
-                        '\nThis is almost certainly not what you want!'
-                        '\nFYI, I was looking for {}'.format(source))
-            return source
-        log.log(2,'form: {}'.format(form))
-        for lang in gloss:
-            log.log(2,'gloss:'.format(gloss[lang]))
-        """The following is the same for senses or examples"""
-        if notonegroup == False:
-            #If I haven't defined self.name nor set notonegroup=True, this will
-            # throw an error on a senseid above.
-            tonegroup=t(firstoflist(tonegroups))
-            log.log(2,'tonegroup: {}'.format(tonegroup))
-            if tonegroup is not None:
-                try:
-                    int(tonegroup)
-                except:
-                    output['tonegroup']=tonegroup #this is only for named groups
-        if self.glosslang2 in gloss and (self.glosslang2 is None or
-                                        gloss[self.glosslang2] is None):
-            del gloss[self.glosslang2] #remove this now, and lose checks later
-        output[self.analang]=None
-        for lang in list(gloss.keys())+[self.glosslang]:
-            output[lang]=None
-        text=('noform','nogloss')
-        if noframe == False:
-            frame=self.toneframes[self.ps][self.name]
-            """Forms and glosses have to be strings, or the regex fails"""
-            if form is None:
-                form=nn(form) #'noform'
-            for lang in gloss:
-                if gloss[lang] is None:
-                    gloss[lang]=nn(gloss[lang]) #'nogloss'
-            log.log(2,frame)
-            output[self.analang]=rx.framerx.sub(form,frame[self.analang])
-            for lang in gloss:
-                """only give these if the frame has this gloss, *and* if
-                the gloss is in the data (user selection is above)"""
-                if ((lang in frame) and (lang in gloss) and (
-                        None not in [gloss[lang],frame[lang]])):
-                    output[lang]=rx.framerx.sub(gloss[lang],frame[lang])
-        else:
-            output[self.analang]=nn(form) #for non-segmental forms
-            for lang in gloss:
-                output[lang]=gloss[lang]
-        if voice is not None:
-            output[self.audiolang]=voice
-        text=[str(output[self.analang]),"‘"+str(output[self.glosslang])+"’"]
-        if self.glosslang2 in output and output[self.glosslang2] is not None:
-            text+=["‘"+str(output[self.glosslang2])+"’"]
-        if 'tonegroup' in output:
-            text=[str(output['tonegroup'])]+text
-        output['formatted']=' '.join(text) #used to be '\t'...
-        if None in output:
-            log.error("Apparently None is an output key! {}".format(output))
-        return output
-    def getframedentry(self,guid):
-        """This is most likely obsolete"""
-        """This generates output for selection and verification, by ps"""
-        glosses={}
-        form=firstoflist(self.db.citationorlexeme(guid,lang=self.analang,
-                                                                ps=self.ps))
-        glosses[self.glosslang]=firstoflist(self.db.glossordefn(guid,
-                                        lang=self.glosslang, ps=self.ps))
-        if self.glosslang2 is not None:
-            glosses[self.glosslang2]=firstoflist(self.db.glossordefn(guid,
-                                            lang=self.glosslang2,ps=self.ps))
-        frame=self.toneframes[self.ps][self.name]
-        if self.debug ==True:
-            print(forms,glosses,frame)
-        outputform=None
-        outputgloss={}
-        outputform=rx.framerx.sub(form,frame[self.analang])
-        for lang in glosses:
-            if (lang != self.glosslang2) or (self.glosslang2 is not None):
-                outputgloss[lang]=rx.framerx.sub(glosses[lang],
-                                            frame[lang])
-        printoutput=('     ',outputform,
-                    "‘"+str(outputgloss[self.glosslang])+"’")
-        if self.glosslang2 is not None:
-            printoutput+="‘"+str(outputgloss[self.glosslang2])+"’"
-        print(printoutput)
-        return {self.analang:outputform,self.glosslang:outputgloss,
-                                        self.glosslang2:outputgloss}
     def senseidtriage(self):
         # import time
         # print("Doing senseid triage... This takes awhile...")
@@ -2245,7 +2081,7 @@ class Check():
             if senseid not in self.senseidsinvalid:
                 self.senseidsvalid+=[senseid]
         print(len(self.senseidsvalid),'senses with valid data remaining.')
-        self.senseidswanyps=self.db.get('senseidwanyps') #any ps value works here.
+        self.senseidswanyps=self.db.get('sense',path=['ps'],showurl=True).get('senseid') #any ps value works here.
         print(len(self.senseidswanyps),'senses with ps data found.')
         self.senseidsvalidwops=[]
         self.senseidsvalidwps=[]
@@ -2473,8 +2309,11 @@ class Check():
             t=(_("Checking {},").format(self.typedict[self.type]['pl']))
             proselabel(opts,t,cmd='gettype',parent=tf)
             opts['columnplus']=1
-            if self.name not in self.toneframes[self.ps]:
-                t=_("no defined tone frame yet.")
+            if len(self.toneframes[self.ps]) == 0:
+                t=_("no tone frames defined.")
+                self.name=None
+            elif self.name not in self.toneframes[self.ps]:
+                t=_("no tone frame selected.")
                 self.name=None
             else:
                 t=(_("working on ‘{}’ tone frame").format(self.name))
@@ -3255,8 +3094,8 @@ class Check():
     def getlocations(self):
         self.locations=[]
         for senseid in self.senseidstosort:
-            for location in self.db.get('exfieldlocation',
-                senseid=senseid, fieldtype='tone'):
+            for location in [i for i in self.db.get('locationfield',
+                senseid=senseid, showurl=True).get('text') if i is not None]:
                 self.locations+=[location]
         self.locations=list(dict.fromkeys(self.locations))
     def topprofiles(self,x='ALL'):
@@ -3331,9 +3170,7 @@ class Check():
         self.buildregex()
         log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
                                                         self.regexCV))
-        matches=set(self.db.senseidformsbyregex(self.regex,
-                                            self.analang,
-                                            ps=self.ps).keys())
+        matches=set(self.senseidformsbyregex(self.regex))
         for typenum in self.typenumsRun:
             # this removes senses already reported (e.g., in V1=V2)
             matches-=self.basicreported[typenum]
@@ -3371,8 +3208,7 @@ class Check():
             for senseid in matches:
                 for typenum in self.typenumsRun:
                     self.basicreported[typenum].add(senseid)
-                framed=self.getframeddata(senseid,noframe=True)
-                print('\t',framed['formatted'])
+                framed=self.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,listword=True)
     def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
         """This function iterates across self.name and self.subcheck values
@@ -3440,9 +3276,11 @@ class Check():
         self.subcheck=subcheckori
     def idXLP(self,framed):
         id='x' #string!
-        bits=[self.ps,self.profile,self.name,self.subcheck,framed[self.analang]]
-        if self.glosslang in framed and framed[self.glosslang] is not None:
-            bits+=framed[self.glosslang]
+        bits=[self.ps,self.profile,self.name,self.subcheck,
+                                                    framed.forms[self.analang]]
+        for lang in self.glosslangs:
+            if lang in framed.forms and framed.forms[lang] is not None:
+                bits+=framed.forms[lang]
         for x in bits:
             if x is not None:
                 id+=x
@@ -3458,18 +3296,18 @@ class Check():
         else:
             exx=xlp.Example(parent,id) #the id goes here...
             ex=xlp.Word(exx) #This doesn't have an id
-        if self.audiolang in framed:
-            url=file.getdiredrelURL(self.reporttoaudiorelURL,framed[self.audiolang])
-            el=xlp.LinkedData(ex,self.analang,framed[self.analang],str(url))
+        if self.audiolang in framed.forms:
+            url=file.getdiredrelURL(self.reporttoaudiorelURL,
+                                                framed.forms[self.audiolang])
+            el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang],
+                                                                    str(url))
         else:
-            el=xlp.LangData(ex,self.analang,framed[self.analang])
-        if 'tonegroup' in framed and groups is True: #joined groups show each
-            elt=xlp.LangData(ex,self.analang,framed['tonegroup'])
-        if self.glosslang in framed:
-            eg=xlp.Gloss(ex,self.glosslang,framed[self.glosslang])
-        if ((self.glosslang2 != None) and (self.glosslang2 in framed)
-                and (framed[self.glosslang2] is not None)):
-                eg2=xlp.Gloss(ex,self.glosslang2,framed[self.glosslang2])
+            el=xlp.LangData(ex,self.analang,framed.forms[self.analang])
+        if hasattr(framed,'tonegroup') and groups is True: #joined groups show each
+            elt=xlp.LangData(ex,self.analang,framed.tonegroup)
+        for lang in self.glosslangs:
+            if lang in framed.forms:
+                xlp.Gloss(ex,lang,framed.forms[lang])
     def makecountssorted(self):
         # This iterates across self.profilesbysense to provide counts for each
         # ps-profile combination (aggravated for profile='Invalid')
@@ -3532,10 +3370,9 @@ class Check():
         return senseidstochange
     def getexsall(self,value):
         #This returns all the senseids with a given tone value
-        senseids=self.db.get('senseidbyexfieldvalue',location=self.name,
-                            fieldtype='tone',
-                            fieldvalue=value
-                            )
+        senseids=self.db.get("sense", location=self.name, path=['tonefield'],
+                            tonevalue=value
+                            ).get('senseid')
         senseidsincheck=self.senseidsincheck(senseids)
         return list(senseidsincheck)
     def getex(self,value,notonegroup=True,truncdefn=False,renew=False):
@@ -3560,11 +3397,9 @@ class Check():
                     log.info("Using stored value for ‘{}’ group: ‘{}’".format(
                                 value, self.exs[value]))
                     senseid=self.exs[value]
-                framed=self.getframeddata(senseid,
-                                            notonegroup=notonegroup,
-                                            truncdefn=truncdefn)
-                if (framed[self.glosslang] is not None):
-                    framed['senseid']=self.exs[value]
+                framed=self.datadict.getframeddata(senseid)
+                if framed.glosses() is not None:
+                    output['senseid']=senseid
                     output['framed']=framed #this includes [n], above
                     return output
                 else:
@@ -3573,12 +3408,11 @@ class Check():
                     return output
         for i in range(len(senseids)): #just keep trying until you succeed
             senseid=senseids[randint(0, len(senseids))-1]
-            framed=self.getframeddata(senseid,notonegroup=notonegroup,
-                                                            truncdefn=truncdefn)
-            if (framed[self.glosslang] is not None):
+            framed=self.datadict.getframeddata(senseid)
+            if framed.glosses() is not None:
                 """As soon as you find one with form and gloss, quit."""
                 self.exs[value]=senseid
-                framed['senseid']=senseid
+                output['senseid']=senseid
                 output['framed']=framed #this includes [n], above
                 return output
             else:
@@ -4023,22 +3857,13 @@ class Check():
                 delattr(self,'groupselected') #reset this for each word!
             senseid=self.senseidsunsorted[0]
             progress=(str(self.senseidstosort.index(senseid)+1)+'/'+str(todo))
-            framed=self.getframeddata(senseid,truncdefn=True)
+            framed=self.datadict.getframeddata(senseid)
+            framed.setframe(self.name)
             """After the first entry, sort by groups."""
             log.debug('self.tonegroups: {}'.format(status['groups']))
             Label(titles, text=progress, font=self.fonts['report'], anchor='w'
                                             ).grid(column=1, row=0, sticky="ew")
-            if 'formatted' in framed:
-                text=(framed['formatted'])
-            else:
-                text=_("Sorry; I can't find {}".format(framed))
-                l=Label(self.runwindow.frame, text=text,font=self.fonts['readbig'])
-                l.grid(column=1,row=1, sticky="w",pady=50)
-                l.wrap()
-                scroll.destroy()
-                self.runwindow.waitdone()
-                self.runwindow.wait_window(window=l)
-                return 1
+            text=framed.formatted(noframe=False)
             entryview=Frame(self.runwindow.frame)
             self.sorting=Label(entryview, text=text,font=self.fonts['readbig'])
             entryview.grid(column=1, row=1, sticky="new")
@@ -4075,6 +3900,21 @@ class Check():
                 return 1 # this should only happen on Exit
             self.marksortedsenseid(senseid)
         self.runwindow.resetframe()
+    def reverify(self):
+        log.info("Reverifying a framed tone group, at user request: {}-{}"
+                    "".format(self.name,self.subcheck))
+        checkswframes=self.status[self.type][self.ps][self.profile]
+        if self.name is None or self.name not in checkswframes:
+            self.getcheck() #guess=True
+        done=self.status[self.type][self.ps][self.profile][self.name]['done']
+        if self.subcheck is None or self.subcheck not in done:
+            self.getsubcheck()#guess=True
+            if self.subcheck == None:
+                log.info("I asked for a framed tone group, but didn't get one.")
+                return
+        if self.subcheck in done:
+            done.remove(self.subcheck)
+        self.maybesort()
     def verifyT(self,menu=False):
         log.info("Running verifyT!")
         """Show entries each in a row, users mark those that are different, and we
@@ -4122,6 +3962,7 @@ class Check():
             senseids=self.getexsall(self.subcheck)
             if len(senseids) <2:
                 self.updatestatus(verified=True)
+                self.updatestatuslift(self.name,self.subcheck,verified=True)
                 # self.checkcheck() #now after verifyT is done
                 log.info("Group ‘{}’ only has {} example; marking verified and "
                         "continuing.".format(self.subcheck,len(senseids)))
@@ -4199,6 +4040,7 @@ class Check():
             elif self.groupselected == "ALLOK":
                 log.debug("User selected ‘{}’, moving on.".format(oktext))
                 self.updatestatus(verified=True)
+                self.updatestatuslift(self.name,self.subcheck,verified=True)
                 # self.checkcheck() #now after verifyT is done
             else:
                 log.debug("User did NOT select ‘{}’, assuming we'll come "
@@ -4217,14 +4059,9 @@ class Check():
         if 'anchor' not in kwargs:
             kwargs['anchor']='w'
         #This should be pulling from the example, as it is there already
-        framed=FramedData(senseid,db=self.db,
-                        frame=self.toneframes[self.ps][self.name],
-                        location=self.name, analangs=[self.analang],
-                        glosslangs=[self.glosslang,self.glosslang2],
-                        notonegroup=True,truncdefn=True)
-        # framed=self.getframeddata(senseid,notonegroup=True,truncdefn=True)
-        text=framed.formatted
-        # text=(framed['formatted'])
+        framed=self.datadict.getframeddata(senseid)
+        framed.setframe(self.name)
+        text=framed.formatted(notonegroup=True)
         if label==True:
             b=Label(parent, text=text,
                     **kwargs
@@ -4243,12 +4080,6 @@ class Check():
                             ipady=15 #Inside the buttons...
                             )
     def joinT(self):
-        def verify():
-            groups=self.status[self.type][self.ps][self.profile][self.name][
-                                                                    'groups']
-            for group in groups:
-                self.updatestatuslift(self.name,group,verified=True)
-            self.db.write() #after iterating
         log.info("Running joinT!")
         """This window shows up after sorting, or maybe after verification, to
         allow the user to join groups that look the same. I think before
@@ -4321,7 +4152,6 @@ class Check():
             if self.groupselected == "ALLOK":
                 print(f"User selected ‘{oktext}’, moving on.")
                 delattr(self,'groupselected')
-                verify()
                 return 0
             else:
                 group1=self.groupselected
@@ -4352,7 +4182,6 @@ class Check():
                     if self.groupselected == "ALLOK":
                         print(f"User selected ‘{oktext}’, moving on.")
                         delattr(self,'groupselected')
-                        verify()
                         return 0
                     else:
                         msg=_("Now we're going to move group ‘{0}’ into "
@@ -4365,22 +4194,22 @@ class Check():
                         self.status[self.type][self.ps][self.profile][
                                 self.name]['groups'].remove(group1)
                         self.subcheck=group1
+                        self.updatestatuslift(refresh=False) #done above
                         self.updatestatus(refresh=False) #not verified=True --since joined.
-                        # self.updatestatuslift(refresh=False) #done above
                         self.subcheck=self.groupselected
+                        self.updatestatuslift() #done above
                         self.updatestatus() #not verified=True --since joined.
-                        # self.updatestatuslift() #done above
                         self.maybesort() #go back to verify, etc.
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
     def updatebysubchecksenseid(self,oldtonevalue,newtonevalue,verified=False):
         # This function updates the field value and verification status (which
-        # containst the field value) in the lift file.
+        # contains the field value) in the lift file.
         # This is all the words in the database with the given
         # location:value correspondence (any ps/profile)
-        lst2=self.db.get('senseidbyexfieldvalue',fieldtype='tone',
-                                location=self.name,fieldvalue=oldtonevalue)
+        lst2=self.db.get('sense',location=self.name,tonevalue=oldtonevalue
+                                                                ).get('senseid')
         # We are agnostic of verification status of any given entry, so don't
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
@@ -4393,11 +4222,11 @@ class Check():
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
-            self.db.updateexfieldvalue(senseid=senseid,fieldtype='tone',
-                                location=self.name,fieldvalue=oldtonevalue,
-                                newfieldvalue=newtonevalue)
+            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
+                                location=self.name,#fieldvalue=oldtonevalue,
+                                fieldvalue=newtonevalue)
             self.db.modverificationnode(senseid=senseid,vtype=self.profile,
-                                                add=add,rm=rm,addifrmd=True)
+                                                add=add,rms=[rm],addifrmd=True)
         self.db.write() #once done iterating over senseids
     def addtonegroup(self):
         log.info("Adding a tone group!")
@@ -4425,7 +4254,7 @@ class Check():
                     self.name,
                     senseid,
                     guid))
-        self.db.addexamplefields( #This should only mod if already there
+        self.db.addmodexamplefields( #This should only mod if already there
                                     guid=guid,senseid=senseid,
                                     analang=self.analang,
                                     glosslang=self.glosslang,
@@ -4438,8 +4267,8 @@ class Check():
                                     fieldvalue=self.groupselected #,
                                     # ps=None #,showurl=True
                                     )
-        tonegroup=firstoflist(self.db.get('exfieldvalue', senseid=senseid,
-                    fieldtype='tone', location=self.name))
+        tonegroup=unlist(self.db.get("example/tonefield/form/text",
+                        senseid=senseid, location=self.name).get('text'))
         if tonegroup != self.groupselected:
             log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                 tonegroup,self.groupselected))
@@ -4469,14 +4298,13 @@ class Check():
         """Still working on one ps-profile combo at a time."""
         self.getidstosort() #just in case this changed
         for senseid in self.senseidstosort: #I should be able to make this a regex...
-            toneUFgroup=firstoflist(self.db.get('toneUFfieldvalue', senseid=senseid,
-                fieldtype='tone' # Including any lang at this point.
-                # ,showurl=True
-                ))
-            if toneUFgroup not in sorted:
-                sorted[toneUFgroup]=[senseid]
-            else:
-                sorted[toneUFgroup]+=[senseid]
+            toneUFgroup=firstoflist(self.db.get('sense/tonefield/form/text',
+                                                senseid=senseid).get('text'))
+            if toneUFgroup is not None:
+                if toneUFgroup not in sorted:
+                    sorted[toneUFgroup]=[senseid]
+                else:
+                    sorted[toneUFgroup]+=[senseid]
         self.toneUFgroups=list(dict.fromkeys(sorted))
         log.debug("UFtonegroups (getsenseidsbytoneUFgroups): {}".format(
                                                             self.toneUFgroups))
@@ -4487,10 +4315,8 @@ class Check():
         toneUFgroups=[]
         """Still working on one ps-profile combo at a time."""
         for senseid in self.senseidstosort: #I should be able to make this a regex...
-            toneUFgroups+=self.db.get('toneUFfieldvalue', senseid=senseid,
-                fieldtype='tone' # Including any lang at this point.
-                # ,showurl=True
-                )
+            toneUFgroups+=self.db.get('sense/tonefield/form/text',
+                                                    senseid=senseid).get('text')
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
     def gettonegroups(self):
         # This depends on self.ps, self.profile, and self.name
@@ -4500,8 +4326,8 @@ class Check():
         log.log(3,"Looking for tone groups for {} frame".format(self.name))
         tonegroups=[]
         for senseid in self.senseidstosort: #This is a ps-profile slice
-            tonegroup=self.db.get('exfieldvalue', senseid=senseid,
-                        fieldtype='tone', location=self.name)#, showurl=True)
+            tonegroup=self.db.get("example/tonefield/form/text",
+                                senseid=senseid, location=self.name).get('text')
             if unlist(tonegroup) in ['NA','','ALLOK', None]:
                 log.error("tonegroup {} found in sense {} under location {}!"
                     "".format(tonegroup,senseid,self.name))
@@ -4568,10 +4394,10 @@ class Check():
         self.senseidssorted=[]
         self.senseidsunsorted=[]
         for senseid in self.senseidstosort:
-            v=self.db.get('exfieldvalue',senseid=senseid,fieldtype='tone',
-                            location=self.name) #because it's relevant to this
+            v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
+                                location=self.name).get('text'))
             log.info("Found tone value: {}".format(v))
-            if unlist(v) in ['',None]:
+            if v in ['',None]:
                 self.senseidsunsorted+=[senseid]
             else:
                 self.senseidssorted+=[senseid]
@@ -4601,10 +4427,10 @@ class Check():
             Label(self.runwindow.frame, text=text).grid(row=0,column=0)
             return
         for senseid in self.senseidstosort: #this is a ps-profile slice
-            self.db.rmexfields(senseid=senseid,fieldtype='tone',
-                                location=self.name,fieldvalue='NA',
-                                showurl=True
-                                )
+            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
+                            location=self.name,fieldvalue='', #just clear this
+                            showurl=True
+                            )
         self.checkcheck() #redraw the table
         self.maybesort() #Because we want to go right into sorting...
     def getanotherskip(self,parent):
@@ -4657,45 +4483,28 @@ class Check():
                 row=row,column=column,label=label,
                 alwaysrefreshable=alwaysrefreshable, font=font,
                 playable=playable,renew=True,refreshcount=refreshcount,**kwargs)
-        if 'font' not in kwargs:
-            font=self.fonts['read']
-        else:
-            font=kwargs['font']
-            del kwargs['font']
-        if 'anchor' not in kwargs:
-            kwargs['anchor']='w'
-        if 'notonegroup' not in kwargs:
-            notonegroup=True
-        else:
-            notonegroup=kwargs['notonegroup']
-            del kwargs['notonegroup']
-        if 'refreshcount' not in kwargs:
-            refreshcount=0
-        else:
-            refreshcount=kwargs['refreshcount']+1
-            del kwargs['refreshcount']
-        if 'sticky' not in kwargs:
-            sticky="ew"
-        else:
-            sticky=kwargs['sticky']
-            del kwargs['sticky']
-        example=self.getex(group,notonegroup=notonegroup,truncdefn=True,renew=renew)
+        font=kwargs.pop('font',self.fonts['read'])
+        kwargs['anchor']=kwargs.get('anchor','w')
+        notonegroup=kwargs.pop('notonegroup',True)
+        refreshcount=kwargs.pop('refreshcount',-1)+1
+        sticky=kwargs.pop('sticky',"ew")
+        example=self.getex(group,notonegroup=notonegroup,renew=renew)
         if example is None:
             log.error("Apparently the example for tone group {} in frame {} "
                         "came back {}".format(group,self.name,example))
             return
-        if 'renew' in kwargs:
-            if kwargs['renew'] == True:
-                log.info("Resetting tone group example ({}): {} of {} examples"
-                        "".format(group,self.exs[group],example['n']))
-                del self.exs[group]
-            del kwargs['renew']
+        renew=kwargs.pop('renew',False)
+        if renew is True:
+            log.info("Resetting tone group example ({}): {} of {} examples"
+                    "".format(group,self.exs[group],example['n']))
+            del self.exs[group]
         framed=example['framed']
+        framed.setframe(self.name)
         if framed is None:
             log.error("Apparently the framed example for tone group {} in "
                         "frame {} came back {}".format(group,self.name,example))
             return
-        text=(framed['formatted'])
+        text=framed.formatted()
         """This should maybe be brought up a level in frames?"""
         bf=Frame(parent)
         bf.grid(column=column, row=row, sticky=sticky)
@@ -4704,7 +4513,7 @@ class Check():
             b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
         elif playable == True:
             url=RecordButtonFrame.makefilenames(None,self, #not Classy...
-                                                framed['senseid'])
+                                                example['senseid'])
             diredurl=str(file.getdiredurl(self.audiodir,url))
             thefileisthere=file.exists(diredurl)
             log.info("fileisthere: {} ({})".format(diredurl,url))
@@ -4770,11 +4579,11 @@ class Check():
     def printentryinfo(self,guid):
         outputs=[
                     nn(self.db.citationorlexeme(guid=guid)),
-                    nn(self.db.glossordefn(guid=guid,lang=self.glosslang))
+                    nn(self.db.glossordefn(guid=guid,glosslang=self.glosslang))
                 ]
         if self.glosslang2 is not None: #only give this if the user wants it.
             outputs.append(nn(self.db.glossordefn(guid=guid,
-                                        lang=self.glosslang2)))
+                                        glosslang=self.glosslang2)))
         outputs.append(nn(self.db.get('pronunciationfieldvalue',
                                         fieldtype='tone',
                                         location=self.subcheck,guid=guid)))
@@ -4866,8 +4675,8 @@ class Check():
         else:
             self.showentryformstorecord()
     def makelabelsnrecordingbuttons(self,parent,sense):
-        t=self.getframeddata(sense['nodetoshow'],noframe=True)[
-                                            self.analang]#+'\t'+sense['gloss']
+        framed=self.datadict.getframeddata(sense['nodetoshow'])
+        t=framed.formatted(noframe=True)
         for g in ['gloss','gloss2']:
             if (g in sense) and (sense[g] is not None):
                 t+='\t‘'+sense[g]
@@ -4877,9 +4686,9 @@ class Check():
                     t+="!"
                 t+='’'
         lxl=Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,id=sense['guid'],
-                                            node=sense['nodetoshow'],
-                                            gloss=sense['gloss'])
+        lcb=RecordButtonFrame(parent,self,id=sense['guid'], #reconfigure!
+                                        framed=framed,node=sense['nodetoshow'],
+                                        gloss=sense['gloss'])
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def showentryformstorecordpage(self):
@@ -4908,8 +4717,9 @@ class Check():
             sense={}
             sense['column']=0
             sense['row']=row
-            sense['guid']=firstoflist(self.db.get('guidbysense',
-                                        senseid=senseid))
+            sense['senseid']=senseid
+            sense['guid']=firstoflist(self.db.get('entry',
+                                        senseid=senseid).get('guid'))
             if sense['guid'] in done: #only the first of multiple senses
                 continue
             else:
@@ -4917,35 +4727,35 @@ class Check():
             """These following two have been shifted down a level, and will
             now return a list of form elements, each. Something will need to be
             adjusted here..."""
-            sense['lxnode']=firstoflist(self.db.get('lexemenode',
+            sense['lxnode']=firstoflist(self.db.get('lexeme',
                                                 guid=sense['guid'],
-                                                lang=self.analang))
-            sense['lcnode']=firstoflist(self.db.get('citationnode',
+                                                lang=self.analang).get())
+            sense['lcnode']=firstoflist(self.db.get('citation',
                                                 guid=sense['guid'],
-                                                lang=self.analang))
+                                                lang=self.analang).get())
             sense['gloss']=firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
-                                                lang=self.glosslang
+                                                glosslang=self.glosslang
                                                 ),othersOK=True)
             if ((hasattr(self,'glosslang2')) and
                     (self.glosslang2 is not None)):
                 sense['gloss2']=firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
-                                                lang=self.glosslang2
+                                                glosslang=self.glosslang2
                                                 ),othersOK=True)
             if ((sense['gloss'] is None) and
                     (('gloss2' in sense) and (sense['gloss2'] is None))):
                 continue #We can't save the file well anyway; don't bother
             if self.db.pluralname is not None:
-                sense['plnode']=firstoflist(self.db.get('fieldnode',
+                sense['plnode']=firstoflist(self.db.get('field',
                                         guid=sense['guid'],
                                         lang=self.analang,
-                                        fieldtype=self.db.pluralname))
+                                        fieldtype=self.db.pluralname).get())
             if self.db.imperativename is not None:
-                sense['impnode']=firstoflist(self.db.get('fieldnode',
+                sense['impnode']=firstoflist(self.db.get('field',
                                         guid=sense['guid'],
                                         lang=self.analang,
-                                        fieldtype=self.db.imperativename))
+                                        fieldtype=self.db.imperativename).get())
             if sense['lcnode'] is not None:
                 sense['nodetoshow']=sense['lcnode']
             else:
@@ -5013,7 +4823,7 @@ class Check():
         for senseid in senses:
             log.debug("Working on {} with skip: {}".format(senseid,
                                                     self.runwindow.frame.skip))
-            examples=self.db.get('example',senseid=senseid)
+            examples=self.db.get('example',senseid=senseid).get()
             if examples == []:
                 log.debug(_("No examples! Add some, then come back."))
                 continue
@@ -5034,12 +4844,12 @@ class Check():
                     )
                 progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
-            framed=self.getframeddata(senseid,noframe=True,notonegroup=True,
-                                        truncdefn=True)
-            if framed[self.analang]=='noform':
-                entryframe.destroy()
+            titleframed=self.datadict.getframeddata(senseid)
+            titleframed.setframe(self.name)
+            if titleframed.analang is None:
+                entryframe.destroy() #is this ever needed?
                 continue
-            text=framed['formatted']
+            text=titleframed.formatted(noframe=True,notonegroup=True)
             Label(entryframe, anchor='w', font=self.fonts['read'],
                     text=text).grid(row=row,
                                     column=0,sticky='w')
@@ -5054,13 +4864,13 @@ class Check():
                     lift.examplehaslangform(example,self.audiolang) == True):
                     continue
                 """These should already be framed!"""
-                framed=self.getframeddata(example,noframe=True,truncdefn=True)
-                if framed[self.analang] is None:
+                framed=self.datadict.getframeddata(example)
+                if framed.analang is None: # when?
                     continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
-                text=framed['formatted']
+                text=framed.formatted(noframe=True)
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
                                     form=nn(framed[self.analang]),
                                     gloss=nn(framed[self.glosslang])
@@ -5126,6 +4936,14 @@ class Check():
                     text=_("Continue to next syllable profile"),
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
+    def senseidformsbyregex(self,regex,):
+        """This function takes in a compiled regex,
+        and outputs a list/dictionary of senseid/{senseid:form} form."""
+        output=[] #This is just a list of senseids now: (Do we need the dict?)
+        for form in self.formstosearch[self.ps]:
+            if regex.search(form):
+                output+=self.formstosearch[self.ps][form]
+        return output
     def getresults(self):
         self.getrunwindow()
         self.makeresultsframe()
@@ -5159,25 +4977,15 @@ class Check():
         for self.subcheck in self.s[self.analang][self.type]:
             log.debug('self.subcheck: {}'.format(self.subcheck))
             self.buildregex() #It would be nice fo this to iterate through...
-            # for senseid in self.profilesbysense[self.ps][self.profile]:
-            # print(self.profilesbysense[self.ps][self.profile][0])
-            # print(self.db.citationorlexeme(self.profilesbysense[self.ps][self.profile][0]))
-            # print(firstoflist(self.db.citationorlexeme(self.profilesbysense[self.ps][self.profile][0])))
-            senseidstocheck=self.db.senseidformsbyregex(self.regex,
-                                                self.analang,
-                                                ps=self.ps)
-            # senseidstocheck= filter(lambda x: self.regex.search(
-            #                         firstoflist(self.db.citationorlexeme(x))),
-            #             self.profilesbysense[self.ps][self.profile])
+            senseidstocheck=self.senseidformsbyregex(self.regex)
             if len(senseidstocheck)>0:
                 id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck)
                 ex=xlp.Example(si,id)
             for senseid in senseidstocheck: #self.senseidformstosearch[lang][ps]
                 # where self.regex(self.senseidformstosearch[lang][ps][senseid]):
                 """This regex is compiled!"""
-                framed=self.getframeddata(senseid,noframe=True)
-                # if self.regex(framed[self.analang]):
-                o=framed['formatted']
+                framed=self.datadict.getframeddata(senseid) #not framed!
+                o=framed.formatted(noframe=True)
                 self.framedtoXLP(framed,parent=ex,listword=True)
                 if self.debug ==True:
                     o=entry.lexeme,entry.citation,nn(entry.gloss),
@@ -5205,11 +5013,11 @@ class Check():
                 #         window=self.runwindow.frame,
                 #         row=i, column=0, font=font, command=self.picked)
                 col=0
-                for lang in [self.analang, self.glosslang, self.glosslang2]:
+                for lang in [self.analang]+self.glosslangs:
                     col+=1
-                    if lang in framed:
+                    if lang in framed.forms:
                         Label(self.results.scroll.content,
-                            text=framed[lang], font=font,
+                            text=framed.forms[lang], font=font,
                             anchor='w',padx=10).grid(row=i, column=col,
                                                         sticky='w')
                 if self.su==True:
@@ -5459,9 +5267,10 @@ class Check():
             for location in locations: #just make them all, delete empty later
                 values[group][location]=list()
                 for senseid in senseidsbygroup[group]:
-                    groupvalue=self.db.get('exfieldvalue',senseid=senseid,
-                        location=location,fieldtype='tone')
-                    if groupvalue != [None]:
+                    groupvalue=self.db.get("example/tonefield/form/text",
+                                            senseid=senseid, location=location,
+                                            ).get('text')
+                    if groupvalue != []:
                         if unlist(groupvalue) not in values[group][location]:
                             values[group][location]+=groupvalue
                 log.log(3,"values[{}][{}]: {}".format(group,location,
@@ -5482,9 +5291,9 @@ class Check():
         for senseid in self.senseidstosort:
             output[senseid]={}
             for location in locations:
-                group=self.db.get('exfieldvalue',senseid=senseid,
-                    location=location,fieldtype='tone')
-                if group != [None]:
+                group=self.db.get("example/tonefield/form/text",
+                    senseid=senseid,location=location,showurl=True).get('text')
+                if group != []:
                     output[senseid][location]=group #Save this info by senseid
         log.info("Done collecting groups by location for each senseid.")
         return output
@@ -5551,9 +5360,9 @@ class Check():
             if not default:
                 groups=True #show groups on all non-default reports
             for example in examples:
-                framed=self.getframeddata(example,noframe=True)
-                if not (framed[self.analang] is None and
-                        framed[self.glosslang] is None):#glosslang2?
+                framed=self.datadict.getframeddata(example)
+                if not (framed.forms[self.analang] is None and
+                        framed.forms[self.glosslang] is None):#glosslang2?
                     self.framedtoXLP(framed,parent=parent,listword=True,
                                     groups=groups)
         log.info("Starting report...")
@@ -5600,6 +5409,7 @@ class Check():
         valuesbylocation=dictofchilddicts(groupvalues,remove=['NA',None])
         log.debug("groups (tonegroupreport): {}".format(grouplist))
         log.debug("locations (tonegroupreport): {}".format(locations))
+        log.debug("valuesbylocation: {}".format(valuesbylocation))
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
         self.runwindow.title(title)
@@ -5703,13 +5513,12 @@ class Check():
                     e1=xlp.Example(s1,id,heading=headtext)
                     for senseid in toreport[group]:
                         #This is for window/text output only, not in XLP file
-                        framed=self.getframeddata(senseid,noframe=True,
-                                                        notonegroup=True)
-                        text=framed['formatted']
+                        framed=self.datadict.getframeddata(senseid)
+                        # framed.setframe(self.name) #not needed here, I think
+                        text=framed.formatted(noframe=True,notonegroup=True)
                         #This is put in XLP file:
-                        examples=self.db.get('examplebylocation',
-                                                location=location,
-                                                senseid=senseid)
+                        examples=self.db.get('example',location=location,
+                                                senseid=senseid).get()
                         examplestoXLP(examples,e1,groups=False)
                         if text not in textout:
                             output(window,r,text)
@@ -5719,11 +5528,11 @@ class Check():
             else:
                 for senseid in toreport[group]: #groups[group]['senseids']:
                     #This is for window/text output only, not in XLP file
-                    framed=self.getframeddata(senseid,noframe=True,
-                                                    notonegroup=True)
-                    text=framed['formatted']
+                    framed=self.datadict.getframeddata(senseid)
+                    # framed.setframe(self.name) #not needed here, I think
+                    text=framed.formatted(noframe=True, notonegroup=True)
                     #This is put in XLP file:
-                    examples=self.db.get('example',senseid=senseid)
+                    examples=self.db.get('example',senseid=senseid).get()
                     log.log(2,"{} examples found: {}".format(len(examples),
                                                                     examples))
                     if examples != []:
@@ -6166,6 +5975,26 @@ class DataList(list):
     def __init__(self, *args):
         super(DataList, self).__init__()
         self.extend(args)
+class Glosslangs(DataList):
+    """docstring for Glosslangs."""
+    def lang1(self,lang=None):
+        if lang is None:
+            return self[0]
+        if len(self) >1 and self[1] == lang:
+            self.pop(1)
+        self[0]=lang
+    def lang2(self,lang=None):
+        if lang is None and len(self) >1:
+            return self[1]
+        if len(self) >0 and self[0] != lang:
+            self[0]=lang
+    def rm(self,lang):
+        """This could be either position, and if lang1 will promote lang2"""
+        self.remove(lang)
+    def __init__(self, *args):
+        super(Glosslangs, self).__init__()
+        self.extend(args)
+
 class DictbyLang(dict):
     """docstring for DictbyLang."""
     def getformfromnode(self,node,truncate=False):
@@ -6185,10 +6014,28 @@ class DictbyLang(dict):
     def frame(self,framedict,langs): #langs can/should be ordered
         """the frame only applies if there is a language value; I hope that's
         what we want..."""
-        for l in [i for i in langs if i in framedict if i in self]:
-            self[l]=rx.framerx.sub(self[l],framedict[l])
+        for l in [i for i in langs if i in framedict if i in self and self[i] != []]:
+            self.framed[l]=rx.framerx.sub(self[l],framedict[l])
     def __init__(self):
         super(DictbyLang, self).__init__()
+        self.framed={}
+class FramedDataDict(dict):
+    def updatelangs(self):
+        self.analang=self.check.analang
+        self.glosslangs=self.check.glosslangs
+        log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
+    def getframeddata(self, source, **kwargs):
+        self.updatelangs()
+        if source not in self:
+            self[source]=FramedData(self,source,**kwargs)
+        else:
+            self[source].updatelangs()
+        return self[source]
+    def __init__(self, check, **kwargs):
+        super(FramedDataDict, self).__init__()
+        self.frames=check.toneframes #[ps][name]
+        self.db=check.db
+        self.check=check
 class FramedData(object):
     """This populates an object with attributes to format data for display,
     by senseid"""
@@ -6196,27 +6043,53 @@ class FramedData(object):
     times to display it. If source is a senseid, it pulls form/gloss/etc
     information from the entry. If source is an example, it pulls that info
     from the example. The info is formatted uniformly in either case."""
-    def parsesense(self,db,senseid,truncdefn=False):
-        self.senseid=senseid
-        lexs=db.get('lexemenode',senseid=senseid)
-        cits=db.get('citationnode',senseid=senseid)
-        log.info("lex: {}, cit: {}".format(lexs,cits))
-        defns=db.get('definitionnode',senseid=senseid)
-        glss=db.get('glossnode',senseid=senseid)
-        log.info("defns: {}, glss: {}".format(defns,glss))
-        for i in lexs+cits: # (later) citation nodes will overwrite lex nodes
-            self.forms.getformfromnode(i)
-        for i in defns: #(later) gloss nodes will overwrite these defn nodes
-            self.glosses.getformfromnode(i,truncate=truncdefn) #only trunc defns
-        for i in glss:
-            self.glosses.getformfromnode(i)
-        if self.location is not None: #otherwise will return all examples
-            self.tonegroups=self.db.get('exfieldvalue', senseid=senseid,
-                                    fieldtype='tone', location=self.location)
+    def formatted(self,notonegroup=True,noframe=False):
+        if notonegroup:
+            toformat=DataList()
         else:
-            tonegroups=None
-            log.error("Location isn't set; I can't tell which example you want")
-    def parseexample(self,example):
+            toformat=DataList(self.tonegroup)
+        if noframe:
+            toformat.appendformsbylang(self.forms,self.analang,quote=False)
+            toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
+        else:
+            if not hasattr(self,'framed'):
+                self.noframe() #Assume no frame if not excplicitly applied
+            toformat.appendformsbylang(self.framed,self.analang,quote=False)
+            toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
+        return ' '.join(toformat) #put it all together
+    def setframe(self,frame):
+        self.frame=self.frames[self.ps][frame]
+        self.applyframe()
+    def noframe(self):
+        self.framed=self.forms
+    def applyframe(self):
+        if not self.noframe:
+            self.forms.frame(self.frame,[self.analang]+self.glosslangs)
+            self.framed=self.forms.framed
+        else:
+            self.noframe()
+    def gettonegroup(self):
+        if self.location is not None:
+            self.tonegroups=self.db.get('example/tonefield/form/text',
+                            senseid=senseid, location=self.location).get('text')
+    def tonegroup(self):
+        if self.tonegroups is not None: # wanted&found
+            tonegroup=unlist(self.tonegroups)
+            if tonegroup is not None:
+                try:
+                    int(tonegroup)
+                except:
+                    self.tonegroup=tonegroup #only for named groups
+    def parsesense(self,db,senseid):
+        self.senseid=senseid
+        self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
+        self.forms[self.analang]=db.citationorlexeme(senseid=senseid,
+                                                    analang=self.analang)
+        self.forms.update(db.glossesordefns(senseid=senseid))
+        for f in self.forms:
+            self.forms[f]=unlist(self.forms[f])
+        self.gettonegroup()
+   def parseexample(self,example):
         self.senseid=None #We don't have access to this here
         for i in example:
             if i.tag == 'form': #language forms, not glosses, etc, below.
@@ -6226,28 +6099,45 @@ class FramedData(object):
                 ((i.tag == 'gloss'))):
                 for ii in i:
                     if (ii.tag == 'form'):
-                        self.glosses.getformfromnode(ii)
-            elif ((i.tag == 'field') and (i.get('type') == 'tone')): #should
-                self.tonegroups=node.findall('form/text') #always be list of one
-    def __init__(self, source, **kwargs):
+                        self.forms.getformfromnode(ii) #glosses
+            elif ((i.tag == 'field') and (i.get('type') == 'tone')):
+                self.tonegroups=i.findall('form/text') #always be list of one
+    def glosses(self):
+        g=DictbyLang()
+        l=0
+        for lang in self.glosslangs:
+            if lang in self.forms:
+                g[lang]=self.forms[lang]
+                l+=len(g[lang])
+        if l >0:
+            return g
+        else:
+            return None
+    def updatelangs(self):
+        self.analang=self.parent.analang
+        self.glosslangs=self.parent.glosslangs
+        log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
+    def __init__(self, parent, source, **kwargs):
         super(FramedData, self).__init__()
-        noframe=kwargs.pop('noframe',False)
-        notonegroup=kwargs.pop('notonegroup',False)
-        truncdefn=kwargs.pop('truncdefn',False)
-        self.location=kwargs.pop('location',None)
-        self.db=kwargs.pop('db',None)
-        #These really must be there...
-        self.analangs=kwargs.pop('analangs')
-        self.glosslangs=kwargs.pop('glosslangs')
-        self.frame=kwargs.pop('frame')
+        self.parent=parent
+        self.frames=parent.frames
+        self.updatelangs()
+        self.db=parent.db #kwargs.pop('db',None) #not needed for examples
+        self.location=kwargs.pop('location',None) #not needed for noframe
+        self.noframe=kwargs.pop('noframe',False)
+        """Generalize these, and manage with methods:"""
+        # self.notonegroup=kwargs.pop('notonegroup',False)
+        # truncdefn=kwargs.pop('truncdefn',False)
+        # self.frame=kwargs.pop('frame',None) #not needed for noframe
+        #These really must be there, and ordered with first first
+        #to put data:
         self.forms=DictbyLang()
-        self.glosses=DictbyLang()
+        #defaults to set upfront
+        self.tonegroups=None
         self.tonegroup=None
         """Build dual logic here. We use this to frame senses & examples"""
         if isinstance(source,lift.ET.Element):
-            noframe=True #Examples should already be framed
-            if self.db is not None:
-                log.info("FYI: You specified database unnecessarily!")
+            self.noframe=True #Examples should already be framed
             self.parseexample(source) #example element, not sense or entry:
             """This is what we're pulling from:
             <example>
@@ -6264,34 +6154,20 @@ class FramedData(object):
             </example>
             """
         elif type(source) is str and len(source) >= 36:#senseid can be guid+form
-            if self.db is not None: #pull from lift by senseid
-                self.parsesense(self.db,source,truncdefn=truncdefn)
-            else:
-                log.error("Can't pull entry ({}) w/o database!".format(source))
-                return
+            self.parsesense(self.db,source)
         else:
             log.error('Neither Element nor senseid was found!'
                         '\nThis is almost certainly not what you want!'
                         '\nFYI, I was looking for {}'.format(source))
             return source
         """The following is the same for senses or examples"""
-        if not notonegroup and self.tonegroups is not None: # wanted&found
-            tonegroup=unlist(self.tonegroups)
-            if tonegroup is not None:
-                try:
-                    int(tonegroup)
-                except:
-                    self.tonegroup=tonegroup #only for named groups
-        if not noframe: #Forms and glosses have to be strings, or the rx fails
-            self.forms.frame(self.frame,self.analangs)
-            self.glosses.frame(self.frame,self.glosslangs)
-        if self.tonegroup is None: #i.e., no named group was found above
-            toformat=DataList()
-        else:
-            toformat=DataList(self.tonegroup)
-        toformat.appendformsbylang(self.forms,self.analangs,quote=False)
-        toformat.appendformsbylang(self.glosses,self.glosslangs,quote=True)
-        self.formatted=' '.join(toformat) #put it all together
+        # # just for convenience:
+        # self.analang=self.forms[self.analangs[0]]
+        # self.glosslang=self.forms[self.glosslangs[0]]
+        # if len(self.glosslangs) >1 and self.glosslangs[1] in self.forms:
+        #     self.glosslang2=self.forms[self.glosslangs[1]]
+        # else:
+        #     self.glosslang2=None
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
@@ -6779,6 +6655,9 @@ class MainApplication(Frame):
         advancedmenu.add_cascade(label=_("Redo"), menu=redomenu)
         advancedmenu.add_cascade(label=_("Add other"), menu=filemenu)
         redomenu.add_command(
+                        label=_("Verification of current framed group"),
+                        command=lambda x=check:Check.reverify(x))
+        redomenu.add_command(
                         label=_("Digraph and Trigraph settings (Restart)"),
                         command=lambda x=check:Check.askaboutpolygraphs(x))
         redomenu.add_command(
@@ -6831,12 +6710,12 @@ class MainApplication(Frame):
                 "allows the user to record a word in each of the frames where "
                 "it has been sorted, storing the recorded audio file in a "
                 "directory, with links to each file in the dictionary database."
-                " Recordings can be made up to 192khz/32float.\nFor help with "
-                "this tool, please check out the documentation at "
-                "{url} or write me at "
-                "{Email}.".format(name=self.program['name'],
-                                    url=self.program['url'],
-                                    Email=self.program['Email']))
+                " Recordings can be made up to 192khz/32float, according to "
+                "your recording equipment's capacity.").format(
+                                                    name=self.program['name'])
+        webtext=_("For help with this tool, please check out the documentation "
+                "at {url} ").format(url=self.program['url'])
+        mailtext=_("or write me at {}.").format(self.program['Email'])
         Label(window.frame, text=title,
                         font=self.fonts['title'],anchor='c',padx=50
                         ).grid(row=0,column=0,sticky='we')
@@ -6845,9 +6724,20 @@ class MainApplication(Frame):
         Label(f.content, image=self.photo['small'],text='',
                         bg=self.theme['background']
                         ).grid(row=0,column=0,sticky='we')
-        l=Label(f.content, text=text, pady=50, padx=50,
+        l=Label(f.content, text=text, padx=50,
                 wraplength=int(self.winfo_screenwidth()/2)
-                ).grid(row=1,column=0,sticky='we')
+                ).grid(row=1,column=0,pady=(50,0),sticky='we')
+        webl=Label(f.content, text=webtext, padx=50,#pady=50,
+                wraplength=int(self.winfo_screenwidth()/2)
+                )
+        webl.grid(row=2,column=0,sticky='we')
+        maill=Label(f.content, text=mailtext, padx=50,#pady=50,
+                wraplength=int(self.winfo_screenwidth()/2)
+                )
+        maill.grid(row=3,column=0,sticky='we')
+        webl.bind("<Button-1>", lambda e: openweburl(self.program['url']))
+        murl='mailto:{}?subject= A→Z+T question'.format(self.program['Email'])
+        maill.bind("<Button-1>", lambda e: openweburl(murl))
     def maketitle(self):
         title=_("{name} Dictionary and Orthography Checker").format(
                                                     name=self.program['name'])
@@ -7533,7 +7423,7 @@ class RecordButtonFrame(Frame):
         self.db.addmediafields(self.node,self.filename,self.audiolang)
     def function(self):
         pass
-    def makefilenames(self,check=None,senseid=None):
+    def makefilenames(self=None,check=None,senseid=None):
         if self is not None: #i.e., this is called by class
             if self.test==True:
                 return "test_{}_{}.wav".format(self.settings.fs,
@@ -7547,12 +7437,13 @@ class RecordButtonFrame(Frame):
             check=self.check
             id=self.id
             gloss=self.gloss
+            # audio=None
         else: #self is None, i.e., this method called on something else.
             if None in [check, senseid]:
                 return
             id=senseid
-            node=firstoflist(check.db.get('examplebylocation',senseid=senseid,
-                                location=check.name))
+            node=firstoflist(check.db.get('example',senseid=senseid,
+                                location=check.name).get())
             if node is None:
                 # This should never be!
                 log.error("Looks like a node came back 'None'; this may be "
@@ -7575,22 +7466,27 @@ class RecordButtonFrame(Frame):
                                 log.error("Node{}cg: {}; tag:{}; attrib:{}; text:{}".format(
                                     nodes.index(node),ggchild,ggchild.tag,
                                                 ggchild.attrib,ggchild.text))
-            gloss=node.find(check.db.geturlnattr('glossofexample')['url']).text
-            form=node.find(check.db.geturlnattr('formofexample',
-                                                lang=check.analang)['url']).text
-        audio=node.find(check.db.geturlnattr('formofexample',
-                                            lang=check.audiolang)['url'])
+            gloss=unlist(check.db.get('translation/form/text',node=node,
+                            glosslang=check.glosslang,showurl=True).get('text'))
+            form=unlist(check.db.get('form/text',node=node,showurl=True,
+                                            analang=check.analang).get('text'))
+            log.log(4,"gloss: {}".format(gloss))
+            log.log(4,"form: {}".format(form))
+        audio=check.db.get('form/text',node=node,showurl=True,
+                                        analang=check.audiolang).get('text')
+        log.log(4,"audio: {}".format(audio))
+        audio=unlist(audio)
         if gloss is None:
             gloss=t(check.db.get('gloss',senseid=senseid,
-                                    glosslang=check.glosslang))
+                                    glosslang=check.glosslang).get('text'))
         if form is None and node is not None:
             form=t(node.find(f"form[@lang='{check.analang}']/text"))
         if audio is not None:
-            filenameURL=str(file.getdiredurl(check.audiodir,audio.text))
+            filenameURL=str(file.getdiredurl(check.audiodir,audio))
             if file.exists(filenameURL):
                 log.debug("Audio file found! using name: {}; diredname: {}"
-                    "".format(audio.text, filenameURL))
-                return audio.text
+                    "".format(audio, filenameURL))
+                return audio
             else:
                 log.debug("Audio link found, but no file found! Making options."
                     "\n{}; diredname: {}".format(audio, filenameURL))
@@ -7640,8 +7536,10 @@ class RecordButtonFrame(Frame):
         #test if any of the generated filenames are there
         for filename in filenames:
             filenameURL=str(file.getdiredurl(check.audiodir,filename))
+            log.debug("Looking for Audio file: {}; filename possibilities: {}; "
+                "url:{}".format(filename, filenames, filenameURL))
             if file.exists(filenameURL):
-                log.debug("Audio file found! using name: {}; diredname: {}; "
+                log.debug("Audiofile found! using name: {}; possibilities: {}; "
                     "url:{}".format(filename, filenames, filenameURL))
                 return filename
         #if you don't find any, take the *last* values
@@ -7654,7 +7552,15 @@ class RecordButtonFrame(Frame):
         sound-python/"""
         self.db=check.db
         self.node=node #This should never be more than one node...
-        self.form=form
+        framed=kwargs.pop('framed',None) #Either this or the next two...
+        if framed is not None:
+            formdefault=framed.forms[check.analang]
+            glossdefault=framed.forms[check.glosslang]
+        else:
+            formdefault=None
+            glossdefault=None
+        self.form=kwargs.pop('form',formdefault)
+        self.gloss=kwargs.pop('gloss',glossdefault)
         self.id=id
         self.gloss=gloss
         self.check=check
@@ -8071,7 +7977,7 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
     if all == True: #don't worry about othersOK yet
         if len(l) > 1:
             ox=[t(v) for v in l[:len(l)-2]] #Should probably always give text
-            l=ox+[' and '.join([t(v) for v in l[len(l)-2:]])]
+            l=ox+[' and '.join([t(v) for v in l[len(l)-2:] if v not in ignore])]
                 # for i in range(int(len(output)/2))]
         else:
             l[0]=t(l[0]) #for lists of a single element
@@ -8086,7 +7992,7 @@ def t(element):
     if type(element) is str:
         return element
     elif element is None:
-        return
+        return str(None)
     else:
         try:
             return element.text
@@ -8355,34 +8261,37 @@ def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
 def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     #?This is the action of a verification button, so needs to be self contained.
     #merge with addtonefieldex
-    framed=self.getframeddata(senseid,truncdefn=True)
+    framed=self.datadict.getframeddata(senseid)
+    framed.setframe(self.name)
+    text=framed.formatted(noframe=False)
     if name is None:
         name=self.name
     if subcheck is None:
         subcheck=self.subcheck
     log.info(_("Removing senseid {} from subcheck {}".format(senseid,subcheck)))
     #This should only *mod* if already there
-    self.db.addexamplefields(senseid=senseid,
+    self.db.addmodexamplefields(senseid=senseid,
                             analang=self.analang,
                             glosslang=self.glosslang,
                             glosslang2=self.glosslang2, #OK if None
                             forms=framed,
                             fieldtype='tone',location=self.name,
-                            fieldvalue='') #this value should be the only change
-    tgroups=self.db.get('exfieldvalue', senseid=senseid,
-                fieldtype='tone', location=self.name)
-    if type(tgroups) is list:
-        if len(tgroups) > 1:
-            log.error(_("Found {} tone values: {}".format(len(tgroups),tgroups)))
-            return
-        else:
-            tgroup=tgroups[0]
-    if tgroup == '' :
-        log.info("Field removal succeeded! LIFT says '{}', = ''.".format(tgroup))
-    else:
-        log.error("Field removal failed! LIFT says '{}', != ''.".format(tgroup))
+                            fieldvalue='',showurl=True) #this value should be the only change
+    log.info("Checking that removal worked")
+    tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
+                        location=self.name).get('text')
+    if tgroups in [[],'']:
+        log.info("Field removal succeeded! LIFT says '{}', = []."
+                                                            "".format(tgroups))
+    elif len(tgroups) == 1:
+        tgroup=tgroups[0]
+        log.error("Field removal failed! LIFT says '{}', != [].".format(tgroup))
+    elif len(tgroups) > 1:
+        log.error(_("Found {} tone values: {}; Fix this!".format(len(tgroups),
+                                                                    tgroups)))
+        return
     rm=self.verifictioncode(name,subcheck)
-    self.db.modverificationnode(senseid,vtype=self.profile,rm=rm)
+    self.db.modverificationnode(senseid,vtype=self.profile,rms=[rm])
     self.db.write() #This is not iterated over
     self.markunsortedsenseid(senseid) #This is just for self.status['sorted']
     parent.destroy() #.runwindow.resetframe()
