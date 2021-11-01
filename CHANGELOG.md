@@ -1,6 +1,7 @@
 # A→Z+T Changelog
 
 # Version 0.8.7
+- added referify data for current subgroup
 - give warning if user is going to undo analysis regroupings
 - mark a sensid to sort again without losing the sound file attached to it.
 - major overhaul to LIFT urls, including class to generate them and catalog to store them
