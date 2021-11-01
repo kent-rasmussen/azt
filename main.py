@@ -6089,7 +6089,7 @@ class FramedData(object):
         for f in self.forms:
             self.forms[f]=unlist(self.forms[f])
         self.gettonegroup()
-   def parseexample(self,example):
+    def parseexample(self,example):
         self.senseid=None #We don't have access to this here
         for i in example:
             if i.tag == 'form': #language forms, not glosses, etc, below.
