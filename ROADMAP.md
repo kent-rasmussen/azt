@@ -1,5 +1,7 @@
 #Roadmap
 
+standarize fns of exit buttons from config changing screens (exit should make changes or not...)
+maybe add backwards epsilon to vowels?
 ## release stoppers
 - put image creation after splash creation?
 - check out why tooltips aren't working before first refresh

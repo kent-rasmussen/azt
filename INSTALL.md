@@ -26,7 +26,9 @@ This should get you all the necessary packages: `sudo apt-get install python3-tk
 Then this will get you the needed python modules: `python3 -m pip install pyaudio tkinter lxml Pillow` The last two are not necessary, but helpful, and not much extra to do at this point.
 
 ### Installation on Microsoft Windows
-- **Be sure to check "add to PATH"** (or whatever options are appropriate), so Windows knows where Python is installed. If you miss this step, A→Z+T will not work.
+- **Be sure to check "add to PATH"** (or whatever options are appropriate), so Windows knows where Python is installed. If you miss this step, A→Z+T will not work:
+
+![Add Python to Path](images/Python_path.png "Add Python to Path")
 
 For some reason, I have had trouble getting pyaudio installed on Windows machines with most recent versions of Python (3.9). You may have better mileage than I. In any case, I have found that it works smoothly to download and install Python 3.6.8 (e.g., from [here](https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe)).
 
@@ -63,6 +65,7 @@ To make full use of A→Z+T's report output, I strongly advise you to be ready t
 
 ## Praat
 If you have [Praat](https://www.fon.hum.uva.nl/praat/) installed, [A→Z+T](https://github.com/kent-rasmussen/azt.git) can open sound files you have recorded there for you.
+To enable this feature in [A→Z+T](https://github.com/kent-rasmussen/azt.git), the Praat executable must be in your operating system path. You may need to ask your IT support for help, if you don't know how to do this.
 
 ## To run AZT
 Assuming your system is configured correctly, just run `main.py`. Depending on your system, that may be just a click on the file (or a link to it on your desktop or wherever), or you may need to type that into a terminal. Your operating system should know to open `main.py` with python, but you can also explicitly tell it to with `python main.py`.

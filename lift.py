@@ -75,8 +75,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ]
         self.slists() #sets: self.c self.v, not done with self.segmentsnotinregexes[lang]
         self.extrasegments() #tell me if there's anything not in a V or C regex.
-        self.findduplicateforms()
-        self.findduplicateexamples()
+        # self.findduplicateforms()
+        # self.findduplicateexamples()
         """Think through where this belongs; what classes/functions need it?"""
         self.morphtypes=self.getmorphtypes()
         log.info("Language initialization done.")
@@ -589,10 +589,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This is a dictionary of theoretically possible segment graphs,
         by category and number of glyphs, with consonant dictionaries nested
         inside it, by category."""
+        # Don't include any profile-legit characters in these variables, or they
+        # will get picked up again during the analysis
         c={}
         c['pvd']={}
         c['pvd'][2]=['bh','dh','gh','gb']
-        c['pvd'][1]=['b','B','d','g','ɡ','G']
+        c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
         c['p']={}
         c['p'][2]=['kk','kp']
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k']
@@ -600,8 +602,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['fvd'][2]=['bh','vh','zh']
         c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ']
         c['f']={}
-        c['f'][2]=['ch','ph','sh','hh']
-        c['f'][1]=['F','f','s','ʃ','θ','x','h']
+        c['f'][2]=['ch','ph','sh','hh','pf','bv']
+        c['f'][1]=['F','f','s','ʃ','θ','x','h'] #not 'S'
         c['avd']={}
         c['avd'][2]=['dj','dz','dʒ']
         c['a']={}
@@ -632,9 +634,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             x[dconsvar]=list() #to store valid depressor consonants in
             for stype in c:
                 if c[stype].get(nglyphs) is not None:
-                    # if 'vd' in stype:
-                    #     x[dconsvar]+=c[stype][nglyphs]
-                    # else:
+                    if 'vd' in stype:
+                        x[dconsvar]+=c[stype][nglyphs]
+                    else:
                         x[consvar]+=c[stype][nglyphs]
         x['ʔ']=['ʔ',
                 "ꞌ", #Latin Small Letter Saltillo
@@ -642,7 +644,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'ʼ'  #modifier letter apostrophe
                 ]
         x['G']=['ẅ','y','Y','w','W']
-        x['N']=["ng'",'mm','ŋŋ','m','M','N','n','ŋ','ɲ'] #no longer:'ny',
+        x['N']=['m','M','n','ŋ','ɲ','ɱ'] #'N', messed with profiles
+        x['Ndg']=['mm','ŋŋ','ny']
+        x['Ntg']=["ng'"]
         """Non-Nasal/Glide Sonorants"""
         x['S']=['l','r']
         x['Sdg']=['rh','wh']
@@ -655,7 +659,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 #single code point vowels:
                 'a', 'e', 'i', 'ə', 'o', 'u',
                 'A', 'E', 'I', 'Ə', 'O', 'U',
-                'ɑ', 'ɛ', 'ɨ', 'ɔ', 'ʉ',
+                'ɑ', 'ɛ', 'ɨ', 'ɔ', 'ʉ', 'ɩ',
                 'æ', 'ʌ', 'ɪ', 'ï', 'ö', 'ʊ',
                 #for those using precomposed letters:
                 'à', 'è', 'ì', 'ò', 'ù',
@@ -672,13 +676,18 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'yi','yu','yɨ','yʉ'] #requested by Jane
         x['Vtg']=[]
 
-        x['d']=["̀","́","̂","̌","̄","̃"
+        x["̀"]=["̀","́","̂","̌","̄","̃"
                 , "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉" #from IPA keyboard
                 ,"̈" #COMBINING DIAERESIS
                 ] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         x['ː']=[":","ː"] # vowel length markers
-        x['b']=['=','-'] #affix boundary markers
-        x['o']=['<','&lt;','&gt;','>','›','»','‹','«',''] #macron here?
+        x['=']=['=','-'] #affix boundary markers
+        x['<']=['<','&lt;','&gt;','>','›','»','‹','«',''] #macron here?
+        # """We need to address long and idiosyncratic vowel orthographies,
+        # especially for Cameroon. This should also include diacritics, together
+        # or separately."""
+        # """At some point, we may want logic to include only certain
+        # elements in c. The first row is in pretty much any language."""
         actuals={}
         log.log(3,'hypotheticals: {}'.format(x))
         self.s={} #wipe out an existing dictionary

@@ -15,7 +15,7 @@
     - [WeSay](https://software.sil.org/wesay/) is [Chorus](https://software.sil.org/chorushub/) enabled, which allows easy tracking of changes and off-site archiving, including the changes to your database and reports made by [A→Z+T](https://github.com/kent-rasmussen/azt).
     - N.B.: I highly recommend the excellent library of images that works with WeSay, [the Art of Reading](https://bloomlibrary.org/artofreading)
 - Build a dictionary in [FLEx](https://software.sil.org/fieldworks/), and share/export to [LIFT](https://code.google.com/archive/p/lift-standard/)/WeSay.
-    - Use the FLEx menu item `send/receive for WeSay`, assuming you may ever want to get the checked database *back* into [FLEx](https://software.sil.org/fieldworks/). 
+    - Use the FLEx menu item `send/receive for WeSay`, assuming you may ever want to get the checked database *back* into [FLEx](https://software.sil.org/fieldworks/).
     - Using the FLEx menu item `Export to LIFT` (a different process) can work, but would preclude sensible sharing back to FLEx in the future.
     - there is an active [list of users](https://groups.google.com/g/flex-list) to help with problems doing this.
 - Store your data in some other form (text, spreadsheet, database) and convert it to [LIFT](https://code.google.com/archive/p/lift-standard/) (*PLEASE* don't do this unless you *really* know what you're doing, and have a *good* reason to; the other options above are much easier, and much less likely to result in data corruption)
@@ -23,9 +23,9 @@
 ### [LIFT](https://code.google.com/archive/p/lift-standard/) Database Requirements
 [LIFT](https://code.google.com/archive/p/lift-standard/) databases can be minimal or very complex. For the purposes of running A→Z+T, you just need the following:
 
-- `citation` (or `lexeme`) forms (tagged with your language code, of course)
+- `citation` (Not `lexeme`) forms (tagged with your language code, of course)
     - forms with spaces or other non-wordforming characters are ignored.
-- `gloss`es (or `definition`s) in at least one language (again coded for gloss language)
+- `gloss`es (Not `definition`s) in at least one language (again coded for gloss language)
     - N.B.: Long definitions cause enough problems with the UI, that they are now truncated to the first three words. If you don't like this (I wouldn't!), set up proper gloss fields, and [A→Z+T](https://github.com/kent-rasmussen/azt) will use them.
 - `Grammatical Category`/`Part of Speech` (ps) indication:
     - stored in `sense/grammatical-info@[value]`
@@ -55,9 +55,12 @@ If [A→Z+T](https://github.com/kent-rasmussen/azt) has an exception, it should 
 
 Results of the analysis of multiple frame groupings (e.g., from the Tone Report) is placed in a separate `entry/sense/field[@type='tone']` (i.e., not in an example field), as this is a summary/analysis of the values contained in the example nodes.
 
+As entries are verified in groups by tone frame, group values by tone frame are stored in a verification field which is named by syllable profile analysis (e.g., `entry/sense/field[@type="CVCV verification"]`)
+
 ### Changes to Expect near Your [LIFT](https://code.google.com/archive/p/lift-standard/) Database
 [A→Z+T](https://github.com/kent-rasmussen/azt) assumes your [LIFT](https://code.google.com/archive/p/lift-standard/) file is in a directory set apart for its analysis. As a result, expect to find generated in that directory:
 
+- A backup copy of your lift database, on the first opening of A→Z+T each day. You're free to delete these as you like; there just there while A→Z+T is in development, in case you need them (this way, you should never lose more than a day's, however badly your database get's damaged).
 - A syllable profile analysis file (`ProfileData`), on first run, and if CV analysis parameters change. This can take a while to run, so it is stored and loaded on startup, rather than running it on each startup.
 - A settings file (`CheckDefaults`), any time a check is run, to preserve settings, including current `ps`/`profile` selection. This allows you to continue where you left off.
 - A tone frame definitions file (`ToneFrames`), once at least one has been defined. I strongly recommend not modifying this file outside of A→Z+T.
@@ -72,12 +75,17 @@ Results of the analysis of multiple frame groupings (e.g., from the Tone Report)
 The first time you run A→Z+T, you will need to select your [LIFT](https://code.google.com/archive/p/lift-standard/) database location.
 A→Z+T stores this location in `lift_url.py`, so you only have to do this once. But if you need to check a different database, delete `lift_url.py`, and [A→Z+T](https://github.com/kent-rasmussen/azt) will ask again where your database is.
 
+### Treatment of Digraphs and Trigraphs
+Each time you open [A→Z+T](https://github.com/kent-rasmussen/azt), it checks for segment sequences which are in some cases digraphs (e.g., "ny" and "ng") or trigraphs (e.g., "ng'" and "tsh"). If any are found in your data, _for which a user has not already specified an interpretation_, [A→Z+T](https://github.com/kent-rasmussen/azt) will present you with a window containing each of the segment sequences found, along with tick boxes for you to indicate which are, in fact, digraphs or trigraphs in your orthography. For instance, if 'ny' is a digraph for [ɲ], check that box and it will be treated as a single consonant throughout. But if 'ny' in your orthography is two segments, do **not** check that box, so [A→Z+T](https://github.com/kent-rasmussen/azt) will treat 'n' and 'y' independently.
+
+Once you finish with this window, [A→Z+T](https://github.com/kent-rasmussen/azt) will store the settings, and use them on subsequent runs. You will only see this window again if you ask for it (in Advanced/Redo menu), or if your database shows (new) potential digraphs, for which a judgment has not already been made and stored.
+
 ### Syllable Profile Analysis
 If you open [A→Z+T](https://github.com/kent-rasmussen/azt) without a saved syllable profile analysis file (e.g., for the first time), it will open your database and go through the entries there, and sort them by syllable profile and part of speech (CVC v CVCV for each of Nouns and Verbs, for example). This can take a couple of minutes. If you are running [A→Z+T](https://github.com/kent-rasmussen/azt) in a terminal, you should see its progress.
 
 If you use symbols that [A→Z+T](https://github.com/kent-rasmussen/azt) doesn't recognize as word-forming (including a space), entries using those symbols will be excluded from the syllable profile analysis, and thus from any work in [A→Z+T](https://github.com/kent-rasmussen/azt). For your convenience, a window appears on boot if this applies to you, including which characters are found, and how many entries they impact. If you feel entries are being excluded inappropriately (e.g., you have an orthographic symbol I haven't already accounted for), please write me with the details, and include a log.
 
-There is a Segment Interpretations Settings (Advanced) menu item and window, to fine tune how [A→Z+T](https://github.com/kent-rasmussen/azt) does this analysis. For instance, some people will want to sort CVʔ data differently than CVC data, depending on the language situation. This can be done repeatedly, with two caveats:
+There is a **Segment Interpretations Settings** (Advanced) menu item and window, to fine tune how [A→Z+T](https://github.com/kent-rasmussen/azt) does this analysis. For instance, some people will want to sort CVʔ data differently than CVC data, depending on the language situation. This can be done repeatedly, with two caveats:
 
 1. Each time a change is made on this page (and you hit "Use these settings"), a reanalysis will happen, and this takes some time.
 2. Each time you reanalyze your syllable profiles, you will be lumping or splitting groups. If you lump two or more groups together, this will impact your sorting done up to that point. E.g., if you had CVʔ and CVC separate, then join them, your new CVC group will have sort values from the old CVʔ **and** CVC sortings, though there is no necessary correspondence between those group name/numbers. Practically, this means that any time you lump groups, you should verify each of those groups again.
@@ -127,12 +135,12 @@ If you absolutely regret a tone frame you have set up, all your frames are store
 ### Tone Frame Groups ![Tone Frame Groups](images/T%20alone%20clear6_icon.png "ToneFrameGroups")
 [A→Z+T](https://github.com/kent-rasmussen/azt) by default labels the groups into which you sort your data by frame with numbers. This is because, at least initially, the fact that it is its own thing (all one thing, and unlike the other groups) is more important than any description of the group, however objective it may be.
 That said, there may come a time where you want to give one or more of these groups a particular name, like `HL` or `[˦˦ ˨˨]`, perhaps because you want to remember how you thought of the surface form at the time, or because you don't want the group names in your database to be just numbers. To do this, right click on the verification window *while verifying the group you want to rename*, and click on `Show Menu`. This will provide a menu which will allow you to change the name.
-Regarding name changes, please be cognizant of the fact that these names are for a *part of speech* and *syllable profile*, **in a given frame**. These should describe the *surface* tone only; hypotheses regarding underlying tone come later (see [`Joining and Renaming Draft Tone Groups`](#joining-and-renaming-draft-tone-groups), below; see also the following process flow chart: ![AZT Process Flow Chart](docs/AZT%20Process%20Flow%20Chart.png "Flow Chart")).
+Regarding name changes, please be cognizant of the fact that these names are for a *part of speech* and *syllable profile*, **in a given frame**. These should describe the *surface* tone only; hypotheses regarding underlying tone come later (see [`Joining and Renaming Draft Tone Groups`](#joining-and-renaming-draft-tone-groups), below; see also the following process flow chart). ![AZT Process Flow Chart](docs/AZT%20Process%20Flow%20Chart.png "Flow Chart")
 
 ### Recording ![Recording](images/Microphone%20alone_sm.png "microphone")
 The first time you try to record, you will be asked to tell [A→Z+T](https://github.com/kent-rasmussen/azt) what sound card parameters you want. You can set frequency, bit depth, and sound card number (to select between multiple cards, for your microphone and for your speakers. This window is designed with test `play` and `record` buttons, so you can set parameters and test them, before moving on. I suggest you budget some time to play with the settings there, until you are satisfied with them.
 
-N.B.: There are some combinations of settings (likely those beyond the physical limits of your sound card) which **play fine in AZT, but do not produce good sound files**. This is simple enough to discover, by playing the sound file in another tool, such as [Praat](https://www.fon.hum.uva.nl/praat/) (right click on `play`, if [Praat](https://www.fon.hum.uva.nl/praat/) is installed on your computer). Please check that you are creating good sound files before recording language data.
+N.B.: There are some combinations of settings (likely those beyond the physical limits of your sound card) which **play fine in AZT, but do not produce good sound files**. This is simple enough to discover, by playing the sound file in another tool, such as [Praat](https://www.fon.hum.uva.nl/praat/) (right click on `play`, if [Praat](https://www.fon.hum.uva.nl/praat/) is installed in your operating system's path). Please check that you are creating good sound files before recording language data. There is a video overview of this process [here](https://github.com/kent-rasmussen/azt/releases/download/v0.8.6/PraatVerification.mp4).
 
 The settings window will you select the highest quality that it thinks your card can do; test to see if it records and plays back OK, then confirm by playing the sound file in anoter player. I have found several computers with cards that can record at 96khz, somewhat to my surprise —though be sure to think about your microphone and environment, etc, too! If you are making recordings for easy sharing over low bandwidth (as opposed to linguistic study), consider the implications of these setting on the size of your files.
 
