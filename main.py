@@ -6828,7 +6828,8 @@ class MainApplication(Frame):
                 "allows the user to record a word in each of the frames where "
                 "it has been sorted, storing the recorded audio file in a "
                 "directory, with links to each file in the dictionary database."
-                " Recordings can be made up to 192khz/32float.\nFor help with "
+                " Recordings can be made up to 192khz/32float, according to "
+                "your recording equipment's capacity.\nFor help with "
                 "this tool, please check out the documentation at "
                 "{url} or write me at "
                 "{Email}.".format(name=self.program['name'],
