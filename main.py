@@ -2426,8 +2426,11 @@ class Check():
             t=(_("Checking {},").format(self.typedict[self.type]['pl']))
             proselabel(opts,t,cmd='gettype',parent=tf)
             opts['columnplus']=1
-            if self.name not in self.toneframes[self.ps]:
-                t=_("no defined tone frame yet.")
+            if len(self.toneframes[self.ps]) == 0:
+                t=_("no tone frames defined.")
+                self.name=None
+            elif self.name not in self.toneframes[self.ps]:
+                t=_("no tone frame selected.")
                 self.name=None
             else:
                 t=(_("working on ‘{}’ tone frame").format(self.name))
