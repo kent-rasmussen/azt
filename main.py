@@ -6829,12 +6829,11 @@ class MainApplication(Frame):
                 "it has been sorted, storing the recorded audio file in a "
                 "directory, with links to each file in the dictionary database."
                 " Recordings can be made up to 192khz/32float, according to "
-                "your recording equipment's capacity.\nFor help with "
-                "this tool, please check out the documentation at "
-                "{url} or write me at "
-                "{Email}.".format(name=self.program['name'],
-                                    url=self.program['url'],
-                                    Email=self.program['Email']))
+                "your recording equipment's capacity.").format(
+                                                    name=self.program['name'])
+        webtext=_("For help with this tool, please check out the documentation "
+                "at {url} ").format(url=self.program['url'])
+        mailtext=_("or write me at {}.").format(self.program['Email'])
         Label(window.frame, text=title,
                         font=self.fonts['title'],anchor='c',padx=50
                         ).grid(row=0,column=0,sticky='we')
@@ -6843,9 +6842,19 @@ class MainApplication(Frame):
         Label(f.content, image=self.photo['small'],text='',
                         bg=self.theme['background']
                         ).grid(row=0,column=0,sticky='we')
-        l=Label(f.content, text=text, pady=50, padx=50,
+        l=Label(f.content, text=text, padx=50,
                 wraplength=int(self.winfo_screenwidth()/2)
-                ).grid(row=1,column=0,sticky='we')
+                ).grid(row=1,column=0,pady=(50,0),sticky='we')
+        webl=Label(f.content, text=webtext, padx=50,#pady=50,
+                wraplength=int(self.winfo_screenwidth()/2)
+                )
+        webl.grid(row=2,column=0,sticky='we')
+        maill=Label(f.content, text=mailtext, padx=50,#pady=50,
+                wraplength=int(self.winfo_screenwidth()/2)
+                )
+        maill.grid(row=3,column=0,sticky='we')
+        webl.bind("<Button-1>", lambda e: openweburl(self.program['url']))
+        maill.bind("<Button-1>", lambda e: openweburl(self.program['Email']))
     def maketitle(self):
         title=_("{name} Dictionary and Orthography Checker").format(
                                                     name=self.program['name'])
