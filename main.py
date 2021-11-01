@@ -7657,8 +7657,14 @@ class RecordButtonFrame(Frame):
         self.db=check.db
         self.node=node #This should never be more than one node...
         framed=kwargs.pop('framed',None) #Either this or the next two...
-        self.form=kwargs.pop('form',framed.forms[check.analang])
-        self.gloss=kwargs.pop('gloss',framed.forms[check.glosslang])
+        if framed is not None:
+            formdefault=framed.forms[check.analang]
+            glossdefault=framed.forms[check.glosslang]
+        else:
+            formdefault=None
+            glossdefault=None
+        self.form=kwargs.pop('form',formdefault)
+        self.gloss=kwargs.pop('gloss',glossdefault)
         self.id=id
         self.check=check
         try:
