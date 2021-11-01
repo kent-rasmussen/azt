@@ -4013,6 +4013,21 @@ class Check():
                 return 1 # this should only happen on Exit
             self.marksortedsenseid(senseid)
         self.runwindow.resetframe()
+    def reverify(self):
+        log.info("Reverifying a framed tone group, at user request: {}-{}"
+                    "".format(self.name,self.subcheck))
+        checkswframes=self.status[self.type][self.ps][self.profile]
+        if self.name is None or self.name not in checkswframes:
+            self.getcheck() #guess=True
+        done=self.status[self.type][self.ps][self.profile][self.name]['done']
+        if self.subcheck is None or self.subcheck not in done:
+            self.getsubcheck()#guess=True
+            if self.subcheck == None:
+                log.info("I asked for a framed tone group, but didn't get one.")
+                return
+        if self.subcheck in done:
+            done.remove(self.subcheck)
+        self.maybesort()
     def verifyT(self,menu=False):
         log.info("Running verifyT!")
         """Show entries each in a row, users mark those that are different, and we
@@ -6754,6 +6769,9 @@ class MainApplication(Frame):
                                 command=lambda x=check:Check.tryNAgain(x))
         advancedmenu.add_cascade(label=_("Redo"), menu=redomenu)
         advancedmenu.add_cascade(label=_("Add other"), menu=filemenu)
+        redomenu.add_command(
+                        label=_("Verification of current framed group"),
+                        command=lambda x=check:Check.reverify(x))
         redomenu.add_command(
                         label=_("Digraph and Trigraph settings (Restart)"),
                         command=lambda x=check:Check.askaboutpolygraphs(x))
