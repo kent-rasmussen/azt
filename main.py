@@ -6854,7 +6854,8 @@ class MainApplication(Frame):
                 )
         maill.grid(row=3,column=0,sticky='we')
         webl.bind("<Button-1>", lambda e: openweburl(self.program['url']))
-        maill.bind("<Button-1>", lambda e: openweburl(self.program['Email']))
+        murl='mailto:{}?subject= A→Z+T question'.format(self.program['Email'])
+        maill.bind("<Button-1>", lambda e: openweburl(murl))
     def maketitle(self):
         title=_("{name} Dictionary and Orthography Checker").format(
                                                     name=self.program['name'])
