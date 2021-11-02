@@ -422,9 +422,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         fieldvalue=kwargs.get('fieldvalue')
         location=kwargs.get('location')
         p=Node(node, 'pronunciation')
-        p.makeformnode(lang=analang,text=langform)
-        p.makefieldnode(type=fieldtype,lang=glosslang,text=fieldvalue)
-        p.makefieldnode(type='gloss',lang=glosslang,text=glossform)
+        p.makeformnode(lang=analang,text=forms[analang])
+        p.makefieldnode(type=fieldtype,lang=glosslangs[0],text=fieldvalue)
+        for lang in glosslangs:
+            p.makefieldnode(type='gloss',lang=lang,text=forms[lang])
         p.maketraitnode(type='location',value=location)
         if senseid is not None:
             self.updatemoddatetime(senseid=senseid)
@@ -884,8 +885,9 @@ class Entry(object): # what does "object do here?"
         ps=None,form=None,fieldtype=None,location=None,showurl=False)"""
         # self.lexeme=db.get('lexeme',guid=guid) #don't use this!
         self.lc=db.citationorlexeme(guid=guid,lang=self.analang)
-        self.gloss=db.glossordefn(guid=guid,lang=self.glosslang)
-        self.gloss2=db.glossordefn(guid=guid,lang=self.glosslang2)
+        self.glosses=[]
+        for g in self.glosslangs:
+            self.glosses.append(db.glossordefn(guid=guid,lang=g))
         # self.citation=get.citation(self,self.analang)
         # self.gloss=get.obentrydefn(self, self.db.glosslang) #entry.get.gloss(self, self.db.glosslang, guid)
         # self.gloss2=get.gloss(self, self.db.glosslang2, guid)
