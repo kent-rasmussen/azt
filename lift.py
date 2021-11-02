@@ -294,9 +294,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 log.info("Sorry, this didn't return a node: {}".format(senseid))
                 return
             analang=kwargs.get('analang')
-            db=kwargs.get('db') #This an object with values
-            forms=db.framed #because this should always be framed
-            glosslangs=db.glosslangs
+            framed=kwargs.get('framed') #This an object with values
+            forms=framed.framed #because this should always be framed
+            glosslangs=framed.glosslangs
             p=Node(sensenode, tag='example')
             p.makeformnode(analang,forms[analang])
             """Until I have reason to do otherwise, I'm going to assume these

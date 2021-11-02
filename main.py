@@ -4255,11 +4255,9 @@ class Check():
                     senseid,
                     guid))
         self.db.addmodexamplefields( #This should only mod if already there
-                                    guid=guid,senseid=senseid,
+                                    senseid=senseid,
                                     analang=self.analang,
-                                    glosslang=self.glosslang,
-                                    glosslang2=self.glosslang2, #OK if None
-                                    forms=framed,
+                                    framed=framed,
                                     # langform=framed[self.analang],
                                     # glossform=framed[self.glosslang],
                                     # gloss2form=framed[self.glosslang2],
