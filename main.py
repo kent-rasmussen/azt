@@ -4249,10 +4249,7 @@ class Check():
         self.db.addmodexamplefields( #This should only mod if already there
                                     senseid=senseid,
                                     analang=self.analang,
-                                    framed=framed,
-                                    # langform=framed[self.analang],
-                                    # glossform=framed[self.glosslang],
-                                    # gloss2form=framed[self.glosslang2],
+                                    forms=framed,
                                     fieldtype='tone',location=self.name,
                                     fieldvalue=self.groupselected
                                     )
