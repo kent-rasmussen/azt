@@ -69,8 +69,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.locations=self.getlocations()
         self.defaults=[ #these are lift related defaults
                     'analang',
-                    'glosslang',
-                    'glosslang2',
+                    'glosslangs',
                     'audiolang'
                 ]
         self.slists() #sets: self.c self.v, not done with self.segmentsnotinregexes[lang]
@@ -415,9 +414,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         elif senseid is not None:
             node=self.get('entry',senseid=senseid,showurl=True).get()[0]
         analang=kwargs.get('analang')
-        glosslang=kwargs.get('glosslang')
-        langform=kwargs.get('langform')
-        glossform=kwargs.get('glossform')
+        glosslangs=kwargs.get('glosslangs')
+        forms=kwargs.get('framed').forms
         fieldtype=kwargs.get('fieldtype','tone')
         fieldvalue=kwargs.get('fieldvalue')
         location=kwargs.get('location')
@@ -879,8 +877,6 @@ class Entry(object): # what does "object do here?"
         #probably should trim all of these..…
         """These depend on check analysis, should move..."""
         self.analang=self.db.analangs[0]
-        self.glosslang=self.db.glosslangs[0]
-        self.glosslang2=self.db.glosslangs[1]
         """get(self,attribute,guid=None,analang=None,glosslang=None,lang=None,
         ps=None,form=None,fieldtype=None,location=None,showurl=False)"""
         # self.lexeme=db.get('lexeme',guid=guid) #don't use this!
