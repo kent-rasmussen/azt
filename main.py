@@ -4395,7 +4395,7 @@ class Check():
         self.senseidsunsorted=[]
         for senseid in self.senseidstosort:
             v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
-                                location=self.name).get('text'))
+                                location=self.name,showurl=True).get('text'))
             log.info("Found tone value: {}".format(v))
             if v in ['',None]:
                 self.senseidsunsorted+=[senseid]
