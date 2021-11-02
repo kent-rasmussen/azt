@@ -2109,18 +2109,6 @@ if __name__ == '__main__':
                     for id in [x for x in idsentry if x is not None]:
                         log.info("guid: {}".format(id))
 
-                    # example=lift.get('example',
-                    #                             path=['location','tonefield'], #get this one first
-                    #                             senseid=senseid,
-                    #                             fieldtype='tone',location=location,
-                    #                             tonevalue=fieldvalue,
-                    #                             what='node')
-                    # sense=lift.get('sense',
-                    #                             path=['location','tonefield'], #get this one first
-                    #                             senseid=senseid,
-                    #                             fieldtype='tone',location=location,
-                    #                             tonevalue=fieldvalue,
-                    #                             what='node')
         return
     for subcheck in range(5):
         b=lift.get('sense',fieldtype='tone',location=locations[0],
@@ -2129,101 +2117,6 @@ if __name__ == '__main__':
         # lift.get("sense", location=locations[0], tonevalue=subcheck,
         #                 path=['tonefield'],showurl=True).get('senseid')
     exit()
-    for senseid in senseids:
-        exnode=lift.get('example',showurl=True,senseid=senseid,
-                        location=locations[1]).get()
-        print('exnode:',exnode)
-        # if len(exnode)>0:
-        prettyprint(exnode)
-        for e in exnode:
-            # print('e:',e)
-            # prettyprint(e)
-            audio=lift.get('form/text',node=e,showurl=True,#en-Zxxx-x-audio
-                                        analang='en-Zxxx-x-audio').get('text')
-        print('audio:',audio)
-    exit()
-    g=lift.glossordefn(#self,guid,
-                                # senseid,
-                                analang='en',
-                                senseid='continue, resume_d174612b-b3c0-4073-bff0-58fd098252a9',
-                                glosslang='fr',glosslang2=None,
-                                lang='swh',#forms,
-                                # langform="TestForm",
-                                # glossform="testgloss",#gloss2form,
-                                # fieldtype='tone',
-                                # location='Plural',
-                                # fieldvalue=45,
-                                # ps=None,
-                                showurl=True)
-                                # lift.write()
-                                # analang=kwargs.get('analang')
-                                # glosslang=kwargs.get('glosslang')
-                                # langform=kwargs.get('langform')
-                                # glossform=kwargs.get('glossform')
-                                # fieldtype=kwargs.get('fieldtype','tone')
-                                # fieldvalue=kwargs.get('fieldvalue')
-                                # location=kwargs.get('location')
-
-    print(g)
-    for i in g:
-        print(i)
-    quit()
-    import timeit
-    def timetest():
-                times=50
-                out1=timeit.timeit(test, number=times)
-                print(out1)
-    timetest()
-    # log.info(lift.urls)
-    # log.info('\n'.join([str(x) for x in lift.urls.items()]))
-    exit()# print('l:',l)
-    showurl=True
-    for i in l:
-        ll=lift.getfrom(i,'example',location="1ss",showurl=showurl)
-        if ll != []:
-            # print("ll:",ll)
-            for ii in ll:
-                lll=lift.getfrom(ii,'text',analang='en',
-                        path=['example/form'],
-                        # exampleform="to begin",
-                        what='text',
-                        showurl=showurl)
-                # print(lll)
-                # for iii in lll:
-                #     print(iii.text)
-                # lllt=lift.getfrom(ii,'text',analang='en',glosslang='fr',
-                #                     path='translation',what='text',
-                #                     showurl=showurl)
-                # if lll != []:
-                #     print("lll:",', '.join(lll))
-                showurl=False
-        # showurl=False
-    log.info(lift.urls)
-    # log.info("Done with above")
-    # fieldtype='tone'
-    # fieldvalue='1'
-    # for i in l:
-    #     r=i.findall("field[@type='location']"
-    #             "/form[text='{}']/../.."
-    #             "/field[@type='{}']"
-    #             "/form[text='{}']/../..".format(location,fieldtype,fieldvalue)
-    #             )
-    #     for ii in r:
-    #         loc=i.find("field[@type='location']/form/text")
-    #         val=i.find("field[@type='{}']/form/text".format(fieldtype))
-    #         log.info("{}: {}, {}".format(i,loc.text,val.text))
-    # print(b.url)
-    # print(bb.url)
-    exit()
-    # senseid='26532c2e-fedf-4111-85d2-75b34ed31dd8'
-    senseid='skin (of man)_d56b5a5d-7cbf-49b9-a2dd-24eebb0ae462'
-    lift.modverificationnode(senseid,vtype="V",add="another value3",rm="Added value")
-    lift.modverificationnode(senseid,vtype="V",rm="another value3",add="another value2")
-    lift.modverificationnode(senseid,vtype="V",rm="another value3",add="another value4")
-    """Functions to run on a database from time to time"""
-    # lift.findduplicateforms()
-    # lift.findduplicateexamples()
-    # lift.convertalltodecomposed()
     """Careful with this!"""
     # lift.write()
     exit()
