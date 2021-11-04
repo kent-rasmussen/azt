@@ -8078,7 +8078,12 @@ def setinterfacelang(lang,magic=False):
     except:
         log.debug("Looks like translation magic isn't defined yet; making")
     if lang != curlang or magic == False:
-        i18n[lang].install()
+        if lang is not None: #lang is not None:
+            log.debug("Setting Interface language: {}".format(lang))
+            i18n[lang].install()
+        else:
+            log.debug("Setting Default Interface language: {}".format(curlang))
+            i18n[curlang].install()
     else:
         log.debug("Apparently we're trying to set the same interface "
                                         "language: {}={}".format(lang,curlang))
