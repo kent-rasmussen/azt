@@ -3438,29 +3438,25 @@ class Check():
     def printcountssorted(self):
         #This is only used in the basic report
         log.info("Ranked and numbered syllable profiles, by grammatical category:")
-        #{}
-        # allkeys=[]
         nTotal=0
-        # nInvalid=0
         nTotals={}
-        # for k in self.profilesbysense:
-        #     allkeys+=self.profilesbysense[k]
-        for line in self.profilecounts:
-            nTotal+=line[0]
-            if line[2] not in nTotals:
-                nTotals[line[2]]=0
-            nTotals[line[2]]+=line[0]
-            # if line[2] == 'Invalid':
-            #     nInvalid+=line[0]
-        print('Profiled data:',nTotal) #len(allkeys))
+        for line in self.slices: #profilecounts:
+            profile=line[0]
+            ps=line[1]
+            nTotal+=self.slices[line]
+            if ps not in nTotals:
+                nTotals[ps]=0
+            nTotals[ps]+=self.slices[line]
+        print('Profiled data:',nTotal)
         """Pull this?"""
-        print('Invalid entries found:',self.profilecountInvalid) # nTotals['Invalid']) #len(self.profilesbysense['Invalid']))
-        for ps in self.profilesbysense:
+        for ps in self.slices.pss():
             if ps == 'Invalid':
                 continue
-            for line in self.profilecounts: #sorted(wcounts, reverse=True):
-                if line[2] == ps:
-                    print(line[0],line[1])
+            log.debug("Part of Speech {}:".format(ps))
+            for line in self.slices.valid(ps=ps):
+                profile=line[0]
+                ps=line[1]
+                log.debug("{}: {}".format(profile,self.slices[line]))
             print(ps,"(total):",nTotals[ps])
     def printprofilesbyps(self):
         #This is only used in the basic report
@@ -4803,9 +4799,7 @@ class Check():
             return
         self.runwindow.resetframe()
         self.runwindow.wait()
-        for psprofile in self.profilecounts:
-            if self.ps==psprofile[2] and self.profile==psprofile[1]:
-                count=psprofile[0]
+        count=self.slices.count()
         text=_("Record {} {} Words: click ‘Record’, talk, "
                 "and release ({} words)".format(self.profile,self.ps,
                                                 count))
@@ -5666,8 +5660,8 @@ class Check():
         values here, and restore them at the end."""
         #Convert to iterate over local variables
         typeori=self.type
-        psori=self.ps
-        profileori=self.profile
+        psori=self.slices.ps()
+        profileori=self.slices.profile()
         start_time=time.time() #move this to function?
         instr=_("The data in this report is given by most restrictive test "
                 "first, followed by less restrictive tests (e.g., V1=V2 "
@@ -7943,6 +7937,8 @@ class ToolTip(object):
         if tw:
             tw.destroy()
 class SliceDict(dict):
+    def count(self):
+        return self[(self._profile,self._ps)]
     def makepsok(self):
         if not(hasattr(self,'_ps') and self._ps in self._pss):
             self.ps(self._pss[0])
@@ -8013,6 +8009,13 @@ class SliceDict(dict):
         if slicesbyhzbyps is not None:
             self._profiles=list(dict.fromkeys([x[0][0]
                                 for x in slicesbyhzbyps]))[:self.maxprofiles]
+    def valid(self, ps=None):
+        if ps is None:
+            return self._valid
+        elif ps in self._validbyps:
+            return self._validbyps[ps]
+        else:
+            log.error("You asked for valid ps data, but that ps isn't there.")
     def validate(self):
         self._valid={}
         self._validbyps={}
