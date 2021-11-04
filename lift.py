@@ -309,28 +309,46 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # Set values for any duplicates, too. Don't leave inconsisted data.
         tonevalue=kwargs.get('fieldvalue') #don't test for this above
         analang=kwargs.get('analang')
-        framed=kwargs.get('framed') #This an object with values
-        formvaluenode=self.get("example/form/text", senseid=senseid,
-                        analang=analang, location=location, showurl=True).get('node')
-        if len(formvaluenode)>0:
-            formvaluenode=formvaluenode[0]
-        forms=framed.framed #because this should always be framed
-        if forms[analang] != formvaluenode.text:
-            log.debug("Form changed!")
-            formvaluenode.text=forms[analang]
-        glosslangs=framed.glosslangs
-        for lang in glosslangs:
-            glossvaluenode=lift.get("example/translation/form/text",
-                        senseid=senseid, glosslang=lang,
-                        location=location, showurl=True).get('node')
-            if len(glossvaluenode)>0:
-                glossvaluenode=glossvaluenode[0]
-            if forms[lang] != glossvaluenode.text:
-                log.debug("Gloss changed!")
-                glossvaluenode.text=forms[lang]
+        framed=kwargs.get('framed',None) #This an object with values
+        if framed is not None:
+            forms=framed.framed #because this should always be framed
+            glosslangs=framed.glosslangs
         if len(exfieldvalue) > 0:
             for e in exfieldvalue:
                 e.text=tonevalue
+            # If we modify the tone value, check for form and gloss conformity:
+            if framed is not None: #if it's specified, that is...
+                formvaluenode=self.get("example/form/text", senseid=senseid,
+                    analang=analang, location=location, showurl=True).get('node')
+                log.info(formvaluenode)
+                if len(formvaluenode)>0:
+                    formvaluenode=formvaluenode[0]
+                    if forms[analang] != formvaluenode.text:
+                        log.debug("Form changed! ({}≠{})".format(forms[analang],
+                                                        formvaluenode.text))
+                        formvaluenode.text=forms[analang]
+                else:
+                    log.error("Found example with tone value field, but no form "
+                            "field? ({}-{})".format(senseid,location))
+                glossesnode=self.get("example/translation", senseid=senseid,
+                            location=location, showurl=True).get('node')
+                for lang in glosslangs:
+                    glossvaluenode=self.get("form/text",
+                                node=glossesnode[0], senseid=senseid, glosslang=lang,
+                                location=location, showurl=True).get('node')
+                    log.debug("glossvaluenode: {}".format(glossvaluenode))
+                    if len(glossvaluenode)>0:
+                        glossvaluenode=glossvaluenode[0]
+                        if forms[lang] != glossvaluenode.text:
+                            log.debug("Gloss changed! ({}≠{})".format(forms[lang],
+                                                            glossvaluenode.text))
+                            glossvaluenode.text=forms[lang]
+                    else:
+                        log.debug("Gloss missing for lang {}; adding".format(lang))
+                        Node.makeformnode(glossesnode[0],lang,forms[lang])
+        elif framed is None:
+            log.error("I can't make new nodes without form info! {}-{}"
+                        "".format(senseid,location))
         else: #If not already there, make it.
             log.info("Didn't find that example already there, creating it...")
             sensenode=self.getsensenode(senseid=senseid)
