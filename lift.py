@@ -1359,7 +1359,8 @@ class LiftURL():
                 afterbp=self.drafturl().split(self.unalias(bp))
                 log.log(4,"b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
                 log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
-                if len(afterbp) <=1 or b not in afterbp[-1]:
+                if (len(afterbp) <=1 or b not in afterbp[-1]
+                                    or self.level[b]!=self.level[bp]+1):
                     log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
                     self.levelup(bp)
                     self.show(b,parent=bp)
