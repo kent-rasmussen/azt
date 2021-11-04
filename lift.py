@@ -283,6 +283,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                 location=location).get('node')
         # Set values for any duplicates, too. Don't leave inconsisted data.
         tonevalue=kwargs.get('fieldvalue') #don't test for this above
+        analang=kwargs.get('analang')
+        framed=kwargs.get('framed') #This an object with values
+        formvaluenode=self.get("example/form/text", senseid=senseid,
+                        analang=analang, location=location, showurl=True).get('node')
+        if len(formvaluenode)>0:
+            formvaluenode=formvaluenode[0]
+        forms=framed.framed #because this should always be framed
+        if forms[analang] != formvaluenode.text:
+            log.debug("Form changed!")
+            formvaluenode.text=forms[analang]
+        glosslangs=framed.glosslangs
+        for lang in glosslangs:
+            glossvaluenode=lift.get("example/translation/form/text",
+                        senseid=senseid, glosslang=lang,
+                        location=location, showurl=True).get('node')
+            if len(glossvaluenode)>0:
+                glossvaluenode=glossvaluenode[0]
+            if forms[lang] != glossvaluenode.text:
+                log.debug("Gloss changed!")
+                glossvaluenode.text=forms[lang]
         if len(exfieldvalue) > 0:
             for e in exfieldvalue:
                 e.text=tonevalue
@@ -292,10 +312,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if sensenode is None:
                 log.info("Sorry, this didn't return a node: {}".format(senseid))
                 return
-            analang=kwargs.get('analang')
-            framed=kwargs.get('framed') #This an object with values
-            forms=framed.framed #because this should always be framed
-            glosslangs=framed.glosslangs
             p=Node(sensenode, tag='example')
             p.makeformnode(analang,forms[analang])
             """Until I have reason to do otherwise, I'm going to assume these
