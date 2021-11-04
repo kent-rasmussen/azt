@@ -3228,8 +3228,8 @@ class Check():
         self.profilecountsValid=[]
         self.profilecountsValidwAdHoc=[]
         #self.profilecountsValid filters out Invalid, and also by self.ps...
-        for x in [x for x in self.profilecounts if x[2]==self.ps
-                                                if x[1]!='Invalid']:
+        for x in [x for x in self.profilecounts if x[1]==self.ps
+                                                if x[0]!='Invalid']:
             log.log(3,"profile count tuple: {}".format(x))
             if set(self.profilelegit).issuperset(x[1]):
                 self.profilecountsValid.append(x)
@@ -3425,16 +3425,18 @@ class Check():
         # ps-profile combination (aggravated for profile='Invalid')
         # it should only be called when creating/adding to self.profilesbysense
         self.profilecounts={}
-        self.profilecountInvalid=0
+        profilecountInvalid=0
         wcounts=list()
         for ps in self.profilesbysense:
             for profile in self.profilesbysense[ps]:
                 if profile == 'Invalid':
-                    self.profilecountInvalid+=len(self.profilesbysense[ps][
+                    profilecountInvalid+=len(self.profilesbysense[ps][
                                                                     profile])
                 count=len(self.profilesbysense[ps][profile])
                 wcounts.append((count, profile, ps))
-        self.profilecounts=sorted(wcounts,reverse=True)
+        for i in sorted(wcounts,reverse=True):
+            self.profilecounts[(i[1],i[2])]=i[0]
+        log.info('Invalid entries found: {}'.format(profilecountInvalid))
     def printcountssorted(self):
         #This is only used in the basic report
         log.info("Ranked and numbered syllable profiles, by grammatical category:")
