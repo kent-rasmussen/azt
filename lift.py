@@ -2110,7 +2110,7 @@ if __name__ == '__main__':
                                                 tonevalue=fieldvalue,
                                                 showurl=True# what='node'
                                                 ) #'text'
-                    exfieldvalue=url.get('text')
+                    url=exfieldvalue=url.get('text')
                     for e in exfieldvalue:
                         log.info("exfieldvalue: {}".format(e))
                     url_sense=lift.retarget(url,"sense")
@@ -2127,10 +2127,18 @@ if __name__ == '__main__':
                         log.info("guid: {}".format(id))
 
         return
-    for subcheck in range(5):
-        b=lift.get('sense',fieldtype='tone',location=locations[0],
-                    tonevalue=subcheck,showurl=True).get('senseid')
-        print(b)
+    for senseid in senseids:
+        for location in locations:# b=lift.get('sense',fieldtype='tone',location=locations[0],
+        #             tonevalue=subcheck,showurl=True).get('senseid')
+            b=lift.get("example/translation/form/text", senseid=senseid, glosslang='fr',
+                            location=location,showurl=True).get('text')
+            print(b)
+            c=lift.get("example/form/text", senseid=senseid, analang='en',
+                            location=location,showurl=True).get('text')
+            print(c)
+            # for bi in b:
+            #     bt=bi.find('form/text')
+            #     print(bt.text)
         # lift.get("sense", location=locations[0], tonevalue=subcheck,
         #                 path=['tonefield'],showurl=True).get('senseid')
     exit()
