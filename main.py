@@ -8497,7 +8497,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     log.info("Checking that removal worked")
     tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
                         location=self.name).get('text')
-    if tgroups in [[],'']:
+    if tgroups in [[],'',['']]:
         log.info("Field removal succeeded! LIFT says '{}', = []."
                                                             "".format(tgroups))
     elif len(tgroups) == 1:
