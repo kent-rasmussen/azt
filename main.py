@@ -7859,6 +7859,167 @@ class ToolTip(object):
         self.tw= None
         if tw:
             tw.destroy()
+class SliceDict(dict):
+    def makepsok(self):
+        if not(hasattr(self,'_ps') and self._ps in self._pss):
+            self.ps(self._pss[0])
+    def makeprofileok(self):
+        if hasattr(self,'_profile'):
+            log.debug("profile: {}; priority: {}".format(self._profile,self._profiles))
+        else:
+            log.debug("profile priority: {}".format(self._profiles))
+        if not(hasattr(self,'_profile') and self._profile in self._profiles):
+            self._profile=self._profiles[0]
+    def pss(self):
+        return self._pss
+    def ps(self,ps=None):
+        if ps is not None:
+            self._ps=ps
+            self.profilepriority() #this is only done here, when ps changes.
+            # self.makestatusdictps()
+            # self.getprofilestodo()
+            self.makeprofileok()
+        else:
+            self.makepsok()
+            return self._ps
+    def profiles(self):
+        return self._profiles
+    def profile(self,profile=None):
+        if profile is not None:
+            self._profile=profile
+        else:
+            # self.makestatusdictprofile()
+            # self.getframestodo()
+            self.makeprofileok()
+            return self._profile
+    def nextps(self):
+        self.makepsok()
+        index=self._pss.index(self._ps)
+        if index+1 == len(self._pss):
+            self.ps(self._pss[0]) #cycle back
+        else:
+            self.ps(self._pss[index+1])
+    def nextprofile(self):
+        self.makeprofileok()
+        index=self._profiles.index(self._profile)
+        if index+1 == len(self._profiles):
+            self.profile(self._profiles[0]) #cycle back
+        else:
+            self.profile(self._profiles[index+1])
+    def slicepriority(self):
+        self.validate()
+        self._sliceprioritybyps={}
+        try:
+            s=self._slicepriority=[x for x in self._valid.items()]
+            s.sort(key=lambda x: int(x[1]),reverse=True)
+            log.debug("self._valid: {}".format(self._valid))
+            for ps in dict.fromkeys([x[1] for x in self._valid]):
+                s=self._sliceprioritybyps[ps]=[x for x in self._valid.items()
+                                                            if x[0][1] == ps]
+                s.sort(key=lambda x: int(x[1]),reverse=True)
+        except Exception as e:
+            log.error("Most likely a non-integer found when looking for an "
+                        "integer in {} (error: {})".format(s,e))
+    def pspriority(self):
+        if self._slicepriority is not None:
+            self._pss=list(dict.fromkeys([x[0][1]
+                                for x in self._slicepriority]))[:self.maxpss]
+    def profilepriority(self):
+        self.makepsok()
+        slicesbyhzbyps=self._sliceprioritybyps[self._ps]
+        if slicesbyhzbyps is not None:
+            self._profiles=list(dict.fromkeys([x[0][0]
+                                for x in slicesbyhzbyps]))[:self.maxprofiles]
+    def validate(self):
+        self._valid={}
+        self._validbyps={}
+        for k in [x for x in self if x[0] != 'Invalid']:
+            self._valid[k]=self[k]
+        for ps in dict.fromkeys([x[1] for x in self._valid]):
+            self._validbyps[ps]=[x for x in self._valid if x[1] == ps]
+        log.info("valid: {}".format(self._valid))
+        log.info("validbyps: {}".format(self._validbyps))
+    def __init__(self,dict):
+        super(SliceDict, self).__init__()
+        for k in dict:
+            self[k]=dict[k]
+        self.profilecountsValid=0
+        self.profilecounts=0
+        self.maxprofiles=None
+        self.maxpss=None
+        """These two are only done here, as the only change with new data"""
+        self.slicepriority()
+        self.pspriority()
+class StatusDict(dict):
+    def store(self):
+        log.info("Saving status dict to file")
+        self.check.storesettingsfile(setting='status')
+    def dict(self):
+        for k in self:
+            v[k]=self[k]
+        return v
+    def build(self):
+        t=self.checkparameters.type()
+        if t not in self:
+            self[t]={}
+            changed=True
+        ps=self.slicedict.ps()
+        if ps not in self[t]:
+            self[t][ps]={}
+            changed=True
+        profile=self.slicedict.profile()
+        if profile not in self[t][ps]:
+            self[t][ps][profile]={}
+            changed=True
+        check=self.checkparameters.check()
+        if check not in self[t][ps][profile]:
+            self[t][ps][profile][check]={}
+            changed=True
+        if isinstance(self[checktype][ps][profile][check],list):
+            log.info("Updating {}-{} status dict to new schema".format(
+                                                        profile,check))
+            groups=self[checktype][ps][profile][check]
+            self[checktype][ps][profile][check]={}
+            self[checktype][ps][profile][check]['groups']=groups
+            changed=True
+        for key in ['groups','done']:
+            if key not in self[checktype][ps][profile][check]:
+                log.info("Adding {} key to {}-{} status dict".format(
+                                                key,profile,check))
+                self[checktype][ps][profile][check][key]=list()
+                changed=True
+        if 'tosort' not in self[checktype][ps][profile][check]:
+            log.info("Adding tosort key to {}-{} status dict".format(
+                                                key,profile,check))
+            self[checktype][ps][profile][check]['tosort']=True
+            changed=True
+        if changed == True:
+            self.write()
+    def __init__(self, checkparameters, slicedict, dict):
+        super(StatusDict, self).__init__()
+        for k in dict:
+            self[k]=dict[k]
+        self.checkparameters=checkparameters
+        self.slicedict=slicedict
+class CheckParameters(dict):
+    def type(self,type=None):
+        if type is not None:
+            self._type=type
+        else:
+            return self._type
+    def check(self,check=None):
+        if check is not None:
+            self._check=check
+        else:
+            return self._check
+    def subcheck(self,subcheck=None):
+        if subcheck is not None:
+            self._subcheck=subcheck
+        else:
+            return self._subcheck
+    def __init__(self,check):
+        super(CheckParameters, self).__init__()
+        self.check=check
 class ConfigParser(configparser.ConfigParser):
     def write(self,*args,**kwargs):
         configparser.ConfigParser.write(self,*args,**kwargs,
