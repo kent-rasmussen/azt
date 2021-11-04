@@ -36,11 +36,6 @@
 ### Collaboration and Archival
 I **strongly** recommend using a version controlled repository (e.g., mercurial, git), as is normally done in [WeSay](https://software.sil.org/wesay/) and in recommended [FLEx](https://software.sil.org/fieldworks/) collaboration schemes. Even if you are the only one to ever see this data (why would that be?), the advantages in history and preservation of your data are already there. But if you will be sharing changes with others, you really **must** have an easy way to do this, or you will get bogged down in the logistics of sharing data changes. I  use [Language Depot](https://languagedepot.org), though there are certainly other ways to meet this need. In any case, setting this up early is always easier than trying to merge divergent data later.
 
-### Tone Frames
-In order to sort tone data in [A→Z+T](https://github.com/kent-rasmussen/azt), you have to have tone frames defined. There is a tool in [A→Z+T](https://github.com/kent-rasmussen/azt) to help you **define** your tone frames, but help **designing** your tone frames is beyond the scope of [A→Z+T](https://github.com/kent-rasmussen/azt). How to design good tone frames is covered in a field methods course in some graduate linguistics programs, and you have find further help in Keith Snider's Tone Analysis for Field Linguists (2018). If this is not enough for you, you should get help from a linguist that can do this with you. It involves syntactic analysis for each of the grammatical categories that you will study.
-
-Once you **design** frames you want to use, see [below](https://github.com/kent-rasmussen/azt/blob/main/USAGE.md#tone-frames) for technical notes on how to **define** the frame in [A→Z+T](https://github.com/kent-rasmussen/azt).
-
 ## Error Tracking
 Once [A→Z+T](https://github.com/kent-rasmussen/azt) is running normally, it will create a log with more information that you probably want), in a file called `log_<date>.txt`. If something unexpected happens, that file should contain information that will help understand what happened and why. That is recreated on each [A→Z+T](https://github.com/kent-rasmussen/azt) startup, though, so add a meaningful name and send it to me before running [A→Z+T](https://github.com/kent-rasmussen/azt) again.
 
