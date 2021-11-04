@@ -4315,7 +4315,7 @@ class Check():
         self.db.addmodexamplefields( #This should only mod if already there
                                     senseid=senseid,
                                     analang=self.analang,
-                                    forms=framed,
+                                    framed=framed,
                                     fieldtype='tone',location=self.name,
                                     fieldvalue=self.groupselected
                                     )
@@ -8330,9 +8330,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     #This should only *mod* if already there
     self.db.addmodexamplefields(senseid=senseid,
                             analang=self.analang,
-                            glosslang=self.glosslang,
-                            glosslang2=self.glosslang2, #OK if None
-                            forms=framed,
+                            framed=framed,
                             fieldtype='tone',location=self.name,
                             fieldvalue='',showurl=True) #this value should be the only change
     log.info("Checking that removal worked")
