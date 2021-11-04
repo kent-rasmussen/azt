@@ -54,6 +54,7 @@ if program['tkinter']==True:
 """else:
     import kivy
 """
+import ast
 import time
 import datetime
 import wave
@@ -62,6 +63,7 @@ import unicodedata
 # from PIL import Image #, ImageTk
 #import Image #, ImageTk
 import re
+import configparser
 import rx
 import inspect #this is for determining this file name and location
 import reports
@@ -125,23 +127,8 @@ class Check():
         else:
             print(_("Apparently we've run this before today; not backing "
             "up again."))
-        self.defaultfile=file.getdiredurl(filedir,
-                                        filenamebase+".CheckDefaults.py")
-        self.toneframesfile=file.getdiredurl(filedir,
-                                        filenamebase+".ToneFrames.py")
-        self.statusfile=file.getdiredurl(filedir,
-                                        filenamebase+".VerificationStatus.py")
-        self.profiledatafile=file.getdiredurl(filedir,
-                                        filenamebase+".ProfileData.py")
-        self.adhocgroupsfile=file.getdiredurl(filedir,
-                                        filenamebase+".AdHocGroups.py")
-        self.soundsettingsfile=file.getdiredurl(filedir,
-                                        filenamebase+".SoundSettings.py")
-        for savefile in [self.defaultfile,self.toneframesfile,self.statusfile,
-                        self.profiledatafile,self.adhocgroupsfile,
-                        self.soundsettingsfile]:
-            if not file.exists(savefile):
-                print(savefile, "doesn't exist!")
+        # self.glosslangs=Glosslangs(None,None) #needed for upgrading
+        self.settingsfilecheck(file.getdiredurl(filedir,filenamebase))
         self.imagesdir=file.getimagesdir(self.filename)
         self.audiodir=file.getaudiodir(self.filename)
         log.info('self.audiodir: {}'.format(self.audiodir))
@@ -152,7 +139,6 @@ class Check():
         log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
-        self.settingsbyfile() #This just sets the variable
         self.loadsettingsfile(setting='toneframes')
         if not hasattr(self,'toneframes'):
             self.toneframes={}
@@ -233,6 +219,22 @@ class Check():
         # log.info(n)
         self.mainlabelrelief()
         self.checkcheck()
+    def settingsfilecheck(self,basename):
+        self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
+        self.toneframesfile=basename.with_suffix(".ToneFrames.ini")
+        self.statusfile=basename.with_suffix(".VerificationStatus.dat")
+        self.profiledatafile=basename.with_suffix(".ProfileData.dat")
+        self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.ini")
+        self.soundsettingsfile=basename.with_suffix(".SoundSettings.ini")
+        self.settingsbyfile() #This just sets the variable
+        for setting in self.settings:#[setting]
+            savefile=self.settingsfile(setting)#self.settings[setting]['file']
+            if not file.exists(savefile):
+                log.debug("{} doesn't exist!".format(savefile))
+                legacy=savefile.with_suffix('.py')
+                if file.exists(legacy):
+                    log.debug("But legacy file {} does; converting!".format(legacy))
+                    self.loadandconvertlegacysettingsfile(setting=setting)
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
@@ -1551,61 +1553,125 @@ class Check():
                 'CV':{'sg':_('Consonant-Vowel combination'),'pl':_('Consonant-Vowel combinations')},
                 'T':{'sg':_('Tone'),'pl':_('Tones')},
                 }
-    def storesettingsfile(self,setting='defaults'):
+    def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
-            filename=getattr(self,fileattr)
-        self.f = open(filename, "w", encoding='utf-8')
+            return getattr(self,fileattr)
+        else:
+            log.error("No file name for setting {}!".format(setting))
+    def storesettingsfile(self,setting='defaults'):
+        filename=self.settingsfile(setting)
+        config=ConfigParser()
+        config['default']={}
         if setting == 'soundsettings':
             o=self.soundsettings
         else:
             o=self
         for s in self.settings[setting]['attributes']:
             if hasattr(o,s):
+                log.debug("Trying to set {} with value {}".format(s,getattr(o,s)))
                 v=getattr(o,s)
-                if v is not None:
-                    self.f.write(s+'=')
-                    pprint.pprint(v,stream=self.f)
-                    log.log(3,"{}={} stored in {}.".format(s,v,filename))
+                if isinstance(v, dict):
+                    config[s]=getattr(o,s)
                 else:
-                    log.log(3,"{}={}! Not stored in {}.".format(s,v,filename))
-        self.f.close()
-    def loadsoundsettings(self):
+                    config['default'][s]=str(v)
+        if config['default'] == {}:
+            del config['default']
+        with open(filename, "w", encoding='utf-8') as file:
+            config.write(file)
+    def makesoundsettings(self):
         if not hasattr(self,'soundsettings'):
+            self.pyaudiocheck() #in case self.pyaudio isn't there yet
             self.soundsettings=sound.SoundSettings(self.pyaudio)
+    def loadsoundsettings(self):
+        self.makesoundsettings()
         self.loadsettingsfile(setting='soundsettings')
-    def loadsettingsfile(self,setting='defaults'):
-        fileattr=self.settings[setting]['file']
-        if hasattr(self,fileattr):
-            filename=getattr(self,fileattr)
+    def loadandconvertlegacysettingsfile(self,setting='defaults'):
+        savefile=self.settingsfile(setting)
+        legacy=savefile.with_suffix('.py')
+        log.info("Going to make {} into {}".format(legacy,savefile))
         if setting == 'soundsettings':
+            self.makesoundsettings()
             o=self.soundsettings
         else:
             o=self
+        ori={}
         try:
-            log.debug("Trying for {} settings in {}".format(setting, filename))
-            spec = importlib.util.spec_from_file_location(setting,filename)
+            log.debug("Trying for {} settings in {}".format(setting, legacy))
+            spec = importlib.util.spec_from_file_location(setting,legacy)
             module = importlib.util.module_from_spec(spec)
-            #If this fails, check your file syntax carefully!
-            # you may need coding=UTF-8 run run it for syntax errors
             sys.modules[setting] = module
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
                 if hasattr(module,s):
-                    log.log(5,"Found attribute {} with value {}".format(s,
-                                getattr(module,s)))
-                    if type(getattr(module,s)) is list:
-                        setattr(o,s,[])
-                        for i in getattr(module,ss):
-                            getattr(o,s).append(i)
-                    else:
-                        setattr(o,s,getattr(module,ss))
+                    ori[s]=getattr(module,s)
+                    setattr(o,s,ori[s])
         except:
-            log.error("Problem importing {}".format(filename))
-            for s in self.settings[setting]['attributes']:
-                log.log(3,"looking for self.{}".format(s))
-                if hasattr(o,s):
-                    log.log(3,"Using {}: {}".format(s,getattr(o,s)))
+            log.error("Problem importing {}".format(legacy))
+        if ('profilesbysense' in self.settings[setting]['attributes'] and
+                hasattr(self,'profilesbysense') and self.profilesbysense != {}):
+            self.makecountssorted() #because this changed structure
+            ori['profilecounts']=self.profilecounts #store the new version
+        if 'glosslangs' in self.settings[setting]['attributes']:
+            self.glosslangs=Glosslangs(getattr(module,'glosslang'),
+                        getattr(module,'glosslang2')) # b/c structure changed
+        self.storesettingsfile(setting=setting) #do last
+        self.loadsettingsfile(setting=setting) #verify write and read
+        for s in self.settings[setting]['attributes']:
+            if s in ori and hasattr(o,s) and ori[s] == getattr(o,s):
+                log.info("Attribute {} verified as {}={}".format(s,ori[s],
+                                                                getattr(o,s)))
+            elif s == 'glosslangs':
+                if getattr(o,s) == [getattr(module,'glosslang'),
+                                        getattr(module,'glosslang2')]:
+                    log.info("Glosslangs attribute verified as {}=[‘{}’,‘{}’]"
+                        "".format(getattr(o,s),getattr(module,'glosslang'),
+                                                getattr(module,'glosslang2')))
+                else:
+                    log.info("Glosslangs attribute problem! {}≠[‘{}’,‘{}’]"
+                        "".format(getattr(o,s),getattr(module,'glosslang'),
+                                                getattr(module,'glosslang2')))
+            else:
+                if s in ori:
+                    if hasattr(o,s):
+                        log.error("Problem with attribute {}; {}≠{}".format(s,
+                                                        ori[s], getattr(o,s)))
+                    else:
+                        log.error("Problem with attribute {}".format(s))
+                    log.error("You should send in an error report for this.")
+                    exit()
+        log.info("Settings file {} converted to {}, with each value verified."
+                "".format(legacy,savefile))
+    def loadsettingsfile(self,setting='defaults'):
+        filename=self.settingsfile(setting)
+        config=ConfigParser()
+        config.read(filename)
+        if len(config.sections()) == 0:
+            return
+        if setting == 'soundsettings':
+            o=self.soundsettings
+        else:
+            o=self
+        log.debug("Trying for {} settings in {}".format(setting, filename))
+        for section in self.settings[setting]['attributes']:
+            if section in config:
+                if len(config[section].values())>0:
+                    log.debug("Found Dictionary value for {}".format(section))
+                    setattr(o,section,{})
+                    for s in config[section]:
+                        getattr(o,section)[ofromstr(s)]=ofromstr(
+                                                            config[section][s])
+                else:
+                    log.debug("Found String/list/other value for {}".format(
+                                                            config[section]))
+                    setattr(o,section,config[section])
+                log.debug("Confirmed attribute {} with value {}, type: {}"
+                            "".format(section,getattr(o,section),
+                                                    type(getattr(o,section))))
+            elif 'default' in config and section in config['default']:
+                setattr(o,section,ofromstr(config['default'][section]))
+            if 'glosslangs' in self.settings[setting]['attributes']:
+                self.glosslangs=Glosslangs(self.glosslangs)
     def makeadhocgroupsdict(self, ps=None):
         # self.ps and self.profile should be set when this is called
         if ps is None:
@@ -7793,6 +7859,18 @@ class ToolTip(object):
         self.tw= None
         if tw:
             tw.destroy()
+class ConfigParser(configparser.ConfigParser):
+    def write(self,*args,**kwargs):
+        configparser.ConfigParser.write(self,*args,**kwargs,
+                                            space_around_delimiters=False)
+    def __init__(self):
+        super(ConfigParser, self).__init__(
+        converters={'list':list},
+        delimiters=(' = ', ' : ')
+        )
+        self.optionxform=str
+        self.allow_no_value=True
+        # self.converters={'list':list} #lambda x: [i.strip() for i in x.split(',')]
 class Options:
     def alias(self,o):
         return self.odict.get(o,o)
@@ -8359,6 +8437,12 @@ def setexitflag(self,exitFlag):
     self.protocol("WM_DELETE_WINDOW", lambda s=self:on_quit(s))
 def openweburl(url):
     webbrowser.open_new(url)
+def ofromstr(x):
+    try:
+        return ast.literal_eval(x)
+    except (SyntaxError,ValueError) as e:
+        log.debug("Assuming ‘{}’ is a string ({})".format(x,e))
+        return x
 def on_quit(self):
     # Do this when a window closes, so any window functions can know
     # to just stop, rather than trying and throwing an error. This doesn't
