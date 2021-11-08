@@ -762,7 +762,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             output[lang]=self.gloss(**kwargs)
             if output[lang] == []:
                 kwargs['truncate']=True
-                forms=self.definition(**kwargs)
+                output[lang]=self.definition(**kwargs)
         return output
     def citationorlexeme(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
