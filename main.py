@@ -3753,6 +3753,8 @@ class Check():
             done=_("All ‘{}’ tone groups in the ‘{}’ frame are verified and "
                     "distinct!".format(self.profile,self.name))
             row=0
+            if self.exitFlag.istrue():
+                return
             Label(self.runwindow.frame, text=done).grid(row=row,column=0,
                                                         columnspan=2)
             row+=1
@@ -3850,6 +3852,8 @@ class Check():
         status=self.status[self.type][self.ps][self.profile][self.name]
         groups=status['groups']
         """Children of runwindow.frame"""
+        if self.exitFlag.istrue():
+            return
         titles=Frame(self.runwindow.frame)
         titles.grid(row=0, column=0, sticky="ew", columnspan=2)
         Label(self.runwindow.frame, image=self.parent.photo['sortT'],
@@ -4125,7 +4129,8 @@ class Check():
         if len(self.status[self.type][self.ps][self.profile][self.name][
                                                             'groups']) <2:
             log.debug("No tone groups to distinguish!")
-            self.runwindow.waitdone()
+            if not self.exitFlag.istrue():
+                self.runwindow.waitdone()
             return 0
         title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
                                         self.languagenames[self.analang],
