@@ -1015,17 +1015,36 @@ class Check():
                 frame[lang]=str(
                     db['before'][lang]['text']+'__'+db['after'][lang]['text'])
             log.info('gimmesenseid::')
-            senseid=self.gimmesenseid()
-            log.info('gimmesenseid:{}'.format(senseid))
-            # This needs self.toneframes
-            log.info('getframeddata::')
-            framed=self.datadict.getframeddata(senseid)
-            log.info('getframeddata: {}'.format(framed.forms))
-            framed.setframe(self.name)
-            log.info('post setframe:{} ({})'.format(framed.framed,self.name))
-            #At this point, remove this frame (in case we don't submit it)
-            del self.toneframes[self.ps][self.name]
-            self.name=self.nameori
+            senseid=self.gimmesenseidwgloss() #don't give exs w/o all glosses
+            log.info('gimmesenseid result: {}'.format(senseid))
+            """This will need to be updated to slices!"""
+            log.info('self.profilesbysense: {}'.format(self.profilesbysense))
+            log.info('self.profilesbysense[ps] result: {}'.format(self.profilesbysense[self.ps]))
+            if senseid not in self.profilesbysense[self.ps]:
+                log.info('bad senseid; showing error')
+                self.addwindow.framechk=Frame(self.addwindow.scroll.content)
+                self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
+                lt=Label(self.addwindow.framechk,
+                        text=senseid,
+                        font=self.fonts['read'],
+                        justify=tkinter.LEFT,anchor='w')
+                lt.grid(row=0,column=0,#row=row,column=columnleft,
+                        sticky='w',columnspan=2)
+                del self.toneframes[self.ps][self.name]
+                self.name=self.nameori
+                return
+            else:
+                text=_("Examples for {} tone frame").format(namevar)
+                log.info('gimmesenseid:{}'.format(senseid))
+                # This needs self.toneframes
+                log.info('getframeddata::')
+                framed=self.datadict.getframeddata(senseid)
+                log.info('getframeddata: {}'.format(framed.forms))
+                framed.setframe(self.name)
+                log.info('post setframe:{} ({})'.format(framed.framed,self.name))
+                #At this point, remove this frame (in case we don't submit it)
+                del self.toneframes[self.ps][self.name]
+                self.name=self.nameori
             """Display framed data"""
             if hasattr(self.addwindow,'framechk'):
                 self.addwindow.framechk.destroy()
