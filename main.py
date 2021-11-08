@@ -754,10 +754,10 @@ class Check():
             log.log(2,"ids: {}".format(self.senseidstosort))
             self.set('profile',profilevar.get(),refresh=False) #checkcheck below
             #Add to dictionaries before updating them below
-            log.debug("profile: {}".format(self.profile))
-            self.makeadhocgroupsdict() # put variable & ps in self.adhocgroups.
-            self.adhocgroups[self.ps][self.profile]=self.profilesbysense[
-                                    self.ps][self.profile]=self.senseidstosort
+            log.debug("profile: {}".format(profile))
+            """Fix this!"""
+            self.slices.adhoc(ids)#[ps][profile]=ids
+            """Is this OK?!?"""
             self.makecountssorted() #we need these to show up in the counts.
             self.storesettingsfile(setting='profiledata')#since we changed this.
             #so we don't have to do this again after each profile analysis
