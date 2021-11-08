@@ -1018,9 +1018,8 @@ class Check():
             senseid=self.gimmesenseidwgloss() #don't give exs w/o all glosses
             log.info('gimmesenseid result: {}'.format(senseid))
             """This will need to be updated to slices!"""
-            log.info('self.profilesbysense: {}'.format(self.profilesbysense))
-            log.info('self.profilesbysense[ps] result: {}'.format(self.profilesbysense[self.ps]))
-            if senseid not in self.profilesbysense[self.ps]:
+            if senseid not in [i for j in self.profilesbysense[self.ps].values()
+                                                                    for i in j]:
                 log.info('bad senseid; showing error')
                 self.addwindow.framechk=Frame(self.addwindow.scroll.content)
                 self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
