@@ -141,10 +141,7 @@ class Check():
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.loadsettingsfile(setting='toneframes')
         if not hasattr(self,'toneframes'):
-            self.toneframes={}
-        self.loadsettingsfile(setting='status')
-        if not hasattr(self,'status'):
-            self.status={}
+            self.toneframes=ToneFrames({})
         self.loadsettingsfile(setting='adhocgroups')
         if nsyls is not None:
             self.nsyls=nsyls
