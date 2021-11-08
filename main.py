@@ -204,10 +204,10 @@ class Check():
         self.makeslicedict()
 =======
             log.debug("Ending ps-profile: {}-{}".format(self.ps,self.profile))
-        self.slices=SliceDict(self.profilecounts)
         self.params=CheckParameters(self.toneframes,self.profilesbysense)
         if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
             self.adhocgroups={}
+        self.slices=SliceDict(self.params,self.adhocgroups,self.profilecounts)
         self.getprofilestodo()
         self.getpss() #This is a prioritized list of all ps'
 >>>>>>> implement slices
