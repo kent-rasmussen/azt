@@ -996,7 +996,7 @@ class Check():
                         justify=tkinter.LEFT,anchor='w')
                 l1.grid(row=0,column=columnleft,sticky='w')
                 return
-            print('self.name:',self.name)
+            log.info('self.name:{}'.format(self.name))
             if self.toneframes is None:
                 self.toneframes={}
             if not self.ps in self.toneframes:
@@ -1014,10 +1014,15 @@ class Check():
                                                             'entryfield'].get()
                 frame[lang]=str(
                     db['before'][lang]['text']+'__'+db['after'][lang]['text'])
+            log.info('gimmesenseid:')
             senseid=self.gimmesenseid()
+            log.info('gimmesenseid:{}'.format(senseid))
             # This needs self.toneframes
+            log.info('getframeddata:')
             framed=self.datadict.getframeddata(senseid)
+            log.info('getframeddata:{}'.format(framed))
             framed.setframe(self.name)
+            log.info('setframe:{} ({})'.format(framed,self.name))
             #At this point, remove this frame (in case we don't submit it)
             del self.toneframes[self.ps][self.name]
             self.name=self.nameori
@@ -1031,12 +1036,14 @@ class Check():
             padx=50
             pady=10
             row=0
+            text=_("Examples for {} tone frame").format(namevar)
             lt=Label(self.addwindow.framechk,
-                    text="Examples for {} tone frame".format(namevar),
+                    text=text,
                     font=self.fonts['readbig'],
                     justify=tkinter.LEFT,anchor='w')
             lt.grid(row=row,column=columnleft,sticky='w',columnspan=2,
                     padx=padx,pady=pady)
+            log.info('getframeddata:{}'.format(framed))
             for lang in langs:
                 row+=1
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
@@ -1053,6 +1060,8 @@ class Check():
                         justify=tkinter.LEFT,anchor='w')
                 l2.grid(row=row,column=columnleft+1,sticky='w',padx=padx,
                                                                 pady=pady)
+                log.info('langlabel:{}-{}'.format(tf[lang],tfd[lang]))
+
             """toneframes={'Nom':
                             {'name/location (e.g.,"By itself")':
                                 {'analang.xyz': '__',
@@ -1065,6 +1074,7 @@ class Check():
             sub_btn=Button(self.addwindow.framechk,text = stext,
                       command = lambda x=frame,n=namevar: submit(x,n))
             sub_btn.grid(row=row,column=columnleft,sticky='w')
+            log.info('sub_btn:{}'.format(stext))
             self.addwindow.scroll.windowsize() #make sure scroll's big enough
         def unchk(event):
             #This is here to keep people from thinking they are approving what's
