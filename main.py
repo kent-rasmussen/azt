@@ -1055,14 +1055,12 @@ class Check():
             padx=50
             pady=10
             row=0
-            text=_("Examples for {} tone frame").format(namevar)
             lt=Label(self.addwindow.framechk,
                     text=text,
                     font=self.fonts['readbig'],
                     justify=tkinter.LEFT,anchor='w')
             lt.grid(row=row,column=columnleft,sticky='w',columnspan=2,
                     padx=padx,pady=pady)
-            log.info('getframeddata (header):{}'.format(framed.framed))
             for lang in langs:
                 row+=1
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
