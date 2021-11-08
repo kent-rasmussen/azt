@@ -1047,7 +1047,7 @@ class Check():
             for lang in langs:
                 row+=1
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
-                tfd[lang]=('(ex: '+framed.forms.framed[lang]+')')
+                tfd[lang]=('(ex: '+str(framed.forms.framed[lang])+')')
                 l1=Label(self.addwindow.framechk,
                         text=tf[lang],
                         font=self.fonts['read'],
