@@ -196,6 +196,9 @@ class Check():
             self.storesettingsfile(setting='profiledata')
             log.debug("Ending ps-profile: {}-{}".format(self.ps,self.profile))
         self.slices=SliceDict(self.profilecounts)
+        self.params=CheckParameters(self.toneframes,self.profilesbysense)
+        if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
+            self.adhocgroups={}
         self.getprofilestodo()
         self.getpss() #This is a prioritized list of all ps'
         self.setnamesall() #sets self.checknamesall
