@@ -1091,6 +1091,7 @@ class Check():
                       command = lambda x=frame,n=namevar: submit(x,n))
             sub_btn.grid(row=row,column=columnleft,sticky='w')
             log.info('sub_btn:{}'.format(stext))
+            self.addwindow.scroll.tobottom()
             self.addwindow.scroll.windowsize() #make sure scroll's big enough
         def unchk(event):
             #This is here to keep people from thinking they are approving what's
@@ -6419,7 +6420,7 @@ class ScrollingFrame(Frame):
         self.canvas.yview_scroll(1,"units")
     def _on_mousewheeldown(self, event):
         self.canvas.yview_scroll(-1,"units")
-    def _configure_interior(self, event):
+    def _configure_interior(self, event=None):
         #This configures self.content
         if not hasattr(self,'configured'):
             self.configured=0
@@ -6495,14 +6496,21 @@ class ScrollingFrame(Frame):
         self.config(height=height, width=width)
         # if self.winfo_height() > self.maxheight:
         #     self.config(height=self.maxheight)
-    def _configure_canvas(self, event):
+    def _configure_canvas(self, event=None):
         #this configures self.canvas
-        if self.content.winfo_reqwidth() != self.canvas.winfo_width():
+        if self.content.winfo_reqwidth() <= self.canvas.winfo_width():
             # update the inner frame's width to fill the canvas
             self.canvas.itemconfigure(self.content_id,
                                         width=self.canvas.winfo_width())
+        if self.content.winfo_reqheight() <= self.canvas.winfo_height():
+            self.canvas.itemconfigure(self.content_id,
+                                        width=self.canvas.winfo_height())
+        self.canvas.config(scrollregion=self.canvas.bbox("all"))
         # if self.winfo_height() > self.maxheight:
         #     self.config(height=self.maxheight)
+    def tobottom(self):
+        self.update_idletasks()
+        self.canvas.yview_moveto(1)
     def __init__(self,parent,xscroll=False):
         """Make this a Frame, with all the inheritances, I need"""
         self.parent=parent
