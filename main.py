@@ -335,62 +335,12 @@ class Check():
         self.pss=self.slices.pss() #make this one line, remove self.pss
         return self.pss
         #Why rebuild this here?
-        if not hasattr(self,'profilecountsValid'): #in case it isn't there.
-            self.profilecountsValid=[]
-        if self.profilecountsValid == []:
-            for x in [x for x in self.profilecounts if x[1]!='Invalid']:
-                self.profilecountsValid.append(x)
-        pssdups=[x[2] for x in self.profilecountsValid]
-        self.pss=[]
-        for ps in pssdups:
-            if ps not in self.pss:
-                self.pss.append(ps)
     def nextps(self,guess=False):
         """Make this smarter, but for now, just take value from the most
         populous tuple"""
-        self.getpss()
-        log.debug('Profiles in priority order: {}'.format(self.pss))
-        if (guess == True) or (self.ps not in self.pss):
-            self.set('ps',self.pss[0])
-        else:
-            index=self.pss.index(self.ps)
-            log.debug("{} ps found in valid pss; "
-                    "selecting next one in this list: {}".format(self.ps,
-                                                                self.pss))
-            if index+1 == len(self.pss):
-                self.set('ps',self.pss[0]) #cycle back
-            else:
-                self.set('ps',self.pss[index+1])
-            if index >= self.maxpss:
-                return 1 #We hit the max already, but give a valid profile
+        return self.slices.nextps()
     def nextprofile(self,guess=False):
-        if len(self.profilecountsValid) >0:
-            profiles=[x[1] for x in self.profilecountsValid]
-            if (guess == True) or (self.profile not in profiles):
-                if self.profile not in profiles:
-                    log.debug("{} profile not in valid profiles for "
-                                "ps {}.".format(self.profile,self.ps))
-                self.set('profile',self.profilecountsValid[0][1])
-                if guess == True:
-                    log.debug("Guessing {} profile, from valid profiles for "
-                                "ps {}: {}.".format(self.profile,self.ps,
-                                                    self.profilecountsValid))
-            else:
-                index=profiles.index(self.profile)
-                log.debug("{} profile found in valid profiles for ps {}; "
-                            "selecting next one in this list: {}".format(
-                            self.profile,self.ps,self.profilecountsValid))
-                if index+1 == len(self.profilecountsValid):
-                    self.set('profile',self.profilecountsValid[0][1]) #cycle back
-                else:
-                    self.set('profile',self.profilecountsValid[index+1][1])
-                if index >= self.maxprofiles:
-                    return 1 #We hit the max already, but give a valid profile
-        else:
-            log.error("For some reason, I don't see any Valid profiles for "
-                        "ps {}. This is likely a problem with your syllable "
-                        "profile analysis.".format(self.ps))
-            self.set('profile',self.profilecounts[0][1])
+        return self.slices.nextprofile()
     def nextframe(self,sort=True,guess=False):
         def default():
             self.set('name',todo[0])
