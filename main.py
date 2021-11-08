@@ -200,6 +200,9 @@ class Check():
         self.getprofilestodo()
         self.getpss() #This is a prioritized list of all ps'
         self.setnamesall() #sets self.checknamesall
+        self.loadsettingsfile(setting='status')
+        if not hasattr(self,'status'): #I.e., not loaded from file
+            self.status=StatusDict(self.params, self.slices, {})
         #This can wait until runcheck, right?
         # if (hasattr(self,'ps') and (self.ps is not None) and
         #     hasattr(self,'profile') and (self.profile is not None) and
