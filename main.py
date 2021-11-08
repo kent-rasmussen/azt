@@ -2085,7 +2085,7 @@ class Check():
                 "fields)?").format(tried,self.db.nsenseids,langs)
                 log.error(errortext)
                 return errortext
-        log("Found entry {} with glosses {}".format(senseid,gloss))
+        log.debug("Found entry {} with glosses {}".format(senseid,gloss))
         return senseid
     def gimmesenseid(self):
         idsbyps=self.db.get('sense',ps=self.ps).get('senseid')
