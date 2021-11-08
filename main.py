@@ -2069,12 +2069,12 @@ class Check():
         gloss={}
         langs=[self.glosslang,self.glosslang2]
         for lang in langs:
-            gloss[lang]=None
-        while None in gloss.values():
+            gloss[lang]=''
+        while '' in gloss.values():
             senseid=self.gimmesenseid()
             for lang in langs:
-                gloss[lang]=unlist(self.db.get('gloss/text',
-                                senseid=senseid, glosslang=lang).get('text'))
+                gloss[lang]=self.db.glossordefn(senseid=senseid,glosslang=lang,
+                                                showurl=True)[0]
             tried+=1
             if tried> self.db.nsenseids*1.5:
                 errortext=_("I've tried (randomly) {} times, and not found one "
