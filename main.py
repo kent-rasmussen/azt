@@ -2047,6 +2047,29 @@ class Check():
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
         return idsbyps[randint(0, len(idsbyps))]
+    def gimmesenseidwgloss(self):
+        tried=0
+        gloss={}
+        langs=[self.glosslang,self.glosslang2]
+        for lang in langs:
+            gloss[lang]=None
+        while None in gloss.values():
+            senseid=self.gimmesenseid()
+            for lang in langs:
+                gloss[lang]=unlist(self.db.get('gloss/text',
+                                senseid=senseid, glosslang=lang).get('text'))
+            tried+=1
+            if tried> self.db.nsenseids*1.5:
+                errortext=_("I've tried (randomly) {} times, and not found one "
+                "of your {} senses with a gloss in each of these languages: "
+                "{}. \nAre you asking for gloss "
+                "languages which actually have data in your database? \nOr, are "
+                "you missing gloss fields (i.e., you have only 'definition' "
+                "fields)?").format(tried,self.db.nsenseids,langs)
+                log.error(errortext)
+                return errortext
+        log("Found entry {} with glosses {}".format(senseid,gloss))
+        return senseid
     def gimmesenseid(self):
         idsbyps=self.db.get('sense',ps=self.ps).get('senseid')
         return idsbyps[randint(0, len(idsbyps)-1)]
