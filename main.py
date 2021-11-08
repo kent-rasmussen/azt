@@ -1020,9 +1020,9 @@ class Check():
             # This needs self.toneframes
             log.info('getframeddata::')
             framed=self.datadict.getframeddata(senseid)
-            log.info('getframeddata:{}'.format(framed.forms))
+            log.info('getframeddata: {}'.format(framed.forms))
             framed.setframe(self.name)
-            log.info('setframe:{} ({})'.format(framed.framed,self.name))
+            log.info('post setframe:{} ({})'.format(framed.framed,self.name))
             #At this point, remove this frame (in case we don't submit it)
             del self.toneframes[self.ps][self.name]
             self.name=self.nameori
@@ -1043,7 +1043,7 @@ class Check():
                     justify=tkinter.LEFT,anchor='w')
             lt.grid(row=row,column=columnleft,sticky='w',columnspan=2,
                     padx=padx,pady=pady)
-            log.info('getframeddata:{}'.format(framed))
+            log.info('getframeddata (header):{}'.format(framed.framed))
             for lang in langs:
                 row+=1
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
@@ -6022,8 +6022,12 @@ class DictbyLang(dict):
     def frame(self,framedict,langs): #langs can/should be ordered
         """the frame only applies if there is a language value; I hope that's
         what we want..."""
+        log.info("Applying frame {} in these langs: {}".format(framedict,langs))
+        log.info("Using regex {}".format(rx.framerx))
         for l in [i for i in langs if i in framedict if i in self and self[i] != []]:
+            log.info("Using lang {}".format(l))
             self.framed[l]=rx.framerx.sub(self[l],framedict[l])
+        log.info("Applied frame: {}".format(self.framed))
     def __init__(self):
         super(DictbyLang, self).__init__()
         self.framed={}
@@ -6069,7 +6073,7 @@ class FramedData(object):
         return ' '.join(toformat) #put it all together
     def setframe(self,frame):
         log.info("setframe::".format(frame))
-        log.info("setframe adding to {}".format(self.frames[self.ps]))
+        log.info("setframe reading from {}".format(self.frames[self.ps]))
         self.frame=self.frames[self.ps][frame]
         self.applyframe()
     def noframe(self):
@@ -6079,9 +6083,10 @@ class FramedData(object):
         if not self.noframe:
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
+            log.info("setframe framed: {}".format(self.forms.framed))
         else:
             self.noframe()
-        log.info("setframe done: {}".format(self.framed))
+        log.info("applyframe done: {}".format(self.framed))
     def gettonegroup(self):
         if self.location is not None:
             self.tonegroups=self.db.get('example/tonefield/form/text',
