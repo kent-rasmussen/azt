@@ -6054,7 +6054,10 @@ class DictbyLang(dict):
         log.info("Using regex {}".format(rx.framerx))
         for l in [i for i in langs if i in framedict if i in self and self[i] != []]:
             log.info("Using lang {}".format(l))
-            self.framed[l]=rx.framerx.sub(self[l],framedict[l])
+            if self[l] is not None:
+                self.framed[l]=rx.framerx.sub(self[l],framedict[l])
+            else:
+                self.framed[l]=None
         log.info("Applied frame: {}".format(self.framed))
     def __init__(self):
         super(DictbyLang, self).__init__()
