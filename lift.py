@@ -737,7 +737,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return output
     def definition(self,**kwargs):
         truncate=kwargs.pop('truncate',False)
-        forms=self.get('definition', **kwargs).get('text')
+        forms=self.get('definition/form/text', **kwargs).get('text')
         if truncate:
             forms=[rx.glossifydefn(f) for f in forms]
         return forms
@@ -1013,7 +1013,7 @@ class LiftURL():
         self.build("gloss","lang","glosslang")
     def definition(self):
         self.baselevel()
-        self.build("definition","lang","glosslang")
+        self.build("definition")
         self.form("definition","glosslang")
     def example(self):
         self.baselevel()
