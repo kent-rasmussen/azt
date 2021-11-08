@@ -1014,15 +1014,15 @@ class Check():
                                                             'entryfield'].get()
                 frame[lang]=str(
                     db['before'][lang]['text']+'__'+db['after'][lang]['text'])
-            log.info('gimmesenseid:')
+            log.info('gimmesenseid::')
             senseid=self.gimmesenseid()
             log.info('gimmesenseid:{}'.format(senseid))
             # This needs self.toneframes
-            log.info('getframeddata:')
+            log.info('getframeddata::')
             framed=self.datadict.getframeddata(senseid)
-            log.info('getframeddata:{}'.format(framed))
+            log.info('getframeddata:{}'.format(framed.forms))
             framed.setframe(self.name)
-            log.info('setframe:{} ({})'.format(framed,self.name))
+            log.info('setframe:{} ({})'.format(framed.framed,self.name))
             #At this point, remove this frame (in case we don't submit it)
             del self.toneframes[self.ps][self.name]
             self.name=self.nameori
@@ -6035,8 +6035,10 @@ class FramedDataDict(dict):
     def getframeddata(self, source, **kwargs):
         self.updatelangs()
         if source not in self:
+            log.debug("source {} not there, making...".format(source))
             self[source]=FramedData(self,source,**kwargs)
         else:
+            log.debug("source {} alread there, using...".format(source))
             self[source].updatelangs()
         return self[source]
     def __init__(self, check, **kwargs):
@@ -6066,16 +6068,20 @@ class FramedData(object):
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join(toformat) #put it all together
     def setframe(self,frame):
+        log.info("setframe::".format(frame))
+        log.info("setframe adding to {}".format(self.frames[self.ps]))
         self.frame=self.frames[self.ps][frame]
         self.applyframe()
     def noframe(self):
         self.framed=self.forms
     def applyframe(self):
+        log.info("setframe::")
         if not self.noframe:
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
         else:
             self.noframe()
+        log.info("setframe done: {}".format(self.framed))
     def gettonegroup(self):
         if self.location is not None:
             self.tonegroups=self.db.get('example/tonefield/form/text',
@@ -6168,6 +6174,9 @@ class FramedData(object):
                         '\nThis is almost certainly not what you want!'
                         '\nFYI, I was looking for {}'.format(source))
             return source
+        log.info("FramedData initalization done.")
+        log.info("FramedData forms: {}".format(self.forms))
+        # log.info("FramedData framed: {}".format(self.framed))
         """The following is the same for senses or examples"""
         # # just for convenience:
         # self.analang=self.forms[self.analangs[0]]
