@@ -279,9 +279,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         senseid=kwargs.get('senseid')
         location=kwargs.get('location')
         fieldtype=kwargs.get('fieldtype','tone') # needed? ever not 'tone'?
-        exfieldvalue=self.get("example/tonefield/form/text", senseid=senseid,
-                                location=location).get('node')
-        # Set values for any duplicates, too. Don't leave inconsisted data.
+        oldtonevalue=kwargs.get('oldfieldvalue',None)
+        if oldtonevalue is None:
+            exfieldvalue=self.get("example/tonefield/form/text",
+                    senseid=senseid, location=location).get('node')
+        else:
+            exfieldvalue=self.get("example/tonefield/form/text",
+                senseid=senseid, tonevalue=oldtonevalue, #to clear just "NA" values
+                location=location).get('node')
+            # Set values for any duplicates, too. Don't leave inconsisted data.
         tonevalue=kwargs.get('fieldvalue') #don't test for this above
         analang=kwargs.get('analang')
         framed=kwargs.get('framed',None) #This an object with values
