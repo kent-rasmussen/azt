@@ -1364,8 +1364,9 @@ class LiftURL():
                 afterbp=self.drafturl().split(self.unalias(bp))
                 log.log(4,"b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
                 log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
-                if (len(afterbp) <=1 or b not in afterbp[-1]
-                                    or self.level[b]!=self.level[bp]+1):
+                if (len(afterbp) <=1 #nothing after parent
+                        or self.unalias(b) not in afterbp[-1] #this item not after parent
+                        or self.level[b]!=self.level[bp]+1): #this not child of parent
                     log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
                     self.levelup(bp)
                     self.show(b,parent=bp)
@@ -1520,6 +1521,7 @@ class LiftURL():
         self.alias['id']='senseid'
         self.alias['ftype']='fieldtype'
         self.alias["field[@type='tone']"]='tonefield'
+        self.alias["field[@type='location']"]='locationfield'
     def __init__(self, *args,**kwargs):
         self.base=kwargs['base']
         self.setaliases()
