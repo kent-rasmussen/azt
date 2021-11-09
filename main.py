@@ -6176,7 +6176,8 @@ class FramedData(object):
         for lang in self.glosslangs:
             if lang in self.forms:
                 g[lang]=self.forms[lang]
-                l+=len(g[lang])
+                if g[lang] is not None:
+                    l+=len(g[lang])
         if l >0:
             return g
         else:
