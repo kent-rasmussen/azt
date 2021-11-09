@@ -2142,15 +2142,25 @@ if __name__ == '__main__':
                         log.info("guid: {}".format(id))
 
         return
+    oldtonevalue=2
     for senseid in senseids:
         for location in locations:# b=lift.get('sense',fieldtype='tone',location=locations[0],
         #             tonevalue=subcheck,showurl=True).get('senseid')
-            b=lift.get("example/translation/form/text", senseid=senseid, glosslang='fr',
-                            location=location,showurl=True).get('text')
+            b=lift.get("example/tonefield/form/text",
+                senseid=senseid, tonevalue=oldtonevalue, toneUFvalue='1',#to clear just "NA" values
+                location=location,showurl=True).get('node')
+            # lift.get("example/translation/form/text", senseid=senseid, glosslang='fr',
+            #                 location=location,showurl=True).get('text')
+            for bi in b:
+                print(bi.text)
+                bi.text=1234
+            b=lift.get("example/tonefield/form/text",
+                senseid=senseid, #tonevalue=oldtonevalue, #to clear just "NA" values
+                location=location,showurl=True).get('text')
             print(b)
-            c=lift.get("example/form/text", senseid=senseid, analang='en',
-                            location=location,showurl=True).get('text')
-            print(c)
+            # c=lift.get("example/form/text", senseid=senseid, analang='en',
+            #                 location=location,showurl=True).get('text')
+            # print(c)
             # for bi in b:
             #     bt=bi.find('form/text')
             #     print(bt.text)
