@@ -1122,7 +1122,7 @@ class LiftURL():
         if 'tonevalue' in self.kwargs:
             self.kwargs['formtext']='tonevalue'
             self.form("tonevalue",'glosslang')
-        else: #dont' force a text node with no text value
+        else: #don't force a text node with no text value
             self.kwargs['formtext']=None
             self.form(lang='glosslang')
     def morphtype(self,attrs={}):
