@@ -1094,11 +1094,23 @@ class LiftURL():
         self.kwargs['formtext']='location'
         self.field()
         self.form("location",'glosslang')
-    def tonefield(self):
+    def toneUFfield(self):
         self.baselevel()
         self.kwargs['ftype']='tone'
         """I assume we will never use sense/tonefield and example/tonefield
         in the same url..."""
+        self.level['toneUFfield']=self.level['cur']+1 #so this won't repeat
+        self.field()
+        if 'toneUFvalue' in self.kwargs:
+            self.kwargs['formtext']='toneUFvalue'
+            self.form("toneUFvalue",'glosslang')
+        else: #don't force a text node with no text value
+            self.kwargs['formtext']=None
+            self.form(lang='glosslang')
+    def tonefield(self):
+        log.info("Making tone field")
+        self.baselevel()
+        self.kwargs['ftype']='tone'
         self.level['tonefield']=self.level['cur']+1 #so this won't repeat
         self.field()
         if 'tonevalue' in self.kwargs:
@@ -1503,6 +1515,7 @@ class LiftURL():
         self.attrs['entry']=['guid']
         self.attrs['sense']=['senseid']
         self.attrs['tonefield']=['tonevalue']
+        self.attrs['toneUFfield']=['toneUFvalue']
         self.attrs['locationfield']=['location']
     def setchildren(self):
         """These are the kwargs that imply a field. field names also added to
@@ -1514,7 +1527,7 @@ class LiftURL():
         self.children['entry']=['lexeme','pronunciation','sense',
                                             'citation','morphtype','trait']
         self.children['sense']=['ps','definition','gloss',
-                                            'example','tonefield','field']
+                                            'example','toneUFfield','field']
         self.children['example']=['form','translation','locationfield',
                                             'tonefield','field']
         self.children['field']=['form']
