@@ -7577,7 +7577,7 @@ class RecordButtonFrame(Frame):
         fieldlocopts=[None]
         if (node.tag == 'example'):
             l=node.find("field[@type='location']//text")
-            if l is not None:
+            if hasattr(l,'text') and l.text is not None:
                 #the last option is taken, if none are found
                 pslocopts.insert(0,check.ps+'-'+l.text) #the first option.
                 fieldlocopts.append(l.text) #make this the last option.
