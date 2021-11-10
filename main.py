@@ -4918,15 +4918,15 @@ class Check():
                     continue
                 """These should already be framed!"""
                 framed=self.datadict.getframeddata(example)
-                if framed.analang is None: # when?
+                if framed.forms[self.analang] is None: # when?
                     continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
                 text=framed.formatted(noframe=True)
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
-                                    form=nn(framed[self.analang]),
-                                    gloss=nn(framed[self.glosslang])
+                                    form=nn(framed.forms[self.analang]),
+                                    gloss=nn(framed.forms[self.glosslang])
                                     ) #no gloss2; form/gloss just for filename
                 rb.grid(row=row,column=0,sticky='w')
                 Label(examplesframe, anchor='w',text=text
