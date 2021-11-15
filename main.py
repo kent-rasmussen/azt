@@ -4893,7 +4893,7 @@ class Check():
             if progress is not None:
                 progressl=Label(self.runwindow.frame, anchor='e',
                     font=self.fonts['small'],
-                    text="({}/{})".format(*progress)
+                    text="({} {}/{})".format(*progress)
                     )
                 progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
@@ -4962,18 +4962,16 @@ class Check():
             batch[i]=[]
             for toneUFgroup in torecord: #self.toneUFgroups:
                 print(i,len(torecord[toneUFgroup]),toneUFgroup,torecord[toneUFgroup])
-                if len(torecord[toneUFgroup]) > i: #no small piles.
-                    batch[i]+=[torecord[toneUFgroup][i]]
+                if len(torecord[toneUFgroup]) > i: #no done piles.
+                    senseid=[torecord[toneUFgroup][i]] #list of one
                 else:
                     print("Not enough examples, moving on:",i,toneUFgroup)
-        print(_('Preparing to record examples from each tone group ({}) '
-                ).format(torecord.keys()))
-        for i in range(self.examplespergrouptorecord):
-            log.info(_('Giving user the number {} example from each tone '
-                    'group ({})'.format(i,torecord.keys())))
-            exited=self.showsenseswithexamplestorecord(batch[i],
-                                        (i+1, self.examplespergrouptorecord),
-                                        skip=skip)
+                    continue
+                log.info(_('Giving user the number {} example from tone '
+                        'group {}'.format(i,toneUFgroup)))
+                exited=self.showsenseswithexamplestorecord(senseid,
+                            (toneUFgroup, i+1, self.examplespergrouptorecord),
+                            skip=skip)
             if exited == 'skip':
                 skip=True
             if exited == True:
