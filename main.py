@@ -4972,7 +4972,7 @@ class Check():
             log.info(_('Giving user the number {} example from each tone '
                     'group ({})'.format(i,torecord.keys())))
             exited=self.showsenseswithexamplestorecord(batch[i],
-                                        (i, self.examplespergrouptorecord),
+                                        (i+1, self.examplespergrouptorecord),
                                         skip=skip)
             if exited == 'skip':
                 skip=True
