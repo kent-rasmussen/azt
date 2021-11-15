@@ -4972,10 +4972,10 @@ class Check():
                 exited=self.showsenseswithexamplestorecord(senseid,
                             (toneUFgroup, i+1, self.examplespergrouptorecord),
                             skip=skip)
-            if exited == 'skip':
-                skip=True
-            if exited == True:
-                return
+                if exited == 'skip':
+                    skip=True
+                if exited == True:
+                    return
         if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
             self.runwindow.waitdone()
             self.runwindow.resetframe()
