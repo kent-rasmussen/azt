@@ -4946,7 +4946,7 @@ class Check():
             self.showtonegroupexs()
         if (not(hasattr(self,'examplespergrouptorecord')) or
             (type(self.examplespergrouptorecord) is not int)):
-            self.examplespergrouptorecord=5
+            self.examplespergrouptorecord=100
             self.storesettingsfile()
         torecord=self.getsenseidsbytoneUFgroups()
         skip=False
