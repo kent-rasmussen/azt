@@ -1489,7 +1489,6 @@ class LiftURL():
         self.setaliases()
         basename=self.basename=self.getalias(self.base.tag)
         super(LiftURL, self).__init__()
-        log.info("LiftURL called with {}".format(kwargs))
         self.kwargs=kwargs
         target=self.target=self.kwargs.pop('target','entry') # what do we want?
         self.setchildren()
