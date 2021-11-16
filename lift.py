@@ -267,9 +267,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             return
         vf=node.find("field[@type='{} {}']".format(vtype,"verification"))
         if vf == None:
-            vf=ET.SubElement(node, 'field',
+            vf=Node(node, 'field',
                                 attrib={'type':"{} verification".format(vtype)})
-        return (vf,node)
+            vft=vf.makeformnode(lang='py',gimmetext=true)
+        return (vft,node)
     def getentrynode(self,senseid,showurl=False):
         return self.get('entry',senseid=senseid).get()
     def getsensenode(self,senseid,showurl=False):
