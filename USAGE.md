@@ -10,7 +10,7 @@
 ### [LIFT](https://code.google.com/archive/p/lift-standard/) Database to Check
 [A→Z+T](https://github.com/kent-rasmussen/azt) requires a [LIFT](https://code.google.com/archive/p/lift-standard/) database to check. Fortunately these are not difficult to generate; [LIFT](https://code.google.com/archive/p/lift-standard/) is an open XML specification for storing lexical data. [LIFT](https://code.google.com/archive/p/lift-standard/) databases can be created by a number of routes:
 
-- Collect words in [WeSay](https://software.sil.org/wesay/) ([Download here](https://software.sil.org/wesay/download/)).
+- Collect words in [WeSay](https://software.sil.org/wesay/) ([Download 1.6.10.0 here](https://software.sil.org/downloads/r/wesay/WeSayInstaller.1.6.10.0.msi)).
     - [WeSay](https://software.sil.org/wesay/) uses [LIFT](https://code.google.com/archive/p/lift-standard/) natively, so the same repository can be used for [WeSay](https://software.sil.org/wesay/) and [A→Z+T](https://github.com/kent-rasmussen/azt) (though it is not recommended to use them both at the same time).
     - [WeSay](https://software.sil.org/wesay/) is [Chorus](https://software.sil.org/chorushub/) enabled, which allows easy tracking of changes and off-site archiving, including the changes to your database and reports made by [A→Z+T](https://github.com/kent-rasmussen/azt).
     - N.B.: I highly recommend the excellent library of images that works with WeSay, [the Art of Reading](https://bloomlibrary.org/artofreading)
