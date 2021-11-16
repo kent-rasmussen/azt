@@ -232,6 +232,20 @@ class Check():
         # log.info(n)
         self.mainlabelrelief()
         self.checkcheck()
+    def checkforlegacyverification(self):
+        start_time=time.time()
+        n=0
+        for ps in self.profilesbysense:
+            for profile in self.profilesbysense[ps]:
+                for senseid in self.profilesbysense[ps][profile]:
+                    if profile is not 'Invalid':
+                        node=self.db.legacyverificationconvert(senseid,vtype=profile,
+                                                            lang=self.analang)
+                        if node is not None:
+                            n+=1
+        self.db.write()
+        log.info("Found {} legacy verification nodes in {} seconds".format(n,
+                                                time.time()-start_time))
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
