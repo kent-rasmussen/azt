@@ -222,8 +222,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.log(2,"empty verification list found")
             l=list()
         return l
-    def modverificationnode(self,senseid,vtype,add=None,rms=[],addifrmd=False):
-        nodes=self.addverificationnode(senseid,vtype=vtype)
+    def modverificationnode(self,senseid,vtype,analang,add=None,rms=[],addifrmd=False):
+        """this node stores a python symbolic representation, specific to an
+        analysis language"""
+        lang='py-'+analang
+        nodes=self.addverificationnode(senseid,vtype=vtype,lang=lang)
         vf=nodes[0] #this is a text node
         sensenode=nodes[1]
         l=self.evaluatenode(vf) #this is the python evaluation of vf.text
@@ -249,8 +252,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             sensenode.remove(vf)
         else:
             log.log(2,"Not removing empty node")
-    def getverificationnodevaluebyframe(self,senseid,vtype,frame):
-        nodes=self.addverificationnode(senseid,vtype=vtype)
+    def getverificationnodevaluebyframe(self,senseid,vtype,analang,frame):
+        lang='py-'+analang
+        nodes=self.addverificationnode(senseid,vtype=vtype,lang=lang)
         vf=nodes[0] #this is a text node
         # sensenode=nodes[1]
         l=self.evaluatenode(vf) #this is the python evaluation of vf.text
@@ -262,8 +266,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if frame in field:
                     values.append(field)
         return values
-    def addverificationnode(self,senseid,vtype):
+    def legacyverificationconvert(self,senseid,vtype,lang):
+        if 'py-' not in lang:
+            lang='py-'+lang
         node=self.getsensenode(senseid=senseid)
+    def addverificationnode(self,senseid,vtype,lang):
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
