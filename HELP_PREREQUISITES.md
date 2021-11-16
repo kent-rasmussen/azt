@@ -6,7 +6,6 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
   - You will need an account (username and password) for yourself first, which you can sign up for (here)[http://public.languagedepot.org/account/register].
   - Once you have an account, sign in, and you will see instructions on the main page to ask for an repository for your language data. Basically, you will write an Email to admin@languagedepot.org, requesting an account with five lines of information. You want a Dictionary repository to work with A→Z+T; everything else should be straightforward.
   - Wait for a response from admin@languagedepot.org, which will give you your project id. It should be `<ethnologue_code>-dictionary`. If it isn't, please forward the Email to me and I'll advise you how to proceed.
-- Follow the instructions (here)[SIMPLEINSTALL.md] to install A→Z+T. Please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please Email me with specific questions or problems.
 - If you don't already have a database in LIFT format, set that up.
   - If you have a database but not in LIFT (i.e., in FLEx, or a spreadsheet, or an electronic or paper document), then you must get help converting it. Some conversions are easier than other (e.g., from FLEx); others are very difficult (typing from a handwritten notebook).
   - If you don't already have a database, and don't already use FLEx, download WeSay and set up your project there:
@@ -33,6 +32,7 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
       - We really should have part of speech confirmed here, though there isn't a great way to do that yet, except check each word one at a time. If you don't have good tests for your major grammatical categories (noun and verb), this can probably wait, without causing too much damage.
   - Take a look at the (practical prerequisites)[USAGE.md#practical-prerequisites] for your database, and see that yours has what it needs.
     - If you followed `you don't already have a database` above, you should be OK.
+- Follow the instructions (here)[SIMPLEINSTALL.md] to install A→Z+T. Please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please Email me with specific questions or problems.
 - Develop draft tone frames (see (Tone Frame Design)[USAGE.md#tone-frame-design]) with one speaker, and test that they are helpful. This may take several hours, or longer. If you don't already understand what this entails, you will need help from a linguist.
 - Define those tone frames in A→Z+T, as (here)[USAGE.md#tone-frames].
 - Test your tone frames (again with one speaker), that they are working correctly. To do this, you will need to do some sorting in A→Z+T, and confirm that word-frame combinations look OK, and that most words work in each of the frames. If a frame has many words that don't work in it, you should probably replace it.
