@@ -270,6 +270,18 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if 'py-' not in lang:
             lang='py-'+lang
         node=self.getsensenode(senseid=senseid)
+        vf=node.find("field[@type='{} {}']".format(vtype,"verification"))
+        if vf is not None:
+            for child in vf:
+                if child.tag == 'form':
+                    return #because this isn't a legacy node
+            log.info("Found legacy verification node: {}, {}, {}".format(
+                                                            senseid,vtype,lang))
+            t=vf.text
+            vf.text=None
+            n=Node.makeformnode(vf,lang=lang,text=t,gimmetext=True)
+            log.info(n)
+            return n
     def addverificationnode(self,senseid,vtype,lang):
         node=self.getsensenode(senseid=senseid)
         if node is None:
