@@ -863,7 +863,7 @@ class Node(ET.Element):
         if text is not None:
             n.text=str(text)
         if gimmetext:
-            return n.text
+            return n
     def maketraitnode(self,type,value,gimmenode=False):
         n=Node(self,'trait',attrib={'name':type, 'value':str(value)})
         if gimmenode:
