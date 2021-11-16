@@ -271,14 +271,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             lang='py-'+lang
         node=self.getsensenode(senseid=senseid)
     def addverificationnode(self,senseid,vtype,lang):
+        node=self.getsensenode(senseid=senseid)
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
-        vf=node.find("field[@type='{} {}']".format(vtype,"verification"))
-        if vf == None:
+        vft=node.find("field[@type='{} {}']/form[@lang='{}']/text".format(
+                                                vtype,"verification",lang))
+        if vft is None:
             vf=Node(node, 'field',
-                                attrib={'type':"{} verification".format(vtype)})
-            vft=vf.makeformnode(lang='py',gimmetext=true)
+                            attrib={'type':"{} verification".format(vtype)})
+            vft=vf.makeformnode(lang=lang,text=t,gimmetext=True)
         return (vft,node)
     def getentrynode(self,senseid,showurl=False):
         return self.get('entry',senseid=senseid).get()
