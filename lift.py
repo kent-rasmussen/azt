@@ -129,6 +129,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         kwargs['target']=target # we want target to be kwarg for LiftURL
         k=self.urlkey(kwargs)
         if k not in self.urls:
+            if showurl:
+                log.debug("Calling LiftURL with {}".format(kwargs))
             self.urls[k]=LiftURL(base=node,**kwargs) #needs base and target to be sensible; attribute?
         else:
             log.info("URL key found, using: {} ({})".format(k,self.urls[k].url))
