@@ -222,6 +222,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.log(2,"empty verification list found")
             l=list()
         return l
+    """Make this a class!!!"""
     def modverificationnode(self,senseid,vtype,analang,add=None,rms=[],addifrmd=False):
         """this node stores a python symbolic representation, specific to an
         analysis language"""
