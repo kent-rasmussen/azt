@@ -7,31 +7,10 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
   - Once you have an account, sign in, and you will see instructions on the main page to ask for an repository for your language data. Basically, you will write an Email to admin@languagedepot.org, requesting an account with five lines of information. You want a **Dictionary** repository to work with A→Z+T; everything else should be straightforward.
   - Wait for a response from admin@languagedepot.org, which will give you your project id. It should be something like `<ethnologue_code>-dictionary`. If it isn't, please forward the Email to me and I'll advise you how to proceed.
 - If you don't already have a database in LIFT format, set that up.
-  - If you have a database but not in LIFT (i.e., in FLEx, or a spreadsheet, or an electronic or paper document), then you must get help converting it. Some conversions are easier than other (e.g., from FLEx); others are very difficult (typing from a handwritten notebook).
-  - If you don't already have a database, and don't already use FLEx, download WeSay and set up your project there:
-    - In the WeSay Config tool, click on `Get From Internet` (assuming you have your project ID from languagedepot by now), and fill out the form with the project ID, your username and password for languagedepot. These are **your** credentials; don't share them. I or anyone else who accesses your data via languagedepot should have their own.
-    - In the WeSay Config Tool settings window:
-      - In the `Tasks` tab, select the box next to `SIL-CAWL Word List`.
-      - In the `Input Systems` tab:
-        - Confirm your gloss language is there (e.g., English), or define it (E.g., French or anything else).
-        - Set up an IPA, or any other language writing systems you want (but A→Z+T will only be analyzing the orthographic writing system). Be sure to make them have different abbreviations, so you can tell them apart.
-      - In the `Fields` tab:
-        - Select the box next to `Citation Form`, and make sure your orthographic writing system is the only one selected.
-        - If you want to collect words using **French**, remove English from the `Definition` field (at least until your word collection is done).
-        - Select the box next to `Gloss`, and make sure the correct gloss language is selected (on the right).
-      - In the `Interface Language` tab, set the WeSay's language, if you don't want it to talk to you in English.
-      - In the `option lists` tab, if you want non-English part of speech labels, set them here. A→Z+T will use whatever labels you have in your data.
-      - Click on `Open in WeSay`, in the upper right.
-    - In WeSay:
-      - Go to the CAWL Word List tab, and fill out the 1700 word Comparative African Word List.
-        - The list is on the left for you to browse if you like.
-        - There is a (word) prompt and one field to fill in. This is where you put the orthographic form of the word in the language you are studying.
-        - There are two buttons:
-          - <enter> or <+>: give another word for the same prompt
-          - <PageDown> or ->: go to next prompt.
-      - We really should have part of speech confirmed here, though there isn't a great way to do that yet, except check each word one at a time. If you don't have good tests for your major grammatical categories (noun and verb), this can probably wait, without causing too much damage.
+  - If you have a database but not in LIFT (i.e., in FLEx, or a spreadsheet, or an electronic or paper document), then you must get help converting it. Some conversions are easier than other (e.g., from FLEx); others are very difficult (e.g., typing from a handwritten notebook).
+  - If you don't already have a database, and don't already use FLEx, download WeSay and follow [these directions](WESAY_FROM_SCRATCH.md) to set up your project in WeSay set up your project there.
   - Take a look at the [practical prerequisites](USAGE.md#practical-prerequisites) for your database, and see that yours has what it needs.
-    - If you followed `you don't already have a database` above, you should be OK.
+    - If you followed the `WeSay from Scratch` directions above, you should be OK.
 - Follow the instructions [here](SIMPLEINSTALL.md) to install A→Z+T. Please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please Email me with specific questions or problems.
 - Develop draft tone frames (see [Tone Frame Design](USAGE.md#tone-frame-design)) with one speaker, and test that they are helpful. This may take several hours, or longer. If you don't already understand what this entails, you will need help from a linguist.
 - Define those tone frames in A→Z+T, as [here](USAGE.md#tone-frames).
