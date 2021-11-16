@@ -15,7 +15,8 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
 - Develop draft tone frames (see [Tone Frame Design](USAGE.md#tone-frame-design)) with one speaker, and test that they are helpful. This may take several hours, or longer. If you don't already understand what this entails, you will need help from a linguist near you.
 - Define those tone frames in A→Z+T, as [here](USAGE.md#tone-frames).
 - Test your tone frames (again with one speaker), that they are working correctly. To do this, you will need to do some sorting in A→Z+T, and confirm that word-frame combinations look OK, and that most words work in each of the frames. If a frame has many words that don't work in it, you should probably replace it.
-- Organize a meeting of more (3+) speakers, for them to sort data together in A→Z+T.
+- Organize a meeting of more (3+) speakers, for them to sort data together in A→Z+T:
+  - you can organize this as you like, but expect at least two weeks of full time work for everyone.
 - At the meeting:
   - Sort data in A→Z+T, start with:
     - largest 2-3 syllable profiles for Nouns in each of four **tonally different** frames
