@@ -8,7 +8,7 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
   - Wait for a response from admin@languagedepot.org, which will give you your project id. It should be something like `<ethnologue_code>-dictionary`. If it isn't, please forward the Email to me and I'll advise you how to proceed.
 - If you don't already have a database in LIFT format, set that up.
   - If you have a database but not in LIFT (i.e., in FLEx, or a spreadsheet, or an electronic or paper document), then you must get help converting it. Some conversions are easier than other (e.g., from FLEx); others are very difficult (e.g., typing from a handwritten notebook).
-  - If you don't already have a database, and don't already use FLEx, download WeSay and follow [these directions](WESAY_FROM_SCRATCH.md) to set up your project in WeSay set up your project there.
+  - If you don't already have a database, and don't already use FLEx, download WeSay and follow [the WeSay from Scratch directions](WESAY_FROM_SCRATCH.md) to set up your project in WeSay set up your project there.
   - Take a look at the [practical prerequisites](USAGE.md#practical-prerequisites) for your database, and see that yours has what it needs.
     - If you followed the `WeSay from Scratch` directions above, you should be OK.
 - Follow the instructions [here](SIMPLEINSTALL.md) to install A→Z+T. Please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please Email me with specific questions or problems.
