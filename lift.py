@@ -222,9 +222,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return l
     def modverificationnode(self,senseid,vtype,add=None,rms=[],addifrmd=False):
         nodes=self.addverificationnode(senseid,vtype=vtype)
-        vf=nodes[0]
+        vf=nodes[0] #this is a text node
         sensenode=nodes[1]
-        l=self.evaluatenode(vf)
+        l=self.evaluatenode(vf) #this is the python evaluation of vf.text
         log.log(2,"{}; {}".format(vf.text, type(vf.text)))
         log.log(2,"{}; {}".format(l, type(l)))
         changed=False
@@ -249,9 +249,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.log(2,"Not removing empty node")
     def getverificationnodevaluebyframe(self,senseid,vtype,frame):
         nodes=self.addverificationnode(senseid,vtype=vtype)
-        vf=nodes[0]
+        vf=nodes[0] #this is a text node
         # sensenode=nodes[1]
-        l=self.evaluatenode(vf)
+        l=self.evaluatenode(vf) #this is the python evaluation of vf.text
         log.info("text: {}; vf: {}".format(l,vf))
         values=[]
         if l is not None:
