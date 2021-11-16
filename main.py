@@ -212,6 +212,7 @@ class Check():
             log.debug("Middle ps-profile: {}-{}".format(self.ps,self.profile))
             self.storesettingsfile(setting='profiledata')
             log.debug("Ending ps-profile: {}-{}".format(self.ps,self.profile))
+        self.checkforlegacyverification()
         self.getprofilestodo()
         self.getpss() #This is a prioritized list of all ps'
         self.setnamesall() #sets self.checknamesall
