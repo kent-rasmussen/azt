@@ -18,8 +18,10 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
 - Organize a meeting of more (3+) speakers, for them to sort data together in A→Z+T.
 - At the meeting:
   - Sort data in A→Z+T, start with:
-    - top 2-3 syllable profiles for Nouns
-    - top 2-3 syllable profiles for Verbs
+    - largest 2-3 syllable profiles for Nouns in each of four **tonally different** frames
+    - largest 2-3 syllable profiles for Verbs in each of four **tonally different** frames
+    - **Tonally different**: if you don't know what this means, plan on getting help from a linguist, or sorting on at least eight frames (Once you have sorted on these, I can look through them for you, and tell you which are tonally different, and what you are missing).
+    - There is a lot more sorting you can do, but this should be the right place to start, and will be a good beginning to understand your tone system. 
   - Record all sorted data in A→Z+T
-  - Record citation forms at least for the above groups
+  - Record citation forms for at least the above (largest 2-3 syllable profiles for Nouns and Verbs)
 - Once you have data you want feedback on, give me permission to read your languagedepot.org repository (Settings/Members/New Member), and [send me your questions](mailto:kent_rasmussen@sil.org?subject=Please help with A→Z+T installation)!
