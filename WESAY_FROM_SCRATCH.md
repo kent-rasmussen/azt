@@ -30,8 +30,8 @@
     - A place to type the word in the language you are studying, which means the same as the prompt word. Use the orthographic form.
     - A box which contains all the words already in the dictionary for that prompt (This will most often be empty, but if you have two words for 'body', for example, the first will show here while you type the second.)
   - There are two buttons:
-    - <enter> or <+>: give another word for the same prompt
-    - <PageDown> or ->: go to next prompt.
+    - `<enter>` or <+>: give another word for the same prompt
+    - `<PageDown>` or ->: go to next prompt.
 
 ### Confirm Parts of Speech (Grammatical Categories)
 - We really should confirm part of speech here, though there isn't a great way to do that yet, except check each word one at a time. If you don't have good tests for your major grammatical categories (noun and verb), and if you used the CAWL as above, this can probably wait, without causing too much damage (the CAWL gives part of speech designations, though they should be confirmed).
