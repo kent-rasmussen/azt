@@ -17,7 +17,7 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
 ## Install A→Z+T
 - Simple instructions are [here](SIMPLEINSTALL.md); please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please [Email me](<mailto:kent_rasmussen@sil.org?subject=Please help with A→Z+T Installation>) with specific questions or problems.
 
-##Field Work: Develop draft tone frames
+## Field Work: Develop draft tone frames
 - See [Tone Frame Design](USAGE.md#tone-frame-design) for a description of this task.
 - Work with one speaker, as this can be a lot of work, and doesn't typically require group discussion.
 - You want at least four frames, such that

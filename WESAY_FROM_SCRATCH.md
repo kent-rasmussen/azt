@@ -33,5 +33,5 @@
     - <enter> or <+>: give another word for the same prompt
     - <PageDown> or ->: go to next prompt.
 
-###Confirm Parts of Speech (Grammatical Categories)
+### Confirm Parts of Speech (Grammatical Categories)
 - We really should confirm part of speech here, though there isn't a great way to do that yet, except check each word one at a time. If you don't have good tests for your major grammatical categories (noun and verb), and if you used the CAWL as above, this can probably wait, without causing too much damage (the CAWL gives part of speech designations, though they should be confirmed).
