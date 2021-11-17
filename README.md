@@ -1,4 +1,5 @@
 ## [I want to start a project, and get consultant help](HELP_PREREQUISITES.md)
+## [I don't need consultant help, I just want to install now.](SIMPLEINSTALL.md)
 
 # A→Z+T ![CV](images/AZT%20stacks6_icon.png "AZT")
 
