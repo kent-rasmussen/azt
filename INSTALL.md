@@ -44,8 +44,7 @@ For some reason, I have had trouble getting pyaudio installed on Windows machine
     - On Linux (and Mac?), `pyaudio` may in turn have a dependency of `portaudio19-dev`, which you should install with your package manager (e.g., `sudo apt-get install portaudio19-dev`).
 
 ### Optional dependency: patiencediff
-to keep your data up to date in your repository:
-`pip install patiencediff`
+to keep your data up to date in your repository: `python -m pip install patiencediff`
 
 ### Optional dependency: PIL/Pillow
 This install allows for visual rendering of tone glyphs that aren't currently working in tkinter:
