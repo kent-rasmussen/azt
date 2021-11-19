@@ -1946,7 +1946,7 @@ class Check():
         scroll=ScrollingFrame(pgw.frame)
         scroll.grid(row=3, column=0)
         row=0
-        ncols=5 # increase this for wider window
+        ncols=4 # increase this for wider window
         for lang in self.db.analangs:
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
