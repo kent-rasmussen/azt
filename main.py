@@ -6435,6 +6435,7 @@ class ScrollingFrame(Frame):
         self.canvas.yview_scroll(-1,"units")
     def _configure_interior(self, event=None):
         #This configures self.content
+        self.update_idletasks()
         if not hasattr(self,'configured'):
             self.configured=0
         # print("Configuring interior")
@@ -6511,6 +6512,7 @@ class ScrollingFrame(Frame):
         #     self.config(height=self.maxheight)
     def _configure_canvas(self, event=None):
         #this configures self.canvas
+        self.update_idletasks()
         if self.content.winfo_reqwidth() <= self.canvas.winfo_width():
             # update the inner frame's width to fill the canvas
             self.canvas.itemconfigure(self.content_id,
