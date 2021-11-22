@@ -7885,6 +7885,11 @@ class SliceDict(dict):
             self._validbyps[ps]=[x for x in self._valid if x[1] == ps]
         log.info("valid: {}".format(self._valid))
         log.info("validbyps: {}".format(self._validbyps))
+    def __init__(self,checkparameters,adhoc,profilesbysense): #dict
+        """The slice dictionary depends on check parameters (and not vice versa)
+        because changes in slice options (ps or profile) change check options,
+        and not vice versa (check options are only presented based on current
+        cvt and slice)"""
         super(SliceDict, self).__init__()
         self.checkparameters=checkparameters
         self.profilecountsValid=0
