@@ -1840,32 +1840,26 @@ class Check():
                     for x in self.sextracted[ps][s]],key=lambda x:x[1],reverse=True)
     def getprofileofsense(self,senseid):
         #Convert to iterate over local variables
-        profileori=self.profile #We iterate across this here
-        psori=self.ps #We iterate across this here
+        ps=unlist(self.db.ps(senseid=senseid))
         forms=self.db.citationorlexeme(senseid=senseid,analang=self.analang)
         if forms == []:
-            self.profile='Invalid'
-            for self.ps in self.db.ps(senseid=senseid):
-                self.addtoprofilesbysense(senseid)
-            self.ps=psori
-            return None,'Invalid'
+            profile='Invalid'
+            self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
+            return None, profile
         if forms is None:
             return None,'Invalid'
         for form in forms:
-            self.profile=self.profileofform(form)
-            if not set(self.profilelegit).issuperset(self.profile):
-                self.profile='Invalid'
-            for self.ps in self.db.ps(senseid=senseid):
-                self.addtoprofilesbysense(senseid)
-                if self.ps not in self.formstosearch:
-                    self.formstosearch[self.ps]={}
-                if form in self.formstosearch[self.ps]:
-                    self.formstosearch[self.ps][form].append(senseid)
-                else:
-                    self.formstosearch[self.ps][form]=[senseid]
-        profile=self.profile
-        self.profile=profileori
-        self.ps=psori
+            """This adds to self.sextracted, too"""
+            profile=self.profileofform(form,ps=ps)
+            if not set(self.profilelegit).issuperset(profile):
+                profile='Invalid'
+            self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
+            if ps not in self.formstosearch:
+                self.formstosearch[ps]={}
+            if form in self.formstosearch[ps]:
+                self.formstosearch[ps][form].append(senseid)
+            else:
+                self.formstosearch[ps][form]=[senseid]
         return firstoflist(forms),profile
     def getprofiles(self):
         self.profileswdatabyentry={}
@@ -1888,21 +1882,20 @@ class Check():
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
                                             profile))
         #Convert to iterate over local variables
-        psori=self.ps #We iterate across this here
         self.makeadhocgroupsdict() #if no file, before iterating over variable
-        for self.ps in self.adhocgroups:
-            self.makeadhocgroupsdict() #in case there is no ps key
-            for adhoc in self.adhocgroups[self.ps]:
-                log.debug("Adding {} to {} ps-profile: {}".format(adhoc,self.ps,
-                                            self.adhocgroups[self.ps][adhoc]))
-                self.addpstoprofileswdata() #in case the ps isn't already there
+        """Do I want this? better to keep the adhoc groups separate"""
+        adhoc=self.slices.adhoc()
+        for ps in adhoc:
+            for a in adhoc[ps]:
+                log.debug("Adding {} to {} ps-profile: {}".format(a,ps,
+                                            self.adhocgroups[ps][a]))
+                self.addpstoprofileswdata(ps=ps) #in case the ps isn't already there
                 #copy over stored values:
-                self.profilesbysense[self.ps][adhoc]=self.adhocgroups[
-                                                                self.ps][adhoc]
+                self.profilesbysense[ps][a]=adhoc[ps][a]
                 log.debug("resulting profilesbysense: {}".format(
-                                        self.profilesbysense[self.ps][adhoc]))
-        self.ps=psori
-        self.updatecounts()
+                                        self.profilesbysense[ps][a]))
+        self.slices.updateslices()
+        self.getscounts() #after getprofileofsense
         # print('Done:',time.time()-self.start_time)
         if self.debug==True:
             for ps in self.profilesbysense:
