@@ -2817,6 +2817,7 @@ class Check():
     def maybeboard(self):
         def checkfordone(): #has *anything* been sorted?
 <<<<<<< HEAD
+<<<<<<< HEAD
             if self.status.groups() >0:
             # for profile in self.status[self.type][ps]:
                 return True
@@ -2824,8 +2825,11 @@ class Check():
         nameori=self.params.check()
 =======
             for self.profile in self.status[self.type][ps]:
+=======
+>>>>>>> selfless
             if self.status.groups() >0:
             # for profile in self.status[self.type][ps]:
+                return True
         profileori=self.slices.profile()
 <<<<<<< HEAD
         nameori=self.name
