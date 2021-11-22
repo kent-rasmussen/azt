@@ -4277,11 +4277,14 @@ class Check():
                                     ps=None
                                     )
     def getsenseidsbytoneUFgroups(self):
-        print("Looking for sensids by UF tone groups for",self.profile,self.ps)
+        """This returns a dict of {UFtonegroup:[senseids]}"""
+        log.debug(_("Looking for sensids by UF tone groups for {}-{}").format(
+                    self.slices.profile(), self.slices.ps())
+                    )
         sorted={}
         """Still working on one ps-profile combo at a time."""
         self.getidstosort() #just in case this changed
-        for senseid in self.senseidstosort: #I should be able to make this a regex...
+        for senseid in self.slices.senseids(): #I should be able to make this a regex...
             toneUFgroup=firstoflist(self.db.get('sense/tonefield/form/text',
                                                 senseid=senseid).get('text'))
             if toneUFgroup is not None:
