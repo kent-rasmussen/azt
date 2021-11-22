@@ -4542,6 +4542,7 @@ class Check():
         refreshcount=kwargs.pop('refreshcount',-1)+1
         sticky=kwargs.pop('sticky',"ew")
         example=self.getex(group,notonegroup=notonegroup,renew=renew)
+        check=self.params.check()
         if example is None:
             log.error("Apparently the example for tone group {} in check {} "
                         "came back {}".format(group,check,example))
