@@ -8388,10 +8388,13 @@ class SliceDict(dict):
         if profile is not None:
             self._profile=profile
         else:
+<<<<<<< HEAD
             # self.makestatusdictprofile()
             # self.getframestodo()
             self.makeprofileok()
 >>>>>>> parameter dictionary classes
+=======
+>>>>>>> profileok call
             return self._profile
     def nextps(self):
         self.makepsok()
