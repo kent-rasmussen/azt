@@ -5969,6 +5969,14 @@ class Glosslangs(DataList):
             self.append(lang)
         else:
             log.debug("Tried to set second glosslang, without first set.")
+    def langs(self,langs=None):
+        if langs is None:
+            return self
+        else:
+            while len(langs) >=2 and langs[0] == langs[1]:
+                del langs[1]
+            self.clear()
+            self.append(langs[:2])
     def rm(self,lang):
         """This could be either position, and if lang1 will promote lang2"""
         self.remove(lang)
