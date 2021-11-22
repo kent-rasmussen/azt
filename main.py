@@ -193,9 +193,16 @@ class Check():
                 log.debug("{}: {}".format(var,getattr(self,var)))
             log.debug("Middle ps-profile: {}-{}".format(ps,profile))
             self.storesettingsfile(setting='profiledata')
+<<<<<<< HEAD
             log.debug("Ending ps-profile: {}-{}".format(ps,profile))
         self.makeparameters()
         self.makeslicedict()
+=======
+            log.debug("Ending ps-profile: {}-{}".format(self.ps,self.profile))
+        self.slices=SliceDict(self.profilecounts)
+        self.getprofilestodo()
+        self.getpss() #This is a prioritized list of all ps'
+>>>>>>> implement slices
         self.setnamesall() #sets self.checknamesall
         self.loadsettingsfile(setting='status')
         self.makestatus()
@@ -384,8 +391,13 @@ class Check():
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def getpss(self):
+<<<<<<< HEAD
         pss=self.slices.pss() #make this one line, remove pss
         return pss
+=======
+        self.pss=self.slices.pss() #make this one line, remove self.pss
+        return self.pss
+>>>>>>> implement slices
         #Why rebuild this here?
     def nextps(self,guess=False):
         """Make this smarter, but for now, just take value from the most
@@ -773,11 +785,16 @@ class Check():
             #so we don't have to do this again after each profile analysis
             self.storesettingsfile(setting='adhocgroups')
         self.getrunwindow()
+<<<<<<< HEAD
         profile=self.slices.profile()
         ps=self.slices.ps()
         if profile in [x[0] for x in self.slices.profiles()]: #profilecountsValid]:
             new=True
             title=_("New Ad Hoc Sort Group for {} Group".format(ps))
+=======
+        if self.profile in [x[0] for x in self.profilecountsValid]:
+            title=_("New Ad Hoc Sort Group for {} Group".format(self.ps))
+>>>>>>> implement slices
         else:
             new=False
             title=_("Modify Existing Ad Hoc Sort Group for {} Group".format(ps))
@@ -1310,6 +1327,7 @@ class Check():
         self.parent.maketitle() #because otherwise, this stays as is...
     def setprofile(self,choice,window):
         self.slices.profile(choice)
+<<<<<<< HEAD
         self.attrschanged.append('profile')
         self.refreshattributechanges()
         window.destroy()
@@ -1318,6 +1336,12 @@ class Check():
         self.attrschanged.append('cvt')
         self.refreshattributechanges()
         window.destroy()
+=======
+        window.destroy()
+        self.checkcheck()
+    def settype(self,choice,window):
+        self.set('type',choice,window)
+>>>>>>> implement slices
     def setanalang(self,choice,window):
         self.set('analang',choice,window)
     def setgroup(self,choice,window):
@@ -1361,9 +1385,14 @@ class Check():
 >>>>>>> chose framed as addmodexamplefields attr
     def setps(self,choice,window):
         self.slices.ps(choice)
+<<<<<<< HEAD
         self.attrschanged.append('ps')
         self.refreshattributechanges()
         window.destroy()
+=======
+        window.destroy()
+        self.checkcheck()
+>>>>>>> implement slices
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
     def getgroup(self,guess=False,cvt=None,event=None,comparison=False):
@@ -1574,6 +1603,7 @@ class Check():
         # This also has no access to verification information, which comes only
         # from verifyT()
         self.storesettingsfile()
+<<<<<<< HEAD
         pss=self.slices.pss() #this depends on nothing
         for t in self.params.cvts(): #this depends on nothing
             for ps in pss:
@@ -1589,6 +1619,39 @@ class Check():
         self.status.cull()
         if None in self.status: #This should never be there
             del self.status[None]
+=======
+        pss=self.slices.pss()
+        for ps in pss:
+            profiles=self.slices.profiles()
+            for profile in profiles:
+                self.status.build(type=self.type,ps,profile) #,check=None) #makestatusdictprofile()
+                if ps in self.toneframes:
+                    names=[x for x in self.toneframes[ps]] #no profile here
+                    for self.name in names:
+                        self.settonevariablesbypsprofile() <+Make generic
+                        if self.status[self.type][ps][profile][
+                                self.name]['groups'] == []:
+                            log.debug("No groups, deleting frame entry!")
+                            del self.status[self.type][ps][
+                                                    profile][self.name]
+                        else:
+                            log.debug("Groups: {}".format(self.status[
+                                self.type][ps][profile][
+                                                    self.name]['groups']))
+                if self.status[self.type][ps][profile] == {}:
+                    log.debug("No Frames; deleting profile entry!")
+                    del self.status[self.type][ps][profile]
+                else:
+                    log.debug("Frames: {}".format(self.status[self.type][
+                                                        ps][profile]))
+            if self.status[self.type][ps] == {}:
+                log.debug("No Profiles; deleting part of speech entry!")
+                del self.status[self.type][ps]
+            else:
+                log.debug("Profiles: {}".format(self.status[self.type][ps]))
+        self.ps=ps
+        self.profile=profile
+>>>>>>> implement slices
         self.storesettingsfile(setting='status')
 <<<<<<< HEAD
 =======
@@ -2491,7 +2554,10 @@ class Check():
             count=0
         tf=Frame(self.frame.status)
         tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
+<<<<<<< HEAD
         opts['row']+=1
+=======
+>>>>>>> implement slices
         t=(_("Looking at {}").format(profile))
         proselabel(opts,t,cmd='getprofile',parent=tf)
         opts['columnplus']=1
@@ -2526,11 +2592,22 @@ class Check():
             proselabel(opts,t,cmd='getcheck',parent=tf)
         # else:
         """Get subcheck"""
+<<<<<<< HEAD
         # if None not in [cvt, ps, profile, check]: #is this needed?
         self.status.build() #makestatusdict()
         self.status.makegroupok()
         group=self.status.group()
         if cvt == 'T':
+=======
+        if None not in [self.type, ps, profile, self.name]:
+            self.makestatusdict()
+            self.getsubchecksprioritized()
+            if self.subcheck not in [x[0] for x in self.subchecksprioritized[
+                                                                    self.type]]:
+                self.guesssubcheck()
+
+        if self.type == 'T':
+>>>>>>> implement slices
             opts['columnplus']=2
             if None in [check, group]:
                 t=_("(no framed group)")
@@ -2643,16 +2720,28 @@ class Check():
             self.soundsettingswindow.destroy()
     def maybeboard(self):
         def checkfordone(): #has *anything* been sorted?
+<<<<<<< HEAD
             if self.status.groups() >0:
             # for profile in self.status[self.type][ps]:
                 return True
         profileori=self.slices.profile()
         nameori=self.params.check()
+=======
+            for self.profile in self.status[self.type][ps]:
+                for self.name in self.status[self.type][ps][self.profile]:
+                    self.makestatusdict() #this should result in 'done' key:
+                    if len(self.status[self.type][ps][self.profile][
+                                                    self.name]['groups']) >0:
+                        return True
+        profileori=self.slices.profile()
+        nameori=self.name
+>>>>>>> implement slices
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
         self.leaderboard=Frame(self.frame)
         self.leaderboard.grid(row=0,column=1,sticky="") #nesw
         #Given the line above, much of the below can go, but not all?
+<<<<<<< HEAD
         cvt=self.params.cvt()
         ps=self.slices.ps()
         self.status.cull() #remove nodes with no data
@@ -2664,6 +2753,26 @@ class Check():
                     if ps in self.toneframes:
                         self.maketoneprogresstable()
                         return
+=======
+        ps=self.slices.ps()
+        if hasattr(self,'status') and self.type in self.status:
+            if ps in self.status[self.type]:
+                done=checkfordone()
+                self.slices.profile(profileori)
+                self.name=nameori
+                log.debug('maybeboard done: {}'.format(done))
+                if done == True:
+                    if (hasattr(self,'noboard') and (self.noboard is not None)):
+                        self.noboard.destroy()
+                    if self.type == 'T':
+                        if ps in self.toneframes:
+                            self.maketoneprogresstable()
+                        else:
+                            self.makenoboard()
+                    else:
+                        log.info("Found CV verifications")
+                        self.makeCVprogresstable()
+>>>>>>> implement slices
                 else:
                     log.info("Found CV verifications")
                     self.makeCVprogresstable()
@@ -2685,7 +2794,12 @@ class Check():
             ).grid(row=0,column=1,sticky='nwe',padx=10)
         ps=self.slices.ps()
         if self.mainrelief == None:
+<<<<<<< HEAD
             lps=Label(titleframe,text=ps,anchor='c',font=self.fonts['title'])
+=======
+            lps=Label(titleframe,text=ps,anchor='c',
+                                                    font=self.fonts['title'])
+>>>>>>> implement slices
         else:
             lps=Button(titleframe,text=ps, anchor='c',
                             relief=self.mainrelief, font=self.fonts['title'])
@@ -2737,11 +2851,15 @@ class Check():
         self.leaderboardtable=leaderscroll.content
         row=0
         #put in a footer for next profile/frame
+<<<<<<< HEAD
         cvt=self.params.cvt()
         ps=self.slices.ps()
         profiles=self.slices.profiles()
         curprofile=self.slices.profile()
         curcheck=self.params.check()
+=======
+        profiles=self.slices.profiles()
+>>>>>>> implement slices
         profiles=['colheader']+profiles+['next']
         frames=list(self.toneframes[ps].keys())
         ungroups=0
@@ -2753,6 +2871,7 @@ class Check():
         h.bind('<ButtonRelease>', refresh)
         htip=_("Refresh table, \nsave settings")
         th=ToolTip(h,htip)
+<<<<<<< HEAD
         r=self.status[cvt][ps]
         log.debug("Table rows possible: {}".format(r))
         for profile in profiles:
@@ -2761,6 +2880,16 @@ class Check():
                                                             ps].keys()):
                 if profile in self.status[cvt][ps]:
                     if self.status[cvt][ps][profile] == {}:
+=======
+        r=self.status[self.type][ps]
+        log.debug("Table rows possible: {}".format(r))
+        for profile in profiles:
+            column=0
+            if profile in ['colheader','next']+list(self.status[self.type][
+                                                            ps].keys()):
+                if profile in self.status[self.type][ps]:
+                    if self.status[self.type][ps][profile] == {}:
+>>>>>>> implement slices
                         continue
                     #Make row header
                     t="{} ({})".format(profile,len(self.profilesbysense[
@@ -2790,6 +2919,7 @@ class Check():
                                 frame), font=self.fonts['reportheader']
                                 ).grid(row=row,column=column,sticky='s',ipadx=5)
                     elif profile == 'next':
+<<<<<<< HEAD
                         continue
                     elif frame in self.status[cvt][ps][profile]:
                         node=self.status[cvt][ps][profile][frame]
@@ -2799,6 +2929,31 @@ class Check():
                         done=node['done']
                         total=node['groups']
                         tosort=node['tosort']
+=======
+                        pass
+                    elif frame in self.status[self.type][ps][profile]:
+                        if not 'groups' in self.status[self.type][ps][
+                                                            profile][frame]:
+                            self.makestatusdict(profile=profile, name=frame)
+                            total='?'
+                        if not 'tosort' in self.status[self.type][ps][
+                                                            profile][frame]:
+                            tosort='?'
+                        if not 'done' in self.status[self.type][ps][
+                                                            profile][frame]:
+                            done='?'
+                        if len(self.status[self.type][ps][profile][
+                                frame]['done']) > len(self.status[self.type][
+                                ps][profile][frame]['groups']):
+                            ungroups+=1
+                        #At this point, these should be there
+                        done=self.status[self.type][ps][profile][
+                                                                frame]['done']
+                        total=self.status[self.type][ps][profile][
+                                                                frame]['groups']
+                        tosort=self.status[self.type][ps][profile][frame][
+                                                                'tosort']
+>>>>>>> implement slices
                         totalwverified=[]
                         for g in total:
                             if g in done:
@@ -8214,11 +8369,15 @@ class SliceDict(dict):
         else:
             self.ps(self._pss[index+1])
 <<<<<<< HEAD
+<<<<<<< HEAD
         return self._ps
     def slicepriority(self,arg=None):
         """arg is to throw away, rather than break a fn where others get
         and set. This is now calculated, not read from file and set here."""
 =======
+=======
+        return self._ps
+>>>>>>> implement slices
     def nextprofile(self):
         self.makeprofileok()
         index=self._profiles.index(self._profile)
@@ -8226,6 +8385,7 @@ class SliceDict(dict):
             self.profile(self._profiles[0]) #cycle back
         else:
             self.profile(self._profiles[index+1])
+        return self._profile
     def slicepriority(self):
 >>>>>>> parameter dictionary classes
         self.validate()
