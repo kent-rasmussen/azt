@@ -237,6 +237,34 @@ class Check():
                 if file.exists(legacy):
                     log.debug("But legacy file {} does; converting!".format(legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
+    """This should each be done only once, to make the objects from settings"""
+    """self.profilesbysense and self.profilecounts are loaded from file, or
+    created by analysis in init()"""
+    def makeglosslangs(self):
+        if not hasattr(self,'glosslangs'):
+            self.guessglosslangs()
+        self.glosslangs=Glosslangs(self.glosslangs)
+    def maketoneframes(self):
+        if not hasattr(self,'toneframes'):
+            self.toneframes={}
+        self.toneframes=ToneFrames(self.toneframes)
+    def makeparameters(self):
+        self.params=CheckParameters() #remove self.profilesbysense?
+    def makeslicedict(self):
+        if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
+            self.adhocgroups={}
+        self.slices=SliceDict(self.params,self.adhocgroups,self.profilesbysense) #self.profilecounts
+    def makestatus(self):
+        log.info("makestatus")
+        if not hasattr(self,'status'):
+            self.status={}
+        self.status=StatusDict(self.params,
+                                self.slices,
+                                self.toneframes,
+                                self.settingsfile('status'),
+                                self.status
+                                )
+        log.info("makestatus status type: {}".format(type(self.status)))
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
@@ -330,8 +358,8 @@ class Check():
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def getpss(self):
-        self.pss=self.slices.pss() #make this one line, remove self.pss
-        return self.pss
+        pss=self.slices.pss() #make this one line, remove pss
+        return pss
         #Why rebuild this here?
     def nextps(self,guess=False):
         """Make this smarter, but for now, just take value from the most
