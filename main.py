@@ -198,15 +198,10 @@ class Check():
         self.makeslicedict()
         self.setnamesall() #sets self.checknamesall
         self.loadsettingsfile(setting='status')
-        if not hasattr(self,'status'): #I.e., not loaded from file
-            self.status=StatusDict(self.params, self.slices, {})
+        self.makestatus()
         #This can wait until runcheck, right?
-        # if (hasattr(self,'ps') and (self.ps is not None) and
-        #     hasattr(self,'profile') and (self.profile is not None) and
-        #     hasattr(self,'name') and (self.name is not None)):
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
         if not hasattr(self,'glosslangs'):
-            self.guessglosslangs() #needed for the following
         self.makeglosslangs()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         #     self.guessglosslangs() #needed for the following
@@ -216,7 +211,6 @@ class Check():
         #set None to make labels, else "raised" "groove" "sunken" "ridge" "flat"
         # n=self.db.getsensenode()
         # senseid="begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa"
-        # self.name='Progressive'
         # RecordButtonFrame.makefilenames(check=self,senseid=senseid)
         # log.info(n)
         log.info("status type: {}".format(type(self.status)))
