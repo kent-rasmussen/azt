@@ -1456,7 +1456,7 @@ class Check():
                                     'distinguish',
                                     'interpret',
                                     'polygraphs',
-                                    "profilecounts","profilecountInvalid",
+                                    "profilecounts",
                                     "scount",
                                     "sextracted",
                                     "profilesbysense",
