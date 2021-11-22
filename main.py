@@ -4616,9 +4616,12 @@ class Check():
         if groupselected is None or groupselected == '':
             log.error("groupselected: {}; this should never happen"
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                         "".format(self.groupselected))
 >>>>>>> selfless
+=======
+>>>>>>> new groupselected parameter
                         "".format(groupselected))
             exit()
         check=self.params.check()
