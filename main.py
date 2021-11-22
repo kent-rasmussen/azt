@@ -3239,12 +3239,15 @@ class Check():
         segments depend on the number of segments in the selected syllable
         profile, but for tone, they don't; tone frames depend only on ps."""
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         if self.type=='T': #if it's a tone check, get from frames.
             self.checkspossible=self.framenamesbyps(self.ps)
         else:
             self.checkspossible=self.setnamesbyprofile() #tuples of CV checks
 >>>>>>> selfless
+=======
+>>>>>>> cleanup
         self.status.renewchecks()
         self.status.checks()
     def getcheck(self,guess=False,tosort=False,wsorted=False,event=None):
