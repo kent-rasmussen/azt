@@ -5084,39 +5084,41 @@ class Check():
         the easier ones, with the first occurrance changed."""
         if self.debug is True:
             print('maxcount='+str(maxcount))
-            print(self.name)
-        self.regexCV=str(self.profile) #Let's set this before changing it.
+            print(check)
+        self.regexCV=str(profile) #Let's set this before changing it.
         """One pass for all regexes, S3, then S2, then S1, as needed."""
-        types=['V','C']
-        if 'x' in self.name:
+        cvts=['V','C']
+        cvt=self.params.cvt()
+        group=self.status.group()
+        if 'x' in check:
             if self.subcheckcomparison in self.s[self.analang]['C']:
-                types=['C','V']
-        for type in types:
-            if type not in self.type:
+                cvts=['C','V']
+        for t in cvts:
+            if t not in cvt:
                 continue
-            S=str(self.type)
+            S=str(cvt)
             regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
             compared=False
             for occurrence in reversed(range(maxcount)):
                 occurrence+=1
-                if re.search(S+str(occurrence),self.name) is not None:
+                if re.search(S+str(occurrence),check) is not None:
                     """Get the (n=occurrence) S, regardless of intervening
                     non S..."""
                     regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
-                    if 'x' in self.name:
+                    if 'x' in check:
                         if compared == False: #occurrence == 2:
                             replS='\\1'+self.subcheckcomparison
                             compared=True
                         else: #if occurrence == 1:
-                            replS='\\1'+self.subcheck
+                            replS='\\1'+group
                     else:
-                        replS='\\1'+self.subcheck
+                        replS='\\1'+group
                     self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
         if self.debug ==True:
-            print('self.profile='+str(self.profile)+str(type(self.profile)))
-            print('self.type='+str(self.type)+str(type(self.type)))
-            print('self.name='+str(self.name)+str(type(self.name)))
-            print('self.subcheck='+str(self.subcheck)+str(type(self.subcheck)))
+            print('profile='+str(profile)+str(type(profile)))
+            print('cvt='+str(cvt)+str(type(cvt)))
+            print('check='+str(check)+str(type(check)))
+            print('group='+str(group)+str(type(group)))
             print('self.regexCV='+str(self.regexCV)+str(type(self.regexCV)))
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
@@ -5213,7 +5215,7 @@ class Check():
             senseidsbygroup=self.getsenseidsbytoneUFgroups()
         self.getrunwindow()
         title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
-                                                        self.ps,self.profile))
+                                                        ps,profile))
         self.runwindow.title(title)
         padx=50
         pady=10
@@ -5232,7 +5234,7 @@ class Check():
                 "default analysis, which will replace these groupings with new "
                 "split groupings. \nTo see a report based on what you do "
                 "here, run the tone reports in the Advanced menu (without "
-                "analysis). ".format(self.ps,self.profile,self.program['name']))
+                "analysis). ".format(ps,profile,self.program['name']))
         rwrow+=1
         i=Label(self.runwindow.frame,text=text)
         i.grid(row=rwrow,column=0,sticky='ew')
@@ -5240,7 +5242,7 @@ class Check():
         qframe=Frame(self.runwindow.frame)
         qframe.grid(row=rwrow,column=0,sticky='ew')
         text=_("What do you want to call this UF tone group for {}-{} words?"
-                "".format(self.ps,self.profile))
+                "".format(ps,profile))
         qrow+=1
         q=Label(qframe,text=text)
         q.grid(row=qrow,column=0,sticky='ew',pady=20)
@@ -5251,7 +5253,7 @@ class Check():
         errorlabel=Label(qframe,text='',fg='red')
         errorlabel.grid(row=qrow,column=2,sticky='ew',pady=20)
         text=_("Select the groups below that you want in this {} group, then "
-                "click ==>".format(self.ps))
+                "click ==>".format(ps))
         qrow+=1
         d=Label(qframe,text=text)
         d.grid(row=qrow,column=0,sticky='ew',pady=20)
@@ -5319,7 +5321,6 @@ class Check():
         return values
     def tonegroupsbysenseidlocation(self):
         #outputs dictionary keyed to [senseid][location]=group
-        self.getidstosort() #in case you didn't just run a check
         self.getlocations()
         output={}
         locations=self.locations[:]
