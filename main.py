@@ -1404,7 +1404,6 @@ class Check():
                                 'interfacelang',
                                 'examplespergrouptorecord',
                                 'adnlangnames',
-                                'exs',
                                 'maxpss',
                                 'hidegroupnames',
                                 'maxprofiles'
