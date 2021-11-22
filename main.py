@@ -8421,8 +8421,14 @@ class SliceDict(dict):
         else:
             self.profile(self._profiles[index+1])
         return self._profile
+<<<<<<< HEAD
     def slicepriority(self):
 >>>>>>> parameter dictionary classes
+=======
+    def slicepriority(self,arg=None):
+        """arg is to throw away, rather than break a fn where others get
+        and set. This is now calculated, not read from file and set here."""
+>>>>>>> doc
         self.validate()
         self._sliceprioritybyps={}
         try:
