@@ -1974,6 +1974,9 @@ class Check():
         if ps not in self.adhocgroups:
             self.adhocgroups[ps]={}
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> statusdict fns
     """I need to think through these some more. How to keep default and
     non-default values from mixing?"""
     def makestatusdictcvt(self,cvt=None):
@@ -1981,6 +1984,7 @@ class Check():
             self.params.cvt()
         self.status.build(cvt=cvt)
         return
+<<<<<<< HEAD
 =======
     def makestatusdicttype(self):
         # This depends on self.type only
@@ -2031,6 +2035,8 @@ class Check():
         if checktype is None:
             checktype=self.type
 >>>>>>> selfless
+=======
+>>>>>>> statusdict fns
     def makestatusdictps(self,cvt=None,ps=None):
         if cvt is None:
             self.params.cvt()
