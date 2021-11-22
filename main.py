@@ -9144,6 +9144,45 @@ class CheckParameters(dict):
         self.slicepriority()
         self.pspriority()
 class StatusDict(dict):
+    """This stores and returns current ps and profile only; there is no check
+    here that the consequences of the change are done (done in check)."""
+    """I should think about what 'do' means here: sort? verify? record?"""
+    def checktosort(self,check=None):
+        if check is None:
+            check=self._checkparameters.check()
+        cvt=self._checkparameters.cvt()
+        ps=self._slicedict.ps()
+        profile=self._slicedict.profile()
+        if (check not in self[cvt][ps][profile] or
+                self[cvt][ps][profile][check]['tosort'] == True):
+            return True
+    def profiletosort(self,profile=None):
+        if profile is None:
+            profile=self._slicedict.profile()
+        cvt=self._checkparameters.cvt()
+        ps=self._slicedict.ps()
+        checks=self.updatechecksbycvt() #not keyed by profile
+        for check in checks:
+            if (check not in self[cvt][ps][profile] or
+                    self[cvt][ps][profile][check]['tosort'] == True):
+                return True
+    def groupstoverify(self,check=None):
+        """This assumes we have already run checktosort, so we won't do that"""
+        if check is None:
+            check=self._checkparameters.check()
+        cvt=self._checkparameters.cvt()
+        ps=self._slicedict.ps()
+        profile=self._slicedict.profile()
+        groups=self[cvt][ps][profile][check]['groups']
+        done=self[cvt][ps][profile][check]['done']
+        groupstoverify=set(groups)-set(done)
+        log.debug("Check: {}; groupstodo: {}; groups: {}; done: {}; "
+                "".format(check, groupstoverify, groups, done))
+        if len(groupstoverify) >0: #len(groups) == 0 or excessive
+            log.debug("{} check has sorted groups left to "
+                    "verify: {} (groups: {})".format(check,groupstoverify,
+                                                                    groups))
+        return list(groupstoverify)
     def nextprofile(self, tosort=False, wsorted=False, toverify=False):
         ps=self._slicedict.ps()
         # self.makeprofileok()
