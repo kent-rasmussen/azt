@@ -140,7 +140,12 @@ class Check():
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.loadsettingsfile(setting='toneframes')
+<<<<<<< HEAD
         self.maketoneframes()
+=======
+        if not hasattr(self,'toneframes'):
+            self.toneframes=ToneFrames({})
+>>>>>>> make sure the new toneframes object exists
         self.loadsettingsfile(setting='adhocgroups')
         if nsyls is not None:
             self.nsyls=nsyls
