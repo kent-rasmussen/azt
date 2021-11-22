@@ -9832,8 +9832,12 @@ def removesenseidfromsubcheck(self,parent,senseid,check=None,group=None):
                                                                     tgroups)))
         return
     rm=self.verifictioncode(check,group)
+<<<<<<< HEAD
     self.db.modverificationnode(senseid,vtype=self.profile,analang=self.analang,
                                                                     rms=[rm])
+=======
+    self.db.modverificationnode(senseid,vtype=self.profile,rms=[rm])
+>>>>>>> group
     self.db.write() #This is not iterated over
     self.status.marksenseidtosort(senseid) #This is just for self.status['sorted']
     parent.destroy() #.runwindow.resetframe()
