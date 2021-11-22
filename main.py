@@ -142,6 +142,7 @@ class Check():
         self.loadsettingsfile(setting='toneframes')
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.maketoneframes()
 =======
         if not hasattr(self,'toneframes'):
@@ -150,6 +151,9 @@ class Check():
 =======
         self.maketoneframes()
 >>>>>>> changes for now
+=======
+        self.maketoneframes()
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         self.loadsettingsfile(setting='adhocgroups')
         if nsyls is not None:
             self.nsyls=nsyls
@@ -204,6 +208,7 @@ class Check():
             self.storesettingsfile(setting='profiledata')
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             log.debug("Ending ps-profile: {}-{}".format(ps,profile))
         self.makeparameters()
         self.makeslicedict()
@@ -237,10 +242,21 @@ class Check():
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
 <<<<<<< HEAD
 <<<<<<< HEAD
+=======
+            log.debug("Ending ps-profile: {}-{}".format(ps,profile))
+        self.makeparameters()
+        self.makeslicedict()
+        self.setnamesall() #sets self.checknamesall
+        self.loadsettingsfile(setting='status')
+        self.makestatus()
+        #This can wait until runcheck, right?
+        #     self.sortingstatus() #because this won't get set later #>checkdefaults?
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         if not hasattr(self,'glosslangs'):
         self.makeglosslangs()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         #     self.guessglosslangs() #needed for the following
+<<<<<<< HEAD
 =======
         self.glosslangs=Glosslangs(None,None)
         self.guessglosslangs() #needed for the following
@@ -258,6 +274,8 @@ class Check():
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         #     self.guessglosslangs() #needed for the following
 >>>>>>> selfless
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
@@ -289,6 +307,7 @@ class Check():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     def checkforlegacyverification(self):
         start_time=time.time()
         n=0
@@ -306,6 +325,8 @@ class Check():
 =======
 =======
 >>>>>>> make new stuff fns
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     """This should each be done only once, to make the objects from settings"""
     """self.profilesbysense and self.profilecounts are loaded from file, or
     created by analysis in init()"""
@@ -335,11 +356,14 @@ class Check():
                                 )
         log.info("makestatus status type: {}".format(type(self.status)))
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> make new stuff fns
 =======
 >>>>>>> upgrade settings parser
 =======
 >>>>>>> make new stuff fns
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
@@ -435,6 +459,7 @@ class Check():
     def getpss(self):
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         pss=self.slices.pss() #make this one line, remove pss
         return pss
 =======
@@ -445,11 +470,16 @@ class Check():
         pss=self.slices.pss() #make this one line, remove pss
         return pss
 >>>>>>> make new stuff fns
+=======
+        pss=self.slices.pss() #make this one line, remove pss
+        return pss
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         #Why rebuild this here?
     def nextps(self,guess=False):
         """Make this smarter, but for now, just take value from the most
         populous tuple"""
         return self.slices.nextps()
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -458,11 +488,14 @@ class Check():
 >>>>>>> make old fns into wrappers
 =======
 >>>>>>> next frame and profile
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def nextframe(self,sort=True,guess=False):
         if len(todo) == 0:
             log.info("No frames to do; asking to define another one")
             self.addframe() #The above should change check, if completed.
             return
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -487,6 +520,8 @@ class Check():
 >>>>>>> selfless
 =======
 >>>>>>> next frame and profile
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def nextgroup(self,guess=False):
         def default():
             self.set('subcheck',priorities[0])
@@ -861,6 +896,7 @@ class Check():
             """Is this OK?!?"""
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.slices.updateslices()
 =======
             self.makecountssorted() #we need these to show up in the counts.
@@ -868,19 +904,26 @@ class Check():
 =======
             self.slices.updateslices()
 >>>>>>> selfless
+=======
+            self.slices.updateslices()
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             self.storesettingsfile(setting='profiledata')#since we changed this.
             #so we don't have to do this again after each profile analysis
             self.storesettingsfile(setting='adhocgroups')
         self.getrunwindow()
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> selfless
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         profile=self.slices.profile()
         ps=self.slices.ps()
         if profile in [x[0] for x in self.slices.profiles()]: #profilecountsValid]:
             new=True
             title=_("New Ad Hoc Sort Group for {} Group".format(ps))
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
         if self.profile in [x[0] for x in self.profilecountsValid]:
@@ -888,6 +931,8 @@ class Check():
 >>>>>>> implement slices
 =======
 >>>>>>> selfless
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         else:
             new=False
             title=_("Modify Existing Ad Hoc Sort Group for {} Group".format(ps))
@@ -1069,6 +1114,7 @@ class Check():
                 return
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             log.info('self.name:{}'.format(self.name))
             if self.toneframes is None:
                 self.toneframes={}
@@ -1129,6 +1175,12 @@ class Check():
             checkdefntoadd['field']='lc' #update this with radio!
             for lang in langs:
 >>>>>>> chk selfless
+=======
+            """Define the new frame"""
+            checkdefntoadd={}
+            checkdefntoadd['field']='lc' #update this with radio!
+            for lang in langs:
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                 before=db['before'][lang]['entryfield'].get()
                 after=db['after'][lang]['entryfield'].get()
                 checkdefntoadd[lang]=str(
@@ -1141,9 +1193,12 @@ class Check():
             #At this point, remove this frame (in case we don't submit it)
             del self.toneframes[ps][checktoadd]
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> chk selfless
 =======
 >>>>>>> chk selfless
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             """Display framed data"""
             if hasattr(self.addwindow,'framechk'):
                 self.addwindow.framechk.destroy()
@@ -1157,6 +1212,7 @@ class Check():
             lt=Label(self.addwindow.framechk,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                     text=text,
 =======
                     text="Examples for {} tone frame".format(checktoadd),
@@ -1164,6 +1220,9 @@ class Check():
 =======
                     text="Examples for {} tone frame".format(checktoadd),
 >>>>>>> chk selfless
+=======
+                    text="Examples for {} tone frame".format(checktoadd),
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                     font=self.fonts['readbig'],
                     justify=tkinter.LEFT,anchor='w')
             lt.grid(row=row,column=columnleft,sticky='w',columnspan=2,
@@ -1172,11 +1231,14 @@ class Check():
                 row+=1
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
                 tfd[lang]=('(ex: '+str(framed.forms.framed[lang])+')')
 =======
 =======
 >>>>>>> chk selfless
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                 tf[lang]=('form[{}]: {}'.format(lang,checkdefntoadd[lang]))
                 tfd[lang]=('(ex: '+framed.forms.framed[lang]+')')
 >>>>>>> chk selfless
@@ -1439,8 +1501,11 @@ class Check():
         self.slices.profile(choice)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> new attribute paradigm
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         self.attrschanged.append('profile')
         self.refreshattributechanges()
         window.destroy()
@@ -1448,6 +1513,7 @@ class Check():
         self.params.cvt(choice)
         self.attrschanged.append('cvt')
         self.refreshattributechanges()
+<<<<<<< HEAD
 <<<<<<< HEAD
         window.destroy()
 =======
@@ -1459,6 +1525,9 @@ class Check():
 =======
         window.destroy()
 >>>>>>> new attribute paradigm
+=======
+        window.destroy()
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def setanalang(self,choice,window):
         self.set('analang',choice,window)
     def setgroup(self,choice,window):
@@ -1480,6 +1549,7 @@ class Check():
         self.glosslangs.lang1(choice)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
         window.destroy()
@@ -1492,16 +1562,25 @@ class Check():
         self.refreshattributechanges()
         window.destroy()
 >>>>>>> new attribute paradigm
+=======
+        self.attrschanged.append('glosslangs')
+        self.refreshattributechanges()
+        window.destroy()
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def setglosslang2(self,choice,window):
         if choice is not None:
             self.glosslangs.lang2(choice)
         elif len(self.glosslangs)>1:
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             self.glosslangs.pop(1) #if lang2 is None
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
         window.destroy()
+<<<<<<< HEAD
 =======
             self.glosslangs.pop(1) #rm(self.glosslangs[1])
         window.destroy()
@@ -1528,6 +1607,13 @@ class Check():
         self.refreshattributechanges()
         window.destroy()
 >>>>>>> cleanup
+=======
+    def setps(self,choice,window):
+        self.slices.ps(choice)
+        self.attrschanged.append('ps')
+        self.refreshattributechanges()
+        window.destroy()
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
     def getgroup(self,guess=False,cvt=None,event=None,comparison=False):
@@ -1634,6 +1720,7 @@ class Check():
                         'glosslangs':[],
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                         'check':[],
 =======
                         'name':[],
@@ -1641,6 +1728,9 @@ class Check():
 =======
                         'check':[],
 >>>>>>> settings
+=======
+                        'check':[],
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                         'subcheck':[
                             'regexCV'
                             ],
@@ -1744,8 +1834,11 @@ class Check():
         self.storesettingsfile()
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> new structure
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         pss=self.slices.pss() #this depends on nothing
         for t in self.params.cvts(): #this depends on nothing
             for ps in pss:
@@ -1761,6 +1854,7 @@ class Check():
         self.status.cull()
         if None in self.status: #This should never be there
             del self.status[None]
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
         pss=self.slices.pss()
@@ -1816,6 +1910,9 @@ class Check():
 >>>>>>> moved to class
 =======
 >>>>>>> cleanup
+=======
+        self.storesettingsfile(setting='status')
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
@@ -1824,8 +1921,11 @@ class Check():
             log.error("No file name for setting {}!".format(setting))
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> new settings paradigm
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
         fns={}
@@ -1851,6 +1951,7 @@ class Check():
         d={}
         objectfns=self.settingsobjects()
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     def storesettingsfile(self,setting='defaults'):
         filename=self.settingsfile(setting)
@@ -1859,6 +1960,8 @@ class Check():
 >>>>>>> upgrade settings parser
 =======
 >>>>>>> new settings paradigm
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         if setting == 'soundsettings':
             o=self.soundsettings
         else:
@@ -1866,8 +1969,11 @@ class Check():
         for s in self.settings[setting]['attributes']:
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> new settings paradigm
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             if s in objectfns:
                 log.debug("Trying to dict {} attr".format(s))
                 try:
@@ -1921,6 +2027,7 @@ class Check():
             else:
                 config['default'][s]=str(v)
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             if hasattr(o,s):
                 log.debug("Trying to set {} with value {}".format(s,getattr(o,s)))
@@ -1932,6 +2039,8 @@ class Check():
 >>>>>>> upgrade settings parser
 =======
 >>>>>>> new settings paradigm
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         if config['default'] == {}:
             del config['default']
         with open(filename, "w", encoding='utf-8') as file:
@@ -1960,6 +2069,7 @@ class Check():
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
                 if hasattr(module,s):
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -1999,6 +2109,8 @@ class Check():
                     ori[s]=getattr(module,s)
                     setattr(o,s,ori[s])
 =======
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                     setattr(o,s,getattr(module,s))
 >>>>>>> new settings paradigm
         except:
@@ -2020,6 +2132,7 @@ class Check():
                                             str(dict1[s]), str(dict2[s])))
             else:
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if s in ori:
                     if hasattr(o,s):
                         log.error("Problem with attribute {}; {}≠{}".format(s,
@@ -2034,6 +2147,11 @@ class Check():
                 log.error("You should send in an error report for this.")
                 exit()
 >>>>>>> new settings paradigm
+=======
+                log.error("Attribute {} didn't make it back".format(s))
+                log.error("You should send in an error report for this.")
+                exit()
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         log.info("Settings file {} converted to {}, with each value verified."
                 "".format(legacy,savefile))
     def loadsettingsfile(self,setting='defaults'):
@@ -2044,6 +2162,9 @@ class Check():
             return
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         log.debug("Trying for {} settings in {}".format(setting, filename))
         d={}
         for section in self.settings[setting]['attributes']:
@@ -2066,6 +2187,7 @@ class Check():
         self.readsettingsdict(d)
     """These should all go!"""
     def makeadhocgroupsdict(self,ps=None): #shouldn't need this, in slices.adhoc()
+<<<<<<< HEAD
 =======
         if setting == 'soundsettings':
             o=self.soundsettings
@@ -2106,6 +2228,8 @@ class Check():
     """These should all go!"""
     def makeadhocgroupsdict(self,ps=None): #shouldn't need this, in slices.adhoc()
 >>>>>>> statusdict comment
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         # self.ps and self.profile should be set when this is called
         if ps is None:
             ps=self.ps
@@ -2115,8 +2239,11 @@ class Check():
             self.adhocgroups[ps]={}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> statusdict fns
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     """I need to think through these some more. How to keep default and
     non-default values from mixing?"""
     def makestatusdictcvt(self,cvt=None):
@@ -2124,6 +2251,7 @@ class Check():
             self.params.cvt()
         self.status.build(cvt=cvt)
         return
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
     def makestatusdicttype(self):
@@ -2177,10 +2305,13 @@ class Check():
 >>>>>>> selfless
 =======
 >>>>>>> statusdict fns
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def makestatusdictps(self,cvt=None,ps=None):
         if cvt is None:
             self.params.cvt()
         if ps is None:
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             self.slices.ps()
@@ -2194,6 +2325,11 @@ class Check():
         self.status.build(cvt=cvt,ps=ps)
         return
 >>>>>>> selfless
+=======
+            self.slices.ps()
+        self.status.build(cvt=cvt,ps=ps)
+        return
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def makestatusdictprofile(self,cvt=None,ps=None,profile=None):
         if cvt is None:
             self.params.cvt()
@@ -2232,6 +2368,7 @@ class Check():
             rms+=self.db.getverificationnodevaluebyframe(senseid,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                         vtype=self.profile, analang=self.analang, frame=name)
 =======
                                                 vtype=profile, frame=check)
@@ -2250,6 +2387,11 @@ class Check():
 =======
             self.db.modverificationnode(senseid,vtype=profile,add=add,rms=rms)
 >>>>>>> selfless
+=======
+                                                vtype=profile, frame=check)
+            log.info("Removing {}".format(rms))
+            self.db.modverificationnode(senseid,vtype=profile,add=add,rms=rms)
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         if refresh == True:
             self.db.write() #for when not iterated over, or on last repeat
     def updatestatus(self,group=None,verified=False,refresh=True):
@@ -2665,12 +2807,16 @@ class Check():
         self.mainrelief=relief # None "raised" "groove" "sunken" "ridge" "flat"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
             self.refreshdelay=10000 #ten seconds if working in another window
         else:
             self.refreshdelay=1000 #one second if not working in another window
+<<<<<<< HEAD
 =======
         if refresh == True:
             self.checkcheck()
@@ -2687,6 +2833,8 @@ class Check():
         else:
             self.refreshdelay=1000 #one second if not working in another window
 >>>>>>> refreshdelay
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def checkcheck(self,dict=None):
         """This checks for incompatible or missing variable values, and asks
         for them. If values are OK, they are displayed."""
@@ -2827,12 +2975,16 @@ class Check():
         tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         opts['row']+=1
 =======
 >>>>>>> implement slices
 =======
         opts['row']+=1
 >>>>>>> checkcheck
+=======
+        opts['row']+=1
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         t=(_("Looking at {}").format(profile))
         proselabel(opts,t,cmd='getprofile',parent=tf)
         opts['columnplus']=1
@@ -2859,17 +3011,21 @@ class Check():
                 t=_("no tone frames defined.")
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                 self.name=None
 >>>>>>> checkcheck
 =======
 >>>>>>> cleanup
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                 check=None
             elif self.status.ischeckok():
                 # check not in checks:
                 t=_("no tone frame selected.")
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 check=None
             else:
                 t=(_("working on ‘{}’ tone frame").format(check))
@@ -2878,10 +3034,13 @@ class Check():
                 self.name=None
 =======
 >>>>>>> cleanup
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                 check=None
             else:
                 t=(_("working on ‘{}’ tone frame").format(check))
             proselabel(opts,t,cmd='getcheck',parent=tf)
+<<<<<<< HEAD
 <<<<<<< HEAD
         else:
 >>>>>>> checkcheck
@@ -2913,6 +3072,10 @@ class Check():
         # else:
         """Get subcheck"""
 >>>>>>> cleanup
+=======
+        # else:
+        """Get subcheck"""
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         # if None not in [cvt, ps, profile, check]: #is this needed?
         self.status.build() #makestatusdict()
         self.status.makegroupok()
@@ -2923,14 +3086,18 @@ class Check():
                 t=_("(no framed group)")
             else:
 <<<<<<< HEAD
+<<<<<<< HEAD
                 t=(_("(framed group: ‘{}’)").format(self.subcheck))
 >>>>>>> checkcheck
 =======
 >>>>>>> cleanup
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                 t=(_("(framed group: ‘{}’)").format(group))
             proselabel(opts,t,cmd='getgroup',parent=tf)
             opts['columnplus']=0
         else:
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             # tf=Frame(self.frame.status)
@@ -2945,6 +3112,10 @@ class Check():
             # tf=Frame(self.frame.status)
             opts['columnplus']=1
 >>>>>>> cleanup
+=======
+            # tf=Frame(self.frame.status)
+            opts['columnplus']=1
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             t=(_("working on {}".format(group))) #check[1]
             proselabel(opts,t,cmd='getcheck',parent=tf)
         """Final Button"""
@@ -2956,6 +3127,7 @@ class Check():
         button(opts,t,self.runcheck,column=0,
                 font=self.fonts['title'],
                 compound='bottom', #image bottom, left, right, or top of text
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                 image=self.photo[cvt]
@@ -2973,6 +3145,11 @@ class Check():
                 )
         opts['row']+=1
 >>>>>>> cleanup
+=======
+                image=self.photo[cvt]
+                )
+        opts['row']+=1
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         if cvt == 'T':
             t=(_("Record Sorted Examples"))
         else:
@@ -3063,11 +3240,15 @@ class Check():
         def checkfordone(): #has *anything* been sorted?
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             if self.status.groups() >0:
             # for profile in self.status[self.type][ps]:
                 return True
         profileori=self.slices.profile()
         nameori=self.params.check()
+<<<<<<< HEAD
 =======
             for self.profile in self.status[self.type][ps]:
 =======
@@ -3082,6 +3263,8 @@ class Check():
 =======
         nameori=self.params.check()
 >>>>>>> checkcheck
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
         self.leaderboard=Frame(self.frame)
@@ -3089,6 +3272,9 @@ class Check():
         #Given the line above, much of the below can go, but not all?
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         cvt=self.params.cvt()
         ps=self.slices.ps()
         self.status.cull() #remove nodes with no data
@@ -3100,6 +3286,7 @@ class Check():
                     if ps in self.toneframes:
                         self.maketoneprogresstable()
                         return
+<<<<<<< HEAD
 =======
         ps=self.slices.ps()
         if hasattr(self,'status') and self.type in self.status:
@@ -3133,6 +3320,8 @@ class Check():
                         self.maketoneprogresstable()
                         return
 >>>>>>> checkcheck
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                 else:
                     log.info("Found CV verifications")
                     self.makeCVprogresstable()
@@ -3156,6 +3345,7 @@ class Check():
         if self.mainrelief == None:
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             lps=Label(titleframe,text=ps,anchor='c',font=self.fonts['title'])
 =======
             lps=Label(titleframe,text=ps,anchor='c',
@@ -3164,6 +3354,9 @@ class Check():
 =======
             lps=Label(titleframe,text=ps,anchor='c',font=self.fonts['title'])
 >>>>>>> checkcheck
+=======
+            lps=Label(titleframe,text=ps,anchor='c',font=self.fonts['title'])
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         else:
             lps=Button(titleframe,text=ps, anchor='c',
                             relief=self.mainrelief, font=self.fonts['title'])
@@ -3217,19 +3410,25 @@ class Check():
         #put in a footer for next profile/frame
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> new progresstable,  selfless
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         cvt=self.params.cvt()
         ps=self.slices.ps()
         profiles=self.slices.profiles()
         curprofile=self.slices.profile()
         curcheck=self.params.check()
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         profiles=self.slices.profiles()
 >>>>>>> implement slices
 =======
 >>>>>>> new progresstable,  selfless
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         profiles=['colheader']+profiles+['next']
         frames=list(self.toneframes[ps].keys())
         ungroups=0
@@ -3241,6 +3440,7 @@ class Check():
         h.bind('<ButtonRelease>', refresh)
         htip=_("Refresh table, \nsave settings")
         th=ToolTip(h,htip)
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         r=self.status[cvt][ps]
@@ -3257,10 +3457,15 @@ class Check():
         r=self.status[cvt][ps]
 >>>>>>> new progresstable,  selfless
         log.debug("Table rows possible: {}".format(r))
+=======
+        r=self.status[cvt][ps]
+        log.debug("Table rows possible: {}".format(r))
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         for profile in profiles:
             column=0
             if profile in ['colheader','next']+list(self.status[cvt][
                                                             ps].keys()):
+<<<<<<< HEAD
 <<<<<<< HEAD
                 if profile in self.status[self.type][ps]:
                     if self.status[self.type][ps][profile] == {}:
@@ -3269,6 +3474,10 @@ class Check():
                 if profile in self.status[cvt][ps]:
                     if self.status[cvt][ps][profile] == {}:
 >>>>>>> new progresstable,  selfless
+=======
+                if profile in self.status[cvt][ps]:
+                    if self.status[cvt][ps][profile] == {}:
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                         continue
                     #Make row header
                     t="{} ({})".format(profile,len(self.profilesbysense[
@@ -3300,12 +3509,16 @@ class Check():
                     elif profile == 'next':
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> new progresstable,  selfless
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                         continue
                     elif frame in self.status[cvt][ps][profile]:
                         node=self.status[cvt][ps][profile][frame]
                         if len(node['done']) > len(node['groups']):
+<<<<<<< HEAD
 <<<<<<< HEAD
                             ungroups+=1
                         #At this point, these should be there
@@ -3344,6 +3557,13 @@ class Check():
                         total=node['groups']
                         tosort=node['tosort']
 >>>>>>> new progresstable,  selfless
+=======
+                            ungroups+=1
+                        #At this point, these should be there
+                        done=node['done']
+                        total=node['groups']
+                        tosort=node['tosort']
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                         totalwverified=[]
                         for g in total:
                             if g in done:
@@ -3556,8 +3776,11 @@ class Check():
         window=Window(self.frame,title='Select Gloss Language')
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> glosslangs implementation
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         text=_('What other language do you want to use for glosses?')
         Label(window.frame,text=text).grid(column=0, row=1)
         langs=list()
@@ -3570,6 +3793,7 @@ class Check():
         buttonFrame1=ButtonFrame(window.frame,langs,self.setglosslang2,
                                  window
                                  ).grid(column=0, row=4)
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
         if self.db.filename is None :
@@ -3592,10 +3816,13 @@ class Check():
 >>>>>>> chose framed as addmodexamplefields attr
 =======
 >>>>>>> glosslangs implementation
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def getcheckspossible(self):
         """This splits by tone or not, because the checks available for
         segments depend on the number of segments in the selected syllable
         profile, but for tone, they don't; tone frames depend only on ps."""
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -3606,6 +3833,8 @@ class Check():
 >>>>>>> selfless
 =======
 >>>>>>> cleanup
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         self.status.renewchecks()
         self.status.checks()
     def getcheck(self,guess=False,tosort=False,wsorted=False,event=None):
@@ -3807,6 +4036,7 @@ class Check():
         self.locations=list(dict.fromkeys(self.locations))
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     def topprofiles(self,x='ALL'):
         """take the top x ps-profile combos, return in ps:profile dict"""
@@ -3876,6 +4106,8 @@ class Check():
 >>>>>>> new count creation
 =======
 >>>>>>> obsolete fns
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
         xlp.Paragraph(parent,t)
         print(t)
@@ -4025,6 +4257,7 @@ class Check():
                 xlp.Gloss(ex,lang,framed.forms[lang])
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     def makecountssorted(self):
         # This iterates across self.profilesbysense to provide counts for each
@@ -4046,6 +4279,8 @@ class Check():
 >>>>>>> new count creation
 =======
 >>>>>>> rm to object
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def printcountssorted(self):
         #This is only used in the basic report
         log.info("Ranked and numbered syllable profiles, by grammatical category:")
@@ -4761,6 +4996,7 @@ class Check():
                 continue
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.verifybutton(self.sframe.content,senseid,
                                 row, column,
                                 label=False)
@@ -4771,6 +5007,11 @@ class Check():
                                 row, column,
                                 label=False)
 >>>>>>> d
+=======
+            self.verifybutton(self.sframe.content,senseid,
+                                row, column,
+                                label=False)
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             row+=1
         bf=Frame(self.sframe.content)
         bf.grid(row=row, column=0, sticky="ew")
@@ -4975,11 +5216,14 @@ class Check():
                                 fieldvalue=newtonevalue)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.db.modverificationnode(senseid=senseid,vtype=self.profile,
                         analang=self.analang, add=add,rms=[rm],addifrmd=True)
 =======
 =======
 >>>>>>> selfless
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             self.db.modverificationnode(senseid=senseid,vtype=profile,
                                                 add=add,rms=[rm],addifrmd=True)
 >>>>>>> selfless
@@ -5003,11 +5247,14 @@ class Check():
             log.error("groupselected: {}; this should never happen"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                         "".format(self.groupselected))
 >>>>>>> selfless
 =======
 >>>>>>> new groupselected parameter
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                         "".format(groupselected))
             exit()
         check=self.params.check()
@@ -5023,6 +5270,7 @@ class Check():
 <<<<<<< HEAD
 <<<<<<< HEAD
                                     framed=framed,
+<<<<<<< HEAD
 <<<<<<< HEAD
                                     fieldtype='tone',location=check,
                                     fieldvalue=groupselected
@@ -5044,6 +5292,10 @@ class Check():
                                     fieldtype='tone',location=check,
                                     fieldvalue=groupselected
 >>>>>>> selfless
+=======
+                                    fieldtype='tone',location=check,
+                                    fieldvalue=groupselected
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                                     )
         tonegroup=unlist(self.db.get("example/tonefield/form/text",
                         senseid=senseid, location=check).get('text'))
@@ -5055,12 +5307,16 @@ class Check():
                                         "".format(tonegroup,groupselected))
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.updatestatus(group=groupselected) #this marks the group unverified.
 =======
 >>>>>>> selfless
 =======
         self.updatestatus(group=groupselected) #this marks the group unverified.
 >>>>>>> selfless
+=======
+        self.updatestatus(group=groupselected) #this marks the group unverified.
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         self.db.write() #This is never iterated over; just one entry at a time.
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
@@ -5070,6 +5326,7 @@ class Check():
                                     forms=framed,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     fieldtype='tone',location=check,
 =======
                                     fieldtype='tone',location=self.name,
@@ -5077,6 +5334,9 @@ class Check():
 =======
                                     fieldtype='tone',location=check,
 >>>>>>> selfless
+=======
+                                    fieldtype='tone',location=check,
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
@@ -5167,6 +5427,7 @@ class Check():
         self.guidssorted.remove(guid)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     def getidstosort(self): #remove!
         #This depends on ps and profile, but not check
         """These variables should not have to be reset between checks"""
@@ -5233,11 +5494,16 @@ class Check():
         #This depends on self.ps and self.profile, but not self.name
 =======
 >>>>>>> cleanup
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def getidstosort(self): #remove!
         #This depends on ps and profile, but not check
         """These variables should not have to be reset between checks"""
         self.slices.senseids()
+<<<<<<< HEAD
 >>>>>>> fn
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def checkforsenseidstosort(self,cvt=None,ps=None,profile=None,check=None):
         """This method just asks if any senseid in the given slice is unsorted.
         It stops when it finds the first one."""
@@ -5254,6 +5520,7 @@ class Check():
         senseids=self.slices.senseids(ps=ps,profile=profile)
         vts=False
         for senseid in senseids:
+<<<<<<< HEAD
             v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
                                                     location=check).get('text'))
             if v not in ['',None]:
@@ -5272,6 +5539,25 @@ class Check():
         self.status.renewsenseidstosort([],[])
         for senseid in senseids:
             v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
+=======
+            v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
+                                                    location=check).get('text'))
+            if v not in ['',None]:
+                vts=True
+                break
+        self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
+        self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
+    def updatesortingstatus(self):
+        """This reads LIFT to create lists for sorting, populating lists of
+        sorted and unsorted senses. So don't iterate over it. Instead, use
+        checkforsenseidstosort to just confirm tosort status"""
+        """To get this from the object, use status.tosort(), todo() or done()"""
+        check=self.params.check()
+        senseids=self.slices.senseids()
+        self.status.renewsenseidstosort([],[])
+        for senseid in senseids:
+            v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                                 location=check,showurl=True).get('text'))
             log.info("Found tone value (updatesortingstatus): {} ({})".format(v,type(v)))
             if v in ['','None']: #unlist() returns strings
@@ -5286,14 +5572,18 @@ class Check():
         else:
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> updted fns
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             log.info("updatesortingstatus shows no senseidstosort remaining")
             vts=False
         self.status.tosort(vts)
         log.info("updatesortingstatus senseids tosort: {}".format(self.status.senseidstosort()))
         log.info("updatesortingstatus senseids sorted: {}".format(self.status.senseidssorted()))
         log.info("tosort (end of updatesortingstatus): {}".format(self.status.tosort()))
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
             self.status[self.type][self.ps][self.profile][self.name][
@@ -5308,6 +5598,8 @@ class Check():
 >>>>>>> new set tone variables
 =======
 >>>>>>> updted fns
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
         """This is currently called in iteration"""
         self.checkforsenseidstosort(cvt=cvt,ps=ps,profile=profile,check=check)
@@ -5671,6 +5963,7 @@ class Check():
                                                 guid=sense['guid'],
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                                                 glosslang=lang
 =======
                                                 glosslang=self.glosslang
@@ -5678,6 +5971,9 @@ class Check():
 =======
                                                 glosslang=lang
 >>>>>>> glosslangs implementation
+=======
+                                                glosslang=lang
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                                                 ),othersOK=True))
             if self.db.pluralname is not None:
                 sense['plnode']=firstoflist(self.db.get('field',
@@ -5775,9 +6071,13 @@ class Check():
             """This is the title for each page: isolation form and glosses."""
             titleframed=self.datadict.getframeddata(senseid)
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             titleframed.setframe(check)
 >>>>>>> selfless
+=======
+            titleframed.setframe(check)
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             if titleframed.analang is None:
                 entryframe.destroy() #is this ever needed?
                 continue
@@ -5810,7 +6110,10 @@ class Check():
 =======
                                     form=nn(framed[self.analang]),
                                     gloss=nn(framed[self.glosslangs[0]])
+<<<<<<< HEAD
 >>>>>>> glosslangs implementation
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                                     ) #no gloss2; form/gloss just for filename
                 rb.grid(row=row,column=0,sticky='w')
                 Label(examplesframe, anchor='w',text=text
@@ -6514,6 +6817,7 @@ class Check():
         #Convert to iterate over local variables
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         typeori=cvt
 =======
         typeori=self.type
@@ -6521,6 +6825,9 @@ class Check():
 =======
         typeori=cvt
 >>>>>>> selfless
+=======
+        typeori=cvt
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         psori=self.slices.ps()
         profileori=self.slices.profile()
         start_time=time.time() #move this to function?
@@ -6620,12 +6927,16 @@ class Check():
                             log.debug("countbyname: {}".format(self.checkcounts[
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     ps][profile][name]))
 =======
 >>>>>>> selfless
 =======
                                     ps][profile][name]))
 >>>>>>> selfless
+=======
+                                    ps][profile][name]))
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
                             if x1 != 'header' and x2 not in ['header','n']:
                                 log.debug("value: {}".format(self.checkcounts[
                                     ps][profile][name][x1][x2]))
@@ -6952,8 +7263,11 @@ class Glosslangs(DataList):
             log.debug("Tried to set second glosslang, without first set.")
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> langs
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def langs(self,langs=None):
         if langs is None:
             return self
@@ -6963,10 +7277,13 @@ class Glosslangs(DataList):
             self.clear()
             self.append(langs[:2])
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> chose framed as addmodexamplefields attr
 =======
 >>>>>>> langs
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def rm(self,lang):
         """This could be either position, and if lang1 will promote lang2"""
         self.remove(lang)
@@ -7047,8 +7364,11 @@ class FramedData(object):
     def setframe(self,frame):
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> setframe
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         """This should never be done on an example, which should
         already be framed. Also, self.ps won't be defined, so you'll get
         a key error."""
@@ -7058,6 +7378,7 @@ class FramedData(object):
         else:
             self.applynoframe() #enforce the docstring above
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         self.frame=self.frames[self.ps][frame]
         self.applyframe()
@@ -7065,6 +7386,8 @@ class FramedData(object):
 >>>>>>> new noframe
 =======
 >>>>>>> setframe
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def applynoframe(self):
         self.framed=self.forms
     def applyframe(self):
@@ -8840,6 +9163,9 @@ class ToolTip(object):
             tw.destroy()
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
 class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
@@ -8886,6 +9212,7 @@ class SliceDict(dict):
             self._profile=profile
             self.renewsenseids()
         else:
+<<<<<<< HEAD
 =======
 class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
@@ -8940,6 +9267,8 @@ class SliceDict(dict):
 >>>>>>> parameter dictionary classes
 =======
 >>>>>>> profileok call
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
             return self._profile
     def nextps(self):
         self.makepsok()
@@ -8948,6 +9277,7 @@ class SliceDict(dict):
             self.ps(self._pss[0]) #cycle back
         else:
             self.ps(self._pss[index+1])
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         return self._ps
@@ -8977,6 +9307,12 @@ class SliceDict(dict):
         """arg is to throw away, rather than break a fn where others get
         and set. This is now calculated, not read from file and set here."""
 >>>>>>> doc
+=======
+        return self._ps
+    def slicepriority(self,arg=None):
+        """arg is to throw away, rather than break a fn where others get
+        and set. This is now calculated, not read from file and set here."""
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         self.validate()
         self._sliceprioritybyps={}
         try:
@@ -8997,14 +9333,18 @@ class SliceDict(dict):
     def profilepriority(self):
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> generalize for ps
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         if not hasattr(self,'_profiles'):
             self._profiles={}
         for ps in self.pss():
             slicesbyhzbyps=self._sliceprioritybyps[ps]
             if slicesbyhzbyps is not None:
                 self._profiles[ps]=list(dict.fromkeys([x[0][0]
+<<<<<<< HEAD
 <<<<<<< HEAD
                                 for x in slicesbyhzbyps]))[:self.maxprofiles]
     def valid(self, ps=None):
@@ -9025,6 +9365,9 @@ class SliceDict(dict):
 <<<<<<< HEAD
 >>>>>>> parameter dictionary classes
 =======
+=======
+                                for x in slicesbyhzbyps]))[:self.maxprofiles]
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def valid(self, ps=None):
         if ps is None:
             return self._valid
@@ -9032,7 +9375,10 @@ class SliceDict(dict):
             return self._validbyps[ps]
         else:
             log.error("You asked for valid ps data, but that ps isn't there.")
+<<<<<<< HEAD
 >>>>>>> slice implementation
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def validate(self):
         self._valid={}
         self._validbyps={}
@@ -9046,8 +9392,11 @@ class SliceDict(dict):
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> slicedict fns
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def inslice(self,senseids):
         senseidstochange=set(self._senseids).intersection(senseids)
         return senseidstochange
@@ -9114,15 +9463,19 @@ class SliceDict(dict):
             self[(i[1],i[2])]=i[0]
         log.info('Invalid entries found: {}'.format(profilecountInvalid))
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> init doc
 =======
 >>>>>>> slicedict fns
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     def __init__(self,checkparameters,adhoc,profilesbysense): #dict
         """The slice dictionary depends on check parameters (and not vice versa)
         because changes in slice options (ps or profile) change check options,
         and not vice versa (check options are only presented based on current
         cvt and slice)"""
+<<<<<<< HEAD
 <<<<<<< HEAD
         super(SliceDict, self).__init__()
         self.checkparameters=checkparameters
@@ -9138,14 +9491,21 @@ class SliceDict(dict):
         super(SliceDict, self).__init__()
         self.checkparameters=checkparameters
 >>>>>>> init changes
+=======
+        super(SliceDict, self).__init__()
+        self.checkparameters=checkparameters
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         self.profilecountsValid=0
         self.profilecounts=0
         self.maxprofiles=None
         self.maxpss=None
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> init changes
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         self._adhoc=adhoc
         self._profilesbysense=profilesbysense #[ps][profile]
         self.updateslices() #any time we add to self._profilesbysense
@@ -9720,6 +10080,7 @@ class CheckParameters(dict):
                     ]
                 },
         }
+<<<<<<< HEAD
 =======
 >>>>>>> upgrade settings parser
 =======
@@ -10294,6 +10655,8 @@ class CheckParameters(dict):
                 },
         }
 >>>>>>> changes for now
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
 class ConfigParser(configparser.ConfigParser):
     def write(self,*args,**kwargs):
         configparser.ConfigParser.write(self,*args,**kwargs,
@@ -10774,6 +11137,7 @@ def removesenseidfromsubcheck(self,parent,senseid,check=None,group=None):
                             framed=framed,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                             fieldtype='tone',location=check,
 =======
                             fieldtype='tone',location=self.name,
@@ -10793,6 +11157,13 @@ def removesenseidfromsubcheck(self,parent,senseid,check=None,group=None):
 =======
                         location=check).get('text')
 >>>>>>> check
+=======
+                            fieldtype='tone',location=check,
+                            fieldvalue='',showurl=True) #this value should be the only change
+    log.info("Checking that removal worked")
+    tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
+                        location=check).get('text')
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     if tgroups in [[],'',['']]:
         log.info("Field removal succeeded! LIFT says '{}', = []."
                                                             "".format(tgroups))
@@ -10805,9 +11176,12 @@ def removesenseidfromsubcheck(self,parent,senseid,check=None,group=None):
         return
     rm=self.verifictioncode(check,group)
 <<<<<<< HEAD
+<<<<<<< HEAD
     self.db.modverificationnode(senseid,vtype=self.profile,analang=self.analang,
                                                                     rms=[rm])
 =======
+=======
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     self.db.modverificationnode(senseid,vtype=self.profile,rms=[rm])
 >>>>>>> group
     self.db.write() #This is not iterated over
@@ -10946,6 +11320,7 @@ def openweburl(url):
 def ofromstr(x):
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     """This interprets a string as a python object, if possible"""
     """This is needed to interpret [x,y] as a list and {x:y} as a dictionary."""
 =======
@@ -10954,6 +11329,10 @@ def ofromstr(x):
     """This interprets a string as a python object, if possible"""
     """This is needed to interpret [x,y] as a list and {x:y} as a dictionary."""
 >>>>>>> doc
+=======
+    """This interprets a string as a python object, if possible"""
+    """This is needed to interpret [x,y] as a list and {x:y} as a dictionary."""
+>>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     try:
         return ast.literal_eval(x)
     except (SyntaxError,ValueError) as e:
