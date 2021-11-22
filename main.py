@@ -389,19 +389,10 @@ class Check():
                 default() #just iterate through for now
         else:
             default() #or guess == True): ever?
-        log.debug("self.subcheck: {}".format(self.subcheck))
-    def guesscheckname(self):
-        """Picks the longest name (the most restrictive fiter)"""
-        if hasattr(self,'checkspossible') and len(self.checkspossible) != 0:
-            self.set('name',firstoflist(sorted(self.checkspossible,
-                                key=lambda s: len(s[0]),reverse=True),
-                                othersOK=True)[0])
-        else:
-            log.info("Continuing without possible checks for now:{} ({})"
-                    "".format(self.checkspossible,len(self.checkspossible)))
-    def guesstype(self):
-        """For now, if type isn't set, start with Vowels."""
-        self.set('type','V')
+        log.debug("group: {}".format(group))
+    def guesscvt(self):
+        """For now, if cvt isn't set, start with Vowels."""
+        self.set('cvt','V')
     def langnames(self):
         """This is for getting the prose name for a language from a code."""
         """It uses a xyz.ldml file, produced (at least) by WeSay."""
