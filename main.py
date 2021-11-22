@@ -7893,12 +7893,12 @@ class SliceDict(dict):
         if not(hasattr(self,'_ps') and self._ps in self._pss):
             self.ps(self._pss[0])
     def makeprofileok(self):
-        if hasattr(self,'_profile'):
-            log.debug("profile: {}; priority: {}".format(self._profile,self._profiles))
-        else:
-            log.debug("profile priority: {}".format(self._profiles))
-        if not(hasattr(self,'_profile') and self._profile in self._profiles):
-            self._profile=self._profiles[0]
+        if not hasattr(self,'_ps'):
+            self.makepsok()
+        profiles=self.profiles(self._ps)
+        if (not hasattr(self,'_profile')
+                or self._profile not in profiles):
+            self.profile(profiles[0])
     def pss(self):
         return self._pss
     def ps(self,ps=None):
