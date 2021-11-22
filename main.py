@@ -5641,10 +5641,9 @@ class Check():
                                 x2=cols[x2]
                             log.debug("x1: {}; x2: {}".format(x1,x2))
                             log.debug("countbyname: {}".format(self.checkcounts[
-                                    self.ps][self.profile][name]))
                             if x1 != 'header' and x2 not in ['header','n']:
                                 log.debug("value: {}".format(self.checkcounts[
-                                    self.ps][self.profile][name][x1][x2]))
+                                    ps][profile][name][x1][x2]))
                             if x1 == 'header' and x2 == 'header':
                                 log.debug("header corner")
                                 cell=xlp.Cell(h,content=name,header=True)
@@ -5657,11 +5656,11 @@ class Check():
                             else:
                                 log.debug("Not a header")
                                 if x2 == 'n':
-                                    value=self.checkcounts[self.ps][
-                                                    self.profile][name][x1]
+                                    value=self.checkcounts[ps][
+                                                    profile][name][x1]
                                 else:
-                                    value=self.checkcounts[self.ps][
-                                                    self.profile][name][x1][x2]
+                                    value=self.checkcounts[ps][
+                                                    profile][name][x1][x2]
                                 cell=xlp.Cell(h,content=value)
         log.info(self.checkcounts)
         xlpr.close()
