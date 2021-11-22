@@ -4655,7 +4655,10 @@ class Check():
         else:
             log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(tonegroup,groupselected))
+<<<<<<< HEAD
         self.updatestatus(group=groupselected) #this marks the group unverified.
+=======
+>>>>>>> selfless
         self.db.write() #This is never iterated over; just one entry at a time.
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
@@ -4664,10 +4667,14 @@ class Check():
                                     lang='en',
                                     forms=framed,
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     fieldtype='tone',location=check,
 =======
                                     fieldtype='tone',location=self.name,
 >>>>>>> chose framed as addmodexamplefields attr
+=======
+                                    fieldtype='tone',location=check,
+>>>>>>> selfless
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
