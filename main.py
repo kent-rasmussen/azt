@@ -1536,10 +1536,14 @@ class Check():
                         'interfacelang':[],
                         'glosslangs':[],
 <<<<<<< HEAD
+<<<<<<< HEAD
                         'check':[],
 =======
                         'name':[],
 >>>>>>> chose framed as addmodexamplefields attr
+=======
+                        'check':[],
+>>>>>>> settings
                         'subcheck':[
                             'regexCV'
                             ],
