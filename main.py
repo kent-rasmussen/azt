@@ -3746,6 +3746,8 @@ class Check():
             log.info("SortT (from maybesort)")
             quit=self.sortT()
             if quit == True:
+                if not self.exitFlag.istrue():
+                    notdonewarning()
                 return
         tosortupdate()
         log.info("Going to verify the first of these groups now: {}".format(
