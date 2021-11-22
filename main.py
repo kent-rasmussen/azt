@@ -2834,7 +2834,7 @@ class Check():
             t+=_(", with ISO 639-3 code [{}]").format(self.analang)
         t+='?' # _("Language with code [{}]").format(xyz)
         Label(window.frame,text=t).grid(row=0,column=0,sticky='e',columnspan=2)
-        name = EntryField(window.frame,textvariable=namevar)
+        name = EntryField(window.frame)
         name.grid(row=1,column=0,sticky='e')
         Button(window.frame,text='OK',cmd=submit).grid(
                                                     row=1,column=1,sticky='w')
