@@ -1984,9 +1984,13 @@ class Check():
         if cvt is None:
             self.params.cvt()
         if ps is None:
+<<<<<<< HEAD
             self.slices.ps()
         self.status.build(cvt=cvt,ps=ps)
         return
+=======
+            ps=self.ps
+>>>>>>> selfless
     def makestatusdictprofile(self,cvt=None,ps=None,profile=None):
         if cvt is None:
             self.params.cvt()
@@ -2024,7 +2028,11 @@ class Check():
         for senseid in self.slices.inslice(senseids): #only for this ps-profile
             rms+=self.db.getverificationnodevaluebyframe(senseid,
 <<<<<<< HEAD
+<<<<<<< HEAD
                         vtype=self.profile, analang=self.analang, frame=name)
+=======
+                                                vtype=profile, frame=check)
+>>>>>>> selfless
 =======
                                                 vtype=profile, frame=check)
 >>>>>>> selfless
