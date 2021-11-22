@@ -450,21 +450,13 @@ class Check():
                 self.languagenames[xyz]="Fulfulde"
             elif xyz == 'bfj':
                 self.languagenames[xyz]="Chufie’"
-            elif xyz is None:
-                self.languagenames[xyz]=None #just so we don't fail on None...
             else:
-                if (not hasattr(self,'adnlangnames')
-                        or self.adnlangnames is None):
-                    adnl=self.adnlangnames={}
-                else:
-                    adnl=self.adnlangnames
-                if xyz in adnl and adnl[xyz] is not None:
-                    self.languagenames[xyz]=adnl[xyz]
-                else:
-                    self.languagenames[xyz]=_("Language with code [{}]").format(
-                                                                            xyz)
-                    adnl[xyz]=self.languagenames[xyz]
-
+                self.languagenames[xyz]=_("Language with code "
+                                                        "[{}]").format(xyz)
+            if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
+                self.adnlangnames={}
+            if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
+                self.languagenames[xyz]=self.adnlangnames[xyz]
     """User Input functions"""
     def getinterfacelang(self,event=None):
         log.info("Asking for interface language...")
@@ -528,7 +520,7 @@ class Check():
             "you have mixed unrelated groups.").format(changed)
             Label(w.frame,text=t,wraplength=int(
                         self.frame.winfo_screenwidth()/2)).grid(row=1,column=0)
-            for ps in self.pss:
+            for ps in pss:
                 i=[x for x in self.profilesbysense[ps].keys()
                                     if set(d).intersection(set(x))]
                 p="Profiles to check: {}".format(i)
@@ -759,7 +751,7 @@ class Check():
                 log.debug("Give a name for this adhoc sort group!")
                 return
             self.runwindow.destroy()
-            self.senseidstosort=[]
+            ids=[]
             for var in [x for x in vars if len(x.get()) >1]:
                 log.log(2,"var {}: {}".format(vars.index(var),var.get()))
                 ids.append(var.get())
