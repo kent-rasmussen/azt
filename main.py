@@ -2901,14 +2901,16 @@ class Check():
             self.checkspossible=self.framenamesbyps(self.ps)
         else:
             self.checkspossible=self.setnamesbyprofile() #tuples of CV checks
-    def getcheck(self,guess=False,event=None):
+        self.status.renewchecks()
+        self.status.checks()
+    def getcheck(self,guess=False,tosort=False,wsorted=False,event=None):
         log.info("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
         log.info("Getting the check name...")
-        self.getcheckspossible()
+        checks=self.status.checks(tosort=tosort,wsorted=wsorted)
         window=Window(self.frame,title='Select Check')
-        if self.checkspossible == []:
-            if self.type == 'T':
+        if checks == []:
+            if self.params.cvt() == 'T':
                 btext=_("Define a New Tone Frame")
                 text=_("You don't seem to have any tone frames set up.\n"
                 "Click '{}' below to define a tone frame. \nPlease "
