@@ -3438,6 +3438,7 @@ class Check():
                 self.locations+=[location]
         self.locations=list(dict.fromkeys(self.locations))
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     def topprofiles(self,x='ALL'):
         """take the top x ps-profile combos, return in ps:profile dict"""
@@ -3505,6 +3506,8 @@ class Check():
                 self.framestodo.append(frame)
         log.debug("Frames to do: {}".format(self.framestodo))
 >>>>>>> new count creation
+=======
+>>>>>>> obsolete fns
     def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
         xlp.Paragraph(parent,t)
         print(t)
