@@ -1642,6 +1642,9 @@ class Check():
         # from verifyT()
         self.storesettingsfile()
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> new structure
         pss=self.slices.pss() #this depends on nothing
         for t in self.params.cvts(): #this depends on nothing
             for ps in pss:
@@ -1657,6 +1660,7 @@ class Check():
         self.status.cull()
         if None in self.status: #This should never be there
             del self.status[None]
+<<<<<<< HEAD
 =======
         pss=self.slices.pss()
         for ps in pss:
@@ -1690,6 +1694,8 @@ class Check():
         self.ps=ps
         self.profile=profile
 >>>>>>> implement slices
+=======
+>>>>>>> new structure
         self.storesettingsfile(setting='status')
 <<<<<<< HEAD
 <<<<<<< HEAD
