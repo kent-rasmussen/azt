@@ -6660,7 +6660,13 @@ class MainApplication(Frame):
                 framemenu = Menu(changemenu, tearoff=0)
                 changemenu.add_cascade(label=_("Tone Frame"), menu=framemenu)
                 framemenu.add_command(label=_("Next"),
-                                command=lambda x=check:Check.nextframe(x))
+                        command=lambda x=check.status:StatusDict.nextcheck(x))
+                framemenu.add_command(label=_("Next to sort"),
+                        command=lambda x=check.status:StatusDict.nextcheck(x,
+                                                                tosort=True))
+                framemenu.add_command(label=_("Next with data already sorted"),
+                        command=lambda x=check.status:StatusDict.nextcheck(x,
+                                                                wsorted=True))
                 framemenu.add_command(label=_("Choose"),
                                 command=lambda x=check:Check.getcheck(x))
             else:
