@@ -4241,6 +4241,7 @@ class Check():
         self.db.addmodexamplefields( #This should only mod if already there
                                     senseid=senseid,
                                     analang=self.analang,
+<<<<<<< HEAD
                                     framed=framed,
 <<<<<<< HEAD
                                     fieldtype='tone',location=check,
@@ -4249,6 +4250,9 @@ class Check():
                                     # langform=framed[self.analang],
                                     # glossform=framed[self.glosslang],
                                     # gloss2form=framed[self.glosslang2],
+=======
+                                    forms=framed,
+>>>>>>> merge conflict resolved
                                     fieldtype='tone',location=self.name,
                                     fieldvalue=self.groupselected
 >>>>>>> chose framed as addmodexamplefields attr
