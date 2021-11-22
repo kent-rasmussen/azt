@@ -4635,31 +4635,35 @@ class Check():
             outputs.append(nn(self.db.glossordefn(guid=guid,glosslang=lang)))
         outputs.append(nn(self.db.get('pronunciationfieldvalue',
                                         fieldtype='tone',
-                                        location=self.subcheck,guid=guid)))
+                                        location=group,guid=guid)))
         return '\t'.join(outputs)
     def guesssubcheck(self):
-        if self.type == 'CV': #Dunno how to guess this yet...
-            if self.subcheck in ([x[0] for x in self.subchecksprioritized['V']+
+        """obsolete"""
+        cvt=self.params.cvt()
+        if cvt == 'CV': #Dunno how to guess this yet...
+            if group in ([x[0] for x in self.subchecksprioritized['V']+
                                 self.subchecksprioritized['C']+
                                 self.subchecksprioritized['T']
                                 ]):
-                self.subcheck=self.scount[self.ps]['C'][0]+self.scount[
-                                                                self.ps]['V'][0]
+                self.subcheck=self.scount[ps]['C'][0]+self.scount[ps]['V'][0]
         else:
-            self.subcheck=firstoflist(self.subchecksprioritized[self.type],
+            self.subcheck=firstoflist(self.subchecksprioritized[cvt],
                                                             othersOK=True)[0]
     def getsubchecksprioritized(self):
         """Tone doesn't have subchecks, so we just make it 'None' here."""
         """I really should be able to order these..."""
-        log.debug("ps: {}, profile: {}, name: {}".format(self.ps,self.profile,
-                                                                    self.name))
+        check=self.params.check()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        log.debug("ps: {}, profile: {}, name: {}".format(ps,profile,check))
         self.subchecksprioritized={
-        "V":self.scount[self.ps]['V'], #self.db.v[self.analang],
-        "C":self.scount[self.ps]['C'], #self.db.c[self.analang],
+        "V":self.scount[ps]['V'], #self.db.v[self.analang],
+        "C":self.scount[ps]['C'], #self.db.c[self.analang],
         "CV":''}#,
-        if self.type == 'T':
+        cvt=self.params.cvt()
+        if cvt == 'T':
             self.subchecksprioritized['T']=[(x,None) for x in self.status['T'][
-                self.ps][self.profile][self.name]['groups']+[None]]
+                ps][profile][check]['groups']+[None]]
     """Doing stuff"""
     def getrunwindow(self,nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
