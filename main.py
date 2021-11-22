@@ -3551,21 +3551,21 @@ class Check():
                 self.nextsubcheck()
                 log.debug("self.subcheck: {}".format(self.subcheck))
                 self.renamegroup(reverify=reverify)
-        def nextframe():
+        def nextcheck():
             log.debug("running next frame")
             error=submitform()
             if not error:
-                log.debug("self.name: {}".format(self.name))
-                self.nextframe(sort=False)
-                log.debug("self.name: {}".format(self.name))
+                log.debug("check: {}".format(check))
+                self.status.nextcheck(wsorted=True)
+                log.debug("check: {}".format(check))
                 self.renamegroup(reverify=reverify)
         def nextprofile():
             log.debug("running next frame")
             error=submitform()
             if not error:
-                log.debug("self.profile: {}".format(self.profile))
-                self.nextprofile()
-                log.debug("self.profile: {}".format(self.profile))
+                log.debug("profile: {}".format(profile))
+                self.status.nextprofile(wsorted=True)
+                log.debug("profile: {}".format(profile))
                 self.renamegroup(reverify=reverify)
         def setsubcheck_comparison():
             w=self.getsubcheck(comparison=True) #this returns its window
@@ -3582,7 +3582,7 @@ class Check():
             t=_('Compare with another group')
             if (hasattr(self, 'subcheck_comparison')
                     and self.subcheck_comparison in groupsthere and
-                    self.subcheck_comparison != self.subcheck):
+                    self.subcheck_comparison != group):
                 log.info("Making comparison buttons for group {} now".format(
                                                     self.subcheck_comparison))
                 t=_('Compare with another group ({})').format(
@@ -3596,39 +3596,45 @@ class Check():
             elif self.subcheck_comparison not in groupsthere:
                 log.info("Comparison ({}) not in group list ({})"
                             "".format(self.subcheck_comparison,groupsthere))
-            elif self.subcheck_comparison == self.subcheck:
+            elif self.subcheck_comparison == group:
                 log.info("Comparison ({}) same as subgroup ({}); not showing."
-                            "".format(self.subcheck_comparison,self.subcheck))
+                            "".format(self.subcheck_comparison,group))
             else:
                 log.info("This should never happen (renamegroup/"
                             "comparisonbuttons)")
             sub_c['text']=t
-        if self.name == None:
+        cvt=self.params.cvt()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+
+        check=self.params.check()
+        if check == None:
             self.getcheck(guess=True)
-            if self.name == None:
+            if check == None:
                 log.info("I asked for a check name, but didn't get one.")
                 return
         groupsthere, groupsdone = updategroups()
-        if self.subcheck is None or self.subcheck not in groupsthere:
+        group=self.status.group()
+        if group is None or group not in groupsthere:
             self.getsubcheck(guess=True)
-            if self.subcheck == None:
+            if group == None:
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
         notthisgroup=groupsthere[:]
-        if self.subcheck in groupsthere:
-            notthisgroup.remove(self.subcheck)
+        if group in groupsthere:
+            notthisgroup.remove(group)
         else:
             log.error(_("current group ({}) doesn't seem to be in list of "
                 "groups: ({})\n\tThis may be because we're looking for data that "
-                "isn't there, or maybe a setting is off.".format(self.subcheck,
+                "isn't there, or maybe a setting is off.".format(group,
                                                                 groupsthere)))
-        newname=tkinter.StringVar(value=self.subcheck)
+        newname=tkinter.StringVar(value=group)
         namehash=tkinter.StringVar()
         hash_t,hash_sp,hash_nbsp=rx.tonerxs()
         padx=50
         pady=10
         title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
-                        ).format(self.ps,self.profile,self.subcheck,self.name)
+                        ).format(ps,profile,group,check)
         self.getrunwindow(title=title)
         menu=self.runwindow.removeverifymenu()
         titlel=Label(self.runwindow.frame,text=title,font=self.fonts['title'])
@@ -3698,14 +3704,14 @@ class Check():
             sub_btn=Button(responseframe,text = t,command = next,anchor ='c')
             sub_btn.grid(row=0,column=2,sticky='ns')
             t=_('next tone frame')
-            sub_f=Button(responseframe,text = t,command = nextframe)
+            sub_f=Button(responseframe,text = t,command = nextcheck)
             sub_f.grid(row=0,column=3,sticky='ns')
             t=_('next syllable profile')
             sub_p=Button(responseframe,text = t,command = nextprofile)
             sub_p.grid(row=0,column=4,sticky='ns')
         examplesframe=Frame(self.runwindow.frame)
         examplesframe.grid(row=4,column=0,sticky='')
-        self.tonegroupbuttonframe(examplesframe,self.subcheck,sticky='w',
+        self.tonegroupbuttonframe(examplesframe,group,sticky='w',
             row=0,column=0,playable=True,alwaysrefreshable=True,unsortable=True)
         compframe=Frame(examplesframe,highlightthickness=10,
                     highlightbackground=self.theme['white']) #no hlfg here
