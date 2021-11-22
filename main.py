@@ -1554,22 +1554,87 @@ class Check():
             return getattr(self,fileattr)
         else:
             log.error("No file name for setting {}!".format(setting))
-    def storesettingsfile(self,setting='defaults'):
-        filename=self.settingsfile(setting)
-        config=ConfigParser()
-        config['default']={}
+    def settingsobjects(self):
+        """These should each push and pull values to/from objects"""
+        fns={}
+        try: #these objects may not exist yet
+            fns['cvt']=self.params.cvt
+            fns['check']=self.params.check
+            fns['glosslang']=self.glosslangs.lang1
+            fns['glosslang2']=self.glosslangs.lang2
+            fns['glosslangs']=self.glosslangs.langs
+            fns['check']=self.params.check
+            fns['ps']=self.slices.ps
+            fns['profile']=self.slices.profile
+            # except this one, which pretends to set but doesn't (throws arg away)
+            fns['profilecounts']=self.slices.slicepriority
+            return fns
+        except:
+            log.error("Only finished settingsobjects up to {}".format(fns))
+            return []
+    def makesettingsdict(self,setting='defaults'):
+        """This returns a dictionary of values, keyed by a set of settings"""
+        """It pulls from objects if it can, otherwise from self attributes
+        (if there), for backwards compatibility"""
+        d={}
+        objectfns=self.settingsobjects()
         if setting == 'soundsettings':
             o=self.soundsettings
         else:
             o=self
         for s in self.settings[setting]['attributes']:
-            if hasattr(o,s):
-                log.debug("Trying to set {} with value {}".format(s,getattr(o,s)))
-                v=getattr(o,s)
-                if isinstance(v, dict):
-                    config[s]=getattr(o,s)
-                else:
-                    config['default'][s]=str(v)
+            if s in objectfns:
+                log.debug("Trying to dict {} attr".format(s))
+                try:
+                    d[s]=objectfns[s]()
+                    log.debug("Value {}={} found in object".format(s,d[s]))
+                except:
+                    log.debug("Value of {} not found in object".format(s))
+            elif hasattr(o,s):# and getattr(o,s) is not None:
+                d[s]=getattr(o,s)
+                log.debug("Trying to dict self.{} with value {}, type {}"
+                        "".format(s,d[s],type(d[s])))
+            else:
+                log.error("Couldn't find {} in {}".format(s,setting))
+        """This is the only glosslang > glosslangs conversion"""
+        if 'glosslangs' in d and d['glosslangs'] in [None,[]]:
+            if 'glosslang' in d and d['glosslang'] is not None:
+                d['glosslangs']=[d['glosslang']]
+                del d['glosslang']
+                if 'glosslang2' in d and d['glosslang2'] is not None:
+                    d['glosslangs'].append(d['glosslang2'])
+                    del d['glosslang2']
+        return d
+    def readsettingsdict(self,dict):
+        """This takes a dictionary keyed by attribute names"""
+        d=dict
+        objectfns=self.settingsobjects()
+        if 'fs' in dict:
+            o=self.soundsettings
+        else:
+            o=self
+        for s in dict:
+            v=d[s]
+            if s in objectfns:
+                log.debug("Trying to read {} to object with value {} and fn "
+                            "{}".format(s,v,objectfns[s]))
+                objectfns[s](v)
+            else:
+                log.debug("Trying to read {} to self with value {}, type {}"
+                            "".format(s,v,type(v)))
+                setattr(o,s,v)
+        return d
+    def storesettingsfile(self,setting='defaults',noobjects=False):
+        filename=self.settingsfile(setting)
+        config=ConfigParser()
+        config['default']={}
+        d=self.makesettingsdict(setting=setting)
+        for s in d:
+            v=d[s]
+            if isinstance(v, dict):
+                config[s]=v
+            else:
+                config['default'][s]=str(v)
         if config['default'] == {}:
             del config['default']
         with open(filename, "w", encoding='utf-8') as file:
@@ -1590,7 +1655,6 @@ class Check():
             o=self.soundsettings
         else:
             o=self
-        ori={}
         try:
             log.debug("Trying for {} settings in {}".format(setting, legacy))
             spec = importlib.util.spec_from_file_location(setting,legacy)
@@ -1599,42 +1663,28 @@ class Check():
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
                 if hasattr(module,s):
-                    ori[s]=getattr(module,s)
-                    setattr(o,s,ori[s])
+                    setattr(o,s,getattr(module,s))
         except:
             log.error("Problem importing {}".format(legacy))
-        if ('profilesbysense' in self.settings[setting]['attributes'] and
-                hasattr(self,'profilesbysense') and self.profilesbysense != {}):
-            self.makecountssorted() #because this changed structure
-            ori['profilecounts']=self.profilecounts #store the new version
         if 'glosslangs' in self.settings[setting]['attributes']:
-            self.glosslangs=Glosslangs(getattr(module,'glosslang'),
-                        getattr(module,'glosslang2')) # b/c structure changed
+            self.glosslangs=[getattr(module,'glosslang'),
+                        getattr(module,'glosslang2')] # b/c structure changed
+        dict1=self.makesettingsdict(setting=setting)
         self.storesettingsfile(setting=setting) #do last
         self.loadsettingsfile(setting=setting) #verify write and read
-        for s in self.settings[setting]['attributes']:
-            if s in ori and hasattr(o,s) and ori[s] == getattr(o,s):
-                log.info("Attribute {} verified as {}={}".format(s,ori[s],
-                                                                getattr(o,s)))
-            elif s == 'glosslangs':
-                if getattr(o,s) == [getattr(module,'glosslang'),
-                                        getattr(module,'glosslang2')]:
-                    log.info("Glosslangs attribute verified as {}=[‘{}’,‘{}’]"
-                        "".format(getattr(o,s),getattr(module,'glosslang'),
-                                                getattr(module,'glosslang2')))
-                else:
-                    log.info("Glosslangs attribute problem! {}≠[‘{}’,‘{}’]"
-                        "".format(getattr(o,s),getattr(module,'glosslang'),
-                                                getattr(module,'glosslang2')))
+        dict2=self.makesettingsdict(setting=setting)
+        """Now we verify that each value read the same each time"""
+        for s in dict1:
+            if s in dict2 and str(dict1[s]) == str(dict2[s]):
+                log.info("Attribute {} verified as {}={}".format(s,
+                                            str(dict1[s]), str(dict2[s])))
+            elif s in dict2:
+                log.error("Problem with attribute {}; {}≠{}".format(s,
+                                            str(dict1[s]), str(dict2[s])))
             else:
-                if s in ori:
-                    if hasattr(o,s):
-                        log.error("Problem with attribute {}; {}≠{}".format(s,
-                                                        ori[s], getattr(o,s)))
-                    else:
-                        log.error("Problem with attribute {}".format(s))
-                    log.error("You should send in an error report for this.")
-                    exit()
+                log.error("Attribute {} didn't make it back".format(s))
+                log.error("You should send in an error report for this.")
+                exit()
         log.info("Settings file {} converted to {}, with each value verified."
                 "".format(legacy,savefile))
     def loadsettingsfile(self,setting='defaults'):
@@ -1643,31 +1693,26 @@ class Check():
         config.read(filename)
         if len(config.sections()) == 0:
             return
-        if setting == 'soundsettings':
-            o=self.soundsettings
-        else:
-            o=self
         log.debug("Trying for {} settings in {}".format(setting, filename))
+        d={}
         for section in self.settings[setting]['attributes']:
             if section in config:
+                log.debug("Trying for {} settings in {}".format(section, setting))
                 if len(config[section].values())>0:
                     log.debug("Found Dictionary value for {}".format(section))
-                    setattr(o,section,{})
+                    d[section]={}
                     for s in config[section]:
-                        getattr(o,section)[ofromstr(s)]=ofromstr(
-                                                            config[section][s])
+                        """return each config item in section to a dict key"""
+                        d[section][s]={}
+                        """Make sure strings become python data"""
+                        d[section][ofromstr(s)]=ofromstr(config[section][s])
                 else:
-                    log.debug("Found String/list/other value for {}".format(
-                                                            config[section]))
-                    setattr(o,section,config[section])
-                log.debug("Confirmed attribute {} with value {}, type: {}"
-                            "".format(section,getattr(o,section),
-                                                    type(getattr(o,section))))
+                    log.debug("Found String/list/other value for {}: {}".format(
+                                                    section,config[section]))
+                    d[section]=ofromstr(config[section])
             elif 'default' in config and section in config['default']:
-                setattr(o,section,ofromstr(config['default'][section]))
-            if 'glosslangs' in self.settings[setting]['attributes']:
-                self.glosslangs=Glosslangs(self.glosslangs)
-    def makeadhocgroupsdict(self, ps=None):
+                d[section]=ofromstr(config['default'][section])
+        self.readsettingsdict(d)
     """These should all go!"""
     def makeadhocgroupsdict(self,ps=None): #shouldn't need this, in slices.adhoc()
         # self.ps and self.profile should be set when this is called
