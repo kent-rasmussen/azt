@@ -6648,8 +6648,11 @@ class MainApplication(Frame):
         profilemenu.add_command(label=_("Choose"),
                         command=lambda x=check:Check.getprofile(x))
         """What to check stuff"""
-        if None not in [check.ps, check.profile, check.type]:
-            if check.type == 'T':
+        cvt=check.params.cvt()
+        ps=check.slices.ps()
+        profile=check.slices.profile()
+        if None not in [ps, profile, cvt]:
+            if cvt == 'T':
                 changemenu.add_separator()
                 framemenu = Menu(changemenu, tearoff=0)
                 changemenu.add_cascade(label=_("Tone Frame"), menu=framemenu)
