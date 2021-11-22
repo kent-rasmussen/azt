@@ -4709,12 +4709,12 @@ class Check():
             self.settonevariablesbypsprofile()
             self.getidstosort() #not a bad idea to refresh this here
             self.maybesort()
-        elif None not in [self.name,self.subcheck]: #do the CV checks
+        elif None not in [check,group]: #do the CV checks
             self.getresults()
         else:
             window=Window(self.frame)
             text=_('Error: please set Check/Subcheck first! ({}/{})').format(
-                                                     self.name,self.subcheck)
+                                                     check,group)
             Label(window,text=text).grid(column=0, row=i)
             i+=1
             return
