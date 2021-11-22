@@ -4935,6 +4935,11 @@ class Check():
             self.examplespergrouptorecord=100
             self.storesettingsfile()
         torecord=self.getsenseidsbytoneUFgroups()
+        ntorecord=len(torecord) #number of groups
+        nexs=len([k for i in torecord for j in torecord[i] for k in j])
+        nslice=self.slices.nsenseids()
+        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
+        exit()
         skip=False
         if ntorecord == 0:
             log.error(_("How did we get no UR tone groups? {}-{}"
