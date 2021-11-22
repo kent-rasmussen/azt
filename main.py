@@ -5552,7 +5552,6 @@ class Check():
                     for senseid in toreport[group]:
                         #This is for window/text output only, not in XLP file
                         framed=self.datadict.getframeddata(senseid)
-                        # framed.setframe(self.name) #not needed here, I think
                         text=framed.formatted(noframe=True,notonegroup=True)
                         #This is put in XLP file:
                         examples=self.db.get('example',location=location,
