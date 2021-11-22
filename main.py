@@ -7795,6 +7795,8 @@ class ToolTip(object):
         if tw:
             tw.destroy()
 class SliceDict(dict):
+    """This stores and returns current ps and profile only; there is no check
+    here that the consequences of the change are done (done in check)."""
     def count(self):
         return self[(self._profile,self._ps)]
     def scount(self,scount=None):
