@@ -6012,10 +6012,14 @@ class Check():
         values here, and restore them at the end."""
         #Convert to iterate over local variables
 <<<<<<< HEAD
+<<<<<<< HEAD
         typeori=cvt
 =======
         typeori=self.type
 >>>>>>> slice implementation
+=======
+        typeori=cvt
+>>>>>>> selfless
         psori=self.slices.ps()
         profileori=self.slices.profile()
         start_time=time.time() #move this to function?
