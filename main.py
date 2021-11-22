@@ -4468,9 +4468,9 @@ class Check():
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.gettonegroups() #sets self.status...['groups'] for a frame
     def tryNAgain(self):
-        if hasattr(self,'name') and self.name is not None:
-            if not hasattr(self,'senseidstosort'):
-                self.getidstosort()
+        check=self.params.check()
+        if check in self.params.checks():
+            senseids=self.status.senseids()
         else:
             #Give an error window here
             log.error("Not Trying again; set a tone frame first!")
