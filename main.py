@@ -9384,7 +9384,11 @@ def removesenseidfromsubcheck(self,parent,senseid,check=None,group=None):
                             fieldvalue='',showurl=True) #this value should be the only change
     log.info("Checking that removal worked")
     tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
+<<<<<<< HEAD
                         location=check).get('text')
+=======
+                        location=self.name).get('text')
+>>>>>>> better listed empties
     if tgroups in [[],'',['']]:
         log.info("Field removal succeeded! LIFT says '{}', = []."
                                                             "".format(tgroups))
