@@ -4121,9 +4121,8 @@ class Check():
         canary.grid(row=5,column=5)
         canary2=Label(self.runwindow,text='')
         canary2.grid(row=5,column=5)
-        for group in self.status[self.type][self.ps][self.profile][self.name][
-                                                                    'groups']:
-            self.tonegroupbuttonframe(self.sorting,group,row,notonegroup=False,
+        for group in groups:
+            self.tonegroupbuttonframe(self.sortitem,group,row,notonegroup=False,
                                 unsortable=False,canary=canary,canary2=canary2)
             row+=1
         """If all is good, destroy this frame."""
