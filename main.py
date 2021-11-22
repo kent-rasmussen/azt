@@ -4591,9 +4591,12 @@ class Check():
                                 location=check,#fieldvalue=oldtonevalue,
                                 fieldvalue=newtonevalue)
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.db.modverificationnode(senseid=senseid,vtype=self.profile,
                         analang=self.analang, add=add,rms=[rm],addifrmd=True)
 =======
+=======
+>>>>>>> selfless
             self.db.modverificationnode(senseid=senseid,vtype=profile,
                                                 add=add,rms=[rm],addifrmd=True)
 >>>>>>> selfless
