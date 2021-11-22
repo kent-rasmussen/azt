@@ -7897,6 +7897,23 @@ class SliceDict(dict):
         self.slicepriority()
         self.pspriority()
 class StatusDict(dict):
+    def groupstodo(self):
+        """This returns prioritization in advance of sorting, before actual
+        sort groups exist. So this only has meaning for segmental checks,
+        and should not be used for tone."""
+        """I don't know how to prioritize CV checks yet, if ever..."""
+        cvt=self.checkparameters.cvt()
+        ps=self.slicedict.ps()
+        self.slicedict.scount()# [ps][s]=list()(x,n),)
+        if cvt == 'V':
+            todo=[self.scount[ps]['V']] #that's all that's there, for now.
+        if cvt == 'C':
+            todo=list()
+            for s in self.scount[ps]:
+                if s != 'V':
+                    todo.extend(self.scount[ps][s]) #list of tuples
+        if cvt in ['CV','T']:
+            return None
     def senseidstosort(self,ps=None,profile=None):
         return self._idstosort
     def senseidssorted(self,ps=None,profile=None):
