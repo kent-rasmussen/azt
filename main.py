@@ -5613,23 +5613,23 @@ class Check():
                     self.wordsbypsprofilechecksubcheck(s3)
         t=_("Summary coocurrence tables")
         s1s=xlp.Section(xlpr,t)
-        for self.ps in self.checkcounts:
-            s2s=xlp.Section(s1s,self.ps,level=2)
-            for self.profile in self.checkcounts[self.ps]:
-                s3s=xlp.Section(s2s,' '.join([self.ps,self.profile]),level=3)
-                for name in self.checkcounts[self.ps][self.profile]:
-                    rows=list(self.checkcounts[self.ps][self.profile][name])
+        for ps in self.checkcounts:
+            s2s=xlp.Section(s1s,ps,level=2)
+            for profile in self.checkcounts[ps]:
+                s3s=xlp.Section(s2s,' '.join([ps,profile]),level=3)
+                for name in self.checkcounts[ps][profile]:
+                    rows=list(self.checkcounts[ps][profile][name])
                     nrows=len(rows)
                     if nrows == 0:
                         continue
                     if 'x' in name:
-                        cols=list(self.checkcounts[self.ps][self.profile][name][rows[0]])
+                        cols=list(self.checkcounts[ps][profile][name][rows[0]])
                     else:
                         cols=['n']
                     ncols=len(cols)
                     if ncols == 0:
                         continue
-                    caption=' '.join([self.ps,self.profile,name])
+                    caption=' '.join([ps,profile,name])
                     t=xlp.Table(s3s,caption)
                     for x1 in ['header']+list(range(nrows)):
                         if x1 != 'header':
