@@ -1363,20 +1363,21 @@ class Check():
                                     window
                                     )
             buttonFrame1.grid(column=0, row=0)
-    def gettype(self,event=None):
-        print(_("Asking for check type"))
+    def getcvt(self,event=None):
+        log.debug(_("Asking for check cvt/type"))
         window=Window(self.frame,title=_('Select Check Type'))
-        types=[]
+        cvts=[]
         x=0
-        for type in self.checknamesall:
-            types.append({})
-            types[x]['name']=self.typedict[type]['pl']
-            types[x]['code']=type
+        tdict=self.params.cvtdict()
+        for cvt in tdict:
+            cvts.append({})
+            cvts[x]['name']=tdict[cvt]['pl']
+            cvts[x]['code']=cvt
             x+=1
         Label(window.frame, text=_('What part of the sound system do you '
                                     'want to work with?')
             ).grid(column=0, row=0)
-        buttonFrame1=ButtonFrame(window.frame,types,self.settype,window)
+        buttonFrame1=ButtonFrame(window.frame,cvts,self.setcvt,window)
         buttonFrame1.grid(column=0, row=1)
     """Settings to and from files"""
     def initdefaults(self):
