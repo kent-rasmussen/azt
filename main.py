@@ -8004,36 +8004,66 @@ class StatusDict(dict):
         ps=self.slicedict.ps()
         if ps not in self[t]:
             self[t][ps]={}
+    def build(self,upto=None,cvt=None,ps=None,profile=None,check=None):
+        """this makes sure that the dictionary structure is there for work you
+        are about to do"""
+        # uptoOK=['type','ps','profile','check']:
+        # if upto is not None and upto not in uptoOK:
+        #     log.error("Bad upto value: {} (ok values: {})".format(upto,uptoOK))
+        """Only build up to a None value"""
+        """If anything is defined, give no defaults"""
+        """Any defined variable after any default is an error"""
+        """We don't want to mix default and specified values here, so
+        unspecified after specified is None, and not built"""
+        if (cvt is None and ps is not None
+                or ps is None and profile is not None
+                or profile is None and check is not None
+                ):
+            log.error("You have to define all values prior to the last: "
+                                    "{}-{}-{}-{}".format(cvt,ps,profile,check))
+        elif cvt is not None:
+            log.debug("At least cvt value defined; using them: {}-{}-{}-{}"
+                                            "".format(cvt,ps,profile,check))
+        else:
+            check=self._checkparameters.check()
+            profile=self._slicedict.profile()
+            ps=self._slicedict.ps()
+            cvt=self._checkparameters.cvt()
+        changed=False
+        if cvt not in self:
+            self[cvt]={}
             changed=True
-        profile=self.slicedict.profile()
-        if profile not in self[t][ps]:
-            self[t][ps][profile]={}
+        if ps not in self[cvt] and ps is not None:
+            self[cvt][ps]={}
             changed=True
-        check=self.checkparameters.check()
-        if check not in self[t][ps][profile]:
-            self[t][ps][profile][check]={}
+        if profile not in self[cvt][ps] and profile is not None:
+            self[cvt][ps][profile]={}
             changed=True
-        if isinstance(self[checktype][ps][profile][check],list):
-            log.info("Updating {}-{} status dict to new schema".format(
-                                                        profile,check))
-            groups=self[checktype][ps][profile][check]
-            self[checktype][ps][profile][check]={}
-            self[checktype][ps][profile][check]['groups']=groups
+        if check not in self[cvt][ps][profile] and check is not None:
+            self[cvt][ps][profile][check]={}
             changed=True
-        for key in ['groups','done']:
-            if key not in self[checktype][ps][profile][check]:
-                log.info("Adding {} key to {}-{} status dict".format(
-                                                key,profile,check))
-                self[checktype][ps][profile][check][key]=list()
+        if None not in [ps,profile,check]:
+            if isinstance(self[cvt][ps][profile][check],list):
+                log.info("Updating {}-{} status dict to new schema".format(
+                                                            profile,check))
+                groups=self[cvt][ps][profile][check]
+                self[cvt][ps][profile][check]={}
+                self[cvt][ps][profile][check]['groups']=groups
                 changed=True
-        if 'tosort' not in self[checktype][ps][profile][check]:
-            log.info("Adding tosort key to {}-{} status dict".format(
-                                                key,profile,check))
-            self[checktype][ps][profile][check]['tosort']=True
-            changed=True
+            for key in ['groups','done']:
+                if key not in self[cvt][ps][profile][check]:
+                    log.info("Adding {} key to {}-{} status dict".format(
+                                                    key,profile,check))
+                    self[cvt][ps][profile][check][key]=list()
+                    changed=True
+            if 'tosort' not in self[cvt][ps][profile][check]:
+                log.info("Adding tosort key to {}-{} status dict".format(
+                                                    key,profile,check))
+                self[cvt][ps][profile][check]['tosort']=True
+                changed=True
         if changed == True:
-            self.write()
     def __init__(self, checkparameters, slicedict, dict):
+            self.store()
     def cull(self):
         """This iterates across the whole dictionary, and removes empty nodes.
         Only do this when you're cleaning up, not about to start new work."""
