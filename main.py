@@ -1344,7 +1344,6 @@ class Check():
         (e.g., on initialization), then do all the fields with None key (other
         fields are NOT saved to file!).
         These are check related defaults; others in lift.get"""
-        self.loadtypedict()
         self.defaultstoclear={'ps':[
                             'profile' #do I want this?
                             # 'name',
@@ -1354,13 +1353,13 @@ class Check():
                             'glosslangs',
                             'ps',
                             'profile',
-                            'type',
-                            'name',
+                            'cvt',
+                            'check',
                             'subcheck'
                             ],
                         'interfacelang':[],
                         'glosslangs':[],
-                        'name':[],
+                        'check':[],
                         'subcheck':[
                             'regexCV'
                             ],
@@ -1368,8 +1367,8 @@ class Check():
                         'profile':[
                             # 'name'
                             ],
-                        'type':[
-                            'name',
+                        'cvt':[
+                            'check',
                             # 'subcheck'
                             ],
                         'fs':[],
@@ -1380,7 +1379,6 @@ class Check():
                         'distinguish':[],
                         'interpret':[],
                         'adnlangnames':[],
-                        'exs':[],
                         'hidegroupnames':[],
                         'maxprofiles':[]
                         }
@@ -1393,11 +1391,9 @@ class Check():
                                 'audiolang',
                                 'ps',
                                 'profile',
-                                'type',
-                                'name',
+                                'cvt',
+                                'check',
                                 'regexCV',
-                                'subcheck',
-                                'subcheck_comparison',
                                 'additionalps',
                                 'entriestoshow',
                                 'additionalprofiles',
