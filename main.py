@@ -2442,12 +2442,18 @@ class Check():
         log.log(3,"setting button relief to {}, with refresh={}".format(relief,
                                                                     refresh))
         self.mainrelief=relief # None "raised" "groove" "sunken" "ridge" "flat"
+<<<<<<< HEAD
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
             self.refreshdelay=10000 #ten seconds if working in another window
         else:
             self.refreshdelay=1000 #one second if not working in another window
+=======
+        if refresh == True:
+            self.checkcheck()
+    def checkcheck(self):
+>>>>>>> checkcheck
     def checkcheck(self,dict=None):
         """This checks for incompatible or missing variable values, and asks
         for them. If values are OK, they are displayed."""
@@ -2587,9 +2593,13 @@ class Check():
         tf=Frame(self.frame.status)
         tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
 <<<<<<< HEAD
+<<<<<<< HEAD
         opts['row']+=1
 =======
 >>>>>>> implement slices
+=======
+        opts['row']+=1
+>>>>>>> checkcheck
         t=(_("Looking at {}").format(profile))
         proselabel(opts,t,cmd='getprofile',parent=tf)
         opts['columnplus']=1
@@ -2614,14 +2624,28 @@ class Check():
             opts['columnplus']=1
             if len(self.status.checks()) == 0:
                 t=_("no tone frames defined.")
+<<<<<<< HEAD
+=======
+                self.name=None
+>>>>>>> checkcheck
                 check=None
             elif self.status.ischeckok():
                 # check not in checks:
                 t=_("no tone frame selected.")
+<<<<<<< HEAD
                 check=None
             else:
                 t=(_("working on ‘{}’ tone frame").format(check))
             proselabel(opts,t,cmd='getcheck',parent=tf)
+=======
+                self.name=None
+                check=None
+            else:
+                t=(_("working on ‘{}’ tone frame").format(self.name))
+                t=(_("working on ‘{}’ tone frame").format(check))
+            proselabel(opts,t,cmd='getcheck',parent=tf)
+        else:
+>>>>>>> checkcheck
         # else:
         """Get subcheck"""
 <<<<<<< HEAD
@@ -2632,6 +2656,7 @@ class Check():
         if cvt == 'T':
 =======
         if None not in [self.type, ps, profile, self.name]:
+<<<<<<< HEAD
             self.makestatusdict()
             self.getsubchecksprioritized()
             if self.subcheck not in [x[0] for x in self.subchecksprioritized[
@@ -2644,12 +2669,31 @@ class Check():
             if None in [check, group]:
                 t=_("(no framed group)")
             else:
+=======
+        # if None not in [cvt, ps, profile, check]: #is this needed?
+        self.status.makegroupok()
+        group=self.status.group()
+        if cvt == 'T':
+            opts['columnplus']=2
+            if None in [self.name, self.subcheck]:
+            if None in [check, group]:
+                t=_("(no framed group)")
+            else:
+                t=(_("(framed group: ‘{}’)").format(self.subcheck))
+>>>>>>> checkcheck
                 t=(_("(framed group: ‘{}’)").format(group))
             proselabel(opts,t,cmd='getgroup',parent=tf)
             opts['columnplus']=0
         else:
+<<<<<<< HEAD
             # tf=Frame(self.frame.status)
             opts['columnplus']=1
+=======
+            tf=Frame(self.frame.status)
+            # tf=Frame(self.frame.status)
+            opts['columnplus']=1
+            t=(_("working on {}".format(self.name)))
+>>>>>>> checkcheck
             t=(_("working on {}".format(group))) #check[1]
             proselabel(opts,t,cmd='getcheck',parent=tf)
         """Final Button"""
@@ -2661,9 +2705,17 @@ class Check():
         button(opts,t,self.runcheck,column=0,
                 font=self.fonts['title'],
                 compound='bottom', #image bottom, left, right, or top of text
+<<<<<<< HEAD
                 image=self.photo[cvt]
                 )
         opts['row']+=1
+=======
+                image=self.photo[self.type]
+                image=self.photo[cvt]
+                )
+        opts['row']+=1
+        if self.type == 'T':
+>>>>>>> checkcheck
         if cvt == 'T':
             t=(_("Record Sorted Examples"))
         else:
@@ -2760,19 +2812,21 @@ class Check():
         nameori=self.params.check()
 =======
             for self.profile in self.status[self.type][ps]:
-                for self.name in self.status[self.type][ps][self.profile]:
-                    self.makestatusdict() #this should result in 'done' key:
-                    if len(self.status[self.type][ps][self.profile][
-                                                    self.name]['groups']) >0:
-                        return True
+            if self.status.groups() >0:
+            # for profile in self.status[self.type][ps]:
         profileori=self.slices.profile()
+<<<<<<< HEAD
         nameori=self.name
 >>>>>>> implement slices
+=======
+        nameori=self.params.check()
+>>>>>>> checkcheck
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
         self.leaderboard=Frame(self.frame)
         self.leaderboard.grid(row=0,column=1,sticky="") #nesw
         #Given the line above, much of the below can go, but not all?
+<<<<<<< HEAD
 <<<<<<< HEAD
         cvt=self.params.cvt()
         ps=self.slices.ps()
@@ -2805,6 +2859,19 @@ class Check():
                         log.info("Found CV verifications")
                         self.makeCVprogresstable()
 >>>>>>> implement slices
+=======
+        cvt=self.params.cvt()
+        ps=self.slices.ps()
+        self.status.cull() #remove nodes with no data
+        if cvt in self.status:
+            if ps in self.status[cvt]:
+                if (hasattr(self,'noboard') and (self.noboard is not None)):
+                    self.noboard.destroy()
+                if cvt == 'T':
+                    if ps in self.toneframes:
+                        self.maketoneprogresstable()
+                        return
+>>>>>>> checkcheck
                 else:
                     log.info("Found CV verifications")
                     self.makeCVprogresstable()
@@ -2827,11 +2894,15 @@ class Check():
         ps=self.slices.ps()
         if self.mainrelief == None:
 <<<<<<< HEAD
+<<<<<<< HEAD
             lps=Label(titleframe,text=ps,anchor='c',font=self.fonts['title'])
 =======
             lps=Label(titleframe,text=ps,anchor='c',
                                                     font=self.fonts['title'])
 >>>>>>> implement slices
+=======
+            lps=Label(titleframe,text=ps,anchor='c',font=self.fonts['title'])
+>>>>>>> checkcheck
         else:
             lps=Button(titleframe,text=ps, anchor='c',
                             relief=self.mainrelief, font=self.fonts['title'])
