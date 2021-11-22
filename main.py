@@ -1412,6 +1412,7 @@ class Check():
             self.glosslangs.lang2(choice)
         elif len(self.glosslangs)>1:
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.glosslangs.pop(1) #if lang2 is None
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
@@ -1431,6 +1432,17 @@ class Check():
         window.destroy()
         self.checkcheck()
 >>>>>>> implement slices
+=======
+            self.glosslangs.pop(1) #if lang2 is None
+        self.attrschanged.append('glosslangs')
+        self.refreshattributechanges()
+        window.destroy()
+    def setps(self,choice,window):
+        self.slices.ps(choice)
+        self.attrschanged.append('ps')
+        self.refreshattributechanges()
+        window.destroy()
+>>>>>>> cleanup
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
     def getgroup(self,guess=False,cvt=None,event=None,comparison=False):
