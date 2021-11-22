@@ -8455,7 +8455,8 @@ def findpath():
             'shell' : False
             }
     try:
-        path=subprocess.check_output(["echo","%PATH%"], **spargs)
+        path=os.getenv(PATH)
+        #subprocess.check_output(["echo","%PATH%"], **spargs)
         log.info("Windows PATH is {}".format(path))
     except Exception as e:
         log.info("No path found! ({})".format(e))
@@ -8480,7 +8481,7 @@ def findhg():
                 log.info("No Mercurial found! ({})".format(e))
                 return
     hg=hg.decode("utf-8").strip()
-    log.info("Praat found at {}".format(hg))
+    log.info("Mercurial found at {}".format(hg))
     program['hgisthere']=True
     program['hg']=hg
 def praatopen(file,event=None):
