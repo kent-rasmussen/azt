@@ -4527,6 +4527,32 @@ class Check():
                         )
         b2.grid(column=0, row=1, sticky="ew")
     def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,playable=False,renew=False,unsortable=False,**kwargs):
+        def again():
+            self.tonegroupbuttonframe(
+                parent=parent,unsortable=unsortable,
+                group=group,notonegroup=notonegroup,
+                canary=canary,canary2=canary2,
+                row=row,column=column,label=label,
+                alwaysrefreshable=alwaysrefreshable, font=font,
+                playable=playable,renew=renew,refreshcount=refreshcount,**kwargs)
+        def select():
+            var.set(True)
+        def sortnext():
+            self.sortitem.destroy()
+        def remove():
+            parent.destroy()
+        def selectnremove():
+            select()
+            remove()
+        def selectnsortnext():
+            select()
+            sortnext()
+        def selectnlabelize():
+            select()
+            label=True
+            again()
+            sortnext()
+            remove()
         def unsort():
             removesenseidfromsubcheck(self,bf,senseid)
             self.tonegroupbuttonframe(
@@ -4536,6 +4562,7 @@ class Check():
                 row=row,column=column,label=label,
                 alwaysrefreshable=alwaysrefreshable, font=font,
                 playable=playable,renew=True,refreshcount=refreshcount,**kwargs)
+        var=tkinter.BooleanVar()
         font=kwargs.pop('font',self.fonts['read'])
         kwargs['anchor']=kwargs.get('anchor','w')
         notonegroup=kwargs.pop('notonegroup',True)
