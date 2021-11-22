@@ -7996,14 +7996,19 @@ class StatusDict(dict):
         for k in self:
             v[k]=self[k]
         return v
-    def build(self):
-        t=self.checkparameters.type()
-        if t not in self:
-            self[t]={}
-            changed=True
-        ps=self.slicedict.ps()
-        if ps not in self[t]:
-            self[t][ps]={}
+    def dictcheck(self,cvt=None,ps=None,profile=None,check=None):
+        if cvt is None:
+            cvt=self._checkparameters.cvt()
+        if ps is None:
+            ps=self._slicedict.ps()
+        if profile is None:
+            profile=self._slicedict.profile()
+        if check is None:
+            check=self._checkparameters.check()
+        try:
+            t=self[cvt][ps][profile][check]['groups']
+        except KeyError:
+            self.build(cvt=cvt,ps=ps,profile=profile,check=check)
     def build(self,upto=None,cvt=None,ps=None,profile=None,check=None):
         """this makes sure that the dictionary structure is there for work you
         are about to do"""
