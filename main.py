@@ -4412,10 +4412,9 @@ class Check():
             return
         for senseid in self.senseidstosort: #this is a ps-profile slice
             self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
-                            location=self.name,fieldvalue='', #just clear this
-                            showurl=True
+                            location=check,fieldvalue='', #just clear this
+                            oldfieldvalue='NA', showurl=True #if this
                             )
-        self.checkcheck() #redraw the table
         self.maybesort() #Because we want to go right into sorting...
     def getanotherskip(self,parent,vardict):
         """This function presents a group of buttons for the user to choose
