@@ -4127,7 +4127,7 @@ class Check():
                                 unsortable=False,canary=canary,canary2=canary2)
             row+=1
         """If all is good, destroy this frame."""
-        b=Button(self.sorting, text=oktext,
+        b=Button(self.sortitem, text=oktext,
                     cmd=lambda:returndictnsortnext(self,
                     self.runwindow.frame,
                     {'groupselected':"ALLOK"},
