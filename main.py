@@ -4305,11 +4305,10 @@ class Check():
         self.status[self.type][self.ps][self.profile][self.name]['groups'
                                                         ].append(str(newgroup))
         return str(newgroup)
-    def addtonefieldex(self,senseid,framed):
+    def addtonefieldex(self,senseid,framed,groupselected):
         guid=None
         if groupselected is None or groupselected == '':
             log.error("groupselected: {}; this should never happen"
-                        "".format(self.groupselected))
                         "".format(groupselected))
             exit()
         check=self.params.check()
