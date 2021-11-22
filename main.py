@@ -4757,6 +4757,7 @@ class Check():
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
 <<<<<<< HEAD
+<<<<<<< HEAD
     def getidstosort(self): #remove!
         #This depends on ps and profile, but not check
         """These variables should not have to be reset between checks"""
@@ -4821,6 +4822,8 @@ class Check():
                         "".format(senseid,self.senseidsunsorted))
     def getidstosort(self):
         #This depends on self.ps and self.profile, but not self.name
+=======
+>>>>>>> cleanup
     def getidstosort(self): #remove!
         #This depends on ps and profile, but not check
         """These variables should not have to be reset between checks"""
