@@ -7977,17 +7977,23 @@ class SliceDict(dict):
             self._validbyps[ps]=[x for x in self._valid if x[1] == ps]
         log.info("valid: {}".format(self._valid))
         log.info("validbyps: {}".format(self._validbyps))
-    def __init__(self,dict):
         super(SliceDict, self).__init__()
-        for k in dict:
-            self[k]=dict[k]
+        self.checkparameters=checkparameters
         self.profilecountsValid=0
         self.profilecounts=0
         self.maxprofiles=None
         self.maxpss=None
+        self._adhoc=adhoc
+        self._profilesbysense=profilesbysense #[ps][profile]
+        self.updateslices() #any time we add to self._profilesbysense
         """These two are only done here, as the only change with new data"""
         self.slicepriority()
         self.pspriority()
+        self.profilepriority() #this is a dict with ps keys, so can do once.
+        self.makesenseidsbyps()
+        """This will be redone, but should be done now, too."""
+        self.makeprofileok() #so the next won't fail
+        self.renewsenseids()
 class ToneFrames(dict):
     def addframe(self,ps,name,defn):
         """This needs to change checks"""
