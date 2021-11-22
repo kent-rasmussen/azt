@@ -6114,8 +6114,12 @@ class Check():
                             log.debug("x1: {}; x2: {}".format(x1,x2))
                             log.debug("countbyname: {}".format(self.checkcounts[
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     ps][profile][name]))
 =======
+>>>>>>> selfless
+=======
+                                    ps][profile][name]))
 >>>>>>> selfless
                             if x1 != 'header' and x2 not in ['header','n']:
                                 log.debug("value: {}".format(self.checkcounts[
