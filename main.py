@@ -8660,6 +8660,8 @@ def setexitflag(self,exitFlag):
 def openweburl(url):
     webbrowser.open_new(url)
 def ofromstr(x):
+    """This interprets a string as a python object, if possible"""
+    """This is needed to interpret [x,y] as a list and {x:y} as a dictionary."""
     try:
         return ast.literal_eval(x)
     except (SyntaxError,ValueError) as e:
