@@ -201,10 +201,15 @@ class Check():
         self.makestatus()
         #This can wait until runcheck, right?
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
+<<<<<<< HEAD
         if not hasattr(self,'glosslangs'):
         self.makeglosslangs()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         #     self.guessglosslangs() #needed for the following
+=======
+        self.glosslangs=Glosslangs(None,None)
+        self.guessglosslangs() #needed for the following
+>>>>>>> chose framed as addmodexamplefields attr
         self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
@@ -954,8 +959,12 @@ class Check():
 =======
 >>>>>>> chk selfless
             """Define the new frame"""
+<<<<<<< HEAD
             checkdefntoadd={}
             checkdefntoadd['field']='lc' #update this with radio!
+=======
+            frame=self.toneframes[self.ps][self.name]
+>>>>>>> chose framed as addmodexamplefields attr
             for lang in langs:
 <<<<<<< HEAD
                 db['before'][lang]['text']=db['before'][lang][
@@ -1320,17 +1329,28 @@ class Check():
         window.destroy()
     def setglosslang(self,choice,window):
         self.glosslangs.lang1(choice)
+<<<<<<< HEAD
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
         window.destroy()
+=======
+        window.destroy()
+        self.checkcheck()
+>>>>>>> chose framed as addmodexamplefields attr
     def setglosslang2(self,choice,window):
         if choice is not None:
             self.glosslangs.lang2(choice)
         elif len(self.glosslangs)>1:
+<<<<<<< HEAD
             self.glosslangs.pop(1) #if lang2 is None
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
         window.destroy()
+=======
+            self.glosslangs.pop(1) #rm(self.glosslangs[1])
+        window.destroy()
+        self.checkcheck()
+>>>>>>> chose framed as addmodexamplefields attr
     def setps(self,choice,window):
         self.slices.ps(choice)
         self.attrschanged.append('ps')
@@ -1440,7 +1460,11 @@ class Check():
                             ],
                         'interfacelang':[],
                         'glosslangs':[],
+<<<<<<< HEAD
                         'check':[],
+=======
+                        'name':[],
+>>>>>>> chose framed as addmodexamplefields attr
                         'subcheck':[
                             'regexCV'
                             ],
@@ -1673,7 +1697,18 @@ class Check():
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
                 if hasattr(module,s):
+<<<<<<< HEAD
                     setattr(o,s,getattr(module,s))
+=======
+                    log.log(5,"Found attribute {} with value {}".format(s,
+                                getattr(module,s)))
+                    if type(getattr(module,s)) is list:
+                        setattr(o,s,[])
+                        for i in getattr(module,ss):
+                            getattr(o,s).append(i)
+                    else:
+                        setattr(o,s,getattr(module,ss))
+>>>>>>> chose framed as addmodexamplefields attr
         except:
             log.error("Problem importing {}".format(legacy))
         if 'glosslangs' in self.settings[setting]['attributes']:
@@ -2869,6 +2904,7 @@ class Check():
     def getglosslang2(self,event=None):
         log.info("this sets the gloss")
         window=Window(self.frame,title='Select Gloss Language')
+<<<<<<< HEAD
         text=_('What other language do you want to use for glosses?')
         Label(window.frame,text=text).grid(column=0, row=1)
         langs=list()
@@ -2881,6 +2917,25 @@ class Check():
         buttonFrame1=ButtonFrame(window.frame,langs,self.setglosslang2,
                                  window
                                  ).grid(column=0, row=4)
+=======
+        if self.db.filename is None :
+            text=_('Error: please set Lift file first!')+' ('
+            +str(self.db.filename)+')'
+            Label(window.frame,text=text).grid(column=0, row=0)
+        else:
+            text=_('What other language do you want to use for glosses?')
+            Label(window.frame,text=text).grid(column=0, row=1)
+            langs=list()
+            for lang in self.db.glosslangs:
+                if lang == self.glosslangs[0]:
+                    continue
+                langs.append({'code':lang, 'name':self.languagenames[lang]})
+            langs.append({'code':None, 'name':'just use '
+                            +self.languagenames[self.glosslangs[0]]})
+            buttonFrame1=ButtonFrame(window.frame,langs,self.setglosslang2,
+                                     window
+                                     ).grid(column=0, row=4)
+>>>>>>> chose framed as addmodexamplefields attr
     def getcheckspossible(self):
         """This splits by tone or not, because the checks available for
         segments depend on the number of segments in the selected syllable
@@ -4187,8 +4242,16 @@ class Check():
                                     senseid=senseid,
                                     analang=self.analang,
                                     framed=framed,
+<<<<<<< HEAD
                                     fieldtype='tone',location=check,
                                     fieldvalue=groupselected
+=======
+                                    # langform=framed[self.analang],
+                                    # glossform=framed[self.glosslang],
+                                    # gloss2form=framed[self.glosslang2],
+                                    fieldtype='tone',location=self.name,
+                                    fieldvalue=self.groupselected
+>>>>>>> chose framed as addmodexamplefields attr
                                     )
         tonegroup=unlist(self.db.get("example/tonefield/form/text",
                         senseid=senseid, location=check).get('text'))
@@ -4206,7 +4269,11 @@ class Check():
                                     guid,senseid,self.analang,self.glosslangs,
                                     lang='en',
                                     forms=framed,
+<<<<<<< HEAD
                                     fieldtype='tone',location=check,
+=======
+                                    fieldtype='tone',location=self.name,
+>>>>>>> chose framed as addmodexamplefields attr
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
@@ -4711,7 +4778,11 @@ class Check():
             for lang in self.glosslangs:
                 sense['gloss'].append(firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
+<<<<<<< HEAD
                                                 glosslang=lang
+=======
+                                                glosslang=self.glosslang
+>>>>>>> chose framed as addmodexamplefields attr
                                                 ),othersOK=True))
             if self.db.pluralname is not None:
                 sense['plnode']=firstoflist(self.db.get('field',
@@ -5960,6 +6031,7 @@ class Glosslangs(DataList):
             self.append(lang)
         else:
             log.debug("Tried to set second glosslang, without first set.")
+<<<<<<< HEAD
     def langs(self,langs=None):
         if langs is None:
             return self
@@ -5968,6 +6040,8 @@ class Glosslangs(DataList):
                 del langs[1]
             self.clear()
             self.append(langs[:2])
+=======
+>>>>>>> chose framed as addmodexamplefields attr
     def rm(self,lang):
         """This could be either position, and if lang1 will promote lang2"""
         self.remove(lang)
