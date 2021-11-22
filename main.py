@@ -4302,23 +4302,34 @@ class Check():
             toneUFgroups+=self.db.get('sense/tonefield/form/text',
                                                     senseid=senseid).get('text')
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
-    def gettonegroups(self):
-        # This depends on self.ps, self.profile, and self.name
-        # And sortingstatus, or at least
-        # This is where we go into the LIFT file to see what's actually there.
-        # It should not be used to affirm that often; sortT/joinT manage this.
-        log.log(3,"Looking for tone groups for {} frame".format(self.name))
+    def gettonegroups(self,ps=None,profile=None,check=None,renew=False):
+        """This returns (non-UF) tonegroups from the LIFT file. It should not
+        be used to affirm that often; sortT/joinT manage this."""
+        """This depends on ps, profile, and check, but can take current or
+        specified values"""
+        """To read groups from the status object, use self.status.groups()"""
+        if check == None:
+            check=self.params.check()
+        if profile == None:
+            self.slices.profile()
+        if ps == None:
+            self.slices.ps()
+        if not renew:
+            self.status.groups(ps=ps,profile=profile,check=check)
+            return
+        log.log(3,"Looking for tone groups for {} frame".format(check))
         tonegroups=[]
-        for senseid in self.senseidstosort: #This is a ps-profile slice
+        """This takes current for any NONE values"""
+        senseids=self.slices.senseids(ps=ps,profile=profile)
+        for senseid in senseids:
             tonegroup=self.db.get("example/tonefield/form/text",
                                 senseid=senseid, location=self.name).get('text')
             if unlist(tonegroup) in ['NA','','ALLOK', None]:
                 log.error("tonegroup {} found in sense {} under location {}!"
-                    "".format(tonegroup,senseid,self.name))
+                    "".format(tonegroup,senseid,check))
             else:
                 tonegroups+=tonegroup
-        groups=self.status[self.type][self.ps][self.profile][self.name][
-                                    'groups']=list(dict.fromkeys(tonegroups))
+        groups=list(dict.fromkeys(tonegroups))
         log.debug("gettonegroups groups: {}".format(groups))
         for value in ['NA', '', None]:
             if value in groups:
