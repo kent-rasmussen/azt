@@ -4805,12 +4805,24 @@ class Check():
             log.info("updatesortingstatus shows senseidstosort remaining")
             vts=True
         else:
+<<<<<<< HEAD
             log.info("updatesortingstatus shows no senseidstosort remaining")
             vts=False
         self.status.tosort(vts)
         log.info("updatesortingstatus senseids tosort: {}".format(self.status.senseidstosort()))
         log.info("updatesortingstatus senseids sorted: {}".format(self.status.senseidssorted()))
         log.info("tosort (end of updatesortingstatus): {}".format(self.status.tosort()))
+=======
+            self.status[self.type][self.ps][self.profile][self.name][
+                                                                'tosort']=False
+    def settonevariablesbypsprofile(self):
+        # This depends on self.ps, self.profile, and self.name
+        # Do this only on changing frames:
+        self.makestatusdict() #Fills an existing hole in status file sructure
+        #The following depends on the above for structure
+        self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
+        self.gettonegroups() #sets self.status...['groups'] for a frame
+>>>>>>> new set tone variables
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
         """This is currently called in iteration"""
         self.checkforsenseidstosort(cvt=cvt,ps=ps,profile=profile,check=check)
