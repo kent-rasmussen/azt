@@ -319,6 +319,23 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if framed is not None:
             forms=framed.framed #because this should always be framed
             glosslangs=framed.glosslangs
+        framed=kwargs.get('framed') #This an object with values
+        formvaluenode=self.get("example/form/text", senseid=senseid,
+                        analang=analang, location=location, showurl=True).get('node')
+        if len(formvaluenode)>0:
+            formvaluenode=formvaluenode[0]
+        if forms[analang] != formvaluenode.text:
+            log.debug("Form changed!")
+            formvaluenode.text=forms[analang]
+        for lang in glosslangs:
+            glossvaluenode=lift.get("example/translation/form/text",
+                        senseid=senseid, glosslang=lang,
+                        location=location, showurl=True).get('node')
+            if len(glossvaluenode)>0:
+                glossvaluenode=glossvaluenode[0]
+            if forms[lang] != glossvaluenode.text:
+                log.debug("Gloss changed!")
+                glossvaluenode.text=forms[lang]
         if len(exfieldvalue) > 0:
             for e in exfieldvalue:
                 e.text=tonevalue
