@@ -1725,67 +1725,47 @@ class Check():
             checktype=self.type
         if ps is None:
             ps=self.ps
+    def makestatusdictprofile(self,cvt=None,ps=None,profile=None):
+        if cvt is None:
+            self.params.cvt()
+        if ps is None:
+            self.slices.ps()
         if profile is None:
-            profile=self.profile
-        if name is None:
-            name=self.name
-        changed=False
-        if checktype not in self.status:
-            self.status[checktype]={}
-            changed=True
-        if ps not in self.status[checktype]:
-            self.status[checktype][ps]={}
-            changed=True
-        if profile not in self.status[checktype][ps]:
-            self.status[checktype][ps][profile]={}
-            changed=True
-        if name not in self.status[checktype][ps][profile]:
-            self.status[checktype][ps][profile][name]={}
-            changed=True
-        if type(self.status[checktype][ps][profile][name]) is list:
-            log.info("Updating {}-{} status dict to new schema".format(
-                                                        profile,name))
-            groups=self.status[checktype][ps][profile][name]
-            self.status[checktype][ps][profile][name]={}
-            self.status[checktype][ps][profile][name]['groups']=groups
-            changed=True
-        for key in ['groups','done']:
-            if key not in self.status[checktype][ps][profile][name]:
-                log.info("Adding {} key to {}-{} status dict".format(
-                                                key,profile,name))
-                self.status[checktype][ps][profile][name][key]=list()
-                changed=True
-        if 'tosort' not in self.status[checktype][ps][profile][name]:
-            log.info("Adding tosort key to {}-{} status dict".format(
-                                                key,profile,name))
-            self.status[checktype][ps][profile][name]['tosort']=True
-            changed=True
-        if changed == True:
-            log.info("Saving status dict to file")
-            self.storesettingsfile(setting='status')
-    def verifictioncode(self,name=None,subcheck=None):
+            self.slices.profile()
+        self.status.build(cvt=cvt,ps=ps,profile=profile)
+        return
+    def makestatusdict(self,cvt=None,ps=None,profile=None,check=None):
+        self.status.build()
+        return
+    def verifictioncode(self,check=None,subcheck=None):
         if subcheck is None: #do I ever want this to really be None?
-            subcheck=self.subcheck
-        if name is None:
-            name=self.name
-        return name+'='+subcheck
-    def updatestatuslift(self,name=None,subcheck=None,verified=False,refresh=True):
-        if subcheck is None: #do I ever want this to really be None?
-            subcheck=self.subcheck
-        if name is None:
-            name=self.name
-        senseids=self.db.get("sense", location=name, tonevalue=subcheck,
+            subcheck=self.params.subcheck()
+        if check is None:
+            check=self.params.check()
+        return check+'='+subcheck
+    def updatestatuslift(self,check=None,group=None,verified=False,refresh=True):
+        if group is None: #do I ever want this to really be None?
+            group=self.status.group()
+        if check is None:
+            check=self.params.check()
+        profile=self.slices.profile()
+        senseids=self.db.get("sense", location=check, tonevalue=group,
                             path=['tonefield']).get('senseid')
-        value=self.verifictioncode(name,subcheck)
+        value=self.verifictioncode(check,group)
         if verified == True:
             add=value
             rms=[]
         else:
             add=None
             rms=[value]
-        for senseid in self.senseidsincheck(senseids): #only for this ps-profile
+        """The above doesn't test for profile, so we restrict that next"""
+        for senseid in self.slices.inslice(senseids): #only for this ps-profile
             rms+=self.db.getverificationnodevaluebyframe(senseid,
+<<<<<<< HEAD
                         vtype=self.profile, analang=self.analang, frame=name)
+=======
+                                                vtype=profile, frame=check)
+>>>>>>> selfless
             log.info("Removing {}".format(rms))
 <<<<<<< HEAD
             self.db.modverificationnode(senseid,vtype=self.profile,
