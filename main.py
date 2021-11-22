@@ -7956,10 +7956,12 @@ class SliceDict(dict):
             self._pss=list(dict.fromkeys([x[0][1]
                                 for x in self._slicepriority]))[:self.maxpss]
     def profilepriority(self):
-        self.makepsok()
-        slicesbyhzbyps=self._sliceprioritybyps[self._ps]
-        if slicesbyhzbyps is not None:
-            self._profiles=list(dict.fromkeys([x[0][0]
+        if not hasattr(self,'_profiles'):
+            self._profiles={}
+        for ps in self.pss():
+            slicesbyhzbyps=self._sliceprioritybyps[ps]
+            if slicesbyhzbyps is not None:
+                self._profiles[ps]=list(dict.fromkeys([x[0][0]
                                 for x in slicesbyhzbyps]))[:self.maxprofiles]
     def valid(self, ps=None):
         if ps is None:
