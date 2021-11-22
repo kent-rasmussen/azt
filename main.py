@@ -2884,14 +2884,20 @@ class Check():
         row=0
         #put in a footer for next profile/frame
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> new progresstable,  selfless
         cvt=self.params.cvt()
         ps=self.slices.ps()
         profiles=self.slices.profiles()
         curprofile=self.slices.profile()
         curcheck=self.params.check()
+<<<<<<< HEAD
 =======
         profiles=self.slices.profiles()
 >>>>>>> implement slices
+=======
+>>>>>>> new progresstable,  selfless
         profiles=['colheader']+profiles+['next']
         frames=list(self.toneframes[ps].keys())
         ungroups=0
@@ -2904,6 +2910,7 @@ class Check():
         htip=_("Refresh table, \nsave settings")
         th=ToolTip(h,htip)
 <<<<<<< HEAD
+<<<<<<< HEAD
         r=self.status[cvt][ps]
         log.debug("Table rows possible: {}".format(r))
         for profile in profiles:
@@ -2914,14 +2921,22 @@ class Check():
                     if self.status[cvt][ps][profile] == {}:
 =======
         r=self.status[self.type][ps]
+=======
+        r=self.status[cvt][ps]
+>>>>>>> new progresstable,  selfless
         log.debug("Table rows possible: {}".format(r))
         for profile in profiles:
             column=0
-            if profile in ['colheader','next']+list(self.status[self.type][
+            if profile in ['colheader','next']+list(self.status[cvt][
                                                             ps].keys()):
+<<<<<<< HEAD
                 if profile in self.status[self.type][ps]:
                     if self.status[self.type][ps][profile] == {}:
 >>>>>>> implement slices
+=======
+                if profile in self.status[cvt][ps]:
+                    if self.status[cvt][ps][profile] == {}:
+>>>>>>> new progresstable,  selfless
                         continue
                     #Make row header
                     t="{} ({})".format(profile,len(self.profilesbysense[
@@ -2952,10 +2967,14 @@ class Check():
                                 ).grid(row=row,column=column,sticky='s',ipadx=5)
                     elif profile == 'next':
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> new progresstable,  selfless
                         continue
                     elif frame in self.status[cvt][ps][profile]:
                         node=self.status[cvt][ps][profile][frame]
                         if len(node['done']) > len(node['groups']):
+<<<<<<< HEAD
                             ungroups+=1
                         #At this point, these should be there
                         done=node['done']
@@ -2986,6 +3005,13 @@ class Check():
                         tosort=self.status[self.type][ps][profile][frame][
                                                                 'tosort']
 >>>>>>> implement slices
+=======
+                            ungroups+=1
+                        #At this point, these should be there
+                        done=node['done']
+                        total=node['groups']
+                        tosort=node['tosort']
+>>>>>>> new progresstable,  selfless
                         totalwverified=[]
                         for g in total:
                             if g in done:
