@@ -8455,7 +8455,7 @@ def findpath():
             'shell' : False
             }
     try:
-        path=os.getenv(PATH)
+        path=os.getenv('PATH')
         #subprocess.check_output(["echo","%PATH%"], **spargs)
         log.info("Windows PATH is {}".format(path))
     except Exception as e:
