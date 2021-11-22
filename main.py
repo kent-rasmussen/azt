@@ -2748,17 +2748,14 @@ class Check():
         self.frame.parent.parent.deiconify()
     def setsu(self):
         self.su=True
-        self.checkcheck()
     def unsetsu(self):
         self.su=False
-        self.checkcheck()
-    def makestatus(self):
+    def makestatusframe(self):
         #This will probably need to be reworked
         if hasattr(self.frame,'status') and self.frame.status.winfo_exists():
             self.frame.status.destroy()
             self.frame.status=Frame(self.frame)
             self.frame.status.grid(row=0, column=0,sticky='nw')
-            self.frame.parent.wait()
         else:
             log.info("Apparently, this is my first time making the status frame.")
             self.frame.status=Frame(self.frame)
@@ -2855,28 +2852,6 @@ class Check():
             ]
         }
     }
-    def setnamesbyprofile(self):
-        """include check names appropriate for the given profile and segment
-        type (e.g., V1=V2 requires at least two vowels). This function is
-        agnostic of part of speech (self.ps)"""
-        try:
-            len(self.profile)
-        except:
-            log.info("It doesn't look like you've picked a syllable profile yet.")
-            return
-        if type(self.type) is not str:
-            print("type not set!",self.type)
-            return
-        if self.type == 'T':
-            log.info("This shouldn't happen! (setnamesbyprofile with self.type T)")
-            return
-        n=int(re.subn(self.type, self.type, self.profile)[1])
-        print(n, 'instances of self.type', self.type, 'in', self.profile)
-        names=list()
-        for i in range(n):
-            ilist=self.checknamesall[self.type][i+1]
-            names+=ilist  #.append(, This is causing a list in a list..…
-        return names
     def getanalangname(self,event=None):
         log.info("this sets the language name")
         def submit(event=None):
