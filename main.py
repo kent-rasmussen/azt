@@ -8637,12 +8637,12 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     #merge with addtonefieldex
     framed=self.datadict.getframeddata(senseid)
     framed.setframe(self.name)
-    # text=framed.formatted(noframe=False)
-    if name is None:
-        name=self.name
-    if subcheck is None:
-        subcheck=self.subcheck
-    log.info(_("Removing senseid {} from subcheck {}".format(senseid,subcheck)))
+    text=framed.formatted(noframe=False)
+    if check is None:
+        check=self.params.check()
+    if group is None:
+        group=self.status.group()
+    log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
     #This should only *mod* if already there
     self.db.addmodexamplefields(senseid=senseid,
                             analang=self.analang,
