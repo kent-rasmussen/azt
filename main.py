@@ -8514,22 +8514,22 @@ def availablexy(self,w=None):
     log.log(2,"cols: {}".format(colwidth))
     log.log(2,"rows: {}".format(rowheight))
 def returndictnsortnext(self,parent,values,canary=None,canary2=None):
-    """Kills self.sorting, not parent."""
+    """Kills self.sortitem, not parent."""
     for value in values:
         setattr(self,value,values[value])
         if canary is None:
-            self.sorting.destroy() #from or window with button...
+            self.sortitem.destroy() #from or window with button...
         elif canary.winfo_exists():
             canary.destroy() #Just delete the one
         elif canary2.winfo_exists():
             canary2.destroy() #or the other
         return value
 def returndictdestroynsortnext(self,parent,values):
-    """Kills self.sorting *and* parent."""
+    """Kills self.sortitem *and* parent."""
     # print(self,parent,values)
     for value in values:
         setattr(self,value,values[value])
-        self.sorting.destroy() #from or window with button...
+        self.sortitem.destroy() #from or window with button...
         parent.destroy() #from or window with button...
         return value
 def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
