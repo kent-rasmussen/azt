@@ -3994,119 +3994,102 @@ class Check():
         pile.
         """
         #This function should exit 1 on a window close, 0/None on all ok.
-        groups=self.status[self.type][self.ps][self.profile][self.name][
-                                                                'groups']
-        if len(groups) == 0:
-            log.debug("No tone groups to verify!")
-            return
+        check=self.params.check()
+        groups=self.status.groups()
+        group=self.status.group()
         # The title for this page changes by group, below.
-        self.getrunwindow(msg="preparing to verify groups: {}".format(
-                                                                unlist(groups)))
+        self.getrunwindow(msg="preparing to verify group: {}".format(group))
         # if menu == True:
         #     self.runwindow.doverifymenu()
         # ContextMenu(self.runwindow, context='verifyT') #once for all
         oktext='These all have the same tone'
         instructions=_("Read down this list to verify they all have the same "
             "tone melody. Select any word with a different tone melody to "
-            "remove it from the list."
-            ).format(self.subcheck,self.name,oktext)
-        """self.subcheck is set here, but probably OK"""
+            "remove it from the list.")
+        """group is set here, but probably OK"""
         self.makestatusdict()
-        for self.subcheck in self.status[self.type][self.ps][self.profile][
-                                                        self.name]['groups']:
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            if self.subcheck in (self.status[self.type][self.ps][self.profile]
-                                            [self.name]['done']):
-                log.info("‘{}’ already verified, continuing.".format(
-                                                                self.subcheck))
-                continue
-            senseids=self.getexsall(self.subcheck)
-            if len(senseids) <2:
-                self.updatestatus(verified=True)
-                self.updatestatuslift(self.name,self.subcheck,verified=True)
-                # self.checkcheck() #now after verifyT is done
+        last=False
+        if self.runwindow.exitFlag.istrue():
+            return 1
+        if group in self.status.verified():
+            log.info("‘{}’ already verified, continuing.".format(group))
+            return
+        senseids=self.getexsall(group)
+        if len(senseids) <= 1:
+            if len(senseids) == 1:
+                verified=True
                 log.info("Group ‘{}’ only has {} example; marking verified and "
-                        "continuing.".format(self.subcheck,len(senseids)))
+                        "continuing.".format(group,len(senseids)))
+            if len(senseids) == 0:
+                verified=False
+                log.info("Group ‘{}’ only has {} example; removing and "
+                "continuing.".format(group,len(senseids)))
+            self.updatestatus(verified=verified)
+            self.updatestatuslift(check,group,verified=verified)
+            if not verified:
+                groups.remove(group)
+            return
+        title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
+                                    self.languagenames[self.analang],
+                                    group,
+                                    check
+                                    )
+        titles=Frame(self.runwindow.frame)
+        titles.grid(column=0, row=0, columnspan=2, sticky="w")
+        Label(titles, text=title,
+                font=self.fonts['title']
+                ).grid(column=0, row=0, sticky="w")
+        """Move this to bool vars, like for sortT"""
+        if hasattr(self,'groupselected'): #so it doesn't get in way later.
+            delattr(self,'groupselected')
+        row=0
+        column=0
+        if group in groups:
+            progress=('('+str(groups.index(group)+1)+'/'+str(len(
+                                                            groups))+')')
+            Label(titles, text=progress,anchor='w'
+                                ).grid(row=0,column=1,sticky="ew")
+        Label(titles, text=instructions).grid(row=1,column=0, columnspan=2,
+                                                                sticky="wns")
+        Label(self.runwindow.frame, image=self.parent.photo['verifyT'],
+                        text='',
+                        bg=self.theme['background']
+                        ).grid(row=1,column=0,rowspan=3,sticky='nwse')
+        """Scroll after instructions"""
+        self.sframe=ScrollingFrame(self.runwindow.frame)
+        self.sframe.grid(row=1,column=1,columnspan=2,sticky='wsne')
+        row+=1
+        """put entry buttons here."""
+        for senseid in senseids:
+            if senseid is None: #needed?
                 continue
-            self.runwindow.resetframe() #just once per group
-            self.runwindow.wait(msg="Preparing to verify group {}".format(
-                                                                self.subcheck))
-            title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
-                                        self.languagenames[self.analang],
-                                        self.subcheck,
-                                        self.name
-                                        )
-            titles=Frame(self.runwindow.frame)
-            titles.grid(column=0, row=0, columnspan=2, sticky="w")
-            Label(titles, text=title,
-                    font=self.fonts['title']
-                    ).grid(column=0, row=0, sticky="w")
-            if hasattr(self,'groupselected'): #so it doesn't get in way later.
-                delattr(self,'groupselected')
-            row=0
-            column=0
-            if self.subcheck in self.status[self.type][self.ps][self.profile][
-                                                        self.name]['groups']:
-                progress=('('+str(self.status[self.type][self.ps][self.profile][
-                    self.name]['groups'].index(self.subcheck)+1)+'/'+str(len(
-                    self.status[self.type][self.ps][self.profile][self.name][
-                                                                'groups']))+')')
-                Label(titles, text=progress,anchor='w'
-                                    ).grid(row=0,column=1,sticky="ew")
-            Label(titles, text=instructions).grid(row=1,column=0, columnspan=2,
-                                                                    sticky="wns")
-            Label(self.runwindow.frame, image=self.parent.photo['verifyT'],
-                            text='',
-                            bg=self.theme['background']
-                            ).grid(row=1,column=0,rowspan=3,sticky='nwse')
-            """Scroll after instructions"""
-            self.sframe=ScrollingFrame(self.runwindow.frame)
-            self.sframe.grid(row=1,column=1,columnspan=2,sticky='wsne')
             row+=1
-            """put entry buttons here."""
-            for senseid in senseids:
-                self.verifybutton(self.sframe.content,senseid,
-                                    row, column,
-                                    label=False)
-                row+=1
-            if senseid is None:
-                continue
-            bf=Frame(self.sframe.content)
-            bf.grid(row=row, column=0, sticky="ew")
-            b=Button(bf, text=oktext,
-                            cmd=lambda:returndictndestroy(self, #destroy frame!
-                                        self.runwindow.frame,
-                                        {'groupselected':"ALLOK"}),
-                            anchor="w",
-                            font=self.fonts['instructions']
-                            )
-            b.grid(column=0, row=0, sticky="ew")
-            # b.bind('<mouseclick>',remove senseid from sensids)
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            # self.runwindow.context.updatebindings() #make sure to bind children
-            self.sframe.windowsize()
-            self.runwindow.waitdone()
-            b.wait_window(bf)
-            if (self.runwindow.exitFlag.istrue() or
-                                            not hasattr(self,'groupselected')):
-                return 1
-            # I need to work on this later. How to distinguish buttons after
-            # the window is gone? I think I have to count senseids in the group.
-            # if not self.sframe.content.winfo_exists(): #This goes with window
-            #     log.debug("It looks like all buttons were removed "
-            #                 "(self.sframe.content.winfo_exists(): {}); "
-            #                 "not marking verified.".format(
-            #                             self.sframe.content.winfo_exists()))
-            elif self.groupselected == "ALLOK":
-                log.debug("User selected ‘{}’, moving on.".format(oktext))
-                self.updatestatus(verified=True)
-                self.updatestatuslift(self.name,self.subcheck,verified=True)
-                # self.checkcheck() #now after verifyT is done
-            else:
-                log.debug("User did NOT select ‘{}’, assuming we'll come "
-                        "back to this!!".format(oktext))
+        bf=Frame(self.sframe.content)
+        bf.grid(row=row, column=0, sticky="ew")
+        b=Button(bf, text=oktext,
+                        cmd=lambda:returndictndestroy(self, #destroy frame!
+                                    self.runwindow.frame,
+                                    {'groupselected':"ALLOK"}),
+                        anchor="w",
+                        font=self.fonts['instructions']
+                        )
+        b.grid(column=0, row=0, sticky="ew")
+        if self.runwindow.exitFlag.istrue():
+            return 1
+        self.sframe.windowsize()
+        self.runwindow.waitdone()
+        b.wait_window(bf)
+        if (self.runwindow.exitFlag.istrue() or
+                                        not hasattr(self,'groupselected')):
+            return 1
+        elif self.groupselected == "ALLOK":
+            log.debug("User selected ‘{}’, moving on.".format(oktext))
+            self.updatestatus(verified=True)
+            self.updatestatuslift(check,group,verified=True)
+            # self.checkcheck() #now after verifyT is done
+        else:
+            log.debug("User did NOT select ‘{}’, assuming we'll come "
+                    "back to this!!".format(oktext))
         #Once done verifying each group:
         if self.runwindow.exitFlag.istrue():
             return 1
