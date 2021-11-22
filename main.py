@@ -2880,16 +2880,14 @@ class Check():
     def getanalangname(self,event=None):
         log.info("this sets the language name")
         def submit(event=None):
-            self.languagenames[self.analang]=namevar.get()
+            self.languagenames[self.analang]=name.get()
             if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
                 self.adnlangnames={}
             self.adnlangnames[self.analang]=self.languagenames[self.analang]
                 # if self.analang in self.adnlangnames:
             self.storesettingsfile()
             window.destroy()
-            self.checkcheck()
         window=Window(self.frame,title=_('Enter Analysis Language Name'))
-        namevar=tkinter.StringVar()
         curname=self.languagenames[self.analang]
         defaultname=_("Language with code [{}]").format(self.analang)
         t=_("How do you want to display the name of {}").format(
