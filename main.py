@@ -8662,7 +8662,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
         log.error(_("Found {} tone values: {}; Fix this!".format(len(tgroups),
                                                                     tgroups)))
         return
-    rm=self.verifictioncode(name,subcheck)
+    rm=self.verifictioncode(check,group)
     self.db.modverificationnode(senseid,vtype=self.profile,analang=self.analang,
                                                                     rms=[rm])
     self.db.write() #This is not iterated over
