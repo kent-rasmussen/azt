@@ -1,6 +1,9 @@
 # A→Z+T Changelog
 
 # Version 0.8.7
+changed .py config files to .ini and .dat, with clearer and simpler syntax. This should automatically migrate, but please let me know if it doesn't.
+
+# Version 0.8.6
 - added referify data for current subgroup
 - give warning if user is going to undo analysis regroupings
 - mark a sensid to sort again without losing the sound file attached to it.
@@ -18,7 +21,7 @@
 - multiple fixes to segment interpretation settings
 - set up mail of bug report, and links to webpage documentation
 
-# Version 0.8.6
+# Version 0.8.5
 - reworked buttons and UI on transcription window
 - comparison option for transcription window
 - refresh group buttons now iterate through list (only random on first try)
