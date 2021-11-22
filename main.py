@@ -187,11 +187,11 @@ class Check():
         if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
             log.info("Starting profile analysis at {}".format(time.time()
                                                             -self.start_time))
-            log.debug("Starting ps-profile: {}-{}".format(self.ps,self.profile))
+            log.debug("Starting ps-profile: {}-{}".format(ps,profile))
             self.getprofiles() #creates self.profilesbysense nested dicts
             for var in ['rx','profilesbysense','profilecounts']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
-            log.debug("Middle ps-profile: {}-{}".format(self.ps,self.profile))
+            log.debug("Middle ps-profile: {}-{}".format(ps,profile))
             self.storesettingsfile(setting='profiledata')
             log.debug("Ending ps-profile: {}-{}".format(ps,profile))
         self.makeparameters()
@@ -207,6 +207,9 @@ class Check():
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
         if not hasattr(self,'glosslangs'):
             self.guessglosslangs() #needed for the following
+        self.makeglosslangs()
+        self.loadsettingsfile() # overwrites guess above, stored on runcheck
+        #     self.guessglosslangs() #needed for the following
         self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
@@ -1743,11 +1746,10 @@ class Check():
             rms+=self.db.getverificationnodevaluebyframe(senseid,
                                                 vtype=self.profile, frame=name)
             log.info("Removing {}".format(rms))
-            self.db.modverificationnode(senseid,vtype=self.profile,add=add,
-                                                                        rms=rms)
+            self.db.modverificationnode(senseid,vtype=profile,add=add,rms=rms)
         if refresh == True:
             self.db.write() #for when not iterated over, or on last repeat
-    def updatestatus(self,subcheck=None,verified=False,refresh=True):
+    def updatestatus(self,group=None,verified=False,refresh=True):
         #This function updates the status variable, not the lift file.
         self.status.update(group=group,verified=verified)
         return
