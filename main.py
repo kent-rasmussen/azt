@@ -370,19 +370,21 @@ class Check():
         else:
             default()
     def nextsubcheck(self,guess=False):
+    def nextgroup(self,guess=False):
         def default():
             self.set('subcheck',priorities[0])
-        if self.type != 'T': #only tone for now
-            log.debug("Only working on tone for now, not {}".format(self.type))
+        cvt=self.params.cvt()
+        if cvt != 'T': #only tone for now
+            log.debug("Only working on tone for now, not {}".format(cvt))
             return
         if (not hasattr(self,'subchecksprioritized') or
-                                self.type not in self.subchecksprioritized):
+                                cvt not in self.subchecksprioritized):
             self.getsubchecksprioritized()
-        priorities=[x[0] for x in self.subchecksprioritized[self.type]
+        priorities=[x[0] for x in self.subchecksprioritized[cvt]
                             if x[0] is not None]
-        if self.subcheck in priorities:
-            log.debug("self.subcheck: {}".format(self.subcheck))
-            i=priorities.index(self.subcheck)
+        if group in priorities:
+            log.debug("group: {}".format(group))
+            i=priorities.index(group)
             if len(priorities)>i+1:
                 self.set('subcheck',priorities[i+1])
             else:
