@@ -8034,6 +8034,169 @@ class StatusDict(dict):
         if changed == True:
             self.write()
     def __init__(self, checkparameters, slicedict, dict):
+    def cull(self):
+        """This iterates across the whole dictionary, and removes empty nodes.
+        Only do this when you're cleaning up, not about to start new work."""
+        for t in self:
+            pss=list(self[t])
+            for ps in pss:
+                profiles=list(self[t][ps]) #actual, not theoretical
+                for profile in profiles:
+                    checks=list(self[t][ps][profile]) #actual, not theoretical
+                    for check in checks:
+                        node=self[t][ps][profile][check]
+                        if node['groups'] == []:
+                            if node['done'] != []:
+                                log.error("groups verified, but not present!")
+                            del self[t][ps][profile][check]
+                    if profile == {}:
+                        del self[t][ps][profile]
+                if ps == {}:
+                    del self[t][ps]
+            if t == {}:
+                del self[t]
+    """The following four methods address where to find what in this dict"""
+    def updatechecksbycvt(self):
+        """This just pulls the correct list from the dict, and updates params"""
+        """It doesn't allow for input, as other fns do"""
+        cvt=self._checkparameters.cvt()
+        if not hasattr(self,'_checksdict'):
+            self._checksdict={}
+        if cvt not in self._checksdict:
+            self._checksdict[cvt]={}
+            self.renewchecks()
+        if cvt == 'T':
+            """This depends on ps and self.toneframes"""
+            ps=self._slicedict.ps()
+            if ps not in self._checksdict[cvt]:
+                self._checks=[] #there may be none defined
+            else:
+                self._checks=self._checksdict[cvt][ps]
+        else:
+            profile=self._slicedict.profile()
+            if profile not in self._checksdict[cvt]:
+                self.renewchecks() #It should always be able to find something
+            self._checks=self._checksdict[cvt][profile]
+        return self._checks
+    def renewchecks(self):
+        """This should only need to be done on a boot or when a new tone frame
+        is defined."""
+        """This depends on cvt and profile, for CV checks"""
+        """replaces getcheckspossible"""
+        """replaces framenamesbyps"""
+        """replaces self.checkspossible"""
+        """replaces setnamesbyprofile"""
+        if not hasattr(self,'_checksdict'):
+            self._checksdict={}
+        t=self._checkparameters.cvt()
+        if t not in self._checksdict:
+            self._checksdict[t]={}
+        if t == 'T':
+            toneframes=self.toneframes()
+            for ps in self._slicedict.pss():
+                if ps in toneframes:
+                    self._checksdict[t][ps]=list(toneframes[ps])
+        else:
+            """This depends on profile only"""
+            profile=self._slicedict.profile()
+            n=profile.count(t)
+            log.debug('Found {} instances of {} in {}'.format(n,t,profile))
+            self._checksdict[t][profile]=list()
+            for i in range(n): # get max checks and lesser
+                self._checksdict[t][profile]+=self._checkparameters._Schecks[t][i+1] #b/c range
+            self._checksdict[t][profile].sort(key=lambda x:len(x[0]),reverse=True)
+    def node(self,cvt=None,ps=None,profile=None,check=None):
+        """Do I want this to take non-real options?"""
+        if cvt is None:
+            cvt=self._checkparameters.cvt()
+        if ps is None:
+            ps=self._slicedict.ps()
+        if profile is None:
+            profile=self._slicedict.profile()
+        if check is None:
+            check=self._checkparameters.check()
+        self.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
+        return self[cvt][ps][profile][check]
+    def tosort(self,v=None,cvt=None,ps=None,profile=None,check=None):
+        sn=self.node(cvt=cvt,ps=ps,profile=profile,check=check)
+        ok=[None,True,False]
+        if v not in ok:
+            log.error("Tosort value ({}) invalid: OK values: {}".format(v,ok))
+        self._tosortbool=sn['tosort']
+        # log.error("Tosort value currently {}".format(self._tosort))
+        if v is not None:
+            # log.error("Setting tosort value to {}".format(v))
+            self._tosortbool=sn['tosort']=v
+        return self._tosortbool
+    def verified(self,g=None,cvt=None,ps=None,profile=None,check=None):
+        sn=self.node(cvt=cvt,ps=ps,profile=profile,check=check)
+        self._verified=sn['done']
+        if g is not None:
+            self._verified=g
+        return self._verified
+    def groups(self,g=None,cvt=None,ps=None,profile=None,check=None):
+        """Do I want this to take non-real options?"""
+        sn=self.node(cvt=cvt,ps=ps,profile=profile,check=check)
+        self._groups=sn['groups']
+        if g is not None:
+            self._groups=sn['groups']=g
+        return self._groups
+    def update(self,group=None,verified=False,refresh=True):
+        """This function updates the status variable, not the lift file."""
+        if group is None:
+            group=self.group()
+        log.info("Verification before update (verifying {} as {}): {}".format(
+                                                group,verified,self.verified()))
+        self.build()
+        n=self.node()
+        if verified == True:
+            if group not in n['done']:
+                n['done'].append(group)
+        if verified == False:
+            if group in n['done']:
+                n['done'].remove(group)
+        if refresh == True:
+            self.store()
+        log.info("Verification after update: {}".format(self.verified()))
+    def group(self,group=None):
+        """This maintains the group we are actually on, pulled from data
+        located by current slice and parameters"""
+        if group is not None:
+            self._group=group
+        else:
+            return getattr(self,'_group',None)
+    def makegroupok(self):
+        groups=self.groups()
+        if not hasattr(self,'_group'):
+             self._group=None #define this attr, one way or another
+        if groups != []:
+            if self._group not in groups:
+                self.group(groups[0])
+    def makecvtok(self):
+        cvt=self._checkparameters.cvt()
+        cvts=self._checkparameters.cvts()
+        if cvt not in cvts:
+            self._checkparameters.cvt(cvts[0])
+    def isprofileok(self, wsorted=False, tosort=False,toverify=False):
+        profile=self._slicedict.profile()
+        profiles=self.profiles(wsorted=wsorted,tosort=tosort,toverify=toverify)
+        if profile in profiles:
+            return True
+    def ischeckok(self, wsorted=False, tosort=False, toverify=False):
+        check=self._checkparameters.check()
+        checks=self.checks(wsorted=wsorted,tosort=tosort,toverify=toverify)
+        if check in checks:
+            return True
+    def makecheckok(self, wsorted=False, tosort=False):
+        check=self._checkparameters.check()
+        checks=self.checks(wsorted=wsorted, tosort=tosort)
+        if check not in checks and checks != []:
+                self._checkparameters.check(checks[0])
+    def toneframes(self):
+        return self._toneframes
+    def __init__(self, checkparameters, slicedict, toneframes, filename, dict):
+        """To populate subchecks, use self.groups()"""
+        self._filename=filename
         super(StatusDict, self).__init__()
         for k in [i for i in dict if i is not None]:
             self[k]=dict[k]
