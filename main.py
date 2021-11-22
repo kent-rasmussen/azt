@@ -244,7 +244,13 @@ class Check():
 =======
         if not hasattr(self,'glosslangs'):
             self.guessglosslangs() #needed for the following
+<<<<<<< HEAD
 >>>>>>> glosslangs implementation
+=======
+        self.makeglosslangs()
+        self.loadsettingsfile() # overwrites guess above, stored on runcheck
+        #     self.guessglosslangs() #needed for the following
+>>>>>>> selfless
         self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
@@ -2024,8 +2030,12 @@ class Check():
 >>>>>>> selfless
             log.info("Removing {}".format(rms))
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.db.modverificationnode(senseid,vtype=self.profile,
                                         analang=self.analang, add=add, rms=rms)
+=======
+            self.db.modverificationnode(senseid,vtype=profile,add=add,rms=rms)
+>>>>>>> selfless
 =======
             self.db.modverificationnode(senseid,vtype=profile,add=add,rms=rms)
 >>>>>>> selfless
