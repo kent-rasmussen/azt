@@ -9809,10 +9809,14 @@ def removesenseidfromsubcheck(self,parent,senseid,check=None,group=None):
                             analang=self.analang,
                             framed=framed,
 <<<<<<< HEAD
+<<<<<<< HEAD
                             fieldtype='tone',location=check,
 =======
                             fieldtype='tone',location=self.name,
 >>>>>>> fixed framed kwarg
+=======
+                            fieldtype='tone',location=check,
+>>>>>>> check
                             fieldvalue='',showurl=True) #this value should be the only change
     log.info("Checking that removal worked")
     tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
