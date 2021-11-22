@@ -5290,7 +5290,7 @@ class Check():
         # find the senseids for each set of location:value correspondences.
         x=1 #first group number
         for value in groupvalues:
-            group=self.ps+'_'+self.profile+'_'+str(x)
+            group=ps+'_'+profile+'_'+str(x)
             groups[group]={}
             groups[group]['values']=value
             groups[group]['senseids']=[]
