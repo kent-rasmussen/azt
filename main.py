@@ -4320,22 +4320,22 @@ class Check():
         groups=self.status[self.type][self.ps][self.profile][self.name][
                                     'groups']=list(dict.fromkeys(tonegroups))
         log.debug("gettonegroups groups: {}".format(groups))
-        if groups != []:
-            for value in ['NA', '', None]:
-                if value in groups:
-                    log.error("Found (and removing) value {} in {}-{} for {} "
-                            "frame: {}".format(value,self.ps,self.profile,
-                            self.name,groups))
-                    # exit()
-                    groups.remove(value)
-        log.debug('gettonegroups ({}): {}'.format(self.name,groups))
-        verified=self.status[self.type][self.ps][self.profile][self.name][
-                                                                    'done']
+        for value in ['NA', '', None]:
+            if value in groups:
+                log.error("Found (and removing) value {} in {}-{} for {} "
+                    "frame: {}".format(value, ps, profile, check, groups))
+                groups.remove(value)
+        log.debug('gettonegroups ({}): {}'.format(check, groups))
+        """This takes current for any NONE values"""
+        self.status.dictcheck(ps=ps,profile=profile,check=check)
+        self.status.groups(groups,ps=ps,profile=profile,check=check) #set
+        verified=self.status.done(ps=ps,profile=profile,check=check) #read
         for v in verified:
             if v not in groups:
                 log.error("Removing verified group {} not in actual groups: {}!"
                             "".format(v, groups))
                 verified.remove(v)
+        self.status.done(verified,ps=ps,profile=profile,check=check) #set
         self.storesettingsfile(setting='status')
     def marksortedguid(self,guid):
         """I think these are only valuable during a check, so we don't have to
