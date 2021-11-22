@@ -5539,11 +5539,11 @@ class Check():
                 xlpreport.addlang({'id':lang,'name': self.languagenames[lang]})
                 langsalreadythere.append(lang)
         return xlpreport
-    def basicreport(self,typestodo=['V']):
+    def basicreport(self,cvtstodo=['V']):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
         #Convert to iterate over local variables
-        typeori=self.type
+        typeori=cvt
         psori=self.slices.ps()
         profileori=self.slices.profile()
         start_time=time.time() #move this to function?
@@ -5578,16 +5578,16 @@ class Check():
         log.info(t)
         print(t)
         p=xlp.Paragraph(si,t)
-        for self.ps in self.pss[0:2]: #just the first two (Noun and Verb)
-            if self.ps not in self.checkcounts:
-                self.checkcounts[self.ps]={}
-            self.getprofilestodo()
-            t=_("{} data: (profiles: {})".format(self.ps,self.profilestodo))
+        for ps in self.pss[0:2]: #just the first two (Noun and Verb)
+            if ps not in self.checkcounts:
+                self.checkcounts[ps]={}
+            profiles=self.slices.profiles()
+            t=_("{} data: (profiles: {})".format(ps,profiles))
             log.info(t)
             print(t)
             s1=xlp.Section(xlpr,t)
             t=_("This section covers the following top syllable profiles "
-                "which are found in {}s: {}".format(self.ps,self.profilestodo))
+                "which are found in {}s: {}".format(ps,profiles))
             p=xlp.Paragraph(s1,t)
             log.info(t)
             print(t)
