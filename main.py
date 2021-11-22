@@ -5428,7 +5428,7 @@ class Check():
         else:
             landscape=False
         s1s=xlp.Section(xlpr,t,landscape=landscape)
-        caption=' '.join([self.ps,self.profile])
+        caption=' '.join([ps,profile])
         ptext=_("The following table shows correspondences across sortings by "
                 "tone frames, with a row for each unique pairing. ")
         if default == True:
