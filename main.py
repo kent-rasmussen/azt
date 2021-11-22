@@ -815,24 +815,34 @@ class Check():
             self.slices.adhoc(ids)#[ps][profile]=ids
             """Is this OK?!?"""
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.slices.updateslices()
 =======
             self.makecountssorted() #we need these to show up in the counts.
 >>>>>>> get adhoc drafted
+=======
+            self.slices.updateslices()
+>>>>>>> selfless
             self.storesettingsfile(setting='profiledata')#since we changed this.
             #so we don't have to do this again after each profile analysis
             self.storesettingsfile(setting='adhocgroups')
         self.getrunwindow()
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> selfless
         profile=self.slices.profile()
         ps=self.slices.ps()
         if profile in [x[0] for x in self.slices.profiles()]: #profilecountsValid]:
             new=True
             title=_("New Ad Hoc Sort Group for {} Group".format(ps))
+<<<<<<< HEAD
 =======
         if self.profile in [x[0] for x in self.profilecountsValid]:
             title=_("New Ad Hoc Sort Group for {} Group".format(self.ps))
 >>>>>>> implement slices
+=======
+>>>>>>> selfless
         else:
             new=False
             title=_("Modify Existing Ad Hoc Sort Group for {} Group".format(ps))
