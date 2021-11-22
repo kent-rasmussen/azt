@@ -3653,6 +3653,7 @@ class Check():
             if lang in framed.forms:
                 xlp.Gloss(ex,lang,framed.forms[lang])
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     def makecountssorted(self):
         # This iterates across self.profilesbysense to provide counts for each
@@ -3672,6 +3673,8 @@ class Check():
             self.profilecounts[(i[1],i[2])]=i[0]
         log.info('Invalid entries found: {}'.format(profilecountInvalid))
 >>>>>>> new count creation
+=======
+>>>>>>> rm to object
     def printcountssorted(self):
         #This is only used in the basic report
         log.info("Ranked and numbered syllable profiles, by grammatical category:")
