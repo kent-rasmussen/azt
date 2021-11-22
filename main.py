@@ -4294,16 +4294,15 @@ class Check():
     def addtonegroup(self):
         log.info("Adding a tone group!")
         values=[0,] #always have something here
-        for i in self.status[self.type][self.ps][self.profile][self.name][
-                                                                    'groups']:
+        groups=self.status.groups()
+        for i in groups:
             try:
                 values+=[int(i)]
             except:
                 log.info('Tone group {} cannot be interpreted as an integer!'
                         ''.format(i))
         newgroup=max(values)+1
-        self.status[self.type][self.ps][self.profile][self.name]['groups'
-                                                        ].append(str(newgroup))
+        groups.append(str(newgroup))
         return str(newgroup)
     def addtonefieldex(self,senseid,framed,groupselected):
         guid=None
