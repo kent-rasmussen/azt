@@ -2225,8 +2225,23 @@ class Check():
         if refresh == True:
             self.checkcheck()
     def checkcheck(self):
+    def checkcheck(self,dict=None):
         """This checks for incompatible or missing variable values, and asks
         for them. If values are OK, they are displayed."""
+        dictnow={'cvt':self.params.cvt(),
+                'check':self.params.check(),
+                'ps':self.slices.ps(),
+                'profile':self.slices.profile(),
+                'group':self.status.group(),
+                'tableiteration':self.tableiteration
+                }
+        """Call this just once. If nothing changed, wait; if changes, run,
+        then run again."""
+        if dict == dictnow:
+            self.setrefreshdelay()
+            self.parent.after(self.refreshdelay, self.checkcheck, dictnow)
+            return
+        log.info("Dict changes; checking attributes and updating the UI.")
         inherit(self) #in case anything has changed (like font size)
         opts={
         'row':0,
@@ -2276,14 +2291,13 @@ class Check():
                             cmd=fn, width=opts['width'], **kwargs
                             ).grid(column=column, row=opts['row'],
                                     columnspan=opts['columnspan'])
-        log.info("Running Check Check!")
         #If the user exits out before this point, just stop.
         try:
             self.frame.winfo_exists()
         except:
             self.frame.parent.waitdone()
             return
-        self.makestatus() # wait is here, after the first time.
+        self.makestatusframe() # wait is here, after the first time.
         #Don't guess this; default or user set only
         log.info('Interfacelang: {}'.format(getinterfacelang()))
         """This just gets the prose language name from the code"""
@@ -2309,7 +2323,8 @@ class Check():
             proselabel(opts,t,cmd='getanalangname',
                                             tt=_("Set analysis language Name"))
         else:
-            proselabel(opts,t,cmd='getanalang')
+            proselabel(opts,t,cmd='getanalang',
+                                            tt=_("Change analysis language"))
         opts['row']+=1
         """Get glosslang"""
         for lang in self.glosslangs:
@@ -2329,6 +2344,8 @@ class Check():
         proselabel(opts,t,cmd='getglosslang2',parent=tf)
         opts['columnplus']=0
         opts['row']+=1
+        self.status.makecvtok()
+        cvt=self.params.cvt()
         """These settings must be set (for now); we can't guess them (yet)"""
         """Ultimately, we will pick the largest ps/profile combination as an
         initial default (obviously changeable, as are all)"""
@@ -2346,6 +2363,7 @@ class Check():
             count=0
         tf=Frame(self.frame.status)
         tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
+        opts['row']+=1
         t=(_("Looking at {}").format(profile))
         proselabel(opts,t,cmd='getprofile',parent=tf)
         opts['columnplus']=1
@@ -2353,71 +2371,61 @@ class Check():
         proselabel(opts,t,cmd='getps',parent=tf)
         opts['columnplus']=0
         opts['row']+=1
-        """Get type"""
-        if self.type not in self.checknamesall:
-            self.guesstype()
-        if self.type is None:
-            log.info("Select a check type (C, V, CV, Tone).")
-            self.gettype()
-            return
-        """Get check"""
-        self.getcheckspossible() #This sets self.checkspossible
+        """Get cvt"""
         tf=Frame(self.frame.status)
         tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
-        if self.name == 'adhoc':
+        t=(_("Checking {},").format(self.params.cvtdict()[cvt]['pl']))
+        proselabel(opts,t,cmd='getcvt',parent=tf)
+        """Get check"""
+        check=self.params.check()
+        if check == 'adhoc':
             tkadhoc()
-        elif self.type == 'T': #self.name has different options by self.type
-            if self.ps not in self.toneframes:
-                self.toneframes[self.ps]={}
-            """self.name set here (But this is one I want to leave alone)"""
-            """If there's only one tone frame, I don't care what the
-            settings file says. Also ask if the settings file name isn't in the
-            list of defined frames."""
-            if len(self.toneframes[self.ps]) == 1:
-                self.name=list(self.toneframes[self.ps].keys())[0]
-            t=(_("Checking {},").format(self.typedict[self.type]['pl']))
-            proselabel(opts,t,cmd='gettype',parent=tf)
+        else:
+            self.status.makecheckok() #this is intentionally broad: *any* check
+        check=self.params.check()
+        log.info("CVT: {}".format(cvt))
+        if cvt == 'T': #self.name has different options by self.type
             opts['columnplus']=1
-            if len(self.toneframes[self.ps]) == 0:
+            if len(self.status.checks()) == 0:
                 t=_("no tone frames defined.")
                 self.name=None
-            elif self.name not in self.toneframes[self.ps]:
+                check=None
+            elif self.status.ischeckok():
+                # check not in checks:
                 t=_("no tone frame selected.")
                 self.name=None
+                check=None
             else:
                 t=(_("working on ‘{}’ tone frame").format(self.name))
+                t=(_("working on ‘{}’ tone frame").format(check))
             proselabel(opts,t,cmd='getcheck',parent=tf)
         else:
-            print(self.name,'in', self.checkspossible,'?')
-            if self.name not in [x[0] for x in self.checkspossible]:
-                self.guesscheckname()
+        # else:
         """Get subcheck"""
         if None not in [self.type, ps, profile, self.name]:
-            self.makestatusdict()
-            self.getsubchecksprioritized()
-            if self.subcheck not in [x[0] for x in self.subchecksprioritized[
-                                                                    self.type]]:
-                self.guesssubcheck()
-
-        if self.type == 'T':
+        # if None not in [cvt, ps, profile, check]: #is this needed?
+        self.status.makegroupok()
+        group=self.status.group()
+        if cvt == 'T':
             opts['columnplus']=2
             if None in [self.name, self.subcheck]:
+            if None in [check, group]:
                 t=_("(no framed group)")
             else:
                 t=(_("(framed group: ‘{}’)").format(self.subcheck))
-            proselabel(opts,t,cmd='getsubcheck',parent=tf)
+                t=(_("(framed group: ‘{}’)").format(group))
+            proselabel(opts,t,cmd='getgroup',parent=tf)
             opts['columnplus']=0
         else:
             tf=Frame(self.frame.status)
-            tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
-            t=(_("Checking {},".format(self.typedict[self.type]['pl'])))
-            proselabel(opts,t,cmd='gettype',parent=tf)
+            # tf=Frame(self.frame.status)
             opts['columnplus']=1
             t=(_("working on {}".format(self.name)))
+            t=(_("working on {}".format(group))) #check[1]
             proselabel(opts,t,cmd='getcheck',parent=tf)
         """Final Button"""
         opts['row']+=1
-        if self.type == 'T':
+        if cvt == 'T':
             t=(_("Sort!"))
         else:
             t=(_("Report!")) #because CV doesn't actually sort yet...
@@ -2425,9 +2433,11 @@ class Check():
                 font=self.fonts['title'],
                 compound='bottom', #image bottom, left, right, or top of text
                 image=self.photo[self.type]
+                image=self.photo[cvt]
                 )
         opts['row']+=1
         if self.type == 'T':
+        if cvt == 'T':
             t=(_("Record Sorted Examples"))
         else:
             t=(_("Record Dictionary Words"))
@@ -2515,65 +2525,55 @@ class Check():
     def maybeboard(self):
         def checkfordone(): #has *anything* been sorted?
             for self.profile in self.status[self.type][ps]:
-                for self.name in self.status[self.type][ps][self.profile]:
-                    self.makestatusdict() #this should result in 'done' key:
-                    if len(self.status[self.type][ps][self.profile][
-                                                    self.name]['groups']) >0:
-                        return True
+            if self.status.groups() >0:
+            # for profile in self.status[self.type][ps]:
         profileori=self.slices.profile()
-        nameori=self.name
+        nameori=self.params.check()
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
             self.leaderboard.destroy()
         self.leaderboard=Frame(self.frame)
         self.leaderboard.grid(row=0,column=1,sticky="") #nesw
         #Given the line above, much of the below can go, but not all?
+        cvt=self.params.cvt()
         ps=self.slices.ps()
-        if hasattr(self,'status') and self.type in self.status:
-            if ps in self.status[self.type]:
-                done=checkfordone()
-                self.slices.profile(profileori)
-                self.name=nameori
-                log.debug('maybeboard done: {}'.format(done))
-                if done == True:
-                    if (hasattr(self,'noboard') and (self.noboard is not None)):
-                        self.noboard.destroy()
-                    if self.type == 'T':
-                        if ps in self.toneframes:
-                            self.maketoneprogresstable()
-                        else:
-                            self.makenoboard()
-                    else:
-                        log.info("Found CV verifications")
-                        self.makeCVprogresstable()
+        self.status.cull() #remove nodes with no data
+        if cvt in self.status:
+            if ps in self.status[cvt]:
+                if (hasattr(self,'noboard') and (self.noboard is not None)):
+                    self.noboard.destroy()
+                if cvt == 'T':
+                    if ps in self.toneframes:
+                        self.maketoneprogresstable()
+                        return
                 else:
-                    self.makenoboard()
-            else:
-                self.makenoboard()
-        else:
-            self.makenoboard()
+                    log.info("Found CV verifications")
+                    self.makeCVprogresstable()
+                    return
+        self.makenoboard()
     def boardtitle(self):
         titleframe=Frame(self.leaderboard)
-        titleframe.grid(row=0,column=0)
+        titleframe.grid(row=0,column=0,sticky='n')
+        cvt=self.params.cvt()
+        cvtdict=self.params.cvtdict()
         if self.mainrelief == None:
-            lt=Label(titleframe, text=_(self.typedict[self.type]['sg']),
+            lt=Label(titleframe, text=_(cvtdict[cvt]['sg']),
                                                     font=self.fonts['title'])
         else:
-            lt=Button(titleframe, text=_(self.typedict[self.type]['sg']),
+            lt=Button(titleframe, text=_(cvtdict[cvt]['sg']),
                                 font=self.fonts['title'],relief=self.mainrelief)
         lt.grid(row=0,column=0,sticky='nwe')
         Label(titleframe, text=_('Progress for'), font=self.fonts['title']
             ).grid(row=0,column=1,sticky='nwe',padx=10)
         ps=self.slices.ps()
         if self.mainrelief == None:
-            lps=Label(titleframe,text=ps,anchor='c',
-                                                    font=self.fonts['title'])
+            lps=Label(titleframe,text=ps,anchor='c',font=self.fonts['title'])
         else:
             lps=Button(titleframe,text=ps, anchor='c',
                             relief=self.mainrelief, font=self.fonts['title'])
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttt=ToolTip(lt,_("Change Check Type"))
         ttps=ToolTip(lps,_("Change Part of Speech"))
-        lt.bind('<ButtonRelease>',self.gettype)
+        lt.bind('<ButtonRelease>',self.getcvt)
         lps.bind('<ButtonRelease>',self.getps)
     def makenoboard(self):
         log.info("No Progress board")
