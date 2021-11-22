@@ -1817,24 +1817,32 @@ class Check():
         if refresh == True:
             self.storesettingsfile(setting='status')
     """Get from LIFT database functions"""
-    def addpstoprofileswdata(self):
-        if self.ps not in self.profilesbysense:
-            self.profilesbysense[self.ps]={}
-    def addprofiletoprofileswdata(self):
-        if self.profile not in self.profilesbysense[self.ps]:
-            self.profilesbysense[self.ps][self.profile]=[]
-    def addtoprofilesbysense(self,senseid):
-        self.addpstoprofileswdata()
-        self.addprofiletoprofileswdata()
-        self.profilesbysense[self.ps][self.profile]+=[senseid]
-    def updatecounts(self):
-        self.getscounts()
-        self.makecountssorted()
+    def addpstoprofileswdata(self,ps=None):
+        if ps is None:
+            ps=self.slices.ps()
+        if ps not in self.profilesbysense:
+            self.profilesbysense[ps]={}
+    def addprofiletoprofileswdata(self,ps=None,profile=None):
+        if ps is None:
+            ps=self.slices.ps()
+        if profile is None:
+            profile=self.slices.profile()
+        if profile not in self.profilesbysense[ps]:
+            self.profilesbysense[ps][profile]=[]
+    def addtoprofilesbysense(self,senseid,ps=None,profile=None):
+        if ps is None:
+            ps=self.slices.ps()
+        self.addpstoprofileswdata(ps=ps)
+        if profile is None:
+            profile=self.slices.profile()
+        self.addprofiletoprofileswdata(ps=ps,profile=profile)
+        self.profilesbysense[ps][profile]+=[senseid]
     def getscounts(self):
-        """This depends on self.sextracted, from getprofiles"""
-        self.scount={}
+        """This depends on self.sextracted, from getprofiles, so should only
+        run when that changes."""
+        scount={}
         for ps in self.db.pss:
-            self.scount[ps]={}
+            scount[ps]={}
             for s in self.rx:
                 scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
                     for x in self.sextracted[ps][s]],key=lambda x:x[1],
