@@ -6527,6 +6527,7 @@ class FramedData(object):
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join(toformat) #put it all together
     def setframe(self,frame):
+<<<<<<< HEAD
         """This should never be done on an example, which should
         already be framed. Also, self.ps won't be defined, so you'll get
         a key error."""
@@ -6535,6 +6536,11 @@ class FramedData(object):
             self.applyframe()
         else:
             self.applynoframe() #enforce the docstring above
+=======
+        self.frame=self.frames[self.ps][frame]
+        self.applyframe()
+    def noframe(self):
+>>>>>>> new noframe
     def applynoframe(self):
         self.framed=self.forms
     def applyframe(self):
