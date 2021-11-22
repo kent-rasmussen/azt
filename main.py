@@ -2453,7 +2453,16 @@ class Check():
         if refresh == True:
             self.checkcheck()
     def checkcheck(self):
+<<<<<<< HEAD
 >>>>>>> checkcheck
+=======
+    def setrefreshdelay(self):
+        """This sets the main window refresh delay, in miliseconds"""
+        if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
+            self.refreshdelay=10000 #ten seconds if working in another window
+        else:
+            self.refreshdelay=1000 #one second if not working in another window
+>>>>>>> refreshdelay
     def checkcheck(self,dict=None):
         """This checks for incompatible or missing variable values, and asks
         for them. If values are OK, they are displayed."""
