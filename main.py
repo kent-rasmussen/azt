@@ -4150,23 +4150,17 @@ class Check():
             else:
                 group1=self.groupselected
                 delattr(self,'groupselected')
-                if group1 in self.status[self.type][self.ps][self.profile][
-                                                self.name]['groups']:
-                    row=self.status[self.type][self.ps][self.profile][
-                                            self.name]['groups'].index(group1)
+                if group1 in groups:
+                    row=groups.index(group1)
                 else:
                     log.error("Group ‘{}’ isn't found in list {}!".format(
-                                group1,
-                                self.status[self.type][self.ps][self.profile][
-                                                        self.name]['groups']))
-                    row=len(self.status[self.type][self.ps][self.profile][
-                                                        self.name]['groups'])+1
-                self.tonegroupbuttonframe(self.sorting,group1,row,
+                                group1,groups))
+                    row=len(groups)+1
+                self.tonegroupbuttonframe(self.sortitem,group1,row,
                                         notonegroup=False,unsortable=False,
                                         label=True, font=self.fonts['readbig'],
                                         canary=canary,canary2=canary2)
-                log.debug('self.tonegroups: {}; group1: {}'.format(self.status[
-                    self.type][self.ps][self.profile][self.name]['groups'],
+                log.debug('self.tonegroups: {}; group1: {}'.format(groups,
                     group1))
                 self.runwindow.wait_window(canary2)
                 #On second button press/exit:
@@ -4185,14 +4179,11 @@ class Check():
                         log.debug(msg)
                         """All the senses we're looking at, by ps/profile"""
                         self.updatebysubchecksenseid(group1,self.groupselected)
-                        self.status[self.type][self.ps][self.profile][
-                                self.name]['groups'].remove(group1)
-                        self.subcheck=group1
-                        self.updatestatuslift(refresh=False) #done above
-                        self.updatestatus(refresh=False) #not verified=True --since joined.
-                        self.subcheck=self.groupselected
-                        self.updatestatuslift() #done above
-                        self.updatestatus() #not verified=True --since joined.
+                        groups.remove(group1)
+                        self.updatestatuslift(group=group1,refresh=False) #done above
+                        self.updatestatus(group=group1,refresh=False) #not verified=True --since joined.
+                        self.updatestatuslift(group=self.groupselected) #done above
+                        self.updatestatus(group=self.groupselected) #not verified=True --since joined.
                         self.maybesort() #go back to verify, etc.
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
@@ -4202,24 +4193,22 @@ class Check():
         # contains the field value) in the lift file.
         # This is all the words in the database with the given
         # location:value correspondence (any ps/profile)
-        lst2=self.db.get('sense',location=self.name,tonevalue=oldtonevalue
+        lst2=self.db.get('sense',location=check,tonevalue=oldtonevalue
                                                                 ).get('senseid')
         # We are agnostic of verification status of any given entry, so don't
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
-        rm=self.verifictioncode(self.name,oldtonevalue)
-        add=self.verifictioncode(self.name,newtonevalue)
-        # This intersects the two, to get only one location:value
-        # correspondence, only within the ps/profile combo we're looking
-        # at.
-        senseids=self.senseidsincheck(lst2)
+        rm=self.verifictioncode(check,oldtonevalue)
+        add=self.verifictioncode(check,newtonevalue)
+        """The above doesn't test for profile, so we restrict that next"""
+        senseids=self.slices.inslice(lst2)
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
             self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
-                                location=self.name,#fieldvalue=oldtonevalue,
+                                location=check,#fieldvalue=oldtonevalue,
                                 fieldvalue=newtonevalue)
-            self.db.modverificationnode(senseid=senseid,vtype=self.profile,
+            self.db.modverificationnode(senseid=senseid,vtype=profile,
                                                 add=add,rms=[rm],addifrmd=True)
         self.db.write() #once done iterating over senseids
     def addtonegroup(self):
