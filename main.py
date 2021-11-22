@@ -4976,17 +4976,17 @@ class Check():
         """This function takes in a compiled regex,
         and outputs a list/dictionary of senseid/{senseid:form} form."""
         output=[] #This is just a list of senseids now: (Do we need the dict?)
-        for form in self.formstosearch[self.ps]:
+        for form in self.formstosearch[ps]:
             if regex.search(form):
-                output+=self.formstosearch[self.ps][form]
+                output+=self.formstosearch[ps][form]
         return output
     def getresults(self):
         self.getrunwindow()
         self.makeresultsframe()
         self.adhocreportfileXLP=''.join([str(self.reportbasefilename)
-                                        ,'_',str(self.ps)
-                                        ,'-',str(self.profile)
-                                        ,'_',str(self.name)
+                                        ,'_',str(ps)
+                                        ,'-',str(profile)
+                                        ,'_',str(check)
                                         ,'_ReportXLP.xml'])
         xlpr=xlpr=self.xlpstart()
         """"Do I need this?"""
@@ -5000,8 +5000,8 @@ class Check():
         i=0
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
-        text=(_("{} roots of form {} by {}".format(self.ps,self.profile,
-                                                            self.name)))
+        text=(_("{} roots of form {} by {}".format(ps,profile,
+                                                            check)))
         Label(self.results, text=text).grid(column=0, row=i)
         self.runwindow.wait()
         si=xlp.Section(xlpr,text)
@@ -5010,12 +5010,12 @@ class Check():
         self.results.scroll=ScrollingFrame(self.results)
         self.results.scroll.grid(column=0, row=1)
         senseid=0 # in case the following doesn't find anything:
-        for self.subcheck in self.s[self.analang][self.type]:
-            log.debug('self.subcheck: {}'.format(self.subcheck))
+        for group in self.s[self.analang][cvt]:
+            log.debug('group: {}'.format(group))
             self.buildregex() #It would be nice fo this to iterate through...
             senseidstocheck=self.senseidformsbyregex(self.regex)
             if len(senseidstocheck)>0:
-                id=rx.id('x'+self.ps+self.profile+self.name+self.subcheck)
+                id=rx.id('x'+ps+profile+check+group)
                 ex=xlp.Example(si,id)
             for senseid in senseidstocheck: #self.senseidformstosearch[lang][ps]
                 # where self.regex(self.senseidformstosearch[lang][ps][senseid]):
@@ -5074,10 +5074,10 @@ class Check():
         and subcheck (e.g., a: CaC\2)."""
         """Provides self.regexCV and self.regex"""
         self.regexCV=None #in case this was run before.
-        log.log(2,'self.profile:',self.profile)
-        log.log(2,'self.type:',self.type)
-        maxcount=re.subn(self.type, self.type, self.profile)[1]
-        if self.profile is None:
+        log.log(2,'profile:',profile)
+        log.log(2,'cvt:',cvt)
+        maxcount=re.subn(cvt, cvt, profile)[1]
+        if profile is None:
             print("It doesn't look like you've picked a syllable profile yet.")
             return
         """Don't need this; only doing count=1 at a time. Let's start with
