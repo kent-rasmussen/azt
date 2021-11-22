@@ -8482,6 +8482,9 @@ class SliceDict(dict):
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> slicedict fns
     def inslice(self,senseids):
         senseidstochange=set(self._senseids).intersection(senseids)
         return senseidstochange
@@ -8547,8 +8550,11 @@ class SliceDict(dict):
         for i in sorted(wcounts,reverse=True):
             self[(i[1],i[2])]=i[0]
         log.info('Invalid entries found: {}'.format(profilecountInvalid))
+<<<<<<< HEAD
 =======
 >>>>>>> init doc
+=======
+>>>>>>> slicedict fns
     def __init__(self,checkparameters,adhoc,profilesbysense): #dict
         """The slice dictionary depends on check parameters (and not vice versa)
         because changes in slice options (ps or profile) change check options,
