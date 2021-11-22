@@ -8555,7 +8555,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     self.db.addmodexamplefields(senseid=senseid,
                             analang=self.analang,
                             framed=framed,
-                            fieldtype='tone',location=self.name,
+                            fieldtype='tone',location=check,
                             fieldvalue='',showurl=True) #this value should be the only change
     log.info("Checking that removal worked")
     tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
