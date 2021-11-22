@@ -4670,7 +4670,7 @@ class Check():
                                         gloss=sense['gloss'])
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
-    def showentryformstorecordpage(self):
+    def showentryformstorecordpage(self,ps=None,profile=None):
         #The info we're going for is stored above sense, hence guid.
         if self.runwindow.exitFlag.istrue():
             log.info('no runwindow; quitting!')
