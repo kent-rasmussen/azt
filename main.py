@@ -4609,9 +4609,8 @@ class Check():
             b.grid(column=1, row=0, sticky="nesw", ipady=15) #Inside the buttons
         else:
             b=Button(bf, text=text, font=font,
-                    cmd=lambda p=parent:returndictnsortnext(self,p,
-                                        {'groupselected':group},
-                                        canary=canary,canary2=canary2),**kwargs)
+                    cmd=selectnsortnext,
+                                                                    **kwargs)
             b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
             bt=ToolTip(b,_("Pick this Group"))
         if example['n'] > 1 or alwaysrefreshable == True:
