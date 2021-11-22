@@ -224,11 +224,15 @@ class Check():
         self.setnamesall() #sets self.checknamesall
         self.loadsettingsfile(setting='status')
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.makestatus()
 =======
         if not hasattr(self,'status'): #I.e., not loaded from file
             self.status=StatusDict(self.params, self.slices, {})
 >>>>>>> make sure status dict is there
+=======
+        self.makestatus()
+>>>>>>> cleanup
         #This can wait until runcheck, right?
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
 <<<<<<< HEAD
@@ -243,10 +247,13 @@ class Check():
 >>>>>>> chose framed as addmodexamplefields attr
 =======
         if not hasattr(self,'glosslangs'):
+<<<<<<< HEAD
             self.guessglosslangs() #needed for the following
 <<<<<<< HEAD
 >>>>>>> glosslangs implementation
 =======
+=======
+>>>>>>> cleanup
         self.makeglosslangs()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         #     self.guessglosslangs() #needed for the following
