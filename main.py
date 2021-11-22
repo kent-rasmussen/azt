@@ -1694,6 +1694,7 @@ class Check():
 <<<<<<< HEAD
 =======
         self.checkcheck()
+<<<<<<< HEAD
     def loadtypedict(self):
         """I just need this to load once somewhere..."""
         self.typedict={
@@ -1703,6 +1704,8 @@ class Check():
                 'T':{'sg':_('Tone'),'pl':_('Tones')},
                 }
 >>>>>>> upgrade settings parser
+=======
+>>>>>>> moved to class
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
