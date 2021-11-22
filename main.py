@@ -3368,23 +3368,6 @@ class Check():
         for lang in self.glosslangs:
             if lang in framed.forms:
                 xlp.Gloss(ex,lang,framed.forms[lang])
-    def makecountssorted(self):
-        # This iterates across self.profilesbysense to provide counts for each
-        # ps-profile combination (aggravated for profile='Invalid')
-        # it should only be called when creating/adding to self.profilesbysense
-        self.profilecounts={}
-        profilecountInvalid=0
-        wcounts=list()
-        for ps in self.profilesbysense:
-            for profile in self.profilesbysense[ps]:
-                if profile == 'Invalid':
-                    profilecountInvalid+=len(self.profilesbysense[ps][
-                                                                    profile])
-                count=len(self.profilesbysense[ps][profile])
-                wcounts.append((count, profile, ps))
-        for i in sorted(wcounts,reverse=True):
-            self.profilecounts[(i[1],i[2])]=i[0]
-        log.info('Invalid entries found: {}'.format(profilecountInvalid))
     def printcountssorted(self):
         #This is only used in the basic report
         log.info("Ranked and numbered syllable profiles, by grammatical category:")
