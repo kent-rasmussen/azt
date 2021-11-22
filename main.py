@@ -4447,26 +4447,34 @@ class Check():
         self.senseidssorted=[]
         self.senseidsunsorted=[]
         for senseid in self.senseidstosort:
+    def updatesortingstatus(self):
+        """This reads LIFT to create lists for sorting, populating lists of
+        sorted and unsorted senses. So don't iterate over it. Instead, use
+        checkforsenseidstosort to just confirm tosort status"""
+        """To get this from the object, use status.tosort(), todo() or done()"""
+        check=self.params.check()
+        senseids=self.slices.senseids()
+        self.status.renewsenseidstosort([],[])
+        for senseid in senseids:
             v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
-                                location=self.name,showurl=True).get('text'))
-            log.info("Found tone value: {}".format(v))
-            if v in ['',None]:
-                self.senseidsunsorted+=[senseid]
+                                location=check,showurl=True).get('text'))
+            log.info("Found tone value (updatesortingstatus): {} ({})".format(v,type(v)))
+            if v in ['','None']: #unlist() returns strings
+                log.info("Marking senseid {} tosort (v: {})".format(senseid,v))
+                self.status.marksenseidtosort(senseid)
             else:
-                self.senseidssorted+=[senseid]
-        if len(self.senseidsunsorted) >0:
-            self.status[self.type][self.ps][self.profile][self.name][
-                                                                'tosort']=True
+                log.info("Marking senseid {} sorted (v: {})".format(senseid,v))
+                self.status.marksenseidsorted(senseid)
+        if len(self.status.senseidstosort()) >0:
+            log.info("updatesortingstatus shows senseidstosort remaining")
+            vts=True
         else:
-            self.status[self.type][self.ps][self.profile][self.name][
-                                                                'tosort']=False
-    def settonevariablesbypsprofile(self):
-        # This depends on self.ps, self.profile, and self.name
-        # Do this only on changing frames:
-        self.makestatusdict() #Fills an existing hole in status file sructure
-        #The following depends on the above for structure
-        self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
-        self.gettonegroups() #sets self.status...['groups'] for a frame
+            log.info("updatesortingstatus shows no senseidstosort remaining")
+            vts=False
+        self.status.tosort(vts)
+        log.info("updatesortingstatus senseids tosort: {}".format(self.status.senseidstosort()))
+        log.info("updatesortingstatus senseids sorted: {}".format(self.status.senseidssorted()))
+        log.info("tosort (end of updatesortingstatus): {}".format(self.status.tosort()))
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
         """This is currently called in iteration"""
         self.checkforsenseidstosort(cvt=cvt,ps=ps,profile=profile,check=check)
