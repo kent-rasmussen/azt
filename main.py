@@ -1634,54 +1634,13 @@ class Check():
             self.adhocgroups={}
         if ps not in self.adhocgroups:
             self.adhocgroups[ps]={}
-    def makestatusdicttype(self):
-        # This depends on self.type only
-        # This operates for exactly one context: wherever it is called.
-        # Do this only where needed, when needed!
-        changed=False
-        if self.type not in self.status:
-            self.status[self.type]={}
-            changed=True
-        if changed == True:
-            log.info("Saving status dict to file")
-            self.storesettingsfile(setting='status')
-    def makestatusdictps(self):
-        # This depends on self.ps only
-        # This operates for exactly one context: wherever it is called.
-        # Do this only where needed, when needed!
-        changed=False
-        if self.type not in self.status:
-            self.status[self.type]={}
-            changed=True
-        if self.ps not in self.status[self.type]:
-            self.status[self.type][self.ps]={}
-            changed=True
-        if changed == True:
-            log.info("Saving status dict to file")
-            self.storesettingsfile(setting='status')
-    def makestatusdictprofile(self):
-        # This depends on self.ps and self.profile
-        # This operates for exactly one context: wherever it is called.
-        # Do this only where needed, when needed!
-        changed=False
-        if self.type not in self.status:
-            self.status[self.type]={}
-            changed=True
-        if self.ps not in self.status[self.type]:
-            self.status[self.type][self.ps]={}
-            changed=True
-        if self.profile not in self.status[self.type][self.ps]:
-            self.status[self.type][self.ps][self.profile]={}
-            changed=True
-        if changed == True:
-            log.info("Saving status dict to file")
-            self.storesettingsfile(setting='status')
-    def makestatusdict(self,checktype=None,ps=None,profile=None,name=None):
-        # This depends on self.type, self.ps, self.profile, and self.name
-        # To operate other than from where it is called, specify args.
-        # Do this only where needed, when needed!
-        if checktype is None:
-            checktype=self.type
+    """I need to think through these some more. How to keep default and
+    non-default values from mixing?"""
+    def makestatusdictcvt(self,cvt=None):
+        if cvt is None:
+            self.params.cvt()
+        self.status.build(cvt=cvt)
+        return
     def makestatusdictps(self,cvt=None,ps=None):
         if cvt is None:
             self.params.cvt()
