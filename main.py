@@ -1723,8 +1723,13 @@ class Check():
         # Do this only where needed, when needed!
         if checktype is None:
             checktype=self.type
+    def makestatusdictps(self,cvt=None,ps=None):
+        if cvt is None:
+            self.params.cvt()
         if ps is None:
-            ps=self.ps
+            self.slices.ps()
+        self.status.build(cvt=cvt,ps=ps)
+        return
     def makestatusdictprofile(self,cvt=None,ps=None,profile=None):
         if cvt is None:
             self.params.cvt()
