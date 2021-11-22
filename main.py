@@ -4438,15 +4438,10 @@ class Check():
                         "".format(senseid,self.senseidsunsorted))
     def getidstosort(self):
         #This depends on self.ps and self.profile, but not self.name
+    def getidstosort(self): #remove!
+        #This depends on ps and profile, but not check
         """These variables should not have to be reset between checks"""
-        self.senseidstosort=list(self.profilesbysense[self.ps]
-                                                    [self.profile])
-    def sortingstatus(self):
-        #This should have self.ps, self.profile and self.name set already
-        self.getidstosort() #This is a ps-profile slice, but reset per frame
-        self.senseidssorted=[]
-        self.senseidsunsorted=[]
-        for senseid in self.senseidstosort:
+        self.slices.senseids()
     def checkforsenseidstosort(self,cvt=None,ps=None,profile=None,check=None):
         """This method just asks if any senseid in the given slice is unsorted.
         It stops when it finds the first one."""
