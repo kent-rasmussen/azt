@@ -4868,10 +4868,10 @@ class Check():
             self.storesettingsfile()
         torecord=self.getsenseidsbytoneUFgroups()
         skip=False
-        if len(torecord) == 0:
-            print("How did we get no UR tone groups?",self.profile,self.ps,
+        if ntorecord == 0:
+            log.error(_("How did we get no UR tone groups? {}-{}"
                     "\nHave you run the tone report recently?"
-                    "\nDoing that for you now...")
+                    "\nDoing that for you now...").format(profile,ps))
             self.tonegroupreport(silent=True)
             self.showtonegroupexs()
             return
