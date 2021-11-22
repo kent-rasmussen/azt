@@ -4386,11 +4386,17 @@ class Check():
             if senseid is None: #needed?
                 continue
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.verifybutton(self.sframe.content,senseid,
                                 row, column,
                                 label=False)
 =======
 >>>>>>> verify logic updates
+=======
+            self.verifybutton(self.sframe.content,senseid,
+                                row, column,
+                                label=False)
+>>>>>>> d
             row+=1
         bf=Frame(self.sframe.content)
         bf.grid(row=row, column=0, sticky="ew")
