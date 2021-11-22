@@ -1627,6 +1627,8 @@ class Check():
             if 'glosslangs' in self.settings[setting]['attributes']:
                 self.glosslangs=Glosslangs(self.glosslangs)
     def makeadhocgroupsdict(self, ps=None):
+    """These should all go!"""
+    def makeadhocgroupsdict(self,ps=None): #shouldn't need this, in slices.adhoc()
         # self.ps and self.profile should be set when this is called
         if ps is None:
             ps=self.ps
