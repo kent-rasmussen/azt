@@ -7819,11 +7819,15 @@ class SliceDict(dict):
         else:
             self.makepsok()
             return self._ps
-    def profiles(self):
-        return self._profiles
+    def profiles(self,ps=None):
+        """This returns profiles for either a specified ps or the current one"""
+        if ps is None:
+            ps=self.ps()
+        return self._profiles[ps]
     def profile(self,profile=None):
-        if profile is not None:
+        if profile is not None and profile in self.profiles(self._ps):
             self._profile=profile
+            self.renewsenseids()
         else:
             return self._profile
     def nextps(self):
