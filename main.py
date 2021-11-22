@@ -4054,7 +4054,8 @@ class Check():
             kwargs['anchor']='w'
         #This should be pulling from the example, as it is there already
         framed=self.datadict.getframeddata(senseid)
-        framed.setframe(self.name)
+        check=self.params.check()
+        framed.setframe(check)
         text=framed.formatted(notonegroup=True)
         if label==True:
             b=Label(parent, text=text,
@@ -4083,21 +4084,25 @@ class Check():
         """
         #This function should exit 1 on a window close, 0/None on all ok.
         self.getrunwindow()
-        if len(self.status[self.type][self.ps][self.profile][self.name][
-                                                            'groups']) <2:
+        cvt=self.params.cvt()
+        check=self.params.check()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        groups=self.status.groups()
+        if len(groups) <2:
             log.debug("No tone groups to distinguish!")
             self.runwindow.waitdone()
             return 0
         title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
                                         self.languagenames[self.analang],
-                                        self.name
+                                        check
                                         )
         oktext=_('These are all different')
         introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
                 "sorted into the groups exemplified below (in the ‘{}’ frame). "
                 "Do any of these have the same tone melody? "
                 "If so, click on the two groups. If not, click ‘{}’."
-                ).format(self.ps,self.profile,self.name,oktext)
+                ).format(ps,profile,check,oktext)
         log.debug(introtext)
         if hasattr(self,'groupselected'):
             delattr(self,'groupselected') # self.groupselected=None
