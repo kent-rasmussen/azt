@@ -1539,7 +1539,6 @@ class Check():
         self.ps=ps
         self.profile=profile
         self.storesettingsfile(setting='status')
-        self.checkcheck()
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
