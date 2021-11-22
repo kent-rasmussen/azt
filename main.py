@@ -3932,7 +3932,7 @@ class Check():
             log.debug('self.tonegroups: {}'.format(status['groups']))
             Label(titles, text=progress, font=self.fonts['report'], anchor='w'
                                             ).grid(column=1, row=0, sticky="ew")
-            text=framed.formatted(noframe=False)
+            text=framed.formatted()
             entryview=Frame(self.runwindow.frame)
             self.sorting=Label(entryview, text=text,font=self.fonts['readbig'])
             entryview.grid(column=1, row=1, sticky="new")
@@ -4937,7 +4937,7 @@ class Check():
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
-                text=framed.formatted(noframe=True)
+                text=framed.formatted()
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
                                     form=nn(framed.forms[self.analang]),
                                     gloss=nn(framed.forms[self.glosslang])
@@ -6128,7 +6128,7 @@ class FramedData(object):
             toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
         else:
             if not hasattr(self,'framed'):
-                self.noframe() #Assume no frame if not excplicitly applied
+                self.applyframe() #self.noframe() #Assume no frame if not excplicitly applied
             toformat.appendformsbylang(self.framed,self.analang,quote=False)
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join(toformat) #put it all together
@@ -6141,7 +6141,7 @@ class FramedData(object):
         self.framed=self.forms
     def applyframe(self):
         log.info("setframe::")
-        if not self.noframe:
+        if not self._noframe and hasattr(self,'frame'):
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
             log.info("setframe framed: {}".format(self.forms.framed))
@@ -6205,7 +6205,7 @@ class FramedData(object):
         self.updatelangs()
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
         self.location=kwargs.pop('location',None) #not needed for noframe
-        self.noframe=kwargs.pop('noframe',False)
+        self._noframe=kwargs.pop('noframe',False)
         """Generalize these, and manage with methods:"""
         # self.notonegroup=kwargs.pop('notonegroup',False)
         # truncdefn=kwargs.pop('truncdefn',False)
@@ -6218,7 +6218,7 @@ class FramedData(object):
         self.tonegroup=None
         """Build dual logic here. We use this to frame senses & examples"""
         if isinstance(source,lift.ET.Element):
-            self.noframe=True #Examples should already be framed
+            self._noframe=True #Examples should already be framed
             self.parseexample(source) #example element, not sense or entry:
             """This is what we're pulling from:
             <example>
@@ -7463,7 +7463,7 @@ class RecordButtonFrame(Frame):
         log.log(3,"Asking PA to record now")
         self.recorder=sound.SoundFileRecorder(self.filenameURL,self.pa,
                                                                 self.settings)
-        log.log(3,"PA recorder made OK")
+        log.debug("PA recorder made OK")
         self.recorder.start()
     def _stop(self, event):
         try:
@@ -8356,7 +8356,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     #merge with addtonefieldex
     framed=self.datadict.getframeddata(senseid)
     framed.setframe(self.name)
-    text=framed.formatted(noframe=False)
+    # text=framed.formatted(noframe=False)
     if name is None:
         name=self.name
     if subcheck is None:
