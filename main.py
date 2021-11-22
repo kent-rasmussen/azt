@@ -3235,14 +3235,15 @@ class Check():
             # this removes senses already reported (e.g., in V1=V2)
             matches-=self.basicreported[typenum]
         log.log(2,"{} matches found!: {}".format(len(matches),matches))
-        if 'x' in self.name:
-            n=self.checkcounts[self.ps][self.profile][self.name][
-                            self.subcheck][self.subcheckcomparison]=len(matches)
+        group=self.status.group()
+        if 'x' in check:
+            n=self.checkcounts[ps][profile][check][
+                            group][self.subcheckcomparison]=len(matches)
         else:
-            n=self.checkcounts[self.ps][self.profile][self.name][
-                            self.subcheck]=len(matches)
-            if '=' in self.name:
-                xname=re.sub('=','x',self.name, count=1)
+            n=self.checkcounts[ps][profile][check][
+                            group]=len(matches)
+            if '=' in check:
+                xname=re.sub('=','x',check, count=1)
                 log.debug("looking for name {} in {}".format(xname,
                                                     self.checkcodesbyprofile))
                 if xname in self.checkcodesbyprofile:
@@ -3250,18 +3251,17 @@ class Check():
                                                                         xname))
                     #put the results in that group, too
                     log.debug(self.checkcounts)
-                    if xname not in self.checkcounts[self.ps][self.profile]:
-                        self.checkcounts[self.ps][self.profile][xname]={}
-                    if self.subcheck not in self.checkcounts[self.ps][
-                                    self.profile][xname]:
-                        self.checkcounts[self.ps][self.profile][xname][
-                                                        self.subcheck]={}
-                    self.checkcounts[self.ps][self.profile][xname][
-                                    self.subcheck][self.subcheck]=len(matches)
+                    if xname not in self.checkcounts[ps][profile]:
+                        self.checkcounts[ps][profile][xname]={}
+                    if group not in self.checkcounts[ps][
+                                    profile][xname]:
+                        self.checkcounts[ps][profile][xname][group]={}
+                    self.checkcounts[ps][profile][xname][group][group
+                                                                ]=len(matches)
                     log.debug(self.checkcounts)
         if n>0:
-            titlebits='x'+self.ps+self.profile+self.name+self.subcheck
-            if 'x' in self.name:
+            titlebits='x'+ps+profile+check+group
+            if 'x' in check:
                 titlebits+='x'+self.subcheckcomparison
             id=rx.id(titlebits)
             ex=xlp.Example(parent,id)
