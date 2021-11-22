@@ -2978,8 +2978,8 @@ class Check():
                 "Click '{}' below to define a tone frame. \nPlease "
                 "pay attention to the instructions, and if \nthere's anything "
                 "you don't understand, or if you're not \nsure what a tone "
-                "frame is, please ask for help. \nWhen you are done making frames, "
-                "click 'Exit' to continue.".format(btext))
+                "frame is, please ask for help. \nWhen you are done making "
+                "frames, click 'Exit' to continue.".format(btext))
                 cmd=self.addframe
             else:
                 btext=_("Return to A→Z+T, to fix settings")
