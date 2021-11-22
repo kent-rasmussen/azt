@@ -1795,8 +1795,10 @@ class Check():
         for ps in self.db.pss:
             self.scount[ps]={}
             for s in self.rx:
-                self.scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
-                    for x in self.sextracted[ps][s]],key=lambda x:x[1],reverse=True)
+                scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
+                    for x in self.sextracted[ps][s]],key=lambda x:x[1],
+                                                                reverse=True)
+        self.slices.scount(scount) #send to object
     def getprofileofsense(self,senseid):
         #Convert to iterate over local variables
         ps=unlist(self.db.ps(senseid=senseid))
@@ -2318,39 +2320,30 @@ class Check():
             opts['columnplus']=1
             if len(self.status.checks()) == 0:
                 t=_("no tone frames defined.")
-                self.name=None
                 check=None
             elif self.status.ischeckok():
                 # check not in checks:
                 t=_("no tone frame selected.")
-                self.name=None
                 check=None
             else:
-                t=(_("working on ‘{}’ tone frame").format(self.name))
                 t=(_("working on ‘{}’ tone frame").format(check))
             proselabel(opts,t,cmd='getcheck',parent=tf)
-        else:
         # else:
         """Get subcheck"""
-        if None not in [self.type, ps, profile, self.name]:
         # if None not in [cvt, ps, profile, check]: #is this needed?
         self.status.makegroupok()
         group=self.status.group()
         if cvt == 'T':
             opts['columnplus']=2
-            if None in [self.name, self.subcheck]:
             if None in [check, group]:
                 t=_("(no framed group)")
             else:
-                t=(_("(framed group: ‘{}’)").format(self.subcheck))
                 t=(_("(framed group: ‘{}’)").format(group))
             proselabel(opts,t,cmd='getgroup',parent=tf)
             opts['columnplus']=0
         else:
-            tf=Frame(self.frame.status)
             # tf=Frame(self.frame.status)
             opts['columnplus']=1
-            t=(_("working on {}".format(self.name)))
             t=(_("working on {}".format(group))) #check[1]
             proselabel(opts,t,cmd='getcheck',parent=tf)
         """Final Button"""
@@ -2362,11 +2355,9 @@ class Check():
         button(opts,t,self.runcheck,column=0,
                 font=self.fonts['title'],
                 compound='bottom', #image bottom, left, right, or top of text
-                image=self.photo[self.type]
                 image=self.photo[cvt]
                 )
         opts['row']+=1
-        if self.type == 'T':
         if cvt == 'T':
             t=(_("Record Sorted Examples"))
         else:
@@ -2377,6 +2368,7 @@ class Check():
                 image=self.photo['record']
                 )
         self.maybeboard()
+        self.checkcheck(dictnow)
     def donewpyaudio(self):
         try:
             self.pyaudio.terminate()
