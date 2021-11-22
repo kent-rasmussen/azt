@@ -239,6 +239,7 @@ class Check():
                     log.debug("But legacy file {} does; converting!".format(legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
 <<<<<<< HEAD
+<<<<<<< HEAD
     def checkforlegacyverification(self):
         start_time=time.time()
         n=0
@@ -283,6 +284,8 @@ class Check():
                                 )
         log.info("makestatus status type: {}".format(type(self.status)))
 >>>>>>> make new stuff fns
+=======
+>>>>>>> upgrade settings parser
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
@@ -1582,12 +1585,25 @@ class Check():
         if None in self.status: #This should never be there
             del self.status[None]
         self.storesettingsfile(setting='status')
+<<<<<<< HEAD
+=======
+        self.checkcheck()
+    def loadtypedict(self):
+        """I just need this to load once somewhere..."""
+        self.typedict={
+                'V':{'sg':_('Vowel'),'pl':_('Vowels')},
+                'C':{'sg':_('Consonant'),'pl':_('Consonants')},
+                'CV':{'sg':_('Consonant-Vowel combination'),'pl':_('Consonant-Vowel combinations')},
+                'T':{'sg':_('Tone'),'pl':_('Tones')},
+                }
+>>>>>>> upgrade settings parser
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
             return getattr(self,fileattr)
         else:
             log.error("No file name for setting {}!".format(setting))
+<<<<<<< HEAD
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
         fns={}
@@ -1612,11 +1628,18 @@ class Check():
         (if there), for backwards compatibility"""
         d={}
         objectfns=self.settingsobjects()
+=======
+    def storesettingsfile(self,setting='defaults'):
+        filename=self.settingsfile(setting)
+        config=ConfigParser()
+        config['default']={}
+>>>>>>> upgrade settings parser
         if setting == 'soundsettings':
             o=self.soundsettings
         else:
             o=self
         for s in self.settings[setting]['attributes']:
+<<<<<<< HEAD
             if s in objectfns:
                 log.debug("Trying to dict {} attr".format(s))
                 try:
@@ -1669,6 +1692,15 @@ class Check():
                 config[s]=v
             else:
                 config['default'][s]=str(v)
+=======
+            if hasattr(o,s):
+                log.debug("Trying to set {} with value {}".format(s,getattr(o,s)))
+                v=getattr(o,s)
+                if isinstance(v, dict):
+                    config[s]=getattr(o,s)
+                else:
+                    config['default'][s]=str(v)
+>>>>>>> upgrade settings parser
         if config['default'] == {}:
             del config['default']
         with open(filename, "w", encoding='utf-8') as file:
@@ -1689,6 +1721,7 @@ class Check():
             o=self.soundsettings
         else:
             o=self
+        ori={}
         try:
             log.debug("Trying for {} settings in {}".format(setting, legacy))
             spec = importlib.util.spec_from_file_location(setting,legacy)
@@ -1697,6 +1730,7 @@ class Check():
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
                 if hasattr(module,s):
+<<<<<<< HEAD
 <<<<<<< HEAD
                     setattr(o,s,getattr(module,s))
 =======
@@ -1730,6 +1764,44 @@ class Check():
                 log.error("Attribute {} didn't make it back".format(s))
                 log.error("You should send in an error report for this.")
                 exit()
+=======
+                    ori[s]=getattr(module,s)
+                    setattr(o,s,ori[s])
+        except:
+            log.error("Problem importing {}".format(legacy))
+        if ('profilesbysense' in self.settings[setting]['attributes'] and
+                hasattr(self,'profilesbysense') and self.profilesbysense != {}):
+            self.makecountssorted() #because this changed structure
+            ori['profilecounts']=self.profilecounts #store the new version
+        if 'glosslangs' in self.settings[setting]['attributes']:
+            self.glosslangs=Glosslangs(getattr(module,'glosslang'),
+                        getattr(module,'glosslang2')) # b/c structure changed
+        self.storesettingsfile(setting=setting) #do last
+        self.loadsettingsfile(setting=setting) #verify write and read
+        for s in self.settings[setting]['attributes']:
+            if s in ori and hasattr(o,s) and ori[s] == getattr(o,s):
+                log.info("Attribute {} verified as {}={}".format(s,ori[s],
+                                                                getattr(o,s)))
+            elif s == 'glosslangs':
+                if getattr(o,s) == [getattr(module,'glosslang'),
+                                        getattr(module,'glosslang2')]:
+                    log.info("Glosslangs attribute verified as {}=[‘{}’,‘{}’]"
+                        "".format(getattr(o,s),getattr(module,'glosslang'),
+                                                getattr(module,'glosslang2')))
+                else:
+                    log.info("Glosslangs attribute problem! {}≠[‘{}’,‘{}’]"
+                        "".format(getattr(o,s),getattr(module,'glosslang'),
+                                                getattr(module,'glosslang2')))
+            else:
+                if s in ori:
+                    if hasattr(o,s):
+                        log.error("Problem with attribute {}; {}≠{}".format(s,
+                                                        ori[s], getattr(o,s)))
+                    else:
+                        log.error("Problem with attribute {}".format(s))
+                    log.error("You should send in an error report for this.")
+                    exit()
+>>>>>>> upgrade settings parser
         log.info("Settings file {} converted to {}, with each value verified."
                 "".format(legacy,savefile))
     def loadsettingsfile(self,setting='defaults'):
@@ -1738,6 +1810,7 @@ class Check():
         config.read(filename)
         if len(config.sections()) == 0:
             return
+<<<<<<< HEAD
         log.debug("Trying for {} settings in {}".format(setting, filename))
         d={}
         for section in self.settings[setting]['attributes']:
@@ -1760,6 +1833,33 @@ class Check():
         self.readsettingsdict(d)
     """These should all go!"""
     def makeadhocgroupsdict(self,ps=None): #shouldn't need this, in slices.adhoc()
+=======
+        if setting == 'soundsettings':
+            o=self.soundsettings
+        else:
+            o=self
+        log.debug("Trying for {} settings in {}".format(setting, filename))
+        for section in self.settings[setting]['attributes']:
+            if section in config:
+                if len(config[section].values())>0:
+                    log.debug("Found Dictionary value for {}".format(section))
+                    setattr(o,section,{})
+                    for s in config[section]:
+                        getattr(o,section)[ofromstr(s)]=ofromstr(
+                                                            config[section][s])
+                else:
+                    log.debug("Found String/list/other value for {}".format(
+                                                            config[section]))
+                    setattr(o,section,config[section])
+                log.debug("Confirmed attribute {} with value {}, type: {}"
+                            "".format(section,getattr(o,section),
+                                                    type(getattr(o,section))))
+            elif 'default' in config and section in config['default']:
+                setattr(o,section,ofromstr(config['default'][section]))
+            if 'glosslangs' in self.settings[setting]['attributes']:
+                self.glosslangs=Glosslangs(self.glosslangs)
+    def makeadhocgroupsdict(self, ps=None):
+>>>>>>> upgrade settings parser
         # self.ps and self.profile should be set when this is called
         if ps is None:
             ps=self.ps
@@ -7905,6 +8005,7 @@ class ToolTip(object):
         self.tw= None
         if tw:
             tw.destroy()
+<<<<<<< HEAD
 class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
@@ -8654,6 +8755,8 @@ class CheckParameters(dict):
                     ]
                 },
         }
+=======
+>>>>>>> upgrade settings parser
 class ConfigParser(configparser.ConfigParser):
     def write(self,*args,**kwargs):
         configparser.ConfigParser.write(self,*args,**kwargs,
@@ -9284,8 +9387,11 @@ def setexitflag(self,exitFlag):
 def openweburl(url):
     webbrowser.open_new(url)
 def ofromstr(x):
+<<<<<<< HEAD
     """This interprets a string as a python object, if possible"""
     """This is needed to interpret [x,y] as a list and {x:y} as a dictionary."""
+=======
+>>>>>>> upgrade settings parser
     try:
         return ast.literal_eval(x)
     except (SyntaxError,ValueError) as e:
