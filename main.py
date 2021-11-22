@@ -140,20 +140,7 @@ class Check():
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.loadsettingsfile(setting='toneframes')
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         self.maketoneframes()
-=======
-        if not hasattr(self,'toneframes'):
-            self.toneframes=ToneFrames({})
->>>>>>> make sure the new toneframes object exists
-=======
-        self.maketoneframes()
->>>>>>> changes for now
-=======
-        self.maketoneframes()
->>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
         self.loadsettingsfile(setting='adhocgroups')
         if nsyls is not None:
             self.nsyls=nsyls
@@ -206,43 +193,6 @@ class Check():
                 log.debug("{}: {}".format(var,getattr(self,var)))
             log.debug("Middle ps-profile: {}-{}".format(ps,profile))
             self.storesettingsfile(setting='profiledata')
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-            log.debug("Ending ps-profile: {}-{}".format(ps,profile))
-        self.makeparameters()
-        self.makeslicedict()
-=======
-            log.debug("Ending ps-profile: {}-{}".format(self.ps,self.profile))
-        self.params=CheckParameters(self.toneframes,self.profilesbysense)
-        if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
-            self.adhocgroups={}
-        self.slices=SliceDict(self.params,self.adhocgroups,self.profilecounts)
-        self.getprofilestodo()
-        self.getpss() #This is a prioritized list of all ps'
->>>>>>> implement slices
-=======
-            log.debug("Ending ps-profile: {}-{}".format(ps,profile))
-        self.makeparameters()
-        self.makeslicedict()
->>>>>>> changes for now
-        self.setnamesall() #sets self.checknamesall
-        self.loadsettingsfile(setting='status')
-<<<<<<< HEAD
-<<<<<<< HEAD
-        self.makestatus()
-=======
-        if not hasattr(self,'status'): #I.e., not loaded from file
-            self.status=StatusDict(self.params, self.slices, {})
->>>>>>> make sure status dict is there
-=======
-        self.makestatus()
->>>>>>> cleanup
-        #This can wait until runcheck, right?
-        #     self.sortingstatus() #because this won't get set later #>checkdefaults?
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
             log.debug("Ending ps-profile: {}-{}".format(ps,profile))
         self.makeparameters()
         self.makeslicedict()
@@ -251,32 +201,9 @@ class Check():
         self.makestatus()
         #This can wait until runcheck, right?
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
->>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
-        if not hasattr(self,'glosslangs'):
         self.makeglosslangs()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         #     self.guessglosslangs() #needed for the following
-<<<<<<< HEAD
-=======
-        self.glosslangs=Glosslangs(None,None)
-        self.guessglosslangs() #needed for the following
->>>>>>> chose framed as addmodexamplefields attr
-=======
-        if not hasattr(self,'glosslangs'):
-<<<<<<< HEAD
-            self.guessglosslangs() #needed for the following
-<<<<<<< HEAD
->>>>>>> glosslangs implementation
-=======
-=======
->>>>>>> cleanup
-        self.makeglosslangs()
-        self.loadsettingsfile() # overwrites guess above, stored on runcheck
-        #     self.guessglosslangs() #needed for the following
->>>>>>> selfless
-=======
->>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
-        self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
         #set None to make labels, else "raised" "groove" "sunken" "ridge" "flat"
@@ -304,10 +231,6 @@ class Check():
                 if file.exists(legacy):
                     log.debug("But legacy file {} does; converting!".format(legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     def checkforlegacyverification(self):
         start_time=time.time()
         n=0
@@ -322,11 +245,6 @@ class Check():
         self.db.write()
         log.info("Found {} legacy verification nodes in {} seconds".format(n,
                                                 time.time()-start_time))
-=======
-=======
->>>>>>> make new stuff fns
-=======
->>>>>>> af7e6250fad8a02e4e6d661d9edf9f82518688db
     """This should each be done only once, to make the objects from settings"""
     """self.profilesbysense and self.profilecounts are loaded from file, or
     created by analysis in init()"""
