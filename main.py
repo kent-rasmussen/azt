@@ -4112,6 +4112,7 @@ class Check():
             return 1
         else:
             self.runwindow.waitdone()
+            return 0
     def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
