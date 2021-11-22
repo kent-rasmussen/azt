@@ -4307,31 +4307,33 @@ class Check():
         return str(newgroup)
     def addtonefieldex(self,senseid,framed):
         guid=None
-        if self.groupselected is None or self.groupselected == '':
+        if groupselected is None or groupselected == '':
             log.error("groupselected: {}; this should never happen"
                         "".format(self.groupselected))
+                        "".format(groupselected))
             exit()
         log.debug("Adding {} value to {} location in 'tone' fieldtype, "
                 "senseid: {} guid: {} (in main_lift.py)".format(
-                    self.groupselected,
-                    self.name,
+                    groupselected,
+                    check,
                     senseid,
                     guid))
         self.db.addmodexamplefields( #This should only mod if already there
                                     senseid=senseid,
                                     analang=self.analang,
                                     framed=framed,
-                                    fieldtype='tone',location=self.name,
-                                    fieldvalue=self.groupselected
+                                    fieldtype='tone',location=check,
+                                    fieldvalue=groupselected
                                     )
         tonegroup=unlist(self.db.get("example/tonefield/form/text",
-                        senseid=senseid, location=self.name).get('text'))
-        if tonegroup != self.groupselected:
+                        senseid=senseid, location=check).get('text'))
+        if tonegroup != groupselected:
             log.error("Field addition failed! LIFT says {}, not {}.".format(
-                                                tonegroup,self.groupselected))
+                                                tonegroup,groupselected))
         else:
             log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(tonegroup,groupselected))
+        self.updatestatus(group=groupselected) #this marks the group unverified.
         self.db.write() #This is never iterated over; just one entry at a time.
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
