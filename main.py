@@ -4378,6 +4378,29 @@ class Check():
         self.senseidssorted=[]
         self.senseidsunsorted=[]
         for senseid in self.senseidstosort:
+    def checkforsenseidstosort(self,cvt=None,ps=None,profile=None,check=None):
+        """This method just asks if any senseid in the given slice is unsorted.
+        It stops when it finds the first one."""
+        """"use if sorting senseid lists aren't needed"""
+        """This is redundant with updatesortingstatus()"""
+        if cvt is None:
+            cvt=self.slices.cvt()
+        if ps is None:
+            ps=self.slices.ps()
+        if profile is None:
+            profile=self.slices.profile()
+        if check is None:
+            check=self.slices.check()
+        senseids=self.slices.senseids(ps=ps,profile=profile)
+        vts=False
+        for senseid in senseids:
+            v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
+                                                    location=check).get('text'))
+            if v not in ['',None]:
+                vts=True
+                break
+        self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
+        self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
     def updatesortingstatus(self):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses. So don't iterate over it. Instead, use
