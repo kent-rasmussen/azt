@@ -7988,6 +7988,23 @@ class SliceDict(dict):
         """These two are only done here, as the only change with new data"""
         self.slicepriority()
         self.pspriority()
+class ToneFrames(dict):
+    def addframe(self,ps,name,defn):
+        """This needs to change checks"""
+        if not isinstance(defn,dict):
+            log.error("The supplied frame definition isn't a dictionary: {}"
+                        "".format(defn))
+        elif name in self:
+            log.error("The supplied frame name is already there: {} ({})"
+                        "".format(name,defn))
+        else:
+            if not ps in self:
+                self[ps]={}
+            self[ps][name]=defn
+    def __init__(self, dict):
+        super(ToneFrames, self).__init__()
+        for k in dict:
+            self[k]=dict[k]
 class StatusDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
