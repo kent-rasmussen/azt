@@ -8480,6 +8480,7 @@ class SliceDict(dict):
         log.info("valid: {}".format(self._valid))
         log.info("validbyps: {}".format(self._validbyps))
 <<<<<<< HEAD
+<<<<<<< HEAD
     def inslice(self,senseids):
         senseidstochange=set(self._senseids).intersection(senseids)
         return senseidstochange
@@ -8558,11 +8559,18 @@ class SliceDict(dict):
         for k in dict:
             self[k]=dict[k]
 >>>>>>> parameter dictionary classes
+=======
+        super(SliceDict, self).__init__()
+        self.checkparameters=checkparameters
+>>>>>>> init changes
         self.profilecountsValid=0
         self.profilecounts=0
         self.maxprofiles=None
         self.maxpss=None
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> init changes
         self._adhoc=adhoc
         self._profilesbysense=profilesbysense #[ps][profile]
         self.updateslices() #any time we add to self._profilesbysense
