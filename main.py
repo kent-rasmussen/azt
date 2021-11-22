@@ -4184,7 +4184,7 @@ class Check():
                         ).grid(row=2,column=0,rowspan=2,sticky='nw')
         self.sframe=ScrollingFrame(self.runwindow.frame)
         self.sframe.grid(row=2,column=1)
-        self.sorting=self.sframe.content
+        self.sortitem=self.sframe.content
         row=0
         canary=Label(self.runwindow,text='')
         canary.grid(row=5,column=5)
