@@ -7897,6 +7897,84 @@ class SliceDict(dict):
         self.slicepriority()
         self.pspriority()
 class StatusDict(dict):
+    def nextprofile(self, tosort=False, wsorted=False, toverify=False):
+        ps=self._slicedict.ps()
+        # self.makeprofileok()
+        profiles=self.profiles(tosort=tosort,wsorted=wsorted,toverify=toverify)
+        self.isprofileok(tosort=tosort,wsorted=wsorted,toverify=toverify)
+        """"TypeError: string indices must be integers"""
+        profile=self._slicedict.profile()
+        nextprofile=profiles[0]
+        if profile in profiles:
+            idx=profiles.index(profile)
+            if idx != len(profiles)-1:
+                nextprofile=profiles[idx+1]
+        self._slicedict.profile(nextprofile)
+    def nextcheck(self, tosort=False, wsorted=False, toverify=False):
+        check=self._checkparameters.check()
+        checks=self.checks(tosort=tosort,wsorted=wsorted,toverify=toverify)
+        if len(checks) == 0:
+            log.error("There are no such checks! tosort: {}; wsorted: {}"
+                        "".format(tosort,wsorted))
+            return
+        nextcheck=checks[0] #default
+        if check in checks:
+            idx=checks.index(check)
+            if idx != len(checks)-1: # i.e., not already last
+                nextcheck=checks[idx+1] #overwrite default in this one case
+        self._checkparameters.check(nextcheck)
+    def profiles(self, wsorted=False, tosort=False, toverify=False):
+        profiles=self._slicedict.profiles() #already limited to current ps
+        checks=self.checks(wsorted=wsorted,tosort=tosort)
+        for profile in profiles:
+            profileswcheckssorted=[i for j
+                            in [self.groups(profile=profile,check=check)
+                            for check in checks]
+                            for i in j
+                            ]
+            for check in checks:
+                log.info("groups found: {} (p:{};c:{})".format(
+                        self.groups(profile=profile,check=check),profile,check
+                        ))
+            log.info("Looking for groups in checks in profiles: {} "
+                    "\nwith tosort ({}); wsorted ({})"
+                    "\nw Checks: {}"
+                    "\nw Profiles: {}".format(
+                                            profileswcheckssorted,
+                                            tosort,wsorted,
+                                            checks,profiles))
+        p=[]
+        for profile in profiles:
+            if (
+                (not wsorted and not tosort) or
+                (tosort and self.profiletosort(profile)) or
+                (wsorted and [i for j in
+                [self.groups(profile=profile,check=check) for check in checks]
+                                for i in j
+                            ])
+                ):
+                p+=[profile]
+        log.info("Profiles with tosort ({}); wsorted ({}): {}"
+                    "".format(tosort,wsorted,p))
+        return p
+    def checks(self, wsorted=False, tosort=False, toverify=False):
+        """This method is designed for tone, which depends on ps, not profile.
+        we'll need to rethink it, when working on CV checks, which depend on
+        profile, and not ps."""
+        cs=[]
+        checks=self.updatechecksbycvt()
+        for check in checks:
+            if (
+                (not wsorted and not tosort) or
+                # """These next two assume current ps-profile slice"""
+                (wsorted and self.groups(check=check)) or
+                (tosort and self.checktosort(check)) or
+                (toverify and self.groupstoverify(check=check))
+                ):
+                cs+=[check]
+        log.info("Checks with tosort ({}); wsorted ({}): {}"
+                    "".format(tosort,wsorted,cs))
+        return cs
     def groupstodo(self):
         """This returns prioritization in advance of sorting, before actual
         sort groups exist. So this only has meaning for segmental checks,
