@@ -4342,9 +4342,9 @@ class Check():
         constantly refresh sortingstatus() from the lift file."""
         """These four functions should be generalizable"""
         self.guidssorted.append(guid)
-        self.guidsunsorted.remove(guid)
-    def markunsortedguid(self,guid):
-        self.guidsunsorted.append(guid)
+        self.guidstosort.remove(guid)
+    def marktosortguid(self,guid):
+        self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
     def getidstosort(self): #remove!
         #This depends on ps and profile, but not check
