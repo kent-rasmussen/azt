@@ -4355,19 +4355,20 @@ class Check():
                                                 senseid=senseid).get('text'))
             if toneUFgroup is not None:
                 if toneUFgroup not in sorted:
-                    sorted[toneUFgroup]=[senseid]
-                else:
-                    sorted[toneUFgroup]+=[senseid]
+                    sorted[toneUFgroup]=[]
+                sorted[toneUFgroup]+=[senseid]
+        """drop this"""
         self.toneUFgroups=list(dict.fromkeys(sorted))
         log.debug("UFtonegroups (getsenseidsbytoneUFgroups): {}".format(
                                                             self.toneUFgroups))
         return sorted
     def gettoneUFgroups(self): #obsolete?
-        log.debug("Looking for UF tone groups for {}-{} slice".format(self.profile,
-                                                                    self.ps))
+        """This returns just the list of UF tone groups in the current slice"""
+        log.debug("Looking for UF tone groups for {}-{} slice".format(profile,
+                                                                    ps))
         toneUFgroups=[]
         """Still working on one ps-profile combo at a time."""
-        for senseid in self.senseidstosort: #I should be able to make this a regex...
+        for senseid in self.slices.senseids():
             toneUFgroups+=self.db.get('sense/tonefield/form/text',
                                                     senseid=senseid).get('text')
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
@@ -4392,7 +4393,7 @@ class Check():
         senseids=self.slices.senseids(ps=ps,profile=profile)
         for senseid in senseids:
             tonegroup=self.db.get("example/tonefield/form/text",
-                                senseid=senseid, location=self.name).get('text')
+                                senseid=senseid, location=check).get('text')
             if unlist(tonegroup) in ['NA','','ALLOK', None]:
                 log.error("tonegroup {} found in sense {} under location {}!"
                     "".format(tonegroup,senseid,check))
