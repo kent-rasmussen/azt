@@ -1710,6 +1710,9 @@ class Check():
         else:
             log.error("No file name for setting {}!".format(setting))
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> new settings paradigm
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
         fns={}
@@ -1734,18 +1737,24 @@ class Check():
         (if there), for backwards compatibility"""
         d={}
         objectfns=self.settingsobjects()
+<<<<<<< HEAD
 =======
     def storesettingsfile(self,setting='defaults'):
         filename=self.settingsfile(setting)
         config=ConfigParser()
         config['default']={}
 >>>>>>> upgrade settings parser
+=======
+>>>>>>> new settings paradigm
         if setting == 'soundsettings':
             o=self.soundsettings
         else:
             o=self
         for s in self.settings[setting]['attributes']:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> new settings paradigm
             if s in objectfns:
                 log.debug("Trying to dict {} attr".format(s))
                 try:
@@ -1798,6 +1807,7 @@ class Check():
                 config[s]=v
             else:
                 config['default'][s]=str(v)
+<<<<<<< HEAD
 =======
             if hasattr(o,s):
                 log.debug("Trying to set {} with value {}".format(s,getattr(o,s)))
@@ -1807,6 +1817,8 @@ class Check():
                 else:
                     config['default'][s]=str(v)
 >>>>>>> upgrade settings parser
+=======
+>>>>>>> new settings paradigm
         if config['default'] == {}:
             del config['default']
         with open(filename, "w", encoding='utf-8') as file:
@@ -1827,7 +1839,6 @@ class Check():
             o=self.soundsettings
         else:
             o=self
-        ori={}
         try:
             log.debug("Trying for {} settings in {}".format(setting, legacy))
             spec = importlib.util.spec_from_file_location(setting,legacy)
@@ -1836,6 +1847,7 @@ class Check():
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
                 if hasattr(module,s):
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                     setattr(o,s,getattr(module,s))
@@ -1873,32 +1885,28 @@ class Check():
 =======
                     ori[s]=getattr(module,s)
                     setattr(o,s,ori[s])
+=======
+                    setattr(o,s,getattr(module,s))
+>>>>>>> new settings paradigm
         except:
             log.error("Problem importing {}".format(legacy))
-        if ('profilesbysense' in self.settings[setting]['attributes'] and
-                hasattr(self,'profilesbysense') and self.profilesbysense != {}):
-            self.makecountssorted() #because this changed structure
-            ori['profilecounts']=self.profilecounts #store the new version
         if 'glosslangs' in self.settings[setting]['attributes']:
-            self.glosslangs=Glosslangs(getattr(module,'glosslang'),
-                        getattr(module,'glosslang2')) # b/c structure changed
+            self.glosslangs=[getattr(module,'glosslang'),
+                        getattr(module,'glosslang2')] # b/c structure changed
+        dict1=self.makesettingsdict(setting=setting)
         self.storesettingsfile(setting=setting) #do last
         self.loadsettingsfile(setting=setting) #verify write and read
-        for s in self.settings[setting]['attributes']:
-            if s in ori and hasattr(o,s) and ori[s] == getattr(o,s):
-                log.info("Attribute {} verified as {}={}".format(s,ori[s],
-                                                                getattr(o,s)))
-            elif s == 'glosslangs':
-                if getattr(o,s) == [getattr(module,'glosslang'),
-                                        getattr(module,'glosslang2')]:
-                    log.info("Glosslangs attribute verified as {}=[‘{}’,‘{}’]"
-                        "".format(getattr(o,s),getattr(module,'glosslang'),
-                                                getattr(module,'glosslang2')))
-                else:
-                    log.info("Glosslangs attribute problem! {}≠[‘{}’,‘{}’]"
-                        "".format(getattr(o,s),getattr(module,'glosslang'),
-                                                getattr(module,'glosslang2')))
+        dict2=self.makesettingsdict(setting=setting)
+        """Now we verify that each value read the same each time"""
+        for s in dict1:
+            if s in dict2 and str(dict1[s]) == str(dict2[s]):
+                log.info("Attribute {} verified as {}={}".format(s,
+                                            str(dict1[s]), str(dict2[s])))
+            elif s in dict2:
+                log.error("Problem with attribute {}; {}≠{}".format(s,
+                                            str(dict1[s]), str(dict2[s])))
             else:
+<<<<<<< HEAD
                 if s in ori:
                     if hasattr(o,s):
                         log.error("Problem with attribute {}; {}≠{}".format(s,
@@ -1908,6 +1916,11 @@ class Check():
                     log.error("You should send in an error report for this.")
                     exit()
 >>>>>>> upgrade settings parser
+=======
+                log.error("Attribute {} didn't make it back".format(s))
+                log.error("You should send in an error report for this.")
+                exit()
+>>>>>>> new settings paradigm
         log.info("Settings file {} converted to {}, with each value verified."
                 "".format(legacy,savefile))
     def loadsettingsfile(self,setting='defaults'):
@@ -1916,6 +1929,7 @@ class Check():
         config.read(filename)
         if len(config.sections()) == 0:
             return
+<<<<<<< HEAD
 <<<<<<< HEAD
         log.debug("Trying for {} settings in {}".format(setting, filename))
         d={}
@@ -1944,23 +1958,27 @@ class Check():
             o=self.soundsettings
         else:
             o=self
+=======
+>>>>>>> new settings paradigm
         log.debug("Trying for {} settings in {}".format(setting, filename))
+        d={}
         for section in self.settings[setting]['attributes']:
             if section in config:
+                log.debug("Trying for {} settings in {}".format(section, setting))
                 if len(config[section].values())>0:
                     log.debug("Found Dictionary value for {}".format(section))
-                    setattr(o,section,{})
+                    d[section]={}
                     for s in config[section]:
-                        getattr(o,section)[ofromstr(s)]=ofromstr(
-                                                            config[section][s])
+                        """return each config item in section to a dict key"""
+                        d[section][s]={}
+                        """Make sure strings become python data"""
+                        d[section][ofromstr(s)]=ofromstr(config[section][s])
                 else:
-                    log.debug("Found String/list/other value for {}".format(
-                                                            config[section]))
-                    setattr(o,section,config[section])
-                log.debug("Confirmed attribute {} with value {}, type: {}"
-                            "".format(section,getattr(o,section),
-                                                    type(getattr(o,section))))
+                    log.debug("Found String/list/other value for {}: {}".format(
+                                                    section,config[section]))
+                    d[section]=ofromstr(config[section])
             elif 'default' in config and section in config['default']:
+<<<<<<< HEAD
                 setattr(o,section,ofromstr(config['default'][section]))
             if 'glosslangs' in self.settings[setting]['attributes']:
                 self.glosslangs=Glosslangs(self.glosslangs)
@@ -1968,6 +1986,10 @@ class Check():
 <<<<<<< HEAD
 >>>>>>> upgrade settings parser
 =======
+=======
+                d[section]=ofromstr(config['default'][section])
+        self.readsettingsdict(d)
+>>>>>>> new settings paradigm
     """These should all go!"""
     def makeadhocgroupsdict(self,ps=None): #shouldn't need this, in slices.adhoc()
 >>>>>>> statusdict comment
