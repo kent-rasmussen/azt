@@ -9969,10 +9969,15 @@ def openweburl(url):
     webbrowser.open_new(url)
 def ofromstr(x):
 <<<<<<< HEAD
+<<<<<<< HEAD
     """This interprets a string as a python object, if possible"""
     """This is needed to interpret [x,y] as a list and {x:y} as a dictionary."""
 =======
 >>>>>>> upgrade settings parser
+=======
+    """This interprets a string as a python object, if possible"""
+    """This is needed to interpret [x,y] as a list and {x:y} as a dictionary."""
+>>>>>>> doc
     try:
         return ast.literal_eval(x)
     except (SyntaxError,ValueError) as e:
