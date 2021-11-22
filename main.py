@@ -3428,11 +3428,13 @@ class Check():
         return senseidstochange
     def getexsall(self,value):
         #This returns all the senseids with a given tone value
-        senseids=self.db.get("sense", location=self.name, path=['tonefield'],
+        check=self.params.check()
+        senseids=self.db.get("sense", location=check, path=['tonefield'],
                             tonevalue=value
                             ).get('senseid')
-        senseidsincheck=self.senseidsincheck(senseids)
-        return list(senseidsincheck)
+        """The above doesn't test for profile, so we restrict that next"""
+        senseidsinslice=self.slices.inslice(senseids)
+        return list(senseidsinslice)
     def getex(self,value,notonegroup=True,truncdefn=False,renew=False):
         """This function finds examples in the lexicon for a given tone value,
         in a given tone frame (from check)"""
@@ -3492,9 +3494,9 @@ class Check():
                 z=hash_nbsp.sub('.',y)
                 namehash.set(z)
         def updategroups():
-            groupsthere=self.status[self.type][self.ps][self.profile][
-                                                        self.name]['groups']
-            groupsdone=self.status[self.type][self.ps][self.profile][self.name][
+            groupsthere=self.status[cvt][ps][profile][
+                                                        check]['groups']
+            groupsdone=self.status[cvt][ps][profile][check][
                                                                     'done']
             return groupsthere, groupsdone
         def submitform():
@@ -3506,7 +3508,7 @@ class Check():
                 log.debug(noname)
                 errorlabel['text'] = noname
                 return 1
-            if newtonevalue != self.subcheck: #only make changes!
+            if newtonevalue != group: #only make changes!
                 if newtonevalue in groupsthere :
                     deja=_("Sorry, there is already a group with "
                                     "that label; If you want to join the "
@@ -3515,15 +3517,15 @@ class Check():
                     log.debug(deja)
                     errorlabel['text'] = deja
                     return 1
-                self.updatebysubchecksenseid(self.subcheck,newtonevalue)
-                i=groupsthere.index(self.subcheck) #put new value in the same place.
-                groupsthere.remove(self.subcheck)
+                self.updatebysubchecksenseid(group,newtonevalue)
+                i=groupsthere.index(group) #put new value in the same place.
+                groupsthere.remove(group)
                 groupsthere.insert(i,newtonevalue)
-                if self.subcheck in groupsdone: #if verified, change the name there, too
-                    i=groupsdone.index(self.subcheck) #put new value in the same place.
-                    groupsdone.remove(self.subcheck)
+                if group in groupsdone: #if verified, change the name there, too
+                    i=groupsdone.index(group) #put new value in the same place.
+                    groupsdone.remove(group)
                     groupsdone.insert(i,newtonevalue)
-                self.subcheck=newtonevalue
+                group=newtonevalue
                 self.getsubchecksprioritized() #We've changed this, so update
                 self.storesettingsfile(setting='status')
             else: #move on, but notify in logs
@@ -3547,9 +3549,9 @@ class Check():
             log.debug("running next group")
             error=submitform()
             if not error:
-                log.debug("self.subcheck: {}".format(self.subcheck))
-                self.nextsubcheck()
-                log.debug("self.subcheck: {}".format(self.subcheck))
+                log.debug("group: {}".format(group))
+                self.nextgroup()
+                log.debug("group: {}".format(group))
                 self.renamegroup(reverify=reverify)
         def nextcheck():
             log.debug("running next frame")
