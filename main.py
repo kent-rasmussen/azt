@@ -4759,6 +4759,7 @@ class Check():
     def getidstosort(self): #remove!
         #This depends on ps and profile, but not check
         """These variables should not have to be reset between checks"""
+<<<<<<< HEAD
         self.slices.senseids()
     def checkforsenseidstosort(self,cvt=None,ps=None,profile=None,check=None):
         """This method just asks if any senseid in the given slice is unsorted.
@@ -4783,6 +4784,16 @@ class Check():
                 break
         self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
         self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
+=======
+        self.senseidstosort=list(self.profilesbysense[self.ps]
+                                                    [self.profile])
+    def sortingstatus(self):
+        #This should have self.ps, self.profile and self.name set already
+        self.getidstosort() #This is a ps-profile slice, but reset per frame
+        self.senseidssorted=[]
+        self.senseidsunsorted=[]
+        for senseid in self.senseidstosort:
+>>>>>>> updted fns
     def updatesortingstatus(self):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses. So don't iterate over it. Instead, use
@@ -4806,12 +4817,16 @@ class Check():
             vts=True
         else:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> updted fns
             log.info("updatesortingstatus shows no senseidstosort remaining")
             vts=False
         self.status.tosort(vts)
         log.info("updatesortingstatus senseids tosort: {}".format(self.status.senseidstosort()))
         log.info("updatesortingstatus senseids sorted: {}".format(self.status.senseidssorted()))
         log.info("tosort (end of updatesortingstatus): {}".format(self.status.tosort()))
+<<<<<<< HEAD
 =======
             self.status[self.type][self.ps][self.profile][self.name][
                                                                 'tosort']=False
@@ -4823,6 +4838,8 @@ class Check():
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.gettonegroups() #sets self.status...['groups'] for a frame
 >>>>>>> new set tone variables
+=======
+>>>>>>> updted fns
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
         """This is currently called in iteration"""
         self.checkforsenseidstosort(cvt=cvt,ps=ps,profile=profile,check=check)
