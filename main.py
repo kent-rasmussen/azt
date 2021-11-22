@@ -3351,17 +3351,6 @@ class Check():
             if ps == 'Invalid':
                 continue
             print(ps, self.profilesbysense[ps])
-    def senseidsincheck(self,senseids):
-        """This function takes a list of senseids that match a criteria, and
-        limits them to those that match the ps/profile combination we're
-        working on"""
-        if not hasattr(self,'senseidstosort'):
-            self.getidstosort()
-            # log.error("Called senseidsincheck, but no senseidstosort!")
-            # return
-        lst1=self.senseidstosort #all in this ps/profile
-        senseidstochange=set(lst1).intersection(senseids)
-        return senseidstochange
     def getexsall(self,value):
         #This returns all the senseids with a given tone value
         check=self.params.check()
