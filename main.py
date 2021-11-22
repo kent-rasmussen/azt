@@ -2443,6 +2443,7 @@ class Check():
                                                                     refresh))
         self.mainrelief=relief # None "raised" "groove" "sunken" "ridge" "flat"
 <<<<<<< HEAD
+<<<<<<< HEAD
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
@@ -2456,6 +2457,8 @@ class Check():
 <<<<<<< HEAD
 >>>>>>> checkcheck
 =======
+=======
+>>>>>>> checkcheckcleanup
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
