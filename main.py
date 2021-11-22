@@ -2052,13 +2052,14 @@ class Check():
         # log.info("Form after simplification:{}".format(form))
         return form
     def gimmeguid(self):
-        idsbyps=self.db.get('guidbyps',lang=self.analang,ps=self.ps)
+        idsbyps=self.db.get('guidbyps',lang=self.analang,ps=ps)
         return idsbyps[randint(0, len(idsbyps))]
     def gimmesenseid(self):
-        idsbyps=self.db.get('sense',ps=self.ps).get('senseid')
+        idsbyps=self.db.get('sense',ps=ps).get('senseid')
         return idsbyps[randint(0, len(idsbyps)-1)]
     def framenamesbyps(self,ps):
         """Names for all tone frames defined for the language."""
+        return self.status.checks()
         if hasattr(self,'toneframes') and self.toneframes is not None:
             if ps not in self.toneframes:
                 self.toneframes[ps]={}
@@ -2070,17 +2071,17 @@ class Check():
         return []
     def frame1valuebynamepsprofile(self):
         """I think this function is obsolete."""
-        """Define self.location based on lookup of self.name"""
+        """Define self.location based on lookup of check"""
         """This should be done after ps and check name are set"""
-        self.location=self.toneframes[self.ps][self.name]['location']
+        self.location=self.toneframes[ps][check]['location']
     def framevaluesbynamepsprofile(self,ps,profile,name):
         """Tone group values actually used in a frame,
         by frame name, and by data ps and profile."""
         l=[]
-        for guid in self.db.profileswdata[self.ps][self.profile]:
+        for guid in self.db.profileswdata[ps][profile]:
             group=self.db.get('pronunciationfieldvalue',guid=guid,
                                 fieldtype='tone',
-                                location=self.name)
+                                location=check)
             l+=group
         return list(dict.fromkeys(l))
     """Mediating between LIFT and the user"""
@@ -2463,9 +2464,9 @@ class Check():
             self.soundsettingswindow.destroy()
     def maybeboard(self):
         def checkfordone(): #has *anything* been sorted?
-            for self.profile in self.status[self.type][ps]:
             if self.status.groups() >0:
             # for profile in self.status[self.type][ps]:
+                return True
         profileori=self.slices.profile()
         nameori=self.params.check()
         if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
