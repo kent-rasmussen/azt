@@ -8439,12 +8439,16 @@ class SliceDict(dict):
                                 for x in self._slicepriority]))[:self.maxpss]
     def profilepriority(self):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> generalize for ps
         if not hasattr(self,'_profiles'):
             self._profiles={}
         for ps in self.pss():
             slicesbyhzbyps=self._sliceprioritybyps[ps]
             if slicesbyhzbyps is not None:
                 self._profiles[ps]=list(dict.fromkeys([x[0][0]
+<<<<<<< HEAD
                                 for x in slicesbyhzbyps]))[:self.maxprofiles]
     def valid(self, ps=None):
         if ps is None:
@@ -8458,6 +8462,8 @@ class SliceDict(dict):
         slicesbyhzbyps=self._sliceprioritybyps[self._ps]
         if slicesbyhzbyps is not None:
             self._profiles=list(dict.fromkeys([x[0][0]
+=======
+>>>>>>> generalize for ps
                                 for x in slicesbyhzbyps]))[:self.maxprofiles]
 <<<<<<< HEAD
 >>>>>>> parameter dictionary classes
