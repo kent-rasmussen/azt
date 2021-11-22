@@ -2018,7 +2018,7 @@ class Check():
         for cc in ['CG','CS','NC','VN','VV']:
             form=self.rx[cc].sub(self.interpret[cc],form)
         return form
-    def profileofform(self,form):
+    def profileofform(self,form,ps):
         if form is None:
             return "Invalid"
         # log.debug("profiling {}...".format(form))
@@ -2034,11 +2034,10 @@ class Check():
         log.log(4,"Searching with these regexes: {}".format(self.rx))
         for s in set(self.profilelegit) & set(self.rx.keys()):
             log.log(3,'s: {}; rx: {}'.format(s, self.rx[s]))
-            for ps in self.db.pss:
-                for i in self.rx[s].findall(form):
-                    if i not in self.sextracted[ps][s]:
-                        self.sextracted[ps][s][i]=0
-                    self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
+            for i in self.rx[s].findall(form):
+                if i not in self.sextracted[ps][s]:
+                    self.sextracted[ps][s][i]=0
+                self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
             form=self.rx[s].sub(s,form) #replace with profile variable
         """We could consider combining NC to C (or not), and CG to C (or not)
         here, after the 'splitter' profiles are formed..."""
