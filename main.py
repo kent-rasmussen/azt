@@ -1345,17 +1345,22 @@ class Check():
         buttonFrame1.grid(column=0, row=1)
     def getprofile(self,event=None):
         log.info("Asking for profile...")
+        self.refreshattributechanges()
         window=Window(self.frame,title=_('Select Syllable Profile'))
-        if self.profilesbysense[self.ps] is None: #likely never happen...
+        ps=self.slices.ps()
+        if self.profilesbysense[ps] is None: #likely never happen...
             Label(window.frame,
             text=_('Error: please set Grammatical category with profiles '
-                    'first!')+' (not '+str(self.ps)+')'
+                    'first!')+' (not '+str(ps)+')'
             ).grid(column=0, row=0)
         else:
+            profilecounts=self.slices.valid()
+            profilecountsAdHoc=self.slices.adhoccounts()
+            pcall=profilecounts+profilecountsAdHoc
             Label(window.frame, text=_('What ({}) syllable profile do you '
-                                    'want to work with?'.format(self.ps))
+                                    'want to work with?'.format(ps))
                                     ).grid(column=0, row=0)
-            optionslist = [(x[1],x[0]) for x in self.profilecountsValidwAdHoc]
+            optionslist = [(x[0],pcall[x]) for x in pcall]
             window.scroll=Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ScrollingButtonFrame(window.scroll,
