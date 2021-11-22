@@ -7926,14 +7926,6 @@ class SliceDict(dict):
         else:
             self.ps(self._pss[index+1])
         return self._ps
-    def nextprofile(self):
-        self.makeprofileok()
-        index=self._profiles.index(self._profile)
-        if index+1 == len(self._profiles):
-            self.profile(self._profiles[0]) #cycle back
-        else:
-            self.profile(self._profiles[index+1])
-        return self._profile
     def slicepriority(self,arg=None):
         """arg is to throw away, rather than break a fn where others get
         and set. This is now calculated, not read from file and set here."""
