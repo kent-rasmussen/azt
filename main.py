@@ -442,6 +442,27 @@ class Check():
             log.info("No frames to do; asking to define another one")
             self.addframe() #The above should change check, if completed.
             return
+<<<<<<< HEAD
+=======
+        log.info("Frames to do: {} (sort={})".format(todo,sort))
+        if self.name in todo:
+            i=todo.index(self.name)
+            log.info("Current frame is {} of {}".format(i,todo))
+            if len(todo)>i+1:
+                self.set('name',todo[i+1],refresh=False)
+                groups=self.status[self.type][self.ps][self.profile][self.name][
+                                            'groups']
+                if sort is False and groups == []:
+                    self.nextframe(sort=sort,guess=guess)
+                    return
+                else:
+                    self.set('name',todo[i+1])
+            else:
+                default() #cycle through framestodo again
+        else:
+            default()
+    def nextsubcheck(self,guess=False):
+>>>>>>> selfless
     def nextgroup(self,guess=False):
         def default():
             self.set('subcheck',priorities[0])
