@@ -7043,6 +7043,7 @@ class MainApplication(Frame):
                                                                     "seconds.")
         """finished loading so destroy splash"""
         splash.destroy()
+        parent.deiconify()
         """Don't show window again until check is done"""
 class ContextMenu:
     def updatebindings(self):
