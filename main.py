@@ -5591,22 +5591,22 @@ class Check():
             p=xlp.Paragraph(s1,t)
             log.info(t)
             print(t)
-            for self.profile in self.profilestodo:
-                if self.profile not in self.checkcounts[self.ps]:
-                    self.checkcounts[self.ps][self.profile]={}
-                t=_("{} {}s".format(self.profile,self.ps))
+            for profile in profiles:
+                if profile not in self.checkcounts[ps]:
+                    self.checkcounts[ps][profile]={}
+                t=_("{} {}s".format(profile,ps))
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
                 log.info(t)
-                for self.type in typestodo:
-                    t=_("{} checks".format(self.typedict[self.type]['sg']))
+                for cvt in typestodo:
+                    t=_("{} checks".format(self.params.typedict()[cvt]['sg']))
                     print(t)
                     log.info(t)
-                    sid=" ".join([t,"for",self.profile,self.ps+'s'])
+                    sid=" ".join([t,"for",profile,ps+'s'])
                     s3=xlp.Section(s2,sid,level=3)
-                    maxcount=re.subn(self.type, self.type, self.profile)[1]
+                    maxcount=re.subn(cvt, cvt, profile)[1]
                     """Get these reports from C1/V1 to total number of C/V"""
-                    self.typenums=[self.type+str(n+1) for n in range(maxcount)]
+                    self.typenums=[cvt+str(n+1) for n in range(maxcount)]
                     for typenum in self.typenums:
                         if typenum not in self.basicreported:
                             self.basicreported[typenum]=set()
@@ -5641,6 +5641,7 @@ class Check():
                                 x2=cols[x2]
                             log.debug("x1: {}; x2: {}".format(x1,x2))
                             log.debug("countbyname: {}".format(self.checkcounts[
+                                    ps][profile][name]))
                             if x1 != 'header' and x2 not in ['header','n']:
                                 log.debug("value: {}".format(self.checkcounts[
                                     ps][profile][name][x1][x2]))
