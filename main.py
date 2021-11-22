@@ -8454,7 +8454,10 @@ def findpath():
     spargs={
             'shell' : False
             }
-    path=subprocess.check_output(["echo","%PATH%"], **spargs)
+    try:
+        path=subprocess.check_output(["echo","%PATH%"], **spargs)
+    except Exception as e:
+        log.info("No path found! ({})".format(e))
     log.info("Windows PATH is {}".format(path))
 def findhg():
     findpath()
