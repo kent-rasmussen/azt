@@ -8573,7 +8573,7 @@ def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
     rm=self.verifictioncode(name,subcheck)
     self.db.modverificationnode(senseid,vtype=self.profile,rms=[rm])
     self.db.write() #This is not iterated over
-    self.markunsortedsenseid(senseid) #This is just for self.status['sorted']
+    self.status.marksenseidtosort(senseid) #This is just for self.status['sorted']
     parent.destroy() #.runwindow.resetframe()
 def inherit(self,parent=None,attr=None):
     """This function brings these attributes from the parent, to inherit
