@@ -2914,6 +2914,7 @@ class Check():
         """Get subcheck"""
 >>>>>>> cleanup
         # if None not in [cvt, ps, profile, check]: #is this needed?
+        self.status.build() #makestatusdict()
         self.status.makegroupok()
         group=self.status.group()
         if cvt == 'T':
