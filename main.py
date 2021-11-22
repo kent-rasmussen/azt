@@ -3088,8 +3088,9 @@ class Check():
                                     )
             buttonFrame1.grid(column=0, row=0)
     def getlocations(self):
+        """This builds from LIFT"""
         self.locations=[]
-        for senseid in self.senseidstosort:
+        for senseid in self.slices.senseids():
             for location in [i for i in self.db.get('locationfield',
                 senseid=senseid, showurl=True).get('text') if i is not None]:
                 self.locations+=[location]
