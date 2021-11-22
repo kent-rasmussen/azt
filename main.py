@@ -6588,12 +6588,12 @@ class MainApplication(Frame):
                         ),command=lambda x=check:Check.tonegroupreport(x,
                                                             bylocation=True))
         reportmenu.add_command(label=_("Basic Vowel report (to file)"),
-                        command=lambda x=check:Check.basicreport(x,typestodo=['V']))
+                        command=lambda x=check:Check.basicreport(x,cvtstodo=['V']))
         reportmenu.add_command(label=_("Basic Consonant report (to file)"),
-                        command=lambda x=check:Check.basicreport(x,typestodo=['C']))
+                        command=lambda x=check:Check.basicreport(x,cvtstodo=['C']))
         reportmenu.add_command(label=_("Basic report on Consonants and Vowels "
                                                                 "(to file)"),
-                command=lambda x=check:Check.basicreport(x,typestodo=['C','V']))
+                command=lambda x=check:Check.basicreport(x,cvtstodo=['C','V']))
         domenu.add_cascade(label=_("Reports"), menu=reportmenu)
         recordmenu = Menu(self.menubar, tearoff=0)
         recordmenu.add_command(label=_("Sound Card Settings"),
