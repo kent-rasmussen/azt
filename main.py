@@ -2922,7 +2922,7 @@ class Check():
                 text=_("I can't find any checks for type {}, ps {}, profile {}."
                         " Probably that means there is a problem with your "
                         " settings, or with your syllable profile analysis"
-                        "".format(self.type,self.ps,self.profile))
+                        "".format(cvt,ps,profile))
                 cmd=window.destroy
             Label(window.frame, text=text).grid(column=0, row=0, ipady=25)
             b=Button(window.frame, text=btext,
@@ -2936,18 +2936,19 @@ class Check():
             b2.grid(column=1, row=1,sticky='')
             b.wait_window(window)
         elif guess is True:
-            self.setcheck(self.checkspossible[0],window) #just pick the first, for now
+            self.status.makecheckok(tosort=tosort,wsorted=wsorted)
         else:
             text=_('What check do you want to do?')
             Label(window.frame, text=text).grid(column=0, row=0)
             buttonFrame1=ScrollingButtonFrame(window.frame,
-                                    self.checkspossible,
+                                    checks,
                                     self.setcheck,
                                     window
                                     )
             buttonFrame1.grid(column=0, row=4)
             buttonFrame1.wait_window(window)
-        if self.name is not None:
+        """Make sure we got a value"""
+        if not self.status.ischeckok():
             return 1
     def getexamplespergrouptorecord(self):
         log.info("this sets the number of examples per group to record")
@@ -3000,8 +3001,12 @@ class Check():
         buttonFrame1.wait_window(window)
     def getframedtonegroup(self,window,event=None,guess=False,comparison=False):
         """Window is called in getsubcheck"""
-        if (None in [self.type, self.ps, self.profile, self.name]
-                or self.type != 'T'):
+        cvt=params.cvt()
+        ps=slices.ps()
+        profile=slices.profile()
+        check=params.check()
+        if (None in [cvt, ps, profile, check]
+                or cvt != 'T'):
             Label(window.frame,
                           text="You need to set "
                           "\nCheck type (as Tone, currently {}) "
@@ -3009,24 +3014,24 @@ class Check():
                           "\nSyllable Profile (currently {}), and "
                           "\nTone Frame (currently {})"
                           "\nBefore this function will do anything!"
-                          "".format(self.typedict[self.type]['sg'], self.ps,
-                          self.profile, self.name)).grid(column=0, row=0)
+                          "".format(self.params.typedict()[cvt]['sg'], ps,
+                          profile, check)).grid(column=0, row=0)
             return 1
         else:
-            g=self.status[self.type][self.ps][self.profile][self.name]['groups']
+            g=self.status.groups()
             if len(g) == 0:
                 Label(window.frame,
                           text="It looks like you haven't sorted {}-{} lexemes "
                           "into any groups in the ‘{}’ frame yet."
-                          "".format(self.ps,self.profile,self.name)
+                          "".format(ps,profile,check)
                           ).grid(column=0, row=0)
             elif guess == True:
                 self.setsubcheck(g[0],window) #don't ask, just set
             else:
                 Label(window.frame,
                           text="What {}-{} tone group in the ‘{}’ frame do "
-                          "you want to work with?".format(self.ps,self.profile,
-                          self.name)).grid(column=0, row=0)
+                          "you want to work with?".format(ps,profile,
+                          check)).grid(column=0, row=0)
                 window.scroll=Frame(window.frame)
                 window.scroll.grid(column=0, row=1)
                 if comparison is False:
@@ -3042,14 +3047,13 @@ class Check():
     def getV(self,window,event=None):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getsubcheck"""
-        if self.ps is None:
+        if ps is None:
             Label(window.frame,
                           text='Error: please set Grammatical category first! ('
-                          +str(self.ps)+')'
+                          +str(ps)+')'
                           ).grid(column=0, row=0)
         else:
             # Label(window.frame,
-            #               text='Working with Grammatical category: '+self.ps
             #               ).grid(column=0, row=0)
             Label(window.frame,
                           text='What Vowel do you want to work with?'
@@ -3058,22 +3062,21 @@ class Check():
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ScrollingButtonFrame(window.scroll,
                                      #self.db.v[self.analang],
-                                     self.scount[self.ps][self.type],
+                                     self.scount[ps][cvt],
                                      self.setsubcheck,
                                      window=window
                                      ).grid(column=0, row=4)
     def getC(self,window,event=None):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getsubcheck"""
-        if self.ps is None:
+        if ps is None:
             text=_('Error: please set Grammatical category first! ')+'('
-            +str(self.ps)+')'
+            +str(ps)+')'
             Label(window.frame,
                           text=text
                           ).grid(column=0, row=0)
         else:
             # Label(window.frame,
-            #               text='Working with Grammatical category: '+self.ps
             #               ).grid(column=0, row=0)
             Label(window.frame,
                           text='What consonant do you want to work with?'
@@ -3082,7 +3085,7 @@ class Check():
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ScrollingButtonFrame(window.scroll,
                                     # self.db.c[self.analang],
-                                    self.scount[self.ps][self.type],
+                                    self.scount[ps][cvt],
                                     self.setsubcheck,
                                     window=window
                                     )
