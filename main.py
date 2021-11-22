@@ -4690,7 +4690,7 @@ class Check():
         buttonframes.grid(row=1,column=0,sticky='w')
         row=0
         done=list()
-        for senseid in self.profilesbysense[self.ps][self.profile]:
+        for senseid in self.profilesbysense[ps][profile]:
             sense={}
             sense['column']=0
             sense['row']=row
@@ -4743,23 +4743,19 @@ class Check():
     def showentryformstorecord(self,justone=True):
         # Save these values before iterating over them
         #Convert to iterate over local variables
-        psori=self.ps
-        profileori=self.profile
         self.getrunwindow()
         if justone==True:
             self.showentryformstorecordpage()
         else:
-            for psprofile in self.profilecountsValid:
+            for psprofile in self.status.valid(): #self.profilecountsValid:
                 if self.runwindow.exitFlag.istrue():
                     return 1
-                self.ps=psprofile[2]
-                self.profile=psprofile[1]
+                ps=psprofile[2]
+                profile=psprofile[1]
                 nextb=Button(self.runwindow,text=_("Next Group"),
                                         cmd=self.runwindow.resetframe) # .frame.destroy
                 nextb.grid(row=0,column=1,sticky='ne')
-                self.showentryformstorecordpage()
-            self.ps=psori
-            self.profile=profileori
+                self.showentryformstorecordpage(ps=ps,profile=profile)
         self.donewpyaudio()
     def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
         def setskip(event):
@@ -4815,7 +4811,7 @@ class Check():
                 progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
             titleframed=self.datadict.getframeddata(senseid)
-            titleframed.setframe(self.name)
+            titleframed.setframe(check)
             if titleframed.analang is None:
                 entryframe.destroy() #is this ever needed?
                 continue
