@@ -6116,6 +6116,7 @@ class FramedData(object):
         #defaults to set upfront
         self.tonegroups=None
         self.tonegroup=None
+        self.senseid=None
         """Build dual logic here. We use this to frame senses & examples"""
         if isinstance(source,lift.ET.Element):
             self.noframe=True #Examples should already be framed
