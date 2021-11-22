@@ -319,7 +319,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if framed is not None:
             forms=framed.framed #because this should always be framed
             glosslangs=framed.glosslangs
-        framed=kwargs.get('framed') #This an object with values
         formvaluenode=self.get("example/form/text", senseid=senseid,
                         analang=analang, location=location, showurl=True).get('node')
         if len(formvaluenode)>0:
