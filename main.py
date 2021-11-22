@@ -210,7 +210,12 @@ class Check():
 >>>>>>> implement slices
         self.setnamesall() #sets self.checknamesall
         self.loadsettingsfile(setting='status')
+<<<<<<< HEAD
         self.makestatus()
+=======
+        if not hasattr(self,'status'): #I.e., not loaded from file
+            self.status=StatusDict(self.params, self.slices, {})
+>>>>>>> make sure status dict is there
         #This can wait until runcheck, right?
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
 <<<<<<< HEAD
