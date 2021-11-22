@@ -8361,8 +8361,9 @@ class SliceDict(dict):
     def count(self):
         return self[(self._profile,self._ps)]
     def makepsok(self):
-        if not(hasattr(self,'_ps') and self._ps in self._pss):
-            self.ps(self._pss[0])
+        pss=self.pss()
+        if not hasattr(self,'_ps') or self._ps not in pss:
+            self.ps(pss[0])
     def makeprofileok(self):
         if not hasattr(self,'_ps'):
             self.makepsok()
