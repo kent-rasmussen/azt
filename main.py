@@ -5298,7 +5298,7 @@ class Check():
         log.info('Groups set up; adding senseids to groups now. ({})'.format(groups.keys()))
         return groups
     def senseidstogroupUFs(self,output,groups):
-        for senseid in self.senseidstosort:
+        for senseid in self.status.senseids():
             for group in groups:
                 if str(output[senseid]) == str(groups[group]['values']):
                     groups[group]['senseids']+=[senseid]
@@ -5339,7 +5339,7 @@ class Check():
         log.info("Starting report...")
         self.storesettingsfile()
         self.getrunwindow()
-        bits=[str(self.reportbasefilename),self.ps,self.profile,"ToneReport"]
+        bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
         if default == False:
             bits.append('mod')
         self.tonereportfile='_'.join(bits)+".txt"
@@ -5399,7 +5399,7 @@ class Check():
         "this report is distinct from the others, in terms of its grouping "
         "across the multiple frames used. Sound files should be available "
         "through links, if the audio directory with those files is in the same "
-        "directory as this file.".format(self.ps,self.locations,
+        "directory as this file.".format(ps,self.locations,
                                             self.program['name']))
         p1=xlp.Paragraph(s1,text=text)
         text=_("As a warning to the analyst who may not understand the "
