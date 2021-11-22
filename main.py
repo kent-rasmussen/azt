@@ -4312,6 +4312,7 @@ class Check():
                         "".format(self.groupselected))
                         "".format(groupselected))
             exit()
+        check=self.params.check()
         log.debug("Adding {} value to {} location in 'tone' fieldtype, "
                 "senseid: {} guid: {} (in main_lift.py)".format(
                     groupselected,
