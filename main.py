@@ -1366,6 +1366,9 @@ class Check():
     def setprofile(self,choice,window):
         self.slices.profile(choice)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> new attribute paradigm
         self.attrschanged.append('profile')
         self.refreshattributechanges()
         window.destroy()
@@ -1373,6 +1376,7 @@ class Check():
         self.params.cvt(choice)
         self.attrschanged.append('cvt')
         self.refreshattributechanges()
+<<<<<<< HEAD
         window.destroy()
 =======
         window.destroy()
@@ -1380,6 +1384,9 @@ class Check():
     def settype(self,choice,window):
         self.set('type',choice,window)
 >>>>>>> implement slices
+=======
+        window.destroy()
+>>>>>>> new attribute paradigm
     def setanalang(self,choice,window):
         self.set('analang',choice,window)
     def setgroup(self,choice,window):
@@ -1400,6 +1407,7 @@ class Check():
     def setglosslang(self,choice,window):
         self.glosslangs.lang1(choice)
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
         window.destroy()
@@ -1407,6 +1415,11 @@ class Check():
         window.destroy()
         self.checkcheck()
 >>>>>>> chose framed as addmodexamplefields attr
+=======
+        self.attrschanged.append('glosslangs')
+        self.refreshattributechanges()
+        window.destroy()
+>>>>>>> new attribute paradigm
     def setglosslang2(self,choice,window):
         if choice is not None:
             self.glosslangs.lang2(choice)
