@@ -7990,9 +7990,13 @@ class SliceDict(dict):
         self.pspriority()
 class StatusDict(dict):
     def store(self):
+        """This will just store to file; reading will come from check."""
         log.info("Saving status dict to file")
-        self.check.storesettingsfile(setting='status')
-    def dict(self):
+        config=ConfigParser()
+        config['status']=self #getattr(o,s)
+        with open(self._filename, "w", encoding='utf-8') as file:
+            config.write(file)
+    def dict(self): #needed?
         for k in self:
             v[k]=self[k]
         return v
