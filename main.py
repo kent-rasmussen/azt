@@ -1186,6 +1186,37 @@ class Check():
                                                                         window)
         buttonFrame1.grid(column=0, row=1)
     """Set User Input"""
+    def refreshattributechanges(self):
+        """I need to think through these; what things must/should change when
+        one of these attributes change? Especially when we've changed a few...
+        """
+        self.status.build()
+        if 'cvt' in self.attrschanged:
+            self.status.renewchecks()
+            self.slices.makeprofileok()
+            self.attrschanged.remove('cvt')
+        if 'ps' in self.attrschanged:
+            t=self.params.cvt()
+            if t == 'T':
+                self.status.renewchecks()
+            self.attrschanged.remove('ps')
+        if 'profile' in self.attrschanged:
+            self.newattr.remove('profile')
+        if 'check' in self.attrschanged:
+            self.attrschanged.remove('check')
+        soundattrs=['fs',
+                    'sample_format',
+                    'audio_card_index',
+                    'audioout_card_index'
+                    ]
+        soundattrschanged=set(soundattrs) & set(self.attrschanged)
+        for a in soundattrschanged:
+            self.storesettingsfile(setting='soundsettings')
+            self.attrschanged.remove(a)
+            break
+        if self.attrschanged != []:
+            log.error("Remaining changed attribute! ({})".format(
+                                                        self.attrschanged))
     def set(self,attribute,choice,window=None,refresh=True):
         #Normally, pass the attribute through the button frame,
         #otherwise, don't set window (which would be destroyed)
@@ -1196,31 +1227,15 @@ class Check():
             window.destroy()
         if not hasattr(self,attribute) or getattr(self,attribute) != choice: #only set if different
             setattr(self,attribute,choice)
+            self.attrschanged.append(attribute)
             """If there's something getting reset that shouldn't be, remove it
             from self.defaultstoclear[attribute]"""
             self.cleardefaults(attribute)
             if attribute in ['analang',  #do the last two cause problems?
                                 'interpret','distinguish']:
                 self.reloadprofiledata()
-            elif attribute == 'type':
-                self.makestatusdicttype()
-                if (choice != 'T' and
-                        not set(self.profilelegit).issuperset(self.profile)):
-                    self.nextprofile()
-            elif attribute == 'ps': #only here
-                self.makestatusdictps()
-                self.getprofilestodo()
-            elif attribute == 'profile': #only here
-                self.makestatusdictprofile()
-                self.getframestodo()
-            elif attribute == 'name' and self.type == 'T':
-                #This can probably wait until runcheck
-                self.settonevariablesbypsprofile() #only on changing tone frame
-            elif attribute in ['fs','sample_format','audio_card_index',
-                        'audioout_card_index']: #called in soundcheckrefreshdone
-                self.storesettingsfile(setting='soundsettings')
-            if refresh == True:
-                self.checkcheck()
+            elif refresh == True:
+                self.refreshattributechanges()
         else:
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setinterfacelangwrapper(self,choice,window):
@@ -1229,30 +1244,38 @@ class Check():
         self.set('interfacelang',choice,window) #set variable for the future
         self.storesettingsfile() #>xyz.CheckDefaults.py
         self.parent.maketitle() #because otherwise, this stays as is...
-        self.checkcheck()
     def setprofile(self,choice,window):
         self.slices.profile(choice)
+        self.attrschanged.append('profile')
+        self.refreshattributechanges()
         window.destroy()
-        self.checkcheck()
-    def settype(self,choice,window):
-        self.set('type',choice,window)
+    def setcvt(self,choice,window):
+        self.params.cvt(choice)
+        self.attrschanged.append('cvt')
+        self.refreshattributechanges()
+        window.destroy()
     def setanalang(self,choice,window):
         self.set('analang',choice,window)
-    def setsubcheck(self,choice,window):
-        log.debug("subcheck: {}".format(self.subcheck))
-        self.set('subcheck',choice,window)
-        log.debug("subcheck: {}".format(self.subcheck))
+    def setgroup(self,choice,window):
+        log.debug("group: {}".format(group))
+        self.status.group(choice)
+        # self.set('subcheck',choice,window)
+        log.debug("group: {}".format(group))
     def setsubcheck_comparison(self,choice,window):
         if hasattr(self,'subcheck_comparison'):
             log.debug("subcheck_comparison: {}".format(self.subcheck_comparison))
         self.set('subcheck_comparison',choice,window,refresh=False)
         log.debug("subcheck_comparison: {}".format(self.subcheck_comparison))
     def setcheck(self,choice,window):
-        self.set('name',choice,window)
+        self.params.check(choice)
+        self.attrschanged.append('check')
+        self.refreshattributechanges()
+        window.destroy()
     def setglosslang(self,choice,window):
         self.glosslangs.lang1(choice)
+        self.attrschanged.append('glosslangs')
+        self.refreshattributechanges()
         window.destroy()
-        self.checkcheck()
     def setglosslang2(self,choice,window):
         if choice is not None:
             self.glosslangs.lang2(choice)
