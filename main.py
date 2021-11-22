@@ -6326,7 +6326,7 @@ class Window(tkinter.Toplevel):
             print(parent)
             print(window)
             print ("    parent.name: "+parentname)
-            print ("    self.name: "+selfname)
+            print ("    check: "+selfname)
             log.info("End current window descriptions")
         self.iconphoto(False, self.photo['icon']) #don't want this transparent
         self.title(title)
