@@ -8412,6 +8412,7 @@ class SliceDict(dict):
 =======
 =======
         return self._ps
+<<<<<<< HEAD
 >>>>>>> implement slices
     def nextprofile(self):
         self.makeprofileok()
@@ -8425,6 +8426,8 @@ class SliceDict(dict):
     def slicepriority(self):
 >>>>>>> parameter dictionary classes
 =======
+=======
+>>>>>>> elsewhere
     def slicepriority(self,arg=None):
         """arg is to throw away, rather than break a fn where others get
         and set. This is now calculated, not read from file and set here."""
