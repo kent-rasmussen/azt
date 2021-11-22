@@ -281,6 +281,7 @@ class Check():
                     self.loadandconvertlegacysettingsfile(setting=setting)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     def checkforlegacyverification(self):
         start_time=time.time()
         n=0
@@ -296,6 +297,8 @@ class Check():
         log.info("Found {} legacy verification nodes in {} seconds".format(n,
                                                 time.time()-start_time))
 =======
+=======
+>>>>>>> make new stuff fns
     """This should each be done only once, to make the objects from settings"""
     """self.profilesbysense and self.profilecounts are loaded from file, or
     created by analysis in init()"""
@@ -324,9 +327,12 @@ class Check():
                                 self.status
                                 )
         log.info("makestatus status type: {}".format(type(self.status)))
+<<<<<<< HEAD
 >>>>>>> make new stuff fns
 =======
 >>>>>>> upgrade settings parser
+=======
+>>>>>>> make new stuff fns
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
@@ -421,12 +427,17 @@ class Check():
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def getpss(self):
 <<<<<<< HEAD
+<<<<<<< HEAD
         pss=self.slices.pss() #make this one line, remove pss
         return pss
 =======
         self.pss=self.slices.pss() #make this one line, remove self.pss
         return self.pss
 >>>>>>> implement slices
+=======
+        pss=self.slices.pss() #make this one line, remove pss
+        return pss
+>>>>>>> make new stuff fns
         #Why rebuild this here?
     def nextps(self,guess=False):
         """Make this smarter, but for now, just take value from the most
