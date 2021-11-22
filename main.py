@@ -433,15 +433,19 @@ class Check():
         populous tuple"""
         return self.slices.nextps()
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     def nextprofile(self,guess=False):
         return self.slices.nextprofile()
 >>>>>>> make old fns into wrappers
+=======
+>>>>>>> next frame and profile
     def nextframe(self,sort=True,guess=False):
         if len(todo) == 0:
             log.info("No frames to do; asking to define another one")
             self.addframe() #The above should change check, if completed.
             return
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
         log.info("Frames to do: {} (sort={})".format(todo,sort))
@@ -463,6 +467,8 @@ class Check():
             default()
     def nextsubcheck(self,guess=False):
 >>>>>>> selfless
+=======
+>>>>>>> next frame and profile
     def nextgroup(self,guess=False):
         def default():
             self.set('subcheck',priorities[0])
