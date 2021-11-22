@@ -8449,12 +8449,43 @@ def findpraat():
     praat=praat.decode("utf-8").strip()
     log.info("Praat found at {}".format(praat))
     program['praatisthere']=True
-    return praat
+    program['praat']=praat
+def findpath():
+    spargs={
+            'shell' : False
+            }
+    path=subprocess.check_output(["echo","%PATH%"], **spargs)
+    log.info("Windows PATH is {}".format(path))
+def findhg():
+    findpath()
+    log.info("Looking for Mercurial (Hg)...")
+    spargs={
+            'shell' : False
+            }
+    program['hgisthere']=False
+    try: #am I on typical Linux?
+        hg=subprocess.check_output(["which","hg"], **spargs)
+    except Exception as e:
+        log.info("No Mercurial found! ({})".format(e))
+        try: #am I on typical MS Windows?
+            hg=subprocess.check_output(["where.exe","Hg.exe"], **spargs)
+        except Exception as e:
+            log.info("No Hg.exe found! ({})".format(e))
+            try: #am I on typical Mac OS?
+                hg=subprocess.check_output(["which","Hg"], **spargs)
+            except Exception as e:
+                log.info("No Mercurial found! ({})".format(e))
+                return
+    hg=hg.decode("utf-8").strip()
+    log.info("Praat found at {}".format(hg))
+    program['hgisthere']=True
+    program['hg']=hg
 def praatopen(file,event=None):
     if program['praatisthere']:
         log.info(_("Trying to call Praat at {}...").format(praat))
     else:
         log.info(_("Looks like I couln't find Praat..."))
+    #This should use the actual executable found earlier...
     praatargs=[praat, "--open", file]
     try:
         subprocess.Popen(praatargs,shell=False) #not run; continue here
@@ -8611,7 +8642,8 @@ if __name__ == "__main__":
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    praat=findpraat()
+    findpraat()
+    findhg()
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         mainproblem()
