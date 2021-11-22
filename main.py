@@ -1307,25 +1307,27 @@ class Check():
         self.checkcheck()
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
-    def getsubcheck(self,guess=False,event=None,comparison=False):
+    def getgroup(self,guess=False,cvt=None,event=None,comparison=False):
         log.info("this sets the subcheck")
-        if self.type == "V":
+        self.refreshattributechanges()
+        if cvt is None:
+            cvt=self.params.cvt()
+        if cvt == "V":
             w=Window(self.frame,title=_('Select Vowel'))
             self.getV(window=w)
             w.wait_window(window=w)
-        elif self.type == "C":
+        elif cvt == "C":
             w=Window(self.frame,title=_('Select Consonant'))
             self.getC(w)
             self.frame.wait_window(window=w)
-        elif self.type == "CV":
+        elif cvt == "CV":
             CV=''
-            for self.type in ['C','V']:
-                self.getsubcheck()
-                CV+=self.subcheck
-            self.subcheck=CV
-            self.type = "CV"
-            self.checkcheck()
-        elif self.type == "T":
+            for cvt in ['C','V']:
+                self.getsubcheck(cvt=cvt)
+                CV+=group
+            group=CV
+            cvt = "CV"
+        elif cvt == "T":
             w=Window(self.frame,title=_('Select Framed Tone Group'))
             self.getframedtonegroup(window=w,guess=guess,
                                                         comparison=comparison)
@@ -1333,6 +1335,7 @@ class Check():
         return w #so others can wait for this
     def getps(self,event=None):
         log.info("Asking for ps...")
+        self.refreshattributechanges()
         window=Window(self.frame, title=_('Select Grammatical Category'))
         Label(window.frame, text=_('What grammatical category do you '
                                     'want to work with (Part of speech)?')
