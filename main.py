@@ -6049,7 +6049,8 @@ class FramedData(object):
         else:
             self.noframe()
     def gettonegroup(self):
-        if self.location is not None:
+        """This is only done by parsesense. parseexample gets it otherwise."""
+        if None not in [self.location,self.senseid]:
             self.tonegroups=self.db.get('example/tonefield/form/text',
                             senseid=senseid, location=self.location).get('text')
     def tonegroup(self):
