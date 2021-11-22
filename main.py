@@ -202,6 +202,7 @@ class Check():
         #This can wait until runcheck, right?
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
 <<<<<<< HEAD
+<<<<<<< HEAD
         if not hasattr(self,'glosslangs'):
         self.makeglosslangs()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
@@ -210,6 +211,10 @@ class Check():
         self.glosslangs=Glosslangs(None,None)
         self.guessglosslangs() #needed for the following
 >>>>>>> chose framed as addmodexamplefields attr
+=======
+        if not hasattr(self,'glosslangs'):
+            self.guessglosslangs() #needed for the following
+>>>>>>> glosslangs implementation
         self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
@@ -3005,6 +3010,9 @@ class Check():
         log.info("this sets the gloss")
         window=Window(self.frame,title='Select Gloss Language')
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> glosslangs implementation
         text=_('What other language do you want to use for glosses?')
         Label(window.frame,text=text).grid(column=0, row=1)
         langs=list()
@@ -3017,6 +3025,7 @@ class Check():
         buttonFrame1=ButtonFrame(window.frame,langs,self.setglosslang2,
                                  window
                                  ).grid(column=0, row=4)
+<<<<<<< HEAD
 =======
         if self.db.filename is None :
             text=_('Error: please set Lift file first!')+' ('
@@ -3036,6 +3045,8 @@ class Check():
                                      window
                                      ).grid(column=0, row=4)
 >>>>>>> chose framed as addmodexamplefields attr
+=======
+>>>>>>> glosslangs implementation
     def getcheckspossible(self):
         """This splits by tone or not, because the checks available for
         segments depend on the number of segments in the selected syllable
@@ -4887,10 +4898,14 @@ class Check():
                 sense['gloss'].append(firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
 <<<<<<< HEAD
+<<<<<<< HEAD
                                                 glosslang=lang
 =======
                                                 glosslang=self.glosslang
 >>>>>>> chose framed as addmodexamplefields attr
+=======
+                                                glosslang=lang
+>>>>>>> glosslangs implementation
                                                 ),othersOK=True))
             if self.db.pluralname is not None:
                 sense['plnode']=firstoflist(self.db.get('field',
@@ -5013,8 +5028,13 @@ class Check():
                 probably make this a function, like getframeddata"""
                 text=framed.formatted()
                 rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
+<<<<<<< HEAD
                                     form=nn(framed.forms[self.analang]),
                                     gloss=nn(framed.forms[self.glosslang])
+=======
+                                    form=nn(framed[self.analang]),
+                                    gloss=nn(framed[self.glosslangs[0]])
+>>>>>>> glosslangs implementation
                                     ) #no gloss2; form/gloss just for filename
                 rb.grid(row=row,column=0,sticky='w')
                 Label(examplesframe, anchor='w',text=text
