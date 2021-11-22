@@ -4474,8 +4474,8 @@ class Check():
         sticky=kwargs.pop('sticky',"ew")
         example=self.getex(group,notonegroup=notonegroup,renew=renew)
         if example is None:
-            log.error("Apparently the example for tone group {} in frame {} "
-                        "came back {}".format(group,self.name,example))
+            log.error("Apparently the example for tone group {} in check {} "
+                        "came back {}".format(group,check,example))
             return
         renew=kwargs.pop('renew',False)
         if renew is True:
@@ -4483,10 +4483,10 @@ class Check():
                     "".format(group,self.exs[group],example['n']))
             del self.exs[group]
         framed=example['framed']
-        framed.setframe(self.name)
+        framed.setframe(check)
         if framed is None:
             log.error("Apparently the framed example for tone group {} in "
-                        "frame {} came back {}".format(group,self.name,example))
+                        "frame {} came back {}".format(group,check,example))
             return
         text=framed.formatted()
         """This should maybe be brought up a level in frames?"""
