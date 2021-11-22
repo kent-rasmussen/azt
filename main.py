@@ -945,12 +945,8 @@ class Check():
         whether french is gloss or gloss2."""
         """self.toneframes should not use 'form' or 'gloss' anymore."""
         def chk():
-            namevar=name.get()
-            # self.name is set here --I need it to correctly test the frames
-            # created...
-            self.nameori=self.name
-            self.name=str(namevar)
-            if self.name in ['', None]:
+            checktoadd=str(name.get())
+            if checktoadd in ['', None]:
                 text=_('Sorry, empty name! \nPlease provide at least \na frame '
                     'name, to distinguish it \nfrom other frames.')
                 print(re.sub('\n','',text))
@@ -964,15 +960,20 @@ class Check():
                         justify=tkinter.LEFT,anchor='w')
                 l1.grid(row=0,column=columnleft,sticky='w')
                 return
+<<<<<<< HEAD
             log.info('self.name:{}'.format(self.name))
             if self.toneframes is None:
                 self.toneframes={}
             if not self.ps in self.toneframes:
                 self.toneframes[self.ps]={}
             self.toneframes[self.ps][self.name]={}
+=======
+>>>>>>> chk selfless
             """Define the new frame"""
-            frame=self.toneframes[self.ps][self.name]
+            checkdefntoadd={}
+            checkdefntoadd['field']='lc' #update this with radio!
             for lang in langs:
+<<<<<<< HEAD
                 db['before'][lang]['text']=db['before'][lang][
                                                             'entryfield'].get()
                 db['after'][lang]['text']=db['after'][lang][
@@ -1009,6 +1010,19 @@ class Check():
                 #At this point, remove this frame (in case we don't submit it)
                 del self.toneframes[self.ps][self.name]
                 self.name=self.nameori
+=======
+                before=db['before'][lang]['entryfield'].get()
+                after=db['after'][lang]['entryfield'].get()
+                checkdefntoadd[lang]=str(
+                    before+'__'+after)
+            self.toneframes.addframe(ps,checktoadd,checkdefntoadd)
+            senseid=self.gimmesenseid()
+            # This needs self.toneframes
+            framed=self.datadict.getframeddata(senseid)
+            framed.setframe(checktoadd)
+            #At this point, remove this frame (in case we don't submit it)
+            del self.toneframes[ps][checktoadd]
+>>>>>>> chk selfless
             """Display framed data"""
             if hasattr(self.addwindow,'framechk'):
                 self.addwindow.framechk.destroy()
@@ -1020,15 +1034,24 @@ class Check():
             pady=10
             row=0
             lt=Label(self.addwindow.framechk,
+<<<<<<< HEAD
                     text=text,
+=======
+                    text="Examples for {} tone frame".format(checktoadd),
+>>>>>>> chk selfless
                     font=self.fonts['readbig'],
                     justify=tkinter.LEFT,anchor='w')
             lt.grid(row=row,column=columnleft,sticky='w',columnspan=2,
                     padx=padx,pady=pady)
             for lang in langs:
                 row+=1
+<<<<<<< HEAD
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
                 tfd[lang]=('(ex: '+str(framed.forms.framed[lang])+')')
+=======
+                tf[lang]=('form[{}]: {}'.format(lang,checkdefntoadd[lang]))
+                tfd[lang]=('(ex: '+framed.forms.framed[lang]+')')
+>>>>>>> chk selfless
                 l1=Label(self.addwindow.framechk,
                         text=tf[lang],
                         font=self.fonts['read'],
@@ -1051,9 +1074,9 @@ class Check():
                         }   }
             """
             row+=1
-            stext=_('Use {} tone frame'.format(namevar))
+            stext=_('Use {} tone frame'.format(checktoadd))
             sub_btn=Button(self.addwindow.framechk,text = stext,
-                      command = lambda x=frame,n=namevar: submit(x,n))
+                      command = lambda x=checkdefntoadd,n=checktoadd: submit(x,n))
             sub_btn.grid(row=row,column=columnleft,sticky='w')
             log.info('sub_btn:{}'.format(stext))
             self.addwindow.scroll.tobottom()
