@@ -7902,12 +7902,15 @@ class SliceDict(dict):
     def pss(self):
         return self._pss
     def ps(self,ps=None):
-        if ps is not None:
+        pss=self.pss()
+        if ps is not None and ps in pss:
+            """This needs to renew checks, if t == 'T'"""
             self._ps=ps
-            self.profilepriority() #this is only done here, when ps changes.
-            # self.makestatusdictps()
-            # self.getprofilestodo()
-            self.makeprofileok()
+            self.makeprofileok() #keyed by ps
+            self.renewsenseids()
+        elif ps is not None:
+            log.error("You asked to change to ps {}, which isn't in the list "
+                        "of pss: {}".format(ps,pss))
         else:
             self.makepsok()
             return self._ps
