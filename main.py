@@ -8456,12 +8456,23 @@ def findpath():
             }
     try:
         path=os.getenv('PATH')
+        #CSIDL_COMMON_DESKTOPDIRECTORY
+        #CSIDL_DEFAULT_DESKTOP
+        # CSIDL_DESKTOPDIRECTORY
+        # CSIDL_DESKTOP
         #subprocess.check_output(["echo","%PATH%"], **spargs)
         log.info("Windows PATH is {}".format(path))
+        return path
     except Exception as e:
         log.info("No path found! ({})".format(e))
 def findhg():
-    findpath()
+    path=findpath()
+    paths=path.split(':')
+    log.info("path items: {}".format(paths))
+    for path in paths:
+        if path and file.exists(path):
+            log.info("path: {}".format(path))
+            array = os.listdir(path)
     log.info("Looking for Mercurial (Hg)...")
     spargs={
             'shell' : False
