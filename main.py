@@ -748,34 +748,34 @@ class Check():
             self.senseidstosort=[]
             for var in [x for x in vars if len(x.get()) >1]:
                 log.log(2,"var {}: {}".format(vars.index(var),var.get()))
-                self.senseidstosort.append(var.get())
-            log.log(2,"ids: {}".format(self.senseidstosort))
-            self.set('profile',profilevar.get(),refresh=False) #checkcheck below
+                ids.append(var.get())
+            log.log(2,"ids: {}".format(ids))
+            profile=profilevar.get()
+            self.set('profile',profile,refresh=False) #checkcheck below
             #Add to dictionaries before updating them below
             log.debug("profile: {}".format(profile))
             """Fix this!"""
             self.slices.adhoc(ids)#[ps][profile]=ids
             """Is this OK?!?"""
-            self.makecountssorted() #we need these to show up in the counts.
+            self.slices.updateslices()
             self.storesettingsfile(setting='profiledata')#since we changed this.
             #so we don't have to do this again after each profile analysis
             self.storesettingsfile(setting='adhocgroups')
-            self.checkcheck()
         self.getrunwindow()
-        if self.profile in [x[0] for x in self.profilecountsValid]:
-            title=_("New Ad Hoc Sort Group for {} Group".format(self.ps))
+        profile=self.slices.profile()
+        ps=self.slices.ps()
+        if profile in [x[0] for x in self.slices.profiles()]: #profilecountsValid]:
+            new=True
+            title=_("New Ad Hoc Sort Group for {} Group".format(ps))
         else:
-            title=_("Modify Existing Ad Hoc Sort Group for {} Group".format(
-                                                                    self.ps))
+            new=False
+            title=_("Modify Existing Ad Hoc Sort Group for {} Group".format(ps))
         self.runwindow.title(title)
         padx=50
         pady=10
         Label(self.runwindow.frame,text=title,font=self.fonts['title'],
                 ).grid(row=0,column=0,sticky='ew')
-        allpssensids=list()
-        for profile in self.profilesbysense[self.ps]:
-            allpssensids+=list(self.profilesbysense[self.ps][profile])
-        allpssensids=list(dict.fromkeys(allpssensids))
+        allpssensids=self.slices.senseidsbyps()
         if len(allpssensids)>70:
             self.runwindow.waitdone()
             text=_("This is a large group ({})! Are you in the right "
@@ -805,23 +805,22 @@ class Check():
                 # "\nIf you're looking at a group you created earlier, and "
                 "\nIf you want to create a new group, exit here, select a "
                 "non-Ad Hoc syllable profile, and try this window again."
-                "".format(self.ps))
+                "".format(ps))
         Label(self.runwindow.frame,text=text).grid(row=1,column=0,sticky='ew')
         qframe=Frame(self.runwindow.frame)
         qframe.grid(row=2,column=0,sticky='ew')
         text=_("What do you want to call this group for sorting {} words?"
-                "".format(self.ps))
+                "".format(ps))
         Label(qframe,text=text).grid(row=0,column=0,sticky='ew',pady=20)
-        if ((set(self.profilelegit).issuperset(self.profile)) or
-                                            (self.profile == "Invalid")):
+        if new:
             default=None
         else:
-            default=self.profile
+            default=profile
         profilevar=tkinter.StringVar(value=default)
         namefield = EntryField(qframe,textvariable=profilevar)
         namefield.grid(row=0,column=1)
-        text=_("Select the words below that you want in this group, then click "
-                "==>".format(self.ps))
+        text=_("Select the {} words below that you want in this group, then "
+                "click ==>".format(ps))
         Label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
         sub_btn=Button(qframe,text = _("OK"),
                   command = submitform,anchor ='c')
@@ -834,7 +833,7 @@ class Check():
                                                     allpssensids.index(id),row))
             idn=allpssensids.index(id)
             vars.append(tkinter.StringVar())
-            if id in self.profilesbysense[self.ps][self.profile]:
+            if id in self.slices.adhoc()[ps][profile]:
                 vars[idn].set(id)
             else:
                 vars[idn].set(0)
@@ -862,7 +861,7 @@ class Check():
             if lang == self.analang:
                 text=_("What is the form of the new {} "
                         "morpheme in {} \n(consonants and vowels only)?".format(
-                                    self.ps,
+                                    ps,
                                     self.languagenames[lang]))
                 ok=_('Use this form')
             elif lang in self.db.analangs:
@@ -870,7 +869,7 @@ class Check():
             else:
                 text=_("What does {} ({}) mean in {}?".format(
                                             self.runwindow.form[self.analang],
-                                            self.ps,
+                                            ps,
                                             self.languagenames[lang]))
                 ok=_('Use this {} gloss for {}'.format(self.languagenames[lang],
                                             self.runwindow.form[self.analang]))
@@ -901,7 +900,7 @@ class Check():
         padx=50
         pady=10
         self.runwindow.title(_("Add Morpheme to Dictionary"))
-        title=_("Add a {} {} morpheme to the dictionary").format(self.ps,
+        title=_("Add a {} {} morpheme to the dictionary").format(ps,
                             self.languagenames[self.analang])
         Label(self.runwindow,text=title,font=self.fonts['title'],
                 justify=tkinter.LEFT,anchor='c'
@@ -914,12 +913,13 @@ class Check():
                 makewindow(lang)
         """get the new senseid back from this function, which generates it"""
         if not self.runwindow.exitFlag.istrue(): #don't do this if exited
-            senseid=self.db.addentry(ps=self.ps,analang=self.analang,
+            senseid=self.db.addentry(ps=ps,analang=self.analang,
                             glosslangs=self.runwindow.glosslangs,
                             form=self.runwindow.form)
             # Update profile information in the running instance, and in the file.
             self.getprofileofsense(senseid)
-            self.updatecounts()
+            self.status.updateslices()
+            self.getscounts()
             self.storesettingsfile(setting='profiledata') #since we changed this.
             self.runwindow.destroy()
     def addframe(self):
