@@ -2001,6 +2001,7 @@ class Check():
                         row+=1
         pgw.wait_window(pgw)
         if changemarker.value and not self.exitFlag.istrue():
+            log.info("Changes called for (like it or not!), redoing analysis.")
             for lang in self.db.analangs:
                 for pc in vars[lang]:
                     for pg in vars[lang][pc]:
@@ -2048,14 +2049,11 @@ class Check():
             self.rx[c+'wd']=re.compile(c+'(?=\Z)')
     def profileofformpreferred(self,form):
         """Simplify combinations where desired"""
-        # log.debug("Simplfying {}...".format(form))
         for c in ['N','S','G','ʔ','D']:
             if self.distinguish[c] is False:
                 form=self.rx[c+'_'].sub('C',form)
-                # log.debug("{} regex result: {}".format(c,form))
             if self.distinguish[c+'wd'] is False:
                 form=self.rx[c+'wd'].sub('C',form)
-                # log.debug("{}wd regex result: {}".format(c,form))
         for cc in ['CG','CS','NC','VN','VV']:
             form=self.rx[cc].sub(self.interpret[cc],form)
         return form
