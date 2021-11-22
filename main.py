@@ -5258,7 +5258,7 @@ class Check():
         output={}
         locations=self.locations[:]
         # Collect location:value correspondences, by sense
-        for senseid in self.senseidstosort:
+        for senseid in self.status.senseids():
             output[senseid]={}
             for location in locations:
                 group=self.db.get("example/tonefield/form/text",
