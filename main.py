@@ -7970,7 +7970,6 @@ class StatusDict(dict):
                 self[cvt][ps][profile][check]['tosort']=True
                 changed=True
         if changed == True:
-    def __init__(self, checkparameters, slicedict, dict):
             self.store()
     def cull(self):
         """This iterates across the whole dictionary, and removes empty nodes.
