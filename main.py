@@ -6528,6 +6528,9 @@ class FramedData(object):
         return ' '.join(toformat) #put it all together
     def setframe(self,frame):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> setframe
         """This should never be done on an example, which should
         already be framed. Also, self.ps won't be defined, so you'll get
         a key error."""
@@ -6536,11 +6539,14 @@ class FramedData(object):
             self.applyframe()
         else:
             self.applynoframe() #enforce the docstring above
+<<<<<<< HEAD
 =======
         self.frame=self.frames[self.ps][frame]
         self.applyframe()
     def noframe(self):
 >>>>>>> new noframe
+=======
+>>>>>>> setframe
     def applynoframe(self):
         self.framed=self.forms
     def applyframe(self):
