@@ -1692,6 +1692,7 @@ class Check():
 >>>>>>> implement slices
         self.storesettingsfile(setting='status')
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         self.checkcheck()
 <<<<<<< HEAD
@@ -1706,6 +1707,8 @@ class Check():
 >>>>>>> upgrade settings parser
 =======
 >>>>>>> moved to class
+=======
+>>>>>>> cleanup
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
