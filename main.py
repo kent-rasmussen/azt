@@ -6439,6 +6439,9 @@ class Glosslangs(DataList):
         else:
             log.debug("Tried to set second glosslang, without first set.")
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> langs
     def langs(self,langs=None):
         if langs is None:
             return self
@@ -6447,8 +6450,11 @@ class Glosslangs(DataList):
                 del langs[1]
             self.clear()
             self.append(langs[:2])
+<<<<<<< HEAD
 =======
 >>>>>>> chose framed as addmodexamplefields attr
+=======
+>>>>>>> langs
     def rm(self,lang):
         """This could be either position, and if lang1 will promote lang2"""
         self.remove(lang)
