@@ -7897,6 +7897,35 @@ class SliceDict(dict):
         self.slicepriority()
         self.pspriority()
 class StatusDict(dict):
+    def senseidstosort(self,ps=None,profile=None):
+        return self._idstosort
+    def senseidssorted(self,ps=None,profile=None):
+        return self._idssorted
+    def renewsenseidstosort(self,todo,done):
+        """This takes arguments to remove and rebuild these lists"""
+        """todo and done should be lists of senseids"""
+        """this takes as arguments lists extracted from LIFT by the check"""
+        if not hasattr(self,'_idssorted'):
+            self._idssorted=[]
+        if not hasattr(self,'_idstosort'):
+            self._idstosort=[]
+        self._idssorted.clear()
+        self._idssorted.extend(done)
+        self._idstosort.clear()
+        self._idstosort.extend(todo)
+    def marksenseidsorted(self,senseid):
+        self._idssorted.append(senseid)
+        if senseid in self._idstosort:
+            self._idstosort.remove(senseid)
+        if not self._idstosort:
+            self.tosort(False)
+            log.info("Tosort now {} (marksenseidsorted)".format(self.tosort()))
+    def marksenseidtosort(self,senseid):
+        self._idstosort.append(senseid)
+        self.tosort(True)
+        log.info("Tosort now {} (marksenseidtosort)".format(self.tosort()))
+        if senseid in self._idssorted:
+            self._idssorted.remove(senseid)
     def store(self):
         """This will just store to file; reading will come from check."""
         log.info("Saving status dict to file")
