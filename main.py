@@ -5736,7 +5736,11 @@ class Check():
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
         #Convert to iterate over local variables
+<<<<<<< HEAD
         typeori=cvt
+=======
+        typeori=self.type
+>>>>>>> slice implementation
         psori=self.slices.ps()
         profileori=self.slices.profile()
         start_time=time.time() #move this to function?
@@ -8079,6 +8083,8 @@ class SliceDict(dict):
         else:
 =======
 class SliceDict(dict):
+    def count(self):
+        return self[(self._profile,self._ps)]
     def makepsok(self):
         if not(hasattr(self,'_ps') and self._ps in self._pss):
             self.ps(self._pss[0])
@@ -8173,7 +8179,17 @@ class SliceDict(dict):
         if slicesbyhzbyps is not None:
             self._profiles=list(dict.fromkeys([x[0][0]
                                 for x in slicesbyhzbyps]))[:self.maxprofiles]
+<<<<<<< HEAD
 >>>>>>> parameter dictionary classes
+=======
+    def valid(self, ps=None):
+        if ps is None:
+            return self._valid
+        elif ps in self._validbyps:
+            return self._validbyps[ps]
+        else:
+            log.error("You asked for valid ps data, but that ps isn't there.")
+>>>>>>> slice implementation
     def validate(self):
         self._valid={}
         self._validbyps={}
