@@ -2865,7 +2865,6 @@ class Check():
                                      ).grid(column=0, row=4)
     def getglosslang(self,event=None):
         log.info("this sets the gloss")
-        # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title=_('Select Gloss Language'))
         Label(window.frame,
                   text=_('What Language do you want to use for glosses?')
@@ -2879,7 +2878,6 @@ class Check():
                                  ).grid(column=0, row=4)
     def getglosslang2(self,event=None):
         log.info("this sets the gloss")
-        # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title='Select Gloss Language')
         text=_('What other language do you want to use for glosses?')
         Label(window.frame,text=text).grid(column=0, row=1)
@@ -2897,10 +2895,6 @@ class Check():
         """This splits by tone or not, because the checks available for
         segments depend on the number of segments in the selected syllable
         profile, but for tone, they don't; tone frames depend only on ps."""
-        if self.type=='T': #if it's a tone check, get from frames.
-            self.checkspossible=self.framenamesbyps(self.ps)
-        else:
-            self.checkspossible=self.setnamesbyprofile() #tuples of CV checks
         self.status.renewchecks()
         self.status.checks()
     def getcheck(self,guess=False,tosort=False,wsorted=False,event=None):
