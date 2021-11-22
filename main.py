@@ -4479,7 +4479,7 @@ class Check():
             text=_("Not Trying Again; set a tone frame first!")
             Label(self.runwindow.frame, text=text).grid(row=0,column=0)
             return
-        for senseid in self.senseidstosort: #this is a ps-profile slice
+        for senseid in senseids: #this is a ps-profile slice
             self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
                             location=check,fieldvalue='', #just clear this
                             oldfieldvalue='NA', showurl=True #if this
