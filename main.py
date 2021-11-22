@@ -2158,9 +2158,6 @@ class Check():
         log.log(3,"setting button relief to {}, with refresh={}".format(relief,
                                                                     refresh))
         self.mainrelief=relief # None "raised" "groove" "sunken" "ridge" "flat"
-        if refresh == True:
-            self.checkcheck()
-    def checkcheck(self):
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
