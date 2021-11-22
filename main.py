@@ -416,6 +416,11 @@ class Check():
         """Make this smarter, but for now, just take value from the most
         populous tuple"""
         return self.slices.nextps()
+<<<<<<< HEAD
+=======
+    def nextprofile(self,guess=False):
+        return self.slices.nextprofile()
+>>>>>>> make old fns into wrappers
     def nextframe(self,sort=True,guess=False):
         if len(todo) == 0:
             log.info("No frames to do; asking to define another one")
