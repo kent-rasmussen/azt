@@ -5500,7 +5500,6 @@ class Check():
                 for senseid in toreport[group]: #groups[group]['senseids']:
                     #This is for window/text output only, not in XLP file
                     framed=self.datadict.getframeddata(senseid)
-                    # framed.setframe(self.name) #not needed here, I think
                     text=framed.formatted(noframe=True, notonegroup=True)
                     #This is put in XLP file:
                     examples=self.db.get('example',senseid=senseid).get()
@@ -5525,8 +5524,8 @@ class Check():
             if bylocation == True:
                 reporttype='Tone-bylocation'
         elif not re.search('Basic',reporttype): #We don't want this in the title
-            reporttype=str(self.name)
-        reporttype=' '.join([self.ps,self.profile,reporttype])
+            reporttype=str(check)
+        reporttype=' '.join([ps,profile,reporttype])
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
         if default == False:
             bits.append('mod')
