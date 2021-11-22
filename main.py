@@ -7977,6 +7977,71 @@ class SliceDict(dict):
             self._validbyps[ps]=[x for x in self._valid if x[1] == ps]
         log.info("valid: {}".format(self._valid))
         log.info("validbyps: {}".format(self._validbyps))
+    def inslice(self,senseids):
+        senseidstochange=set(self._senseids).intersection(senseids)
+        return senseidstochange
+    def senseids(self,ps=None,profile=None):
+        """This returns an up to date list of senseids in the curent slice, or
+        else the specified slice"""
+        # list(self._senseidsbyps[self._ps][self._profile])
+        if ps is None and profile is None:
+            return self._senseids #this is always the current slice
+        else:
+            if ps is None:
+                ps=self._ps
+            if profile is None:
+                profile=self._profile
+            return list(self._profilesbysense[ps][profile]) #specified slice
+    def senseidsbyps(self,ps):
+        return self._senseidsbyps[ps]
+    def makesenseidsbyps(self):
+        """These are not distinguished by profile, just ps"""
+        self._senseidsbyps={}
+        for ps in self._profilesbysense:
+            self._senseidsbyps[ps]=[]
+            for prof in self._profilesbysense[ps]:
+                self._senseidsbyps[ps]+=self._profilesbysense[ps][prof]
+    def renewsenseids(self):
+        self._senseids=list(self._profilesbysense[self._ps][self._profile])
+    def adhoc(self,ids=None):
+        """If passed ids, add them. Otherwise, return dictionary."""
+        if ids is not None:
+            ps=self._ps
+            if ps not in self._adhoc:
+                 self._adhoc[ps]={}
+            self._adhoc[ps][profile]=ids
+        return self._adhoc
+    def adhoccounts(self,ps=None):
+        if ps is None:
+            ps=self._ps
+        return [x for x in self._adhoccounts if x[1] == ps]
+    def updateadhoccounts(self):
+        """This iterates across self.profilesbysense to provide counts for each
+        ps-profile combination (aggravated for profile='Invalid')
+        it should only be called when creating/adding to self.profilesbysense"""
+        profilecountInvalid=0
+        wcounts=list()
+        for ps in self._adhoc:
+            for profile in self._adhoc[ps]:
+                count=len(self._adhoc[ps][profile])
+                wcounts.append((count, profile, ps))
+        for i in sorted(wcounts,reverse=True):
+            self._adhoccounts[(i[1],i[2])]=i[0]
+    def updateslices(self):
+        """This iterates across self.profilesbysense to provide counts for each
+        ps-profile combination (aggravated for profile='Invalid')
+        it should only be called when creating/adding to self.profilesbysense"""
+        profilecountInvalid=0
+        wcounts=list()
+        for ps in self._profilesbysense:
+            for profile in self._profilesbysense[ps]:
+                if profile == 'Invalid':
+                    profilecountInvalid+=len(self._profilesbysense[ps][profile])
+                count=len(self._profilesbysense[ps][profile])
+                wcounts.append((count, profile, ps))
+        for i in sorted(wcounts,reverse=True):
+            self[(i[1],i[2])]=i[0]
+        log.info('Invalid entries found: {}'.format(profilecountInvalid))
     def __init__(self,checkparameters,adhoc,profilesbysense): #dict
         """The slice dictionary depends on check parameters (and not vice versa)
         because changes in slice options (ps or profile) change check options,
