@@ -6041,13 +6041,14 @@ class FramedData(object):
         self.frame=self.frames[self.ps][frame]
         self.applyframe()
     def noframe(self):
+    def applynoframe(self):
         self.framed=self.forms
     def applyframe(self):
         if not self.noframe:
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
         else:
-            self.noframe()
+            self.applynoframe()
     def gettonegroup(self):
         """This is only done by parsesense. parseexample gets it otherwise."""
         if None not in [self.location,self.senseid]:
