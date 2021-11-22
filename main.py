@@ -219,7 +219,9 @@ class Check():
         # self.name='Progressive'
         # RecordButtonFrame.makefilenames(check=self,senseid=senseid)
         # log.info(n)
+        log.info("status type: {}".format(type(self.status)))
         self.mainlabelrelief()
+        self.tableiteration=0
         self.checkcheck()
     def settingsfilecheck(self,basename):
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
