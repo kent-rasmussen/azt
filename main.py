@@ -5736,9 +5736,6 @@ class Check():
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         self.frame.parent.waitdone()
         self.type=typeori
-        self.profile=profileori
-        self.ps=psori
-        self.checkcheck()
     """These are old paradigm CV funcs, with too many arguments, and guids"""
     def picked(self,choice,**kwargs):
         return
