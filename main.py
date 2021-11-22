@@ -1013,6 +1013,7 @@ class Check():
                 l1.grid(row=0,column=columnleft,sticky='w')
                 return
 <<<<<<< HEAD
+<<<<<<< HEAD
             log.info('self.name:{}'.format(self.name))
             if self.toneframes is None:
                 self.toneframes={}
@@ -1067,6 +1068,12 @@ class Check():
                 del self.toneframes[self.ps][self.name]
                 self.name=self.nameori
 =======
+=======
+            """Define the new frame"""
+            checkdefntoadd={}
+            checkdefntoadd['field']='lc' #update this with radio!
+            for lang in langs:
+>>>>>>> chk selfless
                 before=db['before'][lang]['entryfield'].get()
                 after=db['after'][lang]['entryfield'].get()
                 checkdefntoadd[lang]=str(
@@ -1078,6 +1085,9 @@ class Check():
             framed.setframe(checktoadd)
             #At this point, remove this frame (in case we don't submit it)
             del self.toneframes[ps][checktoadd]
+<<<<<<< HEAD
+>>>>>>> chk selfless
+=======
 >>>>>>> chk selfless
             """Display framed data"""
             if hasattr(self.addwindow,'framechk'):
@@ -1091,7 +1101,11 @@ class Check():
             row=0
             lt=Label(self.addwindow.framechk,
 <<<<<<< HEAD
+<<<<<<< HEAD
                     text=text,
+=======
+                    text="Examples for {} tone frame".format(checktoadd),
+>>>>>>> chk selfless
 =======
                     text="Examples for {} tone frame".format(checktoadd),
 >>>>>>> chk selfless
@@ -1102,9 +1116,12 @@ class Check():
             for lang in langs:
                 row+=1
 <<<<<<< HEAD
+<<<<<<< HEAD
                 tf[lang]=('form[{}]: {}'.format(lang,frame[lang]))
                 tfd[lang]=('(ex: '+str(framed.forms.framed[lang])+')')
 =======
+=======
+>>>>>>> chk selfless
                 tf[lang]=('form[{}]: {}'.format(lang,checkdefntoadd[lang]))
                 tfd[lang]=('(ex: '+framed.forms.framed[lang]+')')
 >>>>>>> chk selfless
