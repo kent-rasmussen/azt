@@ -4342,6 +4342,7 @@ class Check():
                                     senseid=senseid,
                                     analang=self.analang,
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     framed=framed,
 <<<<<<< HEAD
                                     fieldtype='tone',location=check,
@@ -4353,6 +4354,9 @@ class Check():
 =======
                                     forms=framed,
 >>>>>>> merge conflict resolved
+=======
+                                    framed=framed,
+>>>>>>> fixed framed kwarg
                                     fieldtype='tone',location=self.name,
                                     fieldvalue=self.groupselected
 >>>>>>> chose framed as addmodexamplefields attr
@@ -9235,7 +9239,11 @@ def removesenseidfromsubcheck(self,parent,senseid,check=None,group=None):
     self.db.addmodexamplefields(senseid=senseid,
                             analang=self.analang,
                             framed=framed,
+<<<<<<< HEAD
                             fieldtype='tone',location=check,
+=======
+                            fieldtype='tone',location=self.name,
+>>>>>>> fixed framed kwarg
                             fieldvalue='',showurl=True) #this value should be the only change
     log.info("Checking that removal worked")
     tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
