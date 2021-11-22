@@ -4615,6 +4615,10 @@ class Check():
         guid=None
         if groupselected is None or groupselected == '':
             log.error("groupselected: {}; this should never happen"
+<<<<<<< HEAD
+=======
+                        "".format(self.groupselected))
+>>>>>>> selfless
                         "".format(groupselected))
             exit()
         check=self.params.check()
@@ -4642,10 +4646,15 @@ class Check():
 >>>>>>> merge conflict resolved
 =======
                                     framed=framed,
+<<<<<<< HEAD
 >>>>>>> fixed framed kwarg
                                     fieldtype='tone',location=self.name,
                                     fieldvalue=self.groupselected
 >>>>>>> chose framed as addmodexamplefields attr
+=======
+                                    fieldtype='tone',location=check,
+                                    fieldvalue=groupselected
+>>>>>>> selfless
                                     )
         tonegroup=unlist(self.db.get("example/tonefield/form/text",
                         senseid=senseid, location=check).get('text'))
@@ -4656,8 +4665,12 @@ class Check():
             log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(tonegroup,groupselected))
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.updatestatus(group=groupselected) #this marks the group unverified.
 =======
+>>>>>>> selfless
+=======
+        self.updatestatus(group=groupselected) #this marks the group unverified.
 >>>>>>> selfless
         self.db.write() #This is never iterated over; just one entry at a time.
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
