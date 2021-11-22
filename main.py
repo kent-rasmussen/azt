@@ -4398,6 +4398,16 @@ class Check():
         #The following depends on the above for structure
         self.sortingstatus() #sets self.senseidssorted and senseidsunsorted
         self.gettonegroups() #sets self.status...['groups'] for a frame
+    def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
+        """This is currently called in iteration"""
+        self.checkforsenseidstosort(cvt=cvt,ps=ps,profile=profile,check=check)
+        self.gettonegroups() #reads from self.status, without renew=True
+    def settonevariables(self):
+        """This is currently called before sorting. This is a waste, if you're
+        not going to sort afterwards"""
+        self.updatesortingstatus()
+        """This is safe to iterate over"""
+        self.gettonegroups() #reads from self.status, without renew=True
     def tryNAgain(self):
         check=self.params.check()
         if check in self.params.checks():
