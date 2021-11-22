@@ -8010,6 +8010,7 @@ class ToolTip(object):
         if tw:
             tw.destroy()
 <<<<<<< HEAD
+<<<<<<< HEAD
 class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
@@ -8056,6 +8057,40 @@ class SliceDict(dict):
             self._profile=profile
             self.renewsenseids()
         else:
+=======
+class SliceDict(dict):
+    def makepsok(self):
+        if not(hasattr(self,'_ps') and self._ps in self._pss):
+            self.ps(self._pss[0])
+    def makeprofileok(self):
+        if hasattr(self,'_profile'):
+            log.debug("profile: {}; priority: {}".format(self._profile,self._profiles))
+        else:
+            log.debug("profile priority: {}".format(self._profiles))
+        if not(hasattr(self,'_profile') and self._profile in self._profiles):
+            self._profile=self._profiles[0]
+    def pss(self):
+        return self._pss
+    def ps(self,ps=None):
+        if ps is not None:
+            self._ps=ps
+            self.profilepriority() #this is only done here, when ps changes.
+            # self.makestatusdictps()
+            # self.getprofilestodo()
+            self.makeprofileok()
+        else:
+            self.makepsok()
+            return self._ps
+    def profiles(self):
+        return self._profiles
+    def profile(self,profile=None):
+        if profile is not None:
+            self._profile=profile
+        else:
+            # self.makestatusdictprofile()
+            # self.getframestodo()
+            self.makeprofileok()
+>>>>>>> parameter dictionary classes
             return self._profile
     def nextps(self):
         self.makepsok()
@@ -8064,10 +8099,21 @@ class SliceDict(dict):
             self.ps(self._pss[0]) #cycle back
         else:
             self.ps(self._pss[index+1])
+<<<<<<< HEAD
         return self._ps
     def slicepriority(self,arg=None):
         """arg is to throw away, rather than break a fn where others get
         and set. This is now calculated, not read from file and set here."""
+=======
+    def nextprofile(self):
+        self.makeprofileok()
+        index=self._profiles.index(self._profile)
+        if index+1 == len(self._profiles):
+            self.profile(self._profiles[0]) #cycle back
+        else:
+            self.profile(self._profiles[index+1])
+    def slicepriority(self):
+>>>>>>> parameter dictionary classes
         self.validate()
         self._sliceprioritybyps={}
         try:
@@ -8086,6 +8132,7 @@ class SliceDict(dict):
             self._pss=list(dict.fromkeys([x[0][1]
                                 for x in self._slicepriority]))[:self.maxpss]
     def profilepriority(self):
+<<<<<<< HEAD
         if not hasattr(self,'_profiles'):
             self._profiles={}
         for ps in self.pss():
@@ -8100,6 +8147,13 @@ class SliceDict(dict):
             return self._validbyps[ps]
         else:
             log.error("You asked for valid ps data, but that ps isn't there.")
+=======
+        self.makepsok()
+        slicesbyhzbyps=self._sliceprioritybyps[self._ps]
+        if slicesbyhzbyps is not None:
+            self._profiles=list(dict.fromkeys([x[0][0]
+                                for x in slicesbyhzbyps]))[:self.maxprofiles]
+>>>>>>> parameter dictionary classes
     def validate(self):
         self._valid={}
         self._validbyps={}
@@ -8109,6 +8163,7 @@ class SliceDict(dict):
             self._validbyps[ps]=[x for x in self._valid if x[1] == ps]
         log.info("valid: {}".format(self._valid))
         log.info("validbyps: {}".format(self._validbyps))
+<<<<<<< HEAD
     def inslice(self,senseids):
         senseidstochange=set(self._senseids).intersection(senseids)
         return senseidstochange
@@ -8181,10 +8236,17 @@ class SliceDict(dict):
         cvt and slice)"""
         super(SliceDict, self).__init__()
         self.checkparameters=checkparameters
+=======
+    def __init__(self,dict):
+        super(SliceDict, self).__init__()
+        for k in dict:
+            self[k]=dict[k]
+>>>>>>> parameter dictionary classes
         self.profilecountsValid=0
         self.profilecounts=0
         self.maxprofiles=None
         self.maxpss=None
+<<<<<<< HEAD
         self._adhoc=adhoc
         self._profilesbysense=profilesbysense #[ps][profile]
         self.updateslices() #any time we add to self._profilesbysense
@@ -8761,6 +8823,81 @@ class CheckParameters(dict):
         }
 =======
 >>>>>>> upgrade settings parser
+=======
+        """These two are only done here, as the only change with new data"""
+        self.slicepriority()
+        self.pspriority()
+class StatusDict(dict):
+    def store(self):
+        log.info("Saving status dict to file")
+        self.check.storesettingsfile(setting='status')
+    def dict(self):
+        for k in self:
+            v[k]=self[k]
+        return v
+    def build(self):
+        t=self.checkparameters.type()
+        if t not in self:
+            self[t]={}
+            changed=True
+        ps=self.slicedict.ps()
+        if ps not in self[t]:
+            self[t][ps]={}
+            changed=True
+        profile=self.slicedict.profile()
+        if profile not in self[t][ps]:
+            self[t][ps][profile]={}
+            changed=True
+        check=self.checkparameters.check()
+        if check not in self[t][ps][profile]:
+            self[t][ps][profile][check]={}
+            changed=True
+        if isinstance(self[checktype][ps][profile][check],list):
+            log.info("Updating {}-{} status dict to new schema".format(
+                                                        profile,check))
+            groups=self[checktype][ps][profile][check]
+            self[checktype][ps][profile][check]={}
+            self[checktype][ps][profile][check]['groups']=groups
+            changed=True
+        for key in ['groups','done']:
+            if key not in self[checktype][ps][profile][check]:
+                log.info("Adding {} key to {}-{} status dict".format(
+                                                key,profile,check))
+                self[checktype][ps][profile][check][key]=list()
+                changed=True
+        if 'tosort' not in self[checktype][ps][profile][check]:
+            log.info("Adding tosort key to {}-{} status dict".format(
+                                                key,profile,check))
+            self[checktype][ps][profile][check]['tosort']=True
+            changed=True
+        if changed == True:
+            self.write()
+    def __init__(self, checkparameters, slicedict, dict):
+        super(StatusDict, self).__init__()
+        for k in dict:
+            self[k]=dict[k]
+        self.checkparameters=checkparameters
+        self.slicedict=slicedict
+class CheckParameters(dict):
+    def type(self,type=None):
+        if type is not None:
+            self._type=type
+        else:
+            return self._type
+    def check(self,check=None):
+        if check is not None:
+            self._check=check
+        else:
+            return self._check
+    def subcheck(self,subcheck=None):
+        if subcheck is not None:
+            self._subcheck=subcheck
+        else:
+            return self._subcheck
+    def __init__(self,check):
+        super(CheckParameters, self).__init__()
+        self.check=check
+>>>>>>> parameter dictionary classes
 class ConfigParser(configparser.ConfigParser):
     def write(self,*args,**kwargs):
         configparser.ConfigParser.write(self,*args,**kwargs,
