@@ -8540,11 +8540,12 @@ def returndictndestroy(self,parent,values): #Spoiler: the parent dies!
         setattr(self,value,values[value])
         parent.destroy() #from or window with button...
         return value
-def removesenseidfromsubcheck(self,parent,senseid,name=None,subcheck=None):
+def removesenseidfromsubcheck(self,parent,senseid,check=None,group=None):
+    """I don't think I knew what I was doing with this. Probably should class"""
     #?This is the action of a verification button, so needs to be self contained.
     #merge with addtonefieldex
     framed=self.datadict.getframeddata(senseid)
-    framed.setframe(self.name)
+    framed.setframe(check)
     text=framed.formatted(noframe=False)
     if check is None:
         check=self.params.check()
