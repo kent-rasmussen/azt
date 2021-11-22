@@ -4719,7 +4719,7 @@ class Check():
             i+=1
             return
     def record(self):
-        if self.type == 'T':
+        if cvt == 'T':
             self.showtonegroupexs()
         else:
             self.showentryformstorecord()
@@ -4751,7 +4751,7 @@ class Check():
         self.runwindow.wait()
         count=self.slices.count()
         text=_("Record {} {} Words: click ‘Record’, talk, "
-                "and release ({} words)".format(self.profile,self.ps,
+                "and release ({} words)".format(profile,ps,
                                                 count))
         instr=Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w')
