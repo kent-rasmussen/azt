@@ -4683,31 +4683,21 @@ class Check():
         t=(_('Run Check'))
         log.info("Running check...")
         i=0
-        if "Null" in [self.analang, self.ps, self.subcheck]:
+        ps=self.slices.ps()
+        group=self.status.group()
+        if None in [self.analang, ps, group]:
             log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
-                                        self.analang, self.ps, self.subcheck))
-        if self.analang is None:
-            text=_('Error: please set language first! ({})').format(
-                                                    str(self.analang))
-            Label(self.runwindow.frame, text=text
-                          ).grid(column=0, row=i)
-            i+=1
-            return
-        if self.ps is None:
-            text=_('Error: please set Grammatical category first! ({})').format(
-                                                                str(self.ps))
-            Label(self.runwindow.frame,text=text).grid(column=0, row=i)
-            i+=1
-            return
-        if self.type == 'T':
-            if self.name not in self.toneframes[self.ps]:
-                exit=self.getcheck()
-                print(exit, self.name)
-                if exit == 1:
-                    self.runcheck()
-                return
-            self.settonevariablesbypsprofile()
-            self.getidstosort() #not a bad idea to refresh this here
+                                        self.analang, ps, group))
+        cvt=self.params.cvt()
+        check=self.params.check()
+        profile=self.slices.ps()
+        if not self.status.ischeckok():
+            exit=self.getcheck()
+            if exit:
+                self.runcheck()
+            return #if the user didn't supply a check
+        if cvt == 'T':
+            self.settonevariables() #here, or later?
             self.maybesort()
         elif None not in [check,group]: #do the CV checks
             self.getresults()
