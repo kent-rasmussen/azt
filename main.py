@@ -4559,7 +4559,7 @@ class Check():
                             **kwargs)
             bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
             bct=ToolTip(bc,_("Change example word"))
-        return bf
+        return var
     def printentryinfo(self,guid):
         outputs=[nn(self.db.citationorlexeme(guid=guid))]
         for lang in self.glosslangs:
