@@ -4331,9 +4331,7 @@ class Check():
                                                 tonegroup,self.groupselected))
         else:
             log.info("Field addition succeeded! LIFT says {}, which is {}."
-                                        "".format(tonegroup,self.groupselected))
-        self.subcheck=self.groupselected
-        self.updatestatus() #this marks the group unverified.
+                                        "".format(tonegroup,groupselected))
         self.db.write() #This is never iterated over; just one entry at a time.
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
@@ -4341,7 +4339,7 @@ class Check():
                                     guid,senseid,self.analang,self.glosslangs,
                                     lang='en',
                                     forms=framed,
-                                    fieldtype='tone',location=self.name,
+                                    fieldtype='tone',location=check,
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
