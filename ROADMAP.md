@@ -1,4 +1,54 @@
 #Roadmap
+At this point, this is just a bunch of random notes on stuff I need to follow up on:
+Fix logic problem in maybesort: (endless cycling, with or without verification page:
+  marking verified and continuing.)
+put UF fields in form/text nodes?
+Add setting for sort since last report.
+  - make sensitive to non-default group names
+Make checks for sound cards being there more frequent? If not, send to settings?
+think through commits to hg, including merge with paitence, and which files should be added automatically.
+Move things into the correct fields (def > gloss)
+<!-- updatecounts() is replaced by getscounts(), to be run after profile data is added -->
+cvt=self.params.cvt()
+check=self.params.check()
+checks=self.status.checks()
+ps=self.slices.ps()
+profile=self.slices.profile()
+group=self.status.group()
+groups=self.status[cvt][ps][profile][check]['groups']
+profilecounts > slices.slicepriority
+self.subchecksprioritized > status.groupstodo
+getframestodo > status.checkstodo
+status.renewchecks has to run after adding tone frames
+to do:
+make wordsbypsprofilechecksubcheckp,updatestatus iterable
+need to run self.status.checks() any time a ps or profile that would change check options.
+self.profilestodo() should be replaced by slices.profilepriority()
+is loadsettingsfile ever called outside of check.init()?
+senseids=self.slices.senseids() #self.getidstosort()
+makestatusdict > self.status.build(type=type,ps=ps,profile=profile,check=check)
+addtonegroup
+addtonefieldex
+tonegroupbuttonframe
+profilecounts
+tonegroupsbysenseidlocation
+Make iterable:
+  addtoprofilesbysense
+  profileofform
+where is settonevariablesbypsprofile used? sort, some iteration?
+is anyone using self.profilecounts but the class? could source on profilesbysense instead, and renew from within the class as needed.
+  - change self.profilesbysense to self.status, calculate profilecounts
+def (settonevariablesbypsprofile|makeadhocgroupsdict|sortingstatus|gettonegroups|updatestatus)|makeadhocgroupsdict|updatestatuslift|senseidstosort|makeadhocgroupsdict|addtoprofilesbysense
+makecountssorted|updatecounts|getscounts|self.profilecounts|profilecountsValidwAdHoc|getprofilestodo
+Think through where to use gettonegroups(renew=True), to update status groups from LIFT.
+  gettonegroups should only be called when we need to confirm groups from LIFT
+  otherwise use self.status.groups(ps=ps,profile=profile,check=check)
+self.subcheckcomparison?
+self.subcheck_comparison?
+
+bring statusdict into an Class
+remove references to makestatusdict{type,ps,profile}
+derive and manipulate ps and profile from SliceDict (rename? How do I want to use this?)
 
 standarize fns of exit buttons from config changing screens (exit should make changes or not...)
 maybe add backwards epsilon to vowels?
