@@ -3895,19 +3895,20 @@ class Check():
             self.marksortedsenseid(senseid)
         self.runwindow.resetframe()
     def reverify(self):
+        group=self.status.group()
+        check=self.params.check()
         log.info("Reverifying a framed tone group, at user request: {}-{}"
-                    "".format(self.name,self.subcheck))
-        checkswframes=self.status[self.type][self.ps][self.profile]
-        if self.name is None or self.name not in checkswframes:
+                    "".format(check,group))
+        if not self.status.ischeckok():
             self.getcheck() #guess=True
-        done=self.status[self.type][self.ps][self.profile][self.name]['done']
-        if self.subcheck is None or self.subcheck not in done:
-            self.getsubcheck()#guess=True
-            if self.subcheck == None:
+        done=self.status.verified()
+        if group not in done:
+            self.getgroup()
+            if group == None:
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
-        if self.subcheck in done:
-            done.remove(self.subcheck)
+        else:
+            done.remove(group)
         self.maybesort()
     def verifyT(self,menu=False):
         log.info("Running verifyT!")
