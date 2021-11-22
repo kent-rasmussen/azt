@@ -1063,14 +1063,15 @@ class Check():
             #next to this button, in case any variable has been changed.
             if hasattr(self.addwindow,'framechk'):
                 self.addwindow.framechk.destroy()
-        def submit(frame,name):
+        def submit(checkdefntoadd,name):
             # Having made and unset these, we now reset and write them to file.
-            self.set('name',name,refresh=False)
-            self.toneframes[self.ps][self.name]=frame
+            self.toneframes[ps][check]=checkdefntoadd
+            self.status.renewchecks()
             self.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
-            self.checkcheck()
-        self.addwindow=Window(self.frame, title=_("Define a New Tone Frame"))
+        ps=self.slices.ps()
+        wtitle=_("Define a New {} Tone Frame").format(ps)
+        self.addwindow=Window(self.frame, title=wtitle)
         self.addwindow.scroll=ScrollingFrame(self.addwindow)
         self.addwindow.scroll.grid(row=0,column=0)
         self.addwindow.frame1=Frame(self.addwindow.scroll.content)
@@ -1088,7 +1089,7 @@ class Check():
             for lang in langs:
                 db[context][lang]={}
                 db[context][lang]['text']=tkinter.StringVar()
-        t=(_("Add {} Tone Frame").format(self.ps))
+        t=(_("Add {} Tone Frame").format(ps))
         Label(self.addwindow.frame1,text=t+'\n',font=self.fonts['title']
                 ).grid(row=row,column=columnleft,columnspan=3)
         row+=1
@@ -1096,7 +1097,7 @@ class Check():
         finst=Frame(self.addwindow.frame1)
         finst.grid(row=row,column=0)
         Label(finst,text=t).grid(row=0,column=columnleft,sticky='e')
-        name = EntryField(finst,textvariable=namevar)
+        name = EntryField(finst)
         name.grid(row=0,column=columnright,sticky='w')
         name.bind('<Key>', unchk)
         row+=1
@@ -1138,7 +1139,6 @@ class Check():
             Label(f[lang],text='word',padx=0,pady=0).grid(row=langrow,
                                                         column=columnword)
             db['before'][lang]['entryfield'] = EntryField(f[lang],
-                                textvariable=db['before'][lang]['text'],
                                 justify='right')
             db['before'][lang]['entryfield'].grid(row=langrow,
                                         column=columnleft,sticky='e')
@@ -1148,7 +1148,6 @@ class Check():
             Label(f[lang],text='word',padx=0,pady=0).grid(row=langrow,
                     column=columnword)
             db['after'][lang]['entryfield'] = EntryField(f[lang],
-                    textvariable=db['after'][lang]['text'],
                     justify='left')
             db['after'][lang]['entryfield'].grid(row=langrow,
                     column=columnright,sticky='w')
