@@ -337,39 +337,11 @@ class Check():
         """Make this smarter, but for now, just take value from the most
         populous tuple"""
         return self.slices.nextps()
-    def nextprofile(self,guess=False):
-        return self.slices.nextprofile()
     def nextframe(self,sort=True,guess=False):
-        def default():
-            self.set('name',todo[0])
-        if not hasattr(self,'framestodo'):
-            self.getframestodo()
-        if sort is True: #Just give frames with unsorted data
-            todo=self.framestodo
-        else: #base on all frames
-            todo=list(self.status[self.type][self.ps][self.profile].keys())
         if len(todo) == 0:
             log.info("No frames to do; asking to define another one")
-            self.addframe() #The above should change self.name, if completed.
+            self.addframe() #The above should change check, if completed.
             return
-        log.info("Frames to do: {} (sort={})".format(todo,sort))
-        if self.name in todo:
-            i=todo.index(self.name)
-            log.info("Current frame is {} of {}".format(i,todo))
-            if len(todo)>i+1:
-                self.set('name',todo[i+1],refresh=False)
-                groups=self.status[self.type][self.ps][self.profile][self.name][
-                                            'groups']
-                if sort is False and groups == []:
-                    self.nextframe(sort=sort,guess=guess)
-                    return
-                else:
-                    self.set('name',todo[i+1])
-            else:
-                default() #cycle through framestodo again
-        else:
-            default()
-    def nextsubcheck(self,guess=False):
     def nextgroup(self,guess=False):
         def default():
             self.set('subcheck',priorities[0])
