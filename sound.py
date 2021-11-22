@@ -474,7 +474,7 @@ class SoundFileRecorder(object):
         self.fileclose()
         self.streamclose()
     def __init__(self,filenameURL,pyaudio,settings):
-        log.debug("Initializing Recording")
+        log.debug("Initializing Recording to {}".format(filenameURL))
         self.callbackrecording=True
         self.pa=pyaudio
         self.settings=settings
