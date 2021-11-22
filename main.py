@@ -2637,13 +2637,17 @@ class Check():
             if len(self.status.checks()) == 0:
                 t=_("no tone frames defined.")
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                 self.name=None
 >>>>>>> checkcheck
+=======
+>>>>>>> cleanup
                 check=None
             elif self.status.ischeckok():
                 # check not in checks:
                 t=_("no tone frame selected.")
+<<<<<<< HEAD
 <<<<<<< HEAD
                 check=None
             else:
@@ -2651,11 +2655,13 @@ class Check():
             proselabel(opts,t,cmd='getcheck',parent=tf)
 =======
                 self.name=None
+=======
+>>>>>>> cleanup
                 check=None
             else:
-                t=(_("working on ‘{}’ tone frame").format(self.name))
                 t=(_("working on ‘{}’ tone frame").format(check))
             proselabel(opts,t,cmd='getcheck',parent=tf)
+<<<<<<< HEAD
         else:
 >>>>>>> checkcheck
         # else:
@@ -2682,21 +2688,28 @@ class Check():
                 t=_("(no framed group)")
             else:
 =======
+=======
+        # else:
+        """Get subcheck"""
+>>>>>>> cleanup
         # if None not in [cvt, ps, profile, check]: #is this needed?
         self.status.makegroupok()
         group=self.status.group()
         if cvt == 'T':
             opts['columnplus']=2
-            if None in [self.name, self.subcheck]:
             if None in [check, group]:
                 t=_("(no framed group)")
             else:
+<<<<<<< HEAD
                 t=(_("(framed group: ‘{}’)").format(self.subcheck))
 >>>>>>> checkcheck
+=======
+>>>>>>> cleanup
                 t=(_("(framed group: ‘{}’)").format(group))
             proselabel(opts,t,cmd='getgroup',parent=tf)
             opts['columnplus']=0
         else:
+<<<<<<< HEAD
 <<<<<<< HEAD
             # tf=Frame(self.frame.status)
             opts['columnplus']=1
@@ -2706,6 +2719,10 @@ class Check():
             opts['columnplus']=1
             t=(_("working on {}".format(self.name)))
 >>>>>>> checkcheck
+=======
+            # tf=Frame(self.frame.status)
+            opts['columnplus']=1
+>>>>>>> cleanup
             t=(_("working on {}".format(group))) #check[1]
             proselabel(opts,t,cmd='getcheck',parent=tf)
         """Final Button"""
@@ -2718,6 +2735,7 @@ class Check():
                 font=self.fonts['title'],
                 compound='bottom', #image bottom, left, right, or top of text
 <<<<<<< HEAD
+<<<<<<< HEAD
                 image=self.photo[cvt]
                 )
         opts['row']+=1
@@ -2728,6 +2746,11 @@ class Check():
         opts['row']+=1
         if self.type == 'T':
 >>>>>>> checkcheck
+=======
+                image=self.photo[cvt]
+                )
+        opts['row']+=1
+>>>>>>> cleanup
         if cvt == 'T':
             t=(_("Record Sorted Examples"))
         else:
