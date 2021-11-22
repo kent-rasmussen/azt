@@ -3271,73 +3271,75 @@ class Check():
                 framed=self.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,listword=True)
     def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
-        """This function iterates across self.name and self.subcheck values
-        appropriate for the specified self.type, self.profile and self.name
+        """This function iterates across check and group values
+        appropriate for the specified self.type, profile and check
         values (ps is irrelevant here).
         Because two functions called (buildregex and getframeddata) use
-        self.name and self.subcheck to do their work, they and their
+        check and group to do their work, they and their
         dependents would need to be changed to fit a new paradigm, if we
         were to change the variable here. So rather, we store the current
-        self.name and self.subcheck values, then iterate across logically
+        check and group values, then iterate across logically
         possible values (as above), then restore the value."""
         """I need to find a way to limit these tests to appropriate
         profiles..."""
-        nameori=self.name
-        subcheckori=self.subcheck
-        if self.type in ['V','C']:
-            subchecks=self.s[self.analang][self.type]
+        check=self.params.check()
+        group=self.status.group()
+        if cvt in ['V','C']:
+            groups=self.s[self.analang][cvt]
         """This sets each of the checks that are applicable for the given
         profile; self.basicreported is from self.basicreport()"""
         for typenum in self.basicreported:
             log.log(2, '{}: {}'.format(typenum,self.basicreported[typenum]))
-        """setnamesbyprofile doesn't depend on self.ps"""
+        """setnamesbyprofile doesn't depend on ps"""
         self.checkcodesbyprofile=sorted([x[0] for x in self.setnamesbyprofile()],
                                         key=len,reverse=True)
-        """self.name set here"""
-        for self.name in self.checkcodesbyprofile:
-            if self.name not in self.checkcounts[self.ps][self.profile]:
-                self.checkcounts[self.ps][self.profile][self.name]={}
+        """check set here"""
+        for check in self.checkcodesbyprofile:
+            if check not in self.checkcounts[ps][profile]:
+                self.checkcounts[ps][profile][check]={}
             self.typenumsRun=[typenum for typenum in self.typenums
-                                        if re.search(typenum,self.name)]
-            log.debug('self.name: {}; self.type: {}; self.typenums: {}; '
-                        'self.typenumsRun: {}'.format(self.name,self.type,
+                                        if re.search(typenum,check)]
+            log.debug('check: {}; self.type: {}; self.typenums: {}; '
+                        'self.typenumsRun: {}'.format(check,cvt,
                                                 self.typenums,self.typenumsRun))
-            if len(self.name) == 1:
+            if len(check) == 1:
                 log.debug("Error! {} Doesn't seem to be list formatted.".format(
-                                                                    self.name))
-            if 'x' in self.name:
+                                                                    check))
+            if 'x' in check:
                 log.debug('Hey, I cound a correspondence number!')
-                if self.type in ['V','C']:
-                    subcheckcomparisons=subchecks
-                elif self.type == 'CV':
+                if cvt in ['V','C']:
+                    subcheckcomparisons=groups
+                elif cvt == 'CV':
                     subchecks=self.s[self.analang]['C']
                     subcheckcomparisons=self.s[self.analang]['V']
                 else:
-                    log.error("Sorry, I don't know how to compare type: {}"
-                                                        "".format(self.type))
-                for self.subcheck in subchecks:
-                    if self.subcheck not in self.checkcounts[self.ps][
-                                                    self.profile][self.name]:
-                        self.checkcounts[self.ps][self.profile][self.name][
-                                                            self.subcheck]={}
+                    log.error("Sorry, I don't know how to compare cvt: {}"
+                                                        "".format(cvt))
+                for group in groups:
+                    if group not in self.checkcounts[ps][
+                                                    profile][check]:
+                        self.checkcounts[ps][profile][check][group]={}
                     for self.subcheckcomparison in subcheckcomparisons:
-                        if self.subcheck != self.subcheckcomparison:
-                            t=_("{} {} {}={}-{}".format(self.ps,self.profile,
-                                                self.name,self.subcheck,
+                        if group != self.subcheckcomparison:
+                            t=_("{} {} {}={}-{}".format(ps,profile,
+                                                check,group,
                                                 self.subcheckcomparison))
                             self.wordsbypsprofilechecksubcheckp(parent=parent,
                                                                             t=t)
             else:
-                for self.subcheck in subchecks:
-                    t=_("{} {} {}={}".format(self.ps,self.profile,self.name,
-                                                                self.subcheck))
+                for group in groups:
+                    t=_("{} {} {}={}".format(ps,profile,check,
+                                                                group))
                     self.wordsbypsprofilechecksubcheckp(parent=parent,t=t)
-        self.name=nameori
-        self.subcheck=subcheckori
     def idXLP(self,framed):
         id='x' #string!
-        bits=[self.ps,self.profile,self.name,self.subcheck,
-                                                    framed.forms[self.analang]]
+        bits=[
+            self.params.cvt(),
+            self.slices.ps(),
+            self.slices.profile(),
+            self.params.check(),
+            self.status.group()
+            ]
         for lang in self.glosslangs:
             if lang in framed.forms and framed.forms[lang] is not None:
                 bits+=framed.forms[lang]
