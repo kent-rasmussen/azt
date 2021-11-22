@@ -220,6 +220,7 @@ class Check():
         #     hasattr(self,'profile') and (self.profile is not None) and
         #     hasattr(self,'name') and (self.name is not None)):
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
+        self.glosslangs=Glosslangs(None,None)
         self.guessglosslangs() #needed for the following
         self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
@@ -312,19 +313,16 @@ class Check():
                     return
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
-        if not hasattr(self,'glosslangs'):
-            self.glosslangs=Glosslangs(None,None)
         if len(self.db.glosslangs) == 1:
             log.info('Only one glosslang!')
-            self.glosslangs[0]=self.glosslang=self.db.glosslangs[0]
-            self.glosslangs[1]=self.glosslang2=None
+            self.glosslangs.lang1(self.db.glosslangs[0])
             """if there are two or more gloss languages, just pick the first
             two, and the user can select something else later (the gloss
             languages are not for CV profile analaysis, but for info after
             checking, when this can be reset."""
         elif len(self.db.glosslangs) > 1:
-            self.glosslangs[0]=self.glosslang=self.db.glosslangs[0]
-            self.glosslangs[1]=self.glosslang2=self.db.glosslangs[1]
+            self.glosslangs.lang1(self.db.glosslangs[0])
+            self.glosslangs.lang2(self.db.glosslangs[1])
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def getpss(self):
@@ -1004,9 +1002,6 @@ class Check():
             self.toneframes[self.ps][self.name]={}
             """Define the new frame"""
             frame=self.toneframes[self.ps][self.name]
-            langs=[self.analang, self.glosslang]
-            if self.glosslang2 is not None:
-                langs+=[self.glosslang2]
             for lang in langs:
                 db['before'][lang]['text']=db['before'][lang][
                                                             'entryfield'].get()
@@ -1090,9 +1085,7 @@ class Check():
         namevar=tkinter.StringVar()
         """Text and fields, before and after, dictionaries by language"""
         db={}
-        langs=[self.analang, self.glosslang]
-        if self.glosslang2 is not None:
-            langs+=[self.glosslang2]
+        langs=[self.analang]+self.glosslangs
         for context in ['before','after']:
             db[context]={}
             for lang in langs:
@@ -1250,9 +1243,7 @@ class Check():
             """If there's something getting reset that shouldn't be, remove it
             from self.defaultstoclear[attribute]"""
             self.cleardefaults(attribute)
-            if attribute in ['glosslang','glosslang2']:
-                self.glosslangs=[self.glosslang,self.glosslang2] #Nothing else to change here
-            elif attribute in ['analang',  #do the last two cause problems?
+            if attribute in ['analang',  #do the last two cause problems?
                                 'interpret','distinguish']:
                 self.reloadprofiledata()
             elif attribute == 'type':
@@ -1301,9 +1292,16 @@ class Check():
     def setcheck(self,choice,window):
         self.set('name',choice,window)
     def setglosslang(self,choice,window):
-        self.set('glosslang',choice,window)
+        self.glosslangs.lang1(choice)
+        window.destroy()
+        self.checkcheck()
     def setglosslang2(self,choice,window):
-        self.set('glosslang2',choice,window)
+        if choice is not None:
+            self.glosslangs.lang2(choice)
+        elif len(self.glosslangs)>1:
+            self.glosslangs.pop(1) #rm(self.glosslangs[1])
+        window.destroy()
+        self.checkcheck()
     def setps(self,choice,window):
         self.set('ps',choice,window)
     def setexamplespergrouptorecord(self,choice,window):
@@ -1393,8 +1391,7 @@ class Check():
                             # 'subcheck'
                             ],
                         'analang':[
-                            'glosslang',
-                            'glosslang2',
+                            'glosslangs',
                             'ps',
                             'profile',
                             'type',
@@ -1402,8 +1399,7 @@ class Check():
                             'subcheck'
                             ],
                         'interfacelang':[],
-                        'glosslang':[],
-                        'glosslang2':[],
+                        'glosslangs':[],
                         'name':[],
                         'subcheck':[
                             'regexCV'
@@ -1433,8 +1429,7 @@ class Check():
         self.settings={'defaults':{
                             'file':'defaultfile',
                             'attributes':['analang',
-                                'glosslang',
-                                'glosslang2',
+                                'glosslangs',
                                 'audiolang',
                                 'ps',
                                 'profile',
@@ -1599,7 +1594,12 @@ class Check():
                 if hasattr(module,s):
                     log.log(5,"Found attribute {} with value {}".format(s,
                                 getattr(module,s)))
-                    setattr(o,s,getattr(module,s))
+                    if type(getattr(module,s)) is list:
+                        setattr(o,s,[])
+                        for i in getattr(module,ss):
+                            getattr(o,s).append(i)
+                    else:
+                        setattr(o,s,getattr(module,ss))
         except:
             log.error("Problem importing {}".format(filename))
             for s in self.settings[setting]['attributes']:
@@ -2231,24 +2231,18 @@ class Check():
             proselabel(opts,t,cmd='getanalang')
         opts['row']+=1
         """Get glosslang"""
-        if self.glosslang not in self.db.glosslangs:
+        for lang in self.glosslangs:
+            if lang not in self.db.glosslangs:
+                self.glosslangs.rm(lang)
+        if len(self.glosslangs) == 0:
             self.guessglosslangs()
-        if self.glosslang is None:
-            log.info("find the gloss language")
-            self.getglosslang()
-            return
-        """Get glosslang2 (None is OK here, meaning no second gloss language)"""
-        if ((self.glosslang2 is not None) and
-                (self.glosslang not in self.db.glosslangs)):
-            """I.e., if glosslang2 is set with a value not in the database"""
-            self.guessglosslangs()
-        t=(_("Meanings in {}").format(self.languagenames[self.glosslang]))
+        t=(_("Meanings in {}").format(self.languagenames[self.glosslangs[0]]))
         tf=Frame(self.frame.status)
         tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
         proselabel(opts,t,cmd='getglosslang',parent=tf)
         opts['columnplus']=1
-        if self.glosslang2 is not None:
-            t=(_("and {}").format(self.languagenames[self.glosslang2]))
+        if len(self.glosslangs) >1:
+            t=(_("and {}").format(self.languagenames[self.glosslangs[1]]))
         else:
             t=_("only")
         proselabel(opts,t,cmd='getglosslang2',parent=tf)
@@ -2870,7 +2864,6 @@ class Check():
         langs=list()
         for lang in self.db.glosslangs:
             langs.append({'code':lang, 'name':self.languagenames[lang]})
-            print(lang, self.languagenames[lang])
         buttonFrame1=ButtonFrame(window.frame,
                                  langs,self.setglosslang,
                                  window
@@ -2888,12 +2881,11 @@ class Check():
             Label(window.frame,text=text).grid(column=0, row=1)
             langs=list()
             for lang in self.db.glosslangs:
-                if lang == self.glosslang:
+                if lang == self.glosslangs[0]:
                     continue
                 langs.append({'code':lang, 'name':self.languagenames[lang]})
-                print(lang, self.languagenames[lang])
             langs.append({'code':None, 'name':'just use '
-                            +self.languagenames[self.glosslang]})
+                            +self.languagenames[self.glosslangs[0]]})
             buttonFrame1=ButtonFrame(window.frame,langs,self.setglosslang2,
                                      window
                                      ).grid(column=0, row=4)
@@ -4262,8 +4254,7 @@ class Check():
                                     # glossform=framed[self.glosslang],
                                     # gloss2form=framed[self.glosslang2],
                                     fieldtype='tone',location=self.name,
-                                    fieldvalue=self.groupselected #,
-                                    # ps=None #,showurl=True
+                                    fieldvalue=self.groupselected
                                     )
         tonegroup=unlist(self.db.get("example/tonefield/form/text",
                         senseid=senseid, location=self.name).get('text'))
@@ -4279,13 +4270,9 @@ class Check():
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
         self.db.addpronunciationfields(
-                                    guid,senseid,self.analang,self.glosslang,
-                                    self.glosslang2,
+                                    guid,senseid,self.analang,self.glosslangs,
                                     lang='en',
                                     forms=framed,
-                                    # langform=framed[self.analang],
-                                    # glossform=framed[self.glosslang],
-                                    # gloss2form=framed[self.glosslang2],
                                     fieldtype='tone',location=self.name,
                                     fieldvalue=self.groupselected,
                                     ps=None
@@ -4575,13 +4562,9 @@ class Check():
             bct=ToolTip(bc,_("Change example word"))
         return bf
     def printentryinfo(self,guid):
-        outputs=[
-                    nn(self.db.citationorlexeme(guid=guid)),
-                    nn(self.db.glossordefn(guid=guid,glosslang=self.glosslang))
-                ]
-        if self.glosslang2 is not None: #only give this if the user wants it.
-            outputs.append(nn(self.db.glossordefn(guid=guid,
-                                        glosslang=self.glosslang2)))
+        outputs=[nn(self.db.citationorlexeme(guid=guid))]
+        for lang in self.glosslangs:
+            outputs.append(nn(self.db.glossordefn(guid=guid,glosslang=lang)))
         outputs.append(nn(self.db.get('pronunciationfieldvalue',
                                         fieldtype='tone',
                                         location=self.subcheck,guid=guid)))
@@ -4675,14 +4658,13 @@ class Check():
     def makelabelsnrecordingbuttons(self,parent,sense):
         framed=self.datadict.getframeddata(sense['nodetoshow'])
         t=framed.formatted(noframe=True)
-        for g in ['gloss','gloss2']:
-            if (g in sense) and (sense[g] is not None):
-                t+='\t‘'+sense[g]
-                if ('plnode' in sense) and (sense['nodetoshow'] is sense['plnode']):
-                    t+=" (pl)"
-                if ('impnode' in sense) and (sense['nodetoshow'] is sense['impnode']):
-                    t+="!"
-                t+='’'
+        for g in sense['glosses']:
+            t+='\t‘'+g
+            if ('plnode' in sense) and (sense['nodetoshow'] is sense['plnode']):
+                t+=" (pl)"
+            if ('impnode' in sense) and (sense['nodetoshow'] is sense['impnode']):
+                t+="!"
+            t+='’'
         lxl=Label(parent, text=t)
         lcb=RecordButtonFrame(parent,self,id=sense['guid'], #reconfigure!
                                         framed=framed,node=sense['nodetoshow'],
@@ -4731,19 +4713,12 @@ class Check():
             sense['lcnode']=firstoflist(self.db.get('citation',
                                                 guid=sense['guid'],
                                                 lang=self.analang).get())
-            sense['gloss']=firstoflist(self.db.glossordefn(
+            sense['glosses']=[]
+            for lang in self.glosslangs:
+                sense['gloss'].append(firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
                                                 glosslang=self.glosslang
-                                                ),othersOK=True)
-            if ((hasattr(self,'glosslang2')) and
-                    (self.glosslang2 is not None)):
-                sense['gloss2']=firstoflist(self.db.glossordefn(
-                                                guid=sense['guid'],
-                                                glosslang=self.glosslang2
-                                                ),othersOK=True)
-            if ((sense['gloss'] is None) and
-                    (('gloss2' in sense) and (sense['gloss2'] is None))):
-                continue #We can't save the file well anyway; don't bother
+                                                ),othersOK=True))
             if self.db.pluralname is not None:
                 sense['plnode']=firstoflist(self.db.get('field',
                                         guid=sense['guid'],
@@ -5359,10 +5334,11 @@ class Check():
                 groups=True #show groups on all non-default reports
             for example in examples:
                 framed=self.datadict.getframeddata(example)
-                if not (framed.forms[self.analang] is None and
-                        framed.forms[self.glosslang] is None):#glosslang2?
-                    self.framedtoXLP(framed,parent=parent,listword=True,
-                                    groups=groups)
+                for langs in [self.analang]+self.glosslangs:
+                    if framed.forms[lang] is not None: #If all None, don't.
+                        self.framedtoXLP(framed,parent=parent,listword=True,
+                                                                groups=groups)
+                        return
         log.info("Starting report...")
         self.storesettingsfile()
         self.getrunwindow()
@@ -5560,9 +5536,11 @@ class Check():
         reportfileXLP='_'.join(bits)+".xml"
         xlpreport=xlp.Report(reportfileXLP,reporttype,
                         self.languagenames[self.analang])
-        for lang in [self.analang,self.glosslang,self.glosslang2]:
-            if lang is not None:
+        langsalreadythere=[]
+        for lang in [self.analang]+self.glosslangs:
+            if lang is not None and lang not in langsalreadythere:
                 xlpreport.addlang({'id':lang,'name': self.languagenames[lang]})
+                langsalreadythere.append(lang)
         return xlpreport
     def basicreport(self,typestodo=['V']):
         """We iterate across these values in this script, so we save current
@@ -5978,14 +5956,21 @@ class Glosslangs(DataList):
     def lang1(self,lang=None):
         if lang is None:
             return self[0]
-        if len(self) >1 and self[1] == lang:
+        if len(self) > 1 and self[1] == lang: #don't have same language twice
             self.pop(1)
-        self[0]=lang
+        if len(self) > 0:
+            self[0]=lang
+        else:
+            self.append(lang)
     def lang2(self,lang=None):
         if lang is None and len(self) >1:
             return self[1]
-        if len(self) >0 and self[0] != lang:
-            self[0]=lang
+        if len(self) > 1 and self[0] != lang:
+            self[1]=lang
+        if len(self) == 1:
+            self.append(lang)
+        else:
+            log.debug("Tried to set second glosslang, without first set.")
     def rm(self,lang):
         """This could be either position, and if lang1 will promote lang2"""
         self.remove(lang)
