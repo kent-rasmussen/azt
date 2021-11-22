@@ -6142,13 +6142,6 @@ class FramedData(object):
                         '\nFYI, I was looking for {}'.format(source))
             return source
         """The following is the same for senses or examples"""
-        # # just for convenience:
-        # self.analang=self.forms[self.analangs[0]]
-        # self.glosslang=self.forms[self.glosslangs[0]]
-        # if len(self.glosslangs) >1 and self.glosslangs[1] in self.forms:
-        #     self.glosslang2=self.forms[self.glosslangs[1]]
-        # else:
-        #     self.glosslang2=None
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
