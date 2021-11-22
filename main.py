@@ -2529,7 +2529,6 @@ class Check():
         self.frame.parent.waitdone()
         self.frame.parent.parent.deiconify()
     def maketoneprogresstable(self):
-        #This should depend on self.ps only, and refresh from self.status.
         def groupfn(x):
             for i in x:
                 try:
@@ -2540,14 +2539,13 @@ class Check():
                     if not self.hidegroupnames:
                         return nn(x,oneperline=True) #if any is not an integer, all.
             return len(x) #to show counts only
-        def updateprofilename(profile,name):
-            self.set('profile',profile,refresh=False)
-            self.set('name',name,refresh=False)
+        def updateprofilencheck(profile,check):
+            self.slices.profile(profile)
+            self.params.check(check)
             #run this in any case, rather than running it not at all, or twice
-            self.checkcheck()
         def refresh(event=None):
             self.storesettingsfile()
-            self.checkcheck()
+            self.tableiteration+=1
         self.boardtitle()
         # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
         # leaderheader.grid(row=1,column=0)
@@ -2556,7 +2554,11 @@ class Check():
         self.leaderboardtable=leaderscroll.content
         row=0
         #put in a footer for next profile/frame
+        cvt=self.params.cvt()
+        ps=self.slices.ps()
         profiles=self.slices.profiles()
+        curprofile=self.slices.profile()
+        curcheck=self.params.check()
         profiles=['colheader']+profiles+['next']
         frames=list(self.toneframes[ps].keys())
         ungroups=0
@@ -2568,27 +2570,27 @@ class Check():
         h.bind('<ButtonRelease>', refresh)
         htip=_("Refresh table, \nsave settings")
         th=ToolTip(h,htip)
-        r=self.status[self.type][ps]
+        r=self.status[cvt][ps]
         log.debug("Table rows possible: {}".format(r))
         for profile in profiles:
             column=0
-            if profile in ['colheader','next']+list(self.status[self.type][
+            if profile in ['colheader','next']+list(self.status[cvt][
                                                             ps].keys()):
-                if profile in self.status[self.type][ps]:
-                    if self.status[self.type][ps][profile] == {}:
+                if profile in self.status[cvt][ps]:
+                    if self.status[cvt][ps][profile] == {}:
                         continue
                     #Make row header
                     t="{} ({})".format(profile,len(self.profilesbysense[
                                                             ps][profile]))
                     h=Label(self.leaderboardtable,text=t)
                     h.grid(row=row,column=column,sticky='e')
-                    if profile == self.profile and self.name is None:
+                    if profile == curprofile and curcheck is None:
                         h.config(background=h.theme['activebackground']) #highlight
                         tip=_("Current profile \n(no frame set)")
                         ttb=ToolTip(h,tip)
                 elif profile == 'next': # end of row headers
                     brh=Button(self.leaderboardtable,text=profile,
-                                            relief='flat',cmd=self.nextprofile)
+                                            relief='flat',cmd=self.status.nextprofile)
                     brh.grid(row=row,column=column,sticky='e')
                     brht=ToolTip(brh,_("Go to the next syllable profile"))
                 for frame in frames+['next']:
@@ -2596,7 +2598,7 @@ class Check():
                     if profile == 'colheader':
                         if frame == 'next': # end of column headers
                             bch=Button(self.leaderboardtable,text=frame,
-                                        relief='flat',cmd=self.nextframe,
+                                        relief='flat',cmd=self.status.nextcheck,
                                         font=self.fonts['reportheader'])
                             bch.grid(row=row,column=column,sticky='s')
                             bcht=ToolTip(bch,_("Go to the next tone frame"))
@@ -2605,29 +2607,15 @@ class Check():
                                 frame), font=self.fonts['reportheader']
                                 ).grid(row=row,column=column,sticky='s',ipadx=5)
                     elif profile == 'next':
-                        pass
-                    elif frame in self.status[self.type][ps][profile]:
-                        if not 'groups' in self.status[self.type][ps][
-                                                            profile][frame]:
-                            self.makestatusdict(profile=profile, name=frame)
-                            total='?'
-                        if not 'tosort' in self.status[self.type][ps][
-                                                            profile][frame]:
-                            tosort='?'
-                        if not 'done' in self.status[self.type][ps][
-                                                            profile][frame]:
-                            done='?'
-                        if len(self.status[self.type][ps][profile][
-                                frame]['done']) > len(self.status[self.type][
-                                ps][profile][frame]['groups']):
+                        continue
+                    elif frame in self.status[cvt][ps][profile]:
+                        node=self.status[cvt][ps][profile][frame]
+                        if len(node['done']) > len(node['groups']):
                             ungroups+=1
                         #At this point, these should be there
-                        done=self.status[self.type][ps][profile][
-                                                                frame]['done']
-                        total=self.status[self.type][ps][profile][
-                                                                frame]['groups']
-                        tosort=self.status[self.type][ps][profile][frame][
-                                                                'tosort']
+                        done=node['done']
+                        total=node['groups']
+                        tosort=node['tosort']
                         totalwverified=[]
                         for g in total:
                             if g in done:
@@ -2635,36 +2623,24 @@ class Check():
                             totalwverified+=[g]
                         donenum=groupfn(done)
                         totalnum=groupfn(total)
-                        log.log(3,"Done groups: {}/{}".format(donenum,type(
-                                                                    donenum)))
-                        log.log(3,"Total groups: {}/{}".format(totalnum,type(
-                                                                    totalnum)))
                         if self.hidegroupnames or (type(totalnum) is int and
                                                         type(donenum) is int):
-                            donenum="{} (+{})".format(totalnum,donenum)
-                            log.log(3,"Total groups found: {}".format(donenum))
+                            donenum="+{}/{}".format(donenum,totalnum)
                         else:
                             donenum=nn(totalwverified,oneperline=True)
                         # This should only be needed on a new database
-                        if donenum == '0 (+0)':
-                            log.log(3,"skipping cell with values {}".format(
-                                                                    donenum))
-                            donenum='' #continue
                         if tosort == True and donenum != '':
-                            donenum='!'+str(donenum)
-                        elif tosort == '?':
-                            donenum='?'+str(donenum)
+                            donenum='!'+str(donenum) #mark data to sort
                         tb=Button(self.leaderboardtable,
                                 relief='flat',
                                 bd=0, #border
                                 text=donenum,
-                                cmd=lambda p=profile, f=frame:updateprofilename(
-                                                                    profile=p,
-                                                                    name=f),
+                                cmd=lambda p=profile,
+                                f=frame:updateprofilencheck(profile=p, check=f),
                                 anchor='c',
                                 padx=0,pady=0
                                 )
-                        if profile == self.profile and frame == self.name:
+                        if profile == curprofile and frame == curcheck:
                             tb.configure(background=tb['activebackground'])
                             tb.configure(command=donothing)
                             tip=_("Current settings \nprofile: ‘{}’; \nframe: ‘{}’"
@@ -2677,11 +2653,9 @@ class Check():
                         ttb=ToolTip(tb,tip)
             row+=1
         if ungroups > 0:
-            log.error(_("You have more groups verified than there are: {}"
-                        "".format(ungroups)))
+            log.error(_("You have more groups verified than there are, in {} "
+                        "cells".format(ungroups)))
         self.frame.update()
-        self.frame.parent.waitdone()
-        self.frame.parent.parent.deiconify()
     def setsu(self):
         self.su=True
     def unsetsu(self):
