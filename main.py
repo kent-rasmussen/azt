@@ -1749,32 +1749,8 @@ class Check():
             self.db.write() #for when not iterated over, or on last repeat
     def updatestatus(self,subcheck=None,verified=False,refresh=True):
         #This function updates the status variable, not the lift file.
-        if subcheck is None:
-            subcheck=self.subcheck
-        self.makestatusdict()
-        if verified == True:
-            if subcheck not in (
-                self.status[self.type][self.ps][self.profile][self.name][
-                                                                    'done']):
-                self.status[self.type][self.ps][self.profile][self.name][
-                                                'done'].append(subcheck)
-            else:
-                log.info("Tried to set {} verified in {} {} {} {} but it was "
-                        "already there, and we're not done with the {} frame."
-                        "".format(subcheck,self.type,
-                        self.ps,self.profile,self.name,self.name))
-        if verified == False:
-            if subcheck in (
-                            self.status[self.type][self.ps][self.profile]
-                            [self.name]['done']):
-                self.status[self.type][self.ps][self.profile][self.name
-                                                ]['done'].remove(subcheck)
-            else:
-                log.info("Tried to set {} UNverified in {} {} {} {}, but it "
-                        "wasn't there.".format(subcheck,self.type,self.ps,
-                                                        self.profile,self.name))
-        if refresh == True:
-            self.storesettingsfile(setting='status')
+        self.status.update(group=group,verified=verified)
+        return
     """Get from LIFT database functions"""
     def addpstoprofileswdata(self,ps=None):
         if ps is None:
