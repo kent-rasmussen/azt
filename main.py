@@ -4417,12 +4417,26 @@ class Check():
                             )
         self.checkcheck() #redraw the table
         self.maybesort() #Because we want to go right into sorting...
-    def getanotherskip(self,parent):
+    def getanotherskip(self,parent,vardict):
         """This function presents a group of buttons for the user to choose
         from, one for each tone group in that location/ps/profile in the
         database, plus one for the user to indicate that the word doesn't
         belong in any of those (new group), plus one to for the user to
         indicate that the word/frame combo doesn't work (skip)."""
+        def firstok():
+            vardict['ok'].set(True)
+            remove(okb) #use this button exactly once
+            sortnext()
+        def different():
+            vardict['NONEOFTHEABOVE'].set(True)
+            sortnext()
+        def skip():
+            vardict['skip'].set(True)
+            sortnext()
+        def remove(x):
+            x.destroy()
+        def sortnext():
+            self.sortitem.destroy()
         row=0
         firstOK=_("This word is OK in this frame")
         newgroup=_("Different")
@@ -4431,32 +4445,33 @@ class Check():
         row+=10
         bf=Frame(parent)
         bf.grid(column=0, row=row, sticky="ew")
-        if self.status[self.type][self.ps][self.profile][self.name]['groups'
-                                                                        ] == []:
-            b=Button(bf, text=firstOK,
-                            cmd=lambda:returndictdestroynsortnext(self,bf,
-                                        {'groupselected':"NONEOFTHEABOVE"}),
+        if self.status.groups() == []:
+            vardict['ok']=tkinter.BooleanVar()
+            okb=Button(bf, text=firstOK,
+                            cmd=firstok,
                             anchor="w",
                             font=self.fonts['instructions']
                             )
-            b.grid(column=0, row=0, sticky="ew")
+            okb.grid(column=0, row=0, sticky="ew")
             # row+=1
         else:
-            b=Button(bf, text=newgroup,
-                        cmd=lambda:returndictnsortnext(self,parent,
-                                    {'groupselected':"NONEOFTHEABOVE"}),
+            vardict['NONEOFTHEABOVE']=tkinter.BooleanVar()
+            difb=Button(bf, text=newgroup,
+                        cmd=different,
                         anchor="w",
                         font=self.fonts['instructions']
                         )
-            b.grid(column=0, row=0, sticky="ew")
+            difb.grid(column=0, row=0, sticky="ew")
         # row+=1
-        b2=Button(bf, text=skip,
-                        cmd=lambda:returndictnsortnext(self,parent,
-                                    {'groupselected':"NA"}),
+        vardict['skip']=tkinter.BooleanVar()
+        skipb=Button(bf, text=skip,
+                        cmd=skip,
+                        # cmd=lambda:returndictnsortnext(self,parent,
+                        #             {'groupselected':"NA"}),
                         anchor="w",
                         font=self.fonts['instructions']
                         )
-        b2.grid(column=0, row=1, sticky="ew")
+        skipb.grid(column=0, row=1, sticky="ew")
     def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,playable=False,renew=False,unsortable=False,**kwargs):
         def again():
             self.tonegroupbuttonframe(
