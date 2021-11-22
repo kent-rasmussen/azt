@@ -4415,29 +4415,6 @@ class Check():
     def markunsortedguid(self,guid):
         self.guidsunsorted.append(guid)
         self.guidssorted.remove(guid)
-    def marksortedsenseid(self,senseid):
-        """I think these are only valuable during a check, so we don't have to
-        constantly refresh sortingstatus() from the lift file."""
-        self.senseidssorted.append(senseid)
-        if senseid in self.senseidsunsorted:
-            self.senseidsunsorted.remove(senseid)
-            if len(self.senseidsunsorted) == 0:
-                self.status[self.type][self.ps][self.profile][self.name][
-                                                        'tosort']=False
-        else:
-            log.error("Sense id {} not found in unsorted senseids! ({}) "
-                        "".format(senseid,self.senseidsunsorted))
-    def markunsortedsenseid(self,senseid):
-        self.status[self.type][self.ps][self.profile][self.name]['tosort']=True
-        if hasattr(self,'senseidsunsorted'): #if not sorting, skip this
-            self.senseidsunsorted.append(senseid)
-            if senseid in self.senseidssorted:
-                self.senseidssorted.remove(senseid)
-            else:
-                log.error("Sense id {} not found in sorted senseids! ({}) "
-                        "".format(senseid,self.senseidsunsorted))
-    def getidstosort(self):
-        #This depends on self.ps and self.profile, but not self.name
     def getidstosort(self): #remove!
         #This depends on ps and profile, but not check
         """These variables should not have to be reset between checks"""
