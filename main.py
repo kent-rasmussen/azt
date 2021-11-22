@@ -1507,37 +1507,21 @@ class Check():
         # This also has no access to verification information, which comes only
         # from verifyT()
         self.storesettingsfile()
-        pss=self.slices.pss()
-        for ps in pss:
-            profiles=self.slices.profiles()
-            for profile in profiles:
-                self.status.build(type=self.type,ps,profile) #,check=None) #makestatusdictprofile()
-                if ps in self.toneframes:
-                    names=[x for x in self.toneframes[ps]] #no profile here
-                    for self.name in names:
-                        self.settonevariablesbypsprofile() <+Make generic
-                        if self.status[self.type][ps][profile][
-                                self.name]['groups'] == []:
-                            log.debug("No groups, deleting frame entry!")
-                            del self.status[self.type][ps][
-                                                    profile][self.name]
-                        else:
-                            log.debug("Groups: {}".format(self.status[
-                                self.type][ps][profile][
-                                                    self.name]['groups']))
-                if self.status[self.type][ps][profile] == {}:
-                    log.debug("No Frames; deleting profile entry!")
-                    del self.status[self.type][ps][profile]
-                else:
-                    log.debug("Frames: {}".format(self.status[self.type][
-                                                        ps][profile]))
-            if self.status[self.type][ps] == {}:
-                log.debug("No Profiles; deleting part of speech entry!")
-                del self.status[self.type][ps]
-            else:
-                log.debug("Profiles: {}".format(self.status[self.type][ps]))
-        self.ps=ps
-        self.profile=profile
+        pss=self.slices.pss() #this depends on nothing
+        for t in self.params.cvts(): #this depends on nothing
+            for ps in pss:
+                profiles=self.slices.profiles(ps=ps) #This depends on ps only
+                for profile in profiles:
+                    checks=self.status.checks()
+                    for c in checks:
+                        self.status.build(t,ps,profile,c)
+                        """this just populates groups and the tosort boolean."""
+                        self.settonevariablesiterable(cvt=t, ps=ps,
+                                                profile=profile, check=check)
+        """Now remove what didn't get data"""
+        self.status.cull()
+        if None in self.status: #This should never be there
+            del self.status[None]
         self.storesettingsfile(setting='status')
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
