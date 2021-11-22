@@ -207,8 +207,8 @@ class Check():
         #     hasattr(self,'profile') and (self.profile is not None) and
         #     hasattr(self,'name') and (self.name is not None)):
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
-        self.glosslangs=Glosslangs(None,None)
-        self.guessglosslangs() #needed for the following
+        if not hasattr(self,'glosslangs'):
+            self.guessglosslangs() #needed for the following
         self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
@@ -2983,12 +2983,6 @@ class Check():
         log.info("this sets the gloss")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title=_('Select Gloss Language'))
-        # if self.db.glosslang is None :
-        #     Label(window.frame,
-        #                   text='Error: please set Lift file first! ('
-        #                   +str(self.db.filename)+')'
-        #                   ).grid(column=0, row=0)
-        # else:
         Label(window.frame,
                   text=_('What Language do you want to use for glosses?')
                   ).grid(column=0, row=1)
@@ -3003,23 +2997,18 @@ class Check():
         log.info("this sets the gloss")
         # fn=inspect.currentframe().f_code.co_name
         window=Window(self.frame,title='Select Gloss Language')
-        if self.db.filename is None :
-            text=_('Error: please set Lift file first!')+' ('
-            +str(self.db.filename)+')'
-            Label(window.frame,text=text).grid(column=0, row=0)
-        else:
-            text=_('What other language do you want to use for glosses?')
-            Label(window.frame,text=text).grid(column=0, row=1)
-            langs=list()
-            for lang in self.db.glosslangs:
-                if lang == self.glosslangs[0]:
-                    continue
-                langs.append({'code':lang, 'name':self.languagenames[lang]})
-            langs.append({'code':None, 'name':'just use '
-                            +self.languagenames[self.glosslangs[0]]})
-            buttonFrame1=ButtonFrame(window.frame,langs,self.setglosslang2,
-                                     window
-                                     ).grid(column=0, row=4)
+        text=_('What other language do you want to use for glosses?')
+        Label(window.frame,text=text).grid(column=0, row=1)
+        langs=list()
+        for lang in self.db.glosslangs:
+            if lang == self.glosslangs[0]:
+                continue
+            langs.append({'code':lang, 'name':self.languagenames[lang]})
+        langs.append({'code':None, 'name':'just use '
+                        +self.languagenames[self.glosslangs[0]]})
+        buttonFrame1=ButtonFrame(window.frame,langs,self.setglosslang2,
+                                 window
+                                 ).grid(column=0, row=4)
     def getcheckspossible(self):
         """This splits by tone or not, because the checks available for
         segments depend on the number of segments in the selected syllable
@@ -4850,7 +4839,7 @@ class Check():
             for lang in self.glosslangs:
                 sense['gloss'].append(firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
-                                                glosslang=self.glosslang
+                                                glosslang=lang
                                                 ),othersOK=True))
             if self.db.pluralname is not None:
                 sense['plnode']=firstoflist(self.db.get('field',
@@ -7608,7 +7597,7 @@ class RecordButtonFrame(Frame):
                                     nodes.index(node),ggchild,ggchild.tag,
                                                 ggchild.attrib,ggchild.text))
             gloss=unlist(check.db.get('translation/form/text',node=node,
-                            glosslang=check.glosslang,showurl=True).get('text'))
+                            glosslang=check.glosslangs[0],showurl=True).get('text'))
             form=unlist(check.db.get('form/text',node=node,showurl=True,
                                             analang=check.analang).get('text'))
             log.log(4,"gloss: {}".format(gloss))
@@ -7619,7 +7608,7 @@ class RecordButtonFrame(Frame):
         audio=unlist(audio)
         if gloss is None:
             gloss=t(check.db.get('gloss',senseid=senseid,
-                                    glosslang=check.glosslang).get('text'))
+                                    glosslang=check.glosslangs[0]).get('text'))
         if form is None and node is not None:
             form=t(node.find(f"form[@lang='{check.analang}']/text"))
         if audio is not None:
@@ -7696,7 +7685,7 @@ class RecordButtonFrame(Frame):
         framed=kwargs.pop('framed',None) #Either this or the next two...
         if framed is not None:
             formdefault=framed.forms[check.analang]
-            glossdefault=framed.forms[check.glosslang]
+            glossdefault=framed.forms[check.glosslangs[0]]
         else:
             formdefault=None
             glossdefault=None
