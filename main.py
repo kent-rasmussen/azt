@@ -141,11 +141,15 @@ class Check():
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.loadsettingsfile(setting='toneframes')
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.maketoneframes()
 =======
         if not hasattr(self,'toneframes'):
             self.toneframes=ToneFrames({})
 >>>>>>> make sure the new toneframes object exists
+=======
+        self.maketoneframes()
+>>>>>>> changes for now
         self.loadsettingsfile(setting='adhocgroups')
         if nsyls is not None:
             self.nsyls=nsyls
@@ -199,6 +203,7 @@ class Check():
             log.debug("Middle ps-profile: {}-{}".format(ps,profile))
             self.storesettingsfile(setting='profiledata')
 <<<<<<< HEAD
+<<<<<<< HEAD
             log.debug("Ending ps-profile: {}-{}".format(ps,profile))
         self.makeparameters()
         self.makeslicedict()
@@ -211,6 +216,11 @@ class Check():
         self.getprofilestodo()
         self.getpss() #This is a prioritized list of all ps'
 >>>>>>> implement slices
+=======
+            log.debug("Ending ps-profile: {}-{}".format(ps,profile))
+        self.makeparameters()
+        self.makeslicedict()
+>>>>>>> changes for now
         self.setnamesall() #sets self.checknamesall
         self.loadsettingsfile(setting='status')
 <<<<<<< HEAD
@@ -9182,28 +9192,144 @@ class StatusDict(dict):
         super(StatusDict, self).__init__()
         for k in dict:
             self[k]=dict[k]
-        self.checkparameters=checkparameters
-        self.slicedict=slicedict
+        self._checkparameters=checkparameters
+        self._slicedict=slicedict
+        self._toneframes=toneframes
 class CheckParameters(dict):
-    def type(self,type=None):
-        if type is not None:
-            self._type=type
+    """This stores and returns current cvt/type and check only; there is not check
+    here that the setting is valid (done in status), nor that the consequences
+    of the change are done (done in check)."""
+    """None of this is language/project dependent, nor with mutable options"""
+    def verify(self):
+        t=self.cvt()
+        if t not in self._cvts:
+            self.cvt(self.cvts()[0])
+        """The following are not (yet?) renewed here"""
+        check=self.check()
+        if check not in self.checks():
+            self.check(self.checks()[0])
+        group=self.group()
+        if check not in self.groups():
+            self.group(self.groups()[0])
+    def cvt(self,cvt=None):
+        """This needs to change checks"""
+        if cvt is not None:
+            self._cvt=cvt
         else:
-            return self._type
+            return self._cvt
+    def cvts(self):
+        """This depends on nothing, so can go anywhere, and shouldn't need to
+        rerun. This is a convenience wrapper only."""
+        return list(self._cvts)
+    def cvtdict(self):
+        """This depends on nothing, so can go anywhere, and shouldn't need to
+        rerun. This is a convenience wrapper only."""
+        return self._cvts
     def check(self,check=None):
+        """This needs to change/clear subchecks"""
         if check is not None:
             self._check=check
+            # self.renewsubchecks() to status
         else:
             return self._check
-    def subcheck(self,subcheck=None):
-        if subcheck is not None:
-            self._subcheck=subcheck
-        else:
-            return self._subcheck
-    def __init__(self,check):
+    def __init__(self): # had, do I need check? to write?
+        """replaces setnamesall"""
+        """replaces self.checknamesall"""
         super(CheckParameters, self).__init__()
+<<<<<<< HEAD
         self.check=check
 >>>>>>> parameter dictionary classes
+=======
+        """This replaces typedict"""
+        self._cvts={
+                'V':{'sg':_('Vowel'),'pl':_('Vowels')},
+                'C':{'sg':_('Consonant'),'pl':_('Consonants')},
+                'CV':{'sg':_('Consonant-Vowel combination'),
+                        'pl':_('Consonant-Vowel combinations')},
+                'T':{'sg':_('Tone'),'pl':_('Tones')},
+                }
+        self._Schecks={
+            "V":{
+                1:[("V1", "First/only Vowel")],
+                2:[
+                    ("V1=V2", "Same First/only Two Vowels"),
+                    ("V1xV2", "Correspondence of First/only Two Vowels"),
+                    ("V2", "Second Vowel")
+                    ],
+                3:[
+                    ("V1=V2=V3", "Same First/only Three Vowels"),
+                    ("V3", "Third Vowel"),
+                    ("V2=V3", "Same Second Two Vowels"),
+                    ("V2xV3", "Correspondence of Second Two Vowels")
+                    ],
+                4:[
+                    ("V1=V2=V3=V4", "Same First/only Four Vowels"),
+                    ("V4", "Fourth Vowel")
+                    ],
+                5:[
+                    ("V1=V2=V3=V4=V5", "Same First/only Five Vowels"),
+                    ("V5", "Fifth Vowel")
+                    ],
+                6:[
+                    ("V1=V2=V3=V4=V5=V6", "Same First/only Six Vowels"),
+                    ("V6", "Sixth Vowel")
+                    ]
+                },
+            "C":{
+                1:[("C1", "First/only Consonant")],
+                2:[
+                    ("C2", "Second Consonant"),
+                    ("C1=C2","Same First/only Two Consonants"),
+                    ("C1xC2", "Correspondence of First/only Two Consonants")
+                    ],
+                3:[
+                    ("C2=C3","Same Second Two Consonants"),
+                    ("C2xC3", "Correspondence of Second Two Consonants"),
+                    ("C3", "Third Consonant"),
+                    ("C1=C2=C3","Same First Three Consonants")
+                    ],
+                4:[
+                    ("C4", "Fourth Consonant"),
+                    ("C1=C2=C3=C4","Same First Four Consonants")
+                    ],
+                5:[
+                    ("C5", "Fifth Consonant"),
+                    ("C1=C2=C3=C4=C5","Same First Five Consonants")
+                    ],
+                6:[
+                    ("C6", "Sixth Consonant"),
+                    ("C1=C2=C3=C4=C5=C6","Same First Six Consonants")
+                    ]
+                },
+            "CV":{
+                1:[("#CV1", "Word-initial CV"),
+                    ("C1xV1", "Correspondence of C1 and V1"),
+                    ("CV1", "First/only CV")
+                    ],
+                2:[("CV2", "Second CV"),
+                    ("C2xV2", "Correspondence of C2 and V2"),
+                    ("CV1=CV2","Same First/only Two CVs"),
+                    ("CV2#", "Word-final CV")
+                    ],
+                3:[
+                    ("CV1=CV2=CV3","Same First/only Three CVs"),
+                    ("CV3", "Third CV")
+                    ],
+                4:[
+                    ("CV1=CV2=CV3=CV4","Same First/only Four CVs"),
+                    ("CV4", "Fourth CV")
+                    ],
+                5:[
+                    ("CV1=CV2=CV3=CV4=CV5","Same First/only Five CVs"),
+                    ("CV5", "Fifth CV")
+                    ],
+                6:[
+                    ("CV1=CV2=CV3=CV4=CV5=CV6","Same First/only Six CVs"),
+                    ("CV6", "Sixth CV")
+                    ]
+                },
+        }
+>>>>>>> changes for now
 class ConfigParser(configparser.ConfigParser):
     def write(self,*args,**kwargs):
         configparser.ConfigParser.write(self,*args,**kwargs,
