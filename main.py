@@ -9190,7 +9190,7 @@ class StatusDict(dict):
             self.write()
     def __init__(self, checkparameters, slicedict, dict):
         super(StatusDict, self).__init__()
-        for k in dict:
+        for k in [i for i in dict if i is not None]:
             self[k]=dict[k]
         self._checkparameters=checkparameters
         self._slicedict=slicedict
