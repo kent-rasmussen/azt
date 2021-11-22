@@ -1540,14 +1540,6 @@ class Check():
         self.profile=profile
         self.storesettingsfile(setting='status')
         self.checkcheck()
-    def loadtypedict(self):
-        """I just need this to load once somewhere..."""
-        self.typedict={
-                'V':{'sg':_('Vowel'),'pl':_('Vowels')},
-                'C':{'sg':_('Consonant'),'pl':_('Consonants')},
-                'CV':{'sg':_('Consonant-Vowel combination'),'pl':_('Consonant-Vowel combinations')},
-                'T':{'sg':_('Tone'),'pl':_('Tones')},
-                }
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
