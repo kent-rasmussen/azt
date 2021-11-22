@@ -7825,9 +7825,6 @@ class SliceDict(dict):
         if profile is not None:
             self._profile=profile
         else:
-            # self.makestatusdictprofile()
-            # self.getframestodo()
-            self.makeprofileok()
             return self._profile
     def nextps(self):
         self.makepsok()
