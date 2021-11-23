@@ -530,12 +530,16 @@ class Check():
             self.distinguish={}
         if (not hasattr(self,'interpret')) or (self.interpret is None):
             self.interpret={}
-        for var in ['G','Gwd','N','S','Swd','D','Dwd','Nwd','d','ː','ʔ','ʔwd']:
+        for var in ['G','Gwd','N','S','Swd','D','Dwd','Nwd','ʔ','ʔwd',
+                    "̀",'ː','<','=']:
             if ((var not in self.distinguish) or
                 (type(self.distinguish[var]) is not bool)):
                 self.distinguish[var]=False
-            if var == 'd':
-                self.distinguish[var]=False #don't change this default, yet...
+            """These defaults are not settable, yet:"""
+            if var in ["̀",'ː']: #typically word-forming
+                self.distinguish[var]=False
+            if var in ['<','=']: #typically not word-forming
+                self.distinguish[var]=True
         for var in ['NC','CG','CS','VV','VN']:
             if ((var not in self.interpret) or
                 (type(self.interpret[var]) is not str) or
@@ -2040,6 +2044,9 @@ class Check():
             if self.distinguish[c+'wd'] is False:
                 form=self.rx[c+'wd'].sub('C',form)
                 # log.debug("{}wd regex result: {}".format(c,form))
+        for o in ["̀",'<','=','ː']:
+            if self.distinguish[o] is False and o in self.rx:
+                form=self.rx[o].sub('',form)
         for cc in ['CG','CS','NC','VN','VV']:
             form=self.rx[cc].sub(self.interpret[cc],form)
         return form
