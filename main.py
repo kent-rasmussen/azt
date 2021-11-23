@@ -8501,7 +8501,7 @@ def praatopen(file,event=None):
     else:
         log.info(_("Looks like I couln't find Praat..."))
     #This should use the actual executable found earlier...
-    praatargs=[praat, "--open", file]
+    praatargs=[program['praat'], "--open", file]
     try:
         subprocess.Popen(praatargs,shell=False) #not run; continue here
     except Exception as e:
