@@ -1,5 +1,8 @@
 #Roadmap
 At this point, this is just a bunch of random notes on stuff I need to follow up on:
+add python3 -m pip install mercurial to docs
+  include toneframes and syllable profile settings.
+  maybe make tone report work off of examples present, rather than tone frames?
 Fix logic problem in maybesort: (endless cycling, with or without verification page:
   marking verified and continuing.)
 put UF fields in form/text nodes?
