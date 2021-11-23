@@ -204,6 +204,7 @@ class Check():
         self.makeglosslangs()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         #     self.guessglosslangs() #needed for the following
+        self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
         #set None to make labels, else "raised" "groove" "sunken" "ridge" "flat"
