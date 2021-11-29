@@ -227,12 +227,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """this node stores a python symbolic representation, specific to an
         analysis language"""
         lang='py-'+analang
-        nodes=self.addverificationnode(senseid,vtype=vtype,lang=lang)
-        vf=nodes[0] #this is a text node
-        sensenode=nodes[1]
-        l=self.evaluatenode(vf) #this is the python evaluation of vf.text
-        log.log(2,"{}; {}".format(vf.text, type(vf.text)))
-        log.log(2,"{}; {}".format(l, type(l)))
+        textnode, fieldnode, sensenode=self.addverificationnode(
+                                                senseid,vtype=vtype,lang=lang)
+        l=self.evaluatenode(textnode) #this is the python evaluation of textnode
         changed=False
         i=len(l)
         for rm in rms:
@@ -244,13 +241,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 and (addifrmd == False or changed == True)):
             l.insert(i,add) #put where removed from, if done.
             changed=True
-        vf.text=str(l)
+        textnode.text=str(l)
         if changed == True:
             self.updatemoddatetime(senseid=senseid)
         log.log(2,"Empty node? {}; {}".format(vf.text,l))
         if l == []:
             log.debug("removing empty verification node from this sense")
-            sensenode.remove(vf)
+            sensenode.remove(fieldnode)
         else:
             log.log(2,"Not removing empty node")
     def getverificationnodevaluebyframe(self,senseid,vtype,analang,frame):
@@ -288,13 +285,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
-        vft=node.find("field[@type='{} {}']/form[@lang='{}']/text".format(
-                                                vtype,"verification",lang))
+        vf=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text/../.."
+                            "".format(vtype,"verification",lang))
+        vft=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text"
+                            "".format(vtype,"verification",lang))
         if vft is None:
             vf=Node(node, 'field',
                             attrib={'type':"{} verification".format(vtype)})
             vft=vf.makeformnode(lang=lang,gimmetext=True)
-        return (vft,node)
+        return (vft,vf,sensenode)
     def getentrynode(self,senseid,showurl=False):
         return self.get('entry',senseid=senseid).get()
     def getsensenode(self,senseid,showurl=False):
