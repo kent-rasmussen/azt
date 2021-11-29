@@ -293,7 +293,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if vft is None:
             vf=Node(node, 'field',
                             attrib={'type':"{} verification".format(vtype)})
-            vft=vf.makeformnode(lang=lang,text=t,gimmetext=True)
+            vft=vf.makeformnode(lang=lang,gimmetext=True)
         return (vft,node)
     def getentrynode(self,senseid,showurl=False):
         return self.get('entry',senseid=senseid).get()
