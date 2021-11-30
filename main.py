@@ -1298,7 +1298,6 @@ class Check():
     def setgroup(self,choice,window):
         log.debug("group: {}".format(choice))
         self.status.group(choice)
-        # self.set('subcheck',choice,window)
         log.debug("group: {}".format(group))
     def setgroup_comparison(self,choice,window):
         if hasattr(self,'group_comparison'):
