@@ -4290,7 +4290,7 @@ class Check():
                             location=check,fieldvalue='', #just clear this
                             oldfieldvalue='NA', showurl=True #if this
                             )
-        self.maybesort() #Because we want to go right into sorting...
+        self.runcheck()
     def getanotherskip(self,parent,vardict):
         """This function presents a group of buttons for the user to choose
         from, one for each tone group in that location/ps/profile in the
