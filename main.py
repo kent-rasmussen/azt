@@ -3792,6 +3792,10 @@ class Check():
             done.remove(group)
         self.maybesort()
     def verifyT(self,menu=False):
+        def updatestatus():
+            log.info("Updating status with {}, {}, {}".format(check,group,verified))
+            self.updatestatus(verified=verified)
+            self.updatestatuslift(check,group,verified=verified)
         log.info("Running verifyT!")
         """Show entries each in a row, users mark those that are different, and we
         remove that group designation from the entry (so the entry will show up on
