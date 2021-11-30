@@ -4243,6 +4243,41 @@ class Check():
                 verified.remove(v)
         self.status.verified(verified,ps=ps,profile=profile,check=check) #set
         self.storesettingsfile(setting='status')
+    def removesenseidfromgroup(self,senseid,check=None,group=None): #parent,
+        if check is None:
+            check=self.params.check()
+        if group is None:
+            group=self.status.group()
+        framed=self.datadict.getframeddata(senseid)
+        framed.setframe(check)
+        text=framed.formatted(noframe=False)
+        log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
+        #This should only *mod* if already there
+        self.db.addmodexamplefields(senseid=senseid,
+                                analang=self.analang,
+                                framed=framed,
+                                fieldtype='tone',location=check,
+                                fieldvalue='',showurl=True) #this value should be the only change
+        log.info("Checking that removal worked")
+        tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
+                            location=check).get('text')
+        if tgroups in [[],'',['']]:
+            log.info("Field removal succeeded! LIFT says '{}', = []."
+                                                                "".format(tgroups))
+        elif len(tgroups) == 1:
+            tgroup=tgroups[0]
+            log.error("Field removal failed! LIFT says '{}', != [].".format(tgroup))
+        elif len(tgroups) > 1:
+            log.error(_("Found {} tone values: {}; Fix this!".format(len(tgroups),
+                                                                        tgroups)))
+            return
+        rm=self.verifictioncode(check,group)
+        profile=self.slices.profile()
+        self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
+                                                                        rms=[rm])
+        self.db.write() #This is not iterated over
+        self.status.marksenseidtosort(senseid) #This is just for self.status['sorted']
+        # parent.destroy() #.runwindow.resetframe()
     def marksortedguid(self,guid):
         """I think these are only valuable during a check, so we don't have to
         constantly refresh sortingstatus() from the lift file."""
