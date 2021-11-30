@@ -51,6 +51,7 @@ if program['tkinter']==True:
     except Exception as e:
         log.exception("Problem importing GUI/tkinter. Is it installed? %s",e)
         exceptiononload=True
+    import ui_tkinter as ui
 """else:
     import kivy
 """
