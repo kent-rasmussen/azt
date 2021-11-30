@@ -1231,6 +1231,8 @@ class Check():
         """I need to think through these; what things must/should change when
         one of these attributes change? Especially when we've changed a few...
         """
+        if not hasattr(self,'attrschanged'):
+            return
         self.status.build()
         if 'cvt' in self.attrschanged:
             self.status.renewchecks()
@@ -1294,12 +1296,15 @@ class Check():
         self.params.cvt(choice)
         self.attrschanged.append('cvt')
         self.refreshattributechanges()
+        window.destroy()
     def setanalang(self,choice,window):
         self.set('analang',choice,window)
     def setgroup(self,choice,window):
         log.debug("group: {}".format(choice))
         self.status.group(choice)
         log.debug("group: {}".format(group))
+        window.destroy()
+        log.debug("group: {}".format(choice))
     def setgroup_comparison(self,choice,window):
         if hasattr(self,'group_comparison'):
             log.debug("group_comparison: {}".format(self.group_comparison))
@@ -1757,7 +1762,6 @@ class Check():
             rms+=self.db.getverificationnodevaluebyframe(senseid,vtype=profile,
                                         analang=self.analang,
             log.info("Removing {}".format(rms))
-            self.db.modverificationnode(senseid,vtype=profile,add=add,rms=rms)
         if refresh == True:
             self.db.write() #for when not iterated over, or on last repeat
     def updatestatus(self,group=None,verified=False,refresh=True):
