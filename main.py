@@ -4414,10 +4414,144 @@ class Check():
             i+=1
             return
     def record(self):
-        if cvt == 'T':
+        if self.params.cvt() == 'T':
             self.showtonegroupexs()
         else:
             self.showentryformstorecord()
+    def makefilenames(self,senseid=None,node=None,test=False): #self=None,check=None,
+        if test==True:
+            return "test_{}_{}.wav".format(self.settings.fs, #soundsettings?
+                                        self.settings.sample_format)
+            if None in [self.id, self.node, self.gloss]:
+                log.debug("Sorry, unless testing we need all these "
+                "arguments; exiting.")
+                return
+        if senseid is None: #we need this at least for the name
+            return
+        check=self.params.check() #where do I need this?
+        if node is not None: #but we want to use this if there.
+            framed=self.datadict.getframeddata(node)
+            framed.setframe() #this should be framed already
+        else:
+            framed=self.datadict.getframeddata(senseid)
+            framed.setframe(check)
+        """The rest of this should be converted to use framed"""
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        if node is None:
+            node=firstoflist(self.db.get('example',senseid=senseid,
+                            location=check).get())
+        if node is None:
+            # This should never be!
+            log.error("Looks like a node came back 'None'; this may be "
+                        "from multiple examples with the same frame; check"
+                        "the log for details on what {} found".format(
+                        program['name']
+                        ))
+            nodes=self.db.get('examplebylocation',senseid=senseid,
+                                location=check)
+            for node in nodes:
+                for child in node:
+                    log.error("Node{}: {}; tag:{}; attrib:{}".format(
+                        nodes.index(node),child,child.tag, child.attrib,
+                                                                child.text))
+                    for grandchild in child:
+                        log.error("Node{}c: {}; tag:{}; attrib:{}".format(
+                            nodes.index(node),grandchild,grandchild.tag,
+                                        grandchild.attrib,grandchild.text))
+                        for ggchild in grandchild:
+                            log.error("Node{}cg: {}; tag:{}; attrib:{}; text:{}"
+                                "".format(nodes.index(node),ggchild,ggchild.tag,
+                                            ggchild.attrib,ggchild.text))
+            return
+        gloss=framed.framed[self.glosslangs[0]]
+        form=framed.framed[self.analang]
+        audio=framed.framed[self.audiolang]
+        """This is for nodes that don't include glosses (like pl/imp fields)"""
+        if gloss is None:
+            gloss=t(self.db.get('gloss',senseid=senseid,
+                    glosslang=self.glosslangs[0]).get('text'))+'_'+node.tag()
+        """We want to use links already present in LIFT, if they link to real
+        sound files."""
+        if audio is not None:
+            filenameURL=str(file.getdiredurl(self.audiodir,audio))
+            if file.exists(filenameURL):
+                log.debug("Audio file found! using name: {}; diredname: {}"
+                    "".format(audio, filenameURL))
+                return audio, filenameURL
+            else:
+                log.debug("Audio link found, but no file found! Removing and "
+                    "making options."
+                    "\n{}; diredname: {}".format(audio, filenameURL))
+        pslocopts=[ps]
+        # Except for data generated early in 2021, profile should not be there,
+        # because it can change with analysis. But we include here to pick up
+        # old files, in case they are there but not linked.
+        pslocopts.insert(0,ps+'_'+profile) # first option (legacy).
+        fieldlocopts=[None]
+        if (node.tag == 'example'):
+            l=node.find("field[@type='location']//text")
+            if hasattr(l,'text') and l.text is not None:
+                #the last option is taken, if none are found
+                pslocopts.insert(0,ps+'-'+l.text) #the first option.
+                fieldlocopts.append(l.text) #make this the last option.
+                # Yes, these allow for location to be present twice, but
+                # that should never be found, nor offered
+        filenames=[]
+        """We iterate over lots of filename schemas, to preserve legacy data.
+        This is only really needed (and so could be removed at some point) when
+        data has been recorded but no link is in place, for whatever reason.
+        If there is a link to a real sound file, that is covered above.
+        If there is no sound file, then the below will result in the default
+        (current) schema."""
+        for pslocopt in pslocopts:
+            for fieldlocopt in fieldlocopts: #for older name schema
+                for legacy in ['_', None]:
+                    for tags in [ None, 1 ]:
+                        args=[senseid]
+                        if tags is not None:
+                            args+=[node.tag]
+                            if node.tag == 'field':
+                                args+=[node.get("type")]
+                        args+=[form]
+                        args+=[gloss]
+                        optargs=args[:]
+                        optargs.insert(0,pslocopt) #put first
+                        optargs.insert(3,fieldlocopt) #put after self.node.tag
+                        log.log(3,optargs)
+                        wavfilename=''
+                        argsthere=[x for x in optargs if x is not None]
+                        for arg in argsthere:
+                            wavfilename+=arg
+                            if argsthere.index(arg) < len(argsthere)-1:
+                                wavfilename+='_'
+                        if legacy == '_': #There was a schema that had an extra '_'.
+                            wavfilename+='_'
+                        wavfilename=rx.urlok(wavfilename) #one character check
+                        filenames+=[wavfilename+'.wav']
+        #test if any of the generated filenames are there, stop at the first one
+        for filename in filenames:
+            filenameURL=str(file.getdiredurl(self.audiodir,filename))
+            log.debug("Looking for Audio file: {}; filename possibilities: {}; "
+                "url:{}".format(filename, filenames, filenameURL))
+            if file.exists(filenameURL):
+                log.debug("Audiofile found! using name: {}; possibilities: {}; "
+                    "url:{}".format(filename, filenames, filenameURL))
+                break
+        #if you don't find any files, the *last* values are used below
+        if not file.exists(filenameURL):
+            log.debug("No audio file found! I'm making a link anyway, and "
+                    "preparing to record using name: {}; url:{}"
+                        "".format(filename, filenameURL))
+        """Create a link now, rather than asking the record buttons to do so.
+        this will give LIFT links where nothing has ever been recorded, but
+        greatly simplifies the record button frame. """
+        """File names with new naming schemes will overwrite those with old
+        naming schemes, on this next line. Note that we don't get here, if
+        there is such a sound file, so this just impacts nodes without
+        recordings."""
+        self.db.addmediafields(node,filename,self.audiolang)
+        return filename, filenameURL
     def makelabelsnrecordingbuttons(self,parent,sense):
         framed=self.datadict.getframeddata(sense['nodetoshow'])
         t=framed.formatted(noframe=True)
