@@ -8100,10 +8100,14 @@ class StatusDict(dict):
             profile=self._slicedict.profile()
         if check is None:
             check=self._checkparameters.check()
+    def dictcheck(self,**kwargs):
+        kwargs=self.checkslicetypecurrent(**kwargs)
         try:
-            t=self[cvt][ps][profile][check]['groups']
+            """Build this explicitly to avoid recursion group-check-node"""
+            t=self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][
+                                                kwargs['check']]['groups']
         except KeyError:
-            self.build(cvt=cvt,ps=ps,profile=profile,check=check)
+            self.build(**kwargs)
     def build(self,**kwargs):
         """this makes sure that the dictionary structure is there for work you
         are about to do"""
