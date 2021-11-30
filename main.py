@@ -3967,11 +3967,10 @@ class Check():
         introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
                 "sorted into the groups exemplified below (in the ‘{}’ frame). "
                 "Do any of these have the same tone melody? "
-                "If so, click on the two groups. If not, click ‘{}’."
-                ).format(ps,profile,check,oktext)
+                "If so, click on two groups to join, then ‘{ok}’. "
+                "If not, just click ‘{ok}’."
+                ).format(ps,profile,check,ok=oktext)
         log.debug(introtext)
-        if hasattr(self,'groupselected'):
-            delattr(self,'groupselected') # self.groupselected=None
         self.runwindow.resetframe()
         self.runwindow.frame.titles=ui.Frame(self.runwindow.frame)
         self.runwindow.frame.titles.grid(column=0, row=0, columnspan=2, sticky="w")
@@ -3988,73 +3987,62 @@ class Check():
         self.sframe.grid(row=2,column=1)
         self.sortitem=self.sframe.content
         row=0
-        canary=Label(self.runwindow,text='')
-        canary.grid(row=5,column=5)
-        canary2=Label(self.runwindow,text='')
-        canary2.grid(row=5,column=5)
+        groupvars={}
+        b={}
         for group in groups:
-            self.tonegroupbuttonframe(self.sortitem,group,row,notonegroup=False,
-                                unsortable=False,canary=canary,canary2=canary2)
+            b[group]=ToneGroupButtonFrame(self.sortitem, self, self.exs, group,
+                                    showtonegroup=True,
+                                    labelizeonselect=True
+                                    )
+            b[group].grid(column=0, row=row, sticky='ew')
+            groupvars[group]=b[group].var()
             row+=1
         """If all is good, destroy this frame."""
-        b=Button(self.sortitem, text=oktext,
-                    cmd=lambda:returndictnsortnext(self,
-                    self.runwindow.frame,
-                    {'groupselected':"ALLOK"},
-                    canary=canary,canary2=canary2
-                    ),
+        self.runwindow.waitdone()
+        ngroupstojoin=0
+        while ngroupstojoin < 2:
+            bok=Button(self.sortitem, text=oktext,
+                    cmd=self.sortitem.destroy,
                     anchor="c",
                     font=self.fonts['instructions']
                     )
-        b.grid(column=0, row=row, sticky="ew")
-        self.runwindow.waitdone()
-        self.runwindow.frame.wait_window(canary)
-        #On first button press/exit:
+            bok.grid(column=0, row=row, sticky="ew")
+            for group in b:
+                b[group].setcanary(bok) #this must be done after bok exists
+            log.info("making button!")
+            self.runwindow.frame.wait_window(bok)
+            groupstojoin=selected(groupvars)
+            ngroupstojoin=len(groupstojoin)
+            if ngroupstojoin == 2 or not self.sortitem.winfo_exists():
+                break
         if self.runwindow.exitFlag.istrue():
             return 1
-        if hasattr(self,'groupselected'):
-            if self.groupselected == "ALLOK":
-                print(f"User selected ‘{oktext}’, moving on.")
-                delattr(self,'groupselected')
-                return 0
-            else:
-                group1=self.groupselected
-                delattr(self,'groupselected')
-                if group1 in groups:
-                    row=groups.index(group1)
-                else:
-                    log.error("Group ‘{}’ isn't found in list {}!".format(
-                                group1,groups))
-                    row=len(groups)+1
-                self.tonegroupbuttonframe(self.sortitem,group1,row,
-                                        notonegroup=False,unsortable=False,
-                                        label=True, font=self.fonts['readbig'],
-                                        canary=canary,canary2=canary2)
-                log.debug('self.tonegroups: {}; group1: {}'.format(groups,
-                    group1))
-                self.runwindow.wait_window(canary2)
-                #On second button press/exit:
-                if self.runwindow.exitFlag.istrue(): #i.e., user exits by now
-                    return 1
-                if hasattr(self,'groupselected'):
-                    if self.groupselected == "ALLOK":
-                        print(f"User selected ‘{oktext}’, moving on.")
-                        delattr(self,'groupselected')
-                        return 0
-                    else:
-                        msg=_("Now we're going to move group ‘{0}’ into "
-                            "‘{1}’, marking ‘{1}’ unverified.".format(
-                            group1,self.groupselected))
-                        self.runwindow.wait(msg=msg)
-                        log.debug(msg)
-                        """All the senses we're looking at, by ps/profile"""
-                        self.updatebysubchecksenseid(group1,self.groupselected)
-                        groups.remove(group1)
-                        self.updatestatuslift(group=group1,refresh=False) #done above
-                        self.updatestatus(group=group1,refresh=False) #not verified=True --since joined.
-                        self.updatestatuslift(group=self.groupselected) #done above
-                        self.updatestatus(group=self.groupselected) #not verified=True --since joined.
-                        self.maybesort() #go back to verify, etc.
+        if ngroupstojoin < 2:
+            log.info("User selected ‘{}’ with {} groups selected, moving on."
+                    "".format(oktext,ngroupstojoin))
+            return 0
+        elif ngroupstojoin > 2:
+            log.info("User selected ‘{}’ with {} groups selected, This is "
+                    "probably a mistake ({} selected)."
+                    "".format(oktext,ngroupstojoin,groupstojoin))
+            return self.joinT() #try again
+        else:
+            log.info("User selected ‘{}’ with {} groups selected, joining "
+                    "them. ({} selected)."
+                    "".format(oktext,ngroupstojoin,groupstojoin))
+            msg=_("Now we're going to move group ‘{0}’ into "
+                "‘{1}’, marking ‘{1}’ unverified.".format(*groupstojoin))
+            self.runwindow.wait(msg=msg)
+            log.debug(msg)
+            """All the senses we're looking at, by ps/profile"""
+            self.updatebygroupsenseid(*groupstojoin)
+            groups.remove(groupstojoin[0])
+            refresh=False
+            for group in groupstojoin: #not verified=True --since joined
+                self.updatestatuslift(group=group,refresh=refresh)
+                self.updatestatus(group=group,refresh=refresh)
+                refresh=True #For second group
+            self.maybesort() #go back to verify, etc.
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
