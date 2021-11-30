@@ -4323,7 +4323,7 @@ class Check():
         row=0
         firstOK=_("This word is OK in this frame")
         newgroup=_("Different")
-        skip=_("Skip this word/phrase")
+        skiptext=_("Skip this word/phrase")
         """This should just add a button, not reload the frame"""
         row+=10
         bf.grid(column=0, row=row, sticky="ew")
@@ -4336,14 +4336,11 @@ class Check():
                             font=self.fonts['instructions']
                             )
             okb.grid(column=0, row=0, sticky="ew")
-            # row+=1
         else:
             differentbutton()
         vardict['skip']=tkinter.BooleanVar()
-        skipb=Button(bf, text=skip,
+        skipb=Button(bf, text=skiptext,
                         cmd=skip,
-                        # cmd=lambda:returndictnsortnext(self,parent,
-                        #             {'groupselected':"NA"}),
                         anchor="w",
                         font=self.fonts['instructions']
                         )
