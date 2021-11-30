@@ -199,13 +199,14 @@ class Check():
         self.makeslicedict()
         self.setnamesall() #sets self.checknamesall
         self.loadsettingsfile(setting='status')
+        self.makedatadict()
+        self.makeexampledict() #needed for makestatus
         self.makestatus()
         #This can wait until runcheck, right?
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
         self.makeglosslangs()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         #     self.guessglosslangs() #needed for the following
-        self.datadict=FramedDataDict(self)
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
         #set None to make labels, else "raised" "groove" "sunken" "ridge" "flat"
@@ -264,6 +265,12 @@ class Check():
         if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
             self.adhocgroups={}
         self.slices=SliceDict(self.params,self.adhocgroups,self.profilesbysense) #self.profilecounts
+    def makedatadict(self):
+        log.info("makedatadict")
+        self.datadict=FramedDataDict(self)
+    def makeexampledict(self):
+        log.info("makeexampledict")
+        self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
     def makestatus(self):
         log.info("makestatus")
         if not hasattr(self,'status'):
