@@ -8029,7 +8029,7 @@ class StatusDict(dict):
         kwargs=grouptype(**kwargs)
         check=self._checkparameters.check()
         checks=self.checks(**kwargs)
-        if len(checks) == 0:
+        if not checks:
             log.error("There are no such checks! tosort: {}; wsorted: {}"
                         "".format(tosort,wsorted))
             return
