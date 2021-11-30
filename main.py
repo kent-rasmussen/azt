@@ -4294,6 +4294,7 @@ class Check():
         def firstok():
             vardict['ok'].set(True)
             remove(okb) #use this button exactly once
+            differentbutton()
             sortnext()
         def different():
             vardict['NONEOFTHEABOVE'].set(True)
@@ -4305,6 +4306,14 @@ class Check():
             x.destroy()
         def sortnext():
             self.sortitem.destroy()
+        def differentbutton():
+            vardict['NONEOFTHEABOVE']=tkinter.BooleanVar()
+            difb=Button(bf, text=newgroup,
+                        cmd=different,
+                        anchor="w",
+                        font=self.fonts['instructions']
+                        )
+            difb.grid(column=0, row=0, sticky="ew")
         row=0
         firstOK=_("This word is OK in this frame")
         newgroup=_("Different")
