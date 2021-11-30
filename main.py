@@ -7939,28 +7939,17 @@ class StatusDict(dict):
             if (check not in self[cvt][ps][profile] or
                     self[cvt][ps][profile][check]['tosort'] == True):
                 return True
-    def groupstoverify(self,check=None):
-        """This assumes we have already run checktosort, so we won't do that"""
-        if check is None:
-            check=self._checkparameters.check()
-        cvt=self._checkparameters.cvt()
-        ps=self._slicedict.ps()
-        profile=self._slicedict.profile()
-        groups=self[cvt][ps][profile][check]['groups']
-        done=self[cvt][ps][profile][check]['done']
-        groupstoverify=set(groups)-set(done)
-        log.debug("Check: {}; groupstodo: {}; groups: {}; done: {}; "
-                "".format(check, groupstoverify, groups, done))
-        if len(groupstoverify) >0: #len(groups) == 0 or excessive
-            log.debug("{} check has sorted groups left to "
-                    "verify: {} (groups: {})".format(check,groupstoverify,
-                                                                    groups))
-        return list(groupstoverify)
-    def nextprofile(self, tosort=False, wsorted=False, toverify=False):
+    def grouptorecord(self,group):
+        for senseid in self._examplesbygroup.senseidsinslicegroup():
+            framed=self._examplesbygroup.frame(senseid)
+            if not framed.audiofileisthere():
+                return True
+    def nextprofile(self, **kwargs):
+        kwargs=grouptype(**kwargs)
         ps=self._slicedict.ps()
         # self.makeprofileok()
-        profiles=self.profiles(tosort=tosort,wsorted=wsorted,toverify=toverify)
-        self.isprofileok(tosort=tosort,wsorted=wsorted,toverify=toverify)
+        profiles=self.profiles(**kwargs)
+        self.isprofileok(**kwargs)
         """"TypeError: string indices must be integers"""
         profile=self._slicedict.profile()
         nextprofile=profiles[0]
@@ -7969,9 +7958,10 @@ class StatusDict(dict):
             if idx != len(profiles)-1:
                 nextprofile=profiles[idx+1]
         self._slicedict.profile(nextprofile)
-    def nextcheck(self, tosort=False, wsorted=False, toverify=False):
+    def nextcheck(self, **kwargs):
+        kwargs=grouptype(**kwargs)
         check=self._checkparameters.check()
-        checks=self.checks(tosort=tosort,wsorted=wsorted,toverify=toverify)
+        checks=self.checks(**kwargs)
         if len(checks) == 0:
             log.error("There are no such checks! tosort: {}; wsorted: {}"
                         "".format(tosort,wsorted))
@@ -7982,57 +7972,44 @@ class StatusDict(dict):
             if idx != len(checks)-1: # i.e., not already last
                 nextcheck=checks[idx+1] #overwrite default in this one case
         self._checkparameters.check(nextcheck)
-    def profiles(self, wsorted=False, tosort=False, toverify=False):
+    def profiles(self, **kwargs):
+        kwargs=grouptype(**kwargs)
         profiles=self._slicedict.profiles() #already limited to current ps
-        checks=self.checks(wsorted=wsorted,tosort=tosort)
-        for profile in profiles:
-            profileswcheckssorted=[i for j
-                            in [self.groups(profile=profile,check=check)
-                            for check in checks]
-                            for i in j
-                            ]
-            for check in checks:
-                log.info("groups found: {} (p:{};c:{})".format(
-                        self.groups(profile=profile,check=check),profile,check
-                        ))
-            log.info("Looking for groups in checks in profiles: {} "
-                    "\nwith tosort ({}); wsorted ({})"
-                    "\nw Checks: {}"
-                    "\nw Profiles: {}".format(
-                                            profileswcheckssorted,
-                                            tosort,wsorted,
-                                            checks,profiles))
+        checks=self.checks(**kwargs)
+        if not checks:
+            return #you won't find any profiles to do, either...
         p=[]
         for profile in profiles:
             if (
-                (not wsorted and not tosort) or
-                (tosort and self.profiletosort(profile)) or
-                (wsorted and [i for j in
-                [self.groups(profile=profile,check=check) for check in checks]
-                                for i in j
-                            ])
+                (not kwargs['wsorted'] and not kwargs['tosort']) or
+                (kwargs['tosort'] and self.profiletosort(profile)) or
+                (kwargs['wsorted'] and [i for j in
+                            [self.groups(profile=profile,check=check,**kwargs)
+                            for check in checks]
+                                        for i in j
+                                        ])
                 ):
                 p+=[profile]
-        log.info("Profiles with tosort ({}); wsorted ({}): {}"
-                    "".format(tosort,wsorted,p))
+        log.info("Profiles with kwargs {}: {}".format(kwargs,p))
         return p
-    def checks(self, wsorted=False, tosort=False, toverify=False):
+    def checks(self, **kwargs):
         """This method is designed for tone, which depends on ps, not profile.
         we'll need to rethink it, when working on CV checks, which depend on
         profile, and not ps."""
+        kwargs=grouptype(**kwargs)
         cs=[]
         checks=self.updatechecksbycvt()
         for check in checks:
             if (
-                (not wsorted and not tosort) or
+                (not kwargs['wsorted'] and not kwargs['tosort']) or
                 # """These next two assume current ps-profile slice"""
-                (wsorted and self.groups(check=check)) or
-                (tosort and self.checktosort(check)) or
-                (toverify and self.groupstoverify(check=check))
+                (kwargs['wsorted'] and self.groups(check=check,wsorted=True)) or
+                (kwargs['tosort'] and self.checktosort(check)) or
+                (kwargs['toverify'] and self.groups(check=check,toverify=True))
                 ):
                 cs+=[check]
-        log.info("Checks with tosort ({}); wsorted ({}): {}"
-                    "".format(tosort,wsorted,cs))
+        log.info("Checks with {}: {}"
+                    "".format(kwargs,cs))
         return cs
     def groups(self,g=None, **kwargs): #was groupstodo
         log.info("groups kwargs: {}".format(kwargs))
