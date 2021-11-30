@@ -4266,15 +4266,13 @@ class Check():
         self.status.verified(verified) #set
         self.storesettingsfile(setting='status')
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
-        """This is currently called in iteration"""
+        """This is currently called in iteration, but doesn't refresh groups,
+        so it probably isn't useful anymore."""
         self.checkforsenseidstosort(cvt=cvt,ps=ps,profile=profile,check=check)
-        self.gettonegroups() #reads from self.status, without renew=True
     def settonevariables(self):
         """This is currently called before sorting. This is a waste, if you're
-        not going to sort afterwards"""
-        self.updatesortingstatus()
-        """This is safe to iterate over"""
-        self.gettonegroups() #reads from self.status, without renew=True
+        not going to sort afterwards –unless you need the groups."""
+        self.updatesortingstatus() #this gets groups, too
     def tryNAgain(self):
         check=self.params.check()
         if check in self.status.checks():
