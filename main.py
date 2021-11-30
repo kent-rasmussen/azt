@@ -3322,7 +3322,7 @@ class Check():
             error=submitform()
             if not error:
                 log.debug("group: {}".format(group))
-                self.nextgroup()
+                self.status.nextgroup()
                 log.debug("group: {}".format(group))
                 self.renamegroup(reverify=reverify)
         def nextcheck():
@@ -8040,6 +8040,20 @@ class StatusDict(dict):
             if idx != len(checks)-1: # i.e., not already last
                 nextcheck=checks[idx+1] #overwrite default in this one case
         self._checkparameters.check(nextcheck)
+    def nextgroup(self, **kwargs):
+        kwargs=grouptype(**kwargs)
+        group=self.group()
+        groups=self.groups(**kwargs)
+        if not groups:
+            log.error("There are no such groups! kwargs: {}"
+                        "".format(kwargs))
+            return
+        nextgroup=groups[0] #default
+        if group in groups:
+            idx=groups.index(group)
+            if idx != len(groups)-1: # i.e., not already last
+                nextgroup=groups[idx+1] #overwrite default in this one case
+        self.group(nextgroup)
     def profiles(self, **kwargs):
         kwargs=grouptype(**kwargs)
         profiles=self._slicedict.profiles() #already limited to current ps
