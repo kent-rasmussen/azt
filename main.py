@@ -1330,8 +1330,26 @@ class Check():
         window.destroy()
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
-    def getgroup(self,guess=False,cvt=None,event=None,comparison=False):
-        log.info("this sets the subcheck")
+    def getgroupwsorted(self,event=None,**kwargs):
+        kwargs['wsorted']=True
+        kwargs=grouptype(**kwargs)
+        return self.getgroup(**kwargs)
+    def getgrouptosort(self,event=None,**kwargs):
+        kwargs['tosort']=True
+        kwargs=grouptype(**kwargs)
+        return self.getgroup(**kwargs)
+    def getgrouptoverify(self,event=None,**kwargs):
+        kwargs['toverify']=True
+        kwargs=grouptype(**kwargs)
+        return self.getgroup(**kwargs)
+    def getgrouptorecord(self,event=None,**kwargs):
+        kwargs['torecord']=True
+        kwargs=grouptype(**kwargs)
+        return self.getgroup(**kwargs)
+    def getgroup(self,guess=False,cvt=None,event=None,**kwargs):
+        log.info("this sets the group")
+        kwargs=grouptype(**kwargs) #if any should be True, set in wrappers above
+        log.info("getgroup kwargs: {}".format(kwargs))
         self.refreshattributechanges()
         if cvt is None:
             cvt=self.params.cvt()
