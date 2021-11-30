@@ -4332,14 +4332,7 @@ class Check():
             okb.grid(column=0, row=0, sticky="ew")
             # row+=1
         else:
-            vardict['NONEOFTHEABOVE']=tkinter.BooleanVar()
-            difb=Button(bf, text=newgroup,
-                        cmd=different,
-                        anchor="w",
-                        font=self.fonts['instructions']
-                        )
-            difb.grid(column=0, row=0, sticky="ew")
-        # row+=1
+            differentbutton()
         vardict['skip']=tkinter.BooleanVar()
         skipb=Button(bf, text=skip,
                         cmd=skip,
