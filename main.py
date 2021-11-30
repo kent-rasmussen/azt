@@ -4755,7 +4755,7 @@ class Check():
             if titleframed.analang is None:
                 entryframe.destroy() #is this ever needed?
                 continue
-            text=titleframed.formatted(noframe=True,notonegroup=True)
+            text=titleframed.formatted(noframe=True,showtonegroup=False)
             Label(entryframe, anchor='w', font=self.fonts['read'],
                     text=text).grid(row=row,
                                     column=0,sticky='w')
@@ -5429,7 +5429,7 @@ class Check():
                     for senseid in toreport[group]:
                         #This is for window/text output only, not in XLP file
                         framed=self.datadict.getframeddata(senseid)
-                        text=framed.formatted(noframe=True,notonegroup=True)
+                        text=framed.formatted(noframe=True,showtonegroup=False)
                         #This is put in XLP file:
                         examples=self.db.get('example',location=location,
                                                 senseid=senseid).get()
@@ -5443,7 +5443,7 @@ class Check():
                 for senseid in toreport[group]: #groups[group]['senseids']:
                     #This is for window/text output only, not in XLP file
                     framed=self.datadict.getframeddata(senseid)
-                    text=framed.formatted(noframe=True, notonegroup=True)
+                    text=framed.formatted(noframe=True, showtonegroup=False)
                     #This is put in XLP file:
                     examples=self.db.get('example',senseid=senseid).get()
                     log.log(2,"{} examples found: {}".format(len(examples),
