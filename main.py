@@ -214,7 +214,6 @@ class Check():
         # senseid="begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa"
         # RecordButtonFrame.makefilenames(check=self,senseid=senseid)
         # log.info(n)
-        log.info("status type: {}".format(type(self.status)))
         self.mainlabelrelief()
         self.tableiteration=0
         self.attrschanged=[]
