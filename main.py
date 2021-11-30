@@ -2232,6 +2232,7 @@ class Check():
                 l.bind('<ButtonRelease>',getattr(self,str(cmd)))
             if tt is not None:
                 ttl=ToolTip(l,tt)
+            return l
         def labels(parent,opts,label,value):
             Label(self.frame.status, text=label).grid(
                     column=opts['labelcolumn'], row=opts['row'],
