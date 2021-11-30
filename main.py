@@ -8739,6 +8739,18 @@ class StatusDict(dict):
     def toneframes(self):
         return self._toneframes
     def __init__(self, checkparameters, slicedict, toneframes, filename, dict):
+    def checkslicetypecurrent(self,**kwargs):
+        """This fills in current values; it shouldn't leave None anywhere."""
+        i=kwargs.copy()
+        for k,v in i.items():
+            if v is None:
+                del kwargs[k]
+        kwargs['cvt']=kwargs.get('cvt',self._checkparameters.cvt())
+        kwargs['ps']=kwargs.get('ps',self._slicedict.ps())
+        kwargs['profile']=kwargs.get('profile',self._slicedict.profile())
+        kwargs['check']=kwargs.get('check',self._checkparameters.check())
+        log.info("Returning checkslicetypecurrent kwargs {}".format(kwargs))
+        return kwargs
         """To populate subchecks, use self.groups()"""
         self._filename=filename
         super(StatusDict, self).__init__()
