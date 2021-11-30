@@ -4283,17 +4283,20 @@ class Check():
         """To get this from the object, use status.tosort(), todo() or done()"""
         check=self.params.check()
         senseids=self.slices.senseids()
-        self.status.renewsenseidstosort([],[])
+        self.status.renewsenseidstosort([],[]) #will repopulate
+        groups=[]
         for senseid in senseids:
             v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
                                 location=check,showurl=True).get('text'))
             log.info("Found tone value (updatesortingstatus): {} ({})".format(v,type(v)))
-            if v in ['','None']: #unlist() returns strings
+            if v in ['','None',None]: #unlist() returns strings
                 log.info("Marking senseid {} tosort (v: {})".format(senseid,v))
                 self.status.marksenseidtosort(senseid)
             else:
                 log.info("Marking senseid {} sorted (v: {})".format(senseid,v))
                 self.status.marksenseidsorted(senseid)
+                groups.append(v)
+        """update 'tosort' status"""
         if len(self.status.senseidstosort()) >0:
             log.info("updatesortingstatus shows senseidstosort remaining")
             vts=True
