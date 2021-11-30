@@ -9039,6 +9039,24 @@ def dictcompare(x,y,ignore=[]):
 def selected(groupvars):
     return [k for k in groupvars
             if groupvars[k] is not None #necessary?
+    if not kwargs:
+        print(exampletype)
+    for arg in ['wglosses']:
+        kwargs[arg]=kwargs.get(arg,True)
+    for arg in ['renew','wsoundfile']:
+        kwargs[arg]=kwargs.get(arg,False)
+    log.info("Returning exampletype kwargs {}".format(kwargs))
+    return kwargs
+def checkslicetype(**kwargs):
+    for arg in ['cvt','ps','profile','check']:
+        kwargs[arg]=kwargs.get(arg,None)
+    log.info("Returning checkslicetype kwargs {}".format(kwargs))
+    return kwargs
+def grouptype(**kwargs):
+    for arg in ['wsorted','tosort','toverify','torecord','comparison']:
+        kwargs[arg]=kwargs.get(arg,False)
+    log.info("Returning grouptype kwargs {}".format(kwargs))
+    return kwargs
 def name(x):
     try:
         name=x.__name__ #If x is a function
