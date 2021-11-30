@@ -114,8 +114,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         get tone value (from example):
             lift.get("example/tonefield/form/text",location=location).get('text')
         get tone value (from sense, UF):
-        lift.get('tonefield/form/text', senseid=senseid).get('text')
-        lift.get('sense/tonefield/form/text', senseid=senseid).get('text')
+        lift.get('toneUFfield/form/text', senseid=senseid).get('text')
+        lift.get('sense/toneUFfield/form/text', senseid=senseid).get('text')
         location: lift.get('locationfield', senseid=senseid).get('text')
         """
         if node is None:
@@ -1025,7 +1025,7 @@ class LiftURL():
             self.url=[i for i in l[:len(l)-2]]+[''.join([i for i in l[len(l)-2:]])]
         else:
             self.level['cur']+=1
-        self.level[self.alias.get(tag,tag)]=self.level['cur']
+        self.level[self.getalias(tag)]=self.level['cur']
         log.log(4,"Path so far: {}".format(self.drafturl()))
         if buildanother:
             self.build(tag)
@@ -1109,6 +1109,7 @@ class LiftURL():
         if 'toneUFvalue' in self.kwargs:
             self.kwargs['formtext']='toneUFvalue'
             self.form("toneUFvalue",'glosslang')
+            self.kwargs['formtext']=None
         else: #don't force a text node with no text value
             self.kwargs['formtext']=None
             self.form(lang='glosslang')
@@ -1121,6 +1122,7 @@ class LiftURL():
         if 'tonevalue' in self.kwargs:
             self.kwargs['formtext']='tonevalue'
             self.form("tonevalue",'glosslang')
+            self.kwargs['formtext']=None
         else: #don't force a text node with no text value
             self.kwargs['formtext']=None
             self.form(lang='glosslang')
@@ -1331,19 +1333,19 @@ class LiftURL():
         return nodename.split('[')[0]
     def currentnodename(self):
         last=self.url[-1:]
-        if len(last)>0:
+        if last:
             n=self.tagonly(last[0])
             return self.getalias(n)
     def unalias(self,nodename):
-        """This returns the names used in the LIFT file"""
+        """This returns the names used in the LIFT URL"""
+        return self.alias.get(nodename,nodename)
+    def getalias(self,nodename):
+        """This returns the names I typically use"""
         if nodename in self.alias.values():
             for k in self.alias:
                 if self.alias[k] == nodename:
                     return k
         return nodename #else
-    def getalias(self,nodename):
-        """This returns the names I typically use"""
-        return self.alias.get(nodename,nodename)
     def rebase(self,rebase):
         """This just changes the node set from which the url draws.
         because different bases (within the whole lift file) would result in
@@ -1546,12 +1548,13 @@ class LiftURL():
         self.children['translation']=['form']
     def setaliases(self):
         self.alias={}
-        self.alias['lexical-unit']='lexeme'
-        self.alias['grammatical-info']='ps'
-        self.alias['id']='senseid'
-        self.alias['ftype']='fieldtype'
-        self.alias["field[@type='tone']"]='tonefield'
-        self.alias["field[@type='location']"]='locationfield'
+        self.alias['lexeme']='lexical-unit'
+        self.alias['ps']='grammatical-info'
+        self.alias['senseid']='id'
+        self.alias['fieldtype']='ftype'
+        self.alias['toneUFfield']="field[@type='tone']"
+        self.alias['tonefield']="field[@type='tone']"
+        self.alias['locationfield']="field[@type='location']"
     def __init__(self, *args,**kwargs):
         self.base=kwargs['base']
         self.setaliases()
