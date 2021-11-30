@@ -277,6 +277,7 @@ class Check():
             self.status={}
         self.status=StatusDict(self.params,
                                 self.slices,
+                                self.exs,
                                 self.toneframes,
                                 self.settingsfile('status'),
                                 self.status
@@ -3222,57 +3223,6 @@ class Check():
             if ps == 'Invalid':
                 continue
             print(ps, self.profilesbysense[ps])
-    def getexsall(self,value):
-        #This returns all the senseids with a given tone value
-        check=self.params.check()
-        senseids=self.db.get("sense", location=check, path=['tonefield'],
-                            tonevalue=value
-                            ).get('senseid')
-        """The above doesn't test for profile, so we restrict that next"""
-        senseidsinslice=self.slices.inslice(senseids)
-        return list(senseidsinslice)
-    def getex(self,value,notonegroup=True,truncdefn=False,renew=False):
-        """This function finds examples in the lexicon for a given tone value,
-        in a given tone frame (from check)"""
-        senseids=self.getexsall(value)
-        output={'n': len(senseids)}
-        if (not hasattr(self,'exs')) or (self.exs is None):
-            self.exs={} #in case this hasn't been set up by now
-        if value in self.exs:
-            if self.exs[value] in senseids: #if stored value is in group
-                if renew == True:
-                    log.info("Using next value for ‘{}’ group: ‘{}’".format(
-                                value, self.exs[value]))
-                    i=senseids.index(self.exs[value])
-                    if i == len(senseids)-1: #loop back on last
-                        senseid=senseids[0]
-                    else:
-                        senseid=senseids[i+1]
-                    self.exs[value]=senseid
-                else:
-                    log.info("Using stored value for ‘{}’ group: ‘{}’".format(
-                                value, self.exs[value]))
-                    senseid=self.exs[value]
-                framed=self.datadict.getframeddata(senseid)
-                if framed.glosses() is not None:
-                    output['senseid']=senseid
-                    output['framed']=framed #this includes [n], above
-                    return output
-                else:
-                    output=self.getex(value=value,notonegroup=notonegroup,
-                                truncdefn=truncdefn,renew=True)
-                    return output
-        for i in range(len(senseids)): #just keep trying until you succeed
-            senseid=senseids[randint(0, len(senseids))-1]
-            framed=self.datadict.getframeddata(senseid)
-            if framed.glosses() is not None:
-                """As soon as you find one with form and gloss, quit."""
-                self.exs[value]=senseid
-                output['senseid']=senseid
-                output['framed']=framed #this includes [n], above
-                return output
-            else:
-                log.info("Example sense with empty field problem")
     def renamegroup(self,reverify=False):
         #reverify indicates when it is called from the verification window
         # (i.e.,) before the group is verified. This does two things differently:
@@ -4385,136 +4335,6 @@ class Check():
                         font=self.fonts['instructions']
                         )
         skipb.grid(column=0, row=1, sticky="ew")
-    def tonegroupbuttonframe(self,parent,group,row,column=0,label=False,canary=None,canary2=None,alwaysrefreshable=False,playable=False,renew=False,unsortable=False,**kwargs):
-        def again():
-            self.tonegroupbuttonframe(
-                parent=parent,unsortable=unsortable,
-                group=group,notonegroup=notonegroup,
-                canary=canary,canary2=canary2,
-                row=row,column=column,label=label,
-                alwaysrefreshable=alwaysrefreshable, font=font,
-                playable=playable,renew=renew,refreshcount=refreshcount,**kwargs)
-        def select():
-            var.set(True)
-        def sortnext():
-            self.sortitem.destroy()
-        def remove():
-            parent.destroy()
-        def selectnremove():
-            select()
-            remove()
-        def selectnsortnext():
-            select()
-            sortnext()
-        def selectnlabelize():
-            select()
-            label=True
-            again()
-            sortnext()
-            remove()
-        def unsort():
-            removesenseidfromsubcheck(self,bf,senseid)
-            self.tonegroupbuttonframe(
-                parent=parent,unsortable=unsortable,
-                group=group,notonegroup=notonegroup,
-                canary=canary,canary2=canary2,
-                row=row,column=column,label=label,
-                alwaysrefreshable=alwaysrefreshable, font=font,
-                playable=playable,renew=True,refreshcount=refreshcount,**kwargs)
-        var=tkinter.BooleanVar()
-        font=kwargs.pop('font',self.fonts['read'])
-        kwargs['anchor']=kwargs.get('anchor','w')
-        notonegroup=kwargs.pop('notonegroup',True)
-        refreshcount=kwargs.pop('refreshcount',-1)+1
-        sticky=kwargs.pop('sticky',"ew")
-        example=self.getex(group,notonegroup=notonegroup,renew=renew)
-        check=self.params.check()
-        if example is None:
-            log.error("Apparently the example for tone group {} in check {} "
-                        "came back {}".format(group,check,example))
-            return
-        renew=kwargs.pop('renew',False)
-        if renew is True:
-            log.info("Resetting tone group example ({}): {} of {} examples"
-                    "".format(group,self.exs[group],example['n']))
-            del self.exs[group]
-        framed=example['framed']
-        framed.setframe(check)
-        if framed is None:
-            log.error("Apparently the framed example for tone group {} in "
-                        "frame {} came back {}".format(group,check,example))
-            return
-        text=framed.formatted()
-        """This should maybe be brought up a level in frames?"""
-        bf=Frame(parent)
-        bf.grid(column=column, row=row, sticky=sticky)
-        if label==True:
-            b=Label(bf, text=text, font=font, **kwargs)
-            b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
-        elif playable == True:
-            url=RecordButtonFrame.makefilenames(None,self, #not Classy...
-                                                example['senseid'])
-            diredurl=str(file.getdiredurl(self.audiodir,url))
-            thefileisthere=file.exists(diredurl)
-            log.info("fileisthere: {} ({})".format(diredurl,url))
-            if thefileisthere:
-                self.pyaudiocheck()
-                self.soundsettingscheck()
-                self.player=sound.SoundFilePlayer(diredurl,self.pyaudio,self.
-                                                                soundsettings)
-                b=Button(bf, text=text, cmd=self.player.play, font=font)
-                bttext=_("Click to hear this utterance")
-                if program['praatisthere']:
-                    bttext+='; '+_("right click to open in praat")
-                    b.bind('<Button-3>',lambda x: praatopen(diredurl))
-                bt=ToolTip(b,bttext)
-                senseid=framed['senseid']
-                if unsortable:
-                    t=_("<= remove *this* *word* from \nthe group (sort into another, later)")
-                    b_unsort=Button(bf,text = t, cmd=unsort, anchor ='c')
-                    b_unsort.grid(row=0,column=2,padx=50)
-            else: #Refresh if this should be playable but there no sound file.
-                if refreshcount < len(self.getexsall(group)):
-                    self.tonegroupbuttonframe(
-                    parent=parent,
-                    group=group,notonegroup=notonegroup,
-                    canary=canary,canary2=canary2,
-                    row=row,column=column,label=label, font=font,
-                    alwaysrefreshable=alwaysrefreshable,unsortable=unsortable,
-                    playable=playable,renew=True,refreshcount=refreshcount,
-                                                                    **kwargs)
-                else:
-                    self.tonegroupbuttonframe(
-                    parent=parent,
-                    group=group,notonegroup=notonegroup,
-                    canary=canary,canary2=canary2, font=font,
-                    row=row,column=column,label=True, #give up on buttons
-                    alwaysrefreshable=alwaysrefreshable,unsortable=unsortable,
-                    playable=False, #give up on playing
-                    renew=True,refreshcount=refreshcount,**kwargs)
-                return #In either case, stop making the current frame.
-            b.grid(column=1, row=0, sticky="nesw", ipady=15) #Inside the buttons
-        else:
-            b=Button(bf, text=text, font=font,
-                    cmd=selectnsortnext,
-                                                                    **kwargs)
-            b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
-            bt=ToolTip(b,_("Pick this Group"))
-        if example['n'] > 1 or alwaysrefreshable == True:
-            bc=Button(bf, image=self.parent.photo['change'], #🔃 not in tck
-                            cmd=lambda p=parent:self.tonegroupbuttonframe(
-                                parent=parent,unsortable=unsortable,
-                                group=group,notonegroup=notonegroup,
-                                canary=canary,canary2=canary2, font=font,
-                                row=row,column=column,label=label,
-                                alwaysrefreshable=True, #once refreshed, keep it
-                                playable=playable,renew=True,**kwargs),
-                            text=str(example['n']),
-                            compound='center',
-                            **kwargs)
-            bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
-            bct=ToolTip(bc,_("Change example word"))
-        return var
     def printentryinfo(self,guid):
         outputs=[nn(self.db.citationorlexeme(guid=guid))]
         for lang in self.glosslangs:
@@ -4535,21 +4355,6 @@ class Check():
         else:
             self.subcheck=firstoflist(self.subchecksprioritized[cvt],
                                                             othersOK=True)[0]
-    def getsubchecksprioritized(self):
-        """Tone doesn't have subchecks, so we just make it 'None' here."""
-        """I really should be able to order these..."""
-        check=self.params.check()
-        ps=self.slices.ps()
-        profile=self.slices.profile()
-        log.debug("ps: {}, profile: {}, name: {}".format(ps,profile,check))
-        self.subchecksprioritized={
-        "V":self.scount[ps]['V'], #self.db.v[self.analang],
-        "C":self.scount[ps]['C'], #self.db.c[self.analang],
-        "CV":''}#,
-        cvt=self.params.cvt()
-        if cvt == 'T':
-            self.subchecksprioritized['T']=[(x,None) for x in self.status['T'][
-                ps][profile][check]['groups']+[None]]
     """Doing stuff"""
     def getrunwindow(self,nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
