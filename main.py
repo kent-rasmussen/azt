@@ -3326,7 +3326,7 @@ class Check():
                 log.debug("group: {}".format(group))
                 self.renamegroup(reverify=reverify)
         def nextcheck():
-            log.debug("running next frame")
+            log.debug("running next check")
             error=submitform()
             if not error:
                 log.debug("check: {}".format(check))
@@ -3334,7 +3334,7 @@ class Check():
                 log.debug("check: {}".format(check))
                 self.renamegroup(reverify=reverify)
         def nextprofile():
-            log.debug("running next frame")
+            log.debug("running next profile")
             error=submitform()
             if not error:
                 log.debug("profile: {}".format(profile))
