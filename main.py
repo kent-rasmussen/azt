@@ -6302,7 +6302,7 @@ class MainApplication(Frame):
         changemenu.add_command(label=_("Part of speech"),
                         command=lambda x=check:Check.getps(x))
         changemenu.add_command(label=_("Consonant-Vowel-Tone"),
-                        command=lambda x=check:Check.gettype(x))
+                        command=lambda x=check:Check.getcvt(x))
         profilemenu = Menu(changemenu, tearoff=0)
         changemenu.add_cascade(label=_("Syllable profile"), menu=profilemenu)
         profilemenu.add_command(label=_("Next"),
@@ -6332,9 +6332,9 @@ class MainApplication(Frame):
                 changemenu.add_separator()
                 changemenu.add_command(label=_("Location in word"),
                         command=lambda x=check:Check.getcheck(x))
-                if check.name is not None:
+                if check.check is not None:
                     changemenu.add_command(label=_("Segment(s) to check"),
-                        command=lambda x=check:Check.getsubcheck(x))
+                        command=lambda x=check:Check.getgroup(x,tosort=True)) #any
         """Do"""
         domenu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label=_("Do"), menu=domenu)
