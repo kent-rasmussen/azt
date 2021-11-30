@@ -2359,7 +2359,30 @@ class Check():
                 t=_("(no framed group)")
             else:
                 t=(_("(framed group: ‘{}’)").format(group))
-            proselabel(opts,t,cmd='getgroup',parent=tf)
+            """Set appropriate conditions for each of these:"""
+            if (not check or (check in self.status.checks(wsorted=True) and
+                profile in self.status.profiles(wsorted=True))):
+                cmd='getgroupwsorted'
+            elif (not check or (check in self.status.checks(tosort=True) and
+                profile in self.status.profiles(tosort=True))):
+                cmd='getgrouptosort'
+            elif (check in self.status.checks(toverify=True) and
+                profile in self.status.profiles(toverify=True)):
+                cmd='getgrouptoverify'
+            elif (check in self.status.checks(torecord=True) and
+                profile in self.status.profiles(torecord=True)):
+                cmd='getgrouptorecord'
+            log.log(4,"check: {}; profile: {}; \n{}-{}; \n{}-{}; \n{}-{};"
+                        "".format(check,profile,
+                                    self.status.checks(wsorted=True),
+                                    self.status.profiles(wsorted=True),
+                                    self.status.checks(tosort=True),
+                                    self.status.profiles(tosort=True),
+                                    self.status.checks(toverify=True),
+                                    self.status.profiles(toverify=True),
+                                    self.status.checks(torecord=True),
+                                    self.status.profiles(torecord=True)))
+            l=proselabel(opts,t,cmd=cmd,parent=tf)
             opts['columnplus']=0
         else:
             opts['columnplus']=1
