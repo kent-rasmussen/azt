@@ -4401,8 +4401,8 @@ class Check():
             if exit:
                 self.runcheck()
             return #if the user didn't supply a check
+        self.updatesortingstatus() # Not just tone anymore #settonevariables() #here, or later?
         if cvt == 'T':
-            self.settonevariables() #here, or later?
             self.maybesort()
         elif None not in [check,group]: #do the CV checks
             self.getresults()
