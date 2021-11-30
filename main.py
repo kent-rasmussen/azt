@@ -5915,7 +5915,7 @@ class Glosslangs(DataList):
             while len(langs) >=2 and langs[0] == langs[1]:
                 del langs[1]
             self.clear()
-            self.append(langs[:2])
+            self.extend(langs[:2])
     def rm(self,lang):
         """This could be either position, and if lang1 will promote lang2"""
         self.remove(lang)
@@ -6066,6 +6066,8 @@ class ExampleDict(dict):
 class FramedDataDict(dict):
     def updatelangs(self):
         self.analang=self.check.analang
+        self.audiolang=self.check.audiolang
+        self.audiodir=self.check.audiodir
         self.glosslangs=self.check.glosslangs
         log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def getframeddata(self, source, **kwargs):
@@ -6089,11 +6091,11 @@ class FramedData(object):
     times to display it. If source is a senseid, it pulls form/gloss/etc
     information from the entry. If source is an example, it pulls that info
     from the example. The info is formatted uniformly in either case."""
-    def formatted(self,notonegroup=True,noframe=False):
-        if notonegroup:
-            toformat=DataList()
-        else:
+    def formatted(self,showtonegroup=False,noframe=False):
+        if showtonegroup and self.tonegroup is not None:
             toformat=DataList(self.tonegroup)
+        else:
+            toformat=DataList()
         if noframe:
             toformat.appendformsbylang(self.forms,self.analang,quote=False)
             toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
@@ -6160,6 +6162,8 @@ class FramedData(object):
     def glosses(self):
         g=DictbyLang()
         l=0
+        log.info("self.glosslangs: {}; self.forms: {}".format(self.glosslangs,
+                    self.forms))
         for lang in self.glosslangs:
             if lang in self.forms:
                 g[lang]=self.forms[lang]
