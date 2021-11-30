@@ -4184,7 +4184,7 @@ class Check():
         """Still working on one ps-profile combo at a time."""
         self.getidstosort() #just in case this changed
         for senseid in self.slices.senseids(): #I should be able to make this a regex...
-            toneUFgroup=firstoflist(self.db.get('sense/tonefield/form/text',
+            toneUFgroup=firstoflist(self.db.get('sense/toneUFfield/form/text',
                                                 senseid=senseid).get('text'))
             if toneUFgroup is not None:
                 if toneUFgroup not in sorted:
