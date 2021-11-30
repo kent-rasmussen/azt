@@ -6169,7 +6169,7 @@ class FramedData(object):
             toformat.appendformsbylang(self.framed,self.analang,quote=False)
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join(toformat) #put it all together
-    def setframe(self,frame):
+    def setframe(self,frame=None):
         """This should never be done on an example, which should
         already be framed. Also, self.ps won't be defined, so you'll get
         a key error."""
