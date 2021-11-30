@@ -217,6 +217,7 @@ class Check():
         log.info("status type: {}".format(type(self.status)))
         self.mainlabelrelief()
         self.tableiteration=0
+        self.attrschanged=[]
         self.checkcheck()
     def settingsfilecheck(self,basename):
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
