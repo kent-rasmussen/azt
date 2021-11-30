@@ -3329,12 +3329,18 @@ class Check():
                 log.info("Making comparison buttons for group {} now".format(
                                                     self.group_comparison))
                 t=_('Compare with another group ({})').format(
-                compframe.bf2=self.tonegroupbuttonframe(compframe.compframeb,
-                    self.subcheck_comparison,sticky='w',row=0,column=0,
-                    playable=True,unsortable=False,alwaysrefreshable=True,
-                    font=self.fonts['default'])
-            elif not hasattr(self, 'subcheck_comparison'):
                                                     self.group_comparison)
+                compframe.bf2=ToneGroupButtonFrame(compframe.compframeb,
+                                        self, self.exs,
+                                        self.group_comparison,
+                                        showtonegroup=True,
+                                        playable=True,
+                                        unsortable=True,
+                                        alwaysrefreshable=True,
+                                        font=self.fonts['default']
+                                        )
+                compframe.bf2.grid(row=0, column=0, sticky='w')
+            elif not hasattr(self, 'group_comparison'):
                 log.info("No comparison found !")
             elif self.group_comparison not in groupsthere:
                 log.info("Comparison ({}) not in group list ({})"
@@ -3453,8 +3459,15 @@ class Check():
             sub_p.grid(row=0,column=4,sticky='ns')
         examplesframe=ui.Frame(self.runwindow.frame)
         examplesframe.grid(row=4,column=0,sticky='')
-        self.tonegroupbuttonframe(examplesframe,group,sticky='w',
-            row=0,column=0,playable=True,alwaysrefreshable=True,unsortable=True)
+        b=ToneGroupButtonFrame(examplesframe, self, self.exs,
+                                group,
+                                showtonegroup=True,
+                                # canary=entryview,
+                                playable=True,
+                                unsortable=True,
+                                alwaysrefreshable=True
+                                )
+        b.grid(row=0, column=0, sticky='w')
         compframe=ui.Frame(examplesframe,highlightthickness=10,
                     highlightbackground=self.theme['white']) #no hlfg here
         compframe.grid(row=0,column=1,sticky='e')
