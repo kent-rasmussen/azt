@@ -9039,6 +9039,9 @@ def dictcompare(x,y,ignore=[]):
 def selected(groupvars):
     return [k for k in groupvars
             if groupvars[k] is not None #necessary?
+            if groupvars[k].get() #only those marked True
+            ]
+def exampletype(**kwargs):
     if not kwargs:
         print(exampletype)
     for arg in ['wglosses']:
