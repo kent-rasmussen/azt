@@ -1732,26 +1732,6 @@ class Check():
             elif 'default' in config and section in config['default']:
                 d[section]=ofromstr(config['default'][section])
         self.readsettingsdict(d)
-    """These should all go!"""
-    def makestatusdictps(self,cvt=None,ps=None):
-        if cvt is None:
-            self.params.cvt()
-        if ps is None:
-            self.slices.ps()
-        self.status.build(cvt=cvt,ps=ps)
-        return
-    def makestatusdictprofile(self,cvt=None,ps=None,profile=None):
-        if cvt is None:
-            self.params.cvt()
-        if ps is None:
-            self.slices.ps()
-        if profile is None:
-            self.slices.profile()
-        self.status.build(cvt=cvt,ps=ps,profile=profile)
-        return
-    def makestatusdict(self,cvt=None,ps=None,profile=None,check=None):
-        self.status.build()
-        return
     def verifictioncode(self,check=None,subcheck=None):
         if subcheck is None: #do I ever want this to really be None?
             subcheck=self.params.subcheck()
@@ -2484,9 +2464,6 @@ class Check():
         if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
             self.soundsettingswindow.destroy()
     def maybeboard(self):
-        def checkfordone(): #has *anything* been sorted?
-            if self.status.groups() >0:
-                return True
         profileori=self.slices.profile()
         if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
             self.leaderboard.destroy()
@@ -3372,7 +3349,6 @@ class Check():
         cvt=self.params.cvt()
         ps=self.slices.ps()
         profile=self.slices.profile()
-
         check=self.params.check()
         if check == None:
             self.getcheck(guess=True)
