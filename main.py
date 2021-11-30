@@ -2343,10 +2343,10 @@ class Check():
         log.info("CVT: {}".format(cvt))
         if cvt == 'T': #self.name has different options by self.type
             opts['columnplus']=1
-            if len(self.status.checks()) == 0:
+            if not self.status.checks():
                 t=_("no tone frames defined.")
                 check=None
-            elif self.status.ischeckok():
+            elif not self.status.ischeckok():
                 # check not in checks:
                 t=_("no tone frame selected.")
                 check=None
