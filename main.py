@@ -9036,6 +9036,9 @@ def dictcompare(x,y,ignore=[]):
     else:
         r=len(pairs)/(len(pairs)+len(unpairs))
     return (r,pairs,unpairs)
+def selected(groupvars):
+    return [k for k in groupvars
+            if groupvars[k] is not None #necessary?
 def name(x):
     try:
         name=x.__name__ #If x is a function
