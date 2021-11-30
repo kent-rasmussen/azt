@@ -3506,6 +3506,7 @@ class Check():
         sub_btn.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
+    """The sort process fns are here"""
     def maybesort(self):
         """This should look for one group to verify at a time, with sorting
         in between, then join and repeat"""
