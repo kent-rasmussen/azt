@@ -3902,27 +3902,18 @@ class Check():
         self.sframe.windowsize()
         self.runwindow.waitdone()
         b.wait_window(bf)
-        if (self.runwindow.exitFlag.istrue() or
-                                        not hasattr(self,'groupselected')):
+        if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
             return 1
-        elif self.groupselected == "ALLOK":
-            log.debug("User selected ‘{}’, moving on.".format(oktext))
-            self.updatestatus(verified=True)
-            self.updatestatuslift(check,group,verified=True)
-            # self.checkcheck() #now after verifyT is done
-        else:
-            log.debug("User did NOT select ‘{}’, assuming we'll come "
-                    "back to this!!".format(oktext))
-        #Once done verifying each group:
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        else:
-            self.runwindow.waitdone()
-            return 0
+        log.debug("User selected ‘{}’, moving on.".format(oktext))
+        verified=True
+        updatestatus()
     def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
         # should move to specify location and fieldvalue in button lambda
+        def notok():
+            self.removesenseidfromgroup(senseid,check)
+            bf.destroy()
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['read']
         if 'anchor' not in kwargs:
@@ -3931,7 +3922,7 @@ class Check():
         framed=self.datadict.getframeddata(senseid)
         check=self.params.check()
         framed.setframe(check)
-        text=framed.formatted(notonegroup=True)
+        text=framed.formatted(showtonegroup=False)
         if label==True:
             b=Label(parent, text=text,
                     **kwargs
@@ -3942,8 +3933,7 @@ class Check():
             bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
             bf.grid(column=0, row=row, sticky='ew')
             b=Button(bf, text=text, pady='0',
-                    cmd=lambda p=bf,s=senseid:removesenseidfromsubcheck(
-                                                    self,p,s),
+                    cmd=notok,
                     **kwargs
                     ).grid(column=column, row=0,
                             sticky="ew",
