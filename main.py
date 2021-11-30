@@ -581,7 +581,7 @@ class Check():
                 self.runwindow.destroy()
         def buttonframeframe(self):
             s=options.s
-            f=options.frames[s]=Frame(self.runwindow.scroll.content)
+            f=options.frames[s]=ui.Frame(self.runwindow.scroll.content)
             f.grid(row=options.get('r'),
                         column=options.get('c'),
                         sticky='ew', padx=options.padx, pady=options.pady)
@@ -627,7 +627,7 @@ class Check():
         instr.grid(row=options.get('r'), column=options.get('c'),
                     sticky='ew', padx=options.padx, pady=options.pady)
         """The rest of the page"""
-        self.runwindow.scroll=ScrollingFrame(mwframe)
+        self.runwindow.scroll=ui.ScrollingFrame(mwframe)
         self.runwindow.scroll.grid(row=2,column=0)
         log.debug('self.distinguish: {}'.format(self.distinguish))
         log.debug('self.interpret: {}'.format(self.interpret))
@@ -722,7 +722,7 @@ class Check():
         options.opts=[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')]
         buttonframeframe(self)
         """Submit button, etc"""
-        self.runwindow.frame2d=Frame(self.runwindow.scroll.content)
+        self.runwindow.frame2d=ui.Frame(self.runwindow.scroll.content)
         self.runwindow.frame2d.grid(row=options.get('r'),
                     column=options.get('c'),
                     sticky='ew', padx=options.padx, pady=options.pady)
@@ -805,7 +805,7 @@ class Check():
                 "non-Ad Hoc syllable profile, and try this window again."
                 "".format(ps))
         Label(self.runwindow.frame,text=text).grid(row=1,column=0,sticky='ew')
-        qframe=Frame(self.runwindow.frame)
+        qframe=ui.Frame(self.runwindow.frame)
         qframe.grid(row=2,column=0,sticky='ew')
         text=_("What do you want to call this group for sorting {} words?"
                 "".format(ps))
@@ -825,7 +825,7 @@ class Check():
         sub_btn.grid(row=1,column=1,sticky='w')
         vars=list()
         row=0
-        scroll=ScrollingFrame(self.runwindow.frame)
+        scroll=ui.ScrollingFrame(self.runwindow.frame)
         for id in allpssensids:
             log.debug("id: {}; index: {}; row: {}".format(id,
                                                     allpssensids.index(id),row))
@@ -853,7 +853,7 @@ class Check():
                 self.runwindow.frame2.destroy()
             def skipform(lang):
                 self.runwindow.frame2.destroy() #Just move on.
-            self.runwindow.frame2=Frame(self.runwindow)
+            self.runwindow.frame2=ui.Frame(self.runwindow)
             self.runwindow.frame2.grid(row=1,column=0,sticky='ew',padx=25,
                                                                         pady=25)
             if lang == self.analang:
@@ -876,7 +876,7 @@ class Check():
                                                 font=self.fonts['read'])
             getform.grid(row=0,column=0,padx=padx,pady=pady)
             form[lang]=tkinter.StringVar()
-            eff=Frame(self.runwindow.frame2) #field rendering is better this way
+            eff=ui.Frame(self.runwindow.frame2) #field rendering is better this way
             eff.grid(row=1,column=0)
             formfield = EntryField(eff, render=True, textvariable=form[lang])
             formfield.grid(row=1,column=0)
@@ -936,7 +936,7 @@ class Check():
                 log.error(re.sub('\n','',text))
                 if hasattr(self.addwindow,'framechk'):
                     self.addwindow.framechk.destroy()
-                self.addwindow.framechk=Frame(self.addwindow.scroll.content)
+                self.addwindow.framechk=ui.Frame(self.addwindow.scroll.content)
                 self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
                 l1=Label(self.addwindow.framechk,
                         text=text,
@@ -961,7 +961,7 @@ class Check():
             if senseid not in [i for j in self.profilesbysense[self.ps].values()
                                                                     for i in j]:
                 log.info('bad senseid; showing error')
-                self.addwindow.framechk=Frame(self.addwindow.scroll.content)
+                self.addwindow.framechk=ui.Frame(self.addwindow.scroll.content)
                 self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
                 lt=Label(self.addwindow.framechk,
                         text=senseid,
@@ -1004,7 +1004,7 @@ class Check():
             """Display framed data"""
             if hasattr(self.addwindow,'framechk'):
                 self.addwindow.framechk.destroy()
-            self.addwindow.framechk=Frame(self.addwindow.scroll.content)
+            self.addwindow.framechk=ui.Frame(self.addwindow.scroll.content)
             self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
             tf={}
             tfd={}
@@ -1064,9 +1064,9 @@ class Check():
         ps=self.slices.ps()
         wtitle=_("Define a New {} Tone Frame").format(ps)
         self.addwindow=Window(self.frame, title=wtitle)
-        self.addwindow.scroll=ScrollingFrame(self.addwindow)
+        self.addwindow.scroll=ui.ScrollingFrame(self.addwindow)
         self.addwindow.scroll.grid(row=0,column=0)
-        self.addwindow.frame1=Frame(self.addwindow.scroll.content)
+        self.addwindow.frame1=ui.Frame(self.addwindow.scroll.content)
         self.addwindow.frame1.grid(row=0,column=0)
         row=0
         columnleft=0
@@ -1086,7 +1086,7 @@ class Check():
                 ).grid(row=row,column=columnleft,columnspan=3)
         row+=1
         t=_("What do you want to call the tone frame ?")
-        finst=Frame(self.addwindow.frame1)
+        finst=ui.Frame(self.addwindow.frame1)
         finst.grid(row=row,column=0)
         Label(finst,text=t).grid(row=0,column=columnleft,sticky='e')
         name = EntryField(finst)
@@ -1119,7 +1119,7 @@ class Check():
                                 ).format(self.languagenames[lang],kind)
         """Place the labels"""
         for lang in langs:
-            f[lang]=Frame(self.addwindow.frame1)
+            f[lang]=ui.Frame(self.addwindow.frame1)
             f[lang].grid(row=row,column=0)
             langrow=0
             Label(f[lang],text='\n'+ti[lang]+'\n').grid(
@@ -1379,7 +1379,7 @@ class Check():
                                     'want to work with?'.format(ps))
                                     ).grid(column=0, row=0)
             optionslist = [(x[0],pcall[x]) for x in pcall]
-            window.scroll=Frame(window.frame)
+            window.scroll=ui.Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ScrollingButtonFrame(window.scroll,
                                     optionslist,self.setprofile,
@@ -1905,7 +1905,7 @@ class Check():
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         vars={}
-        scroll=ScrollingFrame(pgw.frame)
+        scroll=ui.ScrollingFrame(pgw.frame)
         scroll.grid(row=3, column=0)
         row=0
         ncols=4 # increase this for wider window
@@ -2280,7 +2280,7 @@ class Check():
         if len(self.glosslangs) == 0:
             self.guessglosslangs()
         t=(_("Meanings in {}").format(self.languagenames[self.glosslangs[0]]))
-        tf=Frame(self.frame.status)
+        tf=ui.Frame(self.frame.status)
         tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
         proselabel(opts,t,cmd='getglosslang',parent=tf)
         opts['columnplus']=1
@@ -2308,7 +2308,7 @@ class Check():
             count=len(self.profilesbysense[ps][profile])
         else:
             count=0
-        tf=Frame(self.frame.status)
+        tf=ui.Frame(self.frame.status)
         tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
         opts['row']+=1
         t=(_("Looking at {}").format(profile))
@@ -2319,7 +2319,7 @@ class Check():
         opts['columnplus']=0
         opts['row']+=1
         """Get cvt"""
-        tf=Frame(self.frame.status)
+        tf=ui.Frame(self.frame.status)
         tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
         t=(_("Checking {},").format(self.params.cvtdict()[cvt]['pl']))
         proselabel(opts,t,cmd='getcvt',parent=tf)
@@ -2462,9 +2462,9 @@ class Check():
             if self.status.groups() >0:
                 return True
         profileori=self.slices.profile()
-        if hasattr(self,'leaderboard') and type(self.leaderboard) is Frame:
+        if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
             self.leaderboard.destroy()
-        self.leaderboard=Frame(self.frame)
+        self.leaderboard=ui.Frame(self.frame)
         self.leaderboard.grid(row=0,column=1,sticky="") #nesw
         #Given the line above, much of the below can go, but not all?
         cvt=self.params.cvt()
@@ -2484,7 +2484,7 @@ class Check():
                     return
         self.makenoboard()
     def boardtitle(self):
-        titleframe=Frame(self.leaderboard)
+        titleframe=ui.Frame(self.leaderboard)
         titleframe.grid(row=0,column=0,sticky='n')
         cvt=self.params.cvt()
         cvtdict=self.params.cvtdict()
@@ -2518,7 +2518,7 @@ class Check():
         self.frame.parent.parent.deiconify()
     def makeCVprogresstable(self):
         self.boardtitle()
-        self.leaderboardtable=Frame(self.leaderboard)
+        self.leaderboardtable=ui.Frame(self.leaderboard)
         self.leaderboardtable.grid(row=1,column=0)
         notext=_("Nothing to see here...")
         Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
@@ -2546,7 +2546,7 @@ class Check():
         self.boardtitle()
         # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
         # leaderheader.grid(row=1,column=0)
-        leaderscroll=ScrollingFrame(self.leaderboard)
+        leaderscroll=ui.ScrollingFrame(self.leaderboard)
         leaderscroll.grid(row=1,column=0)
         self.leaderboardtable=leaderscroll.content
         row=0
@@ -2661,15 +2661,15 @@ class Check():
         #This will probably need to be reworked
         if hasattr(self.frame,'status') and self.frame.status.winfo_exists():
             self.frame.status.destroy()
-            self.frame.status=Frame(self.frame)
+            self.frame.status=ui.Frame(self.frame)
             self.frame.status.grid(row=0, column=0,sticky='nw')
         else:
             log.info("Apparently, this is my first time making the status frame.")
-            self.frame.status=Frame(self.frame)
+            self.frame.status=ui.Frame(self.frame)
             self.frame.status.grid(row=0, column=0,sticky='nw')
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
-            self.results = Frame(self.runwindow.frame,width=800)
+            self.results = ui.Frame(self.runwindow.frame,width=800)
             self.results.grid(row=0, column=0)
         else:
             log.error("Tried to get a results frame without a runwindow!")
@@ -2972,7 +2972,7 @@ class Check():
                           text="What {}-{} tone group in the ‘{}’ frame do "
                           "you want to work with?".format(ps,profile,
                           check)).grid(column=0, row=0)
-                window.scroll=Frame(window.frame)
+                window.scroll=ui.Frame(window.frame)
                 window.scroll.grid(column=0, row=1)
                 if comparison is False:
                     buttonFrame1=ScrollingButtonFrame(window.scroll,g,
@@ -2998,7 +2998,7 @@ class Check():
             Label(window.frame,
                           text='What Vowel do you want to work with?'
                           ).grid(column=0, row=0)
-            window.scroll=Frame(window.frame)
+            window.scroll=ui.ScrollingFrame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ScrollingButtonFrame(window.scroll,
                                      #self.db.v[self.analang],
@@ -3368,7 +3368,7 @@ class Check():
                 log.info("Comparison frameb destroyed!")
             except: #first run
                 log.info("Problem destroying comparison frame, making...")
-            compframe.compframeb=Frame(compframe)
+            compframe.compframeb=ui.Frame(compframe)
             compframe.compframeb.grid(row=1,column=0)
             t=_('Compare with another group')
             if (hasattr(self, 'subcheck_comparison')
@@ -3436,9 +3436,9 @@ class Check():
         getform=Label(self.runwindow.frame,text=getformtext,
                 font=self.fonts['read'],norender=True)
         getform.grid(row=1,column=0,sticky='ew',padx=padx,pady=pady)
-        inputframe=Frame(self.runwindow.frame)
+        inputframe=ui.Frame(self.runwindow.frame)
         inputframe.grid(row=2,column=0,sticky='')
-        buttonframe=Frame(inputframe)
+        buttonframe=ui.Frame(inputframe)
         buttonframe.grid(row=0,column=0,sticky='new')
         tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
         spaces=[' ',' ','']
@@ -3470,7 +3470,7 @@ class Check():
         log.info("There: {}, NTG: {}; g:{}".format(groupsthere,notthisgroup,g))
         groupslabel=Label(inputframe,text='Other Groups:\n{}'.format(g))
         groupslabel.grid(row=0,column=1,sticky='new',padx=padx,rowspan=2)
-        fieldframe=Frame(inputframe)
+        fieldframe=ui.Frame(inputframe)
         fieldframe.grid(row=1,column=0,sticky='new')
         formfield = EntryField(fieldframe,textvariable=newname)
         formfield.grid(row=1,column=0,sticky='new')
@@ -3482,7 +3482,7 @@ class Check():
         formhashlabel.grid(row=2,column=0,sticky='new')
         fieldframe.grid_columnconfigure(0, weight=1)
         updatelabels()
-        responseframe=Frame(self.runwindow.frame)
+        responseframe=ui.Frame(self.runwindow.frame)
         responseframe.grid(row=3,column=0,sticky='',padx=padx,pady=pady)
         ok=_('Use this name and go to:')
         sub_lbl=Label(responseframe,text = ok, font=self.fonts['read'],)
@@ -3500,11 +3500,11 @@ class Check():
             t=_('next syllable profile')
             sub_p=Button(responseframe,text = t,command = nextprofile)
             sub_p.grid(row=0,column=4,sticky='ns')
-        examplesframe=Frame(self.runwindow.frame)
+        examplesframe=ui.Frame(self.runwindow.frame)
         examplesframe.grid(row=4,column=0,sticky='')
         self.tonegroupbuttonframe(examplesframe,group,sticky='w',
             row=0,column=0,playable=True,alwaysrefreshable=True,unsortable=True)
-        compframe=Frame(examplesframe,highlightthickness=10,
+        compframe=ui.Frame(examplesframe,highlightthickness=10,
                     highlightbackground=self.theme['white']) #no hlfg here
         compframe.grid(row=0,column=1,sticky='e')
         t=_('Compare with another group')
@@ -3692,12 +3692,12 @@ class Check():
         """Children of runwindow.frame"""
         if self.exitFlag.istrue():
             return
-        titles=Frame(self.runwindow.frame)
+        titles=ui.Frame(self.runwindow.frame)
         titles.grid(row=0, column=0, sticky="ew", columnspan=2)
         Label(self.runwindow.frame, image=self.parent.photo['sortT'],
                         text='',bg=self.theme['background']
                         ).grid(row=1,column=0,rowspan=3,sticky='nw')
-        scroll=self.runwindow.frame.scroll=ScrollingFrame(self.runwindow.frame)
+        scroll=self.runwindow.frame.scroll=ui.ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=2, column=1, sticky="new")
         """Titles"""
         title=_("Sort {} Tone (in ‘{}’ frame)").format(
@@ -3709,9 +3709,9 @@ class Check():
         Label(titles, text=instructions, font=self.fonts['instructions'],
                 anchor='c').grid(column=0, row=1, sticky="ew")
         """Children of self.runwindow.frame.scroll.content"""
-        groupbuttons=scroll.content.groups=Frame(scroll.content)
+        groupbuttons=scroll.content.groups=ui.Frame(scroll.content)
         groupbuttons.grid(row=0,column=0,sticky="ew")
-        scroll.content.anotherskip=Frame(scroll.content)
+        scroll.content.anotherskip=ui.Frame(scroll.content)
         scroll.content.anotherskip.grid(row=1,column=0)
         """Children of self.runwindow.frame.scroll.content.groups"""
         groupbuttons.row=0 #rows for this frame
@@ -3869,7 +3869,7 @@ class Check():
                                     group,
                                     check
                                     )
-        titles=Frame(self.runwindow.frame)
+        titles=ui.Frame(self.runwindow.frame)
         titles.grid(column=0, row=0, columnspan=2, sticky="w")
         Label(titles, text=title,
                 font=self.fonts['title']
@@ -3891,7 +3891,7 @@ class Check():
                         bg=self.theme['background']
                         ).grid(row=1,column=0,rowspan=3,sticky='nwse')
         """Scroll after instructions"""
-        self.sframe=ScrollingFrame(self.runwindow.frame)
+        self.sframe=ui.ScrollingFrame(self.runwindow.frame)
         self.sframe.grid(row=1,column=1,columnspan=2,sticky='wsne')
         row+=1
         """put entry buttons here."""
@@ -3902,7 +3902,7 @@ class Check():
                                 row, column,
                                 label=False)
             row+=1
-        bf=Frame(self.sframe.content)
+        bf=ui.Frame(self.sframe.content)
         bf.grid(row=row, column=0, sticky="ew")
         b=Button(bf, text=oktext,
                         cmd=lambda:returndictndestroy(self, #destroy frame!
@@ -3954,7 +3954,7 @@ class Check():
                             sticky="ew",
                             ipady=15)
         else:
-            bf=Frame(parent, pady='0') #This will be killed by removesenseidfromsubcheck
+            bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
             bf.grid(column=0, row=row, sticky='ew')
             b=Button(bf, text=text, pady='0',
                     cmd=lambda p=bf,s=senseid:removesenseidfromsubcheck(
@@ -3998,7 +3998,7 @@ class Check():
         if hasattr(self,'groupselected'):
             delattr(self,'groupselected') # self.groupselected=None
         self.runwindow.resetframe()
-        self.runwindow.frame.titles=Frame(self.runwindow.frame)
+        self.runwindow.frame.titles=ui.Frame(self.runwindow.frame)
         self.runwindow.frame.titles.grid(column=0, row=0, columnspan=2, sticky="w")
         Label(self.runwindow.frame.titles, text=title,
                 font=self.fonts['title']
@@ -4009,7 +4009,7 @@ class Check():
                         text='',
                         bg=self.theme['background']
                         ).grid(row=2,column=0,rowspan=2,sticky='nw')
-        self.sframe=ScrollingFrame(self.runwindow.frame)
+        self.sframe=ui.ScrollingFrame(self.runwindow.frame)
         self.sframe.grid(row=2,column=1)
         self.sortitem=self.sframe.content
         row=0
@@ -4349,9 +4349,9 @@ class Check():
         skip=_("Skip this word/phrase")
         """This should just add a button, not reload the frame"""
         row+=10
-        bf=Frame(parent)
         bf.grid(column=0, row=row, sticky="ew")
         if self.status.groups() == []:
+        bf=ui.Frame(parent)
             vardict['ok']=tkinter.BooleanVar()
             okb=Button(bf, text=firstOK,
                             cmd=firstok,
@@ -4628,7 +4628,7 @@ class Check():
                                                 count))
         instr=Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w')
-        buttonframes=ScrollingFrame(self.runwindow.frame)
+        buttonframes=ui.ScrollingFrame(self.runwindow.frame)
         buttonframes.grid(row=1,column=0,sticky='w')
         row=0
         done=list()
@@ -4720,7 +4720,7 @@ class Check():
                                     column=0,sticky='w')
             return
         if self.runwindow.frame.skip == False:
-            skipf=Frame(self.runwindow.frame)
+            skipf=ui.Frame(self.runwindow.frame)
             skipb=Button(skipf, text=linebreakwords(_("Skip to next undone")),
                         cmd=skipf.destroy)
             skipf.grid(row=1,column=1,sticky='w')
@@ -4743,7 +4743,7 @@ class Check():
             row=0
             if self.runwindow.exitFlag.istrue():
                 return 1
-            entryframe=Frame(self.runwindow.frame)
+            entryframe=ui.Frame(self.runwindow.frame)
             entryframe.grid(row=1,column=0)
             if progress is not None:
                 progressl=Label(self.runwindow.frame, anchor='e',
@@ -4761,9 +4761,9 @@ class Check():
                     text=text).grid(row=row,
                                     column=0,sticky='w')
             """Then get each sorted example"""
-            self.runwindow.frame.scroll=ScrollingFrame(entryframe)
+            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
             self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
-            examplesframe=Frame(self.runwindow.frame.scroll.content)
+            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
             examplesframe.grid(row=0,column=0,sticky='w')
             examples.reverse()
             for example in examples:
@@ -4881,7 +4881,7 @@ class Check():
         si=xlp.Section(xlpr,text)
         # p=xlp.Paragraph(si,instr)
         font=self.frame.fonts['read']
-        self.results.scroll=ScrollingFrame(self.results)
+        self.results.scroll=ui.ScrollingFrame(self.results)
         self.results.scroll.grid(column=0, row=1)
         senseid=0 # in case the following doesn't find anything:
         for group in self.s[self.analang][cvt]:
@@ -5113,7 +5113,7 @@ class Check():
         i=Label(self.runwindow.frame,text=text)
         i.grid(row=rwrow,column=0,sticky='ew')
         rwrow+=1
-        qframe=Frame(self.runwindow.frame)
+        qframe=ui.Frame(self.runwindow.frame)
         qframe.grid(row=rwrow,column=0,sticky='ew')
         text=_("What do you want to call this UF tone group for {}-{} words?"
                 "".format(ps,profile))
@@ -5139,7 +5139,7 @@ class Check():
         done_btn.grid(row=qrow,column=2,sticky='w')
         groups=list()
         rwrow+=1
-        scroll=ScrollingFrame(self.runwindow.frame)
+        scroll=ui.ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=rwrow,column=0,sticky='ew')
         groupvalues=self.tonegroupsbyUFlocation(senseidsbygroup)
         locations=list(dictofchilddicts(groupvalues).keys())
@@ -5325,7 +5325,7 @@ class Check():
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
         self.runwindow.title(title)
-        self.runwindow.scroll=ScrollingFrame(self.runwindow.frame)
+        self.runwindow.scroll=ui.ScrollingFrame(self.runwindow.frame)
         self.runwindow.scroll.grid(row=0,column=0)
         window=self.runwindow.scroll.content
         window.row=0
@@ -6234,9 +6234,9 @@ class Window(tkinter.Toplevel):
         if self.parent.exitFlag.istrue():
             return
         if self.winfo_exists(): #If this has been destroyed, don't bother.
-            if hasattr(self,'frame') and type(self.frame) is Frame:
+            if hasattr(self,'frame') and type(self.frame) is ui.Frame:
                 self.frame.destroy()
-            self.frame=Frame(self.outsideframe)
+            self.frame=ui.Frame(self.outsideframe)
             self.frame.grid(column=0,row=0,sticky='nsew')
     def wait(self,msg=None):
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
@@ -6300,7 +6300,7 @@ class Window(tkinter.Toplevel):
             self.grid_columnconfigure(rc, weight=3)
         self.photo = parent.photo #need this before making the frame
         # self.photowhite = parent.photowhite #this, too.
-        self.outsideframe=Frame(self)
+        self.outsideframe=ui.Frame(self)
         """Give windows some margin"""
         self.outsideframe['padx']=25
         self.outsideframe['pady']=25
@@ -6361,7 +6361,7 @@ class Menu(tkinter.Menu):
         # stand out from other widgets:
         self['activebackground']=self.theme['background']
         self['background']='white'
-class MainApplication(Frame):
+class MainApplication(ui.Frame):
     def wait(self,msg=None):
         # This and the following are only to build the main screen
         if hasattr(self.parent,'ww') and self.parent.ww.winfo_exists() == True:
@@ -6568,7 +6568,7 @@ class MainApplication(Frame):
         Label(window.frame, text=title,
                         font=self.fonts['title'],anchor='c',padx=50
                         ).grid(row=0,column=0,sticky='we')
-        f=ScrollingFrame(window.frame)
+        f=ui.ScrollingFrame(window.frame)
         f.grid(row=2,column=0,sticky='we')
         Label(f.content, image=self.photo['small'],text='',
                         bg=self.theme['background']
@@ -6773,7 +6773,7 @@ class MainApplication(Frame):
         gridded into the center of the root window. This configuration keeps
         the frame with all the visual stuff in the middle of the window,
         without letting the window shrink to really small."""
-        self.frame=Frame(self)
+        self.frame=ui.Frame(self)
         """Give the main window some margin"""
         self.frame['padx']=25
         self.frame['pady']=25
@@ -6983,7 +6983,7 @@ class Renderer(object):
         self.img = PIL.ImageTk.PhotoImage(img)
 class Label(tkinter.Label):
     def wrap(self):
-        availablexy(self)
+        ui.availablexy(self)
         self.config(wraplength=self.maxwidth)
         log.log(3,'self.maxwidth (Label class): {}'.format(self.maxwidth))
     def __init__(self, parent, column=0, row=1, norender=False,**kwargs):
@@ -7082,7 +7082,7 @@ class RadioButton(tkinter.Radiobutton):
         kwargs['selectcolor']=self.theme['activebackground']
         super().__init__(parent,**kwargs)
         self.grid(column=column, row=row, sticky=sticky)
-class RadioButtonFrame(Frame):
+class RadioButtonFrame(ui.Frame):
     def __init__(self, parent, horizontal=False,**kwargs):
         for vars in ['var','opts']:
             if (vars not in kwargs):
@@ -7215,7 +7215,7 @@ class CheckButton(tkinter.Checkbutton):
                                 anchor='w',
                                 **kwargs
                                 )
-class RecordButtonFrame(Frame):
+class RecordButtonFrame(ui.Frame):
     def _start(self, event):
         log.log(3,"Asking PA to record now")
         self.recorder=sound.SoundFileRecorder(self.filenameURL,self.pa,
@@ -7432,7 +7432,7 @@ class RecordButtonFrame(Frame):
         if (file.exists(self.filenameURL) and self.test == False
                 and check.audiolang is not None):
             self.addlink() #just in case an old file doesn't have links
-        Frame.__init__(self,parent, **kwargs)
+        ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
         if check.audiolang is None and self.test is not True:
@@ -7628,7 +7628,7 @@ class ButtonFrame(ui.Frame):
         if self.debug == True:
             for kwarg in kwargs:
                 print("ButtonFrame",kwarg,":",kwargs[kwarg])
-        Frame.__init__(self,parent)
+        ui.Frame.__init__(self,parent)
         gimmenull=False # When do I want a null option added to my lists? ever?
         self['background']=self.theme['background']
         i=0
@@ -7689,10 +7689,10 @@ class ButtonFrame(ui.Frame):
                     **kwargs
                     )
             i=i+1
-class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
+class ScrollingButtonFrame(ui.ScrollingFrame,ButtonFrame):
     """This needs to go inside another frame, for accurrate grid placement"""
     def __init__(self,parent,optionlist,command,window=None,**kwargs):
-        ScrollingFrame.__init__(self,parent)
+        ui.ScrollingFrame.__init__(self,parent)
         self.bf=ButtonFrame(parent=self.content,
                             optionlist=optionlist,
                             command=command,
