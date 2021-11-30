@@ -2969,7 +2969,7 @@ class Check():
                           "".format(ps,profile,check)
                           ).grid(column=0, row=0)
             elif guess == True:
-                self.setsubcheck(g[0],window) #don't ask, just set
+                self.setgroup(g[0],window) #don't ask, just set
             else:
                 Label(window.frame,
                           text="What {}-{} tone group in the ‘{}’ frame do "
@@ -2979,17 +2979,17 @@ class Check():
                 window.scroll.grid(column=0, row=1)
                 if comparison is False:
                     buttonFrame1=ScrollingButtonFrame(window.scroll,g,
-                                                self.setsubcheck,
+                                                self.setgroup_comparison,
                                                 window=window
                                                 ).grid(column=0, row=4)
                 else:
                     buttonFrame1=ScrollingButtonFrame(window.scroll,g,
-                                                self.setsubcheck_comparison,
+                                                self.setgroup,
                                                 window=window
                                                 ).grid(column=0, row=4)
     def getV(self,window,event=None):
         # fn=inspect.currentframe().f_code.co_name
-        """Window is called in getsubcheck"""
+        """Window is called in getgroup"""
         if ps is None:
             Label(window.frame,
                           text='Error: please set Grammatical category first! ('
@@ -3011,7 +3011,7 @@ class Check():
                                      ).grid(column=0, row=4)
     def getC(self,window,event=None):
         # fn=inspect.currentframe().f_code.co_name
-        """Window is called in getsubcheck"""
+        """Window is called in getgroup"""
         if ps is None:
             text=_('Error: please set Grammatical category first! ')+'('
             +str(ps)+')'
@@ -3258,7 +3258,7 @@ class Check():
                     log.debug(deja)
                     errorlabel['text'] = deja
                     return 1
-                self.updatebysubchecksenseid(group,newtonevalue)
+                self.updatebygroupsenseid(group,newtonevalue)
                 i=groupsthere.index(group) #put new value in the same place.
                 groupsthere.remove(group)
                 groupsthere.insert(i,newtonevalue)
@@ -3267,12 +3267,11 @@ class Check():
                     groupsdone.remove(group)
                     groupsdone.insert(i,newtonevalue)
                 group=newtonevalue
-                self.getsubchecksprioritized() #We've changed this, so update
                 self.storesettingsfile(setting='status')
             else: #move on, but notify in logs
                 log.info("User selected ‘{}’, but with no change.".format(ok))
-            if hasattr(self,'subcheck_comparison'):
-                delattr(self,'subcheck_comparison') # in either case
+            if hasattr(self,'group_comparison'):
+                delattr(self,'group_comparison') # in either case
             self.runwindow.destroy()
             if reverify == True: #don't do this if running from menus
                 self.verifyT(menu=menu)
@@ -3310,8 +3309,8 @@ class Check():
                 self.status.nextprofile(wsorted=True)
                 log.debug("profile: {}".format(profile))
                 self.renamegroup(reverify=reverify)
-        def setsubcheck_comparison():
-            w=self.getsubcheck(comparison=True) #this returns its window
+        def setgroup_comparison():
+            w=self.getgroup(comparison=True) #this returns its window
             w.wait_window(w)
             comparisonbuttons()
         def comparisonbuttons():
@@ -3323,25 +3322,25 @@ class Check():
             compframe.compframeb=ui.Frame(compframe)
             compframe.compframeb.grid(row=1,column=0)
             t=_('Compare with another group')
-            if (hasattr(self, 'subcheck_comparison')
-                    and self.subcheck_comparison in groupsthere and
-                    self.subcheck_comparison != group):
+            if (hasattr(self, 'group_comparison')
+                    and self.group_comparison in groupsthere and
+                    self.group_comparison != group):
                 log.info("Making comparison buttons for group {} now".format(
-                                                    self.subcheck_comparison))
+                                                    self.group_comparison))
                 t=_('Compare with another group ({})').format(
-                                                    self.subcheck_comparison)
                 compframe.bf2=self.tonegroupbuttonframe(compframe.compframeb,
                     self.subcheck_comparison,sticky='w',row=0,column=0,
                     playable=True,unsortable=False,alwaysrefreshable=True,
                     font=self.fonts['default'])
             elif not hasattr(self, 'subcheck_comparison'):
+                                                    self.group_comparison)
                 log.info("No comparison found !")
-            elif self.subcheck_comparison not in groupsthere:
+            elif self.group_comparison not in groupsthere:
                 log.info("Comparison ({}) not in group list ({})"
-                            "".format(self.subcheck_comparison,groupsthere))
-            elif self.subcheck_comparison == group:
+                            "".format(self.group_comparison,groupsthere))
+            elif self.group_comparison == group:
                 log.info("Comparison ({}) same as subgroup ({}); not showing."
-                            "".format(self.subcheck_comparison,group))
+                            "".format(self.group_comparison,group))
             else:
                 log.info("This should never happen (renamegroup/"
                             "comparisonbuttons)")
@@ -3358,7 +3357,7 @@ class Check():
         groupsthere, groupsdone = updategroups()
         group=self.status.group()
         if group is None or group not in groupsthere:
-            self.getsubcheck(guess=True)
+            self.getgroup(guess=True,wsorted=True)
             if group == None:
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
@@ -3459,7 +3458,7 @@ class Check():
                     highlightbackground=self.theme['white']) #no hlfg here
         compframe.grid(row=0,column=1,sticky='e')
         t=_('Compare with another group')
-        sub_c=Button(compframe,text = t,command = setsubcheck_comparison)
+        sub_c=Button(compframe,text = t,command = setgroup_comparison)
         sub_c.grid(row=0,column=0)
         comparisonbuttons()
         self.runwindow.waitdone()
@@ -4046,7 +4045,7 @@ class Check():
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
-    def updatebysubchecksenseid(self,oldtonevalue,newtonevalue,verified=False):
+    def updatebygroupsenseid(self,oldtonevalue,newtonevalue,verified=False):
         # This function updates the field value and verification status (which
         # contains the field value) in the lift file.
         # This is all the words in the database with the given
