@@ -253,8 +253,6 @@ class Check():
     """self.profilesbysense and self.profilecounts are loaded from file, or
     created by analysis in init()"""
     def makeglosslangs(self):
-        if not hasattr(self,'glosslangs'):
-            self.guessglosslangs()
         self.glosslangs=Glosslangs(self.glosslangs)
     def maketoneframes(self):
         if not hasattr(self,'toneframes'):
