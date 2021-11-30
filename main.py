@@ -9437,6 +9437,15 @@ def findpraat():
     log.info("Praat found at {}".format(praat))
     program['praatisthere']=True
     program['praat']=praat
+def pathseparate(path):
+    os=platform.system()
+    if os == "Windows":
+        sep=';'
+    elif os == "Linux":
+        sep=':'
+    else:
+        log.error("What operating system are you running? ({})".format(os))
+    return path.split(sep)
 def findpath():
     spargs={
             'shell' : False
@@ -9448,13 +9457,13 @@ def findpath():
         # CSIDL_DESKTOPDIRECTORY
         # CSIDL_DESKTOP
         #subprocess.check_output(["echo","%PATH%"], **spargs)
-        log.info("Windows PATH is {}".format(path))
+        log.info("PATH is {}".format(path))
         return path
     except Exception as e:
         log.info("No path found! ({})".format(e))
 def findhg():
     path=findpath()
-    paths=path.split(':')
+    paths=pathseparate(path)
     log.info("path items: {}".format(paths))
     for path in paths:
         if path and file.exists(path):
