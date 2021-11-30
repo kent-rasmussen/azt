@@ -3892,9 +3892,7 @@ class Check():
         bf=ui.Frame(self.sframe.content)
         bf.grid(row=row, column=0, sticky="ew")
         b=Button(bf, text=oktext,
-                        cmd=lambda:returndictndestroy(self, #destroy frame!
-                                    self.runwindow.frame,
-                                    {'groupselected':"ALLOK"}),
+                        cmd=bf.destroy,
                         anchor="w",
                         font=self.fonts['instructions']
                         )
