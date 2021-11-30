@@ -3865,7 +3865,7 @@ class Check():
             "tone melody. Select any word with a different tone melody to "
             "remove it from the list.")
         """group is set here, but probably OK"""
-        self.makestatusdict()
+        self.status.build()
         last=False
         if self.runwindow.exitFlag.istrue():
             return 1
