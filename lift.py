@@ -2144,46 +2144,49 @@ if __name__ == '__main__':
             for location in locations:
             # # for guid in guids:
                 for senseid in ['prevent_929504ce-35bb-48fe-ae95-8674a97e625f']:
-                    url=lift.get('example/field/form/text',
-                                                path=['location','tonefield'], #get this one first
+                    url=lift.get('sense/tonefield/form/text',#/field/form/text',
+                                                # path=['location','tonefield'], #get this one first
                                                 senseid=senseid,
                                                 fieldtype='tone',location=location,
                                                 tonevalue=fieldvalue,
                                                 showurl=True# what='node'
                                                 ) #'text'
                     url=exfieldvalue=url.get('text')
-                    for e in exfieldvalue:
-                        log.info("exfieldvalue: {}".format(e))
-                    url_sense=lift.retarget(url,"sense")
+                    # for e in exfieldvalue:
+                    #     log.info("exfieldvalue: {}".format(e))
+                    # url_sense=lift.retarget(url,"sense")
                     # Bind lift object to each url object; or can we store
                     # this in a way that allows for non-recursive storage
                     # only of the url object by the lift object?
-                    ids=url_sense.get('senseid')
-                    # log.info("senseids: {}".format(ids))
-                    for id in [x for x in ids if x is not None]:
-                        log.info("senseid: {}".format(id))
-                    url_entry=lift.retarget(url,"entry")
-                    idsentry=url_entry.get('guid')
-                    for id in [x for x in idsentry if x is not None]:
-                        log.info("guid: {}".format(id))
+                    # ids=url_sense.get('senseid')
+                    # # log.info("senseids: {}".format(ids))
+                    # for id in [x for x in ids if x is not None]:
+                    #     log.info("senseid: {}".format(id))
+                    # url_entry=lift.retarget(url,"entry")
+                    # idsentry=url_entry.get('guid')
+                    # for id in [x for x in idsentry if x is not None]:
+                    #     log.info("guid: {}".format(id))
 
         return
     oldtonevalue=2
     for senseid in senseids:
         for location in locations:# b=lift.get('sense',fieldtype='tone',location=locations[0],
         #             tonevalue=subcheck,showurl=True).get('senseid')
-            b=lift.get("example/tonefield/form/text",
-                senseid=senseid, tonevalue=oldtonevalue, toneUFvalue='1',#to clear just "NA" values
-                location=location,showurl=True).get('node')
+            b=lift.get("sense/toneUFfield/form/text", #toneUFfield
+                senseid=senseid,
+                # tonevalue=oldtonevalue,
+                toneUFvalue='1',#to clear just "NA" values
+                # location=location,
+                showurl=True).get('node')
             # lift.get("example/translation/form/text", senseid=senseid, glosslang='fr',
             #                 location=location,showurl=True).get('text')
             for bi in b:
                 print(bi.text)
                 bi.text=1234
-            b=lift.get("example/tonefield/form/text",
-                senseid=senseid, #tonevalue=oldtonevalue, #to clear just "NA" values
-                location=location,showurl=True).get('text')
-            print(b)
+            # b=lift.get("example/tonefield/form/text",
+            #     senseid=senseid, #tonevalue=oldtonevalue, #to clear just "NA" values
+            #     location=location,showurl=True).get('text')
+            # print(b)
             # c=lift.get("example/form/text", senseid=senseid, analang='en',
             #                 location=location,showurl=True).get('text')
             # print(c)
