@@ -2502,7 +2502,7 @@ class Check():
         ps=self.slices.ps()
         self.status.cull() #remove nodes with no data
         if cvt in self.status:
-            if ps in self.status[cvt]:
+            if ps in self.status[cvt]: #because we cull, this == data is there.
                 if (hasattr(self,'noboard') and (self.noboard is not None)):
                     self.noboard.destroy()
                 if cvt == 'T':
