@@ -3628,6 +3628,89 @@ class Check():
         # groups are by frame (surface distinctions), rather than by lexeme
         # (underlying distinctions) in any case.
         #This function should exit 1 on a window close, or finish with None
+        def presenttosort():
+            if self.runwindow.exitFlag.istrue():
+                return 1,1
+            groupselected=None
+            """these just pull the current lists from the object"""
+            senseids=self.status.senseidstosort()
+            sorted=self.status.senseidssorted()
+            senseid=senseids[0]
+            progress=(str(thissort.index(senseid)+1)+'/'+str(len(thissort)))
+            framed=self.datadict.getframeddata(senseid)
+            framed.setframe(check)
+            """After the first entry, sort by groups."""
+            log.debug('tonegroups: {}'.format(self.status.groups(wsorted=True)))
+            Label(titles, text=progress, font=self.fonts['report'], anchor='w'
+                                            ).grid(column=1, row=0, sticky="ew")
+            text=framed.formatted()
+            entryview=ui.Frame(self.runwindow.frame)
+            self.sortitem=Label(entryview, text=text,font=self.fonts['readbig'])
+            entryview.grid(column=1, row=1, sticky="new")
+            self.sortitem.grid(column=0,row=0, sticky="w",pady=50)
+            self.sortitem.wrap()
+            self.runwindow.waitdone()
+            for b in groupbuttonlist:
+                b.setcanary(self.sortitem)
+            self.runwindow.wait_window(window=self.sortitem)
+            return senseid,framed
+        def addgroupbutton(group):
+            if self.runwindow.exitFlag.istrue():
+                return #just don't die
+            b=ToneGroupButtonFrame(groupbuttons, self, self.exs,
+                                    group,
+                                    showtonegroup=True,
+                                    alwaysrefreshable=True
+                                    )
+            b.grid(row=groupbuttons.row, column=0, sticky='w')
+            groupvars[group]=b.var()
+            groupbuttons.row+=1
+            groupbuttonlist.append(b)
+            b.update_idletasks()
+        def sortselected(senseid,framed):
+            selectedgroups=selected(groupvars)
+            log.info("selectedgroups: {}".format(selectedgroups))
+            for k in groupvars:
+                log.info("{} value: {}".format(k,groupvars[k].get()))
+            if len(selectedgroups)>1:
+                log.error("More than one group selected: {}".format(
+                                                                selectedgroups))
+                return 2
+            groupselected=unlist(selectedgroups)
+            if groupselected in groupvars:
+                groupvars[groupselected].set(False)
+            else:
+                log.error("selected {}; not in {}".format(groupselected,groupvars))
+                return
+            if groupselected:
+                if groupselected in ["NONEOFTHEABOVE",'ok']:
+                    """If there are no groups yet, or if the user asks for
+                    another group, make a new group."""
+                    group=self.addtonegroup()
+                    """And give the user a button for it, for future words
+                    (N.B.: This is only used for groups added during the current
+                    run. At the beginning of a run, all used groups have buttons
+                    created above.)"""
+                    self.addtonefieldex(senseid,framed,group) #button needs this
+                    addgroupbutton(group)
+                    #adjust window for new button
+                    scroll.windowsize()
+                    log.debug('Group added: {}'.format(groupselected))
+                    """group with the above?"""
+                    """Group these last two?"""
+                else:
+                    if groupselected == 'skip':
+                        group='NA'
+                    else:
+                        group=groupselected
+                    log.debug('Group selected: {} ({})'.format(group,
+                                                                groupselected))
+                    """This needs to *not* operate on "exit" button."""
+                    self.addtonefieldex(senseid,framed,group)
+            else:
+                log.debug('No group selected: {}'.format(groupselected))
+                return 1 # this should only happen on Exit
+            self.status.marksenseidsorted(senseid)
         log.info('Running sortT:')
         self.getrunwindow()
         """sortingstatus() checks by ps,profile,check (frame),
@@ -3667,84 +3750,29 @@ class Check():
         """Children of self.runwindow.frame.scroll.content.groups"""
         groupbuttons.row=0 #rows for this frame
         groupvars={}
+        groupbuttonlist=list()
+        entryview=ui.Frame(self.runwindow.frame)
         for group in groups:
-            groupvars[group]=self.tonegroupbuttonframe(groupbuttons,
-                                                        group,
-                                                        row=groupbuttons.row,
-                                                        unsortable=False,
-                                                        alwaysrefreshable=True)
-            groupbuttons.row+=1
+            addgroupbutton(group)
+            # b=ToneGroupButtonFrame(groupbuttons, self, self.exs, group,
+            #                         showtonegroup=True,
+            #                         canary=entryview
+            #                         )
+            # b.grid(row=groupbuttons.row, column=0)
+            # groupvars[group]=b.var()
+            # groupbuttons.row+=1
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
-        if len(groups) != 1: #in that case, done below
-            self.getanotherskip(scroll.content.anotherskip,groupvars)
+        self.getanotherskip(scroll.content.anotherskip,groupvars)
+        log.info("getanotherskip vardict (1): {}".format(groupvars))
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
-        while self.status.tosort() and not self.runwindow.exitFlag.istrue():
-            if len(groups) == 1: #only rerun when moving to 1 button
-                self.getanotherskip(scroll.content.anotherskip,groupvars)
-            """Pull this variable from self."""
-            groupselected=None
-            """these just pull the current lists from the object"""
-            senseids=self.status.senseidstosort()
-            sorted=self.status.senseidssorted()
-            log.info("senseids: {}-{} ({})".format(senseids,sorted,self.status.tosort()))
-            senseid=senseids[0]
-            progress=(str(thissort.index(senseid)+1)+'/'+str(len(thissort)))
-            framed=self.datadict.getframeddata(senseid)
-            framed.setframe(check)
-            """After the first entry, sort by groups."""
-            log.debug('self.tonegroups: {}'.format(self.status.groups()))
-            Label(titles, text=progress, font=self.fonts['report'], anchor='w'
-                                            ).grid(column=1, row=0, sticky="ew")
-            text=framed.formatted()
-            entryview=Frame(self.runwindow.frame)
-            self.sortitem=Label(entryview, text=text,font=self.fonts['readbig'])
-            entryview.grid(column=1, row=1, sticky="new")
-            self.sortitem.grid(column=0,row=0, sticky="w",pady=50)
-            self.sortitem.wrap()
-            self.runwindow.waitdone()
-            self.runwindow.wait_window(window=self.sortitem)
-            if self.runwindow.exitFlag.istrue():
+        while self.status.tosort(): # and not self.runwindow.exitFlag.istrue():
+            senseid,framed=presenttosort()
+            if senseid == 1:
                 return 1
-            selected=[k for k in groupvars if groupvars[k] is not None
-                                            if groupvars[k].get()] #should just be one, but find it
-            log.info("selected: {}".format(selected))
-            if len(selected)>1:
-                log.error("More than one group selected: {}".format(selected))
-                return 2
-            groupselected=unlist(selected)
-            groupvars[groupselected].set(False)
-            if groupselected:
-                if groupselected in ["NONEOFTHEABOVE",'ok']:
-                    """If there are no groups yet, or if the user asks for another
-                    group, make a new group."""
-                    groupselected=self.addtonegroup()
-                    groupbuttons.row+=1 #add to above.
-                    """Add the new group to the database"""
-                    self.addtonefieldex(senseid,framed,groupselected)
-                    """And give the user a button for it, for future words
-                    (N.B.: This is only used for groups added during the current
-                    run. At the beginning of a run, all used groups have buttons
-                    created above.)"""
-                    groupvars[groupselected]=self.tonegroupbuttonframe(
-                                                    groupbuttons,
-                                                    groupselected,
-                                                    unsortable=False,
-                                                    row=groupbuttons.row,
-                                                    alwaysrefreshable=True)
-                    #adjust window for new button
-                    scroll.windowsize()
-                    log.debug('Group added: {}'.format(groupselected))
-                    """group with the above?"""
-                    """Group these last two?"""
-                elif groupselected == 'skip':
-                    self.addtonefieldex(senseid,framed,'NA')
-                else: #before making a new button, or now, add fields to the sense.
-                    """This needs to *not* operate on "exit" button."""
-                    self.addtonefieldex(senseid,framed,groupselected)
-            else:
-                return 1 # this should only happen on Exit
-            self.status.marksenseidsorted(senseid)
+            sortselected(senseid,framed)
+        if self.runwindow.exitFlag.istrue():
+            return 1
         self.runwindow.resetframe()
         return
     def reverify(self):
