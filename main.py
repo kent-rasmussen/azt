@@ -3534,7 +3534,6 @@ class Check():
         ps=self.slices.ps()
         profile=self.slices.profile()
         log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,ps,profile,check))
-        self.settonevariables()
         tosortupdate()
         log.info("Maybe SortT (from maybesort)")
         if self.status.checktosort(check):
