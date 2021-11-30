@@ -2425,7 +2425,8 @@ class Check():
                             cmd=cmd)
             bc.grid(row=row,column=1)
             row+=1
-        br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
+        filenames=self.makefilenames(test=True)
+        br=RecordButtonFrame(self.soundsettingswindow.frame,self,filenames)
         br.grid(row=row,column=0)
         row+=1
         l=_("You may need to change your microphone "
@@ -4563,9 +4564,15 @@ class Check():
                 t+="!"
             t+='’'
         lxl=Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,id=sense['guid'], #reconfigure!
-                                        framed=framed,node=sense['nodetoshow'],
-                                        gloss=sense['gloss'])
+        filenames=makefilenames(self,
+                                senseid=sense['senseid'],
+                                node=sense['nodetoshow']
+                                ) #include the above?
+        lcb=RecordButtonFrame(parent,self,filenames,
+                                        # id=sense['guid'], #reconfigure!
+                                        # framed=framed,node=sense['nodetoshow'],
+                                        # gloss=sense['gloss']
+                                        )
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def showentryformstorecordpage(self,ps=None,profile=None):
@@ -4734,9 +4741,13 @@ class Check():
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
                 text=framed.formatted()
-                rb=RecordButtonFrame(examplesframe,self,id=senseid,node=example,
-                                    form=nn(framed.forms[self.analang]),
-                                    gloss=nn(framed.forms[self.glosslang])
+                filenames=makefilenames(self,
+                                senseid=framed.senseid(), #?!?
+                                node=example)
+                rb=RecordButtonFrame(examplesframe,self,filenames,
+                                    # id=senseid,node=example,
+                                    # form=nn(framed.forms[self.analang]),
+                                    # gloss=nn(framed.forms[self.glosslang])
                                     ) #no gloss2; form/gloss just for filename
                 rb.grid(row=row,column=0,sticky='w')
                 Label(examplesframe, anchor='w',text=text
@@ -7229,129 +7240,6 @@ class RecordButtonFrame(ui.Frame):
         self.db.addmediafields(self.node,self.filename,self.audiolang)
     def function(self):
         pass
-    def makefilenames(self=None,check=None,senseid=None):
-        if self is not None: #i.e., this is called by class
-            if self.test==True:
-                return "test_{}_{}.wav".format(self.settings.fs,
-                                                self.settings.sample_format)
-            if None in [self.id, self.node, self.gloss]:
-                log.debug("Sorry, unless testing we need all these "
-                        "arguments; exiting.")
-                return
-            form=self.form
-            node=self.node
-            check=self.check
-            id=self.id
-            gloss=self.gloss
-            # audio=None
-        else: #self is None, i.e., this method called on something else.
-            if None in [check, senseid]:
-                return
-            id=senseid
-            node=firstoflist(check.db.get('example',senseid=senseid,
-                                location=check.name).get())
-            if node is None:
-                # This should never be!
-                log.error("Looks like a node came back 'None'; this may be "
-                            "from multiple examples with the same frame; check"
-                            "the log for details on what {} found".format(
-                            check.program['name']
-                            ))
-                nodes=check.db.get('examplebylocation',senseid=senseid,
-                                    location=check.name)
-                for node in nodes:
-                    for child in node:
-                        log.error("Node{}: {}; tag:{}; attrib:{}".format(
-                            nodes.index(node),child,child.tag, child.attrib,
-                                                                    child.text))
-                        for grandchild in child:
-                            log.error("Node{}c: {}; tag:{}; attrib:{}".format(
-                                nodes.index(node),grandchild,grandchild.tag,
-                                            grandchild.attrib,grandchild.text))
-                            for ggchild in grandchild:
-                                log.error("Node{}cg: {}; tag:{}; attrib:{}; text:{}".format(
-                                    nodes.index(node),ggchild,ggchild.tag,
-                                                ggchild.attrib,ggchild.text))
-            gloss=unlist(check.db.get('translation/form/text',node=node,
-                            glosslang=check.glosslangs[0],showurl=True).get('text'))
-            form=unlist(check.db.get('form/text',node=node,showurl=True,
-                                            analang=check.analang).get('text'))
-            log.log(4,"gloss: {}".format(gloss))
-            log.log(4,"form: {}".format(form))
-        audio=check.db.get('form/text',node=node,showurl=True,
-                                        analang=check.audiolang).get('text')
-        log.log(4,"audio: {}".format(audio))
-        audio=unlist(audio)
-        if gloss is None:
-            gloss=t(check.db.get('gloss',senseid=senseid,
-                                    glosslang=check.glosslangs[0]).get('text'))
-        if form is None and node is not None:
-            form=t(node.find(f"form[@lang='{check.analang}']/text"))
-        if audio is not None:
-            filenameURL=str(file.getdiredurl(check.audiodir,audio))
-            if file.exists(filenameURL):
-                log.debug("Audio file found! using name: {}; diredname: {}"
-                    "".format(audio, filenameURL))
-                return audio
-            else:
-                log.debug("Audio link found, but no file found! Making options."
-                    "\n{}; diredname: {}".format(audio, filenameURL))
-        pslocopts=[check.ps]
-        # Except for data generated early in 2021, profile should not be there,
-        # because it can change with analysis. But we include here to pick up
-        # old files, in case they are there but not linked.
-        pslocopts.insert(0,check.ps+'_'+check.profile) # first option (legacy).
-        fieldlocopts=[None]
-        if (node.tag == 'example'):
-            l=node.find("field[@type='location']//text")
-            if hasattr(l,'text') and l.text is not None:
-                #the last option is taken, if none are found
-                pslocopts.insert(0,check.ps+'-'+l.text) #the first option.
-                fieldlocopts.append(l.text) #make this the last option.
-                # Yes, these allow for location to be present twice, but
-                # that should never be found, nor offered
-        if not hasattr(check, 'rx'): #remove diacritics:
-            check.rx={'d':rx.make(rx.s(check,'d'),compile=True)}
-        filenames=[]
-        # We iterate over lots of filename schemas, to preserve legacy data.
-        for pslocopt in pslocopts:
-            for fieldlocopt in fieldlocopts: #for older name schema
-                for legacy in ['_', None]:
-                    for tags in [ None, 1 ]:
-                        args=[id]
-                        if tags is not None:
-                            args+=[node.tag]
-                            if node.tag == 'field':
-                                args+=[node.get("type")]
-                        args+=[form]
-                        args+=[gloss]
-                        optargs=args[:]
-                        optargs.insert(0,pslocopt) #put first
-                        optargs.insert(3,fieldlocopt) #put after self.node.tag
-                        log.log(3,optargs)
-                        wavfilename=''
-                        argsthere=[x for x in optargs if x is not None]
-                        for arg in argsthere:
-                            wavfilename+=arg
-                            if argsthere.index(arg) < len(argsthere)-1:
-                                wavfilename+='_'
-                        if legacy == '_': #There was a schema that had an extra '_'.
-                            wavfilename+='_'
-                        wavfilename=rx.urlok(wavfilename) #one character check
-                        filenames+=[wavfilename+'.wav']
-        #test if any of the generated filenames are there
-        for filename in filenames:
-            filenameURL=str(file.getdiredurl(check.audiodir,filename))
-            log.debug("Looking for Audio file: {}; filename possibilities: {}; "
-                "url:{}".format(filename, filenames, filenameURL))
-            if file.exists(filenameURL):
-                log.debug("Audiofile found! using name: {}; possibilities: {}; "
-                    "url:{}".format(filename, filenames, filenameURL))
-                return filename
-        #if you don't find any, take the *last* values
-        log.debug("No audio file found! using name: {}; names: {}; url:{}"
-                "".format(filename, filenames, filenameURL))
-        return filename
     def __init__(self,parent,check,id=None,node=None,form=None,gloss=None,test=False,**kwargs):
         # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
@@ -7382,12 +7270,10 @@ class RecordButtonFrame(ui.Frame):
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
         self.audiolang=check.audiolang
-        self.test=test
-        self.filename=self.makefilenames()
-        self.filenameURL=str(file.getdiredurl(check.audiodir,self.filename))
-        if (file.exists(self.filenameURL) and self.test == False
-                and check.audiolang is not None):
-            self.addlink() #just in case an old file doesn't have links
+        self.filename=filenames[0]
+        self.filenameURL=filenames[1]
+        # self.filename=self.makefilenames()
+        # self.filenameURL=str(file.getdiredurl(check.audiodir,self.filename))
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
