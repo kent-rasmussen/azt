@@ -3832,20 +3832,24 @@ class Check():
         if group in self.status.verified():
             log.info("‘{}’ already verified, continuing.".format(group))
             return
-        senseids=self.getexsall(group)
-        if len(senseids) <= 1:
-            if len(senseids) == 1:
-                verified=True
-                log.info("Group ‘{}’ only has {} example; marking verified and "
-                        "continuing.".format(group,len(senseids)))
-            if len(senseids) == 0:
-                verified=False
-                log.info("Group ‘{}’ only has {} example; removing and "
-                "continuing.".format(group,len(senseids)))
-            self.updatestatus(verified=verified)
-            self.updatestatuslift(check,group,verified=verified)
-            if not verified:
-                groups.remove(group)
+        senseids=self.exs.senseidsinslicegroup(group)
+        if not senseids:
+            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            verified=False
+            log.info("Group ‘{}’ has no examples; continuing.".format(group))
+            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            updatestatus()
+            log.info("Group-groups: {}-{}".format(group,groups))
+            groups.remove(group)
+            log.info("Group-groups: {}-{}".format(group,groups))
+            self.status.groups(groups,wsorted=True)
+            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            return
+        elif len(senseids) == 1:
+            verified=True
+            log.info("Group ‘{}’ only has {} example; marking verified and "
+                    "continuing.".format(group,len(senseids)))
+            updatestatus()
             return
         title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
                                     self.languagenames[self.analang],
