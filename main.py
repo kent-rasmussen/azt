@@ -4106,8 +4106,11 @@ class Check():
             self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
                                 location=check,#fieldvalue=oldtonevalue,
                                 fieldvalue=newtonevalue)
-            self.db.modverificationnode(senseid=senseid,vtype=profile,
-                                                add=add,rms=[rm],addifrmd=True)
+            self.db.modverificationnode(senseid=senseid,
+                            vtype=profile,
+                            analang=self.analang,
+                            add=add,rms=[rm],
+                            addifrmd=True)
         self.db.write() #once done iterating over senseids
     def addtonegroup(self):
         log.info("Adding a tone group!")
