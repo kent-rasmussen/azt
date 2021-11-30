@@ -4228,7 +4228,7 @@ class Check():
                 tonegroups+=tonegroup
         groups=list(dict.fromkeys(tonegroups))
         log.debug("gettonegroups groups: {}".format(groups))
-        for value in ['NA', '', None]:
+        for value in ['NA', '', 'None', None]:
             if value in groups:
                 log.error("Found (and removing) value {} in {}-{} for {} "
                     "frame: {}".format(value, ps, profile, check, groups))
