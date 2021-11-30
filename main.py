@@ -1559,8 +1559,8 @@ class Check():
                     for c in checks:
                         self.status.build(t,ps,profile,c)
                         """this just populates groups and the tosort boolean."""
-                        self.settonevariablesiterable(cvt=t, ps=ps,
-                                                profile=profile, check=check)
+                        self.updatesortingstatus(cvt=t, ps=ps, profile=profile,
+                                                                    check=check)
         """Now remove what didn't get data"""
         self.status.cull()
         if None in self.status: #This should never be there
@@ -1753,8 +1753,8 @@ class Check():
             rms=[value]
         """The above doesn't test for profile, so we restrict that next"""
         for senseid in self.slices.inslice(senseids): #only for this ps-profile
-            rms+=self.db.getverificationnodevaluebyframe(senseid,
-                            vtype=profile, analang=self.analang, frame=check)
+            rms+=self.db.getverificationnodevaluebyframe(senseid,vtype=profile,
+                                        analang=self.analang,
             log.info("Removing {}".format(rms))
             self.db.modverificationnode(senseid,vtype=profile,add=add,rms=rms)
         if refresh == True:
@@ -4193,6 +4193,10 @@ class Check():
                                                     senseid=senseid).get('text')
         self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
     def gettonegroups(self,ps=None,profile=None,check=None,renew=False):
+        log.error("We shouldn't be using gettonegroups anymore !!!\n"
+                "Rather, call updatesortingstatus when you will sort."
+                "or, to just get the values, call self.status.groups()")
+        return
         """This returns (non-UF) tonegroups from the LIFT file. It should not
         be used to affirm that often; sortT/joinT manage this."""
         """This depends on ps, profile, and check, but can take current or
@@ -4273,8 +4277,9 @@ class Check():
         self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
     def updatesortingstatus(self):
         """This reads LIFT to create lists for sorting, populating lists of
-        sorted and unsorted senses. So don't iterate over it. Instead, use
-        checkforsenseidstosort to just confirm tosort status"""
+        sorted and unsorted senses, as well as sorted and verified groups.
+        So don't iterate over it. Instead, use checkforsenseidstosort to just
+        confirm tosort status"""
         """To get this from the object, use status.tosort(), todo() or done()"""
         check=self.params.check()
         senseids=self.slices.senseids()
