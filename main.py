@@ -1759,7 +1759,11 @@ class Check():
         for senseid in self.slices.inslice(senseids): #only for this ps-profile
             rms+=self.db.getverificationnodevaluebyframe(senseid,vtype=profile,
                                         analang=self.analang,
+                                        frame=check)
             log.info("Removing {}".format(rms))
+            self.db.modverificationnode(senseid,vtype=profile,
+                                        analang=self.analang,
+                                        add=add,rms=rms)
         if refresh == True:
             self.db.write() #for when not iterated over, or on last repeat
     def updatestatus(self,group=None,verified=False,refresh=True):
