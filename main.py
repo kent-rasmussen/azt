@@ -4091,6 +4091,7 @@ class Check():
         # contains the field value) in the lift file.
         # This is all the words in the database with the given
         # location:value correspondence (any ps/profile)
+        check=self.params.check()
         lst2=self.db.get('sense',location=check,tonevalue=oldtonevalue
                                                                 ).get('senseid')
         # We are agnostic of verification status of any given entry, so don't
@@ -4099,6 +4100,7 @@ class Check():
         rm=self.verifictioncode(check,oldtonevalue)
         add=self.verifictioncode(check,newtonevalue)
         """The above doesn't test for profile, so we restrict that next"""
+        profile=self.slices.profile()
         senseids=self.slices.inslice(lst2)
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
