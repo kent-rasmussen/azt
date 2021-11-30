@@ -6167,10 +6167,20 @@ class FramedData(object):
                     l+=len(g[lang])
         if l >0:
             return g
-        else:
-            return None
+    def audio(self):
+        if self.audiolang in self.forms:
+            return self.forms[self.audiolang]
+    def audiofileisthere(self):
+        # if None in [self.senseid, location]:
+        if self.audio():
+            self.filenameURL=str(file.getdiredurl(self.audiodir,self.audio()))
+            if file.exists(self.filenameURL):
+                log.info("audiofileisthere: {} ({})".format(filenameURL))
+                return True
     def updatelangs(self):
         self.analang=self.parent.analang
+        self.audiolang=self.parent.audiolang
+        self.audiodir=self.parent.audiodir
         self.glosslangs=self.parent.glosslangs
         log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def __init__(self, parent, source, **kwargs):
@@ -7229,9 +7239,8 @@ class RecordButtonFrame(ui.Frame):
         try:
             self.recorder.stop()
         except:
-            log.info("didn't stop recorder; was it on?")
-        if self.test is not True:
-            self.addlink()
+            log.info("Couldn't stop recorder; was it on?")
+        """This is done in advance of recording now:"""
         self.b.destroy()
         self.makeplaybutton()
         self.makedeletebutton()
@@ -7271,28 +7280,18 @@ class RecordButtonFrame(ui.Frame):
         self.r=Button(self,text=_('Redo'),command=self.function)
         self.r.grid(row=0, column=2,sticky='w')
         self.r.bind('<ButtonRelease>', self._redo)
-    def addlink(self):
-        #this checks for and doesn't add if already there.
-        self.db.addmediafields(self.node,self.filename,self.audiolang)
     def function(self):
         pass
-    def __init__(self,parent,check,id=None,node=None,form=None,gloss=None,test=False,**kwargs):
+    def __init__(self,parent,check,filenames,**kwargs):
+        """Without node, this just populates a sound file, with URL as
+        provided. The LIFT link to that sound file should already be there."""
         # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.db=check.db
         self.node=node #This should never be more than one node...
         framed=kwargs.pop('framed',None) #Either this or the next two...
-        if framed is not None:
-            formdefault=framed.forms[check.analang]
-            glossdefault=framed.forms[check.glosslangs[0]]
-        else:
-            formdefault=None
-            glossdefault=None
-        self.form=kwargs.pop('form',formdefault)
-        self.gloss=kwargs.pop('gloss',glossdefault)
         self.id=id
-        self.gloss=gloss
         self.check=check
         try:
             check.pyaudio.get_format_from_width(1) #get_device_count()
