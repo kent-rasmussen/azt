@@ -4842,8 +4842,8 @@ class Check():
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
                 text=framed.formatted()
-                filenames=makefilenames(self,
-                                senseid=framed.senseid(), #?!?
+                filenames=self.makefilenames(
+                                senseid=senseid,
                                 node=example)
                 rb=RecordButtonFrame(examplesframe,self,filenames,
                                     # id=senseid,node=example,
