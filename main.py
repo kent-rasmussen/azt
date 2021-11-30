@@ -4426,13 +4426,17 @@ class Check():
         log.info("Running check...")
         i=0
         ps=self.slices.ps()
+        if ps is None:
+            self.getps()
         group=self.status.group()
         if None in [self.analang, ps, group]:
             log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
                                         self.analang, ps, group))
         cvt=self.params.cvt()
         check=self.params.check()
-        profile=self.slices.ps()
+        profile=self.slices.profile()
+        if profile is None:
+            self.getprofile()
         if not self.status.ischeckok():
             exit=self.getcheck()
             if exit:
