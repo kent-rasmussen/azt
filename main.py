@@ -4515,6 +4515,7 @@ class Check():
             i+=1
             return
     def record(self):
+        self.updatesortingstatus() #is this needed? This is the first fn on button click
         if self.params.cvt() == 'T':
             self.showtonegroupexs()
         else:
