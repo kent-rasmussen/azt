@@ -3275,6 +3275,7 @@ class Check():
             updatelabels()
             newtonevalue=formfield.get()
             groupsthere, groupsdone = updategroups()
+            group=self.status.group()
             if newtonevalue == "":
                 noname=_("Give a name for this tone melody!")
                 log.debug(noname)
