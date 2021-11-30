@@ -8091,15 +8091,6 @@ class StatusDict(dict):
         for k in self:
             v[k]=self[k]
         return v
-    def dictcheck(self,cvt=None,ps=None,profile=None,check=None):
-        if cvt is None:
-            cvt=self._checkparameters.cvt()
-        if ps is None:
-            ps=self._slicedict.ps()
-        if profile is None:
-            profile=self._slicedict.profile()
-        if check is None:
-            check=self._checkparameters.check()
     def dictcheck(self,**kwargs):
         kwargs=self.checkslicetypecurrent(**kwargs)
         try:
