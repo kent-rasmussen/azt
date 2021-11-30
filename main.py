@@ -8234,20 +8234,15 @@ class StatusDict(dict):
             for i in range(n): # get max checks and lesser
                 self._checksdict[t][profile]+=self._checkparameters._Schecks[t][i+1] #b/c range
             self._checksdict[t][profile].sort(key=lambda x:len(x[0]),reverse=True)
-    def node(self,cvt=None,ps=None,profile=None,check=None):
-        """Do I want this to take non-real options?"""
-        if cvt is None:
-            cvt=self._checkparameters.cvt()
-        if ps is None:
-            ps=self._slicedict.ps()
-        if profile is None:
-            profile=self._slicedict.profile()
-        if check is None:
-            check=self._checkparameters.check()
-        self.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
-        return self[cvt][ps][profile][check]
-    def tosort(self,v=None,cvt=None,ps=None,profile=None,check=None):
-        sn=self.node(cvt=cvt,ps=ps,profile=profile,check=check)
+    def node(self,**kwargs):
+        """This will fail if fed None values"""
+        kwargs=self.checkslicetypecurrent(**kwargs)
+        self.dictcheck(**kwargs)
+        return self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][
+                                                                kwargs['check']]
+    def tosort(self,v=None,**kwargs):
+        kwargs=self.checkslicetypecurrent(**kwargs) # current value defaults
+        sn=self.node(**kwargs)
         ok=[None,True,False]
         if v not in ok:
             log.error("Tosort value ({}) invalid: OK values: {}".format(v,ok))
@@ -8263,13 +8258,6 @@ class StatusDict(dict):
         if g is not None:
             self._verified=g
         return self._verified
-    def groups(self,g=None,cvt=None,ps=None,profile=None,check=None):
-        """Do I want this to take non-real options?"""
-        sn=self.node(cvt=cvt,ps=ps,profile=profile,check=check)
-        self._groups=sn['groups']
-        if g is not None:
-            self._groups=sn['groups']=g
-        return self._groups
     def update(self,group=None,verified=False,refresh=True):
         """This function updates the status variable, not the lift file."""
         if group is None:
@@ -8293,71 +8281,10 @@ class StatusDict(dict):
         if group is not None:
             self._group=group
         else:
-            return getattr(self,'_group',None)
-    def makegroupok(self):
-        groups=self.groups()
-        if not hasattr(self,'_group'):
-             self._group=None #define this attr, one way or another
-        if groups != []:
-            if self._group not in groups:
-                self.group(groups[0])
-    def makecvtok(self):
-        cvt=self._checkparameters.cvt()
-        cvts=self._checkparameters.cvts()
-        if cvt not in cvts:
-            self._checkparameters.cvt(cvts[0])
-    def isprofileok(self, wsorted=False, tosort=False,toverify=False):
-        profile=self._slicedict.profile()
-        profiles=self.profiles(wsorted=wsorted,tosort=tosort,toverify=toverify)
-        if profile in profiles:
-            return True
-    def ischeckok(self, wsorted=False, tosort=False, toverify=False):
-        check=self._checkparameters.check()
-        checks=self.checks(wsorted=wsorted,tosort=tosort,toverify=toverify)
-        if check in checks:
-            return True
-    def makecheckok(self, wsorted=False, tosort=False):
-        check=self._checkparameters.check()
-        checks=self.checks(wsorted=wsorted, tosort=tosort)
-        if check not in checks and checks != []:
-                self._checkparameters.check(checks[0])
-    def toneframes(self):
-        return self._toneframes
-    def __init__(self, checkparameters, slicedict, toneframes, filename, dict):
-        """To populate subchecks, use self.groups()"""
-        self._filename=filename
-        super(StatusDict, self).__init__()
-        for k in [i for i in dict if i is not None]:
-            self[k]=dict[k]
-        self._checkparameters=checkparameters
-        self._slicedict=slicedict
-        self._toneframes=toneframes
-    def update(self,group=None,verified=False,refresh=True):
-        """This function updates the status variable, not the lift file."""
-        if group is None:
-            group=self.group()
-        log.info("Verification before update (verifying {} as {}): {}".format(
-                                                group,verified,self.verified()))
-        self.build()
-        n=self.node()
-        if verified == True:
-            if group not in n['done']:
-                n['done'].append(group)
-        if verified == False:
-            if group in n['done']:
-                n['done'].remove(group)
-        if refresh == True:
-            self.store()
-        log.info("Verification after update: {}".format(self.verified()))
-    def group(self,group=None):
-        """This maintains the group we are actually on, pulled from data
-        located by current slice and parameters"""
-        if group is not None:
-            self._group=group
-        else:
-            return getattr(self,'_group',None)
-    def makegroupok(self):
-        groups=self.groups()
+            return str(getattr(self,'_group',None))
+    def makegroupok(self,**kwargs):
+        kwargs=grouptype(**kwargs)
+        groups=self.groups(**kwargs)
         if not hasattr(self,'_group'):
              self._group=None #define this attr, one way or another
         if groups != []:
