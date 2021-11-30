@@ -4277,8 +4277,8 @@ class Check():
         self.gettonegroups() #reads from self.status, without renew=True
     def tryNAgain(self):
         check=self.params.check()
-        if check in self.params.checks():
-            senseids=self.status.senseids()
+        if check in self.status.checks():
+            senseids=self.slices.senseids()
         else:
             #Give an error window here
             log.error("Not Trying again; set a tone frame first!")
