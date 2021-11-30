@@ -8052,8 +8052,9 @@ class StatusDict(dict):
         if cvt in ['CV','T']:
             return None
     def senseidstosort(self,ps=None,profile=None):
+    def senseidstosort(self): #,ps=None,profile=None
         return self._idstosort
-    def senseidssorted(self,ps=None,profile=None):
+    def senseidssorted(self): #,ps=None,profile=None
         return self._idssorted
     def renewsenseidstosort(self,todo,done):
         """This takes arguments to remove and rebuild these lists"""
