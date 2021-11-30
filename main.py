@@ -1299,7 +1299,7 @@ class Check():
     def setgroup(self,choice,window):
         log.debug("group: {}".format(choice))
         self.status.group(choice)
-        log.debug("group: {}".format(group))
+        log.debug("group: {}".format(choice))
         window.destroy()
         log.debug("group: {}".format(choice))
     def setgroup_comparison(self,choice,window):
