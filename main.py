@@ -5950,6 +5950,116 @@ class DictbyLang(dict):
     def __init__(self):
         super(DictbyLang, self).__init__()
         self.framed={}
+class ExampleDict(dict):
+    def senseidsinslicegroup(self,group):
+        #This returns all the senseids with a given tone value
+        check=self.params.check()
+        senseids=self.db.get("sense", location=check, path=['tonefield'],
+                            tonevalue=group
+                            ).get('senseid')
+        if not senseids:
+            log.error("There don't seem to be any sensids in this check tone "
+                "group, so I can't get you an example. ({} {})"
+                "".format(check,group))
+            return
+        """The above doesn't test for profile, so we restrict that next"""
+        senseidsinslice=self.slices.inslice(senseids)
+        if not senseidsinslice:
+            log.error("There don't seem to be any sensids from that check tone "
+                "group in this slice-group, so I can't get you an example. "
+                "({}-{}, {} {})"
+                "".format(self.slices.ps(),self.slices.profile(),check,group))
+            return
+        return list(senseidsinslice)
+    def hasglosses(self,framed):
+        log.info("hasglosses framed: {}".format(framed))
+        if framed.glosses():
+            self._outdict['framed']=framed
+            return True
+    def hassoundfile(self,framed):
+        if framed.audiofileisthere():
+            self._outdict['audiofileisthere']=True
+        else:
+            self._outdict['audiofileisthere']=False
+        return self._outdict['audiofileisthere']
+    def exampletypeok(self,senseid,**kwargs):
+        kwargs=exampletype(**kwargs)
+        if senseid is None:
+            return
+        framed=self.frame(senseid)
+        log.info("exampletypeok framed: {}".format(framed))
+        # framed=self.datadict.getframeddata(senseid)
+        if kwargs['wglosses'] and not self.hasglosses(framed):
+            log.info("Gloss check failed for {}".format(senseid))
+            return
+        if kwargs['wsoundfile'] and not self.hassoundfile(framed):
+            log.info("Audio file check failed for {}".format(senseid))
+            return
+        self._outdict['senseid']=senseid
+    def frame(self,senseid):
+        return self.datadict.getframeddata(senseid)
+    def getexample(self,group,**kwargs):
+        # exampletype(**kwargs) #needed?
+        # wglosses=False,wsoundfile=False): #truncdefn=False, notonegroup=True,
+        """This function finds examples in the lexicon for a given tone value,
+        in a given tone frame (from check)"""
+        senseids=self.senseidsinslicegroup(group)
+        if not senseids:
+            log.error("There don't seem to be any sensids in this "
+                    "check-tonegroup-slice, so I can't get you an example.")
+            return
+        n=len(senseids)
+        self._outdict={'n': n}
+        tries=0
+        senseid=None #do this once, anyway...
+        """hasglosses sets the framed and senseid keys"""
+        log.debug("ExampleDict getexample kwargs: {}".format(kwargs))
+        while not self.exampletypeok(senseid,**kwargs) and tries<n*2:
+            # (self.hasglosses(senseid) or noglossesok or tries>n*2):
+            tries+=1
+            # if tries == n*2: #do this just once
+            #     if exampletype['wsoundfile']:
+            #         exampletype['wsoundfile']=False
+            #     else:
+            #         break
+            log.debug("ExampleDict getexample kwargs: {}; tries: {}; n: {}"
+                                            "".format(kwargs,tries,n))
+            if group in self: #.exs:
+                if self[group] in senseids: #if stored value is in group
+                    if not kwargs['renew']:
+                        log.info("Using stored value for ‘{}’ group: ‘{}’"
+                                "".format(group, self[group]))
+                        senseid=self[group]
+                    else:
+                        log.info("Using next value for ‘{}’ group: ‘{}’"
+                                "".format(group, self[group]))
+                        i=senseids.index(self[group])
+                        if i == len(senseids)-1: #loop back on last
+                            senseid=senseids[0]
+                        else:
+                            senseid=senseids[i+1]
+                else:
+                    senseid=senseids[randint(0, len(senseids))-1]
+            elif n == 1:
+                senseid=senseids[0]
+            else:
+                log.debug("n: {}".format(n))
+                senseid=senseids[randint(0, n-1)]
+        if senseid is None: #not self.hasglosses(senseid):
+            log.info("Apparently I tried for a senseid {} times, and couldn't "
+            "find one matching your needs ({}) glosses (out of {} possible "
+            "senses). This is probably a systematic problem to fix.".format(
+                                                                tries,kwargs,n))
+        else:
+            self._outdict['senseid']=senseid
+            self[group]=senseid #save for next time
+            return self._outdict
+    def __init__(self,params,slices,db,datadict):
+        self.params=params
+        self.slices=slices
+        self.db=db
+        self.datadict=datadict
+        super(ExampleDict, self).__init__()
 class FramedDataDict(dict):
     def updatelangs(self):
         self.analang=self.check.analang
@@ -8738,7 +8848,6 @@ class StatusDict(dict):
                 self._checkparameters.check(checks[0])
     def toneframes(self):
         return self._toneframes
-    def __init__(self, checkparameters, slicedict, toneframes, filename, dict):
     def checkslicetypecurrent(self,**kwargs):
         """This fills in current values; it shouldn't leave None anywhere."""
         i=kwargs.copy()
@@ -8751,6 +8860,7 @@ class StatusDict(dict):
         kwargs['check']=kwargs.get('check',self._checkparameters.check())
         log.info("Returning checkslicetypecurrent kwargs {}".format(kwargs))
         return kwargs
+    def __init__(self,checkparameters,slicedict,exs,toneframes,filename,dict):
         """To populate subchecks, use self.groups()"""
         self._filename=filename
         super(StatusDict, self).__init__()
@@ -8758,6 +8868,7 @@ class StatusDict(dict):
             self[k]=dict[k]
         self._checkparameters=checkparameters
         self._slicedict=slicedict
+        self._examplesbygroup=exs
         self._toneframes=toneframes
 class CheckParameters(dict):
     """This stores and returns current cvt/type and check only; there is not check
