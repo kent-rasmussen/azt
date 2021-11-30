@@ -8104,62 +8104,68 @@ class StatusDict(dict):
             t=self[cvt][ps][profile][check]['groups']
         except KeyError:
             self.build(cvt=cvt,ps=ps,profile=profile,check=check)
-    def build(self,upto=None,cvt=None,ps=None,profile=None,check=None):
+    def build(self,**kwargs):
         """this makes sure that the dictionary structure is there for work you
         are about to do"""
-        # uptoOK=['type','ps','profile','check']:
-        # if upto is not None and upto not in uptoOK:
-        #     log.error("Bad upto value: {} (ok values: {})".format(upto,uptoOK))
+        kwargs=checkslicetype(**kwargs) #fills in with None
         """Only build up to a None value"""
         """If anything is defined, give no defaults"""
         """Any defined variable after any default is an error"""
         """We don't want to mix default and specified values here, so
         unspecified after specified is None, and not built"""
-        if (cvt is None and ps is not None
-                or ps is None and profile is not None
-                or profile is None and check is not None
+        if (kwargs['cvt'] is None and kwargs['ps'] is not None
+                or kwargs['ps'] is None and kwargs['profile'] is not None
+                or kwargs['profile'] is None and kwargs['check'] is not None
                 ):
             log.error("You have to define all values prior to the last: "
-                                    "{}-{}-{}-{}".format(cvt,ps,profile,check))
-        elif cvt is not None:
-            log.debug("At least cvt value defined; using them: {}-{}-{}-{}"
-                                            "".format(cvt,ps,profile,check))
-        else:
-            check=self._checkparameters.check()
-            profile=self._slicedict.profile()
-            ps=self._slicedict.ps()
-            cvt=self._checkparameters.cvt()
+                                    "{}".format(kwargs))
+        elif kwargs['cvt'] is not None:
+            log.debug("At least cvt value defined; using them: {}"
+                                            "".format(kwargs))
+        else: #all None:
+            for k in ['cvt','ps','profile','check']:
+                del kwargs[k]
+            kwargs=self.checkslicetypecurrent(**kwargs) #use current values
         changed=False
-        if cvt not in self:
-            self[cvt]={}
+        """cvt should never be None here. Once an attribute is None, the rest
+        should be, too."""
+        if kwargs['cvt'] not in self:
+            self[kwargs['cvt']]={}
             changed=True
-        if ps not in self[cvt] and ps is not None:
-            self[cvt][ps]={}
-            changed=True
-        if profile not in self[cvt][ps] and profile is not None:
-            self[cvt][ps][profile]={}
-            changed=True
-        if check not in self[cvt][ps][profile] and check is not None:
-            self[cvt][ps][profile][check]={}
-            changed=True
-        if None not in [ps,profile,check]:
-            if isinstance(self[cvt][ps][profile][check],list):
+        base=self[kwargs['cvt']]
+        if kwargs['ps'] is not None:
+            if kwargs['ps'] not in base:
+                base[kwargs['ps']]={}
+                changed=True
+            base=base[kwargs['ps']]
+        if kwargs['profile'] is not None:
+            if kwargs['profile'] not in base:
+                base[kwargs['profile']]={}
+                changed=True
+            base=base[kwargs['profile']]
+        if kwargs['check'] is not None:
+            if kwargs['check'] not in base:
+                base[kwargs['check']]={}
+                changed=True
+            base=base[kwargs['check']]
+        if None not in [kwargs['ps'],kwargs['profile'],kwargs['check']]:
+            if isinstance(base,list):
                 log.info("Updating {}-{} status dict to new schema".format(
-                                                            profile,check))
-                groups=self[cvt][ps][profile][check]
-                self[cvt][ps][profile][check]={}
-                self[cvt][ps][profile][check]['groups']=groups
+                                            kwargs['profile'],kwargs['check']))
+                groups=base
+                base={}
+                base['groups']=groups
                 changed=True
             for key in ['groups','done']:
-                if key not in self[cvt][ps][profile][check]:
+                if key not in base:
                     log.info("Adding {} key to {}-{} status dict".format(
-                                                    key,profile,check))
-                    self[cvt][ps][profile][check][key]=list()
+                                        key,kwargs['profile'],kwargs['check']))
+                    base[key]=list()
                     changed=True
-            if 'tosort' not in self[cvt][ps][profile][check]:
+            if 'tosort' not in base:
                 log.info("Adding tosort key to {}-{} status dict".format(
-                                                    key,profile,check))
-                self[cvt][ps][profile][check]['tosort']=True
+                                        key,kwargs['profile'],kwargs['check']))
+                base['tosort']=True
                 changed=True
         if changed == True:
             self.store()
