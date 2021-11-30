@@ -4254,9 +4254,17 @@ class Check():
             log.info("updatesortingstatus shows no senseidstosort remaining")
             vts=False
         self.status.tosort(vts)
-        log.info("updatesortingstatus senseids tosort: {}".format(self.status.senseidstosort()))
-        log.info("updatesortingstatus senseids sorted: {}".format(self.status.senseidssorted()))
-        log.info("tosort (end of updatesortingstatus): {}".format(self.status.tosort()))
+        """update status groups"""
+        sorted=list(dict.fromkeys(groups))
+        self.status.verified(sorted)
+        verified=self.status.verified() #read
+        for v in verified:
+            if v not in groups:
+                log.error("Removing verified group {} not in actual groups: {}!"
+                            "".format(v, groups))
+                verified.remove(v)
+        self.status.verified(verified) #set
+        self.storesettingsfile(setting='status')
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
         """This is currently called in iteration"""
         self.checkforsenseidstosort(cvt=cvt,ps=ps,profile=profile,check=check)
