@@ -8034,24 +8034,38 @@ class StatusDict(dict):
         log.info("Checks with tosort ({}); wsorted ({}): {}"
                     "".format(tosort,wsorted,cs))
         return cs
-    def groupstodo(self):
+    def groups(self,g=None, **kwargs): #was groupstodo
+        log.info("groups kwargs: {}".format(kwargs))
+        kwargs=grouptype(**kwargs)
+        kwargs=self.checkslicetypecurrent(**kwargs)
         """This returns prioritization in advance of sorting, before actual
         sort groups exist. So this only has meaning for segmental checks,
         and should not be used for tone."""
         """I don't know how to prioritize CV checks yet, if ever..."""
-        cvt=self.checkparameters.cvt()
-        ps=self.slicedict.ps()
-        self.slicedict.scount()# [ps][s]=list()(x,n),)
-        if cvt == 'V':
-            todo=[self.scount[ps]['V']] #that's all that's there, for now.
-        if cvt == 'C':
-            todo=list()
-            for s in self.scount[ps]:
-                if s != 'V':
-                    todo.extend(self.scount[ps][s]) #list of tuples
-        if cvt in ['CV','T']:
-            return None
-    def senseidstosort(self,ps=None,profile=None):
+        sn=self.node(**kwargs)
+        if kwargs['wsorted']: #this used to be the default: get or set sorted groups
+            self._groups=sn['groups']
+            if g is not None:
+                self._groups=sn['groups']=g
+            return self._groups
+        if kwargs['toverify']:
+            return list(set(sn['groups'])-set(sn['done']))
+        if kwargs['torecord']:
+            tr=[]
+            for group in self.groups(wsorted=True):
+                if self.grouptorecord(group):
+                    tr.append(group)
+            return tr
+        else: #give theoretical possibilities (C or V only)
+            if kwargs['cvt'] == 'V':
+                todo=[self.scount[kwargs['ps']]['V']] #that's all that's there, for now.
+            if kwargs['cvt'] == 'C':
+                todo=list()
+                for s in self.scount[['ps']]:
+                    if s != 'V':
+                        todo.extend(self.scount[kwargs['ps']][s]) #list of tuples
+            if kwargs['cvt'] in ['CV','T']:
+                return None
     def senseidstosort(self): #,ps=None,profile=None
         return self._idstosort
     def senseidssorted(self): #,ps=None,profile=None
