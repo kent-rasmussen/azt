@@ -7454,7 +7454,170 @@ class RecordButtonFrame(Frame):
                 ).grid(row=0,column=0)
             return
         self.makebuttons()
-class ButtonFrame(Frame):
+class ToneGroupButtonFrame(ui.Frame):
+    def again(self):
+        """Do I want this? something less drastic?"""
+        for child in self.winfo_children():
+            child.destroy()
+        self.makebuttons()
+    def select(self):
+        self._var.set(True)
+    def sortnext(self):
+        self.kwargs['canary'].destroy()
+    def remove(self):
+        self.destroy() # will this keep the variable around, if stored elsewhere?
+    def selectnremove(self):
+        self.select()
+        self.remove()
+    def selectnsortnext(self):
+        self.select()
+        self.sortnext()
+    def selectnlabelize(self):
+        self.select()
+        self.kwargs['label']=True
+        self.again()
+        self.sortnext()
+        # remove()
+    def unsort(self):
+        self.removesenseidfromgroup(self._senseid,self.check)
+        self.refresh()
+    def setcanary(self,canary):
+        if canary.winfo_exists():
+            self.kwargs['canary']=canary
+        else:
+            log.error("Not setting non-existant canary {}; ".format(canary))
+    def var(self):
+        return self._var
+    def getexample(self,**kwargs):
+        kwargs=exampletype(**kwargs)
+        example=self.exs.getexample(self.group,**kwargs)
+        if example is None:
+            log.error("self.exs.getexample didn't return an example; returning")
+            return
+        self._n=example['n']
+        framed=example['framed']
+        if framed is None:
+            log.error("Apparently the framed example for tone group {} in "
+                        "frame {} came back {}".format(group,check,example))
+            return
+        framed.setframe(self.check.params.check())
+        self._senseid=example['senseid']
+        if framed.audiofileisthere():
+            self._filenameURL=framed.filenameURL
+        else:
+            self._filenameURL=None
+        self._text=framed.formatted(showtonegroup=self.kwargs['showtonegroup'])
+        return 1
+    def makebuttons(self):
+        if self.kwargs['label']:
+            self.labelbutton()
+        elif self.kwargs['playable']:
+            r=0
+            while r < self._n:
+                self.getexample(renew=True,wsoundfile=True)
+                r+=1
+            if self._senseid and self._filenameURL:
+                self.playbutton()
+            else: #Label if there is no sound file on any example.
+                self.getexample() #shouldn't need renew=True
+                self.labelbutton()
+        else:
+            self.selectbutton()
+        if self._n > 1 or self.kwargs['alwaysrefreshable']:
+            self.refreshbutton()
+    """buttons"""
+    def labelbutton(self):
+        b=Label(self, text=self._text, **self.buttonkwargs())
+        b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+    def playbutton(self):
+        self.check.pyaudiocheck()
+        self.check.soundsettingscheck()
+        self.player=sound.SoundFilePlayer(self._filenameURL,self.check.pyaudio,
+                                                    self.check.soundsettings)
+        b=Button(self, text=self._text, cmd=self.player.play,
+                                        **self.buttonkwargs())
+        bttext=_("Click to hear this utterance")
+        if program['praatisthere']:
+            bttext+='; '+_("right click to open in praat")
+            b.bind('<Button-3>',lambda x: praatopen(diredurl))
+        bt=ToolTip(b,bttext)
+        if self.kwargs['unsortable']:
+            self.unsortbutton()
+        b.grid(column=1, row=0, sticky="nesw", ipady=15) #Inside the buttons
+    def selectbutton(self):
+        if self.kwargs['labelizeonselect']:
+            cmd=self.selectnlabelize
+        else:
+            cmd=self.selectnsortnext
+        b=Button(self, text=self._text, cmd=cmd,
+                **self.buttonkwargs())
+        b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+        bt=ToolTip(b,_("Pick this Group"))
+    def refresh(self):
+        # if renew is True:
+        log.info("Resetting tone group example ({}): {} of {} examples"
+                "".format(self.group,self.exs[self.group],self._n))
+        # del self[self.group]
+        self.kwargs['renew']=True
+        self.kwargs['alwaysrefreshable']=True
+        self.getexample(renew=True)
+        self.again()
+    def refreshbutton(self):
+        kwargs=self.buttonkwargs()
+        del kwargs['font'] #=True
+        bc=Button(self, image=self.parent.photo['change'], #🔃 not in tck
+                        cmd=self.refresh,
+                        text=str(self._n),
+                        compound='center',
+                        **kwargs)
+        bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
+        bct=ToolTip(bc,_("Change example word"))
+    def unsortbutton(self):
+        t=_("<= remove *this* *word* from \nthe group (sort into another, later)")
+        b_unsort=Button(self,text = t, cmd=unsort, anchor ='c',
+                                                    **self.buttonkwargs())
+        b_unsort.grid(column=2,row=0,padx=50)
+    def buttonkwargs(self):
+        """This is a method to allow pulling these args after updating kwargs"""
+        bkwargs=self.kwargs.copy()
+        for arg in self.unbuttonargs:
+            del bkwargs[arg]
+        return bkwargs #only the kwargs appropriate for buttons
+    def __init__(self, parent, check, exdict, group, **kwargs):
+        self.exs=exdict
+        self.check=check
+        self.group=group
+        # self,parent,group,row,column=0,label=False,canary=None,canary2=None,
+        # alwaysrefreshable=False,playable=False,renew=False,unsortable=False,
+        # **kwargs
+        # From check, need
+        # check=self.params.check()
+        # setframe
+        # self.getex
+        # self.exs[group]
+        # self.parent.photo (inherit?)
+        self.parent=parent
+        inherit(self)
+        # make sure these variables are there:
+        kwargs['font']=kwargs.pop('font',self.fonts['read'])
+        kwargs['anchor']=kwargs.get('anchor','w')
+        kwargs['showtonegroup']=kwargs.pop('showtonegroup',False)
+        # kwargs['refreshcount']=kwargs.pop('refreshcount',-1)+1
+        # kwargs['sticky']=kwargs.pop('sticky',"ew")
+        self.unbuttonargs=['renew','canary','labelizeonselect',
+                            'label','playable','unsortable',
+                            'alwaysrefreshable',
+                            'showtonegroup']
+        for arg in self.unbuttonargs:
+            kwargs[arg]=kwargs.pop(arg,False)
+        self.kwargs=kwargs
+        self._var=tkinter.BooleanVar()
+        super(ToneGroupButtonFrame,self).__init__(parent)
+        if self.getexample():
+            self.makebuttons()
+        # """Should I do this outside the class?"""
+        # self.grid(column=column, row=row, sticky=sticky)
+class ButtonFrame(ui.Frame):
     def __init__(self,parent,
                     optionlist,command,
                     window=None,
