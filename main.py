@@ -4566,9 +4566,9 @@ class Check():
                                 "".format(nodes.index(node),ggchild,ggchild.tag,
                                             ggchild.attrib,ggchild.text))
             return
-        gloss=framed.framed[self.glosslangs[0]]
-        form=framed.framed[self.analang]
-        audio=framed.framed[self.audiolang]
+        gloss=framed.framed.get(self.glosslangs[0],None)
+        form=framed.framed.get(self.analang,None)
+        audio=framed.framed.get(self.audiolang,None)
         """This is for nodes that don't include glosses (like pl/imp fields)"""
         if gloss is None:
             gloss=t(self.db.get('gloss',senseid=senseid,
