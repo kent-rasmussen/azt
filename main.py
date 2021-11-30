@@ -8369,14 +8369,16 @@ class StatusDict(dict):
         cvts=self._checkparameters.cvts()
         if cvt not in cvts:
             self._checkparameters.cvt(cvts[0])
-    def isprofileok(self, wsorted=False, tosort=False,toverify=False):
+    def isprofileok(self, **kwargs):
+        kwargs=grouptype(**kwargs)
         profile=self._slicedict.profile()
-        profiles=self.profiles(wsorted=wsorted,tosort=tosort,toverify=toverify)
+        profiles=self.profiles(**kwargs)
         if profile in profiles:
             return True
-    def ischeckok(self, wsorted=False, tosort=False, toverify=False):
+    def ischeckok(self, **kwargs):
+        kwargs=grouptype(**kwargs)
         check=self._checkparameters.check()
-        checks=self.checks(wsorted=wsorted,tosort=tosort,toverify=toverify)
+        checks=self.checks(**kwargs)
         if check in checks:
             return True
     def makecheckok(self, wsorted=False, tosort=False):
