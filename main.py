@@ -4094,7 +4094,7 @@ class Check():
         check=self.params.check()
         lst2=self.db.get('sense',location=check,tonevalue=oldtonevalue
                                                                 ).get('senseid')
-        # We are agnostic of verification status of any given entry, so don't
+        # We are agnostic of verification status of any given entry, so just
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
         rm=self.verifictioncode(check,oldtonevalue)
