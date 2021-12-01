@@ -6270,7 +6270,6 @@ class FramedDataSense(FramedData):
     def __init__(self, parent, source, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
-        self.updatelangs()
         self.frames=parent.frames #needed for set frame
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
         if not self.db.get('sense', senseid=self.senseid).get():
