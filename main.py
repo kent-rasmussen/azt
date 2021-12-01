@@ -6260,7 +6260,6 @@ class FramedDataSense(FramedData):
         self.forms.update(db.glossesordefns(senseid=senseid))
         for f in self.forms:
             self.forms[f]=unlist(self.forms[f])
-        self.gettonegroup()
     def audiofileisthere(self):
         # if None in [self.senseid, location]:
         if self.audio():
