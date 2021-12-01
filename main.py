@@ -6287,9 +6287,9 @@ class FramedDataSense(FramedData):
         self.tonegroup=None
         self.senseid=None
         """Build dual logic here. We use this to frame senses & examples"""
-        if not (type(source) is str and len(source) >= 36):#senseid can be guid+form
-            log.error("You passed something that doesn't look like a senseid "
-                        "({}) to FramedData!".format(type(source)))
+        if not self.db.get('sense', senseid=self.senseid).get():
+            log.error("You should pass a senseid from your database {} "
+                        "({}) to FramedDataSense!".format(source,type(source)))
             return
         self.parsesense(self.db,source)
         log.info("FramedDataSense initalization done, with forms {}"
