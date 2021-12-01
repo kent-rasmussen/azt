@@ -6175,7 +6175,8 @@ class FramedDataDict(dict):
         self.check=check
 class FramedData(object):
     """This is a superclass to store methods, etc. common to both
-    FramedDataSense and FramedDataElement"""
+    FramedDataSense and FramedDataElement, making the information gathered by
+    either formatted uniformly in either case."""
     def updatelangs(self):
         self.analang=self.parent.analang
         self.audiolang=self.parent.audiolang
@@ -6232,11 +6233,9 @@ class FramedData(object):
         self.forms=DictbyLang()
 class FramedDataSense(FramedData):
     """This populates an object with attributes to format data for display,
-    by senseid"""
-    """Sometimes this script is called to make the example fields, other
-    times to display it. If source is a senseid, it pulls form/gloss/etc
-    information from the entry. If source is an example, it pulls that info
-    from the example. The info is formatted uniformly in either case."""
+    by senseid. It is called to make the example fields, and pulls form/gloss/etc
+    information from the entry, but cannot be used for recording (which
+    requires) an example or other node be specified, not a whole sense."""
     def setframe(self,frame=None):
         """This should never be done on an example, which should
         already be framed. Also, self.ps won't be defined, so you'll get
@@ -6278,6 +6277,12 @@ class FramedDataSense(FramedData):
         log.info("FramedDataSense initalization done, with forms {}"
                     "".format(self.forms))
 class FramedDataElement(FramedData):
+    """This class formats for display a node with form/text elements
+    (e.g., examples), without access to senseid or entry guids (parent nodes).
+    Example nodes will have forms and glosses, but lc, lx, pl, and imp
+    will only have form info. The rest should be added elsewhere
+    (e.g., at the top of page/line). This is the class that allows for
+    recording into the form[@audiolang] node of that node."""
     def parseelement(self,element):
         # self.senseid=None #We don't have access to this here
         for i in element: # Example, lc, lx, pl, and imp
