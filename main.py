@@ -4864,7 +4864,10 @@ class Check():
         if ntorecord == 0:
             log.error(_("How did we get no UR tone groups? {}-{}"
                     "\nHave you run the tone report recently?"
-                    "\nDoing that for you now...").format(profile,ps))
+                    "\nDoing that for you now...").format(
+                            self.slices.profile(),
+                            self.slices.ps()
+                                                        ))
             self.tonegroupreport(silent=True)
             self.showtonegroupexs()
             return
