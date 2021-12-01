@@ -5322,6 +5322,7 @@ class Check():
             valuesbygroup[group]=groups[group]['values']
         return dictscompare(valuesbygroup,ignore=['NA',None],flat=False)
     def prioritizelocations(self,groups,locations):
+        """This is for the tone group report"""
         """Prioritize locations by similarity of location:value pairings"""
         valuesbylocation={}
         #Move values dictionaries up a level, for comparison
@@ -5331,7 +5332,7 @@ class Check():
                 if location in groups[group]['values']:
                     valuesbylocation[location][group]=groups[group]['values'][
                                                                     location]
-        return dictscompare(valuesbylocation,ignore=['NA',None],flat=False)
+        return dictscompare(valuesbylocation,ignore=['NA',None,'None'],flat=False)
     def tonegroupreport(self,silent=False,bylocation=False,default=True):
         #default=True redoes the UF analysis (removing any joining/renaming)
         def examplestoXLP(examples,parent,groups=True):
@@ -5347,6 +5348,8 @@ class Check():
         log.info("Starting report...")
         self.storesettingsfile()
         self.getrunwindow()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
         bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
         if default == False:
             bits.append('mod')
