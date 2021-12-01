@@ -2193,7 +2193,8 @@ class Check():
             self.setrefreshdelay()
             self.parent.after(self.refreshdelay, self.checkcheck, dictnow)
             return
-        log.info("Dict changes; checking attributes and updating the UI.")
+        log.info("Dict changes; checking attributes and updating the UI. ({})"
+                                                            "".format(dictnow))
         inherit(self) #in case anything has changed (like font size)
         opts={
         'row':0,
@@ -2216,7 +2217,6 @@ class Check():
                 row=0
                 columnspan=1
                 ipadx=0
-            print(label, opts['labelcolumn'],opts['columnspan'])
             if self.mainrelief == None:
                 l=Label(parent, text=label,font=self.fonts['report'],anchor='w')
             else:
