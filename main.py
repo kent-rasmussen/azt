@@ -6208,7 +6208,6 @@ class FramedData(object):
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join(toformat) #put it all together
     def audio(self):
-        """This should change by check/location, so shouldn't be here"""
         if self.audiolang in self.forms:
             return self.forms[self.audiolang]
     def glosses(self):
@@ -6248,7 +6247,7 @@ class FramedDataSense(FramedData):
             self.framed=self.forms.framed
             log.info("setframe framed: {}".format(self.forms.framed))
         else:
-            self.applynoframe()
+            self.applynoframe() #enforce the docstring above
         self.tonegroups=self.db.get('example/tonefield/form/text',
                     senseid=self.senseid, location=frame).get('text')
     def parsesense(self,db,senseid):
