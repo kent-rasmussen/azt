@@ -5288,7 +5288,7 @@ class Check():
         # find the senseids for each set of location:value correspondences.
         x=1 #first group number
         for value in groupvalues:
-            group=ps+'_'+profile+'_'+str(x)
+            group=self.slices.ps()+'_'+self.slices.profile()+'_'+str(x)
             groups[group]={}
             groups[group]['values']=value
             groups[group]['senseids']=[]
@@ -5520,6 +5520,9 @@ class Check():
         output(window,r,text)
         r.close()
     def xlpstart(self,reporttype='adhoc',bylocation=False,default=True):
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        check=self.params.check()
         if reporttype == 'Tone':
             if bylocation == True:
                 reporttype='Tone-bylocation'
