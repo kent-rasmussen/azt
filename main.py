@@ -6142,6 +6142,21 @@ class FramedDataDict(dict):
         self.db=check.db
         self.check=check
 class FramedData(object):
+    def updatelangs(self):
+        self.analang=self.parent.analang
+        self.audiolang=self.parent.audiolang
+        self.audiodir=self.parent.audiodir
+        self.glosslangs=self.parent.glosslangs
+        log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
+    def audio(self):
+        """This should change by check/location, so shouldn't be here"""
+        if self.audiolang in self.forms:
+            return self.forms[self.audiolang]
+    def __init__(self, parent,  **kwargs): #source,
+        """Evaluate what is actually needed"""
+        self.parent=parent
+        super(FramedData, self).__init__()
+class FramedDataSense(FramedData):
     """This populates an object with attributes to format data for display,
     by senseid"""
     """Sometimes this script is called to make the example fields, other
@@ -6225,16 +6240,9 @@ class FramedData(object):
             if file.exists(self.filenameURL):
                 log.info("audiofileisthere: {} ({})".format(filenameURL))
                 return True
-    def updatelangs(self):
-        self.analang=self.parent.analang
-        self.audiolang=self.parent.audiolang
-        self.audiodir=self.parent.audiodir
-        self.glosslangs=self.parent.glosslangs
-        log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def __init__(self, parent, source, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedData, self).__init__()
-        self.parent=parent
         self.frames=parent.frames
         self.updatelangs()
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
@@ -6259,7 +6267,7 @@ class FramedData(object):
         self.parsesense(self.db,source)
         log.info("FramedData initalization done.")
         log.info("FramedData forms: {}".format(self.forms))
-class FramedDataExample(object):
+class FramedDataExample(FramedData):
     def parseexample(self,example):
         self.senseid=None #We don't have access to this here
         for i in example:
@@ -6275,7 +6283,7 @@ class FramedDataExample(object):
                 self.tonegroups=i.findall('form/text') #always be list of one
     def __init__(self, parent, source, **kwargs):
         """Evaluate what is actually needed"""
-        super(FramedDataExample, self).__init__()
+        super(FramedDataExample, self).__init__(parent)
         if not isinstance(source,lift.ET.Element):
             log.error("You passed a nonelement ({}) to FramedDataExample!"
                         "".format(type(source)))
