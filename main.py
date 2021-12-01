@@ -6130,7 +6130,7 @@ class FramedDataDict(dict):
         self.audiolang=self.check.audiolang
         self.audiodir=self.check.audiodir
         self.glosslangs=self.check.glosslangs
-        log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
+        log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def isthere(self,source):
         if source in self:
             log.debug("source {} already there, using...".format(source))
