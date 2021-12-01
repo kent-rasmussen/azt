@@ -6247,7 +6247,7 @@ class FramedDataSense(FramedData):
         self.tonegroups=self.db.get('example/tonefield/form/text',
                     senseid=self.senseid, location=frame).get('text')
     def parsesense(self,db,senseid):
-        self.senseid=senseid
+        self.senseid=senseid #store for later
         self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
         self.forms[self.analang]=db.citationorlexeme(senseid=senseid,
                                                     analang=self.analang)
