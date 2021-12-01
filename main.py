@@ -6208,9 +6208,6 @@ class FramedData(object):
             toformat.appendformsbylang(self.framed,self.analang,quote=False)
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join(toformat) #put it all together
-    def audio(self):
-        if self.audiolang in self.forms:
-            return self.forms[self.audiolang]
     def glosses(self):
         g=DictbyLang()
         l=0
@@ -6257,13 +6254,6 @@ class FramedDataSense(FramedData):
         self.forms.update(db.glossesordefns(senseid=senseid))
         for f in self.forms:
             self.forms[f]=unlist(self.forms[f])
-    def audiofileisthere(self):
-        # if None in [self.senseid, location]:
-        if self.audio():
-            self.filenameURL=str(file.getdiredurl(self.audiodir,self.audio()))
-            if file.exists(self.filenameURL):
-                log.info("audiofileisthere: {} ({})".format(filenameURL))
-                return True
     def __init__(self, parent, source, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
@@ -6283,6 +6273,16 @@ class FramedDataElement(FramedData):
     will only have form info. The rest should be added elsewhere
     (e.g., at the top of page/line). This is the class that allows for
     recording into the form[@audiolang] node of that node."""
+    def audio(self):
+        if self.audiolang in self.forms:
+            return self.forms[self.audiolang]
+    def audiofileisthere(self):
+        # if None in [self.senseid, location]:
+        if self.audio():
+            self.filenameURL=str(file.getdiredurl(self.audiodir,self.audio()))
+            if file.exists(self.filenameURL):
+                log.info("audiofileisthere: {} ({})".format(filenameURL))
+                return True
     def parseelement(self,element):
         # self.senseid=None #We don't have access to this here
         for i in element: # Example, lc, lx, pl, and imp
