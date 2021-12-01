@@ -5330,7 +5330,7 @@ class Check():
                 groups=True #show groups on all non-default reports
             for example in examples:
                 framed=self.datadict.getframeddata(example)
-                for langs in [self.analang]+self.glosslangs:
+                for lang in [self.analang]+self.glosslangs:
                     if framed.forms[lang] is not None: #If all None, don't.
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                                 groups=groups)
