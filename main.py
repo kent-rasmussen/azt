@@ -6140,25 +6140,34 @@ class FramedDataDict(dict):
         """If this is going to feed a recording (i.e., sound file),
         including the senseid is a good idea, even if not otherwise required."""
         self.updatelangs()
-        if not source: #isinstance(source,lift.ET.Element)
-            senseid=kwargs['senseid'],
+        sense=element=False
+        """Is source a valid senseid in the database?"""
+        if source and self.db.get('sense', senseid=source).get():
+            log.info("sense?: {}".format(self.db.get('sense', senseid=source).get()))
+            sense=True
+        if isinstance(source,lift.ET.Element):
+            element=True
+        log.info("sense: {}, element: {}".format(sense,element))
+        """If neither or None is given, try to build it from kwargs"""
+        if not source or (not sense and not element):
+            """If these aren't there, these will correctly fail w/KeyError."""
+            senseid=kwargs['senseid']
             location=kwargs.get('check',kwargs.get('location'))
-            if senseid in self and location in self[senseid]:
-                log.debug("senseid-location {}-{} already there, using..."
-                                                    "".format(senseid,location))
-                return self[senseid][location]
             source=firstoflist(self.db.get('example',
-                        showurl=True,
-                        senseid=kwargs['senseid'],
-                        location=kwargs.get('check',kwargs.get('location'))
-                                ).get('node'))
-        if source not in self:
+                                            showurl=True,
+                                            senseid=senseid,
+                                            location=location
+                                            ).get('node'))
+            element=True
+        log.info("sense: {}, element: {} (after build)".format(sense,element))
+        d=self.isthere(source)
+        if source and not d:
             log.debug("source {} not there, making...".format(source))
-            self[source]=FramedDataExample(self,source,**kwargs)
-        else:
-            log.debug("source {} already there, using...".format(source))
-            self[source].updatelangs()
-        return self[source]
+            if sense:
+                d=self[source]=FramedDataSense(self,source,**kwargs)
+            if element:
+                d=self[source]=FramedDataElement(self,source,**kwargs)
+        return d #self[source]
     def __init__(self, check, **kwargs):
         super(FramedDataDict, self).__init__()
         self.frames=check.toneframes #[ps][name]
