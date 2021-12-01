@@ -6333,8 +6333,8 @@ class FramedDataElement(FramedData):
             </field>
         </example>
         """
-        log.info("FramedDataExample initalization done.")
-        log.info("FramedDataExample forms: {}".format(self.forms))
+        log.info("FramedDataElement initalization done, with forms: {}"
+                    "".format(self.forms))
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
