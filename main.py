@@ -3314,7 +3314,7 @@ class Check():
             error=submitform()
             if not error:
                 log.debug("group: {}".format(group))
-                self.status.nextgroup()
+                self.status.nextgroup(wsorted=True)
                 log.debug("group: {}".format(group))
                 self.renamegroup(reverify=reverify)
         def nextcheck():
@@ -3334,7 +3334,7 @@ class Check():
                 log.debug("profile: {}".format(profile))
                 self.renamegroup(reverify=reverify)
         def setgroup_comparison():
-            w=self.getgroup(comparison=True) #this returns its window
+            w=self.getgroup(comparison=True,wsorted=True) #this returns its window
             w.wait_window(w)
             comparisonbuttons()
         def comparisonbuttons():
