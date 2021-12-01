@@ -6233,11 +6233,8 @@ class FramedDataSense(FramedData):
             log.info("setframe framed: {}".format(self.forms.framed))
         else:
             self.applynoframe()
-    def gettonegroup(self):
-        """This is only done by parsesense. parseexample gets it otherwise."""
-        if None not in [self.location,self.senseid]:
-            self.tonegroups=self.db.get('example/tonefield/form/text',
-                            senseid=senseid, location=self.location).get('text')
+        self.tonegroups=self.db.get('example/tonefield/form/text',
+                    senseid=self.senseid, location=frame).get('text')
     def parsesense(self,db,senseid):
         self.senseid=senseid
         self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
