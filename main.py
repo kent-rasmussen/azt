@@ -6185,6 +6185,23 @@ class FramedData(object):
             except:
                 self.tonegroup=tonegroup #only for named groups
                 return True
+    def formatted(self,showtonegroup=False,noframe=False):
+        if showtonegroup and self.gettonegroup():
+            toformat=DataList(self.tonegroup)
+        else:
+            toformat=DataList()
+        if noframe:
+            toformat.appendformsbylang(self.forms,self.analang,quote=False)
+            toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
+        else:
+            """setframe is a FramedDataSense method, so should only apply there,
+            but also only be needed there, as FramedDataExample has applynoframe
+            in its init."""
+            if not hasattr(self,'framed'):
+                self.setframe() #self.noframe() #Assume no frame if not explicitly applied
+            toformat.appendformsbylang(self.framed,self.analang,quote=False)
+            toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
+        return ' '.join(toformat) #put it all together
     def audio(self):
         """This should change by check/location, so shouldn't be here"""
         if self.audiolang in self.forms:
@@ -6216,20 +6233,6 @@ class FramedDataSense(FramedData):
     times to display it. If source is a senseid, it pulls form/gloss/etc
     information from the entry. If source is an example, it pulls that info
     from the example. The info is formatted uniformly in either case."""
-    def formatted(self,showtonegroup=False,noframe=False):
-        if showtonegroup and self.tonegroup is not None:
-            toformat=DataList(self.tonegroup)
-        else:
-            toformat=DataList()
-        if noframe:
-            toformat.appendformsbylang(self.forms,self.analang,quote=False)
-            toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
-        else:
-            if not hasattr(self,'framed'):
-                self.applyframe() #self.noframe() #Assume no frame if not excplicitly applied
-            toformat.appendformsbylang(self.framed,self.analang,quote=False)
-            toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
-        return ' '.join(toformat) #put it all together
     def setframe(self,frame=None):
         """This should never be done on an example, which should
         already be framed. Also, self.ps won't be defined, so you'll get
