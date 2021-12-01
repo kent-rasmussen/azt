@@ -2448,8 +2448,9 @@ class Check():
                             cmd=cmd)
             bc.grid(row=row,column=1)
             row+=1
-        filenames=self.makefilenames(test=True)
-        br=RecordButtonFrame(self.soundsettingswindow.frame,self,filenames)
+        filename="test_{}_{}.wav".format(self.settings.fs, #soundsettings?
+                                    self.settings.sample_format)
+        br=RecordButtonFrame(self.soundsettingswindow.frame,self,filename)
         br.grid(row=row,column=0)
         row+=1
         l=_("You may need to change your microphone "
@@ -4508,9 +4509,6 @@ class Check():
         else:
             self.showentryformstorecord()
     def makefilenames(self,senseid=None,node=None,test=False): #self=None,check=None,
-        if test==True:
-            return "test_{}_{}.wav".format(self.settings.fs, #soundsettings?
-                                        self.settings.sample_format)
             if None in [self.id, self.node, self.gloss]:
                 log.debug("Sorry, unless testing we need all these "
                 "arguments; exiting.")
