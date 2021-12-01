@@ -6127,13 +6127,36 @@ class FramedDataDict(dict):
         self.audiodir=self.check.audiodir
         self.glosslangs=self.check.glosslangs
         log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
-    def getframeddata(self, source, **kwargs):
+    def getframedsense(self, source, **kwargs):
         self.updatelangs()
         if source not in self:
             log.debug("source {} not there, making...".format(source))
-            self[source]=FramedData(self,source,**kwargs)
+            self[source]=FramedDataSense(self,source,**kwargs)
         else:
-            log.debug("source {} alread there, using...".format(source))
+            log.debug("source {} already there, using...".format(source))
+            self[source].updatelangs()
+        return self[source]
+    def getframedexample(self, source=None, **kwargs):
+        """Do I want to pull the example, then call this, or call this with
+        senseid and check/location to find the example? both?"""
+        self.updatelangs()
+        if not source: #isinstance(source,lift.ET.Element)
+            senseid=kwargs['senseid'],
+            location=kwargs.get('check',kwargs.get('location'))
+            if senseid in self and location in self[senseid]:
+                log.debug("senseid-location {}-{} already there, using..."
+                                                    "".format(senseid,location))
+                return self[senseid][location]
+            source=firstoflist(self.db.get('example',
+                        showurl=True,
+                        senseid=kwargs['senseid'],
+                        location=kwargs.get('check',kwargs.get('location'))
+                                ).get('node'))
+        if source not in self:
+            log.debug("source {} not there, making...".format(source))
+            self[source]=FramedDataExample(self,source,**kwargs)
+        else:
+            log.debug("source {} already there, using...".format(source))
             self[source].updatelangs()
         return self[source]
     def __init__(self, check, **kwargs):
@@ -6242,7 +6265,7 @@ class FramedDataSense(FramedData):
                 return True
     def __init__(self, parent, source, **kwargs):
         """Evaluate what is actually needed"""
-        super(FramedData, self).__init__()
+        super(FramedDataSense, self).__init__(parent)
         self.frames=parent.frames
         self.updatelangs()
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
