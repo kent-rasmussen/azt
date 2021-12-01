@@ -6239,12 +6239,6 @@ class FramedDataSense(FramedData):
         a key error."""
         if hasattr(self, 'ps') and frame is not None:
             self.frame=self.frames[self.ps][frame]
-            self.applyframe()
-        else:
-            self.applynoframe() #enforce the docstring above
-    def applyframe(self):
-        log.info("setframe::")
-        if not self._noframe and hasattr(self,'frame'):
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
             log.info("setframe framed: {}".format(self.forms.framed))
