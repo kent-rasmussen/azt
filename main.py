@@ -6177,6 +6177,14 @@ class FramedData(object):
         self.audiodir=self.parent.audiodir
         self.glosslangs=self.parent.glosslangs
         log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
+    def gettonegroup(self):
+        if self.tonegroups:
+            tonegroup=unlist(self.tonegroups)
+            try:
+                int(tonegroup)
+            except:
+                self.tonegroup=tonegroup #only for named groups
+                return True
     def audio(self):
         """This should change by check/location, so shouldn't be here"""
         if self.audiolang in self.forms:
@@ -6230,14 +6238,6 @@ class FramedDataSense(FramedData):
         if None not in [self.location,self.senseid]:
             self.tonegroups=self.db.get('example/tonefield/form/text',
                             senseid=senseid, location=self.location).get('text')
-    def tonegroup(self):
-        if self.tonegroups is not None: # wanted&found
-            tonegroup=unlist(self.tonegroups)
-            if tonegroup is not None:
-                try:
-                    int(tonegroup)
-                except:
-                    self.tonegroup=tonegroup #only for named groups
     def parsesense(self,db,senseid):
         self.senseid=senseid
         self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
