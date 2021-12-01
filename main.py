@@ -5987,10 +5987,10 @@ class DictbyLang(dict):
         if isinstance(node,lift.ET.Element):
             lang=node.get('lang')
             if truncate: #this gives up to three words, no parens
-                text=rx.glossifydefn(unlist(node.findall('text')))
+                text=unlist([rx.glossifydefn(i.text) for i in node.findall('text')])
             else:
-                text=unlist(node.findall('text'))
-            log.info("Adding {} to {} dict under {}".format(t(text),self,lang))
+                text=unlist([i.text for i in node.findall('text')])
+            log.log(4,"Adding {} to {} dict under {}".format(t(text),self,lang))
             self[lang]=text
         else:
             log.info("Not an element node: {} ({})".format(node,type(node)))
@@ -8730,6 +8730,10 @@ def name(x):
         name=x.__class__.__name__ #If x is a class instance
         return "class."+name
 def unlist(l,ignore=[None]):
+    if isinstance(l[0],lift.ET.Element):
+         log.error("unlist should only be used on text (not node) lists ({})"
+                    "".format(l))
+         return
     return firstoflist(l,all=True,ignore=ignore)
 def firstoflist(l,othersOK=False,all=False,ignore=[None]):
     #rename to unlist
