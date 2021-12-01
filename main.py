@@ -6176,7 +6176,7 @@ class FramedData(object):
         self.audiolang=self.parent.audiolang
         self.audiodir=self.parent.audiodir
         self.glosslangs=self.parent.glosslangs
-        log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
+        log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def gettonegroup(self):
         if self.tonegroups:
             tonegroup=unlist(self.tonegroups)
