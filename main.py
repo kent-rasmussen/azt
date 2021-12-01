@@ -6294,10 +6294,10 @@ class FramedDataSense(FramedData):
         self.parsesense(self.db,source)
         log.info("FramedData initalization done.")
         log.info("FramedData forms: {}".format(self.forms))
-class FramedDataExample(FramedData):
-    def parseexample(self,example):
-        self.senseid=None #We don't have access to this here
-        for i in example:
+class FramedDataElement(FramedData):
+    def parseelement(self,element):
+        # self.senseid=None #We don't have access to this here
+        for i in element: # Example, lc, lx, pl, and imp
             if i.tag == 'form': #language forms, not glosses, etc, below.
                 self.forms.getformfromnode(i)
             elif (((i.tag == 'translation') and
@@ -6309,13 +6309,16 @@ class FramedDataExample(FramedData):
             elif ((i.tag == 'field') and (i.get('type') == 'tone')):
                 self.tonegroups=i.findall('form/text') #always be list of one
     def __init__(self, parent, source, **kwargs):
-        """Evaluate what is actually needed"""
-        super(FramedDataExample, self).__init__(parent)
+        """This class formats a node with form/text elements, without access
+        to senseid or entry guids. Examples will have forms and glosses,
+        but lc, lx, pl, and imp will only have form info. The rest should be
+        added elsewhere (e.g., at the top of page/line)."""
+        super(FramedDataElement, self).__init__(parent)
         if not isinstance(source,lift.ET.Element):
-            log.error("You passed a nonelement ({}) to FramedDataExample!"
+            log.error("You should pass an element ({}) to FramedDataExample!"
                         "".format(type(source)))
             return
-        self.parseexample(source) #example element, not sense or entry:
+        self.parseelement(source) #example element, not sense or entry:
         """This is what we're pulling from:
         <example>
             <form lang="gnd"><text>ga təv</text></form>
