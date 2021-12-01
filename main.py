@@ -6253,9 +6253,6 @@ class FramedDataSense(FramedData):
                     l+=len(g[lang])
         if l >0:
             return g
-    def audio(self):
-        if self.audiolang in self.forms:
-            return self.forms[self.audiolang]
     def audiofileisthere(self):
         # if None in [self.senseid, location]:
         if self.audio():
