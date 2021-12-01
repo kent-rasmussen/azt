@@ -6292,8 +6292,8 @@ class FramedDataSense(FramedData):
                         "({}) to FramedData!".format(type(source)))
             return
         self.parsesense(self.db,source)
-        log.info("FramedData initalization done.")
-        log.info("FramedData forms: {}".format(self.forms))
+        log.info("FramedDataSense initalization done, with forms {}"
+                    "".format(self.forms))
 class FramedDataElement(FramedData):
     def parseelement(self,element):
         # self.senseid=None #We don't have access to this here
