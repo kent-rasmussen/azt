@@ -6319,6 +6319,7 @@ class FramedDataElement(FramedData):
                         "".format(type(source)))
             return
         self.parseelement(source) #example element, not sense or entry:
+        self.applynoframe() #because we want self.framed=self.forms
         """This is what we're pulling from:
         <example>
             <form lang="gnd"><text>ga təv</text></form>
