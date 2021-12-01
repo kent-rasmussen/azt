@@ -6169,6 +6169,8 @@ class FramedDataDict(dict):
         self.db=check.db
         self.check=check
 class FramedData(object):
+    """This is a superclass to store methods, etc. common to both
+    FramedDataSense and FramedDataElement"""
     def updatelangs(self):
         self.analang=self.parent.analang
         self.audiolang=self.parent.audiolang
