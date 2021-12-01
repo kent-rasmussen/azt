@@ -6131,18 +6131,12 @@ class FramedDataDict(dict):
         self.audiodir=self.check.audiodir
         self.glosslangs=self.check.glosslangs
         log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
-    def getframedsense(self, source, **kwargs):
-        self.updatelangs()
-        if source not in self:
-            log.debug("source {} not there, making...".format(source))
-            self[source]=FramedDataSense(self,source,**kwargs)
-        else:
             log.debug("source {} already there, using...".format(source))
             self[source].updatelangs()
         return self[source]
-    def getframedexample(self, source=None, **kwargs):
-        """Do I want to pull the example, then call this, or call this with
-        senseid and check/location to find the example? both?"""
+    def getframeddata(self, source=None, **kwargs):
+        """If this is going to feed a recording (i.e., sound file),
+        including the senseid is a good idea, even if not otherwise required."""
         self.updatelangs()
         if not source: #isinstance(source,lift.ET.Element)
             senseid=kwargs['senseid'],
