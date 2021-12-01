@@ -6250,6 +6250,7 @@ class FramedData(object):
         self.glosslangs=self.parent.glosslangs
         log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def __init__(self, parent, source, **kwargs):
+        """Evaluate what is actually needed"""
         super(FramedData, self).__init__()
         self.parent=parent
         self.frames=parent.frames
@@ -6297,6 +6298,12 @@ class FramedData(object):
         log.info("FramedData forms: {}".format(self.forms))
         # log.info("FramedData framed: {}".format(self.framed))
         """The following is the same for senses or examples"""
+class FramedDataExample(object):
+    def __init__(self, parent, source, **kwargs):
+        """Evaluate what is actually needed"""
+        super(FramedDataExample, self).__init__()
+        log.info("FramedDataExample initalization done.")
+        log.info("FramedDataExample forms: {}".format(self.forms))
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
