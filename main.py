@@ -6203,8 +6203,8 @@ class FramedData(object):
             return g
     def __init__(self, parent,  **kwargs): #source,
         """Evaluate what is actually needed"""
-        self.parent=parent
         super(FramedData, self).__init__()
+        self.parent=parent
 class FramedDataSense(FramedData):
     """This populates an object with attributes to format data for display,
     by senseid"""
