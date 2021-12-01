@@ -6297,10 +6297,6 @@ class FramedDataElement(FramedData):
             elif ((i.tag == 'field') and (i.get('type') == 'tone')):
                 self.tonegroups=i.findall('form/text') #always be list of one
     def __init__(self, parent, source, **kwargs):
-        """This class formats a node with form/text elements, without access
-        to senseid or entry guids. Examples will have forms and glosses,
-        but lc, lx, pl, and imp will only have form info. The rest should be
-        added elsewhere (e.g., at the top of page/line)."""
         super(FramedDataElement, self).__init__(parent)
         if not isinstance(source,lift.ET.Element):
             log.error("You should pass an element ({}) to FramedDataExample!"
