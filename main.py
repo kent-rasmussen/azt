@@ -4518,7 +4518,6 @@ class Check():
         check=self.params.check() #where do I need this?
         if node is not None: #but we want to use this if there.
             framed=self.datadict.getframeddata(node)
-            framed.setframe() #this should be framed already
         else:
             framed=self.datadict.getframeddata(senseid)
             framed.setframe(check)
