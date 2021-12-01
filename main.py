@@ -3066,14 +3066,6 @@ class Check():
                                     window=window
                                     )
             buttonFrame1.grid(column=0, row=0)
-    def getlocations(self):
-        """This builds from LIFT"""
-        self.locations=[]
-        for senseid in self.slices.senseids():
-            for location in [i for i in self.db.get('locationfield',
-                senseid=senseid, showurl=True).get('text') if i is not None]:
-                self.locations+=[location]
-        self.locations=list(dict.fromkeys(self.locations))
     def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
         xlp.Paragraph(parent,t)
         print(t)
@@ -5238,8 +5230,7 @@ class Check():
     def tonegroupsbyUFlocation(self,senseidsbygroup):
         #returns dictionary keyed by [group][location]=groupvalue
         values={}
-        self.getlocations()
-        locations=self.locations[:]
+        locations=self.status.checks()
         # Collect location:value correspondences, by sense
         for group in senseidsbygroup:
             values[group]={}
@@ -5262,9 +5253,8 @@ class Check():
         return values
     def tonegroupsbysenseidlocation(self):
         #outputs dictionary keyed to [senseid][location]=group
-        self.getlocations()
         output={}
-        locations=self.locations[:]
+        locations=self.status.checks()
         # Collect location:value correspondences, by sense
         for senseid in self.status.senseids():
             output[senseid]={}
@@ -5358,8 +5348,9 @@ class Check():
         """Split here"""
         if default == True:
             #Do the draft UF analysis, from scratch
-            output=self.tonegroupsbysenseidlocation() #collect senseid-locations
-            if self.locations == []:
+            """output[senseid][location]=group"""
+            output=self.tonegroupsbysenseidlocation()
+            if checks == []:
                 log.error("Hey, sort some morphemes in at least one frame before "
                             "trying to make a tone report!")
                 self.runwindow.waitdone()
@@ -5367,8 +5358,7 @@ class Check():
             groups=self.groupUFsfromtonegroupsbylocation(output) #make groups
             groups=self.senseidstogroupUFs(output,groups) #fillin group senseids
             groupstructuredlist=self.prioritizegroupUFs(groups)
-            locationstructuredlist=self.prioritizelocations(groups,
-                                                                self.locations)
+            locationstructuredlist=self.prioritizelocations(groups,checks)
             grouplist=flatten(groupstructuredlist)
             locations=flatten(locationstructuredlist)
             log.debug("structured locations: {}".format(locationstructuredlist))
@@ -5387,7 +5377,7 @@ class Check():
             toreport=self.getsenseidsbytoneUFgroups()
             groupvalues=self.tonegroupsbyUFlocation(toreport)
             grouplist=self.toneUFgroups
-            locations=self.locations[:]
+            locations=checks
         valuesbylocation=dictofchilddicts(groupvalues,remove=['NA',None])
         log.debug("groups (tonegroupreport): {}".format(grouplist))
         log.debug("locations (tonegroupreport): {}".format(locations))
@@ -5410,7 +5400,7 @@ class Check():
         "this report is distinct from the others, in terms of its grouping "
         "across the multiple frames used. Sound files should be available "
         "through links, if the audio directory with those files is in the same "
-        "directory as this file.".format(ps,self.locations,
+        "directory as this file.".format(ps,checks,
                                             self.program['name']))
         p1=xlp.Paragraph(s1,text=text)
         text=_("As a warning to the analyst who may not understand the "
