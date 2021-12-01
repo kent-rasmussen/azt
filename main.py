@@ -4569,6 +4569,7 @@ class Check():
                 log.debug("Audio link found, but no file found! Removing and "
                     "making options."
                     "\n{}; diredname: {}".format(audio, filenameURL))
+        filenames=self.filenameoptions()
         #test if any of the generated filenames are there, stop at the first one
         for filename in filenames:
             filenameURL=str(file.getdiredurl(self.audiodir,filename))
@@ -4592,6 +4593,9 @@ class Check():
         recordings."""
         self.db.addmediafields(node,filename,self.audiolang)
         return filename, filenameURL
+    def filenameoptions(self,node,senseid,form,gloss):
+        ps=self.slices.ps()
+        profile=self.slices.profile()
         pslocopts=[ps]
         # Except for data generated early in 2021, profile should not be there,
         # because it can change with analysis. But we include here to pick up
