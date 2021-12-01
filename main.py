@@ -4509,10 +4509,10 @@ class Check():
         else:
             self.showentryformstorecord()
     def makefilenames(self,senseid=None,node=None,test=False): #self=None,check=None,
-            if None in [self.id, self.node, self.gloss]:
-                log.debug("Sorry, unless testing we need all these "
-                "arguments; exiting.")
-                return
+        if None in [self.id, self.node, self.gloss]:
+            log.debug("Sorry, unless testing we need all these "
+            "arguments; exiting.")
+            return
         if senseid is None: #we need this at least for the name
             return
         check=self.params.check() #where do I need this?
