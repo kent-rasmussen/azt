@@ -73,7 +73,7 @@ class ScrollingFrame(Frame):
     def _on_mousewheeldown(self, event):
         self.canvas.yview_scroll(-1,"units")
     def _configure_interior(self, event=None):
-        log.info("_configure_interior, on content change")
+        log.log(4,"_configure_interior, on content change")
         self.update_idletasks()
         size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
         self.canvas.config(scrollregion="0 0 %s %s" % size)
@@ -102,7 +102,7 @@ class ScrollingFrame(Frame):
         if self.content.winfo_reqheight() != self.canvas.winfo_height():
             # update the canvas's width to fit the inner frame
             self.canvas.config(height=self.content.winfo_reqheight())
-        log.info("_configure_interior done.")
+        log.log(4,"_configure_interior done.")
         self._configure_canvas() #bc we changed the canvas
         self.hwinfo(event)
     def hwinfo(self,event=None):
@@ -183,11 +183,11 @@ class ScrollingFrame(Frame):
         else: #if self.winfo_height() < contentrh:
             height=contentrh# self.config(height=contentrh)
         self.config(height=height, width=width)
-        log.info("height={}, width={}".format(height, width))
+        log.log(4,"height={}, width={}".format(height, width))
         # if self.winfo_height() > self.maxheight:
         #     self.config(height=self.maxheight)
     def _configure_canvas(self, event=None):
-        log.info("_configure_canvas on canvas change")
+        log.log(4,"_configure_canvas on canvas change")
         #this configures self.canvas
         self.update_idletasks()
         # if self.content.winfo_reqwidth() != self.content.winfo_width():
@@ -196,17 +196,17 @@ class ScrollingFrame(Frame):
         #     ))
         #     self.content.configure(width=self.content.winfo_reqwidth())
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
-            log.info("self.content reqwidth differs from canvas!")
+            log.info("self.content reqwidth differs from canvas; fixing.")
             # update the inner frame's width to fill the canvas
             # self.content_id.config(width=self.content.winfo_reqwidth())
             self.canvas.itemconfigure(self.content_id,
                                         width=self.content.winfo_reqwidth())
         if self.content.winfo_reqheight() != self.canvas.winfo_height():
-            log.info("self.content reqheight differs from canvas!")
+            log.info("self.content reqheight differs from canvas; fixing.")
             self.canvas.itemconfigure(self.content_id,
                                         height=self.content.winfo_reqheight())
         # self.canvas.config(scrollregion=self.canvas.bbox("all"))
-        log.info("_configure_canvas done.")
+        log.log(4,"_configure_canvas done.")
         self.hwinfo(event)
         # if self.winfo_height() > self.maxheight:
         #     self.config(height=self.maxheight)
