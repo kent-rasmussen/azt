@@ -6131,9 +6131,11 @@ class FramedDataDict(dict):
         self.audiodir=self.check.audiodir
         self.glosslangs=self.check.glosslangs
         log.debug("analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
+    def isthere(self,source):
+        if source in self:
             log.debug("source {} already there, using...".format(source))
-            self[source].updatelangs()
-        return self[source]
+            self[source].updatelangs() #maybe it has been awhile...
+            return self[source]
     def getframeddata(self, source=None, **kwargs):
         """If this is going to feed a recording (i.e., sound file),
         including the senseid is a good idea, even if not otherwise required."""
