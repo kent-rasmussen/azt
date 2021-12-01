@@ -5260,7 +5260,7 @@ class Check():
             output[senseid]={}
             for location in locations:
                 group=self.db.get("example/tonefield/form/text",
-                    senseid=senseid,location=location,showurl=True).get('text')
+                    senseid=senseid,location=location).get('text')
                 if group != []:
                     output[senseid][location]=group #Save this info by senseid
         log.info("Done collecting groups by location for each senseid.")
@@ -5293,7 +5293,8 @@ class Check():
             groups[group]['values']=value
             groups[group]['senseids']=[]
             x+=1
-        log.info('Groups set up; adding senseids to groups now. ({})'.format(groups.keys()))
+        log.info('Groups set up; adding senseids to groups now. ({})'.format(
+                                                                groups.keys()))
         return groups
     def senseidstogroupUFs(self,output,groups):
         for senseid in self.slices.senseids():
@@ -5334,7 +5335,7 @@ class Check():
                     if framed.forms[lang] is not None: #If all None, don't.
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                                 groups=groups)
-                        return
+                        return #do it if any lang is present
         log.info("Starting report...")
         self.storesettingsfile()
         self.getrunwindow()
@@ -5524,7 +5525,7 @@ class Check():
         profile=self.slices.profile()
         check=self.params.check()
         if reporttype == 'Tone':
-            if bylocation == True:
+            if bylocation:
                 reporttype='Tone-bylocation'
         elif not re.search('Basic',reporttype): #We don't want this in the title
             reporttype=str(check)
