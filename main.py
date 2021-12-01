@@ -8775,7 +8775,7 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
         return l
     if (l is None) or (l == []):
         return
-    if all == True: #don't worry about othersOK yet
+    if all: #don't worry about othersOK yet
         if len(l) > 1:
             ox=[t(v) for v in l[:len(l)-2]] #Should probably always give text
             l=ox+[' and '.join([t(v) for v in l[len(l)-2:] if v not in ignore])]
