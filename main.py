@@ -8100,7 +8100,7 @@ class StatusDict(dict):
                                         ])
                 ):
                 p+=[profile]
-        log.info("Profiles with kwargs {}: {}".format(kwargs,p))
+        log.log(4,"Profiles with kwargs {}: {}".format(kwargs,p))
         return p
     def checks(self, **kwargs):
         """This method is designed for tone, which depends on ps, not profile.
@@ -8118,11 +8118,10 @@ class StatusDict(dict):
                 (kwargs['toverify'] and self.groups(check=check,toverify=True))
                 ):
                 cs+=[check]
-        log.info("Checks with {}: {}"
-                    "".format(kwargs,cs))
+        log.log(4,"Checks with {}: {}".format(kwargs,cs))
         return cs
     def groups(self,g=None, **kwargs): #was groupstodo
-        log.info("groups kwargs: {}".format(kwargs))
+        log.log(4,"groups kwargs: {}".format(kwargs))
         kwargs=grouptype(**kwargs)
         kwargs=self.checkslicetypecurrent(**kwargs)
         """This returns prioritization in advance of sorting, before actual
@@ -8184,7 +8183,7 @@ class StatusDict(dict):
             self._idssorted.remove(senseid)
     def store(self):
         """This will just store to file; reading will come from check."""
-        log.info("Saving status dict to file")
+        log.log(4,"Saving status dict to file")
         config=ConfigParser()
         config['status']=self #getattr(o,s)
         with open(self._filename, "w", encoding='utf-8') as file:
@@ -8217,7 +8216,7 @@ class StatusDict(dict):
             log.error("You have to define all values prior to the last: "
                                     "{}".format(kwargs))
         elif kwargs['cvt'] is not None:
-            log.debug("At least cvt value defined; using them: {}"
+            log.log(4,"At least cvt value defined; using them: {}"
                                             "".format(kwargs))
         else: #all None:
             for k in ['cvt','ps','profile','check']:
@@ -8255,12 +8254,12 @@ class StatusDict(dict):
                 changed=True
             for key in ['groups','done']:
                 if key not in base:
-                    log.info("Adding {} key to {}-{} status dict".format(
+                    log.log(4,"Adding {} key to {}-{} status dict".format(
                                         key,kwargs['profile'],kwargs['check']))
                     base[key]=list()
                     changed=True
             if 'tosort' not in base:
-                log.info("Adding tosort key to {}-{} status dict".format(
+                log.log(4,"Adding tosort key to {}-{} status dict".format(
                                         key,kwargs['profile'],kwargs['check']))
                 base['tosort']=True
                 changed=True
@@ -8427,7 +8426,7 @@ class StatusDict(dict):
         kwargs['ps']=kwargs.get('ps',self._slicedict.ps())
         kwargs['profile']=kwargs.get('profile',self._slicedict.profile())
         kwargs['check']=kwargs.get('check',self._checkparameters.check())
-        log.info("Returning checkslicetypecurrent kwargs {}".format(kwargs))
+        log.log(4,"Returning checkslicetypecurrent kwargs {}".format(kwargs))
         return kwargs
     def __init__(self,checkparameters,slicedict,exs,toneframes,filename,dict):
         """To populate subchecks, use self.groups()"""
@@ -8741,17 +8740,17 @@ def exampletype(**kwargs):
         kwargs[arg]=kwargs.get(arg,True)
     for arg in ['renew','wsoundfile']:
         kwargs[arg]=kwargs.get(arg,False)
-    log.info("Returning exampletype kwargs {}".format(kwargs))
+    log.log(4,"Returning exampletype kwargs {}".format(kwargs))
     return kwargs
 def checkslicetype(**kwargs):
     for arg in ['cvt','ps','profile','check']:
         kwargs[arg]=kwargs.get(arg,None)
-    log.info("Returning checkslicetype kwargs {}".format(kwargs))
+    log.log(4,"Returning checkslicetype kwargs {}".format(kwargs))
     return kwargs
 def grouptype(**kwargs):
     for arg in ['wsorted','tosort','toverify','torecord','comparison']:
         kwargs[arg]=kwargs.get(arg,False)
-    log.info("Returning grouptype kwargs {}".format(kwargs))
+    log.log(4,"Returning grouptype kwargs {}".format(kwargs))
     return kwargs
 def name(x):
     try:
@@ -8807,7 +8806,7 @@ def nonspace(x):
     else:
         return " "
 def linebreakwords(x):
-    log.debug("working on {}".format(x))
+    log.log(4,"working on {}".format(x))
     return re.sub(' ','\n',x)
 def nn(x,oneperline=False,twoperline=False):
     """Don't print "None" in the UI..."""
