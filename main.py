@@ -6242,8 +6242,6 @@ class FramedDataSense(FramedData):
             self.applyframe()
         else:
             self.applynoframe() #enforce the docstring above
-    def applynoframe(self):
-        self.framed=self.forms
     def applyframe(self):
         log.info("setframe::")
         if not self._noframe and hasattr(self,'frame'):
