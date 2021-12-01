@@ -6189,6 +6189,18 @@ class FramedData(object):
         """This should change by check/location, so shouldn't be here"""
         if self.audiolang in self.forms:
             return self.forms[self.audiolang]
+    def glosses(self):
+        g=DictbyLang()
+        l=0
+        log.info("self.glosslangs: {}; self.forms: {}".format(self.glosslangs,
+                    self.forms))
+        for lang in self.glosslangs:
+            if lang in self.forms:
+                g[lang]=self.forms[lang]
+                if g[lang] is not None:
+                    l+=len(g[lang])
+        if l >0:
+            return g
     def __init__(self, parent,  **kwargs): #source,
         """Evaluate what is actually needed"""
         self.parent=parent
@@ -6244,18 +6256,6 @@ class FramedDataSense(FramedData):
         for f in self.forms:
             self.forms[f]=unlist(self.forms[f])
         self.gettonegroup()
-    def glosses(self):
-        g=DictbyLang()
-        l=0
-        log.info("self.glosslangs: {}; self.forms: {}".format(self.glosslangs,
-                    self.forms))
-        for lang in self.glosslangs:
-            if lang in self.forms:
-                g[lang]=self.forms[lang]
-                if g[lang] is not None:
-                    l+=len(g[lang])
-        if l >0:
-            return g
     def audiofileisthere(self):
         # if None in [self.senseid, location]:
         if self.audio():
