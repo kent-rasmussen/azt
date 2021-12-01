@@ -6203,19 +6203,6 @@ class FramedData(object):
         for f in self.forms:
             self.forms[f]=unlist(self.forms[f])
         self.gettonegroup()
-    def parseexample(self,example):
-        self.senseid=None #We don't have access to this here
-        for i in example:
-            if i.tag == 'form': #language forms, not glosses, etc, below.
-                self.forms.getformfromnode(i)
-            elif (((i.tag == 'translation') and
-                (i.get('type') == 'Frame translation')) or
-                ((i.tag == 'gloss'))):
-                for ii in i:
-                    if (ii.tag == 'form'):
-                        self.forms.getformfromnode(ii) #glosses
-            elif ((i.tag == 'field') and (i.get('type') == 'tone')):
-                self.tonegroups=i.findall('form/text') #always be list of one
     def glosses(self):
         g=DictbyLang()
         l=0
@@ -6265,38 +6252,49 @@ class FramedData(object):
         self.tonegroup=None
         self.senseid=None
         """Build dual logic here. We use this to frame senses & examples"""
-        if isinstance(source,lift.ET.Element):
-            self._noframe=True #Examples should already be framed
-            self.parseexample(source) #example element, not sense or entry:
-            """This is what we're pulling from:
-            <example>
-                <form lang="gnd"><text>ga təv</text></form>
-                <translation type="Frame translation">
-                    <form lang="fr"><text>lieu (m), place (f) (pl)</text></form>
-                </translation>
-                <field type="tone">
-                    <form lang="fr"><text>1</text></form>
-                </field>
-                <field type="location">
-                    <form lang="fr"><text>Plural</text></form>
-                </field>
-            </example>
-            """
-        elif type(source) is str and len(source) >= 36:#senseid can be guid+form
-            self.parsesense(self.db,source)
-        else:
-            log.error('Neither Element nor senseid was found!'
-                        '\nThis is almost certainly not what you want!'
-                        '\nFYI, I was looking for {}'.format(source))
-            return source
+        if not (type(source) is str and len(source) >= 36):#senseid can be guid+form
+            log.error("You passed something that doesn't look like a senseid "
+                        "({}) to FramedData!".format(type(source)))
+            return
+        self.parsesense(self.db,source)
         log.info("FramedData initalization done.")
         log.info("FramedData forms: {}".format(self.forms))
-        # log.info("FramedData framed: {}".format(self.framed))
-        """The following is the same for senses or examples"""
 class FramedDataExample(object):
+    def parseexample(self,example):
+        self.senseid=None #We don't have access to this here
+        for i in example:
+            if i.tag == 'form': #language forms, not glosses, etc, below.
+                self.forms.getformfromnode(i)
+            elif (((i.tag == 'translation') and
+                (i.get('type') == 'Frame translation')) or
+                ((i.tag == 'gloss'))):
+                for ii in i:
+                    if (ii.tag == 'form'):
+                        self.forms.getformfromnode(ii) #glosses
+            elif ((i.tag == 'field') and (i.get('type') == 'tone')):
+                self.tonegroups=i.findall('form/text') #always be list of one
     def __init__(self, parent, source, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataExample, self).__init__()
+        if not isinstance(source,lift.ET.Element):
+            log.error("You passed a nonelement ({}) to FramedDataExample!"
+                        "".format(type(source)))
+            return
+        self.parseexample(source) #example element, not sense or entry:
+        """This is what we're pulling from:
+        <example>
+            <form lang="gnd"><text>ga təv</text></form>
+            <translation type="Frame translation">
+                <form lang="fr"><text>lieu (m), place (f) (pl)</text></form>
+            </translation>
+            <field type="tone">
+                <form lang="fr"><text>1</text></form>
+            </field>
+            <field type="location">
+                <form lang="fr"><text>Plural</text></form>
+            </field>
+        </example>
+        """
         log.info("FramedDataExample initalization done.")
         log.info("FramedDataExample forms: {}".format(self.forms))
 class ExitFlag(object):
