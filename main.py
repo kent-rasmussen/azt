@@ -4569,6 +4569,29 @@ class Check():
                 log.debug("Audio link found, but no file found! Removing and "
                     "making options."
                     "\n{}; diredname: {}".format(audio, filenameURL))
+        #test if any of the generated filenames are there, stop at the first one
+        for filename in filenames:
+            filenameURL=str(file.getdiredurl(self.audiodir,filename))
+            log.debug("Looking for Audio file: {}; filename possibilities: {}; "
+                "url:{}".format(filename, filenames, filenameURL))
+            if file.exists(filenameURL):
+                log.debug("Audiofile found! using name: {}; possibilities: {}; "
+                    "url:{}".format(filename, filenames, filenameURL))
+                break
+        #if you don't find any files, the *last* values are used below
+        if not file.exists(filenameURL):
+            log.debug("No audio file found! I'm making a link anyway, and "
+                    "preparing to record using name: {}; url:{}"
+                        "".format(filename, filenameURL))
+        """Create a link now, rather than asking the record buttons to do so.
+        this will give LIFT links where nothing has ever been recorded, but
+        greatly simplifies the record button frame. """
+        """File names with new naming schemes will overwrite those with old
+        naming schemes, on this next line. Note that we don't get here, if
+        there is such a sound file, so this just impacts nodes without
+        recordings."""
+        self.db.addmediafields(node,filename,self.audiolang)
+        return filename, filenameURL
         pslocopts=[ps]
         # Except for data generated early in 2021, profile should not be there,
         # because it can change with analysis. But we include here to pick up
@@ -4615,29 +4638,6 @@ class Check():
                             wavfilename+='_'
                         wavfilename=rx.urlok(wavfilename) #one character check
                         filenames+=[wavfilename+'.wav']
-        #test if any of the generated filenames are there, stop at the first one
-        for filename in filenames:
-            filenameURL=str(file.getdiredurl(self.audiodir,filename))
-            log.debug("Looking for Audio file: {}; filename possibilities: {}; "
-                "url:{}".format(filename, filenames, filenameURL))
-            if file.exists(filenameURL):
-                log.debug("Audiofile found! using name: {}; possibilities: {}; "
-                    "url:{}".format(filename, filenames, filenameURL))
-                break
-        #if you don't find any files, the *last* values are used below
-        if not file.exists(filenameURL):
-            log.debug("No audio file found! I'm making a link anyway, and "
-                    "preparing to record using name: {}; url:{}"
-                        "".format(filename, filenameURL))
-        """Create a link now, rather than asking the record buttons to do so.
-        this will give LIFT links where nothing has ever been recorded, but
-        greatly simplifies the record button frame. """
-        """File names with new naming schemes will overwrite those with old
-        naming schemes, on this next line. Note that we don't get here, if
-        there is such a sound file, so this just impacts nodes without
-        recordings."""
-        self.db.addmediafields(node,filename,self.audiolang)
-        return filename, filenameURL
     def makelabelsnrecordingbuttons(self,parent,sense):
         framed=self.datadict.getframeddata(sense['nodetoshow'])
         t=framed.formatted(noframe=True)
