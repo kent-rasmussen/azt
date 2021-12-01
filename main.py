@@ -8767,7 +8767,7 @@ def name(x):
         name=x.__class__.__name__ #If x is a class instance
         return "class."+name
 def unlist(l,ignore=[None]):
-    if isinstance(l[0],lift.ET.Element):
+    if l and isinstance(l[0],lift.ET.Element):
          log.error("unlist should only be used on text (not node) lists ({})"
                     "".format(l))
          return
