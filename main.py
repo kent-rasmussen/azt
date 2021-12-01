@@ -5256,7 +5256,7 @@ class Check():
         output={}
         locations=self.status.checks()
         # Collect location:value correspondences, by sense
-        for senseid in self.status.senseids():
+        for senseid in self.slices.senseids():
             output[senseid]={}
             for location in locations:
                 group=self.db.get("example/tonefield/form/text",
@@ -5296,7 +5296,7 @@ class Check():
         log.info('Groups set up; adding senseids to groups now. ({})'.format(groups.keys()))
         return groups
     def senseidstogroupUFs(self,output,groups):
-        for senseid in self.status.senseids():
+        for senseid in self.slices.senseids():
             for group in groups:
                 if str(output[senseid]) == str(groups[group]['values']):
                     groups[group]['senseids']+=[senseid]
@@ -7875,8 +7875,9 @@ class SliceDict(dict):
         senseidstochange=set(self._senseids).intersection(senseids)
         return senseidstochange
     def senseids(self,ps=None,profile=None):
-        """This returns an up to date list of senseids in the curent slice, or
-        else the specified slice"""
+        """This returns an up to date list of senseids in the curent slice
+        (because changing ps or profile calls renewsenseids), or else the
+        specified slice"""
         # list(self._senseidsbyps[self._ps][self._profile])
         if ps is None and profile is None:
             return self._senseids #this is always the current slice
