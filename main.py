@@ -6201,10 +6201,14 @@ class FramedData(object):
                     l+=len(g[lang])
         if l >0:
             return g
+    def applynoframe(self):
+        self.framed=self.forms
     def __init__(self, parent,  **kwargs): #source,
         """Evaluate what is actually needed"""
         super(FramedData, self).__init__()
         self.parent=parent
+        self.updatelangs()
+        self.forms=DictbyLang()
 class FramedDataSense(FramedData):
     """This populates an object with attributes to format data for display,
     by senseid"""
