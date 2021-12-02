@@ -7468,7 +7468,7 @@ class ToneGroupButtonFrame(ui.Frame):
         bttext=_("Click to hear this utterance")
         if program['praatisthere']:
             bttext+='; '+_("right click to open in praat")
-            b.bind('<Button-3>',lambda x: praatopen(diredurl))
+            b.bind('<Button-3>',lambda x: praatopen(self._filenameURL))
         bt=ToolTip(b,bttext)
         if self.kwargs['unsortable']:
             self.unsortbutton()
