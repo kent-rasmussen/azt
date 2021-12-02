@@ -4341,7 +4341,7 @@ class Check():
                 self.status.marksenseidsorted(senseid)
                 groups.append(v)
         """update 'tosort' status"""
-        if len(self.status.senseidstosort()) >0:
+        if self.status.senseidstosort():
             log.log(4,"updatesortingstatus shows senseidstosort remaining")
             vts=True
         else:
@@ -7886,12 +7886,12 @@ class SliceDict(dict):
         (because changing ps or profile calls renewsenseids), or else the
         specified slice"""
         # list(self._senseidsbyps[self._ps][self._profile])
-        if ps is None and profile is None:
+        if not ps and not profile:
             return self._senseids #this is always the current slice
         else:
-            if ps is None:
+            if not ps:
                 ps=self._ps
-            if profile is None:
+            if not profile:
                 profile=self._profile
             return list(self._profilesbysense[ps][profile]) #specified slice
     def senseidsbyps(self,ps):
