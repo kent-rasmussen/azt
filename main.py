@@ -3866,7 +3866,7 @@ class Check():
         if group in self.status.verified():
             log.info("‘{}’ already verified, continuing.".format(group))
             return
-        senseids=self.exs.senseidsinslicegroup(group)
+        senseids=self.exs.senseidsinslicegroup(group,check)
         if not senseids:
             log.info("Groups: {}".format(self.status.groups(toverify=True)))
             verified=False
