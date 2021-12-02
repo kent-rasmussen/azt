@@ -7804,20 +7804,27 @@ class SliceDict(dict):
             self.makeprofileok()
             return self._profile
     def nextps(self):
-        self.makepsok()
-        index=self._pss.index(self._ps)
-        if index+1 == len(self._pss):
-            self.ps(self._pss[0]) #cycle back
-        else:
-            self.ps(self._pss[index+1])
+        pss=self.pss()
+        try:
+            index=sepss.index(self._ps)
+            if index+1 == len(pss):
+                self.ps(pss[0]) #cycle back
+            else:
+                self.ps(pss[index+1])
+        except ValueError: #i.e., it's not in the list
+            self.makepsok()
         return self.ps()
     def nextprofile(self):
-        self.makeprofileok()
-        index=self._profiles.index(self._profile)
-        if index+1 == len(self._profiles):
-            self.profile(self._profiles[0]) #cycle back
-        else:
-            self.profile(self._profiles[index+1])
+        profiles=self.profiles()
+        #assume it's on the list, if not, just put it there, don't cycle it.
+        try:
+            index=profiles.index(self._profile)
+            if index+1 == len(profiles):
+                self.profile(profiles[0]) #cycle back
+            else:
+                self.profile(profiles[index+1])
+        except ValueError: #i.e., it's not in the list
+            self.makeprofileok()
         return self.profile()
     def slicepriority(self,arg=None):
         """arg is to throw away, rather than break a fn where others get
