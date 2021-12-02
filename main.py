@@ -7503,8 +7503,7 @@ class ToneGroupButtonFrame(ui.Frame):
         bct=ToolTip(bc,_("Change example word"))
     def unsortbutton(self):
         t=_("<= remove *this* *word* from \nthe group (sort into another, later)")
-        b_unsort=Button(self,text = t, cmd=unsort, anchor ='c',
-                                                    **self.buttonkwargs())
+        b_unsort=Button(self,text = t, cmd=self.unsort, **self.buttonkwargs())
         b_unsort.grid(column=2,row=0,padx=50)
     def buttonkwargs(self):
         """This is a method to allow pulling these args after updating kwargs"""
