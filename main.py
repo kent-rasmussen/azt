@@ -5958,6 +5958,8 @@ class ExampleDict(dict):
                         log.info("Using stored value for ‘{}’ group: ‘{}’"
                                 "".format(group, self[group]))
                         senseid=self[group]
+                        #don't do this if clause more than once
+                        kwargs['renew']=True
                     else:
                         i=senseids.index(self[group])
                         if i == len(senseids)-1: #loop back on last
