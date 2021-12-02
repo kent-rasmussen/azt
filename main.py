@@ -4315,7 +4315,7 @@ class Check():
         self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
-        sorted and unsorted senses, as well as sorted and verified groups.
+        sorted and unsorted senses, as well as sorted (but not verified) groups.
         So don't iterate over it. Instead, use checkforsenseidstosort to just
         confirm tosort status"""
         """To get this from the object, use status.tosort(), todo() or done()"""
@@ -4352,6 +4352,7 @@ class Check():
         sorted=list(dict.fromkeys(groups))
         self.status.verified(sorted,**kwargs)
         verified=self.status.verified() #read
+        """This should pull verification status from LIFT, someday"""
         for v in verified:
             if v not in groups:
                 log.error("Removing verified group {} not in actual groups: {}!"
