@@ -5942,7 +5942,7 @@ class ExampleDict(dict):
         senseid=None #do this once, anyway...
         """hasglosses sets the framed and senseid keys"""
         log.debug("ExampleDict getexample kwargs: {}".format(kwargs))
-        while not self.exampletypeok(senseid,**kwargs) and tries<n*2:
+        while not self.exampletypeok(senseid,check,**kwargs) and tries<n*2:
             # (self.hasglosses(senseid) or noglossesok or tries>n*2):
             tries+=1
             # if tries == n*2: #do this just once
