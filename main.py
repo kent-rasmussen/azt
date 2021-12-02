@@ -1549,6 +1549,7 @@ class Check():
         # order to populate it if found —before removing empty entires.
         # This also has no access to verification information, which comes only
         # from verifyT()
+        start_time=time.time()
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
         for t in self.params.cvts(): #this depends on nothing
@@ -1566,6 +1567,8 @@ class Check():
         if None in self.status: #This should never be there
             del self.status[None]
         self.storesettingsfile(setting='status')
+        log.info("Status settings refreshed from LIFT in {}s".format(
+                                                        time.time()-start_time))
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
