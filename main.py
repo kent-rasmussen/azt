@@ -5208,7 +5208,7 @@ class Check():
         self.getrunwindow()
         ps=self.slices.ps()
         profile=self.slices.profile()
-        checks=self.status.checks()
+        checks=self.status.checks(wsorted=True)
         bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
         if default == False:
             bits.append('mod')
