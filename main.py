@@ -20,8 +20,10 @@ Other levels:'WARNING','ERROR','CRITICAL'
 """
 if platform.uname().node == 'karlap':
     loglevel=6 #
+    me=True
 else:
     loglevel='DEBUG'
+    me=False
 from logsetup import *
 log=logsetup(loglevel)
 """My modules, which should log as above"""
