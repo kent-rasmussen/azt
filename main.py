@@ -7542,7 +7542,7 @@ class ToneGroupButtonFrame(ui.Frame):
         self.kwargs=kwargs
         self._var=tkinter.BooleanVar()
         super(ToneGroupButtonFrame,self).__init__(parent)
-        if self.getexample():
+        if self.getexample(**kwargs):
             self.makebuttons()
         # """Should I do this outside the class?"""
         # self.grid(column=column, row=row, sticky=sticky)
