@@ -6139,7 +6139,8 @@ class FramedDataElement(FramedData):
     recording into the form[@audiolang] node of that node."""
     def audio(self):
         if self.audiolang in self.forms:
-            return self.forms[self.audiolang]
+            self.filename=self.forms[self.audiolang]
+            return self.filename
     def audiofileisthere(self):
         # if None in [self.senseid, location]:
         if self.audio():
