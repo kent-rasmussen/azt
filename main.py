@@ -4660,8 +4660,8 @@ class Check():
                     )
                 progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
-            if titleframed.analang is None:
             titleframed=self.datadict.getframeddata(senseid,check=None)
+            if not titleframed or titleframed.forms[self.analang] is None:
                 entryframe.destroy() #is this ever needed?
                 continue
             text=titleframed.formatted(noframe=True,showtonegroup=False)
