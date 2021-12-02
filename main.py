@@ -5969,7 +5969,7 @@ class ExampleDict(dict):
                         log.info("Using next value for ‘{}’ group: ‘{}’"
                                 "".format(group, self[group]))
                 else:
-                    senseid=senseids[randint(0, len(senseids))-1]
+                    senseid=senseids[0] #randint(0, len(senseids))-1]
             elif n == 1:
                 senseid=senseids[0]
             else:
