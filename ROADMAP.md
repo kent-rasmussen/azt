@@ -16,12 +16,12 @@ Make checks for sound cards being there more frequent? If not, send to settings?
 think through commits to hg, including merge with paitence, and which files should be added automatically.
 Move things into the correct fields (def > gloss)
 <!-- updatecounts() is replaced by getscounts(), to be run after profile data is added -->
-cvt=self.params.cvt()
-check=self.params.check()
+cvt=kwargs.get('cvt',self.params.cvt())
+ps=kwargs.get('ps',self.slices.ps())
+profile=kwargs.get('profile',self.slices.profile())
+check=kwargs.get('check',self.params.check())
 checks=self.status.checks()
-ps=self.slices.ps()
-profile=self.slices.profile()
-group=self.status.group()
+group=kwargs.get('group',self.status.group())    
 groups=self.status[cvt][ps][profile][check]['groups']
 profilecounts > slices.slicepriority
 self.subchecksprioritized > status.groupstodo
