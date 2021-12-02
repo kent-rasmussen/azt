@@ -6071,7 +6071,7 @@ class FramedData(object):
                 self.setframe() #self.noframe() #Assume no frame if not explicitly applied
             toformat.appendformsbylang(self.framed,self.analang,quote=False)
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
-        return ' '.join(toformat) #put it all together
+        return ' '.join([x for x in toformat if x is not None]) #put it all together
     def glosses(self):
         g=DictbyLang()
         l=0
