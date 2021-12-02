@@ -5924,8 +5924,6 @@ class ExampleDict(dict):
             log.info("Audio file check failed for {}".format(senseid))
             return
         self._outdict['senseid']=senseid
-    def frame(self,senseid):
-        return self.datadict.getframeddata(senseid)
     def getexample(self,group,**kwargs):
         # exampletype(**kwargs) #needed?
         # wglosses=False,wsoundfile=False): #truncdefn=False, notonegroup=True,
