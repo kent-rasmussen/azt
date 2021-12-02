@@ -5350,7 +5350,7 @@ class Check():
                     e1=xlp.Example(s1,id,heading=headtext)
                     for senseid in toreport[group]:
                         #This is for window/text output only, not in XLP file
-                        framed=self.datadict.getframeddata(senseid)
+                        framed=self.datadict.getframeddata(senseid,check=None)
                         text=framed.formatted(noframe=True,showtonegroup=False)
                         #This is put in XLP file:
                         examples=self.db.get('example',location=location,
@@ -5364,7 +5364,7 @@ class Check():
             else:
                 for senseid in toreport[group]: #groups[group]['senseids']:
                     #This is for window/text output only, not in XLP file
-                    framed=self.datadict.getframeddata(senseid)
+                    framed=self.datadict.getframeddata(senseid,check=None)
                     text=framed.formatted(noframe=True, showtonegroup=False)
                     #This is put in XLP file:
                     examples=self.db.get('example',senseid=senseid).get()
