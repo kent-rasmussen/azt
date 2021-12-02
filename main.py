@@ -7489,7 +7489,7 @@ class ToneGroupButtonFrame(ui.Frame):
         # del self[self.group]
         self.kwargs['renew']=True
         self.kwargs['alwaysrefreshable']=True
-        self.getexample(renew=True)
+        self.getexample(**self.kwargs)
         self.again()
     def refreshbutton(self):
         tinyfontkwargs=self.buttonkwargs()
