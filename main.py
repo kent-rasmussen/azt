@@ -5910,11 +5910,11 @@ class ExampleDict(dict):
         else:
             self._outdict['audiofileisthere']=False
         return self._outdict['audiofileisthere']
-    def exampletypeok(self,senseid,**kwargs):
+    def exampletypeok(self,senseid,check,**kwargs):
         kwargs=exampletype(**kwargs)
         if senseid is None:
             return
-        framed=self.frame(senseid)
+        framed=self.datadict.getframeddata(senseid=senseid,check=check)
         log.info("exampletypeok framed: {}".format(framed))
         # framed=self.datadict.getframeddata(senseid)
         if kwargs['wglosses'] and not self.hasglosses(framed):
