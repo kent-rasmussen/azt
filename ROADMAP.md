@@ -1,6 +1,8 @@
 #Roadmap
 Sound files aren't being picked up correctly. Clear logging to make it more readable, then find out if fileisthere is the problem, or makefilenames, or what.
 
+bring some more ui stuff into ui_tkinter.py
+
 At this point, this is just a bunch of random notes on stuff I need to follow up on:
 add python3 -m pip install mercurial to docs
   include toneframes and syllable profile settings.
