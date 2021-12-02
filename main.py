@@ -5879,9 +5879,10 @@ class DictbyLang(dict):
         super(DictbyLang, self).__init__()
         self.framed={}
 class ExampleDict(dict):
-    def senseidsinslicegroup(self,group):
+    """This function finds examples in the lexicon for a given tone value,
+    in a given tone frame (from check); thus, only sorted data."""
+    def senseidsinslicegroup(self,group,check):
         #This returns all the senseids with a given tone value
-        check=self.params.check()
         senseids=self.db.get("sense", location=check, path=['tonefield'],
                             tonevalue=group
                             ).get('senseid')
