@@ -5959,8 +5959,6 @@ class ExampleDict(dict):
                                 "".format(group, self[group]))
                         senseid=self[group]
                     else:
-                        log.info("Using next value for ‘{}’ group: ‘{}’"
-                                "".format(group, self[group]))
                         i=senseids.index(self[group])
                         if i == len(senseids)-1: #loop back on last
                             senseid=senseids[0]
