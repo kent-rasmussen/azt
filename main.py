@@ -7429,7 +7429,6 @@ class ToneGroupButtonFrame(ui.Frame):
             log.error("Apparently the framed example for tone group {} in "
                         "frame {} came back {}".format(group,check,example))
             return
-        framed.setframe(self.check.params.check())
         self._senseid=example['senseid']
         if framed.audiofileisthere():
             self._filenameURL=framed.filenameURL
