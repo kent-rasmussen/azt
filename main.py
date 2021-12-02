@@ -8242,7 +8242,8 @@ class StatusDict(dict):
     def cull(self):
         """This iterates across the whole dictionary, and removes empty nodes.
         Only do this when you're cleaning up, not about to start new work."""
-        for t in self:
+        ts=list(self)
+        for t in ts:
             pss=list(self[t])
             for ps in pss:
                 profiles=list(self[t][ps]) #actual, not theoretical
@@ -8254,11 +8255,11 @@ class StatusDict(dict):
                             if node['done'] != []:
                                 log.error("groups verified, but not present!")
                             del self[t][ps][profile][check]
-                    if profile == {}:
+                    if self[t][ps][profile] == {}:
                         del self[t][ps][profile]
-                if ps == {}:
+                if self[t][ps] == {}:
                     del self[t][ps]
-            if t == {}:
+            if self[t] == {}:
                 del self[t]
     """The following four methods address where to find what in this dict"""
     def updatechecksbycvt(self):
