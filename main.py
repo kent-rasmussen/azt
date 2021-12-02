@@ -2448,9 +2448,7 @@ class Check():
                             cmd=cmd)
             bc.grid(row=row,column=1)
             row+=1
-        filename="test_{}_{}.wav".format(self.settings.fs, #soundsettings?
-                                    self.settings.sample_format)
-        br=RecordButtonFrame(self.soundsettingswindow.frame,self,filename)
+        br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
         br.grid(row=row,column=0)
         row+=1
         l=_("You may need to change your microphone "
@@ -7397,6 +7395,15 @@ class RecordButtonFrame(ui.Frame):
         self.filenameURL=filenames[1]
         # self.filename=self.makefilenames()
         # self.filenameURL=str(file.getdiredurl(check.audiodir,self.filename))
+        elif kwargs.get('test',None):
+            self.filename=self.filenameURL="test_{}_{}.wav".format(
+                                        self.settings.fs, #soundsettings?
+                                        self.settings.sample_format)
+        else:
+            t="No framed value, nor testing; can't continue..."
+            log.error(t)
+            Label(self,text=t,borderwidth=1,font='default',
+                    relief='raised').grid(row=0,column=0)
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
