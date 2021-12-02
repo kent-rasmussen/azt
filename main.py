@@ -6257,6 +6257,7 @@ class FramedDataElement(FramedData):
         self.senseid=senseid
         self.parseelement(node) #example element, not sense or entry:
         self.applynoframe() #because we want self.framed=self.forms
+        self.makeaudiofilename() #generate self.filename and self.filenameURL
         """This is what we're pulling from:
         <example>
             <form lang="gnd"><text>ga təv</text></form>
