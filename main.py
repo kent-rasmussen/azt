@@ -6247,7 +6247,7 @@ class FramedDataElement(FramedData):
                     if (ii.tag == 'form'):
                         self.forms.getformfromnode(ii) #glosses
             elif ((i.tag == 'field') and (i.get('type') == 'tone')):
-                self.tonegroups=i.findall('form/text') #always be list of one
+                self.tonegroups=[j.text for j in i.findall('form/text')] #always be list of one
     def __init__(self, parent, node, senseid=None, **kwargs):
         super(FramedDataElement, self).__init__(parent)
         if not isinstance(node,lift.ET.Element):
