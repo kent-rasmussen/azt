@@ -1552,7 +1552,7 @@ class Check():
         start_time=time.time()
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
-        for t in self.params.cvts(): #this depends on nothing
+        for t in [i for i in self.params.cvts() if i in self.status]: #this depends on nothing
             for ps in pss:
                 profiles=self.slices.profiles(ps=ps) #This depends on ps only
                 for p in profiles:
