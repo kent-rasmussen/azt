@@ -7535,7 +7535,7 @@ class ToneGroupButtonFrame(ui.Frame):
         # kwargs['sticky']=kwargs.pop('sticky',"ew")
         self.unbuttonargs=['renew','canary','labelizeonselect',
                             'label','playable','unsortable',
-                            'alwaysrefreshable',
+                            'alwaysrefreshable','wsoundfile',
                             'showtonegroup']
         for arg in self.unbuttonargs:
             kwargs[arg]=kwargs.pop(arg,False)
