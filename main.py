@@ -5907,9 +5907,9 @@ class ExampleDict(dict):
     def hassoundfile(self,framed):
         if framed.audiofileisthere():
             self._outdict['audiofileisthere']=True
+            return True
         else:
             self._outdict['audiofileisthere']=False
-        return self._outdict['audiofileisthere']
     def exampletypeok(self,senseid,check,**kwargs):
         kwargs=exampletype(**kwargs)
         if senseid is None:
