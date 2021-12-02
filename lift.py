@@ -132,7 +132,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 log.debug("Calling LiftURL with {}".format(kwargs))
             self.urls[k]=LiftURL(base=node,**kwargs) #needs base and target to be sensible; attribute?
         else:
-            log.info("URL key found, using: {} ({})".format(k,self.urls[k].url))
+            log.log(4,"URL key found: {} ({})".format(k,self.urls[k].url))
             if self.urls[k].base == node:
                 log.log(4,"Same base {}, moving on.".format(node))
             else:
