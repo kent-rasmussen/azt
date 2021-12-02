@@ -6082,7 +6082,7 @@ class FramedData(object):
                 g[lang]=self.forms[lang]
                 if g[lang] is not None:
                     l+=len(g[lang])
-        if l >0:
+        if l:
             return g
     def applynoframe(self):
         self.framed=self.forms
