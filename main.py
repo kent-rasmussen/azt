@@ -8150,8 +8150,9 @@ class StatusDict(dict):
             self.tosort(False)
             log.info("Tosort now {} (marksenseidsorted)".format(self.tosort()))
     def marksenseidtosort(self,senseid):
+        if not self._idstosort:
+            self.tosort(True)
         self._idstosort.append(senseid)
-        self.tosort(True)
         log.info("Tosort now {} (marksenseidtosort)".format(self.tosort()))
         if senseid in self._idssorted:
             self._idssorted.remove(senseid)
