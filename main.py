@@ -8010,7 +8010,7 @@ class StatusDict(dict):
         if check is None:
             check=self._checkparameters.check()
         for senseid in self._examplesbygroup.senseidsinslicegroup(group,check):
-            framed=self._examplesbygroup.datadict.getframeddata(senseid=senseid, 
+            framed=self._examplesbygroup.datadict.getframeddata(senseid=senseid,
                                                                     check=check)
             if not framed.audiofileisthere():
                 return True
