@@ -5341,7 +5341,9 @@ class Check():
             output(window,r,sectitle)
             l=list()
             for x in groupvalues[group]:
-                l.append("{}: {}".format(x,', '.join(groupvalues[group][x])))
+                l.append("{}: {}".format(x,', '.join(
+                            [i for i in groupvalues[group][x] if i is not None]
+                        )))
             text=_('Values by frame: {}'.format('\t'.join(l)))
             p1=xlp.Paragraph(s1,text)
             output(window,r,text)
@@ -5349,8 +5351,9 @@ class Check():
                 textout=list()
                 for location in groupvalues[group]: #locations:
                     id=rx.id('x'+sectitle+location)
-                    headtext='{}: {}'.format(location,', '.join(groupvalues[
-                                                            group][location]))
+                    headtext='{}: {}'.format(location,', '.join(
+                    [i for i in groupvalues[group][location] if i is not None]
+                                            ))
                     e1=xlp.Example(s1,id,heading=headtext)
                     for senseid in toreport[group]:
                         #This is for window/text output only, not in XLP file
