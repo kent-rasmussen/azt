@@ -6254,6 +6254,7 @@ class FramedDataElement(FramedData):
             log.error("You should pass an element ({}) to FramedDataExample!"
                         "".format(type(node)))
             return
+        self.senseid=senseid
         self.parseelement(node) #example element, not sense or entry:
         self.applynoframe() #because we want self.framed=self.forms
         """This is what we're pulling from:
