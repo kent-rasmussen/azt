@@ -7991,8 +7991,10 @@ class StatusDict(dict):
             if (check not in self[cvt][ps][profile] or
                     self[cvt][ps][profile][check]['tosort'] == True):
                 return True
-    def grouptorecord(self,group):
-        for senseid in self._examplesbygroup.senseidsinslicegroup():
+    def grouptorecord(self,group,check=None):
+        if check is None:
+            check=self._checkparameters.check()
+        for senseid in self._examplesbygroup.senseidsinslicegroup(group,check):
             framed=self._examplesbygroup.frame(senseid)
             if not framed.audiofileisthere():
                 return True
