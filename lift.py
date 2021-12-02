@@ -1114,7 +1114,7 @@ class LiftURL():
             self.kwargs['formtext']=None
             self.form(lang='glosslang')
     def tonefield(self):
-        log.info("Making tone field")
+        log.log(4,"Making tone field")
         self.baselevel()
         self.kwargs['ftype']='tone'
         self.level['tonefield']=self.level['cur']+1 #so this won't repeat
