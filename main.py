@@ -4589,7 +4589,6 @@ class Check():
         naming schemes, on this next line. Note that we don't get here, if
         there is such a sound file, so this just impacts nodes without
         recordings."""
-        self.db.addmediafields(node,filename,self.audiolang)
         return filename, filenameURL
     def filenameoptions(self,node,senseid,form,gloss):
         ps=self.slices.ps()
@@ -7369,6 +7368,8 @@ class RecordButtonFrame(ui.Frame):
         self.r.bind('<ButtonRelease>', self._redo)
     def function(self):
         pass
+    def addlink(self):
+        check.db.addmediafields(self.node,self.filename,self.audiolang)
     def __init__(self,parent,check,framed=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
