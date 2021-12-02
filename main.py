@@ -6107,6 +6107,7 @@ class FramedDataSense(FramedData):
             self.framed=self.forms.framed
             log.info("setframe framed: {}".format(self.forms.framed))
         else:
+            log.info("setframe setting no frame")
             self.applynoframe() #enforce the docstring above
         self.tonegroups=self.db.get('example/tonefield/form/text',
                     senseid=self.senseid, location=frame).get('text')
@@ -6128,6 +6129,7 @@ class FramedDataSense(FramedData):
                         "({}) to FramedDataSense!".format(source,type(source)))
             return
         self.parsesense(self.db,senseid)
+        self.setframe(check)
         log.info("FramedDataSense initalization done, with forms {}"
                     "".format(self.forms))
 class FramedDataElement(FramedData):
