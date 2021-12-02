@@ -7484,8 +7484,9 @@ class ToneGroupButtonFrame(ui.Frame):
         bt=ToolTip(b,_("Pick this Group"))
     def refresh(self):
         # if renew is True:
-        log.info("Resetting tone group example ({}): {} of {} examples"
-                "".format(self.group,self.exs[self.group],self._n))
+        log.info("Resetting tone group example ({}): {} of {} examples with "
+                "kwargs: {}".format(self.group,self.exs[self.group],self._n,
+                                                                self.kwargs))
         # del self[self.group]
         self.kwargs['renew']=True
         self.kwargs['alwaysrefreshable']=True
