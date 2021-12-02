@@ -6147,9 +6147,6 @@ class FramedDataElement(FramedData):
             if file.exists(self.filenameURL):
                 log.info("audiofileisthere: {} ({})".format(filenameURL))
                 return True
-    def parseelement(self,element):
-        # self.senseid=None #We don't have access to this here
-        for i in element: # Example, lc, lx, pl, and imp
     def makeaudiofilename(self):
         self.audio()
         if self.audiofileisthere():
@@ -6238,6 +6235,9 @@ class FramedDataElement(FramedData):
                         wavfilename=rx.urlok(wavfilename) #one character check
                         filenames+=[wavfilename+'.wav']
         return filenames
+    def parseelement(self,node):
+        self.node=node #We don't have access to this here
+        for i in node: # Example, lc, lx, pl, and imp
             if i.tag == 'form': #language forms, not glosses, etc, below.
                 self.forms.getformfromnode(i)
             elif (((i.tag == 'translation') and
