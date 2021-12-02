@@ -6250,11 +6250,11 @@ class FramedDataElement(FramedData):
                 self.tonegroups=i.findall('form/text') #always be list of one
     def __init__(self, parent, node, senseid=None, **kwargs):
         super(FramedDataElement, self).__init__(parent)
-        if not isinstance(source,lift.ET.Element):
+        if not isinstance(node,lift.ET.Element):
             log.error("You should pass an element ({}) to FramedDataExample!"
-                        "".format(type(source)))
+                        "".format(type(node)))
             return
-        self.parseelement(source) #example element, not sense or entry:
+        self.parseelement(node) #example element, not sense or entry:
         self.applynoframe() #because we want self.framed=self.forms
         """This is what we're pulling from:
         <example>
