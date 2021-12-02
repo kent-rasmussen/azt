@@ -7539,6 +7539,8 @@ class ToneGroupButtonFrame(ui.Frame):
                             'showtonegroup']
         for arg in self.unbuttonargs:
             kwargs[arg]=kwargs.pop(arg,False)
+        if kwargs['playable']:
+            kwargs['wsoundfile']=True
         self.kwargs=kwargs
         self._var=tkinter.BooleanVar()
         super(ToneGroupButtonFrame,self).__init__(parent)
