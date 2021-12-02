@@ -5929,9 +5929,8 @@ class ExampleDict(dict):
     def getexample(self,group,**kwargs):
         # exampletype(**kwargs) #needed?
         # wglosses=False,wsoundfile=False): #truncdefn=False, notonegroup=True,
-        """This function finds examples in the lexicon for a given tone value,
-        in a given tone frame (from check)"""
-        senseids=self.senseidsinslicegroup(group)
+        check=self.params.check()
+        senseids=self.senseidsinslicegroup(group,check)
         if not senseids:
             log.error("There don't seem to be any sensids in this "
                     "check-tonegroup-slice, so I can't get you an example.")
