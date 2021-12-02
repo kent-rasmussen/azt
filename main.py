@@ -6000,7 +6000,7 @@ class FramedDataDict(dict):
             log.debug("source {} already there, using...".format(source))
             self[source].updatelangs() #maybe it has been awhile...
             return self[source]
-    def getframeddata(self, source=None, **kwargs):
+    def getframeddata(self, source=None, senseid=None, check=None, **kwargs):
         """If this is going to feed a recording (i.e., sound file),
         including the senseid is a good idea, even if not otherwise required."""
         self.updatelangs()
@@ -6015,12 +6015,10 @@ class FramedDataDict(dict):
         """If neither or None is given, try to build it from kwargs"""
         if not source or (not sense and not element):
             """If these aren't there, these will correctly fail w/KeyError."""
-            senseid=kwargs['senseid']
-            location=kwargs.get('check',kwargs.get('location'))
             source=firstoflist(self.db.get('example',
                                             showurl=True,
                                             senseid=senseid,
-                                            location=location
+                                            location=check
                                             ).get('node'))
             element=True
         log.info("sense: {}, element: {} (after build)".format(sense,element))
