@@ -6027,10 +6027,12 @@ class FramedDataDict(dict):
         d=self.isthere(source)
         if source and not d:
             log.debug("source {} not there, making...".format(source))
+            """certain limited cases have sense w/o check (like page titles)
+            or element without senseid (like when not recording)"""
             if sense:
-                d=self[source]=FramedDataSense(self,source,**kwargs)
+                d=self[source]=FramedDataSense(self,source,check,**kwargs)
             if element:
-                d=self[source]=FramedDataElement(self,source,**kwargs)
+                d=self[source]=FramedDataElement(self,source,senseid,**kwargs)
         return d #self[source]
     def __init__(self, check, **kwargs):
         super(FramedDataDict, self).__init__()
