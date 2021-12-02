@@ -4517,15 +4517,7 @@ class Check():
                 t+="!"
             t+='’'
         lxl=Label(parent, text=t)
-        filenames=makefilenames(self,
-                                senseid=sense['senseid'],
-                                node=sense['nodetoshow']
-                                ) #include the above?
-        lcb=RecordButtonFrame(parent,self,filenames,
-                                        # id=sense['guid'], #reconfigure!
-                                        # framed=framed,node=sense['nodetoshow'],
-                                        # gloss=sense['gloss']
-                                        )
+        lcb=RecordButtonFrame(parent,self,framed)
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def showentryformstorecordpage(self,ps=None,profile=None):
@@ -4687,21 +4679,18 @@ class Check():
                     lift.examplehaslangform(example,self.audiolang) == True):
                     continue
                 """These should already be framed!"""
-                framed=self.datadict.getframeddata(example)
+                framed=self.datadict.getframeddata(example,senseid=senseid)
+                if not framed:
+                    exit()
                 if framed.forms[self.analang] is None: # when?
                     continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
                 text=framed.formatted()
-                filenames=self.makefilenames(
-                                senseid=senseid,
-                                node=example)
-                rb=RecordButtonFrame(examplesframe,self,filenames,
-                                    # id=senseid,node=example,
-                                    # form=nn(framed.forms[self.analang]),
-                                    # gloss=nn(framed.forms[self.glosslang])
-                                    ) #no gloss2; form/gloss just for filename
+                if not framed:
+                    exit()
+                rb=RecordButtonFrame(examplesframe,self,framed)
                 rb.grid(row=row,column=0,sticky='w')
                 Label(examplesframe, anchor='w',text=text
                                         ).grid(row=row, column=1, sticky='w')
