@@ -4313,46 +4313,55 @@ class Check():
                 break
         self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
         self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
-    def updatesortingstatus(self):
+    def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses, as well as sorted and verified groups.
         So don't iterate over it. Instead, use checkforsenseidstosort to just
         confirm tosort status"""
         """To get this from the object, use status.tosort(), todo() or done()"""
-        check=self.params.check()
-        senseids=self.slices.senseids()
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        senseids=self.slices.senseids(ps=ps,profile=profile)
         self.status.renewsenseidstosort([],[]) #will repopulate
         groups=[]
         for senseid in senseids:
-            v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
-                                location=check,showurl=True).get('text'))
-            log.info("Found tone value (updatesortingstatus): {} ({})".format(v,type(v)))
+            v=unlist(self.db.get("example/tonefield/form/text",
+                                senseid=senseid,
+                                location=check
+                                ).get('text'))
+            log.log(4,"Found tone value (updatesortingstatus): {} ({})"
+                        "".format(v, type(v)))
             if v in ['','None',None]: #unlist() returns strings
-                log.info("Marking senseid {} tosort (v: {})".format(senseid,v))
+                log.log(4,"Marking senseid {} tosort (v: {})".format(senseid,v))
                 self.status.marksenseidtosort(senseid)
             else:
-                log.info("Marking senseid {} sorted (v: {})".format(senseid,v))
+                log.log(4,"Marking senseid {} sorted (v: {})".format(senseid,v))
                 self.status.marksenseidsorted(senseid)
                 groups.append(v)
         """update 'tosort' status"""
         if len(self.status.senseidstosort()) >0:
-            log.info("updatesortingstatus shows senseidstosort remaining")
+            log.log(4,"updatesortingstatus shows senseidstosort remaining")
             vts=True
         else:
-            log.info("updatesortingstatus shows no senseidstosort remaining")
+            log.log(4,"updatesortingstatus shows no senseidstosort remaining")
             vts=False
-        self.status.tosort(vts)
+        self.status.tosort(vts,**kwargs)
         """update status groups"""
         sorted=list(dict.fromkeys(groups))
-        self.status.verified(sorted)
+        self.status.verified(sorted,**kwargs)
         verified=self.status.verified() #read
         for v in verified:
             if v not in groups:
                 log.error("Removing verified group {} not in actual groups: {}!"
                             "".format(v, groups))
                 verified.remove(v)
-        self.status.verified(verified) #set
-        self.storesettingsfile(setting='status')
+        self.status.verified(verified,**kwargs) #set
+        log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
+                "tosort: {}".format(kwargs,sorted,verified,vts))
+        if store:
+            self.storesettingsfile(setting='status')
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
         """This is currently called in iteration, but doesn't refresh groups,
         so it probably isn't useful anymore."""
