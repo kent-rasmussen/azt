@@ -195,7 +195,7 @@ class SoundSettings(object):
         self.sethypothetical()
         self.getactual()
         self.defaults() #pick best of actuals
-        self.printactuals()
+        # self.printactuals()
         self.chunk=1024
         self.channels=1 #Always record in mono
 class SoundFilePlayer(object):
