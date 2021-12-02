@@ -9164,7 +9164,8 @@ def mainproblem():
                 justify='left',
                 font=defaultfont)
     o.grid(row=3,column=0)
-    o.bind("<Button-1>", lambda e: openweburl(eurl))
+    if not me:
+        o.bind("<Button-1>", lambda e: openweburl(eurl))
     errorroot.mainloop()
     # errorroot.wait_window(errorroot)
     sys.exit()
