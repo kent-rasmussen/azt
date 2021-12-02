@@ -7333,7 +7333,6 @@ class RecordButtonFrame(ui.Frame):
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.db=check.db
-        framed=kwargs.pop('framed',None) #Either this or the next two...
         self.id=id
         self.check=check
         try:
