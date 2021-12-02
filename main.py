@@ -9026,11 +9026,11 @@ def findhg():
     program['hg']=hg
 def praatopen(file,event=None):
     if program['praatisthere']:
-        log.info(_("Trying to call Praat at {}...").format(praat))
+        log.info(_("Trying to call Praat at {}...").format(program['praat']))
     else:
         log.info(_("Looks like I couln't find Praat..."))
     #This should use the actual executable found earlier...
-    praatargs=[praat, "--open", file]
+    praatargs=[program['praat'], "--open", file]
     try:
         subprocess.Popen(praatargs,shell=False) #not run; continue here
     except Exception as e:
