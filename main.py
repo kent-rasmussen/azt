@@ -6118,16 +6118,16 @@ class FramedDataSense(FramedData):
         self.forms.update(db.glossesordefns(senseid=senseid))
         for f in self.forms:
             self.forms[f]=unlist(self.forms[f])
-    def __init__(self, parent, source, **kwargs):
+    def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
         self.frames=parent.frames #needed for set frame
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
-        if not self.db.get('sense', senseid=self.senseid).get():
+        if not self.db.get('sense', senseid=senseid).get():
             log.error("You should pass a senseid from your database {} "
                         "({}) to FramedDataSense!".format(source,type(source)))
             return
-        self.parsesense(self.db,source)
+        self.parsesense(self.db,senseid)
         log.info("FramedDataSense initalization done, with forms {}"
                     "".format(self.forms))
 class FramedDataElement(FramedData):
