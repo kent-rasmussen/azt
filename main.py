@@ -6068,7 +6068,7 @@ class FramedData(object):
     def glosses(self):
         g=DictbyLang()
         l=0
-        log.info("self.glosslangs: {}; self.forms: {}".format(self.glosslangs,
+        log.log(4,"self.glosslangs: {}; self.forms: {}".format(self.glosslangs,
                     self.forms))
         for lang in self.glosslangs:
             if lang in self.forms:
