@@ -6142,11 +6142,12 @@ class FramedDataElement(FramedData):
             self.filename=self.forms[self.audiolang]
             return self.filename
     def audiofileisthere(self):
-        # if None in [self.senseid, location]:
-        if self.audio():
-            self.filenameURL=str(file.getdiredurl(self.audiodir,self.audio()))
+        """This tests the presence of the sound file, which is referred to
+        in the LIFT node, assuming there is one."""
+        if hasattr(self,'filename'):
+            self.filenameURL=str(file.getdiredurl(self.audiodir,self.filename))
             if file.exists(self.filenameURL):
-                log.info("audiofileisthere: {} ({})".format(filenameURL))
+                log.info("audiofileisthere: {}".format(self.filenameURL))
                 return True
     def makeaudiofilename(self):
         self.audio()
