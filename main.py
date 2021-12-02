@@ -7492,13 +7492,13 @@ class ToneGroupButtonFrame(ui.Frame):
         self.getexample(renew=True)
         self.again()
     def refreshbutton(self):
-        kwargs=self.buttonkwargs()
-        del kwargs['font'] #=True
+        tinyfontkwargs=self.buttonkwargs()
+        del tinyfontkwargs['font'] #so it will fit in the circle
         bc=Button(self, image=self.parent.photo['change'], #🔃 not in tck
                         cmd=self.refresh,
                         text=str(self._n),
                         compound='center',
-                        **kwargs)
+                        **tinyfontkwargs)
         bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
         bct=ToolTip(bc,_("Change example word"))
     def unsortbutton(self):
