@@ -7369,7 +7369,8 @@ class RecordButtonFrame(ui.Frame):
         self.r.bind('<ButtonRelease>', self._redo)
     def function(self):
         pass
-    def __init__(self,parent,check,filenames,**kwargs):
+    def __init__(self,parent,check,framed=None,**kwargs): #filenames
+        """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
         provided. The LIFT link to that sound file should already be there."""
         # This class needs to be cleanup after closing, with check.donewpyaudio()
@@ -7390,11 +7391,11 @@ class RecordButtonFrame(ui.Frame):
         self.settings=check.soundsettings
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
-        self.audiolang=check.audiolang
-        self.filename=filenames[0]
-        self.filenameURL=filenames[1]
-        # self.filename=self.makefilenames()
-        # self.filenameURL=str(file.getdiredurl(check.audiodir,self.filename))
+        if framed is not None:
+            self.audiolang=framed.audiolang
+            self.filename=framed.filename
+            self.filenameURL=framed.filenameURL
+            self.node=framed.node
         elif kwargs.get('test',None):
             self.filename=self.filenameURL="test_{}_{}.wav".format(
                                         self.settings.fs, #soundsettings?
