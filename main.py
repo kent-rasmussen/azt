@@ -8719,6 +8719,7 @@ def unlist(l,ignore=[None]):
     if l and isinstance(l[0],lift.ET.Element):
          log.error("unlist should only be used on text (not node) lists ({})"
                     "".format(l))
+         log.error("Element[0] text: {}".format(l[0].text))
          return
     return firstoflist(l,all=True,ignore=ignore)
 def firstoflist(l,othersOK=False,all=False,ignore=[None]):
