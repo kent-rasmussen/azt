@@ -1554,13 +1554,13 @@ class Check():
         for t in self.params.cvts(): #this depends on nothing
             for ps in pss:
                 profiles=self.slices.profiles(ps=ps) #This depends on ps only
-                for profile in profiles:
+                for p in profiles:
                     checks=self.status.checks()
                     for c in checks:
-                        self.status.build(t,ps,profile,c)
+                        self.status.build(cvt=t, ps=ps, profile=p, check=c)
                         """this just populates groups and the tosort boolean."""
-                        self.updatesortingstatus(cvt=t, ps=ps, profile=profile,
-                                                                    check=check)
+                        self.updatesortingstatus(cvt=t,ps=ps,profile=p,check=c,
+                                                store=False) #do below
         """Now remove what didn't get data"""
         self.status.cull()
         if None in self.status: #This should never be there
