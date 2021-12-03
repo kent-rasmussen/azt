@@ -8047,7 +8047,9 @@ class StatusDict(dict):
         ps=self._slicedict.ps()
         # self.makeprofileok()
         profiles=self.profiles(**kwargs)
-        self.isprofileok(**kwargs)
+        if not profiles:
+            log.error("There are no such profiles! kwargs: {}".format(kwargs))
+            return
         """"TypeError: string indices must be integers"""
         profile=self._slicedict.profile()
         nextprofile=profiles[0]
@@ -8061,8 +8063,7 @@ class StatusDict(dict):
         check=self._checkparameters.check()
         checks=self.checks(**kwargs)
         if not checks:
-            log.error("There are no such checks! tosort: {}; wsorted: {}"
-                        "".format(tosort,wsorted))
+            log.error("There are no such checks! kwargs: {}".format(kwargs))
             return
         nextcheck=checks[0] #default
         if check in checks:
@@ -8075,8 +8076,7 @@ class StatusDict(dict):
         group=self.group()
         groups=self.groups(**kwargs)
         if not groups:
-            log.error("There are no such groups! kwargs: {}"
-                        "".format(kwargs))
+            log.error("There are no such groups! kwargs: {}".format(kwargs))
             return
         nextgroup=groups[0] #default
         if group in groups:
