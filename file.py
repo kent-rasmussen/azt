@@ -128,16 +128,21 @@ def writeinterfacelangtofile(lang):
 def getfilename():
     try:
         import lift_url
-        if exists(lift_url.filename): #tests if file exists at url
-            log.debug("lift_url.py imported fine, and url points to a file.")
-            return lift_url.filename
-        else:
-            log.debug("lift_url imported, but didn't contain a url that points "
-                        "to a file: {}".format(str(lift_url.filename)))
-            return lift()
     except:
-        log.debug("lift_url didn't import")
+        log.debug("getfilename lift_url didn't import")
         return lift()
+    if (hasattr(lift_url,'filename') and
+            lift_url.filename != () and
+            exists(lift_url.filename)):
+        log.debug("lift_url.py imported fine, and url points to a file.")
+        return lift_url.filename
+    else:
+        log.debug("lift_url imported, but didn't contain a url that points "
+                    "to a file: {}".format(dir(lift_url)))
+        if lift_url.filenames:
+            return lift_url.filenames
+        else:
+            return lift()
 def gethome():
     home=pathlib.Path.home()
     if platform.uname().node == 'karlap':
