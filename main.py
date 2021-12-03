@@ -2902,7 +2902,7 @@ class Check():
         log.info("Getting the check name...")
         checks=self.status.checks(tosort=tosort,wsorted=wsorted)
         window=Window(self.frame,title='Select Check')
-        if checks == []:
+        if not checks:
             if self.params.cvt() == 'T':
                 btext=_("Define a New Tone Frame")
                 text=_("You don't seem to have any tone frames set up.\n"
@@ -4512,7 +4512,7 @@ class Check():
         log.info("Running check...")
         i=0
         ps=self.slices.ps()
-        if ps is None:
+        if not ps:
             self.getps()
         group=self.status.group()
         if None in [self.analang, ps, group]:
@@ -4521,7 +4521,7 @@ class Check():
         cvt=self.params.cvt()
         check=self.params.check()
         profile=self.slices.profile()
-        if profile is None:
+        if not profile:
             self.getprofile()
         if check not in self.status.checks(wsorted=True):
             exit=self.getcheck()
