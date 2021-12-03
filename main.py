@@ -5038,6 +5038,8 @@ class Check():
             self.runwindow.destroy()
         def refreshgroups():
             senseidsbygroup=self.getsenseidsbytoneUFgroups()
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
         self.getrunwindow()
         title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
                                                         ps,profile))
