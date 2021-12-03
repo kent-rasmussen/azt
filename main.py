@@ -2943,7 +2943,7 @@ class Check():
             buttonFrame1.grid(column=0, row=4)
             buttonFrame1.wait_window(window)
         """Make sure we got a value"""
-        if not self.status.ischeckok():
+        if self.params.check() not in checks:
             return 1
     def getexamplespergrouptorecord(self):
         log.info("this sets the number of examples per group to record")
@@ -3843,7 +3843,7 @@ class Check():
         check=self.params.check()
         log.info("Reverifying a framed tone group, at user request: {}-{}"
                     "".format(check,group))
-        if not self.status.ischeckok():
+        if check not in self.status.checks(wsorted=True):
             self.getcheck() #guess=True
         done=self.status.verified()
         if group not in done:
@@ -4523,7 +4523,7 @@ class Check():
         profile=self.slices.profile()
         if profile is None:
             self.getprofile()
-        if not self.status.ischeckok():
+        if check not in self.status.checks(wsorted=True):
             exit=self.getcheck()
             if exit:
                 self.runcheck()
