@@ -195,7 +195,7 @@ class Check():
             t=time.time()-self.start_time
             log.info("Starting profile analysis at {}".format(t))
             self.getprofiles() #creates self.profilesbysense nested dicts
-            for var in ['rx','profilesbysense','profilecounts']:
+            for var in ['rx','profilesbysense']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
             self.storesettingsfile(setting='profiledata')
             e=time.time()-self.start_time
