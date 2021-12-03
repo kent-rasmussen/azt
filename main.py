@@ -95,10 +95,14 @@ class Check():
         self.parent=parent #should be mainapplication frame
         self.frame=frame
         inherit(self)
-        self.filename=file.getfilename()
-        if not file.exists(self.filename):
+        self.filenames=file.getfilename()
+        if type(self.filenames) is list:
+            self.askwhichlift()
+        else:
+            self.filename=self.filenames
+        if not self.filename or not file.exists(self.filename):
             log.error("Didn't select a lexical database to check; exiting.")
-            return
+            exit()
         filedir=file.getfilenamedir(self.filename)
         """We need this variable to make filenames for files that will be
         imported as python modules. To do that, they need to not have periods
