@@ -1809,7 +1809,11 @@ class Check():
             self.profilesbysense[ps][profile]=[]
     def addtoprofilesbysense(self,senseid,ps=None,profile=None):
         if ps is None:
-            ps=self.slices.ps()
+            if hasattr(self,'slices'):
+                ps=self.slices.ps()
+            else:
+                log.error("You didn't specifiy ps, but don't have slices yet!")
+                return
         self.addpstoprofileswdata(ps=ps)
         if profile is None:
             profile=self.slices.profile()
@@ -1870,21 +1874,18 @@ class Check():
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
                                             profile))
         #Convert to iterate over local variables
-        self.makeadhocgroupsdict() #if no file, before iterating over variable
         """Do I want this? better to keep the adhoc groups separate"""
-        adhoc=self.slices.adhoc()
-        for ps in adhoc:
-            for a in adhoc[ps]:
-                log.debug("Adding {} to {} ps-profile: {}".format(a,ps,
-                                            self.adhocgroups[ps][a]))
-                self.addpstoprofileswdata(ps=ps) #in case the ps isn't already there
-                #copy over stored values:
-                self.profilesbysense[ps][a]=adhoc[ps][a]
-                log.debug("resulting profilesbysense: {}".format(
-                                        self.profilesbysense[ps][a]))
-        self.slices.updateslices()
-        self.getscounts() #after getprofileofsense
-        # print('Done:',time.time()-self.start_time)
+        """We will *never* have slices set up by this time; read from file."""
+        if hasattr(self,'adhocgroups'):
+            for ps in self.adhocgroups:
+                for a in self.adhocgroups[ps]:
+                    log.debug("Adding {} to {} ps-profile: {}".format(a,ps,
+                                                self.adhocgroups[ps][a]))
+                    self.addpstoprofileswdata(ps=ps) #in case the ps isn't already there
+                    #copy over stored values:
+                    self.profilesbysense[ps][a]=adhoc[ps][a]
+                    log.debug("resulting profilesbysense: {}".format(
+                                            self.profilesbysense[ps][a]))
         if self.debug==True:
             for ps in self.profilesbysense:
                 for profile in self.profilesbysense[ps]:
