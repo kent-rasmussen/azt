@@ -9179,6 +9179,8 @@ def mainproblem():
         program['root'].winfo_exists()
         log.info("Root there!")
         errorroot = program['root'] #tkinter.Toplevel(program['root'])
+        for w in errorroot.winfo_children():
+            w.destroy()
     except:
         errorroot = tkinter.Tk()
         setthemes(errorroot)
