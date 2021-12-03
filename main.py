@@ -7946,7 +7946,7 @@ class SliceDict(dict):
     def adhoc(self,ids=None):
         """If passed ids, add them. Otherwise, return dictionary."""
         if ids is not None:
-            ps=self._ps
+            ps=self.ps()
             if ps not in self._adhoc:
                  self._adhoc[ps]={}
             self._adhoc[ps][profile]=ids
