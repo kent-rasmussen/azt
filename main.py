@@ -1629,15 +1629,15 @@ class Check():
             o=self
         for s in self.settings[setting]['attributes']:
             if s in objectfns:
-                log.debug("Trying to dict {} attr".format(s))
+                log.log(4,"Trying to dict {} attr".format(s))
                 try:
                     d[s]=objectfns[s]()
-                    log.debug("Value {}={} found in object".format(s,d[s]))
+                    log.log(4,"Value {}={} found in object".format(s,d[s]))
                 except:
-                    log.debug("Value of {} not found in object".format(s))
+                    log.log(4,"Value of {} not found in object".format(s))
             elif hasattr(o,s):# and getattr(o,s) is not None:
                 d[s]=getattr(o,s)
-                log.debug("Trying to dict self.{} with value {}, type {}"
+                log.log(4,"Trying to dict self.{} with value {}, type {}"
                         "".format(s,d[s],type(d[s])))
             else:
                 log.error("Couldn't find {} in {}".format(s,setting))
@@ -2281,7 +2281,7 @@ class Check():
             return
         self.makestatusframe() # wait is here, after the first time.
         #Don't guess this; default or user set only
-        log.info('Interfacelang: {}'.format(getinterfacelang()))
+        log.log(4,'Interfacelang: {}'.format(getinterfacelang()))
         """This just gets the prose language name from the code"""
         for l in self.parent.interfacelangs:
             if l['code']==getinterfacelang():
@@ -2337,7 +2337,7 @@ class Check():
         self.slices.makeprofileok()
         ps=self.slices.ps()
         profile=self.slices.profile()
-        log.debug("ps:{}; profile:{}; self.profilesbysense type: {}".format(ps,profile,type(self.profilesbysense)))
+        log.log(4,"ps:{}; profile:{}; self.profilesbysense type: {}".format(ps,profile,type(self.profilesbysense)))
         if ((ps in self.profilesbysense) and
                 (profile in self.profilesbysense[ps])):
             count=len(self.profilesbysense[ps][profile])
@@ -2365,7 +2365,7 @@ class Check():
         else:
             self.status.makecheckok() #this is intentionally broad: *any* check
         check=self.params.check()
-        log.info("CVT: {}".format(cvt))
+        log.log(4,"CVT: {}".format(cvt))
         if cvt == 'T': #self.name has different options by self.type
             opts['columnplus']=1
             if not self.status.checks():
@@ -4355,7 +4355,8 @@ class Check():
                                 senseid=senseid,
                                 location=check
                                 ).get('text'))
-            log.log(4,"Found tone value (updatesortingstatus): {} ({})"
+            if v:
+                log.debug("Found tone value (updatesortingstatus): {} ({})"
                         "".format(v, type(v)))
             if v in ['','None',None]: #unlist() returns strings
                 log.log(4,"Marking senseid {} tosort (v: {})".format(senseid,v))
