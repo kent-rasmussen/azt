@@ -1557,8 +1557,7 @@ class Check():
             setattr(self, default, None)
             """These can be done in checkcheck..."""
     def restart(self):
-        self.parent.parent.destroy()
-        main()
+        self.parent.makecheck()
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
         file.writefilename()
@@ -6833,6 +6832,13 @@ class MainApplication(ui.Frame):
             self.context.menuitem(_("Show group names"),self.showgroupnames)
         else:
             self.context.menuitem(_("Hide group names"),self.hidegroupnames)
+    def makecheck(self):
+        if hasattr(self,'check'): #for restarts
+            self.parent.withdraw()
+            for w in self.frame.winfo_children():
+                w.destroy()
+            # self.check.frame.destroy()
+        self.check=Check(self,self.frame,nsyls=self.nsyls)
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
@@ -6884,7 +6890,7 @@ class MainApplication(ui.Frame):
         # self.introtext=_()
         # l=Label(self.frame, text=self.introtext, font=self.fonts['title'])
         # l.grid(row=0, column=0, columnspan=2)
-        nsyls=None #this will give the default (currently 5)
+        self.nsyls=None #this will give the default (currently 5)
         """This means make check with
         this app as parent
         the root window as base window, and
@@ -6893,7 +6899,7 @@ class MainApplication(ui.Frame):
         make syllable profile data analysis up to nsyls syllables
         (more is more load time.)
         """
-        self.check=Check(self,self.frame,nsyls=nsyls)
+        self.makecheck()
         """Do any check tests here"""
         """Make the rest of the mainApplication window"""
         e=(_("Exit"))
