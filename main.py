@@ -2329,6 +2329,9 @@ class Check():
         opts['row']+=1
         self.status.makecvtok()
         cvt=self.params.cvt()
+        cvts=self.params.cvts()
+        if cvt not in cvts:
+            cvt=self.params.cvt('V')
         """These settings must be set (for now); we can't guess them (yet)"""
         """Ultimately, we will pick the largest ps/profile combination as an
         initial default (obviously changeable, as are all)"""
