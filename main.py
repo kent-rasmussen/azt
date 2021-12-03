@@ -8058,6 +8058,7 @@ class StatusDict(dict):
             if idx != len(profiles)-1:
                 nextprofile=profiles[idx+1]
         self._slicedict.profile(nextprofile)
+        return True
     def nextcheck(self, **kwargs):
         kwargs=grouptype(**kwargs)
         check=self._checkparameters.check()
