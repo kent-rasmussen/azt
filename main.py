@@ -284,6 +284,8 @@ class Check():
         if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
             self.adhocgroups={}
         self.slices=SliceDict(self.params,self.adhocgroups,self.profilesbysense) #self.profilecounts
+        if hasattr(self,'sextracted'):
+            self.getscounts()
     def makedatadict(self):
         log.info("makedatadict")
         self.datadict=FramedDataDict(self)
