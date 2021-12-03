@@ -4347,6 +4347,7 @@ class Check():
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         check=kwargs.get('check',self.params.check())
+        kwargs['wsorted']=True #ever not?
         senseids=self.slices.senseids(ps=ps,profile=profile)
         self.status.renewsenseidstosort([],[]) #will repopulate
         groups=[]
@@ -4375,13 +4376,13 @@ class Check():
         self.status.tosort(vts,**kwargs)
         """update status groups"""
         sorted=list(dict.fromkeys(groups))
-        self.status.verified(sorted,**kwargs)
-        verified=self.status.verified() #read
+        self.status.groups(sorted,**kwargs)
+        verified=self.status.verified(**kwargs) #read
         """This should pull verification status from LIFT, someday"""
         for v in verified:
-            if v not in groups:
+            if v not in sorted:
                 log.error("Removing verified group {} not in actual groups: {}!"
-                            "".format(v, groups))
+                            "".format(v, sorted))
                 verified.remove(v)
         self.status.verified(verified,**kwargs) #set
         log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
