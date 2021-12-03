@@ -221,6 +221,27 @@ class Check():
         self.tableiteration=0
         self.attrschanged=[]
         self.checkcheck()
+    def askwhichlift(self):
+        def setfilename(choice,window):
+            if choice == 'Other':
+                self.filename=file.lift()
+                if not self.filename:
+                    return
+            else:
+                self.filename=choice
+            file.writefilename(self.filename)
+            window.destroy()
+        self.filename=None # in case of exit
+        window=Window(self.frame,title="Select LIFT Database")
+        text=_('What LIFT database do you want to work on?')
+        Label(window.frame, text=text).grid(column=0, row=0)
+        buttonFrame1=ScrollingButtonFrame(window.frame,
+                                self.filenames+['Other'],
+                                setfilename,
+                                window
+                                )
+        buttonFrame1.grid(column=0, row=1)
+        window.wait_window(window)
     def settingsfilecheck(self,basename):
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
         self.toneframesfile=basename.with_suffix(".ToneFrames.ini")
