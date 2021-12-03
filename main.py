@@ -4385,7 +4385,7 @@ class Check():
                 verified.remove(v)
         self.status.verified(verified,**kwargs) #set
         log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
-                "tosort: {}".format(kwargs,sorted,verified,vts))
+                "tosort: {}".format(kwargs.values(),sorted,verified,vts))
         if store:
             self.storesettingsfile(setting='status')
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
