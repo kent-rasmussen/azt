@@ -8340,6 +8340,8 @@ class StatusDict(dict):
         if not hasattr(self,'_checksdict'):
             self._checksdict={}
         t=self._checkparameters.cvt()
+        if not t:
+            log.error("No type is set; can't renew checks!")
         if t not in self._checksdict:
             self._checksdict[t]={}
         if t == 'T':
