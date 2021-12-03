@@ -168,12 +168,15 @@ def lift():
 def writefilename(filename=''):
     try:
         import lift_url
+        if hasattr(lift_url,'filenames') and lift_url.filenames:
+            filenames=lift_url.filenames
     except:
         log.error("writefilename lift_url didn't import.")
     if not hasattr(lift_url,'filenames') or not lift_url.filenames:
         lift_url.filenames=[]
     if filename and filename not in lift_url.filenames:
         lift_url.filenames.append(filename)
+        filenames=[]
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
     f = open(file, 'w', encoding='utf-8') # to append, "a"
     f.write('filename="'+str(filename)+'"\n')
