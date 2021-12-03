@@ -8466,8 +8466,9 @@ class CheckParameters(dict):
         """This needs to change checks"""
         if cvt is not None:
             self._cvt=cvt
-        else:
-            return self._cvt
+        elif not hasattr(self,'_cvt'):
+            self._cvt=None
+        return self._cvt
     def cvts(self):
         """This depends on nothing, so can go anywhere, and shouldn't need to
         rerun. This is a convenience wrapper only."""
@@ -8480,9 +8481,9 @@ class CheckParameters(dict):
         """This needs to change/clear subchecks"""
         if check is not None:
             self._check=check
-            # self.renewsubchecks() to status
-        else:
-            return self._check
+        elif not hasattr(self,'_check'):
+            self._check=None
+        return self._check
     def __init__(self): # had, do I need check? to write?
         """replaces setnamesall"""
         """replaces self.checknamesall"""
