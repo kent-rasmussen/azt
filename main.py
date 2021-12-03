@@ -1712,9 +1712,12 @@ class Check():
                     setattr(o,s,getattr(module,s))
         except:
             log.error("Problem importing {}".format(legacy))
+        # b/c structure changed:
         if 'glosslangs' in self.settings[setting]['attributes']:
-            self.glosslangs=[getattr(module,'glosslang'),
-                        getattr(module,'glosslang2')] # b/c structure changed
+            self.glosslangs=[]
+            for lang in ['glosslang','glosslang2']:
+                if hasattr(module,lang):
+                    self.glosslangs.append(getattr(module,lang))
         dict1=self.makesettingsdict(setting=setting)
         self.storesettingsfile(setting=setting) #do last
         self.loadsettingsfile(setting=setting) #verify write and read
