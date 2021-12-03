@@ -199,7 +199,7 @@ class Check():
                 log.debug("{}: {}".format(var,getattr(self,var)))
             self.storesettingsfile(setting='profiledata')
             e=time.time()-self.start_time
-            log.info("Finished profile analysis at {} ({}s)".format(e,e-s))
+            log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
         self.makeparameters()
         self.makeslicedict()
         self.setnamesall() #sets self.checknamesall
