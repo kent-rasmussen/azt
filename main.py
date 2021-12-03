@@ -3781,7 +3781,6 @@ class Check():
         the above is changed, this variable should be reset."""
         """Can't do this test suite unless there are unsorted entries..."""
         """things that don't change in this fn"""
-        self.updatesortingstatus() #<===shouldn't need
         thissort=self.status.senseidstosort()[:] #current list
         log.info("Going to sort these senseids: {}".format(self.status.senseidstosort()))
         groups=self.status.groups(wsorted=True)
@@ -8038,6 +8037,10 @@ class StatusDict(dict):
                 check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
                 return True
+            else:
+                log.info(self[cvt][ps])
+                log.info(self[cvt][ps][profile])
+                log.info(self[cvt][ps][profile][check]['tosort'])
     def grouptorecord(self,group,check=None):
         if check is None:
             check=self._checkparameters.check()
