@@ -192,6 +192,8 @@ class Check():
         self.setupCVrxs() #creates self.rx dictionaries
         """The line above may need to go after this block"""
         if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
+            ps=self.slices.ps()
+            profile=self.slices.profile()
             log.info("Starting profile analysis at {}".format(time.time()
                                                             -self.start_time))
             log.debug("Starting ps-profile: {}-{}".format(ps,profile))
