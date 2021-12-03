@@ -8358,8 +8358,8 @@ class StatusDict(dict):
             # log.error("Setting tosort value to {}".format(v))
             self._tosortbool=sn['tosort']=v
         return self._tosortbool
-    def verified(self,g=None,cvt=None,ps=None,profile=None,check=None):
-        sn=self.node(cvt=cvt,ps=ps,profile=profile,check=check)
+    def verified(self,g=None,**kwargs): #cvt=None,ps=None,profile=None,check=None):
+        sn=self.node(**kwargs)
         self._verified=sn['done']
         if g is not None:
             self._verified=g
