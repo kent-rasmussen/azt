@@ -8044,7 +8044,6 @@ class StatusDict(dict):
                 return True
     def nextprofile(self, **kwargs):
         kwargs=grouptype(**kwargs)
-        ps=self._slicedict.ps()
         # self.makeprofileok()
         profiles=self.profiles(**kwargs)
         if not profiles:
