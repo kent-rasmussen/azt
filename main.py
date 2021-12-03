@@ -8088,7 +8088,8 @@ class StatusDict(dict):
         kwargs=grouptype(**kwargs)
         profiles=self._slicedict.profiles() #already limited to current ps
         checks=self.checks(**kwargs)
-        if not checks:
+        if kwargs['wsorted'] and not checks:
+            log.info("No Checks for this profile, returning.")
             return #you won't find any profiles to do, either...
         p=[]
         for profile in profiles:
