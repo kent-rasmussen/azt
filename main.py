@@ -2622,7 +2622,7 @@ class Check():
         h.bind('<ButtonRelease>', refresh)
         htip=_("Refresh table, \nsave settings")
         th=ToolTip(h,htip)
-        r=self.status[cvt][ps]
+        r=list(self.status[cvt][ps])
         log.debug("Table rows possible: {}".format(r))
         for profile in profiles:
             column=0
