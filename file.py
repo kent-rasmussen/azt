@@ -148,16 +148,18 @@ def lift():
     home=gethome()
     filename=filedialog.askopenfilename(initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
                                     title = _("Select LIFT Lexicon File"))
+    if not filename:
+        return
+    if exists(filename):
+        return writefilename(filename)
     log.debug('filename:'+str(filename))
-    if filename == (): #Try one more time...
-        log.warning("Sorry, did you select a file? Trying again.")
-        filename=filedialog.askopenfilename(initialdir = home,
-                                    title = _("Select LIFT Lexicon File"),)
-        if filename == (): #still, then give up.
-            log.warning("Sorry, did you select a file? Giving up.")
+    if not filename:
+        log.warning("Sorry, did you select a file? Giving up.")
+        return
     log.debug('filename: {}'.format(str(filename)))
     """Assuming this file is still in lift/, this works. Once out,
     remove a parent"""
+    return writefilename(filename)
 def writefilename(filename=''):
     try:
         import lift_url
