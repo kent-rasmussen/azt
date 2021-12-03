@@ -7808,7 +7808,7 @@ class SliceDict(dict):
     def makeprofileok(self):
         if not hasattr(self,'_ps'):
             self.makepsok()
-        profiles=self.profiles(self._ps)
+        profiles=self.profiles()
         if (not hasattr(self,'_profile')
                 or self._profile not in profiles):
             self.profile(profiles[0])
