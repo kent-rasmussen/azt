@@ -9168,7 +9168,7 @@ def mainproblem():
     try: #Make this work whether root has run/still runs or not.
         program['root'].winfo_exists()
         log.info("Root there!")
-        errorroot = Window(program['root']) #tkinter.Toplevel(program['root'])
+        errorroot = program['root'] #tkinter.Toplevel(program['root'])
     except:
         errorroot = tkinter.Tk()
         setthemes(errorroot)
@@ -9215,6 +9215,7 @@ def mainproblem():
     o.grid(row=3,column=0)
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
+    errorroot.deiconify()
     errorroot.mainloop()
     # errorroot.wait_window(errorroot)
     sys.exit()
