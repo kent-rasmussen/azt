@@ -8029,10 +8029,11 @@ class StatusDict(dict):
             profile=self._slicedict.profile()
         cvt=self._checkparameters.cvt()
         ps=self._slicedict.ps()
-        checks=self.updatechecksbycvt() #not keyed by profile
-        for check in checks:
-            if (check not in self[cvt][ps][profile] or
-                    self[cvt][ps][profile][check]['tosort'] == True):
+        checks=self.checks()
+        for check in checks: #any check
+            if (profile not in self[cvt][ps] or
+                check not in self[cvt][ps][profile] or
+                self[cvt][ps][profile][check]['tosort'] == True):
                 return True
     def grouptorecord(self,group,check=None):
         if check is None:
