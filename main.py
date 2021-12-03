@@ -1558,9 +1558,9 @@ class Check():
         self.parent.parent.destroy()
         main()
     def changedatabase(self):
-        log.debug("Removing lift_url.py, so user will be asked again for LIFT")
-        self.filename=None #since this will still be in memory
-        file.removelifturl()
+        log.debug("Removing database name, so user will be asked again.")
+        file.writefilename()
+        delattr(self,'filename')
         self.restart()
     def reloadprofiledata(self):
         self.storesettingsfile()
