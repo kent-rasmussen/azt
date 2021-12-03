@@ -7810,7 +7810,7 @@ class SliceDict(dict):
         """This just stores/returns the values in a dict, keyed by [ps][s]"""
         if scount is not None:
             self._scount=scount
-        return self._scounts
+        return self._scount
     def makepsok(self):
         pss=self.pss()
         if not hasattr(self,'_ps') or self._ps not in pss:
