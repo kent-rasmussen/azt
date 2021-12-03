@@ -192,17 +192,14 @@ class Check():
         self.setupCVrxs() #creates self.rx dictionaries
         """The line above may need to go after this block"""
         if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
-            ps=self.slices.ps()
-            profile=self.slices.profile()
-            log.info("Starting profile analysis at {}".format(time.time()
-                                                            -self.start_time))
-            log.debug("Starting ps-profile: {}-{}".format(ps,profile))
+            t=time.time()-self.start_time
+            log.info("Starting profile analysis at {}".format(t))
             self.getprofiles() #creates self.profilesbysense nested dicts
             for var in ['rx','profilesbysense','profilecounts']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
-            log.debug("Middle ps-profile: {}-{}".format(ps,profile))
             self.storesettingsfile(setting='profiledata')
-            log.debug("Ending ps-profile: {}-{}".format(ps,profile))
+            e=time.time()-self.start_time
+            log.info("Finished profile analysis at {} ({}s)".format(e,e-s))
         self.makeparameters()
         self.makeslicedict()
         self.setnamesall() #sets self.checknamesall
