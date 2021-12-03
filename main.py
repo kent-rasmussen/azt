@@ -2039,7 +2039,7 @@ class Check():
             form=self.rx[cc].sub(self.interpret[cc],form)
         return form
     def profileofform(self,form,ps):
-        if form is None:
+        if not form or not ps:
             return "Invalid"
         # log.debug("profiling {}...".format(form))
         formori=form
