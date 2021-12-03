@@ -2896,11 +2896,11 @@ class Check():
         profile, but for tone, they don't; tone frames depend only on ps."""
         self.status.renewchecks()
         self.status.checks()
-    def getcheck(self,guess=False,tosort=False,wsorted=False,event=None):
+    def getcheck(self,guess=False,event=None,**kwargs):
         log.info("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
         log.info("Getting the check name...")
-        checks=self.status.checks(tosort=tosort,wsorted=wsorted)
+        checks=self.status.checks(**kwargs)
         window=Window(self.frame,title='Select Check')
         if not checks:
             if self.params.cvt() == 'T':
