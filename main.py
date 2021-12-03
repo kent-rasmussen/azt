@@ -5002,7 +5002,7 @@ class Check():
                         value=''
                     finally: # we need each cell to be there...
                         cell=xlp.Cell(r,content=value)
-    def tonegroupsjoinrename(self):
+    def tonegroupsjoinrename(self,**kwargs):
         def clearerror(event=None):
             errorlabel['text'] = ''
         def submitform():
