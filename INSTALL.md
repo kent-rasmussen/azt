@@ -47,7 +47,7 @@ For some reason, I have had trouble getting pyaudio installed on Windows machine
 to keep your data up to date in your repository: `python -m pip install patiencediff`
 
 ### Optional dependency: Mercurial (Hg)
-There are lots of ways to install this; start [here](https://www.mercurial-scm.org/wiki/Download).
+There are lots of ways to install this, e.g., with [this file](https://www.mercurial-scm.org/release/windows/Mercurial-6.0-x64.exe). For more options, start [here](https://www.mercurial-scm.org/wiki/Download).
 
 ### Optional dependency: PIL/Pillow
 This install allows for visual rendering of tone glyphs that aren't currently working in tkinter:
