@@ -5077,7 +5077,6 @@ class Check():
         qrow+=1
         d=Label(qframe,text=text)
         d.grid(row=qrow,column=0,sticky='ew',pady=20)
-        senseidsbygroup=self.getsenseidsbytoneUFgroups() #dict keyed by group
         sub_btn=Button(qframe,text = _("OK"), command = submitform, anchor ='c')
         sub_btn.grid(row=qrow,column=1,sticky='w')
         done_btn=Button(qframe,text = _("Done —no change"), command = done,
