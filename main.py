@@ -7755,7 +7755,7 @@ class Analysis(object):
             try:
                 unnamed[k].append(senseid)
             except KeyError:
-                unnamed[k]=list(senseid)
+                unnamed[k]=[senseid]
         log.info("Done collecting combinations of groups values by location.")
         # self.groups={}
         self.valuesbygroupcheck={}
