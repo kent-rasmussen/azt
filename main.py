@@ -3223,9 +3223,11 @@ class Check():
             self.params.cvt(),
             self.slices.ps(),
             self.slices.profile(),
-            self.params.check(),
-            self.status.group()
             ]
+        if hasattr(framed,'check'):
+            bits.append(framed.check)
+        if hasattr(framed,'tonegroup'):
+            bits.append(framed.tonegroup)
         for lang in self.glosslangs:
             if lang in framed.forms and framed.forms[lang] is not None:
                 bits+=framed.forms[lang]
