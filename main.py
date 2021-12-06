@@ -280,7 +280,7 @@ class Check():
             self.toneframes={}
         self.toneframes=ToneFrames(self.toneframes)
     def makeparameters(self):
-        self.params=CheckParameters() #remove self.profilesbysense?
+        self.params=CheckParameters(self.analang) #remove self.profilesbysense?
     def makeslicedict(self):
         if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
             self.adhocgroups={}
@@ -7834,6 +7834,7 @@ class Analysis(object):
         self._slices=slices
         self._status=status
         self._db=db
+        self.analang=self._params.analang
 class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
@@ -8519,11 +8520,12 @@ class CheckParameters(dict):
         elif not hasattr(self,'_check'):
             self._check=None
         return self._check
-    def __init__(self): # had, do I need check? to write?
+    def __init__(self,analang): # had, do I need check? to write?
         """replaces setnamesall"""
         """replaces self.checknamesall"""
         super(CheckParameters, self).__init__()
         """This replaces typedict"""
+        self.analang=analang
         self._cvts={
                 'V':{'sg':_('Vowel'),'pl':_('Vowels')},
                 'C':{'sg':_('Consonant'),'pl':_('Consonants')},
