@@ -6179,7 +6179,7 @@ class FramedDataElement(FramedData):
             elif ((i.tag == 'field') and (i.get('type') == 'location')):
                 self.check=unlist([j.text for j in i.findall('form/text')])
             elif ((i.tag == 'field') and (i.get('type') == 'tone')):
-                self.tonegroups=[j.text for j in i.findall('form/text')] #always be list of one
+                self.tonegroups=[j.text for j in i.findall('form/text')]
     def __init__(self, parent, node, senseid=None, **kwargs):
         super(FramedDataElement, self).__init__(parent)
         if not isinstance(node,lift.ET.Element):
@@ -8448,9 +8448,7 @@ class StatusDict(dict):
         if v not in ok:
             log.error("Tosort value ({}) invalid: OK values: {}".format(v,ok))
         self._tosortbool=sn['tosort']
-        # log.error("Tosort value currently {}".format(self._tosort))
         if v is not None:
-            # log.error("Setting tosort value to {}".format(v))
             self._tosortbool=sn['tosort']=v
         return self._tosortbool
     def verified(self,g=None,**kwargs): #cvt=None,ps=None,profile=None,check=None):
