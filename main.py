@@ -8069,7 +8069,8 @@ class StatusDict(dict):
         cvt=self._checkparameters.cvt()
         ps=self._slicedict.ps()
         profile=self._slicedict.profile()
-        if (check not in self[cvt][ps][profile] or
+        if (profile not in self[cvt][ps] or
+                check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
             return True
     def checktojoin(self,check=None):
