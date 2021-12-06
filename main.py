@@ -5233,7 +5233,8 @@ class Check():
         for slice in range(int(len(self.analysis.orderedchecks)/m)+1):
             locslice=self.analysis.orderedchecks[slice*m:(slice+1)*m]
             if len(locslice) >0:
-                self.buildXLPtable(s1s,caption+str(slice),yterms=grouplist,
+                self.buildXLPtable(s1s,caption+str(slice),
+                        yterms=grouplist,
                         xterms=locslice,
                         values=lambda x,y:nn(unlist(
                 self.analysis.valuesbygroupcheck[y][x],ignore=[None, 'NA']
