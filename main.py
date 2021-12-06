@@ -5148,12 +5148,12 @@ class Check():
         self.makeanalysis()
         """Split here"""
         if default:
+            self.analysis.do() #full analysis from scratch, output to UF fields
+            # Analysis(object)|groups|groupstructuredlist|groupvalues
         else:
-            #make a report without having redone the UF analysis
-            #The following line puts out a dictionary keyed by UF group name:
-            self.analysis.donoUFanalysis()
-            grouplist=self.toneUFgroups
-            locations=checks
+            self.analysis.donoUFanalysis() #based on (sense) UF fields
+        """These are from LIFT, ordered by similarity for the report."""
+        grouplist=self.analysis.orderedUFs # was toneUFgroups
         checks=self.analysis.orderedchecks
         log.debug("groups (tonegroupreport): {}".format(grouplist))
         r = open(self.tonereportfile, "w", encoding='utf-8')
