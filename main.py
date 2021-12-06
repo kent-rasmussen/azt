@@ -6740,13 +6740,16 @@ class MainApplication(ui.Frame):
             self.context.menuitem(_("Show group names"),self.showgroupnames)
         else:
             self.context.menuitem(_("Hide group names"),self.hidegroupnames)
-    def makecheck(self):
+    def makecheck(self,filename=None):
         if hasattr(self,'check'): #for restarts
             self.parent.withdraw()
             for w in self.frame.winfo_children():
                 w.destroy()
+            for w in self.check.frame.winfo_children():
+                w.destroy()
             # self.check.frame.destroy()
-        self.check=Check(self,self.frame,nsyls=self.nsyls)
+        self.check=Check(self,self.frame,filename,nsyls=self.nsyls)
+        self.parent.deiconify()
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
