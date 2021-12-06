@@ -294,6 +294,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             vfleg=sensenode.find("field[@type='{} {}']".format(vtype,"verification"))
             if vfleg:
                 t=vfleg.text
+                sensenode.remove(vfleg)
             vf=Node(node, 'field',
                             attrib={'type':"{} verification".format(vtype)})
             vft=vf.makeformnode(lang=lang,text=t,gimmetext=True)
