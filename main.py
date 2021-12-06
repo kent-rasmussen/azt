@@ -7751,7 +7751,7 @@ class Analysis(object):
         # Collect all unique combinations of location:group pairings.
         for senseid in self.senseiddict:
             #sort into groups by dict values (combinations location:group pairs)
-            k=str(input[senseid])
+            k=str(self.senseiddict[senseid])
             try:
                 unnamed[k].append(senseid)
             except KeyError:
