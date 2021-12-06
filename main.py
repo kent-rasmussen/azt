@@ -5251,6 +5251,12 @@ class Check():
         if default == False:
             bits.append('mod')
         self.tonereportfile='_'.join(bits)+".txt"
+        checks=self.status.checks(wsorted=True)
+        if not checks:
+            log.error("Hey, sort some morphemes in at least one frame before "
+                        "trying to make a tone report!")
+            self.runwindow.waitdone()
+            return
         start_time=time.time()
         """Split here"""
         if default == True:
