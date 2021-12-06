@@ -7809,9 +7809,10 @@ class Analysis(object):
             group=firstoflist(self.db.get('sense/toneUFfield/form/text',
                                                 senseid=senseid).get('text'))
             if group is not None:
-                if group not in sorted:
-                    self.senseidsbygroup[group]=[]
-                self.senseidsbygroup[group]+=[senseid]
+                try:
+                    self.senseidsbygroup[group].append(senseid)
+                except:
+                    self.senseidsbygroup[group]=[senseid]
         return self.senseidsbygroup #?
     def donoUFanalysis(self):
         self.senseidsbyUFsfromLIFT() # > self.senseidsbygroup
