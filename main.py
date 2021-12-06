@@ -5029,7 +5029,6 @@ class Check():
             self.runwindow.destroy()
         def refreshgroups():
             self.analysis.donoUFanalysis()
-            # self.analysis.senseidsbyUFsfromLIFT() #self.analysis.donoUFanalysis() ?
             senseidsbygroup=self.analysis.senseidsbygroup
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
