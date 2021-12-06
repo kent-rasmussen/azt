@@ -5152,30 +5152,6 @@ class Check():
         self.makeanalysis()
         """Split here"""
         if default:
-            #Do the draft UF analysis, from scratch
-            """output[senseid][location]=group"""
-            output=self.tonegroupsbysenseidlocation()
-            if checks == []:
-                log.error("Hey, sort some morphemes in at least one frame before "
-                            "trying to make a tone report!")
-                self.runwindow.waitdone()
-                return
-            groups=self.groupUFsfromtonegroupsbylocation(output) #make groups
-            groups=self.senseidstogroupUFs(output,groups) #fillin group senseids
-            groupstructuredlist=self.prioritizegroupUFs(groups)
-            locationstructuredlist=self.prioritizelocations(groups,checks)
-            grouplist=flatten(groupstructuredlist)
-            locations=flatten(locationstructuredlist)
-            log.debug("structured locations: {}".format(locationstructuredlist))
-            log.debug("structured groups: {}".format(groupstructuredlist))
-            toreport={}
-            groupvalues={}
-            for group in groups:
-                toreport[group]=groups[group]['senseids']
-                groupvalues[group]={}
-                for location in groups[group]['values']: #locations:
-                    groupvalues[group][location]=list(groups[group]['values'][
-                                                                    location])
         else:
             #make a report without having redone the UF analysis
             #The following line puts out a dictionary keyed by UF group name:
@@ -5184,8 +5160,6 @@ class Check():
             locations=checks
         checks=self.analysis.orderedchecks
         log.debug("groups (tonegroupreport): {}".format(grouplist))
-        log.debug("locations (tonegroupreport): {}".format(locations))
-        log.debug("valuesbylocation: {}".format(valuesbylocation))
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
         self.runwindow.title(title)
@@ -5259,11 +5233,12 @@ class Check():
                                                         self.program['name']))
         p0=xlp.Paragraph(s1s,text=ptext)
         m=7 #only this many columns in a table
+        self.analysis.orderedchecks=list(self.analysis.valuesbycheckgroup)
         for slice in range(int(len(self.analysis.orderedchecks)/m)+1):
             locslice=self.analysis.orderedchecks[slice*m:(slice+1)*m]
             if len(locslice) >0:
                 self.buildXLPtable(s1s,caption+str(slice),yterms=grouplist,
-                            xterms=locslice,
+                        xterms=locslice,
                         values=lambda x,y:nn(unlist(
                 self.analysis.valuesbygroupcheck[y][x],ignore=[None, 'NA']
                                             )),
