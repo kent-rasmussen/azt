@@ -7283,7 +7283,7 @@ class RecordButtonFrame(ui.Frame):
         # self.p.bind('<ButtonRelease>', self.function)
         self.p.grid(row=0, column=1,sticky='w')
         pttext=_("Click to hear this utterance")
-        if program['praatisthere']:
+        if program['praat']:
             pttext+='; '+_("right click to open in praat")
             self.p.bind('<Button-3>',lambda x: praatopen(self.filenameURL))
         self.pt=ToolTip(self.p,pttext)
@@ -7430,7 +7430,7 @@ class ToneGroupButtonFrame(ui.Frame):
         b=Button(self, text=self._text, cmd=self.player.play,
                                         **self.buttonkwargs())
         bttext=_("Click to hear this utterance")
-        if program['praatisthere']:
+        if program['praat']:
             bttext+='; '+_("right click to open in praat")
             b.bind('<Button-3>',lambda x: praatopen(self._filenameURL))
         bt=ToolTip(b,bttext)
