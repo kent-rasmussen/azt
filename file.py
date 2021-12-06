@@ -126,13 +126,16 @@ def writeinterfacelangtofile(lang):
     f.write('interfacelang="'+lang+'"'+'\n')
     f.close()
 def getfilenames():
+    """This just returns the list, if there."""
     try:
         import lift_url
     except:
         log.debug("getfilename lift_url didn't import")
-        return lift()
-    
+    if hasattr(lift_url,'filenames') and lift_url.filenames:
+        return lift_url.filenames
 def getfilename():
+    """This returns a single filename, if there, else a list if there, else
+    it asks for user input."""
     try:
         import lift_url
     except:
@@ -146,8 +149,9 @@ def getfilename():
     else:
         log.debug("lift_url imported, but didn't contain a url that points "
                     "to a file: {}".format(dir(lift_url)))
-        if lift_url.filenames:
-            return lift_url.filenames
+        f=getfilenames()
+        if f:
+            return f
         else:
             return lift()
 def gethome():
