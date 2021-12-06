@@ -7228,6 +7228,7 @@ class RecordButtonFrame(ui.Frame):
         self.b.destroy()
         self.makeplaybutton()
         self.makedeletebutton()
+        self.addlink()
     def _redo(self, event):
         log.log(3,"I'm deleting the recording now")
         self.p.destroy()
@@ -7237,6 +7238,7 @@ class RecordButtonFrame(ui.Frame):
         if file.exists(self.filenameURL):
             self.makeplaybutton()
             self.makedeletebutton()
+            self.addlink()
         else:
             self.makerecordbutton()
     def makerecordbutton(self):
@@ -7267,7 +7269,7 @@ class RecordButtonFrame(ui.Frame):
     def function(self):
         pass
     def addlink(self):
-        check.db.addmediafields(self.node,self.filename,self.audiolang)
+        self.db.addmediafields(self.node,self.filename,self.audiolang)
     def __init__(self,parent,check,framed=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
