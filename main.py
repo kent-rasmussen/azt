@@ -7762,7 +7762,7 @@ class Analysis(object):
         self.senseidsbygroup={}
         ks=list(unnamed) #keep sorting order
         for k in ks:
-            x=index.ks(k)+1
+            x=ks.index(k)+1
             name=self._slices.ps()+'_'+self._slices.profile()+'_'+str(x)
             # self.groups[name]={}
             # self.groups[name]['values']=ast.literal_eval(k) #return str to dict
