@@ -5149,7 +5149,6 @@ class Check():
         """Split here"""
         if default:
             self.analysis.do() #full analysis from scratch, output to UF fields
-            # Analysis(object)|groups|groupstructuredlist|groupvalues
         else:
             self.analysis.donoUFanalysis() #based on (sense) UF fields
         """These are from LIFT, ordered by similarity for the report."""
