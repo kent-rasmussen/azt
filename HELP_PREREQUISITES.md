@@ -7,6 +7,7 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
   - You will need an account (username and password) for yourself first, which you can sign up for [here](http://public.languagedepot.org/account/register).
   - Once you have an account, sign in, and you will see instructions on the main page to ask for an repository for your language data. Basically, you will write an Email to admin@languagedepot.org, requesting an account with five lines of information. You want a **Dictionary** repository to work with A→Z+T; everything else should be straightforward.
   - **Wait** for a response from admin@languagedepot.org, which will give you your project id. It should be something like `<ethnologue_code>-dictionary`. If it isn't, please [forward the Email to me](<mailto:kent_rasmussen@sil.org?subject=Languagedepot-A→Z+T problem>) and I'll advise you how to proceed.
+  - While you wait, install [Mercurial (Hg)](https://www.mercurial-scm.org/wiki/Download) so A→Z+T can make changes to your repository for you.
 
 ## Prepare your LIFT database
   - If **you have a database but not in LIFT** (i.e., in FLEx, or a spreadsheet, or an electronic or paper document), then you must get help converting it. Some conversions are easier than other (e.g., from FLEx); others are very difficult (e.g., typing from a handwritten notebook).
