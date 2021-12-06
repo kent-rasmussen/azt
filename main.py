@@ -6030,6 +6030,7 @@ class FramedDataSense(FramedData):
             self.frame=self.frames[self.ps][frame]
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
+            self.check=frame
             log.info("setframe framed: {}".format(self.forms.framed))
         else:
             log.info("setframe setting no frame")
@@ -6175,6 +6176,8 @@ class FramedDataElement(FramedData):
                 for ii in i:
                     if (ii.tag == 'form'):
                         self.forms.getformfromnode(ii) #glosses
+            elif ((i.tag == 'field') and (i.get('type') == 'location')):
+                self.check=unlist([j.text for j in i.findall('form/text')])
             elif ((i.tag == 'field') and (i.get('type') == 'tone')):
                 self.tonegroups=[j.text for j in i.findall('form/text')] #always be list of one
     def __init__(self, parent, node, senseid=None, **kwargs):
