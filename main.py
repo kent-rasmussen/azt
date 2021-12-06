@@ -5132,7 +5132,7 @@ class Check():
                     if framed.forms[lang] is not None: #If all None, don't.
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                                 groups=groups)
-                        return #do it if any lang is present
+                        break #do it on first present lang, and do next ex
         log.info("Starting report...")
         self.storesettingsfile()
         self.getrunwindow()
