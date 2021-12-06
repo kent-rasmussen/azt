@@ -281,7 +281,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info(n)
             return n
     def addverificationnode(self,senseid,vtype,lang):
-        node=self.getsensenode(senseid=senseid)
+        sensenode=node=self.getsensenode(senseid=senseid)
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
@@ -289,10 +289,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "".format(vtype,"verification",lang))
         vft=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text"
                             "".format(vtype,"verification",lang))
+        t=None #this default will give no text node value
         if vft is None:
+            vfleg=sensenode.find("field[@type='{} {}']".format(vtype,"verification"))
+            if vfleg:
+                t=vfleg.text
             vf=Node(node, 'field',
                             attrib={'type':"{} verification".format(vtype)})
-            vft=vf.makeformnode(lang=lang,gimmetext=True)
+            vft=vf.makeformnode(lang=lang,text=t,gimmetext=True)
         return (vft,vf,sensenode)
     def getentrynode(self,senseid,showurl=False):
         return self.get('entry',senseid=senseid).get()
