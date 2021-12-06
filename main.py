@@ -5127,6 +5127,7 @@ class Check():
                 groups=True #show groups on all non-default reports
             for example in examples:
                 framed=self.datadict.getframeddata(example)
+                framed.gettonegroup() #wanted for id, not for display
                 for lang in [self.analang]+self.glosslangs:
                     if framed.forms[lang] is not None: #If all None, don't.
                         self.framedtoXLP(framed,parent=parent,listword=True,
@@ -5974,17 +5975,16 @@ class FramedData(object):
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def gettonegroup(self):
         if self.tonegroups:
-            tonegroup=unlist(self.tonegroups)
-            try:
-                int(tonegroup)
-            except:
-                self.tonegroup=tonegroup #only for named groups
-                return True
+            self.tonegroup=unlist(self.tonegroups)
+            return True
     def formatted(self,showtonegroup=False,noframe=False):
+        tg=None
         if showtonegroup and self.gettonegroup():
-            toformat=DataList(self.tonegroup)
-        else:
-            toformat=DataList()
+            try:
+                int(self.tonegroup)  #only for named groups
+            except ValueError:
+                tg=self.tonegroup
+        toformat=DataList(tg)
         if noframe:
             toformat.appendformsbylang(self.forms,self.analang,quote=False)
             toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
