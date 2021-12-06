@@ -7853,16 +7853,15 @@ class Analysis(object):
         self.doanyway()
     def do(self):
         self.checks=self._status.checks() #just do once
-        self.locationgroupsbysenseid() # > self.senseiddict
+        self.checkgroupsbysenseid() # > self.senseiddict
         self.sorttoUFs() # > self.senseidsbygroup and self.valuesbygroupcheck
-        self.compareUFs() # > self.comparisonUFs
-        self.comparechecks() #  > self.comparisonchecks
         self.doanyway()
     def doanyway(self):
-        self.allvaluesbycheck()
-        self.allvaluesbygroup()
-        self.comparechecks()
+        """compare(x=UFs/checks) give self.comparison(x) and self.ordered(x)"""
+        self.comparechecks() #also self.valuesbygroupcheck -> …checkgroup
         self.compareUFs()
+        self.allvaluesbycheck() # >self.valuesbycheck
+        self.allvaluesbygroup() # >self.valuesbygroup
     def __init__(self, params, slices, status, db):
         super(Analysis, self).__init__()
         self._params=params
