@@ -7717,12 +7717,15 @@ class Analysis(object):
         """Prioritize locations by similarity of location:value pairings"""
         """we need to switch the hierarchy to make this comparison"""
         vbcg=self.valuesbycheckgroup={}
-        for check in self.valuesbygroupcheck[group]:
-            vbcg[check]={}
-            for group in self.valuesbygroupcheck:
+        for group in self.valuesbygroupcheck:
+            for check in self.valuesbygroupcheck[group]:
                 """This removes the 'values' layer, and promotes check
                 above group"""
-                vbcg[check][group]=self.valuesbygroupcheck[group][check]
+                try:
+                    vbcg[check][group]=self.valuesbygroupcheck[group][check]
+                except KeyError:
+                    vbcg[check]={}
+                    vbcg[check][group]=self.valuesbygroupcheck[group][check]
         self.comparisonchecks=dictscompare(vbcg,
                                             ignore=['NA',None,'None'],
                                             flat=False)
