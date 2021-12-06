@@ -305,6 +305,14 @@ class Check():
                                 self.status
                                 )
         log.info("makestatus status type: {}".format(type(self.status)))
+    def makeanalysis(self):
+        log.info("makeanalysis")
+        if not hasattr(self,'analysis'):
+            self.analysis=Analysis(self.params,
+                                    self.slices,
+                                    self.status
+                                    )
+        log.info("makestatus status type: {}".format(type(self.status)))
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
@@ -4200,25 +4208,6 @@ class Check():
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
-    def getsenseidsbytoneUFgroups(self):
-        """This returns a dict of {UFtonegroup:[senseids]}"""
-        log.debug(_("Looking for sensids by UF tone groups for {}-{}").format(
-                    self.slices.profile(), self.slices.ps())
-                    )
-        sorted={}
-        """Still working on one ps-profile combo at a time."""
-        for senseid in self.slices.senseids(): #I should be able to make this a regex...
-            toneUFgroup=firstoflist(self.db.get('sense/toneUFfield/form/text',
-                                                senseid=senseid).get('text'))
-            if toneUFgroup is not None:
-                if toneUFgroup not in sorted:
-                    sorted[toneUFgroup]=[]
-                sorted[toneUFgroup]+=[senseid]
-        """drop this"""
-        self.toneUFgroups=list(dict.fromkeys(sorted))
-        log.debug("UFtonegroups (getsenseidsbytoneUFgroups): {}".format(
-                                                            self.toneUFgroups))
-        return sorted
     def gettoneUFgroups(self): #obsolete?
         """This returns just the list of UF tone groups in the current slice"""
         log.debug("Looking for UF tone groups for {}-{} slice".format(profile,
@@ -5132,103 +5121,6 @@ class Check():
                 cbl.grid(row=idn+nheaders,column=locations.index(location)+2,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
-    def tonegroupsbyUFlocation(self,senseidsbygroup):
-        #returns dictionary keyed by [group][location]=groupvalue
-        values={}
-        locations=self.status.checks()
-        # Collect location:value correspondences, by sense
-        for group in senseidsbygroup:
-            values[group]={}
-            for location in locations: #just make them all, delete empty later
-                values[group][location]=list()
-                for senseid in senseidsbygroup[group]:
-                    groupvalue=self.db.get("example/tonefield/form/text",
-                                            senseid=senseid, location=location,
-                                            ).get('text')
-                    if groupvalue != []:
-                        if unlist(groupvalue) not in values[group][location]:
-                            values[group][location]+=groupvalue
-                log.log(3,"values[{}][{}]: {}".format(group,location,
-                                                    values[group][location]))
-                if values[group][location] == []:
-                    log.info(_("Removing empty {} key from {} values"
-                                "").format(location,group))
-                    del values[group][location] #don't leave key:None pairs
-        log.info("Done collecting groups by location for each UF group.")
-        return values
-    def tonegroupsbysenseidlocation(self):
-        #outputs dictionary keyed to [senseid][location]=group
-        output={}
-        locations=self.status.checks()
-        # Collect location:value correspondences, by sense
-        for senseid in self.slices.senseids():
-            output[senseid]={}
-            for location in locations:
-                group=self.db.get("example/tonefield/form/text",
-                    senseid=senseid,location=location).get('text')
-                if group != []:
-                    output[senseid][location]=group #Save this info by senseid
-        log.info("Done collecting groups by location for each senseid.")
-        return output
-    def groupUFsfromtonegroupsbylocation(self,output):
-        # returns groups by location:value correspondences.
-        # Look through all the location:value combos (skip over senseids)
-        # this is, critically, a dictionary of each location:value
-        # correspondence for a given sense. So each groupvalue contains
-        # multiple location keys, each with a value value, and the sum of all
-        # the location:value correspondences for a sense defines the group
-        # --which is distinct from another group which shares some
-        # (but not all) of those location:value correspondences.
-        # This is the key analytical step that moves us from a collection of
-        # surface forms (each pronunciation group in a given context) to the
-        # underlying form (which behaves the same as others in its group,
-        # across all contexts).
-        groups={}
-        groupvalues=[]
-        # Collect all unique combinations of location:group pairings.
-        for value in output.values(): #iterate over all loc:group dictionaries
-            if value not in groupvalues: #Just give each once
-                groupvalues+=[value]
-        log.info("Done collecting combinations of groups values by location.")
-        # find the senseids for each set of location:value correspondences.
-        x=1 #first group number
-        for value in groupvalues:
-            group=self.slices.ps()+'_'+self.slices.profile()+'_'+str(x)
-            groups[group]={}
-            groups[group]['values']=value
-            groups[group]['senseids']=[]
-            x+=1
-        log.info('Groups set up; adding senseids to groups now. ({})'.format(
-                                                                groups.keys()))
-        return groups
-    def senseidstogroupUFs(self,output,groups):
-        for senseid in self.slices.senseids():
-            for group in groups:
-                if str(output[senseid]) == str(groups[group]['values']):
-                    groups[group]['senseids']+=[senseid]
-                    self.db.addtoneUF(senseid,group,analang=self.analang)
-        self.db.write()
-        log.info("Done adding senseids to groups.")
-        return groups #after filling it out with senseids
-    def prioritizegroupUFs(self,groups):
-        """Prioritize groups by similarity of location:value pairings"""
-        valuesbygroup={}
-        #Move values dictionaries up a level, for comparison
-        for group in groups:
-            valuesbygroup[group]=groups[group]['values']
-        return dictscompare(valuesbygroup,ignore=['NA',None],flat=False)
-    def prioritizelocations(self,groups,locations):
-        """This is for the tone group report"""
-        """Prioritize locations by similarity of location:value pairings"""
-        valuesbylocation={}
-        #Move values dictionaries up a level, for comparison
-        for location in locations:
-            valuesbylocation[location]={}
-            for group in groups:
-                if location in groups[group]['values']:
-                    valuesbylocation[location][group]=groups[group]['values'][
-                                                                    location]
-        return dictscompare(valuesbylocation,ignore=['NA',None,'None'],flat=False)
     def tonegroupreport(self,silent=False,bylocation=False,default=True):
         #default=True redoes the UF analysis (removing any joining/renaming)
         def examplestoXLP(examples,parent,groups=True):
@@ -7817,6 +7709,156 @@ class ToolTip(object):
         self.tw= None
         if tw:
             tw.destroy()
+class Analysis(object):
+    """Currently for tone, but sorting out values by group"""
+    """The following two functions analyze the similarity of UF groups and
+    locations/checks with respect to the correlation between other and
+    the surface tone group value for that UF-check combination."""
+    def allvaluesbycheck(self):
+        self.valuesbycheck=dictofchilddicts(self.valuesbygroupcheck,
+                                                remove=['NA',None])
+    def allvaluesbygroup(self):
+        self.valuesbygroup=dictofchilddicts(self.valuesbycheckgroup,
+                                                remove=['NA',None])
+    def compareUFs(self): #was prioritize
+        """Prioritize groups by similarity of location:value pairings"""
+        """This is already in the order to compare"""
+        self.comparisonUFs=dictscompare(self.valuesbygroupcheck,
+                                        ignore=['NA',None,'None'],
+                                        flat=False)
+        self.orderedUFs=flatten(self.comparisonUFs)
+        log.debug("structured groups: {}".format(self.comparisonUFs))
+    def comparechecks(self):
+        """Prioritize locations by similarity of location:value pairings"""
+        """we need to switch the hierarchy to make this comparison"""
+        vbcg=self.valuesbycheckgroup={}
+        for check in self.checks:
+            vbcg[check]={}
+            for group in self.valuesbygroupcheck:
+                if check in self.valuesbygroupcheck[group]:
+                    """This removes the 'values' layer, and promotes location
+                    above group"""
+                    vbcg[check][group]=self.valuesbygroupcheck[group][check]
+        self.comparisonchecks=dictscompare(vbcg,
+                                            ignore=['NA',None,'None'],
+                                            flat=False)
+        self.orderedchecks=flatten(self.comparisonchecks)
+        log.debug("structured locations: {}".format(self.comparisonchecks))
+    def locationgroupsbysenseid(self):
+        """outputs dictionary keyed to [senseid][location]=group"""
+        self.senseiddict={}
+        for senseid in self._slices.senseids():
+            self.senseiddict[senseid]={}
+            for location in self.checks:
+                group=self._db.get("example/tonefield/form/text",
+                    senseid=senseid,location=location).get('text')
+                if group: #store location:group by senseid
+                    self.senseiddict[senseid][location]=group
+        log.info("Done collecting groups by location for each senseid.")
+        log.info(self.senseiddict)
+        return self.senseiddict #was output
+    def sorttoUFs(self):
+        """Input is a dict keyed by location, valued with location:group dicts
+        Returns groups by location:value correspondences."""
+        # This is the key analytical step that moves us from a collection of
+        # surface forms (each pronunciation group in a given context) to the
+        # underlying form (which behaves the same as others in its group,
+        # across all contexts).
+        if not hasattr(self,'senseiddict'):
+            log.error("You have to run locationgroupsbysenseid first")
+            return
+        unnamed={}
+        # Collect all unique combinations of location:group pairings.
+        for senseid in self.senseiddict:
+            #sort into groups by dict values (combinations location:group pairs)
+            k=str(input[senseid])
+            try:
+                unnamed[k].append(senseid)
+            except KeyError:
+                unnamed[k]=list(senseid)
+        log.info("Done collecting combinations of groups values by location.")
+        # self.groups={}
+        self.valuesbygroupcheck={}
+        self.senseidsbygroup={}
+        ks=list(unnamed) #keep sorting order
+        for k in ks:
+            x=index.ks(k)+1
+            name=self._slices.ps()+'_'+self._slices.profile()+'_'+str(x)
+            # self.groups[name]={}
+            # self.groups[name]['values']=ast.literal_eval(k) #return str to dict
+            self.valuesbygroupcheck[name]=ast.literal_eval(k) #return str to dict
+            # self.groups[name]['senseids']=unnamed[k]
+            self.senseidsbygroup[name]=unnamed[k]
+            for senseid in unnamed[k]:
+                self._db.addtoneUF(senseid,name,analang=self.analang)
+        self.db.write()
+        log.info("Done adding senseids to groups.")
+        # return self.groups
+    def tonegroupsbyUFcheckfromLIFT(self,senseidsbygroup): #tonegroupsbyUFlocation
+        #returns dictionary keyed by [group][location]=groupvalue
+        values=self.valuesbygroupcheck={}
+        locations=self._status.checks()
+        # Collect location:value correspondences, by sense
+        for group in self.senseidsbygroup:
+            values[group]={}
+            for location in locations: #just make them all, delete empty later
+                values[group][location]=list()
+                for senseid in senseidsbygroup[group]:
+                    groupvalue=self.db.get("example/tonefield/form/text",
+                                            senseid=senseid, location=location,
+                                            ).get('text')
+                    if groupvalue:
+                        if unlist(groupvalue) not in values[group][location]:
+                            values[group][location]+=groupvalue
+                log.log(3,"values[{}][{}]: {}".format(group,location,
+                                                    values[group][location]))
+                if not values[group][location]:
+                    log.info(_("Removing empty {} key from {} values"
+                                "").format(location,group))
+                    del values[group][location] #don't leave key:None pairs
+        log.info("Done collecting groups by location for each UF group.")
+        # return values
+    def senseidsbyUFsfromLIFT(self):
+        """This returns a dict of {UFtonegroup:[senseids]}"""
+        log.debug(_("Looking for sensids by UF tone groups for {}-{}").format(
+                    self._slices.profile(), self._slices.ps())
+                    )
+        self.senseidsbygroup={}
+        """Still working on one ps-profile combo at a time."""
+        for senseid in self._slices.senseids(): #I should be able to make this a regex...
+            group=firstoflist(self.db.get('sense/toneUFfield/form/text',
+                                                senseid=senseid).get('text'))
+            if group is not None:
+                if group not in sorted:
+                    self.senseidsbygroup[group]=[]
+                self.senseidsbygroup[group]+=[senseid]
+        """drop this"""
+        self.toneUFgroups=list(dict.fromkeys(self.senseidsbygroup))
+        log.debug("UFtonegroups (senseidsbyUFsfromLIFT): {}".format(
+                                                            self.toneUFgroups))
+        return self.senseidsbygroup #?
+    def donoUFanalysis(self):
+        self.senseidsbyUFsfromLIFT() # > self.senseidsbygroup
+        self.tonegroupsbyUFcheckfromLIFT() # > self.valuesbygroupcheck
+        self.doanyway()
+    def do(self):
+        self.checks=self._status.checks() #just do once
+        self.locationgroupsbysenseid() # > self.senseiddict
+        self.sorttoUFs() # > self.senseidsbygroup and self.valuesbygroupcheck
+        self.compareUFs() # > self.comparisonUFs
+        self.comparechecks() #  > self.comparisonchecks
+        self.doanyway()
+    def doanyway(self):
+        self.allvaluesbycheck()
+        self.allvaluesbygroup()
+        self.comparechecks()
+        self.compareUFs()
+    def __init__(self, params, slices, status, db):
+        super(Analysis, self).__init__()
+        self._params=params
+        self._slices=slices
+        self._status=status
+        self._db=db
 class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
