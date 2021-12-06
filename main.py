@@ -309,11 +309,11 @@ class Check():
         ninvalids=len(invalids)
         extras=list(dict.fromkeys(invalids).keys())
         if ninvalids >10:
-            warning=Window(self, title="More than Ten Invalid Characters Found!")
+            self.warning=Window(self.frame, title="More than Ten Invalid Characters Found!")
             t=_("Your {} database has the following symbols, which are "
             "excluding {} words from being analyzed: \n{}"
                                     "".format(self.analang,ninvalids,extras))
-            l=Label(warning, text=t)
+            l=Label(self.warning, text=t)
             l.grid(row=0, column=0)
     """Guessing functions"""
     def guessanalang(self):
@@ -1557,6 +1557,8 @@ class Check():
             setattr(self, default, None)
             """These can be done in checkcheck..."""
     def restart(self):
+        if hasattr(self,'warning') and self.warning.winfo_exists():
+            self.warning.destroy()
         self.parent.makecheck()
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
