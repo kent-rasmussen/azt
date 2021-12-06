@@ -4747,7 +4747,7 @@ class Check():
             self.examplespergrouptorecord=100
             self.storesettingsfile()
         self.analysis.donoUFanalysis()
-        torecord=self.analysis.senseidsbygroup()
+        torecord=self.analysis.senseidsbygroup
         ntorecord=len(torecord) #number of groups
         nexs=len([k for i in torecord for j in torecord[i] for k in j])
         nslice=self.slices.count()
