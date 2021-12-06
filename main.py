@@ -7774,7 +7774,7 @@ class Analysis(object):
         self._db.write()
         log.info("Done adding senseids to groups.")
         # return self.groups
-    def tonegroupsbyUFcheckfromLIFT(self,senseidsbygroup): #tonegroupsbyUFlocation
+    def tonegroupsbyUFcheckfromLIFT(self):
         #returns dictionary keyed by [group][location]=groupvalue
         values=self.valuesbygroupcheck={}
         checks=self._status.checks()
