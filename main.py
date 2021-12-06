@@ -310,7 +310,8 @@ class Check():
         if not hasattr(self,'analysis'):
             self.analysis=Analysis(self.params,
                                     self.slices,
-                                    self.status
+                                    self.status,
+                                    self.db
                                     )
         log.info("makestatus status type: {}".format(type(self.status)))
     def notifyuserofextrasegments(self):
