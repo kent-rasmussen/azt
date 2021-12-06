@@ -5086,8 +5086,11 @@ class Check():
         rwrow+=1
         scroll=ui.ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=rwrow,column=0,sticky='ew')
-        groupvalues=self.tonegroupsbyUFlocation(senseidsbygroup)
-        locations=list(dictofchilddicts(groupvalues).keys())
+        self.makeanalysis()
+        refreshgroups()
+        self.analysis.donoUFanalysis()
+        senseidsbygroup=self.analysis.senseidsbygroup
+        groupvalues=self.analysis.valuesbygroupcheck
         checks=self.analysis.orderedchecks
         groups=self.analysis.orderedUFs
         nheaders=0
