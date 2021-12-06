@@ -125,6 +125,13 @@ def writeinterfacelangtofile(lang):
     f = open(file, 'w', encoding='utf-8') # to append, "a"
     f.write('interfacelang="'+lang+'"'+'\n')
     f.close()
+def getfilenames():
+    try:
+        import lift_url
+    except:
+        log.debug("getfilename lift_url didn't import")
+        return lift()
+    
 def getfilename():
     try:
         import lift_url
