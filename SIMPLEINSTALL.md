@@ -42,7 +42,7 @@ Once you have completed everything under [Install Python](#install-python) and [
 ## Additional Important Steps to get the most out of A→Z+T
 
 ### Install Mercurial for better collaboration
-There are lots of ways to install this; start [here](https://www.mercurial-scm.org/wiki/Download).
+Download and install [this file](https://www.mercurial-scm.org/release/windows/Mercurial-6.0-x64.exe).
 
 ### Praat
 - If you use Praat, make sure the Praat executable is in your operating system's path. You may need to ask your IT support for help, if you don't know how to do this.
