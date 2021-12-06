@@ -5005,7 +5005,7 @@ class Check():
                 errorlabel['text'] = noname
                 return
             groupsselected=[]
-            for group in groups: #all group variables
+            for group in groupvars: #all group variables
                 groupsselected+=[group.get()] #value, name if selected, 0 if not
             groupsselected=[x for x in groupsselected if x != '']
             log.info("groupsselected:{}".format(groupsselected))
@@ -5016,20 +5016,17 @@ class Check():
                 errorlabel['text'] = deja
                 return
             for group in groupsselected:
-                if group in senseidsbygroup: #selected ones only
+                if group in self.analysis.senseidsbygroup: #selected ones only
                     log.debug("Changing values from {} to {} for the following "
                             "senseids: {}".format(group,uf,
-                                                    senseidsbygroup[group]))
-                    for senseid in senseidsbygroup[group]:
+                                        self.analysis.senseidsbygroup[group]))
+                    for senseid in self.analysis.senseidsbygroup[group]:
                         self.db.addtoneUF(senseid,uf,analang=self.analang)
             self.db.write()
             self.runwindow.destroy()
             self.tonegroupsjoinrename() #call again, in case needed
         def done():
             self.runwindow.destroy()
-        def refreshgroups():
-            self.analysis.donoUFanalysis()
-            senseidsbygroup=self.analysis.senseidsbygroup
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         self.getrunwindow()
@@ -5081,39 +5078,42 @@ class Check():
         done_btn=Button(qframe,text = _("Done —no change"), command = done,
                                                                     anchor ='c')
         done_btn.grid(row=qrow,column=2,sticky='w')
-        groups=list()
+        groupvars=list()
         rwrow+=1
         scroll=ui.ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=rwrow,column=0,sticky='ew')
         self.makeanalysis()
-        refreshgroups()
         self.analysis.donoUFanalysis()
-        senseidsbygroup=self.analysis.senseidsbygroup
-        groupvalues=self.analysis.valuesbygroupcheck
-        checks=self.analysis.orderedchecks
-        groups=self.analysis.orderedUFs
         nheaders=0
         # ufgroups= # order by structured groups? Store this somewhere?
-        for group in groups: #make a variable and button to select
-            idn=groups.index(group)
+        for group in self.analysis.orderedUFs: #make a variable and button to select
+            idn=self.analysis.orderedUFs.index(group)
             if idn % 5 == 0: #every five rows
-                for check in checks:
+                col=1
+                for check in self.analysis.orderedchecks:
+                    col+=1
                     cbh=Label(scroll.content, text=check, font='small')
                     cbh.grid(row=idn+nheaders,
-                            column=checks.index(check)+2,sticky='ew')
+                            column=col,sticky='ew')
                 nheaders+=1
-            groups.append(tkinter.StringVar())
-            n=len(senseidsbygroup[group])
+            groupvars.append(tkinter.StringVar())
+            n=len(self.analysis.senseidsbygroup[group])
             buttontext=group+' ({})'.format(n)
             cb=CheckButton(scroll.content, text = buttontext,
-                                variable = groups[idn],
+                                variable = groupvars[idn],
                                 onvalue = group, offvalue = 0,
                                 )
             cb.grid(row=idn+nheaders,column=0,sticky='ew')
-            for check in groupvalues[group]: #self.analysis.valuesbygroupcheck
-                gvalue=unlist(groupvalues[group][check]) #self.analysis.valuesbygroupcheck
-                cbl=Label(scroll.content, text=gvalue) #font='small'?
-                cbl.grid(row=idn+nheaders,column=checks.index(check)+2,sticky='ew')
+            col=1
+            for check in self.analysis.orderedchecks:
+                col+=1
+                if check in self.analysis.valuesbygroupcheck[group]:
+                    cbl=Label(scroll.content,
+                        text=unlist(
+                                self.analysis.valuesbygroupcheck[group][check]
+                                    )
+                            )
+                    cbl.grid(row=idn+nheaders,column=col,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def tonegroupreport(self,silent=False,bylocation=False,default=True):
