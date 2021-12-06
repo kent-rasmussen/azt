@@ -5343,9 +5343,9 @@ class Check():
                 "V1≠V2, those words will appear multiple times, e.g., for "
                 "both V1=x and V2=y.")
         self.basicreportfile=''.join([str(self.reportbasefilename)
-                                            ,'_',''.join(typestodo)
+                                            ,'_',''.join(cvtstodo)
                                             ,'_BasicReport.txt'])
-        xlpr=self.xlpstart(reporttype='Basic '+''.join(typestodo))
+        xlpr=self.xlpstart(reporttype='Basic '+''.join(cvtstodo))
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
@@ -5384,7 +5384,7 @@ class Check():
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
                 log.info(t)
-                for cvt in typestodo:
+                for cvt in cvtstodo:
                     t=_("{} checks".format(self.params.typedict()[cvt]['sg']))
                     print(t)
                     log.info(t)
