@@ -5950,7 +5950,7 @@ class FramedDataDict(dict):
         log.info("sense: {}, element: {} (after build)".format(sense,element))
         d=self.isthere(source)
         if source and not d:
-            log.debug("source {} not there, making...".format(source))
+            log.debug("FramedData {} not already done; making…".format(source))
             """certain limited cases have sense w/o check (like page titles)
             or element without senseid (like when not recording)"""
             if sense:
