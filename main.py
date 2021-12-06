@@ -4746,6 +4746,7 @@ class Check():
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=100
             self.storesettingsfile()
+        self.makeanalysis()
         self.analysis.donoUFanalysis()
         torecord=self.analysis.senseidsbygroup
         ntorecord=len(torecord) #number of groups
