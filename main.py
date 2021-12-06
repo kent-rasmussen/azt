@@ -4208,16 +4208,6 @@ class Check():
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
-    def gettoneUFgroups(self): #obsolete?
-        """This returns just the list of UF tone groups in the current slice"""
-        log.debug("Looking for UF tone groups for {}-{} slice".format(profile,
-                                                                    ps))
-        toneUFgroups=[]
-        """Still working on one ps-profile combo at a time."""
-        for senseid in self.slices.senseids():
-            toneUFgroups+=self.db.get('sense/tonefield/form/text',
-                                                    senseid=senseid).get('text')
-        self.toneUFgroups=list(dict.fromkeys(toneUFgroups))
     def gettonegroups(self,ps=None,profile=None,check=None,renew=False):
         log.error("We shouldn't be using gettonegroups anymore !!!\n"
                 "Rather, call updatesortingstatus when you will sort."
@@ -4752,7 +4742,8 @@ class Check():
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=100
             self.storesettingsfile()
-        torecord=self.getsenseidsbytoneUFgroups()
+        self.analysis.donoUFanalysis()
+        torecord=self.analysis.senseidsbygroup()
         ntorecord=len(torecord) #number of groups
         nexs=len([k for i in torecord for j in torecord[i] for k in j])
         nslice=self.slices.count()
@@ -4765,23 +4756,23 @@ class Check():
                             self.slices.profile(),
                             self.slices.ps()
                                                         ))
-            self.tonegroupreport(silent=True)
+            self.analysis.do()
             self.showtonegroupexs()
             return
         batch={}
         for i in range(self.examplespergrouptorecord):
             batch[i]=[]
-            for toneUFgroup in torecord: #self.toneUFgroups:
-                print(i,len(torecord[toneUFgroup]),toneUFgroup,torecord[toneUFgroup])
-                if len(torecord[toneUFgroup]) > i: #no done piles.
-                    senseid=[torecord[toneUFgroup][i]] #list of one
+            for ufgroup in torecord:
+                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
+                if len(torecord[ufgroup]) > i: #no done piles.
+                    senseid=[torecord[ufgroup][i]] #list of one
                 else:
-                    print("Not enough examples, moving on:",i,toneUFgroup)
+                    print("Not enough examples, moving on:",i,ufgroup)
                     continue
                 log.info(_('Giving user the number {} example from tone '
-                        'group {}'.format(i,toneUFgroup)))
+                        'group {}'.format(i,ufgroup)))
                 exited=self.showsenseswithexamplestorecord(senseid,
-                            (toneUFgroup, i+1, self.examplespergrouptorecord),
+                            (ufgroup, i+1, self.examplespergrouptorecord),
                             skip=skip)
                 if exited == 'skip':
                     skip=True
@@ -5018,7 +5009,7 @@ class Check():
                 groupsselected+=[group.get()] #value, name if selected, 0 if not
             groupsselected=[x for x in groupsselected if x != '']
             log.info("groupsselected:{}".format(groupsselected))
-            if uf in self.toneUFgroups and uf not in groupsselected:
+            if uf in self.analysis.orderedUFs and uf not in groupsselected:
                 deja=_("That name is already there! (did you forget to include "
                         "the ‘{}’ group?)".format(uf))
                 log.debug(deja)
@@ -5037,7 +5028,8 @@ class Check():
         def done():
             self.runwindow.destroy()
         def refreshgroups():
-            senseidsbygroup=self.getsenseidsbytoneUFgroups()
+            # self.analysis.senseidsbyUFsfromLIFT() #self.analysis.donoUFanalysis() ?
+            senseidsbygroup=self.analysis.senseidsbygroup
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         self.getrunwindow()
@@ -5096,11 +5088,11 @@ class Check():
         scroll.grid(row=rwrow,column=0,sticky='ew')
         groupvalues=self.tonegroupsbyUFlocation(senseidsbygroup)
         locations=list(dictofchilddicts(groupvalues).keys())
+        groups=self.analysis.orderedUFs
         nheaders=0
         # ufgroups= # order by structured groups? Store this somewhere?
-        self.toneUFgroups.sort(key=len)
-        for group in self.toneUFgroups: #make a variable and button to select
-            idn=self.toneUFgroups.index(group)
+        for group in groups: #make a variable and button to select
+            idn=groups.index(group)
             if idn % 5 == 0: #every five rows
                 for location in locations:
                     cbh=Label(scroll.content, text=location, font='small')
@@ -7817,10 +7809,6 @@ class Analysis(object):
                 if group not in sorted:
                     self.senseidsbygroup[group]=[]
                 self.senseidsbygroup[group]+=[senseid]
-        """drop this"""
-        self.toneUFgroups=list(dict.fromkeys(self.senseidsbygroup))
-        log.debug("UFtonegroups (senseidsbyUFsfromLIFT): {}".format(
-                                                            self.toneUFgroups))
         return self.senseidsbygroup #?
     def donoUFanalysis(self):
         self.senseidsbyUFsfromLIFT() # > self.senseidsbygroup
