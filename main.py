@@ -5182,7 +5182,7 @@ class Check():
             self.analysis.donoUFanalysis()
             grouplist=self.toneUFgroups
             locations=checks
-        valuesbylocation=dictofchilddicts(groupvalues,remove=['NA',None])
+        checks=self.analysis.orderedchecks
         log.debug("groups (tonegroupreport): {}".format(grouplist))
         log.debug("locations (tonegroupreport): {}".format(locations))
         log.debug("valuesbylocation: {}".format(valuesbylocation))
@@ -5289,11 +5289,11 @@ class Check():
             output(window,r,text)
             if bylocation == True:
                 textout=list()
-                for location in self.analysis.orderedchecks:
-                    id=rx.id('x'+sectitle+location)
-                    headtext='{}: {}'.format(location,', '.join(
+                for check in checks:
+                    id=rx.id('x'+sectitle+check)
+                    headtext='{}: {}'.format(check,', '.join(
                             [i for i in
-                            self.analysis.valuesbygroupcheck[group][location]
+                            self.analysis.valuesbygroupcheck[group][check]
                             if i is not None]
                                             ))
                     e1=xlp.Example(s1,id,heading=headtext)
@@ -5302,7 +5302,7 @@ class Check():
                         framed=self.datadict.getframeddata(senseid,check=None)
                         text=framed.formatted(noframe=True,showtonegroup=False)
                         #This is put in XLP file:
-                        examples=self.db.get('example',location=location,
+                        examples=self.db.get('example',location=check,
                                                 senseid=senseid).get()
                         examplestoXLP(examples,e1,groups=False)
                         if text not in textout:
@@ -7754,16 +7754,16 @@ class Analysis(object):
                                             flat=False)
         self.orderedchecks=flatten(self.comparisonchecks)
         log.debug("structured locations: {}".format(self.comparisonchecks))
-    def locationgroupsbysenseid(self):
+    def checkgroupsbysenseid(self):
         """outputs dictionary keyed to [senseid][location]=group"""
         self.senseiddict={}
         for senseid in self._slices.senseids():
             self.senseiddict[senseid]={}
-            for location in self.checks:
+            for check in self.checks:
                 group=self._db.get("example/tonefield/form/text",
-                    senseid=senseid,location=location).get('text')
+                    senseid=senseid,location=check).get('text')
                 if group: #store location:group by senseid
-                    self.senseiddict[senseid][location]=group
+                    self.senseiddict[senseid][check]=group
         log.info("Done collecting groups by location for each senseid.")
         log.info(self.senseiddict)
         return self.senseiddict #was output
@@ -7775,7 +7775,7 @@ class Analysis(object):
         # underlying form (which behaves the same as others in its group,
         # across all contexts).
         if not hasattr(self,'senseiddict'):
-            log.error("You have to run locationgroupsbysenseid first")
+            log.error("You have to run checkgroupsbysenseid first")
             return
         unnamed={}
         # Collect all unique combinations of location:group pairings.
@@ -7807,26 +7807,26 @@ class Analysis(object):
     def tonegroupsbyUFcheckfromLIFT(self,senseidsbygroup): #tonegroupsbyUFlocation
         #returns dictionary keyed by [group][location]=groupvalue
         values=self.valuesbygroupcheck={}
-        locations=self._status.checks()
-        # Collect location:value correspondences, by sense
+        checks=self._status.checks()
+        # Collect check:value correspondences, by sense
         for group in self.senseidsbygroup:
             values[group]={}
-            for location in locations: #just make them all, delete empty later
-                values[group][location]=list()
+            for check in checks: #just make them all, delete empty later
+                values[group][check]=list()
                 for senseid in senseidsbygroup[group]:
                     groupvalue=self.db.get("example/tonefield/form/text",
-                                            senseid=senseid, location=location,
+                                            senseid=senseid, location=check,
                                             ).get('text')
                     if groupvalue:
-                        if unlist(groupvalue) not in values[group][location]:
-                            values[group][location]+=groupvalue
-                log.log(3,"values[{}][{}]: {}".format(group,location,
-                                                    values[group][location]))
-                if not values[group][location]:
+                        if unlist(groupvalue) not in values[group][check]:
+                            values[group][check]+=groupvalue
+                log.log(3,"values[{}][{}]: {}".format(group,check,
+                                                    values[group][check]))
+                if not values[group][check]:
                     log.info(_("Removing empty {} key from {} values"
-                                "").format(location,group))
-                    del values[group][location] #don't leave key:None pairs
-        log.info("Done collecting groups by location for each UF group.")
+                                "").format(check,group))
+                    del values[group][check] #don't leave key:None pairs
+        log.info("Done collecting groups by location/check for each UF group.")
         # return values
     def senseidsbyUFsfromLIFT(self):
         """This returns a dict of {UFtonegroup:[senseids]}"""
