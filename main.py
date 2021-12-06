@@ -5153,9 +5153,8 @@ class Check():
         else:
             self.analysis.donoUFanalysis() #based on (sense) UF fields
         """These are from LIFT, ordered by similarity for the report."""
-        grouplist=self.analysis.orderedUFs # was toneUFgroups
+        grouplist=self.analysis.orderedUFs
         checks=self.analysis.orderedchecks
-        log.debug("groups (tonegroupreport): {}".format(grouplist))
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
         self.runwindow.title(title)
