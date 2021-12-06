@@ -3600,17 +3600,20 @@ class Check():
             self.maybesort()
             return
         # Offer to join in any case:
-        log.info("joinT (from maybesort)")
-        exit=self.joinT()
-        log.debug("exit: {}".format(exit))
-        if exit == True:
+        if self.status.tojoin():
+            log.info("joinT (from maybesort)")
+            exit=self.joinT()
+            log.debug("exit: {}".format(exit))
+        else:
+            exit=False
+        if exit:
             if not self.exitFlag:
                 self.notdonewarning()
             #This happens when the user exits the window
             log.debug("exiting joinT True")
             #Give an error window here
             return
-        elif exit == False:
+        elif not exit:
             def nframe():
                 r=self.status.nextcheck(tosort=True)
                 if not r:
@@ -3838,13 +3841,6 @@ class Check():
         entryview=ui.Frame(self.runwindow.frame)
         for group in groups:
             addgroupbutton(group)
-            # b=ToneGroupButtonFrame(groupbuttons, self, self.exs, group,
-            #                         showtonegroup=True,
-            #                         canary=entryview
-            #                         )
-            # b.grid(row=groupbuttons.row, column=0)
-            # groupvars[group]=b.var()
-            # groupbuttons.row+=1
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
         self.getanotherskip(scroll.content.anotherskip,groupvars)
         log.info("getanotherskip vardict (1): {}".format(groupvars))
@@ -4104,6 +4100,8 @@ class Check():
         if ngroupstojoin < 2:
             log.info("User selected ‘{}’ with {} groups selected, moving on."
                     "".format(oktext,ngroupstojoin))
+            #this avoids asking the user about it again, until more sorting:
+            self.status.tojoin(False)
             return 0
         elif ngroupstojoin > 2:
             log.info("User selected ‘{}’ with {} groups selected, This is "
@@ -4200,6 +4198,7 @@ class Check():
             log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(tonegroup,group))
         self.updatestatus(group=group) #this marks the group unverified.
+        self.status.tojoin(True) # will need to be distinguished again
         self.db.write() #This is never iterated over; just one entry at a time.
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
@@ -8071,6 +8070,27 @@ class StatusDict(dict):
         if (check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
             return True
+    def checktojoin(self,check=None):
+        if check is None:
+            check=self._checkparameters.check()
+        cvt=self._checkparameters.cvt()
+        ps=self._slicedict.ps()
+        profile=self._slicedict.profile()
+        if (check in self[cvt][ps][profile] and
+                'tojoin' not in self[cvt][ps][profile][check] or
+                self[cvt][ps][profile][check]['tojoin'] == True):
+            return True
+    def profiletojoin(self,profile=None):
+        if profile is None:
+            profile=self._slicedict.profile()
+        cvt=self._checkparameters.cvt()
+        ps=self._slicedict.ps()
+        checks=self.checks()
+        for check in checks: #any check
+            if (profile in self[cvt][ps] and
+                check in self[cvt][ps][profile] and
+                self[cvt][ps][profile][check]['tojoin'] == True):
+                return True
     def profiletosort(self,profile=None):
         if profile is None:
             profile=self._slicedict.profile()
@@ -8152,7 +8172,8 @@ class StatusDict(dict):
                             [self.groups(profile=profile,check=check,**kwargs)
                             for check in checks]
                                         for i in j
-                                        ])
+                                        ]) or
+                kwargs['tojoin'] and self.profiletojoin(profile)
                 ):
                 p+=[profile]
         log.log(4,"Profiles with kwargs {}: {}".format(kwargs,p))
@@ -8168,9 +8189,10 @@ class StatusDict(dict):
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']) or
                 # """These next two assume current ps-profile slice"""
-                (kwargs['wsorted'] and self.groups(check=check,wsorted=True)) or
-                (kwargs['tosort'] and self.checktosort(check)) or
-                (kwargs['toverify'] and self.groups(check=check,toverify=True))
+                kwargs['wsorted'] and self.groups(check=check,wsorted=True) or
+                kwargs['tosort'] and self.checktosort(check) or
+                kwargs['toverify'] and self.groups(check=check,toverify=True) or
+                kwargs['tojoin'] and self.checktojoin(check)
                 ):
                 cs+=[check]
         log.log(4,"Checks with {}: {}".format(kwargs,cs))
@@ -8401,6 +8423,16 @@ class StatusDict(dict):
         self.dictcheck(**kwargs)
         return self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][
                                                                 kwargs['check']]
+    def tojoin(self,v=None,**kwargs):
+        kwargs=self.checkslicetypecurrent(**kwargs) # current value defaults
+        sn=self.node(**kwargs)
+        ok=[None,True,False]
+        if 'tojoin' not in sn:
+            sn['tojoin']=True
+        self._tojoinbool=sn['tojoin']
+        if v is not None:
+            self._tojoinbool=sn['tojoin']=v
+        return self._tojoinbool
     def tosort(self,v=None,**kwargs):
         kwargs=self.checkslicetypecurrent(**kwargs) # current value defaults
         sn=self.node(**kwargs)
@@ -8797,7 +8829,7 @@ def checkslicetype(**kwargs):
     log.log(4,"Returning checkslicetype kwargs {}".format(kwargs))
     return kwargs
 def grouptype(**kwargs):
-    for arg in ['wsorted','tosort','toverify','torecord','comparison']:
+    for arg in ['wsorted','tosort','toverify','tojoin','torecord','comparison']:
         kwargs[arg]=kwargs.get(arg,False)
     log.log(4,"Returning grouptype kwargs {}".format(kwargs))
     return kwargs
