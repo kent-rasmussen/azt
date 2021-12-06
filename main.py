@@ -7771,7 +7771,7 @@ class Analysis(object):
             self.senseidsbygroup[name]=unnamed[k]
             for senseid in unnamed[k]:
                 self._db.addtoneUF(senseid,name,analang=self.analang)
-        self.db.write()
+        self._db.write()
         log.info("Done adding senseids to groups.")
         # return self.groups
     def tonegroupsbyUFcheckfromLIFT(self,senseidsbygroup): #tonegroupsbyUFlocation
