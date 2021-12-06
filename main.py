@@ -7783,8 +7783,8 @@ class Analysis(object):
             values[group]={}
             for check in checks: #just make them all, delete empty later
                 values[group][check]=list()
-                for senseid in senseidsbygroup[group]:
-                    groupvalue=self.db.get("example/tonefield/form/text",
+                for senseid in self.senseidsbygroup[group]:
+                    groupvalue=self._db.get("example/tonefield/form/text",
                                             senseid=senseid, location=check,
                                             ).get('text')
                     if groupvalue:
