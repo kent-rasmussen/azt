@@ -5150,7 +5150,6 @@ class Check():
             return
         start_time=time.time()
         self.makeanalysis()
-        """Split here"""
         if default:
             self.analysis.do() #full analysis from scratch, output to UF fields
         else:
