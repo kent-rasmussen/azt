@@ -9176,6 +9176,7 @@ def findhg():
                 return
     hg=hg.decode("utf-8").strip()
     log.info("Mercurial found at {}".format(hg))
+    program['hg']=hg
 def praatopen(file,event=None):
     if program['praat']:
         log.info(_("Trying to call Praat at {}...").format(program['praat']))
