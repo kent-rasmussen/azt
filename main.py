@@ -5104,6 +5104,7 @@ class Check():
                                 onvalue = group, offvalue = 0,
                                 )
             cb.grid(row=idn+nheaders,column=0,sticky='ew')
+            # self.analysis.valuesbygroupcheck[group]:
             col=1
             for check in self.analysis.orderedchecks:
                 col+=1
