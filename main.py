@@ -5263,7 +5263,8 @@ class Check():
             output(window,r,text)
             if bylocation == True:
                 textout=list()
-                for check in checks:
+                #This is better than checks, just whats there for this group
+                for check in self.analysis.valuesbygroupcheck[group]:
                     id=rx.id('x'+sectitle+check)
                     headtext='{}: {}'.format(check,', '.join(
                             [i for i in
