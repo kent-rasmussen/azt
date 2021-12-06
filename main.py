@@ -5266,12 +5266,14 @@ class Check():
                             xterms=locslice,
                             values=lambda x,y:nn(unlist(groupvalues[y][x],
                                 ignore=[None, 'NA'])),
-                            ycounts=lambda x:len(toreport[x]),
                             xcounts=lambda y:len(valuesbylocation[y]))
+                        ycounts=lambda x:len(self.analysis.senseidsbygroup[x]),
         #Can I break this for multithreading?
         for group in grouplist: #These already include ps-profile
             log.info("building report for {} ({}/{}, n={})".format(group,
-                grouplist.index(group)+1,len(grouplist),len(toreport[group])))
+                grouplist.index(group)+1,len(grouplist),
+                len(self.analysis.senseidsbygroup[group])
+                ))
             sectitle=_('\n{}'.format(str(group)))
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
@@ -5291,7 +5293,7 @@ class Check():
                     [i for i in groupvalues[group][location] if i is not None]
                                             ))
                     e1=xlp.Example(s1,id,heading=headtext)
-                    for senseid in toreport[group]:
+                    for senseid in self.analysis.senseidsbygroup[group]:
                         #This is for window/text output only, not in XLP file
                         framed=self.datadict.getframeddata(senseid,check=None)
                         text=framed.formatted(noframe=True,showtonegroup=False)
@@ -5305,7 +5307,7 @@ class Check():
                     if not e1.node.find('listWord'):
                         s1.node.remove(e1.node) #Don't show examples w/o data
             else:
-                for senseid in toreport[group]: #groups[group]['senseids']:
+                for senseid in self.analysis.senseidsbygroup[group]:
                     #This is for window/text output only, not in XLP file
                     framed=self.datadict.getframeddata(senseid,check=None)
                     text=framed.formatted(noframe=True, showtonegroup=False)
