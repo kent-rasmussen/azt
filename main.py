@@ -4515,7 +4515,9 @@ class Check():
         profile=self.slices.profile()
         if not profile:
             self.getprofile()
-        if check not in self.status.checks(wsorted=True):
+        if (check not in self.status.checks(tosort=True)
+                and check not in self.status.checks(toverify=True)
+                and check not in self.status.checks(tojoin=True)):
             exit=self.getcheck()
             if exit:
                 self.runcheck()
