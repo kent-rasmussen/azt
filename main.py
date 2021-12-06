@@ -5150,6 +5150,7 @@ class Check():
             self.runwindow.waitdone()
             return
         start_time=time.time()
+        self.makeanalysis()
         """Split here"""
         if default == True:
             #Do the draft UF analysis, from scratch
