@@ -105,6 +105,11 @@ class Check():
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
         filedir=file.getfilenamedir(self.filename)
+        if file.exists(file.getdiredurl(filedir,'.hg')):
+            log.info("Found Mercurial Repository!")
+            if not program['hg']:
+                log.info("But found no Mercurial executable!")
+                self.mercurialwarning(filedir)
         """We need this variable to make filenames for files that will be
         imported as python modules. To do that, they need to not have periods
         (.) in their filenames. So we take the base name from the lift file,
@@ -219,6 +224,22 @@ class Check():
         self.tableiteration=0
         self.attrschanged=[]
         self.checkcheck()
+    def mercurialwarning(self,filedir):
+        title="Warning: Mercurial Repository without Executable"
+        window=Window(self.frame,title=title)
+        hgurl="https://www.mercurial-scm.org/wiki/Download"
+        text=_("You seem to be working on a repository of data ({}), "
+        "\nwhich seems to be tracked by mercurial (used by Chorus, "
+        "and languagedepot.org), "
+        "\nbut you don't seem to have the executable installed in "
+        "your computer's PATH.  \nPlease see {} for installation "
+        "recommendataions, \nor see all your options at {}."
+        "".format(filedir,program['url'],hgurl)
+        )
+        l=Label(window.frame, text=text)
+        l.grid(column=0, row=0)
+        l.bind("<Button-1>", lambda e: openweburl(hgurl))
+        window.lift()
     def askwhichlift(self):
         def setfilename(choice,window):
             if choice == 'Other':
@@ -9128,6 +9149,7 @@ def findpath():
     except Exception as e:
         log.info("No path found! ({})".format(e))
 def findhg():
+    program['hg']=None
     path=findpath()
     paths=pathseparate(path)
     log.info("path items: {}".format(paths))
@@ -9155,8 +9177,6 @@ def findhg():
                 return
     hg=hg.decode("utf-8").strip()
     log.info("Mercurial found at {}".format(hg))
-    program['hgisthere']=True
-    program['hg']=hg
 def praatopen(file,event=None):
     if program['praatisthere']:
         log.info(_("Trying to call Praat at {}...").format(program['praat']))
