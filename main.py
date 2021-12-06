@@ -7798,7 +7798,6 @@ class Analysis(object):
                                 "").format(check,group))
                     del values[group][check] #don't leave key:None pairs
         log.info("Done collecting groups by location/check for each UF group.")
-        # return values
     def senseidsbyUFsfromLIFT(self):
         """This returns a dict of {UFtonegroup:[senseids]}"""
         log.debug(_("Looking for sensids by UF tone groups for {}-{}").format(
