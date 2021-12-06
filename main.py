@@ -5088,16 +5088,17 @@ class Check():
         scroll.grid(row=rwrow,column=0,sticky='ew')
         groupvalues=self.tonegroupsbyUFlocation(senseidsbygroup)
         locations=list(dictofchilddicts(groupvalues).keys())
+        checks=self.analysis.orderedchecks
         groups=self.analysis.orderedUFs
         nheaders=0
         # ufgroups= # order by structured groups? Store this somewhere?
         for group in groups: #make a variable and button to select
             idn=groups.index(group)
             if idn % 5 == 0: #every five rows
-                for location in locations:
-                    cbh=Label(scroll.content, text=location, font='small')
+                for check in checks:
+                    cbh=Label(scroll.content, text=check, font='small')
                     cbh.grid(row=idn+nheaders,
-                            column=locations.index(location)+2,sticky='ew')
+                            column=checks.index(check)+2,sticky='ew')
                 nheaders+=1
             groups.append(tkinter.StringVar())
             n=len(senseidsbygroup[group])
@@ -5107,10 +5108,10 @@ class Check():
                                 onvalue = group, offvalue = 0,
                                 )
             cb.grid(row=idn+nheaders,column=0,sticky='ew')
-            for location in groupvalues[group]:
-                gvalue=unlist(groupvalues[group][location])
+            for check in groupvalues[group]: #self.analysis.valuesbygroupcheck
+                gvalue=unlist(groupvalues[group][check]) #self.analysis.valuesbygroupcheck
                 cbl=Label(scroll.content, text=gvalue) #font='small'?
-                cbl.grid(row=idn+nheaders,column=locations.index(location)+2,sticky='ew')
+                cbl.grid(row=idn+nheaders,column=checks.index(check)+2,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def tonegroupreport(self,silent=False,bylocation=False,default=True):
