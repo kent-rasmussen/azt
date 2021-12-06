@@ -4804,7 +4804,7 @@ class Check():
                                         ,'-',str(profile)
                                         ,'_',str(check)
                                         ,'_ReportXLP.xml'])
-        xlpr=xlpr=self.xlpstart()
+        xlpr=self.xlpstart()
         """"Do I need this?"""
         self.results.grid(column=0,
                         row=self.runwindow.frame.grid_info()['row']+1,
@@ -4816,8 +4816,7 @@ class Check():
         i=0
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
-        text=(_("{} roots of form {} by {}".format(ps,profile,
-                                                            check)))
+        text=(_("{} roots of form {} by {}".format(ps,profile,check)))
         Label(self.results, text=text).grid(column=0, row=i)
         self.runwindow.wait()
         si=xlp.Section(xlpr,text)
@@ -5306,12 +5305,12 @@ class Check():
     def xlpstart(self,reporttype='adhoc',bylocation=False,default=True):
         ps=self.slices.ps()
         profile=self.slices.profile()
-        check=self.params.check()
         if reporttype == 'Tone':
             if bylocation:
                 reporttype='Tone-bylocation'
         elif not re.search('Basic',reporttype): #We don't want this in the title
-            reporttype=str(check)
+            #this is only for adhoc "big button" reports.
+            reporttype=str(self.params.check())
         reporttype=' '.join([ps,profile,reporttype])
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
         if default == False:
