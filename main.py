@@ -5179,8 +5179,7 @@ class Check():
         else:
             #make a report without having redone the UF analysis
             #The following line puts out a dictionary keyed by UF group name:
-            toreport=self.getsenseidsbytoneUFgroups()
-            groupvalues=self.tonegroupsbyUFlocation(toreport)
+            self.analysis.donoUFanalysis()
             grouplist=self.toneUFgroups
             locations=checks
         valuesbylocation=dictofchilddicts(groupvalues,remove=['NA',None])
@@ -5229,7 +5228,7 @@ class Check():
                                         row=window.row,column=0, sticky="w")
             window.row+=1
         t=_("Summary of Frames by Draft Underlying Melody")
-        if len(locations) > 6:
+        if len(self.analysis.orderedchecks) > 6:
             landscape=True
         else:
             landscape=False
@@ -5251,23 +5250,25 @@ class Check():
                 "relationships for yourself: {}. "
                 "And here are the structured similarity relationships for the "
                 "Frames: {}"
-                "".format(self.program['name'],str(groupstructuredlist),
-                                                str(locationstructuredlist)))
+                "".format(self.program['name'],
+                        str(self.analysis.comparisonUFs),
+                        str(self.analysis.comparisonchecks)))
         else:
             ptext+=_("This is a non-default report, where a user has changed "
             "the default (hyper-split) groups created by {}.".format(
                                                         self.program['name']))
         p0=xlp.Paragraph(s1s,text=ptext)
         m=7 #only this many columns in a table
-        for slice in range(int(len(locations)/m)+1):
-            locslice=locations[slice*m:(slice+1)*m]
+        for slice in range(int(len(self.analysis.orderedchecks)/m)+1):
+            locslice=self.analysis.orderedchecks[slice*m:(slice+1)*m]
             if len(locslice) >0:
                 self.buildXLPtable(s1s,caption+str(slice),yterms=grouplist,
                             xterms=locslice,
-                            values=lambda x,y:nn(unlist(groupvalues[y][x],
-                                ignore=[None, 'NA'])),
-                            xcounts=lambda y:len(valuesbylocation[y]))
+                        values=lambda x,y:nn(unlist(
+                self.analysis.valuesbygroupcheck[y][x],ignore=[None, 'NA']
+                                            )),
                         ycounts=lambda x:len(self.analysis.senseidsbygroup[x]),
+                        xcounts=lambda y:len(self.analysis.valuesbycheck[y]))
         #Can I break this for multithreading?
         for group in grouplist: #These already include ps-profile
             log.info("building report for {} ({}/{}, n={})".format(group,
@@ -5278,19 +5279,22 @@ class Check():
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
             l=list()
-            for x in groupvalues[group]:
+            for x in self.analysis.valuesbygroupcheck[group]:
                 l.append("{}: {}".format(x,', '.join(
-                            [i for i in groupvalues[group][x] if i is not None]
+                    [i for i in self.analysis.valuesbygroupcheck[group][x]
+                                                            if i is not None]
                         )))
             text=_('Values by frame: {}'.format('\t'.join(l)))
             p1=xlp.Paragraph(s1,text)
             output(window,r,text)
             if bylocation == True:
                 textout=list()
-                for location in groupvalues[group]: #locations:
+                for location in self.analysis.orderedchecks:
                     id=rx.id('x'+sectitle+location)
                     headtext='{}: {}'.format(location,', '.join(
-                    [i for i in groupvalues[group][location] if i is not None]
+                            [i for i in
+                            self.analysis.valuesbygroupcheck[group][location]
+                            if i is not None]
                                             ))
                     e1=xlp.Example(s1,id,heading=headtext)
                     for senseid in self.analysis.senseidsbygroup[group]:
