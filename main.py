@@ -6807,6 +6807,8 @@ class MainApplication(ui.Frame):
         """Do this after we instantiate the check, so menus can run check
         methods"""
         ContextMenu(self)
+        if me:
+            self._setmenus()
         print("Finished loading main window in",time.time() - start_time," "
                                                                     "seconds.")
         """finished loading so destroy splash"""
