@@ -8104,10 +8104,6 @@ class StatusDict(dict):
                 check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
                 return True
-            else:
-                log.info(self[cvt][ps])
-                log.info(self[cvt][ps][profile])
-                log.info(self[cvt][ps][profile][check]['tosort'])
     def grouptorecord(self,group,check=None):
         if check is None:
             check=self._checkparameters.check()
