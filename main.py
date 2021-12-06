@@ -84,7 +84,7 @@ import webbrowser
 class Check():
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
-    def __init__(self, parent, frame, nsyls=None):
+    def __init__(self, parent, frame, filename=None, nsyls=None):
         self.start_time=time.time() #this enables boot time evaluation
         self.pp=pprint.PrettyPrinter()
         self.iterations=0
@@ -95,11 +95,12 @@ class Check():
         self.parent=parent #should be mainapplication frame
         self.frame=frame
         inherit(self)
-        self.filenames=file.getfilename()
-        if type(self.filenames) is list:
-            self.askwhichlift()
+        if filename:
+            self.filename=filename
         else:
-            self.filename=self.filenames
+            self.filename=file.getfilename()
+        if type(self.filename) is list:
+            self.askwhichlift()
         if not self.filename or not file.exists(self.filename):
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
@@ -1556,15 +1557,15 @@ class Check():
         for default in fields: #self.defaultstoclear[field]:
             setattr(self, default, None)
             """These can be done in checkcheck..."""
-    def restart(self):
+    def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
-        self.parent.makecheck()
+        self.parent.makecheck(filename)
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
-        file.writefilename()
-        delattr(self,'filename')
-        self.restart()
+        self.filenames=file.getfilenames()
+        self.askwhichlift()
+        self.restart(self.filename)
     def reloadprofiledata(self):
         self.storesettingsfile()
         self.profilesbysense={}
