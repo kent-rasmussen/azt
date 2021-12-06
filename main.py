@@ -5138,9 +5138,8 @@ class Check():
         self.getrunwindow()
         ps=self.slices.ps()
         profile=self.slices.profile()
-        checks=self.status.checks(wsorted=True)
         bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
-        if default == False:
+        if not default:
             bits.append('mod')
         self.tonereportfile='_'.join(bits)+".txt"
         checks=self.status.checks(wsorted=True)
@@ -5152,7 +5151,7 @@ class Check():
         start_time=time.time()
         self.makeanalysis()
         """Split here"""
-        if default == True:
+        if default:
             #Do the draft UF analysis, from scratch
             """output[senseid][location]=group"""
             output=self.tonegroupsbysenseidlocation()
