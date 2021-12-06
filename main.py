@@ -7294,6 +7294,8 @@ class RecordButtonFrame(ui.Frame):
     def function(self):
         pass
     def addlink(self):
+        if self.test:
+            return
         self.db.addmediafields(self.node,self.filename,self.audiolang)
     def __init__(self,parent,check,framed=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
@@ -7316,12 +7318,13 @@ class RecordButtonFrame(ui.Frame):
         self.settings=check.soundsettings
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
+        self.test=kwargs.pop('test',None)
         if framed is not None:
             self.audiolang=framed.audiolang
             self.filename=framed.filename
             self.filenameURL=framed.filenameURL
             self.node=framed.node
-        elif kwargs.get('test',None):
+        elif self.test:
             self.filename=self.filenameURL="test_{}_{}.wav".format(
                                         self.settings.fs, #soundsettings?
                                         self.settings.sample_format)
