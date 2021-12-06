@@ -8203,9 +8203,10 @@ class StatusDict(dict):
         log.log(4,"groups kwargs: {}".format(kwargs))
         kwargs=grouptype(**kwargs)
         kwargs=self.checkslicetypecurrent(**kwargs)
-        """This returns prioritization in advance of sorting, before actual
-        sort groups exist. So this only has meaning for segmental checks,
-        and should not be used for tone."""
+        """Without a kwarg, this returns prioritization in advance of sorting,
+        before actual sort groups exist. So that usage only has meaning for
+        segmental checks, and should not be used for tone. For tone usage,
+        ALWAYS specify a kwarg here."""
         """I don't know how to prioritize CV checks yet, if ever..."""
         sn=self.node(**kwargs)
         if kwargs['wsorted']: #this used to be the default: get or set sorted groups
