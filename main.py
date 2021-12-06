@@ -7806,7 +7806,7 @@ class Analysis(object):
         self.senseidsbygroup={}
         """Still working on one ps-profile combo at a time."""
         for senseid in self._slices.senseids(): #I should be able to make this a regex...
-            group=firstoflist(self.db.get('sense/toneUFfield/form/text',
+            group=firstoflist(self._db.get('sense/toneUFfield/form/text',
                                                 senseid=senseid).get('text'))
             if group is not None:
                 try:
