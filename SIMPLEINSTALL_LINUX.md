@@ -30,6 +30,9 @@ Run this command: `cd;git clone https://github.com/kent-rasmussen/azt.git`.
 6. Send me information on any [bugs](BUGS.md) you find, so I can help you and improve the program for others.
 
 ## Additional Important Steps to get the most out of A→Z+T
+### Install Mercurial for better collaboration
+run this command: `sudo apt-get install mercurial`
+
 ### Be ready to make and edit reports
 Ask someone to help you install the XMLmind XML Editor (XXE) (see [INSTALL](INSTALL.md)).
 
