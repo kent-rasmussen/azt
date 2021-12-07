@@ -911,15 +911,15 @@ class ToolTip(object):
         self.id = None
         self.tw = None
     def enter(self, event=None):
-        print('enteringwidget')
+        # print('enteringwidget')
         self.event=event
         self.schedule()
     def entertip(self, event=None):
-        print('enteringtip')
+        # print('enteringtip')
         self.dispx=-self.dispx
         self.dispy=-self.dispy
     def leave(self, event=None):
-        print('leavingwidget')
+        # print('leavingwidget')
         self.unschedule()
         self.hidetip()
     def schedule(self):
@@ -949,7 +949,6 @@ class ToolTip(object):
         label = Label(self.tw, text=self.text, justify='left', font='small',
                        background="#ffffff", relief='solid', borderwidth=1,
                        wraplength = self.wraplength)
-        label['background']='white'
         label.pack(ipadx=1)
         self.widget.bind("<Leave>", self.leave)
     def hidetip(self):
