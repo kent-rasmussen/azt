@@ -100,7 +100,7 @@ class Check():
         else:
             self.filename=file.getfilename()
         if type(self.filename) is list:
-            self.askwhichlift()
+            self.askwhichlift(self.filename)
         if not self.filename or not file.exists(self.filename):
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
@@ -255,7 +255,7 @@ class Check():
         o.bind("<Button-1>", lambda e: openweburl(hgurl))
         mtt=ToolTip(o,_("Go to {}").format(hgurl))
         window.lift()
-    def askwhichlift(self):
+    def askwhichlift(self,filenamelist):
         def setfilename(choice,window):
             if choice == 'Other':
                 self.filename=file.lift()
@@ -1608,8 +1608,7 @@ class Check():
         self.parent.makecheck(filename)
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
-        self.filenames=file.getfilenames()
-        self.askwhichlift()
+        self.askwhichlift(file.getfilenames())
         self.restart(self.filename)
     def reloadprofiledata(self):
         self.storesettingsfile()
