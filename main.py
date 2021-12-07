@@ -6806,7 +6806,8 @@ class MainApplication(ui.Frame):
                 w.destroy()
             # self.check.frame.destroy()
         self.check=Check(self,self.frame,filename,nsyls=self.nsyls)
-        self.parent.deiconify()
+        if not self.exitFlag.istrue():
+            self.parent.deiconify()
     def __init__(self,parent,program):
         start_time=time.time() #this enables boot time evaluation
         # print(time.time()-start_time) # with this
