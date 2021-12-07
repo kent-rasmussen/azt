@@ -228,17 +228,28 @@ class Check():
         title="Warning: Mercurial Repository without Executable"
         window=Window(self.frame,title=title)
         hgurl="https://www.mercurial-scm.org/wiki/Download"
+        hgfile=("https://www.mercurial-scm.org/release/windows/"
+        "Mercurial-6.0-x64.exe")
         text=_("You seem to be working on a repository of data ({}), "
-        "\nwhich seems to be tracked by mercurial (used by Chorus, "
+        "\nwhich seems to be tracked by mercurial (used by Chorus "
         "and languagedepot.org), "
-        "\nbut you don't seem to have the executable installed in "
-        "your computer's PATH.  \nPlease see {} for installation "
-        "recommendataions, \nor see all your options at {}."
-        "".format(filedir,program['url'],hgurl)
-        )
+        "\nbut you don't seem to have the Mercurial executable installed in "
+        "your computer's PATH.").format(filedir)
+        clickable="Please see {} for installation recommendations".format(
+                                                                program['url'])
+        clickable1="(e.g., in Windows, install *this* file),".format(hgfile)
+        clickable2=_("or see all your options at {}.").format(hgurl)
         l=Label(window.frame, text=text)
         l.grid(column=0, row=0)
-        l.bind("<Button-1>", lambda e: openweburl(hgurl))
+        m=Label(window.frame, text=clickable)
+        m.grid(column=0, row=1)
+        m.bind("<Button-1>", lambda e: openweburl(program['url']))
+        n=Label(window.frame, text=clickable1)
+        n.grid(column=0, row=2)
+        n.bind("<Button-1>", lambda e: openweburl(hgfile))
+        o=Label(window.frame, text=clickable2)
+        o.grid(column=0, row=3)
+        o.bind("<Button-1>", lambda e: openweburl(hgurl))
         window.lift()
     def askwhichlift(self):
         def setfilename(choice,window):
