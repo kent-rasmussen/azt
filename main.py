@@ -105,11 +105,14 @@ class Check():
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
         filedir=file.getfilenamedir(self.filename)
+        self.repo=None #leave this for test of both repo and exe
         if file.exists(file.getdiredurl(filedir,'.hg')):
             log.info("Found Mercurial Repository!")
             if not program['hg']:
                 log.info("But found no Mercurial executable!")
                 self.mercurialwarning(filedir)
+            else:
+                self.repo=Repository(filedir)
         """We need this variable to make filenames for files that will be
         imported as python modules. To do that, they need to not have periods
         (.) in their filenames. So we take the base name from the lift file,
@@ -295,6 +298,10 @@ class Check():
                 if file.exists(legacy):
                     log.debug("But legacy file {} does; converting!".format(legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
+            if file.exists(savefile) and self.repo:
+                self.repo.add(savefile)
+        if self.repo:
+            self.repo.status()
     def checkforlegacyverification(self):
         start_time=time.time()
         n=0
@@ -8709,6 +8716,48 @@ class ConfigParser(configparser.ConfigParser):
         self.optionxform=str
         self.allow_no_value=True
         # self.converters={'list':list} #lambda x: [i.strip() for i in x.split(',')]
+class Repository(object):
+    """docstring for Mercurial Repository."""
+    def add(self,file):
+        if not self.alreadythere(file):
+            args=["add", file]
+            self.do(args)
+    def commit(self,file=None):
+        args=["cm", file, '-m', "Autocommit from AZT"]
+        self.do(args)
+    def diff(self):
+        args=["diff"]
+        self.do(args)
+    def status(self):
+        args=["status"]
+        self.do(args)
+    def files(self):
+        args=["files"]
+        self.files=self.do(args)
+    def do(self,args):
+        cmd=[program['hg'],'-R',self.url]
+        cmd.extend(args)
+        try:
+            e=subprocess.check_output(cmd, shell=False).decode("utf-8").strip()
+            log.info("{} output: {}".format(cmd,e))
+        except Exception as e:
+            log.info(_("Call to Mercurial failed: {}").format(e))
+        return e
+    def alreadythere(self,url):
+        if str(url) in self.files:
+            log.info(_("URL {} is already in repo {}".format(url,self.url)))
+            return True
+        else:
+            log.info(_("URL {} is not already in repo {}:\n{}".format(url,self.url,self.files)))
+    def __init__(self, url):
+        if not program['hg']:
+            log.error("Mercurial isn't found on this computer; no repo object.")
+            return
+        super(Repository, self).__init__()
+        self.url = url
+        self.files()
+        log.info("Mercurial repository object initialized, with the following "
+                "files: {}.".format(self.files))
 class Options:
     def alias(self,o):
         return self.odict.get(o,o)
