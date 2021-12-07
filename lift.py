@@ -268,6 +268,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if 'py-' not in lang:
             lang='py-'+lang
         node=self.getsensenode(senseid=senseid)
+        if not node:
+            log.error("No sense node was found for senseid: {}"
+                        "\nThis should never happen!".format(senseid))
+            return
         vf=node.find("field[@type='{} {}']".format(vtype,"verification"))
         if vf is not None:
             for child in vf:
