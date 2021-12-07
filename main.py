@@ -1970,12 +1970,43 @@ class Check():
                         self.askaboutpolygraphs()
                         return
     def askaboutpolygraphs(self):
-        def nochanges(changemarker):
-            changemarker.value=False
-            pgw.destroy()
-        changemarker=Object()
-        changemarker.value=True
-        nochangetext=_("Exit with no changes")
+        def nochanges():
+            log.info("Trying to make no changes")
+            if foundchanges() and not self.exitFlag.istrue():
+                log.info("Found changes; exiting.")
+                self.exitFlag.true()
+                self.parent.parent.destroy() #pgw.destroy()
+            elif not self.exitFlag.istrue():
+                pgw.destroy()
+        def makechanges():
+            log.info("Changes called for; like it or not, redoing analysis.")
+            if not foundchanges():
+                log.info("User asked for changes to polygraph settings, but "
+                        "no changes found.")
+                pgw.destroy()
+                return
+            for lang in self.db.analangs:
+                for pc in vars[lang]:
+                    for pg in vars[lang][pc]:
+                        self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
+            self.storesettingsfile(setting='profiledata')
+            self.reloadprofiledata()
+        def foundchanges():
+            for lang in vars:
+                if lang not in self.polygraphs:
+                    return True
+                for pc in vars[lang]:
+                    if pc not in self.polygraphs[lang]:
+                        return True
+                    for pg in vars[lang][pc]:
+                        if pg not in self.polygraphs[lang][pc]:
+                            return True
+                        v=vars[lang][pc][pg].get()
+                        if self.polygraphs[lang][pc][pg]!=v:
+                            return True
+            log.info("No changes found to polygraph settings, continuing.")
+        oktext=_("OK")
+        nochangetext=_("Exit {} with no changes".format(program['name']))
         log.info("Asking about Digraphs and Trigraphs!")
         pgw=Window(self.frame,title="A→Z+T Digraphs and Trigraphs")
         t=_("Select which of the following graph sequences found in your data "
@@ -1983,21 +2014,24 @@ class Check():
             unlist([self.languagenames[y] for y in self.db.analangs])))
         title=Label(pgw.frame,text=t)
         title.grid(column=0, row=0)
-        t=_("If you use a digraph or trigraph that isn't listed here, please "
-            "click here to Email me, and I can add it.")
+        t=_("If your data contains a digraph or trigraph that isn't listed "
+            "here, please click here to Email me, and I can add it.")
         t2=Label(pgw.frame,text=t)
         t2.grid(column=0, row=1)
         t2.bind("<Button-1>", lambda e: openweburl(eurl))
-        t=_("Closing this window will restart {} and trigger another syllable "
-            "profile analysis. \nIf you don't want that, click ‘{}’ ==>".format(
-                                                program['name'],nochangetext))
+        t=_("Clicking ‘{}’ will restart {} and trigger another syllable "
+            "profile analysis. \nIf you don't want that, click ‘{}’ ==>"
+            "\nEither way, you won't get past this window until you answer "
+            "This question.".format(
+                                        oktext,program['name'],nochangetext))
         t3=Label(pgw.frame,text=t)
         t3.grid(column=0, row=2)
         eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
                                                             program['Email'])
-        b=Button(pgw.frame,text=nochangetext,
-                    command=lambda x=changemarker:nochanges(x))
+        b=Button(pgw.frame,text=nochangetext,command=nochanges)
         b.grid(column=1, row=2)
+        b=Button(pgw.frame,text=oktext,command=makechanges)
+        b.grid(column=1, row=3)
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         vars={}
@@ -2042,14 +2076,8 @@ class Check():
                         col=1 #not header
                         row+=1
         pgw.wait_window(pgw)
-        if changemarker.value and not self.exitFlag.istrue():
-            log.info("Changes called for (like it or not!), redoing analysis.")
-            for lang in self.db.analangs:
-                for pc in vars[lang]:
-                    for pg in vars[lang][pc]:
-                        self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
-            self.storesettingsfile(setting='profiledata')
-            self.reloadprofiledata()
+        if not self.exitFlag.istrue():
+            nochanges() #this is the default exit behavior
     def slists(self):
         """This sets up the lists of segments, by types. For the moment, it
         just pulls from the segment types in the lift database."""
