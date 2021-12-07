@@ -228,8 +228,9 @@ class Check():
         title="Warning: Mercurial Repository without Executable"
         window=Window(self.frame,title=title)
         hgurl="https://www.mercurial-scm.org/wiki/Download"
-        hgfile=("https://www.mercurial-scm.org/release/windows/"
-        "Mercurial-6.0-x64.exe")
+        hgfilename="Mercurial-6.0-x64.exe"
+        hgfile=("https://www.mercurial-scm.org/release/windows/{}".format(
+                                                                    hgfilename))
         text=_("You seem to be working on a repository of data ({}), "
         "\nwhich seems to be tracked by mercurial (used by Chorus "
         "and languagedepot.org), "
@@ -244,12 +245,15 @@ class Check():
         m=Label(window.frame, text=clickable)
         m.grid(column=0, row=1)
         m.bind("<Button-1>", lambda e: openweburl(program['url']))
+        mtt=ToolTip(m,_("Go to {}").format(program['url']))
         n=Label(window.frame, text=clickable1)
         n.grid(column=0, row=2)
         n.bind("<Button-1>", lambda e: openweburl(hgfile))
+        ntt=ToolTip(n,_("download {}").format(hgfilename))
         o=Label(window.frame, text=clickable2)
         o.grid(column=0, row=3)
         o.bind("<Button-1>", lambda e: openweburl(hgurl))
+        mtt=ToolTip(o,_("Go to {}").format(hgurl))
         window.lift()
     def askwhichlift(self):
         def setfilename(choice,window):
