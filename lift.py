@@ -69,8 +69,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.locations=self.getlocations()
         self.defaults=[ #these are lift related defaults
                     'analang',
-                    'glosslang',
-                    'glosslang2',
+                    'glosslangs',
                     'audiolang'
                 ]
         self.slists() #sets: self.c self.v, not done with self.segmentsnotinregexes[lang]
@@ -115,8 +114,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         get tone value (from example):
             lift.get("example/tonefield/form/text",location=location).get('text')
         get tone value (from sense, UF):
-        lift.get('tonefield/form/text', senseid=senseid).get('text')
-        lift.get('sense/tonefield/form/text', senseid=senseid).get('text')
+        lift.get('toneUFfield/form/text', senseid=senseid).get('text')
+        lift.get('sense/toneUFfield/form/text', senseid=senseid).get('text')
         location: lift.get('locationfield', senseid=senseid).get('text')
         """
         if node is None:
@@ -133,7 +132,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 log.debug("Calling LiftURL with {}".format(kwargs))
             self.urls[k]=LiftURL(base=node,**kwargs) #needs base and target to be sensible; attribute?
         else:
-            log.info("URL key found, using: {} ({})".format(k,self.urls[k].url))
+            log.log(4,"URL key found: {} ({})".format(k,self.urls[k].url))
             if self.urls[k].base == node:
                 log.log(4,"Same base {}, moving on.".format(node))
             else:
@@ -244,7 +243,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         textnode.text=str(l)
         if changed == True:
             self.updatemoddatetime(senseid=senseid)
-        log.log(2,"Empty node? {}; {}".format(vf.text,l))
+        log.log(2,"Empty node? {}; {}".format(textnode.text,l))
         if l == []:
             log.debug("removing empty verification node from this sense")
             sensenode.remove(fieldnode)
@@ -315,23 +314,63 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         senseid=kwargs.get('senseid')
         location=kwargs.get('location')
         fieldtype=kwargs.get('fieldtype','tone') # needed? ever not 'tone'?
-        exfieldvalue=self.get("example/tonefield/form/text", senseid=senseid,
-                                location=location).get('node')
-        # Set values for any duplicates, too. Don't leave inconsisted data.
+        oldtonevalue=kwargs.get('oldfieldvalue',None)
+        if oldtonevalue is None:
+            exfieldvalue=self.get("example/tonefield/form/text",
+                    senseid=senseid, location=location).get('node')
+        else:
+            exfieldvalue=self.get("example/tonefield/form/text",
+                senseid=senseid, tonevalue=oldtonevalue, #to clear just "NA" values
+                location=location).get('node')
+            # Set values for any duplicates, too. Don't leave inconsisted data.
         tonevalue=kwargs.get('fieldvalue') #don't test for this above
+        analang=kwargs.get('analang')
+        framed=kwargs.get('framed',None) #This an object with values
+        if framed is not None:
+            forms=framed.framed #because this should always be framed
+            glosslangs=framed.glosslangs
         if len(exfieldvalue) > 0:
             for e in exfieldvalue:
                 e.text=tonevalue
+            # If we modify the tone value, check for form and gloss conformity:
+            if framed is not None: #if it's specified, that is...
+                formvaluenode=self.get("example/form/text", senseid=senseid,
+                    analang=analang, location=location, showurl=True).get('node')
+                log.info(formvaluenode)
+                if len(formvaluenode)>0:
+                    formvaluenode=formvaluenode[0]
+                    if forms[analang] != formvaluenode.text:
+                        log.debug("Form changed! ({}≠{})".format(forms[analang],
+                                                        formvaluenode.text))
+                        formvaluenode.text=forms[analang]
+                else:
+                    log.error("Found example with tone value field, but no form "
+                            "field? ({}-{})".format(senseid,location))
+                glossesnode=self.get("example/translation", senseid=senseid,
+                            location=location, showurl=True).get('node')
+                for lang in glosslangs:
+                    glossvaluenode=self.get("form/text",
+                                node=glossesnode[0], senseid=senseid, glosslang=lang,
+                                location=location, showurl=True).get('node')
+                    log.debug("glossvaluenode: {}".format(glossvaluenode))
+                    if len(glossvaluenode)>0:
+                        glossvaluenode=glossvaluenode[0]
+                        if forms[lang] != glossvaluenode.text:
+                            log.debug("Gloss changed! ({}≠{})".format(forms[lang],
+                                                            glossvaluenode.text))
+                            glossvaluenode.text=forms[lang]
+                    else:
+                        log.debug("Gloss missing for lang {}; adding".format(lang))
+                        Node.makeformnode(glossesnode[0],lang,forms[lang])
+        elif framed is None:
+            log.error("I can't make new nodes without form info! {}-{}"
+                        "".format(senseid,location))
         else: #If not already there, make it.
             log.info("Didn't find that example already there, creating it...")
             sensenode=self.getsensenode(senseid=senseid)
             if sensenode is None:
                 log.info("Sorry, this didn't return a node: {}".format(senseid))
                 return
-            analang=kwargs.get('analang')
-            framed=kwargs.get('framed') #This an object with values
-            forms=framed.framed #because this should always be framed
-            glosslangs=framed.glosslangs
             p=Node(sensenode, tag='example')
             p.makeformnode(analang,forms[analang])
             """Until I have reason to do otherwise, I'm going to assume these
@@ -450,16 +489,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         elif senseid is not None:
             node=self.get('entry',senseid=senseid,showurl=True).get()[0]
         analang=kwargs.get('analang')
-        glosslang=kwargs.get('glosslang')
-        langform=kwargs.get('langform')
-        glossform=kwargs.get('glossform')
+        glosslangs=kwargs.get('glosslangs')
+        forms=kwargs.get('framed').forms
         fieldtype=kwargs.get('fieldtype','tone')
         fieldvalue=kwargs.get('fieldvalue')
         location=kwargs.get('location')
         p=Node(node, 'pronunciation')
-        p.makeformnode(lang=analang,text=langform)
-        p.makefieldnode(type=fieldtype,lang=glosslang,text=fieldvalue)
-        p.makefieldnode(type='gloss',lang=glosslang,text=glossform)
+        p.makeformnode(lang=analang,text=forms[analang])
+        p.makefieldnode(type=fieldtype,lang=glosslangs[0],text=fieldvalue)
+        for lang in glosslangs:
+            p.makefieldnode(type='gloss',lang=lang,text=forms[lang])
         p.maketraitnode(type='location',value=location)
         if senseid is not None:
             self.updatemoddatetime(senseid=senseid)
@@ -632,7 +671,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
         c['p']={}
         c['p'][2]=['kk','kp']
-        c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k']
+        c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q']
         c['fvd']={}
         c['fvd'][2]=['bh','vh','zh']
         c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ']
@@ -913,14 +952,13 @@ class Entry(object): # what does "object do here?"
         #probably should trim all of these..…
         """These depend on check analysis, should move..."""
         self.analang=self.db.analangs[0]
-        self.glosslang=self.db.glosslangs[0]
-        self.glosslang2=self.db.glosslangs[1]
         """get(self,attribute,guid=None,analang=None,glosslang=None,lang=None,
         ps=None,form=None,fieldtype=None,location=None,showurl=False)"""
         # self.lexeme=db.get('lexeme',guid=guid) #don't use this!
         self.lc=db.citationorlexeme(guid=guid,lang=self.analang)
-        self.gloss=db.glossordefn(guid=guid,lang=self.glosslang)
-        self.gloss2=db.glossordefn(guid=guid,lang=self.glosslang2)
+        self.glosses=[]
+        for g in self.glosslangs:
+            self.glosses.append(db.glossordefn(guid=guid,lang=g))
         # self.citation=get.citation(self,self.analang)
         # self.gloss=get.obentrydefn(self, self.db.glosslang) #entry.get.gloss(self, self.db.glosslang, guid)
         # self.gloss2=get.gloss(self, self.db.glosslang2, guid)
@@ -998,7 +1036,7 @@ class LiftURL():
             self.url=[i for i in l[:len(l)-2]]+[''.join([i for i in l[len(l)-2:]])]
         else:
             self.level['cur']+=1
-        self.level[self.alias.get(tag,tag)]=self.level['cur']
+        self.level[self.getalias(tag)]=self.level['cur']
         log.log(4,"Path so far: {}".format(self.drafturl()))
         if buildanother:
             self.build(tag)
@@ -1072,17 +1110,31 @@ class LiftURL():
         self.kwargs['formtext']='location'
         self.field()
         self.form("location",'glosslang')
-    def tonefield(self):
+    def toneUFfield(self):
         self.baselevel()
         self.kwargs['ftype']='tone'
         """I assume we will never use sense/tonefield and example/tonefield
         in the same url..."""
+        self.level['toneUFfield']=self.level['cur']+1 #so this won't repeat
+        self.field()
+        if 'toneUFvalue' in self.kwargs:
+            self.kwargs['formtext']='toneUFvalue'
+            self.form("toneUFvalue",'glosslang')
+            self.kwargs['formtext']=None
+        else: #don't force a text node with no text value
+            self.kwargs['formtext']=None
+            self.form(lang='glosslang')
+    def tonefield(self):
+        log.log(4,"Making tone field")
+        self.baselevel()
+        self.kwargs['ftype']='tone'
         self.level['tonefield']=self.level['cur']+1 #so this won't repeat
         self.field()
         if 'tonevalue' in self.kwargs:
             self.kwargs['formtext']='tonevalue'
             self.form("tonevalue",'glosslang')
-        else: #dont' force a text node with no text value
+            self.kwargs['formtext']=None
+        else: #don't force a text node with no text value
             self.kwargs['formtext']=None
             self.form(lang='glosslang')
     def morphtype(self,attrs={}):
@@ -1292,19 +1344,19 @@ class LiftURL():
         return nodename.split('[')[0]
     def currentnodename(self):
         last=self.url[-1:]
-        if len(last)>0:
+        if last:
             n=self.tagonly(last[0])
             return self.getalias(n)
     def unalias(self,nodename):
-        """This returns the names used in the LIFT file"""
+        """This returns the names used in the LIFT URL"""
+        return self.alias.get(nodename,nodename)
+    def getalias(self,nodename):
+        """This returns the names I typically use"""
         if nodename in self.alias.values():
             for k in self.alias:
                 if self.alias[k] == nodename:
                     return k
         return nodename #else
-    def getalias(self,nodename):
-        """This returns the names I typically use"""
-        return self.alias.get(nodename,nodename)
     def rebase(self,rebase):
         """This just changes the node set from which the url draws.
         because different bases (within the whole lift file) would result in
@@ -1355,7 +1407,9 @@ class LiftURL():
                 afterbp=self.drafturl().split(self.unalias(bp))
                 log.log(4,"b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
                 log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
-                if len(afterbp) <=1 or b not in afterbp[-1]:
+                if (len(afterbp) <=1 #nothing after parent
+                        or self.unalias(b) not in afterbp[-1] #this item not after parent
+                        or self.level[b]!=self.level[bp]+1): #this not child of parent
                     log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
                     self.levelup(bp)
                     self.show(b,parent=bp)
@@ -1480,6 +1534,7 @@ class LiftURL():
         self.attrs['entry']=['guid']
         self.attrs['sense']=['senseid']
         self.attrs['tonefield']=['tonevalue']
+        self.attrs['toneUFfield']=['toneUFvalue']
         self.attrs['locationfield']=['location']
     def setchildren(self):
         """These are the kwargs that imply a field. field names also added to
@@ -1491,7 +1546,7 @@ class LiftURL():
         self.children['entry']=['lexeme','pronunciation','sense',
                                             'citation','morphtype','trait']
         self.children['sense']=['ps','definition','gloss',
-                                            'example','tonefield','field']
+                                            'example','toneUFfield','field']
         self.children['example']=['form','translation','locationfield',
                                             'tonefield','field']
         self.children['field']=['form']
@@ -1504,11 +1559,13 @@ class LiftURL():
         self.children['translation']=['form']
     def setaliases(self):
         self.alias={}
-        self.alias['lexical-unit']='lexeme'
-        self.alias['grammatical-info']='ps'
-        self.alias['id']='senseid'
-        self.alias['ftype']='fieldtype'
-        self.alias["field[@type='tone']"]='tonefield'
+        self.alias['lexeme']='lexical-unit'
+        self.alias['ps']='grammatical-info'
+        self.alias['senseid']='id'
+        self.alias['fieldtype']='ftype'
+        self.alias['toneUFfield']="field[@type='tone']"
+        self.alias['tonefield']="field[@type='tone']"
+        self.alias['locationfield']="field[@type='location']"
     def __init__(self, *args,**kwargs):
         self.base=kwargs['base']
         self.setaliases()
@@ -2098,144 +2155,58 @@ if __name__ == '__main__':
             for location in locations:
             # # for guid in guids:
                 for senseid in ['prevent_929504ce-35bb-48fe-ae95-8674a97e625f']:
-                    url=lift.get('example/field/form/text',
-                                                path=['location','tonefield'], #get this one first
+                    url=lift.get('sense/tonefield/form/text',#/field/form/text',
+                                                # path=['location','tonefield'], #get this one first
                                                 senseid=senseid,
                                                 fieldtype='tone',location=location,
                                                 tonevalue=fieldvalue,
                                                 showurl=True# what='node'
                                                 ) #'text'
-                    exfieldvalue=url.get('text')
-                    for e in exfieldvalue:
-                        log.info("exfieldvalue: {}".format(e))
-                    url_sense=lift.retarget(url,"sense")
+                    url=exfieldvalue=url.get('text')
+                    # for e in exfieldvalue:
+                    #     log.info("exfieldvalue: {}".format(e))
+                    # url_sense=lift.retarget(url,"sense")
                     # Bind lift object to each url object; or can we store
                     # this in a way that allows for non-recursive storage
                     # only of the url object by the lift object?
-                    ids=url_sense.get('senseid')
-                    # log.info("senseids: {}".format(ids))
-                    for id in [x for x in ids if x is not None]:
-                        log.info("senseid: {}".format(id))
-                    url_entry=lift.retarget(url,"entry")
-                    idsentry=url_entry.get('guid')
-                    for id in [x for x in idsentry if x is not None]:
-                        log.info("guid: {}".format(id))
+                    # ids=url_sense.get('senseid')
+                    # # log.info("senseids: {}".format(ids))
+                    # for id in [x for x in ids if x is not None]:
+                    #     log.info("senseid: {}".format(id))
+                    # url_entry=lift.retarget(url,"entry")
+                    # idsentry=url_entry.get('guid')
+                    # for id in [x for x in idsentry if x is not None]:
+                    #     log.info("guid: {}".format(id))
 
-                    # example=lift.get('example',
-                    #                             path=['location','tonefield'], #get this one first
-                    #                             senseid=senseid,
-                    #                             fieldtype='tone',location=location,
-                    #                             tonevalue=fieldvalue,
-                    #                             what='node')
-                    # sense=lift.get('sense',
-                    #                             path=['location','tonefield'], #get this one first
-                    #                             senseid=senseid,
-                    #                             fieldtype='tone',location=location,
-                    #                             tonevalue=fieldvalue,
-                    #                             what='node')
         return
-    for subcheck in range(5):
-        b=lift.get('sense',fieldtype='tone',location=locations[0],
-                    tonevalue=subcheck,showurl=True).get('senseid')
-        print(b)
+    oldtonevalue=2
+    for senseid in senseids:
+        for location in locations:# b=lift.get('sense',fieldtype='tone',location=locations[0],
+        #             tonevalue=subcheck,showurl=True).get('senseid')
+            b=lift.get("sense/toneUFfield/form/text", #toneUFfield
+                senseid=senseid,
+                # tonevalue=oldtonevalue,
+                toneUFvalue='1',#to clear just "NA" values
+                # location=location,
+                showurl=True).get('node')
+            # lift.get("example/translation/form/text", senseid=senseid, glosslang='fr',
+            #                 location=location,showurl=True).get('text')
+            for bi in b:
+                print(bi.text)
+                bi.text=1234
+            # b=lift.get("example/tonefield/form/text",
+            #     senseid=senseid, #tonevalue=oldtonevalue, #to clear just "NA" values
+            #     location=location,showurl=True).get('text')
+            # print(b)
+            # c=lift.get("example/form/text", senseid=senseid, analang='en',
+            #                 location=location,showurl=True).get('text')
+            # print(c)
+            # for bi in b:
+            #     bt=bi.find('form/text')
+            #     print(bt.text)
         # lift.get("sense", location=locations[0], tonevalue=subcheck,
         #                 path=['tonefield'],showurl=True).get('senseid')
     exit()
-    for senseid in senseids:
-        exnode=lift.get('example',showurl=True,senseid=senseid,
-                        location=locations[1]).get()
-        print('exnode:',exnode)
-        # if len(exnode)>0:
-        prettyprint(exnode)
-        for e in exnode:
-            # print('e:',e)
-            # prettyprint(e)
-            audio=lift.get('form/text',node=e,showurl=True,#en-Zxxx-x-audio
-                                        analang='en-Zxxx-x-audio').get('text')
-        print('audio:',audio)
-    exit()
-    g=lift.glossordefn(#self,guid,
-                                # senseid,
-                                analang='en',
-                                senseid='continue, resume_d174612b-b3c0-4073-bff0-58fd098252a9',
-                                glosslang='fr',glosslang2=None,
-                                lang='swh',#forms,
-                                # langform="TestForm",
-                                # glossform="testgloss",#gloss2form,
-                                # fieldtype='tone',
-                                # location='Plural',
-                                # fieldvalue=45,
-                                # ps=None,
-                                showurl=True)
-                                # lift.write()
-                                # analang=kwargs.get('analang')
-                                # glosslang=kwargs.get('glosslang')
-                                # langform=kwargs.get('langform')
-                                # glossform=kwargs.get('glossform')
-                                # fieldtype=kwargs.get('fieldtype','tone')
-                                # fieldvalue=kwargs.get('fieldvalue')
-                                # location=kwargs.get('location')
-
-    print(g)
-    for i in g:
-        print(i)
-    quit()
-    import timeit
-    def timetest():
-                times=50
-                out1=timeit.timeit(test, number=times)
-                print(out1)
-    timetest()
-    # log.info(lift.urls)
-    # log.info('\n'.join([str(x) for x in lift.urls.items()]))
-    exit()# print('l:',l)
-    showurl=True
-    for i in l:
-        ll=lift.getfrom(i,'example',location="1ss",showurl=showurl)
-        if ll != []:
-            # print("ll:",ll)
-            for ii in ll:
-                lll=lift.getfrom(ii,'text',analang='en',
-                        path=['example/form'],
-                        # exampleform="to begin",
-                        what='text',
-                        showurl=showurl)
-                # print(lll)
-                # for iii in lll:
-                #     print(iii.text)
-                # lllt=lift.getfrom(ii,'text',analang='en',glosslang='fr',
-                #                     path='translation',what='text',
-                #                     showurl=showurl)
-                # if lll != []:
-                #     print("lll:",', '.join(lll))
-                showurl=False
-        # showurl=False
-    log.info(lift.urls)
-    # log.info("Done with above")
-    # fieldtype='tone'
-    # fieldvalue='1'
-    # for i in l:
-    #     r=i.findall("field[@type='location']"
-    #             "/form[text='{}']/../.."
-    #             "/field[@type='{}']"
-    #             "/form[text='{}']/../..".format(location,fieldtype,fieldvalue)
-    #             )
-    #     for ii in r:
-    #         loc=i.find("field[@type='location']/form/text")
-    #         val=i.find("field[@type='{}']/form/text".format(fieldtype))
-    #         log.info("{}: {}, {}".format(i,loc.text,val.text))
-    # print(b.url)
-    # print(bb.url)
-    exit()
-    # senseid='26532c2e-fedf-4111-85d2-75b34ed31dd8'
-    senseid='skin (of man)_d56b5a5d-7cbf-49b9-a2dd-24eebb0ae462'
-    lift.modverificationnode(senseid,vtype="V",add="another value3",rm="Added value")
-    lift.modverificationnode(senseid,vtype="V",rm="another value3",add="another value2")
-    lift.modverificationnode(senseid,vtype="V",rm="another value3",add="another value4")
-    """Functions to run on a database from time to time"""
-    # lift.findduplicateforms()
-    # lift.findduplicateexamples()
-    # lift.convertalltodecomposed()
     """Careful with this!"""
     # lift.write()
     exit()

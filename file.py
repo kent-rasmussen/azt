@@ -87,14 +87,6 @@ def remove(file):
         os.remove(fullpathname(file))
     else:
         log.debug(_("Tried to remove {}, but I can't find it.").format(file))
-def removelifturl():
-    import lift_url
-    file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
-    f = open(file, 'w', encoding='utf-8') # to append, "a"
-    f.write('filename=""'+'\n')
-    f.close()
-    # remove('lift_url.py')
-    modulereload(lift_url)
 def getdiredurl(dir,filename):
     return pathlib.Path.joinpath(dir,filename)
 def getdiredrelURL(reldir,filename):
@@ -133,19 +125,36 @@ def writeinterfacelangtofile(lang):
     f = open(file, 'w', encoding='utf-8') # to append, "a"
     f.write('interfacelang="'+lang+'"'+'\n')
     f.close()
-def getfilename():
+def getfilenames():
+    """This just returns the list, if there."""
     try:
         import lift_url
-        if exists(lift_url.filename): #tests if file exists at url
-            log.debug("lift_url.py imported fine, and url points to a file.")
-            return lift_url.filename
-        else:
-            log.debug("lift_url imported, but didn't contain a url that points "
-                        "to a file: {}".format(str(lift_url.filename)))
-            return lift()
     except:
-        log.debug("lift_url didn't import")
+        log.debug("getfilename lift_url didn't import")
+    if hasattr(lift_url,'filenames') and lift_url.filenames:
+        log.info("Returning filenames: {}".format(lift_url.filenames))
+        return lift_url.filenames
+def getfilename():
+    """This returns a single filename, if there, else a list if there, else
+    it asks for user input."""
+    try:
+        import lift_url
+    except:
+        log.debug("getfilename lift_url didn't import")
         return lift()
+    if (hasattr(lift_url,'filename') and
+            lift_url.filename != () and
+            exists(lift_url.filename)):
+        log.debug("lift_url.py imported fine, and url points to a file.")
+        return lift_url.filename
+    else:
+        log.debug("lift_url imported, but didn't contain a url that points "
+                    "to a file: {}".format(dir(lift_url)))
+        f=getfilenames()
+        if f:
+            return f
+        else:
+            return lift()
 def gethome():
     home=pathlib.Path.home()
     if platform.uname().node == 'karlap':
@@ -156,19 +165,32 @@ def lift():
     home=gethome()
     filename=filedialog.askopenfilename(initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
                                     title = _("Select LIFT Lexicon File"))
+    if not filename:
+        return
+    if exists(filename):
+        return writefilename(filename)
     log.debug('filename:'+str(filename))
-    if filename == (): #Try one more time...
-        log.warning("Sorry, did you select a file? Trying again.")
-        filename=filedialog.askopenfilename(initialdir = home,
-                                    title = _("Select LIFT Lexicon File"),)
-        if filename == (): #still, then give up.
-            log.warning("Sorry, did you select a file? Giving up.")
+    if not filename:
+        log.warning("Sorry, did you select a file? Giving up.")
+        return
     log.debug('filename: {}'.format(str(filename)))
     """Assuming this file is still in lift/, this works. Once out,
     remove a parent"""
+    return writefilename(filename)
+def writefilename(filename=''):
+    try:
+        import lift_url
+        if hasattr(lift_url,'filenames') and lift_url.filenames:
+            filenames=lift_url.filenames
+    except:
+        log.error("writefilename lift_url didn't import.")
+        filenames=[]
+    if filename and filename not in filenames:
+        filenames.append(filename)
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
     f = open(file, 'w', encoding='utf-8') # to append, "a"
-    f.write('filename="'+filename+'"'+'\n')
+    f.write('filename="'+str(filename)+'"\n')
+    f.write('filenames='+str(filenames)+'\n')
     f.close()
     return filename
 if __name__ == "__main__":
