@@ -9119,30 +9119,6 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent
     return unicodedata.normalize('NFD', str(x))
-def findpraat():
-    log.info("Looking for Praat...")
-    spargs={
-            # 'stdout':subprocess.PIPE, 'stderr':subprocess.PIPE,
-            # 'capture_output' : 'True',
-            'shell' : False
-            }
-    program['praat']=False
-    try: #am I on typical Linux?
-        praat=subprocess.check_output(["which","praat"], **spargs)
-    except Exception as e:
-        log.info("No praat found! ({})".format(e))
-        try: #am I on typical MS Windows?
-            praat=subprocess.check_output(["where.exe","Praat.exe"], **spargs)
-        except Exception as e:
-            log.info("No Praat.exe found! ({})".format(e))
-            try: #am I on typical Mac OS?
-                praat=subprocess.check_output(["which","Praat"], **spargs)
-            except Exception as e:
-                log.info("No Praat found! ({})".format(e))
-                return
-    praat=praat.decode("utf-8").strip()
-    log.info("Praat found at {}".format(praat))
-    program['praat']=praat
 def pathseparate(path):
     os=platform.system()
     if os == "Windows":
@@ -9167,36 +9143,20 @@ def findpath():
         return path
     except Exception as e:
         log.info("No path found! ({})".format(e))
-def findhg():
-    program['hg']=None
-    path=findpath()
-    paths=pathseparate(path)
-    log.info("path items: {}".format(paths))
-    for path in paths:
-        if path and file.exists(path):
-            log.info("path: {}".format(path))
-            array = os.listdir(path)
-    log.info("Looking for Mercurial (Hg)...")
-    spargs={
-            'shell' : False
-            }
-    program['hgisthere']=False
-    try: #am I on typical Linux?
-        hg=subprocess.check_output(["which","hg"], **spargs)
-    except Exception as e:
-        log.info("No Mercurial found! ({})".format(e))
-        try: #am I on typical MS Windows?
-            hg=subprocess.check_output(["where.exe","Hg.exe"], **spargs)
-        except Exception as e:
-            log.info("No Hg.exe found! ({})".format(e))
-            try: #am I on typical Mac OS?
-                hg=subprocess.check_output(["which","Hg"], **spargs)
-            except Exception as e:
-                log.info("No Mercurial found! ({})".format(e))
-                return
-    hg=hg.decode("utf-8").strip()
-    log.info("Mercurial found at {}".format(hg))
-    program['hg']=hg
+def findexecutable(exe):
+    os=platform.system()
+    if os == 'Linux':
+        which='which'
+    elif os == 'Windows':
+        which='where'
+    else:
+        log.error("Sorry, I don't know this OS: {}".format(os))
+    log.info("Looking for {} on {}...".format(exe,os))
+    program[exe]=None
+    spargs={'shell':False}
+    hg=subprocess.check_output([which,exe], **spargs)
+    program[exe]=hg.decode("utf-8").strip()
+    log.info("Executable {} found at {}".format(exe,program[exe]))
 def praatopen(file,event=None):
     if program['praat']:
         log.info(_("Trying to call Praat at {}...").format(program['praat']))
@@ -9371,8 +9331,8 @@ if __name__ == "__main__":
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    findpraat()
-    findhg()
+    for exe in ['praat','hg']:
+        findexecutable(exe)
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         mainproblem()
