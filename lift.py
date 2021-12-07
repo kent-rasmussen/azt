@@ -267,6 +267,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if 'py-' not in lang:
             lang='py-'+lang
         node=self.getsensenode(senseid=senseid)
+        if not node:
+            log.error("No sense node was found for senseid: {}"
+                        "\nThis should never happen!".format(senseid))
+            return
         vf=node.find("field[@type='{} {}']".format(vtype,"verification"))
         if vf is not None:
             for child in vf:
@@ -280,23 +284,30 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info(n)
             return n
     def addverificationnode(self,senseid,vtype,lang):
-        sensenode=self.getsensenode(senseid=senseid)
-        if sensenode is None:
+        sensenode=node=self.getsensenode(senseid=senseid)
+        if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
         vf=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text/../.."
                             "".format(vtype,"verification",lang))
         vft=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text"
                             "".format(vtype,"verification",lang))
+        t=None #this default will give no text node value
         if vft is None:
-            vf=Node(sensenode, 'field',
+            vfleg=sensenode.find("field[@type='{} {}']".format(vtype,"verification"))
+            if vfleg:
+                t=vfleg.text
+                sensenode.remove(vfleg)
+            vf=Node(node, 'field',
                             attrib={'type':"{} verification".format(vtype)})
-            vft=vf.makeformnode(lang=lang,gimmetext=True) #text=t, gimmetextnode?
+            vft=vf.makeformnode(lang=lang,text=t,gimmetext=True)
         return (vft,vf,sensenode)
     def getentrynode(self,senseid,showurl=False):
         return self.get('entry',senseid=senseid).get()
     def getsensenode(self,senseid,showurl=False):
-        return self.get('sense',senseid=senseid).get()[0]
+        x=self.get('sense',senseid=senseid).get()
+        if x:
+            return x[0]
     def addmodexamplefields(self,**kwargs):
         log.info(_("Adding values (in lift.py) : {}").format(kwargs))
         #These should always be there:

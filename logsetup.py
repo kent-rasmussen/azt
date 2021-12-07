@@ -90,16 +90,17 @@ def logwritelzma(filename):
         with lzma.open(compressed) as ch:
             data2 = ch.read().decode("utf-8")
             log.debug("LZMA file {} decompressed.".format(compressed))
+            ch.close()
         if data2 == data:
             log.debug("Data before compression the same as after "
                         "decompression.")
-        else:
-            decompressed=compressed+'_decompressed'
-            log.error("Data before compression NOT the same as after "
-                    "decompression; writing decompressed back to file {}!"
-                    "".format(decompressed))
-            with open(decompressed,'w', encoding='utf-8') as chd:
-                chd.write(data2)
-                log.debug("Decompressed file {} written to disk."
-                    "".format(decompressed))
+        # else:
+        #     decompressed=compressed+'_decompressed'
+        #     log.error("Data before compression NOT the same as after "
+        #             "decompression; writing decompressed back to file {}!"
+        #             "".format(decompressed))
+        #     with open(decompressed,'w', encoding='utf-8') as chd:
+        #         chd.write(data2)
+        #         log.debug("Decompressed file {} written to disk."
+        #             "".format(decompressed))
     return compressed
