@@ -257,6 +257,9 @@ class Check():
         window.lift()
     def askwhichlift(self,filenamelist):
         def setfilename(choice,window):
+            if choice == 'New':
+                log.error("Just kidding! This isn't implemented yet.")
+                return
             if choice == 'Other':
                 self.filename=file.lift()
                 if not self.filename:
@@ -270,7 +273,7 @@ class Check():
         text=_('What LIFT database do you want to work on?')
         Label(window.frame, text=text).grid(column=0, row=0)
         buttonFrame1=ScrollingButtonFrame(window.frame,
-                                self.filenames+['Other'],
+                                ['New']+filenamelist+['Other'],
                                 setfilename,
                                 window
                                 )
