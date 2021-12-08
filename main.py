@@ -8033,7 +8033,13 @@ class Repository(object):
         self.do(args)
     def status(self):
         args=["status"]
-        self.do(args)
+        log.info(self.do(args))
+    def log(self):
+        args=["log"]
+        log.info(self.do(args))
+    def root(self):
+        args=["root"]
+        self.root=self.do(args)
     def files(self):
         args=["files"]
         self.files=self.do(args)
