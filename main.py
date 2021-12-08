@@ -8483,9 +8483,21 @@ def findexecutable(exe):
     hg=subprocess.check_output([which,exe], **spargs)
     program[exe]=hg.decode("utf-8").strip()
     log.info("Executable {} found at {}".format(exe,program[exe]))
-def praatopen(file,event=None):
-    if program['praat']:
+def praatopen(file,newpraat=False,event=None):
+    if program['sendpraat'] and not newpraat:
+        praatargs=[program['sendpraat'], "praat", "Read from file... {}".format(file)]
+        try:
+            e=subprocess.check_output(praatargs,shell=False,stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            o=e.output.decode("utf-8").strip()
+            if o == "sendpraat: Program praat not running.":
+                praatopen(file,newpraat=True)
+            else:
+                log.info("praatoutput: {}; {}".format(e,o))
+    elif program['praat']:
         log.info(_("Trying to call Praat at {}...").format(program['praat']))
+        praatargs=[program['praat'], "--open", file]
+        subprocess.Popen(praatargs,shell=False) #not run; continue here
     else:
         log.info(_("Looks like I couln't find Praat..."))
     #This should use the actual executable found earlier...
