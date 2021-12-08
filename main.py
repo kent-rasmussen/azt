@@ -8503,11 +8503,6 @@ def praatopen(file,newpraat=False,event=None):
     else:
         log.info(_("Looks like I couln't find Praat..."))
     #This should use the actual executable found earlier...
-    praatargs=[program['praat'], "--open", file]
-    try:
-        subprocess.Popen(praatargs,shell=False) #not run; continue here
-    except Exception as e:
-        log.info(_("Call to Praat failed: {}").format(e))
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
