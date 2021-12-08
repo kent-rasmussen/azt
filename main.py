@@ -8082,6 +8082,7 @@ class Repository(object):
         super(Repository, self).__init__()
         self.url = url
         self.files()
+        self.choruscheck()
         log.info("Mercurial repository object initialized, with {} files."
                 "".format(len(self.files)))
 class Options:
