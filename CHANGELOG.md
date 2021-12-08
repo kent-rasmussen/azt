@@ -2,6 +2,11 @@
 
 # Version 0.8.7
 changed .py config files to .ini and .dat, with clearer and simpler syntax. This should automatically migrate, but please let me know if it doesn't.
+should put those files into hg repository
+sendpraat should now be working, if installed
+massive changes under the hood:
+ui.py extracted
+new objects for examples, parameters
 
 # Version 0.8.6
 - added referify data for current subgroup

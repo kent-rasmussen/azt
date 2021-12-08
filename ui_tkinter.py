@@ -1,13 +1,47 @@
 #!/usr/bin/env python3
 # coding=UTF-8
+import sys
 import logging
 log = logging.getLogger(__name__) #bc not imported as a module...
+import unicodedata
 import tkinter #as gui
 import tkinter.font
 import tkinter.scrolledtext
 # import tkintermod
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
-class Frame(tkinter.Frame):
+class UI(object):
+    """docstring for Widget."""
+    def wait(self,msg=None):
+        if hasattr(self,'ww') and self.ww.winfo_exists() == True:
+            log.debug("There is already a wait window: {}".format(self.ww))
+            return
+        self.ww=Wait(self,msg)
+    def waitdone(self):
+        try:
+            self.ww.close()
+        except tkinter.TclError:
+            pass
+    def inherit(self,attr=None):
+        """This function brings these attributes from the parent, to inherit
+        from the root window, through all windows, frames, and scrolling frames, etc
+        """
+        if attr is None:
+            attrs=['fonts','theme','debug','wraplength','photo','renderings',
+                    'program','exitFlag']
+        else:
+            attrs=[attr]
+        for attr in attrs:
+            if hasattr(self.parent,attr):
+                setattr(self,attr,getattr(self.parent,attr))
+    def __init__(self, parent):
+        super(Widget, self).__init__()
+        self.parent = parent
+class Toplevel(tkinter.Toplevel,UI):
+    def __init__(self, parent, **kwargs):
+        self.parent = parent
+        super(Toplevel, self).__init__()
+        self.inherit()
+class Frame(tkinter.Frame,UI):
     def windowsize(self):
         if not hasattr(self,'configured'):
             self.configured=0
@@ -48,10 +82,11 @@ class Frame(tkinter.Frame):
         self.configured+=1
     def __init__(self, parent, **kwargs):
         self.parent = parent
-        for attr in ['fonts','theme','debug','wraplength','photo','renderings',
-                'program','exitFlag']:
-            if hasattr(parent,attr):
-                setattr(self,attr,getattr(parent,attr))
+        # for attr in ['fonts','theme','debug','wraplength','photo','renderings',
+        #         'program','exitFlag']:
+        #     if hasattr(parent,attr):
+        #         setattr(self,attr,getattr(parent,attr))
+        self.inherit()
         """tkinter.Frame thingies below this"""
         tkinter.Frame.__init__(self,parent,**kwargs)
         self['background']=parent['background']
@@ -278,6 +313,683 @@ class ScrollingFrame(Frame):
         # self.canvas.bind('<Configure>', self._configure_canvas) #called by:
         self.content.bind('<Configure>', self._configure_interior)
         self.bind('<Visibility>', self.windowsize)
+class Window(Toplevel):
+    def resetframe(self):
+        if self.parent.exitFlag.istrue():
+            return
+        if self.winfo_exists(): #If this has been destroyed, don't bother.
+            if hasattr(self,'frame') and type(self.frame) is Frame:
+                self.frame.destroy()
+            self.frame=Frame(self.outsideframe)
+            self.frame.grid(column=0,row=0,sticky='nsew')
+    def removeverifymenu(self,event=None):
+        #This removes menu from the verify window
+        if hasattr(self,'menubar'):
+            self.menubar.destroy()
+            self.parent.verifymenu=False
+            self.setcontext(context='verifyT')
+            return True #i.e., removed, to maybe replace later
+    def on_quit(self):
+        # Do this when a window closes, so any window functions can know
+        # to just stop, rather than trying and throwing an error. This doesn't
+        # do anything but set the flag value on exit, the logic to stop needs
+        # to be elsewhere, e.g., if `self.exitFlag.istrue(): return`
+        def killall():
+            self.destroy()
+            sys.exit()
+        if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
+            print("Setting window exit flag True!")
+            self.exitFlag.true()
+        if type(self) is tkinter.Tk: #exit afterwards if main window
+            killall()
+        else:
+            self.destroy() #do this for everything
+    def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
+                choice=None, *args, **kwargs):
+        self.parent=parent
+        """Things requiring tkinter.Window below here"""
+        super(Window, self).__init__(parent)
+        # self.config(className="azt")
+        self['background']=self.theme['background']
+        """Is this section necessary for centering on resize?"""
+        for rc in [0,2]:
+            self.grid_rowconfigure(rc, weight=3)
+            self.grid_columnconfigure(rc, weight=3)
+        self.outsideframe=Frame(self)
+        """Give windows some margin"""
+        self.outsideframe['padx']=25
+        self.outsideframe['pady']=25
+        self.outsideframe.grid(row=1, column=1,sticky='we')
+        self.iconphoto(False, self.photo['icon']) #don't want this transparent
+        self.title(title)
+        self.resetframe()
+        self.exitFlag=ExitFlag() #This overwrites inherited exitFlag
+        if exit is True:
+            e=(_("Exit")) #This should be the class, right?
+            self.exitButton=tkinter.Button(self.outsideframe, width=10, text=e,
+                                command=self.on_quit,
+                                activebackground=self.theme['activebackground'],
+                                background=self['background']
+                                            )
+            self.exitButton.grid(column=2,row=2)
+        if backcmd is not False: #This one, too...
+            b=(_("Back"))
+            cmd=lambda:backcmd(parent, window, check, entry, choice)
+            self.backButton=tkinter.Button(self.outsideframe, width=10, text=b,
+                                command=cmd,
+                                activebackground=self.theme['activebackground'],
+                                background=self.theme['background']
+                                            )
+            self.backButton.grid(column=3,row=2)
+class Menu(tkinter.Menu,UI):
+    def pad(self,label):
+        w=5 #Make menus at least w characters wide
+        if len(label) <w:
+            spaces=" "*(w-len(label))
+            label=spaces+label+spaces
+        return label
+    def add_command(self,label,command):
+        label=self.pad(label)
+        tkinter.Menu.add_command(self,label=label,command=command)
+    def add_cascade(self,label,menu):
+        label=self.pad(label)
+        tkinter.Menu.add_cascade(self,label=label,menu=menu)
+    def __init__(self,parent,**kwargs):
+        super().__init__(parent,**kwargs)
+        self.parent=parent
+        self.inherit()
+        self['font']=self.fonts['default']
+        #Blend with other widgets:
+        # self['activebackground']=self.theme['activebackground']
+        # self['background']=self.theme['background']
+        # stand out from other widgets:
+        self['activebackground']=self.theme['background']
+        self['background']='white'
+class ContextMenu(UI):
+    def updatebindings(self):
+        def bindthisncheck(w):
+            log.log(2,"{};{}".format(w,w.winfo_children()))
+            if type(w) is not tkinter.Canvas: #ScrollingFrame:
+                w.bind('<Enter>', self._bind_to_makemenus)
+            for child in w.winfo_children():
+                bindthisncheck(child)
+        self.parent.bind('<Leave>', self._unbind_to_makemenus) #parent only
+        bindthisncheck(self.parent)
+    def undo_popup(self,event=None):
+        if hasattr(self,'menu'):
+            log.log(2,"undo_popup Checking for ContextMenu.menu: {}".format(
+                                                            self.menu.__dict__))
+            try:
+                self.root.destroy() #Tk()
+                log.log(3,"popup parent/root destroyed")
+            except:
+                log.log(3,"popup parent/root not destroyed!")
+            finally:
+                self.parent.unbind_all('<Button-1>')
+    def menuinit(self):
+        """redo menu on context change"""
+        self.menu = Menu(self.root, tearoff=0)
+        try:
+            log.info("menuinit done: {}".format(self.menu.__dict__))
+        except:
+            log.error("Problem initializing context menu")
+    def menuitem(self,msg,cmd):
+        self.menu.add_command(label=msg,command=cmd)
+    def dosetcontext(self):
+        try:
+            log.log(3,"setcontext: {}".format(self.parent.setcontext))
+            self.parent.setcontext(context=self.context)
+        except:
+            log.error("You need to have a setcontext() method for the "
+                        "parent of this context menu ({}), to set menu "
+                        "items under appropriate conditions ({}): {}.".format(
+                            self.parent,self.context,self.parent.setcontext))
+    def do_popup(self,event):
+        try:
+            self.menu.tk_popup(event.x_root, event.y_root)
+        except:
+            log.log(4,"Problem with self.menu.tk_popup; setting context")
+            self.getroot()
+            self.dosetcontext()
+            self.menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.menu.grab_release() #allows click on main window
+    def _bind_to_makemenus(self,event): #all needed to cover all of window
+        self.parent.bind_all('<Button-3>',self.do_popup) #_all
+        self.parent.bind_all('<Button-1>',self.undo_popup)
+    def _unbind_to_makemenus(self,event):
+        self.parent.unbind_all('<Button-3>')
+    def getroot(self):
+        self.root=tkinter.Tk()
+        self.root.withdraw()
+        self.root.parent=self.parent
+        UI.inherit(self.root)
+    def __init__(self,parent,context=None):
+        self.parent=parent
+        self.parent.context=self
+        self.context=context #where the menu is showing (e.g., verifyT)
+        self.inherit()
+        self.getroot()
+        self.updatebindings()
+class Renderer(object):
+    def __init__(self,test=False,**kwargs):
+        try:
+            import PIL.ImageFont
+            import PIL.ImageTk
+            import PIL.ImageDraw
+            import PIL.Image
+        except:
+            log.info("Seems like PIL is not installed; skipping Renderer init.")
+            self.img=None
+            return
+        font=kwargs['font'].actual() #should always be there
+        xpad=ypad=fspacing=font['size']
+        fname=font['family']
+        fsize=int(font['size']*1.33)
+        fspacing=10
+        fonttype=''
+        if font['weight'] == 'bold':
+            fonttype+='B'
+        if font['slant'] == 'italic':
+            fonttype+='I'
+        if fonttype == '':
+            fonttype='R'
+        text=kwargs['text'] #should always be there
+        text=text.replace('\t','    ') #Not sure why, but tabs aren't working.
+        wraplength=kwargs['wraplength'] #should always be there
+        log.log(2,"Rendering ‘{}’ text with font: {}".format(text,font))
+        if (('justify' in kwargs and
+                        kwargs['justify'] in [tkinter.LEFT,'left']) or
+            ('anchor' in kwargs and
+                        kwargs['anchor'] in [tkinter.E,"e"])):
+            align="left"
+        else:
+            align="center" #also supports "right"
+        if fname in ["Andika","Andika SIL"]:
+            file='Andika-{}.ttf'.format('R') #There's only this one
+            filenostaves='Andika-tstv-{}.ttf'.format(fonttype)
+        elif fname in ["Charis","Charis SIL"]:
+            file='CharisSIL-{}.ttf'.format(fonttype)
+            filenostaves='CharisSIL-tstv-{}.ttf'.format(fonttype)
+        elif fname in ["Gentium","Gentium SIL"]:
+            if fonttype == 'B':
+                fonttype='R'
+            if fonttype == 'BI':
+                fonttype='I'
+            file='Gentium-{}.ttf'.format(fonttype)
+            filenostaves='Gentium-tstv-{}.ttf'.format(fonttype)
+        elif fname in ["Gentium Basic","Gentium Basic SIL"]:
+            file='GenBas{}.ttf'.format(fonttype)
+            filenostaves='GenBas-tstv-{}.ttf'.format(fonttype)
+        elif fname in ["Gentium Book Basic","Gentium Book Basic SIL"]:
+            file='GenBkBas{}.ttf'.format(fonttype)
+            filenostaves='GenBkBas-tstv-{}.ttf'.format(fonttype)
+        elif fname in ["DejaVu Sans"]:
+            fonttype=fonttype.replace('B','Bold').replace('I','Oblique').replace('R','')
+            if len(fonttype)>0:
+                fonttype='-'+fonttype
+            file='DejaVuSans{}.ttf'.format(fonttype)
+            filenostaves='DejaVuSans-tstv-{}.ttf'.format(fonttype)
+        else:
+            log.error("Sorry, I have no info on font {}".format(fname))
+            return
+        try:
+            font = PIL.ImageFont.truetype(font=filenostaves, size=fsize)
+            log.log(2,"Using No Staves font")
+        except:
+            log.debug("Couldn't find No Staves font, going without")
+            font = PIL.ImageFont.truetype(font=file, size=fsize)
+        img = PIL.Image.new("1", (10,10), 255)
+        draw = PIL.ImageDraw.Draw(img)
+        w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
+        textori=text
+        lines=textori.split('\n') #get everything between manual linebreaks
+        for line in lines:
+            li=lines.index(line)
+            words=line.split(' ') #split by words/spaces
+            nl=x=y=0
+            while y < len(words):
+                y+=1
+                l=' '.join(words[x+nl:y+nl])
+                w, h = draw.multiline_textsize(l, font=font, spacing=fspacing)
+                log.log(2,"Round {} Words {}-{}:{}, width: {}/{}".format(y,x+nl,
+                                                y+nl,l,w,wraplength))
+                if w>wraplength:
+                    words.insert(y+nl-1,'\n')
+                    x=y-1
+                    nl+=1
+            line=' '.join(words) #Join back words
+            lines[li]=line
+        text='\n'.join(lines) #join back sections between manual linebreaks
+        log.debug(text)
+        w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
+        log.log(2,"Final size w: {}, h: {}".format(w,h))
+        black = 'rgb(0, 0, 0)'
+        white = 'rgb(255, 255, 255)'
+        img = PIL.Image.new("RGBA", (w+xpad, h+ypad), (255, 255, 255,0 )) #alpha
+        draw = PIL.ImageDraw.Draw(img)
+        draw.multiline_text((0+xpad//2, 0+ypad//4), text,font=font,fill=black,
+                                                                align=align)
+        self.img = PIL.ImageTk.PhotoImage(img)
+class Label(tkinter.Label,UI):
+    def wrap(self):
+        availablexy(self)
+        self.config(wraplength=self.maxwidth)
+        log.log(3,'self.maxwidth (Label class): {}'.format(self.maxwidth))
+    def __init__(self, parent, column=0, row=1, norender=False,**kwargs):
+        """These have non-None defaults"""
+        self.parent=parent
+        if 'text' not in kwargs or kwargs['text'] is None:
+            kwargs['text']=''
+        if 'font' in kwargs:
+            if isinstance(kwargs['font'],tkinter.font.Font):
+                pass #use as is
+            elif kwargs['font'] in parent.fonts: #if font key (e.g., 'small')
+                kwargs['font']=parent.fonts[kwargs['font']] #change key to font
+            else:
+                kwargs['font']=parent.fonts['default']
+        else:
+            kwargs['font']=parent.fonts['default']
+        self.inherit()
+        if hasattr(self,'wraplength'):
+            defaultwr=self.wraplength
+        else:
+            defaultwr=0
+        kwargs['wraplength']=kwargs.get('wraplength',defaultwr)
+        d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
+        sticks=set(['˥','˦','˧','˨','˩',' '])
+        if set(kwargs['text']) & (sticks|d) and not norender:
+            # log.info(kwargs['font']['size'])
+            style=(kwargs['font']['family'], # from kwargs['font'].actual()
+                    kwargs['font']['size'],kwargs['font']['weight'],
+                    kwargs['font']['slant'],kwargs['font']['underline'],
+                    kwargs['font']['overstrike'])
+            # log.info("style: {}".format(style))
+            renderings=self.parent.renderings
+            # log.info("renderings: {}".format(renderings))
+            if style not in renderings:
+                renderings[style]={}
+            if kwargs['wraplength'] not in renderings[style]:
+                renderings[style][kwargs['wraplength']]={}
+            thisrenderings=renderings[style][kwargs['wraplength']]
+            if (kwargs['text'] in thisrenderings and
+                    thisrenderings[kwargs['text']] is not None):
+                log.log(5,"text {} already rendered with {} wraplength, using."
+                        "".format(kwargs['text'],kwargs['wraplength']))
+                kwargs['image']=thisrenderings[kwargs['text']]
+                kwargs['text']=''
+            elif 'image' in kwargs and kwargs['image'] is not None:
+                log.error("You gave an image and tone characters in the same "
+                "label? ({},{})".format(image,kwargs['text']))
+                return
+            else:
+                log.log(5,"Sticks found! (Generating image for label)")
+                i=Renderer(**kwargs)
+                self.tkimg=i.img
+                if self.tkimg is not None:
+                    thisrenderings[kwargs['text']]=kwargs['image']=self.tkimg
+                    kwargs['text']=''
+        else:
+            kwargs['text']=nfc(kwargs['text'])
+        tkinter.Label.__init__(self, parent, **kwargs)
+        self['background']=kwargs.get('background',self.theme['background'])
+class EntryField(tkinter.Entry,UI):
+    def renderlabel(self,grid=False,event=None):
+        v=self.get()
+        if hasattr(self,'rendered'): #Get grid info before destroying old one
+            mygrid=self.rendered.grid_info()
+            grid=True
+            self.rendered.destroy()
+        self.rendered=Label(self.parent,text=v)
+        d=["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"]
+        if set(d) & set(v):
+            if grid:
+                self.rendered.grid(**mygrid)
+            elif hasattr(self,'rendergrid'):
+                self.rendered.grid(**self.rendergrid)
+            else:
+                log.error("Help! I have no idea what happened!")
+            delattr(self,'rendergrid')
+        elif grid:
+                self.rendergrid=mygrid
+    def __init__(self, parent, render=False, **kwargs):
+        self.parent=parent
+        self.inherit()
+        if 'font' not in kwargs:
+            kwargs['font']=self.fonts['default']
+        super().__init__(parent,**kwargs)
+        if render is True:
+            self.bind('<KeyRelease>', self.renderlabel)
+            self.renderlabel()
+        self['background']=self.theme['offwhite'] #because this is for entry...
+class RadioButton(tkinter.Radiobutton,UI):
+    def __init__(self, parent, column=0, row=0, sticky='w', **kwargs):
+        self.parent=parent
+        self.inherit()
+        if 'font' not in kwargs:
+            kwargs['font']=self.fonts['default']
+        kwargs['activebackground']=self.theme['activebackground']
+        kwargs['selectcolor']=self.theme['activebackground']
+        super().__init__(parent,**kwargs)
+        self.grid(column=column, row=row, sticky=sticky)
+class RadioButtonFrame(Frame):
+    def __init__(self, parent, horizontal=False,**kwargs):
+        for vars in ['var','opts']:
+            if (vars not in kwargs):
+                print('You need to set {} for radio button frame!').format(vars)
+            else:
+                setattr(self,vars,kwargs[vars])
+                del kwargs[vars] #we don't want this going to the button.
+        column=0
+        sticky='w'
+        self.parent=parent
+        super(RadioButtonFrame,self).__init__(parent,**kwargs)
+        kwargs['background']=self.theme['background']
+        kwargs['activebackground']=self.theme['activebackground']
+        row=0
+        for opt in self.opts:
+            value=opt[0]
+            name=opt[1]
+            log.log(3,"Value: {}; name: {}".format(value,name))
+            RadioButton(self,variable=self.var, value=value, text=nfc(name),
+                                                column=column,
+                                                row=row,
+                                                sticky=sticky,
+                                                indicatoron=0,
+                                                **kwargs)
+            if horizontal:
+                column+=1
+            else:
+                row+=1
+class Button(tkinter.Button,UI):
+    def nofn(self):
+        pass
+    def __init__(self, parent, choice=None, window=None,
+                command=None, column=0, row=1, norender=False,**kwargs):
+        self.parent=parent
+        self.inherit()
+        """For button"""
+        if 'anchor' not in kwargs:
+            kwargs['anchor']="w"
+        if 'text' not in kwargs:
+            kwargs['text']=''
+        if 'wraplength' not in kwargs:
+            kwargs['wraplength']=parent.wraplength
+        if 'font' in kwargs:
+            if isinstance(kwargs['font'],tkinter.font.Font):
+                pass #use as is
+            elif kwargs['font'] in parent.fonts: #if font key (e.g., 'small')
+                kwargs['font']=parent.fonts[kwargs['font']] #change key to font
+            else:
+                kwargs['font']=parent.fonts['default']
+        else:
+            kwargs['font']=parent.fonts['default']
+        """For image rendering of button text"""
+        sticks=set(['˥','˦','˧','˨','˩',' '])
+        if set(kwargs['text']) & sticks and not norender:
+            style=(kwargs['font']['family'], # from kwargs['font'].actual()
+                    kwargs['font']['size'],kwargs['font']['weight'],
+                    kwargs['font']['slant'],kwargs['font']['underline'],
+                    kwargs['font']['overstrike'])
+            # log.info("style: {}".format(style))
+            renderings=self.parent.renderings
+            # log.info("renderings: {}".format(renderings))
+            if style not in renderings:
+                renderings[style]={}
+            if kwargs['wraplength'] not in renderings[style]:
+                renderings[style][kwargs['wraplength']]={}
+            thisrenderings=renderings[style][kwargs['wraplength']]
+            if (kwargs['text'] in thisrenderings and
+                    thisrenderings[kwargs['text']] is not None):
+                log.log(5,"text {} already rendered with {} wraplength, using."
+                        "".format(kwargs['text'],kwargs['wraplength']))
+                kwargs['image']=thisrenderings[kwargs['text']]
+                kwargs['text']=''
+            elif 'image' in kwargs and kwargs['image'] is not None:
+                log.error("You gave an image and tone characters in the same "
+                "button text? ({},{})".format(image,kwargs['text']))
+                return
+            else:
+                log.log(5,"sticks found! (Generating image for button)")
+                i=Renderer(**kwargs)
+                self.tkimg=i.img
+                if self.tkimg is not None:
+                    thisrenderings[kwargs['text']]=kwargs['image']=self.tkimg
+                    kwargs['text']=''
+        kwargs['text']=nfc(kwargs['text'])
+        """For Grid"""
+        if 'sticky' in kwargs:
+            sticky=kwargs['sticky']
+            del kwargs['sticky'] #we don't want this going to the button.
+        else:
+            sticky="W"+"E"
+        kwargs['activebackground']=self.theme['activebackground']
+        kwargs['background']=self.theme['background']
+        if self.debug == True:
+            for arg in kwargs:
+                print("Button "+arg+": "+kwargs[arg])
+        # `command` is my hacky command specification, with lots of args added.
+        # cmd is just the command passing through.
+        if 'cmd' in kwargs and kwargs['cmd'] is not None:
+            cmd=kwargs['cmd']
+            del kwargs['cmd'] #we don't want this going to the button as is.
+        elif command is None:
+            cmd=self.nofn
+        else:
+            """This doesn't seem to be working, but OK to avoid it..."""
+            if window is not None:
+                if choice is not None:
+                    cmd=lambda w=window:command(choice,window=w)
+                else:
+                    cmd=lambda w=window:command(window=w)
+            else:
+                if choice is not None:
+                    cmd=lambda :command('choice')
+                else:
+                    cmd=lambda :command()
+        tkinter.Button.__init__(self, parent, command=cmd, **kwargs)
+        self.grid(column=column, row=row, sticky=sticky)
+class CheckButton(tkinter.Checkbutton,UI):
+    def __init__(self, parent, **kwargs):
+        self.parent=parent
+        self.inherit()
+        super(CheckButton,self).__init__(parent,
+                                bg=self.theme['background'],
+                                activebackground=self.theme['activebackground'],
+                                image=self.photo['uncheckedbox'],
+                                selectimage=self.photo['checkedbox'],
+                                indicatoron=False,
+                                compound='left',
+                                font=self.fonts['read'],
+                                anchor='w',
+                                **kwargs
+                                )
+class ButtonFrame(Frame):
+    def __init__(self,parent,
+                    optionlist,command,
+                    window=None,
+                    **kwargs
+                    ):
+        self.parent=parent
+        Frame.__init__(self,parent)
+        gimmenull=False # When do I want a null option added to my lists? ever?
+        self['background']=self.theme['background']
+        i=0
+        """Make sure list is in the proper format: list of dictionaries"""
+        if type(optionlist) is not list:
+            print("optionlist is Not a list!",optionlist,type(optionlist))
+            return
+        elif (optionlist is None) or (len(optionlist) == 0):
+            print("list is empty!",type(optionlist))
+            return
+            """Assuming from here on that the first list item represents
+            the format of the whole list; hope that's true!"""
+        elif optionlist[0] is dict:
+            print("looks like options are already in dictionary format.")
+        elif (type(optionlist[0]) is str) or (type(optionlist[0]) is int):
+            """when optionlist is a list of strings/codes/integers"""
+            print("looks like options are just a list of codes; making dict.")
+            optionlist = [({'code':optionlist[i], 'name':optionlist[i]}
+                            ) for i in range(0, len(optionlist))]
+        elif type(optionlist[0]) is tuple:
+            if type(optionlist[0][1]) is str:
+                """when optionlist is a list of binary tuples (codes,names)"""
+                print("looks like options are just a list of (codes,names) "
+                        "tuples; making dict.")
+                optionlist = [({'code':optionlist[i][0],
+                                'name':optionlist[i][1]}
+                                ) for i in range(0, len(optionlist))]
+            elif type(optionlist[0][1]) is int:
+                """when optionlist is a list of binary tuples (codes,counts)"""
+                print("looks like options are just a list of (codes,counts) "
+                        "tuples; making dict.")
+                optionlist = [({'code':optionlist[i][0],
+                                'description':optionlist[i][1]}
+                                ) for i in range(0, len(optionlist))]
+        if not 'name' in optionlist[0].keys(): #duplicate name from code.
+            for i in range(0, len(optionlist)):
+                optionlist[i]['name']=optionlist[i]['code']
+        if gimmenull == True:
+            optionlist.append(({code:"Null",name:"None of These"}))
+        for choice in optionlist:
+            if choice['name'] == ["Null"]:
+                command=newvowel #come up with something better here..…
+            if 'description' in choice.keys():
+                print(choice['name'],str(choice['description']))
+                text=choice['name']+' ('+str(choice['description'])+')'
+            else:
+                text=choice['name']
+            """commands are methods, so this normally includes self (don't
+            specify it here). x= as a lambda argument allows us to assign the
+            variable value now (in the loop across choices). Otherwise, it will
+            maintain a link to the variable itself, and give the last value it
+            had to all the buttons... --not what we want!
+            """
+            cmd=lambda x=choice['code'], w=window:command(x,window=w)
+            b=Button(self,text=text,choice=choice['code'],
+                    window=window,cmd=cmd,#width=self.width,
+                    row=i,
+                    **kwargs
+                    )
+            i=i+1
+class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
+    """This needs to go inside another frame, for accurrate grid placement"""
+    def __init__(self,parent,optionlist,command,window=None,**kwargs):
+        ScrollingFrame.__init__(self,parent)
+        self.bf=ButtonFrame(parent=self.content,
+                            optionlist=optionlist,
+                            command=command,
+                            window=window,
+                            **kwargs)
+        self.bf.grid(row=0, column=0)
+class ToolTip(object):
+    """
+    create a tooltip for a given widget
+    modified from https://stackoverflow.com/, originally from
+    www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
+    Modified to include a delay time by Victor Zaccardo, 25mar16
+    """
+    def __init__(self, widget, text='widget info'):
+        self.waittime = 500     #miliseconds
+        self.wraplength = 180   #pixels
+        self.dispx = 25
+        self.dispy = 20
+        self.widget = widget
+        self.text = text
+        self.widget.bind("<Enter>", self.enter)
+        self.widget.bind("<Leave>", self.leave)
+        self.widget.bind("<ButtonPress>", self.leave)
+        self.id = None
+        self.tw = None
+    def enter(self, event=None):
+        # print('enteringwidget')
+        self.event=event
+        self.schedule()
+    def entertip(self, event=None):
+        # print('enteringtip')
+        self.dispx=-self.dispx
+        self.dispy=-self.dispy
+    def leave(self, event=None):
+        # print('leavingwidget')
+        self.unschedule()
+        self.hidetip()
+    def schedule(self):
+        self.unschedule()
+        self.id = self.widget.after(self.waittime, self.showtip)
+    def unschedule(self):
+        id = self.id
+        self.id = None
+        if id:
+            self.widget.after_cancel(id)
+    def showtip(self, event=None):
+        self.widget.unbind("<Leave>")
+        x = y = 0
+        x, y, cx, cy = self.widget.bbox("insert")
+        # #based on widgets (flashy):
+        # x += self.widget.winfo_rootx() + self.dispx
+        # y += self.widget.winfo_rooty() + self.dispy
+        #based on mouse click (much better):
+        x += self.event.x_root +5 #+ self.dispx
+        y += self.event.y_root #+ self.dispy
+        # creates a toplevel window
+        self.tw = Toplevel(self.widget)
+        self.tw.bind("<Enter>", self.entertip)
+        # Leaves only the label and removes the app window
+        self.tw.wm_overrideredirect(True)
+        self.tw.wm_geometry("+%d+%d" % (x, y))
+        label = Label(self.tw, text=self.text, justify='left', font='small',
+                       background="#ffffff", relief='solid', borderwidth=1,
+                       wraplength = self.wraplength)
+        label.pack(ipadx=1)
+        self.widget.bind("<Leave>", self.leave)
+    def hidetip(self):
+        tw = self.tw
+        self.tw= None
+        if tw:
+            tw.destroy()
+class Wait(Window): #tkinter.Toplevel?
+    def close(self):
+        self.update_idletasks()
+        self.parent.deiconify()
+        self.destroy()
+    def __init__(self, parent=None,msg=None):
+        self.parent=parent
+        self.parent.withdraw()
+        global program
+        super(Wait, self).__init__(parent,exit=False)
+        self.withdraw() #don't show until we're done making it
+        self.attributes("-topmost", True)
+        self['background']=parent['background']
+        self.photo = parent.photo #need this before making the frame
+        title=(_("Please Wait! {name} Dictionary and Orthography Checker "
+                        "in Process").format(name=self.program['name']))
+        self.title(title)
+        text=_("Please Wait...")
+        self.l=Label(self.outsideframe, text=text,
+                font='title',anchor='c')
+        self.l.grid(row=0,column=0,sticky='we')
+        if msg is not None:
+            self.l1=Label(self.outsideframe, text=msg,
+                font='default',anchor='c')
+            self.l1.grid(row=1,column=0,sticky='we')
+        self.l2=Label(self.outsideframe, image=self.photo['small'],text='',
+                        bg=self['background']
+                        )
+        self.l2.grid(row=2,column=0,sticky='we',padx=50,pady=50)
+        self.deiconify() #show after the window is built
+        #for some reason this has to follow the above, or you get a blank window
+        self.update_idletasks() #updates just geometry
+class ExitFlag(object):
+    def istrue(self):
+        # log.debug("Returning {} exitflag".format(self.value))
+        return self.value
+    value=get=istrue
+    def true(self):
+        self.value=True
+    def false(self):
+        self.value=False
+    def __init__(self):
+        self.false()
 def availablexy(self,w=None):
     if w is None: #initialize a first run
         w=self
@@ -299,7 +1011,7 @@ def availablexy(self,w=None):
     rowheight={}
     colwidth={}
     for sib in w.parent.winfo_children(): #one of these should be sufficient
-        if sib.winfo_class() not in ['Menu','Wait']:
+        if sib.winfo_class() not in ['Menu','Wait','Window']:
             if hasattr(w.parent,'grid_info') and 'row' in sib.grid_info():
                 sib.row=sib.grid_info()['row']
                 sib.col=sib.grid_info()['column']
@@ -356,7 +1068,14 @@ def availablexy(self,w=None):
                                 self.maxwidth))
     log.log(2,"cols: {}".format(colwidth))
     log.log(2,"rows: {}".format(rowheight))
+def nfc(x):
+    #This makes (pre)composed characters, e.g., vowel and accent in one
+    return unicodedata.normalize('NFC', str(x))
+def nfd(x):
+    #This makes decomposed characters. e.g., vowel + accent (not used yet)
+    return unicodedata.normalize('NFD', str(x))
 if __name__ == '__main__':
+    a=tkinter.Widget()
     """To Test:"""
     # loglevel='Debug'
     loglevel='INFO'
