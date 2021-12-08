@@ -8067,8 +8067,8 @@ class Repository(object):
         super(Repository, self).__init__()
         self.url = url
         self.files()
-            log.info("Mercurial repository object initialized, with "
-                "{} files.".format(len(self.files)))
+        log.info("Mercurial repository object initialized, with {} files."
+                "".format(len(self.files)))
 class Options:
     def alias(self,o):
         return self.odict.get(o,o)
