@@ -283,7 +283,7 @@ class Check():
         window.wait_window(window)
     def settingsfilecheck(self,basename):
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
-        self.toneframesfile=basename.with_suffix(".ToneFrames.ini")
+        self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
         self.statusfile=basename.with_suffix(".VerificationStatus.dat")
         self.profiledatafile=basename.with_suffix(".ProfileData.dat")
         self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.ini")
@@ -297,7 +297,10 @@ class Check():
                 if file.exists(legacy):
                     log.debug("But legacy file {} does; converting!".format(legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
-            if file.exists(savefile) and self.repo and not me:
+            if (file.endswith('.dat') and
+                    file.exists(savefile) and
+                    self.repo and
+                    not me):
                 self.repo.add(savefile)
         if self.repo and not me:
             self.repo.commit()
