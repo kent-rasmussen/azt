@@ -8047,11 +8047,13 @@ class Repository(object):
         cmd=[program['hg'],'--cwd',self.url] #-R
         cmd.extend(args)
         try:
-            e=subprocess.check_output(cmd, shell=False).decode("utf-8").strip()
-            log.info("{} output: {}".format(cmd,e))
+            output=subprocess.check_output(cmd, shell=False)
+        except subprocess.CalledProcessError as e:
+            output=e.output
         except Exception as e:
-            log.info(_("Call to Mercurial failed: {}").format(e))
-        return e
+            log.info(_("Call to Mercurial ({}) failed: {} ({})").format(args,e))
+            return e
+        return output.decode("utf-8").strip()
     def alreadythere(self,url):
         if str(file.getreldir(self.url,url)) in self.files:
             log.info(_("URL {} is already in repo {}".format(url,self.url)))
