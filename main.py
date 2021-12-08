@@ -297,9 +297,9 @@ class Check():
                 if file.exists(legacy):
                     log.debug("But legacy file {} does; converting!".format(legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
-            if file.exists(savefile) and self.repo:
+            if file.exists(savefile) and self.repo and not me:
                 self.repo.add(savefile)
-        if self.repo:
+        if self.repo and not me:
             self.repo.commit()
     def checkforlegacyverification(self):
         start_time=time.time()
