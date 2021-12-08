@@ -8485,6 +8485,9 @@ def findexecutable(exe):
         log.info("Executable {} found at {}".format(exe,program[exe]))
     except subprocess.CalledProcessError as e:
         log.info("Executable {} search output: {}".format(exe,e.output))
+    except Exception as e:
+        log.info(_("Search for {} failed: {}").format(exe,e))
+        return e
 def praatopen(file,newpraat=False,event=None):
     if program['sendpraat'] and not newpraat:
         praatargs=[program['sendpraat'], "praat", "Read from file... {}".format(file)]
