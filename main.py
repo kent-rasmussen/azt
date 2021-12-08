@@ -8057,7 +8057,7 @@ class Repository(object):
         self.root=self.do(args)
     def files(self):
         args=["files"]
-        self.files=self.do(args)
+        self.files=self.do(args).split('\n')
     def do(self,args):
         cmd=[program['hg'],'--cwd',self.url] #-R
         cmd.extend(args)
