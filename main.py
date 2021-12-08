@@ -8038,7 +8038,7 @@ class Repository(object):
         args=["files"]
         self.files=self.do(args)
     def do(self,args):
-        cmd=[program['hg'],'-R',self.url]
+        cmd=[program['hg'],'--cwd',self.url] #-R
         cmd.extend(args)
         try:
             e=subprocess.check_output(cmd, shell=False).decode("utf-8").strip()
@@ -8047,7 +8047,7 @@ class Repository(object):
             log.info(_("Call to Mercurial failed: {}").format(e))
         return e
     def alreadythere(self,url):
-        if str(url) in self.files:
+        if str(file.getreldir(self.url,url)) in self.files:
             log.info(_("URL {} is already in repo {}".format(url,self.url)))
             return True
         else:
