@@ -11,16 +11,6 @@ import tkinter.scrolledtext
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
 class UI(object):
     """docstring for Widget."""
-    # def wait(self,msg=None):
-    #     # This and the following are only to build the main screen
-    #     if hasattr(self.parent,'ww') and self.parent.ww.winfo_exists() == True:
-    #         log.debug("Already a wait window: {}".format(self.parent.ww))
-    #         return
-    #     self.parent.ww=Wait(self.parent,msg)
-    # def waitdone(self):
-    #     log.log(3,"Closing Wait window, and bringing up main window again.")
-    #     if hasattr(self.parent,'ww'):
-    #         self.parent.ww.close()
     def wait(self,msg=None):
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
             log.debug("There is already a wait window: {}".format(self.ww))
