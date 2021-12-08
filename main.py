@@ -8014,6 +8014,16 @@ class ConfigParser(configparser.ConfigParser):
         self.optionxform=str
         self.allow_no_value=True
         # self.converters={'list':list} #lambda x: [i.strip() for i in x.split(',')]
+class ErrorNotice(ui.Window):
+    """this is for things that I want the user to know, without having
+    to find it in the logs."""
+    def __init__(self, parent, title, text):
+        super(ErrorNotice, self).__init__(parent,title=title)
+        self.parent = parent
+        self.title = title
+        self.text = text
+        l=ui.Label(self, text=text)
+        l.grid(row=0, column=0)
 class Repository(object):
     """docstring for Mercurial Repository."""
     def choruscheck(self):
