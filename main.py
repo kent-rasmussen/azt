@@ -8461,11 +8461,20 @@ def findpath():
     except Exception as e:
         log.info("No path found! ({})".format(e))
 def findexecutable(exe):
+    exeOS=exe
     os=platform.system()
     if os == 'Linux':
         which='which'
+        if exe == 'sendpraat':
+            exeOS='sendpraat-linux'
     elif os == 'Windows':
         which='where'
+        if exe == 'sendpraat':
+            exeOS='sendpraat-win.exe'
+    elif os == 'Darwin': #MacOS
+         which='which'
+         if exe == 'sendpraat':
+             exeOS='sendpraat-mac'
     else:
         log.error("Sorry, I don't know this OS: {}".format(os))
     log.info("Looking for {} on {}...".format(exe,os))
