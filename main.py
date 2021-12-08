@@ -286,7 +286,7 @@ class Check():
         self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
         self.statusfile=basename.with_suffix(".VerificationStatus.dat")
         self.profiledatafile=basename.with_suffix(".ProfileData.dat")
-        self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.ini")
+        self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.dat")
         self.soundsettingsfile=basename.with_suffix(".SoundSettings.ini")
         self.settingsbyfile() #This just sets the variable
         for setting in self.settings:#[setting]
