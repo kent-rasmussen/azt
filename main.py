@@ -8016,6 +8016,18 @@ class ConfigParser(configparser.ConfigParser):
         # self.converters={'list':list} #lambda x: [i.strip() for i in x.split(',')]
 class Repository(object):
     """docstring for Mercurial Repository."""
+    def choruscheck(self):
+        rescues=[]
+        for file in self.files:
+            if file.endswith('.ChorusRescuedFile'):
+                rescues.append(file)
+        if rescues:
+            error=_("You have the following files that need to be resolved"
+                    "from Chorus merges: {}").format(rescues)
+            log.error(error)
+
+            if me:
+                exit()
     def add(self,file):
         if not self.alreadythere(file):
             args=["add", file]
