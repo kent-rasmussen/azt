@@ -283,10 +283,10 @@ class Check():
         window.wait_window(window)
     def settingsfilecheck(self,basename):
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
-        self.toneframesfile=basename.with_suffix(".ToneFrames.ini")
+        self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
         self.statusfile=basename.with_suffix(".VerificationStatus.dat")
         self.profiledatafile=basename.with_suffix(".ProfileData.dat")
-        self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.ini")
+        self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.dat")
         self.soundsettingsfile=basename.with_suffix(".SoundSettings.ini")
         self.settingsbyfile() #This just sets the variable
         for setting in self.settings:#[setting]
@@ -297,9 +297,12 @@ class Check():
                 if file.exists(legacy):
                     log.debug("But legacy file {} does; converting!".format(legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
-            if file.exists(savefile) and self.repo:
+            if (file.endswith('.dat') and
+                    file.exists(savefile) and
+                    self.repo and
+                    not me):
                 self.repo.add(savefile)
-        if self.repo:
+        if self.repo and not me:
             self.repo.commit()
     def checkforlegacyverification(self):
         start_time=time.time()
@@ -8067,8 +8070,8 @@ class Repository(object):
         super(Repository, self).__init__()
         self.url = url
         self.files()
-        log.info("Mercurial repository object initialized, with the following "
-                "files: {}.".format(self.files))
+        log.info("Mercurial repository object initialized, with {} files."
+                "".format(len(self.files)))
 class Options:
     def alias(self,o):
         return self.odict.get(o,o)
