@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
+import sys
 import logging
 log = logging.getLogger(__name__) #bc not imported as a module...
 import unicodedata
