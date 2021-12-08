@@ -300,7 +300,7 @@ class Check():
             if file.exists(savefile) and self.repo:
                 self.repo.add(savefile)
         if self.repo:
-            self.repo.status()
+            self.repo.commit()
     def checkforlegacyverification(self):
         start_time=time.time()
         n=0
