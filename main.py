@@ -8016,10 +8016,18 @@ class Repository(object):
     def add(self,file):
         if not self.alreadythere(file):
             args=["add", file]
-            self.do(args)
+            r=self.do(args)
+            if r:
+                log.info("Hg add: {}".format(r))
+            else:
+                log.info("Hg add OK".format(r))
     def commit(self,file=None):
-        args=["cm", file, '-m', "Autocommit from AZT"]
-        self.do(args)
+        args=["commit", file, '-m', "Autocommit from AZT"]
+        r=self.do([i for i in args if i is not None])
+        if r:
+            log.info("Hg commit: {}".format(r))
+        else:
+            log.info("Hg commit OK".format(r))
     def diff(self):
         args=["diff"]
         self.do(args)
