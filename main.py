@@ -8479,10 +8479,12 @@ def findexecutable(exe):
         log.error("Sorry, I don't know this OS: {}".format(os))
     log.info("Looking for {} on {}...".format(exe,os))
     program[exe]=None
-    spargs={'shell':False}
-    hg=subprocess.check_output([which,exe], **spargs)
-    program[exe]=hg.decode("utf-8").strip()
-    log.info("Executable {} found at {}".format(exe,program[exe]))
+    try:
+        exeURL=subprocess.check_output([which,exeOS], shell=False)
+        program[exe]=exeURL.decode("utf-8").strip()
+        log.info("Executable {} found at {}".format(exe,program[exe]))
+    except subprocess.CalledProcessError as e:
+        log.info("Executable {} search output: {}".format(exe,e.output))
 def praatopen(file,newpraat=False,event=None):
     if program['sendpraat'] and not newpraat:
         praatargs=[program['sendpraat'], "praat", "Read from file... {}".format(file)]
