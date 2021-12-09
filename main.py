@@ -1802,7 +1802,7 @@ class Check():
     def loadsettingsfile(self,setting='defaults'):
         filename=self.settingsfile(setting)
         config=ConfigParser()
-        config.read(filename)
+        config.read(filename,encoding='utf-8')
         if len(config.sections()) == 0:
             return
         log.debug("Trying for {} settings in {}".format(setting, filename))
