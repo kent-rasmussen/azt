@@ -297,7 +297,7 @@ class Check():
                 if file.exists(legacy):
                     log.debug("But legacy file {} does; converting!".format(legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
-            if (file.endswith('.dat') and
+            if (str(savefile).endswith('.dat') and
                     file.exists(savefile) and
                     self.repo and
                     not me):
