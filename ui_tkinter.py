@@ -1322,6 +1322,14 @@ def availablexy(self,w=None):
         w=self
         self.otherrowheight=0
         self.othercolwidth=0
+    parentclasses=['Toplevel','Tk','Wait','Window','Root',
+                    tkinter.Canvas,
+                    'ScrollingFrame']
+    if not w.grid_info():
+        # (hasattr(w,'parent.parent') and
+        # hasattr(w.parent,'parent') and
+        # w.parent.parent.winfo_class() == ScrollingFrame):
+        return
     try: #Any kind of error making a widget often shows up here
         wrow=w.grid_info()['row']
     except KeyError:
@@ -1337,9 +1345,9 @@ def availablexy(self,w=None):
             'wcols: {} ({})'.format(wrow,wrowmax,wrows,wcol,wcolmax,wcols,w))
     rowheight={}
     colwidth={}
-    parentclasses=['Toplevel','Tk','Wait','Window','Root']
     for sib in w.parent.winfo_children(): #one of these should be sufficient
-        if sib.winfo_class() not in parentclasses:
+        if (sib.winfo_class() not in parentclasses and
+            sib.parent.winfo_class() not in [tkinter.Canvas,'ScrollingFrame']):
             if hasattr(w.parent,'grid_info') and 'row' in sib.grid_info():
                 sib.row=sib.grid_info()['row']
                 sib.col=sib.grid_info()['column']
@@ -1370,8 +1378,9 @@ def availablexy(self,w=None):
     log.log(3,"self.othercolwidth: {}; self.otherrowheight: {}".format(
                 self.othercolwidth,self.otherrowheight))
     log.log(3,"w.parent.winfo_class: {}".format(w.parent.winfo_class()))
-    if w.parent.winfo_class() not in parentclasses:
-        if hasattr(w.parent,'grid_info'): #one of these should be sufficient
+    if hasattr(w.parent,'grid_info') and w.parent.grid_info(): 
+        # winfo_class() not in parentclasses:
+        # if hasattr(w.parent,'grid_info'): #one of these should be sufficient
             availablexy(self,w.parent)
     else:
         """This may not be the right way to do this, but this set of adjustments
@@ -1382,8 +1391,8 @@ def availablexy(self,w=None):
         borderSize= 0 #not working: self.winfo_rootx() - self.winfo_x()
         self.othercolwidth+=borderSize*2
         self.otherrowheight+=titlebarHeight+100
-        self.maxheight=self.parent.winfo_screenheight()-self.otherrowheight
-        self.maxwidth=self.parent.winfo_screenwidth()-self.othercolwidth #+600
+        self.maxheight=self.winfo_screenheight()-self.otherrowheight
+        self.maxwidth=self.winfo_screenwidth()-self.othercolwidth #+600
         log.log(2,"self.winfo_rootx(): {}".format(self.winfo_rootx()))
         log.log(2,"self.winfo_x(): {}".format(self.winfo_x()))
         log.log(2,"titlebarHeight: {}".format(titlebarHeight))
