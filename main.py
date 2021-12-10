@@ -4654,7 +4654,7 @@ class Check():
         buttonframes.grid(row=1,column=0,sticky='w')
         row=0
         done=list()
-        for senseid in self.profilesbysense[ps][profile]:
+        for senseid in self.slices.senseids(ps=ps,profile=profile):
             sense={}
             sense['column']=0
             sense['row']=row
