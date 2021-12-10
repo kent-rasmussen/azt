@@ -491,96 +491,6 @@ class Window(Toplevel):
                                 command=cmd,
                                             )
             self.backButton.grid(column=3,row=2)
-class Menu(tkinter.Menu,UI):
-    def pad(self,label):
-        w=5 #Make menus at least w characters wide
-        if len(label) <w:
-            spaces=" "*(w-len(label))
-            label=spaces+label+spaces
-        return label
-    def add_command(self,label,command):
-        label=self.pad(label)
-        tkinter.Menu.add_command(self,label=label,command=command)
-    def add_cascade(self,label,menu):
-        label=self.pad(label)
-        tkinter.Menu.add_cascade(self,label=label,menu=menu)
-    def __init__(self,parent,**kwargs):
-        super().__init__(parent,**kwargs)
-        self.parent=parent
-        self.inherit()
-        self['font']=self.fonts['default']
-        #Blend with other widgets:
-        # self['activebackground']=self.theme['activebackground']
-        # self['background']=self.theme['background']
-        # stand out from other widgets:
-        self['activebackground']=self.theme['background']
-        self['background']='white'
-class ContextMenu(UI):
-    def updatebindings(self):
-        def bindthisncheck(w):
-            log.log(2,"{};{}".format(w,w.winfo_children()))
-            if type(w) is not tkinter.Canvas: #ScrollingFrame:
-                w.bind('<Enter>', self._bind_to_makemenus)
-            for child in w.winfo_children():
-                bindthisncheck(child)
-        self.parent.bind('<Leave>', self._unbind_to_makemenus) #parent only
-        bindthisncheck(self.parent)
-    def undo_popup(self,event=None):
-        if hasattr(self,'menu'):
-            log.log(2,"undo_popup Checking for ContextMenu.menu: {}".format(
-                                                            self.menu.__dict__))
-            try:
-                self.root.destroy() #Tk()
-                log.log(3,"popup parent/root destroyed")
-            except:
-                log.log(3,"popup parent/root not destroyed!")
-            finally:
-                self.parent.unbind_all('<Button-1>')
-    def menuinit(self):
-        """redo menu on context change"""
-        self.menu = Menu(self.root, tearoff=0)
-        try:
-            log.info("menuinit done: {}".format(self.menu.__dict__))
-        except:
-            log.error("Problem initializing context menu")
-    def menuitem(self,msg,cmd):
-        self.menu.add_command(label=msg,command=cmd)
-    def dosetcontext(self):
-        try:
-            log.log(3,"setcontext: {}".format(self.parent.setcontext))
-            self.parent.setcontext(context=self.context)
-        except:
-            log.error("You need to have a setcontext() method for the "
-                        "parent of this context menu ({}), to set menu "
-                        "items under appropriate conditions ({}): {}.".format(
-                            self.parent,self.context,self.parent.setcontext))
-    def do_popup(self,event):
-        try:
-            self.menu.tk_popup(event.x_root, event.y_root)
-        except:
-            log.log(4,"Problem with self.menu.tk_popup; setting context")
-            self.getroot()
-            self.dosetcontext()
-            self.menu.tk_popup(event.x_root, event.y_root)
-        finally:
-            self.menu.grab_release() #allows click on main window
-    def _bind_to_makemenus(self,event): #all needed to cover all of window
-        self.parent.bind_all('<Button-3>',self.do_popup) #_all
-        self.parent.bind_all('<Button-1>',self.undo_popup)
-    def _unbind_to_makemenus(self,event):
-        self.parent.unbind_all('<Button-3>')
-    def getroot(self):
-        self.root=tkinter.Tk()
-        self.root.withdraw()
-        self.root.parent=self.parent
-        UI.inherit(self.root)
-    def __init__(self,parent,context=None):
-        self.parent=parent
-        self.parent.context=self
-        self.context=context #where the menu is showing (e.g., verifyT)
-        self.inherit()
-        self.getroot()
-        self.updatebindings()
 class Renderer(object):
     def __init__(self,test=False,**kwargs):
         try:
@@ -744,6 +654,94 @@ class Label(tkinter.Label,UI):
         tkinter.Label.__init__(self, parent, **kwargs)
         self['background']=kwargs.get('background',self.theme['background'])
 class EntryField(tkinter.Entry,UI):
+class Menu(tkinter.Menu,UI): #not Text
+    def pad(self,label):
+        w=5 #Make menus at least w characters wide
+        if len(label) <w:
+            spaces=" "*(w-len(label))
+            label=spaces+label+spaces
+        return label
+    def add_command(self,label,command):
+        label=self.pad(label)
+        tkinter.Menu.add_command(self,label=label,command=command)
+    def add_cascade(self,label,menu):
+        label=self.pad(label)
+        tkinter.Menu.add_cascade(self,label=label,menu=menu)
+    def __init__(self,parent,**kwargs):
+        UI.inherit(self,parent)
+        self.theme=parent.theme
+        super(Menu,self).__init__(parent,**kwargs)
+        self['font']=self.theme.fonts['default']
+        self['activebackground']=self.theme.background
+        self['background']=self.theme.menubackground
+class ContextMenu(Text,UI):
+    def updatebindings(self):
+        def bindthisncheck(w):
+            log.log(2,"{};{}".format(w,w.winfo_children()))
+            if type(w) is not tkinter.Canvas: #ScrollingFrame:
+                w.bind('<Enter>', self._bind_to_makemenus)
+            for child in w.winfo_children():
+                bindthisncheck(child)
+        self.parent.bind('<Leave>', self._unbind_to_makemenus) #parent only
+        bindthisncheck(self.parent)
+    def undo_popup(self,event=None):
+        if hasattr(self,'menu'):
+            log.log(2,"undo_popup Checking for ContextMenu.menu: {}".format(
+                                                            self.menu.__dict__))
+            try:
+                self.root.destroy() #Tk()
+                log.log(3,"popup parent/root destroyed")
+            except:
+                log.log(3,"popup parent/root not destroyed!")
+            finally:
+                self.parent.unbind_all('<Button-1>')
+    def menuinit(self):
+        """redo menu on context change"""
+        self.menu = Menu(self.root, tearoff=0)
+        try:
+            log.info("menuinit done: {}".format(self.menu.__dict__))
+        except:
+            log.error("Problem initializing context menu")
+    def menuitem(self,msg,cmd):
+        self.menu.add_command(label=msg,command=cmd)
+    def dosetcontext(self):
+        try:
+            log.log(3,"setcontext: {}".format(self.parent.setcontext))
+            self.parent.setcontext(context=self.context)
+        except:
+            log.error("You need to have a setcontext() method for the "
+                        "parent of this context menu ({}), to set menu "
+                        "items under appropriate conditions ({}): {}.".format(
+                            self.parent,self.context,self.parent.setcontext))
+    def do_popup(self,event):
+        try:
+            self.menu.tk_popup(event.x_root, event.y_root)
+        except:
+            log.log(4,"Problem with self.menu.tk_popup; setting context")
+            self.getroot()
+            self.dosetcontext()
+            self.menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.menu.grab_release() #allows click on main window
+    def _bind_to_makemenus(self,event): #all needed to cover all of window
+        self.parent.bind_all('<Button-3>',self.do_popup) #_all
+        self.parent.bind_all('<Button-1>',self.undo_popup)
+    def _unbind_to_makemenus(self,event):
+        self.parent.unbind_all('<Button-3>')
+    def getroot(self):
+        self.root=tkinter.Tk()
+        self.root.withdraw()
+        self.root.parent=self.parent
+        UI.inherit(self.root,self.parent)
+    def __init__(self,parent,context=None):
+        self.parent=parent
+        self.getroot()
+        UI.inherit(self,parent)
+        super(ContextMenu,self).__init__(parent)
+        self.parent.context=self
+        self.context=context #where the menu is showing (e.g., verifyT)
+        # self.inherit()
+        self.updatebindings()
     def renderlabel(self,grid=False,event=None):
         v=self.get()
         if hasattr(self,'rendered'): #Get grid info before destroying old one
