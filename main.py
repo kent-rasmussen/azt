@@ -8047,7 +8047,7 @@ class Repository(object):
         args=["files"]
         self.files=self.do(args)
     def do(self,args):
-        cmd=[program['hg'],'--cwd',self.url] #-R
+        cmd=[program['hg'],'--cwd',str(self.url)] #-R
         cmd.extend(args)
         try:
             output=subprocess.check_output(cmd, shell=False)
