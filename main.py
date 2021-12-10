@@ -3483,9 +3483,10 @@ class Check():
                                         self.group_comparison,
                                         showtonegroup=True,
                                         playable=True,
-                                        unsortable=True,
+                                        unsortable=False, #no space, bad idea
                                         alwaysrefreshable=True,
-                                        font='default'
+                                        font='default',
+                                        wraplength=buttonframew
                                         )
                 compframe.bf2.grid(row=0, column=0, sticky='w')
             elif not hasattr(self, 'group_comparison'):
@@ -3504,6 +3505,7 @@ class Check():
         ps=self.slices.ps()
         profile=self.slices.profile()
         check=self.params.check()
+        buttonframew=int(program['screenw']/3.5)
         if check == None:
             self.getcheck(guess=True)
             if check == None:
