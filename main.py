@@ -7026,17 +7026,19 @@ class Splash(ui.Window):
                 "-based language development by facilitating the sorting of a "
                 "beginning dictionary by vowels, consonants and tone. "
                 "(more in help:about)").format(name=program['name'])
-        ui.Label(self, text=title, pady=10,
-                        font='title',anchor='c',padx=25
-                        ).grid(row=0,column=0,sticky='we')
-        ui.Label(self, text=v, anchor='c',padx=25
-                        ).grid(row=1,column=0,sticky='we')
-        ui.Label(self, image=self.photo['transparent'],text='',
-                        bg=self.theme['background']
-                        ).grid(row=2,column=0,sticky='we')
-        l=ui.Label(self, text=text, padx=50,
-                wraplength=int(self.winfo_screenwidth()/2)
-                ).grid(row=3,column=0,sticky='we')
+        l=ui.Label(self.frame, text=title, pady=10,
+                        font='title',anchor='c',padx=25,
+                        row=0,column=0,sticky='we'
+                        )
+        m=ui.Label(self.frame, text=v, anchor='c',padx=25,
+                        row=1,column=0,sticky='we'
+                        )
+        n=ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
+                        row=2,column=0,sticky='we'
+                        )
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=3,column=0,sticky='we'
+                )
         self.withdraw() #don't show until placed
         self.update_idletasks()
         self.w = self.winfo_reqwidth()
