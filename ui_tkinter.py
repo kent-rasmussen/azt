@@ -787,13 +787,13 @@ class EntryField(Gridded,tkinter.Entry,UI):
         self['background']=self.theme.offwhite #because this is for entry...
 class RadioButton(tkinter.Radiobutton,UI):
     def __init__(self, parent, column=0, row=0, sticky='w', **kwargs):
+        UI.inherit(self,parent)
         self.parent=parent
-        self.inherit()
         if 'font' not in kwargs:
             kwargs['font']=self.fonts['default']
-        kwargs['activebackground']=self.theme['activebackground']
-        kwargs['selectcolor']=self.theme['activebackground']
-        super().__init__(parent,**kwargs)
+        kwargs['activebackground']=self.theme.activebackground
+        kwargs['selectcolor']=self.theme.activebackground
+        super(RadioButton,self).__init__(parent,**kwargs)
         self.grid(column=column, row=row, sticky=sticky)
 class RadioButtonFrame(Frame):
     def __init__(self, parent, horizontal=False,**kwargs):
