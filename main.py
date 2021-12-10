@@ -4,7 +4,7 @@
 program={'name':'A→Z+T'}
 program['tkinter']=True
 program['production']=True#False #True for making screenshots
-program['version']='0.8.7' #This is a string...
+program['version']='0.8.7oop' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 import platform
@@ -88,7 +88,6 @@ class Check():
         self.pp=pprint.PrettyPrinter()
         self.iterations=0
         # print(time.time()-self.start_time) # with this
-        self.debug=parent.debug
         self.su=True #show me stuff others don't want/need
         self.su=False #not a superuser; make it easy on me!
         self.parent=parent #should be mainapplication frame
@@ -713,7 +712,7 @@ class Check():
         options.next('r')
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
-                ).format(self.program['name'],self.languagenames[self.analang])
+                ).format(program['name'],self.languagenames[self.analang])
         instr=ui.Label(mwframe,text=text,justify=tkinter.LEFT,anchor='c')
         instr.grid(row=options.get('r'), column=options.get('c'),
                     sticky='ew', padx=options.padx, pady=options.pady)
@@ -1063,19 +1062,6 @@ class Check():
                 del self.toneframes[self.ps][self.name]
                 self.name=self.nameori
                 return
-            else:
-                text=_("Examples for {} tone frame").format(namevar)
-                log.info('gimmesenseid:{}'.format(senseid))
-                # This needs self.toneframes
-                log.info('getframeddata::')
-                framed=self.datadict.getframeddata(senseid)
-                log.info('getframeddata: {}'.format(framed.forms))
-                framed.setframe(self.name)
-                log.info('post setframe:{} ({})'.format(framed.framed,self.name))
-                #At this point, remove this frame (in case we don't submit it)
-                del self.toneframes[self.ps][self.name]
-                self.name=self.nameori
-
             """Define the new frame"""
             checkdefntoadd={}
             checkdefntoadd['field']='lc' #update this with radio!
@@ -1146,9 +1132,9 @@ class Check():
             #next to this button, in case any variable has been changed.
             if hasattr(self.addwindow,'framechk'):
                 self.addwindow.framechk.destroy()
-        def submit(checkdefntoadd,name):
+        def submit(checkdefntoadd,checktoadd):
             # Having made and unset these, we now reset and write them to file.
-            self.toneframes[ps][check]=checkdefntoadd
+            self.toneframes.addframe(ps,checktoadd,checkdefntoadd)
             self.status.renewchecks()
             self.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
@@ -1326,7 +1312,7 @@ class Check():
                 self.status.renewchecks()
             self.attrschanged.remove('ps')
         if 'profile' in self.attrschanged:
-            self.newattr.remove('profile')
+            self.attrschanged.remove('profile')
         if 'check' in self.attrschanged:
             self.attrschanged.remove('check')
         soundattrs=['fs',
@@ -1486,11 +1472,13 @@ class Check():
         else:
             profilecounts=self.slices.valid()
             profilecountsAdHoc=self.slices.adhoccounts()
-            pcall=profilecounts+profilecountsAdHoc
+            log.info("count types: {}, {}".format(type(profilecounts),type(profilecountsAdHoc)))
+            if profilecountsAdHoc:
+                profilecounts.update(profilecountsAdHoc)
             ui.Label(window.frame, text=_('What ({}) syllable profile do you '
                                     'want to work with?'.format(ps))
                                     ).grid(column=0, row=0)
-            optionslist = [(x[0],pcall[x]) for x in pcall]
+            optionslist = [(x[0],profilecounts[x]) for x in profilecounts]
             window.scroll=ui.Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
@@ -2172,15 +2160,15 @@ class Check():
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=ps)
         return idsbyps[randint(0, len(idsbyps))]
-    def gimmesenseidwgloss(self):
+    def gimmesenseidwgloss(self,**kwargs):
         tried=0
         gloss={}
-        langs=[self.glosslang,self.glosslang2]
-        for lang in langs:
+        ps=kwargs.get('ps',self.slices.ps())
+        for lang in self.glosslangs:
             gloss[lang]=''
         while '' in gloss.values():
-            senseid=self.gimmesenseid()
-            for lang in langs:
+            senseid=self.gimmesenseid(ps=ps)
+            for lang in self.glosslangs:
                 gloss[lang]=self.db.glossordefn(senseid=senseid,glosslang=lang,
                                                 showurl=True)[0]
             tried+=1
@@ -2195,7 +2183,8 @@ class Check():
                 return errortext
         log.debug("Found entry {} with glosses {}".format(senseid,gloss))
         return senseid
-    def gimmesenseid(self):
+    def gimmesenseid(self,**kwargs):
+        ps=kwargs.get('ps',self.slices.ps())
         idsbyps=self.db.get('sense',ps=ps).get('senseid')
         return idsbyps[randint(0, len(idsbyps)-1)]
     def framenamesbyps(self,ps):
@@ -2528,8 +2517,8 @@ class Check():
         button(opts,t,self.runcheck,column=0,
                 font='title',
                 compound='bottom', #image bottom, left, right, or top of text
-                image=self.frame.photo[cvt]
-                )
+                image=self.frame.theme.photo[cvt],
+                sticky='ew')
         opts['row']+=1
         if cvt == 'T':
             t=(_("Record Sorted Examples"))
@@ -2538,7 +2527,7 @@ class Check():
         button(opts,t,self.record,column=0,
                 compound='left', #image bottom, left, right, or top of text
                 row=1,
-                image=self.frame.photo['record']
+                image=self.frame.theme.photo['record']
                 )
         self.maybeboard()
         self.checkcheck(dictnow)
@@ -2668,10 +2657,13 @@ class Check():
     def makenoboard(self):
         log.info("No Progress board")
         self.boardtitle()
-        self.noboard=ui.Label(self.leaderboard, image=self.frame.photo['transparent'],
-                    text='', pady=50, bg='red').grid(row=1,column=0,sticky='we')
+        self.noboard=ui.Label(self.leaderboard,
+                            image=self.frame.theme.photo['transparent'],
+                            text='', pady=50,
+                            background=self.frame.theme.background
+                            ).grid(row=1,column=0,sticky='we')
         self.frame.update()
-        self.frame.parent.parent.deiconify()
+        self.parent.deiconify()
     def makeCVprogresstable(self):
         self.boardtitle()
         self.leaderboardtable=ui.Frame(self.leaderboard)
@@ -2679,7 +2671,7 @@ class Check():
         notext=_("Nothing to see here...")
         ui.Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
         self.frame.update()
-        self.frame.parent.parent.deiconify()
+        self.parent.deiconify()
     def maketoneprogresstable(self):
         def groupfn(x):
             for i in x:
@@ -3082,7 +3074,7 @@ class Check():
                 "the recording window; picking a smaller number could mean "
                 "data not getting recorded. "
                 "Up to how many examples do you want to record for each group?"
-                "".format(self.program['name'])
+                "".format(program['name'])
                 )
         ui.Label(window.frame, text=title, font='title').grid(column=0,
                                                                         row=0)
@@ -3466,6 +3458,8 @@ class Check():
                 log.info("Comparison frameb destroyed!")
             except: #first run
                 log.info("Problem destroying comparison frame, making...")
+            buttonframew=int(program['screenw']/4)
+            # b['wraplength']=buttonframew
             compframe.compframeb=ui.Frame(compframe)
             compframe.compframeb.grid(row=1,column=0)
             t=_('Compare with another group')
@@ -3481,9 +3475,10 @@ class Check():
                                         self.group_comparison,
                                         showtonegroup=True,
                                         playable=True,
-                                        unsortable=True,
+                                        unsortable=False, #no space, bad idea
                                         alwaysrefreshable=True,
-                                        font='default'
+                                        font='default',
+                                        wraplength=buttonframew
                                         )
                 compframe.bf2.grid(row=0, column=0, sticky='w')
             elif not hasattr(self, 'group_comparison'):
@@ -3502,6 +3497,7 @@ class Check():
         ps=self.slices.ps()
         profile=self.slices.profile()
         check=self.params.check()
+        buttonframew=int(program['screenw']/3.5)
         if check == None:
             self.getcheck(guess=True)
             if check == None:
@@ -3535,18 +3531,25 @@ class Check():
                         ).format(ps,profile,group,check)
         self.getrunwindow(title=title)
         menu=self.runwindow.removeverifymenu()
-        titlel=ui.Label(self.runwindow.frame,text=title,font='title')
-        titlel.grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
+        titlel=ui.Label(self.runwindow.frame,text=title,font='title',
+                        row=0,column=0,sticky='ew',padx=padx,pady=pady
+                        )
         getformtext=_("What new name do you want to call this surface tone "
                         "group? A label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
-        getform=ui.Label(self.runwindow.frame,text=getformtext,
-                font='read',norender=True)
-        getform.grid(row=1,column=0,sticky='ew',padx=padx,pady=pady)
-        inputframe=ui.Frame(self.runwindow.frame)
-        inputframe.grid(row=2,column=0,sticky='')
-        buttonframe=ui.Frame(inputframe)
-        buttonframe.grid(row=0,column=0,sticky='new')
+        getform=ui.Label(self.runwindow.frame,
+                        text=getformtext,
+                        font='read',
+                        norender=True,
+                        row=1,column=0,sticky='ew',padx=padx,pady=pady
+                        )
+        getform.wrap()
+        inputframe=ui.Frame(self.runwindow.frame,
+                            row=2,column=0,sticky=''
+                            )
+        buttonframe=ui.Frame(inputframe,
+                            row=0,column=0,sticky='new'
+                            )
         tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
         spaces=[' ',' ','']
         for char in tonechars+spaces:
@@ -3570,60 +3573,94 @@ class Check():
                 text=char
                 columnspan=1
                 row=0
-            ui.Button(buttonframe,text = text,command = lambda x=char:addchar(x),
-                    anchor ='c').grid(row=row,column=column,sticky='nsew',
-                                    columnspan=columnspan)
+            ui.Button(buttonframe,text = text,
+                        command = lambda x=char:addchar(x),
+                        anchor ='c',
+                        row=row,
+                        column=column,
+                        sticky='nsew',
+                        columnspan=columnspan
+                        )
         g=nn(notthisgroup,twoperline=True)
         log.info("There: {}, NTG: {}; g:{}".format(groupsthere,notthisgroup,g))
-        groupslabel=ui.Label(inputframe,text='Other Groups:\n{}'.format(g))
-        groupslabel.grid(row=0,column=1,sticky='new',padx=padx,rowspan=2)
-        fieldframe=ui.Frame(inputframe)
-        fieldframe.grid(row=1,column=0,sticky='new')
-        formfield = ui.EntryField(fieldframe,textvariable=newname)
-        formfield.grid(row=1,column=0,sticky='new')
+        groupslabel=ui.Label(inputframe,
+                            text='Other Groups:\n{}'.format(g),
+                            row=0,column=1,
+                            sticky='new',
+                            padx=padx,
+                            rowspan=2
+                            )
+        fieldframe=ui.Frame(inputframe,
+                            row=1,column=0,sticky='new'
+                            )
+        formfield = ui.EntryField(fieldframe,textvariable=newname,
+                                    row=1,column=0,sticky='new'
+                                    )
         formfield.bind('<KeyRelease>', updatelabels) #apply function after key
-        errorlabel=ui.Label(fieldframe,text='',fg='red',
-                            wraplength=int(self.frame.winfo_screenwidth()/3))
-        errorlabel.grid(row=1,column=1,sticky='nsew')
-        formhashlabel=ui.Label(fieldframe,textvariable=namehash, anchor ='c')
-        formhashlabel.grid(row=2,column=0,sticky='new')
+        errorlabel=ui.Label(fieldframe,text='',
+                            fg='red',
+                            wraplength=int(self.frame.winfo_screenwidth()/3),
+                            row=1,column=1,sticky='nsew'
+                            )
+        formhashlabel=ui.Label(fieldframe,
+                                textvariable=namehash,
+                                anchor ='c',
+                                row=2,column=0,sticky='new'
+                                )
         fieldframe.grid_columnconfigure(0, weight=1)
         updatelabels()
-        responseframe=ui.Frame(self.runwindow.frame)
-        responseframe.grid(row=3,column=0,sticky='',padx=padx,pady=pady)
+        responseframe=ui.Frame(self.runwindow.frame,
+                                row=3,
+                                column=0,
+                                sticky='',
+                                padx=padx,
+                                pady=pady
+                                )
         ok=_('Use this name and go to:')
-        sub_lbl=ui.Label(responseframe,text = ok, font='read',)
-        sub_lbl.grid(row=0,column=0,sticky='ns')
+        sub_lbl=ui.Label(responseframe,text = ok, font='read',
+                        row=0,column=0,sticky='ns'
+                        )
         t=_('main screen')
-        sub_btn=ui.Button(responseframe,text = t, command = done, anchor ='c')
-        sub_btn.grid(row=0,column=1,sticky='ns')
+        sub_btn=ui.Button(responseframe,text = t, command = done, anchor ='c',
+                            row=0,column=1,sticky='ns'
+                            )
         if reverify == False: #don't give this option if verifying
             t=_('next group')
-            sub_btn=ui.Button(responseframe,text = t,command = next,anchor ='c')
-            sub_btn.grid(row=0,column=2,sticky='ns')
+            sub_btn=ui.Button(responseframe,text = t,command = next,anchor ='c',
+                                row=0,column=2,sticky='ns'
+                                )
             t=_('next tone frame')
-            sub_f=ui.Button(responseframe,text = t,command = nextcheck)
-            sub_f.grid(row=0,column=3,sticky='ns')
+            sub_f=ui.Button(responseframe,text = t,command = nextcheck,
+                            row=0,column=3,sticky='ns'
+                            )
             t=_('next syllable profile')
-            sub_p=ui.Button(responseframe,text = t,command = nextprofile)
-            sub_p.grid(row=0,column=4,sticky='ns')
-        examplesframe=ui.Frame(self.runwindow.frame)
-        examplesframe.grid(row=4,column=0,sticky='')
+            sub_p=ui.Button(responseframe,text = t,command = nextprofile,
+                            row=0,column=4,sticky='ns'
+                            )
+        examplesframe=ui.Frame(self.runwindow.frame,
+                                row=4,column=0,sticky=''
+                                )
         b=ToneGroupButtonFrame(examplesframe, self, self.exs,
                                 group,
                                 showtonegroup=True,
                                 # canary=entryview,
                                 playable=True,
                                 unsortable=True,
-                                alwaysrefreshable=True
+                                alwaysrefreshable=True,
+                                row=0, column=0, sticky='w',
+                                wraplength=buttonframew
                                 )
-        b.grid(row=0, column=0, sticky='w')
-        compframe=ui.Frame(examplesframe,highlightthickness=10,
-                    highlightbackground=self.frame.theme['white']) #no hlfg here
-        compframe.grid(row=0,column=1,sticky='e')
+        compframe=ui.Frame(examplesframe,
+                    highlightthickness=10,
+                    highlightbackground=self.frame.theme.white,
+                    row=0,column=1,sticky='e'
+                    ) #no hlfg here
         t=_('Compare with another group')
-        sub_c=ui.Button(compframe,text = t,command = setgroup_comparison)
-        sub_c.grid(row=0,column=0)
+        sub_c=ui.Button(compframe,
+                        text = t,
+                        command = setgroup_comparison,
+                        row=0,column=0
+                        )
         comparisonbuttons()
         self.runwindow.waitdone()
         sub_btn.wait_window(self.runwindow) #then move to next step
@@ -3726,7 +3763,7 @@ class Check():
                                                         columnspan=2)
             row+=1
             ui.Label(self.runwindow.frame, text='',
-                        image=self.frame.photo[cvt]
+                        image=self.frame.theme.photo[cvt]
                         ).grid(row=row,column=0,columnspan=2)
             row+=1
             ctosort=self.status.checks(tosort=True)
@@ -3893,8 +3930,8 @@ class Check():
             return
         titles=ui.Frame(self.runwindow.frame)
         titles.grid(row=0, column=0, sticky="ew", columnspan=2)
-        ui.Label(self.runwindow.frame, image=self.parent.photo['sortT'],
-                        text='',bg=self.frame.theme['background']
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['sortT'],
+                        text='',
                         ).grid(row=1,column=0,rowspan=3,sticky='nw')
         scroll=self.runwindow.frame.scroll=ui.ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=2, column=1, sticky="new")
@@ -4031,9 +4068,8 @@ class Check():
                                 ).grid(row=0,column=1,sticky="ew")
         ui.Label(titles, text=instructions).grid(row=1,column=0, columnspan=2,
                                                                 sticky="wns")
-        ui.Label(self.runwindow.frame, image=self.parent.photo['verifyT'],
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['verifyT'],
                         text='',
-                        bg=self.frame.theme['background']
                         ).grid(row=1,column=0,rowspan=3,sticky='nwse')
         """Scroll after instructions"""
         self.sframe=ui.ScrollingFrame(self.runwindow.frame)
@@ -4137,9 +4173,8 @@ class Check():
                 ).grid(column=0, row=0, sticky="w")
         i=ui.Label(self.runwindow.frame.titles, text=introtext)
         i.grid(row=1,column=0, sticky="w")
-        ui.Label(self.runwindow.frame, image=self.parent.photo['joinT'],
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['joinT'],
                         text='',
-                        bg=self.frame.theme['background']
                         ).grid(row=2,column=0,rowspan=2,sticky='nw')
         self.sframe=ui.ScrollingFrame(self.runwindow.frame)
         self.sframe.grid(row=2,column=1)
@@ -4434,7 +4469,8 @@ class Check():
             else:
                 log.log(4,"Marking senseid {} sorted (v: {})".format(senseid,v))
                 self.status.marksenseidsorted(senseid)
-                groups.append(v)
+                if v not in ['NA','ALLOK']:
+                    groups.append(v)
         """update 'tosort' status"""
         if self.status.senseidstosort():
             log.log(4,"updatesortingstatus shows senseidstosort remaining")
@@ -4622,12 +4658,15 @@ class Check():
         framed=self.datadict.getframeddata(sense['nodetoshow'])
         t=framed.formatted(noframe=True)
         for g in sense['glosses']:
-            t+='\t‘'+g
-            if ('plnode' in sense) and (sense['nodetoshow'] is sense['plnode']):
-                t+=" (pl)"
-            if ('impnode' in sense) and (sense['nodetoshow'] is sense['impnode']):
-                t+="!"
-            t+='’'
+            if g:
+                t+='\t‘'+g
+                if ('plnode' in sense and
+                        sense['nodetoshow'] is sense['plnode']):
+                    t+=" (pl)"
+                if ('impnode' in sense and
+                        sense['nodetoshow'] is sense['impnode']):
+                    t+="!"
+                t+='’'
         lxl=ui.Label(parent, text=t)
         lcb=RecordButtonFrame(parent,self,framed)
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
@@ -4652,7 +4691,7 @@ class Check():
         buttonframes.grid(row=1,column=0,sticky='w')
         row=0
         done=list()
-        for senseid in self.profilesbysense[ps][profile]:
+        for senseid in self.slices.senseids(ps=ps,profile=profile):
             sense={}
             sense['column']=0
             sense['row']=row
@@ -4674,7 +4713,7 @@ class Check():
                                                 lang=self.analang).get())
             sense['glosses']=[]
             for lang in self.glosslangs:
-                sense['gloss'].append(firstoflist(self.db.glossordefn(
+                sense['glosses'].append(firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
                                                 glosslang=lang
                                                 ),othersOK=True))
@@ -5132,7 +5171,7 @@ class Check():
                 "default analysis, which will replace these groupings with new "
                 "split groupings. \nTo see a report based on what you do "
                 "here, run the tone reports in the Advanced menu (without "
-                "analysis). ".format(ps,profile,self.program['name']))
+                "analysis). ".format(ps,profile,program['name']))
         rwrow+=1
         i=ui.Label(self.runwindow.frame,text=text)
         i.grid(row=rwrow,column=0,sticky='ew')
@@ -5254,8 +5293,7 @@ class Check():
         "this report is distinct from the others, in terms of its grouping "
         "across the multiple frames used. Sound files should be available "
         "through links, if the audio directory with those files is in the same "
-        "directory as this file.".format(ps,checks,
-                                            self.program['name']))
+        "directory as this file.".format(ps,checks,program['name']))
         p1=xlp.Paragraph(s1,text=text)
         text=_("As a warning to the analyst who may not understand the "
         "implications of this *automated analysis*, you may have too few "
@@ -5274,8 +5312,10 @@ class Check():
         def output(window,r,text):
             r.write(text+'\n')
             if silent == False:
-                ui.Label(window,text=text,font=window.fonts['report']).grid(
-                                        row=window.row,column=0, sticky="w")
+                ui.Label(window,text=text,
+                        font=window.theme.fonts['report'],
+                        row=window.row,column=0, sticky="w"
+                        )
             window.row+=1
         t=_("Summary of Frames by Draft Underlying Melody")
         if len(self.analysis.orderedchecks) > 6:
@@ -5300,13 +5340,13 @@ class Check():
                 "relationships for yourself: {}. "
                 "And here are the structured similarity relationships for the "
                 "Frames: {}"
-                "".format(self.program['name'],
+                "".format(program['name'],
                         str(self.analysis.comparisonUFs),
                         str(self.analysis.comparisonchecks)))
         else:
             ptext+=_("This is a non-default report, where a user has changed "
             "the default (hyper-split) groups created by {}.".format(
-                                                        self.program['name']))
+                                                        program['name']))
         p0=xlp.Paragraph(s1s,text=ptext)
         m=7 #only this many columns in a table
         self.analysis.orderedchecks=list(self.analysis.valuesbycheckgroup)
@@ -6161,19 +6201,21 @@ class FramedDataElement(FramedData):
         if self.audiofileisthere():
             return
         """First check if *any* glosslang has data"""
-        gloss=None
+        self.gloss=None
         for lang in self.glosslangs:
             if lang in self.forms:
-                gloss=self.forms[lang]
+                self.gloss=self.forms[lang]
                 break #glosslangs are prioritized; take the first one you find.
         """This is for nodes that don't include glosses (lc/lx/pl/imp fields)"""
-        if not gloss:
+        if not self.gloss and self.senseid:
             for lang in self.glosslangs:
-                gloss=t(self.db.get('gloss',senseid=senseid,glosslang=lang
-                                    ).get('text')
+                self.gloss=t(self.parent.db.get('gloss',
+                                            senseid=self.senseid,
+                                            glosslang=lang
+                                            ).get('text')
                         )
-                if gloss:
-                    gloss+='_'+self.node.tag() #since not gloss of the form
+                if self.gloss:
+                    self.gloss+='_'+self.node.tag() #since not gloss of the form
                     break
         filenames=self.filenameoptions()
         """if any of the generated filenames are there, stop at the first one"""
@@ -6228,7 +6270,10 @@ class FramedDataElement(FramedData):
                             if self.node.tag == 'field':
                                 args+=[self.node.get("type")]
                         args+=[self.forms[self.analang]]
-                        args+=[self.forms[self.glosslangs.lang1()]]
+                        if self.gloss: #could be None still, if no senseid given
+                            args+=[
+                                    self.gloss
+                                    ]
                         optargs=args[:]
                         optargs.insert(0,pslocopt) #put first
                         optargs.insert(3,fieldlocopt) #put after self.node.tag
@@ -6285,7 +6330,7 @@ class FramedDataElement(FramedData):
         """
         log.info("FramedDataElement initalization done, with forms: {}"
                     "".format(self.forms))
-class MainApplication(ui.Frame):
+class MainApplication(ui.Window):
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
@@ -6307,7 +6352,7 @@ class MainApplication(ui.Frame):
             self.setcontext()
     def _setmenus(self,event=None):
         check=self.check
-        self.menubar = ui.Menu(self.parent)
+        self.menubar = ui.Menu(self)
         changemenu = ui.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label=_("Change"), menu=changemenu)
         """Language stuff"""
@@ -6449,16 +6494,19 @@ class MainApplication(ui.Frame):
         helpmenu.add_command(label=_("About"),
                         command=self.helpabout)
         self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
-        self.parent.config(menu=self.menubar)
+        self.config(menu=self.menubar)
         self.menu=True
         self.setcontext()
         self.unbind_all('<Enter>')
     def helpabout(self):
         window=ui.Window(self)
-        title=(_("{name} Dictionary and Orthography Checker".format(name=self.program['name'])))
+        title=(_("{name} Dictionary and Orthography Checker".format(name=program['name'])))
         window.title(title)
-        ui.Label(window.frame, text=_("version: {}").format(program['version']),anchor='c',padx=50
-                        ).grid(row=1,column=0,sticky='we')
+        ui.Label(window.frame,
+                text=_("version: {}").format(program['version']),
+                anchor='c',padx=50,
+                row=1,column=0,sticky='we'
+                        )
         text=_("{name} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
                 "beginning dictionary by vowels, consonants and tone.\n"
@@ -6475,135 +6523,50 @@ class MainApplication(ui.Frame):
                 "directory, with links to each file in the dictionary database."
                 " Recordings can be made up to 192khz/32float, according to "
                 "your recording equipment's capacity.").format(
-                                                    name=self.program['name'])
+                                                    name=program['name'])
         webtext=_("For help with this tool, please check out the documentation "
-                "at {url} ").format(url=self.program['url'])
-        mailtext=_("or write me at {}.").format(self.program['Email'])
+                "at {url} ").format(url=program['url'])
+        mailtext=_("or write me at {}.").format(program['Email'])
         ui.Label(window.frame, text=title,
-                        font='title',anchor='c',padx=50
-                        ).grid(row=0,column=0,sticky='we')
-        f=ui.ScrollingFrame(window.frame)
-        f.grid(row=2,column=0,sticky='we')
-        ui.Label(f.content, image=self.frame.photo['small'],text='',
-                        bg=self.theme['background']
-                        ).grid(row=0,column=0,sticky='we')
+                font='title',anchor='c',padx=50,
+                row=0,column=0,sticky='we')
+        f=ui.ScrollingFrame(window.frame,
+                            row=2,column=0,sticky='we')
+        ui.Label(f.content, image=self.frame.theme.photo['small'],
+                text='',
+                row=0,column=0,sticky='we'
+                )
         l=ui.Label(f.content, text=text, padx=50,
-                wraplength=int(self.winfo_screenwidth()/2)
-                ).grid(row=1,column=0,pady=(50,0),sticky='we')
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=1,column=0,pady=(50,0),sticky='we'
+                )
         webl=ui.Label(f.content, text=webtext, padx=50,#pady=50,
-                wraplength=int(self.winfo_screenwidth()/2)
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=2,column=0,sticky='we'
                 )
-        webl.grid(row=2,column=0,sticky='we')
         maill=ui.Label(f.content, text=mailtext, padx=50,#pady=50,
-                wraplength=int(self.winfo_screenwidth()/2)
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=3,column=0,sticky='we'
                 )
-        maill.grid(row=3,column=0,sticky='we')
-        webl.bind("<Button-1>", lambda e: openweburl(self.program['url']))
-        murl='mailto:{}?subject= A→Z+T question'.format(self.program['Email'])
+        webl.bind("<Button-1>", lambda e: openweburl(program['url']))
+        murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
         maill.bind("<Button-1>", lambda e: openweburl(murl))
     def maketitle(self):
         title=_("{name} Dictionary and Orthography Checker").format(
-                                                    name=self.program['name'])
-        if self.master.themename != 'greygreen':
-            print(f"Using theme '{self.master.themename}'.")
-            title+=_(' ('+self.master.themename+')')
-        self.parent.title(title)
-    def setimages(self):
-        # Program icon(s) (First should be transparent!)
-        #Use this:
-        log.info("Scaling images; please wait...") #threading?
-        # threading.Thread(target=thread_function, args=(arg1,),kwargs={'arg2': arg2})
-        # if process:
-        #     from multiprocessing import Process
-        #     log.info("Running as multi-process")
-        #     p = Process(target=block)
-        # elif thread:
-        #     from threading import Thread
-        #     log.info("Running as threaded")
-        #     p = Thread(target=block)
-        # else:
-        #     log.info("Running in line")
-        #     block()
-        # if process or thread:
-        #     p.exception = None
-        #     try:
-        #         p.start()
-        #     except BaseException as e:
-        #         log.error("Exception!", traceback.format_exc())
-        #         p.exception = e
-        #     p.join(timeout) #finish this after timeout, in any case
-        #     if p.exception:
-        #         log.error("Exception2!", traceback.format_exc())
-        #         raise p.exception
-        #     if process:
-        #         p.terminate() #for processes, not threads
-        # x and y here express a float as two integers, so 0.7 = 7/10, because
-        # the zoom and subsample fns only work on integers
-        y=25 #10 #Higher number is better resolution (x*y/y), more time to process
-        y=int(y) # These all must be integers
-        x=int(program['scale']*y)
-        self.parent.photo={}
-        def mkimg(name,relurl):
-            imgurl=file.fullpathname(relurl)
-            if x != y: # should scale if off by >2% either way
-                self.parent.photo[name] = tkinter.PhotoImage(
-                                        file = imgurl).zoom(x,x).subsample(y,y)
-            else: #if close enough...
-                self.parent.photo[name] = tkinter.PhotoImage(file = imgurl)
-        for name,relurl in [ ('transparent','images/AZT stacks6.png'),
-                            ('small','images/AZT stacks6_sm.png'),
-                            ('icon','images/AZT stacks6_icon.png'),
-                            ('T','images/T alone clear6.png'),
-                            ('C','images/Z alone clear6.png'),
-                            ('V','images/A alone clear6.png'),
-                            ('CV','images/ZA alone clear6.png'),
-                            ('backgrounded','images/AZT stacks6.png'),
-                            #Set images for tasks
-                            ('verifyT','images/Verify List.png'),
-                            ('sortT','images/Sort List.png'),
-                            ('joinT','images/Join List.png'),
-                            ('record','images/Microphone alone_sm.png'),
-                            ('change','images/Change Circle_sm.png'),
-                            ('checkedbox','images/checked.png'),
-                            ('uncheckedbox','images/unchecked.png')
-                        ]:
-            mkimg(name,relurl)
-        log.info("Done scaling images")
-        self.parent.renderings={} #initialize this somewhere...
-    def settheme(self):
-        setthemes(self.parent)
-        #Select from lightgreen, green, pink, lighterpink, evenlighterpink,
-        #purple, Howard, Kent, Kim, yellow, greygreen1, lightgreygreen,
-        #greygreen, highcontrast, tkinterdefault
-        defaulttheme='greygreen'
-        multiplier=99 #The default theme will be this more frequent than others.
-        pot=list(self.parent.themes.keys())+([defaulttheme]*
-                                        (multiplier*len(self.parent.themes)-1))
-        self.parent.themename='Kent' #for the colorblind (to punish others...)
-        self.parent.themename='highcontrast' #for low light environments
-        self.parent.themename=pot[randint(0, len(pot))-1] #mostly defaulttheme
-        if ((platform.uname().node == 'karlap')
-                and (program['production'] is not True)):
-            self.parent.themename='Kim' #for my development
-        """These versions might be necessary later, but with another module"""
-        if self.parent.themename not in self.parent.themes:
-            print("Sorry, that theme doesn't seem to be set up. Pick from "
-            "these options:",self.parent.themes.keys())
-            exit()
-        self.parent.theme=self.parent.themes[self.parent.themename]
-        self.parent['background']=self.parent.theme['background']
+                                                    name=program['name'])
+        if program['theme'].name != 'greygreen':
+            log.info("Using theme '{}'.".format(program['theme'].name))
+            title+=_(' ('+program['theme'].name+')')
+        return title #self.title(title)
     def setfontsdefault(self):
-        setfonts(self.parent)
-        if len(self.parent.winfo_children()) >0:
-            propagate(self.parent,attr='fonts')
+        self.theme.setfonts()
         self.fonttheme='default'
         if hasattr(self,'context'): #don't do this before ContextMenu is there
             self.setcontext()
             if hasattr(self,'check'):
                 self.check.checkcheck() #redraw the main window (not on boot)
     def setfontssmaller(self):
-        setfonts(self.parent,fonttheme='smaller')
-        propagate(self.parent,attr='fonts')
+        self.theme.setfonts(fonttheme='smaller')
         self.fonttheme='smaller'
         self.setcontext()
         if hasattr(self,'check'):
@@ -6614,20 +6577,16 @@ class MainApplication(ui.Frame):
     def showgroupnames(self):
         self.check.set('hidegroupnames', False, refresh=True)
         self.setcontext()
-    def setmasterconfig(self,program):
+    def setmasterconfig(self): #,program
         self.parent.debug=False #needed?
         """Configure variables for the root window (master)"""
         for rc in [0,2]:
             self.parent.grid_rowconfigure(rc, weight=3)
             self.parent.grid_columnconfigure(rc, weight=3)
-        self.settheme()
-        self.setimages()
         #if resolutionsucks==True or windows==True:
             # setfonts(self.parent,fonttheme='small')
         #else:
         self.setfontsdefault()
-        self.parent.wraplength=self.parent.winfo_screenwidth()-300 #exit button
-        self.parent.program=program
     def setcontext(self,context=None):
         self.context.menuinit() #This is a ContextMenu() method
         if not hasattr(self,'menu') or self.menu == False:
@@ -6656,21 +6615,22 @@ class MainApplication(ui.Frame):
             # self.check.frame.destroy()
         self.check=Check(self,self.frame,filename,nsyls=self.nsyls)
         if not self.exitFlag.istrue():
-            self.parent.deiconify()
-    def __init__(self,parent,program):
+            self.deiconify()
+    def __init__(self,parent,exit=0):
         start_time=time.time() #this enables boot time evaluation
-        # print(time.time()-start_time) # with this
-        self.parent=parent
-        self.parent.exitFlag=self.exitFlag = ui.ExitFlag()
-        self.setmasterconfig(program)
-        # inherit(self) # do this after setting config.
-        #set up languages before splash window:
         self.interfacelangs=file.getinterfacelangs()
         interfacelang=file.getinterfacelang()
         if interfacelang is None:
             setinterfacelang('fr')
         else:
             setinterfacelang(interfacelang)
+        title=self.maketitle()
+        """Things that belong to a tkinter.Frame go after this:"""
+        super(MainApplication,self).__init__(parent,
+                title=title,
+                exit=False
+                )
+        self.setmasterconfig()
         """Pick one of the following three screensizes (or don't):"""
         # self.fullscreen()
         # self.quarterscreen()
@@ -6681,28 +6641,17 @@ class MainApplication(ui.Frame):
         #                     self.parent.winfo_screenheight()-200
         #                     )
         #Might be needed for M$ windows:root.state('zoomed')
-        """Things that belong to a tkinter.Frame go after this:"""
-        super().__init__(parent)
         # super().__init__(parent,class_="AZT")
-        parent.withdraw()
-        splash = Splash(self)
-        self.grid(row=1, column=1,  #This is inbetween rc=[0,2], above.
-                sticky=tkinter.N+tkinter.E+tkinter.S+tkinter.W
-                )
+        self.withdraw()
+        splash = Splash(parent)
         """Set up the frame in this (mainapplication) frame. This will be
         'placed' in the middle of the mainapplication frame, which is
         gridded into the center of the root window. This configuration keeps
         the frame with all the visual stuff in the middle of the window,
         without letting the window shrink to really small."""
-        self.frame=ui.Frame(self)
-        """Give the main window some margin"""
-        self.frame['padx']=25
-        self.frame['pady']=25
-        self.frame.grid(row=0, column=0)
         """Pick one of these two placements:"""
         # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
         # self.frame.grid(column=0, row=0)
-        parent.iconphoto(True, self.photo['icon'])
         self.maketitle()
         self.nsyls=None #this will give the default (currently 5)
         """This means make check with
@@ -6719,8 +6668,9 @@ class MainApplication(ui.Frame):
         e=(_("Exit"))
         #If the user exits out before this point, just stop.
         if self.check is None:
-            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!")
-            l.grid(row=0,column=0)
+            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
+            row=0,column=0
+            )
         try:
             self.check.frame.winfo_exists()
         except:
@@ -6734,7 +6684,7 @@ class MainApplication(ui.Frame):
                                                                     "seconds.")
         """finished loading so destroy splash"""
         splash.destroy()
-        parent.deiconify()
+        self.deiconify()
         """Don't show window again until check is done"""
 class RecordButtonFrame(ui.Frame):
     def _start(self, event):
@@ -6879,7 +6829,8 @@ class ToneGroupButtonFrame(ui.Frame):
         self.sortnext()
         # remove()
     def unsort(self):
-        self.removesenseidfromgroup(self._senseid,self.check)
+        check=self.check.params.check()
+        self.check.removesenseidfromgroup(self._senseid,check)
         self.refresh()
     def setcanary(self,canary):
         if canary.winfo_exists():
@@ -6897,6 +6848,7 @@ class ToneGroupButtonFrame(ui.Frame):
         self._n=example['n']
         framed=example['framed']
         if framed is None:
+            check=self.check.params.check()
             log.error("Apparently the framed example for tone group {} in "
                         "frame {} came back {}".format(group,check,example))
             return
@@ -6922,15 +6874,21 @@ class ToneGroupButtonFrame(ui.Frame):
             self.refreshbutton()
     """buttons"""
     def labelbutton(self):
-        b=ui.Label(self, text=self._text, **self.buttonkwargs())
-        b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+        b=ui.Label(self, text=self._text,
+                    column=1, row=0, sticky="ew", ipady=15,
+                    **self.buttonkwargs()
+                    )
     def playbutton(self):
         self.check.pyaudiocheck()
         self.check.soundsettingscheck()
         self.player=sound.SoundFilePlayer(self._filenameURL,self.check.pyaudio,
                                                     self.check.soundsettings)
-        b=ui.Button(self, text=self._text, cmd=self.player.play,
-                                        **self.buttonkwargs())
+        b=ui.Button(self, text=self._text,
+                    cmd=self.player.play,
+                    column=1, row=0,
+                    sticky="nesw",
+                    ipady=15,
+                    **self.buttonkwargs())
         bttext=_("Click to hear this utterance")
         if program['praat']:
             bttext+='; '+_("right click to open in praat")
@@ -6938,15 +6896,14 @@ class ToneGroupButtonFrame(ui.Frame):
         bt=ui.ToolTip(b,bttext)
         if self.kwargs['unsortable']:
             self.unsortbutton()
-        b.grid(column=1, row=0, sticky="nesw", ipady=15) #Inside the buttons
     def selectbutton(self):
         if self.kwargs['labelizeonselect']:
             cmd=self.selectnlabelize
         else:
             cmd=self.selectnsortnext
         b=ui.Button(self, text=self._text, cmd=cmd,
-                **self.buttonkwargs())
-        b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+                    column=1, row=0, sticky="ew", ipady=15,
+                    **self.buttonkwargs())
         bt=ui.ToolTip(b,_("Pick this Group"))
     def refresh(self):
         # if renew is True:
@@ -6961,17 +6918,25 @@ class ToneGroupButtonFrame(ui.Frame):
     def refreshbutton(self):
         tinyfontkwargs=self.buttonkwargs()
         del tinyfontkwargs['font'] #so it will fit in the circle
-        bc=ui.Button(self, image=self.parent.photo['change'], #🔃 not in tck
+        bc=ui.Button(self, image=self.theme.photo['change'], #🔃 not in tck
                         cmd=self.refresh,
                         text=str(self._n),
                         compound='center',
+                        column=0,
+                        row=0,
+                        sticky="nsew",
+                        ipady=15,
                         **tinyfontkwargs)
-        bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
         bct=ui.ToolTip(bc,_("Change example word"))
     def unsortbutton(self):
         t=_("<= remove *this* *word* from \nthe group (sort into another, later)")
-        b_unsort=ui.Button(self,text = t, cmd=self.unsort, **self.buttonkwargs())
-        b_unsort.grid(column=2,row=0,padx=50)
+        usbkwargs=self.buttonkwargs()
+        usbkwargs['wraplength']=usbkwargs['wraplength']*2/3
+        b_unsort=ui.Button(self,text = t,
+                            cmd=self.unsort,
+                            column=2,row=0,padx=50,
+                            **usbkwargs
+                            )
     def buttonkwargs(self):
         """This is a method to allow pulling these args after updating kwargs"""
         bkwargs=self.kwargs.copy()
@@ -6997,19 +6962,35 @@ class ToneGroupButtonFrame(ui.Frame):
         kwargs['font']=kwargs.pop('font','read')
         kwargs['anchor']=kwargs.get('anchor','w')
         kwargs['showtonegroup']=kwargs.pop('showtonegroup',False)
+        kwargs['wraplength']=kwargs.pop('wraplength',False)
         # kwargs['refreshcount']=kwargs.pop('refreshcount',-1)+1
         # kwargs['sticky']=kwargs.pop('sticky',"ew")
+        frameargs={} #kwargs.copy()
+        defaults={'sticky':'',
+                    'rowspan': 1,
+                    'columnspan': 1
+                    }
+        for f in ['row','column','sticky',
+                    'rowspan',
+                    'columnspan',
+                    'padx',
+                    'pady',
+                    'ipadx',
+                    'ipady',
+                    ]:
+            frameargs[f]=kwargs.pop(f,defaults.get(f,0))
         self.unbuttonargs=['renew','canary','labelizeonselect',
                             'label','playable','unsortable',
                             'alwaysrefreshable','wsoundfile',
-                            'showtonegroup']
+                            'showtonegroup',
+                            ]
         for arg in self.unbuttonargs:
             kwargs[arg]=kwargs.pop(arg,False)
         if kwargs['playable']:
             kwargs['wsoundfile']=True
         self.kwargs=kwargs
         self._var=tkinter.BooleanVar()
-        super(ToneGroupButtonFrame,self).__init__(parent)
+        super(ToneGroupButtonFrame,self).__init__(parent, **frameargs)
         if self.getexample(**kwargs):
             self.makebuttons()
         # """Should I do this outside the class?"""
@@ -7026,17 +7007,20 @@ class Splash(ui.Window):
                 "-based language development by facilitating the sorting of a "
                 "beginning dictionary by vowels, consonants and tone. "
                 "(more in help:about)").format(name=program['name'])
-        ui.Label(self, text=title, pady=10,
-                        font='title',anchor='c',padx=25
-                        ).grid(row=0,column=0,sticky='we')
-        ui.Label(self, text=v, anchor='c',padx=25
-                        ).grid(row=1,column=0,sticky='we')
-        ui.Label(self, image=self.photo['transparent'],text='',
-                        bg=self.theme['background']
-                        ).grid(row=2,column=0,sticky='we')
-        l=ui.Label(self, text=text, padx=50,
-                wraplength=int(self.winfo_screenwidth()/2)
-                ).grid(row=3,column=0,sticky='we')
+        l=ui.Label(self.frame, text=title, pady=10,
+                        font='title',anchor='c',padx=25,
+                        row=0,column=0,sticky='we'
+                        )
+        m=ui.Label(self.frame, text=v, anchor='c',padx=25,
+                        row=1,column=0,sticky='we'
+                        )
+        n=ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
+                        row=2,column=0,sticky='we'
+                        )
+        o=ui.Label(self.frame, text=text, padx=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=3,column=0,sticky='we'
+                )
         self.withdraw() #don't show until placed
         self.update_idletasks()
         self.w = self.winfo_reqwidth()
@@ -7347,6 +7331,10 @@ class SliceDict(dict):
     def adhoccounts(self,ps=None):
         if ps is None:
             ps=self._ps
+        if not hasattr(self,'_adhoccounts'):
+            self.updateadhoccounts()
+        if not self._adhoccounts:
+            return {}
         return [x for x in self._adhoccounts if x[1] == ps]
     def updateadhoccounts(self):
         """This iterates across self.profilesbysense to provide counts for each
@@ -7358,6 +7346,7 @@ class SliceDict(dict):
             for profile in self._adhoc[ps]:
                 count=len(self._adhoc[ps][profile])
                 wcounts.append((count, profile, ps))
+        self._adhoccounts={}
         for i in sorted(wcounts,reverse=True):
             self._adhoccounts[(i[1],i[2])]=i[0]
     def updateslices(self):
@@ -7497,6 +7486,7 @@ class StatusDict(dict):
             if idx != len(checks)-1: # i.e., not already last
                 nextcheck=checks[idx+1] #overwrite default in this one case
         self._checkparameters.check(nextcheck)
+        return True
     def nextgroup(self, **kwargs):
         kwargs=grouptype(**kwargs)
         group=self.group()
@@ -7608,7 +7598,7 @@ class StatusDict(dict):
             self.tosort(False)
             log.log(4,"Tosort now {} (marksenseidsorted)".format(self.tosort()))
     def marksenseidtosort(self,senseid):
-        if not self._idstosort:
+        if not hasattr(self,'_idstosort') or not self._idstosort:
             self.tosort(True)
         self._idstosort.append(senseid)
         log.log(4,"Tosort now {} (marksenseidtosort)".format(self.tosort()))
@@ -8014,8 +8004,35 @@ class ConfigParser(configparser.ConfigParser):
         self.optionxform=str
         self.allow_no_value=True
         # self.converters={'list':list} #lambda x: [i.strip() for i in x.split(',')]
+class ErrorNotice(ui.Window):
+    """this is for things that I want the user to know, without having
+    to find it in the logs."""
+    def __init__(self, parent, title, text):
+        if not parent:
+            log.error("No parent for ErrorNotice; exiting. ({})".format(text))
+            exit()
+        super(ErrorNotice, self).__init__(parent,title=title)
+        self.title = title
+        self.text = text
+        l=ui.Label(self.frame, text=text)
+        l.grid(row=0, column=0)
+        self.attributes("-topmost", True)
+        self.wait_window(self)
 class Repository(object):
     """docstring for Mercurial Repository."""
+    def choruscheck(self):
+        rescues=[]
+        for file in self.files:
+            if file.endswith('.ChorusRescuedFile'):
+                rescues.append(file)
+        if rescues:
+            error=_("You have the following files ( in {}) that need to be "
+                    "resolved from Chorus merges:\n {}"
+                    "").format(self.url,'\n'.join(rescues))
+            log.error(error)
+            ErrorNotice(program['root'],"Chorus Rescue files found!",error)
+            if me:
+                exit()
     def add(self,file):
         if not self.alreadythere(file):
             args=["add", file]
@@ -8045,7 +8062,7 @@ class Repository(object):
         self.root=self.do(args)
     def files(self):
         args=["files"]
-        self.files=self.do(args)
+        self.files=self.do(args).split('\n')
     def do(self,args):
         cmd=[program['hg'],'--cwd',str(self.url)] #-R
         cmd.extend(args)
@@ -8070,6 +8087,7 @@ class Repository(object):
         super(Repository, self).__init__()
         self.url = url
         self.files()
+        self.choruscheck()
         log.info("Mercurial repository object initialized, with {} files."
                 "".format(len(self.files)))
 class Options:
@@ -8309,136 +8327,6 @@ def nn(x,oneperline=False,twoperline=False):
             return ' '.join(output)
     else:
         return nonspace(x)
-def setthemes(self):
-    self.themes={'lightgreen':{
-                        'background':'#c6ffb3',
-                        'activebackground':'#c6ffb3',
-                        'offwhite':None,
-                        'highlight': 'red',
-                        'white': 'white'}, #lighter green
-                'green':{
-                        'background':'#b3ff99',
-                        'activebackground':'#c6ffb3',
-                        'offwhite':None,
-                        'highlight': 'red',
-                        'white': 'white'},
-                'pink':{
-                        'background':'#ff99cc',
-                        'activebackground':'#ff66b3',
-                        'offwhite':None,
-                        'highlight': 'red',
-                        'white': 'white'},
-                'lighterpink':{
-                        'background':'#ffb3d9',
-                        'activebackground':'#ff99cc',
-                        'offwhite':None,
-                        'highlight': 'red',
-                        'white': 'white'},
-                'evenlighterpink':{
-                        'background':'#ffcce6',
-                        'activebackground':'#ffb3d9',
-                        'offwhite':'#ffe6f3',
-                        'highlight': 'red',
-                        'white': 'white'},
-                'purple':{
-                        'background':'#ffb3ec',
-                        'activebackground':'#ff99e6',
-                        'offwhite':'#ffe6f9',
-                        'highlight': 'red',
-                        'white': 'white'},
-                'Howard':{
-                        'background':'green',
-                        'activebackground':'red',
-                        'offwhite':'grey',
-                        'highlight': 'red',
-                        'white': 'white'},
-                'Kent':{
-                        'background':'red',
-                        'activebackground':'green',
-                        'offwhite':'grey',
-                        'highlight': 'red',
-                        'white': 'white'},
-                'Kim':{
-                        'background':'#ffbb99',
-                        'activebackground':'#ffaa80',
-                        'offwhite':'#ffeee6',
-                        'highlight': 'red',
-                        'white': 'white'},
-                'yellow':{
-                        'background':'#ffff99',
-                        'activebackground':'#ffff80',
-                        'offwhite':'#ffffe6',
-                        'highlight': 'red',
-                        'white': 'white'},
-                'greygreen1':{
-                        'background':'#62d16f',
-                        'activebackground':'#4dcb5c',
-                        'offwhite':'#ebf9ed',
-                        'highlight': 'red',
-                        'white': 'white'},
-                'lightgreygreen':{
-                        'background':'#9fdfca',
-                        'activebackground':'#8cd9bf',
-                        'offwhite':'#ecf9f4',
-                        'highlight': 'red',
-                        'white': 'white'},
-                'greygreen':{
-                        'background':'#8cd9bf',
-                        'activebackground':'#66ccaa', #10% darker than the above
-                        'offwhite':'#ecf9f4',
-                        'highlight': 'red',
-                        'white': 'white'}, #default!
-                'highcontrast':{
-                        'background':'white',
-                        'activebackground':'#e6fff9', #10% darker than the above
-                        'offwhite':'#ecf9f4',
-                        'highlight': 'red',
-                        'white': 'white'},
-                'tkinterdefault':{
-                        'background':None,
-                        'activebackground':None,
-                        'offwhite':None,
-                        'highlight': 'red',
-                        'white': 'white'}
-                }
-def setfonts(self,fonttheme='default'):
-    log.info("Setting fonts with {} theme".format(fonttheme))
-    if fonttheme == 'smaller':
-        default=12*program['scale']
-    else:
-        default=18*program['scale']
-    normal=int(default*4/3)
-    big=int(default*5/3)
-    title=bigger=int(default*2)
-    small=int(default*2/3)
-    default=int(default)
-    log.info("Default font size: {}".format(default))
-    andika="Andika"# not "Andika SIL"
-    charis="Charis SIL"
-    self.fonts={
-            'title':tkinter.font.Font(family=charis, size=title), #Charis
-            'instructions':tkinter.font.Font(family=charis,
-                                        size=normal), #Charis
-            'report':tkinter.font.Font(family=charis, size=small),
-            'reportheader':tkinter.font.Font(family=charis, size=small,
-                                                # underline = True,
-                                                slant = 'italic'
-                                                ),
-            'read':tkinter.font.Font(family=charis, size=big),
-            'readbig':tkinter.font.Font(family=charis, size=bigger,
-                                        weight='bold'),
-            'small':tkinter.font.Font(family=charis, size=small),
-            'default':tkinter.font.Font(family=charis, size=default)
-                }
-    # print(self.fonts)
-    """additional keyword options (ignored if font is specified):
-    family - font family i.e. Courier, Times
-    size - font size (in points, |-x| in pixels)
-    weight - font emphasis (NORMAL, BOLD)
-    slant - ROMAN, ITALIC
-    underline - font underlining (0 - none, 1 - underline)
-    overstrike - font strikeout (0 - none, 1 - strikeout)
-    """
 def propagate(self,attr):
     """This function pushes an attribute value to all children with that
     attribute already set, for widgets that are already there (changing fonts)
@@ -8544,10 +8432,17 @@ def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    root = program['root']=tkinter.Tk()
+    root = program['root']=ui.Root() #tkinter.Tk()
+    program['theme']=ui.Theme(program)
+    log.info("Theme name: {}".format(program['theme'].name))
+    root.settheme(program['theme'])
+    root.program=program
+    root.wraplength=root.winfo_screenwidth()-300 #exit button
+    root.renderings={} #initialize this somewhere...
+    root.withdraw()
     #this computer: (this doesn't pick up changes, so just doing it here)
-    h = root.winfo_screenheight()
-    w = root.winfo_screenwidth()
+    h = program['screenh'] = root.winfo_screenheight()
+    w = program['screenw'] = root.winfo_screenwidth()
     wmm = root.winfo_screenmmwidth()
     hmm = root.winfo_screenmmheight()
     #this computer as a ratio of mine, 1080 (286mm) x 1920 (508mm):
@@ -8579,7 +8474,7 @@ def main():
     # root.winfo_class("azt")
     # log.info(root.winfo_class())
     """Translation starts here:"""
-    myapp = MainApplication(root,program)
+    myapp = MainApplication(root)
     myapp.mainloop()
     logshutdown() #in logsetup
 def mainproblem():
@@ -8592,11 +8487,13 @@ def mainproblem():
         for w in errorroot.winfo_children():
             w.destroy()
     except:
-        errorroot = tkinter.Tk()
-        setthemes(errorroot)
-        errorroot.theme=errorroot.themes['greygreen']
-        errorroot['background']=errorroot.theme['background']
-        errorroot.protocol("WM_DELETE_WINDOW", ui.Window.on_quit(errorroot))
+        errorroot = ui.Root()
+        if 'theme' in program:
+            theme=program['theme']
+        else:
+            theme=ui.Theme(program)
+            errorroot.settheme(theme)
+            errorroot.renderings={}
     errorroot.title("Serious Problem!")
     try:
         char="Charis SIL"
@@ -8606,14 +8503,16 @@ def mainproblem():
     except:
         titlefont=noticefont=defaultfont=tkinter.font.Font(family=char, size=12)
     l=ui.Label(errorroot,text="Hey! You found a problem! (details and "
-            "solution below)",justify='left',font=titlefont)
-    l.grid(row=0,column=0)
+            "solution below)",justify='left',font='titlefont',
+            row=0,column=0
+            )
     if exceptiononload:
         durl=('https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md'
                 '#dependencies')
         m=ui.Label(errorroot,text="\nPlease see {}".format(durl),
-            justify='left', font=noticefont)
-        m.grid(row=1,column=0)
+            justify='left', font=noticefont,
+            row=1,column=0
+            )
         m.bind("<Button-1>", lambda e: openweburl(durl))
     lcontents=logcontents(log,25)
     addr=program['Email']
