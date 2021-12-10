@@ -7347,6 +7347,10 @@ class SliceDict(dict):
     def adhoccounts(self,ps=None):
         if ps is None:
             ps=self._ps
+        if not hasattr(self,'_adhoccounts'):
+            self.updateadhoccounts()
+        if not self._adhoccounts:
+            return {}
         return [x for x in self._adhoccounts if x[1] == ps]
     def updateadhoccounts(self):
         """This iterates across self.profilesbysense to provide counts for each
