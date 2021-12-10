@@ -88,7 +88,6 @@ class Check():
         self.pp=pprint.PrettyPrinter()
         self.iterations=0
         # print(time.time()-self.start_time) # with this
-        self.debug=parent.debug
         self.su=True #show me stuff others don't want/need
         self.su=False #not a superuser; make it easy on me!
         self.parent=parent #should be mainapplication frame
@@ -1063,19 +1062,6 @@ class Check():
                 del self.toneframes[self.ps][self.name]
                 self.name=self.nameori
                 return
-            else:
-                text=_("Examples for {} tone frame").format(namevar)
-                log.info('gimmesenseid:{}'.format(senseid))
-                # This needs self.toneframes
-                log.info('getframeddata::')
-                framed=self.datadict.getframeddata(senseid)
-                log.info('getframeddata: {}'.format(framed.forms))
-                framed.setframe(self.name)
-                log.info('post setframe:{} ({})'.format(framed.framed,self.name))
-                #At this point, remove this frame (in case we don't submit it)
-                del self.toneframes[self.ps][self.name]
-                self.name=self.nameori
-
             """Define the new frame"""
             checkdefntoadd={}
             checkdefntoadd['field']='lc' #update this with radio!
