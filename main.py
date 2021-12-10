@@ -6997,19 +6997,35 @@ class ToneGroupButtonFrame(ui.Frame):
         kwargs['font']=kwargs.pop('font','read')
         kwargs['anchor']=kwargs.get('anchor','w')
         kwargs['showtonegroup']=kwargs.pop('showtonegroup',False)
+        kwargs['wraplength']=kwargs.pop('wraplength',False)
         # kwargs['refreshcount']=kwargs.pop('refreshcount',-1)+1
         # kwargs['sticky']=kwargs.pop('sticky',"ew")
+        frameargs={} #kwargs.copy()
+        defaults={'sticky':'',
+                    'rowspan': 1,
+                    'columnspan': 1
+                    }
+        for f in ['row','column','sticky',
+                    'rowspan',
+                    'columnspan',
+                    'padx',
+                    'pady',
+                    'ipadx',
+                    'ipady',
+                    ]:
+            frameargs[f]=kwargs.pop(f,defaults.get(f,0))
         self.unbuttonargs=['renew','canary','labelizeonselect',
                             'label','playable','unsortable',
                             'alwaysrefreshable','wsoundfile',
-                            'showtonegroup']
+                            'showtonegroup',
+                            ]
         for arg in self.unbuttonargs:
             kwargs[arg]=kwargs.pop(arg,False)
         if kwargs['playable']:
             kwargs['wsoundfile']=True
         self.kwargs=kwargs
         self._var=tkinter.BooleanVar()
-        super(ToneGroupButtonFrame,self).__init__(parent)
+        super(ToneGroupButtonFrame,self).__init__(parent, **frameargs)
         if self.getexample(**kwargs):
             self.makebuttons()
         # """Should I do this outside the class?"""
@@ -7036,6 +7052,7 @@ class Splash(ui.Window):
         n=ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
                         row=2,column=0,sticky='we'
                         )
+        o=ui.Label(self.frame, text=text, padx=50,
                 wraplength=int(self.winfo_screenwidth()/2),
                 row=3,column=0,sticky='we'
                 )
