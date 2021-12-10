@@ -880,7 +880,10 @@ class ButtonFrame(Frame):
                     ):
         UI.inherit(self,parent)
         self.parent=parent
-        super(ButtonFrame,self).__init__(parent)
+        super(ButtonFrame,self).__init__(parent,**kwargs)
+        for kwarg in ['row', 'column']: #done with these
+            if kwarg in kwargs:
+                del kwargs[kwarg]
         log.info("Buttonframe option list: {} ({})".format(optionlist,command))
         gimmenull=False # When do I want a null option added to my lists? ever?
         self['background']=self.theme.background
@@ -946,13 +949,17 @@ class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
     """This needs to go inside another frame, for accurrate grid placement"""
     def __init__(self,parent,optionlist,command,window=None,**kwargs):
         UI.inherit(self,parent)
-        ScrollingFrame.__init__(self,parent)
+        ScrollingFrame.__init__(self,parent,**kwargs)
+        for kwarg in ['row', 'column']: #done with these
+            if kwarg in kwargs:
+                del kwargs[kwarg]
         self.bf=ButtonFrame(parent=self.content,
                             optionlist=optionlist,
                             command=command,
                             window=window,
+                            row=0,
+                            column=0,
                             **kwargs)
-        self.bf.grid(row=0, column=0)
 class ToolTip(object):
     """
     create a tooltip for a given widget
