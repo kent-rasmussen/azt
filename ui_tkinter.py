@@ -456,11 +456,14 @@ class Window(Toplevel):
             self.destroy() #do this for everything
     def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
                 choice=None, *args, **kwargs):
+        UI.inherit(self,parent)
         self.parent=parent
+        self.theme=parent.theme
         """Things requiring tkinter.Window below here"""
-        super(Window, self).__init__(parent)
+        super(Window, self).__init__(parent) #no title attr for Toplevel
         # self.config(className="azt")
         self['background']=self.theme['background']
+        # self['background']=self.theme.background
         """Is this section necessary for centering on resize?"""
         for rc in [0,2]:
             self.grid_rowconfigure(rc, weight=3)
@@ -470,25 +473,22 @@ class Window(Toplevel):
         self.outsideframe['padx']=25
         self.outsideframe['pady']=25
         self.outsideframe.grid(row=1, column=1,sticky='we')
-        self.iconphoto(False, self.photo['icon']) #don't want this transparent
+        self.iconphoto(False, self.theme.photo['icon']) #don't want this transparent
         self.title(title)
         self.resetframe()
         self.exitFlag=ExitFlag() #This overwrites inherited exitFlag
-        if exit is True:
+        if exit:
             e=(_("Exit")) #This should be the class, right?
-            self.exitButton=tkinter.Button(self.outsideframe, width=10, text=e,
+            self.exitButton=Button(self.outsideframe, width=10, text=e,
                                 command=self.on_quit,
-                                activebackground=self.theme['activebackground'],
-                                background=self['background']
+                                font='small'
                                             )
             self.exitButton.grid(column=2,row=2)
         if backcmd is not False: #This one, too...
             b=(_("Back"))
             cmd=lambda:backcmd(parent, window, check, entry, choice)
-            self.backButton=tkinter.Button(self.outsideframe, width=10, text=b,
+            self.backButton=Button(self.outsideframe, width=10, text=b,
                                 command=cmd,
-                                activebackground=self.theme['activebackground'],
-                                background=self.theme['background']
                                             )
             self.backButton.grid(column=3,row=2)
 class Menu(tkinter.Menu,UI):
