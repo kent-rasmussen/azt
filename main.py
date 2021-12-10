@@ -3537,18 +3537,25 @@ class Check():
                         ).format(ps,profile,group,check)
         self.getrunwindow(title=title)
         menu=self.runwindow.removeverifymenu()
-        titlel=ui.Label(self.runwindow.frame,text=title,font='title')
-        titlel.grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
+        titlel=ui.Label(self.runwindow.frame,text=title,font='title',
+                        row=0,column=0,sticky='ew',padx=padx,pady=pady
+                        )
         getformtext=_("What new name do you want to call this surface tone "
                         "group? A label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
-        getform=ui.Label(self.runwindow.frame,text=getformtext,
-                font='read',norender=True)
-        getform.grid(row=1,column=0,sticky='ew',padx=padx,pady=pady)
-        inputframe=ui.Frame(self.runwindow.frame)
-        inputframe.grid(row=2,column=0,sticky='')
-        buttonframe=ui.Frame(inputframe)
-        buttonframe.grid(row=0,column=0,sticky='new')
+        getform=ui.Label(self.runwindow.frame,
+                        text=getformtext,
+                        font='read',
+                        norender=True,
+                        row=1,column=0,sticky='ew',padx=padx,pady=pady
+                        )
+        getform.wrap()
+        inputframe=ui.Frame(self.runwindow.frame,
+                            row=2,column=0,sticky=''
+                            )
+        buttonframe=ui.Frame(inputframe,
+                            row=0,column=0,sticky='new'
+                            )
         tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
         spaces=[' ',' ','']
         for char in tonechars+spaces:
@@ -3572,60 +3579,94 @@ class Check():
                 text=char
                 columnspan=1
                 row=0
-            ui.Button(buttonframe,text = text,command = lambda x=char:addchar(x),
-                    anchor ='c').grid(row=row,column=column,sticky='nsew',
-                                    columnspan=columnspan)
+            ui.Button(buttonframe,text = text,
+                        command = lambda x=char:addchar(x),
+                        anchor ='c',
+                        row=row,
+                        column=column,
+                        sticky='nsew',
+                        columnspan=columnspan
+                        )
         g=nn(notthisgroup,twoperline=True)
         log.info("There: {}, NTG: {}; g:{}".format(groupsthere,notthisgroup,g))
-        groupslabel=ui.Label(inputframe,text='Other Groups:\n{}'.format(g))
-        groupslabel.grid(row=0,column=1,sticky='new',padx=padx,rowspan=2)
-        fieldframe=ui.Frame(inputframe)
-        fieldframe.grid(row=1,column=0,sticky='new')
-        formfield = ui.EntryField(fieldframe,textvariable=newname)
-        formfield.grid(row=1,column=0,sticky='new')
+        groupslabel=ui.Label(inputframe,
+                            text='Other Groups:\n{}'.format(g),
+                            row=0,column=1,
+                            sticky='new',
+                            padx=padx,
+                            rowspan=2
+                            )
+        fieldframe=ui.Frame(inputframe,
+                            row=1,column=0,sticky='new'
+                            )
+        formfield = ui.EntryField(fieldframe,textvariable=newname,
+                                    row=1,column=0,sticky='new'
+                                    )
         formfield.bind('<KeyRelease>', updatelabels) #apply function after key
-        errorlabel=ui.Label(fieldframe,text='',fg='red',
-                            wraplength=int(self.frame.winfo_screenwidth()/3))
-        errorlabel.grid(row=1,column=1,sticky='nsew')
-        formhashlabel=ui.Label(fieldframe,textvariable=namehash, anchor ='c')
-        formhashlabel.grid(row=2,column=0,sticky='new')
+        errorlabel=ui.Label(fieldframe,text='',
+                            fg='red',
+                            wraplength=int(self.frame.winfo_screenwidth()/3),
+                            row=1,column=1,sticky='nsew'
+                            )
+        formhashlabel=ui.Label(fieldframe,
+                                textvariable=namehash,
+                                anchor ='c',
+                                row=2,column=0,sticky='new'
+                                )
         fieldframe.grid_columnconfigure(0, weight=1)
         updatelabels()
-        responseframe=ui.Frame(self.runwindow.frame)
-        responseframe.grid(row=3,column=0,sticky='',padx=padx,pady=pady)
+        responseframe=ui.Frame(self.runwindow.frame,
+                                row=3,
+                                column=0,
+                                sticky='',
+                                padx=padx,
+                                pady=pady
+                                )
         ok=_('Use this name and go to:')
-        sub_lbl=ui.Label(responseframe,text = ok, font='read',)
-        sub_lbl.grid(row=0,column=0,sticky='ns')
+        sub_lbl=ui.Label(responseframe,text = ok, font='read',
+                        row=0,column=0,sticky='ns'
+                        )
         t=_('main screen')
-        sub_btn=ui.Button(responseframe,text = t, command = done, anchor ='c')
-        sub_btn.grid(row=0,column=1,sticky='ns')
+        sub_btn=ui.Button(responseframe,text = t, command = done, anchor ='c',
+                            row=0,column=1,sticky='ns'
+                            )
         if reverify == False: #don't give this option if verifying
             t=_('next group')
-            sub_btn=ui.Button(responseframe,text = t,command = next,anchor ='c')
-            sub_btn.grid(row=0,column=2,sticky='ns')
+            sub_btn=ui.Button(responseframe,text = t,command = next,anchor ='c',
+                                row=0,column=2,sticky='ns'
+                                )
             t=_('next tone frame')
-            sub_f=ui.Button(responseframe,text = t,command = nextcheck)
-            sub_f.grid(row=0,column=3,sticky='ns')
+            sub_f=ui.Button(responseframe,text = t,command = nextcheck,
+                            row=0,column=3,sticky='ns'
+                            )
             t=_('next syllable profile')
-            sub_p=ui.Button(responseframe,text = t,command = nextprofile)
-            sub_p.grid(row=0,column=4,sticky='ns')
-        examplesframe=ui.Frame(self.runwindow.frame)
-        examplesframe.grid(row=4,column=0,sticky='')
+            sub_p=ui.Button(responseframe,text = t,command = nextprofile,
+                            row=0,column=4,sticky='ns'
+                            )
+        examplesframe=ui.Frame(self.runwindow.frame,
+                                row=4,column=0,sticky=''
+                                )
         b=ToneGroupButtonFrame(examplesframe, self, self.exs,
                                 group,
                                 showtonegroup=True,
                                 # canary=entryview,
                                 playable=True,
                                 unsortable=True,
-                                alwaysrefreshable=True
+                                alwaysrefreshable=True,
+                                row=0, column=0, sticky='w',
+                                wraplength=buttonframew
                                 )
-        b.grid(row=0, column=0, sticky='w')
-        compframe=ui.Frame(examplesframe,highlightthickness=10,
-                    highlightbackground=self.frame.theme['white']) #no hlfg here
-        compframe.grid(row=0,column=1,sticky='e')
+        compframe=ui.Frame(examplesframe,
+                    highlightthickness=10,
+                    highlightbackground=self.frame.theme.white,
+                    row=0,column=1,sticky='e'
+                    ) #no hlfg here
         t=_('Compare with another group')
-        sub_c=ui.Button(compframe,text = t,command = setgroup_comparison)
-        sub_c.grid(row=0,column=0)
+        sub_c=ui.Button(compframe,
+                        text = t,
+                        command = setgroup_comparison,
+                        row=0,column=0
+                        )
         comparisonbuttons()
         self.runwindow.waitdone()
         sub_btn.wait_window(self.runwindow) #then move to next step
@@ -3728,7 +3769,7 @@ class Check():
                                                         columnspan=2)
             row+=1
             ui.Label(self.runwindow.frame, text='',
-                        image=self.frame.photo[cvt]
+                        image=self.frame.theme.photo[cvt]
                         ).grid(row=row,column=0,columnspan=2)
             row+=1
             ctosort=self.status.checks(tosort=True)
@@ -3895,8 +3936,8 @@ class Check():
             return
         titles=ui.Frame(self.runwindow.frame)
         titles.grid(row=0, column=0, sticky="ew", columnspan=2)
-        ui.Label(self.runwindow.frame, image=self.parent.photo['sortT'],
-                        text='',bg=self.frame.theme['background']
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['sortT'],
+                        text='',
                         ).grid(row=1,column=0,rowspan=3,sticky='nw')
         scroll=self.runwindow.frame.scroll=ui.ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=2, column=1, sticky="new")
@@ -4033,9 +4074,8 @@ class Check():
                                 ).grid(row=0,column=1,sticky="ew")
         ui.Label(titles, text=instructions).grid(row=1,column=0, columnspan=2,
                                                                 sticky="wns")
-        ui.Label(self.runwindow.frame, image=self.parent.photo['verifyT'],
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['verifyT'],
                         text='',
-                        bg=self.frame.theme['background']
                         ).grid(row=1,column=0,rowspan=3,sticky='nwse')
         """Scroll after instructions"""
         self.sframe=ui.ScrollingFrame(self.runwindow.frame)
@@ -4139,9 +4179,8 @@ class Check():
                 ).grid(column=0, row=0, sticky="w")
         i=ui.Label(self.runwindow.frame.titles, text=introtext)
         i.grid(row=1,column=0, sticky="w")
-        ui.Label(self.runwindow.frame, image=self.parent.photo['joinT'],
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['joinT'],
                         text='',
-                        bg=self.frame.theme['background']
                         ).grid(row=2,column=0,rowspan=2,sticky='nw')
         self.sframe=ui.ScrollingFrame(self.runwindow.frame)
         self.sframe.grid(row=2,column=1)
