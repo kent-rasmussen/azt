@@ -790,7 +790,7 @@ class RadioButton(tkinter.Radiobutton,UI):
         UI.inherit(self,parent)
         self.parent=parent
         if 'font' not in kwargs:
-            kwargs['font']=self.fonts['default']
+            kwargs['font']=self.theme.fonts['default']
         kwargs['activebackground']=self.theme.activebackground
         kwargs['selectcolor']=self.theme.activebackground
         super(RadioButton,self).__init__(parent,**kwargs)
