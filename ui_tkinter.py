@@ -779,15 +779,13 @@ class EntryField(Gridded,tkinter.Entry,UI):
         elif grid:
                 self.rendergrid=mygrid
     def __init__(self, parent, render=False, **kwargs):
+        UI.inherit(self,parent)
         self.parent=parent
-        self.inherit()
-        if 'font' not in kwargs:
-            kwargs['font']=self.fonts['default']
-        super().__init__(parent,**kwargs)
+        super(EntryField,self).__init__(parent,**kwargs)
         if render is True:
             self.bind('<KeyRelease>', self.renderlabel)
             self.renderlabel()
-        self['background']=self.theme['offwhite'] #because this is for entry...
+        self['background']=self.theme.offwhite #because this is for entry...
 class RadioButton(tkinter.Radiobutton,UI):
     def __init__(self, parent, column=0, row=0, sticky='w', **kwargs):
         self.parent=parent
