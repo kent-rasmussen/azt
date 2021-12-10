@@ -853,6 +853,7 @@ class Button(Gridded,Text,tkinter.Button,UI):
         super(Button,self).__init__(
             parent,
             command=cmd,
+            **kwargs)
         self['activebackground']=self.theme.activebackground
         self['background']=self.theme.background
         self['bg']=self.theme.background
