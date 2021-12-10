@@ -1041,8 +1041,9 @@ class Wait(Window): #tkinter.Toplevel?
             self.l1=Label(self.outsideframe, text=msg,
                 font='default',anchor='c')
             self.l1.grid(row=1,column=0,sticky='we')
-        self.l2=Label(self.outsideframe, image=self.photo['small'],text='',
-                        bg=self['background']
+        self.l2=Label(self.outsideframe,
+                        image=self.theme.photo['small'],
+                        text='',
                         )
         self.l2.grid(row=2,column=0,sticky='we',padx=50,pady=50)
         self.deiconify() #show after the window is built
