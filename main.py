@@ -7358,6 +7358,7 @@ class SliceDict(dict):
             for profile in self._adhoc[ps]:
                 count=len(self._adhoc[ps][profile])
                 wcounts.append((count, profile, ps))
+        self._adhoccounts={}
         for i in sorted(wcounts,reverse=True):
             self._adhoccounts[(i[1],i[2])]=i[0]
     def updateslices(self):
