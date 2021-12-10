@@ -6879,7 +6879,8 @@ class ToneGroupButtonFrame(ui.Frame):
         self.sortnext()
         # remove()
     def unsort(self):
-        self.removesenseidfromgroup(self._senseid,self.check)
+        check=self.check.params.check()
+        self.check.removesenseidfromgroup(self._senseid,check)
         self.refresh()
     def setcanary(self,canary):
         if canary.winfo_exists():
@@ -6897,6 +6898,7 @@ class ToneGroupButtonFrame(ui.Frame):
         self._n=example['n']
         framed=example['framed']
         if framed is None:
+            check=self.check.params.check()
             log.error("Apparently the framed example for tone group {} in "
                         "frame {} came back {}".format(group,check,example))
             return
@@ -6922,15 +6924,21 @@ class ToneGroupButtonFrame(ui.Frame):
             self.refreshbutton()
     """buttons"""
     def labelbutton(self):
-        b=ui.Label(self, text=self._text, **self.buttonkwargs())
-        b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+        b=ui.Label(self, text=self._text,
+                    column=1, row=0, sticky="ew", ipady=15,
+                    **self.buttonkwargs()
+                    )
     def playbutton(self):
         self.check.pyaudiocheck()
         self.check.soundsettingscheck()
         self.player=sound.SoundFilePlayer(self._filenameURL,self.check.pyaudio,
                                                     self.check.soundsettings)
-        b=ui.Button(self, text=self._text, cmd=self.player.play,
-                                        **self.buttonkwargs())
+        b=ui.Button(self, text=self._text,
+                    cmd=self.player.play,
+                    column=1, row=0,
+                    sticky="nesw",
+                    ipady=15,
+                    **self.buttonkwargs())
         bttext=_("Click to hear this utterance")
         if program['praat']:
             bttext+='; '+_("right click to open in praat")
@@ -6938,15 +6946,14 @@ class ToneGroupButtonFrame(ui.Frame):
         bt=ui.ToolTip(b,bttext)
         if self.kwargs['unsortable']:
             self.unsortbutton()
-        b.grid(column=1, row=0, sticky="nesw", ipady=15) #Inside the buttons
     def selectbutton(self):
         if self.kwargs['labelizeonselect']:
             cmd=self.selectnlabelize
         else:
             cmd=self.selectnsortnext
         b=ui.Button(self, text=self._text, cmd=cmd,
-                **self.buttonkwargs())
-        b.grid(column=1, row=0, sticky="ew", ipady=15) #Inside the buttons
+                    column=1, row=0, sticky="ew", ipady=15,
+                    **self.buttonkwargs())
         bt=ui.ToolTip(b,_("Pick this Group"))
     def refresh(self):
         # if renew is True:
@@ -6961,17 +6968,25 @@ class ToneGroupButtonFrame(ui.Frame):
     def refreshbutton(self):
         tinyfontkwargs=self.buttonkwargs()
         del tinyfontkwargs['font'] #so it will fit in the circle
-        bc=ui.Button(self, image=self.parent.photo['change'], #🔃 not in tck
+        bc=ui.Button(self, image=self.theme.photo['change'], #🔃 not in tck
                         cmd=self.refresh,
                         text=str(self._n),
                         compound='center',
+                        column=0,
+                        row=0,
+                        sticky="nsew",
+                        ipady=15,
                         **tinyfontkwargs)
-        bc.grid(column=0, row=0, sticky="nsew", ipady=15) #In buttonframe
         bct=ui.ToolTip(bc,_("Change example word"))
     def unsortbutton(self):
         t=_("<= remove *this* *word* from \nthe group (sort into another, later)")
-        b_unsort=ui.Button(self,text = t, cmd=self.unsort, **self.buttonkwargs())
-        b_unsort.grid(column=2,row=0,padx=50)
+        usbkwargs=self.buttonkwargs()
+        usbkwargs['wraplength']=usbkwargs['wraplength']*2/3
+        b_unsort=ui.Button(self,text = t,
+                            cmd=self.unsort,
+                            column=2,row=0,padx=50,
+                            **usbkwargs
+                            )
     def buttonkwargs(self):
         """This is a method to allow pulling these args after updating kwargs"""
         bkwargs=self.kwargs.copy()
