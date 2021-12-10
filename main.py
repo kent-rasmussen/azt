@@ -7608,7 +7608,7 @@ class StatusDict(dict):
             self.tosort(False)
             log.log(4,"Tosort now {} (marksenseidsorted)".format(self.tosort()))
     def marksenseidtosort(self,senseid):
-        if not self._idstosort:
+        if not hasattr(self,'_idstosort') or not self._idstosort:
             self.tosort(True)
         self._idstosort.append(senseid)
         log.log(4,"Tosort now {} (marksenseidtosort)".format(self.tosort()))
