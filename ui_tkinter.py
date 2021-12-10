@@ -944,6 +944,7 @@ class ButtonFrame(Frame):
 class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
     """This needs to go inside another frame, for accurrate grid placement"""
     def __init__(self,parent,optionlist,command,window=None,**kwargs):
+        UI.inherit(self,parent)
         ScrollingFrame.__init__(self,parent)
         self.bf=ButtonFrame(parent=self.content,
                             optionlist=optionlist,
@@ -1022,14 +1023,13 @@ class Wait(Window): #tkinter.Toplevel?
         self.parent.deiconify()
         self.destroy()
     def __init__(self, parent=None,msg=None):
-        self.parent=parent
-        self.parent.withdraw()
+        UI.inherit(self,parent)
         global program
         super(Wait, self).__init__(parent,exit=False)
+        self.parent.withdraw()
         self.withdraw() #don't show until we're done making it
         self.attributes("-topmost", True)
         self['background']=parent['background']
-        self.photo = parent.photo #need this before making the frame
         title=(_("Please Wait! {name} Dictionary and Orthography Checker "
                         "in Process").format(name=self.program['name']))
         self.title(title)
