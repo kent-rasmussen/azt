@@ -4624,12 +4624,15 @@ class Check():
         framed=self.datadict.getframeddata(sense['nodetoshow'])
         t=framed.formatted(noframe=True)
         for g in sense['glosses']:
-            t+='\t‘'+g
-            if ('plnode' in sense) and (sense['nodetoshow'] is sense['plnode']):
-                t+=" (pl)"
-            if ('impnode' in sense) and (sense['nodetoshow'] is sense['impnode']):
-                t+="!"
-            t+='’'
+            if g:
+                t+='\t‘'+g
+                if ('plnode' in sense and
+                        sense['nodetoshow'] is sense['plnode']):
+                    t+=" (pl)"
+                if ('impnode' in sense and
+                        sense['nodetoshow'] is sense['impnode']):
+                    t+="!"
+                t+='’'
         lxl=ui.Label(parent, text=t)
         lcb=RecordButtonFrame(parent,self,framed)
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
