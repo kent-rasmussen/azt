@@ -6734,7 +6734,7 @@ class MainApplication(ui.Frame):
                                                                     "seconds.")
         """finished loading so destroy splash"""
         splash.destroy()
-        parent.deiconify()
+        self.deiconify()
         """Don't show window again until check is done"""
 class RecordButtonFrame(ui.Frame):
     def _start(self, event):
