@@ -1048,6 +1048,254 @@ class Wait(Window): #tkinter.Toplevel?
         self.deiconify() #show after the window is built
         #for some reason this has to follow the above, or you get a blank window
         self.update_idletasks() #updates just geometry
+class Theme(object):
+    """docstring for Theme."""
+    def setimages(self):
+        # Program icon(s) (First should be transparent!)
+        log.info("Scaling images; please wait...") #threading?
+        try:
+            if program: #'scale' in
+                scale=program['scale']
+        except NameError:
+            scale=1
+        # threading.Thread(target=thread_function, args=(arg1,),kwargs={'arg2': arg2})
+        # if process:
+        #     from multiprocessing import Process
+        #     log.info("Running as multi-process")
+        #     p = Process(target=block)
+        # elif thread:
+        #     from threading import Thread
+        #     log.info("Running as threaded")
+        #     p = Thread(target=block)
+        # else:
+        #     log.info("Running in line")
+        #     block()
+        # if process or thread:
+        #     p.exception = None
+        #     try:
+        #         p.start()
+        #     except BaseException as e:
+        #         log.error("Exception!", traceback.format_exc())
+        #         p.exception = e
+        #     p.join(timeout) #finish this after timeout, in any case
+        #     if p.exception:
+        #         log.error("Exception2!", traceback.format_exc())
+        #         raise p.exception
+        #     if process:
+        #         p.terminate() #for processes, not threads
+        # x and y here express a float as two integers, so 0.7 = 7/10, because
+        # the zoom and subsample fns only work on integers
+        y=25 #10 #Higher number is better resolution (x*y/y), more time to process
+        y=int(y) # These all must be integers
+        x=int(scale*y)
+        self.photo={}
+        def mkimg(name,relurl):
+            imgurl=file.fullpathname(relurl)
+            if x != y: # should scale if off by >2% either way
+                self.photo[name] = tkinter.PhotoImage(
+                                        file = imgurl).zoom(x,x).subsample(y,y)
+            else: #if close enough...
+                self.photo[name] = tkinter.PhotoImage(file = imgurl)
+            log.info(type(self.photo[name]))
+        for name,relurl in [ ('transparent','images/AZT stacks6.png'),
+                            ('small','images/AZT stacks6_sm.png'),
+                            ('icon','images/AZT stacks6_icon.png'),
+                            ('T','images/T alone clear6.png'),
+                            ('C','images/Z alone clear6.png'),
+                            ('V','images/A alone clear6.png'),
+                            ('CV','images/ZA alone clear6.png'),
+                            ('backgrounded','images/AZT stacks6.png'),
+                            #Set images for tasks
+                            ('verifyT','images/Verify List.png'),
+                            ('sortT','images/Sort List.png'),
+                            ('joinT','images/Join List.png'),
+                            ('record','images/Microphone alone_sm.png'),
+                            ('change','images/Change Circle_sm.png'),
+                            ('checkedbox','images/checked.png'),
+                            ('uncheckedbox','images/unchecked.png')
+                        ]:
+            mkimg(name,relurl)
+        log.info("Done scaling images")
+    def settheme(self):
+        defaulttheme='greygreen'
+        multiplier=99 #The default theme will be this more frequent than others.
+        pot=list(self.themes.keys())+([defaulttheme]*
+                                        (multiplier*len(self.themes)-1))
+        self.name='Kent' #for the colorblind (to punish others...)
+        self.name='highcontrast' #for low light environments
+        self.name=pot[randint(0, len(pot))-1] #mostly defaulttheme
+        try:
+            if (platform.uname().node == 'karlap' and
+                    self.program and
+                    not self.program['production']):
+                self.name='Kim' #for my development
+        except Exception as e:
+            log.info("Assuming I'm not working from main ({}).".format(e))
+        """These versions might be necessary later, but with another module"""
+        if self.name not in self.themes:
+            print("Sorry, that theme doesn't seem to be set up. Pick from "
+            "these options:",self.themes.keys())
+            exit()
+        for k in self.themes[self.name]:
+            setattr(self,k,self.themes[self.name][k])
+            log.info("Theme {}: {}".format(k,getattr(self,k)))
+    def setthemes(self):
+        self.themes={'lightgreen':{
+                            'background':'#c6ffb3',
+                            'activebackground':'#c6ffb3',
+                            'offwhite':None,
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'}, #lighter green
+                    'green':{
+                            'background':'#b3ff99',
+                            'activebackground':'#c6ffb3',
+                            'offwhite':None,
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'pink':{
+                            'background':'#ff99cc',
+                            'activebackground':'#ff66b3',
+                            'offwhite':None,
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'lighterpink':{
+                            'background':'#ffb3d9',
+                            'activebackground':'#ff99cc',
+                            'offwhite':None,
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'evenlighterpink':{
+                            'background':'#ffcce6',
+                            'activebackground':'#ffb3d9',
+                            'offwhite':'#ffe6f3',
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'purple':{
+                            'background':'#ffb3ec',
+                            'activebackground':'#ff99e6',
+                            'offwhite':'#ffe6f9',
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'Howard':{
+                            'background':'green',
+                            'activebackground':'red',
+                            'offwhite':'grey',
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'Kent':{
+                            'background':'red',
+                            'activebackground':'green',
+                            'offwhite':'grey',
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'Kim':{
+                            'background':'#ffbb99',
+                            'activebackground':'#ffaa80',
+                            'offwhite':'#ffeee6',
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'yellow':{
+                            'background':'#ffff99',
+                            'activebackground':'#ffff80',
+                            'offwhite':'#ffffe6',
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'greygreen1':{
+                            'background':'#62d16f',
+                            'activebackground':'#4dcb5c',
+                            'offwhite':'#ebf9ed',
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'lightgreygreen':{
+                            'background':'#9fdfca',
+                            'activebackground':'#8cd9bf',
+                            'offwhite':'#ecf9f4',
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'greygreen':{
+                            'background':'#8cd9bf',
+                            'activebackground':'#66ccaa', #10% darker than the above
+                            'offwhite':'#ecf9f4',
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'}, #default!
+                    'highcontrast':{
+                            'background':'white',
+                            'activebackground':'#e6fff9', #10% darker than the above
+                            'offwhite':'#ecf9f4',
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'},
+                    'tkinterdefault':{
+                            'background':None,
+                            'activebackground':None,
+                            'offwhite':None,
+                            'highlight': 'red',
+                            'menubackground': 'white',
+                            'white': 'white'}
+                    }
+    def setfonts(self,fonttheme='default'):
+        log.info("Setting fonts with {} theme".format(fonttheme))
+        try:
+            if program: #'scale' in
+                scale=program['scale']
+        except NameError:
+            scale=1
+        if fonttheme == 'smaller':
+            default=12*scale
+        else:
+            default=18*scale
+        normal=int(default*4/3)
+        big=int(default*5/3)
+        title=bigger=int(default*2)
+        small=int(default*2/3)
+        default=int(default)
+        log.info("Default font size: {}".format(default))
+        andika="Andika"# not "Andika SIL"
+        charis="Charis SIL"
+        self.fonts={
+                'title':tkinter.font.Font(family=charis, size=title), #Charis
+                'instructions':tkinter.font.Font(family=charis,
+                                            size=normal), #Charis
+                'report':tkinter.font.Font(family=charis, size=small),
+                'reportheader':tkinter.font.Font(family=charis, size=small,
+                                                    # underline = True,
+                                                    slant = 'italic'
+                                                    ),
+                'read':tkinter.font.Font(family=charis, size=big),
+                'readbig':tkinter.font.Font(family=charis, size=bigger,
+                                            weight='bold'),
+                'small':tkinter.font.Font(family=charis, size=small),
+                'default':tkinter.font.Font(family=charis, size=default)
+                    }
+        """additional keyword options (ignored if font is specified):
+        family - font family i.e. Courier, Times
+        size - font size (in points, |-x| in pixels)
+        weight - font emphasis (NORMAL, BOLD)
+        slant - ROMAN, ITALIC
+        underline - font underlining (0 - none, 1 - underline)
+        overstrike - font strikeout (0 - none, 1 - strikeout)
+        """
+    def __init__(self,program=None):
+        self.program=program
+        self.setthemes()
+        self.setfonts()
+        self.setimages()
+        self.settheme()
+        log.info("Using {} theme ({})".format(self.name,self.program))
+        super(Theme, self).__init__()
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
@@ -1066,7 +1314,7 @@ def availablexy(self,w=None):
         self.othercolwidth=0
     try: #Any kind of error making a widget often shows up here
         wrow=w.grid_info()['row']
-    except:
+    except KeyError:
         log.error("Problem with grid on {} widget, with these siblings: {}"
                     "".format(w.winfo_class(),w.parent.winfo_children()))
         raise{}
