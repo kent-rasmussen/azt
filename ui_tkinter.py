@@ -591,7 +591,6 @@ class Renderer(object):
         draw.multiline_text((0+xpad//2, 0+ypad//4), text,font=font,fill=black,
                                                                 align=align)
         self.img = PIL.ImageTk.PhotoImage(img)
-class Label(tkinter.Label,UI):
 class Text(ObectwArgs):
     def wrap(self):
         availablexy(self)
@@ -740,6 +739,21 @@ class ContextMenu(Text,UI):
         self.context=context #where the menu is showing (e.g., verifyT)
         # self.inherit()
         self.updatebindings()
+class Label(Gridded,Text,tkinter.Label,UI): #,tkinter.Label
+    def __init__(self, parent, **kwargs):
+        UI.inherit(self,parent)
+        log.info("label parent: {}".format(parent))
+        """These shouldn't need to be here..."""
+        self.theme=parent.theme
+        self.parent=parent
+        super(Label,self).__init__(
+            parent,
+            **kwargs)
+        i=self.grid_info()
+        log.info("Label final grid_info: {}".format(i))
+        if i:
+            self.wrap()
+        self['background']=kwargs.get('background',self.theme.background)
     def renderlabel(self,grid=False,event=None):
         v=self.get()
         if hasattr(self,'rendered'): #Get grid info before destroying old one
