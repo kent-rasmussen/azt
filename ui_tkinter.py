@@ -592,67 +592,65 @@ class Renderer(object):
                                                                 align=align)
         self.img = PIL.ImageTk.PhotoImage(img)
 class Label(tkinter.Label,UI):
+class Text(ObectwArgs):
     def wrap(self):
         availablexy(self)
-        self.config(wraplength=self.maxwidth)
+        wraplength=min(self['wraplength'],self.maxwidth)
+        self.config(wraplength=wraplength)
         log.log(3,'self.maxwidth (Label class): {}'.format(self.maxwidth))
-    def __init__(self, parent, column=0, row=1, norender=False,**kwargs):
-        """These have non-None defaults"""
-        self.parent=parent
-        if 'text' not in kwargs or kwargs['text'] is None:
-            kwargs['text']=''
+    def render(self, **kwargs):
+        style=(kwargs['font']['family'], # from kwargs['font'].actual()
+                kwargs['font']['size'],kwargs['font']['weight'],
+                kwargs['font']['slant'],kwargs['font']['underline'],
+                kwargs['font']['overstrike'])
+        if style not in self.renderings:
+            self.renderings[style]={}
+        if kwargs['wraplength'] not in self.renderings[style]:
+            self.renderings[style][kwargs['wraplength']]={}
+        thisrenderings=self.renderings[style][kwargs['wraplength']]
+        if (self.text in thisrenderings and
+                thisrenderings[self.text] is not None):
+            log.log(5,"text {} already rendered with {} wraplength, using."
+                    "".format(self.text,kwargs['wraplength']))
+            self.image=thisrenderings[self.text]
+            self.text=''
+        elif self.image:
+            log.error("You gave an image and tone characters in the same "
+            "label? ({},{})".format(self.image,self.text))
+            return
+        else:
+            log.log(5,"Sticks found! (Generating image for label)")
+            i=Renderer(
+                        text=self.text,
+                        # wraplength=kwargs['wraplength'],
+                        **kwargs)
+            self.tkimg=i.img
+            if self.tkimg is not None:
+                thisrenderings[self.text]=self.image=self.tkimg
+                self.text=''
+    def __init__(self,parent,**kwargs):
+        self.text=kwargs.pop('text','')
+        self.renderings=parent.renderings
+        self.anchor=kwargs.pop('anchor',"w")
         if 'font' in kwargs:
             if isinstance(kwargs['font'],tkinter.font.Font):
-                pass #use as is
-            elif kwargs['font'] in parent.fonts: #if font key (e.g., 'small')
-                kwargs['font']=parent.fonts[kwargs['font']] #change key to font
-            else:
-                kwargs['font']=parent.fonts['default']
+                log.info("Found font {}; using as is".format(kwargs['font']))
+            elif kwargs['font'] in self.theme.fonts: #if font key (e.g., 'small')
+                kwargs['font']=self.theme.fonts[kwargs['font']] #change key to font
         else:
-            kwargs['font']=parent.fonts['default']
-        self.inherit()
-        if hasattr(self,'wraplength'):
-            defaultwr=self.wraplength
-        else:
-            defaultwr=0
-        kwargs['wraplength']=kwargs.get('wraplength',defaultwr)
+            kwargs['font']=self.theme.fonts['default']
+        kwargs['wraplength']=kwargs.get('wraplength',
+                                        getattr(self,'wraplength',0))
+        log.info("Button wraplength: {}".format(kwargs['wraplength']))
+        # self.wraplength=kwargs.get('wraplength',defaultwr) #also for ButtonLabel
+        self.norender=kwargs.pop('norender',False)
+        self.image=kwargs.pop('image',None)
         d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
         sticks=set(['˥','˦','˧','˨','˩',' '])
-        if set(kwargs['text']) & (sticks|d) and not norender:
-            # log.info(kwargs['font']['size'])
-            style=(kwargs['font']['family'], # from kwargs['font'].actual()
-                    kwargs['font']['size'],kwargs['font']['weight'],
-                    kwargs['font']['slant'],kwargs['font']['underline'],
-                    kwargs['font']['overstrike'])
-            # log.info("style: {}".format(style))
-            renderings=self.parent.renderings
-            # log.info("renderings: {}".format(renderings))
-            if style not in renderings:
-                renderings[style]={}
-            if kwargs['wraplength'] not in renderings[style]:
-                renderings[style][kwargs['wraplength']]={}
-            thisrenderings=renderings[style][kwargs['wraplength']]
-            if (kwargs['text'] in thisrenderings and
-                    thisrenderings[kwargs['text']] is not None):
-                log.log(5,"text {} already rendered with {} wraplength, using."
-                        "".format(kwargs['text'],kwargs['wraplength']))
-                kwargs['image']=thisrenderings[kwargs['text']]
-                kwargs['text']=''
-            elif 'image' in kwargs and kwargs['image'] is not None:
-                log.error("You gave an image and tone characters in the same "
-                "label? ({},{})".format(image,kwargs['text']))
-                return
-            else:
-                log.log(5,"Sticks found! (Generating image for label)")
-                i=Renderer(**kwargs)
-                self.tkimg=i.img
-                if self.tkimg is not None:
-                    thisrenderings[kwargs['text']]=kwargs['image']=self.tkimg
-                    kwargs['text']=''
+        if set(self.text) & (sticks|d) and not self.norender:
+            self.render(**kwargs)
+            log.info("text and image: {} - {}".format(self.text,self.image))
         else:
-            kwargs['text']=nfc(kwargs['text'])
-        tkinter.Label.__init__(self, parent, **kwargs)
-        self['background']=kwargs.get('background',self.theme['background'])
 class EntryField(tkinter.Entry,UI):
 class Menu(tkinter.Menu,UI): #not Text
     def pad(self,label):
