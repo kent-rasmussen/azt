@@ -4676,7 +4676,7 @@ class Check():
                                                 lang=self.analang).get())
             sense['glosses']=[]
             for lang in self.glosslangs:
-                sense['gloss'].append(firstoflist(self.db.glossordefn(
+                sense['glosses'].append(firstoflist(self.db.glossordefn(
                                                 guid=sense['guid'],
                                                 glosslang=lang
                                                 ),othersOK=True))
