@@ -4436,7 +4436,8 @@ class Check():
             else:
                 log.log(4,"Marking senseid {} sorted (v: {})".format(senseid,v))
                 self.status.marksenseidsorted(senseid)
-                groups.append(v)
+                if v not in ['NA','ALLOK']:
+                    groups.append(v)
         """update 'tosort' status"""
         if self.status.senseidstosort():
             log.log(4,"updatesortingstatus shows senseidstosort remaining")
