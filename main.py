@@ -6161,19 +6161,21 @@ class FramedDataElement(FramedData):
         if self.audiofileisthere():
             return
         """First check if *any* glosslang has data"""
-        gloss=None
+        self.gloss=None
         for lang in self.glosslangs:
             if lang in self.forms:
-                gloss=self.forms[lang]
+                self.gloss=self.forms[lang]
                 break #glosslangs are prioritized; take the first one you find.
         """This is for nodes that don't include glosses (lc/lx/pl/imp fields)"""
-        if not gloss:
+        if not self.gloss and self.senseid:
             for lang in self.glosslangs:
-                gloss=t(self.db.get('gloss',senseid=senseid,glosslang=lang
-                                    ).get('text')
+                self.gloss=t(self.parent.db.get('gloss',
+                                            senseid=self.senseid,
+                                            glosslang=lang
+                                            ).get('text')
                         )
-                if gloss:
-                    gloss+='_'+self.node.tag() #since not gloss of the form
+                if self.gloss:
+                    self.gloss+='_'+self.node.tag() #since not gloss of the form
                     break
         filenames=self.filenameoptions()
         """if any of the generated filenames are there, stop at the first one"""
@@ -6228,7 +6230,10 @@ class FramedDataElement(FramedData):
                             if self.node.tag == 'field':
                                 args+=[self.node.get("type")]
                         args+=[self.forms[self.analang]]
-                        args+=[self.forms[self.glosslangs.lang1()]]
+                        if self.gloss: #could be None still, if no senseid given
+                            args+=[
+                                    self.gloss
+                                    ]
                         optargs=args[:]
                         optargs.insert(0,pslocopt) #put first
                         optargs.insert(3,fieldlocopt) #put after self.node.tag
