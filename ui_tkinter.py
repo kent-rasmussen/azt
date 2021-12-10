@@ -960,6 +960,7 @@ class ToolTip(object):
     Modified to include a delay time by Victor Zaccardo, 25mar16
     """
     def __init__(self, widget, text='widget info'):
+        UI.inherit(self,widget)
         self.waittime = 500     #miliseconds
         self.wraplength = 180   #pixels
         self.dispx = 25
