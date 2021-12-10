@@ -5275,8 +5275,10 @@ class Check():
         def output(window,r,text):
             r.write(text+'\n')
             if silent == False:
-                ui.Label(window,text=text,font=window.fonts['report']).grid(
-                                        row=window.row,column=0, sticky="w")
+                ui.Label(window,text=text,
+                        font=window.theme.fonts['report'],
+                        row=window.row,column=0, sticky="w"
+                        )
             window.row+=1
         t=_("Summary of Frames by Draft Underlying Melody")
         if len(self.analysis.orderedchecks) > 6:
@@ -6489,21 +6491,25 @@ class MainApplication(ui.Window):
                 "at {url} ").format(url=program['url'])
         mailtext=_("or write me at {}.").format(program['Email'])
         ui.Label(window.frame, text=title,
-                        font='title',anchor='c',padx=50
-                        ).grid(row=0,column=0,sticky='we')
-        f=ui.ScrollingFrame(window.frame)
-        f.grid(row=2,column=0,sticky='we')
-        ui.Label(f.content, image=self.frame.theme.photo['small'],text='',
-                        ).grid(row=0,column=0,sticky='we')
-        l=ui.Label(f.content, text=text, padx=50,
-                wraplength=int(self.winfo_screenwidth()/2)
-                ).grid(row=1,column=0,pady=(50,0),sticky='we')
-        webl=ui.Label(f.content, text=webtext, padx=50,#pady=50,
-                wraplength=int(self.winfo_screenwidth()/2)
+                font='title',anchor='c',padx=50,
+                row=0,column=0,sticky='we')
+        f=ui.ScrollingFrame(window.frame,
+                            row=2,column=0,sticky='we')
+        ui.Label(f.content, image=self.frame.theme.photo['small'],
+                text='',
+                row=0,column=0,sticky='we'
                 )
-        webl.grid(row=2,column=0,sticky='we')
+        l=ui.Label(f.content, text=text, padx=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=1,column=0,pady=(50,0),sticky='we'
+                )
+        webl=ui.Label(f.content, text=webtext, padx=50,#pady=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=2,column=0,sticky='we'
+                )
         maill=ui.Label(f.content, text=mailtext, padx=50,#pady=50,
-                wraplength=int(self.winfo_screenwidth()/2)
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=3,column=0,sticky='we'
                 )
         webl.bind("<Button-1>", lambda e: openweburl(program['url']))
         murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
