@@ -9,7 +9,6 @@ import tkinter.font
 import tkinter.scrolledtext
 # import tkintermod
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
-class UI(object):
 class ObectwArgs(object):
     """ObectwArgs just allows us to throw away unused args and kwargs."""
 
@@ -66,6 +65,7 @@ class Gridded(ObectwArgs):
                         )
         else:
             log.info("Not Gridding! ({})".format(kwargs))
+class UI(ObectwArgs):
     """docstring for Widget."""
     def wait(self,msg=None):
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
