@@ -173,15 +173,15 @@ class Frame(Gridded,tkinter.Frame,UI):
             self.config(height=min(self.maxheight,contentrh))
         self.configured+=1
     def __init__(self, parent, **kwargs):
-        self.parent = parent
+        log.info("Initializing Frame object")
+        UI.inherit(self,parent)
         # for attr in ['fonts','theme','debug','wraplength','photo','renderings',
         #         'program','exitFlag']:
         #     if hasattr(parent,attr):
         #         setattr(self,attr,getattr(parent,attr))
-        self.inherit()
-        """tkinter.Frame thingies below this"""
-        tkinter.Frame.__init__(self,parent,**kwargs)
-        self['background']=parent['background']
+        super(Frame, self).__init__(parent,**kwargs)
+        self['background']=self.theme.background
+        self['bg']=self.theme.background
 class ScrollingFrame(Frame):
     def _bound_to_mousewheel(self, event):
         # with Windows OS
