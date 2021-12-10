@@ -182,6 +182,26 @@ class Frame(Gridded,tkinter.Frame,UI):
         super(Frame, self).__init__(parent,**kwargs)
         self['background']=self.theme.background
         self['bg']=self.theme.background
+class Scrollbar(Gridded,tkinter.Scrollbar,UI):
+    """docstring for Scrollbar."""
+
+    def __init__(self, parent, *args, **kwargs):
+        UI.inherit(self,parent)
+        if 'orient' in kwargs and kwargs['orient']==tkinter.HORIZONTAL:
+            kwargs['sticky']=kwargs.get('sticky',tkinter.E+tkinter.W)
+        else:
+            kwargs['sticky']=kwargs.get('sticky',tkinter.N+tkinter.S)
+        # yscrollbar.config(background=self.theme.background)
+        # yscrollbar.config(activebackground=self.theme.activebackground)
+        # yscrollbar.config(troughcolor=self.theme.background)
+        super(Scrollbar, self).__init__(
+        parent=parent,
+        **kwargs
+        )
+        """after theme is inherited:"""
+        self['background']=self.theme.background
+        self['activebackground']=self.theme.activebackground
+        self['troughcolor']=self.theme.background
 class ScrollingFrame(Frame):
     def _bound_to_mousewheel(self, event):
         # with Windows OS
