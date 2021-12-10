@@ -1393,7 +1393,6 @@ def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent (not used yet)
     return unicodedata.normalize('NFD', str(x))
 if __name__ == '__main__':
-    a=tkinter.Widget()
     """To Test:"""
     # loglevel='Debug'
     loglevel='INFO'
