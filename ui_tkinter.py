@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 import sys
+import platform
 import logging
 log = logging.getLogger(__name__) #bc not imported as a module...
 import unicodedata
 import tkinter #as gui
 import tkinter.font
 import tkinter.scrolledtext
+import file #for image pathnames
+from random import randint #for theme selection
 # import tkintermod
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
 class ObectwArgs(object):
