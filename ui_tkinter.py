@@ -581,7 +581,6 @@ class Renderer(ObectwArgs):
             line=' '.join(words) #Join back words
             lines[li]=line
         text='\n'.join(lines) #join back sections between manual linebreaks
-        log.debug(text)
         w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
         log.log(2,"Final size w: {}, h: {}".format(w,h))
         black = 'rgb(0, 0, 0)'
