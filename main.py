@@ -1486,11 +1486,13 @@ class Check():
         else:
             profilecounts=self.slices.valid()
             profilecountsAdHoc=self.slices.adhoccounts()
-            pcall=profilecounts+profilecountsAdHoc
+            log.info("count types: {}, {}".format(type(profilecounts),type(profilecountsAdHoc)))
+            if profilecountsAdHoc:
+                profilecounts.update(profilecountsAdHoc)
             ui.Label(window.frame, text=_('What ({}) syllable profile do you '
                                     'want to work with?'.format(ps))
                                     ).grid(column=0, row=0)
-            optionslist = [(x[0],pcall[x]) for x in pcall]
+            optionslist = [(x[0],profilecounts[x]) for x in profilecounts]
             window.scroll=ui.Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
