@@ -1146,9 +1146,9 @@ class Check():
             #next to this button, in case any variable has been changed.
             if hasattr(self.addwindow,'framechk'):
                 self.addwindow.framechk.destroy()
-        def submit(checkdefntoadd,name):
+        def submit(checkdefntoadd,checktoadd):
             # Having made and unset these, we now reset and write them to file.
-            self.toneframes[ps][check]=checkdefntoadd
+            self.toneframes.addframe(ps,checktoadd,checkdefntoadd)
             self.status.renewchecks()
             self.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
@@ -1326,7 +1326,7 @@ class Check():
                 self.status.renewchecks()
             self.attrschanged.remove('ps')
         if 'profile' in self.attrschanged:
-            self.newattr.remove('profile')
+            self.attrschanged.remove('profile')
         if 'check' in self.attrschanged:
             self.attrschanged.remove('check')
         soundattrs=['fs',
