@@ -8018,12 +8018,16 @@ class ErrorNotice(ui.Window):
     """this is for things that I want the user to know, without having
     to find it in the logs."""
     def __init__(self, parent, title, text):
+        if not parent:
+            log.error("No parent for ErrorNotice; exiting. ({})".format(text))
+            exit()
         super(ErrorNotice, self).__init__(parent,title=title)
-        self.parent = parent
         self.title = title
         self.text = text
-        l=ui.Label(self, text=text)
+        l=ui.Label(self.frame, text=text)
         l.grid(row=0, column=0)
+        self.attributes("-topmost", True)
+        self.wait_window(self)
 class Repository(object):
     """docstring for Mercurial Repository."""
     def choruscheck(self):
