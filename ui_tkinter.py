@@ -650,7 +650,12 @@ class Text(ObectwArgs):
             self.render(**kwargs)
             log.info("text and image: {} - {}".format(self.text,self.image))
         else:
-class EntryField(tkinter.Entry,UI):
+            self.text=nfc(self.text)
+        log.info(parent)
+        super(Text,self).__init__(parent,
+                                    text=self.text,
+                                    image=self.image,
+                                    **kwargs)
 class Menu(tkinter.Menu,UI): #not Text
     def pad(self,label):
         w=5 #Make menus at least w characters wide
@@ -754,6 +759,7 @@ class Label(Gridded,Text,tkinter.Label,UI): #,tkinter.Label
         if i:
             self.wrap()
         self['background']=kwargs.get('background',self.theme.background)
+class EntryField(Gridded,tkinter.Entry,UI):
     def renderlabel(self,grid=False,event=None):
         v=self.get()
         if hasattr(self,'rendered'): #Get grid info before destroying old one
