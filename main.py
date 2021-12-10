@@ -7497,6 +7497,7 @@ class StatusDict(dict):
             if idx != len(checks)-1: # i.e., not already last
                 nextcheck=checks[idx+1] #overwrite default in this one case
         self._checkparameters.check(nextcheck)
+        return True
     def nextgroup(self, **kwargs):
         kwargs=grouptype(**kwargs)
         group=self.group()
