@@ -491,7 +491,7 @@ class Window(Toplevel):
                                 command=cmd,
                                             )
             self.backButton.grid(column=3,row=2)
-class Renderer(object):
+class Renderer(ObectwArgs):
     def __init__(self,test=False,**kwargs):
         try:
             import PIL.ImageFont
