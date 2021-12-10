@@ -6570,9 +6570,8 @@ class MainApplication(ui.Window):
         self.check=Check(self,self.frame,filename,nsyls=self.nsyls)
         if not self.exitFlag.istrue():
             self.deiconify()
-    def __init__(self,parent,program,exit=0):
+    def __init__(self,parent,exit=0):
         start_time=time.time() #this enables boot time evaluation
-        self.program=program
         self.interfacelangs=file.getinterfacelangs()
         interfacelang=file.getinterfacelang()
         if interfacelang is None:
@@ -8429,7 +8428,7 @@ def main():
     # root.winfo_class("azt")
     # log.info(root.winfo_class())
     """Translation starts here:"""
-    myapp = MainApplication(root,program)
+    myapp = MainApplication(root)
     myapp.mainloop()
     logshutdown() #in logsetup
 def mainproblem():
