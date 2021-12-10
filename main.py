@@ -8615,11 +8615,13 @@ def mainproblem():
         for w in errorroot.winfo_children():
             w.destroy()
     except:
-        errorroot = tkinter.Tk()
-        setthemes(errorroot)
-        errorroot.theme=errorroot.themes['greygreen']
-        errorroot['background']=errorroot.theme['background']
-        errorroot.protocol("WM_DELETE_WINDOW", ui.Window.on_quit(errorroot))
+        errorroot = ui.Root()
+        if 'theme' in program:
+            theme=program['theme']
+        else:
+            theme=ui.Theme(program)
+            errorroot.settheme(theme)
+            errorroot.renderings={}
     errorroot.title("Serious Problem!")
     try:
         char="Charis SIL"
@@ -8629,14 +8631,16 @@ def mainproblem():
     except:
         titlefont=noticefont=defaultfont=tkinter.font.Font(family=char, size=12)
     l=ui.Label(errorroot,text="Hey! You found a problem! (details and "
-            "solution below)",justify='left',font=titlefont)
-    l.grid(row=0,column=0)
+            "solution below)",justify='left',font='titlefont',
+            row=0,column=0
+            )
     if exceptiononload:
         durl=('https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md'
                 '#dependencies')
         m=ui.Label(errorroot,text="\nPlease see {}".format(durl),
-            justify='left', font=noticefont)
-        m.grid(row=1,column=0)
+            justify='left', font=noticefont,
+            row=1,column=0
+            )
         m.bind("<Button-1>", lambda e: openweburl(durl))
     lcontents=logcontents(log,25)
     addr=program['Email']
