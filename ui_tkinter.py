@@ -99,17 +99,41 @@ class UI(ObectwArgs):
         else:
             attrs=[attr]
         for attr in attrs:
-            if hasattr(self.parent,attr):
-                setattr(self,attr,getattr(self.parent,attr))
-    def __init__(self, parent):
-        super(Widget, self).__init__()
-        self.parent = parent
-class Toplevel(tkinter.Toplevel,UI):
-    def __init__(self, parent, **kwargs):
-        self.parent = parent
-        super(Toplevel, self).__init__()
-        self.inherit()
 class Frame(tkinter.Frame,UI):
+            if hasattr(parent,attr):
+                setattr(self,attr,getattr(parent,attr))
+            else:
+                log.info("parent doesn't have attr {}, skipping inheritance"
+                        "".format(attr))
+    def __init__(self, *args, **kwargs): #because this is used everywhere.
+        log.info("Initializing UI object")
+        if hasattr(self,'theme'):
+            try:
+                self['background']=self.theme.background
+                self['bg']=self.theme.background
+                self['foreground']=self.theme.background
+                self['activebackground']=self.theme.activebackground
+            except TypeError as e:
+                log.info("TypeError {}".format(e))
+        super(UI, self).__init__(*args, **kwargs)
+class Root(tkinter.Tk,UI):
+    """docstring for Root."""
+    def settheme(self,theme):
+        self.theme=theme
+        self['background']=self.theme.background
+        self['bg']=self.theme.background
+    def __init__(self, *args, **kwargs):
+        self.exitFlag = ExitFlag()
+        super(Root, self).__init__()
+        self.protocol("WM_DELETE_WINDOW", lambda s=self: Window.on_quit(s))
+class Toplevel(tkinter.Toplevel,UI): #NoParent
+    def __init__(self, parent, *args, **kwargs):
+        log.info("Initializing Toplevel object")
+        log.info("Toplevel parent: {}".format(parent))
+        UI.inherit(self,parent)
+        super(Toplevel, self).__init__(parent)
+        self['background']=self.theme.background
+        self['bg']=self.theme.background
     def windowsize(self):
         if not hasattr(self,'configured'):
             self.configured=0
