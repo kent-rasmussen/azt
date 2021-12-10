@@ -99,7 +99,6 @@ class UI(ObectwArgs):
         else:
             attrs=[attr]
         for attr in attrs:
-class Frame(tkinter.Frame,UI):
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
             else:
@@ -134,6 +133,7 @@ class Toplevel(tkinter.Toplevel,UI): #NoParent
         super(Toplevel, self).__init__(parent)
         self['background']=self.theme.background
         self['bg']=self.theme.background
+class Frame(Gridded,tkinter.Frame,UI):
     def windowsize(self):
         if not hasattr(self,'configured'):
             self.configured=0
