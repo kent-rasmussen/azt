@@ -77,12 +77,21 @@ class UI(ObectwArgs):
             self.ww.close()
         except tkinter.TclError:
             pass
-    def inherit(self,attr=None):
+    def inherit(self,parent=None,attr=None):
         """This function brings these attributes from the parent, to inherit
         from the root window, through all windows, frames, and scrolling frames, etc
         """
+        if not parent and hasattr(self,'parent') and self.parent:
+            parent=self.parent
+        elif parent:
+            self.parent=parent
         if attr is None:
-            attrs=['fonts','theme','debug','wraplength','photo','renderings',
+            attrs=['theme',
+                    # 'fonts', #in theme
+                    # 'debug',
+                    'wraplength',
+                    # 'photo', #in theme
+                    'renderings',
                     'program','exitFlag']
         else:
             attrs=[attr]
