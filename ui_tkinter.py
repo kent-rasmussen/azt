@@ -10,6 +10,62 @@ import tkinter.scrolledtext
 # import tkintermod
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
 class UI(object):
+class ObectwArgs(object):
+    """ObectwArgs just allows us to throw away unused args and kwargs."""
+
+    def __init__(self, *args, **kwargs):
+        log.info("ObectwArgs args: {};{}".format(args,kwargs))
+        super(ObectwArgs, self).__init__()
+class NoParent(object):
+    """docstring for NoParent."""
+    def __init__(self, *args, **kwargs):
+        if args:
+            args=list(args)
+            args.remove(args[0])
+        super(NoParent, self).__init__(*args, **kwargs)
+class Gridded(ObectwArgs):
+    def __init__(self, parent, *args, **kwargs): #because this is used everywhere.
+        """this removes gridding kwargs from the widget calls"""
+        log.info("Gridded parent: {}".format(parent))
+        log.info("Gridding? ({})".format(kwargs))
+        grid=False
+        if set(kwargs) & set(['sticky','row','column','columnspan','padx','pady']):
+            grid=True
+            self.sticky=kwargs.pop('sticky',"ew")
+            self.row=kwargs.pop('row',kwargs.pop('r',0))
+            self.column=kwargs.pop('column',kwargs.pop('col',kwargs.pop('c',0)))
+            self.columnspan=kwargs.pop('columnspan',1)
+            self.rowspan=kwargs.pop('rowspan',1)
+            self.padx=kwargs.pop('padx',0)
+            self.pady=kwargs.pop('pady',0)
+            self.ipadx=kwargs.pop('ipadx',0)
+            self.ipady=kwargs.pop('ipady',0)
+        super(Gridded, self).__init__(parent, *args, **kwargs)
+        if grid:
+            log.info("Gridding at r{},c{},rsp{},csp{},st{},padx{},pady{},"
+                    "ipadx{},ipady{}".format(self.row,
+                                self.column,
+                                self.rowspan,
+                                self.columnspan,
+                                self.sticky,
+                                self.padx,
+                                self.pady,
+                                self.ipadx,
+                                self.ipady,
+                                ))
+            self.grid(
+                        row=self.row,
+                        column=self.column,
+                        sticky=self.sticky,
+                        padx=self.padx,
+                        pady=self.pady,
+                        ipadx=self.ipadx,
+                        ipady=self.ipady,
+                        columnspan=self.columnspan,
+                        rowspan=self.rowspan
+                        )
+        else:
+            log.info("Not Gridding! ({})".format(kwargs))
     """docstring for Widget."""
     def wait(self,msg=None):
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
