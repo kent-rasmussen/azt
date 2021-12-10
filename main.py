@@ -8032,10 +8032,11 @@ class Repository(object):
             if file.endswith('.ChorusRescuedFile'):
                 rescues.append(file)
         if rescues:
-            error=_("You have the following files that need to be resolved"
-                    "from Chorus merges: {}").format(rescues)
+            error=_("You have the following files ( in {}) that need to be "
+                    "resolved from Chorus merges:\n {}"
+                    "").format(self.url,'\n'.join(rescues))
             log.error(error)
-
+            ErrorNotice(program['root'],"Chorus Rescue files found!",error)
             if me:
                 exit()
     def add(self,file):
