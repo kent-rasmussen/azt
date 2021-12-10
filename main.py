@@ -8567,10 +8567,17 @@ def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    root = program['root']=tkinter.Tk()
+    root = program['root']=ui.Root() #tkinter.Tk()
+    program['theme']=ui.Theme(program)
+    log.info("Theme name: {}".format(program['theme'].name))
+    root.settheme(program['theme'])
+    root.program=program
+    root.wraplength=root.winfo_screenwidth()-300 #exit button
+    root.renderings={} #initialize this somewhere...
+    root.withdraw()
     #this computer: (this doesn't pick up changes, so just doing it here)
-    h = root.winfo_screenheight()
-    w = root.winfo_screenwidth()
+    h = program['screenh'] = root.winfo_screenheight()
+    w = program['screenw'] = root.winfo_screenwidth()
     wmm = root.winfo_screenmmwidth()
     hmm = root.winfo_screenmmheight()
     #this computer as a ratio of mine, 1080 (286mm) x 1920 (508mm):
