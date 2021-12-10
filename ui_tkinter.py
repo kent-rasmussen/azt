@@ -861,10 +861,10 @@ class CheckButton(tkinter.Checkbutton,UI):
         self.parent=parent
         self.inherit()
         super(CheckButton,self).__init__(parent,
-                                bg=self.theme['background'],
-                                activebackground=self.theme['activebackground'],
-                                image=self.photo['uncheckedbox'],
-                                selectimage=self.photo['checkedbox'],
+                                bg=self.theme.background,
+                                activebackground=self.theme.activebackground,
+                                image=self.theme.photo['uncheckedbox'],
+                                selectimage=self.theme.photo['checkedbox'],
                                 indicatoron=False,
                                 compound='left',
                                 font=self.fonts['read'],
