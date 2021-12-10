@@ -2172,15 +2172,15 @@ class Check():
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=ps)
         return idsbyps[randint(0, len(idsbyps))]
-    def gimmesenseidwgloss(self):
+    def gimmesenseidwgloss(self,**kwargs):
         tried=0
         gloss={}
-        langs=[self.glosslang,self.glosslang2]
-        for lang in langs:
+        ps=kwargs.get('ps',self.slices.ps())
+        for lang in self.glosslangs:
             gloss[lang]=''
         while '' in gloss.values():
-            senseid=self.gimmesenseid()
-            for lang in langs:
+            senseid=self.gimmesenseid(ps=ps)
+            for lang in self.glosslangs:
                 gloss[lang]=self.db.glossordefn(senseid=senseid,glosslang=lang,
                                                 showurl=True)[0]
             tried+=1
