@@ -713,7 +713,7 @@ class Check():
         options.next('r')
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
-                ).format(self.program['name'],self.languagenames[self.analang])
+                ).format(program['name'],self.languagenames[self.analang])
         instr=ui.Label(mwframe,text=text,justify=tkinter.LEFT,anchor='c')
         instr.grid(row=options.get('r'), column=options.get('c'),
                     sticky='ew', padx=options.padx, pady=options.pady)
@@ -3082,7 +3082,7 @@ class Check():
                 "the recording window; picking a smaller number could mean "
                 "data not getting recorded. "
                 "Up to how many examples do you want to record for each group?"
-                "".format(self.program['name'])
+                "".format(program['name'])
                 )
         ui.Label(window.frame, text=title, font='title').grid(column=0,
                                                                         row=0)
@@ -3466,6 +3466,8 @@ class Check():
                 log.info("Comparison frameb destroyed!")
             except: #first run
                 log.info("Problem destroying comparison frame, making...")
+            buttonframew=int(program['screenw']/4)
+            # b['wraplength']=buttonframew
             compframe.compframeb=ui.Frame(compframe)
             compframe.compframeb.grid(row=1,column=0)
             t=_('Compare with another group')
@@ -5132,7 +5134,7 @@ class Check():
                 "default analysis, which will replace these groupings with new "
                 "split groupings. \nTo see a report based on what you do "
                 "here, run the tone reports in the Advanced menu (without "
-                "analysis). ".format(ps,profile,self.program['name']))
+                "analysis). ".format(ps,profile,program['name']))
         rwrow+=1
         i=ui.Label(self.runwindow.frame,text=text)
         i.grid(row=rwrow,column=0,sticky='ew')
@@ -5254,8 +5256,7 @@ class Check():
         "this report is distinct from the others, in terms of its grouping "
         "across the multiple frames used. Sound files should be available "
         "through links, if the audio directory with those files is in the same "
-        "directory as this file.".format(ps,checks,
-                                            self.program['name']))
+        "directory as this file.".format(ps,checks,program['name']))
         p1=xlp.Paragraph(s1,text=text)
         text=_("As a warning to the analyst who may not understand the "
         "implications of this *automated analysis*, you may have too few "
@@ -5300,13 +5301,13 @@ class Check():
                 "relationships for yourself: {}. "
                 "And here are the structured similarity relationships for the "
                 "Frames: {}"
-                "".format(self.program['name'],
+                "".format(program['name'],
                         str(self.analysis.comparisonUFs),
                         str(self.analysis.comparisonchecks)))
         else:
             ptext+=_("This is a non-default report, where a user has changed "
             "the default (hyper-split) groups created by {}.".format(
-                                                        self.program['name']))
+                                                        program['name']))
         p0=xlp.Paragraph(s1s,text=ptext)
         m=7 #only this many columns in a table
         self.analysis.orderedchecks=list(self.analysis.valuesbycheckgroup)
@@ -6460,10 +6461,13 @@ class MainApplication(ui.Window):
         self.unbind_all('<Enter>')
     def helpabout(self):
         window=ui.Window(self)
-        title=(_("{name} Dictionary and Orthography Checker".format(name=self.program['name'])))
+        title=(_("{name} Dictionary and Orthography Checker".format(name=program['name'])))
         window.title(title)
-        ui.Label(window.frame, text=_("version: {}").format(program['version']),anchor='c',padx=50
-                        ).grid(row=1,column=0,sticky='we')
+        ui.Label(window.frame,
+                text=_("version: {}").format(program['version']),
+                anchor='c',padx=50,
+                row=1,column=0,sticky='we'
+                        )
         text=_("{name} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
                 "beginning dictionary by vowels, consonants and tone.\n"
@@ -6480,10 +6484,10 @@ class MainApplication(ui.Window):
                 "directory, with links to each file in the dictionary database."
                 " Recordings can be made up to 192khz/32float, according to "
                 "your recording equipment's capacity.").format(
-                                                    name=self.program['name'])
+                                                    name=program['name'])
         webtext=_("For help with this tool, please check out the documentation "
-                "at {url} ").format(url=self.program['url'])
-        mailtext=_("or write me at {}.").format(self.program['Email'])
+                "at {url} ").format(url=program['url'])
+        mailtext=_("or write me at {}.").format(program['Email'])
         ui.Label(window.frame, text=title,
                         font='title',anchor='c',padx=50
                         ).grid(row=0,column=0,sticky='we')
@@ -6501,13 +6505,12 @@ class MainApplication(ui.Window):
         maill=ui.Label(f.content, text=mailtext, padx=50,#pady=50,
                 wraplength=int(self.winfo_screenwidth()/2)
                 )
-        maill.grid(row=3,column=0,sticky='we')
-        webl.bind("<Button-1>", lambda e: openweburl(self.program['url']))
-        murl='mailto:{}?subject= A→Z+T question'.format(self.program['Email'])
+        webl.bind("<Button-1>", lambda e: openweburl(program['url']))
+        murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
         maill.bind("<Button-1>", lambda e: openweburl(murl))
     def maketitle(self):
         title=_("{name} Dictionary and Orthography Checker").format(
-                                                    name=self.program['name'])
+                                                    name=program['name'])
         if program['theme'].name != 'greygreen':
             log.info("Using theme '{}'.".format(program['theme'].name))
             title+=_(' ('+program['theme'].name+')')
