@@ -429,8 +429,9 @@ class Window(Toplevel):
         if self.winfo_exists(): #If this has been destroyed, don't bother.
             if hasattr(self,'frame') and type(self.frame) is Frame:
                 self.frame.destroy()
-            self.frame=Frame(self.outsideframe)
-            self.frame.grid(column=0,row=0,sticky='nsew')
+            self.frame=Frame(self.outsideframe,
+                            column=0,row=0,sticky='nsew'
+                            )
     def removeverifymenu(self,event=None):
         #This removes menu from the verify window
         if hasattr(self,'menubar'):
