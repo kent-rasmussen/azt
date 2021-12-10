@@ -2195,7 +2195,8 @@ class Check():
                 return errortext
         log.debug("Found entry {} with glosses {}".format(senseid,gloss))
         return senseid
-    def gimmesenseid(self):
+    def gimmesenseid(self,**kwargs):
+        ps=kwargs.get('ps',self.slices.ps())
         idsbyps=self.db.get('sense',ps=ps).get('senseid')
         return idsbyps[randint(0, len(idsbyps)-1)]
     def framenamesbyps(self,ps):
