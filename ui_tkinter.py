@@ -825,73 +825,12 @@ class RadioButtonFrame(Frame):
                 column+=1
             else:
                 row+=1
-class Button(tkinter.Button,UI):
+class Button(Gridded,Text,tkinter.Button,UI):
     def nofn(self):
         pass
-    def __init__(self, parent, choice=None, window=None,
-                command=None, column=0, row=1, norender=False,**kwargs):
-        self.parent=parent
-        self.inherit()
-        """For button"""
-        if 'anchor' not in kwargs:
-            kwargs['anchor']="w"
-        if 'text' not in kwargs:
-            kwargs['text']=''
-        if 'wraplength' not in kwargs:
-            kwargs['wraplength']=parent.wraplength
-        if 'font' in kwargs:
-            if isinstance(kwargs['font'],tkinter.font.Font):
-                pass #use as is
-            elif kwargs['font'] in parent.fonts: #if font key (e.g., 'small')
-                kwargs['font']=parent.fonts[kwargs['font']] #change key to font
-            else:
-                kwargs['font']=parent.fonts['default']
-        else:
-            kwargs['font']=parent.fonts['default']
-        """For image rendering of button text"""
-        sticks=set(['˥','˦','˧','˨','˩',' '])
-        if set(kwargs['text']) & sticks and not norender:
-            style=(kwargs['font']['family'], # from kwargs['font'].actual()
-                    kwargs['font']['size'],kwargs['font']['weight'],
-                    kwargs['font']['slant'],kwargs['font']['underline'],
-                    kwargs['font']['overstrike'])
-            # log.info("style: {}".format(style))
-            renderings=self.parent.renderings
-            # log.info("renderings: {}".format(renderings))
-            if style not in renderings:
-                renderings[style]={}
-            if kwargs['wraplength'] not in renderings[style]:
-                renderings[style][kwargs['wraplength']]={}
-            thisrenderings=renderings[style][kwargs['wraplength']]
-            if (kwargs['text'] in thisrenderings and
-                    thisrenderings[kwargs['text']] is not None):
-                log.log(5,"text {} already rendered with {} wraplength, using."
-                        "".format(kwargs['text'],kwargs['wraplength']))
-                kwargs['image']=thisrenderings[kwargs['text']]
-                kwargs['text']=''
-            elif 'image' in kwargs and kwargs['image'] is not None:
-                log.error("You gave an image and tone characters in the same "
-                "button text? ({},{})".format(image,kwargs['text']))
-                return
-            else:
-                log.log(5,"sticks found! (Generating image for button)")
-                i=Renderer(**kwargs)
-                self.tkimg=i.img
-                if self.tkimg is not None:
-                    thisrenderings[kwargs['text']]=kwargs['image']=self.tkimg
-                    kwargs['text']=''
-        kwargs['text']=nfc(kwargs['text'])
-        """For Grid"""
-        if 'sticky' in kwargs:
-            sticky=kwargs['sticky']
-            del kwargs['sticky'] #we don't want this going to the button.
-        else:
-            sticky="W"+"E"
-        kwargs['activebackground']=self.theme['activebackground']
-        kwargs['background']=self.theme['background']
-        if self.debug == True:
-            for arg in kwargs:
-                print("Button "+arg+": "+kwargs[arg])
+    def __init__(self, parent, choice=None, window=None, command=None, **kwargs):
+        """Usta include column=0, row=1, norender=False,"""
+        UI.inherit(self,parent)
         # `command` is my hacky command specification, with lots of args added.
         # cmd is just the command passing through.
         if 'cmd' in kwargs and kwargs['cmd'] is not None:
@@ -911,8 +850,12 @@ class Button(tkinter.Button,UI):
                     cmd=lambda :command('choice')
                 else:
                     cmd=lambda :command()
-        tkinter.Button.__init__(self, parent, command=cmd, **kwargs)
-        self.grid(column=column, row=row, sticky=sticky)
+        super(Button,self).__init__(
+            parent,
+            command=cmd,
+        self['activebackground']=self.theme.activebackground
+        self['background']=self.theme.background
+        self['bg']=self.theme.background
 class CheckButton(tkinter.Checkbutton,UI):
     def __init__(self, parent, **kwargs):
         self.parent=parent
