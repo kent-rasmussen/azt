@@ -2528,8 +2528,8 @@ class Check():
         button(opts,t,self.runcheck,column=0,
                 font='title',
                 compound='bottom', #image bottom, left, right, or top of text
-                image=self.frame.photo[cvt]
-                )
+                image=self.frame.theme.photo[cvt],
+                sticky='ew')
         opts['row']+=1
         if cvt == 'T':
             t=(_("Record Sorted Examples"))
@@ -2538,7 +2538,7 @@ class Check():
         button(opts,t,self.record,column=0,
                 compound='left', #image bottom, left, right, or top of text
                 row=1,
-                image=self.frame.photo['record']
+                image=self.frame.theme.photo['record']
                 )
         self.maybeboard()
         self.checkcheck(dictnow)
