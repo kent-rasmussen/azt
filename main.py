@@ -6504,106 +6504,19 @@ class MainApplication(ui.Frame):
     def maketitle(self):
         title=_("{name} Dictionary and Orthography Checker").format(
                                                     name=self.program['name'])
-        if self.master.themename != 'greygreen':
-            print(f"Using theme '{self.master.themename}'.")
-            title+=_(' ('+self.master.themename+')')
-        self.parent.title(title)
-    def setimages(self):
-        # Program icon(s) (First should be transparent!)
-        #Use this:
-        log.info("Scaling images; please wait...") #threading?
-        # threading.Thread(target=thread_function, args=(arg1,),kwargs={'arg2': arg2})
-        # if process:
-        #     from multiprocessing import Process
-        #     log.info("Running as multi-process")
-        #     p = Process(target=block)
-        # elif thread:
-        #     from threading import Thread
-        #     log.info("Running as threaded")
-        #     p = Thread(target=block)
-        # else:
-        #     log.info("Running in line")
-        #     block()
-        # if process or thread:
-        #     p.exception = None
-        #     try:
-        #         p.start()
-        #     except BaseException as e:
-        #         log.error("Exception!", traceback.format_exc())
-        #         p.exception = e
-        #     p.join(timeout) #finish this after timeout, in any case
-        #     if p.exception:
-        #         log.error("Exception2!", traceback.format_exc())
-        #         raise p.exception
-        #     if process:
-        #         p.terminate() #for processes, not threads
-        # x and y here express a float as two integers, so 0.7 = 7/10, because
-        # the zoom and subsample fns only work on integers
-        y=25 #10 #Higher number is better resolution (x*y/y), more time to process
-        y=int(y) # These all must be integers
-        x=int(program['scale']*y)
-        self.parent.photo={}
-        def mkimg(name,relurl):
-            imgurl=file.fullpathname(relurl)
-            if x != y: # should scale if off by >2% either way
-                self.parent.photo[name] = tkinter.PhotoImage(
-                                        file = imgurl).zoom(x,x).subsample(y,y)
-            else: #if close enough...
-                self.parent.photo[name] = tkinter.PhotoImage(file = imgurl)
-        for name,relurl in [ ('transparent','images/AZT stacks6.png'),
-                            ('small','images/AZT stacks6_sm.png'),
-                            ('icon','images/AZT stacks6_icon.png'),
-                            ('T','images/T alone clear6.png'),
-                            ('C','images/Z alone clear6.png'),
-                            ('V','images/A alone clear6.png'),
-                            ('CV','images/ZA alone clear6.png'),
-                            ('backgrounded','images/AZT stacks6.png'),
-                            #Set images for tasks
-                            ('verifyT','images/Verify List.png'),
-                            ('sortT','images/Sort List.png'),
-                            ('joinT','images/Join List.png'),
-                            ('record','images/Microphone alone_sm.png'),
-                            ('change','images/Change Circle_sm.png'),
-                            ('checkedbox','images/checked.png'),
-                            ('uncheckedbox','images/unchecked.png')
-                        ]:
-            mkimg(name,relurl)
-        log.info("Done scaling images")
-        self.parent.renderings={} #initialize this somewhere...
-    def settheme(self):
-        setthemes(self.parent)
-        #Select from lightgreen, green, pink, lighterpink, evenlighterpink,
-        #purple, Howard, Kent, Kim, yellow, greygreen1, lightgreygreen,
-        #greygreen, highcontrast, tkinterdefault
-        defaulttheme='greygreen'
-        multiplier=99 #The default theme will be this more frequent than others.
-        pot=list(self.parent.themes.keys())+([defaulttheme]*
-                                        (multiplier*len(self.parent.themes)-1))
-        self.parent.themename='Kent' #for the colorblind (to punish others...)
-        self.parent.themename='highcontrast' #for low light environments
-        self.parent.themename=pot[randint(0, len(pot))-1] #mostly defaulttheme
-        if ((platform.uname().node == 'karlap')
-                and (program['production'] is not True)):
-            self.parent.themename='Kim' #for my development
-        """These versions might be necessary later, but with another module"""
-        if self.parent.themename not in self.parent.themes:
-            print("Sorry, that theme doesn't seem to be set up. Pick from "
-            "these options:",self.parent.themes.keys())
-            exit()
-        self.parent.theme=self.parent.themes[self.parent.themename]
-        self.parent['background']=self.parent.theme['background']
+        if program['theme'].name != 'greygreen':
+            log.info("Using theme '{}'.".format(program['theme'].name))
+            title+=_(' ('+program['theme'].name+')')
+        return title #self.title(title)
     def setfontsdefault(self):
-        setfonts(self.parent)
-        if len(self.parent.winfo_children()) >0:
-            propagate(self.parent,attr='fonts')
+        self.theme.setfonts()
         self.fonttheme='default'
         if hasattr(self,'context'): #don't do this before ContextMenu is there
             self.setcontext()
             if hasattr(self,'check'):
                 self.check.checkcheck() #redraw the main window (not on boot)
     def setfontssmaller(self):
-        setfonts(self.parent,fonttheme='smaller')
-        propagate(self.parent,attr='fonts')
+        self.theme.setfonts(fonttheme='smaller')
         self.fonttheme='smaller'
         self.setcontext()
         if hasattr(self,'check'):
@@ -6614,20 +6527,16 @@ class MainApplication(ui.Frame):
     def showgroupnames(self):
         self.check.set('hidegroupnames', False, refresh=True)
         self.setcontext()
-    def setmasterconfig(self,program):
+    def setmasterconfig(self): #,program
         self.parent.debug=False #needed?
         """Configure variables for the root window (master)"""
         for rc in [0,2]:
             self.parent.grid_rowconfigure(rc, weight=3)
             self.parent.grid_columnconfigure(rc, weight=3)
-        self.settheme()
-        self.setimages()
         #if resolutionsucks==True or windows==True:
             # setfonts(self.parent,fonttheme='small')
         #else:
         self.setfontsdefault()
-        self.parent.wraplength=self.parent.winfo_screenwidth()-300 #exit button
-        self.parent.program=program
     def setcontext(self,context=None):
         self.context.menuinit() #This is a ContextMenu() method
         if not hasattr(self,'menu') or self.menu == False:
@@ -6656,21 +6565,23 @@ class MainApplication(ui.Frame):
             # self.check.frame.destroy()
         self.check=Check(self,self.frame,filename,nsyls=self.nsyls)
         if not self.exitFlag.istrue():
-            self.parent.deiconify()
-    def __init__(self,parent,program):
+            self.deiconify()
+    def __init__(self,parent,program,exit=0):
         start_time=time.time() #this enables boot time evaluation
-        # print(time.time()-start_time) # with this
-        self.parent=parent
-        self.parent.exitFlag=self.exitFlag = ui.ExitFlag()
-        self.setmasterconfig(program)
-        # inherit(self) # do this after setting config.
-        #set up languages before splash window:
+        self.program=program
         self.interfacelangs=file.getinterfacelangs()
         interfacelang=file.getinterfacelang()
         if interfacelang is None:
             setinterfacelang('fr')
         else:
             setinterfacelang(interfacelang)
+        title=self.maketitle()
+        """Things that belong to a tkinter.Frame go after this:"""
+        super(MainApplication,self).__init__(parent,
+                title=title,
+                exit=False
+                )
+        self.setmasterconfig()
         """Pick one of the following three screensizes (or don't):"""
         # self.fullscreen()
         # self.quarterscreen()
@@ -6681,28 +6592,17 @@ class MainApplication(ui.Frame):
         #                     self.parent.winfo_screenheight()-200
         #                     )
         #Might be needed for M$ windows:root.state('zoomed')
-        """Things that belong to a tkinter.Frame go after this:"""
-        super().__init__(parent)
         # super().__init__(parent,class_="AZT")
-        parent.withdraw()
-        splash = Splash(self)
-        self.grid(row=1, column=1,  #This is inbetween rc=[0,2], above.
-                sticky=tkinter.N+tkinter.E+tkinter.S+tkinter.W
-                )
+        self.withdraw()
+        splash = Splash(parent)
         """Set up the frame in this (mainapplication) frame. This will be
         'placed' in the middle of the mainapplication frame, which is
         gridded into the center of the root window. This configuration keeps
         the frame with all the visual stuff in the middle of the window,
         without letting the window shrink to really small."""
-        self.frame=ui.Frame(self)
-        """Give the main window some margin"""
-        self.frame['padx']=25
-        self.frame['pady']=25
-        self.frame.grid(row=0, column=0)
         """Pick one of these two placements:"""
         # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
         # self.frame.grid(column=0, row=0)
-        parent.iconphoto(True, self.photo['icon'])
         self.maketitle()
         self.nsyls=None #this will give the default (currently 5)
         """This means make check with
@@ -6719,8 +6619,9 @@ class MainApplication(ui.Frame):
         e=(_("Exit"))
         #If the user exits out before this point, just stop.
         if self.check is None:
-            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!")
-            l.grid(row=0,column=0)
+            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
+            row=0,column=0
+            )
         try:
             self.check.frame.winfo_exists()
         except:
