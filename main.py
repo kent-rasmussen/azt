@@ -2668,8 +2668,11 @@ class Check():
     def makenoboard(self):
         log.info("No Progress board")
         self.boardtitle()
-        self.noboard=ui.Label(self.leaderboard, image=self.frame.photo['transparent'],
-                    text='', pady=50, bg='red').grid(row=1,column=0,sticky='we')
+        self.noboard=ui.Label(self.leaderboard,
+                            image=self.frame.theme.photo['transparent'],
+                            text='', pady=50,
+                            background=self.frame.theme.background
+                            ).grid(row=1,column=0,sticky='we')
         self.frame.update()
         self.parent.deiconify()
     def makeCVprogresstable(self):
