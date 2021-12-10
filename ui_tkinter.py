@@ -462,7 +462,7 @@ class Window(Toplevel):
         """Things requiring tkinter.Window below here"""
         super(Window, self).__init__(parent) #no title attr for Toplevel
         # self.config(className="azt")
-        self['background']=self.theme['background']
+        self['background']=self.theme.background
         # self['background']=self.theme.background
         """Is this section necessary for centering on resize?"""
         for rc in [0,2]:
