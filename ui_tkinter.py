@@ -797,6 +797,7 @@ class RadioButton(tkinter.Radiobutton,UI):
         self.grid(column=column, row=row, sticky=sticky)
 class RadioButtonFrame(Frame):
     def __init__(self, parent, horizontal=False,**kwargs):
+        UI.inherit(self,parent)
         for vars in ['var','opts']:
             if (vars not in kwargs):
                 print('You need to set {} for radio button frame!').format(vars)
@@ -807,8 +808,8 @@ class RadioButtonFrame(Frame):
         sticky='w'
         self.parent=parent
         super(RadioButtonFrame,self).__init__(parent,**kwargs)
-        kwargs['background']=self.theme['background']
-        kwargs['activebackground']=self.theme['activebackground']
+        kwargs['background']=self.theme.background
+        kwargs['activebackground']=self.theme.activebackground
         row=0
         for opt in self.opts:
             value=opt[0]
