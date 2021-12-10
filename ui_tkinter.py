@@ -360,11 +360,11 @@ class ScrollingFrame(Frame):
     def tobottom(self):
         self.update_idletasks()
         self.canvas.yview_moveto(1)
-    def __init__(self,parent,xscroll=False):
+    def __init__(self,parent,xscroll=False,**kwargs):
         UI.inherit(self,parent)
         """Make this a Frame, with all the inheritances, I need"""
         # inherit(self)
-        Frame.__init__(self,parent)
+        super(ScrollingFrame,self).__init__(parent, **kwargs)
         """Not sure if I want these... rather not hardcode."""
         # log.debug(self.parent.winfo_children())
         self.grid_rowconfigure(0, weight=1)
