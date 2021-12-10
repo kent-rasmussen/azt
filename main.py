@@ -8076,7 +8076,7 @@ class Repository(object):
         except subprocess.CalledProcessError as e:
             output=e.output
         except Exception as e:
-            log.info(_("Call to Mercurial ({}) failed: {} ({})").format(args,e))
+            log.info(_("Call to Mercurial ({}) failed: {}").format(args,e))
             return e
         return output.decode("utf-8").strip()
     def alreadythere(self,url):
