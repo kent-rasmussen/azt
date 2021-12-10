@@ -1079,8 +1079,9 @@ def availablexy(self,w=None):
             'wcols: {} ({})'.format(wrow,wrowmax,wrows,wcol,wcolmax,wcols,w))
     rowheight={}
     colwidth={}
+    parentclasses=['Toplevel','Tk','Wait','Window','Root']
     for sib in w.parent.winfo_children(): #one of these should be sufficient
-        if sib.winfo_class() not in ['Menu','Wait','Window']:
+        if sib.winfo_class() not in parentclasses:
             if hasattr(w.parent,'grid_info') and 'row' in sib.grid_info():
                 sib.row=sib.grid_info()['row']
                 sib.col=sib.grid_info()['column']
@@ -1111,7 +1112,7 @@ def availablexy(self,w=None):
     log.log(3,"self.othercolwidth: {}; self.otherrowheight: {}".format(
                 self.othercolwidth,self.otherrowheight))
     log.log(3,"w.parent.winfo_class: {}".format(w.parent.winfo_class()))
-    if w.parent.winfo_class() not in ['Toplevel','Tk','Wait']:
+    if w.parent.winfo_class() not in parentclasses:
         if hasattr(w.parent,'grid_info'): #one of these should be sufficient
             availablexy(self,w.parent)
     else:
