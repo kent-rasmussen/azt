@@ -877,10 +877,12 @@ class ButtonFrame(Frame):
                     window=None,
                     **kwargs
                     ):
+        UI.inherit(self,parent)
         self.parent=parent
-        Frame.__init__(self,parent)
+        super(ButtonFrame,self).__init__(parent)
+        log.info("Buttonframe option list: {} ({})".format(optionlist,command))
         gimmenull=False # When do I want a null option added to my lists? ever?
-        self['background']=self.theme['background']
+        self['background']=self.theme.background
         i=0
         """Make sure list is in the proper format: list of dictionaries"""
         if type(optionlist) is not list:
