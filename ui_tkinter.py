@@ -361,8 +361,8 @@ class ScrollingFrame(Frame):
         self.update_idletasks()
         self.canvas.yview_moveto(1)
     def __init__(self,parent,xscroll=False):
+        UI.inherit(self,parent)
         """Make this a Frame, with all the inheritances, I need"""
-        self.parent=parent
         # inherit(self)
         Frame.__init__(self,parent)
         """Not sure if I want these... rather not hardcode."""
@@ -374,18 +374,15 @@ class ScrollingFrame(Frame):
 
         """We might want horizonal bars some day? (also below)"""
         if xscroll == True:
-            xscrollbar = tkinter.Scrollbar(self, orient=tkinter.HORIZONTAL)
-            xscrollbar.grid(row=1, column=0, sticky=tkinter.E+tkinter.W)
-        yscrollbar = tkinter.Scrollbar(self)
-        yscrollbar.grid(row=0, column=1, sticky=tkinter.N+tkinter.S)
+            xscrollbar = Scrollbar(self, orient=tkinter.HORIZONTAL,
+                                            row=1, column=0
+                                            )
+        yscrollbar = Scrollbar(self, row=0, column=1)
         """Should decide some day which we want when..."""
         self.yscrollbarwidth=50 #make the scrollbars big!
         self.yscrollbarwidth=0 #make the scrollbars invisible (use wheel)
         self.yscrollbarwidth=15 #make the scrollbars useable, but not obnoxious
         yscrollbar.config(width=self.yscrollbarwidth)
-        yscrollbar.config(background=self.theme['background'])
-        yscrollbar.config(activebackground=self.theme['activebackground'])
-        yscrollbar.config(troughcolor=self.theme['background'])
         self.canvas = tkinter.Canvas(self)
         self.canvas.parent = self.canvas.master
         """make the canvas inherit these values like a frame"""
@@ -413,9 +410,9 @@ class ScrollingFrame(Frame):
         """We might want horizonal bars some day? (also above)"""
         if xscroll == True:
             xscrollbar.config(width=self.yscrollbarwidth)
-            xscrollbar.config(background=self.theme['background'])
-            xscrollbar.config(activebackground=self.theme['activebackground'])
-            xscrollbar.config(troughcolor=self.theme['background'])
+            xscrollbar.config(background=self.theme.background)
+            xscrollbar.config(activebackground=self.theme.activebackground)
+            xscrollbar.config(troughcolor=self.theme.background)
             xscrollbar.config(command=self.canvas.xview)
         yscrollbar.config(command=self.canvas.yview)
         """Bindings so the mouse wheel works correctly, etc."""
