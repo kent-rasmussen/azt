@@ -6285,7 +6285,7 @@ class FramedDataElement(FramedData):
         """
         log.info("FramedDataElement initalization done, with forms: {}"
                     "".format(self.forms))
-class MainApplication(ui.Frame):
+class MainApplication(ui.Window):
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
@@ -6307,7 +6307,7 @@ class MainApplication(ui.Frame):
             self.setcontext()
     def _setmenus(self,event=None):
         check=self.check
-        self.menubar = ui.Menu(self.parent)
+        self.menubar = ui.Menu(self)
         changemenu = ui.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label=_("Change"), menu=changemenu)
         """Language stuff"""
@@ -6449,7 +6449,7 @@ class MainApplication(ui.Frame):
         helpmenu.add_command(label=_("About"),
                         command=self.helpabout)
         self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
-        self.parent.config(menu=self.menubar)
+        self.config(menu=self.menubar)
         self.menu=True
         self.setcontext()
         self.unbind_all('<Enter>')
@@ -6484,8 +6484,7 @@ class MainApplication(ui.Frame):
                         ).grid(row=0,column=0,sticky='we')
         f=ui.ScrollingFrame(window.frame)
         f.grid(row=2,column=0,sticky='we')
-        ui.Label(f.content, image=self.frame.photo['small'],text='',
-                        bg=self.theme['background']
+        ui.Label(f.content, image=self.frame.theme.photo['small'],text='',
                         ).grid(row=0,column=0,sticky='we')
         l=ui.Label(f.content, text=text, padx=50,
                 wraplength=int(self.winfo_screenwidth()/2)
