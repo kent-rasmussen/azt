@@ -755,7 +755,7 @@ class Label(Gridded,Text,tkinter.Label,UI): #,tkinter.Label
             **kwargs)
         i=self.grid_info()
         log.info("Label final grid_info: {}".format(i))
-        if i:
+        if i and self.text:
             self.wrap()
         self['background']=kwargs.get('background',self.theme.background)
 class EntryField(Gridded,tkinter.Entry,UI):
