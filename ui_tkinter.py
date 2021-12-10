@@ -923,7 +923,7 @@ class ButtonFrame(Frame):
         for choice in optionlist:
             if choice['name'] == ["Null"]:
                 command=newvowel #come up with something better here..…
-            if 'description' in choice.keys():
+            if 'description' in choice:
                 print(choice['name'],str(choice['description']))
                 text=choice['name']+' ('+str(choice['description'])+')'
             else:
