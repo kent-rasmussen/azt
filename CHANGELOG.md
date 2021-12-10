@@ -7,6 +7,7 @@ sendpraat should now be working, if installed
 massive changes under the hood:
 ui.py extracted
 new objects for examples, parameters
+Hg should now track all .dat files (not .ini, per user)
 
 # Version 0.8.6
 - added referify data for current subgroup

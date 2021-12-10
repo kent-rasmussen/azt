@@ -1790,7 +1790,7 @@ class Check():
     def loadsettingsfile(self,setting='defaults'):
         filename=self.settingsfile(setting)
         config=ConfigParser()
-        config.read(filename)
+        config.read(filename,encoding='utf-8')
         if len(config.sections()) == 0:
             return
         log.debug("Trying for {} settings in {}".format(setting, filename))
@@ -8064,7 +8064,7 @@ class Repository(object):
         args=["files"]
         self.files=self.do(args).split('\n')
     def do(self,args):
-        cmd=[program['hg'],'--cwd',self.url] #-R
+        cmd=[program['hg'],'--cwd',str(self.url)] #-R
         cmd.extend(args)
         try:
             output=subprocess.check_output(cmd, shell=False)
