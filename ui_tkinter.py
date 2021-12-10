@@ -574,7 +574,7 @@ class Renderer(object):
                 w, h = draw.multiline_textsize(l, font=font, spacing=fspacing)
                 log.log(2,"Round {} Words {}-{}:{}, width: {}/{}".format(y,x+nl,
                                                 y+nl,l,w,wraplength))
-                if w>wraplength:
+                if wraplength and w>wraplength:
                     words.insert(y+nl-1,'\n')
                     x=y-1
                     nl+=1
