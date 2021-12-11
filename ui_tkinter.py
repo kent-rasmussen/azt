@@ -202,7 +202,8 @@ class Scrollbar(Gridded,tkinter.Scrollbar,UI):
     """docstring for Scrollbar."""
 
     def __init__(self, parent, *args, **kwargs):
-        UI.inherit(self,parent)
+        Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
         if 'orient' in kwargs and kwargs['orient']==tkinter.HORIZONTAL:
             kwargs['sticky']=kwargs.get('sticky',tkinter.E+tkinter.W)
@@ -211,14 +212,10 @@ class Scrollbar(Gridded,tkinter.Scrollbar,UI):
         # yscrollbar.config(background=self.theme.background)
         # yscrollbar.config(activebackground=self.theme.activebackground)
         # yscrollbar.config(troughcolor=self.theme.background)
-        super(Scrollbar, self).__init__(
-        parent=parent,
-        **kwargs
-        )
+        tkinter.Scrollbar.__init__(self,parent,
+                                    **kwargs
+                                    )
         """after theme is inherited:"""
-        self['background']=self.theme.background
-        self['activebackground']=self.theme.activebackground
-        self['troughcolor']=self.theme.background
         UI.__init__(self)
         self.dogrid()
 class ScrollingFrame(Frame):
