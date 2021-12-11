@@ -73,7 +73,6 @@ class Theme(object):
                                         file = imgurl).zoom(x,x).subsample(y,y)
             else: #if close enough...
                 self.photo[name] = tkinter.PhotoImage(file = imgurl)
-            log.info(type(self.photo[name]))
         for name,relurl in [ ('transparent','images/AZT stacks6.png'),
                             ('small','images/AZT stacks6_sm.png'),
                             ('icon','images/AZT stacks6_icon.png'),
@@ -420,8 +419,6 @@ class Gridded(ObectwArgs):
                             'row','rowspan',
                             'column','columnspan',
                             'padx','pady','ipadx','ipady']
-        # log.info("Gridded parent: {}".format(parent))
-        # log.info("Gridding? ({})".format(kwargs))
         self._grid=False
         if set(kwargs) & set(self.gridkwargs):
             self._grid=True
@@ -640,34 +637,11 @@ class Frame(Gridded,Childof,tkinter.Frame):
         if self.configured>10:
             return
         availablexy(self)
-        """The above script calculates how much screen is left to fill, these
-        next two lines give a max widget size to stay in the window."""
-        # height=self.parent.winfo_screenheight()-self.otherrowheight
-        # width=self.parent.winfo_screenwidth()-self.othercolwidth
-        # print('height=',self.parent.winfo_screenheight(),-self.otherrowheight)
-        # print('width=',self.parent.winfo_screenwidth(),-self.othercolwidth)
-        # print(height,width)
-        """This is how much space the contents of the scrolling canvas is asking
-        for. We don't need the scrolling frame to be any bigger than this."""
-        """These lines are different than for the scrolling frame"""
         contentrw=self.winfo_reqwidth()
         contentrh=self.winfo_reqheight()
-        """If the current scrolling frame dimensions are smaller than the
-        scrolling content, or else pushing the window off the screen, then make
-        the scrolling window the smaller of
-            -the scrolling content or
-            -the max dimensions, from above."""
-        # if self.winfo_width() < contentrw:
-        #      self.config(width=contentrw)
-        # if self.winfo_width() > self.maxwidth:
-        #     self.config(width=self.maxwidth)
         if ((self.winfo_width() < contentrw)
                 or (self.winfo_width() > self.maxwidth)):
                 self.config(width=min(self.maxwidth,contentrw))
-        # if self.winfo_height() < contentrh:
-        #     self.config(height=contentrh)
-        # if self.winfo_height() > self.maxheight:
-        #     self.config(height=self.maxheight)
         if ((self.winfo_height() < contentrh)
                 or (self.winfo_height() > self.maxheight)):
             self.config(height=min(self.maxheight,contentrh))
@@ -677,13 +651,6 @@ class Frame(Gridded,Childof,tkinter.Frame):
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
-        # for attr in ['fonts','theme','debug','wraplength','photo','renderings',
-        #         'program','exitFlag']:
-        #     if hasattr(parent,attr):
-        # for opt in ['optionlist','command','window']:
-        #     if opt in kwargs:
-        #         del kwargs[opt]
-        #         setattr(self,attr,getattr(parent,attr))
         tkinter.Frame.__init__(self,parent,**kwargs)
         UI.__init__(self)
         self.dogrid()
@@ -694,10 +661,7 @@ class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
         Childof.__init__(self,parent)
         Text.__init__(self,parent,**kwargs)
         kwargs=self.lesstextkwargs(**kwargs)
-        log.info("label parent: {}".format(parent))
         """These shouldn't need to be here..."""
-        # self.theme=parent.theme
-        # self.parent=parent
         tkinter.Label.__init__(self,
                                 parent,
                                 text=self.text,
@@ -705,7 +669,6 @@ class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
                                 font=self.font,
                                 **kwargs)
         i=self.grid_info()
-        log.info("Label final grid_info: {}".format(i))
         if i and self.text:
             self.wrap()
         UI.__init__(self)
@@ -749,7 +712,7 @@ class Button(Gridded,Text,tkinter.Button):
                                 **kwargs)
         UI.__init__(self)
         self.dogrid()
-class EntryField(Gridded,Childof,UI,tkinter.Entry):
+class EntryField(Gridded,Text,UI,tkinter.Entry):
     def renderlabel(self,grid=False,event=None):
         v=self.get()
         if hasattr(self,'rendered'): #Get grid info before destroying old one
@@ -772,8 +735,12 @@ class EntryField(Gridded,Childof,UI,tkinter.Entry):
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
-        self.parent=parent
-        tkinter.Entry.__init__(self,parent,**kwargs)
+        Text.__init__(self,parent)
+        kwargs=self.lesstextkwargs(**kwargs)
+        tkinter.Entry.__init__(self,parent,
+                                font=self.font,
+                                text=self.text,
+                                **kwargs)
         if render is True:
             self.bind('<KeyRelease>', self.renderlabel)
             self.renderlabel()
@@ -801,12 +768,11 @@ class CheckButton(Gridded,Childof,tkinter.Checkbutton):
         Childof.__init__(self,parent)
         tkinter.Checkbutton.__init__(self,
                                 parent,
-                                # bg=self.theme.background,
                                 image=self.theme.photo['uncheckedbox'],
                                 selectimage=self.theme.photo['checkedbox'],
                                 indicatoron=False,
                                 compound='left',
-                                font=self.fonts['read'],
+                                font=self.theme.fonts['read'],
                                 anchor='w',
                                 **kwargs
                                 )
