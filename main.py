@@ -8451,10 +8451,9 @@ def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    root = program['root']=ui.Root() #tkinter.Tk()
-    program['theme']=ui.Theme(program)
+    root = program['root']=ui.Root(program) #tkinter.Tk()
+    program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
-    root.settheme(program['theme'])
     root.program=program
     root.wraplength=root.winfo_screenwidth()-300 #exit button
     root.renderings={} #initialize this somewhere...
@@ -8506,30 +8505,20 @@ def mainproblem():
         for w in errorroot.winfo_children():
             w.destroy()
     except:
-        errorroot = ui.Root()
-        if 'theme' in program:
-            theme=program['theme']
-        else:
-            theme=ui.Theme(program)
-            errorroot.settheme(theme)
-            errorroot.renderings={}
+        errorroot = ui.Root(program)
+        errorroot.renderings={}
     errorroot.title("Serious Problem!")
-    try:
-        char="Charis SIL"
-        titlefont=tkinter.font.Font(family=char, size=36)
-        noticefont=tkinter.font.Font(family=char,size=24)
-        defaultfont=tkinter.font.Font(family=char, size=12)
-    except:
-        titlefont=noticefont=defaultfont=tkinter.font.Font(family=char, size=12)
-    l=ui.Label(errorroot,text="Hey! You found a problem! (details and "
-            "solution below)",justify='left',font='titlefont',
+    errorroot.withdraw()
+    errorw=ui.Window(errorroot)
+    l=ui.Label(errorw.frame,text="Hey! You found a problem! (details and "
+            "solution below)",justify='left',font='title',
             row=0,column=0
             )
     if exceptiononload:
         durl=('https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md'
                 '#dependencies')
-        m=ui.Label(errorroot,text="\nPlease see {}".format(durl),
-            justify='left', font=noticefont,
+        m=ui.Label(errorw.frame,text="\nPlease see {}".format(durl),
+            justify='left', font='instructions',
             row=1,column=0
             )
         m.bind("<Button-1>", lambda e: openweburl(durl))
@@ -8543,16 +8532,17 @@ def mainproblem():
             "session, please attach "
             "your compressed log file ({})".format(file))
     eurl+='%0d%0a--log info--%0d%0a{}'.format('%0d%0a'.join(lcontents))
-    n=ui.Label(errorroot,text="\n\nIf this information doesn't help "
+    n=ui.Label(errorw.frame,text="\n\nIf this information doesn't help "
         "you fix this, please click on this text to Email me your log (to {})"
-        "".format(addr),justify='left', font=defaultfont)
-    n.grid(row=2,column=0)
+        "".format(addr),justify='left', font='default',
+        row=2,column=0
+        )
     n.bind("<Button-1>", lambda e: openweburl(eurl))
-    scroll=ui.ScrollingFrame(errorroot,row=3,column=0)
+    scroll=ui.ScrollingFrame(errorw.frame,row=3,column=0)
     o=ui.Label(scroll.content,text="\n\nThe end of {} / {} are below:"
                 "\n\n{}".format(log.filename,file,''.join(lcontents)),
                 justify='left',
-                font=defaultfont,
+                font='report',
                 row=0,column=0)
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
