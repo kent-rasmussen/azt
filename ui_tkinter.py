@@ -1418,7 +1418,7 @@ def availablexy(self,w=None):
     log.log(3,"self.othercolwidth: {}; self.otherrowheight: {}".format(
                 self.othercolwidth,self.otherrowheight))
     log.log(3,"w.parent.winfo_class: {}".format(w.parent.winfo_class()))
-    if hasattr(w.parent,'grid_info') and w.parent.grid_info(): 
+    if hasattr(w.parent,'grid_info') and w.parent.grid_info():
         # winfo_class() not in parentclasses:
         # if hasattr(w.parent,'grid_info'): #one of these should be sufficient
             availablexy(self,w.parent)
