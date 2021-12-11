@@ -442,9 +442,9 @@ class ScrollingFrame(Frame):
         # self.canvas.bind('<Configure>', self._configure_canvas) #called by:
         self.content.bind('<Configure>', self._configure_interior)
         self.bind('<Visibility>', self.windowsize)
-class Window(Toplevel):
         UI.__init__(self)
         self.dogrid()
+class Window(Childof,Toplevel):
     def resetframe(self):
         if self.parent.exitFlag.istrue():
             return
@@ -478,7 +478,7 @@ class Window(Toplevel):
             self.destroy() #do this for everything
     def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
                 choice=None, *args, **kwargs):
-        UI.inherit(self,parent)
+        Childof.__init__(self,parent)
         self.parent=parent
         self.theme=parent.theme
         """Things requiring tkinter.Window below here"""
