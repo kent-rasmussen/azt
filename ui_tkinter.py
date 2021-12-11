@@ -693,12 +693,11 @@ class Menu(tkinter.Menu,UI): #not Text
         label=self.pad(label)
         tkinter.Menu.add_cascade(self,label=label,menu=menu)
     def __init__(self,parent,**kwargs):
-        UI.inherit(self,parent)
+        Childof.__init__(self,parent)
         self.theme=parent.theme
-        super(Menu,self).__init__(parent,**kwargs)
-        self['font']=self.theme.fonts['default']
-        self['activebackground']=self.theme.background
-        self['background']=self.theme.menubackground
+        tkinter.Menu.__init__(parent,
+                                font=self.theme.fonts['default']
+                                **kwargs)
         UI.__init__(self)
 class ContextMenu(Text,UI):
     def updatebindings(self):
@@ -755,14 +754,13 @@ class ContextMenu(Text,UI):
     def _unbind_to_makemenus(self,event):
         self.parent.unbind_all('<Button-3>')
     def getroot(self):
-        self.root=tkinter.Tk()
+        self.root=Root(self.theme) #tkinter.Tk()
         self.root.withdraw()
         self.root.parent=self.parent
         UI.inherit(self.root,self.parent)
     def __init__(self,parent,context=None):
-        self.parent=parent
+        Childof.__init__(self,parent)
         self.getroot()
-        UI.inherit(self,parent)
         super(ContextMenu,self).__init__(parent)
         self.parent.context=self
         self.context=context #where the menu is showing (e.g., verifyT)
