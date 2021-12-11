@@ -380,10 +380,9 @@ class ScrollingFrame(Frame):
         self.update_idletasks()
         self.canvas.yview_moveto(1)
     def __init__(self,parent,xscroll=False,**kwargs):
-        UI.inherit(self,parent)
         Gridded.__init__(self,**kwargs)
+        Childof.__init__(self,parent)
         """Make this a Frame, with all the inheritances, I need"""
-        # inherit(self)
         super(ScrollingFrame,self).__init__(parent, **kwargs)
         """Not sure if I want these... rather not hardcode."""
         # log.debug(self.parent.winfo_children())
