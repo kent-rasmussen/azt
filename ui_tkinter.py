@@ -31,11 +31,10 @@ class Theme(object):
     def setimages(self):
         # Program icon(s) (First should be transparent!)
         log.info("Scaling images; please wait...") #threading?
-        try:
-            if program: #'scale' in
-                scale=program['scale']
-        except NameError:
-            scale=1
+        if self.program: #'scale' in
+            scale=self.program['scale']
+        else:
+            scale=1    
         # threading.Thread(target=thread_function, args=(arg1,),kwargs={'arg2': arg2})
         # if process:
         #     from multiprocessing import Process
