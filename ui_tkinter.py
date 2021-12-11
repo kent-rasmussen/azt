@@ -992,6 +992,7 @@ class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
                             row=0,
                             column=0,
                             **kwargs)
+        UI.__init__(self)
 class ToolTip(object):
     """
     create a tooltip for a given widget
