@@ -138,6 +138,7 @@ class Root(tkinter.Tk,UI):
     def __init__(self, *args, **kwargs):
         self.exitFlag = ExitFlag()
         super(Root, self).__init__()
+        UI.__init__(self)
         self.protocol("WM_DELETE_WINDOW", lambda s=self: Window.on_quit(s))
 class Toplevel(tkinter.Toplevel,UI): #NoParent
     def __init__(self, parent, *args, **kwargs):
@@ -147,6 +148,7 @@ class Toplevel(tkinter.Toplevel,UI): #NoParent
         super(Toplevel, self).__init__(parent)
         self['background']=self.theme.background
         Childof.__init__(self,parent)
+        UI.__init__(self)
     def windowsize(self):
         if not hasattr(self,'configured'):
             self.configured=0
@@ -196,6 +198,7 @@ class Toplevel(tkinter.Toplevel,UI): #NoParent
         super(Frame, self).__init__(parent,**kwargs)
         self['background']=self.theme.background
         self['bg']=self.theme.background
+        UI.__init__(self)
 class Scrollbar(Gridded,tkinter.Scrollbar,UI):
     """docstring for Scrollbar."""
 
@@ -217,6 +220,7 @@ class Scrollbar(Gridded,tkinter.Scrollbar,UI):
         self['background']=self.theme.background
         self['activebackground']=self.theme.activebackground
         self['troughcolor']=self.theme.background
+        UI.__init__(self)
 class ScrollingFrame(Frame):
     def _bound_to_mousewheel(self, event):
         # with Windows OS
@@ -439,6 +443,7 @@ class ScrollingFrame(Frame):
         self.content.bind('<Configure>', self._configure_interior)
         self.bind('<Visibility>', self.windowsize)
 class Window(Toplevel):
+        UI.__init__(self)
     def resetframe(self):
         if self.parent.exitFlag.istrue():
             return
@@ -507,6 +512,7 @@ class Window(Toplevel):
                                 command=cmd,
                                             )
             self.backButton.grid(column=3,row=2)
+        UI.__init__(self)
 class Renderer(ObectwArgs):
     def __init__(self,test=False,**kwargs):
         try:
@@ -691,6 +697,7 @@ class Menu(tkinter.Menu,UI): #not Text
         self['font']=self.theme.fonts['default']
         self['activebackground']=self.theme.background
         self['background']=self.theme.menubackground
+        UI.__init__(self)
 class ContextMenu(Text,UI):
     def updatebindings(self):
         def bindthisncheck(w):
@@ -760,6 +767,7 @@ class ContextMenu(Text,UI):
         # self.inherit()
         self.updatebindings()
 class Label(Gridded,Text,tkinter.Label,UI): #,tkinter.Label
+        UI.__init__(self)
     def __init__(self, parent, **kwargs):
         UI.inherit(self,parent)
         log.info("label parent: {}".format(parent))
@@ -773,6 +781,7 @@ class Label(Gridded,Text,tkinter.Label,UI): #,tkinter.Label
         if i and self.text:
             self.wrap()
         self['background']=kwargs.get('background',self.theme.background)
+        UI.__init__(self)
 class EntryField(Gridded,tkinter.Entry,UI):
     def renderlabel(self,grid=False,event=None):
         v=self.get()
@@ -799,6 +808,7 @@ class EntryField(Gridded,tkinter.Entry,UI):
         if render is True:
             self.bind('<KeyRelease>', self.renderlabel)
             self.renderlabel()
+        UI.__init__(self)
         self['background']=self.theme.offwhite #because this is for entry...
 class RadioButton(tkinter.Radiobutton,UI):
     def __init__(self, parent, column=0, row=0, sticky='w', **kwargs):
@@ -810,6 +820,7 @@ class RadioButton(tkinter.Radiobutton,UI):
         kwargs['selectcolor']=self.theme.activebackground
         super(RadioButton,self).__init__(parent,**kwargs)
         self.grid(column=column, row=row, sticky=sticky)
+        self.dogrid()
 class RadioButtonFrame(Frame):
     def __init__(self, parent, horizontal=False,**kwargs):
         UI.inherit(self,parent)
@@ -841,6 +852,7 @@ class RadioButtonFrame(Frame):
             else:
                 row+=1
         UI.__init__(self)
+        self.dogrid()
 class Button(Gridded,Text,tkinter.Button,UI):
     def nofn(self):
         pass
@@ -875,7 +887,6 @@ class Button(Gridded,Text,tkinter.Button,UI):
         self['bg']=self.theme.background
 class CheckButton(tkinter.Checkbutton,UI):
     def __init__(self, parent, **kwargs):
-        self.parent=parent
         self.inherit()
         super(CheckButton,self).__init__(parent,
                                 bg=self.theme.background,
