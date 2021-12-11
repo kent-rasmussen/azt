@@ -650,7 +650,7 @@ class Text(ObectwArgs):
             if self.tkimg is not None:
                 thisrenderings[self.text]=self.image=self.tkimg
                 self.text=''
-    def __init__(self,parent,**kwargs):
+    def __init__(self,**kwargs):
         self.text=kwargs.pop('text','')
         self.renderings=parent.renderings
         self.anchor=kwargs.pop('anchor',"w")
@@ -675,7 +675,7 @@ class Text(ObectwArgs):
         else:
             self.text=nfc(self.text)
         log.info(parent)
-        super(Text,self).__init__(parent,
+        super(Text,self).__init__(
                                     text=self.text,
                                     image=self.image,
                                     **kwargs)
