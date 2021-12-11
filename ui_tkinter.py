@@ -144,10 +144,8 @@ class Toplevel(tkinter.Toplevel,UI): #NoParent
     def __init__(self, parent, *args, **kwargs):
         log.info("Initializing Toplevel object")
         log.info("Toplevel parent: {}".format(parent))
-        UI.inherit(self,parent)
-        super(Toplevel, self).__init__(parent)
-        self['background']=self.theme.background
         Childof.__init__(self,parent)
+        tkinter.Toplevel.__init__(self)
         UI.__init__(self)
     def windowsize(self):
         if not hasattr(self,'configured'):
