@@ -911,19 +911,20 @@ class CheckButton(tkinter.Checkbutton,UI):
         self.dogrid()
 class ButtonFrame(Frame):
     def __init__(self,parent,
-                    optionlist,command,
-                    window=None,
                     **kwargs
                     ):
-        UI.inherit(self,parent)
-        self.parent=parent
+        # Gridded.__init__(self,**kwargs)
+        # Childof.__init__(self,parent)
         super(ButtonFrame,self).__init__(parent,**kwargs)
         for kwarg in ['row', 'column']: #done with these
             if kwarg in kwargs:
                 del kwargs[kwarg]
-        log.info("Buttonframe option list: {} ({})".format(optionlist,command))
         gimmenull=False # When do I want a null option added to my lists? ever?
         self['background']=self.theme.background
+        optionlist=kwargs['optionlist']
+        command=kwargs['command']
+        log.info("Buttonframe option list: {} ({})".format(optionlist,command))
+        window=kwargs['window']=kwargs.get('window',None)
         i=0
         """Make sure list is in the proper format: list of dictionaries"""
         if type(optionlist) is not list:
