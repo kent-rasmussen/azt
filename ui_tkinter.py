@@ -123,6 +123,7 @@ class UI(ObectwArgs):
                 self['bg']=self.theme.background
                 self['foreground']=self.theme.background
                 self['activebackground']=self.theme.activebackground
+                self['troughcolor']=self.theme.background
             except TypeError as e:
                 log.info("TypeError {}".format(e))
         super(UI, self).__init__(*args, **kwargs)
