@@ -820,6 +820,7 @@ class RadioButton(tkinter.Radiobutton,UI):
         kwargs['selectcolor']=self.theme.activebackground
         super(RadioButton,self).__init__(parent,**kwargs)
         self.grid(column=column, row=row, sticky=sticky)
+        UI.__init__(self)
         self.dogrid()
 class RadioButtonFrame(Frame):
     def __init__(self, parent, horizontal=False,**kwargs):
@@ -885,6 +886,7 @@ class Button(Gridded,Text,tkinter.Button,UI):
         self['activebackground']=self.theme.activebackground
         self['background']=self.theme.background
         self['bg']=self.theme.background
+        UI.__init__(self)
 class CheckButton(tkinter.Checkbutton,UI):
     def __init__(self, parent, **kwargs):
         self.inherit()
@@ -900,6 +902,7 @@ class CheckButton(tkinter.Checkbutton,UI):
                                 anchor='w',
                                 **kwargs
                                 )
+        UI.__init__(self)
 class ButtonFrame(Frame):
     def __init__(self,parent,
                     optionlist,command,
@@ -973,6 +976,7 @@ class ButtonFrame(Frame):
                     **kwargs
                     )
             i=i+1
+        UI.__init__(self)
 class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
     """This needs to go inside another frame, for accurrate grid placement"""
     def __init__(self,parent,optionlist,command,window=None,**kwargs):
