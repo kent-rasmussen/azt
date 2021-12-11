@@ -146,8 +146,7 @@ class Toplevel(tkinter.Toplevel,UI): #NoParent
         UI.inherit(self,parent)
         super(Toplevel, self).__init__(parent)
         self['background']=self.theme.background
-        self['bg']=self.theme.background
-class Frame(Gridded,tkinter.Frame,UI):
+        Childof.__init__(self,parent)
     def windowsize(self):
         if not hasattr(self,'configured'):
             self.configured=0
@@ -189,6 +188,7 @@ class Frame(Gridded,tkinter.Frame,UI):
     def __init__(self, parent, **kwargs):
         log.info("Initializing Frame object")
         UI.inherit(self,parent)
+        Gridded.__init__(self,**kwargs)
         # for attr in ['fonts','theme','debug','wraplength','photo','renderings',
         #         'program','exitFlag']:
         #     if hasattr(parent,attr):
@@ -201,6 +201,7 @@ class Scrollbar(Gridded,tkinter.Scrollbar,UI):
 
     def __init__(self, parent, *args, **kwargs):
         UI.inherit(self,parent)
+        Childof.__init__(self,parent)
         if 'orient' in kwargs and kwargs['orient']==tkinter.HORIZONTAL:
             kwargs['sticky']=kwargs.get('sticky',tkinter.E+tkinter.W)
         else:
@@ -376,6 +377,7 @@ class ScrollingFrame(Frame):
         self.canvas.yview_moveto(1)
     def __init__(self,parent,xscroll=False,**kwargs):
         UI.inherit(self,parent)
+        Gridded.__init__(self,**kwargs)
         """Make this a Frame, with all the inheritances, I need"""
         # inherit(self)
         super(ScrollingFrame,self).__init__(parent, **kwargs)
@@ -765,7 +767,6 @@ class Label(Gridded,Text,tkinter.Label,UI): #,tkinter.Label
         self.theme=parent.theme
         self.parent=parent
         super(Label,self).__init__(
-            parent,
             **kwargs)
         i=self.grid_info()
         log.info("Label final grid_info: {}".format(i))
@@ -839,6 +840,7 @@ class RadioButtonFrame(Frame):
                 column+=1
             else:
                 row+=1
+        UI.__init__(self)
 class Button(Gridded,Text,tkinter.Button,UI):
     def nofn(self):
         pass
@@ -878,6 +880,7 @@ class CheckButton(tkinter.Checkbutton,UI):
         super(CheckButton,self).__init__(parent,
                                 bg=self.theme.background,
                                 activebackground=self.theme.activebackground,
+                                # bg=self.theme.background,
                                 image=self.theme.photo['uncheckedbox'],
                                 selectimage=self.theme.photo['checkedbox'],
                                 indicatoron=False,
