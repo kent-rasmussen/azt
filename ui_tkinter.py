@@ -99,7 +99,7 @@ class Childof(object):
             else:
                 log.info("parent doesn't have attr {}, skipping inheritance"
                         "".format(attr))
-    def __init__(self, *args, **kwargs): #because this is used everywhere.
+    def __init__(self, parent): #because this is used everywhere.
         log.info("Initializing Childof object")
         self.parent=parent
         self.inherit()
