@@ -26,24 +26,8 @@ class NoParent(object):
             args.remove(args[0])
         super(NoParent, self).__init__(*args, **kwargs)
 class Gridded(ObectwArgs):
-    def __init__(self, parent, *args, **kwargs): #because this is used everywhere.
-        """this removes gridding kwargs from the widget calls"""
-        log.info("Gridded parent: {}".format(parent))
-        log.info("Gridding? ({})".format(kwargs))
-        grid=False
-        if set(kwargs) & set(['sticky','row','column','columnspan','padx','pady']):
-            grid=True
-            self.sticky=kwargs.pop('sticky',"ew")
-            self.row=kwargs.pop('row',kwargs.pop('r',0))
-            self.column=kwargs.pop('column',kwargs.pop('col',kwargs.pop('c',0)))
-            self.columnspan=kwargs.pop('columnspan',1)
-            self.rowspan=kwargs.pop('rowspan',1)
-            self.padx=kwargs.pop('padx',0)
-            self.pady=kwargs.pop('pady',0)
-            self.ipadx=kwargs.pop('ipadx',0)
-            self.ipady=kwargs.pop('ipady',0)
-        super(Gridded, self).__init__(parent, *args, **kwargs)
-        if grid:
+    def dogrid(self):
+        if self._grid:
             log.info("Gridding at r{},c{},rsp{},csp{},st{},padx{},pady{},"
                     "ipadx{},ipady{}".format(self.row,
                                 self.column,
@@ -66,6 +50,28 @@ class Gridded(ObectwArgs):
                         columnspan=self.columnspan,
                         rowspan=self.rowspan
                         )
+    def lessgridkwargs(self,**kwargs):
+        for opt in self.gridkwargs:
+            if opt in kwargs:
+                del kwargs[opt]
+        return kwargs
+    def __init__(self, *args, **kwargs): #because this is used everywhere.
+        """this removes gridding kwargs from the widget calls"""
+        self.gridkwargs=['sticky','row','column','columnspan','padx','pady']
+        # log.info("Gridded parent: {}".format(parent))
+        # log.info("Gridding? ({})".format(kwargs))
+        self._grid=False
+        if set(kwargs) & set(self.gridkwargs):
+            self._grid=True
+            self.sticky=kwargs.pop('sticky',"ew")
+            self.row=kwargs.pop('row',kwargs.pop('r',0))
+            self.column=kwargs.pop('column',kwargs.pop('col',kwargs.pop('c',0)))
+            self.columnspan=kwargs.pop('columnspan',1)
+            self.rowspan=kwargs.pop('rowspan',1)
+            self.padx=kwargs.pop('padx',0)
+            self.pady=kwargs.pop('pady',0)
+            self.ipadx=kwargs.pop('ipadx',0)
+            self.ipady=kwargs.pop('ipady',0)
         else:
             log.info("Not Gridding! ({})".format(kwargs))
 class UI(ObectwArgs):
