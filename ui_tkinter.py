@@ -86,6 +86,7 @@ class UI(ObectwArgs):
             self.ww.close()
         except tkinter.TclError:
             pass
+class Childof(object):
     def inherit(self,parent=None,attr=None):
         """This function brings these attributes from the parent, to inherit
         from the root window, through all windows, frames, and scrolling frames, etc
@@ -111,6 +112,10 @@ class UI(ObectwArgs):
                 log.info("parent doesn't have attr {}, skipping inheritance"
                         "".format(attr))
     def __init__(self, *args, **kwargs): #because this is used everywhere.
+        log.info("Initializing Childof object")
+        self.parent=parent
+        self.inherit()
+class UI(ObectwArgs):
         log.info("Initializing UI object")
         if hasattr(self,'theme'):
             try:
