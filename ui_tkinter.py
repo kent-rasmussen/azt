@@ -782,7 +782,6 @@ class Label(Gridded,Text,tkinter.Label,UI): #,tkinter.Label
         log.info("Label final grid_info: {}".format(i))
         if i and self.text:
             self.wrap()
-        self['background']=kwargs.get('background',self.theme.background)
         UI.__init__(self)
         self.dogrid()
 class EntryField(Gridded,tkinter.Entry,UI):
@@ -805,7 +804,8 @@ class EntryField(Gridded,tkinter.Entry,UI):
         elif grid:
                 self.rendergrid=mygrid
     def __init__(self, parent, render=False, **kwargs):
-        UI.inherit(self,parent)
+        Gridded.__init__(self,**kwargs)
+        Childof.__init__(self,parent)
         self.parent=parent
         super(EntryField,self).__init__(parent,**kwargs)
         if render is True:
@@ -815,8 +815,9 @@ class EntryField(Gridded,tkinter.Entry,UI):
         self['background']=self.theme.offwhite #because this is for entry...
         self.dogrid()
 class RadioButton(tkinter.Radiobutton,UI):
-    def __init__(self, parent, column=0, row=0, sticky='w', **kwargs):
-        UI.inherit(self,parent)
+    def __init__(self, parent, **kwargs):
+        Gridded.__init__(self,**kwargs)
+        Childof.__init__(self,parent)
         self.parent=parent
         if 'font' not in kwargs:
             kwargs['font']=self.theme.fonts['default']
@@ -828,7 +829,8 @@ class RadioButton(tkinter.Radiobutton,UI):
         self.dogrid()
 class RadioButtonFrame(Frame):
     def __init__(self, parent, horizontal=False,**kwargs):
-        UI.inherit(self,parent)
+        Gridded.__init__(self,**kwargs)
+        Childof.__init__(self,parent)
         for vars in ['var','opts']:
             if (vars not in kwargs):
                 print('You need to set {} for radio button frame!').format(vars)
@@ -863,7 +865,8 @@ class Button(Gridded,Text,tkinter.Button,UI):
         pass
     def __init__(self, parent, choice=None, window=None, command=None, **kwargs):
         """Usta include column=0, row=1, norender=False,"""
-        UI.inherit(self,parent)
+        Gridded.__init__(self,**kwargs)
+        Childof.__init__(self,parent)
         # `command` is my hacky command specification, with lots of args added.
         # cmd is just the command passing through.
         if 'cmd' in kwargs and kwargs['cmd'] is not None:
@@ -887,9 +890,6 @@ class Button(Gridded,Text,tkinter.Button,UI):
             parent,
             command=cmd,
             **kwargs)
-        self['activebackground']=self.theme.activebackground
-        self['background']=self.theme.background
-        self['bg']=self.theme.background
         UI.__init__(self)
         self.dogrid()
 class CheckButton(tkinter.Checkbutton,UI):
