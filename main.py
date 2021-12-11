@@ -5266,9 +5266,12 @@ class Check():
         self.tonereportfile='_'.join(bits)+".txt"
         checks=self.status.checks(wsorted=True)
         if not checks:
-            log.error("Hey, sort some morphemes in at least one frame before "
+            error=_("Hey, sort some morphemes in at least one frame before "
                         "trying to make a tone report!")
+            log.error(error)
             self.runwindow.waitdone()
+            self.runwindow.destroy()
+            ErrorNotice(error)
             return
         start_time=time.time()
         self.makeanalysis()
@@ -8024,10 +8027,9 @@ class ConfigParser(configparser.ConfigParser):
 class ErrorNotice(ui.Window):
     """this is for things that I want the user to know, without having
     to find it in the logs."""
-    def __init__(self, parent, title, text):
+    def __init__(self, text, parent=None, title="Error!"):
         if not parent:
-            log.error("No parent for ErrorNotice; exiting. ({})".format(text))
-            exit()
+            parent=program['root']
         super(ErrorNotice, self).__init__(parent,title=title)
         self.title = title
         self.text = text
