@@ -126,7 +126,8 @@ class UI(ObectwArgs):
                 self['troughcolor']=self.theme.background
             except TypeError as e:
                 log.info("TypeError {}".format(e))
-        super(UI, self).__init__(*args, **kwargs)
+            except tkinter.TclError as e:
+                log.info("TclError {}".format(e))
         # super(UI, self).__init__(*args, **kwargs)
 class Root(tkinter.Tk,UI):
     """docstring for Root."""
