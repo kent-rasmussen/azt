@@ -1482,8 +1482,9 @@ class Check():
             window.scroll=ui.Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                    optionslist,self.setprofile,
-                                    window
+                                    optionlist=optionslist,
+                                    command=self.setprofile,
+                                    window=window
                                     )
             buttonFrame1.grid(column=0, row=0)
     def getcvt(self,event=None):
@@ -5616,8 +5617,12 @@ class Check():
                 ("badSubcheck",bscv1isv2nsc+" (V1=V2≠"+check.subcheck+")")]
         else:
             log.info("Sorry, that check isn't set up yet.")
-        buttonFrame1=ui.ButtonFrame(window.frame,window,check,entry,list=problemopts,
-                                    command=Check.fixdiff,width="50")
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    # check,entry,
+                                    window=window,
+                                    optionlist=problemopts,
+                                    command=Check.fixdiff,
+                                    width="50")
         buttonFrame1.grid(column=0, row=3)
         i=4 #start at this row
         print(result)
@@ -5636,8 +5641,11 @@ class Check():
         q2=_("What are the two vowels?")
         ui.Label(window.frame, text=q2,anchor=tkinter.W).grid(column=0, row=3,
                                                                 columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,window,check,entry,
-                                list=check.db.vowels(),command=Check.fixVs)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                window=window,
+                                # check,entry,
+                                optionlist=check.db.vowels(),
+                                command=Check.fixVs)
         ButtonFrame1.grid(column=0, row=4)
     def fixV1(parent, window, check, entry, choice):
         t=(_('fixV1:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
@@ -5654,16 +5662,22 @@ class Check():
         ui.Label(window.frame, text=t3, anchor=tkinter.W).grid(column=0,
                                                                 row=1,
                                                                 columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,window,check,entry,
-                                list=check.db.vowels(),command=Check.newform)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                window=window,
+                                # check,entry,
+                                optionlist=check.db.vowels(),
+                                command=Check.newform)
         ButtonFrame1.grid(column=0, row=2)
     def fixV2(parent, window, check, entry, choice):
         check.fix='V2'
         t=(_('fixV2:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
         t=(_("What is the second vowel?"))
         ui.Label(window.frame, text=t,justify=tkinter.LEFT).grid(column=0, row=1, columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,window,check,entry,
-                                    list=check.db.vowels(),command=Check.newform)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                    window=window,
+                                    # check,entry,
+                                    optionlist=check.db.vowels(),
+                                    command=Check.newform)
         ButtonFrame1.grid(column=0, row=2)
     def fixdiff(parent, window, check, entry, choice):
         """We need to fix problems in a more intuitively obvious way"""
