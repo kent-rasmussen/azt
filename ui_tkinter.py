@@ -74,18 +74,6 @@ class Gridded(ObectwArgs):
             self.ipady=kwargs.pop('ipady',0)
         else:
             log.info("Not Gridding! ({})".format(kwargs))
-class UI(ObectwArgs):
-    """docstring for Widget."""
-    def wait(self,msg=None):
-        if hasattr(self,'ww') and self.ww.winfo_exists() == True:
-            log.debug("There is already a wait window: {}".format(self.ww))
-            return
-        self.ww=Wait(self,msg)
-    def waitdone(self):
-        try:
-            self.ww.close()
-        except tkinter.TclError:
-            pass
 class Childof(object):
     def inherit(self,parent=None,attr=None):
         """This function brings these attributes from the parent, to inherit
@@ -116,6 +104,18 @@ class Childof(object):
         self.parent=parent
         self.inherit()
 class UI(ObectwArgs):
+    """docstring for UI, after tkinter widgets are initted."""
+    def wait(self,msg=None):
+        if hasattr(self,'ww') and self.ww.winfo_exists() == True:
+            log.debug("There is already a wait window: {}".format(self.ww))
+            return
+        self.ww=Wait(self,msg)
+    def waitdone(self):
+        try:
+            self.ww.close()
+        except tkinter.TclError:
+            pass
+    def __init__(self): #because this is used everywhere.
         log.info("Initializing UI object")
         if hasattr(self,'theme'):
             try:
