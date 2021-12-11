@@ -127,6 +127,7 @@ class UI(ObectwArgs):
             except TypeError as e:
                 log.info("TypeError {}".format(e))
         super(UI, self).__init__(*args, **kwargs)
+        # super(UI, self).__init__(*args, **kwargs)
 class Root(tkinter.Tk,UI):
     """docstring for Root."""
     def settheme(self,theme):
