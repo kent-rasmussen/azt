@@ -985,8 +985,12 @@ class ButtonFrame(Frame):
         UI.__init__(self)
 class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
     """This needs to go inside another frame, for accurrate grid placement"""
-    def __init__(self,parent,optionlist,command,window=None,**kwargs):
-        UI.inherit(self,parent)
+    def __init__(self,parent,**kwargs):
+        Gridded.__init__(self,**kwargs)
+        Childof.__init__(self,parent)
+        optionlist=kwargs['optionlist']
+        command=kwargs['command']
+        window=kwargs['window']=kwargs.get('window',None)
         ScrollingFrame.__init__(self,parent,**kwargs)
         for kwarg in ['row', 'column']: #done with these
             if kwarg in kwargs:
