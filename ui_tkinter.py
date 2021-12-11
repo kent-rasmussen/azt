@@ -894,10 +894,9 @@ class Button(Gridded,Text,tkinter.Button,UI):
         self.dogrid()
 class CheckButton(tkinter.Checkbutton,UI):
     def __init__(self, parent, **kwargs):
-        self.inherit()
+        Gridded.__init__(self,**kwargs)
+        Childof.__init__(self,parent)
         super(CheckButton,self).__init__(parent,
-                                bg=self.theme.background,
-                                activebackground=self.theme.activebackground,
                                 # bg=self.theme.background,
                                 image=self.theme.photo['uncheckedbox'],
                                 selectimage=self.theme.photo['checkedbox'],
