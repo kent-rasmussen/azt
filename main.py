@@ -274,11 +274,11 @@ class Check():
         text=_('What LIFT database do you want to work on?')
         ui.Label(window.frame, text=text).grid(column=0, row=0)
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                ['New']+filenamelist+['Other'],
-                                setfilename,
-                                window
+                                optionlist=['New']+filenamelist+['Other'],
+                                command=setfilename,
+                                window=window,
+                                column=0, row=1
                                 )
-        buttonFrame1.grid(column=0, row=1)
         window.wait_window(window)
     def settingsfilecheck(self,basename):
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
@@ -542,11 +542,11 @@ class Check():
                                 'to address you in?')
                 ).grid(column=0, row=0)
         buttonFrame1=ui.ButtonFrame(window.frame,
-                                self.parent.interfacelangs,
-                                self.setinterfacelangwrapper,
-                                window
+                                optionlist=self.parent.interfacelangs,
+                                command=self.setinterfacelangwrapper,
+                                window=window,
+                                column=0, row=1
                                 )
-        buttonFrame1.grid(column=0, row=1)
     def checkinterpretations(self):
         if (not hasattr(self,'distinguish')) or (self.distinguish is None):
             self.distinguish={}
@@ -1246,8 +1246,12 @@ class Check():
         for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
             name=ss.hypothetical['sample_formats'][sf]
             l+=[(sf, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,l,self.setsoundformat,window)
-        buttonFrame1.grid(column=0, row=1)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.setsoundformat,
+                                    window=window,
+                                    column=0, row=1
+                                    )
     def getsoundhz(self):
         log.info("Asking for sampling frequency...")
         window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
@@ -1259,8 +1263,12 @@ class Check():
         for fs in ss.cards['in'][ss.audio_card_in]:
             name=ss.hypothetical['fss'][fs]
             l+=[(fs, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,l,self.setsoundhz,window)
-        buttonFrame1.grid(column=0, row=1)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.setsoundhz,
+                                    window=window,
+                                    column=0, row=1
+                                    )
     def setsoundcardindex(self,choice,window):
         self.soundsettings.audio_card_in=choice
         window.destroy()
@@ -1279,8 +1287,12 @@ class Check():
         for card in self.soundsettings.cards['in']:
             name=self.soundsettings.cards['dict'][card]
             l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,l,self.setsoundcardindex,window)
-        buttonFrame1.grid(column=0, row=1)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.setsoundcardindex,
+                                    window=window,
+                                    column=0, row=1
+                                    )
     def getsoundcardoutindex(self):
         log.info("Asking for output sound card...")
         window=ui.Window(self.frame, title=_('Select Output Sound Card'))
@@ -1291,9 +1303,12 @@ class Check():
         for card in self.soundsettings.cards['out']:
             name=self.soundsettings.cards['dict'][card]
             l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,l,self.setsoundcardoutindex,
-                                                                        window)
-        buttonFrame1.grid(column=0, row=1)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.setsoundcardoutindex,
+                                    window=window,
+                                    column=0, row=1
+                                    )
     """Set User Input"""
     def refreshattributechanges(self):
         """I need to think through these; what things must/should change when
@@ -1457,8 +1472,12 @@ class Check():
             pss=self.db.pss+self.additionalps #these should be lists
         else:
             pss=self.db.pss
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,pss,self.setps,window)
-        buttonFrame1.grid(column=0, row=1)
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                            optionlist=pss,
+                                            command=self.setps,
+                                            window=window,
+                                            column=0, row=1
+                                            )
     def getprofile(self,event=None):
         log.info("Asking for profile...")
         self.refreshattributechanges()
@@ -1482,10 +1501,11 @@ class Check():
             window.scroll=ui.Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                    optionslist,self.setprofile,
-                                    window
+                                    optionlist=optionslist,
+                                    command=self.setprofile,
+                                    window=window,
+                                    column=0, row=0
                                     )
-            buttonFrame1.grid(column=0, row=0)
     def getcvt(self,event=None):
         log.debug(_("Asking for check cvt/type"))
         window=ui.Window(self.frame,title=_('Select Check Type'))
@@ -1500,8 +1520,12 @@ class Check():
         ui.Label(window.frame, text=_('What part of the sound system do you '
                                     'want to work with?')
             ).grid(column=0, row=0)
-        buttonFrame1=ui.ButtonFrame(window.frame,cvts,self.setcvt,window)
-        buttonFrame1.grid(column=0, row=1)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=cvts,
+                                    command=self.setcvt,
+                                    window=window,
+                                    column=0, row=1
+                                    )
     """Settings to and from files"""
     def initdefaults(self):
         """Some of these defaults should be reset when setting another field.
@@ -2951,9 +2975,11 @@ class Check():
                 langs.append({'code':lang, 'name':self.languagenames[lang]})
                 print(lang, self.languagenames[lang])
             buttonFrame1=ui.ButtonFrame(window.frame,
-                                     langs,self.setanalang,
-                                     window
-                                     ).grid(column=0, row=4)
+                                     optionlist=langs,
+                                     command=self.setanalang,
+                                     window=window,
+                                     column=0, row=4
+                                     )
     def getglosslang(self,event=None):
         log.info("this sets the gloss")
         window=ui.Window(self.frame,title=_('Select Gloss Language'))
@@ -2964,9 +2990,11 @@ class Check():
         for lang in self.db.glosslangs:
             langs.append({'code':lang, 'name':self.languagenames[lang]})
         buttonFrame1=ui.ButtonFrame(window.frame,
-                                 langs,self.setglosslang,
-                                 window
-                                 ).grid(column=0, row=4)
+                                 optionlist=langs,
+                                 command=self.setglosslang,
+                                 window=window,
+                                 column=0, row=4
+                                 )
     def getglosslang2(self,event=None):
         log.info("this sets the gloss")
         window=ui.Window(self.frame,title='Select Gloss Language')
@@ -2979,9 +3007,12 @@ class Check():
             langs.append({'code':lang, 'name':self.languagenames[lang]})
         langs.append({'code':None, 'name':'just use '
                         +self.languagenames[self.glosslangs[0]]})
-        buttonFrame1=ui.ButtonFrame(window.frame,langs,self.setglosslang2,
-                                 window
-                                 ).grid(column=0, row=4)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=langs,
+                                    command=self.setglosslang2,
+                                    window=window,
+                                    column=0, row=4
+                                    )
     def getcheckspossible(self):
         """This splits by tone or not, because the checks available for
         segments depend on the number of segments in the selected syllable
@@ -3028,11 +3059,11 @@ class Check():
             text=_('What check do you want to do?')
             ui.Label(window.frame, text=text).grid(column=0, row=0)
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                    checks,
-                                    self.setcheck,
-                                    window
+                                    optionlist=checks,
+                                    command=self.setcheck,
+                                    window=window,
+                                    column=0, row=4
                                     )
-            buttonFrame1.grid(column=0, row=4)
             buttonFrame1.wait_window(window)
         """Make sure we got a value"""
         if self.params.check() not in checks:
@@ -3080,11 +3111,11 @@ class Check():
                                                                         row=0)
         ui.Label(window.frame, text=text, justify='left').grid(column=0, row=1)
         buttonFrame1=ui.ButtonFrame(window.frame,
-                                self.npossible,
-                                self.setexamplespergrouptorecord,
-                                window
+                                optionlist=self.npossible,
+                                command=self.setexamplespergrouptorecord,
+                                window=window,
+                                column=0, row=4
                                 )
-        buttonFrame1.grid(column=0, row=4)
         buttonFrame1.wait_window(window)
     def getframedtonegroup(self,window,event=None,guess=False,**kwargs):
         """Window is called in getgroup"""
@@ -3124,15 +3155,19 @@ class Check():
                 window.scroll=ui.Frame(window.frame)
                 window.scroll.grid(column=0, row=1)
                 if kwargs['comparison']:
-                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,g,
-                                                self.setgroup_comparison,
-                                                window=window
-                                                ).grid(column=0, row=4)
+                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                            optionlist=g,
+                                            command=self.setgroup_comparison,
+                                            window=window,
+                                            column=0, row=4
+                                            )
                 else:
-                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,g,
-                                                self.setgroup,
-                                                window=window
-                                                ).grid(column=0, row=4)
+                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                                optionlist=g,
+                                                command=self.setgroup,
+                                                window=window,
+                                                column=0, row=4
+                                                )
     def getV(self,window,event=None, **kwargs):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
@@ -3149,11 +3184,11 @@ class Check():
             window.scroll=ui.ScrollingFrame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                     #self.db.v[self.analang],
-                                     g,
-                                     self.setsubcheck,
-                                     window=window
-                                     ).grid(column=0, row=4)
+                                     optionlist=g,
+                                     command=self.setsubcheck,
+                                     window=window,
+                                     column=0, row=4
+                                     )
     def getC(self,window,event=None, **kwargs):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
@@ -3173,12 +3208,11 @@ class Check():
             window.scroll=Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                    # self.db.c[self.analang],
-                                    g,
-                                    self.setsubcheck,
-                                    window=window
+                                    optionlist=g,
+                                    command=self.setsubcheck,
+                                    window=window,
+                                    column=0, row=0
                                     )
-            buttonFrame1.grid(column=0, row=0)
     def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
         xlp.Paragraph(parent,t)
         print(t)
@@ -3594,8 +3628,8 @@ class Check():
                             row=1,column=0,sticky='new'
                             )
         formfield = ui.EntryField(fieldframe,textvariable=newname,
-                                    row=1,column=0,sticky='new'
-                                    )
+                                    row=1,column=0,sticky='new',
+                                    font='readbig')
         formfield.bind('<KeyRelease>', updatelabels) #apply function after key
         errorlabel=ui.Label(fieldframe,text='',
                             fg='red',
@@ -3807,7 +3841,7 @@ class Check():
                                 "grammatical category.".format(ps)))
             b2.grid(row=row,column=1,sticky='w')
             w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
-                                            self.frame.winfo_screenwidth()/150))
+                                        self.parent.winfo_screenwidth()/150))
             log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
                                     b1.winfo_reqwidth(),b2.winfo_reqwidth(),w))
             b1.config(width=w)
@@ -4099,6 +4133,7 @@ class Check():
         if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
             return 1
         log.debug("User selected ‘{}’, moving on.".format(oktext))
+        self.status.last('verify',update=True)
         verified=True
         updatestatus()
     def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
@@ -4166,18 +4201,26 @@ class Check():
                 ).format(ps,profile,check,ok=oktext)
         log.debug(introtext)
         self.runwindow.resetframe()
-        self.runwindow.frame.titles=ui.Frame(self.runwindow.frame)
-        self.runwindow.frame.titles.grid(column=0, row=0, columnspan=2, sticky="w")
-        ui.Label(self.runwindow.frame.titles, text=title,
-                font='title'
-                ).grid(column=0, row=0, sticky="w")
-        i=ui.Label(self.runwindow.frame.titles, text=introtext)
-        i.grid(row=1,column=0, sticky="w")
-        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['joinT'],
-                        text='',
-                        ).grid(row=2,column=0,rowspan=2,sticky='nw')
-        self.sframe=ui.ScrollingFrame(self.runwindow.frame)
-        self.sframe.grid(row=2,column=1)
+        self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
+                                            column=0, row=0,
+                                            columnspan=2, sticky="ew"
+                                            )
+        ltitle=ui.Label(self.runwindow.frame.titles, text=title,
+                font='title',
+                column=0, row=0, sticky="ew",
+                )
+        i=ui.Label(self.runwindow.frame.titles,
+                    text=introtext,
+                    row=1,column=0, sticky="w",
+                    )
+        i.wrap()
+        ui.Label(self.runwindow.frame,
+                image=self.frame.theme.photo['joinT'],
+                text='',
+                row=1,column=0,rowspan=2,sticky='nw'
+                )
+        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
+                                        row=1,column=1,sticky='w')
         self.sortitem=self.sframe.content
         row=0
         groupvars={}
@@ -4310,6 +4353,7 @@ class Check():
         else:
             log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(tonegroup,group))
+        self.status.last('sort',update=True)
         self.updatestatus(group=group) #this marks the group unverified.
         self.status.tojoin(True) # will need to be distinguished again
         self.db.write() #This is never iterated over; just one entry at a time.
@@ -4406,6 +4450,7 @@ class Check():
         profile=self.slices.profile()
         self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
                                                                         rms=[rm])
+        self.status.last('sort',update=True)
         self.db.write() #This is not iterated over
         self.status.marksenseidtosort(senseid) #This is just for self.status['sorted']
         # parent.destroy() #.runwindow.resetframe()
@@ -5251,7 +5296,15 @@ class Check():
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                                 groups=groups)
                         break #do it on first present lang, and do next ex
-        log.info("Starting report...")
+        r=self.status.last('report',update=True)
+        s=self.status.last('sort')
+        if s:
+            t=r>s
+        else:
+            t=False
+        log.info("Starting report at {}; last sort at {} (since={})..."
+                "".format(r,s,t))
+        self.datadict.refresh() #get the most recent data
         self.storesettingsfile()
         self.getrunwindow()
         ps=self.slices.ps()
@@ -5262,9 +5315,12 @@ class Check():
         self.tonereportfile='_'.join(bits)+".txt"
         checks=self.status.checks(wsorted=True)
         if not checks:
-            log.error("Hey, sort some morphemes in at least one frame before "
+            error=_("Hey, sort some morphemes in at least one frame before "
                         "trying to make a tone report!")
+            log.error(error)
             self.runwindow.waitdone()
+            self.runwindow.destroy()
+            ErrorNotice(error)
             return
         start_time=time.time()
         self.makeanalysis()
@@ -5616,9 +5672,13 @@ class Check():
                 ("badSubcheck",bscv1isv2nsc+" (V1=V2≠"+check.subcheck+")")]
         else:
             log.info("Sorry, that check isn't set up yet.")
-        buttonFrame1=ui.ButtonFrame(window.frame,window,check,entry,list=problemopts,
-                                    command=Check.fixdiff,width="50")
-        buttonFrame1.grid(column=0, row=3)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    window=window,
+                                    optionlist=problemopts,
+                                    command=Check.fixdiff,
+                                    width="50",
+                                    column=0, row=3
+                                    )
         i=4 #start at this row
         print(result)
     def fixV12(parent, window, check, entry, choice):
@@ -5636,9 +5696,12 @@ class Check():
         q2=_("What are the two vowels?")
         ui.Label(window.frame, text=q2,anchor=tkinter.W).grid(column=0, row=3,
                                                                 columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,window,check,entry,
-                                list=check.db.vowels(),command=Check.fixVs)
-        ButtonFrame1.grid(column=0, row=4)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                window=window,
+                                optionlist=check.db.vowels(),
+                                command=Check.fixVs,
+                                column=0, row=4
+                                )
     def fixV1(parent, window, check, entry, choice):
         t=(_('fixV1:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
         print(t)
@@ -5654,17 +5717,23 @@ class Check():
         ui.Label(window.frame, text=t3, anchor=tkinter.W).grid(column=0,
                                                                 row=1,
                                                                 columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,window,check,entry,
-                                list=check.db.vowels(),command=Check.newform)
-        ButtonFrame1.grid(column=0, row=2)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                window=window,
+                                optionlist=check.db.vowels(),
+                                command=Check.newform,
+                                column=0, row=2
+                                )
     def fixV2(parent, window, check, entry, choice):
         check.fix='V2'
         t=(_('fixV2:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
         t=(_("What is the second vowel?"))
         ui.Label(window.frame, text=t,justify=tkinter.LEFT).grid(column=0, row=1, columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,window,check,entry,
-                                    list=check.db.vowels(),command=Check.newform)
-        ButtonFrame1.grid(column=0, row=2)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                    window=window,
+                                    optionlist=check.db.vowels(),
+                                    command=Check.newform,
+                                    column=0, row=2
+                                    )
     def fixdiff(parent, window, check, entry, choice):
         """We need to fix problems in a more intuitively obvious way"""
         entry.problem=choice
@@ -6034,6 +6103,8 @@ class ExampleDict(dict):
         self.datadict=datadict
         super(ExampleDict, self).__init__()
 class FramedDataDict(dict):
+    def refresh(self):
+        self.clear()
     def updatelangs(self):
         self.analang=self.check.analang
         self.audiolang=self.check.audiolang
@@ -6746,6 +6817,7 @@ class RecordButtonFrame(ui.Frame):
         if self.test:
             return
         self.db.addmediafields(self.node,self.filename,self.audiolang)
+        self.check.status.last('recording',update=True)
     def __init__(self,parent,check,framed=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
@@ -7850,6 +7922,16 @@ class StatusDict(dict):
         kwargs['check']=kwargs.get('check',self._checkparameters.check())
         log.log(4,"Returning checkslicetypecurrent kwargs {}".format(kwargs))
         return kwargs
+    def last(self,task,update=False,**kwargs):
+        profile=kwargs.get('profile',self._slicedict.profile())
+        if not hasattr(self,'_last'):
+            self._last={}
+        if task not in self._last:
+            self._last[task]={}
+        if update:
+            self._last[task][profile]=now()
+        if profile in self._last[task]:
+            return self._last[task][profile]
     def __init__(self,checkparameters,slicedict,exs,toneframes,filename,dict):
         """To populate subchecks, use self.groups()"""
         self._filename=filename
@@ -8007,10 +8089,9 @@ class ConfigParser(configparser.ConfigParser):
 class ErrorNotice(ui.Window):
     """this is for things that I want the user to know, without having
     to find it in the logs."""
-    def __init__(self, parent, title, text):
+    def __init__(self, text, parent=None, title="Error!"):
         if not parent:
-            log.error("No parent for ErrorNotice; exiting. ({})".format(text))
-            exit()
+            parent=program['root']
         super(ErrorNotice, self).__init__(parent,title=title)
         self.title = title
         self.text = text
@@ -8112,6 +8193,9 @@ class Object:
     def __init__(self):
         self.value=None
 """These are non-method utilities I'm actually using."""
+def now():
+    # datetime.datetime.utcnow().isoformat()[:-7]+'Z'
+    return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
 def getinterfacelang():
     for lang in i18n:
         try:
@@ -8432,10 +8516,9 @@ def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    root = program['root']=ui.Root() #tkinter.Tk()
-    program['theme']=ui.Theme(program)
+    root = program['root']=ui.Root(program) #tkinter.Tk()
+    program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
-    root.settheme(program['theme'])
     root.program=program
     root.wraplength=root.winfo_screenwidth()-300 #exit button
     root.renderings={} #initialize this somewhere...
@@ -8487,34 +8570,24 @@ def mainproblem():
         for w in errorroot.winfo_children():
             w.destroy()
     except:
-        errorroot = ui.Root()
-        if 'theme' in program:
-            theme=program['theme']
-        else:
-            theme=ui.Theme(program)
-            errorroot.settheme(theme)
-            errorroot.renderings={}
+        errorroot = ui.Root(program)
+        errorroot.renderings={}
     errorroot.title("Serious Problem!")
-    try:
-        char="Charis SIL"
-        titlefont=tkinter.font.Font(family=char, size=36)
-        noticefont=tkinter.font.Font(family=char,size=24)
-        defaultfont=tkinter.font.Font(family=char, size=12)
-    except:
-        titlefont=noticefont=defaultfont=tkinter.font.Font(family=char, size=12)
-    l=ui.Label(errorroot,text="Hey! You found a problem! (details and "
-            "solution below)",justify='left',font='titlefont',
+    errorroot.withdraw()
+    errorw=ui.Window(errorroot)
+    l=ui.Label(errorw.frame,text="Hey! You found a problem! (details and "
+            "solution below)",justify='left',font='title',
             row=0,column=0
             )
     if exceptiononload:
         durl=('https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md'
                 '#dependencies')
-        m=ui.Label(errorroot,text="\nPlease see {}".format(durl),
-            justify='left', font=noticefont,
+        m=ui.Label(errorw.frame,text="\nPlease see {}".format(durl),
+            justify='left', font='instructions',
             row=1,column=0
             )
         m.bind("<Button-1>", lambda e: openweburl(durl))
-    lcontents=logcontents(log,25)
+    lcontents=logcontents(log,50)
     addr=program['Email']
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
     eurl+=('&body=Please replace this text with a description of what you '
@@ -8524,19 +8597,20 @@ def mainproblem():
             "session, please attach "
             "your compressed log file ({})".format(file))
     eurl+='%0d%0a--log info--%0d%0a{}'.format('%0d%0a'.join(lcontents))
-    n=ui.Label(errorroot,text="\n\nIf this information doesn't help "
+    n=ui.Label(errorw.frame,text="\n\nIf this information doesn't help "
         "you fix this, please click on this text to Email me your log (to {})"
-        "".format(addr),justify='left', font=defaultfont)
-    n.grid(row=2,column=0)
+        "".format(addr),justify='left', font='default',
+        row=2,column=0
+        )
     n.bind("<Button-1>", lambda e: openweburl(eurl))
-    o=ui.Label(errorroot,text="\n\nThe end of {} / {} are below:"
+    scroll=ui.ScrollingFrame(errorw.frame,row=3,column=0)
+    o=ui.Label(scroll.content,text="\n\nThe end of {} / {} are below:"
                 "\n\n{}".format(log.filename,file,''.join(lcontents)),
                 justify='left',
-                font=defaultfont)
-    o.grid(row=3,column=0)
+                font='report',
+                row=0,column=0)
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
-    errorroot.deiconify()
     errorroot.mainloop()
     # errorroot.wait_window(errorroot)
     sys.exit()
