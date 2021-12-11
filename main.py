@@ -8528,7 +8528,7 @@ def mainproblem():
             row=1,column=0
             )
         m.bind("<Button-1>", lambda e: openweburl(durl))
-    lcontents=logcontents(log,25)
+    lcontents=logcontents(log,50)
     addr=program['Email']
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
     eurl+=('&body=Please replace this text with a description of what you '
@@ -8543,11 +8543,12 @@ def mainproblem():
         "".format(addr),justify='left', font=defaultfont)
     n.grid(row=2,column=0)
     n.bind("<Button-1>", lambda e: openweburl(eurl))
-    o=ui.Label(errorroot,text="\n\nThe end of {} / {} are below:"
+    scroll=ui.ScrollingFrame(errorroot,row=3,column=0)
+    o=ui.Label(scroll.content,text="\n\nThe end of {} / {} are below:"
                 "\n\n{}".format(log.filename,file,''.join(lcontents)),
                 justify='left',
-                font=defaultfont)
-    o.grid(row=3,column=0)
+                font=defaultfont,
+                row=0,column=0)
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     errorroot.deiconify()
