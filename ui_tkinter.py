@@ -194,8 +194,10 @@ class Frame(Gridded,Childof,tkinter.Frame):
         # for attr in ['fonts','theme','debug','wraplength','photo','renderings',
         #         'program','exitFlag']:
         #     if hasattr(parent,attr):
+        for opt in ['optionlist','command','window']:
+            del kwargs[opt]
         #         setattr(self,attr,getattr(parent,attr))
-        self['bg']=self.theme.background
+        tkinter.Frame.__init__(self,parent,**kwargs)
         UI.__init__(self)
         self.dogrid()
 class Scrollbar(Gridded,tkinter.Scrollbar,UI):
