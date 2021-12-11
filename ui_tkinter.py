@@ -1008,7 +1008,6 @@ class ToolTip(object):
     Modified to include a delay time by Victor Zaccardo, 25mar16
     """
     def __init__(self, widget, text='widget info'):
-        UI.inherit(self,widget)
         self.waittime = 500     #miliseconds
         self.wraplength = 180   #pixels
         self.dispx = 25
@@ -1072,7 +1071,6 @@ class Wait(Window): #tkinter.Toplevel?
         self.parent.deiconify()
         self.destroy()
     def __init__(self, parent=None,msg=None):
-        UI.inherit(self,parent)
         global program
         super(Wait, self).__init__(parent,exit=False)
         self.parent.withdraw()
