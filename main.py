@@ -8573,7 +8573,6 @@ def mainproblem():
                 row=0,column=0)
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
-    errorroot.deiconify()
     errorroot.mainloop()
     # errorroot.wait_window(errorroot)
     sys.exit()
