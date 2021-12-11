@@ -4103,6 +4103,7 @@ class Check():
         if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
             return 1
         log.debug("User selected ‘{}’, moving on.".format(oktext))
+        self.status.last('verify',update=True)
         verified=True
         updatestatus()
     def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
@@ -4314,6 +4315,7 @@ class Check():
         else:
             log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(tonegroup,group))
+        self.status.last('sort',update=True)
         self.updatestatus(group=group) #this marks the group unverified.
         self.status.tojoin(True) # will need to be distinguished again
         self.db.write() #This is never iterated over; just one entry at a time.
@@ -4410,6 +4412,7 @@ class Check():
         profile=self.slices.profile()
         self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
                                                                         rms=[rm])
+        self.status.last('sort',update=True)
         self.db.write() #This is not iterated over
         self.status.marksenseidtosort(senseid) #This is just for self.status['sorted']
         # parent.destroy() #.runwindow.resetframe()
@@ -5255,7 +5258,15 @@ class Check():
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                                 groups=groups)
                         break #do it on first present lang, and do next ex
-        log.info("Starting report...")
+        r=self.status.last('report',update=True)
+        s=self.status.last('sort')
+        if s:
+            t=r>s
+        else:
+            t=False
+        log.info("Starting report at {}; last sort at {} (since={})..."
+                "".format(r,s,t))
+        self.datadict.refresh() #get the most recent data
         self.storesettingsfile()
         self.getrunwindow()
         ps=self.slices.ps()
@@ -6054,6 +6065,8 @@ class ExampleDict(dict):
         self.datadict=datadict
         super(ExampleDict, self).__init__()
 class FramedDataDict(dict):
+    def refresh(self):
+        self.clear()
     def updatelangs(self):
         self.analang=self.check.analang
         self.audiolang=self.check.audiolang
@@ -6766,6 +6779,7 @@ class RecordButtonFrame(ui.Frame):
         if self.test:
             return
         self.db.addmediafields(self.node,self.filename,self.audiolang)
+        self.check.status.last('recording',update=True)
     def __init__(self,parent,check,framed=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
@@ -7870,6 +7884,16 @@ class StatusDict(dict):
         kwargs['check']=kwargs.get('check',self._checkparameters.check())
         log.log(4,"Returning checkslicetypecurrent kwargs {}".format(kwargs))
         return kwargs
+    def last(self,task,update=False,**kwargs):
+        profile=kwargs.get('profile',self._slicedict.profile())
+        if not hasattr(self,'_last'):
+            self._last={}
+        if task not in self._last:
+            self._last[task]={}
+        if update:
+            self._last[task][profile]=now()
+        if profile in self._last[task]:
+            return self._last[task][profile]
     def __init__(self,checkparameters,slicedict,exs,toneframes,filename,dict):
         """To populate subchecks, use self.groups()"""
         self._filename=filename
@@ -8131,6 +8155,9 @@ class Object:
     def __init__(self):
         self.value=None
 """These are non-method utilities I'm actually using."""
+def now():
+    # datetime.datetime.utcnow().isoformat()[:-7]+'Z'
+    return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
 def getinterfacelang():
     for lang in i18n:
         try:
