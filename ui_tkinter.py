@@ -768,16 +768,19 @@ class ContextMenu(Text,UI):
         self.context=context #where the menu is showing (e.g., verifyT)
         # self.inherit()
         self.updatebindings()
-class Label(Gridded,Text,tkinter.Label,UI): #,tkinter.Label
         UI.__init__(self)
+class Label(Childof,Gridded,Text,tkinter.Label,UI): #,tkinter.Label
     def __init__(self, parent, **kwargs):
-        UI.inherit(self,parent)
+        Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
+        Childof.__init__(self,parent)
         log.info("label parent: {}".format(parent))
         """These shouldn't need to be here..."""
         self.theme=parent.theme
         self.parent=parent
-        super(Label,self).__init__(
-            **kwargs)
+        tkinter.Label.__init__(self,
+                                parent,
+                                **kwargs)
         i=self.grid_info()
         log.info("Label final grid_info: {}".format(i))
         if i and self.text:
