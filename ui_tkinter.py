@@ -199,6 +199,7 @@ class Toplevel(tkinter.Toplevel,UI): #NoParent
         self['background']=self.theme.background
         self['bg']=self.theme.background
         UI.__init__(self)
+        self.dogrid()
 class Scrollbar(Gridded,tkinter.Scrollbar,UI):
     """docstring for Scrollbar."""
 
@@ -221,6 +222,7 @@ class Scrollbar(Gridded,tkinter.Scrollbar,UI):
         self['activebackground']=self.theme.activebackground
         self['troughcolor']=self.theme.background
         UI.__init__(self)
+        self.dogrid()
 class ScrollingFrame(Frame):
     def _bound_to_mousewheel(self, event):
         # with Windows OS
@@ -444,6 +446,7 @@ class ScrollingFrame(Frame):
         self.bind('<Visibility>', self.windowsize)
 class Window(Toplevel):
         UI.__init__(self)
+        self.dogrid()
     def resetframe(self):
         if self.parent.exitFlag.istrue():
             return
@@ -513,6 +516,7 @@ class Window(Toplevel):
                                             )
             self.backButton.grid(column=3,row=2)
         UI.__init__(self)
+        self.dogrid()
 class Renderer(ObectwArgs):
     def __init__(self,test=False,**kwargs):
         try:
@@ -782,6 +786,7 @@ class Label(Gridded,Text,tkinter.Label,UI): #,tkinter.Label
             self.wrap()
         self['background']=kwargs.get('background',self.theme.background)
         UI.__init__(self)
+        self.dogrid()
 class EntryField(Gridded,tkinter.Entry,UI):
     def renderlabel(self,grid=False,event=None):
         v=self.get()
@@ -810,6 +815,7 @@ class EntryField(Gridded,tkinter.Entry,UI):
             self.renderlabel()
         UI.__init__(self)
         self['background']=self.theme.offwhite #because this is for entry...
+        self.dogrid()
 class RadioButton(tkinter.Radiobutton,UI):
     def __init__(self, parent, column=0, row=0, sticky='w', **kwargs):
         UI.inherit(self,parent)
@@ -887,6 +893,7 @@ class Button(Gridded,Text,tkinter.Button,UI):
         self['background']=self.theme.background
         self['bg']=self.theme.background
         UI.__init__(self)
+        self.dogrid()
 class CheckButton(tkinter.Checkbutton,UI):
     def __init__(self, parent, **kwargs):
         self.inherit()
@@ -903,6 +910,7 @@ class CheckButton(tkinter.Checkbutton,UI):
                                 **kwargs
                                 )
         UI.__init__(self)
+        self.dogrid()
 class ButtonFrame(Frame):
     def __init__(self,parent,
                     optionlist,command,
@@ -993,6 +1001,7 @@ class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
                             column=0,
                             **kwargs)
         UI.__init__(self)
+        self.dogrid()
 class ToolTip(object):
     """
     create a tooltip for a given widget
