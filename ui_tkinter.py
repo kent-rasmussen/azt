@@ -147,6 +147,7 @@ class Toplevel(tkinter.Toplevel,UI): #NoParent
         Childof.__init__(self,parent)
         tkinter.Toplevel.__init__(self)
         UI.__init__(self)
+class Frame(Gridded,Childof,tkinter.Frame):
     def windowsize(self):
         if not hasattr(self,'configured'):
             self.configured=0
@@ -187,14 +188,13 @@ class Toplevel(tkinter.Toplevel,UI): #NoParent
         self.configured+=1
     def __init__(self, parent, **kwargs):
         log.info("Initializing Frame object")
-        UI.inherit(self,parent)
         Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
+        Childof.__init__(self,parent)
         # for attr in ['fonts','theme','debug','wraplength','photo','renderings',
         #         'program','exitFlag']:
         #     if hasattr(parent,attr):
         #         setattr(self,attr,getattr(parent,attr))
-        super(Frame, self).__init__(parent,**kwargs)
-        self['background']=self.theme.background
         self['bg']=self.theme.background
         UI.__init__(self)
         self.dogrid()
