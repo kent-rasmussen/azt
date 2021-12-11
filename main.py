@@ -3125,13 +3125,16 @@ class Check():
                 window.scroll=ui.Frame(window.frame)
                 window.scroll.grid(column=0, row=1)
                 if kwargs['comparison']:
-                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,g,
-                                                self.setgroup_comparison,
-                                                window=window
-                                                ).grid(column=0, row=4)
+                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                            optionlist=g,
+                                            command=self.setgroup_comparison,
+                                            window=window,
+                                            column=0, row=4
+                                            )
                 else:
-                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,g,
-                                                self.setgroup,
+                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                                optionlist=g,
+                                                command=self.setgroup,
                                                 window=window
                                                 ).grid(column=0, row=4)
     def getV(self,window,event=None, **kwargs):
