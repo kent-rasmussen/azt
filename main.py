@@ -1913,6 +1913,8 @@ class Check():
     def getprofileofsense(self,senseid):
         #Convert to iterate over local variables
         ps=unlist(self.db.ps(senseid=senseid))
+        if ps in [None,'None']:
+            return None,'NoPS'
         forms=self.db.citationorlexeme(senseid=senseid,analang=self.analang)
         if forms == []:
             profile='Invalid'
