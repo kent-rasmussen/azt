@@ -4960,7 +4960,7 @@ class Check():
                     text=_("Continue to next syllable profile"),
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
-    def senseidformsbyregex(self,regex,):
+    def senseidformsbyregex(self,regex):
         """This function takes in a compiled regex,
         and outputs a list/dictionary of senseid/{senseid:form} form."""
         output=[] #This is just a list of senseids now: (Do we need the dict?)
@@ -8575,7 +8575,7 @@ def mainproblem():
         for w in errorroot.winfo_children():
             w.destroy()
     except:
-        errorroot = ui.Root(program)
+        errorroot = ui.Root(program=program)
         errorroot.renderings={}
     errorroot.title("Serious Problem!")
     errorroot.withdraw()
@@ -8616,6 +8616,7 @@ def mainproblem():
                 row=0,column=0)
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
+    scroll.tobottom()
     errorroot.mainloop()
     # errorroot.wait_window(errorroot)
     sys.exit()
