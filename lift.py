@@ -228,7 +228,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """this node stores a python symbolic representation, specific to an
         analysis language"""
         textnode, fieldnode, sensenode=self.addverificationnode(
-                                                senseid,vtype=vtype,lang=lang)
+                                            senseid,vtype=vtype,analang=analang)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
         changed=False
         i=len(l)
