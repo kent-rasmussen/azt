@@ -1963,7 +1963,7 @@ class Check():
                                                 self.adhocgroups[ps][a]))
                     self.addpstoprofileswdata(ps=ps) #in case the ps isn't already there
                     #copy over stored values:
-                    self.profilesbysense[ps][a]=adhoc[ps][a]
+                    self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
                     log.debug("resulting profilesbysense: {}".format(
                                             self.profilesbysense[ps][a]))
     def polygraphcheck(self):
