@@ -1756,7 +1756,11 @@ class Check():
                 config['default'][s]=str(v)
         if config['default'] == {}:
             del config['default']
+        header=("# This settings file was made on {} on {}".format(
+                                                    now(),platform.uname().node)
+                )
         with open(filename, "w", encoding='utf-8') as file:
+            file.write(header+'\n\n')
             config.write(file)
     def makesoundsettings(self):
         if not hasattr(self,'soundsettings'):
