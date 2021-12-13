@@ -1996,16 +1996,17 @@ class Check():
             log.info("Trying to make no changes")
             if foundchanges() and not self.exitFlag.istrue():
                 log.info("Found changes; exiting.")
-                self.exitFlag.true()
-                self.parent.parent.destroy() #pgw.destroy()
+                pgw.destroy()
+                self.parent.destroy()
+                exit()
             elif not self.exitFlag.istrue():
                 pgw.destroy()
         def makechanges():
             log.info("Changes called for; like it or not, redoing analysis.")
+            pgw.destroy()
             if not foundchanges():
                 log.info("User asked for changes to polygraph settings, but "
                         "no changes found.")
-                pgw.destroy()
                 return
             for lang in self.db.analangs:
                 for pc in vars[lang]:
