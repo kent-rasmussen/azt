@@ -2028,8 +2028,10 @@ class Check():
         t=_("Select which of the following graph sequences found in your data "
                 "refer to a single sound (digraph or trigraph) in {}".format(
             unlist([self.languagenames[y] for y in self.db.analangs])))
-        title=ui.Label(pgw.frame,text=t)
-        title.grid(column=0, row=0)
+        title=ui.Label(pgw.frame,text=t,
+                        column=0, row=0
+                        )
+        title.wrap()
         t=_("If your data contains a digraph or trigraph that isn't listed "
             "here, please click here to Email me, and I can add it.")
         t2=ui.Label(pgw.frame,text=t)
