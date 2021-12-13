@@ -283,7 +283,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             n=Node.makeformnode(vf,lang=lang,text=t,gimmetext=True)
             log.info(n)
             return n
-    def addverificationnode(self,senseid,vtype,lang):
+    def addverificationnode(self,senseid,vtype,analang):
         sensenode=node=self.getsensenode(senseid=senseid)
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
