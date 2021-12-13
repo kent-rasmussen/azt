@@ -631,7 +631,6 @@ class Check():
                             "current setting for ‘{}’: {}".format(changed[s][1],
                                                         s,self.interpret[s]))
             r=True #only false if changes made, and user exits notice
-            change=False
             changed={}
             for typ in ['distinguish', 'interpret']:
                 for s in getattr(self,typ):
@@ -655,16 +654,15 @@ class Check():
             log.debug('self.distinguish: {}'.format(self.distinguish))
             log.debug('self.interpret: {}'.format(self.interpret))
             if change:
+            # if change:
+            if changed:
                 log.info('There was a change; we need to redo the analysis now.')
-                self.storesettingsfile()
                 log.info('The following changed (from,to): {}'.format(changed))
-                if len(changed) >0:
-                    r=notice(changed)
-                # self.debug = True
-                if self.debug != True and r:
-                    self.reloadprofiledata()
+                self.storesettingsfile()
+                r=notice(changed)
                 if r:
                     self.runwindow.destroy()
+                    self.reloadprofiledata()
                 else:
                     undo(changed)
             else:
