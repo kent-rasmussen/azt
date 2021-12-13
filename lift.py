@@ -222,10 +222,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l=list()
         return l
     """Make this a class!!!"""
+    def pylang(self,analang):
+         return 'py-'+analang
     def modverificationnode(self,senseid,vtype,analang,add=None,rms=[],addifrmd=False):
         """this node stores a python symbolic representation, specific to an
         analysis language"""
-        lang='py-'+analang
         textnode, fieldnode, sensenode=self.addverificationnode(
                                                 senseid,vtype=vtype,lang=lang)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
@@ -250,8 +251,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         else:
             log.log(2,"Not removing empty node")
     def getverificationnodevaluebyframe(self,senseid,vtype,analang,frame):
-        lang='py-'+analang
-        nodes=self.addverificationnode(senseid,vtype=vtype,lang=lang)
+        nodes=self.addverificationnode(senseid,vtype=vtype,analang=analang)
         vf=nodes[0] #this is a text node
         # sensenode=nodes[1]
         l=self.evaluatenode(vf) #this is the python evaluation of vf.text
@@ -265,7 +265,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return values
     def legacyverificationconvert(self,senseid,vtype,lang):
         if 'py-' not in lang:
-            lang='py-'+lang
+            lang=self.pylang(lang)
         node=self.getsensenode(senseid=senseid)
         if not node:
             log.error("No sense node was found for senseid: {}"
@@ -288,10 +288,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
+        pylang=self.pylang(analang)
         vf=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text/../.."
-                            "".format(vtype,"verification",lang))
+                            "".format(vtype,"verification",pylang))
         vft=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text"
-                            "".format(vtype,"verification",lang))
+                            "".format(vtype,"verification",pylang))
         t=None #this default will give no text node value
         if vft is None:
             vfleg=sensenode.find("field[@type='{} {}']".format(vtype,"verification"))
