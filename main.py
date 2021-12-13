@@ -8111,7 +8111,7 @@ class Repository(object):
                     "resolved from Chorus merges:\n {}"
                     "").format(self.url,'\n'.join(rescues))
             log.error(error)
-            ErrorNotice(program['root'],"Chorus Rescue files found!",error)
+            ErrorNotice(error,program['root'],"Chorus Rescue files found!")
             if me:
                 exit()
     def add(self,file):
