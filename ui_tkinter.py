@@ -34,7 +34,7 @@ class Theme(object):
         if self.program: #'scale' in
             scale=self.program['scale']
         else:
-            scale=1    
+            scale=1
         # threading.Thread(target=thread_function, args=(arg1,),kwargs={'arg2': arg2})
         # if process:
         #     from multiprocessing import Process
@@ -386,7 +386,7 @@ class Renderer(ObectwArgs):
 class Gridded(ObectwArgs):
     def dogrid(self):
         if self._grid:
-            log.info("Gridding at r{},c{},rsp{},csp{},st{},padx{},pady{},"
+            log.log(4,"Gridding at r{},c{},rsp{},csp{},st{},padx{},pady{},"
                     "ipadx{},ipady{}".format(self.row,
                                 self.column,
                                 self.rowspan,
@@ -432,7 +432,7 @@ class Gridded(ObectwArgs):
             self.ipadx=kwargs.pop('ipadx',0)
             self.ipady=kwargs.pop('ipady',0)
         else:
-            log.info("Not Gridding! ({})".format(kwargs))
+            log.log(4,"Not Gridding! ({})".format(kwargs))
 class Childof(object):
     def inherit(self,parent=None,attr=None):
         """This function brings these attributes from the parent, to inherit
@@ -459,7 +459,6 @@ class Childof(object):
                 log.info("parent doesn't have attr {}, skipping inheritance"
                         "".format(attr))
     def __init__(self, parent): #because this is used everywhere.
-        log.info("Initializing Childof object")
         self.parent=parent
         self.inherit()
 class UI(ObectwArgs):
@@ -475,7 +474,6 @@ class UI(ObectwArgs):
         except tkinter.TclError:
             pass
     def __init__(self): #because this is used everywhere.
-        log.info("Initializing UI object")
         if hasattr(self,'theme'):
             for a in ['background','bg','troughcolor']:
                 if a in self.keys():
@@ -528,11 +526,11 @@ class Menu(Childof,tkinter.Menu): #not Text
             label=spaces+label+spaces
         return label
     def add_command(self,label,command):
-        log.info("Menu opts: {}".format((self,label,command)))
+        log.log(4,"Menu opts: {}".format((self,label,command)))
         label=self.pad(label)
         tkinter.Menu.add_command(self,label=label,command=command)
     def add_cascade(self,label,menu):
-        log.info("Cascade opts: {}".format((self,label,menu)))
+        log.log(4,"Cascade opts: {}".format((self,label,menu)))
         label=self.pad(label)
         tkinter.Menu.add_cascade(self,label=label,menu=menu)
     def __init__(self,parent,**kwargs):
@@ -647,7 +645,7 @@ class Frame(Gridded,Childof,tkinter.Frame):
             self.config(height=min(self.maxheight,contentrh))
         self.configured+=1
     def __init__(self, parent, **kwargs):
-        log.info("Initializing Frame object")
+        # log.info("Initializing Frame object")
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
@@ -1154,13 +1152,13 @@ class ScrollingFrame(Frame):
         #     ))
         #     self.content.configure(width=self.content.winfo_reqwidth())
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
-            log.info("self.content reqwidth differs from canvas; fixing.")
+            log.log(4,"self.content reqwidth differs from canvas; fixing.")
             # update the inner frame's width to fill the canvas
             # self.content_id.config(width=self.content.winfo_reqwidth())
             self.canvas.itemconfigure(self.content_id,
                                         width=self.content.winfo_reqwidth())
         if self.content.winfo_reqheight() != self.canvas.winfo_height():
-            log.info("self.content reqheight differs from canvas; fixing.")
+            log.log(4,"self.content reqheight differs from canvas; fixing.")
             self.canvas.itemconfigure(self.content_id,
                                         height=self.content.winfo_reqheight())
         # self.canvas.config(scrollregion=self.canvas.bbox("all"))
