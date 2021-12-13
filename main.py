@@ -1968,11 +1968,6 @@ class Check():
                     self.profilesbysense[ps][a]=adhoc[ps][a]
                     log.debug("resulting profilesbysense: {}".format(
                                             self.profilesbysense[ps][a]))
-        if self.debug==True:
-            for ps in self.profilesbysense:
-                for profile in self.profilesbysense[ps]:
-                    log.debug("ps: {}; profile: {} ({})".format(ps,profile,
-                            len(self.profilesbysense[ps][profile])))
     def polygraphcheck(self):
         log.info("Checking for Digraphs and Trigraphs!")
         if not hasattr(self,'polygraphs'):
@@ -2177,10 +2172,6 @@ class Check():
             form=self.rx[s].sub(s,form) #replace with profile variable
         """We could consider combining NC to C (or not), and CG to C (or not)
         here, after the 'splitter' profiles are formed..."""
-        if self.debug==True:
-            self.iterations+=1
-            if self.iterations>15:
-                exit()
         # log.debug("{}: {}".format(formori,form))
         # log.info("Form before simplification:{}".format(form))
         form=self.profileofformpreferred(form)
@@ -5010,10 +5001,6 @@ class Check():
                 framed=self.datadict.getframeddata(senseid) #not framed!
                 o=framed.formatted(noframe=True)
                 self.framedtoXLP(framed,parent=ex,listword=True)
-                if self.debug ==True:
-                    o=entry.lexeme,entry.citation,nn(entry.gloss),
-                    nn(entry.gloss2),nn(entry.illustration)
-                    print(o)
                 def makeimg():
                     img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
                     "/pictures/button.png")
@@ -5069,9 +5056,6 @@ class Check():
             return
         """Don't need this; only doing count=1 at a time. Let's start with
         the easier ones, with the first occurrance changed."""
-        if self.debug is True:
-            print('maxcount='+str(maxcount))
-            print(check)
         self.regexCV=str(profile) #Let's set this before changing it.
         """One pass for all regexes, S3, then S2, then S1, as needed."""
         cvts=['V','C']
@@ -5101,12 +5085,6 @@ class Check():
                     else:
                         replS='\\1'+group
                     self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
-        if self.debug ==True:
-            print('profile='+str(profile)+str(type(profile)))
-            print('cvt='+str(cvt)+str(type(cvt)))
-            print('check='+str(check)+str(type(check)))
-            print('group='+str(group)+str(type(group)))
-            print('self.regexCV='+str(self.regexCV)+str(type(self.regexCV)))
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
@@ -5643,8 +5621,6 @@ class Check():
     """These are old paradigm CV funcs, with too many arguments, and guids"""
     def picked(self,choice,**kwargs):
         return
-        if self.debug == True:
-            print(entry.__dict__)
         entry.addresult(check, result='OK') #let's not translate this...
         debug()
         window=ui.Window(parent, title='Same! '+entry.lexeme+': '
@@ -5660,8 +5636,6 @@ class Check():
             log.info("No entry!")
             """Probably a bad idea"""
             entry=Entry(db, parent, window, check, guid=choice)
-        if self.debug==True:
-            print(entry.__dict__)
         entry.addresult(check, result='NOTok')
         window=ui.Window(parent, title='notpicked: Different! '
                         +entry.lexeme+': '+entry.guid)
@@ -5743,8 +5717,6 @@ class Check():
         """We need to fix problems in a more intuitively obvious way"""
         entry.problem=choice
         entry.addresult(check, result=entry.problem)
-        if self.debug==True:
-            print(entry.__dict__)
         window.destroy()
         window=ui.Window(self.frame.parent, entry=entry, backcmd=notpickedback)
         ui.Label(window, text="Let's fix those problems").grid(column=0, row=0)
@@ -5859,17 +5831,6 @@ class Check():
         print('newform: '+entry.newform)
         def old2():
             for x in baseform:
-                if self.debug==True:
-                    print("exchanging "+check.subcheck+" for "+choice)
-                    print(ximin,xi,ximax)
-                    if x == check.subcheck:
-                        log.info("x == check.subcheck")
-                    if xi >= ximin and xi <= ximax:
-                        log.info("xi >= ximin  and xi <= ximax") # <= ximax ):
-                    if ximin <= xi:
-                        log.info("ximin <= xi") # <= ximax ):
-                    if xi <= ximax:
-                        log.info("xi <= ximax") # <= ximax ):
                 if x == check.subcheck: # <= ximax ):
                     if ximin <= xi <= ximax:
                         try:
@@ -5900,14 +5861,6 @@ class Entry(lift.Entry): #Not in use
     def addresult(self, check, result):
         """This could be stored under check[guid]; otherwise, how do we want
         to store and access this info?"""
-        if self.debug==True:
-            print (str(len(self.checkresults))+': '+str(self.checkresults))
-            print (str(len(self.checkresults[check.name]))+': '
-                +str(self.checkresults[check.name]))
-            print (str(len(self.checkresults[check.name][check.subcheck]))
-                +': '+str(self.checkresults[check.name][check.subcheck]))
-            print (str(len(self.checkresults))+': '+str(self.checkresults))
-            print(self.checkresults)
         try:
             self.checkresults[check.name]
         except:
