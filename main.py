@@ -5986,6 +5986,8 @@ class ExampleDict(dict):
         if senseid is None:
             return
         framed=self.datadict.getframeddata(senseid=senseid,check=check)
+        if framed is None:
+            return
         log.info("exampletypeok framed: {}".format(framed))
         # framed=self.datadict.getframeddata(senseid)
         if kwargs['wglosses'] and not self.hasglosses(framed):
