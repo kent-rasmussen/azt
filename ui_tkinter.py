@@ -547,7 +547,6 @@ class Text(Childof,ObectwArgs):
     characters in the text."""
     def wrap(self):
         availablexy(self)
-        log.info((self.wraplength,self.maxwidth))
         if not hasattr(self,'wraplength'):
             wraplength=self.maxwidth
         else:
@@ -681,7 +680,6 @@ class Button(Gridded,Text,tkinter.Button):
         Childof.__init__(self,parent)
         Text.__init__(self,parent,**kwargs)
         kwargs=self.lesstextkwargs(**kwargs)
-        log.info(self.font)
         # `command` is my hacky command specification, with lots of args added.
         # cmd is just the command passing through.
         if 'cmd' in kwargs and kwargs['cmd'] is not None:
