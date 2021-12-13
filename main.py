@@ -1859,13 +1859,13 @@ class Check():
             rms=[value]
         """The above doesn't test for profile, so we restrict that next"""
         for senseid in self.slices.inslice(senseids): #only for this ps-profile
-            rms+=self.db.getverificationnodevaluebyframe(senseid,vtype=profile,
+            rmlist=rms[:]+self.db.getverificationnodevaluebyframe(senseid,vtype=profile,
                                         analang=self.analang,
                                         frame=check)
-            log.info("Removing {}".format(rms))
+            log.info("Removing {}".format(rmlist))
             self.db.modverificationnode(senseid,vtype=profile,
                                         analang=self.analang,
-                                        add=add,rms=rms)
+                                        add=add,rms=rmlist)
         if refresh == True:
             self.db.write() #for when not iterated over, or on last repeat
     def updatestatus(self,group=None,verified=False,refresh=True):
@@ -3836,6 +3836,8 @@ class Check():
                                 "Click here to automatically select the next "
                                 "grammatical category.".format(ps)))
             b2.grid(row=row,column=1,sticky='w')
+            if self.parent.exitFlag.istrue():
+                return
             w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
                                         self.parent.winfo_screenwidth()/150))
             log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
