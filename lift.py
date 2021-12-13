@@ -244,7 +244,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if changed == True:
             self.updatemoddatetime(senseid=senseid)
         log.log(2,"Empty node? {}; {}".format(textnode.text,l))
-        if l == []:
+        if not l:
             log.debug("removing empty verification node from this sense")
             sensenode.remove(fieldnode)
         else:
