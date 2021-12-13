@@ -295,13 +295,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "".format(vtype,"verification",pylang))
         t=None #this default will give no text node value
         if vft is None:
-            vfleg=sensenode.find("field[@type='{} {}']".format(vtype,"verification"))
-            if vfleg:
-                t=vfleg.text
-                sensenode.remove(vfleg)
+            field=sensenode.find("field[@type='{} {}']".format(vtype,"verification"))
+            if field:
+                form=field.find("form")
+                if field.text and not form:
+                    t=field.text
+                else:
+                    l=form.get('lang')
+                    if l and analang in l:
+                        log.info("Found other node with analang in it, using.")
+                        textnode=form.find('text')
+                        t=textnode.text
+                sensenode.remove(field) #either way, we won't want the old one.
             vf=Node(node, 'field',
                             attrib={'type':"{} verification".format(vtype)})
-            vft=vf.makeformnode(lang=lang,text=t,gimmetext=True)
+            vft=vf.makeformnode(lang=pylang,text=t,gimmetext=True)
         return (vft,vf,sensenode)
     def getentrynode(self,senseid,showurl=False):
         return self.get('entry',senseid=senseid).get()
