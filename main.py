@@ -6013,7 +6013,6 @@ class ExampleDict(dict):
             "senses). This is probably a systematic problem to fix.".format(
                                                                 tries,kwargs,n))
         else:
-            self._outdict['senseid']=senseid
             self[group]=senseid #save for next time
             return self._outdict
     def __init__(self,params,slices,db,datadict):
