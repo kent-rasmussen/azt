@@ -157,6 +157,8 @@ Regarding which sound card to choose (as [A→Z+T](https://github.com/kent-rasmu
 Regarding external (e.g., USB) sound interfaces, there is an issue worth pointing out:
 - In some contexts (perhaps particularly in places with lower quality power, or running off a generator?), I have noticed inconsistencies building up over time in recordings. They may start with pops or other problems in the recordings, and ultimately not record at all. In any case, there is an easy fix: shut down and restart [A→Z+T](https://github.com/kent-rasmussen/azt). But this is a good reminder to listen to your recordings in real time, as you make them.
 
+Finally, note that you are presented words to record based on the **most recent tone analysis**. So if you feel that words are missing in the recording windows, it should help to redo the tone analysis.
+
 ## Subsequent Runs: CV analysis ![CV](images/ZA%20alone%20clear6_icon.png "ZA")
 ### (View data and run reports)
 [A→Z+T](https://github.com/kent-rasmussen/azt) doesn't do CV sorting and verification (Yet!), but you can make recordings and filter your data and look at it through a number of checks (e.g., by C1, or by V1=V2, etc.).
