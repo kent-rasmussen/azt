@@ -6007,7 +6007,7 @@ class ExampleDict(dict):
                 log.debug("n: {}".format(n))
                 senseid=senseids[randint(0, n-1)]
             self[group]=senseid #store for next iteration
-        if senseid is None: #not self.hasglosses(senseid):
+        if tries == n*2: #senseid is None: #not self.hasglosses(senseid):
             log.info("Apparently I tried for a senseid {} times, and couldn't "
             "find one matching your needs ({}) glosses (out of {} possible "
             "senses). This is probably a systematic problem to fix.".format(
