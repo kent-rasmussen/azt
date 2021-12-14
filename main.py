@@ -1474,7 +1474,7 @@ class Check():
                                             window=window,
                                             column=0, row=1
                                             )
-    def getprofile(self,event=None):
+    def getprofile(self,event=None,**kwargs):
         log.info("Asking for profile...")
         self.refreshattributechanges()
         window=ui.Window(self.frame,title=_('Select Syllable Profile'))
@@ -7491,12 +7491,12 @@ class StatusDict(dict):
     def profiles(self, **kwargs):
         kwargs=grouptype(**kwargs)
         profiles=self._slicedict.profiles() #already limited to current ps
-        checks=self.checks(**kwargs)
-        if kwargs['wsorted'] and not checks:
-            log.info("No Checks for this profile, returning.")
-            return #you won't find any profiles to do, either...
         p=[]
         for profile in profiles:
+            checks=self.checks(profile=profile,**kwargs)
+            if kwargs['wsorted'] and not checks:
+                log.info("No Checks for this profile, returning.")
+                continue #you won't find any profiles to do, either...
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']) or
                 (kwargs['tosort'] and self.profiletosort(profile)) or
@@ -7521,9 +7521,9 @@ class StatusDict(dict):
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']) or
                 # """These next two assume current ps-profile slice"""
-                kwargs['wsorted'] and self.groups(check=check,wsorted=True) or
+                kwargs['wsorted'] and self.groups(check=check,**kwargs) or
                 kwargs['tosort'] and self.checktosort(check) or
-                kwargs['toverify'] and self.groups(check=check,toverify=True) or
+                kwargs['toverify'] and self.groups(check=check,**kwargs) or
                 kwargs['tojoin'] and self.checktojoin(check)
                 ):
                 cs+=[check]
