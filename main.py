@@ -1746,7 +1746,7 @@ class Check():
         config=ConfigParser()
         config['default']={}
         d=self.makesettingsdict(setting=setting)
-        for s in d:
+        for s in [i for i in d if i not in [None,'None']]:
             v=d[s]
             if isinstance(v, dict):
                 config[s]=v
