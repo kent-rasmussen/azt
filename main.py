@@ -8053,7 +8053,7 @@ class Repository(object):
                 exit()
     def add(self,file):
         if not self.alreadythere(file):
-            args=["add", file]
+            args=["add", str(file)]
             r=self.do(args)
             if r:
                 log.info("Hg add: {}".format(r))
