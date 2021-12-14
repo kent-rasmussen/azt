@@ -6084,7 +6084,7 @@ class FramedData(object):
         self.glosslangs=self.parent.glosslangs
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def gettonegroup(self):
-        if self.tonegroups:
+        if hasattr(self,'tonegroups') and self.tonegroups:
             self.tonegroup=unlist(self.tonegroups)
             return True
     def formatted(self,showtonegroup=False,noframe=False):
