@@ -4365,57 +4365,6 @@ class Check():
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
-    def gettonegroups(self,ps=None,profile=None,check=None,renew=False):
-        log.error("We shouldn't be using gettonegroups anymore !!!\n"
-                "Rather, call updatesortingstatus when you will sort."
-                "or, to just get the values, call self.status.groups()")
-        return
-        """This returns (non-UF) tonegroups from the LIFT file. It should not
-        be used to affirm that often; sortT/joinT manage this."""
-        """This depends on ps, profile, and check, but can take current or
-        specified values"""
-        """To read groups from the status object, use self.status.groups()"""
-        if check == None:
-            check=self.params.check()
-        if profile == None:
-            self.slices.profile()
-        if ps == None:
-            self.slices.ps()
-        if not renew:
-            self.status.groups(wsorted=True,ps=ps,profile=profile,check=check)
-            return
-        log.log(3,"Looking for tone groups for {} frame".format(check))
-        tonegroups=[]
-        """This takes current for any NONE values"""
-        senseids=self.slices.senseids(ps=ps,profile=profile)
-        for senseid in senseids:
-            tonegroup=self.db.get("example/tonefield/form/text",
-                                senseid=senseid, location=check).get('text')
-            if unlist(tonegroup) in ['NA','','ALLOK', None]:
-                log.error("tonegroup {} found in sense {} under location {}!"
-                    "".format(tonegroup,senseid,check))
-            else:
-                tonegroups+=tonegroup
-        groups=list(dict.fromkeys(tonegroups))
-        log.debug("gettonegroups groups: {}".format(groups))
-        for value in ['NA', '', 'None', None]:
-            if value in groups:
-                log.error("Found (and removing) value {} in {}-{} for {} "
-                    "frame: {}".format(value, ps, profile, check, groups))
-                groups.remove(value)
-        log.debug('gettonegroups ({}): {}'.format(check, groups))
-        """This takes current for any NONE values"""
-        self.status.dictcheck(ps=ps,profile=profile,check=check)
-        self.status.groups(groups,wsorted=True,ps=ps,profile=profile,
-                                                        check=check) #set
-        verified=self.status.verified(ps=ps,profile=profile,check=check) #read
-        for v in verified:
-            if v not in groups:
-                log.error("Removing verified group {} not in actual groups: {}!"
-                            "".format(v, groups))
-                verified.remove(v)
-        self.status.verified(verified,ps=ps,profile=profile,check=check) #set
-        self.storesettingsfile(setting='status')
     def removesenseidfromgroup(self,senseid,check=None,group=None): #parent,
         if check is None:
             check=self.params.check()
