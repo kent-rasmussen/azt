@@ -7706,8 +7706,11 @@ class StatusDict(dict):
                 log.info("Updating {}-{} status dict to new schema".format(
                                             kwargs['profile'],kwargs['check']))
                 groups=base
-                base={}
+                base=self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][
+                                                        kwargs['check']]={}
                 base['groups']=groups
+                base['done']=[]
+                base['tosort']=True
                 changed=True
             for key in ['groups','done']:
                 if key not in base:
