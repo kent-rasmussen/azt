@@ -4061,6 +4061,7 @@ class Check():
             return
         senseids=self.exs.senseidsinslicegroup(group,check)
         if not senseids:
+            groups=self.status.groups() #from which to remove, put back
             log.info("Groups: {}".format(self.status.groups(toverify=True)))
             verified=False
             log.info("Group ‘{}’ has no examples; continuing.".format(group))
@@ -4549,7 +4550,7 @@ class Check():
         row+=10
         bf=ui.Frame(parent)
         bf.grid(column=0, row=row, sticky="w")
-        if self.status.groups(wsorted=True) == []:
+        if not self.status.groups(wsorted=True):
             vardict['ok']=tkinter.BooleanVar()
             okb=ui.Button(bf, text=firstOK,
                             cmd=firstok,
