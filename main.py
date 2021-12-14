@@ -4607,7 +4607,7 @@ class Check():
             self.runwindow=ui.Window(self.frame,title=title)
         self.runwindow.title(title)
         self.runwindow.lift()
-        if nowait != True:
+        if not nowait:
             self.runwindow.wait(msg=msg)
     def runcheck(self):
         self.storesettingsfile() #This is not called in checkcheck.
