@@ -6808,6 +6808,9 @@ class ToneGroupButtonFrame(ui.Frame):
         for child in self.winfo_children():
             child.destroy()
         self.makebuttons()
+        self.update_idletasks()
+        if self.kwargs['playable'] and self._playable:
+            self.player.play()
     def select(self):
         self._var.set(True)
     def sortnext(self):
