@@ -1505,6 +1505,7 @@ class Check():
                                     window=window,
                                     column=0, row=0
                                     )
+            window.wait_window(window)
     def getcvt(self,event=None):
         log.debug(_("Asking for check cvt/type"))
         window=ui.Window(self.frame,title=_('Select Check Type'))
