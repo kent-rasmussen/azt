@@ -6306,6 +6306,9 @@ class FramedDataElement(FramedData):
             return
         self.senseid=senseid
         self.parseelement(node) #example element, not sense or entry:
+        if not self.forms:
+            log.error("Sorry, somehow {} didn't result in forms: {}; {}/{}"
+                    "".format(senseid,self.forms,node,type(node)))
         self.applynoframe() #because we want self.framed=self.forms
         self.makeaudiofilename() #generate self.filename and self.filenameURL
         """This is what we're pulling from:
