@@ -7655,7 +7655,7 @@ class StatusDict(dict):
             """Build this explicitly to avoid recursion group-check-node"""
             t=self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][
                                                 kwargs['check']]['groups']
-        except KeyError:
+        except (KeyError,TypeError):
             self.build(**kwargs)
     def build(self,**kwargs):
         """this makes sure that the dictionary structure is there for work you
