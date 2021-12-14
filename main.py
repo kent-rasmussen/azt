@@ -5248,7 +5248,7 @@ class Check():
         if not checks:
             self.getprofile(wsorted=True)
         self.storesettingsfile()
-        self.getrunwindow()
+        self.getrunwindow(msg="Tone Report in Process")
         ps=self.slices.ps()
         profile=self.slices.profile()
         bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
