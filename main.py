@@ -7737,7 +7737,10 @@ class StatusDict(dict):
                     checks=list(self[t][ps][profile]) #actual, not theoretical
                     for check in checks:
                         node=self[t][ps][profile][check]
-                        if node['groups'] == []:
+                        if type(node) is list:
+                            if not node:
+                                del self[t][ps][profile][check]
+                        elif node['groups'] == []:
                             if node['done'] != []:
                                 log.error("groups verified, but not present!")
                             del self[t][ps][profile][check]
