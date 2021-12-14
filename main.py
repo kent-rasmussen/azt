@@ -3729,9 +3729,9 @@ class Check():
                 return
         tosortupdate()
         log.info("Going to verify the first of these groups now: {}".format(
-                                    self.status.groups(check,toverify=True)))
+                                    self.status.groups(toverify=True)))
         log.info("Maybe verifyT (from maybesort)")
-        groupstoverify=self.status.groups(check,toverify=True)
+        groupstoverify=self.status.groups(toverify=True)
         if groupstoverify:
             self.status.group(groupstoverify[0]) #just pick the first now
             log.info("verifyT (from maybesort)")
