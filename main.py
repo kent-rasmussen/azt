@@ -5999,6 +5999,7 @@ class ExampleDict(dict):
             log.info("Audio file check failed for {}".format(senseid))
             return
         self._outdict['senseid']=senseid
+        self._outdict['framed']=framed
         return True
     def getexample(self,group,**kwargs):
         # exampletype(**kwargs) #needed?
