@@ -1487,13 +1487,16 @@ class Check():
         else:
             profilecounts=self.slices.valid()
             profilecountsAdHoc=self.slices.adhoccounts()
+            profiles=self.status.profiles(**kwargs)
+            if not profiles:
+                log.error("No profiles of {} type found!".format(kwargs))
             log.info("count types: {}, {}".format(type(profilecounts),type(profilecountsAdHoc)))
             if profilecountsAdHoc:
                 profilecounts.update(profilecountsAdHoc)
             ui.Label(window.frame, text=_('What ({}) syllable profile do you '
                                     'want to work with?'.format(ps))
                                     ).grid(column=0, row=0)
-            optionslist = [(x[0],profilecounts[x]) for x in profilecounts]
+            optionslist = [(x,profilecounts[(x,ps)]) for x in profiles]
             window.scroll=ui.Frame(window.frame)
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
