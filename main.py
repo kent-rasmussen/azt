@@ -6866,9 +6866,11 @@ class ToneGroupButtonFrame(ui.Frame):
         elif self.kwargs['playable']:
             if self._senseid and self._filenameURL:
                 self.playbutton()
+                self._playable=True
             else: #Label if there is no sound file on any example.
                 self.getexample() #shouldn't need renew=True
                 self.labelbutton()
+                self._playable=False
         else:
             self.selectbutton()
         if self._n > 1 or self.kwargs['alwaysrefreshable']:
