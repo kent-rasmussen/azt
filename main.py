@@ -8606,7 +8606,7 @@ if __name__ == "__main__":
                                     platform.uname().node,
                                     loglevel,
                                     datetime.datetime.utcnow().isoformat()))
-    transdir=aztdir+'/translations/'
+    transdir=file.gettranslationdirin(aztdir)
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])

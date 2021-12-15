@@ -34,7 +34,7 @@ def getfilenamedir(filename):
     return pathlib.Path(filename).parent
 def getfilenamebase(filename):
     return pathlib.Path(filename).stem
-def gettranslationdir(exedir):
+def gettranslationdirin(exedir):
     dir=pathlib.Path.joinpath(exedir,'translations')
     return dir
 def getimagesdir(filename):
