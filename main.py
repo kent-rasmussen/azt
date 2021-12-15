@@ -360,7 +360,7 @@ class Check():
                                     self.status,
                                     self.db
                                     )
-        log.info("makestatus status type: {}".format(type(self.status)))
+        log.info("makeanalysis analysis type: {}".format(type(self.analysis)))
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
@@ -7521,7 +7521,7 @@ class StatusDict(dict):
         for profile in profiles:
             checks=self.checks(profile=profile,**kwargs)
             if kwargs['wsorted'] and not checks:
-                log.info("No Checks for this profile, returning.")
+                log.log(4,"No Checks for this profile, returning.")
                 continue #you won't find any profiles to do, either...
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']) or
