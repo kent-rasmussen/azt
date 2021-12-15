@@ -4377,14 +4377,10 @@ class Check():
             check=self.params.check()
         if group is None:
             group=self.status.group()
-        framed=self.datadict.getframeddata(senseid)
-        framed.setframe(check)
-        text=framed.formatted(noframe=False)
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
         #This should only *mod* if already there
         self.db.addmodexamplefields(senseid=senseid,
                                 analang=self.analang,
-                                framed=framed,
                                 fieldtype='tone',location=check,
                                 fieldvalue='',showurl=True) #this value should be the only change
         log.info("Checking that removal worked")
