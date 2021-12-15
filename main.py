@@ -5228,11 +5228,14 @@ class Check():
         self.runwindow.wait_window(scroll)
     def tonegroupreport(self,silent=False,bylocation=False,default=True):
         #default=True redoes the UF analysis (removing any joining/renaming)
-        def examplestoXLP(examples,parent,groups=True):
+        def examplestoXLP(examples,parent,senseid,groups=True):
             if not default:
                 groups=True #show groups on all non-default reports
             for example in examples:
-                framed=self.datadict.getframeddata(example)
+                framed=self.datadict.getframeddata(example,senseid)
+                # skip empty examples:
+                if not framed.forms:
+                    continue
                 framed.gettonegroup() #wanted for id, not for display
                 for lang in [self.analang]+self.glosslangs:
                     if framed.forms[lang] is not None: #If all None, don't.
@@ -5399,7 +5402,7 @@ class Check():
                         #This is put in XLP file:
                         examples=self.db.get('example',location=check,
                                                 senseid=senseid).get()
-                        examplestoXLP(examples,e1,groups=False)
+                        examplestoXLP(examples,e1,senseid,groups=False)
                         if text not in textout:
                             output(window,r,text)
                             textout.append(text)
@@ -5419,7 +5422,9 @@ class Check():
                         log.log(2,"Using id {}".format(id))
                         headtext=text.replace('\t',' ')
                         e1=xlp.Example(s1,id,heading=headtext)
-                        examplestoXLP(examples,e1)
+                        log.info("Asking for the following {} examples from id "
+                                "{}: {}".format(len(examples),senseid,examples))
+                        examplestoXLP(examples,e1,senseid)
                     output(window,r,text)
         self.runwindow.waitdone()
         xlpr.close()
