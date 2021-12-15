@@ -4388,13 +4388,14 @@ class Check():
                             location=check).get('text')
         if tgroups in [[],'',['']]:
             log.info("Field removal succeeded! LIFT says '{}', = []."
-                                                                "".format(tgroups))
+                                                            "".format(tgroups))
         elif len(tgroups) == 1:
             tgroup=tgroups[0]
-            log.error("Field removal failed! LIFT says '{}', != [].".format(tgroup))
+            log.error("Field removal failed! LIFT says '{}', != []."
+                                                            "".format(tgroup))
         elif len(tgroups) > 1:
-            log.error(_("Found {} tone values: {}; Fix this!".format(len(tgroups),
-                                                                        tgroups)))
+            log.error("Found {} tone values: {}; Fix this!"
+                                            "".format(len(tgroups),tgroups))
             return
         rm=self.verifictioncode(check,group)
         profile=self.slices.profile()
