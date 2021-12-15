@@ -5153,16 +5153,19 @@ class Check():
                 "here, run the tone reports in the Advanced menu (without "
                 "analysis). ".format(ps,profile,program['name']))
         rwrow+=1
-        i=ui.Label(self.runwindow.frame,text=text)
-        i.grid(row=rwrow,column=0,sticky='ew')
+        i=ui.Label(self.runwindow.frame,text=text,
+                    row=rwrow,column=0,sticky='ew')
+        i.wrap()
         rwrow+=1
         qframe=ui.Frame(self.runwindow.frame)
         qframe.grid(row=rwrow,column=0,sticky='ew')
         text=_("What do you want to call this UF tone group for {}-{} words?"
                 "".format(ps,profile))
         qrow+=1
-        q=ui.Label(qframe,text=text)
-        q.grid(row=qrow,column=0,sticky='ew',pady=20)
+        q=ui.Label(qframe,text=text,
+                    row=qrow,column=0,sticky='ew',pady=20
+                    )
+        q.wrap()
         named=tkinter.StringVar() #store the new name here
         namefield = ui.EntryField(qframe,textvariable=named)
         namefield.grid(row=qrow,column=1)
