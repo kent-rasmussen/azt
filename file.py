@@ -13,7 +13,8 @@ try: #Allow this module to be used without translation
 except:
     def _(x):
         return x
-
+def getfile(filename):
+    return pathlib.Path(filename)
 def fullpathname(filename):
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
