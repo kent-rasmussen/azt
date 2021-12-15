@@ -751,10 +751,7 @@ class RadioButton(Gridded,Childof,tkinter.Radiobutton):
         self.parent=parent
         if 'font' not in kwargs:
             kwargs['font']=self.theme.fonts['default']
-        # kwargs['activebackground']=self.theme.activebackground
-        # kwargs['selectcolor']=self.theme.activebackground
-        super(RadioButton,self).__init__(parent,**kwargs)
-        self.grid(column=column, row=row, sticky=sticky)
+        tkinter.Radiobutton.__init__(self,parent,**kwargs)
         UI.__init__(self)
         self.dogrid()
 class CheckButton(Gridded,Childof,tkinter.Checkbutton):
