@@ -894,7 +894,6 @@ class Check():
                 "".format(ps))
         instq=ui.Label(qframe,text=text,
                 row=0,column=0,sticky='ew',pady=20)
-        instq.wrap()
         if new:
             default=None
         else:
