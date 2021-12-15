@@ -439,6 +439,36 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     # for e in examples[1:]:
                     #     sense.remove(e)
                     dup=True
+                    nodes={}
+                    uniq={}
+                    first={}
+                    for n in self.analangs+self.glosslangs+['value']:
+                        nodes[n]=[]
+                    for example in examples:
+                        for lang in self.analangs:
+                            nodes[lang].extend(example.findall(
+                                        "form[@lang='{}']/text".format(lang)))
+                        for lang in self.glosslangs:
+                            nodes[lang].extend(example.findall(
+                                            "translation/form[@lang='{}']/text"
+                                            "".format(lang)))
+                        nodes['value'].extend(example.findall(
+                                    "field[@type='tone']/form[@lang='{}']/text"
+                                    "".format(lang)))
+                    for n in nodes:
+                        uniq[n]=list(set([i.text for i in nodes[n]
+                                                            if i is not None]))
+                        # first['forms']=forms.get('node')[0]
+                    if [n for n in uniq if len(uniq[n]) >1]:
+                            log.info("Sorry, I don't know how to combine these "
+                                "example values: {} ({})"
+                                "".format(uniq[n],n))
+                            continue
+                    log.info("It looks like all examples have all the same "
+                            "values, so we're deleting all but the first: {}"
+                            "".format(uniq))
+                    for example in examples[1:]:
+                        sense.remove(example)
         if dup:
             pass #not yet: self.write()
         else:
