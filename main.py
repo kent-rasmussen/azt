@@ -916,7 +916,9 @@ class Check():
                                                     allpssensids.index(id),row))
             idn=allpssensids.index(id)
             vars.append(tkinter.StringVar())
-            if id in self.slices.adhoc()[ps][profile]:
+            adhocslices=self.slices.adhoc()
+            if (ps in adhocslices and profile in adhocslices[ps] and
+                                                id in adhocslices[ps][profile]):
                 vars[idn].set(id)
             else:
                 vars[idn].set(0)
