@@ -6310,12 +6310,12 @@ class FramedDataElement(FramedData):
             elif ((i.tag == 'field') and (i.get('type') == 'tone')):
                 self.tonegroups=[j.text for j in i.findall('form/text')]
     def __init__(self, parent, node, senseid=None, **kwargs):
-        super(FramedDataElement, self).__init__(parent)
         if not isinstance(node,lift.ET.Element):
             log.error("You should pass an element ({}) to FramedDataExample!"
                         "".format(type(node)))
             return
         self.senseid=senseid
+        super(FramedDataElement, self).__init__(parent)
         self.parseelement(node) #example element, not sense or entry:
         if not self.forms:
             log.error("Sorry, somehow {} didn't result in forms: {}; {}/{}"
