@@ -8601,10 +8601,11 @@ if __name__ == "__main__":
         aztdir = thisexe.parent
     mt=datetime.datetime.fromtimestamp(thisexe.stat().st_mtime)
     """Not translating yet"""
-    log.info('Running {} v{} in {} on {} with loglevel {} at {}'.format(
-                                    program['name'],program['version'],aztdir,
-                                    platform.uname().node,
-                                    loglevel,
+    log.info("Running {} v{} (main.py updated to {})".format(
+                                    program['name'],program['version'],mt))
+    log.info("Working directory is {} on {} ".format(aztdir,
+                                                    platform.uname().node))
+    log.info("Loglevel is {}; starting at {}".format(loglevel,
                                     datetime.datetime.utcnow().isoformat()))
     transdir=file.gettranslationdirin(aztdir)
     i18n={}
