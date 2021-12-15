@@ -3876,8 +3876,6 @@ class Check():
         # (underlying distinctions) in any case.
         #This function should exit 1 on a window close, or finish with None
         def presenttosort():
-            if self.runwindow.exitFlag.istrue():
-                return 1,1
             groupselected=None
             """these just pull the current lists from the object"""
             senseids=self.status.senseidstosort()
@@ -3888,6 +3886,8 @@ class Check():
             framed.setframe(check)
             """After the first entry, sort by groups."""
             log.debug('tonegroups: {}'.format(self.status.groups(wsorted=True)))
+            if self.runwindow.exitFlag.istrue():
+                return 1,1
             ui.Label(titles, text=progress, font='report', anchor='w'
                                             ).grid(column=1, row=0, sticky="ew")
             text=framed.formatted()
