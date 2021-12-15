@@ -3491,7 +3491,8 @@ class Check():
                 self.renamegroup(reverify=reverify)
         def setgroup_comparison():
             w=self.getgroup(comparison=True,wsorted=True) #this returns its window
-            w.wait_window(w)
+            if w and w.winfo_exists(): #This window may be already gone
+                w.wait_window(w)
             comparisonbuttons()
         def comparisonbuttons():
             try: #successive runs
