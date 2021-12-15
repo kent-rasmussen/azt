@@ -34,6 +34,9 @@ def getfilenamedir(filename):
     return pathlib.Path(filename).parent
 def getfilenamebase(filename):
     return pathlib.Path(filename).stem
+def gettranslationdir(exedir):
+    dir=pathlib.Path.joinpath(exedir,'translations')
+    return dir
 def getimagesdir(filename):
     dir=pathlib.Path.joinpath(getfilenamedir(filename),'images')
     if not os.path.exists(dir):
