@@ -335,13 +335,10 @@ class Check():
         if hasattr(self,'sextracted'):
             self.getscounts()
     def makedatadict(self):
-        log.info("makedatadict")
         self.datadict=FramedDataDict(self)
     def makeexampledict(self):
-        log.info("makeexampledict")
         self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
     def makestatus(self):
-        log.info("makestatus")
         if not hasattr(self,'status'):
             self.status={}
         self.status=StatusDict(self.params,
@@ -351,16 +348,13 @@ class Check():
                                 self.settingsfile('status'),
                                 self.status
                                 )
-        log.info("makestatus status type: {}".format(type(self.status)))
     def makeanalysis(self):
-        log.info("makeanalysis")
         if not hasattr(self,'analysis'):
             self.analysis=Analysis(self.params,
                                     self.slices,
                                     self.status,
                                     self.db
                                     )
-        log.info("makeanalysis analysis type: {}".format(type(self.analysis)))
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
