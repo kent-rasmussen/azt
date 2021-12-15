@@ -5252,7 +5252,7 @@ class Check():
                     continue
                 framed.gettonegroup() #wanted for id, not for display
                 for lang in [self.analang]+self.glosslangs:
-                    if framed.forms[lang] is not None: #If all None, don't.
+                    if lang in framed.forms and framed.forms[lang]: #If all None, don't.
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                                 groups=groups)
                         break #do it on first present lang, and do next ex
