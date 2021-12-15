@@ -4152,7 +4152,7 @@ class Check():
         # it will fail.
         # should move to specify location and fieldvalue in button lambda
         def notok():
-            self.removesenseidfromgroup(senseid,check)
+            self.removesenseidfromgroup(senseid,check,sorting=True)
             bf.destroy()
         if 'font' not in kwargs:
             kwargs['font']='read'
@@ -4378,11 +4378,12 @@ class Check():
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
-    def removesenseidfromgroup(self,senseid,check=None,group=None): #parent,
+    def removesenseidfromgroup(self,senseid,check=None,group=None,**kwargs):
         if check is None:
             check=self.params.check()
         if group is None:
             group=self.status.group()
+        sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
         #This should only *mod* if already there
         self.db.addmodexamplefields(senseid=senseid,
@@ -4409,8 +4410,8 @@ class Check():
                                                                         rms=[rm])
         self.status.last('sort',update=True)
         self.db.write() #This is not iterated over
-        self.status.marksenseidtosort(senseid) #This is just for self.status['sorted']
-        # parent.destroy() #.runwindow.resetframe()
+        if sorting:
+            self.status.marksenseidtosort(senseid)
     def marksortedguid(self,guid):
         """I think these are only valuable during a check, so we don't have to
         constantly refresh sortingstatus() from the lift file."""
@@ -6854,7 +6855,7 @@ class ToneGroupButtonFrame(ui.Frame):
         # remove()
     def unsort(self):
         check=self.check.params.check()
-        self.check.removesenseidfromgroup(self._senseid,check)
+        self.check.removesenseidfromgroup(self._senseid,check,sorting=False)
         self.refresh()
     def setcanary(self,canary):
         if canary.winfo_exists():
