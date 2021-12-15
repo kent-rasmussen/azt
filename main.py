@@ -6320,6 +6320,7 @@ class FramedDataElement(FramedData):
         if not self.forms:
             log.error("Sorry, somehow {} didn't result in forms: {}; {}/{}"
                     "".format(senseid,self.forms,node,type(node)))
+            return
         self.applynoframe() #because we want self.framed=self.forms
         self.makeaudiofilename() #generate self.filename and self.filenameURL
         """This is what we're pulling from:
