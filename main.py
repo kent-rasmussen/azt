@@ -6187,6 +6187,7 @@ class FramedDataElement(FramedData):
     def audio(self):
         if self.audiolang in self.forms:
             self.filename=self.forms[self.audiolang]
+            log.info("Found link to audio file {}".format(self.filename))
             return self.filename
     def audiofileisthere(self):
         """This tests the presence of the sound file, which is referred to
@@ -6194,7 +6195,7 @@ class FramedDataElement(FramedData):
         if hasattr(self,'filename'):
             self.filenameURL=str(file.getdiredurl(self.audiodir,self.filename))
             if file.exists(self.filenameURL):
-                log.info("audiofileisthere: {}".format(self.filenameURL))
+                log.info("Found linked audio file {}".format(self.filename))
                 return True
     def makeaudiofilename(self):
         self.audio()
