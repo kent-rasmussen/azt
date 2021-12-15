@@ -6860,9 +6860,20 @@ class ToneGroupButtonFrame(ui.Frame):
     def getexample(self,**kwargs):
         kwargs=exampletype(**kwargs)
         example=self.exs.getexample(self.group,**kwargs)
-        if example is None:
-            log.error("self.exs.getexample didn't return an example; returning")
-            return
+        if not example:
+            if kwargs['wsoundfile']:
+                log.error("self.exs.getexample didn't return an example "
+                                    "with a soundfile; trying for one without")
+                kwargs['wsoundfile']=False
+                example=self.exs.getexample(self.group,**kwargs)
+                if not example:
+                    log.error("self.exs.getexample didn't return an example "
+                                        "with or without sound file; returning")
+                    return
+            else:
+                log.error("self.exs.getexample didn't return an example "
+                                    "(without needing a sound file); returning")
+                return
         self._n=example['n']
         framed=example['framed']
         if framed is None:
