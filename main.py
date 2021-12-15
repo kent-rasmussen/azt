@@ -1326,6 +1326,8 @@ class Check():
             self.attrschanged.remove('profile')
         if 'check' in self.attrschanged:
             self.attrschanged.remove('check')
+        if 'interfacelang' in self.attrschanged:
+            self.attrschanged.remove('interfacelang')
         soundattrs=['fs',
                     'sample_format',
                     'audio_card_index',
