@@ -3157,8 +3157,13 @@ class Check():
                 window.scroll=ui.Frame(window.frame)
                 window.scroll.grid(column=0, row=1)
                 if kwargs['comparison']:
+                    g2=g[:]
+                    g2.remove(self.status.group())
+                    if len(g2) == 1:
+                        self.setgroup_comparison(g2[0],window)
+                        return
                     buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                            optionlist=g,
+                                            optionlist=g2,
                                             command=self.setgroup_comparison,
                                             window=window,
                                             column=0, row=4
