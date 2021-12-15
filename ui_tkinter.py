@@ -238,7 +238,7 @@ class Theme(object):
         title=bigger=int(default*2)
         small=int(default*2/3)
         default=int(default)
-        log.info("Default font size: {}".format(default))
+        log.log(4,"Default font size: {}".format(default))
         andika="Andika"# not "Andika SIL"
         charis="Charis SIL"
         self.fonts={
@@ -513,8 +513,6 @@ class Root(tkinter.Tk):
 """These have parent (Childof), but no grid"""
 class Toplevel(Childof,tkinter.Toplevel,UI): #NoParent
     def __init__(self, parent, *args, **kwargs):
-        log.info("Initializing Toplevel object")
-        log.info("Toplevel parent: {}".format(parent))
         Childof.__init__(self,parent)
         tkinter.Toplevel.__init__(self)
         UI.__init__(self)
