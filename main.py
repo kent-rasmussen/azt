@@ -5419,7 +5419,6 @@ class Check():
                                                                     examples))
                     if examples != []:
                         id=self.idXLP(framed)+'_examples'
-                        log.log(2,"Using id {}".format(id))
                         headtext=text.replace('\t',' ')
                         e1=xlp.Example(s1,id,heading=headtext)
                         log.info("Asking for the following {} examples from id "
