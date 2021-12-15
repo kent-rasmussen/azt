@@ -8419,7 +8419,7 @@ def findexecutable(exe):
              exeOS='sendpraat-mac'
     else:
         log.error("Sorry, I don't know this OS: {}".format(os))
-    log.info("Looking for {} on {}...".format(exe,os))
+    # log.info("Looking for {} on {}...".format(exe,os))
     program[exe]=None
     try:
         exeURL=subprocess.check_output([which,exeOS], shell=False)
@@ -8428,7 +8428,7 @@ def findexecutable(exe):
     except subprocess.CalledProcessError as e:
         log.info("Executable {} search output: {}".format(exe,e.output))
     except Exception as e:
-        log.info(_("Search for {} failed: {}").format(exe,e))
+        log.info(_("Search for {} on {} failed: {}").format(exe,os,e))
         return e
 def praatopen(file,newpraat=False,event=None):
     if program['sendpraat'] and not newpraat:
