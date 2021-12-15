@@ -6050,14 +6050,15 @@ class FramedDataDict(dict):
         self.updatelangs()
         sense=element=False
         """Is source a valid senseid in the database?"""
-        if source and self.db.get('sense', senseid=source).get():
-            log.info("sense?: {}".format(self.db.get('sense', senseid=source).get()))
-            sense=True
-        if isinstance(source,lift.ET.Element):
-            element=True
-        log.info("sense: {}, element: {}".format(sense,element))
-        """If neither or None is given, try to build it from kwargs"""
-        if not source or (not sense and not element):
+        if source:
+            if self.db.get('sense', senseid=source).get():
+                # log.info("sense?: {}".format(self.db.get('sense', senseid=source).get()))
+                sense=True
+            if isinstance(source,lift.ET.Element):
+                element=True
+            # log.info("sense: {}, element: {}".format(sense,element))
+        elif senseid and check:
+            """If neither or None is given, try to build it from kwargs"""
             """If these aren't there, these will correctly fail w/KeyError."""
             source=firstoflist(self.db.get('example',
                                             showurl=True,
