@@ -8594,11 +8594,13 @@ if __name__ == "__main__":
     except:
         pass
     sys.excepthook = handle_exception
+    thisexe = file.getfile(__file__)
     if hasattr(sys,'_MEIPASS') and sys._MEIPASS is not None:
         aztdir=sys._MEIPASS
     else:
         filename = inspect.getframeinfo(inspect.currentframe()).filename
         aztdir = os.path.dirname(os.path.abspath(filename))
+    mt=datetime.datetime.fromtimestamp(thisexe.stat().st_mtime)
     """Not translating yet"""
     log.info('Running {} v{} in {} on {} with loglevel {} at {}'.format(
                                     program['name'],program['version'],aztdir,
