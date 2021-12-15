@@ -91,7 +91,6 @@ class Theme(object):
                             ('uncheckedbox','images/unchecked.png')
                         ]:
             mkimg(name,relurl)
-        log.info("Done scaling images")
     def settheme(self):
         if not self.name:
             defaulttheme='greygreen'
@@ -114,7 +113,6 @@ class Theme(object):
             exit()
         for k in self.themes[self.name]:
             setattr(self,k,self.themes[self.name][k])
-            log.info("Theme {}: {}".format(k,getattr(self,k)))
     def setthemes(self):
         self.themes={'lightgreen':{
                             'background':'#c6ffb3',
