@@ -75,7 +75,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.slists() #sets: self.c self.v, not done with self.segmentsnotinregexes[lang]
         self.extrasegments() #tell me if there's anything not in a V or C regex.
         # self.findduplicateforms()
-        # self.findduplicateexamples()
+        self.findduplicateexamples()
         """Think through where this belongs; what classes/functions need it?"""
         self.morphtypes=self.getmorphtypes()
         log.info("Language initialization done.")
@@ -470,7 +470,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     for example in examples[1:]:
                         sense.remove(example)
         if dup:
-            pass #not yet: self.write()
+            self.write()
         else:
             log.info("No duplicate examples (same sense and location) were "
                     "found in the lexicon.")
