@@ -324,7 +324,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         location=kwargs.get('location')
         fieldtype=kwargs.get('fieldtype','tone') # needed? ever not 'tone'?
         oldtonevalue=kwargs.get('oldfieldvalue',None)
-        if oldtonevalue is None:
+        if not oldtonevalue:
             exfieldvalue=self.get("example/tonefield/form/text",
                     senseid=senseid, location=location).get('node')
         else:
@@ -335,18 +335,18 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         tonevalue=kwargs.get('fieldvalue') #don't test for this above
         analang=kwargs.get('analang')
         framed=kwargs.get('framed',None) #This an object with values
-        if framed is not None:
+        if framed:
             forms=framed.framed #because this should always be framed
             glosslangs=framed.glosslangs
-        if len(exfieldvalue) > 0:
+        if exfieldvalue:
             for e in exfieldvalue:
                 e.text=tonevalue
             # If we modify the tone value, check for form and gloss conformity:
-            if framed is not None: #if it's specified, that is...
+            if framed: #if it's specified, that is...
                 formvaluenode=self.get("example/form/text", senseid=senseid,
                     analang=analang, location=location, showurl=True).get('node')
                 log.info(formvaluenode)
-                if len(formvaluenode)>0:
+                if formvaluenode:
                     formvaluenode=formvaluenode[0]
                     if forms[analang] != formvaluenode.text:
                         log.debug("Form changed! ({}≠{})".format(forms[analang],
@@ -362,7 +362,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                 node=glossesnode[0], senseid=senseid, glosslang=lang,
                                 location=location, showurl=True).get('node')
                     log.debug("glossvaluenode: {}".format(glossvaluenode))
-                    if len(glossvaluenode)>0:
+                    if glossvaluenode:
                         glossvaluenode=glossvaluenode[0]
                         if forms[lang] != glossvaluenode.text:
                             log.debug("Gloss changed! ({}≠{})".format(forms[lang],
@@ -371,8 +371,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     else:
                         log.debug("Gloss missing for lang {}; adding".format(lang))
                         Node.makeformnode(glossesnode[0],lang,forms[lang])
-        elif framed is None:
-            log.error("I can't make new nodes without form info! {}-{}"
+        elif not framed:
+            log.error("No node found, nor form info provided! {}-{}"
                         "".format(senseid,location))
         else: #If not already there, make it.
             log.info("Didn't find that example already there, creating it...")
