@@ -5192,6 +5192,14 @@ class Check():
         self.makeanalysis()
         self.analysis.donoUFanalysis()
         nheaders=0
+        if not self.analysis.orderedUFs:
+            self.runwindow.waitdone()
+            self.runwindow.destroy()
+            ErrorNotice(title="No draft UF groups found!",
+                        text="You don't seem to have any analyzed groups to "
+                                "join/rename. Have you done a tone analyis?"
+                        )
+            return
         # ufgroups= # order by structured groups? Store this somewhere?
         for group in self.analysis.orderedUFs: #make a variable and button to select
             idn=self.analysis.orderedUFs.index(group)
