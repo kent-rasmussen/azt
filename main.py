@@ -5241,6 +5241,8 @@ class Check():
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def tonegroupreport(self,silent=False,bylocation=False,default=True):
+        """This should iterate over at least some profiles; top 2-3?
+        those with 2-4 verified frames? Selectable with radio buttons?"""
         #default=True redoes the UF analysis (removing any joining/renaming)
         def examplestoXLP(examples,parent,senseid,groups=True):
             if not default:
