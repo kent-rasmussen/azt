@@ -853,7 +853,7 @@ class Check():
         pady=10
         ui.Label(self.runwindow.frame,text=title,font='title',
                 ).grid(row=0,column=0,sticky='ew')
-        allpssensids=self.slices.senseidsbyps()
+        allpssensids=self.slices.senseidsbyps(ps)
         if len(allpssensids)>70:
             self.runwindow.waitdone()
             text=_("This is a large group ({})! Are you in the right "
