@@ -884,12 +884,17 @@ class Check():
                 "\nIf you want to create a new group, exit here, select a "
                 "non-Ad Hoc syllable profile, and try this window again."
                 "".format(ps))
-        ui.Label(self.runwindow.frame,text=text).grid(row=1,column=0,sticky='ew')
+        inst=ui.Label(self.runwindow.frame,text=text,
+                row=1,column=0,sticky='ew'
+                )
+        inst.wrap()
         qframe=ui.Frame(self.runwindow.frame)
         qframe.grid(row=2,column=0,sticky='ew')
         text=_("What do you want to call this group for sorting {} words?"
                 "".format(ps))
-        ui.Label(qframe,text=text).grid(row=0,column=0,sticky='ew',pady=20)
+        instq=ui.Label(qframe,text=text,
+                row=0,column=0,sticky='ew',pady=20)
+        instq.wrap()
         if new:
             default=None
         else:
