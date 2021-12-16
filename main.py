@@ -2570,8 +2570,9 @@ class Check():
     def soundcheckrefresh(self):
         self.soundsettingswindow.resetframe()
         row=0
-        ui.Label(self.soundsettingswindow.frame,
-                text="Current Sound Card Settings:").grid(row=row,column=0)
+        ui.Label(self.soundsettingswindow.frame, font='title',
+                text="Current Sound Card Settings (click any to change):",
+                row=row,column=0)
         row+=1
         ss=self.soundsettings
         ss.check() #make defaults if not valid options
