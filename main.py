@@ -7213,7 +7213,6 @@ class Analysis(object):
         self.tonegroupsbyUFcheckfromLIFT() # > self.valuesbygroupcheck
         self.doanyway()
     def do(self):
-        self.checks=self._status.checks() #just do once
         self.checkgroupsbysenseid() # > self.senseiddict
         self.sorttoUFs() # > self.senseidsbygroup and self.valuesbygroupcheck
         self._db.write()
