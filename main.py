@@ -5475,7 +5475,8 @@ class Check():
         text=_("(Report is also available at ("+self.tonereportfile+")")
         output(window,r,text)
         r.close()
-        resultswindow.update_idletasks()
+        if me:
+            resultswindow.destroy()
     def xlpstart(self,**kwargs):
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
