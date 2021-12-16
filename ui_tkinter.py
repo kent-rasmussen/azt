@@ -592,7 +592,7 @@ class Text(Childof,ObectwArgs):
         self.anchor=kwargs.pop('anchor',"w")
         if 'font' in kwargs:
             if isinstance(kwargs['font'],tkinter.font.Font):
-                log.info("Found font {}; using as is".format(kwargs['font']))
+                # log.info("Found font {}; using as is".format(kwargs['font']))
                 self.font=kwargs['font']
             elif kwargs['font'] in self.theme.fonts: #if font key (e.g., 'small')
                 self.font=self.theme.fonts[kwargs['font']] #change key to font
