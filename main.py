@@ -5439,6 +5439,8 @@ class Check():
                 for senseid in self.analysis.senseidsbygroup[group]:
                     #This is for window/text output only, not in XLP file
                     framed=self.datadict.getframeddata(senseid,check=None)
+                    if not framed:
+                        continue
                     text=framed.formatted(noframe=True, showtonegroup=False)
                     #This is put in XLP file:
                     examples=self.db.get('example',senseid=senseid).get()
