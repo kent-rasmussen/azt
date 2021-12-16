@@ -5245,6 +5245,10 @@ class Check():
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def tonegroupreport(self,silent=False,bylocation=False,default=True):
+        for ps in pss:
+            for profile in self.slices.profiles(ps=ps)[:maxprofiles]:
+                self.tonegroupreport(ps=ps,profile=profile)
+    def tonegroupreport(self,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
         #default=True redoes the UF analysis (removing any joining/renaming)
@@ -5254,7 +5258,7 @@ class Check():
             for example in examples:
                 framed=self.datadict.getframeddata(example,senseid)
                 # skip empty examples:
-                if not framed.forms:
+                if not framed.forms or self.analang not in framed.forms:
                     continue
                 framed.gettonegroup() #wanted for id, not for display
                 for lang in [self.analang]+self.glosslangs:
