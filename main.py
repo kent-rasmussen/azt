@@ -3894,9 +3894,9 @@ class Check():
                                             ).grid(column=1, row=0, sticky="ew")
             text=framed.formatted()
             entryview=ui.Frame(self.runwindow.frame)
-            self.sortitem=ui.Label(entryview, text=text,font='readbig')
+            self.sortitem=ui.Label(entryview, text=text,font='readbig',
+                                    column=0,row=0, sticky="w",pady=50)
             entryview.grid(column=1, row=1, sticky="new")
-            self.sortitem.grid(column=0,row=0, sticky="w",pady=50)
             self.sortitem.wrap()
             self.runwindow.waitdone()
             for b in groupbuttonlist:
