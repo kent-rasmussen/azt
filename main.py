@@ -2591,11 +2591,9 @@ class Check():
                 l=_("Microphone: ‘{}’").format(l)
             if cmd == self.getsoundcardoutindex:
                 l=_("Speakers: ‘{}’").format(l)
-            ui.Label(self.soundsettingswindow.frame,text=l).grid(row=row,column=0)
-            bc=ui.Button(self.soundsettingswindow.frame, choice=text, #choice unused.
-                            text=text, anchor='c',
-                            cmd=cmd)
-            bc.grid(row=row,column=1)
+            l=ui.Label(self.soundsettingswindow.frame,text=l,
+                    row=row,column=0)
+            l.bind('<ButtonRelease>',cmd) #getattr(self,str(cmd)))
             row+=1
         br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
         br.grid(row=row,column=0)
