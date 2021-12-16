@@ -1642,7 +1642,8 @@ class Check():
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
         self.askwhichlift(file.getfilenames())
-        self.restart(self.filename)
+        sys.exit()
+        # self.restart(self.filename)
     def reloadprofiledata(self):
         self.storesettingsfile()
         self.profilesbysense={}
