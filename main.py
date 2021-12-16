@@ -7160,7 +7160,6 @@ class Analysis(object):
                 if group: #store location:group by senseid
                     self.senseiddict[senseid][check]=group
         log.info("Done collecting groups by location for each senseid.")
-        log.info(self.senseiddict)
         return self.senseiddict #was output
     def sorttoUFs(self):
         """Input is a dict keyed by location, valued with location:group dicts
