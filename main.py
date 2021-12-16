@@ -5280,9 +5280,19 @@ class Check():
         else:
             t=False
         self.datadict.refresh() #get the most recent data
-        checks=self.status.checks(wsorted=True)
+        silent=kwargs.get('silent',False)
+        bylocation=kwargs.get('bylocation',False)
+        default=kwargs.get('default',True)
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
         if not checks:
+            if 'profile' in kwargs:
+                log.error("{} {} came up with no checks.".format(ps,profile))
+                return
             self.getprofile(wsorted=True)
+        log.info("Starting report {} {} at {}; last sort at {} (since={})..."
+                "".format(ps,profile,r,s,t))
         self.storesettingsfile()
         waitmsg="{} {} Tone Report in Process".format(ps,profile)
         resultswindow=ResultWindow(self.parent,msg=waitmsg)
@@ -5290,7 +5300,7 @@ class Check():
         if not default:
             bits.append('mod')
         self.tonereportfile='_'.join(bits)+".txt"
-        checks=self.status.checks(wsorted=True)
+        checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
         if not checks:
             error=_("Hey, sort some morphemes in at least one frame before "
                         "trying to make a tone report!")
@@ -5300,7 +5310,7 @@ class Check():
             ErrorNotice(error)
             return
         start_time=time.time()
-        self.makeanalysis()
+        self.makeanalysis(ps=ps,profile=profile)
         if default:
             self.analysis.do() #full analysis from scratch, output to UF fields
         else:
