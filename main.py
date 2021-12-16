@@ -6348,6 +6348,9 @@ class FramedDataElement(FramedData):
             log.error("Sorry, somehow {} didn't result in forms: {}; {}/{}"
                     "".format(senseid,self.forms,node,type(node)))
             return
+        if hasattr(self,'tonegroups') and unlist(self.tonegroups) == 'NA':
+            log.error("Sorry, this example was skipped in sorting")
+            return
         self.applynoframe() #because we want self.framed=self.forms
         self.makeaudiofilename() #generate self.filename and self.filenameURL
         """This is what we're pulling from:
