@@ -5490,7 +5490,7 @@ class Check():
             reporttype=str(self.params.check())
         reporttype=' '.join([ps,profile,reporttype])
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
-        if default == False:
+        if not default:
             bits.append('mod')
         reportfileXLP='_'.join(bits)+".xml"
         xlpreport=xlp.Report(reportfileXLP,reporttype,
