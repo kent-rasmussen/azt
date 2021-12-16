@@ -348,13 +348,16 @@ class Check():
                                 self.settingsfile('status'),
                                 self.status
                                 )
-    def makeanalysis(self):
+    def makeanalysis(self,**kwargs):
         if not hasattr(self,'analysis'):
             self.analysis=Analysis(self.params,
                                     self.slices,
                                     self.status,
-                                    self.db
+                                    self.db,
+                                    **kwargs
                                     )
+        else:
+            self.analysis.setslice(**kwargs)
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
@@ -7212,13 +7215,19 @@ class Analysis(object):
         self.compareUFs()
         self.allvaluesbycheck() # >self.valuesbycheck
         self.allvaluesbygroup() # >self.valuesbygroup
-    def __init__(self, params, slices, status, db):
+    def setslice(self,**kwargs):
+        self.ps=kwargs.get('ps',self._slices.ps())
+        self.profile=kwargs.get('profile',self._slices.profile())
+        self.checks=self._status.checks(ps=self.ps,profile=self.profile)
+        self.senseids=self._slices.senseids(ps=self.ps,profile=self.profile)
+    def __init__(self, params, slices, status, db, **kwargs):
         super(Analysis, self).__init__()
         self._params=params
         self._slices=slices
         self._status=status
         self._db=db
         self.analang=self._params.analang
+        self.setslice(**kwargs)
 class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
