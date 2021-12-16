@@ -5244,7 +5244,14 @@ class Check():
                     cbl.grid(row=idn+nheaders,column=col,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
-    def tonegroupreport(self,silent=False,bylocation=False,default=True):
+    def tonegroupreportcomprehensive(self,**kwargs):
+        maxpss=2 #number of profiles
+        maxprofiles=3 #number of profiles
+        pss=self.slices.pss()[:maxpss]
+        d={}
+        for ps in pss:
+            d[ps]=self.slices.profiles(ps=ps)[:maxprofiles]
+        log.info("Starting comprehensive reports for {}".format(d))
         for ps in pss:
             for profile in self.slices.profiles(ps=ps)[:maxprofiles]:
                 self.tonegroupreport(ps=ps,profile=profile)
