@@ -7776,10 +7776,10 @@ class StatusDict(dict):
             if self[t] == {}:
                 del self[t]
     """The following four methods address where to find what in this dict"""
-    def updatechecksbycvt(self):
+    def updatechecksbycvt(self,**kwargs):
         """This just pulls the correct list from the dict, and updates params"""
         """It doesn't allow for input, as other fns do"""
-        cvt=self._checkparameters.cvt()
+        cvt=kwargs.get('cvt',self._checkparameters.cvt())
         if not hasattr(self,'_checksdict'):
             self._checksdict={}
         if cvt not in self._checksdict:
@@ -7787,13 +7787,13 @@ class StatusDict(dict):
             self.renewchecks()
         if cvt == 'T':
             """This depends on ps and self.toneframes"""
-            ps=self._slicedict.ps()
+            ps=kwargs.get('ps',self._slicedict.ps())
             if ps not in self._checksdict[cvt]:
                 self._checks=[] #there may be none defined
             else:
                 self._checks=self._checksdict[cvt][ps]
         else:
-            profile=self._slicedict.profile()
+            profile=kwargs.get('profile',self._slicedict.profile())
             if profile not in self._checksdict[cvt]:
                 self.renewchecks() #It should always be able to find something
             self._checks=self._checksdict[cvt][profile]
