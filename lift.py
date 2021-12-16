@@ -474,7 +474,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         else:
             log.info("No duplicate examples (same sense and location) were "
                     "found in the lexicon.")
-    def addtoneUF(self,senseid,group,analang,guid=None,showurl=False):
+    def addtoneUF(self,senseid,group,analang,guid=None,**kwargs):
+        showurl=kwargs.get('showurl',False)    
+        write=kwargs.get('write',True)
         node=self.get('sense',senseid=senseid).get() #give the sense.
         if node == []:
             log.info("Sorry, this didn't return a node: guid {}; senseid {}"
@@ -487,7 +489,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         else:
             t[0].text=group
         self.updatemoddatetime(guid=guid,senseid=senseid)
-        self.write()
+        if write:
+            self.write()
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
