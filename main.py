@@ -5259,6 +5259,9 @@ class Check():
                     cbl.grid(row=idn+nheaders,column=col,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
+    def consultantcheck(self):
+        self.reloadstatusdata()
+        self.tonegroupreportcomprehensive()
     def tonegroupreportcomprehensive(self,**kwargs):
         maxpss=2 #number of profiles
         maxprofiles=5 #number of profiles
@@ -6489,6 +6492,9 @@ class MainApplication(ui.Window):
                                                             bylocation=True))
         reportmenu.add_command(label=_("Tone by sense (comprehensive)"),
                 command=lambda x=check:Check.tonegroupreportcomprehensive(x))
+        if me:
+            reportmenu.add_command(label=_("Initiate Consultant Check"),
+                command=lambda x=check:Check.consultantcheck(x))
         reportmenu.add_command(label=_("Basic Vowel report (to file)"),
                         command=lambda x=check:Check.basicreport(x,cvtstodo=['V']))
         reportmenu.add_command(label=_("Basic Consonant report (to file)"),
