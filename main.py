@@ -5497,10 +5497,8 @@ class Check():
         xlpreport=xlp.Report(reportfileXLP,reporttype,
                         self.languagenames[self.analang])
         langsalreadythere=[]
-        for lang in [self.analang]+self.glosslangs:
-            if lang is not None and lang not in langsalreadythere:
-                xlpreport.addlang({'id':lang,'name': self.languagenames[lang]})
-                langsalreadythere.append(lang)
+        for lang in set([self.analang]+self.glosslangs)-set([None]):
+            xlpreport.addlang({'id':lang,'name': self.languagenames[lang]})
         return xlpreport
     def basicreport(self,cvtstodo=['V']):
         """We iterate across these values in this script, so we save current
