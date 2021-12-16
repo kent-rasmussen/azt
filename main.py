@@ -2604,12 +2604,26 @@ class Check():
         ui.Label(self.soundsettingswindow.frame,
                 text=l).grid(row=row,column=0)
         row+=1
-        l=_("Make sure ‘record’ and ‘play’ \nwork well here, "
-            "\nbefore recording real data!"
-            "\n See also note in documentation about verifying these recordings"
-            "in an external application, such as Praat.")
-        ui.Label(self.soundsettingswindow.frame,
-                text=l,font='read').grid(row=row,column=0)
+        l=_("Make sure ‘record’ and ‘play’ work well here, "
+            "\nbefore recording real data!")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='read',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        l=_("See also note in documentation about verifying these "
+            "recordings in an external application, such as Praat.")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='instructions',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        l=_("If Praat is installed in your path, right click on play "
+            "to open in Praat.")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='default',
+                row=row,column=0)
+        caveat.wrap()
         row+=1
         bd=ui.Button(self.soundsettingswindow.frame,text=_("Done"),anchor='c',
                                             cmd=self.soundcheckrefreshdone)
@@ -4084,7 +4098,8 @@ class Check():
             log.info("Groups: {}".format(self.status.groups(toverify=True)))
             updatestatus()
             log.info("Group-groups: {}-{}".format(group,groups))
-            groups.remove(group)
+            if groups:
+                groups.remove(group)
             log.info("Group-groups: {}-{}".format(group,groups))
             self.status.groups(groups,wsorted=True)
             log.info("Groups: {}".format(self.status.groups(toverify=True)))
