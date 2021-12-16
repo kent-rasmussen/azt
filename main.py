@@ -5247,7 +5247,7 @@ class Check():
         self.runwindow.wait_window(scroll)
     def tonegroupreportcomprehensive(self,**kwargs):
         maxpss=2 #number of profiles
-        maxprofiles=3 #number of profiles
+        maxprofiles=5 #number of profiles
         pss=self.slices.pss()[:maxpss]
         d={}
         for ps in pss:
