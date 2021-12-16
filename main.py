@@ -5286,9 +5286,8 @@ class Check():
         if not checks:
             self.getprofile(wsorted=True)
         self.storesettingsfile()
-        self.getrunwindow(msg="Tone Report in Process")
-        ps=self.slices.ps()
-        profile=self.slices.profile()
+        waitmsg="{} {} Tone Report in Process".format(ps,profile)
+        resultswindow=ResultWindow(self.parent,msg=waitmsg)
         bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
         if not default:
             bits.append('mod')
@@ -5298,8 +5297,8 @@ class Check():
             error=_("Hey, sort some morphemes in at least one frame before "
                         "trying to make a tone report!")
             log.error(error)
-            self.runwindow.waitdone()
-            self.runwindow.destroy()
+            resultswindow.waitdone()
+            resultswindow.destroy()
             ErrorNotice(error)
             return
         start_time=time.time()
@@ -5313,10 +5312,9 @@ class Check():
         checks=self.analysis.orderedchecks
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
-        self.runwindow.title(title)
-        self.runwindow.scroll=ui.ScrollingFrame(self.runwindow.frame)
-        self.runwindow.scroll.grid(row=0,column=0)
-        window=self.runwindow.scroll.content
+        resultswindow.scroll=ui.ScrollingFrame(resultswindow.frame)
+        resultswindow.scroll.grid(row=0,column=0)
+        window=resultswindow.scroll.content
         window.row=0
         xlpr=self.xlpstart(reporttype='Tone',bylocation=bylocation,
                                                                 default=default)
@@ -5456,13 +5454,14 @@ class Check():
                                 "{}: {}".format(len(examples),senseid,examples))
                         examplestoXLP(examples,e1,senseid)
                     output(window,r,text)
-        self.runwindow.waitdone()
+        resultswindow.waitdone()
         xlpr.close()
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
         output(window,r,text)
         text=_("(Report is also available at ("+self.tonereportfile+")")
         output(window,r,text)
         r.close()
+        resultswindow.update_idletasks()
     def xlpstart(self,reporttype='adhoc',bylocation=False,default=True):
         ps=self.slices.ps()
         profile=self.slices.profile()
