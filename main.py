@@ -7123,7 +7123,7 @@ class Analysis(object):
     def checkgroupsbysenseid(self):
         """outputs dictionary keyed to [senseid][location]=group"""
         self.senseiddict={}
-        for senseid in self._slices.senseids():
+        for senseid in self.senseids:
             self.senseiddict[senseid]={}
             for check in self.checks:
                 group=self._db.get("example/tonefield/form/text",
@@ -7159,7 +7159,7 @@ class Analysis(object):
         ks=list(unnamed) #keep sorting order
         for k in ks:
             x=ks.index(k)+1
-            name=self._slices.ps()+'_'+self._slices.profile()+'_'+str(x)
+            name=self.ps+'_'+self.profile+'_'+str(x)
             # self.groups[name]={}
             # self.groups[name]['values']=ast.literal_eval(k) #return str to dict
             self.valuesbygroupcheck[name]=ast.literal_eval(k) #return str to dict
@@ -7172,11 +7172,10 @@ class Analysis(object):
     def tonegroupsbyUFcheckfromLIFT(self):
         #returns dictionary keyed by [group][location]=groupvalue
         values=self.valuesbygroupcheck={}
-        checks=self._status.checks()
         # Collect check:value correspondences, by sense
         for group in self.senseidsbygroup:
             values[group]={}
-            for check in checks: #just make them all, delete empty later
+            for check in self.checks: #just make them all, delete empty later
                 values[group][check]=list()
                 for senseid in self.senseidsbygroup[group]:
                     groupvalue=self._db.get("example/tonefield/form/text",
@@ -7195,11 +7194,11 @@ class Analysis(object):
     def senseidsbyUFsfromLIFT(self):
         """This returns a dict of {UFtonegroup:[senseids]}"""
         log.debug(_("Looking for sensids by UF tone groups for {}-{}").format(
-                    self._slices.profile(), self._slices.ps())
-                    )
+                    self.profile, self.ps
+                    ))
         self.senseidsbygroup={}
         """Still working on one ps-profile combo at a time."""
-        for senseid in self._slices.senseids(): #I should be able to make this a regex...
+        for senseid in self.senseids: #I should be able to make this a regex...
             group=firstoflist(self._db.get('sense/toneUFfield/form/text',
                                                 senseid=senseid).get('text'))
             if group is not None:
