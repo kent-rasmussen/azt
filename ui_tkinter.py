@@ -231,11 +231,11 @@ class Theme(object):
             default=12*scale
         else:
             default=18*scale
-        normal=int(default*4/3)
-        big=int(default*5/3)
         title=bigger=int(default*2)
-        small=int(default*2/3)
+        big=int(default*5/3)
+        normal=int(default*4/3)
         default=int(default)
+        small=int(default*2/3)
         log.log(4,"Default font size: {}".format(default))
         andika="Andika"# not "Andika SIL"
         charis="Charis SIL"
