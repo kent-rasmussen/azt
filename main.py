@@ -3902,7 +3902,10 @@ class Check():
             for b in groupbuttonlist:
                 b.setcanary(self.sortitem)
             self.runwindow.wait_window(window=self.sortitem)
-            return senseid,framed
+            if self.runwindow.exitFlag.istrue():
+                return 1,1
+            else:
+                return senseid,framed
         def addgroupbutton(group):
             if self.runwindow.exitFlag.istrue():
                 return #just don't die
