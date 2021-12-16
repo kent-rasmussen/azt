@@ -7587,7 +7587,7 @@ class StatusDict(dict):
         profile, and not ps."""
         kwargs=grouptype(**kwargs)
         cs=[]
-        checks=self.updatechecksbycvt()
+        checks=self.updatechecksbycvt(**kwargs)
         for check in checks:
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']) or
