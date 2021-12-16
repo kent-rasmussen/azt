@@ -5279,8 +5279,6 @@ class Check():
             t=r>s
         else:
             t=False
-        log.info("Starting report at {}; last sort at {} (since={})..."
-                "".format(r,s,t))
         self.datadict.refresh() #get the most recent data
         checks=self.status.checks(wsorted=True)
         if not checks:
