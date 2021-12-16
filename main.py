@@ -8146,6 +8146,17 @@ class Repository(object):
         self.choruscheck()
         log.info("Mercurial repository object initialized, with {} files."
                 "".format(len(self.files)))
+class ResultWindow(ui.Window):
+    def __init__(self, parent, nowait=False,msg=None,title=None):
+        """Can't test for widget/window if the attribute hasn't been assigned,"
+        but the attribute is still there after window has been killed, so we
+        need to test for both."""
+        if title is None:
+            title=(_("Result Window"))
+        super().__init__(parent,title=title)
+        self.lift()
+        if not nowait:
+            self.wait(msg=msg)
 class Options:
     def alias(self,o):
         return self.odict.get(o,o)
