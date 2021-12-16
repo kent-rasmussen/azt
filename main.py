@@ -5360,7 +5360,9 @@ class Check():
                         )
             window.row+=1
         t=_("Summary of Frames by Draft Underlying Melody")
-        if len(self.analysis.orderedchecks) > 6:
+        m=7 #only this many columns in a table
+        # Don't bother with lanscape if we're splitting the table in any case.
+        if m >= len(self.analysis.orderedchecks) > 6:
             landscape=True
         else:
             landscape=False
@@ -5390,7 +5392,6 @@ class Check():
             "the default (hyper-split) groups created by {}.".format(
                                                         program['name']))
         p0=xlp.Paragraph(s1s,text=ptext)
-        m=7 #only this many columns in a table
         self.analysis.orderedchecks=list(self.analysis.valuesbycheckgroup)
         for slice in range(int(len(self.analysis.orderedchecks)/m)+1):
             locslice=self.analysis.orderedchecks[slice*m:(slice+1)*m]
