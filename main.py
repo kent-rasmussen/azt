@@ -8556,9 +8556,9 @@ def mainproblem():
     except:
         errorroot = ui.Root(program=program)
         errorroot.renderings={}
-    errorroot.title("Serious Problem!")
     errorroot.withdraw()
     errorw=ui.Window(errorroot)
+    errorw.title("Serious Problem!")
     l=ui.Label(errorw.frame,text="Hey! You found a problem! (details and "
             "solution below)",justify='left',font='title',
             row=0,column=0
