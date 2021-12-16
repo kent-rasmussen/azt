@@ -7169,7 +7169,6 @@ class Analysis(object):
             self.senseidsbygroup[name]=unnamed[k]
             for senseid in unnamed[k]:
                 self._db.addtoneUF(senseid,name,analang=self.analang)
-        self._db.write()
         log.info("Done adding senseids to groups.")
         # return self.groups
     def tonegroupsbyUFcheckfromLIFT(self):
@@ -7219,6 +7218,7 @@ class Analysis(object):
         self.checks=self._status.checks() #just do once
         self.checkgroupsbysenseid() # > self.senseiddict
         self.sorttoUFs() # > self.senseidsbygroup and self.valuesbygroupcheck
+        self._db.write()
         self.doanyway()
     def doanyway(self):
         """compare(x=UFs/checks) give self.comparison(x) and self.ordered(x)"""
