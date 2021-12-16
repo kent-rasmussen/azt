@@ -1230,7 +1230,7 @@ class Check():
         self.soundsettings.sample_format=choice
         window.destroy()
         self.soundcheckrefresh()
-    def getsoundformat(self):
+    def getsoundformat(self,event=None):
         log.info("Asking for audio format...")
         window=ui.Window(self.frame, title=_('Select Audio Format'))
         ui.Label(window.frame, text=_('What audio format do you '
@@ -1247,7 +1247,7 @@ class Check():
                                     window=window,
                                     column=0, row=1
                                     )
-    def getsoundhz(self):
+    def getsoundhz(self,event=None):
         log.info("Asking for sampling frequency...")
         window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
         ui.Label(window.frame, text=_('What sampling frequency you '
@@ -1272,7 +1272,7 @@ class Check():
         self.soundsettings.audio_card_out=choice
         window.destroy()
         self.soundcheckrefresh()
-    def getsoundcardindex(self):
+    def getsoundcardindex(self,event=None):
         log.info("Asking for input sound card...")
         window=ui.Window(self.frame, title=_('Select Input Sound Card'))
         ui.Label(window.frame, text=_('What sound card do you '
@@ -1288,7 +1288,7 @@ class Check():
                                     window=window,
                                     column=0, row=1
                                     )
-    def getsoundcardoutindex(self):
+    def getsoundcardoutindex(self,event=None):
         log.info("Asking for output sound card...")
         window=ui.Window(self.frame, title=_('Select Output Sound Card'))
         ui.Label(window.frame, text=_('What sound card do you '
