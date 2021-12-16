@@ -5324,8 +5324,12 @@ class Check():
         resultswindow.scroll.grid(row=0,column=0)
         window=resultswindow.scroll.content
         window.row=0
-        xlpr=self.xlpstart(reporttype='Tone',bylocation=bylocation,
-                                                                default=default)
+        xlpr=self.xlpstart(reporttype='Tone',
+                            ps=ps,
+                            profile=profile,
+                            bylocation=bylocation,
+                            default=default
+                            )
         s1=xlp.Section(xlpr,title='Introduction')
         text=_("This report follows an analysis of sortings of {} morphemes "
         "(roots or affixes) across the following frames: {}. {} stores these "
@@ -5472,9 +5476,12 @@ class Check():
         output(window,r,text)
         r.close()
         resultswindow.update_idletasks()
-    def xlpstart(self,reporttype='adhoc',bylocation=False,default=True):
-        ps=self.slices.ps()
-        profile=self.slices.profile()
+    def xlpstart(self,**kwargs):
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        reporttype=kwargs.get('reporttype','adhoc')
+        bylocation=kwargs.get('bylocation',False)
+        default=kwargs.get('default',True)
         if reporttype == 'Tone':
             if bylocation:
                 reporttype='Tone-bylocation'
