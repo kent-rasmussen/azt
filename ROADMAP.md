@@ -1,4 +1,8 @@
 #Roadmap
+Cut down on the file writing during report generation
+
+select which profiles to include in a given tone report
+
 bring some more ui stuff into ui_tkinter.py
 
 do something with mercurial to add (or rather ini versions)
@@ -27,6 +31,8 @@ check=kwargs.get('check',self.params.check())
 checks=self.status.checks()
 group=kwargs.get('group',self.status.group())    
 groups=self.status[cvt][ps][profile][check]['groups']
+showurl=kwargs.get('showurl',False)    
+write=kwargs.get('write',True)    
 profilecounts > slices.slicepriority
 self.subchecksprioritized > status.groupstodo
 getframestodo > status.checkstodo
