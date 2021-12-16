@@ -6450,6 +6450,8 @@ class MainApplication(ui.Window):
         reportmenu.add_command(label=_("Tone by location"
                         ),command=lambda x=check:Check.tonegroupreport(x,
                                                             bylocation=True))
+        reportmenu.add_command(label=_("Tone by sense (comprehensive)"),
+                command=lambda x=check:Check.tonegroupreportcomprehensive(x))
         reportmenu.add_command(label=_("Basic Vowel report (to file)"),
                         command=lambda x=check:Check.basicreport(x,cvtstodo=['V']))
         reportmenu.add_command(label=_("Basic Consonant report (to file)"),
@@ -6493,6 +6495,10 @@ class MainApplication(ui.Window):
         advtonemenu.add_command(label=_("Custom groups by location"),
                                 command=lambda x=check:Check.tonegroupreport(x,
                                                 bylocation=True, default=False))
+        advtonemenu.add_command(
+                    label=_("Custom groups by sense (comprehensive)"),
+                    command=lambda x=check:Check.tonegroupreportcomprehensive(x,
+                                                                default=False))
         redomenu = ui.Menu(self.menubar, tearoff=0)
         redomenu.add_command(label=_("Previously skipped data"),
                                 command=lambda x=check:Check.tryNAgain(x))
