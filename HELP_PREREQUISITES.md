@@ -23,10 +23,10 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
 - Work with one speaker, as this can be a lot of work, and doesn't typically require group discussion.
 - You want at least four frames, such that
   - Each frame gives a different tonal melody than the other frames:
-    - High tone before the word
-    - High tone after the word
-    - Low tone before the word
-    - Low tone after the word
+    - High tone immediately before the word
+    - High tone immediately after the word
+    - Low tone immediately before the word
+    - Low tone immediately after the word
   - each frame can be used with almost all words in the class for which they were designed (i.e., noun or verb).
 - This may take several hours, or longer.
 - If you don't already understand what this entails, you will need help from a linguist near you.
@@ -37,6 +37,7 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
   - You can test a frame with more words, more quickly, by doing some sorting in A→Z+T.
   - confirm that word-frame combinations look OK, and
   - confirm that most words work in each of the frames. If a frame has many words that don't work in it, you should probably replace it.
+  - to confirm that you have the right tone contexts, do one syllable profile of about 25 words in each of your proposed frames, for each of nouns and verbs. Then send this data to me (see [Collaborate and Get Help](#collaborate-and-get-help), below) before doing a lot more sorting.
 
 ## Collect data in A→Z+T
 - **Organize a meeting** of more (3+) speakers, for them to sort and record data together in A→Z+T. You can organize this as you like, but expect at **least two weeks** of full time work for everyone.
