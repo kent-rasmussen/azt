@@ -5253,7 +5253,7 @@ class Check():
             d[ps]=self.slices.profiles(ps=ps)[:maxprofiles]
         log.info("Starting comprehensive reports for {}".format(d))
         for ps in pss:
-            for profile in self.slices.profiles(ps=ps)[:maxprofiles]:
+            for profile in d[ps]:
                 self.tonegroupreport(ps=ps,profile=profile)
     def tonegroupreport(self,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
