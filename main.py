@@ -631,9 +631,6 @@ class Check():
             changed={}
             for typ in ['distinguish', 'interpret']:
                 for s in getattr(self,typ):
-                    log.log(5,"Variable {} was: {}, now: {}, change: {}"
-                            "".format(s,getattr(self,typ)[s],
-                                        options.vars[s].get(),change))
                     if s in options.vars and s in getattr(self,typ):
                         newvar=options.vars[s].get()
                         oldvar=getattr(self,typ)[s]
@@ -647,7 +644,6 @@ class Check():
                                     ).intersection(set(oldvar))) >0):
                                     changed[s]=(oldvar,newvar)
                             getattr(self,typ)[s]=newvar
-                            change=True #I.e., something has changed
             log.debug('self.distinguish: {}'.format(self.distinguish))
             log.debug('self.interpret: {}'.format(self.interpret))
             if changed:
