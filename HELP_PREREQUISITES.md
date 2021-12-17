@@ -48,6 +48,12 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
     - **Tonally different**: if you don't know what this means, plan on getting help from a linguist near you, or sorting on at least eight frames (Once you have sorted on these, I can look through them for you, and tell you which are tonally different, and what you are missing).
     - There is a lot more sorting you can do, but this should be the right place to start, and will be a good beginning to understand your tone system.
   - **Record** all sorted data in A→Z+T
+    - Please pay attention to 
+      - **speak as naturally as possible**, without unnecessary pauses. Pauses may break your recording into multiple phonological phrases, making your recordings useless for tone study.
+        - if the syntactic context of a frame requires a significant pause (>150ms), you should probably use a different frame. 
+      - include **the whole utterance** in the recording (don't clip the first or last syllable)
+      - **not** include **extra space** before or after the utterance 
+        - In case this last one sounds petty, extra space in the recording wastes computer space, internet bandwidth, and time in listening. For instance, if you have utterances that are one (1) second long, but you record three (3) seconds for each, then you are taking up three times as much space as you need, all of which needs to be stored on a computer, and shared across the internet. And you are asking your listener (me, other collaborators, a dictionary user) to spend that extra time listening to each file without reason. Two seconds wasted may not seem like much, but across thousands of recordings, it adds up. 
   - **Record** citation forms for at least the above (largest 2-3 syllable profiles for Nouns and Verbs)
 
 ## Collaborate and Get Help
