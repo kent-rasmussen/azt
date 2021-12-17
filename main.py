@@ -5339,6 +5339,18 @@ class Check():
         else:
             self.analysis.donoUFanalysis() #based on (sense) UF fields
         """These are from LIFT, ordered by similarity for the report."""
+        if not self.analysis.orderedchecks or not self.analysis.orderedUFs:
+            log.error("Problem with checks: {} (in {} {})."
+                    "".format(checks,ps,profile))
+            log.error("valuesbygroupcheck: {}, valuesbycheckgroup: {}"
+                        "".format(self.analysis.valuesbygroupcheck,
+                                    self.analysis.valuesbycheckgroup))
+            log.error("Ordered checks is {}, ordered UFs: {}"
+                    "".format(self.analysis.orderedchecks,
+                            self.analysis.orderedUFs))
+            log.error("comparisonUFs: {}, comparisonchecks: {}"
+                    "".format(self.analysis.comparisonUFs,
+                            self.analysis.comparisonchecks))
         grouplist=self.analysis.orderedUFs
         checks=self.analysis.orderedchecks
         r = open(self.tonereportfile, "w", encoding='utf-8')
