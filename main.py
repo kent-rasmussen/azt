@@ -8351,9 +8351,10 @@ def addxofytolistoflists(x,y,o):
             o.append([x])
     return o
 def dictscompare(dicts,ignore=[],flat=True):
-    if len(dicts) == 1:
-        log.debug("Just one dict: {}; just returning key.".format(dicts))
-        return [list(dicts.keys()),] #This should be a list of lists
+    keyswoignore=[k for k in dicts if dicts[k] not in ignore]
+    if len(keyswoignore) <= 1:
+        log.debug("One or less dict: {}; just returning key.".format(dicts))
+        return [keyswoignore] #This should be a list of lists
     l=dictscompare11(dicts,ignore=ignore)
     o=list([],)
     for c in l:
