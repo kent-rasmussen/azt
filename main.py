@@ -1639,6 +1639,8 @@ class Check():
         log.debug("Removing database name, so user will be asked again.")
         self.askwhichlift(file.getfilenames())
         # program['root'].destroy()
+        # subprocess.call?
+        # __name__
         # main()
         sys.exit()
         # self.restart(self.filename)
