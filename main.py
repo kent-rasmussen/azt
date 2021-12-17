@@ -5992,9 +5992,15 @@ class DictbyLang(dict):
             lang=node.get('lang')
             if truncate: #this gives up to three words, no parens
                 text=unlist([rx.glossifydefn(i.text).strip('‘’')
-                                                for i in node.findall('text')])
+                                                for i in node.findall('text')
+                                                if i is not None
+                                                if i.text is not None
+                                                ])
             else:
-                text=unlist([i.text.strip('‘’') for i in node.findall('text')])
+                text=unlist([i.text.strip('‘’') for i in node.findall('text')
+                                                if i is not None
+                                                if i.text is not None
+                                                ])
             log.log(4,"Adding {} to {} dict under {}".format(t(text),self,lang))
             self[lang]=text
         else:
