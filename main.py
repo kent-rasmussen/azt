@@ -1660,7 +1660,7 @@ class Check():
             for ps in pss:
                 profiles=self.slices.profiles(ps=ps) #This depends on ps only
                 for p in profiles:
-                    checks=self.status.checks(ps=ps,profile=profile)
+                    checks=self.status.checks(ps=ps,profile=p)
                     for c in checks:
                         self.status.build(cvt=t, ps=ps, profile=p, check=c)
                         """this just populates groups and the tosort boolean."""
