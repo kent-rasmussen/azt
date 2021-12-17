@@ -5023,7 +5023,7 @@ class Check():
                             window=self.runwindow.frame,
                             width=15, row=i,
                             column=1, command=self.notpicked)
-        xlpr.close()
+        xlpr.close(me=me)
         self.runwindow.waitdone()
         if senseid == 0: #i.e., nothing was found above
             print(_('No results!'))
@@ -5516,7 +5516,7 @@ class Check():
         counts={'examples':0, 'audio':0}
 
         resultswindow.waitdone()
-        xlpr.close()
+        xlpr.close(me=me)
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
         output(window,r,text)
         text=_("(Report is also available at ("+self.tonereportfile+")")
@@ -5672,7 +5672,7 @@ class Check():
                                                     profile][name][x1][x2]
                                 cell=xlp.Cell(h,content=value)
         log.info(self.checkcounts)
-        xlpr.close()
+        xlpr.close(me=me)
         log.info("Finished in {} seconds.".format(str(time.time()-start_time)))
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
