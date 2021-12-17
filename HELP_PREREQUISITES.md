@@ -50,6 +50,7 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
   - **Record** all sorted data in A→Z+T
     - Please pay attention to 
       - **speak as naturally as possible**, without unnecessary pauses. Pauses may break your recording into multiple phonological phrases, making your recordings useless for tone study.
+        - if the syntactic context of a frame requires a significant pause (>150ms), you should probably use a different frame. 
       - include **the whole utterance** in the recording (don't clip the first or last syllable)
       - **not** include **extra space** before or after the utterance 
         - In case this last one sounds petty, extra space in the recording wastes computer space, internet bandwidth, and time in listening. For instance, if you have utterances that are one (1) second long, but you record three (3) seconds for each, then you are taking up three times as much space as you need, all of which needs to be stored on a computer, and shared across the internet. And you are asking your listener (me, other collaborators, a dictionary user) to spend that extra time listening to each file without reason. Two seconds wasted may not seem like much, but across thousands of recordings, it adds up. 
