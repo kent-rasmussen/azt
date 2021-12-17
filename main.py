@@ -5384,7 +5384,7 @@ class Check():
         t=_("Summary of Frames by Draft Underlying Melody")
         m=7 #only this many columns in a table
         # Don't bother with lanscape if we're splitting the table in any case.
-        if m >= len(self.analysis.orderedchecks) > 6:
+        if m >= len(checks) > 6:
             landscape=True
         else:
             landscape=False
