@@ -5293,6 +5293,9 @@ class Check():
                 framed.gettonegroup() #wanted for id, not for display
                 for lang in [self.analang]+self.glosslangs:
                     if lang in framed.forms and framed.forms[lang]: #If all None, don't.
+                        counts['examples']+=1
+                        if self.audiolang in framed.forms:
+                            counts['audio']+=1
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                                 groups=groups)
                         break #do it on first present lang, and do next ex
@@ -5333,6 +5336,7 @@ class Check():
             ErrorNotice(error)
             return
         start_time=time.time()
+        counts={'examples':0, 'audio':0}
         self.makeanalysis(ps=ps,profile=profile)
         if default:
             self.analysis.do() #full analysis from scratch, output to UF fields
@@ -5504,6 +5508,13 @@ class Check():
                                 "{}: {}".format(len(examples),senseid,examples))
                         examplestoXLP(examples,e1,senseid)
                     output(window,r,text)
+        sectitle=_('\nData Summary')
+        s2=xlp.Section(xlpr,title=sectitle)
+        ptext=_("This report contains {} examples, {} with sound files."
+                "").format(counts['examples'],counts['audio'])
+        ps2=xlp.Paragraph(s2,text=ptext)
+        counts={'examples':0, 'audio':0}
+
         resultswindow.waitdone()
         xlpr.close()
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
