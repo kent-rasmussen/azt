@@ -5287,6 +5287,7 @@ class Check():
         def examplestoXLP(examples,parent,senseid,groups=True):
             if not default:
                 groups=True #show groups on all non-default reports
+            counts['senses']+=1
             for example in examples:
                 framed=self.datadict.getframeddata(example,senseid)
                 # skip empty examples:
@@ -5338,7 +5339,7 @@ class Check():
             ErrorNotice(error)
             return
         start_time=time.time()
-        counts={'examples':0, 'audio':0}
+        counts={'senses':0,'examples':0, 'audio':0}
         self.makeanalysis(ps=ps,profile=profile)
         if default:
             self.analysis.do() #full analysis from scratch, output to UF fields
@@ -5512,11 +5513,14 @@ class Check():
                     output(window,r,text)
         sectitle=_('\nData Summary')
         s2=xlp.Section(xlpr,title=sectitle)
-        ptext=_("This report contains {} examples, {} with sound files."
-                "").format(counts['examples'],counts['audio'])
+        eps='{:.2%}'.format(float(counts['examples']/counts['senses']))
+        audiopercent='{:.2%}'.format(float(counts['audio']/counts['examples']))
+        ptext=_("This report contains {} senses, {} examples, and "
+                "{} sound files. That is an average of {} examples/sense, and "
+                "{} of examples with sound files."
+                "").format(counts['senses'],counts['examples'],counts['audio'],
+                            eps,audiopercent)
         ps2=xlp.Paragraph(s2,text=ptext)
-        counts={'examples':0, 'audio':0}
-
         resultswindow.waitdone()
         xlpr.close(me=me)
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
