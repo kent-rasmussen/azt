@@ -3174,6 +3174,11 @@ class Check():
                 if kwargs['comparison']:
                     g2=g[:]
                     g2.remove(self.status.group())
+                    if not g2:
+                        window.destroy()
+                        ErrorNotice(text="There don't seem to be any groups "
+                                    "to compare with!")
+                        return
                     if len(g2) == 1:
                         self.setgroup_comparison(g2[0],window)
                         return
