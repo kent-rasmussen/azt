@@ -81,6 +81,77 @@ import subprocess
 import webbrowser
 import pkg_resources
 
+class FileChooser(object):
+    """docstring for FileChooser."""
+
+    def __init__(self, arg):
+        super(FileChooser, self).__init__()
+        self.arg = arg
+
+class TaskChooser(object):
+    """docstring for FileChooser."""
+
+    def __init__(self, arg):
+        super(FileChooser, self).__init__()
+        self.arg = arg
+
+class FileChooser(object):
+    """This class selects the LIFT database we'll be working with, and does
+    some basic processing on it."""
+
+    def __init__(self, arg):
+        super(FileChooser, self).__init__()
+        self.arg = arg
+
+class TaskChooser(object):
+    """This class stores the hierarchy of tasks to do in A→Z+T, plus the
+    minimum and optimum prerequisites for each. Based on these, it presents
+    to the user a default (highest in hierarchy without optimum fulfilled)
+    task on opening, and allows users to choose others (any with minimum
+    prequisites satisfied)."""
+
+    def __init__(self, arg):
+        super(FileChooser, self).__init__()
+        self.arg = arg
+
+class FileChooser(object):
+    """This class selects the LIFT database we'll be working with, and does
+    some basic processing on it."""
+
+    def __init__(self, arg):
+        super(FileChooser, self).__init__()
+        self.arg = arg
+
+class TaskChooser(object):
+    """This class stores the hierarchy of tasks to do in A→Z+T, plus the
+    minimum and optimum prerequisites for each. Based on these, it presents
+    to the user a default (highest in hierarchy without optimum fulfilled)
+    task on opening, and allows users to choose others (any with minimum
+    prequisites satisfied)."""
+
+    def __init__(self, arg):
+        super(FileChooser, self).__init__()
+        self.arg = arg
+
+class FileChooser(object):
+    """This class selects the LIFT database we'll be working with, and does
+    some basic processing on it."""
+
+    def __init__(self, arg):
+        super(FileChooser, self).__init__()
+        self.arg = arg
+
+class TaskChooser(object):
+    """This class stores the hierarchy of tasks to do in A→Z+T, plus the
+    minimum and optimum prerequisites for each. Based on these, it presents
+    to the user a default (highest in hierarchy without optimum fulfilled)
+    task on opening, and allows users to choose others (any with minimum
+    prequisites satisfied)."""
+
+    def __init__(self, arg):
+        super(FileChooser, self).__init__()
+        self.arg = arg
+
 class Check():
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
@@ -8588,7 +8659,8 @@ def praatopen(file,newpraat=False,event=None):
                                         )
     # This is the version at which we don't need sendpraat anymore
     # and where "--hide-picture" becomes available.
-    justpraatversion=pkg_resources.parse_version('Praat 6.2.04')
+    justpraatversion=pkg_resources.parse_version(
+                                            'Praat 6.2.04 (December 18 2021)')
     log.info("Found Praat version {} ({})".format(version, versionraw))
     if version>=justpraatversion:
         log.info("Praat version greater than {}".format(justpraatversion))
