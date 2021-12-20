@@ -8659,7 +8659,8 @@ def praatopen(file,newpraat=False,event=None):
                                         )
     # This is the version at which we don't need sendpraat anymore
     # and where "--hide-picture" becomes available.
-    justpraatversion=pkg_resources.parse_version('Praat 6.2.04')
+    justpraatversion=pkg_resources.parse_version(
+                                            'Praat 6.2.04 (December 18 2021)')
     log.info("Found Praat version {} ({})".format(version, versionraw))
     if version>=justpraatversion:
         log.info("Praat version greater than {}".format(justpraatversion))
