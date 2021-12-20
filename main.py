@@ -8597,9 +8597,11 @@ def praatopen(file,newpraat=False,event=None):
         log.info("Praat version less than {}".format(justpraatversion))
         justpraat=False
     if (not justpraat or program['sendpraat']) and not newpraat:
-        praatargs=[program['sendpraat'], "praat", "Read from file... {}".format(file)]
+        praatargs=[program['sendpraat'], "praat", "Read from file... {}"
+                                                    "".format(file)]
         try:
-            e=subprocess.check_output(praatargs,shell=False,stderr=subprocess.STDOUT)
+            e=subprocess.check_output(praatargs,shell=False,
+                                        stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             o=e.output.decode("utf-8").strip()
             if o == "sendpraat: Program praat not running.":
@@ -8615,7 +8617,6 @@ def praatopen(file,newpraat=False,event=None):
         subprocess.Popen(praatargs,shell=False) #not run; continue here
     else:
         log.info(_("Looks like I couln't find Praat..."))
-    #This should use the actual executable found earlier...
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
