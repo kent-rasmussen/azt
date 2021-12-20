@@ -458,9 +458,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             nodes[lang].extend(example.findall(
                                             "translation/form[@lang='{}']/text"
                                             "".format(lang)))
+                        #This should ultimately have [@lang='{}'].analang
                         nodes['value'].extend(example.findall(
-                                    "field[@type='tone']/form[@lang='{}']/text"
-                                    "".format(lang)))
+                                    "field[@type='tone']/form/text"))
                     for n in nodes:
                         uniq[n]=list(set([i.text for i in nodes[n]
                                                             if i is not None]))
