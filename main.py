@@ -96,14 +96,19 @@ class TaskChooser(object):
         self.arg = arg
 
 class FileChooser(object):
-    """docstring for FileChooser."""
+    """This class selects the LIFT database we'll be working with, and does
+    some basic processing on it."""
 
     def __init__(self, arg):
         super(FileChooser, self).__init__()
         self.arg = arg
 
 class TaskChooser(object):
-    """docstring for FileChooser."""
+    """This class stores the hierarchy of tasks to do in A→Z+T, plus the
+    minimum and optimum prerequisites for each. Based on these, it presents
+    to the user a default (highest in hierarchy without optimum fulfilled)
+    task on opening, and allows users to choose others (any with minimum
+    prequisites satisfied)."""
 
     def __init__(self, arg):
         super(FileChooser, self).__init__()
