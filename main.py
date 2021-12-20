@@ -8608,7 +8608,10 @@ def praatopen(file,newpraat=False,event=None):
                 log.info("praatoutput: {}; {}".format(e,o))
     elif program['praat']:
         log.info(_("Trying to call Praat at {}...").format(program['praat']))
-        praatargs=[program['praat'], "--open", file]
+        if justpraat:
+            praatargs=[program['praat'], "--hide-picture","--open", file]
+        else:
+            praatargs=[program['praat'], "--open", file]
         subprocess.Popen(praatargs,shell=False) #not run; continue here
     else:
         log.info(_("Looks like I couln't find Praat..."))
