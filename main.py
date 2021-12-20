@@ -1658,7 +1658,8 @@ class Check():
         start_time=time.time()
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
-        for t in [i for i in self.params.cvts() if i in self.status]: #this depends on nothing
+        cvts=[i for i in self.params.cvts() if i in self.status]
+        if not cvts:
             log.info("Working on {}".format(t))
             for ps in pss:
                 log.info("Working on {}".format(ps))
