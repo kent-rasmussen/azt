@@ -464,17 +464,38 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     for n in nodes:
                         uniq[n]=list(set([i.text for i in nodes[n]
                                                             if i is not None]))
-                        # first['forms']=forms.get('node')[0]
-                    if [n for n in uniq if len(uniq[n]) >1]:
-                            log.info("Sorry, I don't know how to combine these "
-                                "example values: {} ({})"
-                                "".format(uniq[n],n))
-                            continue
-                    log.info("It looks like all examples have all the same "
+                    if [n for n in uniq if len(uniq[n]) >1]: #any multiples
+                        if not [l for l in langs if len(uniq[l]) >1]: #nonlang
+                            nonint=[noninteger(j) for j in uniq['value'] #nonint
+                                                if noninteger(j) is not None]
+                            if not len(nonint) or len(nonint) >1:
+                                log.info("Sorry, I don't know how to combine "
+                                        "these example values: {} ({})"
+                                        "".format(uniq[n],n))
+                                continue
+                            else: #only one noninteger tone value
+                                for example in examples:
+                                    #This should ultimately have [@lang='{}'].analang
+                                    url=("field[@type='tone']/form[text='{}']"
+                                        "".format(nonint[0]))
+                                    if not example.find(url):
+                                        log.info("Removing duplicate ({}) "
+                                        "example with value: {}".format(l,
+                                            example.find(
+                                                "field[@type='tone']/form/text"
+                                                            ).text
+                                                )                    )
+                                        sense.remove(example)
+                                    else:
+                                        log.info("Keeping duplicate ({}) "
+                                        "example with value: {}".format(l,
+                                            nonint[0]))
+                    else:
+                        log.info("It looks like all examples have all the same "
                             "values, so we're deleting all but the first: {}"
                             "".format(uniq))
-                    for example in examples[1:]:
-                        sense.remove(example)
+                        for example in examples[1:]:
+                            sense.remove(example)
         if dup:
             self.write()
         else:
