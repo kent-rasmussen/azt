@@ -79,6 +79,7 @@ import os
 import pprint #for settings and status files, etc.
 import subprocess
 import webbrowser
+import pkg_resources
 
 class Check():
     """the parent is the *functional* head, the MainApplication."""
@@ -8580,7 +8581,22 @@ def findexecutable(exe):
         log.info(_("Search for {} on {} failed: {}").format(exe,os,e))
         return e
 def praatopen(file,newpraat=False,event=None):
-    if program['sendpraat'] and not newpraat:
+    praatvargs=[program['praat'], "--version"]
+    versionraw=subprocess.check_output(praatvargs, shell=False)
+    version=pkg_resources.parse_version(
+                versionraw.decode("utf-8").strip()
+                                        )
+    # This is the version at which we don't need sendpraat anymore
+    # and where "--hide-picture" becomes available.
+    justpraatversion=pkg_resources.parse_version('Praat 6.2.04')
+    log.info("Found Praat version {} ({})".format(version, versionraw))
+    if version>=justpraatversion:
+        log.info("Praat version greater than {}".format(justpraatversion))
+        justpraat=True
+    else:
+        log.info("Praat version less than {}".format(justpraatversion))
+        justpraat=False
+    if (not justpraat or program['sendpraat']) and not newpraat:
         praatargs=[program['sendpraat'], "praat", "Read from file... {}".format(file)]
         try:
             e=subprocess.check_output(praatargs,shell=False,stderr=subprocess.STDOUT)
