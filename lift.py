@@ -447,7 +447,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     nodes={}
                     uniq={}
                     first={}
-                    for n in self.analangs+self.glosslangs+['value']:
+                    langs=self.analangs+self.glosslangs
+                    for n in langs+['value']:
                         nodes[n]=[]
                     for example in examples:
                         for lang in self.analangs:
