@@ -37,16 +37,25 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
   - You can test a frame with more words, more quickly, by doing some sorting in A→Z+T.
   - confirm that word-frame combinations look OK, and
   - confirm that most words work in each of the frames. If a frame has many words that don't work in it, you should probably replace it.
-  - to confirm that you have the right tone contexts, do one syllable profile of about 25 words in each of your proposed frames, for each of nouns and verbs. Then send this data to me (see [Collaborate and Get Help](#collaborate-and-get-help), below) before doing a lot more sorting.
+  - ATTENTION: to **confirm your tone frames** will give you what you need for tone analysis, do one syllable profile of about 25 words in each of your proposed frames, for each of nouns and verbs. Record all that data, then send this data to me (see [Collaborate and Get Help](#collaborate-and-get-help), below) **_before_ doing a lot more sorting**.
 
 ## Collect data in A→Z+T
 - **Organize a meeting** of more (3+) speakers, for them to sort and record data together in A→Z+T. You can organize this as you like, but expect at **least two weeks** of full time work for everyone.
 - At the meeting:
-  - **Sort** data in A→Z+T, start with:
-    - largest 2-3 syllable profiles for Nouns in each of four **tonally different** frames
-    - largest 2-3 syllable profiles for Verbs in each of four **tonally different** frames
-    - **Tonally different**: if you don't know what this means, plan on getting help from a linguist near you, or sorting on at least eight frames (Once you have sorted on these, I can look through them for you, and tell you which are tonally different, and what you are missing).
-    - There is a lot more sorting you can do, but this should be the right place to start, and will be a good beginning to understand your tone system.
+  - **Sort** data in A→Z+T: 
+    - As you sort, 
+      - each surface group should have **just one** pitch melody for the whole utterance, for each word in the group.
+        -  if not, remove the different ones on the "Verify" page.
+      - each surface group should have a **different** pitch melody than _every other group_.
+        - Take the time to compare **each group** with _every other group_! 
+        - if some are the same, join them on the "Review Groups" page.
+      - keep going, around and around, until the each group is just one thing, and each is different from each other.
+    - Start with:
+      - largest 2-3 syllable profiles for Nouns in each of four **tonally different** frames
+      - largest 2-3 syllable profiles for Verbs in each of four **tonally different** frames
+      - There is a lot more sorting you can do, but this should be the right place to start, and will be a good beginning to understand your tone system.
+      - **Tonally different**: if you don't know what this means, plan on getting help from a linguist near you, or sorting on at least eight frames (You should have this sorted out above, before starting a workshop).
+    
   - **Record** all sorted data in A→Z+T
     - Please pay attention to 
       - **speak as naturally as possible**, without unnecessary pauses. Pauses may break your recording into multiple phonological phrases, making your recordings useless for tone study.
