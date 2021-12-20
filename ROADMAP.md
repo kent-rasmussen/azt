@@ -1,5 +1,6 @@
 #Roadmap
 bring some more ui stuff into ui_tkinter.py
+make lift-status update take in verification info, too.
 
 do something with mercurial to add (or rather ini versions)
     ProfileData.py
