@@ -1660,6 +1660,8 @@ class Check():
         pss=self.slices.pss() #this depends on nothing
         cvts=[i for i in self.params.cvts() if i in self.status]
         if not cvts:
+            cvts=[i for i in self.params.cvts()]
+        for t in cvts: #this depends on nothing
             log.info("Working on {}".format(t))
             for ps in pss:
                 log.info("Working on {}".format(ps))
