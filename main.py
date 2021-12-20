@@ -1659,11 +1659,15 @@ class Check():
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
         for t in [i for i in self.params.cvts() if i in self.status]: #this depends on nothing
+            log.info("Working on {}".format(t))
             for ps in pss:
+                log.info("Working on {}".format(ps))
                 profiles=self.slices.profiles(ps=ps) #This depends on ps only
                 for p in profiles:
+                    log.info("Working on {}".format(p))
                     checks=self.status.checks(ps=ps,profile=p)
                     for c in checks:
+                        log.info("Working on {}".format(c))
                         self.status.build(cvt=t, ps=ps, profile=p, check=c)
                         """this just populates groups and the tosort boolean."""
                         self.updatesortingstatus(cvt=t,ps=ps,profile=p,check=c,
