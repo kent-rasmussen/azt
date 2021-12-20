@@ -481,7 +481,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info("No duplicate examples (same sense and location) were "
                     "found in the lexicon.")
     def addtoneUF(self,senseid,group,analang,guid=None,**kwargs):
-        showurl=kwargs.get('showurl',False)    
+        showurl=kwargs.get('showurl',False)
         write=kwargs.get('write',True)
         node=self.get('sense',senseid=senseid).get() #give the sense.
         if node == []:
