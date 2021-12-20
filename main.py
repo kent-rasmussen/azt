@@ -80,6 +80,20 @@ import pprint #for settings and status files, etc.
 import subprocess
 import webbrowser
 
+class FileChooser(object):
+    """docstring for FileChooser."""
+
+    def __init__(self, arg):
+        super(FileChooser, self).__init__()
+        self.arg = arg
+
+class TaskChooser(object):
+    """docstring for FileChooser."""
+
+    def __init__(self, arg):
+        super(FileChooser, self).__init__()
+        self.arg = arg
+
 class Check():
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
