@@ -423,6 +423,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if not dup:
             log.info("No duplicate form fields were found in the lexicon.")
     def findduplicateexamples(self):
+        def noninteger(x):
+            try:
+                int(x)
+            except (ValueError,TypeError):
+                return x
         dup=False
         senses=self.nodes.findall('entry/sense')
         for sense in senses:
