@@ -4494,9 +4494,9 @@ class Check():
                                 location=check
                                 ).get('text'),
                         othersOK=True) #Don't complain if more than one found.
-            if v:
-                log.debug("Found tone value (updatesortingstatus): {} ({})"
-                        "".format(v, type(v)))
+            # if v:
+            #     log.debug("Found tone value (updatesortingstatus): {} ({})"
+            #             "".format(v, type(v)))
             if v in ['','None',None]: #unlist() returns strings
                 log.log(4,"Marking senseid {} tosort (v: {})".format(senseid,v))
                 self.status.marksenseidtosort(senseid)
