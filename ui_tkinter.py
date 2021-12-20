@@ -101,6 +101,8 @@ class Theme(object):
             self.name='highcontrast' #for low light environments
             self.name=pot[randint(0, len(pot))-1] #mostly defaulttheme
             try:
+                if platform.uname().node == 'CS-477':
+                    self.name='pink'
                 if (platform.uname().node == 'karlap' and
                         self.program and
                         not self.program['production']):
