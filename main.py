@@ -634,6 +634,34 @@ class FileChooser(object):
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
         self.guessanalang() #needed for regexs
+        self.file.loadsettingsfile() # overwrites guess above, stored on runcheck
+        if self.analang is None:
+            return
+        self.notifyuserofextrasegments() #self.analang set by now
+        if self.interfacelang not in [None, getinterfacelang()]:
+            #set only when new value is loaded:
+            setinterfacelang(self.interfacelang)
+            self.parent.maketitle()
+        self.langnames()
+        self.polygraphcheck()
+        self.checkinterpretations() #checks/sets values for self.distinguish
+        self.slists() #lift>check segment dicts: s[lang][segmenttype]
+        self.setupCVrxs() #creates self.rx dictionaries
+        """The line above may need to go after this block"""
+        if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
+            t=time.time()-self.start_time
+            log.info("Starting profile analysis at {}".format(t))
+            self.getprofiles() #creates self.profilesbysense nested dicts
+            for var in ['rx','profilesbysense']:
+                log.debug("{}: {}".format(var,getattr(self,var)))
+            self.file.storesettingsfile(setting='profiledata')
+            e=time.time()-self.start_time
+            log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
+        self.setnamesall() #sets self.checknamesall
+        self.file.loadsettingsfile(setting='status')
+        self.makedatadict()
+        self.makeexampledict() #needed for makestatus
+        
 class TaskChooser(ui.Window):
     """This class stores the hierarchy of tasks to do in A→Z+T, plus the
     minimum and optimum prerequisites for each. Based on these, it presents
@@ -939,34 +967,7 @@ class Check():
                     "the menus)".format(self.analang))
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
-        self.file.loadsettingsfile() # overwrites guess above, stored on runcheck
-        if self.analang is None:
-            return
-        self.notifyuserofextrasegments() #self.analang set by now
-        if self.interfacelang not in [None, getinterfacelang()]:
-            #set only when new value is loaded:
-            setinterfacelang(self.interfacelang)
-            self.parent.maketitle()
-        self.langnames()
-        self.polygraphcheck()
-        self.checkinterpretations() #checks/sets values for self.distinguish
-        self.slists() #lift>check segment dicts: s[lang][segmenttype]
-        self.setupCVrxs() #creates self.rx dictionaries
-        """The line above may need to go after this block"""
-        if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
-            t=time.time()-self.start_time
-            log.info("Starting profile analysis at {}".format(t))
-            self.getprofiles() #creates self.profilesbysense nested dicts
-            for var in ['rx','profilesbysense']:
-                log.debug("{}: {}".format(var,getattr(self,var)))
-            self.file.storesettingsfile(setting='profiledata')
-            e=time.time()-self.start_time
-            log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
-        self.setnamesall() #sets self.checknamesall
-        self.file.loadsettingsfile(setting='status')
-        self.makedatadict()
-        self.makeexampledict() #needed for makestatus
-        self.makestatus()
+        # self.makestatus()
         #This can wait until runcheck, right?
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
         self.makeglosslangs()
