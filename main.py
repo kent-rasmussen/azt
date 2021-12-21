@@ -1091,7 +1091,7 @@ class FileChooser(object):
     def getwritingsystemsinfo(self):
         """This doesn't actually do anything yet, as we can't parse ldml."""
         self.db.languagecodes=self.db.analangs+self.db.glosslangs
-        self.db.languagepaths=file.getlangnamepaths(self.filename,
+        self.db.languagepaths=file.getlangnamepaths(self.name,
                                                     self.db.languagecodes)
     def __init__(self):
         super(FileChooser, self).__init__()
