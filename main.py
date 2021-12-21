@@ -341,28 +341,21 @@ class TaskChooser(ui.Window):
         self.slices=SliceDict(self.params,self.adhocgroups,self.profilesbysense) #self.profilecounts
         if hasattr(self,'sextracted'):
             self.getscounts()
-    def makedatadict(self):
-        self.datadict=FramedDataDict(self)
-    def makeexampledict(self):
-        self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
-    def makestatus(self):
-        if not hasattr(self,'status'):
-            self.status={}
-        self.status=StatusDict(self.params,
-                                self.slices,
-                                self.exs,
-                                self.toneframes,
-                                self.settingsfile('status'),
-                                self.status
-                                )
-    def makeanalysis(self,**kwargs):
-        if not hasattr(self,'analysis'):
-            self.analysis=Analysis(self.params,
-                                    self.slices,
-                                    self.status,
-                                    self.db,
-                                    **kwargs
-                                    )
+    def maketoneframes(self):
+        if not hasattr(self,'toneframes'):
+            self.toneframes={}
+        self.toneframes=ToneFrames(self.toneframes)
+    def makecheck(self,filename=None):
+        if hasattr(self,'check'): #for restarts
+            self.parent.withdraw()
+            for w in self.frame.winfo_children():
+                w.destroy()
+            for w in self.check.frame.winfo_children():
+                w.destroy()
+            # self.check.frame.destroy()
+        self.check=Check(self,self.frame,filename) #nsyls=self.nsyls
+        if not self.exitFlag.istrue():
+            self.deiconify()
         else:
             self.analysis.setslice(**kwargs)
     def notifyuserofextrasegments(self):
@@ -1496,6 +1489,22 @@ class Check():
                 ).grid(column=0, row=0)
         if self.additionalps is not None:
             pss=self.db.pss+self.additionalps #these should be lists
+    def makeglosslangs(self):
+        self.glosslangs=Glosslangs(self.glosslangs)
+    def makedatadict(self):
+        self.datadict=FramedDataDict(self)
+    def makeexampledict(self):
+        self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
+    def makeanalysis(self,**kwargs):
+        if not hasattr(self,'analysis'):
+            self.analysis=Analysis(self.params,
+                                    self.slices,
+                                    self.status,
+                                    self.db,
+                                    **kwargs
+                                    )
+        else:
+            self.analysis.setslice(**kwargs)
         else:
             pss=self.db.pss
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
