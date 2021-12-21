@@ -356,10 +356,6 @@ class FileChooser(object):
         self.file.storesettingsfile(setting='status')
         log.info("Status settings refreshed from LIFT in {}s".format(
                                                         time.time()-start_time))
-    def maketoneframes(self):
-        if not hasattr(self,'toneframes'):
-            self.toneframes={}
-        self.toneframes=ToneFrames(self.toneframes)
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
@@ -577,7 +573,7 @@ class TaskChooser(ui.Window):
                                 self.status
                                 )
     def makeparameters(self):
-        self.params=CheckParameters(self.analang) #remove self.profilesbysense?
+        self.params=CheckParameters(self.file.analang) #remove self.profilesbysense?
     def makeslicedict(self):
         if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
             self.adhocgroups={}
@@ -921,6 +917,18 @@ class Check():
     created by analysis in init()"""
     def makeglosslangs(self):
         self.glosslangs=Glosslangs(self.glosslangs)
+    def makedatadict(self):
+        self.datadict=FramedDataDict(self)
+    def makeexampledict(self):
+        self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
+    def makeanalysis(self,**kwargs):
+        if not hasattr(self,'analysis'):
+            self.analysis=Analysis(self.params,
+                                    self.slices,
+                                    self.status,
+                                    self.db,
+                                    **kwargs
+                                    )
         else:
             self.analysis.setslice(**kwargs)
     def notifyuserofextrasegments(self):
@@ -2034,22 +2042,6 @@ class Check():
                 ).grid(column=0, row=0)
         if self.additionalps is not None:
             pss=self.db.pss+self.additionalps #these should be lists
-    def makeglosslangs(self):
-        self.glosslangs=Glosslangs(self.glosslangs)
-    def makedatadict(self):
-        self.datadict=FramedDataDict(self)
-    def makeexampledict(self):
-        self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
-    def makeanalysis(self,**kwargs):
-        if not hasattr(self,'analysis'):
-            self.analysis=Analysis(self.params,
-                                    self.slices,
-                                    self.status,
-                                    self.db,
-                                    **kwargs
-                                    )
-        else:
-            self.analysis.setslice(**kwargs)
         else:
             pss=self.db.pss
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
@@ -2180,39 +2172,6 @@ class Check():
         except:
             log.error("Only finished settingsobjects up to {}".format(fns))
             return []
-    def makesettingsdict(self,setting='defaults'):
-        """This returns a dictionary of values, keyed by a set of settings"""
-        """It pulls from objects if it can, otherwise from self attributes
-        (if there), for backwards compatibility"""
-        d={}
-        objectfns=self.settingsobjects()
-        if setting == 'soundsettings':
-            o=self.soundsettings
-        else:
-            o=self
-        for s in self.settings[setting]['attributes']:
-            if s in objectfns:
-                log.log(4,"Trying to dict {} attr".format(s))
-                try:
-                    d[s]=objectfns[s]()
-                    log.log(4,"Value {}={} found in object".format(s,d[s]))
-                except:
-                    log.log(4,"Value of {} not found in object".format(s))
-            elif hasattr(o,s):# and getattr(o,s) is not None:
-                d[s]=getattr(o,s)
-                log.log(4,"Trying to dict self.{} with value {}, type {}"
-                        "".format(s,d[s],type(d[s])))
-            else:
-                log.error("Couldn't find {} in {}".format(s,setting))
-        """This is the only glosslang > glosslangs conversion"""
-        if 'glosslangs' in d and d['glosslangs'] in [None,[]]:
-            if 'glosslang' in d and d['glosslang'] is not None:
-                d['glosslangs']=[d['glosslang']]
-                del d['glosslang']
-                if 'glosslang2' in d and d['glosslang2'] is not None:
-                    d['glosslangs'].append(d['glosslang2'])
-                    del d['glosslang2']
-        return d
     def readsettingsdict(self,dict):
         """This takes a dictionary keyed by attribute names"""
         d=dict
@@ -2251,10 +2210,6 @@ class Check():
         with open(filename, "w", encoding='utf-8') as file:
             file.write(header+'\n\n')
             config.write(file)
-    def makesoundsettings(self):
-        if not hasattr(self,'soundsettings'):
-            self.pyaudiocheck() #in case self.pyaudio isn't there yet
-            self.soundsettings=sound.SoundSettings(self.pyaudio)
     def loadsoundsettings(self):
         self.makesoundsettings()
         self.loadsettingsfile(setting='soundsettings')
