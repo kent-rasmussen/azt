@@ -179,6 +179,57 @@ class FileChooser(object):
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
         self.loadsettingsfile(setting='toneframes')
+    def settingsbyfile(self):
+        #Here we set which settings are stored in which files
+        self.settings={'defaults':{
+                            'file':'defaultfile',
+                            'attributes':['analang',
+                                'glosslangs',
+                                'audiolang',
+                                'ps',
+                                'profile',
+                                'cvt',
+                                'check',
+                                'regexCV',
+                                'additionalps',
+                                'entriestoshow',
+                                'additionalprofiles',
+                                'interfacelang',
+                                'examplespergrouptorecord',
+                                'adnlangnames',
+                                'maxpss',
+                                'hidegroupnames',
+                                'maxprofiles'
+                                ]},
+            'profiledata':{
+                                'file':'profiledatafile',
+                                'attributes':[
+                                    'distinguish',
+                                    'interpret',
+                                    'polygraphs',
+                                    "profilecounts",
+                                    "scount",
+                                    "sextracted",
+                                    "profilesbysense",
+                                    "formstosearch"
+                                    ]},
+            'status':{
+                                'file':'statusfile',
+                                'attributes':['status']},
+            'adhocgroups':{
+                                'file':'adhocgroupsfile',
+                                'attributes':['adhocgroups']},
+            'soundsettings':{
+                                'file':'soundsettingsfile',
+                                'attributes':['sample_format',
+                                            'fs',
+                                            'audio_card_in',
+                                            'audio_card_out',
+                                            ]},
+            'toneframes':{
+                                'file':'toneframesfile',
+                                'attributes':['toneframes']}
+                                }
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
         self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
         self.statusfile=basename.with_suffix(".VerificationStatus.dat")
@@ -1564,57 +1615,6 @@ class Check():
                         'hidegroupnames':[],
                         'maxprofiles':[]
                         }
-    def settingsbyfile(self):
-        #Here we set which settings are stored in which files
-        self.settings={'defaults':{
-                            'file':'defaultfile',
-                            'attributes':['analang',
-                                'glosslangs',
-                                'audiolang',
-                                'ps',
-                                'profile',
-                                'cvt',
-                                'check',
-                                'regexCV',
-                                'additionalps',
-                                'entriestoshow',
-                                'additionalprofiles',
-                                'interfacelang',
-                                'examplespergrouptorecord',
-                                'adnlangnames',
-                                'maxpss',
-                                'hidegroupnames',
-                                'maxprofiles'
-                                ]},
-            'profiledata':{
-                                'file':'profiledatafile',
-                                'attributes':[
-                                    'distinguish',
-                                    'interpret',
-                                    'polygraphs',
-                                    "profilecounts",
-                                    "scount",
-                                    "sextracted",
-                                    "profilesbysense",
-                                    "formstosearch"
-                                    ]},
-            'status':{
-                                'file':'statusfile',
-                                'attributes':['status']},
-            'adhocgroups':{
-                                'file':'adhocgroupsfile',
-                                'attributes':['adhocgroups']},
-            'soundsettings':{
-                                'file':'soundsettingsfile',
-                                'attributes':['sample_format',
-                                            'fs',
-                                            'audio_card_in',
-                                            'audio_card_out',
-                                            ]},
-            'toneframes':{
-                                'file':'toneframesfile',
-                                'attributes':['toneframes']}
-                                }
     def cleardefaults(self,field=None):
         if field==None:
             fields=self.settings['defaults']['attributes']
