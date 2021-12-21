@@ -613,6 +613,418 @@ class FileChooser(object):
             self.glosslangs.lang2(self.db.glosslangs[1])
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
+    def askaboutpolygraphs(self):
+        def nochanges():
+            log.info("Trying to make no changes")
+            if foundchanges() and not self.exitFlag.istrue():
+                log.info("Found changes; exiting.")
+                pgw.destroy()
+                self.parent.destroy()
+                exit()
+            elif not self.exitFlag.istrue():
+                pgw.destroy()
+        def makechanges():
+            log.info("Changes called for; like it or not, redoing analysis.")
+            pgw.destroy()
+            if not foundchanges():
+                log.info("User asked for changes to polygraph settings, but "
+                        "no changes found.")
+                return
+            for lang in self.db.analangs:
+                for pc in vars[lang]:
+                    for pg in vars[lang][pc]:
+                        self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
+            self.storesettingsfile(setting='profiledata')
+            self.reloadprofiledata()
+        def foundchanges():
+            for lang in vars:
+                if lang not in self.polygraphs:
+                    return True
+                for pc in vars[lang]:
+                    if pc not in self.polygraphs[lang]:
+                        return True
+                    for pg in vars[lang][pc]:
+                        if pg not in self.polygraphs[lang][pc]:
+                            return True
+                        v=vars[lang][pc][pg].get()
+                        if self.polygraphs[lang][pc][pg]!=v:
+                            return True
+            log.info("No changes found to polygraph settings, continuing.")
+        oktext=_("OK")
+        nochangetext=_("Exit {} with no changes".format(program['name']))
+        log.info("Asking about Digraphs and Trigraphs!")
+        pgw=ui.Window(self.frame,title="A→Z+T Digraphs and Trigraphs")
+        t=_("Select which of the following graph sequences found in your data "
+                "refer to a single sound (digraph or trigraph) in {}".format(
+            unlist([self.languagenames[y] for y in self.db.analangs])))
+        title=ui.Label(pgw.frame,text=t,
+                        column=0, row=0
+                        )
+        title.wrap()
+        t=_("If your data contains a digraph or trigraph that isn't listed "
+            "here, please click here to Email me, and I can add it.")
+        t2=ui.Label(pgw.frame,text=t)
+        t2.grid(column=0, row=1)
+        t2.bind("<Button-1>", lambda e: openweburl(eurl))
+        t=_("Clicking ‘{}’ will restart {} and trigger another syllable "
+            "profile analysis. \nIf you don't want that, click ‘{}’ ==>"
+            "\nEither way, you won't get past this window until you answer "
+            "This question.".format(
+                                        oktext,program['name'],nochangetext))
+        t3=ui.Label(pgw.frame,text=t)
+        t3.grid(column=0, row=2)
+        eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
+                                                            program['Email'])
+        b=ui.Button(pgw.frame,text=nochangetext,command=nochanges)
+        b.grid(column=1, row=2)
+        b=ui.Button(pgw.frame,text=oktext,command=makechanges)
+        b.grid(column=1, row=3)
+        if not hasattr(self,'polygraphs'):
+            self.polygraphs={}
+        vars={}
+        scroll=ui.ScrollingFrame(pgw.frame)
+        scroll.grid(row=3, column=0)
+        row=0
+        ncols=4 # increase this for wider window
+        for lang in self.db.analangs:
+            if lang not in self.polygraphs:
+                self.polygraphs[lang]={}
+            row+=1
+            title=ui.Label(scroll.content,text=self.languagenames[lang],
+                                                        font='read')
+            title.grid(column=0, row=row, columnspan=ncols)
+            vars[lang]={}
+            for sclass in [sc for sc in self.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
+                                    if ('dg' in sc or 'tg' in sc)]:
+                pclass=sclass.replace('dg','').replace('tg','')
+                if pclass not in self.polygraphs[lang]:
+                    self.polygraphs[lang][pclass]={}
+                if pclass not in vars[lang]:
+                    vars[lang][pclass]={}
+                if len(self.db.s[lang][sclass])>0:
+                    row+=1
+                    header=ui.Label(scroll.content,
+                    text=sclass.replace('dg',' (digraph)').replace('tg',
+                                                            ' (trigraph)')+': ')
+                    header.grid(column=0, row=row)
+                col=1
+                for pg in self.db.s[lang][sclass]:
+                    vars[lang][pclass][pg] = tkinter.BooleanVar()
+                    vars[lang][pclass][pg].set(
+                                    self.polygraphs[lang][pclass].get(pg,False))
+                    cb=ui.CheckButton(scroll.content, text = pg, #.content
+                                        variable = vars[lang][pclass][pg],
+                                        onvalue = True, offvalue = False,
+                                        )
+                    cb.grid(column=col, row=row,sticky='nsew')
+                    if col<= ncols:
+                        col+=1
+                    else:
+                        col=1 #not header
+                        row+=1
+        pgw.wait_window(pgw)
+        if not self.exitFlag.istrue():
+            nochanges() #this is the default exit behavior
+    def polygraphcheck(self):
+        log.info("Checking for Digraphs and Trigraphs!")
+        if not hasattr(self,'polygraphs'):
+            self.polygraphs={}
+        for lang in self.db.analangs:
+            if lang not in self.polygraphs:
+                self.polygraphs[lang]={}
+            for sclass in [sc for sc in self.db.s[lang]
+                                    if ('dg' in sc or 'tg' in sc)]:
+                pclass=sclass.replace('dg','').replace('tg','')
+                if pclass not in self.polygraphs[lang]:
+                    self.polygraphs[lang][pclass]={}
+                for pg in self.db.s[lang][sclass]:
+                    if pg not in self.polygraphs[lang][pclass]:
+                        log.info("{} ([]/{}) has no Di/Trigraph setting; "
+                        "prompting user or info.".format(pg,pclass,sclass))
+                        self.askaboutpolygraphs()
+                        return
+        log.info("Di/Trigraph settings seem complete; moving on.")
+    def checkinterpretations(self):
+        if (not hasattr(self,'distinguish')) or (self.distinguish is None):
+            self.distinguish={}
+        if (not hasattr(self,'interpret')) or (self.interpret is None):
+            self.interpret={}
+        for var in ['G','Gwd','N','S','Swd','D','Dwd','Nwd','ʔ','ʔwd',
+                    "̀",'ː','<','=']:
+            if ((var not in self.distinguish) or
+                (type(self.distinguish[var]) is not bool)):
+                self.distinguish[var]=False
+            """These defaults are not settable, yet:"""
+            if var in ["̀",'ː']: #typically word-forming
+                self.distinguish[var]=False
+            if var in ['<','=']: #typically not word-forming
+                self.distinguish[var]=True
+        for var in ['NC','CG','CS','VV','VN']:
+            if ((var not in self.interpret) or
+                (type(self.interpret[var]) is not str) or
+                not(1 <=len(self.interpret[var])<= 2)):
+                if (var == 'VV') or (var == 'VN'):
+                    self.interpret[var]=var
+                else:
+                    self.interpret[var]='CC'
+        if self.interpret['VV']=='Vː' and self.distinguish['ː']==False:
+            self.interpret['VV']='VV'
+        log.log(2,"self.distinguish: {}".format(self.distinguish))
+    def setSdistinctions(self):
+        def notice(changed):
+            def confirm():
+                ok.value=True
+                w.destroy()
+            ti=_("Important Notice!")
+            w=ui.Window(self.frame,title=ti)
+            til=ui.Label(w.frame,text=ti,font='title')
+            til.grid(row=0,column=0)
+            t=_("You are changing segment interpretation "
+            "settings in a way that could cause you problems: ")
+            d=[x for x in changed.keys()
+                                            if changed[x][1] is False]
+            if len(d) >0:
+                t+=_("\n=> You are no longer distinguishing {}.").format(
+                                    unlist([x.replace('wd','#') for x in d]))
+            i=[y for y in changed.keys() if changed[y][1] is not False]
+            if len(i) >0:
+                t+=_("\n=> Your interpretation of {} changed.").format(
+                                                            unlist(i))
+            t+=_("\nHere is the full info, in form setting: (from, to): {}."
+                    "").format(changed)
+            t+=_("\n\nAnywhere you have sorted a group based on your "
+            "old interpretation settings, you should sort/verify "
+            "that data again, as there is a possiblity that "
+            "you have mixed unrelated groups.").format(changed)
+            ui.Label(w.frame,text=t,wraplength=int(
+                        self.frame.winfo_screenwidth()/2)).grid(row=1,column=0)
+            for ps in pss:
+                i=[x for x in self.profilesbysense[ps].keys()
+                                    if set(d).intersection(set(x))]
+                p="Profiles to check: {}".format(i)
+                log.info(p)
+                ui.Label(w.frame,text=p).grid(row=2,column=0)
+            ok=Object()
+            ok.value=False
+            b=ui.Button(w.frame,text="OK, go ahead", command=confirm)
+            b.grid(row=1,column=1)
+            w.wait_window(w)
+            return ok.value
+        def submitform():
+            def undo(changed):
+                for s in changed:
+                    if s in self.distinguish:
+                        if self.distinguish[s]==changed[s][1]:
+                            self.distinguish[s]=changed[s][0] #(oldvar,newvar):
+                        else:
+                            log.error("Changed to value ({}) doesn't match "
+                            "current setting for ‘{}’: {}".format(changed[s][1],
+                                                        s,self.distinguish[s]))
+                    elif s in self.interpret:
+                        if self.interpret[s]==changed[s][1]:
+                            self.interpret[s]=changed[s][0] #(oldvar,newvar):
+                        else:
+                            log.error("Changed to value ({}) doesn't match "
+                            "current setting for ‘{}’: {}".format(changed[s][1],
+                                                        s,self.interpret[s]))
+            r=True #only false if changes made, and user exits notice
+            changed={}
+            for typ in ['distinguish', 'interpret']:
+                for s in getattr(self,typ):
+                    if s in options.vars and s in getattr(self,typ):
+                        newvar=options.vars[s].get()
+                        oldvar=getattr(self,typ)[s]
+                        if oldvar != newvar:
+                            if typ == 'distinguish': #i.e., boolean
+                                if oldvar and not newvar: #True becomes False
+                                    changed[s]=(oldvar,newvar)
+                            else: #i.e., CC v CG v C, etc.
+                                if (len(oldvar)>len(newvar) or # becomes shorter
+                                    len(set(['V','G','N'] #one of these is there
+                                    ).intersection(set(oldvar))) >0):
+                                    changed[s]=(oldvar,newvar)
+                            getattr(self,typ)[s]=newvar
+            log.debug('self.distinguish: {}'.format(self.distinguish))
+            log.debug('self.interpret: {}'.format(self.interpret))
+            if changed:
+                log.info('There was a change; we need to redo the analysis now.')
+                log.info('The following changed (from,to): {}'.format(changed))
+                self.file.storesettingsfile()
+                r=notice(changed)
+                if r:
+                    self.runwindow.destroy()
+                    self.reloadprofiledata()
+                else:
+                    undo(changed)
+            else:
+                self.runwindow.destroy()
+        def buttonframeframe(self):
+            s=options.s
+            f=options.frames[s]=ui.Frame(self.runwindow.scroll.content)
+            f.grid(row=options.get('r'),
+                        column=options.get('c'),
+                        sticky='ew', padx=options.padx, pady=options.pady)
+            bffl=ui.Label(f,text=options.text,justify=tkinter.LEFT,
+                                                                anchor='c')
+            bffl.grid(row=1,column=options.column,
+                            sticky='ew',
+                            padx=options.padx,
+                            pady=options.pady)
+            # for opt in self.runwindow.options['opts']:
+            #     bffrb=CheckButton(self.runwindow.frames[ss],var=var[ss])#, #RadioButtonFrame
+            #                             # opts=self.runwindow.options['opts'])
+            #     bffrb.grid(row=1,column=1)
+            for opt in options.opts:
+                bffrb=ui.RadioButtonFrame(f,
+                                        var=options.vars[s],
+                                        opts=options.opts)
+                bffrb.grid(row=1,column=1)
+            options.next('r') #self.runwindow.options['row']+=1
+        self.getrunwindow()
+        self.checkinterpretations()
+        options=Options(r=0,padx=50,pady=10,c=0,vars={},frames={})
+        for s in self.distinguish: #Should be already set.
+            options.vars[s] = tkinter.BooleanVar()
+            options.vars[s].set(self.distinguish[s])
+        for s in self.interpret: #This should already be set, even by default
+            options.vars[s] = tkinter.StringVar()
+            options.vars[s].set(self.interpret[s])
+        """Page title and instructions"""
+        self.runwindow.title(_("Set Parameters for Segment Interpretation"))
+        mwframe=self.runwindow.frame
+        title=_("Interpret {} Segments"
+                ).format(self.languagenames[self.analang])
+        titl=ui.Label(mwframe,text=title,font='title',
+                justify=tkinter.LEFT,anchor='c')
+        titl.grid(row=options.get('r'), column=options.get('c'), #self.runwindow.options['column'],
+                    sticky='ew', padx=options.padx, pady=10)
+        options.next('r')
+        text=_("Here you can view and set parameters that change how {} "
+        "interprets {} segments \n(consonant and vowel glyphs/characters)"
+                ).format(program['name'],self.languagenames[self.analang])
+        instr=ui.Label(mwframe,text=text,justify=tkinter.LEFT,anchor='c')
+        instr.grid(row=options.get('r'), column=options.get('c'),
+                    sticky='ew', padx=options.padx, pady=options.pady)
+        """The rest of the page"""
+        self.runwindow.scroll=ui.ScrollingFrame(mwframe)
+        self.runwindow.scroll.grid(row=2,column=0)
+        log.debug('self.distinguish: {}'.format(self.distinguish))
+        log.debug('self.interpret: {}'.format(self.interpret))
+        """I considered offering these to the user conditionally, but I don't
+        see a subset of them that would only be relevant when another is
+        selected. For instance, a user may NOT want to distinguish all Nasals,
+        yet distinguish word final nasals. Or CG sequences, but not other G's
+        --or distinguish G, but leave as CG (≠C). So I think these are all
+        independent boolean selections."""
+        options.s='ʔ'
+        options.text=_('Do you want to distinguish '
+                        'initial and medial glottal stops (ʔ) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'ʔ≠C'),(False,'ʔ=C')]
+        buttonframeframe(self)
+        options.s='ʔwd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final glottal stops (ʔ#) \nfrom other '
+                        'word final consonants?')
+        options.opts=[(True,'ʔ#≠C#'),(False,'ʔ#=C#')]
+        buttonframeframe(self)
+        options.s='N'
+        options.text=_('Do you want to distinguish '
+                        'initial and medial Nasals (N) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'N≠C'),(False,'N=C')]
+        buttonframeframe(self)
+        options.s='Nwd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final Nasals (N#) \nfrom other word '
+                        'final consonants?')
+        options.opts=[(True,'N#≠C#'),(False,'N#=C#')]
+        buttonframeframe(self)
+        options.s='D'
+        options.text=_('Do you want to distinguish '
+                        'initial and medial likely depressor consonants (D={})'
+                        '\nfrom '
+                        'other (simple/single) consonants?'
+                        "").format(self.db.s[self.analang]['D'])
+        options.opts=[(True,'D≠C'),(False,'D=C')]
+        buttonframeframe(self)
+        options.s='Dwd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final likely depressor consonants (D={})'
+                        '\nfrom '
+                        'other (simple/single) consonants?'
+                        "").format(self.db.s[self.analang]['D'])
+        options.opts=[(True,'D#≠C#'),(False,'D#=C#')]
+        buttonframeframe(self)
+        options.s='G'
+        options.text=_('Do you want to distinguish '
+                        'initial and medial Glides (G) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'G≠C'),(False,'G=C')]
+        buttonframeframe(self)
+        options.s='Gwd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final Glides (G) \nfrom '
+                        'other (simple/single) consonants?')
+        options.opts=[(True,'G#≠C#'),(False,'G#=C#')]
+        buttonframeframe(self)
+        options.s='S'
+        options.text=_('Do you want to distinguish '
+                        'initial and medial Non-Nasal/Glide Sonorants (S) '
+                    '\nfrom other (simple/single) consonants?')
+        options.opts=[(True,'S≠C'),(False,'S=C')]
+        buttonframeframe(self)
+        options.s='Swd'
+        options.text=_('Do you want to distinguish Word '
+                        'Final Non-Nasal/Glide Sonorants (S) '
+                    '\nfrom other (simple/single) consonants?')
+        options.opts=[(True,'S#≠C#'),(False,'S#=C#')]
+        buttonframeframe(self)
+        options.s='NC'
+        options.text=_('How do you want to interpret '
+                                        '\nNasal-Consonant (NC) sequences?')
+        options.opts=[('NC','NC=NC (≠C, ≠CC)'),
+                        ('C','NC=C (≠NC, ≠CC)'),
+                        ('CC','NC=CC (≠NC, ≠C)')
+                        ]
+        buttonframeframe(self)
+        options.s='CG'
+        options.text=_('How do you want to interpret '
+                                        '\nConsonant-Glide (CG) sequences?')
+        options.opts=[('CG','CG=CG (≠C, ≠CC)'),
+                        ('C','CG=C (≠CG, ≠CC)'),
+                        ('CC','CG=CC (≠CG, ≠C)')]
+        buttonframeframe(self)
+        options.s='VN'
+        options.text=_('How do you want to interpret '
+                                        '\nVowel-Nasal (VN) sequences?')
+        options.opts=[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')]
+        buttonframeframe(self)
+        """Submit button, etc"""
+        self.runwindow.frame2d=ui.Frame(self.runwindow.scroll.content)
+        self.runwindow.frame2d.grid(row=options.get('r'),
+                    column=options.get('c'),
+                    sticky='ew', padx=options.padx, pady=options.pady)
+        sub_btn=ui.Button(self.runwindow.frame2d,text = 'Use these settings',
+                  command = submitform)
+        sub_btn.grid(row=0,column=1,sticky='nw',pady=options.pady)
+        nbtext=_("If you make changes, this button==> \nwill "
+                "restart the program to reanalyze your data, \nwhich will "
+                "take some time.")
+        sub_nb=ui.Label(self.runwindow.frame2d,text = nbtext, anchor='e')
+        sub_nb.grid(row=0,column=0,sticky='e',
+                    pady=options.pady)
+        self.runwindow.waitdone()
+    def checkforprofileanalysis(self):
+        if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
+            t=time.time()-self.start_time
+            log.info("Starting profile analysis at {}".format(t))
+            self.getprofiles() #creates self.profilesbysense nested dicts
+            for var in ['rx','profilesbysense']:
+                log.debug("{}: {}".format(var,getattr(self,var)))
+            self.file.storesettingsfile(setting='profiledata')
+            e=time.time()-self.start_time
+            log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
     def __init__(self):
         super(FileChooser, self).__init__()
         self.getfilename()
@@ -637,15 +1049,6 @@ class FileChooser(object):
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
         self.setupCVrxs() #creates self.rx dictionaries
         """The line above may need to go after this block"""
-        if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
-            t=time.time()-self.start_time
-            log.info("Starting profile analysis at {}".format(t))
-            self.getprofiles() #creates self.profilesbysense nested dicts
-            for var in ['rx','profilesbysense']:
-                log.debug("{}: {}".format(var,getattr(self,var)))
-            self.file.storesettingsfile(setting='profiledata')
-            e=time.time()-self.start_time
-            log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
         self.setnamesall() #sets self.checknamesall
         self.file.loadsettingsfile(setting='status')
         self.makedatadict()
@@ -1120,277 +1523,6 @@ class Check():
                                 window=window,
                                 column=0, row=1
                                 )
-    def checkinterpretations(self):
-        if (not hasattr(self,'distinguish')) or (self.distinguish is None):
-            self.distinguish={}
-        if (not hasattr(self,'interpret')) or (self.interpret is None):
-            self.interpret={}
-        for var in ['G','Gwd','N','S','Swd','D','Dwd','Nwd','ʔ','ʔwd',
-                    "̀",'ː','<','=']:
-            if ((var not in self.distinguish) or
-                (type(self.distinguish[var]) is not bool)):
-                self.distinguish[var]=False
-            """These defaults are not settable, yet:"""
-            if var in ["̀",'ː']: #typically word-forming
-                self.distinguish[var]=False
-            if var in ['<','=']: #typically not word-forming
-                self.distinguish[var]=True
-        for var in ['NC','CG','CS','VV','VN']:
-            if ((var not in self.interpret) or
-                (type(self.interpret[var]) is not str) or
-                not(1 <=len(self.interpret[var])<= 2)):
-                if (var == 'VV') or (var == 'VN'):
-                    self.interpret[var]=var
-                else:
-                    self.interpret[var]='CC'
-        if self.interpret['VV']=='Vː' and self.distinguish['ː']==False:
-            self.interpret['VV']='VV'
-        log.log(2,"self.distinguish: {}".format(self.distinguish))
-    def setSdistinctions(self):
-        def notice(changed):
-            def confirm():
-                ok.value=True
-                w.destroy()
-            ti=_("Important Notice!")
-            w=ui.Window(self.frame,title=ti)
-            til=ui.Label(w.frame,text=ti,font='title')
-            til.grid(row=0,column=0)
-            t=_("You are changing segment interpretation "
-            "settings in a way that could cause you problems: ")
-            d=[x for x in changed.keys()
-                                            if changed[x][1] is False]
-            if len(d) >0:
-                t+=_("\n=> You are no longer distinguishing {}.").format(
-                                    unlist([x.replace('wd','#') for x in d]))
-            i=[y for y in changed.keys() if changed[y][1] is not False]
-            if len(i) >0:
-                t+=_("\n=> Your interpretation of {} changed.").format(
-                                                            unlist(i))
-            t+=_("\nHere is the full info, in form setting: (from, to): {}."
-                    "").format(changed)
-            t+=_("\n\nAnywhere you have sorted a group based on your "
-            "old interpretation settings, you should sort/verify "
-            "that data again, as there is a possiblity that "
-            "you have mixed unrelated groups.").format(changed)
-            ui.Label(w.frame,text=t,wraplength=int(
-                        self.frame.winfo_screenwidth()/2)).grid(row=1,column=0)
-            for ps in pss:
-                i=[x for x in self.profilesbysense[ps].keys()
-                                    if set(d).intersection(set(x))]
-                p="Profiles to check: {}".format(i)
-                log.info(p)
-                ui.Label(w.frame,text=p).grid(row=2,column=0)
-            ok=Object()
-            ok.value=False
-            b=ui.Button(w.frame,text="OK, go ahead", command=confirm)
-            b.grid(row=1,column=1)
-            w.wait_window(w)
-            return ok.value
-        def submitform():
-            def undo(changed):
-                for s in changed:
-                    if s in self.distinguish:
-                        if self.distinguish[s]==changed[s][1]:
-                            self.distinguish[s]=changed[s][0] #(oldvar,newvar):
-                        else:
-                            log.error("Changed to value ({}) doesn't match "
-                            "current setting for ‘{}’: {}".format(changed[s][1],
-                                                        s,self.distinguish[s]))
-                    elif s in self.interpret:
-                        if self.interpret[s]==changed[s][1]:
-                            self.interpret[s]=changed[s][0] #(oldvar,newvar):
-                        else:
-                            log.error("Changed to value ({}) doesn't match "
-                            "current setting for ‘{}’: {}".format(changed[s][1],
-                                                        s,self.interpret[s]))
-            r=True #only false if changes made, and user exits notice
-            changed={}
-            for typ in ['distinguish', 'interpret']:
-                for s in getattr(self,typ):
-                    if s in options.vars and s in getattr(self,typ):
-                        newvar=options.vars[s].get()
-                        oldvar=getattr(self,typ)[s]
-                        if oldvar != newvar:
-                            if typ == 'distinguish': #i.e., boolean
-                                if oldvar and not newvar: #True becomes False
-                                    changed[s]=(oldvar,newvar)
-                            else: #i.e., CC v CG v C, etc.
-                                if (len(oldvar)>len(newvar) or # becomes shorter
-                                    len(set(['V','G','N'] #one of these is there
-                                    ).intersection(set(oldvar))) >0):
-                                    changed[s]=(oldvar,newvar)
-                            getattr(self,typ)[s]=newvar
-            log.debug('self.distinguish: {}'.format(self.distinguish))
-            log.debug('self.interpret: {}'.format(self.interpret))
-            if changed:
-                log.info('There was a change; we need to redo the analysis now.')
-                log.info('The following changed (from,to): {}'.format(changed))
-                self.storesettingsfile()
-                r=notice(changed)
-                if r:
-                    self.runwindow.destroy()
-                    self.reloadprofiledata()
-                else:
-                    undo(changed)
-            else:
-                self.runwindow.destroy()
-        def buttonframeframe(self):
-            s=options.s
-            f=options.frames[s]=ui.Frame(self.runwindow.scroll.content)
-            f.grid(row=options.get('r'),
-                        column=options.get('c'),
-                        sticky='ew', padx=options.padx, pady=options.pady)
-            bffl=ui.Label(f,text=options.text,justify=tkinter.LEFT,
-                                                                anchor='c')
-            bffl.grid(row=1,column=options.column,
-                            sticky='ew',
-                            padx=options.padx,
-                            pady=options.pady)
-            # for opt in self.runwindow.options['opts']:
-            #     bffrb=CheckButton(self.runwindow.frames[ss],var=var[ss])#, #RadioButtonFrame
-            #                             # opts=self.runwindow.options['opts'])
-            #     bffrb.grid(row=1,column=1)
-            for opt in options.opts:
-                bffrb=ui.RadioButtonFrame(f,
-                                        var=options.vars[s],
-                                        opts=options.opts)
-                bffrb.grid(row=1,column=1)
-            options.next('r') #self.runwindow.options['row']+=1
-        self.getrunwindow()
-        self.checkinterpretations()
-        options=Options(r=0,padx=50,pady=10,c=0,vars={},frames={})
-        for s in self.distinguish: #Should be already set.
-            options.vars[s] = tkinter.BooleanVar()
-            options.vars[s].set(self.distinguish[s])
-        for s in self.interpret: #This should already be set, even by default
-            options.vars[s] = tkinter.StringVar()
-            options.vars[s].set(self.interpret[s])
-        """Page title and instructions"""
-        self.runwindow.title(_("Set Parameters for Segment Interpretation"))
-        mwframe=self.runwindow.frame
-        title=_("Interpret {} Segments"
-                ).format(self.languagenames[self.analang])
-        titl=ui.Label(mwframe,text=title,font='title',
-                justify=tkinter.LEFT,anchor='c')
-        titl.grid(row=options.get('r'), column=options.get('c'), #self.runwindow.options['column'],
-                    sticky='ew', padx=options.padx, pady=10)
-        options.next('r')
-        text=_("Here you can view and set parameters that change how {} "
-        "interprets {} segments \n(consonant and vowel glyphs/characters)"
-                ).format(program['name'],self.languagenames[self.analang])
-        instr=ui.Label(mwframe,text=text,justify=tkinter.LEFT,anchor='c')
-        instr.grid(row=options.get('r'), column=options.get('c'),
-                    sticky='ew', padx=options.padx, pady=options.pady)
-        """The rest of the page"""
-        self.runwindow.scroll=ui.ScrollingFrame(mwframe)
-        self.runwindow.scroll.grid(row=2,column=0)
-        log.debug('self.distinguish: {}'.format(self.distinguish))
-        log.debug('self.interpret: {}'.format(self.interpret))
-        """I considered offering these to the user conditionally, but I don't
-        see a subset of them that would only be relevant when another is
-        selected. For instance, a user may NOT want to distinguish all Nasals,
-        yet distinguish word final nasals. Or CG sequences, but not other G's
-        --or distinguish G, but leave as CG (≠C). So I think these are all
-        independent boolean selections."""
-        options.s='ʔ'
-        options.text=_('Do you want to distinguish '
-                        'initial and medial glottal stops (ʔ) \nfrom '
-                        'other (simple/single) consonants?')
-        options.opts=[(True,'ʔ≠C'),(False,'ʔ=C')]
-        buttonframeframe(self)
-        options.s='ʔwd'
-        options.text=_('Do you want to distinguish Word '
-                        'Final glottal stops (ʔ#) \nfrom other '
-                        'word final consonants?')
-        options.opts=[(True,'ʔ#≠C#'),(False,'ʔ#=C#')]
-        buttonframeframe(self)
-        options.s='N'
-        options.text=_('Do you want to distinguish '
-                        'initial and medial Nasals (N) \nfrom '
-                        'other (simple/single) consonants?')
-        options.opts=[(True,'N≠C'),(False,'N=C')]
-        buttonframeframe(self)
-        options.s='Nwd'
-        options.text=_('Do you want to distinguish Word '
-                        'Final Nasals (N#) \nfrom other word '
-                        'final consonants?')
-        options.opts=[(True,'N#≠C#'),(False,'N#=C#')]
-        buttonframeframe(self)
-        options.s='D'
-        options.text=_('Do you want to distinguish '
-                        'initial and medial likely depressor consonants (D={})'
-                        '\nfrom '
-                        'other (simple/single) consonants?'
-                        "").format(self.db.s[self.analang]['D'])
-        options.opts=[(True,'D≠C'),(False,'D=C')]
-        buttonframeframe(self)
-        options.s='Dwd'
-        options.text=_('Do you want to distinguish Word '
-                        'Final likely depressor consonants (D={})'
-                        '\nfrom '
-                        'other (simple/single) consonants?'
-                        "").format(self.db.s[self.analang]['D'])
-        options.opts=[(True,'D#≠C#'),(False,'D#=C#')]
-        buttonframeframe(self)
-        options.s='G'
-        options.text=_('Do you want to distinguish '
-                        'initial and medial Glides (G) \nfrom '
-                        'other (simple/single) consonants?')
-        options.opts=[(True,'G≠C'),(False,'G=C')]
-        buttonframeframe(self)
-        options.s='Gwd'
-        options.text=_('Do you want to distinguish Word '
-                        'Final Glides (G) \nfrom '
-                        'other (simple/single) consonants?')
-        options.opts=[(True,'G#≠C#'),(False,'G#=C#')]
-        buttonframeframe(self)
-        options.s='S'
-        options.text=_('Do you want to distinguish '
-                        'initial and medial Non-Nasal/Glide Sonorants (S) '
-                    '\nfrom other (simple/single) consonants?')
-        options.opts=[(True,'S≠C'),(False,'S=C')]
-        buttonframeframe(self)
-        options.s='Swd'
-        options.text=_('Do you want to distinguish Word '
-                        'Final Non-Nasal/Glide Sonorants (S) '
-                    '\nfrom other (simple/single) consonants?')
-        options.opts=[(True,'S#≠C#'),(False,'S#=C#')]
-        buttonframeframe(self)
-        options.s='NC'
-        options.text=_('How do you want to interpret '
-                                        '\nNasal-Consonant (NC) sequences?')
-        options.opts=[('NC','NC=NC (≠C, ≠CC)'),
-                        ('C','NC=C (≠NC, ≠CC)'),
-                        ('CC','NC=CC (≠NC, ≠C)')
-                        ]
-        buttonframeframe(self)
-        options.s='CG'
-        options.text=_('How do you want to interpret '
-                                        '\nConsonant-Glide (CG) sequences?')
-        options.opts=[('CG','CG=CG (≠C, ≠CC)'),
-                        ('C','CG=C (≠CG, ≠CC)'),
-                        ('CC','CG=CC (≠CG, ≠C)')]
-        buttonframeframe(self)
-        options.s='VN'
-        options.text=_('How do you want to interpret '
-                                        '\nVowel-Nasal (VN) sequences?')
-        options.opts=[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')]
-        buttonframeframe(self)
-        """Submit button, etc"""
-        self.runwindow.frame2d=ui.Frame(self.runwindow.scroll.content)
-        self.runwindow.frame2d.grid(row=options.get('r'),
-                    column=options.get('c'),
-                    sticky='ew', padx=options.padx, pady=options.pady)
-        sub_btn=ui.Button(self.runwindow.frame2d,text = 'Use these settings',
-                  command = submitform)
-        sub_btn.grid(row=0,column=1,sticky='nw',pady=options.pady)
-        nbtext=_("If you make changes, this button==> \nwill "
-                "restart the program to reanalyze your data, \nwhich will "
-                "take some time.")
-        sub_nb=ui.Label(self.runwindow.frame2d,text = nbtext, anchor='e')
-        sub_nb.grid(row=0,column=0,sticky='e',
-                    pady=options.pady)
-        self.runwindow.waitdone()
     def addmodadhocsort(self):
         def submitform():
             if profilevar.get() == "":
@@ -2299,136 +2431,6 @@ class Check():
                     self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
                     log.debug("resulting profilesbysense: {}".format(
                                             self.profilesbysense[ps][a]))
-    def polygraphcheck(self):
-        log.info("Checking for Digraphs and Trigraphs!")
-        if not hasattr(self,'polygraphs'):
-            self.polygraphs={}
-        for lang in self.db.analangs:
-            if lang not in self.polygraphs:
-                self.polygraphs[lang]={}
-            for sclass in [sc for sc in self.db.s[lang]
-                                    if ('dg' in sc or 'tg' in sc)]:
-                pclass=sclass.replace('dg','').replace('tg','')
-                if pclass not in self.polygraphs[lang]:
-                    self.polygraphs[lang][pclass]={}
-                for pg in self.db.s[lang][sclass]:
-                    if pg not in self.polygraphs[lang][pclass]:
-                        log.info("{} ([]/{}) has no Di/Trigraph setting; "
-                        "prompting user or info.".format(pg,pclass,sclass))
-                        self.askaboutpolygraphs()
-                        return
-    def askaboutpolygraphs(self):
-        def nochanges():
-            log.info("Trying to make no changes")
-            if foundchanges() and not self.exitFlag.istrue():
-                log.info("Found changes; exiting.")
-                pgw.destroy()
-                self.parent.destroy()
-                exit()
-            elif not self.exitFlag.istrue():
-                pgw.destroy()
-        def makechanges():
-            log.info("Changes called for; like it or not, redoing analysis.")
-            pgw.destroy()
-            if not foundchanges():
-                log.info("User asked for changes to polygraph settings, but "
-                        "no changes found.")
-                return
-            for lang in self.db.analangs:
-                for pc in vars[lang]:
-                    for pg in vars[lang][pc]:
-                        self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
-            self.storesettingsfile(setting='profiledata')
-            self.reloadprofiledata()
-        def foundchanges():
-            for lang in vars:
-                if lang not in self.polygraphs:
-                    return True
-                for pc in vars[lang]:
-                    if pc not in self.polygraphs[lang]:
-                        return True
-                    for pg in vars[lang][pc]:
-                        if pg not in self.polygraphs[lang][pc]:
-                            return True
-                        v=vars[lang][pc][pg].get()
-                        if self.polygraphs[lang][pc][pg]!=v:
-                            return True
-            log.info("No changes found to polygraph settings, continuing.")
-        oktext=_("OK")
-        nochangetext=_("Exit {} with no changes".format(program['name']))
-        log.info("Asking about Digraphs and Trigraphs!")
-        pgw=ui.Window(self.frame,title="A→Z+T Digraphs and Trigraphs")
-        t=_("Select which of the following graph sequences found in your data "
-                "refer to a single sound (digraph or trigraph) in {}".format(
-            unlist([self.languagenames[y] for y in self.db.analangs])))
-        title=ui.Label(pgw.frame,text=t,
-                        column=0, row=0
-                        )
-        title.wrap()
-        t=_("If your data contains a digraph or trigraph that isn't listed "
-            "here, please click here to Email me, and I can add it.")
-        t2=ui.Label(pgw.frame,text=t)
-        t2.grid(column=0, row=1)
-        t2.bind("<Button-1>", lambda e: openweburl(eurl))
-        t=_("Clicking ‘{}’ will restart {} and trigger another syllable "
-            "profile analysis. \nIf you don't want that, click ‘{}’ ==>"
-            "\nEither way, you won't get past this window until you answer "
-            "This question.".format(
-                                        oktext,program['name'],nochangetext))
-        t3=ui.Label(pgw.frame,text=t)
-        t3.grid(column=0, row=2)
-        eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
-                                                            program['Email'])
-        b=ui.Button(pgw.frame,text=nochangetext,command=nochanges)
-        b.grid(column=1, row=2)
-        b=ui.Button(pgw.frame,text=oktext,command=makechanges)
-        b.grid(column=1, row=3)
-        if not hasattr(self,'polygraphs'):
-            self.polygraphs={}
-        vars={}
-        scroll=ui.ScrollingFrame(pgw.frame)
-        scroll.grid(row=3, column=0)
-        row=0
-        ncols=4 # increase this for wider window
-        for lang in self.db.analangs:
-            if lang not in self.polygraphs:
-                self.polygraphs[lang]={}
-            row+=1
-            title=ui.Label(scroll.content,text=self.languagenames[lang],
-                                                        font='read')
-            title.grid(column=0, row=row, columnspan=ncols)
-            vars[lang]={}
-            for sclass in [sc for sc in self.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
-                                    if ('dg' in sc or 'tg' in sc)]:
-                pclass=sclass.replace('dg','').replace('tg','')
-                if pclass not in self.polygraphs[lang]:
-                    self.polygraphs[lang][pclass]={}
-                if pclass not in vars[lang]:
-                    vars[lang][pclass]={}
-                if len(self.db.s[lang][sclass])>0:
-                    row+=1
-                    header=ui.Label(scroll.content,
-                    text=sclass.replace('dg',' (digraph)').replace('tg',
-                                                            ' (trigraph)')+': ')
-                    header.grid(column=0, row=row)
-                col=1
-                for pg in self.db.s[lang][sclass]:
-                    vars[lang][pclass][pg] = tkinter.BooleanVar()
-                    vars[lang][pclass][pg].set(
-                                    self.polygraphs[lang][pclass].get(pg,False))
-                    cb=ui.CheckButton(scroll.content, text = pg, #.content
-                                        variable = vars[lang][pclass][pg],
-                                        onvalue = True, offvalue = False,
-                                        )
-                    cb.grid(column=col, row=row,sticky='nsew')
-                    if col<= ncols:
-                        col+=1
-                    else:
-                        col=1 #not header
-                        row+=1
-        pgw.wait_window(pgw)
-        if not self.exitFlag.istrue():
-            nochanges() #this is the default exit behavior
     def slists(self):
         """This sets up the lists of segments, by types. For the moment, it
         just pulls from the segment types in the lift database."""
