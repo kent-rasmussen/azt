@@ -547,6 +547,25 @@ class FileChooser(object):
         setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
         self.initdefaults() #provides self.defaults, list to load/save
         self.cleardefaults() #this resets all to none (to be set below)
+    def __init__(self):
+        # self.exitFlag=self.parent.exitFlag
+        super(FileChooser, self).__init__()
+        self.getfilename()
+        self.getdirectories()
+        self.loadsettingsfile()
+        # self.settingsfilecheck()
+        # self.repocheck()
+        self.loaddatabase()
+        self.dailybackup()
+        self.loadsettingsfile(setting='profiledata')
+        """I think I need this before setting up regexs"""
+        self.guessanalang() #needed for regexs
+class TaskChooser(ui.Window):
+    """This class stores the hierarchy of tasks to do in A→Z+T, plus the
+    minimum and optimum prerequisites for each. Based on these, it presents
+    to the user a default (highest in hierarchy without optimum fulfilled)
+    task on opening, and allows users to choose others (any with minimum
+    prequisites satisfied)."""
     def getfile(self):
         self.file=FileChooser()
     def makestatus(self):
@@ -582,12 +601,115 @@ class FileChooser(object):
         self.check=Check(self,self.frame,filename) #nsyls=self.nsyls
         if not self.exitFlag.istrue():
             self.deiconify()
+    def __init__(self,parent):
+        super(TaskChooser, self).__init__(parent)
+        self.exitFlag=self.parent.exitFlag
+        self.getfile()
+        self.makeparameters()
+        self.makeslicedict()
+        self.makestatus()
+        self.makecheck()
+        self.maketoneframes()
+        #If the user exits out before this point, just stop.
+        if self.check is None:
+            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
+            row=0,column=0
+            )
         try:
             self.check.frame.winfo_exists()
         except:
             return
 class Context(object):
     """This class stores the methods for any object which is a context."""
+    def __init__(self, arg):
+        super(Context, self).__init__(**kwargs)
+        for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
+            if not hasattr(self,k):
+                setattr(self,k,False)
+        ui.ContextMenu(self)
+class Menus(ui.Menu):
+    """docstring for Menus."""
+class Check():
+    """the parent is the *functional* head, the MainApplication."""
+    """the frame is the *GUI* head, the frame sitting in the MainApplication."""
+    def __init__(self, parent, frame, filename=None, nsyls=None):
+        self.start_time=time.time() #this enables boot time evaluation
+        self.parent=parent # chooser#should be mainapplication frame
+        for attr in ['exitFlag','file','params','slices','status']:
+            if hasattr(parent,attr):
+                setattr(self,attr,getattr(parent,attr))
+        # self.exitFlag=self.parent.exitFlag
+        # self.file=self.parent.file
+        self.pp=pprint.PrettyPrinter()
+        self.iterations=0
+        # print(time.time()-self.start_time) # with this
+        # self.su=True #show me stuff others don't want/need
+        # self.su=False #not a superuser; make it easy on me!
+        # self.frame=frame
+
+        # self.glosslangs=Glosslangs(None,None) #needed for upgrading
+        self.file.loadsettingsfile(setting='adhocgroups')
+        if nsyls is not None:
+            self.nsyls=nsyls
+        else:
+            self.nsyls=2
+        self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
+        self.invalidregex='( |\.|,|\)|\()+'
+        # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
+        self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
+
+        """Are we OK without these?"""
+        # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
+        # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
+        self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
+        self.db.languagecodes=self.db.analangs+self.db.glosslangs
+        self.db.languagepaths=file.getlangnamepaths(self.filename,
+                                                        self.db.languagecodes)
+        """These two lines can import structured frame dictionaries; do this
+        just to make the import, then comment them out again."""
+        log.info("analang guessed: {} (If you don't like this, change it in "
+                    "the menus)".format(self.analang))
+        self.maxprofiles=5 # how many profiles to check before moving on to another ps
+        self.maxpss=2 #don't automatically give more than two grammatical categories
+        self.file.loadsettingsfile() # overwrites guess above, stored on runcheck
+        if self.analang is None:
+            return
+        self.notifyuserofextrasegments() #self.analang set by now
+        if self.interfacelang not in [None, getinterfacelang()]:
+            #set only when new value is loaded:
+            setinterfacelang(self.interfacelang)
+            self.parent.maketitle()
+        self.langnames()
+        self.polygraphcheck()
+        self.checkinterpretations() #checks/sets values for self.distinguish
+        self.slists() #lift>check segment dicts: s[lang][segmenttype]
+        self.setupCVrxs() #creates self.rx dictionaries
+        """The line above may need to go after this block"""
+        if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
+            t=time.time()-self.start_time
+            log.info("Starting profile analysis at {}".format(t))
+            self.getprofiles() #creates self.profilesbysense nested dicts
+            for var in ['rx','profilesbysense']:
+                log.debug("{}: {}".format(var,getattr(self,var)))
+            self.file.storesettingsfile(setting='profiledata')
+            e=time.time()-self.start_time
+            log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
+        self.setnamesall() #sets self.checknamesall
+        self.file.loadsettingsfile(setting='status')
+        self.makedatadict()
+        self.makeexampledict() #needed for makestatus
+        self.makestatus()
+        #This can wait until runcheck, right?
+        #     self.sortingstatus() #because this won't get set later #>checkdefaults?
+        self.makeglosslangs()
+        self.file.loadsettingsfile() # overwrites guess above, stored on runcheck
+        #     self.guessglosslangs() #needed for the following
+        log.info("Done initializing check; running first check check.")
+        """Testing Zone"""
+        self.mainlabelrelief()
+        self.tableiteration=0
+        self.attrschanged=[]
+        self.checkcheck()
     def checkforlegacyverification(self):
         start_time=time.time()
         n=0
