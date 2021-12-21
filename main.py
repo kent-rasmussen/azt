@@ -1393,7 +1393,9 @@ class TaskChooser(TaskDressing,ui.Window):
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
         self.setinvalidcharacters() #invalidchars, invalidregex, profilelegit
-        super(TaskChooser, self).__init__(parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        self.title("Task Chooser")
         self.withdraw()
         self.getfile()
         self.setupCVrxs() #creates self.rx dictionaries
@@ -1612,7 +1614,8 @@ class Check(TaskDressing,ui.Window):
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
     def __init__(self, parent, frame): #, filename=None
         self.start_time=time.time() #this enables boot time evaluation
-        super(Check, self).__init__(parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
         self.parent=parent # chooser#should be mainapplication frame
         for attr in ['exitFlag','file','params','slices','status','db']:
             if hasattr(parent,attr):
