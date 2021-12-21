@@ -1142,11 +1142,11 @@ class TaskChooser(ui.Window):
                                 self.slices,
                                 self.exs,
                                 self.toneframes,
-                                self.settingsfile('status'),
+                                self.file.settingsfile('status'),
                                 self.status
                                 )
     def makeparameters(self):
-        self.params=CheckParameters(self.file.analang) #remove self.profilesbysense?
+        self.params=CheckParameters(self.analang) #remove self.profilesbysense?
     def makeslicedict(self):
         if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
             self.adhocgroups={}
