@@ -160,25 +160,6 @@ class FileChooser(object):
                 self.mercurialwarning(self.directory)
             else:
                 self.repo=Repository(self.directory)
-    def getdirectories(self):
-        self.directory=file.getfilenamedir(self.name)
-        if not file.exists(self.directory):
-            log.info(_("Looks like there's a problem with your directory... {}"
-                    "\n{}".format(self.name,filemod)))
-            exit()
-        self.repocheck()
-        self.settingsfilecheck()
-        self.imagesdir=file.getimagesdir(self.name)
-        self.audiodir=file.getaudiodir(self.name)
-        log.info('self.audiodir: {}'.format(self.audiodir))
-        self.reportsdir=file.getreportdir(self.name)
-        self.reportbasefilename=file.getdiredurl(self.reportsdir, self.namebase)
-        self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
-        log.log(2,'self.reportsdir: {}'.format(self.reportsdir))
-        log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
-        log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
-        # setdefaults.langs(self.db) #This will be done again, on resets
-        self.loadsettingsfile(setting='toneframes')
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
         self.settings={'defaults':{
@@ -298,6 +279,24 @@ class FileChooser(object):
                 self.repo.add(savefile)
         if self.repo and not me:
             self.repo.commit()
+    def getdirectories(self):
+        self.directory=file.getfilenamedir(self.name)
+        if not file.exists(self.directory):
+            log.info(_("Looks like there's a problem with your directory... {}"
+                    "\n{}".format(self.name,filemod)))
+            exit()
+        self.repocheck()
+        self.settingsfilecheck()
+        self.imagesdir=file.getimagesdir(self.name)
+        self.audiodir=file.getaudiodir(self.name)
+        log.info('self.audiodir: {}'.format(self.audiodir))
+        self.reportsdir=file.getreportdir(self.name)
+        self.reportbasefilename=file.getdiredurl(self.reportsdir, self.namebase)
+        self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
+        log.log(2,'self.reportsdir: {}'.format(self.reportsdir))
+        log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
+        log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
+        # setdefaults.langs(self.db) #This will be done again, on resets
     def loaddatabase(self):
         try:
             self.db=lift.Lift(self.name)
