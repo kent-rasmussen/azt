@@ -151,21 +151,14 @@ class FileChooser(object):
         o.bind("<Button-1>", lambda e: openweburl(hgurl))
         mtt=ui.ToolTip(o,_("Go to {}").format(hgurl))
         window.lift()
+    def repocheck(self):
+        self.repo=None #leave this for test of both repo and exe
+        if file.exists(file.getdiredurl(self.directory,'.hg')):
+            log.info("Found Mercurial Repository!")
+            if not program['hg']:
+                log.info("But found no Mercurial executable!")
+                self.mercurialwarning(self.directory)
             else:
-                self.filename=choice
-            file.writefilename(self.filename)
-            window.destroy()
-        self.filename=None # in case of exit
-        window=ui.Window(self.frame,title="Select LIFT Database")
-        text=_('What LIFT database do you want to work on?')
-        ui.Label(window.frame, text=text).grid(column=0, row=0)
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                optionlist=['New']+filenamelist+['Other'],
-                                command=setfilename,
-                                window=window,
-                                column=0, row=1
-                                )
-        window.wait_window(window)
     def settingsfilecheck(self,basename):
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
         self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
