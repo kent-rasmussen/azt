@@ -1501,6 +1501,8 @@ class Check():
         for attr in ['exitFlag','file','params','slices','status','db']:
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
+        # if me: #not yet
+        #     self._setmenus()
         # self.exitFlag=self.parent.exitFlag
         # self.file=self.parent.file
         self.pp=pprint.PrettyPrinter()
@@ -6900,8 +6902,6 @@ class MainApplication(ui.Window,Context):
         # ui.ContextMenu(self)
         # filechooser=FileChooser()
         tasks=TaskChooser(self)
-        if me:
-            self._setmenus()
         print("Finished loading main window in",time.time() - start_time," "
                                                                     "seconds.")
         """finished loading so destroy splash"""
