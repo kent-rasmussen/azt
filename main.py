@@ -160,6 +160,25 @@ class FileChooser(object):
                 self.mercurialwarning(self.directory)
             else:
     def settingsfilecheck(self,basename):
+    def getdirectories(self):
+        self.directory=file.getfilenamedir(self.name)
+        if not file.exists(self.directory):
+            log.info(_("Looks like there's a problem with your directory... {}"
+                    "\n{}".format(self.name,filemod)))
+            exit()
+        self.repocheck()
+        self.settingsfilecheck()
+        self.imagesdir=file.getimagesdir(self.name)
+        self.audiodir=file.getaudiodir(self.name)
+        log.info('self.audiodir: {}'.format(self.audiodir))
+        self.reportsdir=file.getreportdir(self.name)
+        self.reportbasefilename=file.getdiredurl(self.reportsdir, self.namebase)
+        self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
+        log.log(2,'self.reportsdir: {}'.format(self.reportsdir))
+        log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
+        log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
+        # setdefaults.langs(self.db) #This will be done again, on resets
+        self.loadsettingsfile(setting='toneframes')
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
         self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
         self.statusfile=basename.with_suffix(".VerificationStatus.dat")
