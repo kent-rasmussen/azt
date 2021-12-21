@@ -6883,7 +6883,6 @@ class MainApplication(ui.Window):
                 title=title,
                 exit=False
                 )
-        self.setmasterconfig()
         """Pick one of the following three screensizes (or don't):"""
         # self.fullscreen()
         # self.quarterscreen()
