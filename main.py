@@ -6835,25 +6835,6 @@ class MainApplication(ui.Window):
             log.info("Using theme '{}'.".format(program['theme'].name))
             title+=_(' ('+program['theme'].name+')')
         return title #self.title(title)
-    def setfontsdefault(self):
-        self.theme.setfonts()
-        self.fontthemesmall=False
-        if hasattr(self,'context'): #don't do this before ContextMenu is there
-            self.setcontext()
-            if hasattr(self,'check'):
-                self.check.checkcheck() #redraw the main window (not on boot)
-    def setfontssmaller(self):
-        self.theme.setfonts(fonttheme='smaller')
-        self.fontthemesmall=True
-        self.setcontext()
-        if hasattr(self,'check'):
-            self.check.checkcheck() #redraw the main window
-    def hidegroupnames(self):
-        self.check.set('hidegroupnames', True, refresh=True)
-        self.setcontext()
-    def showgroupnames(self):
-        self.check.set('hidegroupnames', False, refresh=True)
-        self.setcontext()
     def setmasterconfig(self): #,program
         self.parent.debug=False #needed?
         """Configure variables for the root window (master)"""
