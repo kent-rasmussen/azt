@@ -541,6 +541,86 @@ class FileChooser(object):
         setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
         self.initdefaults() #provides self.defaults, list to load/save
         self.cleardefaults() #this resets all to none (to be set below)
+    def guessanalang(self):
+        #have this call set()?
+        """if there's only one analysis language, use it."""
+        nlangs=len(self.db.analangs)
+        log.debug(_("Found {} analangs: {}".format(nlangs,self.db.analangs)))
+        if nlangs == 1:
+            self.analang=self.db.analangs[0]
+            log.debug(_('Only one analang in file; using it: ({})'.format(
+                                                        self.db.analangs[0])))
+            """If there are more than two analangs in the database, check if one
+            of the first two is three letters long, and the other isn't"""
+        elif nlangs == 2:
+            if ((len(self.db.analangs[0]) == 3) and
+                (len(self.db.analangs[1]) != 3)):
+                log.debug(_('Looks like I found an iso code for analang! '
+                                        '({})'.format(self.db.analangs[0])))
+                self.analang=self.db.analangs[0] #assume this is the iso code
+                self.analangdefault=self.db.analangs[0] #In case it gets changed.
+            elif ((len(self.db.analangs[1]) == 3) and
+                    (len(self.db.analangs[0]) != 3)):
+                log.debug(_('Looks like I found an iso code for analang! '
+                                            '({})'.format(self.db.analangs[1])))
+                self.analang=self.db.analangs[1] #assume this is the iso code
+                self.analangdefault=self.db.analangs[1] #In case it gets changed.
+            else:
+                self.analang=self.db.analangs[0]
+                log.debug('Neither analang looks like an iso code, taking the '
+                'first one: {}'.format(self.db.analangs))
+        else: #for three or more analangs, take the first plausible iso code
+            for n in range(nlangs):
+                if len(self.db.analangs[n]) == 3:
+                    self.analang=self.db.analangs[n]
+                    log.debug(_('Looks like I found an iso code for analang! '
+                                            '({})'.format(self.db.analangs[n])))
+                    return
+            log.debug('None of more than three analangs look like an iso code, '
+            'taking the first one: {}'.format(self.db.analangs))
+            self.analang=self.db.analangs[0]
+    def guessaudiolang(self):
+        nlangs=len(self.db.audiolangs)
+        """if there's only one audio language, use it."""
+        if nlangs == 1: # print('Only one analang in database!')
+            self.audiolang=self.db.audiolangs[0]
+            """If there are more than two analangs in the database, check if one
+            of the first two is three letters long, and the other isn't"""
+        elif nlangs == 2:
+            if ((self.analang in self.db.audiolangs[0]) and
+                (self.analang not in self.db.audiolangs[1])):
+                self.audiolang=self.db.audiolangs[0]
+                log.info("Analang in first of two audiolangs only, selecting "
+                                            "{}".format(self.audiolang))
+            elif ((self.analang in self.db.audiolangs[1]) and
+                    (self.analang not in self.db.audiolangs[0])):
+                self.audiolang=self.db.audiolangs[1]
+                log.info("Analang in second of two audiolangs only, selecting "
+                                            "{}".format(self.audiolang))
+            elif ((self.analang in self.db.audiolangs[1]) and
+                    (self.analang in self.db.audiolangs[0])):
+                self.audiolang=sorted(self.db.audiolangs,key = len)[0]
+                log.info("Analang in both of two audiolangs only, selecting "
+                "shorter: {}".format(self.audiolang))  #assume is more basic
+        else: #for three or more analangs, take the first plausible iso code
+            for n in range(nlangs):
+                if self.analang in self.db.analangs[n]:
+                    self.audiolang=self.db.audiolangs[n]
+                    return
+    def guessglosslangs(self):
+        """if there's only one gloss language, use it."""
+        if len(self.db.glosslangs) == 1:
+            log.info('Only one glosslang!')
+            self.glosslangs.lang1(self.db.glosslangs[0])
+            """if there are two or more gloss languages, just pick the first
+            two, and the user can select something else later (the gloss
+            languages are not for CV profile analaysis, but for info after
+            checking, when this can be reset."""
+        elif len(self.db.glosslangs) > 1:
+            self.glosslangs.lang1(self.db.glosslangs[0])
+            self.glosslangs.lang2(self.db.glosslangs[1])
+        else:
+            print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def __init__(self):
         # self.exitFlag=self.parent.exitFlag
         super(FileChooser, self).__init__()
@@ -943,86 +1023,6 @@ class Check():
             l=ui.Label(self.warning, text=t)
             l.grid(row=0, column=0)
     """Guessing functions"""
-    def guessanalang(self):
-        #have this call set()?
-        """if there's only one analysis language, use it."""
-        nlangs=len(self.db.analangs)
-        log.debug(_("Found {} analangs: {}".format(nlangs,self.db.analangs)))
-        if nlangs == 1:
-            self.analang=self.db.analangs[0]
-            log.debug(_('Only one analang in file; using it: ({})'.format(
-                                                        self.db.analangs[0])))
-            """If there are more than two analangs in the database, check if one
-            of the first two is three letters long, and the other isn't"""
-        elif nlangs == 2:
-            if ((len(self.db.analangs[0]) == 3) and
-                (len(self.db.analangs[1]) != 3)):
-                log.debug(_('Looks like I found an iso code for analang! '
-                                        '({})'.format(self.db.analangs[0])))
-                self.analang=self.db.analangs[0] #assume this is the iso code
-                self.analangdefault=self.db.analangs[0] #In case it gets changed.
-            elif ((len(self.db.analangs[1]) == 3) and
-                    (len(self.db.analangs[0]) != 3)):
-                log.debug(_('Looks like I found an iso code for analang! '
-                                            '({})'.format(self.db.analangs[1])))
-                self.analang=self.db.analangs[1] #assume this is the iso code
-                self.analangdefault=self.db.analangs[1] #In case it gets changed.
-            else:
-                self.analang=self.db.analangs[0]
-                log.debug('Neither analang looks like an iso code, taking the '
-                'first one: {}'.format(self.db.analangs))
-        else: #for three or more analangs, take the first plausible iso code
-            for n in range(nlangs):
-                if len(self.db.analangs[n]) == 3:
-                    self.analang=self.db.analangs[n]
-                    log.debug(_('Looks like I found an iso code for analang! '
-                                            '({})'.format(self.db.analangs[n])))
-                    return
-            log.debug('None of more than three analangs look like an iso code, '
-            'taking the first one: {}'.format(self.db.analangs))
-            self.analang=self.db.analangs[0]
-    def guessaudiolang(self):
-        nlangs=len(self.db.audiolangs)
-        """if there's only one audio language, use it."""
-        if nlangs == 1: # print('Only one analang in database!')
-            self.audiolang=self.db.audiolangs[0]
-            """If there are more than two analangs in the database, check if one
-            of the first two is three letters long, and the other isn't"""
-        elif nlangs == 2:
-            if ((self.analang in self.db.audiolangs[0]) and
-                (self.analang not in self.db.audiolangs[1])):
-                self.audiolang=self.db.audiolangs[0]
-                log.info("Analang in first of two audiolangs only, selecting "
-                                            "{}".format(self.audiolang))
-            elif ((self.analang in self.db.audiolangs[1]) and
-                    (self.analang not in self.db.audiolangs[0])):
-                self.audiolang=self.db.audiolangs[1]
-                log.info("Analang in second of two audiolangs only, selecting "
-                                            "{}".format(self.audiolang))
-            elif ((self.analang in self.db.audiolangs[1]) and
-                    (self.analang in self.db.audiolangs[0])):
-                self.audiolang=sorted(self.db.audiolangs,key = len)[0]
-                log.info("Analang in both of two audiolangs only, selecting "
-                "shorter: {}".format(self.audiolang))  #assume is more basic
-        else: #for three or more analangs, take the first plausible iso code
-            for n in range(nlangs):
-                if self.analang in self.db.analangs[n]:
-                    self.audiolang=self.db.audiolangs[n]
-                    return
-    def guessglosslangs(self):
-        """if there's only one gloss language, use it."""
-        if len(self.db.glosslangs) == 1:
-            log.info('Only one glosslang!')
-            self.glosslangs.lang1(self.db.glosslangs[0])
-            """if there are two or more gloss languages, just pick the first
-            two, and the user can select something else later (the gloss
-            languages are not for CV profile analaysis, but for info after
-            checking, when this can be reset."""
-        elif len(self.db.glosslangs) > 1:
-            self.glosslangs.lang1(self.db.glosslangs[0])
-            self.glosslangs.lang2(self.db.glosslangs[1])
-        else:
-            print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def getpss(self):
         pss=self.slices.pss() #make this one line, remove pss
         return pss
