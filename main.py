@@ -1061,6 +1061,7 @@ class FileChooser(object):
     def __init__(self):
         super(FileChooser, self).__init__()
         self.getfilename()
+        self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
         self.getwritingsystemsinfo()
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.loadsettingsfile()
@@ -1203,6 +1204,7 @@ class TaskChooser(ui.Window):
         for attr in ['exitFlag']:
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
+        self.setinvalidcharacters() #invalidchars, invalidregex, profilelegit
         super(TaskChooser, self).__init__(parent)
         self.getfile()
         self.updateinterfacelang()
@@ -1448,7 +1450,6 @@ class Check():
         """Are we OK without these?"""
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
-        self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
         """These two lines can import structured frame dictionaries; do this
         just to make the import, then comment them out again."""
         log.info("analang guessed: {} (If you don't like this, change it in "
