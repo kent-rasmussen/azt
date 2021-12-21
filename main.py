@@ -6919,14 +6919,14 @@ class MainApplication(ui.Window,Context):
         return title #self.title(title)
     def setfontsdefault(self):
         self.theme.setfonts()
-        self.fonttheme='default'
+        self.fontthemesmall=False
         if hasattr(self,'context'): #don't do this before ContextMenu is there
             self.setcontext()
             if hasattr(self,'check'):
                 self.check.checkcheck() #redraw the main window (not on boot)
     def setfontssmaller(self):
         self.theme.setfonts(fonttheme='smaller')
-        self.fonttheme='smaller'
+        self.fontthemesmall=True
         self.setcontext()
         if hasattr(self,'check'):
             self.check.checkcheck() #redraw the main window
@@ -6946,17 +6946,6 @@ class MainApplication(ui.Window,Context):
             # setfonts(self.parent,fonttheme='small')
         #else:
         self.setfontsdefault()
-    def makecheck(self,filename=None):
-        if hasattr(self,'check'): #for restarts
-            self.parent.withdraw()
-            for w in self.frame.winfo_children():
-                w.destroy()
-            for w in self.check.frame.winfo_children():
-                w.destroy()
-            # self.check.frame.destroy()
-        self.check=Check(self,self.frame,filename,nsyls=self.nsyls)
-        if not self.exitFlag.istrue():
-            self.deiconify()
     def __init__(self,parent,exit=0):
         start_time=time.time() #this enables boot time evaluation
         self.interfacelangs=file.getinterfacelangs()
@@ -7003,22 +6992,14 @@ class MainApplication(ui.Window,Context):
         make syllable profile data analysis up to nsyls syllables
         (more is more load time.)
         """
-        self.makecheck()
         """Do any check tests here"""
         """Make the rest of the mainApplication window"""
         e=(_("Exit"))
-        #If the user exits out before this point, just stop.
-        if self.check is None:
-            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
-            row=0,column=0
-            )
-        try:
-            self.check.frame.winfo_exists()
-        except:
-            return
         """Do this after we instantiate the check, so menus can run check
         methods"""
-        ui.ContextMenu(self)
+        # ui.ContextMenu(self)
+        # filechooser=FileChooser()
+        tasks=TaskChooser(self)
         if me:
             self._setmenus()
         print("Finished loading main window in",time.time() - start_time," "
