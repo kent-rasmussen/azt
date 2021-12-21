@@ -1038,6 +1038,8 @@ class FileChooser(object):
         self.file.loadsettingsfile() # overwrites guess above, stored on runcheck
         if self.analang is None:
             return
+        self.guessaudiolang()
+        self.guessglosslangs()
         self.notifyuserofextrasegments() #self.analang set by now
         if self.interfacelang not in [None, getinterfacelang()]:
             #set only when new value is loaded:
@@ -1103,6 +1105,11 @@ class TaskChooser(ui.Window):
     def loadsoundsettings(self):
         self.makesoundsettings()
         self.loadsettingsfile(setting='soundsettings')
+    def updateinterfacelang(self):
+        if self.interfacelang not in [None, getinterfacelang()]:
+            #set only when new value is loaded:
+            setinterfacelang(self.interfacelang)
+            self.parent.maketitle()
     def makecheck(self,filename=None):
         if hasattr(self,'check'): #for restarts
             self.parent.withdraw()
