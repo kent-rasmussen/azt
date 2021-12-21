@@ -354,23 +354,6 @@ class FileChooser(object):
         self.file.storesettingsfile(setting='status')
         log.info("Status settings refreshed from LIFT in {}s".format(
                                                         time.time()-start_time))
-    def checkforlegacyverification(self):
-        start_time=time.time()
-        n=0
-        for ps in self.profilesbysense:
-            for profile in self.profilesbysense[ps]:
-                for senseid in self.profilesbysense[ps][profile]:
-                    if profile is not 'Invalid':
-                        node=self.db.legacyverificationconvert(senseid,vtype=profile,
-                                                            lang=self.analang)
-                        if node is not None:
-                            n+=1
-        self.db.write()
-        log.info("Found {} legacy verification nodes in {} seconds".format(n,
-                                                time.time()-start_time))
-    """This should each be done only once, to make the objects from settings"""
-    """self.profilesbysense and self.profilecounts are loaded from file, or
-    created by analysis in init()"""
     def makeglosslangs(self):
         self.glosslangs=Glosslangs(self.glosslangs)
     def maketoneframes(self):
@@ -418,6 +401,23 @@ class FileChooser(object):
             return
 class Context(object):
     """This class stores the methods for any object which is a context."""
+    def checkforlegacyverification(self):
+        start_time=time.time()
+        n=0
+        for ps in self.profilesbysense:
+            for profile in self.profilesbysense[ps]:
+                for senseid in self.profilesbysense[ps][profile]:
+                    if profile is not 'Invalid':
+                        node=self.db.legacyverificationconvert(senseid,vtype=profile,
+                                                            lang=self.analang)
+                        if node is not None:
+                            n+=1
+        self.db.write()
+        log.info("Found {} legacy verification nodes in {} seconds".format(n,
+                                                time.time()-start_time))
+    """This should each be done only once, to make the objects from settings"""
+    """self.profilesbysense and self.profilecounts are loaded from file, or
+    created by analysis in init()"""
         else:
             self.analysis.setslice(**kwargs)
     def notifyuserofextrasegments(self):
