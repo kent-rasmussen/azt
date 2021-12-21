@@ -688,6 +688,10 @@ class TaskChooser(ui.Window):
         self.slices=SliceDict(self.params,self.adhocgroups,self.profilesbysense) #self.profilecounts
         if hasattr(self,'sextracted'):
             self.getscounts()
+    def makedatadict(self):
+        self.datadict=FramedDataDict(self)
+    def makeexampledict(self):
+        self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
     def maketoneframes(self):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
@@ -998,10 +1002,6 @@ class Check():
     created by analysis in init()"""
     def makeglosslangs(self):
         self.glosslangs=Glosslangs(self.glosslangs)
-    def makedatadict(self):
-        self.datadict=FramedDataDict(self)
-    def makeexampledict(self):
-        self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
     def makeanalysis(self,**kwargs):
         if not hasattr(self,'analysis'):
             self.analysis=Analysis(self.params,
