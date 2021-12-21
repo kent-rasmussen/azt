@@ -670,6 +670,9 @@ class TaskChooser(ui.Window):
     prequisites satisfied)."""
     def getfile(self):
         self.file=FileChooser()
+        for attr in ['profilesbysense','analang']:
+            if hasattr(self.file,attr):
+                setattr(self,attr,getattr(self.file,attr))
     def makestatus(self):
         if not hasattr(self,'status'):
             self.status={}
