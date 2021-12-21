@@ -1041,10 +1041,6 @@ class FileChooser(object):
         self.guessaudiolang()
         self.guessglosslangs()
         self.notifyuserofextrasegments() #self.analang set by now
-        if self.interfacelang not in [None, getinterfacelang()]:
-            #set only when new value is loaded:
-            setinterfacelang(self.interfacelang)
-            self.parent.maketitle()
         self.langnames()
         self.polygraphcheck()
         self.checkinterpretations() #checks/sets values for self.distinguish
