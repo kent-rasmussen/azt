@@ -688,6 +688,11 @@ class TaskChooser(ui.Window):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
         self.toneframes=ToneFrames(self.toneframes)
+    def pyaudiocheck(self):
+        try:
+            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
+        except:
+            self.pyaudio=sound.AudioInterface()
     def makesoundsettings(self):
         if not hasattr(self,'soundsettings'):
             self.pyaudiocheck() #in case self.pyaudio isn't there yet
@@ -2948,11 +2953,6 @@ class Check():
         bd=ui.Button(self.soundsettingswindow.frame,text=_("Done"),anchor='c',
                                             cmd=self.soundcheckrefreshdone)
         bd.grid(row=row,column=0)
-    def pyaudiocheck(self):
-        try:
-            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
-        except:
-            self.pyaudio=sound.AudioInterface()
     def soundsettingscheck(self):
         if not hasattr(self,'soundsettings'):
             self.loadsoundsettings()
