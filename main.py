@@ -715,7 +715,6 @@ class TaskChooser(ui.Window):
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
         super(TaskChooser, self).__init__(parent)
-        self.exitFlag=self.parent.exitFlag
         self.getfile()
         self.makeparameters()
         self.makeslicedict()
