@@ -1144,6 +1144,47 @@ class TaskChooser(ui.Window):
         self.check=Check(self,self.frame,filename)
         if not self.exitFlag.istrue():
             self.deiconify()
+    def langnames(self):
+        """This is for getting the prose name for a language from a code."""
+        """It uses a xyz.ldml file, produced (at least) by WeSay."""
+        #ET.register_namespace("", 'palaso')
+        ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
+        node=None
+        self.languagenames={}
+        for xyz in self.db.analangs+self.db.glosslangs: #self.languagepaths.keys():
+            # log.info(' '.join('Looking for language name for',xyz))
+            """This provides an ldml node"""
+            #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
+            #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
+            """This doesn't seem to be working; I should fix it, but there
+            doesn't seem to be reason to generalize it for now."""
+            # tree=ET.parse(self.languagepaths[xyz])
+            # tree.nodes=tree.getroot()
+            # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
+            if node is not None:
+                self.languagenames[xyz]=node.get('value')
+                log.info(' '.join('found',self.languagenames[xyz]))
+            elif xyz == 'fr':
+                self.languagenames[xyz]="Français"
+            elif xyz == 'en':
+                self.languagenames[xyz]="English"
+            elif xyz == 'swc':
+                self.languagenames[xyz]="Congo Swahili"
+            elif xyz == 'swh':
+                self.languagenames[xyz]="Swahili"
+            elif xyz == 'gnd':
+                self.languagenames[xyz]="Zulgo"
+            elif xyz == 'fub':
+                self.languagenames[xyz]="Fulfulde"
+            elif xyz == 'bfj':
+                self.languagenames[xyz]="Chufie’"
+            else:
+                self.languagenames[xyz]=_("Language with code "
+                                                        "[{}]").format(xyz)
+            if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
+                self.adnlangnames={}
+            if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
+                self.languagenames[xyz]=self.adnlangnames[xyz]
     def __init__(self,parent):
         for attr in ['exitFlag']:
             if hasattr(parent,attr):
@@ -1500,47 +1541,6 @@ class Check():
     def guesscvt(self):
         """For now, if cvt isn't set, start with Vowels."""
         self.set('cvt','V')
-    def langnames(self):
-        """This is for getting the prose name for a language from a code."""
-        """It uses a xyz.ldml file, produced (at least) by WeSay."""
-        #ET.register_namespace("", 'palaso')
-        ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
-        node=None
-        self.languagenames={}
-        for xyz in self.db.analangs+self.db.glosslangs: #self.languagepaths.keys():
-            # log.info(' '.join('Looking for language name for',xyz))
-            """This provides an ldml node"""
-            #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
-            #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
-            """This doesn't seem to be working; I should fix it, but there
-            doesn't seem to be reason to generalize it for now."""
-            # tree=ET.parse(self.languagepaths[xyz])
-            # tree.nodes=tree.getroot()
-            # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
-            if node is not None:
-                self.languagenames[xyz]=node.get('value')
-                log.info(' '.join('found',self.languagenames[xyz]))
-            elif xyz == 'fr':
-                self.languagenames[xyz]="Français"
-            elif xyz == 'en':
-                self.languagenames[xyz]="English"
-            elif xyz == 'swc':
-                self.languagenames[xyz]="Congo Swahili"
-            elif xyz == 'swh':
-                self.languagenames[xyz]="Swahili"
-            elif xyz == 'gnd':
-                self.languagenames[xyz]="Zulgo"
-            elif xyz == 'fub':
-                self.languagenames[xyz]="Fulfulde"
-            elif xyz == 'bfj':
-                self.languagenames[xyz]="Chufie’"
-            else:
-                self.languagenames[xyz]=_("Language with code "
-                                                        "[{}]").format(xyz)
-            if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
-                self.adnlangnames={}
-            if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
-                self.languagenames[xyz]=self.adnlangnames[xyz]
     """User Input functions"""
     def getinterfacelang(self,event=None):
         log.info("Asking for interface language...")
