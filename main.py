@@ -1120,7 +1120,103 @@ class FileChooser(object):
         self.loadsettingsfile(setting='status')
         self.loadsettingsfile(setting='adhocgroups')
         self.loadsettingsfile(setting='toneframes')
-class TaskChooser(ui.Window):
+class TaskDressing(object):
+    """This Class covers elements that belong to (or should be available to)
+    all tasks, e.g., menus and button appearance."""
+    def _taskchooserbutton(self):
+        if hasattr(self,'parent') and isinstance(self.parent,TaskChooser):
+            ui.Button(self.outsideframe,text=_("Tasks"), #.outsideframe
+                        font='small',
+                        cmd=self.parent.gettask,
+                        row=0,column=2,
+                        sticky='ne')
+        else:
+            log.info("Parent: {} ({})".format(self.parent,type(self.parent)))
+    def mainlabelrelief(self,relief=None,refresh=False,event=None):
+        #set None to make this a label instead of button:
+        log.log(3,"setting button relief to {}, with refresh={}".format(relief,
+                                                                    refresh))
+        self.mainrelief=relief # None "raised" "groove" "sunken" "ridge" "flat"
+    def _showbuttons(self,event=None):
+        self.check.mainlabelrelief(relief='flat',refresh=True)
+        self.setcontext()
+    def _hidebuttons(self,event=None):
+        self.check.mainlabelrelief(relief=None,refresh=True)
+        self.setcontext()
+    def _removemenus(self,event=None):
+        if hasattr(self,'menubar'):
+            self.menubar.destroy()
+            self.menu=False
+            self.setcontext()
+    def _setmenus(self,event=None):
+        # check=self.check
+        self.menubar=Menus(self)
+        self.config(menu=self.menubar)
+        self.menu=True
+        self.setcontext()
+        self.unbind_all('<Enter>')
+    def setfontsdefault(self):
+        self.theme.setfonts()
+        self.fontthemesmall=False
+        if hasattr(self,'context'): #don't do this before ContextMenu is there
+            self.setcontext()
+            if hasattr(self,'check'):
+                self.check.checkcheck() #redraw the main window (not on boot)
+    def setfontssmaller(self):
+        self.theme.setfonts(fonttheme='smaller')
+        self.fontthemesmall=True
+        self.setcontext()
+        if hasattr(self,'check'):
+            self.check.checkcheck() #redraw the main window
+    def hidegroupnames(self):
+        self.check.set('hidegroupnames', True, refresh=True)
+        self.setcontext()
+    def showgroupnames(self):
+        self.check.set('hidegroupnames', False, refresh=True)
+        self.setcontext()
+    def getinterfacelang(self,event=None):
+        log.info("Asking for interface language...")
+        window=ui.Window(self.frame, title=_('Select Interface Language'))
+        ui.Label(window.frame, text=_('What language do you want this program '
+                                'to address you in?')
+                ).grid(column=0, row=0)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                optionlist=self.parent.interfacelangs,
+                                command=self.setinterfacelangwrapper,
+                                window=window,
+                                column=0, row=1
+                                )
+    def setcontext(self,context=None):
+        self.context.menuinit() #This is a ContextMenu() method
+        if not hasattr(self,'menu') or not self.menu:
+            self.context.menuitem(_("Show Menus"),self._setmenus)
+        else:
+            self.context.menuitem(_("Hide Menus"),self._removemenus)
+        if hasattr(self,'mainrelief') and not self.mainrelief:
+            self.context.menuitem(_("Show Buttons"),self._showbuttons)
+        else:
+            self.context.menuitem(_("Hide Buttons"),self._hidebuttons)
+        if hasattr(self,'fontthemesmall') and not self.fontthemesmall:
+            self.context.menuitem(_("Smaller Fonts"),self.setfontssmaller)
+        else:
+            self.context.menuitem(_("Larger Fonts"),self.setfontsdefault)
+        if hasattr(self,'hidegroupnames') and self.hidegroupnames:
+            self.context.menuitem(_("Show group names"),self.showgroupnames)
+        else:
+            self.context.menuitem(_("Hide group names"),self.hidegroupnames)
+    def __init__(self,parent):
+        log.info("Initializing TaskDressing")
+        self.parent=parent
+        self.withdraw() #made visible by chooser when complete
+        # super(TaskDressing, self).__init__(parent)
+        for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
+            if not hasattr(self,k):
+                setattr(self,k,False)
+        ui.ContextMenu(self)
+        self._taskchooserbutton()
+        # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=self.taskchooser)
+        # self.setfontsdefault()
+class TaskChooser(TaskDressing,ui.Window):
     """This class stores the hierarchy of tasks to do in A→Z+T, plus the
     minimum and optimum prerequisites for each. Based on these, it presents
     to the user a default (highest in hierarchy without optimum fulfilled)
