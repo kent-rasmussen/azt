@@ -1091,37 +1091,6 @@ class Check():
                 self.languagenames[xyz]="Chufie’"
         for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
             if not hasattr(self,k):
-    def __init__(self):
-        # self.exitFlag=self.parent.exitFlag
-        super(FileChooser, self).__init__()
-        self.getfilename()
-        self.getdirectories()
-        self.loadsettingsfile()
-        # self.settingsfilecheck()
-        # self.repocheck()
-        self.loaddatabase()
-        self.dailybackup()
-        self.loadsettingsfile(setting='profiledata')
-        """I think I need this before setting up regexs"""
-        self.guessanalang() #needed for regexs
-    def __init__(self,parent):
-        super(TaskChooser, self).__init__(parent)
-        self.exitFlag=self.parent.exitFlag
-        self.getfile()
-        self.makeparameters()
-        self.makeslicedict()
-        self.makestatus()
-        self.makecheck()
-        self.maketoneframes()
-        #If the user exits out before this point, just stop.
-        if self.check is None:
-            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
-            row=0,column=0
-            )
-        try:
-            self.check.frame.winfo_exists()
-        except:
-            return
 class Context(object):
     """This class stores the methods for any object which is a context."""
     def __init__(self, arg):
