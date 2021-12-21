@@ -159,7 +159,7 @@ class FileChooser(object):
                 log.info("But found no Mercurial executable!")
                 self.mercurialwarning(self.directory)
             else:
-    def settingsfilecheck(self,basename):
+                self.repo=Repository(self.directory)
     def getdirectories(self):
         self.directory=file.getfilenamedir(self.name)
         if not file.exists(self.directory):
@@ -274,6 +274,8 @@ class FileChooser(object):
                 exit()
         log.info("Settings file {} converted to {}, with each value verified."
                 "".format(legacy,savefile))
+    def settingsfilecheck(self):
+        basename=file.getdiredurl(self.directory,self.namebase)
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
         self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
         self.statusfile=basename.with_suffix(".VerificationStatus.dat")
@@ -360,6 +362,137 @@ class FileChooser(object):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
         self.toneframes=ToneFrames(self.toneframes)
+    def settingsfile(self,setting):
+        fileattr=self.settings[setting]['file']
+        if hasattr(self,fileattr):
+            return getattr(self,fileattr)
+        else:
+            log.error("No file name for setting {}!".format(setting))
+    def settingsobjects(self):
+        """These should each push and pull values to/from objects"""
+        fns={}
+        try: #these objects may not exist yet
+            fns['cvt']=self.params.cvt
+            fns['check']=self.params.check
+            fns['glosslang']=self.glosslangs.lang1
+            fns['glosslang2']=self.glosslangs.lang2
+            fns['glosslangs']=self.glosslangs.langs
+            fns['check']=self.params.check
+            fns['ps']=self.slices.ps
+            fns['profile']=self.slices.profile
+            # except this one, which pretends to set but doesn't (throws arg away)
+            fns['profilecounts']=self.slices.slicepriority
+            return fns
+        except:
+            log.error("Only finished settingsobjects up to {}".format(fns))
+            return []
+    def makesettingsdict(self,setting='defaults'):
+        """This returns a dictionary of values, keyed by a set of settings"""
+        """It pulls from objects if it can, otherwise from self attributes
+        (if there), for backwards compatibility"""
+        d={}
+        objectfns=self.settingsobjects()
+        if setting == 'soundsettings':
+            o=self.soundsettings
+        else:
+            o=self
+        for s in self.settings[setting]['attributes']:
+            if s in objectfns:
+                log.log(4,"Trying to dict {} attr".format(s))
+                try:
+                    d[s]=objectfns[s]()
+                    log.log(4,"Value {}={} found in object".format(s,d[s]))
+                except:
+                    log.log(4,"Value of {} not found in object".format(s))
+            elif hasattr(o,s):# and getattr(o,s) is not None:
+                d[s]=getattr(o,s)
+                log.log(4,"Trying to dict self.{} with value {}, type {}"
+                        "".format(s,d[s],type(d[s])))
+            else:
+                log.error("Couldn't find {} in {}".format(s,setting))
+        """This is the only glosslang > glosslangs conversion"""
+        if 'glosslangs' in d and d['glosslangs'] in [None,[]]:
+            if 'glosslang' in d and d['glosslang'] is not None:
+                d['glosslangs']=[d['glosslang']]
+                del d['glosslang']
+                if 'glosslang2' in d and d['glosslang2'] is not None:
+                    d['glosslangs'].append(d['glosslang2'])
+                    del d['glosslang2']
+        return d
+    def readsettingsdict(self,dict):
+        """This takes a dictionary keyed by attribute names"""
+        d=dict
+        objectfns=self.settingsobjects()
+        if 'fs' in dict:
+            o=self.soundsettings
+        else:
+            o=self
+        for s in dict:
+            v=d[s]
+            if s in objectfns:
+                log.debug("Trying to read {} to object with value {} and fn "
+                            "{}".format(s,v,objectfns[s]))
+                objectfns[s](v)
+            else:
+                log.debug("Trying to read {} to self with value {}, type {}"
+                            "".format(s,v,type(v)))
+                setattr(o,s,v)
+        return d
+    def storesettingsfile(self,setting='defaults',noobjects=False):
+        filename=self.settingsfile(setting)
+        config=ConfigParser()
+        config['default']={}
+        d=self.makesettingsdict(setting=setting)
+        for s in [i for i in d if i not in [None,'None']]:
+            v=d[s]
+            if isinstance(v, dict):
+                config[s]=v
+            else:
+                config['default'][s]=str(v)
+        if config['default'] == {}:
+            del config['default']
+        header=("# This settings file was made on {} on {}".format(
+                                                    now(),platform.uname().node)
+                )
+        with open(filename, "w", encoding='utf-8') as file:
+            file.write(header+'\n\n')
+            config.write(file)
+    def makesoundsettings(self):
+        if not hasattr(self,'soundsettings'):
+            self.pyaudiocheck() #in case self.pyaudio isn't there yet
+            self.soundsettings=sound.SoundSettings(self.pyaudio)
+    def loadsoundsettings(self):
+        self.makesoundsettings()
+        self.loadsettingsfile(setting='soundsettings')
+    def loadsettingsfile(self,setting='defaults'):
+        filename=self.settingsfile(setting)
+        config=ConfigParser()
+        config.read(filename,encoding='utf-8')
+        if len(config.sections()) == 0:
+            return
+        log.debug("Trying for {} settings in {}".format(setting, filename))
+        d={}
+        for section in self.settings[setting]['attributes']:
+            if section in config:
+                log.debug("Trying for {} settings in {}".format(section, setting))
+                if len(config[section].values())>0:
+                    log.debug("Found Dictionary value for {}".format(section))
+                    d[section]={}
+                    for s in config[section]:
+                        d[section][s]={}
+                        """Make sure strings become python data"""
+                        d[section][ofromstr(s)]=ofromstr(config[section][s])
+                else:
+                    log.debug("Found String/list/other value for {}: {}".format(
+                                                    section,config[section]))
+                    d[section]=ofromstr(config[section])
+            elif 'default' in config and section in config['default']:
+                d[section]=ofromstr(config['default'][section])
+        self.readsettingsdict(d)
+    def settings(self):
+        setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
+        self.initdefaults() #provides self.defaults, list to load/save
+        self.cleardefaults() #this resets all to none (to be set below)
     def getfile(self):
         self.file=FileChooser()
     def makestatus(self):
@@ -1705,26 +1838,6 @@ class Check():
                         'cvt':[
                             'check',
                             # 'subcheck'
-                            ],
-                        'fs':[],
-                        'sample_format':[],
-                        'audio_card_index':[],
-                        'audioout_card_index':[],
-                        'examplespergrouptorecord':[],
-                        'distinguish':[],
-                        'interpret':[],
-                        'adnlangnames':[],
-                        'hidegroupnames':[],
-                        'maxprofiles':[]
-                        }
-    def cleardefaults(self,field=None):
-        if field==None:
-            fields=self.settings['defaults']['attributes']
-        else:
-            fields=self.defaultstoclear[field]
-        for default in fields: #self.defaultstoclear[field]:
-            setattr(self, default, None)
-            """These can be done in checkcheck..."""
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
