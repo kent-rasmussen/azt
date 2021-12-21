@@ -514,13 +514,16 @@ class UI(ObectwArgs):
             #     log.info("TclError {}".format(e))
         # super(UI, self).__init__(*args, **kwargs)
 """below here has UI"""
-class Root(tkinter.Tk):
+class Root(Exitable,tkinter.Tk):
     """docstring for Root."""
     # def settheme(self,theme):
     #     self.theme=theme
     #     self['background']=self.theme.background
     #     self['bg']=self.theme.background
     def __init__(self, theme=None, program=None, *args, **kwargs):
+        """Some roots aren't THE root, e.g., contextmenu. Furthermore, I'm
+        currently not showing the root, so the user will never exit it."""
+        self.mainwindow=False
         self.exitFlag = ExitFlag()
         tkinter.Tk.__init__(self)
         if theme and not isinstance(theme,Theme) and type(theme) is str:
@@ -529,13 +532,15 @@ class Root(tkinter.Tk):
             self.theme=theme
         else:
             self.theme=Theme(program) #OK if program==None
+        Exitable.__init__(self)
         UI.__init__(self)
-        self.protocol("WM_DELETE_WINDOW", lambda s=self: Window.on_quit(s))
 """These have parent (Childof), but no grid"""
-class Toplevel(Childof,tkinter.Toplevel,UI): #NoParent
+class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
     def __init__(self, parent, *args, **kwargs):
+        self.mainwindow=False
         Childof.__init__(self,parent)
         tkinter.Toplevel.__init__(self)
+        Exitable.__init__(self)
         UI.__init__(self)
 class Menu(Childof,tkinter.Menu): #not Text
     def pad(self,label):
@@ -828,21 +833,6 @@ class Window(Toplevel):
             self.parent.verifymenu=False
             self.setcontext(context='verifyT')
             return True #i.e., removed, to maybe replace later
-    def on_quit(self):
-        # Do this when a window closes, so any window functions can know
-        # to just stop, rather than trying and throwing an error. This doesn't
-        # do anything but set the flag value on exit, the logic to stop needs
-        # to be elsewhere, e.g., if `self.exitFlag.istrue(): return`
-        def killall():
-            self.destroy()
-            sys.exit()
-        if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
-            print("Setting window exit flag True!")
-            self.exitFlag.true()
-        if type(self) is tkinter.Tk: #exit afterwards if main window
-            killall()
-        else:
-            self.destroy() #do this for everything
     def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
                 choice=None, *args, **kwargs):
         Childof.__init__(self,parent)
