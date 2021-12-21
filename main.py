@@ -1127,6 +1127,7 @@ class TaskChooser(ui.Window):
                 setattr(self,attr,getattr(parent,attr))
         super(TaskChooser, self).__init__(parent)
         self.getfile()
+        self.updateinterfacelang()
         self.makeparameters()
         self.makeslicedict()
         self.makestatus()
