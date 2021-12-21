@@ -614,13 +614,10 @@ class FileChooser(object):
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
     def __init__(self):
-        # self.exitFlag=self.parent.exitFlag
         super(FileChooser, self).__init__()
         self.getfilename()
-        self.getdirectories()
+        self.getdirectories() #incl settingsfilecheck and repocheck
         self.loadsettingsfile()
-        # self.settingsfilecheck()
-        # self.repocheck()
         self.loaddatabase()
         self.dailybackup()
         self.loadsettingsfile(setting='profiledata')
