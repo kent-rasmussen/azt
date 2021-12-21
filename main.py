@@ -1646,7 +1646,6 @@ class Check(TaskDressing,ui.Window):
         #     self.guessglosslangs() #needed for the following
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
-        self.mainlabelrelief()
         self.tableiteration=0
         self.attrschanged=[]
         self.checkcheck()
@@ -2769,11 +2768,6 @@ class Check(TaskDressing,ui.Window):
         for ps in self.db.pss:
             self.guidsvalidbyps[ps]=self.db.get('guidbyps',ps=ps)
     """Making the main window"""
-    def mainlabelrelief(self,relief=None,refresh=False,event=None):
-        #set None to make this a label instead of button:
-        log.log(3,"setting button relief to {}, with refresh={}".format(relief,
-                                                                    refresh))
-        self.mainrelief=relief # None "raised" "groove" "sunken" "ridge" "flat"
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
