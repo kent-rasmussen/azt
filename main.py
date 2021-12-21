@@ -84,11 +84,6 @@ import pkg_resources
 class FileChooser(object):
     """This class selects the LIFT database we'll be working with, and does
     some basic processing on it."""
-
-    def __init__(self, arg):
-        super(FileChooser, self).__init__()
-        self.arg = arg
-
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
         filedir=file.getfilenamedir(self.filename)
@@ -315,6 +310,19 @@ class FileChooser(object):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
         self.toneframes=ToneFrames(self.toneframes)
+    def __init__(self):
+        # self.exitFlag=self.parent.exitFlag
+        super(FileChooser, self).__init__()
+        self.getfilename()
+        self.getdirectories()
+        self.loadsettingsfile()
+        # self.settingsfilecheck()
+        # self.repocheck()
+        self.loaddatabase()
+        self.dailybackup()
+        self.loadsettingsfile(setting='profiledata')
+        """I think I need this before setting up regexs"""
+        self.guessanalang() #needed for regexs
 class TaskChooser(ui.Window):
     """This class stores the hierarchy of tasks to do in A→Z+T, plus the
     minimum and optimum prerequisites for each. Based on these, it presents
@@ -356,6 +364,26 @@ class TaskChooser(ui.Window):
         self.check=Check(self,self.frame,filename) #nsyls=self.nsyls
         if not self.exitFlag.istrue():
             self.deiconify()
+    def __init__(self,parent):
+        super(TaskChooser, self).__init__(parent)
+        self.exitFlag=self.parent.exitFlag
+        self.getfile()
+        self.makeparameters()
+        self.makeslicedict()
+        self.makestatus()
+        self.makecheck()
+        self.maketoneframes()
+        #If the user exits out before this point, just stop.
+        if self.check is None:
+            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
+            row=0,column=0
+            )
+        try:
+            self.check.frame.winfo_exists()
+        except:
+            return
+class Context(object):
+    """This class stores the methods for any object which is a context."""
         else:
             self.analysis.setslice(**kwargs)
     def notifyuserofextrasegments(self):
@@ -524,6 +552,14 @@ class TaskChooser(ui.Window):
                 self.languagenames[xyz]="Fulfulde"
             elif xyz == 'bfj':
                 self.languagenames[xyz]="Chufie’"
+    def __init__(self, arg):
+        super(Context, self).__init__(**kwargs)
+        for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
+            if not hasattr(self,k):
+                setattr(self,k,False)
+        ui.ContextMenu(self)
+class Menus(ui.Menu):
+    """docstring for Menus."""
             else:
                 self.languagenames[xyz]=_("Language with code "
                                                         "[{}]").format(xyz)
@@ -1359,6 +1395,8 @@ class TaskChooser(ui.Window):
                 self.reloadprofiledata()
             elif refresh == True:
                 self.refreshattributechanges()
+    def __init__(self, parent):
+        super(Menus, self).__init__(parent)
 class Check():
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
@@ -6492,7 +6530,7 @@ class FramedDataElement(FramedData):
         """
         log.info("FramedDataElement initalization done, with forms: {}"
                     "".format(self.forms))
-class MainApplication(ui.Window):
+class MainApplication(ui.Window,Context):
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
