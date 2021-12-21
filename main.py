@@ -1497,11 +1497,12 @@ class Menus(ui.Menu):
         self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
     def __init__(self, parent):
         super(Menus, self).__init__(parent)
-class Check():
+class Check(ui.Window):
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
     def __init__(self, parent, frame): #, filename=None
         self.start_time=time.time() #this enables boot time evaluation
+        super(Check, self).__init__(parent)
         self.parent=parent # chooser#should be mainapplication frame
         for attr in ['exitFlag','file','params','slices','status','db']:
             if hasattr(parent,attr):
@@ -2744,10 +2745,7 @@ class Check():
                             ).grid(column=column, row=opts['row'],
                                     columnspan=opts['columnspan'])
         #If the user exits out before this point, just stop.
-        try:
-            self.frame.winfo_exists()
-        except:
-            self.frame.parent.waitdone()
+        if not self.exitFlag.istrue():
             return
         self.makestatusframe() # wait is here, after the first time.
         #Don't guess this; default or user set only
