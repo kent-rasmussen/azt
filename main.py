@@ -2135,6 +2135,26 @@ class Check():
                         'cvt':[
                             'check',
                             # 'subcheck'
+                            ],
+                        'fs':[],
+                        'sample_format':[],
+                        'audio_card_index':[],
+                        'audioout_card_index':[],
+                        'examplespergrouptorecord':[],
+                        'distinguish':[],
+                        'interpret':[],
+                        'adnlangnames':[],
+                        'hidegroupnames':[],
+                        'maxprofiles':[]
+                        }
+    def cleardefaults(self,field=None):
+        if field==None:
+            fields=self.settings['defaults']['attributes']
+        else:
+            fields=self.defaultstoclear[field]
+        for default in fields: #self.defaultstoclear[field]:
+            setattr(self, default, None)
+            """These can be done in checkcheck..."""
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
@@ -2148,96 +2168,6 @@ class Check():
         # main()
         sys.exit()
         # self.restart(self.filename)
-    def settingsfile(self,setting):
-        fileattr=self.settings[setting]['file']
-        if hasattr(self,fileattr):
-            return getattr(self,fileattr)
-        else:
-            log.error("No file name for setting {}!".format(setting))
-    def settingsobjects(self):
-        """These should each push and pull values to/from objects"""
-        fns={}
-        try: #these objects may not exist yet
-            fns['cvt']=self.params.cvt
-            fns['check']=self.params.check
-            fns['glosslang']=self.glosslangs.lang1
-            fns['glosslang2']=self.glosslangs.lang2
-            fns['glosslangs']=self.glosslangs.langs
-            fns['check']=self.params.check
-            fns['ps']=self.slices.ps
-            fns['profile']=self.slices.profile
-            # except this one, which pretends to set but doesn't (throws arg away)
-            fns['profilecounts']=self.slices.slicepriority
-            return fns
-        except:
-            log.error("Only finished settingsobjects up to {}".format(fns))
-            return []
-    def readsettingsdict(self,dict):
-        """This takes a dictionary keyed by attribute names"""
-        d=dict
-        objectfns=self.settingsobjects()
-        if 'fs' in dict:
-            o=self.soundsettings
-        else:
-            o=self
-        for s in dict:
-            v=d[s]
-            if s in objectfns:
-                log.debug("Trying to read {} to object with value {} and fn "
-                            "{}".format(s,v,objectfns[s]))
-                objectfns[s](v)
-            else:
-                log.debug("Trying to read {} to self with value {}, type {}"
-                            "".format(s,v,type(v)))
-                setattr(o,s,v)
-        return d
-    def storesettingsfile(self,setting='defaults',noobjects=False):
-        filename=self.settingsfile(setting)
-        config=ConfigParser()
-        config['default']={}
-        d=self.makesettingsdict(setting=setting)
-        for s in [i for i in d if i not in [None,'None']]:
-            v=d[s]
-            if isinstance(v, dict):
-                config[s]=v
-            else:
-                config['default'][s]=str(v)
-        if config['default'] == {}:
-            del config['default']
-        header=("# This settings file was made on {} on {}".format(
-                                                    now(),platform.uname().node)
-                )
-        with open(filename, "w", encoding='utf-8') as file:
-            file.write(header+'\n\n')
-            config.write(file)
-    def loadsoundsettings(self):
-        self.makesoundsettings()
-        self.loadsettingsfile(setting='soundsettings')
-    def loadsettingsfile(self,setting='defaults'):
-        filename=self.settingsfile(setting)
-        config=ConfigParser()
-        config.read(filename,encoding='utf-8')
-        if len(config.sections()) == 0:
-            return
-        log.debug("Trying for {} settings in {}".format(setting, filename))
-        d={}
-        for section in self.settings[setting]['attributes']:
-            if section in config:
-                log.debug("Trying for {} settings in {}".format(section, setting))
-                if len(config[section].values())>0:
-                    log.debug("Found Dictionary value for {}".format(section))
-                    d[section]={}
-                    for s in config[section]:
-                        d[section][s]={}
-                        """Make sure strings become python data"""
-                        d[section][ofromstr(s)]=ofromstr(config[section][s])
-                else:
-                    log.debug("Found String/list/other value for {}: {}".format(
-                                                    section,config[section]))
-                    d[section]=ofromstr(config[section])
-            elif 'default' in config and section in config['default']:
-                d[section]=ofromstr(config['default'][section])
-        self.readsettingsdict(d)
     def verifictioncode(self,check=None,subcheck=None):
         if subcheck is None: #do I ever want this to really be None?
             subcheck=self.params.subcheck()
