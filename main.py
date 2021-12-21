@@ -1079,6 +1079,7 @@ class FileChooser(object):
         self.notifyuserofextrasegments() #self.analang set by now
         self.langnames()
         self.polygraphcheck()
+        self.checkforprofileanalysis()
         self.checkinterpretations() #checks/sets values for self.distinguish
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
         self.setupCVrxs() #creates self.rx dictionaries
