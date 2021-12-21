@@ -98,7 +98,7 @@ class FileChooser(object):
             file.writefilename(self.name)
             window.destroy()
         self.name=None # in case of exit
-        window=ui.Window(self.frame,title="Select LIFT Database")
+        window=ui.Window(program['root'],title="Select LIFT Database")
         text=_('What LIFT database do you want to work on?')
         ui.Label(window.frame, text=text).grid(column=0, row=0)
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
