@@ -6860,10 +6860,6 @@ class MainApplication(ui.Window):
         for rc in [0,2]:
             self.parent.grid_rowconfigure(rc, weight=3)
             self.parent.grid_columnconfigure(rc, weight=3)
-        #if resolutionsucks==True or windows==True:
-            # setfonts(self.parent,fonttheme='small')
-        #else:
-        self.setfontsdefault()
     def __init__(self,parent,exit=0):
         start_time=time.time() #this enables boot time evaluation
         self.interfacelangs=file.getinterfacelangs()
