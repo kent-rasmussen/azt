@@ -1418,32 +1418,6 @@ class TaskChooser(TaskDressing,ui.Window):
             self.task.frame.winfo_exists() #these should all be windows w/frames
         except:
             return
-class Context(object):
-    """This class stores the methods for any object which is a context."""
-    def setcontext(self,context=None):
-        self.context.menuinit() #This is a ContextMenu() method
-        if not hasattr(self,'menu') or not self.menu:
-            self.context.menuitem(_("Show Menus"),self._setmenus)
-        else:
-            self.context.menuitem(_("Hide Menus"),self._removemenus)
-        if hasattr(self,'mainrelief') and not self.mainrelief:
-            self.context.menuitem(_("Show Buttons"),self._showbuttons)
-        else:
-            self.context.menuitem(_("Hide Buttons"),self._hidebuttons)
-        if hasattr(self,'fontthemesmall') and not self.fontthemesmall:
-            self.context.menuitem(_("Smaller Fonts"),self.setfontssmaller)
-        else:
-            self.context.menuitem(_("Larger Fonts"),self.setfontsdefault)
-        if hasattr(self,'hidegroupnames') and self.hidegroupnames:
-            self.context.menuitem(_("Show group names"),self.showgroupnames)
-        else:
-            self.context.menuitem(_("Hide group names"),self.hidegroupnames)
-    def __init__(self, arg):
-        super(Context, self).__init__(**kwargs)
-        for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
-            if not hasattr(self,k):
-                setattr(self,k,False)
-        ui.ContextMenu(self)
 class Menus(ui.Menu):
     """this is the overall menu set, from which each will be selected."""
     def command(self,parent,label,cmd):
