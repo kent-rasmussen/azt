@@ -6818,7 +6818,6 @@ class MainApplication(ui.Window):
             title+=_(' ('+program['theme'].name+')')
         return title #self.title(title)
     def setmasterconfig(self): #,program
-        self.parent.debug=False #needed?
         """Configure variables for the root window (master)"""
         for rc in [0,2]:
             self.parent.grid_rowconfigure(rc, weight=3)
