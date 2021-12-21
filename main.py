@@ -752,7 +752,7 @@ class Context(object):
                 setattr(self,k,False)
         ui.ContextMenu(self)
 class Menus(ui.Menu):
-    """docstring for Menus."""
+    """this is the overall menu set, from which each will be selected."""
     def command(self,parent,label,cmd):
         parent.add_command(label=label, command=cmd)
     def cascade(self,parent,label,newmenuname):
