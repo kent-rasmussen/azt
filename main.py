@@ -6757,24 +6757,6 @@ class MainApplication(ui.Window):
         w=w/2
         h=h/2
         self.parent.geometry("%dx%d+0+0" % (w, h))
-    def _showbuttons(self,event=None):
-        self.check.mainlabelrelief(relief='flat',refresh=True)
-        self.setcontext()
-    def _hidebuttons(self,event=None):
-        self.check.mainlabelrelief(relief=None,refresh=True)
-        self.setcontext()
-    def _removemenus(self,event=None):
-        if hasattr(self,'menubar'):
-            self.menubar.destroy()
-            self.menu=False
-            self.setcontext()
-    def _setmenus(self,event=None):
-        # check=self.check
-        self.menubar=Menus(self)
-        self.config(menu=self.menubar)
-        self.menu=True
-        self.setcontext()
-        self.unbind_all('<Enter>')
     def helpabout(self):
         window=ui.Window(self)
         title=(_("{name} Dictionary and Orthography Checker".format(name=program['name'])))
