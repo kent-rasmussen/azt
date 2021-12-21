@@ -296,6 +296,11 @@ class FileChooser(object):
                 self.repo.add(savefile)
         if self.repo and not me:
             self.repo.commit()
+    def reloadprofiledata(self):
+        self.file.storesettingsfile()
+        self.profilesbysense={}
+        self.file.storesettingsfile(setting='profiledata')
+        self.restart()
     def checkforlegacyverification(self):
         start_time=time.time()
         n=0
@@ -1680,11 +1685,6 @@ class Check():
         # main()
         sys.exit()
         # self.restart(self.filename)
-    def reloadprofiledata(self):
-        self.storesettingsfile()
-        self.profilesbysense={}
-        self.storesettingsfile(setting='profiledata')
-        self.restart()
     def reloadstatusdata(self):
         # This fn is very inefficient, as it iterates over everything in
         # profilesbysense, creating status dictionaries for all of that, in
