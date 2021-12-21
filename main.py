@@ -100,26 +100,6 @@ class TaskChooser(object):
         super(FileChooser, self).__init__()
         self.arg = arg
 
-class Check():
-    """the parent is the *functional* head, the MainApplication."""
-    """the frame is the *GUI* head, the frame sitting in the MainApplication."""
-    def __init__(self, parent, frame, filename=None, nsyls=None):
-        self.start_time=time.time() #this enables boot time evaluation
-        self.pp=pprint.PrettyPrinter()
-        self.iterations=0
-        # print(time.time()-self.start_time) # with this
-        self.su=True #show me stuff others don't want/need
-        self.su=False #not a superuser; make it easy on me!
-        self.parent=parent #should be mainapplication frame
-        self.frame=frame
-        self.exitFlag=self.frame.exitFlag
-        if filename:
-            self.filename=filename
-        else:
-            self.filename=file.getfilename()
-        if type(self.filename) is list:
-            self.askwhichlift(self.filename)
-        if not self.filename or not file.exists(self.filename):
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
         filedir=file.getfilenamedir(self.filename)
@@ -1379,6 +1359,28 @@ class Check():
                 self.reloadprofiledata()
             elif refresh == True:
                 self.refreshattributechanges()
+class Check():
+    """the parent is the *functional* head, the MainApplication."""
+    """the frame is the *GUI* head, the frame sitting in the MainApplication."""
+    def __init__(self, parent, frame, filename=None, nsyls=None):
+        self.start_time=time.time() #this enables boot time evaluation
+        self.parent=parent # chooser#should be mainapplication frame
+        for attr in ['exitFlag','file','params','slices','status']:
+            if hasattr(parent,attr):
+                setattr(self,attr,getattr(parent,attr))
+        # self.exitFlag=self.parent.exitFlag
+        # self.file=self.parent.file
+        self.pp=pprint.PrettyPrinter()
+        self.iterations=0
+        # print(time.time()-self.start_time) # with this
+        # self.su=True #show me stuff others don't want/need
+        # self.su=False #not a superuser; make it easy on me!
+        # self.frame=frame
+
+        # self.glosslangs=Glosslangs(None,None) #needed for upgrading
+        self.file.loadsettingsfile(setting='adhocgroups')
+        if nsyls is not None:
+            self.nsyls=nsyls
         else:
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setinterfacelangwrapper(self,choice,window):
