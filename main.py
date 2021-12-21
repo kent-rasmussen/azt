@@ -1094,8 +1094,6 @@ class Check():
                 self.languagenames[xyz]="Fulfulde"
             elif xyz == 'bfj':
                 self.languagenames[xyz]="Chufie’"
-        for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
-            if not hasattr(self,k):
             else:
                 self.languagenames[xyz]=_("Language with code "
                                                         "[{}]").format(xyz)
