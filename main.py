@@ -450,13 +450,6 @@ class FileChooser(object):
         with open(filename, "w", encoding='utf-8') as file:
             file.write(header+'\n\n')
             config.write(file)
-    def makesoundsettings(self):
-        if not hasattr(self,'soundsettings'):
-            self.pyaudiocheck() #in case self.pyaudio isn't there yet
-            self.soundsettings=sound.SoundSettings(self.pyaudio)
-    def loadsoundsettings(self):
-        self.makesoundsettings()
-        self.loadsettingsfile(setting='soundsettings')
     def loadsettingsfile(self,setting='defaults'):
         filename=self.settingsfile(setting)
         config=ConfigParser()
@@ -698,6 +691,13 @@ class TaskChooser(ui.Window):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
         self.toneframes=ToneFrames(self.toneframes)
+    def makesoundsettings(self):
+        if not hasattr(self,'soundsettings'):
+            self.pyaudiocheck() #in case self.pyaudio isn't there yet
+            self.soundsettings=sound.SoundSettings(self.pyaudio)
+    def loadsoundsettings(self):
+        self.makesoundsettings()
+        self.loadsettingsfile(setting='soundsettings')
     def makecheck(self,filename=None):
         if hasattr(self,'check'): #for restarts
             self.parent.withdraw()
