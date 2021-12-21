@@ -1596,7 +1596,18 @@ class Menus(ui.Menu):
         self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
     def __init__(self, parent):
         super(Menus, self).__init__(parent)
-class Check(ui.Window):
+class Check2(ui.Window,TaskDressing):
+    """Fake check, placeholder for now."""
+    def __init__(self, parent): #frame, filename=None
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        log.info("Initializing Check2")
+        self.title("Placeholder Check2")
+        for r in range(5):
+            ui.Label(self.frame,
+                    text="This is a check placeholder.",
+                    row=r, column=0)
+class Check(TaskDressing,ui.Window):
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
     def __init__(self, parent, frame): #, filename=None
