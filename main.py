@@ -296,6 +296,26 @@ class FileChooser(object):
                 self.repo.add(savefile)
         if self.repo and not me:
             self.repo.commit()
+    def loaddatabase(self):
+        try:
+            self.db=lift.Lift(self.name) #,nsyls=nsyls
+        except lift.BadParseError:
+            text=_("{} doesn't look like a well formed lift file; please "
+                    "try again.").format(self.name)
+            log.info("'lift_url.py' removed.")
+            ErrorNotice(title='LIFT parse error',
+                        text=text)
+            # window=ui.Window(self)
+            # ui.Label(window,text=text).grid(row=0,column=0)
+            file.remove('lift_url.py') #whatever the problem was, remove it.
+            # window.wait_window(window) #Let the user see the error
+            raise #Then force a quit and retry
+    def dailybackup(self):
+        if not file.exists(self.db.backupfilename):
+            self.db.write(self.db.backupfilename)
+        else:
+            print(_("Apparently we've run this before today; not backing "
+            "up again."))
     def reloadprofiledata(self):
         self.file.storesettingsfile()
         self.profilesbysense={}
