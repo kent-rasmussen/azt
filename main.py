@@ -1200,7 +1200,7 @@ class TaskChooser(ui.Window):
             else:
                 self.rx[c+'_']=re.compile('(?<![CSGDNʔ])'+c)
             self.rx[c+'wd']=re.compile(c+'(?=\Z)')
-    def makecheck(self,filename=None):
+    def makecheck(self): #,filename=None
         if hasattr(self,'check'): #for restarts
             self.parent.withdraw()
             for w in self.frame.winfo_children():
@@ -1208,7 +1208,7 @@ class TaskChooser(ui.Window):
             for w in self.check.frame.winfo_children():
                 w.destroy()
             # self.check.frame.destroy()
-        self.check=Check(self,self.frame,filename)
+        self.check=Check(self,self.frame) #filename
         if not self.exitFlag.istrue():
             self.deiconify()
         self.setmainwindow(self.check)
@@ -1495,7 +1495,7 @@ class Menus(ui.Menu):
 class Check():
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
-    def __init__(self, parent, frame, filename=None):
+    def __init__(self, parent, frame): #, filename=None
         self.start_time=time.time() #this enables boot time evaluation
         self.parent=parent # chooser#should be mainapplication frame
         for attr in ['exitFlag','file','params','slices','status','db']:
