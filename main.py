@@ -935,7 +935,7 @@ class Check():
     def __init__(self, parent, frame, filename=None):
         self.start_time=time.time() #this enables boot time evaluation
         self.parent=parent # chooser#should be mainapplication frame
-        for attr in ['exitFlag','file','params','slices','status']:
+        for attr in ['exitFlag','file','params','slices','status','db']:
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
         # self.exitFlag=self.parent.exitFlag
