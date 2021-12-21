@@ -1133,6 +1133,11 @@ class TaskChooser(ui.Window):
             #set only when new value is loaded:
             setinterfacelang(self.interfacelang)
             self.parent.maketitle()
+    def setinvalidcharacters(self):
+        self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
+        self.invalidregex='( |\.|,|\)|\()+'
+        # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
+        self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
     def makecheck(self,filename=None):
         if hasattr(self,'check'): #for restarts
             self.parent.withdraw()
@@ -1430,10 +1435,6 @@ class Check():
 
         # self.glosslangs=Glosslangs(None,None) #needed for upgrading
         self.file.loadsettingsfile(setting='adhocgroups')
-        self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
-        self.invalidregex='( |\.|,|\)|\()+'
-        # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
-        self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
 
         """Are we OK without these?"""
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
