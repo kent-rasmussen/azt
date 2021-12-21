@@ -1060,7 +1060,8 @@ class TaskChooser(ui.Window):
     prequisites satisfied)."""
     def getfile(self):
         self.file=FileChooser()
-        for attr in ['profilesbysense','analang']:
+        # I want to access these attributes directly
+        for attr in ['profilesbysense','analang','interfacelang']:
             if hasattr(self.file,attr):
                 setattr(self,attr,getattr(self.file,attr))
     def makestatus(self):
