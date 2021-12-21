@@ -8792,6 +8792,7 @@ def mainproblem():
     errorroot.withdraw()
     errorw=ui.Window(errorroot)
     errorw.title("Serious Problem!")
+    errorw.mainwindow=True
     l=ui.Label(errorw.frame,text="Hey! You found a problem! (details and "
             "solution below)",justify='left',font='title',
             row=0,column=0
