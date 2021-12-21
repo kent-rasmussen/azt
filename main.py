@@ -625,6 +625,8 @@ class FileChooser(object):
                 if self.analang in self.db.analangs[n]:
                     self.audiolang=self.db.audiolangs[n]
                     return
+    def makeglosslangs(self):
+        self.glosslangs=Glosslangs(self.glosslangs)
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
         if len(self.db.glosslangs) == 1:
@@ -1070,6 +1072,7 @@ class FileChooser(object):
         if self.analang is None:
             return
         self.guessaudiolang()
+        self.makeglosslangs()
         self.guessglosslangs()
         self.notifyuserofextrasegments() #self.analang set by now
         self.langnames()
@@ -1454,7 +1457,6 @@ class Check():
         # self.makestatus()
         #This can wait until runcheck, right?
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
-        self.makeglosslangs()
         self.file.loadsettingsfile() # overwrites guess above, stored on runcheck
         #     self.guessglosslangs() #needed for the following
         log.info("Done initializing check; running first check check.")
@@ -1480,8 +1482,6 @@ class Check():
     """This should each be done only once, to make the objects from settings"""
     """self.profilesbysense and self.profilecounts are loaded from file, or
     created by analysis in init()"""
-    def makeglosslangs(self):
-        self.glosslangs=Glosslangs(self.glosslangs)
     def makeanalysis(self,**kwargs):
         if not hasattr(self,'analysis'):
             self.analysis=Analysis(self.params,
