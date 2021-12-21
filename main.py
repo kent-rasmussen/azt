@@ -6748,7 +6748,7 @@ class FramedDataElement(FramedData):
         """
         log.info("FramedDataElement initalization done, with forms: {}"
                     "".format(self.forms))
-class MainApplication(ui.Window,Context):
+class MainApplication(ui.Window):
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
