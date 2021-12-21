@@ -108,131 +108,18 @@ class FileChooser(object):
                                 column=0, row=1
                                 )
         window.wait_window(window)
+    def getfilename(self):
+        self.name=file.getfilename()
+        if type(self.name) is list:
+            self.askwhichlift(self.name)
+        if not self.name or not file.exists(self.name):
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
-        filedir=file.getfilenamedir(self.filename)
-        self.repo=None #leave this for test of both repo and exe
-        if file.exists(file.getdiredurl(filedir,'.hg')):
-            log.info("Found Mercurial Repository!")
-            if not program['hg']:
-                log.info("But found no Mercurial executable!")
-                self.mercurialwarning(filedir)
-            else:
-                self.repo=Repository(filedir)
         """We need this variable to make filenames for files that will be
         imported as python modules. To do that, they need to not have periods
         (.) in their filenames. So we take the base name from the lift file,
         and replace periods with underscores, to make our modules basename."""
-        filenamebase=re.sub('\.','_',str(file.getfilenamebase(self.filename)))
-        if not file.exists(filedir):
-            log.info(_("Looks like there's a problem with your directory... {}"
-                    "\n{}".format(self.filename,filemod)))
-            exit()
-        """This and the following bit should probably be in another lift
-        class, in the main script. They make non lift-specific changes
-        and assumptions about the database."""
-        try:
-            self.db=lift.Lift(self.filename,nsyls=nsyls)
-        except lift.BadParseError:
-            text=_("{} doesn't look like a well formed lift file; please "
-                    "try again.").format(self.filename)
-            print(text)
-            log.info("'lift_url.py' removed.")
-            window=ui.Window(self)
-            ui.Label(window,text=text).grid(row=0,column=0)
-            file.remove('lift_url.py') #whatever the problem was, remove it.
-            window.wait_window(window) #Let the user see the error
-            raise #Then force a quit and retry
-        # self.db.filename=filename #in lift.py
-        if not file.exists(self.db.backupfilename):
-            self.db.write(self.db.backupfilename)
-        else:
-            print(_("Apparently we've run this before today; not backing "
-            "up again."))
-        # self.glosslangs=Glosslangs(None,None) #needed for upgrading
-        self.settingsfilecheck(file.getdiredurl(filedir,filenamebase))
-        self.imagesdir=file.getimagesdir(self.filename)
-        self.audiodir=file.getaudiodir(self.filename)
-        log.info('self.audiodir: {}'.format(self.audiodir))
-        self.reportsdir=file.getreportdir(self.filename)
-        self.reportbasefilename=file.getdiredurl(self.reportsdir, filenamebase)
-        self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
-        log.log(2,'self.reportsdir: {}'.format(self.reportsdir))
-        log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
-        log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
-        # setdefaults.langs(self.db) #This will be done again, on resets
-        self.loadsettingsfile(setting='toneframes')
-        self.maketoneframes()
-        self.loadsettingsfile(setting='adhocgroups')
-        if nsyls is not None:
-            self.nsyls=nsyls
-        else:
-            self.nsyls=2
-        self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
-        self.invalidregex='( |\.|,|\)|\()+'
-        # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
-        self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
-
-        """Are we OK without these?"""
-        # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
-        # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
-        self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
-        self.db.languagecodes=self.db.analangs+self.db.glosslangs
-        self.db.languagepaths=file.getlangnamepaths(self.filename,
-                                                        self.db.languagecodes)
-        setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
-        self.initdefaults() #provides self.defaults, list to load/save
-        self.cleardefaults() #this resets all to none (to be set below)
-        """These two lines can import structured frame dictionaries; do this
-        just to make the import, then comment them out again."""
-        self.loadsettingsfile(setting='profiledata')
-        """I think I need this before setting up regexs"""
-        self.guessanalang() #needed for regexs
-        log.info("analang guessed: {} (If you don't like this, change it in "
-                    "the menus)".format(self.analang))
-        self.maxprofiles=5 # how many profiles to check before moving on to another ps
-        self.maxpss=2 #don't automatically give more than two grammatical categories
-        self.loadsettingsfile() # overwrites guess above, stored on runcheck
-        if self.analang is None:
-            return
-        self.notifyuserofextrasegments() #self.analang set by now
-        if self.interfacelang not in [None, getinterfacelang()]:
-            #set only when new value is loaded:
-            setinterfacelang(self.interfacelang)
-            self.parent.maketitle()
-        self.langnames()
-        self.polygraphcheck()
-        self.checkinterpretations() #checks/sets values for self.distinguish
-        self.slists() #lift>check segment dicts: s[lang][segmenttype]
-        self.setupCVrxs() #creates self.rx dictionaries
-        """The line above may need to go after this block"""
-        if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
-            t=time.time()-self.start_time
-            log.info("Starting profile analysis at {}".format(t))
-            self.getprofiles() #creates self.profilesbysense nested dicts
-            for var in ['rx','profilesbysense']:
-                log.debug("{}: {}".format(var,getattr(self,var)))
-            self.storesettingsfile(setting='profiledata')
-            e=time.time()-self.start_time
-            log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
-        self.makeparameters()
-        self.makeslicedict()
-        self.setnamesall() #sets self.checknamesall
-        self.loadsettingsfile(setting='status')
-        self.makedatadict()
-        self.makeexampledict() #needed for makestatus
-        self.makestatus()
-        #This can wait until runcheck, right?
-        #     self.sortingstatus() #because this won't get set later #>checkdefaults?
-        self.makeglosslangs()
-        self.loadsettingsfile() # overwrites guess above, stored on runcheck
-        #     self.guessglosslangs() #needed for the following
-        log.info("Done initializing check; running first check check.")
-        """Testing Zone"""
-        self.mainlabelrelief()
-        self.tableiteration=0
-        self.attrschanged=[]
-        self.checkcheck()
+        self.namebase=re.sub('\.','_', str(file.getfilenamebase(self.name)))
     def mercurialwarning(self,filedir):
         title="Warning: Mercurial Repository without Executable"
         window=ui.Window(self.frame,title=title)
