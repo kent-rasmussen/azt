@@ -89,17 +89,6 @@ class FileChooser(object):
         super(FileChooser, self).__init__()
         self.arg = arg
 
-class TaskChooser(object):
-    """This class stores the hierarchy of tasks to do in A→Z+T, plus the
-    minimum and optimum prerequisites for each. Based on these, it presents
-    to the user a default (highest in hierarchy without optimum fulfilled)
-    task on opening, and allows users to choose others (any with minimum
-    prequisites satisfied)."""
-
-    def __init__(self, arg):
-        super(FileChooser, self).__init__()
-        self.arg = arg
-
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
         filedir=file.getfilenamedir(self.filename)
@@ -326,6 +315,24 @@ class TaskChooser(object):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
         self.toneframes=ToneFrames(self.toneframes)
+class TaskChooser(ui.Window):
+    """This class stores the hierarchy of tasks to do in A→Z+T, plus the
+    minimum and optimum prerequisites for each. Based on these, it presents
+    to the user a default (highest in hierarchy without optimum fulfilled)
+    task on opening, and allows users to choose others (any with minimum
+    prequisites satisfied)."""
+    def getfile(self):
+        self.file=FileChooser()
+    def makestatus(self):
+        if not hasattr(self,'status'):
+            self.status={}
+        self.status=StatusDict(self.params,
+                                self.slices,
+                                self.exs,
+                                self.toneframes,
+                                self.settingsfile('status'),
+                                self.status
+                                )
     def makeparameters(self):
         self.params=CheckParameters(self.analang) #remove self.profilesbysense?
     def makeslicedict(self):
