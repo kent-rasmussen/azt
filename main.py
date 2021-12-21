@@ -356,8 +356,6 @@ class FileChooser(object):
         self.file.storesettingsfile(setting='status')
         log.info("Status settings refreshed from LIFT in {}s".format(
                                                         time.time()-start_time))
-    def makeglosslangs(self):
-        self.glosslangs=Glosslangs(self.glosslangs)
     def maketoneframes(self):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
@@ -921,6 +919,8 @@ class Check():
     """This should each be done only once, to make the objects from settings"""
     """self.profilesbysense and self.profilecounts are loaded from file, or
     created by analysis in init()"""
+    def makeglosslangs(self):
+        self.glosslangs=Glosslangs(self.glosslangs)
         else:
             self.analysis.setslice(**kwargs)
     def notifyuserofextrasegments(self):
