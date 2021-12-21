@@ -1051,6 +1051,11 @@ class FileChooser(object):
             self.file.storesettingsfile(setting='profiledata')
             e=time.time()-self.start_time
             log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
+    def getwritingsystemsinfo(self):
+        """This doesn't actually do anything yet, as we can't parse ldml."""
+        self.db.languagecodes=self.db.analangs+self.db.glosslangs
+        self.db.languagepaths=file.getlangnamepaths(self.filename,
+                                                    self.db.languagecodes)
     def __init__(self):
         super(FileChooser, self).__init__()
         self.getfilename()
@@ -1440,9 +1445,6 @@ class Check():
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
         self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
-        self.db.languagecodes=self.db.analangs+self.db.glosslangs
-        self.db.languagepaths=file.getlangnamepaths(self.filename,
-                                                        self.db.languagecodes)
         """These two lines can import structured frame dictionaries; do this
         just to make the import, then comment them out again."""
         log.info("analang guessed: {} (If you don't like this, change it in "
