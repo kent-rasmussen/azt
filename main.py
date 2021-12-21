@@ -1163,6 +1163,7 @@ class TaskChooser(ui.Window):
         self.check=Check(self,self.frame,filename)
         if not self.exitFlag.istrue():
             self.deiconify()
+        self.setmainwindow(self.check)
     def langnames(self):
         """This is for getting the prose name for a language from a code."""
         """It uses a xyz.ldml file, produced (at least) by WeSay."""
@@ -1204,6 +1205,16 @@ class TaskChooser(ui.Window):
                 self.adnlangnames={}
             if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
                 self.languagenames[xyz]=self.adnlangnames[xyz]
+    def setmainwindow(self,window):
+        """self.mainwindowis tracks who the mainwindow is for the chooser,
+        x.mainwindow tracks if the object is the mainwindow, so it will
+        exit the program on closure appropriately. This fn keeps them
+        synchronized."""
+        self.mainwindowis.withdraw()
+        self.mainwindowis.mainwindow=False #keep only one of these
+        window.mainwindow=True
+        self.mainwindowis=window
+        self.mainwindowis.deiconify()
     def __init__(self,parent):
         for attr in ['exitFlag']:
             if hasattr(parent,attr):
@@ -1215,6 +1226,7 @@ class TaskChooser(ui.Window):
         self.makeparameters()
         self.makeslicedict()
         self.makestatus()
+        self.mainwindowis=self
         self.makecheck()
         self.maketoneframes()
         #If the user exits out before this point, just stop.
