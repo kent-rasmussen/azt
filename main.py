@@ -1269,16 +1269,21 @@ class TaskChooser(ui.Window):
                 setattr(self,attr,getattr(parent,attr))
         self.setinvalidcharacters() #invalidchars, invalidregex, profilelegit
         super(TaskChooser, self).__init__(parent)
+        self.withdraw()
         self.getfile()
+        self.setupCVrxs() #creates self.rx dictionaries
         self.updateinterfacelang()
         self.makeparameters()
-        self.makeslicedict()
-        self.makestatus()
+        self.makeslicedict() #needs params
+        self.makedatadict()
+        self.makeexampledict() #needed for makestatus, needs params,slices,data
+        self.makestatus() #needs params, slices, data, toneframes, exs
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
         self.mainwindowis=self
         self.makecheck()
         self.maketoneframes()
+        self.langnames()
         #If the user exits out before this point, just stop.
         if self.check is None:
             l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
