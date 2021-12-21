@@ -1055,6 +1055,40 @@ class FileChooser(object):
             self.file.storesettingsfile(setting='profiledata')
             e=time.time()-self.start_time
             log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
+    def notifyuserofextrasegments(self):
+        invalids=self.db.segmentsnotinregexes[self.analang]
+        ninvalids=len(invalids)
+        extras=list(dict.fromkeys(invalids).keys())
+        if ninvalids >10:
+            text=_("Your {} database has the following symbols, which are "
+                "excluding {} words from being analyzed: \n{}"
+                "".format(self.analang,ninvalids,extras))
+            title="More than Ten Invalid Characters Found!"
+            self.warning=ErrorNotice(text,title=title)
+            # l=ui.Label(self.warning, text=t)
+            # l.grid(row=0, column=0)
+    def slists(self):
+        """This sets up the lists of segments, by types. For the moment, it
+        just pulls from the segment types in the lift database."""
+        if not hasattr(self,'s'):
+            self.s={}
+        for lang in self.db.analangs:
+            if lang not in self.s:
+                self.s[lang]={}
+            """These should always be there, no matter what"""
+            for sclass in [x for x in self.db.s[lang]
+                                        if 'dg' not in x and 'tg' not in x]: #Just populate each list now
+                if sclass in self.polygraphs[lang]:
+                    pgthere=[k for k,v in self.polygraphs[lang][sclass].items() if v]
+                    log.debug("Polygraphs for {} in {}: {}".format(lang,sclass,
+                                                                    pgthere))
+                    self.s[lang][sclass]=pgthere
+                else:
+                    self.s[lang][sclass]=list()
+                self.s[lang][sclass]+=self.db.s[lang][sclass]
+                """These lines just add to a C list, for a later regex"""
+            log.info("Segment lists for {} language: {}".format(lang,
+                                                                self.s[lang]))
     def getwritingsystemsinfo(self):
         """This doesn't actually do anything yet, as we can't parse ldml."""
         self.db.languagecodes=self.db.analangs+self.db.glosslangs
@@ -1152,6 +1186,23 @@ class TaskChooser(ui.Window):
         self.invalidregex='( |\.|,|\)|\()+'
         # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
         self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
+    def setupCVrxs(self):
+        self.rx={}
+        for sclass in list(self.s[self.analang]):
+            if self.s[self.analang][sclass] != []: #don't make if empty
+                self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
+        #Compile preferred regexs here
+        for cc in ['CG','CS','NC','VN','VV']:
+            ccc=cc.replace('C','[CSGDʔN]{1}')
+            self.rx[cc]=re.compile(ccc)
+        for c in ['N','S','G','ʔ','D']:
+            if c == 'N': #i.e., before C
+                self.rx[c+'_']=re.compile(c+'(?!([CSGDʔ]|\Z))') #{1}|
+            elif c in ['ʔ','D']:
+                self.rx[c+'_']=re.compile(c+'(?!\Z)')
+            else:
+                self.rx[c+'_']=re.compile('(?<![CSGDNʔ])'+c)
+            self.rx[c+'wd']=re.compile(c+'(?=\Z)')
     def makecheck(self,filename=None):
         if hasattr(self,'check'): #for restarts
             self.parent.withdraw()
@@ -1507,17 +1558,6 @@ class Check():
                                     )
         else:
             self.analysis.setslice(**kwargs)
-    def notifyuserofextrasegments(self):
-        invalids=self.db.segmentsnotinregexes[self.analang]
-        ninvalids=len(invalids)
-        extras=list(dict.fromkeys(invalids).keys())
-        if ninvalids >10:
-            self.warning=ui.Window(self.frame, title="More than Ten Invalid Characters Found!")
-            t=_("Your {} database has the following symbols, which are "
-            "excluding {} words from being analyzed: \n{}"
-                                    "".format(self.analang,ninvalids,extras))
-            l=ui.Label(self.warning, text=t)
-            l.grid(row=0, column=0)
     """Guessing functions"""
     def getpss(self):
         pss=self.slices.pss() #make this one line, remove pss
@@ -2479,45 +2519,6 @@ class Check():
                     self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
                     log.debug("resulting profilesbysense: {}".format(
                                             self.profilesbysense[ps][a]))
-    def slists(self):
-        """This sets up the lists of segments, by types. For the moment, it
-        just pulls from the segment types in the lift database."""
-        if not hasattr(self,'s'):
-            self.s={}
-        for lang in self.db.analangs:
-            if lang not in self.s:
-                self.s[lang]={}
-            """These should always be there, no matter what"""
-            for sclass in [x for x in self.db.s[lang]
-                                        if 'dg' not in x and 'tg' not in x]: #Just populate each list now
-                if sclass in self.polygraphs[lang]:
-                    pgthere=[k for k,v in self.polygraphs[lang][sclass].items() if v]
-                    log.debug("Polygraphs for {} in {}: {}".format(lang,sclass,
-                                                                    pgthere))
-                    self.s[lang][sclass]=pgthere
-                else:
-                    self.s[lang][sclass]=list()
-                self.s[lang][sclass]+=self.db.s[lang][sclass]
-                """These lines just add to a C list, for a later regex"""
-            log.info("Segment lists for {} language: {}".format(lang,
-                                                                self.s[lang]))
-    def setupCVrxs(self):
-        self.rx={}
-        for sclass in list(self.s[self.analang]):
-            if self.s[self.analang][sclass] != []: #don't make if empty
-                self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
-        #Compile preferred regexs here
-        for cc in ['CG','CS','NC','VN','VV']:
-            ccc=cc.replace('C','[CSGDʔN]{1}')
-            self.rx[cc]=re.compile(ccc)
-        for c in ['N','S','G','ʔ','D']:
-            if c == 'N': #i.e., before C
-                self.rx[c+'_']=re.compile(c+'(?!([CSGDʔ]|\Z))') #{1}|
-            elif c in ['ʔ','D']:
-                self.rx[c+'_']=re.compile(c+'(?!\Z)')
-            else:
-                self.rx[c+'_']=re.compile('(?<![CSGDNʔ])'+c)
-            self.rx[c+'wd']=re.compile(c+'(?=\Z)')
     def profileofformpreferred(self,form):
         """Simplify combinations where desired"""
         for c in ['N','S','G','ʔ','D']:
