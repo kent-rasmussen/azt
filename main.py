@@ -1616,6 +1616,7 @@ class Check(TaskDressing,ui.Window):
         self.start_time=time.time() #this enables boot time evaluation
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        self.title("Already Functional Check")
         self.parent=parent # chooser#should be mainapplication frame
         for attr in ['exitFlag','file','params','slices','status','db']:
             if hasattr(parent,attr):
