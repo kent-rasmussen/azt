@@ -824,7 +824,7 @@ class Window(Toplevel):
             if hasattr(self,'frame') and type(self.frame) is Frame:
                 self.frame.destroy()
             self.frame=Frame(self.outsideframe,
-                            column=0,row=0,sticky='nsew'
+                            row=1, column=1, sticky='nsew'
                             )
     def removeverifymenu(self,event=None):
         #This removes menu from the verify window
@@ -847,11 +847,12 @@ class Window(Toplevel):
         for rc in [0,2]:
             self.grid_rowconfigure(rc, weight=3)
             self.grid_columnconfigure(rc, weight=3)
-        self.outsideframe=Frame(self)
+        self.outsideframe=Frame(self,
+                                row=1, column=1,sticky='we',
+                                padx=(25,0),
+                                pady=(0,25)
+                                )
         """Give windows some margin"""
-        self.outsideframe['padx']=25
-        self.outsideframe['pady']=25
-        self.outsideframe.grid(row=1, column=1,sticky='we')
         self.iconphoto(False, self.theme.photo['icon']) #don't want this transparent
         self.title(title)
         self.resetframe()
@@ -860,7 +861,8 @@ class Window(Toplevel):
             e=(_("Exit")) #This should be the class, right?
             self.exitButton=Button(self.outsideframe, width=10, text=e,
                                 command=self.on_quit,
-                                font='small'
+                                font='small',
+                                padx=(0,25),
                                             )
             self.exitButton.grid(column=2,row=2)
         if backcmd is not False: #This one, too...
@@ -1007,9 +1009,13 @@ class ButtonFrame(Frame):
             maintain a link to the variable itself, and give the last value it
             had to all the buttons... --not what we want!
             """
-            cmd=lambda x=choice['code'], w=window:command(x,window=w)
+            if window:
+                cmd=lambda x=choice['code'], w=window:command(x,window=w)
+                kwargs['window']=window
+            else:
+                cmd=lambda x=choice['code']:command(x)
             b=Button(self,text=text,choice=choice['code'],
-                    window=window,cmd=cmd,#width=self.width,
+                    cmd=cmd,#width=self.width,
                     row=i,
                     **kwargs
                     )
