@@ -230,6 +230,50 @@ class FileChooser(object):
                                 'file':'toneframesfile',
                                 'attributes':['toneframes']}
                                 }
+    def loadandconvertlegacysettingsfile(self,setting='defaults'):
+        savefile=self.settingsfile(setting)
+        legacy=savefile.with_suffix('.py')
+        log.info("Going to make {} into {}".format(legacy,savefile))
+        if setting == 'soundsettings':
+            self.makesoundsettings()
+            o=self.soundsettings
+        else:
+            o=self
+        try:
+            log.debug("Trying for {} settings in {}".format(setting, legacy))
+            spec = importlib.util.spec_from_file_location(setting,legacy)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[setting] = module
+            spec.loader.exec_module(module)
+            for s in self.settings[setting]['attributes']:
+                if hasattr(module,s):
+                    setattr(o,s,getattr(module,s))
+        except:
+            log.error("Problem importing {}".format(legacy))
+        # b/c structure changed:
+        if 'glosslangs' in self.settings[setting]['attributes']:
+            self.glosslangs=[]
+            for lang in ['glosslang','glosslang2']:
+                if hasattr(module,lang):
+                    self.glosslangs.append(getattr(module,lang))
+        dict1=self.makesettingsdict(setting=setting)
+        self.storesettingsfile(setting=setting) #do last
+        self.loadsettingsfile(setting=setting) #verify write and read
+        dict2=self.makesettingsdict(setting=setting)
+        """Now we verify that each value read the same each time"""
+        for s in dict1:
+            if s in dict2 and str(dict1[s]) == str(dict2[s]):
+                log.info("Attribute {} verified as {}={}".format(s,
+                                            str(dict1[s]), str(dict2[s])))
+            elif s in dict2:
+                log.error("Problem with attribute {}; {}≠{}".format(s,
+                                            str(dict1[s]), str(dict2[s])))
+            else:
+                log.error("Attribute {} didn't make it back".format(s))
+                log.error("You should send in an error report for this.")
+                exit()
+        log.info("Settings file {} converted to {}, with each value verified."
+                "".format(legacy,savefile))
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
         self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
         self.statusfile=basename.with_suffix(".VerificationStatus.dat")
@@ -1776,50 +1820,6 @@ class Check():
     def loadsoundsettings(self):
         self.makesoundsettings()
         self.loadsettingsfile(setting='soundsettings')
-    def loadandconvertlegacysettingsfile(self,setting='defaults'):
-        savefile=self.settingsfile(setting)
-        legacy=savefile.with_suffix('.py')
-        log.info("Going to make {} into {}".format(legacy,savefile))
-        if setting == 'soundsettings':
-            self.makesoundsettings()
-            o=self.soundsettings
-        else:
-            o=self
-        try:
-            log.debug("Trying for {} settings in {}".format(setting, legacy))
-            spec = importlib.util.spec_from_file_location(setting,legacy)
-            module = importlib.util.module_from_spec(spec)
-            sys.modules[setting] = module
-            spec.loader.exec_module(module)
-            for s in self.settings[setting]['attributes']:
-                if hasattr(module,s):
-                    setattr(o,s,getattr(module,s))
-        except:
-            log.error("Problem importing {}".format(legacy))
-        # b/c structure changed:
-        if 'glosslangs' in self.settings[setting]['attributes']:
-            self.glosslangs=[]
-            for lang in ['glosslang','glosslang2']:
-                if hasattr(module,lang):
-                    self.glosslangs.append(getattr(module,lang))
-        dict1=self.makesettingsdict(setting=setting)
-        self.storesettingsfile(setting=setting) #do last
-        self.loadsettingsfile(setting=setting) #verify write and read
-        dict2=self.makesettingsdict(setting=setting)
-        """Now we verify that each value read the same each time"""
-        for s in dict1:
-            if s in dict2 and str(dict1[s]) == str(dict2[s]):
-                log.info("Attribute {} verified as {}={}".format(s,
-                                            str(dict1[s]), str(dict2[s])))
-            elif s in dict2:
-                log.error("Problem with attribute {}; {}≠{}".format(s,
-                                            str(dict1[s]), str(dict2[s])))
-            else:
-                log.error("Attribute {} didn't make it back".format(s))
-                log.error("You should send in an error report for this.")
-                exit()
-        log.info("Settings file {} converted to {}, with each value verified."
-                "".format(legacy,savefile))
     def loadsettingsfile(self,setting='defaults'):
         filename=self.settingsfile(setting)
         config=ConfigParser()
