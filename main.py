@@ -211,6 +211,12 @@ class FileChooser(object):
                                 'file':'toneframesfile',
                                 'attributes':['toneframes']}
                                 }
+    def settingsfile(self,setting):
+        fileattr=self.settings[setting]['file']
+        if hasattr(self,fileattr):
+            return getattr(self,fileattr)
+        else:
+            log.error("No file name for setting {}!".format(setting))
     def loadandconvertlegacysettingsfile(self,setting='defaults'):
         savefile=self.settingsfile(setting)
         legacy=savefile.with_suffix('.py')
@@ -355,12 +361,6 @@ class FileChooser(object):
         self.file.storesettingsfile(setting='status')
         log.info("Status settings refreshed from LIFT in {}s".format(
                                                         time.time()-start_time))
-    def settingsfile(self,setting):
-        fileattr=self.settings[setting]['file']
-        if hasattr(self,fileattr):
-            return getattr(self,fileattr)
-        else:
-            log.error("No file name for setting {}!".format(setting))
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
         fns={}
