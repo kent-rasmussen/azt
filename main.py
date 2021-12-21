@@ -1063,12 +1063,12 @@ class FileChooser(object):
     def __init__(self):
         super(FileChooser, self).__init__()
         self.getfilename()
-        self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
-        self.getwritingsystemsinfo()
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.loadsettingsfile()
         self.loaddatabase()
         self.dailybackup()
+        self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
+        self.getwritingsystemsinfo()
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
         self.guessanalang() #needed for regexs
