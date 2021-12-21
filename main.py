@@ -1112,19 +1112,14 @@ class FileChooser(object):
         self.makeglosslangs()
         self.guessglosslangs()
         self.notifyuserofextrasegments() #self.analang set by now
-        self.langnames()
         self.polygraphcheck()
         self.checkforprofileanalysis()
         self.checkinterpretations() #checks/sets values for self.distinguish
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
-        self.setupCVrxs() #creates self.rx dictionaries
         """The line above may need to go after this block"""
-        self.setnamesall() #sets self.checknamesall
-        self.file.loadsettingsfile(setting='status')
+        self.loadsettingsfile(setting='status')
         self.loadsettingsfile(setting='adhocgroups')
-        self.makedatadict()
-        self.makeexampledict() #needed for makestatus
-        
+        self.loadsettingsfile(setting='toneframes')
 class TaskChooser(ui.Window):
     """This class stores the hierarchy of tasks to do in A→Z+T, plus the
     minimum and optimum prerequisites for each. Based on these, it presents
