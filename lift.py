@@ -40,7 +40,7 @@ class BadParseError(Error):
 class Lift(object): #fns called outside of this class call self.nodes here.
     """The job of this class is to expose the LIFT XML as python object
     attributes. Nothing more, not thing else, should be done here."""
-    def __init__(self, filename,nsyls=None):
+    def __init__(self, filename):
         self.debug=False
         self.filename=filename #lift_file.liftstr()
         self.logfile=filename+".changes"
@@ -2203,7 +2203,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
-    lift=Lift(filename,nsyls=2)
+    lift=Lift(filename)
     senseids=["begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
             'widen_fceb550d-fc99-40af-a288-0433add4f15',
             'flatten_9fb3d2b4-bc9e-4451-b475-36ee10316e40',

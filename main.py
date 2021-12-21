@@ -300,7 +300,7 @@ class FileChooser(object):
             self.repo.commit()
     def loaddatabase(self):
         try:
-            self.db=lift.Lift(self.name) #,nsyls=nsyls
+            self.db=lift.Lift(self.name)
         except lift.BadParseError:
             text=_("{} doesn't look like a well formed lift file; please "
                     "try again.").format(self.name)
@@ -704,7 +704,7 @@ class TaskChooser(ui.Window):
             for w in self.check.frame.winfo_children():
                 w.destroy()
             # self.check.frame.destroy()
-        self.check=Check(self,self.frame,filename) #nsyls=self.nsyls
+        self.check=Check(self,self.frame,filename)
         if not self.exitFlag.istrue():
             self.deiconify()
     def __init__(self,parent):
@@ -932,7 +932,7 @@ class Menus(ui.Menu):
 class Check():
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
-    def __init__(self, parent, frame, filename=None, nsyls=None):
+    def __init__(self, parent, frame, filename=None):
         self.start_time=time.time() #this enables boot time evaluation
         self.parent=parent # chooser#should be mainapplication frame
         for attr in ['exitFlag','file','params','slices','status']:
@@ -949,10 +949,6 @@ class Check():
 
         # self.glosslangs=Glosslangs(None,None) #needed for upgrading
         self.file.loadsettingsfile(setting='adhocgroups')
-        if nsyls is not None:
-            self.nsyls=nsyls
-        else:
-            self.nsyls=2
         self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
         self.invalidregex='( |\.|,|\)|\()+'
         # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
@@ -6869,14 +6865,11 @@ class MainApplication(ui.Window,Context):
         # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
         # self.frame.grid(column=0, row=0)
         self.maketitle()
-        self.nsyls=None #this will give the default (currently 5)
         """This means make check with
         this app as parent
         the root window as base window, and
         the root window as the master window, from which new windows should
         inherit attributes
-        make syllable profile data analysis up to nsyls syllables
-        (more is more load time.)
         """
         """Do any check tests here"""
         """Make the rest of the mainApplication window"""
