@@ -336,8 +336,7 @@ class FileChooser(object):
             text=_("{} doesn't look like a well formed lift file; please "
                     "try again.").format(self.name)
             log.info("'lift_url.py' removed.")
-            ErrorNotice(title='LIFT parse error',
-                        text=text)
+            ErrorNotice(text,title='LIFT parse error')
             # window=ui.Window(self)
             # ui.Label(window,text=text).grid(row=0,column=0)
             file.remove('lift_url.py') #whatever the problem was, remove it.
@@ -8291,7 +8290,7 @@ class Repository(object):
                     "resolved from Chorus merges:\n {}"
                     "").format(self.url,'\n'.join(rescues))
             log.error(error)
-            ErrorNotice(error,program['root'],"Chorus Rescue files found!")
+            ErrorNotice(error,title="Chorus Rescue files found!")
             if me:
                 exit()
     def add(self,file):
