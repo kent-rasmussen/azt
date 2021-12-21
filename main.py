@@ -1226,6 +1226,8 @@ class TaskChooser(ui.Window):
         self.makeparameters()
         self.makeslicedict()
         self.makestatus()
+        self.maxprofiles=5 # how many profiles to check before moving on to another ps
+        self.maxpss=2 #don't automatically give more than two grammatical categories
         self.mainwindowis=self
         self.makecheck()
         self.maketoneframes()
@@ -1467,10 +1469,6 @@ class Check():
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
         """These two lines can import structured frame dictionaries; do this
         just to make the import, then comment them out again."""
-        log.info("analang guessed: {} (If you don't like this, change it in "
-                    "the menus)".format(self.analang))
-        self.maxprofiles=5 # how many profiles to check before moving on to another ps
-        self.maxpss=2 #don't automatically give more than two grammatical categories
         # self.makestatus()
         #This can wait until runcheck, right?
         #     self.sortingstatus() #because this won't get set later #>checkdefaults?
