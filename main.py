@@ -120,6 +120,32 @@ class FileChooser(object):
         (.) in their filenames. So we take the base name from the lift file,
         and replace periods with underscores, to make our modules basename."""
         self.namebase=re.sub('\.','_', str(file.getfilenamebase(self.name)))
+    def senseidtriage(self):
+        # import time
+        # print("Doing senseid triage... This takes awhile...")
+        # start_time=time.time()
+        self.senseids=self.db.senseids
+        self.senseidsinvalid=[] #nothing, for now...
+        # print(time.time() - start_time,"seconds.")
+        print(len(self.senseidsinvalid),'senses with invalid data found.')
+        self.db.senseidsinvalid=self.senseidsinvalid
+        self.senseidsvalid=[]
+        for senseid in self.senseids:
+            if senseid not in self.senseidsinvalid:
+                self.senseidsvalid+=[senseid]
+        print(len(self.senseidsvalid),'senses with valid data remaining.')
+        self.senseidswanyps=self.db.get('sense',path=['ps'],showurl=True).get('senseid') #any ps value works here.
+        print(len(self.senseidswanyps),'senses with ps data found.')
+        self.senseidsvalidwops=[]
+        self.senseidsvalidwps=[]
+        for senseid in self.senseidsvalid:
+            if senseid in self.senseidswanyps:
+                self.senseidsvalidwps+=[senseid]
+            else:
+                self.senseidsvalidwops+=[senseid]
+        self.db.senseidsvalidwps=self.senseidsvalidwps #This is what we'll search
+        print(len(self.senseidsvalidwops),'senses with valid data but no ps data.')
+        print(len(self.senseidsvalidwps),'senses with valid data and ps data.')
     def mercurialwarning(self,filedir):
         title="Warning: Mercurial Repository without Executable"
         window=ui.Window(self.frame,title=title)
@@ -2575,32 +2601,6 @@ class Check():
             l+=group
         return list(dict.fromkeys(l))
     """Mediating between LIFT and the user"""
-    def senseidtriage(self):
-        # import time
-        # print("Doing senseid triage... This takes awhile...")
-        # start_time=time.time()
-        self.senseids=self.db.senseids
-        self.senseidsinvalid=[] #nothing, for now...
-        # print(time.time() - start_time,"seconds.")
-        print(len(self.senseidsinvalid),'senses with invalid data found.')
-        self.db.senseidsinvalid=self.senseidsinvalid
-        self.senseidsvalid=[]
-        for senseid in self.senseids:
-            if senseid not in self.senseidsinvalid:
-                self.senseidsvalid+=[senseid]
-        print(len(self.senseidsvalid),'senses with valid data remaining.')
-        self.senseidswanyps=self.db.get('sense',path=['ps'],showurl=True).get('senseid') #any ps value works here.
-        print(len(self.senseidswanyps),'senses with ps data found.')
-        self.senseidsvalidwops=[]
-        self.senseidsvalidwps=[]
-        for senseid in self.senseidsvalid:
-            if senseid in self.senseidswanyps:
-                self.senseidsvalidwps+=[senseid]
-            else:
-                self.senseidsvalidwops+=[senseid]
-        self.db.senseidsvalidwps=self.senseidsvalidwps #This is what we'll search
-        print(len(self.senseidsvalidwops),'senses with valid data but no ps data.')
-        print(len(self.senseidsvalidwps),'senses with valid data and ps data.')
     def guidtriage(self):
         # import time
         log.info("Doing guid triage... This takes awhile...")
