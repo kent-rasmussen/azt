@@ -205,25 +205,6 @@ class FileChooser(object):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
         self.toneframes=ToneFrames(self.toneframes)
-    def __init__(self):
-        # self.exitFlag=self.parent.exitFlag
-        super(FileChooser, self).__init__()
-        self.getfilename()
-        self.getdirectories()
-        self.loadsettingsfile()
-        # self.settingsfilecheck()
-        # self.repocheck()
-        self.loaddatabase()
-        self.dailybackup()
-        self.loadsettingsfile(setting='profiledata')
-        """I think I need this before setting up regexs"""
-        self.guessanalang() #needed for regexs
-class TaskChooser(ui.Window):
-    """This class stores the hierarchy of tasks to do in A→Z+T, plus the
-    minimum and optimum prerequisites for each. Based on these, it presents
-    to the user a default (highest in hierarchy without optimum fulfilled)
-    task on opening, and allows users to choose others (any with minimum
-    prequisites satisfied)."""
     def getfile(self):
         self.file=FileChooser()
     def makestatus(self):
@@ -259,20 +240,6 @@ class TaskChooser(ui.Window):
         self.check=Check(self,self.frame,filename) #nsyls=self.nsyls
         if not self.exitFlag.istrue():
             self.deiconify()
-    def __init__(self,parent):
-        super(TaskChooser, self).__init__(parent)
-        self.exitFlag=self.parent.exitFlag
-        self.getfile()
-        self.makeparameters()
-        self.makeslicedict()
-        self.makestatus()
-        self.makecheck()
-        self.maketoneframes()
-        #If the user exits out before this point, just stop.
-        if self.check is None:
-            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
-            row=0,column=0
-            )
         try:
             self.check.frame.winfo_exists()
         except:
@@ -447,6 +414,41 @@ class Context(object):
                 self.languagenames[xyz]="Fulfulde"
             elif xyz == 'bfj':
                 self.languagenames[xyz]="Chufie’"
+        for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
+            if not hasattr(self,k):
+    def __init__(self):
+        # self.exitFlag=self.parent.exitFlag
+        super(FileChooser, self).__init__()
+        self.getfilename()
+        self.getdirectories()
+        self.loadsettingsfile()
+        # self.settingsfilecheck()
+        # self.repocheck()
+        self.loaddatabase()
+        self.dailybackup()
+        self.loadsettingsfile(setting='profiledata')
+        """I think I need this before setting up regexs"""
+        self.guessanalang() #needed for regexs
+    def __init__(self,parent):
+        super(TaskChooser, self).__init__(parent)
+        self.exitFlag=self.parent.exitFlag
+        self.getfile()
+        self.makeparameters()
+        self.makeslicedict()
+        self.makestatus()
+        self.makecheck()
+        self.maketoneframes()
+        #If the user exits out before this point, just stop.
+        if self.check is None:
+            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
+            row=0,column=0
+            )
+        try:
+            self.check.frame.winfo_exists()
+        except:
+            return
+class Context(object):
+    """This class stores the methods for any object which is a context."""
     def __init__(self, arg):
         super(Context, self).__init__(**kwargs)
         for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
