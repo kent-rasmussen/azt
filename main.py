@@ -1296,18 +1296,47 @@ class TaskChooser(TaskDressing,ui.Window):
             else:
                 self.rx[c+'_']=re.compile('(?<![CSGDNʔ])'+c)
             self.rx[c+'wd']=re.compile(c+'(?=\Z)')
-    def makecheck(self): #,filename=None
-        if hasattr(self,'check'): #for restarts
-            self.parent.withdraw()
-            for w in self.frame.winfo_children():
-                w.destroy()
-            for w in self.check.frame.winfo_children():
-                w.destroy()
+    def makeoptions(self):
+        """This function (and probably a few dependent functions, maybe
+        another class) provides a list of functions with prerequisites
+        that are minimally and/or optimally satisfied."""
+        return [(Check,"Basic check that we've been doing"),
+                (Check2,"Placeholder for future checks")
+                ]
+    def gettask(self,event=None):
+        """This function allows the user to select from any of tasks whose
+        prerequisites are minimally satisfied."""
+        if hasattr(self,'task') and self.task.winfo_exists():
+            self.task.mainwindow=False
+            self.task.destroy()
+        self.mainwindow=True
+        self.mainwindowis=self
+        optionlist=self.makeoptions()
+        ui.ButtonFrame(self.frame,
+                                optionlist=optionlist,
+                                command=self.maketask,
+                                # window=None,
+                                column=0, row=0,
+                                pady=(25,0)
+                                )
+        self.deiconify()
+        self.setmainwindow(self)
+    def makedefaulttask(self):
+        """This function makes the task after the highest optimally
+        satisfied task"""
+        optionlist=self.makeoptions()
+        self.maketask(optionlist[-1][0]) #last item, the code
+    def maketask(self,taskclass): #,filename=None
+        self.withdraw()
+        self.mainwindowis=self.task=taskclass(self) #filename
+        self.task.mainwindow=True
+        self.task.deiconify()
+        # if hasattr(self,'task'): #for restarts
+            # for w in self.frame.winfo_children():
+            #     w.destroy()
+            # for w in self.check.frame.winfo_children():
+            #     w.destroy()
             # self.check.frame.destroy()
-        self.check=Check(self,self.frame) #filename
-        if not self.exitFlag.istrue():
-            self.deiconify()
-        self.setmainwindow(self.check)
     def langnames(self):
         """This is for getting the prose name for a language from a code."""
         """It uses a xyz.ldml file, produced (at least) by WeSay."""
@@ -1377,16 +1406,16 @@ class TaskChooser(TaskDressing,ui.Window):
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
         self.mainwindowis=self
-        self.makecheck()
+        self.makedefaulttask()
         self.maketoneframes()
         self.langnames()
         #If the user exits out before this point, just stop.
-        if self.check is None:
+        if self.task is None:
             l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
             row=0,column=0
             )
         try:
-            self.check.frame.winfo_exists()
+            self.task.frame.winfo_exists() #these should all be windows w/frames
         except:
             return
 class Context(object):
