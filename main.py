@@ -1105,7 +1105,7 @@ class FileChooser(object):
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
         self.guessanalang() #needed for regexs
-        self.file.loadsettingsfile() # overwrites guess above, stored on runcheck
+        self.loadsettingsfile() # overwrites guess above, stored on runcheck
         if self.analang is None:
             return
         self.guessaudiolang()
