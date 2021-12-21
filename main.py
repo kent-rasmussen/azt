@@ -1061,6 +1061,7 @@ class FileChooser(object):
     def __init__(self):
         super(FileChooser, self).__init__()
         self.getfilename()
+        self.getwritingsystemsinfo()
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.loadsettingsfile()
         self.loaddatabase()
