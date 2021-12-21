@@ -708,6 +708,9 @@ class TaskChooser(ui.Window):
         if not self.exitFlag.istrue():
             self.deiconify()
     def __init__(self,parent):
+        for attr in ['exitFlag']:
+            if hasattr(parent,attr):
+                setattr(self,attr,getattr(parent,attr))
         super(TaskChooser, self).__init__(parent)
         self.exitFlag=self.parent.exitFlag
         self.getfile()
