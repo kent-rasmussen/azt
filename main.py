@@ -1086,6 +1086,7 @@ class FileChooser(object):
         """The line above may need to go after this block"""
         self.setnamesall() #sets self.checknamesall
         self.file.loadsettingsfile(setting='status')
+        self.loadsettingsfile(setting='adhocgroups')
         self.makedatadict()
         self.makeexampledict() #needed for makestatus
         
@@ -1446,7 +1447,6 @@ class Check():
         # self.frame=frame
 
         # self.glosslangs=Glosslangs(None,None) #needed for upgrading
-        self.file.loadsettingsfile(setting='adhocgroups')
 
         """Are we OK without these?"""
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
@@ -1582,7 +1582,6 @@ class Check():
             self.makecountssorted() #we need these to show up in the counts.
             self.storesettingsfile(setting='profiledata')#since we changed this.
             #so we don't have to do this again after each profile analysis
-            self.storesettingsfile(setting='adhocgroups')
         self.getrunwindow()
         profile=self.slices.profile()
         ps=self.slices.ps()
