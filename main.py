@@ -593,10 +593,12 @@ class FileChooser(object):
                     self.analang=self.db.analangs[n]
                     log.debug(_('Looks like I found an iso code for analang! '
                                             '({})'.format(self.db.analangs[n])))
-                    return
+                    break
             log.debug('None of more than three analangs look like an iso code, '
             'taking the first one: {}'.format(self.db.analangs))
             self.analang=self.db.analangs[0]
+        log.info("analang guessed: {} (If you don't like this, change it in "
+                    "the menus)".format(self.analang))
     def guessaudiolang(self):
         nlangs=len(self.db.audiolangs)
         """if there's only one audio language, use it."""
