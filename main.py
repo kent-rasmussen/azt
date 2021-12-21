@@ -1091,16 +1091,6 @@ class Check():
                 self.languagenames[xyz]="Chufie’"
         for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
             if not hasattr(self,k):
-class Context(object):
-    """This class stores the methods for any object which is a context."""
-    def __init__(self, arg):
-        super(Context, self).__init__(**kwargs)
-        for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
-            if not hasattr(self,k):
-                setattr(self,k,False)
-        ui.ContextMenu(self)
-class Menus(ui.Menu):
-    """docstring for Menus."""
             else:
                 self.languagenames[xyz]=_("Language with code "
                                                         "[{}]").format(xyz)
@@ -1936,30 +1926,6 @@ class Menus(ui.Menu):
                 self.reloadprofiledata()
             elif refresh == True:
                 self.refreshattributechanges()
-    def __init__(self, parent):
-        super(Menus, self).__init__(parent)
-class Check():
-    """the parent is the *functional* head, the MainApplication."""
-    """the frame is the *GUI* head, the frame sitting in the MainApplication."""
-    def __init__(self, parent, frame, filename=None, nsyls=None):
-        self.start_time=time.time() #this enables boot time evaluation
-        self.parent=parent # chooser#should be mainapplication frame
-        for attr in ['exitFlag','file','params','slices','status']:
-            if hasattr(parent,attr):
-                setattr(self,attr,getattr(parent,attr))
-        # self.exitFlag=self.parent.exitFlag
-        # self.file=self.parent.file
-        self.pp=pprint.PrettyPrinter()
-        self.iterations=0
-        # print(time.time()-self.start_time) # with this
-        # self.su=True #show me stuff others don't want/need
-        # self.su=False #not a superuser; make it easy on me!
-        # self.frame=frame
-
-        # self.glosslangs=Glosslangs(None,None) #needed for upgrading
-        self.file.loadsettingsfile(setting='adhocgroups')
-        if nsyls is not None:
-            self.nsyls=nsyls
         else:
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setinterfacelangwrapper(self,choice,window):
