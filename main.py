@@ -1612,7 +1612,7 @@ class Check2(ui.Window,TaskDressing):
 class Check(TaskDressing,ui.Window):
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
-    def __init__(self, parent, frame): #, filename=None
+    def __init__(self, parent): #frame, filename=None
         self.start_time=time.time() #this enables boot time evaluation
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
