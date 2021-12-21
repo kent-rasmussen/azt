@@ -321,6 +321,39 @@ class FileChooser(object):
         self.profilesbysense={}
         self.file.storesettingsfile(setting='profiledata')
         self.restart()
+    def reloadstatusdata(self):
+        # This fn is very inefficient, as it iterates over everything in
+        # profilesbysense, creating status dictionaries for all of that, in
+        # order to populate it if found —before removing empty entires.
+        # This also has no access to verification information, which comes only
+        # from verifyT()
+        start_time=time.time()
+        self.file.storesettingsfile()
+        pss=self.slices.pss() #this depends on nothing
+        cvts=[i for i in self.params.cvts() if i in self.status]
+        if not cvts:
+            cvts=[i for i in self.params.cvts()]
+        for t in cvts: #this depends on nothing
+            log.info("Working on {}".format(t))
+            for ps in pss:
+                log.info("Working on {}".format(ps))
+                profiles=self.slices.profiles(ps=ps) #This depends on ps only
+                for p in profiles:
+                    log.info("Working on {}".format(p))
+                    checks=self.status.checks(ps=ps,profile=p)
+                    for c in checks:
+                        log.info("Working on {}".format(c))
+                        self.status.build(cvt=t, ps=ps, profile=p, check=c)
+                        """this just populates groups and the tosort boolean."""
+                        self.updatesortingstatus(cvt=t,ps=ps,profile=p,check=c,
+                                                store=False) #do below
+        """Now remove what didn't get data"""
+        self.status.cull()
+        if None in self.status: #This should never be there
+            del self.status[None]
+        self.file.storesettingsfile(setting='status')
+        log.info("Status settings refreshed from LIFT in {}s".format(
+                                                        time.time()-start_time))
     def checkforlegacyverification(self):
         start_time=time.time()
         n=0
@@ -1705,39 +1738,6 @@ class Check():
         # main()
         sys.exit()
         # self.restart(self.filename)
-    def reloadstatusdata(self):
-        # This fn is very inefficient, as it iterates over everything in
-        # profilesbysense, creating status dictionaries for all of that, in
-        # order to populate it if found —before removing empty entires.
-        # This also has no access to verification information, which comes only
-        # from verifyT()
-        start_time=time.time()
-        self.storesettingsfile()
-        pss=self.slices.pss() #this depends on nothing
-        cvts=[i for i in self.params.cvts() if i in self.status]
-        if not cvts:
-            cvts=[i for i in self.params.cvts()]
-        for t in cvts: #this depends on nothing
-            log.info("Working on {}".format(t))
-            for ps in pss:
-                log.info("Working on {}".format(ps))
-                profiles=self.slices.profiles(ps=ps) #This depends on ps only
-                for p in profiles:
-                    log.info("Working on {}".format(p))
-                    checks=self.status.checks(ps=ps,profile=p)
-                    for c in checks:
-                        log.info("Working on {}".format(c))
-                        self.status.build(cvt=t, ps=ps, profile=p, check=c)
-                        """this just populates groups and the tosort boolean."""
-                        self.updatesortingstatus(cvt=t,ps=ps,profile=p,check=c,
-                                                store=False) #do below
-        """Now remove what didn't get data"""
-        self.status.cull()
-        if None in self.status: #This should never be there
-            del self.status[None]
-        self.storesettingsfile(setting='status')
-        log.info("Status settings refreshed from LIFT in {}s".format(
-                                                        time.time()-start_time))
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
         if hasattr(self,fileattr):
