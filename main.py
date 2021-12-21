@@ -84,6 +84,30 @@ import pkg_resources
 class FileChooser(object):
     """This class selects the LIFT database we'll be working with, and does
     some basic processing on it."""
+    def askwhichlift(self,filenamelist):
+        def setfilename(choice,window):
+            if choice == 'New':
+                log.error("Just kidding! This isn't implemented yet.")
+                return
+            if choice == 'Other':
+                self.name=file.lift()
+                if not self.name:
+                    return
+            else:
+                self.name=choice
+            file.writefilename(self.name)
+            window.destroy()
+        self.name=None # in case of exit
+        window=ui.Window(self.frame,title="Select LIFT Database")
+        text=_('What LIFT database do you want to work on?')
+        ui.Label(window.frame, text=text).grid(column=0, row=0)
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                optionlist=['New']+filenamelist+['Other'],
+                                command=setfilename,
+                                window=window,
+                                column=0, row=1
+                                )
+        window.wait_window(window)
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
         filedir=file.getfilenamedir(self.filename)
@@ -240,15 +264,6 @@ class FileChooser(object):
         o.bind("<Button-1>", lambda e: openweburl(hgurl))
         mtt=ui.ToolTip(o,_("Go to {}").format(hgurl))
         window.lift()
-    def askwhichlift(self,filenamelist):
-        def setfilename(choice,window):
-            if choice == 'New':
-                log.error("Just kidding! This isn't implemented yet.")
-                return
-            if choice == 'Other':
-                self.filename=file.lift()
-                if not self.filename:
-                    return
             else:
                 self.filename=choice
             file.writefilename(self.filename)
