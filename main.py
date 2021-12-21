@@ -1719,18 +1719,6 @@ class Check(TaskDressing,ui.Window):
         """For now, if cvt isn't set, start with Vowels."""
         self.set('cvt','V')
     """User Input functions"""
-    def getinterfacelang(self,event=None):
-        log.info("Asking for interface language...")
-        window=ui.Window(self.frame, title=_('Select Interface Language'))
-        ui.Label(window.frame, text=_('What language do you want this program '
-                                'to address you in?')
-                ).grid(column=0, row=0)
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                optionlist=self.parent.interfacelangs,
-                                command=self.setinterfacelangwrapper,
-                                window=window,
-                                column=0, row=1
-                                )
     def addmodadhocsort(self):
         def submitform():
             if profilevar.get() == "":
