@@ -1316,7 +1316,10 @@ class Settings(object):
         self.refreshattributechanges()
         window.destroy()
     def setanalang(self,choice,window):
-        self.set('analang',choice,window)
+        self.params.analang(choice)
+        self.attrschanged.append('analang')
+        self.refreshattributechanges()
+        window.destroy()
     def setgroup(self,choice,window):
         log.debug("group: {}".format(choice))
         self.status.group(choice)
