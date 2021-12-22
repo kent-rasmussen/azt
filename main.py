@@ -661,6 +661,58 @@ class Settings(object):
             elif 'default' in config and section in config['default']:
                 d[section]=ofromstr(config['default'][section])
         self.readsettingsdict(d)
+    def initdefaults(self):
+        """Some of these defaults should be reset when setting another field.
+        These are listed under that other field. If no field is specified
+        (e.g., on initialization), then do all the fields with None key (other
+        fields are NOT saved to file!).
+        These are check related defaults; others in lift.get"""
+        self.defaultstoclear={'ps':[
+                            'profile' #do I want this?
+                            # 'name',
+                            # 'subcheck'
+                            ],
+                        'analang':[
+                            'glosslangs',
+                            'ps',
+                            'profile',
+                            'cvt',
+                            'check',
+                            'subcheck'
+                            ],
+                        'interfacelang':[],
+                        'glosslangs':[],
+                        'check':[],
+                        'subcheck':[
+                            'regexCV'
+                            ],
+                        'group_comparison':[],
+                        'profile':[
+                            # 'name'
+                            ],
+                        'cvt':[
+                            'check',
+                            # 'subcheck'
+                            ],
+                        'fs':[],
+                        'sample_format':[],
+                        'audio_card_index':[],
+                        'audioout_card_index':[],
+                        'examplespergrouptorecord':[],
+                        'distinguish':[],
+                        'interpret':[],
+                        'adnlangnames':[],
+                        'hidegroupnames':[],
+                        'maxprofiles':[]
+                        }
+    def cleardefaults(self,field=None):
+        if field==None:
+            fields=self.settings['defaults']['attributes']
+        else:
+            fields=self.defaultstoclear[field]
+        for default in fields: #self.defaultstoclear[field]:
+            setattr(self, default, None)
+            """These can be done in checkcheck..."""
     def settings(self):
         setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
         self.initdefaults() #provides self.defaults, list to load/save
@@ -1752,6 +1804,19 @@ class TaskDressing(object):
             log.info("Using theme '{}'.".format(program['theme'].name))
             title+=_(' ('+program['theme'].name+')')
         self.title(title)
+    def inherit(self):
+        for attr in ['exitFlag','file','params','slices','status','db',
+                    'datadict','exs','toneframes',
+                    'settings',
+                    'menu','mainrelief','fontthemesmall',
+                    'hidegroupnames'
+                    # 'glosslangs',
+                    # 'analang',
+                    # 'audiolang',
+                    # 'profilesbysense'
+                    ]:
+            if hasattr(parent,attr):
+                setattr(self,attr,getattr(parent,attr))
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -2111,15 +2176,6 @@ class Check(TaskDressing,ui.Window):
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         self.parent=parent # chooser#should be mainapplication frame
-        for attr in ['exitFlag','file','params','slices','status','db',
-                    'datadict','exs','toneframes',
-                    'glosslangs',
-                    'analang',
-                    'audiolang','languagenames',
-                    'profilesbysense'
-                    ]:
-            if hasattr(parent,attr):
-                setattr(self,attr,getattr(parent,attr))
         # if me: #not yet
         #     self._setmenus()
         # self.exitFlag=self.parent.exitFlag
@@ -2615,58 +2671,6 @@ class Check(TaskDressing,ui.Window):
             # windowT.wait_window(window=windowT) #?!?
         return w #so others can wait for this
     """Settings to and from files"""
-    def initdefaults(self):
-        """Some of these defaults should be reset when setting another field.
-        These are listed under that other field. If no field is specified
-        (e.g., on initialization), then do all the fields with None key (other
-        fields are NOT saved to file!).
-        These are check related defaults; others in lift.get"""
-        self.defaultstoclear={'ps':[
-                            'profile' #do I want this?
-                            # 'name',
-                            # 'subcheck'
-                            ],
-                        'analang':[
-                            'glosslangs',
-                            'ps',
-                            'profile',
-                            'cvt',
-                            'check',
-                            'subcheck'
-                            ],
-                        'interfacelang':[],
-                        'glosslangs':[],
-                        'check':[],
-                        'subcheck':[
-                            'regexCV'
-                            ],
-                        'group_comparison':[],
-                        'profile':[
-                            # 'name'
-                            ],
-                        'cvt':[
-                            'check',
-                            # 'subcheck'
-                            ],
-                        'fs':[],
-                        'sample_format':[],
-                        'audio_card_index':[],
-                        'audioout_card_index':[],
-                        'examplespergrouptorecord':[],
-                        'distinguish':[],
-                        'interpret':[],
-                        'adnlangnames':[],
-                        'hidegroupnames':[],
-                        'maxprofiles':[]
-                        }
-    def cleardefaults(self,field=None):
-        if field==None:
-            fields=self.settings['defaults']['attributes']
-        else:
-            fields=self.defaultstoclear[field]
-        for default in fields: #self.defaultstoclear[field]:
-            setattr(self, default, None)
-            """These can be done in checkcheck..."""
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
