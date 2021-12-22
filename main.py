@@ -1662,7 +1662,7 @@ class Settings(object):
     def __init__(self):
         super(Settings, self).__init__()
 
-class TaskDressing(Settings,object):
+class TaskDressing(object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
     def _taskchooserbutton(self):
@@ -1822,6 +1822,8 @@ class TaskChooser(TaskDressing,ui.Window):
                                 self.file.settingsfile('status'),
                                 self.status
                                 )
+    def makesettings(self):
+        self.settings=Settings(self.file.directory)
     def makeparameters(self):
         self.params=CheckParameters(self.analang) #remove self.profilesbysense?
     def makeslicedict(self):
