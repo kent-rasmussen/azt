@@ -1840,28 +1840,6 @@ class TaskChooser(TaskDressing,ui.Window):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
         self.toneframes=ToneFrames(self.toneframes)
-    def setinvalidcharacters(self):
-        self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
-        self.invalidregex='( |\.|,|\)|\()+'
-        # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
-        self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
-    def setupCVrxs(self):
-        self.rx={}
-        for sclass in list(self.s[self.analang]):
-            if self.s[self.analang][sclass] != []: #don't make if empty
-                self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
-        #Compile preferred regexs here
-        for cc in ['CG','CS','NC','VN','VV']:
-            ccc=cc.replace('C','[CSGDʔN]{1}')
-            self.rx[cc]=re.compile(ccc)
-        for c in ['N','S','G','ʔ','D']:
-            if c == 'N': #i.e., before C
-                self.rx[c+'_']=re.compile(c+'(?!([CSGDʔ]|\Z))') #{1}|
-            elif c in ['ʔ','D']:
-                self.rx[c+'_']=re.compile(c+'(?!\Z)')
-            else:
-                self.rx[c+'_']=re.compile('(?<![CSGDNʔ])'+c)
-            self.rx[c+'wd']=re.compile(c+'(?=\Z)')
     def makeoptions(self):
         """This function (and probably a few dependent functions, maybe
         another class) provides a list of functions with prerequisites
@@ -1991,6 +1969,8 @@ class TaskChooser(TaskDressing,ui.Window):
         self.getfile()
         self.setupCVrxs() #creates self.rx dictionaries
         self.updateinterfacelang()
+        self.makesettings()
+        log.info("Settings: {}".format(self.settings))
         self.makeparameters()
         self.makeslicedict() #needs params
         self.makedatadict()
