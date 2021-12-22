@@ -1647,7 +1647,28 @@ class Settings(object):
     def __init__(self,liftfilename):
         self.liftfilename=liftfilename
         super(Settings, self).__init__()
-
+        self.getdirectories() #incl settingsfilecheck and repocheck
+        self.repocheck()
+        self.settingsfilecheck()
+        self.loadsettingsfile()
+        self.loadsettingsfile(setting='profiledata')
+        """I think I need this before setting up regexs"""
+        self.guessanalang() #needed for regexs
+        self.loadsettingsfile() # overwrites guess above, stored on runcheck
+        if self.analang is None:
+            return
+        self.guessaudiolang()
+        self.makeglosslangs()
+        self.guessglosslangs()
+        self.notifyuserofextrasegments() #self.analang set by now
+        self.polygraphcheck()
+        self.checkinterpretations() #checks/sets values for self.distinguish
+        self.checkforprofileanalysis()
+        self.slists() #lift>check segment dicts: s[lang][segmenttype]
+        """The line above may need to go after this block"""
+        self.loadsettingsfile(setting='status')
+        self.loadsettingsfile(setting='adhocgroups')
+        self.loadsettingsfile(setting='toneframes')
 class TaskDressing(object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
@@ -8168,6 +8189,12 @@ class CheckParameters(dict):
         elif not hasattr(self,'_check'):
             self._check=None
         return self._check
+    def analang(self,analang=None):
+        if analang is not None:
+            self._analang=analang
+        elif not hasattr(self,'_analang'):
+            self._analang=None
+        return self._analang
     def __init__(self,analang): # had, do I need check? to write?
         """replaces setnamesall"""
         """replaces self.checknamesall"""
