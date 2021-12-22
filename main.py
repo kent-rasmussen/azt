@@ -168,30 +168,10 @@ class FileChooser(object):
     def __init__(self):
         super(FileChooser, self).__init__()
         self.getfilename()
-        self.getdirectories() #incl settingsfilecheck and repocheck
-        self.loadsettingsfile()
         self.loaddatabase()
         self.dailybackup()
         self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
         self.getwritingsystemsinfo()
-        self.loadsettingsfile(setting='profiledata')
-        """I think I need this before setting up regexs"""
-        self.guessanalang() #needed for regexs
-        self.loadsettingsfile() # overwrites guess above, stored on runcheck
-        if self.analang is None:
-            return
-        self.guessaudiolang()
-        self.makeglosslangs()
-        self.guessglosslangs()
-        self.notifyuserofextrasegments() #self.analang set by now
-        self.polygraphcheck()
-        self.checkforprofileanalysis()
-        self.checkinterpretations() #checks/sets values for self.distinguish
-        self.slists() #lift>check segment dicts: s[lang][segmenttype]
-        """The line above may need to go after this block"""
-        self.loadsettingsfile(setting='status')
-        self.loadsettingsfile(setting='adhocgroups')
-        self.loadsettingsfile(setting='toneframes')
 class Menus(ui.Menu):
     """this is the overall menu set, from which each will be selected."""
     def command(self,parent,label,cmd):
