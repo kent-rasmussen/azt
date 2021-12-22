@@ -1643,6 +1643,7 @@ class TaskChooser(TaskDressing,ui.Window):
             self.file.storesettingsfile(setting='status')
     def __init__(self,parent):
         self.setiflang() #before Splash
+        splash = Splash(parent)
         for attr in ['exitFlag']:
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
@@ -1673,6 +1674,7 @@ class TaskChooser(TaskDressing,ui.Window):
             self.task.frame.winfo_exists() #these should all be windows w/frames
         except:
             return
+        splash.destroy()
 class WordCollection(ui.Window,TaskDressing):
     """This task collects words, from the SIL CAWL, or one by one."""
     def tasktitle(self):
@@ -6953,7 +6955,6 @@ class MainApplication(ui.Window):
         #Might be needed for M$ windows:root.state('zoomed')
         # super().__init__(parent,class_="AZT")
         self.withdraw()
-        splash = Splash(parent)
         """Set up the frame in this (mainapplication) frame. This will be
         'placed' in the middle of the mainapplication frame, which is
         gridded into the center of the root window. This configuration keeps
