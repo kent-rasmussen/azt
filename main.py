@@ -1804,6 +1804,67 @@ class TaskDressing(object):
             log.info("Using theme '{}'.".format(program['theme'].name))
             title+=_(' ('+program['theme'].name+')')
         self.title(title)
+    def fullscreen(self):
+        w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
+        self.parent.geometry("%dx%d+0+0" % (w, h))
+    def quarterscreen(self):
+        w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
+        w=w/2
+        h=h/2
+        self.parent.geometry("%dx%d+0+0" % (w, h))
+    def helpabout(self):
+        window=ui.Window(self)
+        title=(_("{name} Dictionary and Orthography Checker".format(name=program['name'])))
+        window.title(title)
+        ui.Label(window.frame,
+                text=_("version: {}").format(program['version']),
+                anchor='c',padx=50,
+                row=1,column=0,sticky='we'
+                        )
+        text=_("{name} is a computer program that accelerates community"
+                "-based language development by facilitating the sorting of a "
+                "beginning dictionary by vowels, consonants and tone.\n"
+                "It does this by presenting users with sets of words from a "
+                "LIFT dictionary database, one part of speech and syllable "
+                "profile at a time. These words are sorted into groups based "
+                "on consonants, vowels, and tone. \nTone frames are "
+                "customizable and stored in the database for each word, "
+                "allowing for a number of approaches to collecting this data. "
+                "A tone report aids the drafting of underlying categories by "
+                "grouping words based on sorting across tone frames. \n{name} then "
+                "allows the user to record a word in each of the frames where "
+                "it has been sorted, storing the recorded audio file in a "
+                "directory, with links to each file in the dictionary database."
+                " Recordings can be made up to 192khz/32float, according to "
+                "your recording equipment's capacity.").format(
+                                                    name=program['name'])
+        webtext=_("For help with this tool, please check out the documentation "
+                "at {url} ").format(url=program['url'])
+        mailtext=_("or write me at {}.").format(program['Email'])
+        ui.Label(window.frame, text=title,
+                font='title',anchor='c',padx=50,
+                row=0,column=0,sticky='we')
+        f=ui.ScrollingFrame(window.frame,
+                            row=2,column=0,sticky='we')
+        ui.Label(f.content, image=self.frame.theme.photo['small'],
+                text='',
+                row=0,column=0,sticky='we'
+                )
+        l=ui.Label(f.content, text=text, padx=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=1,column=0,pady=(50,0),sticky='we'
+                )
+        webl=ui.Label(f.content, text=webtext, padx=50,#pady=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=2,column=0,sticky='we'
+                )
+        maill=ui.Label(f.content, text=mailtext, padx=50,#pady=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=3,column=0,sticky='we'
+                )
+        webl.bind("<Button-1>", lambda e: openweburl(program['url']))
+        murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
+        maill.bind("<Button-1>", lambda e: openweburl(murl))
     def inherit(self):
         for attr in ['exitFlag','file','params','slices','status','db',
                     'datadict','exs','toneframes',
@@ -6838,67 +6899,6 @@ class FramedDataElement(FramedData):
         log.info("FramedDataElement initalization done, with forms: {}"
                     "".format(self.forms))
 class MainApplication(ui.Window):
-    def fullscreen(self):
-        w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
-        self.parent.geometry("%dx%d+0+0" % (w, h))
-    def quarterscreen(self):
-        w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
-        w=w/2
-        h=h/2
-        self.parent.geometry("%dx%d+0+0" % (w, h))
-    def helpabout(self):
-        window=ui.Window(self)
-        title=(_("{name} Dictionary and Orthography Checker".format(name=program['name'])))
-        window.title(title)
-        ui.Label(window.frame,
-                text=_("version: {}").format(program['version']),
-                anchor='c',padx=50,
-                row=1,column=0,sticky='we'
-                        )
-        text=_("{name} is a computer program that accelerates community"
-                "-based language development by facilitating the sorting of a "
-                "beginning dictionary by vowels, consonants and tone.\n"
-                "It does this by presenting users with sets of words from a "
-                "LIFT dictionary database, one part of speech and syllable "
-                "profile at a time. These words are sorted into groups based "
-                "on consonants, vowels, and tone. \nTone frames are "
-                "customizable and stored in the database for each word, "
-                "allowing for a number of approaches to collecting this data. "
-                "A tone report aids the drafting of underlying categories by "
-                "grouping words based on sorting across tone frames. \n{name} then "
-                "allows the user to record a word in each of the frames where "
-                "it has been sorted, storing the recorded audio file in a "
-                "directory, with links to each file in the dictionary database."
-                " Recordings can be made up to 192khz/32float, according to "
-                "your recording equipment's capacity.").format(
-                                                    name=program['name'])
-        webtext=_("For help with this tool, please check out the documentation "
-                "at {url} ").format(url=program['url'])
-        mailtext=_("or write me at {}.").format(program['Email'])
-        ui.Label(window.frame, text=title,
-                font='title',anchor='c',padx=50,
-                row=0,column=0,sticky='we')
-        f=ui.ScrollingFrame(window.frame,
-                            row=2,column=0,sticky='we')
-        ui.Label(f.content, image=self.frame.theme.photo['small'],
-                text='',
-                row=0,column=0,sticky='we'
-                )
-        l=ui.Label(f.content, text=text, padx=50,
-                wraplength=int(self.winfo_screenwidth()/2),
-                row=1,column=0,pady=(50,0),sticky='we'
-                )
-        webl=ui.Label(f.content, text=webtext, padx=50,#pady=50,
-                wraplength=int(self.winfo_screenwidth()/2),
-                row=2,column=0,sticky='we'
-                )
-        maill=ui.Label(f.content, text=mailtext, padx=50,#pady=50,
-                wraplength=int(self.winfo_screenwidth()/2),
-                row=3,column=0,sticky='we'
-                )
-        webl.bind("<Button-1>", lambda e: openweburl(program['url']))
-        murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
-        maill.bind("<Button-1>", lambda e: openweburl(murl))
     def setmasterconfig(self): #,program
         """Configure variables for the root window (master)"""
         for rc in [0,2]:
