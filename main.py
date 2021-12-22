@@ -1786,7 +1786,9 @@ class Check(TaskDressing,ui.Window):
         self.parent=parent # chooser#should be mainapplication frame
         for attr in ['exitFlag','file','params','slices','status','db',
                     'datadict','exs','toneframes',
-                    'analang','glosslangs','audiolang','languagenames',
+                    'glosslangs',
+                    'analang',
+                    'audiolang','languagenames',
                     'profilesbysense'
                     ]:
             if hasattr(parent,attr):
