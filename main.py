@@ -1372,14 +1372,41 @@ class TaskChooser(TaskDressing,ui.Window):
     task on opening, and allows users to choose others (any with minimum
     prequisites satisfied)."""
     def getfile(self):
-        self.file=FileChooser()
-        # I want to access these attributes directly
-        for attr in ['profilesbysense','analang','interfacelang','s',
-                'toneframes','db','glosslangs',
-                'adhocgroups'
-                ]:
+        def getit(attr):
             if hasattr(self.file,attr):
                 setattr(self,attr,getattr(self.file,attr))
+        file=self.file=FileChooser()
+        # I want to access these attributes directly
+        for k in file.settings:
+            for attr in [i for i in file.settings[k]['attributes']]:
+                getit(attr)
+        for attr in ['s','db']:
+            getit(attr)
+        """'profilesbysense',
+        'analang','interfacelang','audiolang',
+        's',
+        'toneframes','db','glosslangs','status',
+        'adhocgroups',
+        'ps', 'profile' , 'cvt',
+        check
+
+        analang = en
+           7 ps = Verb
+          8 profile = CVCCVC
+          9 cvt = T
+         10 check = Progressive
+         11 regexCV = None
+         12 additionalps = None
+         13 entriestoshow = None
+         14 additionalprofiles = None
+         15 interfacelang = en
+         16 examplespergrouptorecord = 5
+         17 maxpss = 2
+         18 hidegroupnames = None
+         19 maxprofiles = 5
+         20
+         21 [adnlangnames
+                        ]:"""
     def makestatus(self):
         if not hasattr(self,'status'):
             self.status={}
