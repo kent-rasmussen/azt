@@ -518,8 +518,9 @@ class Settings(object):
         to not have periods (.) in their filenames. So we take the base
         name from the lift file, and replace periods with underscores,
         to make our modules basename."""
-        self.namebase=re.sub('\.','_', str(file.getfilenamebase(self.name)))
-        basename=file.getdiredurl(self.directory,self.namebase)
+        self.liftnamebase=re.sub('\.','_', str(
+                                    file.getfilenamebase(self.liftfilename)))
+        basename=file.getdiredurl(self.directory,self.liftnamebase)
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
         self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
         self.statusfile=basename.with_suffix(".VerificationStatus.dat")
@@ -661,10 +662,10 @@ class Settings(object):
         self.initdefaults() #provides self.defaults, list to load/save
         self.cleardefaults() #this resets all to none (to be set below)
     def getdirectories(self):
-        self.directory=file.getfilenamedir(self.name)
+        self.directory=file.getfilenamedir(self.liftfilename)
         if not file.exists(self.directory):
             log.info(_("Looks like there's a problem with your directory... {}"
-                    "\n{}".format(self.name,filemod)))
+                    "\n{}".format(self.liftfilename,filemod)))
             exit()
         self.repocheck()
         self.settingsfilecheck()
@@ -672,7 +673,8 @@ class Settings(object):
         self.audiodir=file.getaudiodir(self.directory)
         log.info('self.audiodir: {}'.format(self.audiodir))
         self.reportsdir=file.getreportdir(self.directory)
-        self.reportbasefilename=file.getdiredurl(self.reportsdir, self.namebase)
+        self.reportbasefilename=file.getdiredurl(self.reportsdir,
+                                                    self.liftnamebase)
         self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
         log.log(2,'self.reportsdir: {}'.format(self.reportsdir))
         log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
@@ -1639,7 +1641,8 @@ class Settings(object):
                 self.adnlangnames={}
             if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
                 self.languagenames[xyz]=self.adnlangnames[xyz]
-    def __init__(self):
+    def __init__(self,liftfilename):
+        self.liftfilename=liftfilename
         super(Settings, self).__init__()
 
 class TaskDressing(object):
