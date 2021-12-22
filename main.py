@@ -3218,7 +3218,6 @@ class Check(TaskDressing,ui.Window):
                             background=self.frame.theme.background
                             ).grid(row=1,column=0,sticky='we')
         self.frame.update()
-        self.parent.deiconify()
     def makeCVprogresstable(self):
         self.boardtitle()
         self.leaderboardtable=ui.Frame(self.leaderboard)
@@ -3226,7 +3225,6 @@ class Check(TaskDressing,ui.Window):
         notext=_("Nothing to see here...")
         ui.Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
         self.frame.update()
-        self.parent.deiconify()
     def maketoneprogresstable(self):
         def groupfn(x):
             for i in x:
