@@ -2449,7 +2449,7 @@ class Check(TaskDressing,ui.Window):
         ui.Label(window.frame, text=_('What grammatical category do you '
                                     'want to work with (Part of speech)?')
                 ).grid(column=0, row=0)
-        if self.additionalps is not None:
+        if hasattr(self,'additionalps') and self.additionalps is not None:
             pss=self.db.pss+self.additionalps #these should be lists
         else:
             pss=self.db.pss
