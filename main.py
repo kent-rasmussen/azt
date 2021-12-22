@@ -2929,13 +2929,9 @@ class Check(TaskDressing,ui.Window):
         """We start with the settings that we can likely guess"""
         """Get Analang"""
         if self.analang not in self.db.analangs:
-            self.guessanalang()
-        if self.analang is None:
-            log.info("find the language")
-            self.getanalang()
+            ErrorNotice("Analysis language {} not in LIFT Languages: {}"
+                        "".format(self.analang,self.db.analangs))
             return
-        if self.audiolang is None:
-            self.guessaudiolang() #don't display this, but make it
         t=(_("Working on {}").format(self.languagenames[self.analang]))
         if (self.languagenames[self.analang] == _("Language with code [{}]"
                                                     "").format(self.analang)):
