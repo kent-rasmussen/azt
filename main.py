@@ -6881,13 +6881,6 @@ class MainApplication(ui.Window):
         webl.bind("<Button-1>", lambda e: openweburl(program['url']))
         murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
         maill.bind("<Button-1>", lambda e: openweburl(murl))
-    def maketitle(self):
-        title=_("{name} Dictionary and Orthography Checker").format(
-                                                    name=program['name'])
-        if program['theme'].name != 'greygreen':
-            log.info("Using theme '{}'.".format(program['theme'].name))
-            title+=_(' ('+program['theme'].name+')')
-        return title #self.title(title)
     def setmasterconfig(self): #,program
         """Configure variables for the root window (master)"""
         for rc in [0,2]:
@@ -6897,7 +6890,6 @@ class MainApplication(ui.Window):
         start_time=time.time() #this enables boot time evaluation
         """Things that belong to a tkinter.Frame go after this:"""
         super(MainApplication,self).__init__(parent,
-                title=title,
                 exit=False
                 )
         """Pick one of the following three screensizes (or don't):"""
@@ -6920,7 +6912,6 @@ class MainApplication(ui.Window):
         """Pick one of these two placements:"""
         # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
         # self.frame.grid(column=0, row=0)
-        self.maketitle()
         """This means make check with
         this app as parent
         the root window as base window, and
@@ -6929,7 +6920,7 @@ class MainApplication(ui.Window):
         """
         """Do any check tests here"""
         """Make the rest of the mainApplication window"""
-        e=(_("Exit"))
+        # e=(_("Exit"))
         """Do this after we instantiate the check, so menus can run check
         methods"""
         # ui.ContextMenu(self)
@@ -6938,7 +6929,6 @@ class MainApplication(ui.Window):
         print("Finished loading main window in",time.time() - start_time," "
                                                                     "seconds.")
         """finished loading so destroy splash"""
-        splash.destroy()
         """Don't show window again until check is done"""
 class RecordButtonFrame(ui.Frame):
     def _start(self, event):
