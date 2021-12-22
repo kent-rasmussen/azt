@@ -2884,7 +2884,7 @@ class Check(TaskDressing,ui.Window):
                 row=0
                 columnspan=1
                 ipadx=0
-            if self.mainrelief == None:
+            if not self.mainrelief:
                 l=ui.Label(parent, text=label,font='report',anchor='w')
             else:
                 l=ui.Button(parent,text=label,font='report',anchor='w',
@@ -3189,7 +3189,7 @@ class Check(TaskDressing,ui.Window):
         titleframe.grid(row=0,column=0,sticky='n')
         cvt=self.params.cvt()
         cvtdict=self.params.cvtdict()
-        if self.mainrelief == None:
+        if not self.mainrelief:
             lt=ui.Label(titleframe, text=_(cvtdict[cvt]['sg']),
                                                     font='title')
         else:
@@ -3199,7 +3199,7 @@ class Check(TaskDressing,ui.Window):
         ui.Label(titleframe, text=_('Progress for'), font='title'
             ).grid(row=0,column=1,sticky='nwe',padx=10)
         ps=self.slices.ps()
-        if self.mainrelief == None:
+        if not self.mainrelief:
             lps=ui.Label(titleframe,text=ps,anchor='c',font='title')
         else:
             lps=ui.Button(titleframe,text=ps, anchor='c',
