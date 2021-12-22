@@ -1342,10 +1342,18 @@ class TaskDressing(object):
             self.context.menuitem(_("Show group names"),self.showgroupnames)
         else:
             self.context.menuitem(_("Hide group names"),self.hidegroupnames)
+    def maketitle(self):
+        title=_("{} Dictionary and Orthography Checker: {}").format(
+                                            program['name'],self.tasktitle())
+        if program['theme'].name != 'greygreen':
+            log.info("Using theme '{}'.".format(program['theme'].name))
+            title+=_(' ('+program['theme'].name+')')
+        self.title(title)
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
         self.withdraw() #made visible by chooser when complete
+        self.maketitle()
         # super(TaskDressing, self).__init__(parent)
         for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
             if not hasattr(self,k):
@@ -1438,9 +1446,14 @@ class TaskChooser(TaskDressing,ui.Window):
         """This function (and probably a few dependent functions, maybe
         another class) provides a list of functions with prerequisites
         that are minimally and/or optimally satisfied."""
-        return [(Check,"Basic check that we've been doing"),
-                (Check2,"Placeholder for future checks")
-                ]
+        tasks=[]
+        for task in [Check, WordCollection, Placeholder]:
+            tasks.append((task,task.tasktitle()))
+        return tasks
+        # [(Check,"Citation Form Sorting in Tone Frames"),
+        #         (WordCollection,"Placeholder for future checks"),
+        #         (Placeholder,"Placeholder for future checks")
+        #         ]
     def gettask(self,event=None):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
@@ -1594,9 +1607,8 @@ class TaskChooser(TaskDressing,ui.Window):
                 setattr(self,attr,getattr(parent,attr))
         self.setinvalidcharacters() #invalidchars, invalidregex, profilelegit
         ui.Window.__init__(self,parent)
+        self.tasktitle=_("Task Chooser") #before dressing
         TaskDressing.__init__(self,parent)
-        self.title("Task Chooser")
-        self.withdraw()
         self.getfile()
         self.setupCVrxs() #creates self.rx dictionaries
         self.updateinterfacelang()
@@ -1733,11 +1745,13 @@ class TaskChooser(TaskDressing,ui.Window):
         super(Menus, self).__init__(parent)
 class Check2(ui.Window,TaskDressing):
     """Fake check, placeholder for now."""
+    def tasktitle(self):
+        return _("Placeholder Check2")
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
+        self.tasktitle=_("Placeholder Check2") #before dressing
         TaskDressing.__init__(self,parent)
         log.info("Initializing Check2")
-        self.title("Placeholder Check2")
         for r in range(5):
             ui.Label(self.frame,
                     text="This is a check placeholder.",
@@ -1745,11 +1759,12 @@ class Check2(ui.Window,TaskDressing):
 class Check(TaskDressing,ui.Window):
     """the parent is the *functional* head, the MainApplication."""
     """the frame is the *GUI* head, the frame sitting in the MainApplication."""
+    def tasktitle(self):
+        return _("Citation Form Sorting in Tone Frames")
     def __init__(self, parent): #frame, filename=None
         self.start_time=time.time() #this enables boot time evaluation
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        self.title("Already Functional Check")
         self.parent=parent # chooser#should be mainapplication frame
         for attr in ['exitFlag','file','params','slices','status','db']:
             if hasattr(parent,attr):
