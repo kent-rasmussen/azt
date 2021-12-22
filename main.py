@@ -1273,6 +1273,81 @@ class Settings(object):
                                 window=window,
                                 column=0, row=1
                                 )
+    def setinterfacelangwrapper(self,choice,window):
+        setinterfacelang(choice) #change the UI *ONLY*; no object attributes
+        file.writeinterfacelangtofile(choice) #>ui_lang.py, for startup
+        self.set('interfacelang',choice,window) #set variable for the future
+        self.storesettingsfile() #>xyz.CheckDefaults.py
+        self.maketitle() #because otherwise, this stays as is...
+    def set(self,attribute,choice,window=None,refresh=True):
+        #Normally, pass the attribute through the button frame,
+        #otherwise, don't set window (which would be destroyed)
+        #Set refresh=False (or anything but True) to not redo the main window
+        #afterwards. Do this to save time if you are setting multiple variables.
+        log.info("Setting {} variable with value: {}".format(attribute,choice))
+        if window is not None:
+            window.destroy()
+        if not hasattr(self,attribute) or getattr(self,attribute) != choice: #only set if different
+            setattr(self,attribute,choice)
+            self.attrschanged.append(attribute)
+            """If there's something getting reset that shouldn't be, remove it
+            from self.defaultstoclear[attribute]"""
+            self.cleardefaults(attribute)
+            if attribute in ['analang',  #do the last two cause problems?
+                                'interpret','distinguish']:
+                self.reloadprofiledata()
+            elif refresh == True:
+                self.refreshattributechanges()
+        else:
+            log.debug(_('No change: {} == {}'.format(attribute,choice)))
+    def setprofile(self,choice,window):
+        self.slices.profile(choice)
+        self.attrschanged.append('profile')
+        self.refreshattributechanges()
+        window.destroy()
+    def setcvt(self,choice,window):
+        self.params.cvt(choice)
+        self.attrschanged.append('cvt')
+        self.refreshattributechanges()
+        window.destroy()
+    def setanalang(self,choice,window):
+        self.set('analang',choice,window)
+    def setgroup(self,choice,window):
+        log.debug("group: {}".format(choice))
+        self.status.group(choice)
+        log.debug("group: {}".format(choice))
+        window.destroy()
+        log.debug("group: {}".format(choice))
+    def setgroup_comparison(self,choice,window):
+        if hasattr(self,'group_comparison'):
+            log.debug("group_comparison: {}".format(self.group_comparison))
+        self.set('group_comparison',choice,window,refresh=False)
+        log.debug("group_comparison: {}".format(self.group_comparison))
+    def setcheck(self,choice,window):
+        self.params.check(choice)
+        self.attrschanged.append('check')
+        self.refreshattributechanges()
+        window.destroy()
+    def setglosslang(self,choice,window):
+        self.glosslangs.lang1(choice)
+        self.attrschanged.append('glosslangs')
+        self.refreshattributechanges()
+        window.destroy()
+    def setglosslang2(self,choice,window):
+        if choice is not None:
+            self.glosslangs.lang2(choice)
+        elif len(self.glosslangs)>1:
+            self.glosslangs.pop(1) #if lang2 is None
+        self.attrschanged.append('glosslangs')
+        self.refreshattributechanges()
+        window.destroy()
+    def setps(self,choice,window):
+        self.slices.ps(choice)
+        self.attrschanged.append('ps')
+        self.refreshattributechanges()
+        window.destroy()
+    def setexamplespergrouptorecord(self,choice,window):
+        self.set('examplespergrouptorecord',choice,window)
     def getanalangname(self,event=None):
         log.info("this sets the language name")
         def submit(event=None):
@@ -1426,6 +1501,141 @@ class Settings(object):
                                     window=window,
                                     column=0, row=1
                                     )
+    def setsoundhz(self,choice,window):
+        self.soundsettings.fs=choice
+        window.destroy()
+        self.soundcheckrefresh()
+    def setsoundformat(self,choice,window):
+        self.soundsettings.sample_format=choice
+        window.destroy()
+        self.soundcheckrefresh()
+    def getsoundformat(self,event=None):
+        log.info("Asking for audio format...")
+        window=ui.Window(self.frame, title=_('Select Audio Format'))
+        ui.Label(window.frame, text=_('What audio format do you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        l=list()
+        ss=self.soundsettings
+        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
+            name=ss.hypothetical['sample_formats'][sf]
+            l+=[(sf, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.setsoundformat,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getsoundhz(self,event=None):
+        log.info("Asking for sampling frequency...")
+        window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
+        ui.Label(window.frame, text=_('What sampling frequency you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        l=list()
+        ss=self.soundsettings
+        for fs in ss.cards['in'][ss.audio_card_in]:
+            name=ss.hypothetical['fss'][fs]
+            l+=[(fs, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.setsoundhz,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def setsoundcardindex(self,choice,window):
+        self.soundsettings.audio_card_in=choice
+        window.destroy()
+        self.soundcheckrefresh()
+    def setsoundcardoutindex(self,choice,window):
+        self.soundsettings.audio_card_out=choice
+        window.destroy()
+        self.soundcheckrefresh()
+    def getsoundcardindex(self,event=None):
+        log.info("Asking for input sound card...")
+        window=ui.Window(self.frame, title=_('Select Input Sound Card'))
+        ui.Label(window.frame, text=_('What sound card do you '
+                                    'want to record sound with with?')
+                ).grid(column=0, row=0)
+        l=list()
+        for card in self.soundsettings.cards['in']:
+            name=self.soundsettings.cards['dict'][card]
+            l+=[(card, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.setsoundcardindex,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getsoundcardoutindex(self,event=None):
+        log.info("Asking for output sound card...")
+        window=ui.Window(self.frame, title=_('Select Output Sound Card'))
+        ui.Label(window.frame, text=_('What sound card do you '
+                                    'want to play sound with?')
+                ).grid(column=0, row=0)
+        l=list()
+        for card in self.soundsettings.cards['out']:
+            name=self.soundsettings.cards['dict'][card]
+            l+=[(card, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.setsoundcardoutindex,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def pyaudiocheck(self):
+        try:
+            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
+        except:
+            self.pyaudio=sound.AudioInterface()
+    def makesoundsettings(self):
+        if not hasattr(self,'soundsettings'):
+            self.pyaudiocheck() #in case self.pyaudio isn't there yet
+            self.soundsettings=sound.SoundSettings(self.pyaudio)
+    def loadsoundsettings(self):
+        self.makesoundsettings()
+        self.file.loadsettingsfile(setting='soundsettings')
+    def langnames(self):
+        """This is for getting the prose name for a language from a code."""
+        """It uses a xyz.ldml file, produced (at least) by WeSay."""
+        #ET.register_namespace("", 'palaso')
+        ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
+        node=None
+        self.languagenames={}
+        for xyz in self.db.analangs+self.db.glosslangs: #self.languagepaths.keys():
+            # log.info(' '.join('Looking for language name for',xyz))
+            """This provides an ldml node"""
+            #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
+            #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
+            """This doesn't seem to be working; I should fix it, but there
+            doesn't seem to be reason to generalize it for now."""
+            # tree=ET.parse(self.languagepaths[xyz])
+            # tree.nodes=tree.getroot()
+            # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
+            if node is not None:
+                self.languagenames[xyz]=node.get('value')
+                log.info(' '.join('found',self.languagenames[xyz]))
+            elif xyz == 'fr':
+                self.languagenames[xyz]="Français"
+            elif xyz == 'en':
+                self.languagenames[xyz]="English"
+            elif xyz == 'swc':
+                self.languagenames[xyz]="Congo Swahili"
+            elif xyz == 'swh':
+                self.languagenames[xyz]="Swahili"
+            elif xyz == 'gnd':
+                self.languagenames[xyz]="Zulgo"
+            elif xyz == 'fub':
+                self.languagenames[xyz]="Fulfulde"
+            elif xyz == 'bfj':
+                self.languagenames[xyz]="Chufie’"
+            else:
+                self.languagenames[xyz]=_("Language with code "
+                                                        "[{}]").format(xyz)
+            if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
+                self.adnlangnames={}
+            if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
+                self.languagenames[xyz]=self.adnlangnames[xyz]
     def __init__(self):
         super(Settings, self).__init__()
 
@@ -1605,23 +1815,6 @@ class TaskChooser(TaskDressing,ui.Window):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
         self.toneframes=ToneFrames(self.toneframes)
-    def pyaudiocheck(self):
-        try:
-            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
-        except:
-            self.pyaudio=sound.AudioInterface()
-    def makesoundsettings(self):
-        if not hasattr(self,'soundsettings'):
-            self.pyaudiocheck() #in case self.pyaudio isn't there yet
-            self.soundsettings=sound.SoundSettings(self.pyaudio)
-    def loadsoundsettings(self):
-        self.makesoundsettings()
-        self.loadsettingsfile(setting='soundsettings')
-    def updateinterfacelang(self):
-        if self.interfacelang not in [None, getinterfacelang()]:
-            #set only when new value is loaded:
-            setinterfacelang(self.interfacelang)
-            self.parent.maketitle()
     def setinvalidcharacters(self):
         self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
         self.invalidregex='( |\.|,|\)|\()+'
@@ -1707,47 +1900,6 @@ class TaskChooser(TaskDressing,ui.Window):
             setinterfacelang('fr')
         else:
             setinterfacelang(interfacelang)
-    def langnames(self):
-        """This is for getting the prose name for a language from a code."""
-        """It uses a xyz.ldml file, produced (at least) by WeSay."""
-        #ET.register_namespace("", 'palaso')
-        ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
-        node=None
-        self.languagenames={}
-        for xyz in self.db.analangs+self.db.glosslangs: #self.languagepaths.keys():
-            # log.info(' '.join('Looking for language name for',xyz))
-            """This provides an ldml node"""
-            #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
-            #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
-            """This doesn't seem to be working; I should fix it, but there
-            doesn't seem to be reason to generalize it for now."""
-            # tree=ET.parse(self.languagepaths[xyz])
-            # tree.nodes=tree.getroot()
-            # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
-            if node is not None:
-                self.languagenames[xyz]=node.get('value')
-                log.info(' '.join('found',self.languagenames[xyz]))
-            elif xyz == 'fr':
-                self.languagenames[xyz]="Français"
-            elif xyz == 'en':
-                self.languagenames[xyz]="English"
-            elif xyz == 'swc':
-                self.languagenames[xyz]="Congo Swahili"
-            elif xyz == 'swh':
-                self.languagenames[xyz]="Swahili"
-            elif xyz == 'gnd':
-                self.languagenames[xyz]="Zulgo"
-            elif xyz == 'fub':
-                self.languagenames[xyz]="Fulfulde"
-            elif xyz == 'bfj':
-                self.languagenames[xyz]="Chufie’"
-            else:
-                self.languagenames[xyz]=_("Language with code "
-                                                        "[{}]").format(xyz)
-            if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
-                self.adnlangnames={}
-            if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
-                self.languagenames[xyz]=self.adnlangnames[xyz]
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses, as well as sorted (but not verified) groups.
@@ -2367,88 +2519,6 @@ class Check(TaskDressing,ui.Window):
         text=_('See the tone frame around a word from the dictionary')
         chk_btn=ui.Button(self.addwindow.frame1,text = text, command = chk)
         chk_btn.grid(row=row+1,column=columnleft,pady=100)
-    def setsoundhz(self,choice,window):
-        self.soundsettings.fs=choice
-        window.destroy()
-        self.soundcheckrefresh()
-    def setsoundformat(self,choice,window):
-        self.soundsettings.sample_format=choice
-        window.destroy()
-        self.soundcheckrefresh()
-    def getsoundformat(self,event=None):
-        log.info("Asking for audio format...")
-        window=ui.Window(self.frame, title=_('Select Audio Format'))
-        ui.Label(window.frame, text=_('What audio format do you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
-        ss=self.soundsettings
-        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
-            name=ss.hypothetical['sample_formats'][sf]
-            l+=[(sf, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundformat,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundhz(self,event=None):
-        log.info("Asking for sampling frequency...")
-        window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
-        ui.Label(window.frame, text=_('What sampling frequency you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
-        ss=self.soundsettings
-        for fs in ss.cards['in'][ss.audio_card_in]:
-            name=ss.hypothetical['fss'][fs]
-            l+=[(fs, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundhz,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def setsoundcardindex(self,choice,window):
-        self.soundsettings.audio_card_in=choice
-        window.destroy()
-        self.soundcheckrefresh()
-    def setsoundcardoutindex(self,choice,window):
-        self.soundsettings.audio_card_out=choice
-        window.destroy()
-        self.soundcheckrefresh()
-    def getsoundcardindex(self,event=None):
-        log.info("Asking for input sound card...")
-        window=ui.Window(self.frame, title=_('Select Input Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to record sound with with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['in']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundcardindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundcardoutindex(self,event=None):
-        log.info("Asking for output sound card...")
-        window=ui.Window(self.frame, title=_('Select Output Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to play sound with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['out']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundcardoutindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
     """Set User Input"""
     def refreshattributechanges(self):
         """I need to think through these; what things must/should change when
@@ -2485,81 +2555,6 @@ class Check(TaskDressing,ui.Window):
         if self.attrschanged != []:
             log.error("Remaining changed attribute! ({})".format(
                                                         self.attrschanged))
-    def set(self,attribute,choice,window=None,refresh=True):
-        #Normally, pass the attribute through the button frame,
-        #otherwise, don't set window (which would be destroyed)
-        #Set refresh=False (or anything but True) to not redo the main window
-        #afterwards. Do this to save time if you are setting multiple variables.
-        log.info("Setting {} variable with value: {}".format(attribute,choice))
-        if window is not None:
-            window.destroy()
-        if not hasattr(self,attribute) or getattr(self,attribute) != choice: #only set if different
-            setattr(self,attribute,choice)
-            self.attrschanged.append(attribute)
-            """If there's something getting reset that shouldn't be, remove it
-            from self.defaultstoclear[attribute]"""
-            self.cleardefaults(attribute)
-            if attribute in ['analang',  #do the last two cause problems?
-                                'interpret','distinguish']:
-                self.reloadprofiledata()
-            elif refresh == True:
-                self.refreshattributechanges()
-        else:
-            log.debug(_('No change: {} == {}'.format(attribute,choice)))
-    def setinterfacelangwrapper(self,choice,window):
-        setinterfacelang(choice) #change the UI *ONLY*; no object attributes
-        file.writeinterfacelangtofile(choice) #>ui_lang.py, for startup
-        self.set('interfacelang',choice,window) #set variable for the future
-        self.storesettingsfile() #>xyz.CheckDefaults.py
-        self.parent.maketitle() #because otherwise, this stays as is...
-    def setprofile(self,choice,window):
-        self.slices.profile(choice)
-        self.attrschanged.append('profile')
-        self.refreshattributechanges()
-        window.destroy()
-    def setcvt(self,choice,window):
-        self.params.cvt(choice)
-        self.attrschanged.append('cvt')
-        self.refreshattributechanges()
-        window.destroy()
-    def setanalang(self,choice,window):
-        self.set('analang',choice,window)
-    def setgroup(self,choice,window):
-        log.debug("group: {}".format(choice))
-        self.status.group(choice)
-        log.debug("group: {}".format(choice))
-        window.destroy()
-        log.debug("group: {}".format(choice))
-    def setgroup_comparison(self,choice,window):
-        if hasattr(self,'group_comparison'):
-            log.debug("group_comparison: {}".format(self.group_comparison))
-        self.set('group_comparison',choice,window,refresh=False)
-        log.debug("group_comparison: {}".format(self.group_comparison))
-    def setcheck(self,choice,window):
-        self.params.check(choice)
-        self.attrschanged.append('check')
-        self.refreshattributechanges()
-        window.destroy()
-    def setglosslang(self,choice,window):
-        self.glosslangs.lang1(choice)
-        self.attrschanged.append('glosslangs')
-        self.refreshattributechanges()
-        window.destroy()
-    def setglosslang2(self,choice,window):
-        if choice is not None:
-            self.glosslangs.lang2(choice)
-        elif len(self.glosslangs)>1:
-            self.glosslangs.pop(1) #if lang2 is None
-        self.attrschanged.append('glosslangs')
-        self.refreshattributechanges()
-        window.destroy()
-    def setps(self,choice,window):
-        self.slices.ps(choice)
-        self.attrschanged.append('ps')
-        self.refreshattributechanges()
-        window.destroy()
-    def setexamplespergrouptorecord(self,choice,window):
-        self.set('examplespergrouptorecord',choice,window)
     def getgroupwsorted(self,event=None,**kwargs):
         kwargs['wsorted']=True
         kwargs=grouptype(**kwargs)
