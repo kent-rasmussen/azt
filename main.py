@@ -1371,6 +1371,8 @@ class TaskChooser(TaskDressing,ui.Window):
     to the user a default (highest in hierarchy without optimum fulfilled)
     task on opening, and allows users to choose others (any with minimum
     prequisites satisfied)."""
+    def tasktitle(self):
+        return _("Task Chooser")
     def getfile(self):
         def getit(attr):
             if hasattr(self.file,attr):
@@ -1489,7 +1491,7 @@ class TaskChooser(TaskDressing,ui.Window):
         that are minimally and/or optimally satisfied."""
         tasks=[]
         for task in [Check, WordCollection, Placeholder]:
-            tasks.append((task,task.tasktitle()))
+            tasks.append((task,task.tasktitle(task)))
         return tasks
         # [(Check,"Citation Form Sorting in Tone Frames"),
         #         (WordCollection,"Placeholder for future checks"),
@@ -1649,7 +1651,6 @@ class TaskChooser(TaskDressing,ui.Window):
                 setattr(self,attr,getattr(parent,attr))
         self.setinvalidcharacters() #invalidchars, invalidregex, profilelegit
         ui.Window.__init__(self,parent)
-        self.tasktitle=_("Task Chooser") #before dressing
         TaskDressing.__init__(self,parent)
         self.getfile()
         self.setupCVrxs() #creates self.rx dictionaries
@@ -1767,7 +1768,6 @@ class Placeholder(ui.Window,TaskDressing):
         return _("Placeholder Check2")
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
-        self.tasktitle=_("Placeholder Check2") #before dressing
         TaskDressing.__init__(self,parent)
         log.info("Initializing Check2")
         for r in range(5):
