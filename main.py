@@ -1261,6 +1261,102 @@ class Menus(ui.Menu):
 class Settings(object):
     """docstring for Settings."""
 
+    def getinterfacelang(self,event=None):
+        log.info("Asking for interface language...")
+        window=ui.Window(self.frame, title=_('Select Interface Language'))
+        ui.Label(window.frame, text=_('What language do you want this program '
+                                'to address you in?')
+                ).grid(column=0, row=0)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                optionlist=self.parent.interfacelangs,
+                                command=self.setinterfacelangwrapper,
+                                window=window,
+                                column=0, row=1
+                                )
+    def getanalangname(self,event=None):
+        log.info("this sets the language name")
+        def submit(event=None):
+            analang=self.params.analang()
+            self.parent.languagenames[analang]=name.get()
+            if (not hasattr(self.parent,'adnlangnames') or
+                    not self.parent.adnlangnames):
+                self.parent.adnlangnames={}
+            self.parent.adnlangnames[analang]=self.parent.languagenames[analang]
+                # if self.analang in self.adnlangnames:
+            self.storesettingsfile()
+            window.destroy()
+        window=ui.Window(self.frame,title=_('Enter Analysis Language Name'))
+        curname=self.parent.languagenames[analang]
+        defaultname=_("Language with code [{}]").format(analang)
+        t=_("How do you want to display the name of {}").format(curname)
+        if curname != defaultname:
+            t+=_(", with ISO 639-3 code [{}]").format(self.analang)
+        t+='?' # _("Language with code [{}]").format(xyz)
+        ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
+        name = ui.EntryField(window.frame)
+        name.grid(row=1,column=0,sticky='e')
+        ui.Button(window.frame,text='OK',cmd=submit,row=1,column=1,sticky='w')
+        name.bind('<Return>',submit)
+    def getanalang(self,event=None):
+        if len(self.db.analangs) <2: #The user probably wants to change display.
+            self.getanalangname()
+            return
+        log.info("this sets the language")
+        # fn=inspect.currentframe().f_code.co_name
+        window=ui.Window(self.frame,title=_('Select Analysis Language'))
+        if self.db.analangs is None :
+            ui.Label(window.frame,
+                          text='Error: please set Lift file first! ('
+                          +str(self.db.filename)+')'
+                          ).grid(column=0, row=0)
+        else:
+            ui.Label(window.frame,
+                          text=_('What language do you want to analyze?')
+                          ).grid(column=0, row=1)
+            langs=list()
+            for lang in self.db.analangs:
+                langs.append({'code':lang,
+                                'name':self.parent.languagenames[lang]})
+                print(lang, self.parent.languagenames[lang])
+            buttonFrame1=ui.ButtonFrame(window.frame,
+                                     optionlist=langs,
+                                     command=self.setanalang,
+                                     window=window,
+                                     column=0, row=4
+                                     )
+    def getglosslang(self,event=None):
+        log.info("this sets the gloss")
+        window=ui.Window(self.frame,title=_('Select Gloss Language'))
+        ui.Label(window.frame,
+                  text=_('What Language do you want to use for glosses?')
+                  ).grid(column=0, row=1)
+        langs=list()
+        for lang in self.db.glosslangs:
+            langs.append({'code':lang, 'name':self.parent.languagenames[lang]})
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                 optionlist=langs,
+                                 command=self.setglosslang,
+                                 window=window,
+                                 column=0, row=4
+                                 )
+    def getglosslang2(self,event=None):
+        log.info("this sets the gloss")
+        window=ui.Window(self.frame,title='Select Gloss Language')
+        text=_('What other language do you want to use for glosses?')
+        ui.Label(window.frame,text=text).grid(column=0, row=1)
+        langs=list()
+        for lang in self.db.glosslangs:
+            if lang == self.glosslangs[0]:
+                continue
+            langs.append({'code':lang, 'name':self.parent.languagenames[lang]})
+        langs.append({'code':None, 'name':'just use '
+                        +self.parent.languagenames[self.glosslangs[0]]})
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=langs,
+                                    command=self.setglosslang2,
+                                    window=window,
+                                    column=0, row=4
+                                    )
     def getps(self,event=None):
         log.info("Asking for ps...")
         self.refreshattributechanges()
@@ -1387,142 +1483,6 @@ class TaskDressing(Settings,object):
     def showgroupnames(self):
         self.check.set('hidegroupnames', False, refresh=True)
         self.setcontext()
-    def getinterfacelang(self,event=None):
-        log.info("Asking for interface language...")
-        window=ui.Window(self.frame, title=_('Select Interface Language'))
-        ui.Label(window.frame, text=_('What language do you want this program '
-                                'to address you in?')
-                ).grid(column=0, row=0)
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                optionlist=self.parent.interfacelangs,
-                                command=self.setinterfacelangwrapper,
-                                window=window,
-                                column=0, row=1
-                                )
-    def langnames(self):
-        """This is for getting the prose name for a language from a code."""
-        """It uses a xyz.ldml file, produced (at least) by WeSay."""
-        #ET.register_namespace("", 'palaso')
-        ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
-        node=None
-        self.languagenames={}
-        for xyz in self.db.analangs+self.db.glosslangs: #self.languagepaths.keys():
-            # log.info(' '.join('Looking for language name for',xyz))
-            """This provides an ldml node"""
-            #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
-            #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
-            """This doesn't seem to be working; I should fix it, but there
-            doesn't seem to be reason to generalize it for now."""
-            # tree=ET.parse(self.languagepaths[xyz])
-            # tree.nodes=tree.getroot()
-            # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
-            if node is not None:
-                self.languagenames[xyz]=node.get('value')
-                log.info(' '.join('found',self.languagenames[xyz]))
-            elif xyz == 'fr':
-                self.languagenames[xyz]="Français"
-            elif xyz == 'en':
-                self.languagenames[xyz]="English"
-            elif xyz == 'swc':
-                self.languagenames[xyz]="Congo Swahili"
-            elif xyz == 'swh':
-                self.languagenames[xyz]="Swahili"
-            elif xyz == 'gnd':
-                self.languagenames[xyz]="Zulgo"
-            elif xyz == 'fub':
-                self.languagenames[xyz]="Fulfulde"
-            elif xyz == 'bfj':
-                self.languagenames[xyz]="Chufie’"
-            else:
-                self.languagenames[xyz]=_("Language with code "
-                                                        "[{}]").format(xyz)
-            if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
-                self.adnlangnames={}
-            if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
-                self.languagenames[xyz]=self.adnlangnames[xyz]
-    def getanalangname(self,event=None):
-        log.info("this sets the language name")
-        def submit(event=None):
-            self.languagenames[self.analang]=name.get()
-            if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
-                self.adnlangnames={}
-            self.adnlangnames[self.analang]=self.languagenames[self.analang]
-                # if self.analang in self.adnlangnames:
-            self.storesettingsfile()
-            window.destroy()
-        window=ui.Window(self.frame,title=_('Enter Analysis Language Name'))
-        curname=self.languagenames[self.analang]
-        defaultname=_("Language with code [{}]").format(self.analang)
-        t=_("How do you want to display the name of {}").format(
-                                                                        curname)
-        if curname != defaultname:
-            t+=_(", with ISO 639-3 code [{}]").format(self.analang)
-        t+='?' # _("Language with code [{}]").format(xyz)
-        ui.Label(window.frame,text=t).grid(row=0,column=0,sticky='e',columnspan=2)
-        name = ui.EntryField(window.frame)
-        name.grid(row=1,column=0,sticky='e')
-        ui.Button(window.frame,text='OK',cmd=submit).grid(
-                                                    row=1,column=1,sticky='w')
-        name.bind('<Return>',submit)
-    def getanalang(self,event=None):
-        if len(self.db.analangs) <2: #The user probably wants to change display.
-            self.getanalangname()
-            return
-        log.info("this sets the language")
-        # fn=inspect.currentframe().f_code.co_name
-        window=ui.Window(self.frame,title=_('Select Analysis Language'))
-        if self.db.analangs is None :
-            ui.Label(window.frame,
-                          text='Error: please set Lift file first! ('
-                          +str(self.db.filename)+')'
-                          ).grid(column=0, row=0)
-        else:
-            ui.Label(window.frame,
-                          text=_('What language do you want to analyze?')
-                          ).grid(column=0, row=1)
-            langs=list()
-            for lang in self.db.analangs:
-                langs.append({'code':lang, 'name':self.languagenames[lang]})
-                print(lang, self.languagenames[lang])
-            buttonFrame1=ui.ButtonFrame(window.frame,
-                                     optionlist=langs,
-                                     command=self.setanalang,
-                                     window=window,
-                                     column=0, row=4
-                                     )
-    def getglosslang(self,event=None):
-        log.info("this sets the gloss")
-        window=ui.Window(self.frame,title=_('Select Gloss Language'))
-        ui.Label(window.frame,
-                  text=_('What Language do you want to use for glosses?')
-                  ).grid(column=0, row=1)
-        langs=list()
-        for lang in self.db.glosslangs:
-            langs.append({'code':lang, 'name':self.languagenames[lang]})
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                 optionlist=langs,
-                                 command=self.setglosslang,
-                                 window=window,
-                                 column=0, row=4
-                                 )
-    def getglosslang2(self,event=None):
-        log.info("this sets the gloss")
-        window=ui.Window(self.frame,title='Select Gloss Language')
-        text=_('What other language do you want to use for glosses?')
-        ui.Label(window.frame,text=text).grid(column=0, row=1)
-        langs=list()
-        for lang in self.db.glosslangs:
-            if lang == self.glosslangs[0]:
-                continue
-            langs.append({'code':lang, 'name':self.languagenames[lang]})
-        langs.append({'code':None, 'name':'just use '
-                        +self.languagenames[self.glosslangs[0]]})
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=langs,
-                                    command=self.setglosslang2,
-                                    window=window,
-                                    column=0, row=4
-                                    )
     def setcontext(self,context=None):
         self.context.menuinit() #This is a ContextMenu() method
         if not hasattr(self,'menu') or not self.menu:
