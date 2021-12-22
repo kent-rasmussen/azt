@@ -1080,6 +1080,184 @@ class FileChooser(object):
         self.loadsettingsfile(setting='status')
         self.loadsettingsfile(setting='adhocgroups')
         self.loadsettingsfile(setting='toneframes')
+class Menus(ui.Menu):
+    """this is the overall menu set, from which each will be selected."""
+    def command(self,parent,label,cmd):
+        parent.add_command(label=label, command=cmd)
+    def cascade(self,parent,label,newmenuname):
+        setattr(self,newmenuname, ui.Menu(parent, tearoff=0))
+        parent.add_cascade(label=label, menu=getattr(self,newmenuname))
+    # def setmenus(self):
+    #     self.menubar = ui.Menu(self)
+    def change(self):
+        self.cascade(self,_("Change"),'changemenu')
+        # changemenu = ui.Menu(self.menubar, tearoff=0)
+        # self.menubar.add_cascade(label=_("Change"), menu=changemenu)
+    def languages(self):
+        """Language stuff"""
+        self.changemenu.cascade(self,_("Languages"),'languagemenu')
+        # languagemenu = ui.Menu(changemenu, tearoff=0)
+        # changemenu.add_cascade(label=_("Languages"), menu=languagemenu)
+        for m in [("Interface/computer language", getinterfacelang),
+                    ("Analysis language",getanalang),
+                    ("Analysis language Name",getanalangname),
+                    ("Gloss language",getglosslang),
+                    ("Another gloss language",getglosslang2)]:
+            self.languagemenu.command(label=_(m[0]),
+                                command=lambda x=check:getattr(Check,m)[1](x))
+
+        # self.languagemenu.command(label=_("Interface/computer language"),
+        #                 command=lambda x=check:Check.getinterfacelang(x))
+        # self.languagemenu.add_command(label=_("Analysis language"),
+        #                 command=lambda x=check:Check.getanalang(x))
+        # self.languagemenu.add_command(label=_("Analysis language Name"),
+        #                 command=lambda x=check:Check.getanalangname(x))
+        # self.languagemenu.add_command(label=_("Gloss language"),
+        #                 command=lambda x=check:Check.getglosslang(x))
+        # self.languagemenu.add_command(label=_("Another gloss language"),
+        #                 command=lambda x=check:Check.getglosslang2(x))
+        """Word/data choice stuff"""
+    def parameterslice(self):
+        self.changemenu.add_command(label=_("Part of speech"),
+                        command=lambda x=check:Check.getps(x))
+        self.changemenu.add_command(label=_("Consonant-Vowel-Tone"),
+                        command=lambda x=check:Check.getcvt(x))
+        profilemenu = ui.Menu(changemenu, tearoff=0)
+        changemenu.add_cascade(label=_("Syllable profile"), menu=profilemenu)
+        profilemenu.add_command(label=_("Next"),
+                        command=lambda x=check:Check.nextprofile(x))
+        profilemenu.add_command(label=_("Choose"),
+                        command=lambda x=check:Check.getprofile(x))
+        """What to check stuff"""
+        cvt=check.params.cvt()
+        ps=check.slices.ps()
+        profile=check.slices.profile()
+        if None not in [ps, profile, cvt]:
+            if cvt == 'T':
+                changemenu.add_separator()
+                framemenu = ui.Menu(changemenu, tearoff=0)
+                changemenu.add_cascade(label=_("Tone Frame"), menu=framemenu)
+                framemenu.add_command(label=_("Next"),
+                        command=lambda x=check.status:StatusDict.nextcheck(x))
+                framemenu.add_command(label=_("Next to sort"),
+                        command=lambda x=check.status:StatusDict.nextcheck(x,
+                                                                tosort=True))
+                framemenu.add_command(label=_("Next with data already sorted"),
+                        command=lambda x=check.status:StatusDict.nextcheck(x,
+                                                                wsorted=True))
+                framemenu.add_command(label=_("Choose"),
+                                command=lambda x=check:Check.getcheck(x))
+            else:
+                changemenu.add_separator()
+                changemenu.add_command(label=_("Location in word"),
+                        command=lambda x=check:Check.getcheck(x))
+                if check.check is not None:
+                    changemenu.add_command(label=_("Segment(s) to check"),
+                        command=lambda x=check:Check.getgroup(x,tosort=True)) #any
+        """Do"""
+    def do(self):
+        domenu = ui.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label=_("Do"), menu=domenu)
+        reportmenu = ui.Menu(self.menubar, tearoff=0)
+        reportmenu.add_command(label=_("Tone by sense"),
+                        command=lambda x=check:Check.tonegroupreport(x))
+        reportmenu.add_command(label=_("Tone by location"
+                        ),command=lambda x=check:Check.tonegroupreport(x,
+                                                            bylocation=True))
+        reportmenu.add_command(label=_("Tone by sense (comprehensive)"),
+                command=lambda x=check:Check.tonegroupreportcomprehensive(x))
+        if me:
+            reportmenu.add_command(label=_("Initiate Consultant Check"),
+                command=lambda x=check:Check.consultantcheck(x))
+        reportmenu.add_command(label=_("Basic Vowel report (to file)"),
+                        command=lambda x=check:Check.basicreport(x,cvtstodo=['V']))
+        reportmenu.add_command(label=_("Basic Consonant report (to file)"),
+                        command=lambda x=check:Check.basicreport(x,cvtstodo=['C']))
+        reportmenu.add_command(label=_("Basic report on Consonants and Vowels "
+                                                                "(to file)"),
+                command=lambda x=check:Check.basicreport(x,cvtstodo=['C','V']))
+        domenu.add_cascade(label=_("Reports"), menu=reportmenu)
+    def record(self):
+        recordmenu = ui.Menu(self.menubar, tearoff=0)
+        recordmenu.add_command(label=_("Sound Card Settings"),
+                        command=lambda x=check:Check.soundcheck(x))
+        recordmenu.add_command(label=_("Record tone group examples"),
+                        command=lambda x=check:Check.showtonegroupexs(x))
+        recordmenu.add_command(label=_("Record dictionary words, largest group "
+                                                                    "first"),
+                        command=lambda x=check:Check.showentryformstorecord(x,
+                                                                justone=False))
+        recordmenu.add_command(label=_("Record examples for particular "
+                                                    "entries, 1 at at time"),
+                        command=lambda x=check:Check.showsenseswithexamplestorecord(x))
+        domenu.add_cascade(label=_("Recording"), menu=recordmenu)
+        domenu.add_command(label=_("Join Groups"),
+                        command=lambda x=check:Check.joinT(x))
+        """Advanced"""
+    def advanced(self):
+        advancedmenu = ui.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label=_("Advanced"), menu=advancedmenu)
+        filemenu = ui.Menu(self.menubar, tearoff=0)
+        filemenu.add_command(label=_("Dictionary Morpheme"),
+                        command=lambda x=check:Check.addmorpheme(x))
+        advancedmenu.add_command(label=_("Add Tone frame"),
+                        command=lambda x=check:Check.addframe(x))
+        advancedmenu.add_command(label=_("Transcribe/(re)name Framed Tone Group"),
+                                command=lambda x=check:Check.renamegroup(x))
+        advtonemenu = ui.Menu(self.menubar, tearoff=0)
+        advancedmenu.add_cascade(label=_("Tone Reports"), menu=advtonemenu)
+        advtonemenu.add_command(label=_("Name/join UF Tone Groups"),
+                        command=lambda x=check:Check.tonegroupsjoinrename(x))
+        advtonemenu.add_command(label=_("Custom groups by sense"),
+                                command=lambda x=check:Check.tonegroupreport(x,
+                                                                default=False))
+        advtonemenu.add_command(label=_("Custom groups by location"),
+                                command=lambda x=check:Check.tonegroupreport(x,
+                                                bylocation=True, default=False))
+        advtonemenu.add_command(
+                    label=_("Custom groups by sense (comprehensive)"),
+                    command=lambda x=check:Check.tonegroupreportcomprehensive(x,
+                                                                default=False))
+        redomenu = ui.Menu(self.menubar, tearoff=0)
+        redomenu.add_command(label=_("Previously skipped data"),
+                                command=lambda x=check:Check.tryNAgain(x))
+        advancedmenu.add_cascade(label=_("Redo"), menu=redomenu)
+        advancedmenu.add_cascade(label=_("Add other"), menu=filemenu)
+        redomenu.add_command(
+                        label=_("Verification of current framed group"),
+                        command=lambda x=check:Check.reverify(x))
+        redomenu.add_command(
+                        label=_("Digraph and Trigraph settings (Restart)"),
+                        command=lambda x=check:Check.askaboutpolygraphs(x))
+        redomenu.add_command(
+                        label=_("Syllable Profile Analysis (Restart)"),
+                        command=lambda x=check:Check.reloadprofiledata(x))
+        redomenu.add_command(
+                        label=_("Change to another Database (Restart)"),
+                        command=lambda x=check:Check.changedatabase(x))
+        redomenu.add_command(
+                        label=_("Verification Status file (several minutes)"),
+                        command=lambda x=check:Check.reloadstatusdata(x))
+        advancedmenu.add_command(
+                        label=_("Segment Interpretation Settings"),
+                        command=lambda x=check:Check.setSdistinctions(x))
+        advancedmenu.add_command(
+                        label=_("Add/Modify Ad Hoc Sorting Group"),
+                        command=lambda x=check:Check.addmodadhocsort(x))
+        advancedmenu.add_command(
+                label=_("Number of Examples to Record"),
+                command=lambda x=check:Check.getexamplespergrouptorecord(x))
+        """Unused for now"""
+        # settingsmenu = ui.Menu(menubar, tearoff=0)
+        # changestuffmenu.add_cascade(label=_("Settings"), menu=settingsmenu)
+        """help"""
+    def help(self):
+        helpmenu = ui.Menu(self.menubar, tearoff=0)
+        helpmenu.add_command(label=_("About"),
+                        command=self.helpabout)
+        self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
+    def __init__(self, parent):
+        super(Menus, self).__init__(parent)
 class TaskDressing(object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
@@ -1442,73 +1620,6 @@ class TaskChooser(TaskDressing,ui.Window):
             self.task.frame.winfo_exists() #these should all be windows w/frames
         except:
             return
-class Menus(ui.Menu):
-    """this is the overall menu set, from which each will be selected."""
-    def command(self,parent,label,cmd):
-        parent.add_command(label=label, command=cmd)
-    def cascade(self,parent,label,newmenuname):
-        setattr(self,newmenuname, ui.Menu(parent, tearoff=0))
-        parent.add_cascade(label=label, menu=getattr(self,newmenuname))
-    # def setmenus(self):
-    #     self.menubar = ui.Menu(self)
-    def change(self):
-        self.cascade(self,_("Change"),'changemenu')
-        # changemenu = ui.Menu(self.menubar, tearoff=0)
-        # self.menubar.add_cascade(label=_("Change"), menu=changemenu)
-    def languages(self):
-        """Language stuff"""
-        self.changemenu.cascade(self,_("Languages"),'languagemenu')
-        # languagemenu = ui.Menu(changemenu, tearoff=0)
-        # changemenu.add_cascade(label=_("Languages"), menu=languagemenu)
-        for m in [("Interface/computer language", getinterfacelang),
-                    ("Analysis language",getanalang),
-                    ("Analysis language Name",getanalangname),
-                    ("Gloss language",getglosslang),
-                    ("Another gloss language",getglosslang2)]:
-            self.languagemenu.command(label=_(m[0]),
-                                command=lambda x=check:getattr(Check,m)[1](x))
-
-        # self.languagemenu.command(label=_("Interface/computer language"),
-        #                 command=lambda x=check:Check.getinterfacelang(x))
-        # self.languagemenu.add_command(label=_("Analysis language"),
-        #                 command=lambda x=check:Check.getanalang(x))
-        # self.languagemenu.add_command(label=_("Analysis language Name"),
-        #                 command=lambda x=check:Check.getanalangname(x))
-        # self.languagemenu.add_command(label=_("Gloss language"),
-        #                 command=lambda x=check:Check.getglosslang(x))
-        # self.languagemenu.add_command(label=_("Another gloss language"),
-        #                 command=lambda x=check:Check.getglosslang2(x))
-        """Word/data choice stuff"""
-    def parameterslice(self):
-        self.changemenu.add_command(label=_("Part of speech"),
-                        command=lambda x=check:Check.getps(x))
-        self.changemenu.add_command(label=_("Consonant-Vowel-Tone"),
-                        command=lambda x=check:Check.getcvt(x))
-        profilemenu = ui.Menu(changemenu, tearoff=0)
-        changemenu.add_cascade(label=_("Syllable profile"), menu=profilemenu)
-        profilemenu.add_command(label=_("Next"),
-                        command=lambda x=check:Check.nextprofile(x))
-        profilemenu.add_command(label=_("Choose"),
-                        command=lambda x=check:Check.getprofile(x))
-        """What to check stuff"""
-        cvt=check.params.cvt()
-        ps=check.slices.ps()
-        profile=check.slices.profile()
-        if None not in [ps, profile, cvt]:
-            if cvt == 'T':
-                changemenu.add_separator()
-                framemenu = ui.Menu(changemenu, tearoff=0)
-                changemenu.add_cascade(label=_("Tone Frame"), menu=framemenu)
-                framemenu.add_command(label=_("Next"),
-                        command=lambda x=check.status:StatusDict.nextcheck(x))
-                framemenu.add_command(label=_("Next to sort"),
-                        command=lambda x=check.status:StatusDict.nextcheck(x,
-                                                                tosort=True))
-                framemenu.add_command(label=_("Next with data already sorted"),
-                        command=lambda x=check.status:StatusDict.nextcheck(x,
-                                                                wsorted=True))
-                framemenu.add_command(label=_("Choose"),
-                                command=lambda x=check:Check.getcheck(x))
             else:
                 changemenu.add_separator()
                 changemenu.add_command(label=_("Location in word"),
