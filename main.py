@@ -1357,7 +1357,10 @@ class TaskDressing(object):
         # super(TaskDressing, self).__init__(parent)
         for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
             if not hasattr(self,k):
-                setattr(self,k,False)
+                if hasattr(parent,k):
+                    setattr(self,k,getattr(parent,k))
+                else:
+                    setattr(self,k,False)
         ui.ContextMenu(self)
         self._taskchooserbutton()
         # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=self.taskchooser)
