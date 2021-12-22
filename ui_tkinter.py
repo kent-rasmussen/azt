@@ -264,9 +264,37 @@ class Theme(object):
         underline - font underlining (0 - none, 1 - underline)
         overstrike - font strikeout (0 - none, 1 - strikeout)
         """
+    def setscale(self):
+        #this computer: (this doesn't pick up changes, so just doing it here)
+        root=tkinter.Tk() #just to get these values
+        h = self.program['screenh'] = root.winfo_screenheight()
+        w = self.program['screenw'] = root.winfo_screenwidth()
+        wmm = root.winfo_screenmmwidth()
+        hmm = root.winfo_screenmmheight()
+        root.destroy()
+        #this computer as a ratio of mine, 1080 (286mm) x 1920 (508mm):
+        hx=h/1080
+        wx=w/1920
+        hmmx=hmm/286
+        wmmx=wmm/508
+        log.info("screen height: {} ({}mm, ratio: {}/{})".format(h,hmm,hx,hmmx))
+        log.info("screen width: {} ({}mm, ratio: {}/{})".format(w,wmm,wx,wmmx))
+        xmin=min(hx,wx,hmmx,wmmx)
+        xmax=max(hx,wx,hmmx,wmmx)
+        if xmax-1 > 1-xmin:
+            self.program['scale']=xmax
+        else:
+            self.program['scale']=xmin
+        if self.program['scale'] < 1.02 and self.program['scale'] > 0.98:
+            log.info("Probably shouldn't scale in this case (scale: {})".format(
+                                                        self.program['scale']))
+            self.program['scale']=1
+        log.info("Largest variance from 1:1 ratio: {} (this will be used to scale "
+                "stuff.)".format(self.program['scale']))
     def __init__(self,program=None,name=None):
         self.program=program
         self.name=name
+        self.setscale()
         self.setthemes()
         self.setfonts()
         self.setimages()

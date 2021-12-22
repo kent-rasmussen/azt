@@ -8751,30 +8751,6 @@ def main():
     root.wraplength=root.winfo_screenwidth()-300 #exit button
     root.renderings={} #initialize this somewhere...
     root.withdraw()
-    #this computer: (this doesn't pick up changes, so just doing it here)
-    h = program['screenh'] = root.winfo_screenheight()
-    w = program['screenw'] = root.winfo_screenwidth()
-    wmm = root.winfo_screenmmwidth()
-    hmm = root.winfo_screenmmheight()
-    #this computer as a ratio of mine, 1080 (286mm) x 1920 (508mm):
-    hx=h/1080
-    wx=w/1920
-    hmmx=hmm/286
-    wmmx=wmm/508
-    log.info("screen height: {} ({}mm, ratio: {}/{})".format(h,hmm,hx,hmmx))
-    log.info("screen width: {} ({}mm, ratio: {}/{})".format(w,wmm,wx,wmmx))
-    xmin=min(hx,wx,hmmx,wmmx)
-    xmax=max(hx,wx,hmmx,wmmx)
-    if xmax-1 > 1-xmin:
-        program['scale']=xmax
-    else:
-        program['scale']=xmin
-    if program['scale'] < 1.02 and program['scale'] > 0.98:
-        log.info("Probably shouldn't scale in this case (scale: {})".format(
-                                                            program['scale']))
-        program['scale']=1
-    log.info("Largest variance from 1:1 ratio: {} (this will be used to scale "
-            "stuff.)".format(program['scale']))
     if platform.system() != 'Linux': #this is only for MS Windows!
         import ctypes
         user32 = ctypes.windll.user32
