@@ -1622,6 +1622,39 @@ class TaskChooser(TaskDressing,ui.Window):
                                      window=window,
                                      column=0, row=4
                                      )
+    def getglosslang(self,event=None):
+        log.info("this sets the gloss")
+        window=ui.Window(self.frame,title=_('Select Gloss Language'))
+        ui.Label(window.frame,
+                  text=_('What Language do you want to use for glosses?')
+                  ).grid(column=0, row=1)
+        langs=list()
+        for lang in self.db.glosslangs:
+            langs.append({'code':lang, 'name':self.languagenames[lang]})
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                 optionlist=langs,
+                                 command=self.setglosslang,
+                                 window=window,
+                                 column=0, row=4
+                                 )
+    def getglosslang2(self,event=None):
+        log.info("this sets the gloss")
+        window=ui.Window(self.frame,title='Select Gloss Language')
+        text=_('What other language do you want to use for glosses?')
+        ui.Label(window.frame,text=text).grid(column=0, row=1)
+        langs=list()
+        for lang in self.db.glosslangs:
+            if lang == self.glosslangs[0]:
+                continue
+            langs.append({'code':lang, 'name':self.languagenames[lang]})
+        langs.append({'code':None, 'name':'just use '
+                        +self.languagenames[self.glosslangs[0]]})
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=langs,
+                                    command=self.setglosslang2,
+                                    window=window,
+                                    column=0, row=4
+                                    )
     def setmainwindow(self,window):
         """self.mainwindowis tracks who the mainwindow is for the chooser,
         x.mainwindow tracks if the object is the mainwindow, so it will
@@ -3421,39 +3454,6 @@ class Check(TaskDressing,ui.Window):
             self.results.grid(row=0, column=0)
         else:
             log.error("Tried to get a results frame without a runwindow!")
-    def getglosslang(self,event=None):
-        log.info("this sets the gloss")
-        window=ui.Window(self.frame,title=_('Select Gloss Language'))
-        ui.Label(window.frame,
-                  text=_('What Language do you want to use for glosses?')
-                  ).grid(column=0, row=1)
-        langs=list()
-        for lang in self.db.glosslangs:
-            langs.append({'code':lang, 'name':self.languagenames[lang]})
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                 optionlist=langs,
-                                 command=self.setglosslang,
-                                 window=window,
-                                 column=0, row=4
-                                 )
-    def getglosslang2(self,event=None):
-        log.info("this sets the gloss")
-        window=ui.Window(self.frame,title='Select Gloss Language')
-        text=_('What other language do you want to use for glosses?')
-        ui.Label(window.frame,text=text).grid(column=0, row=1)
-        langs=list()
-        for lang in self.db.glosslangs:
-            if lang == self.glosslangs[0]:
-                continue
-            langs.append({'code':lang, 'name':self.languagenames[lang]})
-        langs.append({'code':None, 'name':'just use '
-                        +self.languagenames[self.glosslangs[0]]})
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=langs,
-                                    command=self.setglosslang2,
-                                    window=window,
-                                    column=0, row=4
-                                    )
     def getcheckspossible(self):
         """This splits by tone or not, because the checks available for
         segments depend on the number of segments in the selected syllable
