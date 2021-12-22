@@ -348,6 +348,20 @@ class FileChooser(object):
         else:
             print(_("Apparently we've run this before today; not backing "
             "up again."))
+    def checkforlegacyverification(self):
+        start_time=time.time()
+        n=0
+        for ps in self.profilesbysense:
+            for profile in self.profilesbysense[ps]:
+                for senseid in self.profilesbysense[ps][profile]:
+                    if profile is not 'Invalid':
+                        node=self.db.legacyverificationconvert(senseid,vtype=profile,
+                                                            lang=self.analang)
+                        if node is not None:
+                            n+=1
+        self.db.write()
+        log.info("Found {} legacy verification nodes in {} seconds".format(n,
+                                                time.time()-start_time))
     def reloadprofiledata(self):
         self.file.storesettingsfile()
         self.profilesbysense={}
@@ -1657,20 +1671,6 @@ class Check(TaskDressing,ui.Window):
         self.tableiteration=0
         self.attrschanged=[]
         self.checkcheck()
-    def checkforlegacyverification(self):
-        start_time=time.time()
-        n=0
-        for ps in self.profilesbysense:
-            for profile in self.profilesbysense[ps]:
-                for senseid in self.profilesbysense[ps][profile]:
-                    if profile is not 'Invalid':
-                        node=self.db.legacyverificationconvert(senseid,vtype=profile,
-                                                            lang=self.analang)
-                        if node is not None:
-                            n+=1
-        self.db.write()
-        log.info("Found {} legacy verification nodes in {} seconds".format(n,
-                                                time.time()-start_time))
     """This should each be done only once, to make the objects from settings"""
     """self.profilesbysense and self.profilecounts are loaded from file, or
     created by analysis in init()"""
