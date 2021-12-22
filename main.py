@@ -8744,7 +8744,7 @@ def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    root = program['root']=ui.Root(program) #tkinter.Tk()
+    root = program['root']=ui.Root(program=program) #tkinter.Tk()
     program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
     root.program=program
