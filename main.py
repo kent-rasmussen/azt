@@ -1334,6 +1334,13 @@ class TaskChooser(TaskDressing,ui.Window):
         window.mainwindow=True
         self.mainwindowis=window
         self.mainwindowis.deiconify()
+    def setiflang(self):
+        self.interfacelangs=file.getinterfacelangs()
+        interfacelang=file.getinterfacelang()
+        if interfacelang is None:
+            setinterfacelang('fr')
+        else:
+            setinterfacelang(interfacelang)
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses, as well as sorted (but not verified) groups.
@@ -1389,6 +1396,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if store:
             self.file.storesettingsfile(setting='status')
     def __init__(self,parent):
+        self.setiflang() #before Splash
         for attr in ['exitFlag']:
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
@@ -6824,13 +6832,6 @@ class MainApplication(ui.Window):
             self.parent.grid_columnconfigure(rc, weight=3)
     def __init__(self,parent,exit=0):
         start_time=time.time() #this enables boot time evaluation
-        self.interfacelangs=file.getinterfacelangs()
-        interfacelang=file.getinterfacelang()
-        if interfacelang is None:
-            setinterfacelang('fr')
-        else:
-            setinterfacelang(interfacelang)
-        title=self.maketitle()
         """Things that belong to a tkinter.Frame go after this:"""
         super(MainApplication,self).__init__(parent,
                 title=title,
