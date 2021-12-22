@@ -1258,7 +1258,82 @@ class Menus(ui.Menu):
         self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
     def __init__(self, parent):
         super(Menus, self).__init__(parent)
-class TaskDressing(object):
+class Settings(object):
+    """docstring for Settings."""
+
+    def getps(self,event=None):
+        log.info("Asking for ps...")
+        self.refreshattributechanges()
+        window=ui.Window(self.frame, title=_('Select Grammatical Category'))
+        ui.Label(window.frame, text=_('What grammatical category do you '
+                                    'want to work with (Part of speech)?')
+                ).grid(column=0, row=0)
+        if hasattr(self,'additionalps') and self.additionalps is not None:
+            pss=self.db.pss+self.additionalps #these should be lists
+        else:
+            pss=self.db.pss
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                            optionlist=pss,
+                                            command=self.setps,
+                                            window=window,
+                                            column=0, row=1
+                                            )
+    def getprofile(self,event=None,**kwargs):
+        log.info("Asking for profile...")
+        self.refreshattributechanges()
+        window=ui.Window(self.frame,title=_('Select Syllable Profile'))
+        ps=self.slices.ps()
+        if self.profilesbysense[ps] is None: #likely never happen...
+            ui.Label(window.frame,
+            text=_('Error: please set Grammatical category with profiles '
+                    'first!')+' (not '+str(ps)+')'
+            ).grid(column=0, row=0)
+        else:
+            profilecounts=self.slices.valid()
+            profilecountsAdHoc=self.slices.adhoccounts()
+            profiles=self.status.profiles(**kwargs)
+            if not profiles:
+                log.error("No profiles of {} type found!".format(kwargs))
+            log.info("count types: {}, {}".format(type(profilecounts),type(profilecountsAdHoc)))
+            if profilecountsAdHoc:
+                profilecounts.update(profilecountsAdHoc)
+            ui.Label(window.frame, text=_('What ({}) syllable profile do you '
+                                    'want to work with?'.format(ps))
+                                    ).grid(column=0, row=0)
+            optionslist = [(x,profilecounts[(x,ps)]) for x in profiles]
+            window.scroll=ui.Frame(window.frame)
+            window.scroll.grid(column=0, row=1)
+            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                    optionlist=optionslist,
+                                    command=self.setprofile,
+                                    window=window,
+                                    column=0, row=0
+                                    )
+            window.wait_window(window)
+    def getcvt(self,event=None):
+        log.debug(_("Asking for check cvt/type"))
+        window=ui.Window(self.frame,title=_('Select Check Type'))
+        cvts=[]
+        x=0
+        tdict=self.params.cvtdict()
+        for cvt in tdict:
+            cvts.append({})
+            cvts[x]['name']=tdict[cvt]['pl']
+            cvts[x]['code']=cvt
+            x+=1
+        ui.Label(window.frame, text=_('What part of the sound system do you '
+                                    'want to work with?')
+            ).grid(column=0, row=0)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=cvts,
+                                    command=self.setcvt,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def __init__(self):
+        super(Settings, self).__init__()
+
+class TaskDressing(Settings,object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
     def _taskchooserbutton(self):
@@ -2527,75 +2602,6 @@ class Check(TaskDressing,ui.Window):
             self.getframedtonegroup(window=w,guess=guess,**kwargs)
             # windowT.wait_window(window=windowT) #?!?
         return w #so others can wait for this
-    def getps(self,event=None):
-        log.info("Asking for ps...")
-        self.refreshattributechanges()
-        window=ui.Window(self.frame, title=_('Select Grammatical Category'))
-        ui.Label(window.frame, text=_('What grammatical category do you '
-                                    'want to work with (Part of speech)?')
-                ).grid(column=0, row=0)
-        if hasattr(self,'additionalps') and self.additionalps is not None:
-            pss=self.db.pss+self.additionalps #these should be lists
-        else:
-            pss=self.db.pss
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                            optionlist=pss,
-                                            command=self.setps,
-                                            window=window,
-                                            column=0, row=1
-                                            )
-    def getprofile(self,event=None,**kwargs):
-        log.info("Asking for profile...")
-        self.refreshattributechanges()
-        window=ui.Window(self.frame,title=_('Select Syllable Profile'))
-        ps=self.slices.ps()
-        if self.profilesbysense[ps] is None: #likely never happen...
-            ui.Label(window.frame,
-            text=_('Error: please set Grammatical category with profiles '
-                    'first!')+' (not '+str(ps)+')'
-            ).grid(column=0, row=0)
-        else:
-            profilecounts=self.slices.valid()
-            profilecountsAdHoc=self.slices.adhoccounts()
-            profiles=self.status.profiles(**kwargs)
-            if not profiles:
-                log.error("No profiles of {} type found!".format(kwargs))
-            log.info("count types: {}, {}".format(type(profilecounts),type(profilecountsAdHoc)))
-            if profilecountsAdHoc:
-                profilecounts.update(profilecountsAdHoc)
-            ui.Label(window.frame, text=_('What ({}) syllable profile do you '
-                                    'want to work with?'.format(ps))
-                                    ).grid(column=0, row=0)
-            optionslist = [(x,profilecounts[(x,ps)]) for x in profiles]
-            window.scroll=ui.Frame(window.frame)
-            window.scroll.grid(column=0, row=1)
-            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                    optionlist=optionslist,
-                                    command=self.setprofile,
-                                    window=window,
-                                    column=0, row=0
-                                    )
-            window.wait_window(window)
-    def getcvt(self,event=None):
-        log.debug(_("Asking for check cvt/type"))
-        window=ui.Window(self.frame,title=_('Select Check Type'))
-        cvts=[]
-        x=0
-        tdict=self.params.cvtdict()
-        for cvt in tdict:
-            cvts.append({})
-            cvts[x]['name']=tdict[cvt]['pl']
-            cvts[x]['code']=cvt
-            x+=1
-        ui.Label(window.frame, text=_('What part of the sound system do you '
-                                    'want to work with?')
-            ).grid(column=0, row=0)
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=cvts,
-                                    command=self.setcvt,
-                                    window=window,
-                                    column=0, row=1
-                                    )
     """Settings to and from files"""
     def initdefaults(self):
         """Some of these defaults should be reset when setting another field.
