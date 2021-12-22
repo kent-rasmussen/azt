@@ -115,220 +115,6 @@ class FileChooser(object):
         if not self.name or not file.exists(self.name):
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
-        """We need this variable to make filenames for files that will be
-        imported as python modules. To do that, they need to not have periods
-        (.) in their filenames. So we take the base name from the lift file,
-        and replace periods with underscores, to make our modules basename."""
-        self.namebase=re.sub('\.','_', str(file.getfilenamebase(self.name)))
-    def senseidtriage(self):
-        # import time
-        # print("Doing senseid triage... This takes awhile...")
-        # start_time=time.time()
-        self.senseids=self.db.senseids
-        self.senseidsinvalid=[] #nothing, for now...
-        # print(time.time() - start_time,"seconds.")
-        print(len(self.senseidsinvalid),'senses with invalid data found.')
-        self.db.senseidsinvalid=self.senseidsinvalid
-        self.senseidsvalid=[]
-        for senseid in self.senseids:
-            if senseid not in self.senseidsinvalid:
-                self.senseidsvalid+=[senseid]
-        print(len(self.senseidsvalid),'senses with valid data remaining.')
-        self.senseidswanyps=self.db.get('sense',path=['ps'],showurl=True).get('senseid') #any ps value works here.
-        print(len(self.senseidswanyps),'senses with ps data found.')
-        self.senseidsvalidwops=[]
-        self.senseidsvalidwps=[]
-        for senseid in self.senseidsvalid:
-            if senseid in self.senseidswanyps:
-                self.senseidsvalidwps+=[senseid]
-            else:
-                self.senseidsvalidwops+=[senseid]
-        self.db.senseidsvalidwps=self.senseidsvalidwps #This is what we'll search
-        print(len(self.senseidsvalidwops),'senses with valid data but no ps data.')
-        print(len(self.senseidsvalidwps),'senses with valid data and ps data.')
-    def mercurialwarning(self,filedir):
-        title="Warning: Mercurial Repository without Executable"
-        window=ui.Window(self.frame,title=title)
-        hgurl="https://www.mercurial-scm.org/wiki/Download"
-        hgfilename="Mercurial-6.0-x64.exe"
-        hgfile=("https://www.mercurial-scm.org/release/windows/{}".format(
-                                                                    hgfilename))
-        text=_("You seem to be working on a repository of data ({}), "
-        "\nwhich seems to be tracked by mercurial (used by Chorus "
-        "and languagedepot.org), "
-        "\nbut you don't seem to have the Mercurial executable installed in "
-        "your computer's PATH.").format(filedir)
-        clickable="Please see {} for installation recommendations".format(
-                                                                program['url'])
-        clickable1="(e.g., in Windows, install *this* file),".format(hgfile)
-        clickable2=_("or see all your options at {}.").format(hgurl)
-        l=ui.Label(window.frame, text=text)
-        l.grid(column=0, row=0)
-        m=ui.Label(window.frame, text=clickable)
-        m.grid(column=0, row=1)
-        m.bind("<Button-1>", lambda e: openweburl(program['url']))
-        mtt=ui.ToolTip(m,_("Go to {}").format(program['url']))
-        n=ui.Label(window.frame, text=clickable1)
-        n.grid(column=0, row=2)
-        n.bind("<Button-1>", lambda e: openweburl(hgfile))
-        ntt=ui.ToolTip(n,_("download {}").format(hgfilename))
-        o=ui.Label(window.frame, text=clickable2)
-        o.grid(column=0, row=3)
-        o.bind("<Button-1>", lambda e: openweburl(hgurl))
-        mtt=ui.ToolTip(o,_("Go to {}").format(hgurl))
-        window.lift()
-    def repocheck(self):
-        self.repo=None #leave this for test of both repo and exe
-        if file.exists(file.getdiredurl(self.directory,'.hg')):
-            log.info("Found Mercurial Repository!")
-            if not program['hg']:
-                log.info("But found no Mercurial executable!")
-                self.mercurialwarning(self.directory)
-            else:
-                self.repo=Repository(self.directory)
-    def settingsbyfile(self):
-        #Here we set which settings are stored in which files
-        self.settings={'defaults':{
-                            'file':'defaultfile',
-                            'attributes':['analang',
-                                'glosslangs',
-                                'audiolang',
-                                'ps',
-                                'profile',
-                                'cvt',
-                                'check',
-                                'regexCV',
-                                'additionalps',
-                                'entriestoshow',
-                                'additionalprofiles',
-                                'interfacelang',
-                                'examplespergrouptorecord',
-                                'adnlangnames',
-                                'maxpss',
-                                'hidegroupnames',
-                                'maxprofiles'
-                                ]},
-            'profiledata':{
-                                'file':'profiledatafile',
-                                'attributes':[
-                                    'distinguish',
-                                    'interpret',
-                                    'polygraphs',
-                                    "profilecounts",
-                                    "scount",
-                                    "sextracted",
-                                    "profilesbysense",
-                                    "formstosearch"
-                                    ]},
-            'status':{
-                                'file':'statusfile',
-                                'attributes':['status']},
-            'adhocgroups':{
-                                'file':'adhocgroupsfile',
-                                'attributes':['adhocgroups']},
-            'soundsettings':{
-                                'file':'soundsettingsfile',
-                                'attributes':['sample_format',
-                                            'fs',
-                                            'audio_card_in',
-                                            'audio_card_out',
-                                            ]},
-            'toneframes':{
-                                'file':'toneframesfile',
-                                'attributes':['toneframes']}
-                                }
-    def settingsfile(self,setting):
-        fileattr=self.settings[setting]['file']
-        if hasattr(self,fileattr):
-            return getattr(self,fileattr)
-        else:
-            log.error("No file name for setting {}!".format(setting))
-    def loadandconvertlegacysettingsfile(self,setting='defaults'):
-        savefile=self.settingsfile(setting)
-        legacy=savefile.with_suffix('.py')
-        log.info("Going to make {} into {}".format(legacy,savefile))
-        if setting == 'soundsettings':
-            self.makesoundsettings()
-            o=self.soundsettings
-        else:
-            o=self
-        try:
-            log.debug("Trying for {} settings in {}".format(setting, legacy))
-            spec = importlib.util.spec_from_file_location(setting,legacy)
-            module = importlib.util.module_from_spec(spec)
-            sys.modules[setting] = module
-            spec.loader.exec_module(module)
-            for s in self.settings[setting]['attributes']:
-                if hasattr(module,s):
-                    setattr(o,s,getattr(module,s))
-        except:
-            log.error("Problem importing {}".format(legacy))
-        # b/c structure changed:
-        if 'glosslangs' in self.settings[setting]['attributes']:
-            self.glosslangs=[]
-            for lang in ['glosslang','glosslang2']:
-                if hasattr(module,lang):
-                    self.glosslangs.append(getattr(module,lang))
-        dict1=self.makesettingsdict(setting=setting)
-        self.storesettingsfile(setting=setting) #do last
-        self.loadsettingsfile(setting=setting) #verify write and read
-        dict2=self.makesettingsdict(setting=setting)
-        """Now we verify that each value read the same each time"""
-        for s in dict1:
-            if s in dict2 and str(dict1[s]) == str(dict2[s]):
-                log.info("Attribute {} verified as {}={}".format(s,
-                                            str(dict1[s]), str(dict2[s])))
-            elif s in dict2:
-                log.error("Problem with attribute {}; {}≠{}".format(s,
-                                            str(dict1[s]), str(dict2[s])))
-            else:
-                log.error("Attribute {} didn't make it back".format(s))
-                log.error("You should send in an error report for this.")
-                exit()
-        log.info("Settings file {} converted to {}, with each value verified."
-                "".format(legacy,savefile))
-    def settingsfilecheck(self):
-        basename=file.getdiredurl(self.directory,self.namebase)
-        self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
-        self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
-        self.statusfile=basename.with_suffix(".VerificationStatus.dat")
-        self.profiledatafile=basename.with_suffix(".ProfileData.dat")
-        self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.dat")
-        self.soundsettingsfile=basename.with_suffix(".SoundSettings.ini")
-        self.settingsbyfile() #This just sets the variable
-        for setting in self.settings:#[setting]
-            savefile=self.settingsfile(setting)#self.settings[setting]['file']
-            if not file.exists(savefile):
-                log.debug("{} doesn't exist!".format(savefile))
-                legacy=savefile.with_suffix('.py')
-                if file.exists(legacy):
-                    log.debug("But legacy file {} does; converting!".format(legacy))
-                    self.loadandconvertlegacysettingsfile(setting=setting)
-            if (str(savefile).endswith('.dat') and
-                    file.exists(savefile) and
-                    self.repo and
-                    not me):
-                self.repo.add(savefile)
-        if self.repo and not me:
-            self.repo.commit()
-    def getdirectories(self):
-        self.directory=file.getfilenamedir(self.name)
-        if not file.exists(self.directory):
-            log.info(_("Looks like there's a problem with your directory... {}"
-                    "\n{}".format(self.name,filemod)))
-            exit()
-        self.repocheck()
-        self.settingsfilecheck()
-        self.imagesdir=file.getimagesdir(self.name)
-        self.audiodir=file.getaudiodir(self.name)
-        log.info('self.audiodir: {}'.format(self.audiodir))
-        self.reportsdir=file.getreportdir(self.name)
-        self.reportbasefilename=file.getdiredurl(self.reportsdir, self.namebase)
-        self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
-        log.log(2,'self.reportsdir: {}'.format(self.reportsdir))
-        log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
-        log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
-        # setdefaults.langs(self.db) #This will be done again, on resets
     def loaddatabase(self):
         try:
             self.db=lift.Lift(self.name)
@@ -1279,6 +1065,243 @@ class Settings(object):
         self.set('interfacelang',choice,window) #set variable for the future
         self.storesettingsfile() #>xyz.CheckDefaults.py
         self.maketitle() #because otherwise, this stays as is...
+    def senseidtriage(self):
+        # import time
+        # print("Doing senseid triage... This takes awhile...")
+        # start_time=time.time()
+        self.senseids=self.db.senseids
+        self.senseidsinvalid=[] #nothing, for now...
+        # print(time.time() - start_time,"seconds.")
+        print(len(self.senseidsinvalid),'senses with invalid data found.')
+        self.db.senseidsinvalid=self.senseidsinvalid
+        self.senseidsvalid=[]
+        for senseid in self.senseids:
+            if senseid not in self.senseidsinvalid:
+                self.senseidsvalid+=[senseid]
+        print(len(self.senseidsvalid),'senses with valid data remaining.')
+        self.senseidswanyps=self.db.get('sense',path=['ps'],showurl=True).get('senseid') #any ps value works here.
+        print(len(self.senseidswanyps),'senses with ps data found.')
+        self.senseidsvalidwops=[]
+        self.senseidsvalidwps=[]
+        for senseid in self.senseidsvalid:
+            if senseid in self.senseidswanyps:
+                self.senseidsvalidwps+=[senseid]
+            else:
+                self.senseidsvalidwops+=[senseid]
+        self.db.senseidsvalidwps=self.senseidsvalidwps #This is what we'll search
+        print(len(self.senseidsvalidwops),'senses with valid data but no ps data.')
+        print(len(self.senseidsvalidwps),'senses with valid data and ps data.')
+    def mercurialwarning(self,filedir):
+        title="Warning: Mercurial Repository without Executable"
+        window=ui.Window(self.frame,title=title)
+        hgurl="https://www.mercurial-scm.org/wiki/Download"
+        hgfilename="Mercurial-6.0-x64.exe"
+        hgfile=("https://www.mercurial-scm.org/release/windows/{}".format(
+                                                                    hgfilename))
+        text=_("You seem to be working on a repository of data ({}), "
+        "\nwhich seems to be tracked by mercurial (used by Chorus "
+        "and languagedepot.org), "
+        "\nbut you don't seem to have the Mercurial executable installed in "
+        "your computer's PATH.").format(filedir)
+        clickable="Please see {} for installation recommendations".format(
+                                                                program['url'])
+        clickable1="(e.g., in Windows, install *this* file),".format(hgfile)
+        clickable2=_("or see all your options at {}.").format(hgurl)
+        l=ui.Label(window.frame, text=text)
+        l.grid(column=0, row=0)
+        m=ui.Label(window.frame, text=clickable)
+        m.grid(column=0, row=1)
+        m.bind("<Button-1>", lambda e: openweburl(program['url']))
+        mtt=ui.ToolTip(m,_("Go to {}").format(program['url']))
+        n=ui.Label(window.frame, text=clickable1)
+        n.grid(column=0, row=2)
+        n.bind("<Button-1>", lambda e: openweburl(hgfile))
+        ntt=ui.ToolTip(n,_("download {}").format(hgfilename))
+        o=ui.Label(window.frame, text=clickable2)
+        o.grid(column=0, row=3)
+        o.bind("<Button-1>", lambda e: openweburl(hgurl))
+        mtt=ui.ToolTip(o,_("Go to {}").format(hgurl))
+        window.lift()
+    def repocheck(self):
+        self.repo=None #leave this for test of both repo and exe
+        if file.exists(file.getdiredurl(self.directory,'.hg')):
+            log.info("Found Mercurial Repository!")
+            if not program['hg']:
+                log.info("But found no Mercurial executable!")
+                self.mercurialwarning(self.directory)
+            else:
+                self.repo=Repository(self.directory)
+    def settingsbyfile(self):
+        #Here we set which settings are stored in which files
+        self.settings={'defaults':{
+                            'file':'defaultfile',
+                            'attributes':['analang',
+                                'glosslangs',
+                                'audiolang',
+                                'ps',
+                                'profile',
+                                'cvt',
+                                'check',
+                                'regexCV',
+                                'additionalps',
+                                'entriestoshow',
+                                'additionalprofiles',
+                                'interfacelang',
+                                'examplespergrouptorecord',
+                                'adnlangnames',
+                                'maxpss',
+                                'hidegroupnames',
+                                'maxprofiles'
+                                ]},
+            'profiledata':{
+                                'file':'profiledatafile',
+                                'attributes':[
+                                    'distinguish',
+                                    'interpret',
+                                    'polygraphs',
+                                    "profilecounts",
+                                    "scount",
+                                    "sextracted",
+                                    "profilesbysense",
+                                    "formstosearch"
+                                    ]},
+            'status':{
+                                'file':'statusfile',
+                                'attributes':['status']},
+            'adhocgroups':{
+                                'file':'adhocgroupsfile',
+                                'attributes':['adhocgroups']},
+            'soundsettings':{
+                                'file':'soundsettingsfile',
+                                'attributes':['sample_format',
+                                            'fs',
+                                            'audio_card_in',
+                                            'audio_card_out',
+                                            ]},
+            'toneframes':{
+                                'file':'toneframesfile',
+                                'attributes':['toneframes']}
+                                }
+    def settingsfile(self,setting):
+        fileattr=self.settings[setting]['file']
+        if hasattr(self,fileattr):
+            return getattr(self,fileattr)
+        else:
+            log.error("No file name for setting {}!".format(setting))
+    def loadandconvertlegacysettingsfile(self,setting='defaults'):
+        savefile=self.settingsfile(setting)
+        legacy=savefile.with_suffix('.py')
+        log.info("Going to make {} into {}".format(legacy,savefile))
+        if setting == 'soundsettings':
+            self.makesoundsettings()
+            o=self.soundsettings
+        else:
+            o=self
+        try:
+            log.debug("Trying for {} settings in {}".format(setting, legacy))
+            spec = importlib.util.spec_from_file_location(setting,legacy)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[setting] = module
+            spec.loader.exec_module(module)
+            for s in self.settings[setting]['attributes']:
+                if hasattr(module,s):
+                    setattr(o,s,getattr(module,s))
+        except:
+            log.error("Problem importing {}".format(legacy))
+        # b/c structure changed:
+        if 'glosslangs' in self.settings[setting]['attributes']:
+            self.glosslangs=[]
+            for lang in ['glosslang','glosslang2']:
+                if hasattr(module,lang):
+                    self.glosslangs.append(getattr(module,lang))
+        dict1=self.makesettingsdict(setting=setting)
+        self.storesettingsfile(setting=setting) #do last
+        self.loadsettingsfile(setting=setting) #verify write and read
+        dict2=self.makesettingsdict(setting=setting)
+        """Now we verify that each value read the same each time"""
+        for s in dict1:
+            if s in dict2 and str(dict1[s]) == str(dict2[s]):
+                log.info("Attribute {} verified as {}={}".format(s,
+                                            str(dict1[s]), str(dict2[s])))
+            elif s in dict2:
+                log.error("Problem with attribute {}; {}≠{}".format(s,
+                                            str(dict1[s]), str(dict2[s])))
+            else:
+                log.error("Attribute {} didn't make it back".format(s))
+                log.error("You should send in an error report for this.")
+                exit()
+        log.info("Settings file {} converted to {}, with each value verified."
+                "".format(legacy,savefile))
+    def settingsfilecheck(self):
+        """We need the namebase variable to make filenames for files
+        that will be imported as python modules. To do that, they need
+        to not have periods (.) in their filenames. So we take the base
+        name from the lift file, and replace periods with underscores,
+        to make our modules basename."""
+        self.namebase=re.sub('\.','_', str(file.getfilenamebase(self.name)))
+        basename=file.getdiredurl(self.directory,self.namebase)
+        self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
+        self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
+        self.statusfile=basename.with_suffix(".VerificationStatus.dat")
+        self.profiledatafile=basename.with_suffix(".ProfileData.dat")
+        self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.dat")
+        self.soundsettingsfile=basename.with_suffix(".SoundSettings.ini")
+        self.settingsbyfile() #This just sets the variable
+        for setting in self.settings:#[setting]
+            savefile=self.settingsfile(setting)#self.settings[setting]['file']
+            if not file.exists(savefile):
+                log.debug("{} doesn't exist!".format(savefile))
+                legacy=savefile.with_suffix('.py')
+                if file.exists(legacy):
+                    log.debug("But legacy file {} does; converting!".format(legacy))
+                    self.loadandconvertlegacysettingsfile(setting=setting)
+            if (str(savefile).endswith('.dat') and
+                    file.exists(savefile) and
+                    self.repo and
+                    not me):
+                self.repo.add(savefile)
+        if self.repo and not me:
+            self.repo.commit()
+    def getdirectories(self):
+        self.directory=file.getfilenamedir(self.name)
+        if not file.exists(self.directory):
+            log.info(_("Looks like there's a problem with your directory... {}"
+                    "\n{}".format(self.name,filemod)))
+            exit()
+        self.repocheck()
+        self.settingsfilecheck()
+        self.imagesdir=file.getimagesdir(self.directory)
+        self.audiodir=file.getaudiodir(self.directory)
+        log.info('self.audiodir: {}'.format(self.audiodir))
+        self.reportsdir=file.getreportdir(self.directory)
+        self.reportbasefilename=file.getdiredurl(self.reportsdir, self.namebase)
+        self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
+        log.log(2,'self.reportsdir: {}'.format(self.reportsdir))
+        log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
+        log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
+        # setdefaults.langs(self.db) #This will be done again, on resets
+    def setinvalidcharacters(self):
+        self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
+        self.invalidregex='( |\.|,|\)|\()+'
+        # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
+        self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
+    def setupCVrxs(self):
+        self.rx={}
+        for sclass in list(self.s[self.analang]):
+            if self.s[self.analang][sclass] != []: #don't make if empty
+                self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
+        #Compile preferred regexs here
+        for cc in ['CG','CS','NC','VN','VV']:
+            ccc=cc.replace('C','[CSGDʔN]{1}')
+            self.rx[cc]=re.compile(ccc)
+        for c in ['N','S','G','ʔ','D']:
+            if c == 'N': #i.e., before C
+                self.rx[c+'_']=re.compile(c+'(?!([CSGDʔ]|\Z))') #{1}|
+            elif c in ['ʔ','D']:
+                self.rx[c+'_']=re.compile(c+'(?!\Z)')
+            else:
+                self.rx[c+'_']=re.compile('(?<![CSGDNʔ])'+c)
+            self.rx[c+'wd']=re.compile(c+'(?=\Z)')
     def set(self,attribute,choice,window=None,refresh=True):
         #Normally, pass the attribute through the button frame,
         #otherwise, don't set window (which would be destroyed)
