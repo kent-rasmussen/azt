@@ -1784,7 +1784,11 @@ class Check(TaskDressing,ui.Window):
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         self.parent=parent # chooser#should be mainapplication frame
-        for attr in ['exitFlag','file','params','slices','status','db']:
+        for attr in ['exitFlag','file','params','slices','status','db',
+                    'datadict','exs','toneframes',
+                    'analang','glosslangs','audiolang','languagenames',
+                    'profilesbysense'
+                    ]:
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
         # if me: #not yet
