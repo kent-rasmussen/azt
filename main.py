@@ -2914,7 +2914,7 @@ class Check(TaskDressing,ui.Window):
                             ).grid(column=column, row=opts['row'],
                                     columnspan=opts['columnspan'])
         #If the user exits out before this point, just stop.
-        if not self.exitFlag.istrue():
+        if self.exitFlag.istrue():
             return
         self.makestatusframe() # wait is here, after the first time.
         #Don't guess this; default or user set only
