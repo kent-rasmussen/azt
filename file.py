@@ -37,20 +37,20 @@ def getfilenamebase(filename):
 def gettranslationdirin(exedir):
     dir=pathlib.Path.joinpath(exedir,'translations')
     return dir
-def getimagesdir(filename):
-    dir=pathlib.Path.joinpath(getfilenamedir(filename),'images')
+def getimagesdir(dirname):
+    dir=pathlib.Path.joinpath(dirname,'images')
     if not os.path.exists(dir):
         os.mkdir(dir)
     return dir
-def getaudiodir(filename):
-    dir=pathlib.Path.joinpath(getfilenamedir(filename),'audio')
+def getaudiodir(dirname):
+    dir=pathlib.Path.joinpath(dirname,'audio')
     log.debug("Looking for {}".format(dir))
     if not os.path.exists(dir):
         log.debug("{} not there, making it!".format(dir))
         os.mkdir(dir)
     return dir
-def getreportdir(filename):
-    dir=pathlib.Path.joinpath(getfilenamedir(filename),'reports')
+def getreportdir(dirname):
+    dir=pathlib.Path.joinpath(dirname,'reports')
     log.debug("Looking for {}".format(dir))
     if not os.path.exists(dir):
         log.debug("{} not there, making it!".format(dir))
