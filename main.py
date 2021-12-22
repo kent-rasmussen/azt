@@ -1407,6 +1407,17 @@ class TaskChooser(TaskDressing,ui.Window):
          20
          21 [adnlangnames
                         ]:"""
+    def getscounts(self):
+        """This depends on self.sextracted, from getprofiles, so should only
+        run when that changes."""
+        scount={}
+        for ps in self.db.pss:
+            scount[ps]={}
+            for s in self.rx:
+                scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
+                    for x in self.sextracted[ps][s]],key=lambda x:x[1],
+                                                                reverse=True)
+        self.slices.scount(scount) #send to object
     def makestatus(self):
         if not hasattr(self,'status'):
             self.status={}
@@ -2668,17 +2679,6 @@ class Check(TaskDressing,ui.Window):
             profile=self.slices.profile()
         self.addprofiletoprofileswdata(ps=ps,profile=profile)
         self.profilesbysense[ps][profile]+=[senseid]
-    def getscounts(self):
-        """This depends on self.sextracted, from getprofiles, so should only
-        run when that changes."""
-        scount={}
-        for ps in self.db.pss:
-            scount[ps]={}
-            for s in self.rx:
-                scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
-                    for x in self.sextracted[ps][s]],key=lambda x:x[1],
-                                                                reverse=True)
-        self.slices.scount(scount) #send to object
     def getprofileofsense(self,senseid):
         #Convert to iterate over local variables
         ps=unlist(self.db.ps(senseid=senseid))
