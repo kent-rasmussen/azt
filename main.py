@@ -1707,6 +1707,47 @@ class TaskChooser(TaskDressing,ui.Window):
             setinterfacelang('fr')
         else:
             setinterfacelang(interfacelang)
+    def langnames(self):
+        """This is for getting the prose name for a language from a code."""
+        """It uses a xyz.ldml file, produced (at least) by WeSay."""
+        #ET.register_namespace("", 'palaso')
+        ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
+        node=None
+        self.languagenames={}
+        for xyz in self.db.analangs+self.db.glosslangs: #self.languagepaths.keys():
+            # log.info(' '.join('Looking for language name for',xyz))
+            """This provides an ldml node"""
+            #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
+            #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
+            """This doesn't seem to be working; I should fix it, but there
+            doesn't seem to be reason to generalize it for now."""
+            # tree=ET.parse(self.languagepaths[xyz])
+            # tree.nodes=tree.getroot()
+            # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
+            if node is not None:
+                self.languagenames[xyz]=node.get('value')
+                log.info(' '.join('found',self.languagenames[xyz]))
+            elif xyz == 'fr':
+                self.languagenames[xyz]="Français"
+            elif xyz == 'en':
+                self.languagenames[xyz]="English"
+            elif xyz == 'swc':
+                self.languagenames[xyz]="Congo Swahili"
+            elif xyz == 'swh':
+                self.languagenames[xyz]="Swahili"
+            elif xyz == 'gnd':
+                self.languagenames[xyz]="Zulgo"
+            elif xyz == 'fub':
+                self.languagenames[xyz]="Fulfulde"
+            elif xyz == 'bfj':
+                self.languagenames[xyz]="Chufie’"
+            else:
+                self.languagenames[xyz]=_("Language with code "
+                                                        "[{}]").format(xyz)
+            if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
+                self.adnlangnames={}
+            if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
+                self.languagenames[xyz]=self.adnlangnames[xyz]
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses, as well as sorted (but not verified) groups.
