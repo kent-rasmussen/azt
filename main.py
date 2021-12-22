@@ -431,7 +431,11 @@ class Settings(object):
                                 'adnlangnames',
                                 'maxpss',
                                 'hidegroupnames',
-                                'maxprofiles'
+                                'maxprofiles',
+                                'menu',
+                                'mainrelief',
+                                'fontthemesmall',
+                                'hidegroupnames'
                                 ]},
             'profiledata':{
                                 'file':'profiledatafile',
