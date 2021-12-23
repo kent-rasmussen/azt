@@ -1377,6 +1377,17 @@ class Settings(object):
         form=self.profileofformpreferred(form)
         # log.info("Form after simplification:{}".format(form))
         return form
+    def getscounts(self):
+        """This depends on self.sextracted, from getprofiles, so should only
+        run when that changes."""
+        scount={}
+        for ps in self.db.pss:
+            scount[ps]={}
+            for s in self.rx:
+                scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
+                    for x in self.sextracted[ps][s]],key=lambda x:x[1],
+                                                                reverse=True)
+        self.slices.scount(scount) #send to object
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
@@ -1555,6 +1566,12 @@ class Settings(object):
                     return
     def makeglosslangs(self):
         self.glosslangs=Glosslangs(self.glosslangs)
+    def checkglosslangs(self):
+        for lang in self.glosslangs:
+            if lang not in self.db.glosslangs:
+                self.glosslangs.rm(lang)
+        if len(self.glosslangs) == 0:
+            self.guessglosslangs()
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
         if len(self.db.glosslangs) == 1:
@@ -1569,6 +1586,9 @@ class Settings(object):
             self.glosslangs.lang2(self.db.glosslangs[1])
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
+    def guesscvt(self):
+        """For now, if cvt isn't set, start with Vowels."""
+        self.set('cvt','V')
     def refreshattributechanges(self):
         """I need to think through these; what things must/should change when
         one of these attributes change? Especially when we've changed a few...
@@ -1703,108 +1723,6 @@ class Settings(object):
         window.destroy()
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
-    def getglosslang(self,event=None):
-        log.info("this sets the gloss")
-        window=ui.Window(self.frame,title=_('Select Gloss Language'))
-        ui.Label(window.frame,
-                  text=_('What Language do you want to use for glosses?')
-                  ).grid(column=0, row=1)
-        langs=list()
-        for lang in self.db.glosslangs:
-            langs.append({'code':lang, 'name':self.parent.languagenames[lang]})
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                 optionlist=langs,
-                                 command=self.setglosslang,
-                                 window=window,
-                                 column=0, row=4
-                                 )
-    def getglosslang2(self,event=None):
-        log.info("this sets the gloss")
-        window=ui.Window(self.frame,title='Select Gloss Language')
-        text=_('What other language do you want to use for glosses?')
-        ui.Label(window.frame,text=text).grid(column=0, row=1)
-        langs=list()
-        for lang in self.db.glosslangs:
-            if lang == self.glosslangs[0]:
-                continue
-            langs.append({'code':lang, 'name':self.parent.languagenames[lang]})
-        langs.append({'code':None, 'name':'just use '
-                        +self.parent.languagenames[self.glosslangs[0]]})
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=langs,
-                                    command=self.setglosslang2,
-                                    window=window,
-                                    column=0, row=4
-                                    )
-    def getps(self,event=None):
-        log.info("Asking for ps...")
-        self.refreshattributechanges()
-        window=ui.Window(self.frame, title=_('Select Grammatical Category'))
-        ui.Label(window.frame, text=_('What grammatical category do you '
-                                    'want to work with (Part of speech)?')
-                ).grid(column=0, row=0)
-        if hasattr(self,'additionalps') and self.additionalps is not None:
-            pss=self.db.pss+self.additionalps #these should be lists
-        else:
-            pss=self.db.pss
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                            optionlist=pss,
-                                            command=self.setps,
-                                            window=window,
-                                            column=0, row=1
-                                            )
-    def getprofile(self,event=None,**kwargs):
-        log.info("Asking for profile...")
-        self.refreshattributechanges()
-        window=ui.Window(self.frame,title=_('Select Syllable Profile'))
-        ps=self.slices.ps()
-        if self.profilesbysense[ps] is None: #likely never happen...
-            ui.Label(window.frame,
-            text=_('Error: please set Grammatical category with profiles '
-                    'first!')+' (not '+str(ps)+')'
-            ).grid(column=0, row=0)
-        else:
-            profilecounts=self.slices.valid()
-            profilecountsAdHoc=self.slices.adhoccounts()
-            profiles=self.status.profiles(**kwargs)
-            if not profiles:
-                log.error("No profiles of {} type found!".format(kwargs))
-            log.info("count types: {}, {}".format(type(profilecounts),type(profilecountsAdHoc)))
-            if profilecountsAdHoc:
-                profilecounts.update(profilecountsAdHoc)
-            ui.Label(window.frame, text=_('What ({}) syllable profile do you '
-                                    'want to work with?'.format(ps))
-                                    ).grid(column=0, row=0)
-            optionslist = [(x,profilecounts[(x,ps)]) for x in profiles]
-            window.scroll=ui.Frame(window.frame)
-            window.scroll.grid(column=0, row=1)
-            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                    optionlist=optionslist,
-                                    command=self.setprofile,
-                                    window=window,
-                                    column=0, row=0
-                                    )
-            window.wait_window(window)
-    def getcvt(self,event=None):
-        log.debug(_("Asking for check cvt/type"))
-        window=ui.Window(self.frame,title=_('Select Check Type'))
-        cvts=[]
-        x=0
-        tdict=self.params.cvtdict()
-        for cvt in tdict:
-            cvts.append({})
-            cvts[x]['name']=tdict[cvt]['pl']
-            cvts[x]['code']=cvt
-            x+=1
-        ui.Label(window.frame, text=_('What part of the sound system do you '
-                                    'want to work with?')
-            ).grid(column=0, row=0)
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=cvts,
-                                    command=self.setcvt,
-                                    window=window,
-                                    column=0, row=1
-                                    )
     def setsoundhz(self,choice,window):
         self.soundsettings.fs=choice
         window.destroy()
@@ -2202,6 +2120,343 @@ class TaskDressing(object):
                                      window=window,
                                      column=0, row=4
                                      )
+    def getglosslang(self,event=None):
+        log.info("this sets the gloss")
+        window=ui.Window(self.frame,title=_('Select Gloss Language'))
+        ui.Label(window.frame,
+                  text=_('What Language do you want to use for glosses?')
+                  ).grid(column=0, row=1)
+        langs=list()
+        for lang in self.db.glosslangs:
+            langs.append({'code':lang,
+                            'name':self.settings.languagenames[lang]})
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                 optionlist=langs,
+                                 command=self.settings.setglosslang,
+                                 window=window,
+                                 column=0, row=4
+                                 )
+    def getglosslang2(self,event=None):
+        log.info("this sets the gloss")
+        window=ui.Window(self.frame,title='Select Gloss Language')
+        text=_('What other language do you want to use for glosses?')
+        ui.Label(window.frame,text=text).grid(column=0, row=1)
+        langs=list()
+        for lang in self.db.glosslangs:
+            if lang == self.settings.glosslangs[0]:
+                continue
+            langs.append({'code':lang,
+                            'name':self.settings.languagenames[lang]})
+        langs.append({'code':None, 'name':'just use '
+                +self.parent.languagenames[self.settings.glosslangs.lang1()]})
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=langs,
+                                    command=self.settings.setglosslang2,
+                                    window=window,
+                                    column=0, row=4
+                                    )
+    def getcvt(self,event=None):
+        log.debug(_("Asking for check cvt/type"))
+        window=ui.Window(self.frame,title=_('Select Check Type'))
+        cvts=[]
+        x=0
+        tdict=self.params.cvtdict()
+        for cvt in tdict:
+            cvts.append({})
+            cvts[x]['name']=tdict[cvt]['pl']
+            cvts[x]['code']=cvt
+            x+=1
+        ui.Label(window.frame, text=_('What part of the sound system do you '
+                                    'want to work with?')
+            ).grid(column=0, row=0)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=cvts,
+                                    command=self.settings.setcvt,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getps(self,event=None):
+        log.info("Asking for ps...")
+        # self.refreshattributechanges()
+        window=ui.Window(self.frame, title=_('Select Grammatical Category'))
+        ui.Label(window.frame, text=_('What grammatical category do you '
+                                    'want to work with (Part of speech)?')
+                ).grid(column=0, row=0)
+        if hasattr(self,'additionalps') and self.settings.additionalps is not None:
+            pss=self.db.pss+self.settings.additionalps #these should be lists
+        else:
+            pss=self.db.pss
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                            optionlist=pss,
+                                            command=self.settings.setps,
+                                            window=window,
+                                            column=0, row=1
+                                            )
+    def getprofile(self,event=None,**kwargs):
+        log.info("Asking for profile...")
+        # self.refreshattributechanges()
+        window=ui.Window(self.frame,title=_('Select Syllable Profile'))
+        ps=self.slices.ps()
+        if self.settings.profilesbysense[ps] is None: #likely never happen...
+            ui.Label(window.frame,
+            text=_('Error: please set Grammatical category with profiles '
+                    'first!')+' (not '+str(ps)+')'
+            ).grid(column=0, row=0)
+        else:
+            profilecounts=self.slices.valid()
+            profilecountsAdHoc=self.slices.adhoccounts()
+            profiles=self.status.profiles(**kwargs)
+            if not profiles:
+                log.error("No profiles of {} type found!".format(kwargs))
+            log.info("count types: {}, {}".format(type(profilecounts),
+                                                    type(profilecountsAdHoc)))
+            if profilecountsAdHoc:
+                profilecounts.update(profilecountsAdHoc)
+            ui.Label(window.frame, text=_('What ({}) syllable profile do you '
+                                    'want to work with?'.format(ps))
+                                    ).grid(column=0, row=0)
+            optionslist = [(x,profilecounts[(x,ps)]) for x in profiles]
+            """What does this extra frame do?"""
+            window.scroll=ui.Frame(window.frame)
+            window.scroll.grid(column=0, row=1)
+            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                    optionlist=optionslist,
+                                    command=self.settings.setprofile,
+                                    window=window,
+                                    column=0, row=0
+                                    )
+            window.wait_window(window)
+    def getcheck(self,guess=False,event=None,**kwargs):
+        log.info("this sets the check")
+        # fn=inspect.currentframe().f_code.co_name
+        log.info("Getting the check name...")
+        checks=self.status.checks(**kwargs)
+        window=ui.Window(self.frame,title='Select Check')
+        if not checks:
+            if self.params.cvt() == 'T':
+                btext=_("Define a New Tone Frame")
+                text=_("You don't seem to have any tone frames set up.\n"
+                "Click '{}' below to define a tone frame. \nPlease "
+                "pay attention to the instructions, and if \nthere's anything "
+                "you don't understand, or if you're not \nsure what a tone "
+                "frame is, please ask for help. \nWhen you are done making "
+                "frames, click 'Exit' to continue.".format(btext))
+                cmd=self.addframe
+            else:
+                btext=_("Return to A→Z+T, to fix settings")
+                text=_("I can't find any checks for type {}, ps {}, profile {}."
+                        " Probably that means there is a problem with your "
+                        " settings, or with your syllable profile analysis"
+                        "".format(cvt,ps,profile))
+                cmd=window.destroy
+            ui.Label(window.frame, text=text).grid(column=0, row=0, ipady=25)
+            b=ui.Button(window.frame, text=btext,
+                    cmd=cmd,
+                    anchor='c')
+            b.grid(column=0, row=1,sticky='')
+            """I need to make this quit the whole program, immediately."""
+            b2=ui.Button(window.frame, text=_("Quit A→Z+T"),
+                    cmd=self.parent.parent.destroy,
+                    anchor='c')
+            b2.grid(column=1, row=1,sticky='')
+            b.wait_window(window)
+        elif guess is True:
+            self.status.makecheckok(tosort=tosort,wsorted=wsorted)
+        else:
+            text=_('What check do you want to do?')
+            ui.Label(window.frame, text=text).grid(column=0, row=0)
+            buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                    optionlist=checks,
+                                    command=self.setcheck,
+                                    window=window,
+                                    column=0, row=4
+                                    )
+            buttonFrame1.wait_window(window)
+        """Make sure we got a value"""
+        if self.params.check() not in checks:
+            return 1
+    def getframedtonegroup(self,window,event=None,guess=False,**kwargs):
+        """Window is called in getgroup"""
+        log.info("getframedtonegroup kwargs: {}".format(kwargs))
+        kwargs=grouptype(**kwargs)
+        cvt=self.params.cvt()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        check=self.params.check()
+        if (None in [cvt, ps, profile, check]
+                or cvt != 'T'):
+            ui.Label(window.frame,
+                          text="You need to set "
+                          "\nCheck type (as Tone, currently {}) "
+                          "\nGrammatical category (currently {})"
+                          "\nSyllable Profile (currently {}), and "
+                          "\nTone Frame (currently {})"
+                          "\nBefore this function will do anything!"
+                          "".format(self.params.typedict()[cvt]['sg'], ps,
+                          profile, check)).grid(column=0, row=0)
+            return 1
+        else:
+            g=self.status.groups(**kwargs) #wsorted=True above
+            if not g:
+                ui.Label(window.frame,
+                          text="It looks like you don't have {}-{} lexemes "
+                          "grouped in the ‘{}’ frame yet \n({})."
+                          "".format(ps,profile,check,kwargs)
+                          ).grid(column=0, row=0)
+            elif guess == True:
+                self.setgroup(g[0],window) #don't ask, just set
+            else:
+                ui.Label(window.frame,
+                          text="What {}-{} tone group in the ‘{}’ frame do "
+                          "you want to work with?".format(ps,profile,
+                          check)).grid(column=0, row=0)
+                window.scroll=ui.Frame(window.frame)
+                window.scroll.grid(column=0, row=1)
+                if kwargs['comparison']:
+                    g2=g[:]
+                    g2.remove(self.status.group())
+                    if not g2:
+                        window.destroy()
+                        ErrorNotice(text="There don't seem to be any groups "
+                                    "to compare with!")
+                        return
+                    if len(g2) == 1:
+                        self.setgroup_comparison(g2[0],window)
+                        return
+                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                            optionlist=g2,
+                                            command=self.setgroup_comparison,
+                                            window=window,
+                                            column=0, row=4
+                                            )
+                else:
+                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                                optionlist=g,
+                                                command=self.setgroup,
+                                                window=window,
+                                                column=0, row=4
+                                                )
+    def getV(self,window,event=None, **kwargs):
+        # fn=inspect.currentframe().f_code.co_name
+        """Window is called in getgroup"""
+        if ps is None:
+            ui.Label(window.frame,
+                          text='Error: please set Grammatical category first! ('
+                          +str(ps)+')'
+                          ).grid(column=0, row=0)
+        else:
+            g=self.status.groups(**kwargs)
+            ui.Label(window.frame,
+                          text='What Vowel do you want to work with?'
+                          ).grid(column=0, row=0)
+            window.scroll=ui.ScrollingFrame(window.frame)
+            window.scroll.grid(column=0, row=1)
+            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                     optionlist=g,
+                                     command=self.setsubcheck,
+                                     window=window,
+                                     column=0, row=4
+                                     )
+    def getC(self,window,event=None, **kwargs):
+        # fn=inspect.currentframe().f_code.co_name
+        """Window is called in getgroup"""
+        if ps is None:
+            text=_('Error: please set Grammatical category first! ')+'('
+            +str(ps)+')'
+            ui.Label(window.frame,
+                          text=text
+                          ).grid(column=0, row=0)
+        else:
+            # ui.Label(window.frame,
+            #               ).grid(column=0, row=0)
+            g=self.status.groups(**kwargs)
+            ui.Label(window.frame,
+                          text='What consonant do you want to work with?'
+                          ).grid(column=0, row=0,sticky='nw')
+            window.scroll=Frame(window.frame)
+            window.scroll.grid(column=0, row=1)
+            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                    optionlist=g,
+                                    command=self.setsubcheck,
+                                    window=window,
+                                    column=0, row=0
+                                    )
+    def getgroup(self,guess=False,cvt=None,event=None,**kwargs):
+        log.info("this sets the group")
+        kwargs=grouptype(**kwargs) #if any should be True, set in wrappers above
+        log.info("getgroup kwargs: {}".format(kwargs))
+        self.refreshattributechanges()
+        if cvt is None:
+            cvt=self.params.cvt()
+        if cvt == "V":
+            w=ui.Window(self.frame,title=_('Select Vowel'))
+            self.getV(window=w,**kwargs)
+            w.wait_window(window=w)
+        elif cvt == "C":
+            w=ui.Window(self.frame,title=_('Select Consonant'))
+            self.getC(w,**kwargs)
+            self.frame.wait_window(window=w)
+        elif cvt == "CV":
+            CV=''
+            for cvt in ['C','V']:
+                self.getgroup(cvt=cvt,**kwargs)
+                CV+=group
+            group=CV
+            cvt = "CV"
+        elif cvt == "T":
+            w=ui.Window(self.frame,title=_('Select Framed Tone Group'))
+            self.getframedtonegroup(window=w,guess=guess,**kwargs)
+            # windowT.wait_window(window=windowT) #?!?
+        return w #so others can wait for this
+    def getexamplespergrouptorecord(self):
+        log.info("this sets the number of examples per group to record")
+        self.npossible=[
+            {'code':1,'name':"1 - Bare minimum, just one per group"},
+            {'code':5,'name':"5 - Some, but not all, of most groups"},
+            {'code':100,'name':"100 - All examples in most databases"},
+            {'code':1000,'name':"1000 - All examples in VERY large databases"}
+                        ]
+        title=_('Select Number of Examples per Group to Record')
+        window=ui.Window(self.frame, title=title)
+        text=_("The {0} tone report splits sorted data into "
+                "draft underlying tone melody groups. "
+                # ", with distinct values for each of your tone frames. This "
+                # "exhaustively finds differences between groups of lexical "
+                # "senses, but often "
+                # "misses similarities between groups, which might be "
+                # "distinguished only because a single word was skipped or sorted "
+                # "incorrectly.\n\n"
+                "Even before a linguist has been able to evaluate these "
+                "groups, it may be helpful to record your sorted data. "
+                "{0} can give you a window for each lexicon sense in a tone "
+                "group, with a record button for each sorted sense-frame "
+                "combination. "
+                "\n\nThose "
+                "windows will be presented to the user from one tone report "
+                "group after "
+                "another, until all groups have had one page presented. Then "
+                "{0} will "
+                "repeat this process, until it has done a number of "
+                "rounds equal to the number selected below. "
+                # "\n\nIf a "
+                # "group has fewer examples than this number, that group will be "
+                # "skipped once done. "
+                "\nPicking a larger number could delay opening "
+                "the recording window; picking a smaller number could mean "
+                "data not getting recorded. "
+                "Up to how many examples do you want to record for each group?"
+                "".format(program['name'])
+                )
+        ui.Label(window.frame, text=title, font='title').grid(column=0,
+                                                                        row=0)
+        ui.Label(window.frame, text=text, justify='left').grid(column=0, row=1)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                optionlist=self.npossible,
+                                command=self.setexamplespergrouptorecord,
+                                window=window,
+                                column=0, row=4
+                                )
+        buttonFrame1.wait_window(window)
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -2277,17 +2532,6 @@ class TaskChooser(TaskDressing,ui.Window):
          20
          21 [adnlangnames
                         ]:"""
-    def getscounts(self):
-        """This depends on self.sextracted, from getprofiles, so should only
-        run when that changes."""
-        scount={}
-        for ps in self.db.pss:
-            scount[ps]={}
-            for s in self.rx:
-                scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
-                    for x in self.sextracted[ps][s]],key=lambda x:x[1],
-                                                                reverse=True)
-        self.slices.scount(scount) #send to object
     def makesettings(self):
         self.settings=Settings(self,self.file)
     def makedatadict(self):
@@ -2975,33 +3219,6 @@ class Check(TaskDressing,ui.Window):
         kwargs['torecord']=True
         kwargs=grouptype(**kwargs)
         return self.getgroup(**kwargs)
-    def getgroup(self,guess=False,cvt=None,event=None,**kwargs):
-        log.info("this sets the group")
-        kwargs=grouptype(**kwargs) #if any should be True, set in wrappers above
-        log.info("getgroup kwargs: {}".format(kwargs))
-        self.refreshattributechanges()
-        if cvt is None:
-            cvt=self.params.cvt()
-        if cvt == "V":
-            w=ui.Window(self.frame,title=_('Select Vowel'))
-            self.getV(window=w,**kwargs)
-            w.wait_window(window=w)
-        elif cvt == "C":
-            w=ui.Window(self.frame,title=_('Select Consonant'))
-            self.getC(w,**kwargs)
-            self.frame.wait_window(window=w)
-        elif cvt == "CV":
-            CV=''
-            for cvt in ['C','V']:
-                self.getgroup(cvt=cvt,**kwargs)
-                CV+=group
-            group=CV
-            cvt = "CV"
-        elif cvt == "T":
-            w=ui.Window(self.frame,title=_('Select Framed Tone Group'))
-            self.getframedtonegroup(window=w,guess=guess,**kwargs)
-            # windowT.wait_window(window=windowT) #?!?
-        return w #so others can wait for this
     """Settings to and from files"""
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
@@ -3622,210 +3839,6 @@ class Check(TaskDressing,ui.Window):
         profile, but for tone, they don't; tone frames depend only on ps."""
         self.status.renewchecks()
         self.status.checks()
-    def getcheck(self,guess=False,event=None,**kwargs):
-        log.info("this sets the check")
-        # fn=inspect.currentframe().f_code.co_name
-        log.info("Getting the check name...")
-        checks=self.status.checks(**kwargs)
-        window=ui.Window(self.frame,title='Select Check')
-        if not checks:
-            if self.params.cvt() == 'T':
-                btext=_("Define a New Tone Frame")
-                text=_("You don't seem to have any tone frames set up.\n"
-                "Click '{}' below to define a tone frame. \nPlease "
-                "pay attention to the instructions, and if \nthere's anything "
-                "you don't understand, or if you're not \nsure what a tone "
-                "frame is, please ask for help. \nWhen you are done making "
-                "frames, click 'Exit' to continue.".format(btext))
-                cmd=self.addframe
-            else:
-                btext=_("Return to A→Z+T, to fix settings")
-                text=_("I can't find any checks for type {}, ps {}, profile {}."
-                        " Probably that means there is a problem with your "
-                        " settings, or with your syllable profile analysis"
-                        "".format(cvt,ps,profile))
-                cmd=window.destroy
-            ui.Label(window.frame, text=text).grid(column=0, row=0, ipady=25)
-            b=ui.Button(window.frame, text=btext,
-                    cmd=cmd,
-                    anchor='c')
-            b.grid(column=0, row=1,sticky='')
-            """I need to make this quit the whole program, immediately."""
-            b2=ui.Button(window.frame, text=_("Quit A→Z+T"),
-                    cmd=self.parent.parent.destroy,
-                    anchor='c')
-            b2.grid(column=1, row=1,sticky='')
-            b.wait_window(window)
-        elif guess is True:
-            self.status.makecheckok(tosort=tosort,wsorted=wsorted)
-        else:
-            text=_('What check do you want to do?')
-            ui.Label(window.frame, text=text).grid(column=0, row=0)
-            buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                    optionlist=checks,
-                                    command=self.setcheck,
-                                    window=window,
-                                    column=0, row=4
-                                    )
-            buttonFrame1.wait_window(window)
-        """Make sure we got a value"""
-        if self.params.check() not in checks:
-            return 1
-    def getexamplespergrouptorecord(self):
-        log.info("this sets the number of examples per group to record")
-        self.npossible=[
-            {'code':1,'name':"1 - Bare minimum, just one per group"},
-            {'code':5,'name':"5 - Some, but not all, of most groups"},
-            {'code':100,'name':"100 - All examples in most databases"},
-            {'code':1000,'name':"1000 - All examples in VERY large databases"}
-                        ]
-        title=_('Select Number of Examples per Group to Record')
-        window=ui.Window(self.frame, title=title)
-        text=_("The {0} tone report splits sorted data into "
-                "draft underlying tone melody groups. "
-                # ", with distinct values for each of your tone frames. This "
-                # "exhaustively finds differences between groups of lexical "
-                # "senses, but often "
-                # "misses similarities between groups, which might be "
-                # "distinguished only because a single word was skipped or sorted "
-                # "incorrectly.\n\n"
-                "Even before a linguist has been able to evaluate these "
-                "groups, it may be helpful to record your sorted data. "
-                "{0} can give you a window for each lexicon sense in a tone "
-                "group, with a record button for each sorted sense-frame "
-                "combination. "
-                "\n\nThose "
-                "windows will be presented to the user from one tone report "
-                "group after "
-                "another, until all groups have had one page presented. Then "
-                "{0} will "
-                "repeat this process, until it has done a number of "
-                "rounds equal to the number selected below. "
-                # "\n\nIf a "
-                # "group has fewer examples than this number, that group will be "
-                # "skipped once done. "
-                "\nPicking a larger number could delay opening "
-                "the recording window; picking a smaller number could mean "
-                "data not getting recorded. "
-                "Up to how many examples do you want to record for each group?"
-                "".format(program['name'])
-                )
-        ui.Label(window.frame, text=title, font='title').grid(column=0,
-                                                                        row=0)
-        ui.Label(window.frame, text=text, justify='left').grid(column=0, row=1)
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                optionlist=self.npossible,
-                                command=self.setexamplespergrouptorecord,
-                                window=window,
-                                column=0, row=4
-                                )
-        buttonFrame1.wait_window(window)
-    def getframedtonegroup(self,window,event=None,guess=False,**kwargs):
-        """Window is called in getgroup"""
-        log.info("getframedtonegroup kwargs: {}".format(kwargs))
-        kwargs=grouptype(**kwargs)
-        cvt=self.params.cvt()
-        ps=self.slices.ps()
-        profile=self.slices.profile()
-        check=self.params.check()
-        if (None in [cvt, ps, profile, check]
-                or cvt != 'T'):
-            ui.Label(window.frame,
-                          text="You need to set "
-                          "\nCheck type (as Tone, currently {}) "
-                          "\nGrammatical category (currently {})"
-                          "\nSyllable Profile (currently {}), and "
-                          "\nTone Frame (currently {})"
-                          "\nBefore this function will do anything!"
-                          "".format(self.params.typedict()[cvt]['sg'], ps,
-                          profile, check)).grid(column=0, row=0)
-            return 1
-        else:
-            g=self.status.groups(**kwargs) #wsorted=True above
-            if not g:
-                ui.Label(window.frame,
-                          text="It looks like you don't have {}-{} lexemes "
-                          "grouped in the ‘{}’ frame yet \n({})."
-                          "".format(ps,profile,check,kwargs)
-                          ).grid(column=0, row=0)
-            elif guess == True:
-                self.setgroup(g[0],window) #don't ask, just set
-            else:
-                ui.Label(window.frame,
-                          text="What {}-{} tone group in the ‘{}’ frame do "
-                          "you want to work with?".format(ps,profile,
-                          check)).grid(column=0, row=0)
-                window.scroll=ui.Frame(window.frame)
-                window.scroll.grid(column=0, row=1)
-                if kwargs['comparison']:
-                    g2=g[:]
-                    g2.remove(self.status.group())
-                    if not g2:
-                        window.destroy()
-                        ErrorNotice(text="There don't seem to be any groups "
-                                    "to compare with!")
-                        return
-                    if len(g2) == 1:
-                        self.setgroup_comparison(g2[0],window)
-                        return
-                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                            optionlist=g2,
-                                            command=self.setgroup_comparison,
-                                            window=window,
-                                            column=0, row=4
-                                            )
-                else:
-                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                                optionlist=g,
-                                                command=self.setgroup,
-                                                window=window,
-                                                column=0, row=4
-                                                )
-    def getV(self,window,event=None, **kwargs):
-        # fn=inspect.currentframe().f_code.co_name
-        """Window is called in getgroup"""
-        if ps is None:
-            ui.Label(window.frame,
-                          text='Error: please set Grammatical category first! ('
-                          +str(ps)+')'
-                          ).grid(column=0, row=0)
-        else:
-            g=self.status.groups(**kwargs)
-            ui.Label(window.frame,
-                          text='What Vowel do you want to work with?'
-                          ).grid(column=0, row=0)
-            window.scroll=ui.ScrollingFrame(window.frame)
-            window.scroll.grid(column=0, row=1)
-            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                     optionlist=g,
-                                     command=self.setsubcheck,
-                                     window=window,
-                                     column=0, row=4
-                                     )
-    def getC(self,window,event=None, **kwargs):
-        # fn=inspect.currentframe().f_code.co_name
-        """Window is called in getgroup"""
-        if ps is None:
-            text=_('Error: please set Grammatical category first! ')+'('
-            +str(ps)+')'
-            ui.Label(window.frame,
-                          text=text
-                          ).grid(column=0, row=0)
-        else:
-            # ui.Label(window.frame,
-            #               ).grid(column=0, row=0)
-            g=self.status.groups(**kwargs)
-            ui.Label(window.frame,
-                          text='What consonant do you want to work with?'
-                          ).grid(column=0, row=0,sticky='nw')
-            window.scroll=Frame(window.frame)
-            window.scroll.grid(column=0, row=1)
-            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                    optionlist=g,
-                                    command=self.setsubcheck,
-                                    window=window,
-                                    column=0, row=0
-                                    )
     def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
         xlp.Paragraph(parent,t)
         print(t)
