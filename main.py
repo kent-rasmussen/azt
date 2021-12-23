@@ -7771,14 +7771,6 @@ class StatusDict(dict):
                 check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
                 return True
-    def grouptorecord(self,group,check=None):
-        if check is None:
-            check=self._checkparameters.check()
-        for senseid in self._examplesbygroup.senseidsinslicegroup(group,check):
-            framed=self._examplesbygroup.datadict.getframeddata(senseid=senseid,
-                                                                    check=check)
-            if not framed.audiofileisthere():
-                return True
     def nextprofile(self, **kwargs):
         kwargs=grouptype(**kwargs)
         # self.makeprofileok()
@@ -7881,11 +7873,7 @@ class StatusDict(dict):
         if kwargs['toverify']:
             return list(set(sn['groups'])-set(sn['done']))
         if kwargs['torecord']:
-            tr=[]
-            for group in self.groups(wsorted=True):
-                if self.grouptorecord(group):
-                    tr.append(group)
-            return tr
+            return list(set(sn['groups'])-set(sn['recorded']))
         else: #give theoretical possibilities (C or V only)
             if kwargs['cvt'] == 'V':
                 todo=[self.scount[kwargs['ps']]['V']] #that's all that's there, for now.
@@ -8000,7 +7988,7 @@ class StatusDict(dict):
                 base['done']=[]
                 base['tosort']=True
                 changed=True
-            for key in ['groups','done']:
+            for key in ['groups','done','recorded']:
                 if key not in base:
                     log.log(4,"Adding {} key to {}-{} status dict".format(
                                         key,kwargs['profile'],kwargs['check']))
@@ -8122,6 +8110,12 @@ class StatusDict(dict):
         if g is not None:
             self._verified=g
         return self._verified
+    def recorded(self,g=None,**kwargs): #cvt=None,ps=None,profile=None,check=None):
+        sn=self.node(**kwargs)
+        self._recorded=sn['recorded']
+        if g is not None:
+            self._recorded=g
+        return self._recorded
     def update(self,group=None,verified=False,refresh=True):
         """This function updates the status variable, not the lift file."""
         if group is None:
