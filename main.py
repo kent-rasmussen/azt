@@ -3414,28 +3414,7 @@ class Check(TaskDressing,ui.Window):
         # if self.audiolang is None:
         #     self.guessaudiolang() #don't display this, but make it
         """Get glosslang"""
-        for lang in self.glosslangs:
-            if lang not in self.db.glosslangs:
-                self.glosslangs.rm(lang)
-        if len(self.glosslangs) == 0:
-            self.guessglosslangs()
-        t=(_("Meanings in {}").format(self.languagenames[self.glosslangs[0]]))
-        tf=ui.Frame(self.frame.status)
-        tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
-        proselabel(opts,t,cmd='getglosslang',parent=tf)
-        opts['columnplus']=1
-        if len(self.glosslangs) >1:
-            t=(_("and {}").format(self.languagenames[self.glosslangs[1]]))
-        else:
-            t=_("only")
-        proselabel(opts,t,cmd='getglosslang2',parent=tf)
-        opts['columnplus']=0
-        opts['row']+=1
         self.status.makecvtok()
-        cvt=self.params.cvt()
-        cvts=self.params.cvts()
-        if cvt not in cvts:
-            cvt=self.params.cvt('V')
         """These settings must be set (for now); we can't guess them (yet)"""
         """Ultimately, we will pick the largest ps/profile combination as an
         initial default (obviously changeable, as are all)"""
@@ -3443,24 +3422,6 @@ class Check(TaskDressing,ui.Window):
         self.slices.makepsok()
         """Get profile (this depends on ps)"""
         self.slices.makeprofileok()
-        ps=self.slices.ps()
-        profile=self.slices.profile()
-        log.log(4,"ps:{}; profile:{}; self.profilesbysense type: {}".format(ps,profile,type(self.profilesbysense)))
-        if ((ps in self.profilesbysense) and
-                (profile in self.profilesbysense[ps])):
-            count=len(self.profilesbysense[ps][profile])
-        else:
-            count=0
-        tf=ui.Frame(self.frame.status)
-        tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
-        opts['row']+=1
-        t=(_("Looking at {}").format(profile))
-        proselabel(opts,t,cmd='getprofile',parent=tf)
-        opts['columnplus']=1
-        t=(_("{} words ({})").format(ps,count))
-        proselabel(opts,t,cmd='getps',parent=tf)
-        opts['columnplus']=0
-        opts['row']+=1
         """Get cvt"""
         tf=ui.Frame(self.frame.status)
         tf.grid(row=opts['row'],column=0,columnspan=3,sticky='w')
@@ -3531,7 +3492,7 @@ class Check(TaskDressing,ui.Window):
             t=(_("Sort!"))
         else:
             t=(_("Report!")) #because CV doesn't actually sort yet...
-        button(opts,t,self.runcheck,column=0,
+        button(t,self.runcheck,column=0,
                 font='title',
                 compound='bottom', #image bottom, left, right, or top of text
                 image=self.frame.theme.photo[cvt],
@@ -3541,7 +3502,7 @@ class Check(TaskDressing,ui.Window):
             t=(_("Record Sorted Examples"))
         else:
             t=(_("Record Dictionary Words"))
-        button(opts,t,self.record,column=0,
+        button(t,self.record,column=0,
                 compound='left', #image bottom, left, right, or top of text
                 row=1,
                 image=self.frame.theme.photo['record']
