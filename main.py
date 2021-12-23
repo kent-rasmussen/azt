@@ -1990,7 +1990,7 @@ class TaskChooser(TaskDressing,ui.Window):
         another class) provides a list of functions with prerequisites
         that are minimally and/or optimally satisfied."""
         tasks=[]
-        for task in [Check, WordCollection, Placeholder]:
+        for task in [WordCollection, Placeholder, Check]:
             tasks.append((task,task.tasktitle(task)))
         return tasks
         # [(Check,"Citation Form Sorting in Tone Frames"),
