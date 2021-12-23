@@ -2155,6 +2155,10 @@ class TaskDressing(object):
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
+        if isinstance(self,TaskChooser):
+            self.taskchooser=self
+        else:
+            self.taskchooser=self.parent
         self.withdraw() #made visible by chooser when complete
         self.maketitle()
         self.inherittaskattrs()
