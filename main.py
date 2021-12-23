@@ -1230,6 +1230,130 @@ class Settings(object):
             self.file.storesettingsfile(setting='profiledata')
             e=time.time()-self.start_time
             log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
+    def addpstoprofileswdata(self,ps=None):
+        if ps is None:
+            ps=self.slices.ps()
+        if ps not in self.profilesbysense:
+            self.profilesbysense[ps]={}
+    def addprofiletoprofileswdata(self,ps=None,profile=None):
+        if ps is None:
+            ps=self.slices.ps()
+        if profile is None:
+            profile=self.slices.profile()
+        if profile not in self.profilesbysense[ps]:
+            self.profilesbysense[ps][profile]=[]
+    def addtoprofilesbysense(self,senseid,ps=None,profile=None):
+        if ps is None:
+            if hasattr(self,'slices'):
+                ps=self.slices.ps()
+            else:
+                log.error("You didn't specifiy ps, but don't have slices yet!")
+                return
+        self.addpstoprofileswdata(ps=ps)
+        if profile is None:
+            profile=self.slices.profile()
+        self.addprofiletoprofileswdata(ps=ps,profile=profile)
+        self.profilesbysense[ps][profile]+=[senseid]
+    def getprofileofsense(self,senseid):
+        #Convert to iterate over local variables
+        ps=unlist(self.db.ps(senseid=senseid))
+        if ps in [None,'None']:
+            return None,'NoPS'
+        forms=self.db.citationorlexeme(senseid=senseid,analang=self.analang)
+        if forms == []:
+            profile='Invalid'
+            self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
+            return None, profile
+        if forms is None:
+            return None,'Invalid'
+        for form in forms:
+            """This adds to self.sextracted, too"""
+            profile=self.profileofform(form,ps=ps)
+            if not set(self.profilelegit).issuperset(profile):
+                profile='Invalid'
+            self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
+            if ps not in self.formstosearch:
+                self.formstosearch[ps]={}
+            if form in self.formstosearch[ps]:
+                self.formstosearch[ps][form].append(senseid)
+            else:
+                self.formstosearch[ps][form]=[senseid]
+        return firstoflist(forms),profile
+    def getprofiles(self):
+        self.profileswdatabyentry={}
+        self.profilesbysense={}
+        self.profilesbysense['Invalid']=[]
+        self.profiledguids=[]
+        self.profiledsenseids=[]
+        self.formstosearch={}
+        self.sextracted={} #Will store matching segments here
+        for ps in self.db.pss:
+            self.sextracted[ps]={}
+            for s in self.rx:
+                self.sextracted[ps][s]={}
+        todo=len(self.db.senseids)
+        x=0
+        for senseid in self.db.senseids:
+            x+=1
+            form,profile=self.getprofileofsense(senseid)
+            if x % 10 == 0:
+                log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
+                                            profile))
+        #Convert to iterate over local variables
+        """Do I want this? better to keep the adhoc groups separate"""
+        """We will *never* have slices set up by this time; read from file."""
+        if hasattr(self,'adhocgroups'):
+            for ps in self.adhocgroups:
+                for a in self.adhocgroups[ps]:
+                    log.debug("Adding {} to {} ps-profile: {}".format(a,ps,
+                                                self.adhocgroups[ps][a]))
+                    self.addpstoprofileswdata(ps=ps) #in case the ps isn't already there
+                    #copy over stored values:
+                    self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
+                    log.debug("resulting profilesbysense: {}".format(
+                                            self.profilesbysense[ps][a]))
+    def profileofformpreferred(self,form):
+        """Simplify combinations where desired"""
+        for c in ['N','S','G','ʔ','D']:
+            if self.distinguish[c] is False:
+                form=self.rx[c+'_'].sub('C',form)
+            if self.distinguish[c+'wd'] is False:
+                form=self.rx[c+'wd'].sub('C',form)
+                # log.debug("{}wd regex result: {}".format(c,form))
+        for o in ["̀",'<','=','ː']:
+            if self.distinguish[o] is False and o in self.rx:
+                form=self.rx[o].sub('',form)
+        for cc in ['CG','CS','NC','VN','VV']:
+            form=self.rx[cc].sub(self.interpret[cc],form)
+        return form
+    def profileofform(self,form,ps):
+        if not form or not ps:
+            return "Invalid"
+        # log.debug("profiling {}...".format(form))
+        formori=form
+        """priority sort alphabets (need logic to set one or the other)"""
+        """Look for any C, don't find N or G"""
+        # self.profilelegit=['#','̃','C','N','G','S','V']
+        """Look for word boundaries, N and G before C (though this doesn't
+        work, since CG is captured by C first...)"""
+        # self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b']
+        log.log(4,"Searching {} in this order: {}".format(form,self.profilelegit
+                        ))
+        log.log(4,"Searching with these regexes: {}".format(self.rx))
+        for s in set(self.profilelegit) & set(self.rx.keys()):
+            log.log(3,'s: {}; rx: {}'.format(s, self.rx[s]))
+            for i in self.rx[s].findall(form):
+                if i not in self.sextracted[ps][s]:
+                    self.sextracted[ps][s][i]=0
+                self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
+            form=self.rx[s].sub(s,form) #replace with profile variable
+        """We could consider combining NC to C (or not), and CG to C (or not)
+        here, after the 'splitter' profiles are formed..."""
+        # log.debug("{}: {}".format(formori,form))
+        # log.info("Form before simplification:{}".format(form))
+        form=self.profileofformpreferred(form)
+        # log.info("Form after simplification:{}".format(form))
+        return form
     def notifyuserofextrasegments(self):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
@@ -2864,130 +2988,6 @@ class Check(TaskDressing,ui.Window):
         self.status.update(group=group,verified=verified)
         return
     """Get from LIFT database functions"""
-    def addpstoprofileswdata(self,ps=None):
-        if ps is None:
-            ps=self.slices.ps()
-        if ps not in self.profilesbysense:
-            self.profilesbysense[ps]={}
-    def addprofiletoprofileswdata(self,ps=None,profile=None):
-        if ps is None:
-            ps=self.slices.ps()
-        if profile is None:
-            profile=self.slices.profile()
-        if profile not in self.profilesbysense[ps]:
-            self.profilesbysense[ps][profile]=[]
-    def addtoprofilesbysense(self,senseid,ps=None,profile=None):
-        if ps is None:
-            if hasattr(self,'slices'):
-                ps=self.slices.ps()
-            else:
-                log.error("You didn't specifiy ps, but don't have slices yet!")
-                return
-        self.addpstoprofileswdata(ps=ps)
-        if profile is None:
-            profile=self.slices.profile()
-        self.addprofiletoprofileswdata(ps=ps,profile=profile)
-        self.profilesbysense[ps][profile]+=[senseid]
-    def getprofileofsense(self,senseid):
-        #Convert to iterate over local variables
-        ps=unlist(self.db.ps(senseid=senseid))
-        if ps in [None,'None']:
-            return None,'NoPS'
-        forms=self.db.citationorlexeme(senseid=senseid,analang=self.analang)
-        if forms == []:
-            profile='Invalid'
-            self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
-            return None, profile
-        if forms is None:
-            return None,'Invalid'
-        for form in forms:
-            """This adds to self.sextracted, too"""
-            profile=self.profileofform(form,ps=ps)
-            if not set(self.profilelegit).issuperset(profile):
-                profile='Invalid'
-            self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
-            if ps not in self.formstosearch:
-                self.formstosearch[ps]={}
-            if form in self.formstosearch[ps]:
-                self.formstosearch[ps][form].append(senseid)
-            else:
-                self.formstosearch[ps][form]=[senseid]
-        return firstoflist(forms),profile
-    def getprofiles(self):
-        self.profileswdatabyentry={}
-        self.profilesbysense={}
-        self.profilesbysense['Invalid']=[]
-        self.profiledguids=[]
-        self.profiledsenseids=[]
-        self.formstosearch={}
-        self.sextracted={} #Will store matching segments here
-        for ps in self.db.pss:
-            self.sextracted[ps]={}
-            for s in self.rx:
-                self.sextracted[ps][s]={}
-        todo=len(self.db.senseids)
-        x=0
-        for senseid in self.db.senseids:
-            x+=1
-            form,profile=self.getprofileofsense(senseid)
-            if x % 10 == 0:
-                log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
-                                            profile))
-        #Convert to iterate over local variables
-        """Do I want this? better to keep the adhoc groups separate"""
-        """We will *never* have slices set up by this time; read from file."""
-        if hasattr(self,'adhocgroups'):
-            for ps in self.adhocgroups:
-                for a in self.adhocgroups[ps]:
-                    log.debug("Adding {} to {} ps-profile: {}".format(a,ps,
-                                                self.adhocgroups[ps][a]))
-                    self.addpstoprofileswdata(ps=ps) #in case the ps isn't already there
-                    #copy over stored values:
-                    self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
-                    log.debug("resulting profilesbysense: {}".format(
-                                            self.profilesbysense[ps][a]))
-    def profileofformpreferred(self,form):
-        """Simplify combinations where desired"""
-        for c in ['N','S','G','ʔ','D']:
-            if self.distinguish[c] is False:
-                form=self.rx[c+'_'].sub('C',form)
-            if self.distinguish[c+'wd'] is False:
-                form=self.rx[c+'wd'].sub('C',form)
-                # log.debug("{}wd regex result: {}".format(c,form))
-        for o in ["̀",'<','=','ː']:
-            if self.distinguish[o] is False and o in self.rx:
-                form=self.rx[o].sub('',form)
-        for cc in ['CG','CS','NC','VN','VV']:
-            form=self.rx[cc].sub(self.interpret[cc],form)
-        return form
-    def profileofform(self,form,ps):
-        if not form or not ps:
-            return "Invalid"
-        # log.debug("profiling {}...".format(form))
-        formori=form
-        """priority sort alphabets (need logic to set one or the other)"""
-        """Look for any C, don't find N or G"""
-        # self.profilelegit=['#','̃','C','N','G','S','V']
-        """Look for word boundaries, N and G before C (though this doesn't
-        work, since CG is captured by C first...)"""
-        # self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b']
-        log.log(4,"Searching {} in this order: {}".format(form,self.profilelegit
-                        ))
-        log.log(4,"Searching with these regexes: {}".format(self.rx))
-        for s in set(self.profilelegit) & set(self.rx.keys()):
-            log.log(3,'s: {}; rx: {}'.format(s, self.rx[s]))
-            for i in self.rx[s].findall(form):
-                if i not in self.sextracted[ps][s]:
-                    self.sextracted[ps][s][i]=0
-                self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
-            form=self.rx[s].sub(s,form) #replace with profile variable
-        """We could consider combining NC to C (or not), and CG to C (or not)
-        here, after the 'splitter' profiles are formed..."""
-        # log.debug("{}: {}".format(formori,form))
-        # log.info("Form before simplification:{}".format(form))
-        form=self.profileofformpreferred(form)
-        # log.info("Form after simplification:{}".format(form))
-        return form
     def gimmeguid(self):
         idsbyps=self.db.get('guidbyps',lang=self.analang,ps=ps)
         return idsbyps[randint(0, len(idsbyps))]
