@@ -8840,7 +8840,10 @@ def main():
     logshutdown() #in logsetup
 def mainproblem():
     log.info("Starting up help line...")
-    file=logwritelzma(log.filename)
+    if not me:
+        file=logwritelzma(log.filename)
+    else:
+        file='<zipped filename here>'
     try: #Make this work whether root has run/still runs or not.
         program['root'].winfo_exists()
         log.info("Root there!")
@@ -8882,9 +8885,14 @@ def mainproblem():
         row=2,column=0
         )
     n.bind("<Button-1>", lambda e: openweburl(eurl))
-    scroll=ui.ScrollingFrame(errorw.frame,row=3,column=0)
-    o=ui.Label(scroll.content,text="\n\nThe end of {} / {} are below:"
-                "\n\n{}".format(log.filename,file,''.join(lcontents)),
+    o=ui.Label(errorw.frame,text="The end of {} / {} are below:"
+                                "".format(log.filename,file),
+                                justify='left',
+                                font='report',
+                                row=3,column=0,
+                                sticky='w')
+    scroll=ui.ScrollingFrame(errorw.frame,row=4,column=0)
+    o=ui.Label(scroll.content,text=''.join(lcontents),
                 justify='left',
                 font='report',
                 row=0,column=0)
