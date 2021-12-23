@@ -2183,6 +2183,8 @@ class TaskDressing(object):
                 for attr in [i for i in self.settings.settings[k]['attributes']]:
                     if hasattr(self.settings,attr):
                         setattr(self,attr,getattr(self.settings,attr))
+        """these are objects made by the task chooser"""
+        self.inherittaskattrs()
         # super(TaskDressing, self).__init__(parent)
         for k in ['settings',
                     'menu','mainrelief','fontthemesmall',
