@@ -7315,6 +7315,7 @@ class ToneGroupButtonFrame(ui.Frame):
         # self.grid(column=column, row=row, sticky=sticky)
 class Splash(ui.Window):
     def __init__(self, parent):
+        parent.withdraw()
         super(Splash, self).__init__(parent,exit=0)
         title=(_("{name} Dictionary and Orthography Checker").format(
                                                         name=program['name']))
