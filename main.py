@@ -466,6 +466,8 @@ class StatusFrame(ui.Frame):
         super(StatusFrame, self).__init__(parent, **kwargs)
         self.interfacelang()
         self.analang()
+        self.glosslangs()
+        self.slice()
 class Settings(object):
     """docstring for Settings."""
     def setinterfacelangwrapper(self,choice,window):
