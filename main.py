@@ -1700,9 +1700,9 @@ class Settings(object):
                 self.adnlangnames={}
             if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
                 self.languagenames[xyz]=self.adnlangnames[xyz]
-    def __init__(self,liftfilename):
-        self.liftfilename=liftfilename
-        super(Settings, self).__init__()
+    def __init__(self,liftfileobject):
+        self.liftfilename=liftfileobject.name
+        self.db=liftfileobject.db
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.repocheck()
         self.settingsfilecheck()
