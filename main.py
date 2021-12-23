@@ -8798,7 +8798,7 @@ def main():
     # root.winfo_class("azt")
     # log.info(root.winfo_class())
     """Translation starts here:"""
-    myapp = MainApplication(root)
+    myapp = TaskChooser(root) #TaskChooser MainApplication
     myapp.mainloop()
     logshutdown() #in logsetup
 def mainproblem():
