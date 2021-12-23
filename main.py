@@ -423,6 +423,40 @@ class StatusFrame(ui.Frame):
             self.proselabel(t,cmd=self.taskchooser.getanalang,
                                             tt=_("Change analysis language"))
         self.opts['row']+=1
+    def glosslangs(self):
+        lang1=self.settings.languagenames[self.settings.glosslangs.lang1()]
+        t=(_("Meanings in {}").format(lang1))
+        line=ui.Frame(self,row=self.opts['row'],column=0,
+                        columnspan=3,sticky='w') #3 cols is the width of frame
+        self.proselabel(t,cmd=self.taskchooser.getglosslang,parent=line)
+        self.opts['columnplus']=1
+        if len(self.settings.glosslangs) >1:
+            lang2=self.settings.languagenames[self.settings.glosslangs.lang2()]
+            t=(_("and {}").format(lang2))
+        else:
+            t=_("only")
+        self.proselabel(t,cmd=self.taskchooser.getglosslang2,parent=line)
+        self.opts['columnplus']=0
+        self.opts['row']+=1
+    def slice(self):
+        ps=self.settings.slices.ps()
+        profile=self.settings.slices.profile()
+        # if ((ps in self.profilesbysense) and
+        #         (profile in self.profilesbysense[ps])):
+        #     count=len(self.profilesbysense[ps][profile])
+        # else:
+        #     count=0
+        count=self.settings.slices.count()
+        line=ui.Frame(self,row=self.opts['row'],column=0,
+                        columnspan=3,sticky='w')
+        self.opts['row']+=1
+        t=(_("Looking at {}").format(profile))
+        self.proselabel(t,cmd=self.taskchooser.getprofile,parent=line)
+        self.opts['columnplus']=1
+        t=(_("{} words ({})").format(ps,count))
+        self.proselabel(t,cmd=self.taskchooser.getps,parent=line)
+        self.opts['columnplus']=0
+        self.opts['row']+=1
     def __init__(self, parent, taskchooser, **kwargs):
         self.setopts()
         self.parent=parent
