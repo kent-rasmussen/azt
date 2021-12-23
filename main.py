@@ -432,19 +432,6 @@ class StatusFrame(ui.Frame):
         self.analang()
 class Settings(object):
     """docstring for Settings."""
-
-    def getinterfacelang(self,event=None):
-        log.info("Asking for interface language...")
-        window=ui.Window(self.frame, title=_('Select Interface Language'))
-        ui.Label(window.frame, text=_('What language do you want this program '
-                                'to address you in?')
-                ).grid(column=0, row=0)
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                optionlist=self.parent.interfacelangs,
-                                command=self.setinterfacelangwrapper,
-                                window=window,
-                                column=0, row=1
-                                )
     def setinterfacelangwrapper(self,choice,window):
         setinterfacelang(choice) #change the UI *ONLY*; no object attributes
         file.writeinterfacelangtofile(choice) #>ui_lang.py, for startup
@@ -1546,6 +1533,68 @@ class Settings(object):
             self.glosslangs.lang2(self.db.glosslangs[1])
         else:
             print("Can't tell how many glosslangs!",len(self.db.glosslangs))
+    def refreshattributechanges(self):
+        """I need to think through these; what things must/should change when
+        one of these attributes change? Especially when we've changed a few...
+        """
+        if not hasattr(self,'attrschanged'):
+            return
+        self.taskchooser.status.build()
+        if 'cvt' in self.attrschanged:
+            self.taskchooser.status.renewchecks()
+            self.taskchooser.slices.makeprofileok()
+            self.attrschanged.remove('cvt')
+        if 'ps' in self.attrschanged:
+            t=self.taskchooser.params.cvt()
+            if t == 'T':
+                self.taskchooser.status.renewchecks()
+            self.attrschanged.remove('ps')
+        if 'profile' in self.attrschanged:
+            self.attrschanged.remove('profile')
+        if 'check' in self.attrschanged:
+            self.attrschanged.remove('check')
+        if 'interfacelang' in self.attrschanged:
+            self.attrschanged.remove('interfacelang')
+        soundattrs=['fs',
+                    'sample_format',
+                    'audio_card_index',
+                    'audioout_card_index'
+                    ]
+        soundattrschanged=set(soundattrs) & set(self.attrschanged)
+        for a in soundattrschanged:
+            self.storesettingsfile(setting='soundsettings')
+            self.attrschanged.remove(a)
+            break
+        if self.attrschanged != []:
+            log.error("Remaining changed attribute! ({})".format(
+                                                        self.attrschanged))
+    def makeparameters(self):
+        self.params=CheckParameters(self.analang) #remove self.profilesbysense?
+    def makeslicedict(self):
+        if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
+            self.adhocgroups={}
+        self.slices=SliceDict(self.params,
+                                self.adhocgroups,
+                                self.profilesbysense
+                                ) #self.profilecounts
+        if hasattr(self,'sextracted'):
+            self.getscounts()
+    def maketoneframes(self):
+        if not hasattr(self,'toneframes'):
+            self.toneframes={}
+        self.toneframes=ToneFrames(self.toneframes)
+    def makestatus(self):
+        if not hasattr(self,'status'):
+            self.status={}
+        log.info("Making status object with value {}".format(self.status))
+        self.status=StatusDict(self.params,
+                                self.slices,
+                                # self.exs,
+                                self.toneframes,
+                                self.settingsfile('status'),
+                                self.status
+                                )
+        log.info("Made status object with value {}".format(self.status))
     def set(self,attribute,choice,window=None,refresh=True):
         #Normally, pass the attribute through the button frame,
         #otherwise, don't set window (which would be destroyed)
@@ -1618,57 +1667,6 @@ class Settings(object):
         window.destroy()
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
-    def getanalangname(self,event=None):
-        log.info("this sets the language name")
-        def submit(event=None):
-            analang=self.params.analang()
-            self.parent.languagenames[analang]=name.get()
-            if (not hasattr(self.parent,'adnlangnames') or
-                    not self.parent.adnlangnames):
-                self.parent.adnlangnames={}
-            self.parent.adnlangnames[analang]=self.parent.languagenames[analang]
-                # if self.analang in self.adnlangnames:
-            self.storesettingsfile()
-            window.destroy()
-        window=ui.Window(self.frame,title=_('Enter Analysis Language Name'))
-        curname=self.parent.languagenames[analang]
-        defaultname=_("Language with code [{}]").format(analang)
-        t=_("How do you want to display the name of {}").format(curname)
-        if curname != defaultname:
-            t+=_(", with ISO 639-3 code [{}]").format(self.analang)
-        t+='?' # _("Language with code [{}]").format(xyz)
-        ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
-        name = ui.EntryField(window.frame)
-        name.grid(row=1,column=0,sticky='e')
-        ui.Button(window.frame,text='OK',cmd=submit,row=1,column=1,sticky='w')
-        name.bind('<Return>',submit)
-    def getanalang(self,event=None):
-        if len(self.db.analangs) <2: #The user probably wants to change display.
-            self.getanalangname()
-            return
-        log.info("this sets the language")
-        # fn=inspect.currentframe().f_code.co_name
-        window=ui.Window(self.frame,title=_('Select Analysis Language'))
-        if self.db.analangs is None :
-            ui.Label(window.frame,
-                          text='Error: please set Lift file first! ('
-                          +str(self.db.filename)+')'
-                          ).grid(column=0, row=0)
-        else:
-            ui.Label(window.frame,
-                          text=_('What language do you want to analyze?')
-                          ).grid(column=0, row=1)
-            langs=list()
-            for lang in self.db.analangs:
-                langs.append({'code':lang,
-                                'name':self.parent.languagenames[lang]})
-                print(lang, self.parent.languagenames[lang])
-            buttonFrame1=ui.ButtonFrame(window.frame,
-                                     optionlist=langs,
-                                     command=self.setanalang,
-                                     window=window,
-                                     column=0, row=4
-                                     )
     def getglosslang(self,event=None):
         log.info("this sets the gloss")
         window=ui.Window(self.frame,title=_('Select Gloss Language'))
@@ -2084,6 +2082,76 @@ class TaskDressing(object):
                     ]:
             if hasattr(self.parent,attr):
                 setattr(self,attr,getattr(self.parent,attr))
+    def makestatusframe(self):
+        #This will probably need to be reworked
+        if hasattr(self.frame,'status') and self.frame.status.winfo_exists():
+            self.frame.status.destroy()
+        self.frame.status=StatusFrame(self.frame, self.taskchooser,
+                                        relief=self.mainrelief,
+                                        row=0, column=0, sticky='nw')
+    def getinterfacelang(self,event=None):
+        log.info("Asking for interface language...")
+        window=ui.Window(self.frame, title=_('Select Interface Language'))
+        ui.Label(window.frame, text=_('What language do you want this program '
+                                'to address you in?')
+                ).grid(column=0, row=0)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                optionlist=self.taskchooser.interfacelangs,
+                                command=self.settings.setinterfacelangwrapper,
+                                window=window,
+                                column=0, row=1
+                                )
+    def getanalangname(self,event=None):
+        log.info("this sets the language name")
+        def submit(event=None):
+            self.taskchooser.languagenames[analang]=name.get()
+            if (not hasattr(self.taskchooser,'adnlangnames') or
+                    not self.taskchooser.adnlangnames):
+                self.taskchooser.adnlangnames={}
+            self.taskchooser.adnlangnames[analang]=self.taskchooser.languagenames[analang]
+                # if self.analang in self.adnlangnames:
+            self.settings.storesettingsfile()
+            window.destroy()
+        analang=self.params.analang()
+        window=ui.Window(self.frame,title=_('Enter Analysis Language Name'))
+        curname=self.taskchooser.languagenames[analang]
+        defaultname=_("Language with code [{}]").format(analang)
+        t=_("How do you want to display the name of {}").format(curname)
+        if curname != defaultname:
+            t+=_(", with ISO 639-3 code [{}]").format(analang)
+        t+='?' # _("Language with code [{}]").format(xyz)
+        ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
+        name = ui.EntryField(window.frame)
+        name.grid(row=1,column=0,sticky='e')
+        ui.Button(window.frame,text='OK',cmd=submit,row=1,column=1,sticky='w')
+        name.bind('<Return>',submit)
+    def getanalang(self,event=None):
+        if len(self.db.analangs) <2: #The user probably wants to change display.
+            self.getanalangname()
+            return
+        log.info("this sets the language")
+        # fn=inspect.currentframe().f_code.co_name
+        window=ui.Window(self.frame,title=_('Select Analysis Language'))
+        if self.db.analangs is None :
+            ui.Label(window.frame,
+                          text='Error: please set Lift file first! ('
+                          +str(self.db.filename)+')'
+                          ).grid(column=0, row=0)
+        else:
+            ui.Label(window.frame,
+                          text=_('What language do you want to analyze?')
+                          ).grid(column=0, row=1)
+            langs=list()
+            for lang in self.db.analangs:
+                langs.append({'code':lang,
+                                'name':self.taskchooser.languagenames[lang]})
+                # print(lang, self.taskchooser.languagenames[lang])
+            buttonFrame1=ui.ButtonFrame(window.frame,
+                                     optionlist=langs,
+                                     command=self.settings.setanalang,
+                                     window=window,
+                                     column=0, row=4
+                                     )
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -2161,26 +2229,8 @@ class TaskChooser(TaskDressing,ui.Window):
                     for x in self.sextracted[ps][s]],key=lambda x:x[1],
                                                                 reverse=True)
         self.slices.scount(scount) #send to object
-    def makestatus(self):
-        if not hasattr(self,'status'):
-            self.status={}
-        self.status=StatusDict(self.params,
-                                self.slices,
-                                self.exs,
-                                self.toneframes,
-                                self.file.settingsfile('status'),
-                                self.status
-                                )
     def makesettings(self):
-        self.settings=Settings(self.file.directory)
-    def makeparameters(self):
-        self.params=CheckParameters(self.analang) #remove self.profilesbysense?
-    def makeslicedict(self):
-        if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
-            self.adhocgroups={}
-        self.slices=SliceDict(self.params,self.adhocgroups,self.profilesbysense) #self.profilecounts
-        if hasattr(self,'sextracted'):
-            self.getscounts()
+        self.settings=Settings(self,self.file)
     def makedatadict(self):
         self.datadict=FramedDataDict(self) #needs self.toneframes
     def makeexampledict(self):
@@ -2859,41 +2909,6 @@ class Check(TaskDressing,ui.Window):
         chk_btn=ui.Button(self.addwindow.frame1,text = text, command = chk)
         chk_btn.grid(row=row+1,column=columnleft,pady=100)
     """Set User Input"""
-    def refreshattributechanges(self):
-        """I need to think through these; what things must/should change when
-        one of these attributes change? Especially when we've changed a few...
-        """
-        if not hasattr(self,'attrschanged'):
-            return
-        self.status.build()
-        if 'cvt' in self.attrschanged:
-            self.status.renewchecks()
-            self.slices.makeprofileok()
-            self.attrschanged.remove('cvt')
-        if 'ps' in self.attrschanged:
-            t=self.params.cvt()
-            if t == 'T':
-                self.status.renewchecks()
-            self.attrschanged.remove('ps')
-        if 'profile' in self.attrschanged:
-            self.attrschanged.remove('profile')
-        if 'check' in self.attrschanged:
-            self.attrschanged.remove('check')
-        if 'interfacelang' in self.attrschanged:
-            self.attrschanged.remove('interfacelang')
-        soundattrs=['fs',
-                    'sample_format',
-                    'audio_card_index',
-                    'audioout_card_index'
-                    ]
-        soundattrschanged=set(soundattrs) & set(self.attrschanged)
-        for a in soundattrschanged:
-            self.storesettingsfile(setting='soundsettings')
-            self.attrschanged.remove(a)
-            break
-        if self.attrschanged != []:
-            log.error("Remaining changed attribute! ({})".format(
-                                                        self.attrschanged))
     def getgroupwsorted(self,event=None,**kwargs):
         kwargs['wsorted']=True
         kwargs=grouptype(**kwargs)
@@ -3113,54 +3128,6 @@ class Check(TaskDressing,ui.Window):
             return
         log.info("Dict changes; checking attributes and updating the UI. ({})"
                                                             "".format(dictnow))
-        opts={
-        'row':0,
-        'labelcolumn':0,
-        'valuecolumn':1,
-        'buttoncolumn':2,
-        'labelxpad':15,
-        'width':None, #10
-        'columnspan':3,
-        'columnplus':0}
-        def proselabel(opts,label,parent=None,cmd=None,tt=None):
-            if parent is None:
-                parent=self.frame.status
-                column=opts['labelcolumn']
-                row=opts['row']
-                columnspan=opts['columnspan']
-                ipadx=opts['labelxpad']
-            else:
-                column=0+opts['columnplus']
-                row=0
-                columnspan=1
-                ipadx=0
-            if not self.mainrelief:
-                l=ui.Label(parent, text=label,font='report',anchor='w')
-            else:
-                l=ui.Button(parent,text=label,font='report',anchor='w',
-                    relief=self.mainrelief)
-            l.grid(column=column, row=row, columnspan=columnspan,
-                    ipadx=ipadx, sticky='w')
-            if cmd is not None:
-                l.bind('<ButtonRelease>',getattr(self,str(cmd)))
-            if tt is not None:
-                ttl=ui.ToolTip(l,tt)
-            return l
-        def labels(parent,opts,label,value):
-            ui.Label(self.frame.status, text=label).grid(
-                    column=opts['labelcolumn'], row=opts['row'],
-                    ipadx=opts['labelxpad'], sticky='w'
-                    )
-            ui.Label(self.frame.status, text=value).grid(
-                    column=opts['valuecolumn'], row=opts['row'],
-                    ipadx=opts['labelxpad'], sticky='w'
-                    )
-        def button(opts,text,fn=None,column=opts['labelcolumn'],**kwargs):
-            """cmd overrides the standard button command system."""
-            ui.Button(self.frame.status, choice=text, text=text, anchor='c',
-                            cmd=fn, width=opts['width'], **kwargs
-                            ).grid(column=column, row=opts['row'],
-                                    columnspan=opts['columnspan'])
         #If the user exits out before this point, just stop.
         if self.exitFlag.istrue():
             return
@@ -3603,16 +3570,6 @@ class Check(TaskDressing,ui.Window):
         self.su=True
     def unsetsu(self):
         self.su=False
-    def makestatusframe(self):
-        #This will probably need to be reworked
-        if hasattr(self.frame,'status') and self.frame.status.winfo_exists():
-            self.frame.status.destroy()
-            self.frame.status=ui.Frame(self.frame)
-            self.frame.status.grid(row=0, column=0,sticky='nw')
-        else:
-            log.info("Apparently, this is my first time making the status frame.")
-            self.frame.status=ui.Frame(self.frame)
-            self.frame.status.grid(row=0, column=0,sticky='nw')
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
             self.results = ui.Frame(self.runwindow.frame,width=800)
