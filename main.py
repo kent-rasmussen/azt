@@ -1904,12 +1904,14 @@ class Settings(object):
                 self.adnlangnames={}
             if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
                 self.languagenames[xyz]=self.adnlangnames[xyz]
-    def __init__(self,liftfileobject):
+    def __init__(self,taskchooser,liftfileobject):
+        self.taskchooser=taskchooser
         self.liftfilename=liftfileobject.name
         self.db=liftfileobject.db
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.repocheck()
         self.settingsfilecheck()
+        self.initdefaults()
         self.loadsettingsfile()
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
@@ -1917,6 +1919,7 @@ class Settings(object):
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         if self.analang is None:
             return
+        self.langnames()
         self.guessaudiolang()
         self.makeglosslangs()
         self.guessglosslangs()
@@ -1929,6 +1932,12 @@ class Settings(object):
         self.loadsettingsfile(setting='status')
         self.loadsettingsfile(setting='adhocgroups')
         self.loadsettingsfile(setting='toneframes')
+        """Make these objects here only"""
+        self.makeparameters()
+        self.makeslicedict() #needs params
+        self.maketoneframes()
+        self.makestatus() #needs params, slices, data, toneframes, exs
+        self.attrschanged=[]
 class TaskDressing(object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
