@@ -2104,20 +2104,15 @@ class TaskChooser(TaskDressing,ui.Window):
             self.file.storesettingsfile(setting='status')
     def __init__(self,parent):
         self.setiflang() #before Splash
-        splash = Splash(parent)
-        for attr in ['exitFlag']:
-            if hasattr(parent,attr):
-                setattr(self,attr,getattr(parent,attr))
-        self.setinvalidcharacters() #invalidchars, invalidregex, profilelegit
         ui.Window.__init__(self,parent)
+        splash = Splash(self)
         TaskDressing.__init__(self,parent)
         self.getfile()
-        self.setupCVrxs() #creates self.rx dictionaries
-        self.updateinterfacelang()
-        self.makesettings()
+        self.makesettings() #give whole object, for name and db
         log.info("Settings: {}".format(self.settings))
         self.makeparameters()
         self.makeslicedict() #needs params
+        self.maketoneframes()
         self.makedatadict()
         self.makeexampledict() #needed for makestatus, needs params,slices,data
         self.makestatus() #needs params, slices, data, toneframes, exs
@@ -2125,7 +2120,6 @@ class TaskChooser(TaskDressing,ui.Window):
         self.maxpss=2 #don't automatically give more than two grammatical categories
         self.mainwindowis=self
         self.makedefaulttask()
-        self.maketoneframes()
         self.langnames()
         #If the user exits out before this point, just stop.
         if self.task is None:
