@@ -350,6 +350,86 @@ class Menus(ui.Menu):
         self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
     def __init__(self, parent):
         super(Menus, self).__init__(parent)
+class StatusFrame(ui.Frame):
+    """This contains all the info about what the user is currently working on,
+    and buttons to change it."""
+    def setopts(self):
+        self.opts={
+            'row':0,
+            'labelcolumn':0,
+            'valuecolumn':1,
+            'buttoncolumn':2,
+            'labelxpad':15,
+            'width':None, #10
+            'columnspan':3,
+            'columnplus':0}
+    def proselabel(self,label,parent=None,cmd=None,tt=None):
+        if parent is None:
+            parent=self
+            column=self.opts['labelcolumn']
+            row=self.opts['row']
+            columnspan=self.opts['columnspan']
+            ipadx=self.opts['labelxpad']
+        else:
+            column=0+self.opts['columnplus']
+            row=0
+            columnspan=1
+            ipadx=0
+        if not self.mainrelief:
+            l=ui.Label(parent, text=label,font='report',anchor='w')
+        else:
+            l=ui.Button(parent,text=label,font='report',anchor='w',
+                relief=self.mainrelief)
+        l.grid(column=column, row=row, columnspan=columnspan,
+                ipadx=ipadx, sticky='w')
+        if cmd is not None:
+            l.bind('<ButtonRelease>',cmd)
+        if tt is not None:
+            ttl=ui.ToolTip(l,tt)
+        return l
+    def labels(parent,label,value):
+        ui.Label(self, text=label,
+                column=opts['labelcolumn'], row=self.opts['row'],
+                ipadx=opts['labelxpad'], sticky='w'
+                )
+        ui.Label(self, text=value,
+                column=opts['valuecolumn'], row=self.opts['row'],
+                ipadx=opts['labelxpad'], sticky='w'
+                )
+    def button(text,fn,column,**kwargs): #=opts['labelcolumn']
+        """cmd overrides the standard button command system."""
+        ui.Button(self, choice=text, text=text, anchor='c',
+                        cmd=fn, width=self.opts['width'],
+                        column=column, row=self.opts['row'],
+                        columnspan=self.opts['columnspan'],
+                        **kwargs)
+    def interfacelang(self):
+        for l in self.taskchooser.interfacelangs:
+            if l['code']==getinterfacelang():
+                interfacelanguagename=l['name']
+        t=(_("Using {}").format(interfacelanguagename))
+        self.proselabel(t,cmd=self.taskchooser.getinterfacelang)
+        self.opts['row']+=1
+    def analang(self):
+        analang=self.taskchooser.analang
+        langname=self.settings.languagenames[analang]
+        t=(_("Working on {}").format())
+        if (langname == _("Language with code [{}]").format(analang)):
+            proselabel(opts,t,cmd='taskchooser.getanalangname',
+                                            tt=_("Set analysis language Name"))
+        else:
+            proselabel(opts,t,cmd='taskchooser.getanalang',
+                                            tt=_("Change analysis language"))
+        opts['row']+=1
+    def __init__(self, parent, taskchooser, **kwargs):
+        self.setopts()
+        self.parent=parent
+        self.settings=taskchooser.settings
+        self.taskchooser=taskchooser
+        self.mainrelief=kwargs.pop('relief',None) #not for frame
+        super(StatusFrame, self).__init__(parent, **kwargs)
+        self.interfacelang()
+        self.analang()
 class Settings(object):
     """docstring for Settings."""
 
