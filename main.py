@@ -1978,7 +1978,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if hasattr(self,'sextracted'):
             self.getscounts()
     def makedatadict(self):
-        self.datadict=FramedDataDict(self)
+        self.datadict=FramedDataDict(self) #needs self.toneframes
     def makeexampledict(self):
         self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
     def maketoneframes(self):
