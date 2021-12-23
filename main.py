@@ -1876,7 +1876,7 @@ class Settings(object):
         self.langnames()
         self.guessaudiolang()
         self.makeglosslangs()
-        self.guessglosslangs()
+        self.checkglosslangs()
         self.notifyuserofextrasegments() #self.analang set by now
         self.polygraphcheck()
         self.checkinterpretations() #checks/sets values for self.distinguish
