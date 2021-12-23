@@ -2092,6 +2092,7 @@ class TaskDressing(object):
                     ]:
             if hasattr(self.parent,attr):
                 setattr(self,attr,getattr(self.parent,attr))
+        # Make these directly available:
         for attr in ['params','slices','status','toneframes']:
             if hasattr(self.settings,attr):
                 setattr(self,attr,getattr(self.settings,attr))
@@ -2174,7 +2175,9 @@ class TaskDressing(object):
             self.taskchooser=self.parent
         self.withdraw() #made visible by chooser when complete
         self.maketitle()
-        self.inherittaskattrs()
+        """At some point, I need to think through which attributes are needed,
+        and if I can get them all into objects, read/writeable with files."""
+        """These are raw attributes from file"""
         if hasattr(self,'settings'):
             for k in self.settings.settings:
                 for attr in [i for i in self.settings.settings[k]['attributes']]:
