@@ -1867,8 +1867,8 @@ class TaskDressing(object):
         webl.bind("<Button-1>", lambda e: openweburl(program['url']))
         murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
         maill.bind("<Button-1>", lambda e: openweburl(murl))
-    def inherit(self):
-        for attr in ['exitFlag','file','params','slices','status','db',
+    def inherittaskattrs(self):
+        for attr in ['file','params','slices','status','db',
                     'datadict','exs','toneframes',
                     'settings',
                     'menu','mainrelief','fontthemesmall',
@@ -1878,15 +1878,23 @@ class TaskDressing(object):
                     # 'audiolang',
                     # 'profilesbysense'
                     ]:
-            if hasattr(parent,attr):
-                setattr(self,attr,getattr(parent,attr))
+            if hasattr(self.parent,attr):
+                setattr(self,attr,getattr(self.parent,attr))
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
         self.withdraw() #made visible by chooser when complete
         self.maketitle()
+        self.inherittaskattrs()
+        if hasattr(self,'settings'):
+            for k in self.settings.settings:
+                for attr in [i for i in self.settings.settings[k]['attributes']]:
+                    if hasattr(self.settings,attr):
+                        setattr(self,attr,getattr(self.settings,attr))
         # super(TaskDressing, self).__init__(parent)
-        for k in ['menu','mainrelief','fontthemesmall','hidegroupnames']:
+        for k in ['settings',
+                    'menu','mainrelief','fontthemesmall',
+                    'hidegroupnames']:
             if not hasattr(self,k):
                 if hasattr(parent,k):
                     setattr(self,k,getattr(parent,k))
@@ -1905,16 +1913,14 @@ class TaskChooser(TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Task Chooser")
     def getfile(self):
-        def getit(attr):
-            if hasattr(self.file,attr):
-                setattr(self,attr,getattr(self.file,attr))
+        # def getit(attr):
+        #     if hasattr(self.file,attr):
+        #         setattr(self,attr,getattr(self.file,attr))
         file=self.file=FileChooser()
         # I want to access these attributes directly
-        for k in file.settings:
-            for attr in [i for i in file.settings[k]['attributes']]:
-                getit(attr)
         for attr in ['s','db']:
-            getit(attr)
+            if hasattr(self.file,attr):
+                setattr(self,attr,getattr(self.file,attr))
         """'profilesbysense',
         'analang','interfacelang','audiolang',
         's',
