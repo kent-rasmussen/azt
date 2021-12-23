@@ -2519,7 +2519,6 @@ class Check(TaskDressing,ui.Window):
         log.info("Done initializing check; running first check check.")
         """Testing Zone"""
         self.tableiteration=0
-        self.attrschanged=[]
         self.checkcheck()
     """This should each be done only once, to make the objects from settings"""
     """self.profilesbysense and self.profilecounts are loaded from file, or
