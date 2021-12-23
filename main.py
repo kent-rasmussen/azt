@@ -7558,7 +7558,10 @@ class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
     def count(self):
-        return self[(self._profile,self._ps)]
+        try:
+            return self[(self._profile,self._ps)]
+        except KeyError:
+            return 0
     def scount(self,scount=None):
         """This just stores/returns the values in a dict, keyed by [ps][s]"""
         if scount is not None:
