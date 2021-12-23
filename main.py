@@ -8247,7 +8247,7 @@ class CheckParameters(dict):
         """replaces self.checknamesall"""
         super(CheckParameters, self).__init__()
         """This replaces typedict"""
-        self.analang=analang
+        self._analang=analang
         self._cvts={
                 'V':{'sg':_('Vowel'),'pl':_('Vowels')},
                 'C':{'sg':_('Consonant'),'pl':_('Consonants')},
