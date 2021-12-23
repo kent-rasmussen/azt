@@ -2235,10 +2235,6 @@ class TaskChooser(TaskDressing,ui.Window):
         self.datadict=FramedDataDict(self) #needs self.toneframes
     def makeexampledict(self):
         self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
-    def maketoneframes(self):
-        if not hasattr(self,'toneframes'):
-            self.toneframes={}
-        self.toneframes=ToneFrames(self.toneframes)
     def makeoptions(self):
         """This function (and probably a few dependent functions, maybe
         another class) provides a list of functions with prerequisites
@@ -2360,21 +2356,17 @@ class TaskChooser(TaskDressing,ui.Window):
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
         splash = Splash(self)
-        TaskDressing.__init__(self,parent)
         self.getfile()
         self.makesettings() #give whole object, for name and db
         log.info("Settings: {}".format(self.settings))
-        self.makeparameters()
-        self.makeslicedict() #needs params
-        self.maketoneframes()
         self.makedatadict()
         self.makeexampledict() #needed for makestatus, needs params,slices,data
-        self.makestatus() #needs params, slices, data, toneframes, exs
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
         self.mainwindowis=self
+        TaskDressing.__init__(self,parent)
+        log.info("status: {}".format(type(self.status)))
         self.makedefaulttask()
-        self.langnames()
         #If the user exits out before this point, just stop.
         if self.task is None:
             l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
