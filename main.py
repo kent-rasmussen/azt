@@ -8017,6 +8017,9 @@ class StatusDict(dict):
         changed=False
         """cvt should never be None here. Once an attribute is None, the rest
         should be, too."""
+        if not kwargs['cvt']:
+            log.error("Sorry, no cvt defined! ({})".format(kwargs['cvt']))
+            raise
         if kwargs['cvt'] not in self:
             self[kwargs['cvt']]={}
             changed=True
