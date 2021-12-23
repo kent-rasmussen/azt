@@ -413,16 +413,16 @@ class StatusFrame(ui.Frame):
         self.proselabel(t,cmd=self.taskchooser.getinterfacelang)
         self.opts['row']+=1
     def analang(self):
-        analang=self.taskchooser.analang
+        analang=self.settings.params.analang()
         langname=self.settings.languagenames[analang]
-        t=(_("Working on {}").format())
+        t=(_("Working on {}").format(langname))
         if (langname == _("Language with code [{}]").format(analang)):
-            proselabel(opts,t,cmd='taskchooser.getanalangname',
+            self.proselabel(t,cmd=self.taskchooser.getanalangname,
                                             tt=_("Set analysis language Name"))
         else:
-            proselabel(opts,t,cmd='taskchooser.getanalang',
+            self.proselabel(t,cmd=self.taskchooser.getanalang,
                                             tt=_("Change analysis language"))
-        opts['row']+=1
+        self.opts['row']+=1
     def __init__(self, parent, taskchooser, **kwargs):
         self.setopts()
         self.parent=parent
