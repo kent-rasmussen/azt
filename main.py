@@ -2662,12 +2662,12 @@ class TaskChooser(TaskDressing,ui.Window):
         self.getfile()
         self.makesettings() #give whole object, for name and db
         log.info("Settings: {}".format(self.settings))
+        TaskDressing.__init__(self,parent)
         self.makedatadict()
         self.makeexampledict() #needed for makestatus, needs params,slices,data
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
         self.mainwindowis=self
-        TaskDressing.__init__(self,parent)
         log.info("status: {}".format(type(self.status)))
         self.makedefaulttask()
         #If the user exits out before this point, just stop.
