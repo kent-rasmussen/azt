@@ -863,7 +863,6 @@ class Window(Toplevel):
             return True #i.e., removed, to maybe replace later
     def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
                 choice=None, *args, **kwargs):
-        Childof.__init__(self,parent)
         # self.parent=parent
         # self.theme=parent.theme
         """Things requiring tkinter.Window below here"""
