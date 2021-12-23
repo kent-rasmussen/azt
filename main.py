@@ -641,6 +641,8 @@ class Settings(object):
         config=ConfigParser()
         config.read(filename,encoding='utf-8')
         if len(config.sections()) == 0:
+            if setting == "adhocgroups":
+                self.adhocgroups={}
             return
         log.debug("Trying for {} settings in {}".format(setting, filename))
         d={}
