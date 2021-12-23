@@ -8196,7 +8196,6 @@ class StatusDict(dict):
             self[k]=dict[k]
         self._checkparameters=checkparameters
         self._slicedict=slicedict
-        self._examplesbygroup=exs
         self._toneframes=toneframes
 class CheckParameters(dict):
     """This stores and returns current cvt/type and check only; there is not check
