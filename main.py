@@ -403,6 +403,8 @@ class StatusFrame(ui.Frame):
                         column=column, row=self.opts['row'],
                         columnspan=self.opts['columnspan'],
                         **kwargs)
+    """These functions point to self.taskchooser functions, betcause we don't
+    know who this frame's parent is"""
     def interfacelang(self):
         for l in self.taskchooser.interfacelangs:
             if l['code']==getinterfacelang():
