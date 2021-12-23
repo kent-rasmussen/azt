@@ -2079,8 +2079,9 @@ class TaskDressing(object):
         murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
         maill.bind("<Button-1>", lambda e: openweburl(murl))
     def inherittaskattrs(self):
-        for attr in ['file','params','slices','status','db',
-                    'datadict','exs','toneframes',
+        for attr in ['file',
+                    'db',
+                    'datadict','exs',
                     'settings',
                     'menu','mainrelief','fontthemesmall',
                     'hidegroupnames'
@@ -2091,6 +2092,9 @@ class TaskDressing(object):
                     ]:
             if hasattr(self.parent,attr):
                 setattr(self,attr,getattr(self.parent,attr))
+        for attr in ['params','slices','status','toneframes']:
+            if hasattr(self.settings,attr):
+                setattr(self,attr,getattr(self.settings,attr))
     def makestatusframe(self):
         #This will probably need to be reworked
         if hasattr(self.frame,'status') and self.frame.status.winfo_exists():
