@@ -1880,8 +1880,9 @@ class Settings(object):
         self.notifyuserofextrasegments() #self.analang set by now
         self.polygraphcheck()
         self.checkinterpretations() #checks/sets values for self.distinguish
-        self.checkforprofileanalysis()
         self.slists() #lift>check segment dicts: s[lang][segmenttype]
+        self.setupCVrxs() # self.rx (needs s)
+        self.checkforprofileanalysis()
         """The line above may need to go after this block"""
         self.loadsettingsfile(setting='status')
         self.loadsettingsfile(setting='adhocgroups')
