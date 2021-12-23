@@ -505,8 +505,8 @@ class Childof(object):
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
             else:
-                log.info("parent {} doesn't have attr {}, skipping inheritance"
-                        "".format(parent,attr))
+                log.info("parent {} (of {}) doesn't have attr {}, skipping inheritance"
+                        "".format(parent,type(self),attr))
     def __init__(self, parent): #because this is used everywhere.
         self.parent=parent
         self.inherit()
