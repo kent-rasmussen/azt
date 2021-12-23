@@ -2866,9 +2866,6 @@ class Check(TaskDressing,ui.Window):
         else:
             default() #or guess == True): ever?
         log.debug("group: {}".format(group))
-    def guesscvt(self):
-        """For now, if cvt isn't set, start with Vowels."""
-        self.set('cvt','V')
     """User Input functions"""
     def addmodadhocsort(self):
         def submitform():
