@@ -8188,7 +8188,7 @@ class StatusDict(dict):
             self._last[task][profile]=now()
         if profile in self._last[task]:
             return self._last[task][profile]
-    def __init__(self,checkparameters,slicedict,exs,toneframes,filename,dict):
+    def __init__(self,checkparameters,slicedict,toneframes,filename,dict):
         """To populate subchecks, use self.groups()"""
         self._filename=filename
         super(StatusDict, self).__init__()
