@@ -3131,31 +3131,21 @@ class Check(TaskDressing,ui.Window):
         #If the user exits out before this point, just stop.
         if self.exitFlag.istrue():
             return
-        self.makestatusframe() # wait is here, after the first time.
         #Don't guess this; default or user set only
         log.log(4,'Interfacelang: {}'.format(getinterfacelang()))
         """This just gets the prose language name from the code"""
-        for l in self.parent.interfacelangs:
-            if l['code']==getinterfacelang():
-                interfacelanguagename=l['name']
-        t=(_("Using {}").format(interfacelanguagename))
-        proselabel(opts,t,cmd='getinterfacelang')
-        opts['row']+=1
         """We start with the settings that we can likely guess"""
         """Get Analang"""
-        if self.analang not in self.db.analangs:
+        if self.params.analang() not in self.db.analangs:
             ErrorNotice("Analysis language {} not in LIFT Languages: {}"
                         "".format(self.analang,self.db.analangs))
             return
-        t=(_("Working on {}").format(self.languagenames[self.analang]))
-        if (self.languagenames[self.analang] == _("Language with code [{}]"
-                                                    "").format(self.analang)):
-            proselabel(opts,t,cmd='getanalangname',
-                                            tt=_("Set analysis language Name"))
-        else:
-            proselabel(opts,t,cmd='getanalang',
-                                            tt=_("Change analysis language"))
-        opts['row']+=1
+        # if self.analang is None:
+        #     log.info("find the language")
+        #     self.getanalang()
+        #     return
+        # if self.audiolang is None:
+        #     self.guessaudiolang() #don't display this, but make it
         """Get glosslang"""
         for lang in self.glosslangs:
             if lang not in self.db.glosslangs:
