@@ -3004,9 +3004,10 @@ class TaskChooser(TaskDressing,ui.Window):
         self.makeexampledict() #needed for makestatus, needs params,slices,data
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
-        self.mainwindowis=self
         log.info("status: {}".format(type(self.status)))
-        self.makedefaulttask()
+        self.makedefaulttask() #normal default
+        # self.gettask() # let the user pick
+        """Do I want this? Rather give errors..."""
         #If the user exits out before this point, just stop.
         # if not hasattr(self,'task') or not self.task:
         #     l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
