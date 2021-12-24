@@ -1106,7 +1106,6 @@ class Settings(object):
             fields=self.defaultstoclear[field]
         for default in fields: #self.defaultstoclear[field]:
             setattr(self, default, None)
-            """These can be done in checkcheck..."""
     def settings(self):
         setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
         self.initdefaults() #provides self.defaults, list to load/save
@@ -2235,14 +2234,12 @@ class TaskDressing(object):
         self.fontthemesmall=False
         if hasattr(self,'context'): #don't do this before ContextMenu is there
             self.setcontext()
-            if hasattr(self,'check'):
-                self.check.checkcheck() #redraw the main window (not on boot)
+            self.tableiteration+=1
     def setfontssmaller(self):
         self.theme.setfonts(fonttheme='smaller')
         self.fontthemesmall=True
         self.setcontext()
-        if hasattr(self,'check'):
-            self.check.checkcheck() #redraw the main window
+        self.tableiteration+=1
     def hidegroupnames(self):
         self.check.set('hidegroupnames', True, refresh=True)
         self.setcontext()
@@ -6148,7 +6145,7 @@ class Check(TaskDressing,ui.Window):
                         self.languagenames[self.analang])
         langsalreadythere=[]
         for lang in set([self.analang]+self.glosslangs)-set([None]):
-            xlpreport.addlang({'id':lang,'name': self.languagenames[lang]})
+            xlpreport.addlang({'id':lang,'name': self.settings.languagenames[lang]})
         return xlpreport
     def basicreport(self,cvtstodo=['V']):
         """We iterate across these values in this script, so we save current
@@ -8951,6 +8948,8 @@ def main():
     logshutdown() #in logsetup
 def mainproblem():
     log.info("Starting up help line...")
+    if me:
+        return #for now
     if not me:
         file=logwritelzma(log.filename)
     else:
