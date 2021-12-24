@@ -6449,14 +6449,15 @@ class Glosslangs(DataList):
         else:
             self.append(lang)
     def lang2(self,lang=None):
-        if lang is None and len(self) >1:
+        if not lang and len(self) >1:
             return self[1]
-        if len(self) > 1 and self[0] != lang:
-            self[1]=lang
-        if len(self) == 1:
-            self.append(lang)
-        else:
-            log.debug("Tried to set second glosslang, without first set.")
+        if lang:
+            if len(self) > 1 and self[0] != lang:
+                self[1]=lang
+            if len(self) == 1:
+                self.append(lang)
+            else:
+                log.debug("Tried to set second glosslang, without first set.")
     def langs(self,langs=None):
         if langs is None:
             return self
