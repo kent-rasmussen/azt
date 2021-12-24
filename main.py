@@ -365,7 +365,7 @@ class StatusFrame(ui.Frame):
             'columnplus':0}
     def proselabel(self,label,parent=None,cmd=None,tt=None):
         if parent is None:
-            parent=self
+            parent=self.proseframe
             column=self.opts['labelcolumn']
             row=self.opts['row']
             columnspan=self.opts['columnspan']
@@ -386,8 +386,7 @@ class StatusFrame(ui.Frame):
             l.bind('<ButtonRelease>',cmd)
         if tt is not None:
             ttl=ui.ToolTip(l,tt)
-        return l
-    def labels(parent,label,value):
+    def labels(self,parent,label,value): #not used!
         ui.Label(self, text=label,
                 column=opts['labelcolumn'], row=self.opts['row'],
                 ipadx=opts['labelxpad'], sticky='w'
@@ -405,14 +404,16 @@ class StatusFrame(ui.Frame):
                         **kwargs)
     """These functions point to self.taskchooser functions, betcause we don't
     know who this frame's parent is"""
-    def interfacelang(self):
+    def makeproseframe(self):
+        self.proseframe=ui.Frame(self,row=0,column=0)
+    def interfacelangline(self):
         for l in self.taskchooser.interfacelangs:
             if l['code']==getinterfacelang():
                 interfacelanguagename=l['name']
         t=(_("Using {}").format(interfacelanguagename))
         self.proselabel(t,cmd=self.taskchooser.getinterfacelang)
         self.opts['row']+=1
-    def analang(self):
+    def analangline(self):
         analang=self.settings.params.analang()
         langname=self.settings.languagenames[analang]
         t=(_("Working on {}").format(langname))
@@ -423,11 +424,12 @@ class StatusFrame(ui.Frame):
             self.proselabel(t,cmd=self.taskchooser.getanalang,
                                             tt=_("Change analysis language"))
         self.opts['row']+=1
-    def glosslangs(self):
+    def glosslangline(self):
         lang1=self.settings.languagenames[self.settings.glosslangs.lang1()]
         t=(_("Meanings in {}").format(lang1))
-        line=ui.Frame(self,row=self.opts['row'],column=0,
+        line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w') #3 cols is the width of frame
+        self.opts['row']+=1
         self.proselabel(t,cmd=self.taskchooser.getglosslang,parent=line)
         self.opts['columnplus']=1
         if len(self.settings.glosslangs) >1:
@@ -437,23 +439,15 @@ class StatusFrame(ui.Frame):
             t=_("only")
         self.proselabel(t,cmd=self.taskchooser.getglosslang2,parent=line)
         self.opts['columnplus']=0
-        self.opts['row']+=1
-    def slice(self):
-        ps=self.settings.slices.ps()
-        profile=self.settings.slices.profile()
-        # if ((ps in self.profilesbysense) and
-        #         (profile in self.profilesbysense[ps])):
-        #     count=len(self.profilesbysense[ps][profile])
-        # else:
-        #     count=0
+    def sliceline(self):
         count=self.settings.slices.count()
-        line=ui.Frame(self,row=self.opts['row'],column=0,
+        line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w')
         self.opts['row']+=1
-        t=(_("Looking at {}").format(profile))
+        t=(_("Looking at {}").format(self.profile))
         self.proselabel(t,cmd=self.taskchooser.getprofile,parent=line)
         self.opts['columnplus']=1
-        t=(_("{} words ({})").format(ps,count))
+        t=(_("{} words ({})").format(self.ps,count))
         self.proselabel(t,cmd=self.taskchooser.getps,parent=line)
         self.opts['columnplus']=0
         self.opts['row']+=1
