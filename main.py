@@ -2911,9 +2911,8 @@ class TaskChooser(TaskDressing,ui.Window):
         optionlist=self.makeoptions()
         self.maketask(optionlist[-1][0]) #last item, the code
     def maketask(self,taskclass): #,filename=None
-        self.withdraw()
-        self.mainwindowis=self.task=taskclass(self) #filename
-        self.task.mainwindow=True
+        self.unsetmainwindow()
+        self.task=taskclass(self) #filename
         self.task.deiconify()
         # if hasattr(self,'task'): #for restarts
             # for w in self.frame.winfo_children():
