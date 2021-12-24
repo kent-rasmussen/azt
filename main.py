@@ -2995,6 +2995,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def __init__(self,parent):
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
+        self.setmainwindow(self)
         splash = Splash(self)
         self.getfile()
         self.makesettings() #give whole object, for name and db
