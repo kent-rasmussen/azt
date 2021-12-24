@@ -450,18 +450,311 @@ class StatusFrame(ui.Frame):
         t=(_("{} words ({})").format(self.ps,count))
         self.proselabel(t,cmd=self.taskchooser.getps,parent=line)
         self.opts['columnplus']=0
+    def cvtline(self):
+        line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
+                        columnspan=3,sticky='w')
         self.opts['row']+=1
+        t=(_("Checking {},").format(
+                                self.settings.params.cvtdict()[self.cvt]['pl']))
+        self.proselabel(t,cmd=self.taskchooser.getcvt,parent=line)
+        #this continues on the same line:
+        if self.cvt == 'T':
+            self.runtext=(_("Sort!"))
+            self.recordtext=(_("Record Sorted Examples"))
+            self.toneframe(line)
+            self.tonegroup(line)
+        else:
+            self.runtext=(_("Report!")) #because CV doesn't actually sort yet...
+            self.recordtext=(_("Record Dictionary Words"))
+            self.cvcheck(line)
+    def toneframe(self,line):
+        self.opts['columnplus']=1
+        if not self.checks:
+            t=_("no tone frames defined.")
+            # self.check=None
+        elif self.check not in self.checks:
+            t=_("no tone frame selected.")
+            # self.check=None
+        else:
+            t=(_("working on ‘{}’ tone frame").format(check))
+        self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
+    def tonegroup(self,line):
+        self.opts['columnplus']=2
+        check=self.settings.params.check()
+        group=self.settings.status.group()
+        profile=self.settings.slices.profile()
+        if None in [check, group]:
+            t=_("(no framed group)")
+        else:
+            t=(_("(framed group: ‘{}’)").format(group))
+        log.info("cvt: {}; check: {}".format(self.cvt,self.check))
+        """Set appropriate conditions for each of these:"""
+        if (not check or (check in self.settings.status.checks(wsorted=True) and
+            profile in self.settings.status.profiles(wsorted=True))):
+            cmd=self.taskchooser.getgroupwsorted
+        elif (not check or (check in self.settings.status.checks(tosort=True) and
+            profile in self.settings.status.profiles(tosort=True))):
+            cmd=self.taskchooser.getgrouptosort
+        elif (check in self.settings.status.checks(toverify=True) and
+            profile in self.settings.status.profiles(toverify=True)):
+            cmd=self.taskchooser.getgrouptoverify
+        elif (check in self.settings.status.checks(torecord=True) and
+            profile in self.settings.status.profiles(torecord=True)):
+            cmd=self.taskchooser.getgrouptorecord
+        log.info("check: {}; profile: {}; \n{}-{}; \n{}-{}; \n{}-{};"
+                    "".format(check,profile,
+                                self.settings.status.checks(wsorted=True),
+                                self.settings.status.profiles(wsorted=True),
+                                self.settings.status.checks(tosort=True),
+                                self.settings.status.profiles(tosort=True),
+                                self.settings.status.checks(toverify=True),
+                                self.settings.status.profiles(toverify=True),
+                                self.settings.status.checks(torecord=True),
+                                self.settings.status.profiles(torecord=True)))
+        self.proselabel(t,cmd=cmd,parent=line)
+        self.opts['columnplus']=0
+    def cvcheck(self,line):
+        self.opts['columnplus']=1
+        t=(_("working on {}".format(self.settings.status.group()))) #check[1]
+        self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
+        # self.opts['row']+=1
+    def finalbuttons(self):
+        # self.opts['row']+=6
+        if hasattr(self.taskchooser.mainwindowis,'runcheck'):
+            self.button(self.runtext,self.taskchooser.mainwindowis.runcheck,
+                # column=0,
+                font='title',
+                compound='bottom', #image bottom, left, right, or top of text
+                image=self.taskchooser.theme.photo[self.cvt],
+                sticky='ew')
+        self.opts['row']+=1
+        if hasattr(self.taskchooser.mainwindowis,'record'):
+            self.button(self.recordtext,self.taskchooser.mainwindowis.record,
+                # column=0,
+                compound='left', #image bottom, left, right, or top of text
+                # row=1,
+                image=self.taskchooser.theme.photo['record']
+                )
+    """Right side"""
+    def maybeboard(self):
+        profileori=self.slices.profile()
+        if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
+            self.leaderboard.destroy()
+        self.leaderboard=ui.Frame(self,row=0,column=1,sticky="") #nesw
+        #Given the line above, much of the below can go, but not all?
+        cvt=self.settings.params.cvt()
+        ps=self.settings.slices.ps()
+        self.settings.status.cull() #remove nodes with no data
+        if cvt in self.settings.status:
+            if ps in self.settings.status[cvt]: #because we cull, this == data is there.
+                if (hasattr(self,'noboard') and (self.noboard is not None)):
+                    self.noboard.destroy()
+                if cvt == 'T':
+                    if ps in self.settings.toneframes:
+                        self.maketoneprogresstable()
+                        return
+                    else:
+                        log.info("Ps {} not in toneframes ({})".format(ps,
+                                self.settings.toneframes))
+                else:
+                    log.info("Found CV verifications")
+                    self.makeCVprogresstable()
+                    return
+        else:
+            log.info("cvt {} not in status {}".format(cvt,self.settings.status))
+        self.makenoboard()
+    def boardtitle(self):
+        titleframe=ui.Frame(self.leaderboard)
+        titleframe.grid(row=0,column=0,sticky='n')
+        cvt=self.settings.params.cvt()
+        cvtdict=self.settings.params.cvtdict()
+        if not self.settings.mainrelief:
+            lt=ui.Label(titleframe, text=_(cvtdict[cvt]['sg']),
+                                                    font='title')
+        else:
+            lt=ui.Button(titleframe, text=_(cvtdict[cvt]['sg']),
+                                font='title',relief=self.settings.mainrelief)
+        lt.grid(row=0,column=0,sticky='nwe')
+        ui.Label(titleframe, text=_('Progress for'), font='title'
+            ).grid(row=0,column=1,sticky='nwe',padx=10)
+        ps=self.settings.slices.ps()
+        if not self.settings.mainrelief:
+            lps=ui.Label(titleframe,text=ps,anchor='c',font='title')
+        else:
+            lps=ui.Button(titleframe,text=ps, anchor='c',
+                            relief=self.settings.mainrelief, font='title')
+        lps.grid(row=0,column=2,ipadx=0,ipady=0)
+        ttt=ui.ToolTip(lt,_("Change Check Type"))
+        ttps=ui.ToolTip(lps,_("Change Part of Speech"))
+        lt.bind('<ButtonRelease>',self.getcvt)
+        lps.bind('<ButtonRelease>',self.getps)
+    def makenoboard(self):
+        log.info("No Progress board")
+        self.boardtitle()
+        self.noboard=ui.Label(self.leaderboard,
+                            image=self.theme.photo['transparent'],
+                            text='', pady=50,
+                            # background=self.theme.background
+                            ).grid(row=1,column=0,sticky='we')
+        # self.frame.update()
+    def makeCVprogresstable(self):
+        self.boardtitle()
+        self.leaderboardtable=ui.Frame(self.leaderboard)
+        self.leaderboardtable.grid(row=1,column=0)
+        notext=_("Nothing to see here...")
+        ui.Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
+        # self.frame.update()
+    def maketoneprogresstable(self):
+        def groupfn(x):
+            for i in x:
+                try:
+                    int(i)
+                    log.log(3,"Integer {} fine".format(i))
+                except:
+                    log.log(3,"Problem with integer {}".format(i))
+                    if not self.settings.hidegroupnames:
+                        return nn(x,oneperline=True) #if any is not an integer, all.
+            return len(x) #to show counts only
+        def updateprofilencheck(profile,check):
+            self.settings.slices.profile(profile)
+            self.settings.params.check(check)
+            #run this in any case, rather than running it not at all, or twice
+        def refresh(event=None):
+            self.file.storesettingsfile()
+            self.taskchooser.mainwindowis.tableiteration+=1
+        self.boardtitle()
+        # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
+        # leaderheader.grid(row=1,column=0)
+        leaderscroll=ui.ScrollingFrame(self.leaderboard)
+        leaderscroll.grid(row=1,column=0)
+        self.leaderboardtable=leaderscroll.content
+        row=0
+        #put in a footer for next profile/frame
+        cvt=self.settings.params.cvt()
+        ps=self.settings.slices.ps()
+        profiles=self.settings.slices.profiles()
+        curprofile=self.settings.slices.profile()
+        curcheck=self.settings.params.check()
+        profiles=['colheader']+profiles+['next']
+        frames=list(self.settings.toneframes[ps].keys())
+        ungroups=0
+        tv=_("verified")
+        tu=_("unsorted data")
+        t="+ = {} \n! = {}".format(tv,tu)
+        h=ui.Label(self.leaderboardtable,text=t,font="small")
+        h.grid(row=row,column=0,sticky='e')
+        h.bind('<ButtonRelease>', refresh)
+        htip=_("Refresh table, \nsave settings")
+        th=ui.ToolTip(h,htip)
+        r=list(self.status[cvt][ps])
+        log.debug("Table rows possible: {}".format(r))
+        for profile in profiles:
+            column=0
+            if profile in ['colheader','next']+list(self.settings.status[cvt][
+                                                            ps].keys()):
+                if profile in self.settings.status[cvt][ps]:
+                    if self.settings.status[cvt][ps][profile] == {}:
+                        continue
+                    #Make row header
+                    t="{} ({})".format(profile,
+                                len(self.settings.profilesbysense[ps][profile]))
+                    h=ui.Label(self.leaderboardtable,text=t)
+                    h.grid(row=row,column=column,sticky='e')
+                    if profile == curprofile and curcheck is None:
+                        h.config(background=h.theme['activebackground']) #highlight
+                        tip=_("Current profile \n(no frame set)")
+                        ttb=ui.ToolTip(h,tip)
+                elif profile == 'next': # end of row headers
+                    brh=ui.Button(self.leaderboardtable,text=profile,
+                            relief='flat',cmd=self.settings.status.nextprofile)
+                    brh.grid(row=row,column=column,sticky='e')
+                    brht=ui.ToolTip(brh,_("Go to the next syllable profile"))
+                for frame in frames+['next']:
+                    column+=1
+                    if profile == 'colheader':
+                        if frame == 'next': # end of column headers
+                            bch=ui.Button(self.leaderboardtable,text=frame,
+                                        relief='flat',
+                                        cmd=self.settings.status.nextcheck,
+                                        font='reportheader',
+                                        row=row,column=column,sticky='s')
+                            bcht=ui.ToolTip(bch,_("Go to the next tone frame"))
+                        else:
+                            ui.Label(self.leaderboardtable,
+                                    text=linebreakwords(frame),
+                                    font='reportheader',
+                                    row=row,column=column,sticky='s',ipadx=5)
+                    elif profile == 'next':
+                        continue
+                    elif frame in self.settings.status[cvt][ps][profile]:
+                        node=self.settings.status[cvt][ps][profile][frame]
+                        if len(node['done']) > len(node['groups']):
+                            ungroups+=1
+                        #At this point, these should be there
+                        done=node['done']
+                        total=node['groups']
+                        tosort=node['tosort']
+                        totalwverified=[]
+                        for g in total:
+                            if g in done:
+                                g='+'+g #these should be strings
+                            totalwverified+=[g]
+                        donenum=groupfn(done)
+                        totalnum=groupfn(total)
+                        if (self.settings.hidegroupnames or
+                            (type(totalnum) is int and type(donenum) is int)):
+                            donenum="+{}/{}".format(donenum,totalnum)
+                        else:
+                            donenum=nn(totalwverified,oneperline=True)
+                        # This should only be needed on a new database
+                        if tosort == True and donenum != '':
+                            donenum='!'+str(donenum) #mark data to sort
+                        tb=ui.Button(self.leaderboardtable,
+                                relief='flat',
+                                bd=0, #border
+                                text=donenum,
+                                cmd=lambda p=profile,
+                                f=frame:updateprofilencheck(profile=p, check=f),
+                                anchor='c',
+                                padx=0,pady=0
+                                )
+                        if profile == curprofile and frame == curcheck:
+                            tb.configure(background=tb['activebackground'])
+                            tb.configure(command=donothing)
+                            tip=_("Current settings \nprofile: ‘{}’; \nframe: ‘{}’"
+                                "".format(profile,frame))
+                        else:
+                            tip=_("Change to \nprofile: ‘{}’; \nframe: ‘{}’"
+                                "".format(profile,frame))
+                        tb.grid(row=row,column=column,ipadx=0,ipady=0,
+                                                                sticky='nesw')
+                        ttb=ui.ToolTip(tb,tip)
+            row+=1
+        if ungroups > 0:
+            log.error(_("You have more groups verified than there are, in {} "
+                        "cells".format(ungroups)))
+        # self.frame.update()
     def __init__(self, parent, taskchooser, **kwargs):
         self.setopts()
         self.parent=parent
         self.settings=taskchooser.settings
         self.taskchooser=taskchooser
         self.mainrelief=kwargs.pop('relief',None) #not for frame
+        self.cvt=self.settings.params.cvt()
+        self.ps=self.settings.slices.ps()
+        self.profile=self.settings.slices.profile()
+        self.check=self.settings.params.check()
+        self.checks=self.settings.status.checks()
         super(StatusFrame, self).__init__(parent, **kwargs)
-        self.interfacelang()
-        self.analang()
-        self.glosslangs()
-        self.slice()
+        self.makeproseframe()
+        self.interfacelangline()
+        self.analangline()
+        self.glosslangline()
+        self.sliceline()
+        self.cvtline()
+        if not self.taskchooser.mainwindow:
+            self.finalbuttons()
+            # self.maybeboard()
 class Settings(object):
     """docstring for Settings."""
     def setinterfacelangwrapper(self,choice,window):
@@ -1854,6 +2147,19 @@ class Settings(object):
                 self.adnlangnames={}
             if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
                 self.languagenames[xyz]=self.adnlangnames[xyz]
+    def makeeverythingok(self):
+        self.status.makecvtok()
+        self.slices.makepsok()
+        self.slices.makeprofileok()
+        self.status.makecheckok() #this is intentionally broad: *any* check
+        # self.status.makegroupok(wsorted=True)
+    def setrefreshdelay(self):
+        """This sets the main window refresh delay, in miliseconds"""
+        if (hasattr(self.taskchooser.mainwindowis,'runwindow') and
+                self.taskchooser.mainwindowis.runwindow.winfo_exists()):
+            self.refreshdelay=10000 #ten seconds if working in another window
+        else:
+            self.refreshdelay=1000 #one second if not working in another window
     def __init__(self,taskchooser,liftfileobject):
         self.taskchooser=taskchooser
         self.liftfilename=liftfileobject.name
@@ -2047,13 +2353,34 @@ class TaskDressing(object):
         for attr in ['params','slices','status','toneframes']:
             if hasattr(self.settings,attr):
                 setattr(self,attr,getattr(self.settings,attr))
-    def makestatusframe(self):
+    def makestatusframe(self,dict=None):
+        dictnow={'cvt':self.params.cvt(),
+                'check':self.params.check(),
+                'ps':self.slices.ps(),
+                'profile':self.slices.profile(),
+                'group':self.status.group(),
+                'tableiteration':self.tableiteration
+                }
+        """Call this just once. If nothing changed, wait; if changes, run,
+        then run again."""
+        if dict == dictnow:
+            self.settings.setrefreshdelay()
+            self.parent.after(self.settings.refreshdelay,
+                                self.makestatusframe,
+                                dictnow)
+            return
+        log.info("Dict changes; checking attributes and updating the UI. ({})"
+                                                            "".format(dictnow))
+        self.settings.makeeverythingok()
         #This will probably need to be reworked
+        if self.exitFlag.istrue():
+            return
         if hasattr(self.frame,'status') and self.frame.status.winfo_exists():
             self.frame.status.destroy()
         self.frame.status=StatusFrame(self.frame, self.taskchooser,
                                         relief=self.mainrelief,
                                         row=0, column=0, sticky='nw')
+        self.makestatusframe(dictnow)
     def getinterfacelang(self,event=None):
         log.info("Asking for interface language...")
         window=ui.Window(self.frame, title=_('Select Interface Language'))
@@ -2405,6 +2732,22 @@ class TaskDressing(object):
             self.getframedtonegroup(window=w,guess=guess,**kwargs)
             # windowT.wait_window(window=windowT) #?!?
         return w #so others can wait for this
+    def getgroupwsorted(self,event=None,**kwargs):
+        kwargs['wsorted']=True
+        kwargs=grouptype(**kwargs)
+        return self.getgroup(**kwargs)
+    def getgrouptosort(self,event=None,**kwargs):
+        kwargs['tosort']=True
+        kwargs=grouptype(**kwargs)
+        return self.getgroup(**kwargs)
+    def getgrouptoverify(self,event=None,**kwargs):
+        kwargs['toverify']=True
+        kwargs=grouptype(**kwargs)
+        return self.getgroup(**kwargs)
+    def getgrouptorecord(self,event=None,**kwargs):
+        kwargs['torecord']=True
+        kwargs=grouptype(**kwargs)
+        return self.getgroup(**kwargs)
     def getexamplespergrouptorecord(self):
         log.info("this sets the number of examples per group to record")
         self.npossible=[
@@ -3197,22 +3540,6 @@ class Check(TaskDressing,ui.Window):
         chk_btn=ui.Button(self.addwindow.frame1,text = text, command = chk)
         chk_btn.grid(row=row+1,column=columnleft,pady=100)
     """Set User Input"""
-    def getgroupwsorted(self,event=None,**kwargs):
-        kwargs['wsorted']=True
-        kwargs=grouptype(**kwargs)
-        return self.getgroup(**kwargs)
-    def getgrouptosort(self,event=None,**kwargs):
-        kwargs['tosort']=True
-        kwargs=grouptype(**kwargs)
-        return self.getgroup(**kwargs)
-    def getgrouptoverify(self,event=None,**kwargs):
-        kwargs['toverify']=True
-        kwargs=grouptype(**kwargs)
-        return self.getgroup(**kwargs)
-    def getgrouptorecord(self,event=None,**kwargs):
-        kwargs['torecord']=True
-        kwargs=grouptype(**kwargs)
-        return self.getgroup(**kwargs)
     """Settings to and from files"""
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
@@ -3444,42 +3771,6 @@ class Check(TaskDressing,ui.Window):
         """Get subcheck"""
         self.status.build()
         self.status.makegroupok(wsorted=True)
-        group=self.status.group()
-        if cvt == 'T':
-            opts['columnplus']=2
-            if None in [check, group]:
-                t=_("(no framed group)")
-            else:
-                t=(_("(framed group: ‘{}’)").format(group))
-            """Set appropriate conditions for each of these:"""
-            if (not check or (check in self.status.checks(wsorted=True) and
-                profile in self.status.profiles(wsorted=True))):
-                cmd='getgroupwsorted'
-            elif (not check or (check in self.status.checks(tosort=True) and
-                profile in self.status.profiles(tosort=True))):
-                cmd='getgrouptosort'
-            elif (check in self.status.checks(toverify=True) and
-                profile in self.status.profiles(toverify=True)):
-                cmd='getgrouptoverify'
-            elif (check in self.status.checks(torecord=True) and
-                profile in self.status.profiles(torecord=True)):
-                cmd='getgrouptorecord'
-            log.log(4,"check: {}; profile: {}; \n{}-{}; \n{}-{}; \n{}-{};"
-                        "".format(check,profile,
-                                    self.status.checks(wsorted=True),
-                                    self.status.profiles(wsorted=True),
-                                    self.status.checks(tosort=True),
-                                    self.status.profiles(tosort=True),
-                                    self.status.checks(toverify=True),
-                                    self.status.profiles(toverify=True),
-                                    self.status.checks(torecord=True),
-                                    self.status.profiles(torecord=True)))
-            l=proselabel(opts,t,cmd=cmd,parent=tf)
-            opts['columnplus']=0
-        else:
-            opts['columnplus']=1
-            t=(_("working on {}".format(group))) #check[1]
-            proselabel(opts,t,cmd='getcheck',parent=tf)
         """Final Button"""
         opts['row']+=1
         if cvt == 'T':
@@ -3586,198 +3877,6 @@ class Check(TaskDressing,ui.Window):
         self.donewpyaudio()
         if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
             self.soundsettingswindow.destroy()
-    def maybeboard(self):
-        profileori=self.slices.profile()
-        if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
-            self.leaderboard.destroy()
-        self.leaderboard=ui.Frame(self.frame)
-        self.leaderboard.grid(row=0,column=1,sticky="") #nesw
-        #Given the line above, much of the below can go, but not all?
-        cvt=self.params.cvt()
-        ps=self.slices.ps()
-        self.status.cull() #remove nodes with no data
-        if cvt in self.status:
-            if ps in self.status[cvt]: #because we cull, this == data is there.
-                if (hasattr(self,'noboard') and (self.noboard is not None)):
-                    self.noboard.destroy()
-                if cvt == 'T':
-                    if ps in self.toneframes:
-                        self.maketoneprogresstable()
-                        return
-                else:
-                    log.info("Found CV verifications")
-                    self.makeCVprogresstable()
-                    return
-        self.makenoboard()
-    def boardtitle(self):
-        titleframe=ui.Frame(self.leaderboard)
-        titleframe.grid(row=0,column=0,sticky='n')
-        cvt=self.params.cvt()
-        cvtdict=self.params.cvtdict()
-        if not self.mainrelief:
-            lt=ui.Label(titleframe, text=_(cvtdict[cvt]['sg']),
-                                                    font='title')
-        else:
-            lt=ui.Button(titleframe, text=_(cvtdict[cvt]['sg']),
-                                font='title',relief=self.mainrelief)
-        lt.grid(row=0,column=0,sticky='nwe')
-        ui.Label(titleframe, text=_('Progress for'), font='title'
-            ).grid(row=0,column=1,sticky='nwe',padx=10)
-        ps=self.slices.ps()
-        if not self.mainrelief:
-            lps=ui.Label(titleframe,text=ps,anchor='c',font='title')
-        else:
-            lps=ui.Button(titleframe,text=ps, anchor='c',
-                            relief=self.mainrelief, font='title')
-        lps.grid(row=0,column=2,ipadx=0,ipady=0)
-        ttt=ui.ToolTip(lt,_("Change Check Type"))
-        ttps=ui.ToolTip(lps,_("Change Part of Speech"))
-        lt.bind('<ButtonRelease>',self.getcvt)
-        lps.bind('<ButtonRelease>',self.getps)
-    def makenoboard(self):
-        log.info("No Progress board")
-        self.boardtitle()
-        self.noboard=ui.Label(self.leaderboard,
-                            image=self.frame.theme.photo['transparent'],
-                            text='', pady=50,
-                            background=self.frame.theme.background
-                            ).grid(row=1,column=0,sticky='we')
-        self.frame.update()
-    def makeCVprogresstable(self):
-        self.boardtitle()
-        self.leaderboardtable=ui.Frame(self.leaderboard)
-        self.leaderboardtable.grid(row=1,column=0)
-        notext=_("Nothing to see here...")
-        ui.Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
-        self.frame.update()
-    def maketoneprogresstable(self):
-        def groupfn(x):
-            for i in x:
-                try:
-                    int(i)
-                    log.log(3,"Integer {} fine".format(i))
-                except:
-                    log.log(3,"Problem with integer {}".format(i))
-                    if not self.hidegroupnames:
-                        return nn(x,oneperline=True) #if any is not an integer, all.
-            return len(x) #to show counts only
-        def updateprofilencheck(profile,check):
-            self.slices.profile(profile)
-            self.params.check(check)
-            #run this in any case, rather than running it not at all, or twice
-        def refresh(event=None):
-            self.storesettingsfile()
-            self.tableiteration+=1
-        self.boardtitle()
-        # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
-        # leaderheader.grid(row=1,column=0)
-        leaderscroll=ui.ScrollingFrame(self.leaderboard)
-        leaderscroll.grid(row=1,column=0)
-        self.leaderboardtable=leaderscroll.content
-        row=0
-        #put in a footer for next profile/frame
-        cvt=self.params.cvt()
-        ps=self.slices.ps()
-        profiles=self.slices.profiles()
-        curprofile=self.slices.profile()
-        curcheck=self.params.check()
-        profiles=['colheader']+profiles+['next']
-        frames=list(self.toneframes[ps].keys())
-        ungroups=0
-        tv=_("verified")
-        tu=_("unsorted data")
-        t="+ = {} \n! = {}".format(tv,tu)
-        h=ui.Label(self.leaderboardtable,text=t,font="small")
-        h.grid(row=row,column=0,sticky='e')
-        h.bind('<ButtonRelease>', refresh)
-        htip=_("Refresh table, \nsave settings")
-        th=ui.ToolTip(h,htip)
-        r=list(self.status[cvt][ps])
-        log.debug("Table rows possible: {}".format(r))
-        for profile in profiles:
-            column=0
-            if profile in ['colheader','next']+list(self.status[cvt][
-                                                            ps].keys()):
-                if profile in self.status[cvt][ps]:
-                    if self.status[cvt][ps][profile] == {}:
-                        continue
-                    #Make row header
-                    t="{} ({})".format(profile,len(self.profilesbysense[
-                                                            ps][profile]))
-                    h=ui.Label(self.leaderboardtable,text=t)
-                    h.grid(row=row,column=column,sticky='e')
-                    if profile == curprofile and curcheck is None:
-                        h.config(background=h.theme['activebackground']) #highlight
-                        tip=_("Current profile \n(no frame set)")
-                        ttb=ui.ToolTip(h,tip)
-                elif profile == 'next': # end of row headers
-                    brh=ui.Button(self.leaderboardtable,text=profile,
-                                            relief='flat',cmd=self.status.nextprofile)
-                    brh.grid(row=row,column=column,sticky='e')
-                    brht=ui.ToolTip(brh,_("Go to the next syllable profile"))
-                for frame in frames+['next']:
-                    column+=1
-                    if profile == 'colheader':
-                        if frame == 'next': # end of column headers
-                            bch=ui.Button(self.leaderboardtable,text=frame,
-                                        relief='flat',cmd=self.status.nextcheck,
-                                        font='reportheader')
-                            bch.grid(row=row,column=column,sticky='s')
-                            bcht=ui.ToolTip(bch,_("Go to the next tone frame"))
-                        else:
-                            ui.Label(self.leaderboardtable,text=linebreakwords(
-                                frame), font='reportheader'
-                                ).grid(row=row,column=column,sticky='s',ipadx=5)
-                    elif profile == 'next':
-                        continue
-                    elif frame in self.status[cvt][ps][profile]:
-                        node=self.status[cvt][ps][profile][frame]
-                        if len(node['done']) > len(node['groups']):
-                            ungroups+=1
-                        #At this point, these should be there
-                        done=node['done']
-                        total=node['groups']
-                        tosort=node['tosort']
-                        totalwverified=[]
-                        for g in total:
-                            if g in done:
-                                g='+'+g #these should be strings
-                            totalwverified+=[g]
-                        donenum=groupfn(done)
-                        totalnum=groupfn(total)
-                        if self.hidegroupnames or (type(totalnum) is int and
-                                                        type(donenum) is int):
-                            donenum="+{}/{}".format(donenum,totalnum)
-                        else:
-                            donenum=nn(totalwverified,oneperline=True)
-                        # This should only be needed on a new database
-                        if tosort == True and donenum != '':
-                            donenum='!'+str(donenum) #mark data to sort
-                        tb=ui.Button(self.leaderboardtable,
-                                relief='flat',
-                                bd=0, #border
-                                text=donenum,
-                                cmd=lambda p=profile,
-                                f=frame:updateprofilencheck(profile=p, check=f),
-                                anchor='c',
-                                padx=0,pady=0
-                                )
-                        if profile == curprofile and frame == curcheck:
-                            tb.configure(background=tb['activebackground'])
-                            tb.configure(command=donothing)
-                            tip=_("Current settings \nprofile: ‘{}’; \nframe: ‘{}’"
-                                "".format(profile,frame))
-                        else:
-                            tip=_("Change to \nprofile: ‘{}’; \nframe: ‘{}’"
-                                "".format(profile,frame))
-                        tb.grid(row=row,column=column,ipadx=0,ipady=0,
-                                                                sticky='nesw')
-                        ttb=ui.ToolTip(tb,tip)
-            row+=1
-        if ungroups > 0:
-            log.error(_("You have more groups verified than there are, in {} "
-                        "cells".format(ungroups)))
-        self.frame.update()
     def setsu(self):
         self.su=True
     def unsetsu(self):
