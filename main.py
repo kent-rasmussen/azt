@@ -3797,7 +3797,7 @@ class Check(TaskDressing,ui.Window):
         except:
             log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
     def soundcheckrefreshdone(self):
-        self.storesettingsfile(setting='soundsettings')
+        self.settings.storesettingsfile(setting='soundsettings')
         self.soundsettingswindow.destroy()
     def soundcheckrefresh(self):
         self.soundsettingswindow.resetframe()
@@ -4117,7 +4117,7 @@ class Check(TaskDressing,ui.Window):
                     groupsdone.remove(group)
                     groupsdone.insert(i,newtonevalue)
                 group=newtonevalue
-                self.storesettingsfile(setting='status')
+                self.settings.storesettingsfile(setting='status')
             else: #move on, but notify in logs
                 log.info("User selected ‘{}’, but with no change.".format(ok))
             if hasattr(self,'group_comparison'):
@@ -4654,7 +4654,7 @@ class Check(TaskDressing,ui.Window):
         scroll.grid(row=2, column=1, sticky="new")
         """Titles"""
         title=_("Sort {} Tone (in ‘{}’ frame)").format(
-                                        self.languagenames[self.analang],
+                                        self.settings.languagenames[self.analang],
                                         check)
         ui.Label(titles, text=title,font='title',anchor='c').grid(
                                             column=0, row=0, sticky="ew")
@@ -4766,7 +4766,7 @@ class Check(TaskDressing,ui.Window):
             updatestatus()
             return
         title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
-                                    self.languagenames[self.analang],
+                                    self.settings.languagenames[self.analang],
                                     group,
                                     check
                                     )
@@ -4874,7 +4874,7 @@ class Check(TaskDressing,ui.Window):
                 self.runwindow.waitdone()
             return 0
         title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
-                                        self.languagenames[self.analang],
+                                        self.settings.languagenames[self.analang],
                                         check
                                         )
         oktext=_('These are all different')
@@ -5125,7 +5125,7 @@ class Check(TaskDressing,ui.Window):
     def settonevariables(self):
         """This is currently called before sorting. This is a waste, if you're
         not going to sort afterwards –unless you need the groups."""
-        self.updatesortingstatus() #this gets groups, too
+        self.settings.updatesortingstatus() #this gets groups, too
     def tryNAgain(self):
         check=self.params.check()
         if check in self.status.checks():
@@ -5237,7 +5237,7 @@ class Check(TaskDressing,ui.Window):
         if not nowait:
             self.runwindow.wait(msg=msg)
     def runcheck(self):
-        self.storesettingsfile() #This is not called in checkcheck.
+        self.settings.storesettingsfile()
         t=(_('Run Check'))
         log.info("Running check...")
         i=0
@@ -5260,7 +5260,7 @@ class Check(TaskDressing,ui.Window):
             if exit:
                 self.runcheck()
             return #if the user didn't supply a check
-        self.updatesortingstatus() # Not just tone anymore #settonevariables() #here, or later?
+        self.settings.updatesortingstatus() # Not just tone anymore #settonevariables() #here, or later?
         if cvt == 'T':
             self.maybesort()
         elif None not in [check,group]: #do the CV checks
@@ -5273,7 +5273,7 @@ class Check(TaskDressing,ui.Window):
             i+=1
             return
     def record(self):
-        self.updatesortingstatus() #is this needed? This is the first fn on button click
+        self.settings.updatesortingstatus() #is this needed? This is the first fn on button click
         if self.params.cvt() == 'T':
             self.showtonegroupexs()
         else:
@@ -5486,7 +5486,7 @@ class Check(TaskDressing,ui.Window):
         if (not(hasattr(self,'examplespergrouptorecord')) or
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=100
-            self.storesettingsfile()
+            self.settings.storesettingsfile()
         self.makeanalysis()
         self.analysis.donoUFanalysis()
         torecord=self.analysis.senseidsbygroup
@@ -5916,7 +5916,7 @@ class Check(TaskDressing,ui.Window):
             self.getprofile(wsorted=True)
         log.info("Starting report {} {} at {}; last sort at {} (since={})..."
                 "".format(ps,profile,r,s,t))
-        self.storesettingsfile()
+        self.settings.storesettingsfile()
         waitmsg="{} {} Tone Report in Process".format(ps,profile)
         resultswindow=ResultWindow(self.parent,msg=waitmsg)
         bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
@@ -6142,7 +6142,7 @@ class Check(TaskDressing,ui.Window):
             bits.append('mod')
         reportfileXLP='_'.join(bits)+".xml"
         xlpreport=xlp.Report(reportfileXLP,reporttype,
-                        self.languagenames[self.analang])
+                        self.settings.languagenames[self.analang])
         langsalreadythere=[]
         for lang in set([self.analang]+self.glosslangs)-set([None]):
             xlpreport.addlang({'id':lang,'name': self.settings.languagenames[lang]})
