@@ -8190,7 +8190,8 @@ class StatusDict(dict):
             log.debug('Found {} instances of {} in {}'.format(n,t,profile))
             self._checksdict[t][profile]=list()
             for i in range(n): # get max checks and lesser
-                self._checksdict[t][profile]+=self._checkparameters._Schecks[t][i+1] #b/c range
+                code=self._checkparameters._Schecks[t][i+1][0] #b/c range, code
+                self._checksdict[t][profile]+=code
             self._checksdict[t][profile].sort(key=lambda x:len(x[0]),reverse=True)
     def node(self,**kwargs):
         """This will fail if fed None values"""
