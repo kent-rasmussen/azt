@@ -2801,6 +2801,9 @@ class TaskDressing(object):
             self.taskchooser=self
         else:
             self.taskchooser=self.parent
+        """Whenever this runs, it's the main window."""
+        self.taskchooser.mainwindowis=self
+        self.mainwindow=True
         self.withdraw() #made visible by chooser when complete
         self.maketitle()
         """At some point, I need to think through which attributes are needed,
