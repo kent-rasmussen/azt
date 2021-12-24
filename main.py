@@ -2921,15 +2921,20 @@ class TaskChooser(TaskDressing,ui.Window):
             # for w in self.check.frame.winfo_children():
             #     w.destroy()
             # self.check.frame.destroy()
-    def setmainwindow(self,window):
+    def unsetmainwindow(self):
         """self.mainwindowis tracks who the mainwindow is for the chooser,
         x.mainwindow tracks if the object is the mainwindow, so it will
         exit the program on closure appropriately. This fn keeps them
         synchronized."""
-        self.mainwindowis.withdraw()
-        self.mainwindowis.mainwindow=False #keep only one of these
-        window.mainwindow=True
+        if hasattr(self,'mainwindowis'):
+            self.mainwindowis.withdraw()
+            self.mainwindowis.mainwindow=False #keep only one of these
+        else:
+            log.info("No mainwindowis found.")
+    def setmainwindow(self,window):
+        """This is really only useful for the taskChooser; others live or die"""
         self.mainwindowis=window
+        self.mainwindowis.mainwindow=True #keep only one of these
         self.mainwindowis.deiconify()
     def setiflang(self):
         self.interfacelangs=file.getinterfacelangs()
