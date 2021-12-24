@@ -8336,9 +8336,9 @@ class CheckParameters(dict):
         """This depends on nothing, so can go anywhere, and shouldn't need to
         rerun. This is a convenience wrapper only."""
         return self._cvts
-    def check(self,check=None):
+    def check(self,check=None,unset=False):
         """This needs to change/clear subchecks"""
-        if check is not None:
+        if unset or check:
             self._check=check
         elif not hasattr(self,'_check'):
             self._check=None
