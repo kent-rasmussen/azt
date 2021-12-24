@@ -2350,11 +2350,16 @@ class TaskDressing(object):
             if hasattr(self.parent,attr):
                 setattr(self,attr,getattr(self.parent,attr))
         # Make these directly available:
-        for attr in ['params','slices','status','toneframes']:
+        for attr in ['params','slices','status','toneframes','glosslangs']:
             if hasattr(self.settings,attr):
                 setattr(self,attr,getattr(self.settings,attr))
     def makestatusframe(self,dict=None):
-        dictnow={'cvt':self.params.cvt(),
+        dictnow={
+                'iflang':self.settings.interfacelang,
+                'analang':self.params.analang(),
+                'glang1':self.glosslangs.lang1(),
+                'glang2':self.glosslangs.lang2(),
+                'cvt':self.params.cvt(),
                 'check':self.params.check(),
                 'ps':self.slices.ps(),
                 'profile':self.slices.profile(),
