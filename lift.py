@@ -368,7 +368,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             log.debug("Gloss changed! ({}≠{})".format(forms[lang],
                                                             glossvaluenode.text))
                             glossvaluenode.text=forms[lang]
-                    else:
+                    elif lang in forms:
                         log.debug("Gloss missing for lang {}; adding".format(lang))
                         Node.makeformnode(glossesnode[0],lang,forms[lang])
         elif not framed:
