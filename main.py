@@ -620,7 +620,7 @@ class StatusFrame(ui.Frame):
             self.settings.params.check(check)
             #run this in any case, rather than running it not at all, or twice
         def refresh(event=None):
-            self.file.storesettingsfile()
+            self.settings.storesettingsfile()
             self.taskchooser.mainwindowis.tableiteration+=1
         self.boardtitle()
         # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
@@ -1172,7 +1172,7 @@ class Settings(object):
         pgw=ui.Window(self.frame,title="A→Z+T Digraphs and Trigraphs")
         t=_("Select which of the following graph sequences found in your data "
                 "refer to a single sound (digraph or trigraph) in {}".format(
-            unlist([self.parent.languagenames[y] for y in self.db.analangs])))
+            unlist([self.settings.languagenames[y] for y in self.db.analangs])))
         title=ui.Label(pgw.frame,text=t,
                         column=0, row=0
                         )
@@ -1206,7 +1206,7 @@ class Settings(object):
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
             row+=1
-            title=ui.Label(scroll.content,text=self.parent.languagenames[lang],
+            title=ui.Label(scroll.content,text=self.settings.languagenames[lang],
                                                         font='read')
             title.grid(column=0, row=row, columnspan=ncols)
             vars[lang]={}
@@ -1409,7 +1409,7 @@ class Settings(object):
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
         mwframe=self.runwindow.frame
         title=_("Interpret {} Segments"
-                ).format(self.parent.languagenames[self.analang])
+                ).format(self.settings.languagenames[self.analang])
         titl=ui.Label(mwframe,text=title,font='title',
                 justify=tkinter.LEFT,anchor='c')
         titl.grid(row=options.get('r'), column=options.get('c'), #self.runwindow.options['column'],
@@ -1417,7 +1417,7 @@ class Settings(object):
         options.next('r')
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
-                ).format(program['name'],self.parent.languagenames[self.analang])
+                ).format(program['name'],self.settings.languagenames[self.analang])
         instr=ui.Label(mwframe,text=text,justify=tkinter.LEFT,anchor='c')
         instr.grid(row=options.get('r'), column=options.get('c'),
                     sticky='ew', padx=options.padx, pady=options.pady)
