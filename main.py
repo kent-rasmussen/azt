@@ -2198,7 +2198,7 @@ class TaskDressing(object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
     def _taskchooserbutton(self):
-        if hasattr(self,'parent') and isinstance(self.parent,TaskChooser):
+        if not isinstance(self,TaskChooser):
             ui.Button(self.outsideframe,text=_("Tasks"), #.outsideframe
                         font='small',
                         cmd=self.parent.gettask,
