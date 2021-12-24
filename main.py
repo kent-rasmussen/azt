@@ -3224,7 +3224,7 @@ class Check(TaskDressing,ui.Window):
             """Is this OK?!?"""
             self.slices.updateslices()
             self.makecountssorted() #we need these to show up in the counts.
-            self.storesettingsfile(setting='profiledata')#since we changed this.
+            self.settings.storesettingsfile(setting='profiledata')#since we changed this.
             #so we don't have to do this again after each profile analysis
         self.getrunwindow()
         profile=self.slices.profile()
@@ -3445,7 +3445,7 @@ class Check(TaskDressing,ui.Window):
             # Having made and unset these, we now reset and write them to file.
             self.toneframes.addframe(ps,checktoadd,checkdefntoadd)
             self.status.renewchecks()
-            self.storesettingsfile(setting='toneframes')
+            self.settings.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
         ps=self.slices.ps()
         wtitle=_("Define a New {} Tone Frame").format(ps)
@@ -3489,20 +3489,20 @@ class Check(TaskDressing,ui.Window):
             if lang == self.analang:
                 ti[lang]=_("Fill in the {} frame forms below.\n(include a "
                 "space to separate word forms)".format(
-                                        self.languagenames[lang]))
+                                        self.settings.languagenames[lang]))
                 kind='form'
             else:
                 ti[lang]=(_("Fill in the {} glossing "
                     "here \nas appropriate for the morphosyntactic context.\n("
                     "include a space to separate word glosses)"
-                                ).format(self.languagenames[lang]))
+                                ).format(self.settings.languagenames[lang]))
                 kind='gloss'
             tb[lang]=_("What text goes *before* \n<==the {} word *{}* "
                         "\nin the frame?"
-                                ).format(self.languagenames[lang],kind)
+                                ).format(self.settings.languagenames[lang],kind)
             ta[lang]=_("What text goes *after* \nthe {} word *{}*==> "
                         "\nin the frame?"
-                                ).format(self.languagenames[lang],kind)
+                                ).format(self.settings.languagenames[lang],kind)
         """Place the labels"""
         for lang in langs:
             f[lang]=ui.Frame(self.addwindow.frame1)
