@@ -1884,16 +1884,18 @@ class Settings(object):
         if not hasattr(self,'attrschanged'):
             return
         self.taskchooser.status.build()
+        t=self.taskchooser.params.cvt()
         if 'cvt' in self.attrschanged:
             self.taskchooser.status.renewchecks()
-            self.taskchooser.slices.makeprofileok()
+            self.taskchooser.status.makecheckok()
             self.attrschanged.remove('cvt')
         if 'ps' in self.attrschanged:
-            t=self.taskchooser.params.cvt()
             if t == 'T':
                 self.taskchooser.status.renewchecks()
             self.attrschanged.remove('ps')
         if 'profile' in self.attrschanged:
+            if t != 'T':
+                self.taskchooser.status.renewchecks()
             self.attrschanged.remove('profile')
         if 'check' in self.attrschanged:
             self.attrschanged.remove('check')
