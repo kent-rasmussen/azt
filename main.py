@@ -2891,10 +2891,7 @@ class TaskChooser(TaskDressing,ui.Window):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
         if hasattr(self,'task') and self.task.winfo_exists():
-            self.task.mainwindow=False
             self.task.destroy()
-        self.mainwindow=True
-        self.mainwindowis=self
         optionlist=self.makeoptions()
         ui.ButtonFrame(self.frame,
                                 optionlist=optionlist,
