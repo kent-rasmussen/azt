@@ -516,6 +516,7 @@ class Toplevel(Childof,tkinter.Toplevel,UI): #NoParent
         Childof.__init__(self,parent)
         tkinter.Toplevel.__init__(self)
         UI.__init__(self)
+        self.protocol("WM_DELETE_WINDOW", lambda s=self: Window.on_quit(s))
 class Menu(Childof,tkinter.Menu): #not Text
     def pad(self,label):
         w=5 #Make menus at least w characters wide
