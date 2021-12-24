@@ -2826,6 +2826,7 @@ class TaskDressing(object):
                 else:
                     setattr(self,k,False)
         ui.ContextMenu(self)
+        self.tableiteration=0
         self.makestatusframe()
         self._taskchooserbutton()
         # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=self.taskchooser)
