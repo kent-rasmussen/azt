@@ -1680,7 +1680,7 @@ class Settings(object):
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
         extras=list(dict.fromkeys(invalids).keys())
-        if ninvalids >10:
+        if ninvalids >10 and self.analang != 'en':
             text=_("Your {} database has the following symbols, which are "
                 "excluding {} words from being analyzed: \n{}"
                 "".format(self.analang,ninvalids,extras))
