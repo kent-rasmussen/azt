@@ -3008,14 +3008,14 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("status: {}".format(type(self.status)))
         self.makedefaulttask()
         #If the user exits out before this point, just stop.
-        if self.task is None:
-            l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
-            row=0,column=0
-            )
-        try:
-            self.task.frame.winfo_exists() #these should all be windows w/frames
-        except:
-            return
+        # if not hasattr(self,'task') or not self.task:
+        #     l=ui.Label(self.frame,text="Sorry, I couldn't find enough data!",
+        #     row=0,column=0
+        #     )
+        # try:
+        #     self.task.frame.winfo_exists() #these should all be windows w/frames
+        # except:
+        #     return
         splash.destroy()
 class WordCollection(ui.Window,TaskDressing):
     """This task collects words, from the SIL CAWL, or one by one."""
