@@ -2991,7 +2991,7 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
                 "tosort: {}".format(kwargs.values(),sorted,verified,vts))
         if store:
-            self.file.storesettingsfile(setting='status')
+            self.settings.storesettingsfile(setting='status')
     def __init__(self,parent):
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
