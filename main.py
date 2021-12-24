@@ -3124,34 +3124,14 @@ class Check(TaskDressing,ui.Window):
         self.start_time=time.time() #this enables boot time evaluation
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        self.parent=parent # chooser#should be mainapplication frame
-        # if me: #not yet
-        #     self._setmenus()
-        # self.exitFlag=self.parent.exitFlag
-        # self.file=self.parent.file
+        log.info("status: {}".format(type(self.status)))
+        # Not sure what this was for (XML?):
         self.pp=pprint.PrettyPrinter()
-        self.iterations=0
-        # print(time.time()-self.start_time) # with this
-        # self.su=True #show me stuff others don't want/need
-        # self.su=False #not a superuser; make it easy on me!
-        # self.frame=frame
-
-        # self.glosslangs=Glosslangs(None,None) #needed for upgrading
-
         """Are we OK without these?"""
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
-        """These two lines can import structured frame dictionaries; do this
-        just to make the import, then comment them out again."""
-        # self.makestatus()
-        #This can wait until runcheck, right?
-        #     self.sortingstatus() #because this won't get set later #>checkdefaults?
-        self.file.loadsettingsfile() # overwrites guess above, stored on runcheck
-        #     self.guessglosslangs() #needed for the following
-        log.info("Done initializing check; running first check check.")
+        log.info("Done initializing check.")
         """Testing Zone"""
-        self.tableiteration=0
-        self.checkcheck()
     """This should each be done only once, to make the objects from settings"""
     """self.profilesbysense and self.profilecounts are loaded from file, or
     created by analysis in init()"""
@@ -3216,7 +3196,7 @@ class Check(TaskDressing,ui.Window):
                 ids.append(var.get())
             log.log(2,"ids: {}".format(ids))
             profile=profilevar.get()
-            self.set('profile',profile,refresh=False) #checkcheck below
+            self.set('profile',profile,refresh=False)
             #Add to dictionaries before updating them below
             log.debug("profile: {}".format(profile))
             """Fix this!"""
