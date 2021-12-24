@@ -396,11 +396,11 @@ class StatusFrame(ui.Frame):
                 column=opts['valuecolumn'], row=self.opts['row'],
                 ipadx=opts['labelxpad'], sticky='w'
                 )
-    def button(text,fn,column,**kwargs): #=opts['labelcolumn']
+    def button(self,text,fn,**kwargs): #=opts['labelcolumn']
         """cmd overrides the standard button command system."""
-        ui.Button(self, choice=text, text=text, anchor='c',
+        b=ui.Button(self.proseframe, choice=text, text=text, anchor='c',
                         cmd=fn, width=self.opts['width'],
-                        column=column, row=self.opts['row'],
+                        column=0, row=self.opts['row'],
                         columnspan=self.opts['columnspan'],
                         **kwargs)
     """These functions point to self.taskchooser functions, betcause we don't
