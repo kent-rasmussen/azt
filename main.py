@@ -8267,11 +8267,14 @@ class StatusDict(dict):
         cvts=self._checkparameters.cvts()
         if cvt not in cvts:
             self._checkparameters.cvt(cvts[0])
-    def makecheckok(self, wsorted=False, tosort=False):
+    def makecheckok(self, **kwargs): #result None w/no checks
         check=self._checkparameters.check()
-        checks=self.checks(wsorted=wsorted, tosort=tosort)
-        if check not in checks and checks != []:
+        checks=self.checks(**kwargs)
+        if check not in checks:
+            if checks:
                 self._checkparameters.check(checks[0])
+            else:
+                self._checkparameters.check(unset=True)
     def toneframes(self):
         return self._toneframes
     def checkslicetypecurrent(self,**kwargs):
