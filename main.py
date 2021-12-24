@@ -2393,17 +2393,17 @@ class TaskDressing(object):
     def getanalangname(self,event=None):
         log.info("this sets the language name")
         def submit(event=None):
-            self.taskchooser.languagenames[analang]=name.get()
+            self.settings.languagenames[analang]=name.get()
             if (not hasattr(self.taskchooser,'adnlangnames') or
                     not self.taskchooser.adnlangnames):
                 self.taskchooser.adnlangnames={}
-            self.taskchooser.adnlangnames[analang]=self.taskchooser.languagenames[analang]
+            self.settings.adnlangnames[analang]=self.settings.languagenames[analang]
                 # if self.analang in self.adnlangnames:
             self.settings.storesettingsfile()
             window.destroy()
         analang=self.params.analang()
         window=ui.Window(self.frame,title=_('Enter Analysis Language Name'))
-        curname=self.taskchooser.languagenames[analang]
+        curname=self.settings.languagenames[analang]
         defaultname=_("Language with code [{}]").format(analang)
         t=_("How do you want to display the name of {}").format(curname)
         if curname != defaultname:
@@ -2433,7 +2433,7 @@ class TaskDressing(object):
             langs=list()
             for lang in self.db.analangs:
                 langs.append({'code':lang,
-                                'name':self.taskchooser.languagenames[lang]})
+                                'name':self.settings.languagenames[lang]})
                 # print(lang, self.taskchooser.languagenames[lang])
             buttonFrame1=ui.ButtonFrame(window.frame,
                                      optionlist=langs,
@@ -2469,7 +2469,7 @@ class TaskDressing(object):
             langs.append({'code':lang,
                             'name':self.settings.languagenames[lang]})
         langs.append({'code':None, 'name':'just use '
-                +self.parent.languagenames[self.settings.glosslangs.lang1()]})
+                +self.settings.languagenames[self.settings.glosslangs.lang1()]})
         buttonFrame1=ui.ButtonFrame(window.frame,
                                     optionlist=langs,
                                     command=self.settings.setglosslang2,
@@ -2577,7 +2577,7 @@ class TaskDressing(object):
             b.grid(column=0, row=1,sticky='')
             """I need to make this quit the whole program, immediately."""
             b2=ui.Button(window.frame, text=_("Quit A→Z+T"),
-                    cmd=self.parent.parent.destroy,
+                    cmd=self.destroy,
                     anchor='c')
             b2.grid(column=1, row=1,sticky='')
             b.wait_window(window)
@@ -2588,7 +2588,7 @@ class TaskDressing(object):
             ui.Label(window.frame, text=text).grid(column=0, row=0)
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                     optionlist=checks,
-                                    command=self.setcheck,
+                                    command=self.settings.setcheck,
                                     window=window,
                                     column=0, row=4
                                     )
