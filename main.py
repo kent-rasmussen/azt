@@ -8149,7 +8149,7 @@ class StatusDict(dict):
             self._checksdict={}
         if cvt not in self._checksdict:
             self._checksdict[cvt]={}
-            self.renewchecks()
+            self.renewchecks(**kwargs)
         if cvt == 'T':
             """This depends on ps and self.toneframes"""
             ps=kwargs.get('ps',self._slicedict.ps())
@@ -8160,10 +8160,10 @@ class StatusDict(dict):
         else:
             profile=kwargs.get('profile',self._slicedict.profile())
             if profile not in self._checksdict[cvt]:
-                self.renewchecks() #It should always be able to find something
+                self.renewchecks(**kwargs) #should be able to find something
             self._checks=self._checksdict[cvt][profile]
         return self._checks
-    def renewchecks(self):
+    def renewchecks(self,**kwargs):
         """This should only need to be done on a boot or when a new tone frame
         is defined."""
         """This depends on cvt and profile, for CV checks"""
@@ -8185,7 +8185,7 @@ class StatusDict(dict):
                     self._checksdict[t][ps]=list(toneframes[ps])
         else:
             """This depends on profile only"""
-            profile=self._slicedict.profile()
+            profile=kwargs.get('profile',self._slicedict.profile())
             n=profile.count(t)
             log.debug('Found {} instances of {} in {}'.format(n,t,profile))
             self._checksdict[t][profile]=list()
