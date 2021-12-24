@@ -2194,6 +2194,7 @@ class Settings(object):
         self.maketoneframes()
         self.makestatus() #needs params, slices, data, toneframes, exs
         self.attrschanged=[]
+        self.makeeverythingok()
 class TaskDressing(object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
