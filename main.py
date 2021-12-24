@@ -3035,7 +3035,7 @@ class WordCollection(ui.Window,TaskDressing):
                 text=_("What is the form of the new {} "
                         "morpheme in {} \n(consonants and vowels only)?".format(
                                     ps,
-                                    self.languagenames[lang]))
+                                    self.settings.languagenames[lang]))
                 ok=_('Use this form')
             elif lang in self.db.analangs:
                 return
@@ -3043,8 +3043,9 @@ class WordCollection(ui.Window,TaskDressing):
                 text=_("What does {} ({}) mean in {}?".format(
                                             self.runwindow.form[self.analang],
                                             ps,
-                                            self.languagenames[lang]))
-                ok=_('Use this {} gloss for {}'.format(self.languagenames[lang],
+                                            self.settings.languagenames[lang]))
+                ok=_('Use this {} gloss for {}'.format(
+                                            self.settings.languagenames[lang],
                                             self.runwindow.form[self.analang]))
                 self.runwindow.glosslangs.append(lang)
             getform=ui.Label(self.runwindow.frame2,text=text,
@@ -3061,7 +3062,8 @@ class WordCollection(ui.Window,TaskDressing):
             sub_btn.grid(row=2,column=0,sticky='')
             if lang != self.analang:
                 sub_btnNo=ui.Button(self.runwindow.frame2,
-                    text = _('Skip {} gloss').format(self.languagenames[lang]),
+                    text = _('Skip {} gloss').format(
+                                        self.settings.languagenames[lang]),
                     command = lambda lang=lang: skipform(lang))
                 sub_btnNo.grid(row=1,column=1,sticky='')
             self.runwindow.waitdone()
@@ -3074,7 +3076,7 @@ class WordCollection(ui.Window,TaskDressing):
         pady=10
         self.runwindow.title(_("Add Morpheme to Dictionary"))
         title=_("Add a {} {} morpheme to the dictionary").format(ps,
-                            self.languagenames[self.analang])
+                            self.settings.languagenames[self.analang])
         ui.Label(self.runwindow,text=title,font='title',
                 justify=tkinter.LEFT,anchor='c'
                 ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
@@ -3093,7 +3095,7 @@ class WordCollection(ui.Window,TaskDressing):
             self.getprofileofsense(senseid)
             self.status.updateslices()
             self.getscounts()
-            self.file.storesettingsfile(setting='profiledata') #since we changed this.
+            self.settings.storesettingsfile(setting='profiledata') #since we changed this.
             self.runwindow.destroy()
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
