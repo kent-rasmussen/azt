@@ -2903,7 +2903,6 @@ class TaskChooser(TaskDressing,ui.Window):
                                 column=0, row=0,
                                 pady=(25,0)
                                 )
-        self.deiconify()
         self.setmainwindow(self)
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
