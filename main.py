@@ -413,7 +413,7 @@ class StatusFrame(ui.Frame):
         self.proseframe=ui.Frame(self,row=0,column=0)
     def interfacelangline(self):
         for l in self.taskchooser.interfacelangs:
-            if l['code']==getinterfacelang():
+            if l['code']==interfacelang():
                 interfacelanguagename=l['name']
         t=(_("Using {}").format(interfacelanguagename))
         self.proselabel(t,cmd=self.taskchooser.getinterfacelang)
@@ -760,12 +760,16 @@ class StatusFrame(ui.Frame):
             self.maybeboard()
 class Settings(object):
     """docstring for Settings."""
-    def setinterfacelangwrapper(self,choice,window):
-        setinterfacelang(choice) #change the UI *ONLY*; no object attributes
-        file.writeinterfacelangtofile(choice) #>ui_lang.py, for startup
-        self.set('interfacelang',choice,window) #set variable for the future
-        self.storesettingsfile() #>xyz.CheckDefaults.py
-        self.maketitle() #because otherwise, this stays as is...
+    def interfacelangwrapper(self,choice=None,window=None):
+        if choice:
+            interfacelang(choice) #change the UI *ONLY*; no object attributes
+            file.writeinterfacelangtofile(choice) #>ui_lang.py, for startup
+            self.set('interfacelang',choice,window) #set variable for the future
+            self.storesettingsfile() #>xyz.CheckDefaults.py
+            #because otherwise, this stays as is...
+            self.taskchooser.mainwindowis.maketitle()
+        else:
+            return interfacelang()
     def mercurialwarning(self,filedir):
         title="Warning: Mercurial Repository without Executable"
         window=ui.Window(self.frame,title=title)
@@ -2411,7 +2415,7 @@ class TaskDressing(object):
                 setattr(self,attr,getattr(self.settings,attr))
     def makestatusframe(self,dict=None):
         dictnow={
-                'iflang':self.settings.interfacelang,
+                'iflang':self.settings.interfacelangwrapper(),
                 'analang':self.params.analang(),
                 'glang1':self.glosslangs.lang1(),
                 'glang2':self.glosslangs.lang2(),
@@ -2450,7 +2454,7 @@ class TaskDressing(object):
                 ).grid(column=0, row=0)
         buttonFrame1=ui.ButtonFrame(window.frame,
                                 optionlist=self.taskchooser.interfacelangs,
-                                command=self.settings.setinterfacelangwrapper,
+                                command=self.settings.interfacelangwrapper,
                                 window=window,
                                 column=0, row=1
                                 )
@@ -3001,11 +3005,11 @@ class TaskChooser(TaskDressing,ui.Window):
         self.mainwindowis.deiconify()
     def setiflang(self):
         self.interfacelangs=file.getinterfacelangs()
-        interfacelang=file.getinterfacelang()
-        if interfacelang is None:
-            setinterfacelang('fr')
+        iflang=file.getinterfacelang()
+        if iflang is None:
+            interfacelang('fr')
         else:
-            setinterfacelang(interfacelang)
+            interfacelang(iflang)
     def __init__(self,parent):
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
@@ -8474,41 +8478,42 @@ class Object:
 def now():
     # datetime.datetime.utcnow().isoformat()[:-7]+'Z'
     return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
-def getinterfacelang():
-    for lang in i18n:
-        try:
-            _
-            if i18n[lang] == _.__self__:
-                return lang
-        except:
-            log.debug("_ doesn't look defined yet, returning 'en' as current "
-                                                        "interface language.")
-            return 'en'
-def setinterfacelang(lang,magic=False):
+def interfacelang(lang=None,magic=False):
     global aztdir
     global i18n
     global _
     """Attention: for this to work, _ has to be defined globally (here, not in
     a class or module.) So I'm getting the language setting in the class, then
     calling the module (imported globally) from here."""
-    curlang=getinterfacelang()
-    try:
-        log.debug("Magic: {}".format(str(_)))
-        magic=True
-    except:
-        log.debug("Looks like translation magic isn't defined yet; making")
-    if lang != curlang or magic == False:
-        if lang is not None: #lang is not None:
-            log.debug("Setting Interface language: {}".format(lang))
-            i18n[lang].install()
+    if lang:
+        curlang=interfacelang()
+        try:
+            log.debug("Magic: {}".format(str(_)))
+            magic=True
+        except:
+            log.debug("Looks like translation magic isn't defined yet; making")
+        if lang != curlang or magic == False:
+            if lang is not None: #lang is not None:
+                log.debug("Setting Interface language: {}".format(lang))
+                i18n[lang].install()
+            else:
+                log.debug("Setting Default Interface language: {}".format(curlang))
+                i18n[curlang].install()
         else:
-            log.debug("Setting Default Interface language: {}".format(curlang))
-            i18n[curlang].install()
+            log.debug("Apparently we're trying to set the same interface "
+                                            "language: {}={}".format(lang,curlang))
+        log.debug(_("Translation seems to be working, using {}"
+                                                    "".format(interfacelang())))
     else:
-        log.debug("Apparently we're trying to set the same interface "
-                                        "language: {}={}".format(lang,curlang))
-    log.debug(_("Translation seems to be working, using {}"
-                                                "".format(getinterfacelang())))
+        for lang in i18n:
+            try:
+                _
+                if i18n[lang] == _.__self__:
+                    return lang
+            except:
+                log.debug("_ doesn't look defined yet, returning 'en' as current "
+                                                            "interface language.")
+                return 'en'
 def dictofchilddicts(self,remove=None):
     # This takes a dict[x][y] and returns a dict[y], with all unique values
     # listed for all dict[*][y].
