@@ -547,8 +547,6 @@ class StatusFrame(ui.Frame):
             self.leaderboard.destroy()
         self.leaderboard=ui.Frame(self,row=0,column=1,sticky="") #nesw
         #Given the line above, much of the below can go, but not all?
-        cvt=self.settings.params.cvt()
-        ps=self.settings.slices.ps()
         self.settings.status.cull() #remove nodes with no data
         if self.cvt in self.settings.status:
             if self.ps in self.settings.status[self.cvt]: #because we cull, this == data is there.
@@ -572,7 +570,6 @@ class StatusFrame(ui.Frame):
     def boardtitle(self):
         titleframe=ui.Frame(self.leaderboard)
         titleframe.grid(row=0,column=0,sticky='n')
-        cvt=self.settings.params.cvt()
         cvtdict=self.settings.params.cvtdict()
         if not self.mainrelief:
             lt=ui.Label(titleframe, text=_(cvtdict[self.cvt]['sg']),
