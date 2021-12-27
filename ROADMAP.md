@@ -1,4 +1,6 @@
 #Roadmap
+Think through getting settings to and from file in a faithful manner.
+menus
 Cut down on the file writing during report generation
 
 select which profiles to include in a given tone report
