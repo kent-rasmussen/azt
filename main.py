@@ -1944,6 +1944,60 @@ class Settings(object):
                                 self.status
                                 )
         log.info("Made status object with value {}".format(self.status))
+    def updatesortingstatus(self, store=True, **kwargs):
+        """This reads LIFT to create lists for sorting, populating lists of
+        sorted and unsorted senses, as well as sorted (but not verified) groups.
+        So don't iterate over it. Instead, use checkforsenseidstosort to just
+        confirm tosort status"""
+        """To get this from the object, use status.tosort(), todo() or done()"""
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        kwargs['wsorted']=True #ever not?
+        senseids=self.slices.senseids(ps=ps,profile=profile)
+        self.status.renewsenseidstosort([],[]) #will repopulate
+        groups=[]
+        for senseid in senseids:
+            v=firstoflist(self.db.get("example/tonefield/form/text",
+                                senseid=senseid,
+                                location=check
+                                ).get('text'),
+                        othersOK=True) #Don't complain if more than one found.
+            # if v:
+            #     log.debug("Found tone value (updatesortingstatus): {} ({})"
+            #             "".format(v, type(v)))
+            if v in ['','None',None]: #unlist() returns strings
+                log.log(4,"Marking senseid {} tosort (v: {})".format(senseid,v))
+                self.status.marksenseidtosort(senseid)
+            else:
+                log.log(4,"Marking senseid {} sorted (v: {})".format(senseid,v))
+                self.status.marksenseidsorted(senseid)
+                if v not in ['NA','ALLOK']:
+                    groups.append(v)
+        """update 'tosort' status"""
+        if self.status.senseidstosort():
+            log.log(4,"updatesortingstatus shows senseidstosort remaining")
+            vts=True
+        else:
+            log.log(4,"updatesortingstatus shows no senseidstosort remaining")
+            vts=False
+        self.status.tosort(vts,**kwargs)
+        """update status groups"""
+        sorted=list(dict.fromkeys(groups))
+        self.status.groups(sorted,**kwargs)
+        verified=self.status.verified(**kwargs) #read
+        """This should pull verification status from LIFT, someday"""
+        for v in verified:
+            if v not in sorted:
+                log.error("Removing verified group {} not in actual groups: {}!"
+                            "".format(v, sorted))
+                verified.remove(v)
+        self.status.verified(verified,**kwargs) #set
+        log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
+                "tosort: {}".format(kwargs.values(),sorted,verified,vts))
+        if store:
+            self.storesettingsfile(setting='status')
     def set(self,attribute,choice,window=None,refresh=True):
         #Normally, pass the attribute through the button frame,
         #otherwise, don't set window (which would be destroyed)
@@ -2953,60 +3007,6 @@ class TaskChooser(TaskDressing,ui.Window):
             setinterfacelang('fr')
         else:
             setinterfacelang(interfacelang)
-    def updatesortingstatus(self, store=True, **kwargs):
-        """This reads LIFT to create lists for sorting, populating lists of
-        sorted and unsorted senses, as well as sorted (but not verified) groups.
-        So don't iterate over it. Instead, use checkforsenseidstosort to just
-        confirm tosort status"""
-        """To get this from the object, use status.tosort(), todo() or done()"""
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
-        kwargs['wsorted']=True #ever not?
-        senseids=self.slices.senseids(ps=ps,profile=profile)
-        self.status.renewsenseidstosort([],[]) #will repopulate
-        groups=[]
-        for senseid in senseids:
-            v=firstoflist(self.db.get("example/tonefield/form/text",
-                                senseid=senseid,
-                                location=check
-                                ).get('text'),
-                        othersOK=True) #Don't complain if more than one found.
-            # if v:
-            #     log.debug("Found tone value (updatesortingstatus): {} ({})"
-            #             "".format(v, type(v)))
-            if v in ['','None',None]: #unlist() returns strings
-                log.log(4,"Marking senseid {} tosort (v: {})".format(senseid,v))
-                self.status.marksenseidtosort(senseid)
-            else:
-                log.log(4,"Marking senseid {} sorted (v: {})".format(senseid,v))
-                self.status.marksenseidsorted(senseid)
-                if v not in ['NA','ALLOK']:
-                    groups.append(v)
-        """update 'tosort' status"""
-        if self.status.senseidstosort():
-            log.log(4,"updatesortingstatus shows senseidstosort remaining")
-            vts=True
-        else:
-            log.log(4,"updatesortingstatus shows no senseidstosort remaining")
-            vts=False
-        self.status.tosort(vts,**kwargs)
-        """update status groups"""
-        sorted=list(dict.fromkeys(groups))
-        self.status.groups(sorted,**kwargs)
-        verified=self.status.verified(**kwargs) #read
-        """This should pull verification status from LIFT, someday"""
-        for v in verified:
-            if v not in sorted:
-                log.error("Removing verified group {} not in actual groups: {}!"
-                            "".format(v, sorted))
-                verified.remove(v)
-        self.status.verified(verified,**kwargs) #set
-        log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
-                "tosort: {}".format(kwargs.values(),sorted,verified,vts))
-        if store:
-            self.settings.storesettingsfile(setting='status')
     def __init__(self,parent):
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
