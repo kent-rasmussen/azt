@@ -945,10 +945,11 @@ class Settings(object):
             self.repo.commit()
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
-        fns={}
+        self.fndict=fns={}
         try: #these objects may not exist yet
             fns['cvt']=self.params.cvt
             fns['check']=self.params.check
+            fns['analang']=self.params.analang
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
             fns['glosslangs']=self.glosslangs.langs
@@ -957,7 +958,6 @@ class Settings(object):
             fns['profile']=self.slices.profile
             # except this one, which pretends to set but doesn't (throws arg away)
             fns['profilecounts']=self.slices.slicepriority
-            return fns
         except:
             log.error("Only finished settingsobjects up to {}".format(fns))
             return []
@@ -966,7 +966,6 @@ class Settings(object):
         """It pulls from objects if it can, otherwise from self attributes
         (if there), for backwards compatibility"""
         d={}
-        objectfns=self.settingsobjects()
         if setting == 'soundsettings':
             o=self.soundsettings
         else:
@@ -975,8 +974,8 @@ class Settings(object):
             if s in objectfns:
                 log.log(4,"Trying to dict {} attr".format(s))
                 try:
-                    d[s]=objectfns[s]()
-                    log.log(4,"Value {}={} found in object".format(s,d[s]))
+                    d[s]=self.fndict[s]()
+                    log.info("Value {}={} found in object".format(s,d[s]))
                 except:
                     log.log(4,"Value of {} not found in object".format(s))
             elif hasattr(o,s):# and getattr(o,s) is not None:
@@ -997,17 +996,16 @@ class Settings(object):
     def readsettingsdict(self,dict):
         """This takes a dictionary keyed by attribute names"""
         d=dict
-        objectfns=self.settingsobjects()
         if 'fs' in dict:
             o=self.soundsettings
         else:
             o=self
         for s in dict:
             v=d[s]
-            if s in objectfns:
+            if hasattr(self,'fndict') and s in self.fndict:
                 log.debug("Trying to read {} to object with value {} and fn "
-                            "{}".format(s,v,objectfns[s]))
-                objectfns[s](v)
+                            "{}".format(s,v,self.fndict[s]))
+                self.fndict[s](v)
             else:
                 log.debug("Trying to read {} to self with value {}, type {}"
                             "".format(s,v,type(v)))
@@ -2251,6 +2249,7 @@ class Settings(object):
         """Make these objects here only"""
         self.makeparameters()
         self.makeslicedict() #needs params
+        self.settingsobjects() #needs params, glosslangs, slices
         self.maketoneframes()
         self.makestatus() #needs params, slices, data, toneframes, exs
         self.attrschanged=[]
