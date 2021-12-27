@@ -540,7 +540,7 @@ class StatusFrame(ui.Frame):
                 )
     """Right side"""
     def maybeboard(self):
-        profileori=self.slices.profile()
+        profileori=self.settings.slices.profile()
         if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
             self.leaderboard.destroy()
         self.leaderboard=ui.Frame(self,row=0,column=1,sticky="") #nesw
@@ -548,49 +548,50 @@ class StatusFrame(ui.Frame):
         cvt=self.settings.params.cvt()
         ps=self.settings.slices.ps()
         self.settings.status.cull() #remove nodes with no data
-        if cvt in self.settings.status:
-            if ps in self.settings.status[cvt]: #because we cull, this == data is there.
+        if self.cvt in self.settings.status:
+            if self.ps in self.settings.status[self.cvt]: #because we cull, this == data is there.
                 if (hasattr(self,'noboard') and (self.noboard is not None)):
                     self.noboard.destroy()
-                if cvt == 'T':
-                    if ps in self.settings.toneframes:
+                if self.cvt == 'T':
+                    if self.ps in self.settings.toneframes:
                         self.maketoneprogresstable()
                         return
                     else:
-                        log.info("Ps {} not in toneframes ({})".format(ps,
+                        log.info("Ps {} not in toneframes ({})".format(self.ps,
                                 self.settings.toneframes))
                 else:
                     log.info("Found CV verifications")
                     self.makeCVprogresstable()
                     return
         else:
-            log.info("cvt {} not in status {}".format(cvt,self.settings.status))
+            log.info("cvt {} not in status {}".format(self.cvt,
+                                                        self.settings.status))
         self.makenoboard()
     def boardtitle(self):
         titleframe=ui.Frame(self.leaderboard)
         titleframe.grid(row=0,column=0,sticky='n')
         cvt=self.settings.params.cvt()
         cvtdict=self.settings.params.cvtdict()
-        if not self.settings.mainrelief:
-            lt=ui.Label(titleframe, text=_(cvtdict[cvt]['sg']),
+        if not self.mainrelief:
+            lt=ui.Label(titleframe, text=_(cvtdict[self.cvt]['sg']),
                                                     font='title')
         else:
-            lt=ui.Button(titleframe, text=_(cvtdict[cvt]['sg']),
-                                font='title',relief=self.settings.mainrelief)
+            lt=ui.Button(titleframe, text=_(cvtdict[self.cvt]['sg']),
+                                font='title',relief=self.mainrelief)
         lt.grid(row=0,column=0,sticky='nwe')
         ui.Label(titleframe, text=_('Progress for'), font='title'
             ).grid(row=0,column=1,sticky='nwe',padx=10)
-        ps=self.settings.slices.ps()
-        if not self.settings.mainrelief:
-            lps=ui.Label(titleframe,text=ps,anchor='c',font='title')
+        # ps=self.settings.slices.ps()
+        if not self.mainrelief:
+            lps=ui.Label(titleframe,text=self.ps,anchor='c',font='title')
         else:
-            lps=ui.Button(titleframe,text=ps, anchor='c',
-                            relief=self.settings.mainrelief, font='title')
+            lps=ui.Button(titleframe,text=self.ps, anchor='c',
+                            relief=self.mainrelief, font='title')
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttt=ui.ToolTip(lt,_("Change Check Type"))
         ttps=ui.ToolTip(lps,_("Change Part of Speech"))
-        lt.bind('<ButtonRelease>',self.getcvt)
-        lps.bind('<ButtonRelease>',self.getps)
+        lt.bind('<ButtonRelease>',self.taskchooser.getcvt)
+        lps.bind('<ButtonRelease>',self.taskchooser.getps)
     def makenoboard(self):
         log.info("No Progress board")
         self.boardtitle()
@@ -649,7 +650,7 @@ class StatusFrame(ui.Frame):
         h.bind('<ButtonRelease>', refresh)
         htip=_("Refresh table, \nsave settings")
         th=ui.ToolTip(h,htip)
-        r=list(self.status[cvt][ps])
+        r=list(self.settings.status[cvt][ps])
         log.debug("Table rows possible: {}".format(r))
         for profile in profiles:
             column=0
@@ -1368,7 +1369,7 @@ class Settings(object):
             if changed:
                 log.info('There was a change; we need to redo the analysis now.')
                 log.info('The following changed (from,to): {}'.format(changed))
-                self.file.storesettingsfile()
+                self.storesettingsfile()
                 r=notice(changed)
                 if r:
                     self.runwindow.destroy()
@@ -2272,10 +2273,10 @@ class TaskDressing(object):
                                                                     refresh))
         self.mainrelief=relief # None "raised" "groove" "sunken" "ridge" "flat"
     def _showbuttons(self,event=None):
-        self.check.mainlabelrelief(relief='flat',refresh=True)
+        self.mainlabelrelief(relief='flat',refresh=True)
         self.setcontext()
     def _hidebuttons(self,event=None):
-        self.check.mainlabelrelief(relief=None,refresh=True)
+        self.mainlabelrelief(relief=None,refresh=True)
         self.setcontext()
     def _removemenus(self,event=None):
         if hasattr(self,'menubar'):
@@ -5142,7 +5143,8 @@ class Check(TaskDressing,ui.Window):
         if not ps:
             self.getps()
         group=self.status.group()
-        if None in [self.analang, ps, group]:
+        analang=self.params.analang()
+        if None in [analang, ps, group]:
             log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
                                         self.analang, ps, group))
         cvt=self.params.cvt()
