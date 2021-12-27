@@ -2967,7 +2967,7 @@ class TaskChooser(TaskDressing,ui.Window):
                                 optionlist=optionlist,
                                 command=self.maketask,
                                 # window=None,
-                                column=0, row=0,
+                                column=1, row=0,
                                 pady=(25,0)
                                 )
         self.setmainwindow(self)
