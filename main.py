@@ -930,7 +930,7 @@ class Settings(object):
         self.profiledatafile=basename.with_suffix(".ProfileData.dat")
         self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.dat")
         self.soundsettingsfile=basename.with_suffix(".SoundSettings.ini")
-        self.settingsbyfile() #This just sets the variable
+        self.settingsbyfile() #This just sets self.settings
         for setting in self.settings:#[setting]
             savefile=self.settingsfile(setting)#self.settings[setting]['file']
             if not file.exists(savefile):
@@ -967,15 +967,20 @@ class Settings(object):
     def makesettingsdict(self,setting='defaults'):
         """This returns a dictionary of values, keyed by a set of settings"""
         """It pulls from objects if it can, otherwise from self attributes
-        (if there), for backwards compatibility"""
+        (if there), for backwards compatibility, when converting from legacy
+        files before the objects are created."""
         d={}
         if setting == 'soundsettings':
             o=self.soundsettings
         else:
             o=self
         for s in self.settings[setting]['attributes']:
-            if s in objectfns:
-                log.log(4,"Trying to dict {} attr".format(s))
+            log.info("Looking for {} attr".format(s))
+            """This dictionary of functions isn't made until after the objects,
+            at the end of settings init. So this block is not used in
+            conversion, only in later saves."""
+            if hasattr(self,'fndict') and s in self.fndict:
+                log.info("Trying to dict {} attr".format(s))
                 try:
                     d[s]=self.fndict[s]()
                     log.info("Value {}={} found in object".format(s,d[s]))
