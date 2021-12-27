@@ -518,7 +518,7 @@ class StatusFrame(ui.Frame):
         self.opts['columnplus']=0
     def cvcheck(self,line):
         self.opts['columnplus']=1
-        t=(_("working on {}".format(self.settings.status.group()))) #check[1]
+        t=(_("working on {}".format(self.settings.params.check()[1]))) #check[1]
         self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
         # self.opts['row']+=1
     def finalbuttons(self):
@@ -8085,7 +8085,7 @@ class StatusDict(dict):
             log.debug('Found {} instances of {} in {}'.format(n,t,profile))
             self._checksdict[t][profile]=list()
             for i in range(n): # get max checks and lesser
-                code=self._checkparameters._Schecks[t][i+1][0] #b/c range, code
+                code=self._checkparameters._Schecks[t][i+1] #b/c range, code
                 self._checksdict[t][profile]+=code
             self._checksdict[t][profile].sort(key=lambda x:len(x[0]),reverse=True)
     def node(self,**kwargs):
