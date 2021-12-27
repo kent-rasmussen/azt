@@ -758,7 +758,7 @@ class StatusFrame(ui.Frame):
         self.cvtline()
         if not self.taskchooser.mainwindow:
             self.finalbuttons()
-            # self.maybeboard()
+            self.maybeboard()
 class Settings(object):
     """docstring for Settings."""
     def setinterfacelangwrapper(self,choice,window):
