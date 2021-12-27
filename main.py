@@ -476,7 +476,7 @@ class StatusFrame(ui.Frame):
             t=_("no tone frame selected.")
             # self.check=None
         else:
-            t=(_("working on ‘{}’ tone frame").format(check))
+            t=(_("working on ‘{}’ tone frame").format(self.check))
         self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
     def tonegroup(self,line):
         self.opts['columnplus']=2
