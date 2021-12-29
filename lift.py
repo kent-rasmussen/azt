@@ -612,10 +612,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
+        log.info("Reading LIFT file.")
         self.tree=ET.parse(self.filename)
+        self.nodes=self.tree.getroot()
+        log.info("Done reading LIFT file.")
         """This returns the root node of an ElementTree tree (the entire
         tree as nodes), to edit the XML."""
-        self.nodes=self.tree.getroot()
     def writegzip(self,dir=None,filename=None):
         import gzip
         if filename is None:
@@ -658,12 +660,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if filename is None:
             filename=self.filename
         write=0
-        replace=0
-        remove=0
+        nodes=self.nodes
         xmlfns.indent(self.nodes)
-        self.tree=ET.ElementTree(self.nodes)
+        tree=ET.ElementTree(self.nodes)
         try:
-            self.tree.write(filename+'.part', encoding="UTF-8")
+            tree.write(filename+'.part', encoding="UTF-8")
             write=True
         except:
             log.error("There was a problem writing to partial file: {}"
