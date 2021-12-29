@@ -8473,7 +8473,7 @@ class ConfigParser(configparser.ConfigParser):
 class ErrorNotice(ui.Window):
     """this is for things that I want the user to know, without having
     to find it in the logs."""
-    def __init__(self, text, parent=None, title="Error!"):
+    def __init__(self, text, parent=None, title="Error!", wait=False):
         if not parent:
             parent=program['root']
         super(ErrorNotice, self).__init__(parent,title=title)
