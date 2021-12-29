@@ -34,28 +34,6 @@ def langs(self):
     log.info("If you're working on a multilingual dictionary, we need to "
             "figure out how to deal with that, later.  :-)")
     self.languagecodes=[self.analangs]+[self.glosslangs]
-def fields(self):
-    """I think this is lift specific; may move it to defaults, if not."""
-    fields=self.fields()
-    log.info(_("Fields found in lexicon: {}".format(str(fields))))
-    plopts=('Plural', 'plural','pl','Pluriel','pluriel')
-    impopts=('Imperative','imperative','imp','Imp')
-    for opt in plopts:
-        if opt in fields:
-            self.pluralname=opt
-    try:
-        log.info(_('Plural field name: {}').format(self.pluralname))
-    except:
-        log.info(_('Looks like there is no Plural field in the database'))
-        self.pluralname=None
-    for opt in impopts:
-        if opt in fields:
-            self.imperativename=opt
-    try:
-        log.info(_('Imperative field name: {}'.format(self.imperativename)))
-    except:
-        log.info(_('Looks like there is no Imperative field in the database'))
-        self.imperativename=None
 def count(self):
     """Return the number of occurrances of subcategories, for a given category.
     or perhaps just return the largest (unverified?) category....
