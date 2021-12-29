@@ -69,7 +69,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
         self.lcs=self.citations()
         self.lxs=self.lexemes()
-        self.locations=self.getlocations()
+        self.getfields()
+        self.getlocations()
         self.defaults=[ #these are lift related defaults
                     'analang',
                     'glosslangs',
@@ -708,13 +709,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         d=self.get('definition/form').get('lang')
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {}".format(self.glosslangs)))
-    def fields(self,guid=None,lang=None): # all field types in a given entry
-        f=list(dict.fromkeys(self.get('field').get('type')))
-        return f
+    def getfields(self,guid=None,lang=None): # all field types in a given entry
+        self.fields=list(dict.fromkeys(self.get('field').get('type')))
+        log.info('Fields found in Entries: {}'.format(self.fields))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
-        l=list(dict.fromkeys(self.get('example/locationfield').get('text')))
-        log.info('Locations found in Examples: {}'.format(l))
-        return l
+        self.locations=list(dict.fromkeys(self.get('example/locationfield').get('text')))
+        log.info('Locations found in Examples: {}'.format(self.locations))
     def getsenseids(self):
         self.senseids=self.get('sense').get('senseid')
         self.nsenseids=len(self.senseids)
