@@ -78,7 +78,6 @@ def gettransformsdir():
         log.error("HELP! not sure why {} is not there!".format(dir))
         # os.mkdir(dir)
     return dir
-
 def exists(file):
     if os.path.exists(file):
         return True
