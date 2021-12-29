@@ -285,16 +285,21 @@ class Menus(ui.Menu):
         #                 command=lambda x=check:Check.getglosslang2(x))
         """Word/data choice stuff"""
     def parameterslice(self):
-        self.changemenu.add_command(label=_("Part of speech"),
-                        command=lambda x=check:Check.getps(x))
-        self.changemenu.add_command(label=_("Consonant-Vowel-Tone"),
-                        command=lambda x=check:Check.getcvt(x))
-        profilemenu = ui.Menu(changemenu, tearoff=0)
-        changemenu.add_cascade(label=_("Syllable profile"), menu=profilemenu)
-        profilemenu.add_command(label=_("Next"),
-                        command=lambda x=check:Check.nextprofile(x))
-        profilemenu.add_command(label=_("Choose"),
-                        command=lambda x=check:Check.getprofile(x))
+        for m in [("Part of speech", self.parent.getps),
+                    ("Consonant-Vowel-Tone", self.parent.getcvt),
+                    ]:
+            self.command(self.changemenu,
+                        label=_(m[0]),
+                        cmd=m[1]
+                        )
+        self.cascade(self.changemenu,_("Syllable profile"),'profilemenu')
+        for m in [("Next", self.parent.nextprofile),
+                    ("Choose", self.parent.getprofile),
+                    ]:
+            self.command(self.profilemenu,
+                        label=_(m[0]),
+                        cmd=m[1]
+                        )
         """What to check stuff"""
         cvt=check.params.cvt()
         ps=check.slices.ps()
