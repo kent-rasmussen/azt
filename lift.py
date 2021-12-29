@@ -56,14 +56,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.backupfilename=''.join(backupbits)
         self.getguids() #sets: self.guids and self.nguids
         self.getsenseids() #sets: self.senseids and self.nsenseids
-        log.info("Working on {} with {} entries "
-                    "and {} senses".format(filename,self.nguids,self.nsenseids))
         """These three get all possible langs by type"""
         self.getglosslangs() #sets: self.glosslangs
         self.getanalangs() #sets: self.analangs, self.audiolangs
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
         "with citation data) "
+        log.info("Working on {} with {} entries, with lexeme data counts: {}, "
+        "citation data counts: {} and {} senses".format(filename,self.nguids,
+                                                    self.nentrieswlexemedata,
+                                                    self.nentrieswcitationdata,
+                                                    self.nsenseids))
         self.pss=self.pss() #log.info(self.pss)
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
