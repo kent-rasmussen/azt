@@ -9048,18 +9048,18 @@ if __name__ == "__main__":
     sys.excepthook = handle_exception
     thisexe = file.getfile(__file__)
     if hasattr(sys,'_MEIPASS') and sys._MEIPASS is not None:
-        aztdir=sys._MEIPASS
+        program['aztdir']=sys._MEIPASS
     else:
-        aztdir = thisexe.parent
+        program['aztdir'] = thisexe.parent
     mt=datetime.datetime.fromtimestamp(thisexe.stat().st_mtime)
     """Not translating yet"""
     log.info("Running {} v{} (main.py updated to {})".format(
                                     program['name'],program['version'],mt))
-    log.info("Working directory is {} on {} ".format(aztdir,
+    log.info("Working directory is {} on {} ".format(program['aztdir'],
                                                     platform.uname().node))
     log.info("Loglevel is {}; starting at {}".format(loglevel,
                                     datetime.datetime.utcnow().isoformat()))
-    transdir=file.gettranslationdirin(aztdir)
+    transdir=file.gettranslationdirin(program['aztdir'])
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
