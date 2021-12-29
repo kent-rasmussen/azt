@@ -676,7 +676,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 "directory. This is what's here: {}".format(
                     pathlib.Path(filename).name, pathlib.Path(filename).parent,
                     os.listdir(pathlib.Path(filename).parent)))
-    def analangs(self):
+    def getanalangs(self):
         """These are ordered by frequency in the database"""
         self.audiolangs=[]
         self.analangs=[]
@@ -703,10 +703,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.debug(_('No audio languages found in Database; creating one '
             'for each analysis language.'))
             for self.analang in self.analangs:
-                self.audiolangs+=[f'{self.analang}-Zxxx-x-audio']
+                self.audiolangs+=[self.makeaudiolangname()] #f'{self.analang}-Zxxx-x-audio']
         log.info('Audio languages: {}'.format(self.audiolangs))
         log.info('Analysis languages: {}'.format(self.analangs))
-    def glosslangs(self):
+    def makeaudiolangname(self):
+        return "{}-Zxxx-x-audio".format(self.analang)
+    def getglosslangs(self):
         """These are ordered by frequency in the database"""
         g=self.get('gloss').get('lang')
         d=self.get('definition/form').get('lang')
