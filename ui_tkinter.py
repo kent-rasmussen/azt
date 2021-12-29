@@ -1017,7 +1017,7 @@ class ButtonFrame(Frame):
                 optionlist = [({'code':optionlist[i][0],
                                 'description':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
-        if not 'name' in optionlist[0].keys(): #duplicate name from code.
+        if not 'name' in optionlist[0]: #duplicate name from code.
             for i in range(0, len(optionlist)):
                 optionlist[i]['name']=optionlist[i]['code']
         if gimmenull == True:
