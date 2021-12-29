@@ -1012,9 +1012,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def ps(self,**kwargs): #get POS values, limited as you like
         return self.get('ps',**kwargs).get('value')
     def pss(self): #get all POS values in the LIFT file
-        p=list(dict.fromkeys(self.ps()))
-        log.info("Found these ps values: {}".format(p))
-        return p
+        counted = collections.Counter(self.ps())
+        ordered = [value for value, count in counted.most_common()]
+        log.info("Found these ps values, by frequency: {}".format(ordered))
+        return ordered
     def getmorphtypes(self): #get all morph-type values in the LIFT file
         m=collections.Counter(self.get('morphtype',showurl=True).get('value')
                                                                 ).most_common()
