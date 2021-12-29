@@ -8479,8 +8479,7 @@ class ErrorNotice(ui.Window):
         super(ErrorNotice, self).__init__(parent,title=title)
         self.title = title
         self.text = text
-        l=ui.Label(self.frame, text=text)
-        l.grid(row=0, column=0)
+        l=ui.Label(self.frame, text=text, row=0, column=0)
         self.attributes("-topmost", True)
         if wait:
             self.wait_window(self)
