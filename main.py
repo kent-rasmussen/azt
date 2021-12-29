@@ -87,16 +87,21 @@ class FileChooser(object):
     def askwhichlift(self,filenamelist):
         def setfilename(choice,window):
             if choice == 'New':
-                log.error("Just kidding! This isn't implemented yet.")
-                return
-            if choice == 'Other':
+                window.withdraw()
+                self.name=self.startnewfile()
+                log.info("self.name: {}".format(self.name))
+                if self.name in ['New','']:
+                    return
+                window.deiconify()
+            elif choice == 'Other':
                 self.name=file.lift()
                 if not self.name:
                     return
             else:
                 self.name=choice
-            file.writefilename(self.name)
-            window.destroy()
+            if self.name:
+                file.writefilename(self.name)
+                window.destroy()
         self.name=None # in case of exit
         window=ui.Window(program['root'],title="Select LIFT Database")
         text=_('What LIFT database do you want to work on?')
@@ -189,7 +194,7 @@ class FileChooser(object):
             text=_("{} doesn't look like a well formed lift file; please "
                     "try again.").format(self.name)
             log.info("'lift_url.py' removed.")
-            ErrorNotice(text,title='LIFT parse error')
+            ErrorNotice(text,title='LIFT parse error',wait=True)
             # window=ui.Window(self)
             # ui.Label(window,text=text).grid(row=0,column=0)
             file.remove('lift_url.py') #whatever the problem was, remove it.
