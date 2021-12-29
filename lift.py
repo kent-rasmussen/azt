@@ -61,6 +61,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """These three get all possible langs by type"""
         self.getglosslangs() #sets: self.glosslangs
         self.getanalangs() #sets: self.analangs, self.audiolangs
+        self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
+        self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
+        "with citation data) "
         self.pss=self.pss() #log.info(self.pss)
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
@@ -715,6 +718,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def getsenseids(self):
         self.senseids=self.get('sense').get('senseid')
         self.nsenseids=len(self.senseids)
+    def getentrieswcitationdata(self):
+        self.entrieswcitationdata={}
+        self.nentrieswcitationdata={}
+        for lang in self.analangs:
+            self.entrieswcitationdata[lang]=[
+                    i for i in self.nodes.findall('entry')
+                    if self.citationformnodeofentry(i,lang).text
+                            ]
+            self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
+    def getentrieswlexemedata(self):
+        self.entrieswlexemedata={}
+        self.nentrieswlexemedata={}
+        for lang in self.analangs:
+            self.entrieswlexemedata[lang]=[
+                    i for i in self.nodes.findall('entry')
+                    if self.lexemeformnodeofentry(i,lang).text
+                            ]
+            self.nentrieswlexemedata[lang]=len(self.entrieswlexemedata[lang])
     def getguids(self):
         self.guids=self.get('entry').get('guid')
         self.nguids=len(self.guids)
@@ -926,6 +947,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             output[lang]=self.citation(**kwargs) #.get('text')
         log.info("Found the following citation forms: {}".format(output))
         return output
+    def citationformnodeofentry(self,entry,analang):
+        nodes=entry.findall('citation')
+        for node in nodes:
+            formtexts=node.findall('form[@lang="{}"]/text'.format(analang))
+            if formtexts:
+                return formtexts[0]
+        if nodes:
+            return Node.makeformnode(nodes[0],analang,gimmetext=True)
+        else:
+            citationnode=Node(entry,'citation')
+            return citationnode.makeformnode(analang,gimmetext=True)
+    def lexemeformnodeofentry(self,entry,analang):
+        """This produces a list; specify senseid and analang as you like."""
+        nodes=entry.findall('lexical-unit') #always there, even if empty
+        for node in nodes:
+            formtexts=node.findall('form[@lang="{}"]/text'.format(analang))
+            if formtexts:
+                return formtexts[0]
+            else:
+                return Node.makeformnode(node,analang,gimmetext=True)
     def lexeme(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
         output=self.get('lexeme/form/text',**kwargs).get('text')
