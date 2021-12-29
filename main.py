@@ -418,6 +418,8 @@ class Menus(ui.Menu):
         super(Menus, self).__init__(parent)
         self.change()
         self.languages()
+        if isinstance(self.parent,Sort):
+            self.parameterslice()
 class StatusFrame(ui.Frame):
     """This contains all the info about what the user is currently working on,
     and buttons to change it."""
@@ -816,9 +818,11 @@ class StatusFrame(ui.Frame):
         self.interfacelangline()
         self.analangline()
         self.glosslangline()
-        self.sliceline()
-        self.cvtline()
-        if not self.taskchooser.mainwindow:
+        if isinstance(self.task,WordCollection):
+            self.fieldsline()
+        if isinstance(self.task,Sort):
+            self.sliceline()
+            self.cvtline()
             self.finalbuttons()
             self.maybeboard()
 class Settings(object):
@@ -2352,8 +2356,10 @@ class TaskDressing(object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
     def _taskchooserbutton(self):
-        if not isinstance(self,TaskChooser):
-            ui.Button(self.outsideframe,text=_("Tasks"), #.outsideframe
+        if (isinstance(self,TaskChooser) or
+                len(self.taskchooser.makeoptions())<2):
+            return
+        ui.Button(self.outsideframe,text=_("Tasks"), #.outsideframe
                         font='small',
                         cmd=self.parent.gettask,
                         row=0,column=2,
