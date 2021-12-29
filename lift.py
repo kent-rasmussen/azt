@@ -59,8 +59,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Working on {} with {} entries "
                     "and {} senses".format(filename,self.nguids,self.nsenseids))
         """These three get all possible langs by type"""
-        self.glosslangs() #sets: self.glosslangs
-        self.analangs() #sets: self.analangs, self.audiolangs
+        self.getglosslangs() #sets: self.glosslangs
+        self.getanalangs() #sets: self.analangs, self.audiolangs
         self.pss=self.pss() #log.info(self.pss)
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
