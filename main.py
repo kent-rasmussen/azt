@@ -108,6 +108,73 @@ class FileChooser(object):
                                 column=0, row=1
                                 )
         window.wait_window(window)
+    def copytonewfile(self,newfile):
+        log.info("Beginning Copy of stock to new LIFT file.")
+        stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
+        if file.exists(stockCAWL):
+            log.info("Found stock LIFT file: {}".format(stockCAWL))
+        try:
+            tmpdb=lift.Lift(str(stockCAWL))
+            log.info("Parsed ET.")
+            log.info("Got ET Root.")
+        except Exception as e:
+            log.info("Error: {}".format(e))
+        except lift.BadParseError:
+            text=_("{} doesn't look like a well formed lift file; please "
+                    "try again.").format(stockCAWL)
+            ErrorNotice(text,wait=True)
+            return
+        log.info("Parsed stock LIFT file to tree.")
+        """This returns the root node of an ElementTree tree (the entire
+        tree as nodes), to edit the XML."""
+        log.info("Parsed stock LIFT file to nodes.")
+        for n in (tmpdb.nodes.findall('entry/lexical-unit')+
+                    tmpdb.nodes.findall('entry/citation')):
+            for f in n.findall('form'):
+                n.remove(f)
+        log.info("Stripped stock LIFT file.")
+        log.info("Trying to write empty LIFT file to {}".format(newfile))
+        try:
+            tmpdb.write(str(newfile))
+        except Exception as e:
+            log.error("Exception: {}".format(e))
+        log.info("Tried to write empty LIFT file to {}".format(newfile))
+        if file.exists(newfile):
+            log.info("Wrote empty LIFT file to {}".format(newfile))
+    def startnewfile(self):
+        window=ui.Window(program['root'],title="Start New LIFT Database")
+        ethnologueurl="https://www.ethnologue.com/"
+        title=_("What is the Ethnologue (ISO 639-3) code?")#" of the language you "
+                # "want to study?")
+        text=_("(find your language on {}; the code is at the top of "
+                "the page) "
+                "\nThis code will be used throughout your database, so please "
+                "\ntake a moment and confirm that this is correct before "
+                "continuing.".format(ethnologueurl)
+                )
+        t=ui.Label(window.frame, text=title, font='title', column=0, row=0)
+        l=ui.Label(window.frame, text=text, column=0, row=1)
+        l.bind("<Button-1>", lambda e: openweburl(ethnologueurl))
+        l.wrap()
+        entryframe=ui.Frame(window.frame,row=2,column=0,sticky='nsew')
+        analang=tkinter.StringVar()
+        e=ui.EntryField(entryframe, textvariable=analang, font='readbig',
+                        width=5, row=0,column=0,sticky='w')
+        ui.Button(entryframe, text='OK', cmd=window.destroy, font='title',
+                    row=0,column=1,sticky='e')
+        l.wait_window(window)
+        self.analang=analang.get()
+        if not self.analang:
+            return
+        if len(self.analang) != 3:
+            e=ErrorNotice("That doesn't look like an ethnologue code "
+                        "(just three letters)",wait=True)
+            return
+        dir=file.getdirectory()
+        newfile=file.getnewlifturl(dir,analang.get())
+        log.info("Copying over stock to new LIFT file.")
+        self.copytonewfile(newfile)
+        return str(newfile)
     def getfilename(self):
         self.name=file.getfilename()
         if type(self.name) is list:
