@@ -509,6 +509,21 @@ class StatusFrame(ui.Frame):
             t=_("only")
         self.proselabel(t,cmd=self.taskchooser.getglosslang2,parent=line)
         self.opts['columnplus']=0
+    def fieldsline(self):
+        for ps in [self.settings.nominalps, self.settings.verbalps]:
+            if ps in self.settings.secondformfield:
+                field=self.settings.secondformfield[ps]
+            else:
+                field='<unset>'
+            t=(_("Using second form field ‘{}’ ({})").format(field,ps))
+            line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
+                            columnspan=3,sticky='w') #3 cols is the width of frame
+            self.opts['row']+=1
+            if ps == self.settings.nominalps:
+                cmd=self.taskchooser.getsecondformfieldN
+            else:
+                cmd=self.taskchooser.getsecondformfieldV
+            self.proselabel(t, cmd=cmd, parent=line)
     def sliceline(self):
         count=self.settings.slices.count()
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
