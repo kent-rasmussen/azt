@@ -8175,8 +8175,8 @@ class StatusDict(dict):
             self._checks=self._checksdict[cvt][profile]
         return self._checks
     def renewchecks(self,**kwargs):
-        """This should only need to be done on a boot or when a new tone frame
-        is defined."""
+        """This should only need to be done on a boot, when a new tone frame
+        is defined, or when working on a new syllable profile for CV checks."""
         """This depends on cvt and profile, for CV checks"""
         """replaces getcheckspossible"""
         """replaces framenamesbyps"""
@@ -8184,6 +8184,8 @@ class StatusDict(dict):
         """replaces setnamesbyprofile"""
         if not hasattr(self,'_checksdict'):
             self._checksdict={}
+        if not hasattr(self,'_cvchecknames'):
+            self._cvchecknames={}
         t=self._checkparameters.cvt()
         if not t:
             log.error("No type is set; can't renew checks!")
@@ -8201,8 +8203,9 @@ class StatusDict(dict):
             log.debug('Found {} instances of {} in {}'.format(n,t,profile))
             self._checksdict[t][profile]=list()
             for i in range(n): # get max checks and lesser
-                code=self._checkparameters._Schecks[t][i+1] #b/c range, code
-                self._checksdict[t][profile]+=code
+                syltuples=self._checkparameters._Schecks[t][i+1] #range+1 = syl
+                c=self._checksdict[t][profile].extend([t[0] for t in syltuples])
+                log.info("Check codes to date: {}".format(c))
             self._checksdict[t][profile].sort(key=lambda x:len(x[0]),reverse=True)
     def node(self,**kwargs):
         """This will fail if fed None values"""
@@ -8358,6 +8361,21 @@ class CheckParameters(dict):
         elif not hasattr(self,'_check'):
             self._check=None
         return self._check
+    def cvcheckname(self,code=None):
+        if self.cvt() == 'T':
+            log.error("Asking for a CV check name, but checking tone!")
+            return
+        if not code:
+            code=self.check()
+        return self._cvchecknames[code]
+    def cvchecknamesdict(self):
+        """I reconstruct this here so I can look up names intuitively, having
+        built the named checks by type and number of syllables."""
+        self._cvchecknames={}
+        for t in self._Schecks:
+            for s in self._Schecks[t]:
+                for tup in self._Schecks[t][s]:
+                    self._cvchecknames[tup[0]]=tup[1]
     def analang(self,analang=None):
         if analang is not None:
             self._analang=analang
@@ -8458,6 +8476,7 @@ class CheckParameters(dict):
                     ]
                 },
         }
+        self.cvchecknamesdict()
 class ConfigParser(configparser.ConfigParser):
     def write(self,*args,**kwargs):
         configparser.ConfigParser.write(self,*args,**kwargs,
