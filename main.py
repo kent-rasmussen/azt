@@ -260,8 +260,6 @@ class Menus(ui.Menu):
     def languages(self):
         """Language stuff"""
         self.cascade(self.changemenu,_("Languages"),'languagemenu')
-        # languagemenu = ui.Menu(changemenu, tearoff=0)
-        # changemenu.add_cascade(label=_("Languages"), menu=languagemenu)
         for m in [("Interface/computer language", self.parent.getinterfacelang),
                     ("Analysis language",self.parent.getanalang),
                     ("Analysis language Name",self.parent.getanalangname),
@@ -269,20 +267,8 @@ class Menus(ui.Menu):
                     ("Another gloss language",self.parent.getglosslang2)]:
             self.command(self.languagemenu,
                         label=_(m[0]),
-                        # command=lambda x=check:getattr(Check,m)[1](x),
                         cmd=m[1]
                         )
-
-        # self.languagemenu.command(label=_("Interface/computer language"),
-        #                 command=lambda x=check:Check.getinterfacelang(x))
-        # self.languagemenu.add_command(label=_("Analysis language"),
-        #                 command=lambda x=check:Check.getanalang(x))
-        # self.languagemenu.add_command(label=_("Analysis language Name"),
-        #                 command=lambda x=check:Check.getanalangname(x))
-        # self.languagemenu.add_command(label=_("Gloss language"),
-        #                 command=lambda x=check:Check.getglosslang(x))
-        # self.languagemenu.add_command(label=_("Another gloss language"),
-        #                 command=lambda x=check:Check.getglosslang2(x))
         """Word/data choice stuff"""
     def parameterslice(self):
         for m in [("Part of speech", self.parent.getps),
