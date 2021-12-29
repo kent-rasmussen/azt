@@ -8487,6 +8487,8 @@ class ErrorNotice(ui.Window):
         l=ui.Label(self.frame, text=text)
         l.grid(row=0, column=0)
         self.attributes("-topmost", True)
+        if wait:
+            self.wait_window(self)
 class Repository(object):
     """docstring for Mercurial Repository."""
     def choruscheck(self):
