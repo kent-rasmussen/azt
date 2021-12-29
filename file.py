@@ -91,6 +91,14 @@ def remove(file):
         os.remove(fullpathname(file))
     else:
         log.debug(_("Tried to remove {}, but I can't find it.").format(file))
+def getnewlifturl(dir,xyz):
+    dir=pathlib.Path(dir)
+    dir=dir.joinpath(xyz)
+    if not exists(dir):
+        dir.mkdir()
+    url=dir.joinpath(xyz)
+    url=url.with_suffix('.lift')
+    return url
 def getdiredurl(dir,filename):
     return pathlib.Path.joinpath(dir,filename)
 def getdiredrelURL(reldir,filename):
@@ -164,6 +172,12 @@ def gethome():
     if platform.uname().node == 'karlap':
         home=pathlib.Path.joinpath(home, "Assignment","Tools","WeSay")
     return home
+def getdirectory():
+    Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
+    home=gethome()
+    f=filedialog.askdirectory(initialdir = home, title = _("Select a new "
+                            "location for your LIFT Lexicon and other Files"))
+    return f
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()
@@ -190,7 +204,7 @@ def writefilename(filename=''):
         log.error("writefilename lift_url didn't import.")
         filenames=[]
     if filename and filename not in filenames:
-        filenames.append(filename)
+        filenames.append(str(filename))
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
     f = open(file, 'w', encoding='utf-8') # to append, "a"
     f.write('filename="'+str(filename)+'"\n')
