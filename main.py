@@ -8591,7 +8591,6 @@ def now():
     # datetime.datetime.utcnow().isoformat()[:-7]+'Z'
     return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
 def interfacelang(lang=None,magic=False):
-    global aztdir
     global i18n
     global _
     """Attention: for this to work, _ has to be defined globally (here, not in
