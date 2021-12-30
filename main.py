@@ -819,11 +819,12 @@ class StatusFrame(ui.Frame):
             log.error(_("You have more groups verified than there are, in {} "
                         "cells".format(ungroups)))
         # self.frame.update()
-    def __init__(self, parent, taskchooser, **kwargs):
+    def __init__(self, parent, taskchooser, task, **kwargs):
         self.setopts()
         self.parent=parent
         self.settings=taskchooser.settings
         self.taskchooser=taskchooser
+        self.task=task
         self.mainrelief=kwargs.pop('relief',None) #not for frame
         self.cvt=self.settings.params.cvt()
         self.ps=self.settings.slices.ps()
