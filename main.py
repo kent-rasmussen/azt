@@ -1986,10 +1986,10 @@ class Settings(object):
     def guessaudiolang(self):
         nlangs=len(self.db.audiolangs)
         """if there's only one audio language, use it."""
-        if nlangs == 1: # print('Only one analang in database!')
+        if nlangs == 0 and self.analang:
+            self.audiolang=lift.Lift.makeaudiolangname(self) #self.db.audiolangs[0]
+        if nlangs == 1:
             self.audiolang=self.db.audiolangs[0]
-            """If there are more than two analangs in the database, check if one
-            of the first two is three letters long, and the other isn't"""
         elif nlangs == 2:
             if ((self.analang in self.db.audiolangs[0]) and
                 (self.analang not in self.db.audiolangs[1])):
