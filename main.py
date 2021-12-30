@@ -966,6 +966,10 @@ class Settings(object):
             o=self.soundsettings
         else:
             o=self
+        oldnames={'cvt':'type',
+                    'check':'name',
+                    'group':'subcheck'
+                    }
         try:
             log.debug("Trying for {} settings in {}".format(setting, legacy))
             spec = importlib.util.spec_from_file_location(setting,legacy)
@@ -973,16 +977,25 @@ class Settings(object):
             sys.modules[setting] = module
             spec.loader.exec_module(module)
             for s in self.settings[setting]['attributes']:
-                if hasattr(module,s):
+                if s in oldnames and hasattr(module,oldnames[s]):
+                    setattr(o,s,getattr(module,oldnames[s]))
+                    log.info("Imported and upgraded {}/{}: {}".format(
+                                                    s,oldnames[s],getattr(o,s)))
+                elif hasattr(module,s):
                     setattr(o,s,getattr(module,s))
-        except:
-            log.error("Problem importing {}".format(legacy))
+                    log.info("Imported {}: {}".format(s,getattr(o,s)))
+                else:
+                    log.info("Attribute {} not found".format(s))
+            log.info("Importing {} settings done.".format(setting))
+        except Exception as e:
+            log.error("Problem importing {} ({})".format(legacy,e))
         # b/c structure changed:
         if 'glosslangs' in self.settings[setting]['attributes']:
             self.glosslangs=[]
             for lang in ['glosslang','glosslang2']:
                 if hasattr(module,lang):
                     self.glosslangs.append(getattr(module,lang))
+                    delattr(self,lang) #because this would be made above
         dict1=self.makesettingsdict(setting=setting)
         self.storesettingsfile(setting=setting) #do last
         self.loadsettingsfile(setting=setting) #verify write and read
