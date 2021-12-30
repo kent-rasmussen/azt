@@ -4454,7 +4454,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 self.runwindow.destroy()
                 self.runcheck()
             def nps():
-                self.nextps()
+                self.slices.nextps()
                 r=self.status.nextprofile(tosort=True)
                 if not r:
                     self.status.nextprofile(toverify=True)
