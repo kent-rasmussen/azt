@@ -7664,18 +7664,6 @@ class SliceDict(dict):
         except ValueError: #i.e., it's not in the list
             self.makepsok()
         return self.ps()
-    def nextprofile(self):
-        profiles=self.profiles()
-        #assume it's on the list, if not, just put it there, don't cycle it.
-        try:
-            index=profiles.index(self._profile)
-            if index+1 == len(profiles):
-                self.profile(profiles[0]) #cycle back
-            else:
-                self.profile(profiles[index+1])
-        except ValueError: #i.e., it's not in the list
-            self.makeprofileok()
-        return self.profile()
     def slicepriority(self,arg=None):
         """arg is to throw away, rather than break a fn where others get
         and set. This is now calculated, not read from file and set here."""
