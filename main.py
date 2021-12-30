@@ -619,21 +619,9 @@ class StatusFrame(ui.Frame):
         # self.opts['row']+=1
     def finalbuttons(self):
         # self.opts['row']+=6
-        if hasattr(self.taskchooser.mainwindowis,'runcheck'):
-            self.button(self.runtext,self.taskchooser.mainwindowis.runcheck,
-                # column=0,
-                font='title',
-                compound='bottom', #image bottom, left, right, or top of text
-                image=self.taskchooser.theme.photo[self.cvt],
-                sticky='ew')
+        if hasattr(self.taskchooser.mainwindowis,'dobuttonkwargs'):
+            self.button(**self.task.dobuttonkwargs())
         self.opts['row']+=1
-        if hasattr(self.taskchooser.mainwindowis,'record'):
-            self.button(self.recordtext,self.taskchooser.mainwindowis.record,
-                # column=0,
-                compound='left', #image bottom, left, right, or top of text
-                # row=1,
-                image=self.taskchooser.theme.photo['record']
-                )
     """Right side"""
     def maybeboard(self):
         profileori=self.settings.slices.profile()
