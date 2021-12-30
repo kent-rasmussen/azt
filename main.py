@@ -4777,16 +4777,18 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         if group in groups:
             progress=('('+str(groups.index(group)+1)+'/'+str(len(
                                                             groups))+')')
-            ui.Label(titles, text=progress,anchor='w'
-                                ).grid(row=0,column=1,sticky="ew")
-        ui.Label(titles, text=instructions).grid(row=1,column=0, columnspan=2,
-                                                                sticky="wns")
+            ui.Label(titles,text=progress,anchor='w',row=0,column=1,sticky="ew")
+        ui.Label(titles, text=instructions,
+                row=1, column=0, columnspan=2, sticky="wns")
         ui.Label(self.runwindow.frame, image=self.frame.theme.photo['verifyT'],
-                        text='',
-                        ).grid(row=1,column=0,rowspan=3,sticky='nwse')
+                        text='', row=1,column=0,
+                        # rowspan=3,
+                        sticky='nws')
         """Scroll after instructions"""
-        self.sframe=ui.ScrollingFrame(self.runwindow.frame)
-        self.sframe.grid(row=1,column=1,columnspan=2,sticky='wsne')
+        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
+                                    row=1,column=1,
+                                    # columnspan=2,
+                                    sticky='wsn')
         row+=1
         """put entry buttons here."""
         for senseid in senseids:
