@@ -2206,6 +2206,7 @@ class Settings(object):
         self.attrschanged.append('analang')
         self.refreshattributechanges()
         window.destroy()
+        self.reloadprofiledata()
     def setgroup(self,choice,window):
         log.debug("group: {}".format(choice))
         self.status.group(choice)
