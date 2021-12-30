@@ -7580,26 +7580,26 @@ class RecordButtonFrame(ui.Frame):
         if self.test:
             return
         self.db.addmediafields(self.node,self.filename,self.audiolang)
-        self.check.status.last('recording',update=True)
-    def __init__(self,parent,check,framed=None,**kwargs): #filenames
+        self.task.status.last('recording',update=True)
+    def __init__(self,parent,task,framed=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
         provided. The LIFT link to that sound file should already be there."""
         # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
-        self.db=check.db
+        self.db=task.db
         self.id=id
-        self.check=check
+        self.task=task
         try:
-            check.pyaudio.get_format_from_width(1) #get_device_count()
+            task.pyaudio.get_format_from_width(1) #get_device_count()
         except:
-            check.pyaudio=sound.AudioInterface()
-        self.pa=check.pyaudio
-        if not hasattr(check,'soundsettings'):
-            check.loadsoundsettings()
+            task.pyaudio=sound.AudioInterface()
+        self.pa=task.pyaudio
+        if not hasattr(task.settings,'soundsettings'):
+            task.settings.loadsoundsettings()
         self.callbackrecording=True
-        self.settings=chooser.soundsettings
+        self.settings=task.soundsettings
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
         self.test=kwargs.pop('test',None)
@@ -7620,7 +7620,7 @@ class RecordButtonFrame(ui.Frame):
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
-        if chooser.audiolang is None and self.test is not True:
+        if task.audiolang is None and self.test is not True:
             tlang=_("Set audio language to get record buttons!")
             log.error(tlang)
             ui.Label(self,text=tlang,borderwidth=1,
@@ -7667,8 +7667,8 @@ class ToneGroupButtonFrame(ui.Frame):
         self.sortnext()
         # remove()
     def unsort(self):
-        check=self.chooser.params.check()
-        self.chooser.task.removesenseidfromgroup(self._senseid,check,sorting=False)
+        check=self.task.params.check()
+        self.task.removesenseidfromgroup(self._senseid,check,sorting=False)
         self.refresh()
     def setcanary(self,canary):
         if canary.winfo_exists():
