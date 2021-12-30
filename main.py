@@ -3276,8 +3276,10 @@ class TaskChooser(TaskDressing,ui.Window):
     def gettask(self,event=None):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
+        self.unsetmainwindow() #first, so the program stays alive
+        self.setmainwindow(self)
         if hasattr(self,'task') and self.task.winfo_exists():
-            self.task.destroy()
+            self.task.on_quit() #destroy and set flag
         optionlist=self.makeoptions()
         n=0
         bpr=3
