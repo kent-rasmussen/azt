@@ -3884,7 +3884,7 @@ class Tone(object):
             # senseid=self.gimmesenseidwgloss() #don't give exs w/o all glosses
             # senseid=self.gimmesenseid()
             # This needs self.toneframes
-            framed=self.datadict.getframeddata(senseid)
+            framed=self.taskchooser.datadict.getframeddata(senseid)
             framed.setframe(checktoadd)
             #At this point, remove this frame (in case we don't submit it)
             del self.toneframes[ps][checktoadd]
@@ -4331,7 +4331,7 @@ class Sort(object):
                 vars[idn].set(id)
             else:
                 vars[idn].set(0)
-            framed=self.datadict.getframeddata(id)
+            framed=self.taskchooser.datadict.getframeddata(id)
             forms=framed.formatted(noframe=True)
             log.debug("forms: {}".format(forms))
             ui.CheckButton(scroll.content, text = forms,
@@ -4817,7 +4817,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             sorted=self.status.senseidssorted()
             senseid=senseids[0]
             progress=(str(thissort.index(senseid)+1)+'/'+str(len(thissort)))
-            framed=self.datadict.getframeddata(senseid)
+            framed=self.taskchooser.datadict.getframeddata(senseid)
             framed.setframe(check)
             """After the first entry, sort by groups."""
             log.debug('tonegroups: {}'.format(self.status.groups(wsorted=True)))
@@ -5098,7 +5098,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         if 'anchor' not in kwargs:
             kwargs['anchor']='w'
         #This should be pulling from the example, as it is there already
-        framed=self.datadict.getframeddata(senseid)
+        framed=self.taskchooser.datadict.getframeddata(senseid)
         check=self.params.check()
         framed.setframe(check)
         text=framed.formatted(showtonegroup=False)
@@ -6010,7 +6010,7 @@ class Report(object):
                 groups=True #show groups on all non-default reports
             counts['senses']+=1
             for example in examples:
-                framed=self.datadict.getframeddata(example,senseid)
+                framed=self.taskchooser.datadict.getframeddata(example,senseid)
                 # skip empty examples:
                 if not framed.forms or self.analang not in framed.forms:
                     continue
@@ -6202,7 +6202,7 @@ class Report(object):
                     e1=xlp.Example(s1,id,heading=headtext)
                     for senseid in self.analysis.senseidsbygroup[group]:
                         #This is for window/text output only, not in XLP file
-                        framed=self.datadict.getframeddata(senseid,check=None)
+                        framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
                         text=framed.formatted(noframe=True,showtonegroup=False)
                         #This is put in XLP file:
                         examples=self.db.get('example',location=check,
@@ -6216,7 +6216,7 @@ class Report(object):
             else:
                 for senseid in self.analysis.senseidsbygroup[group]:
                     #This is for window/text output only, not in XLP file
-                    framed=self.datadict.getframeddata(senseid,check=None)
+                    framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
                     if not framed:
                         continue
                     text=framed.formatted(noframe=True, showtonegroup=False)
@@ -6296,7 +6296,7 @@ class Report(object):
             for senseid in senseidstocheck: #self.senseidformstosearch[lang][ps]
                 # where self.regex(self.senseidformstosearch[lang][ps][senseid]):
                 """This regex is compiled!"""
-                framed=self.datadict.getframeddata(senseid) #not framed!
+                framed=self.taskchooser.datadict.getframeddata(senseid) #not framed!
                 o=framed.formatted(noframe=True)
                 self.framedtoXLP(framed,parent=ex,listword=True)
                 def makeimg():
@@ -6516,7 +6516,7 @@ class Report(object):
             for senseid in matches:
                 for typenum in self.typenumsRun:
                     self.basicreported[typenum].add(senseid)
-                framed=self.datadict.getframeddata(senseid)
+                framed=self.taskchooser.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,listword=True)
     def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
         """This function iterates across check and group values
@@ -6881,7 +6881,7 @@ class Record(object):
         if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
             self.soundsettingswindow.destroy()
     def makelabelsnrecordingbuttons(self,parent,sense):
-        framed=self.datadict.getframeddata(sense['nodetoshow'])
+        framed=self.taskchooser.datadict.getframeddata(sense['nodetoshow'])
         t=framed.formatted(noframe=True)
         for g in sense['glosses']:
             if g:
@@ -7037,7 +7037,7 @@ class Record(object):
                     )
                 progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
-            titleframed=self.datadict.getframeddata(senseid,check=None)
+            titleframed=self.taskchooser.datadict.getframeddata(senseid,check=None)
             if not titleframed or titleframed.forms[self.analang] is None:
                 entryframe.destroy() #is this ever needed?
                 continue
@@ -7056,7 +7056,7 @@ class Record(object):
                     lift.examplehaslangform(example,self.audiolang) == True):
                     continue
                 """These should already be framed!"""
-                framed=self.datadict.getframeddata(example,senseid=senseid)
+                framed=self.taskchooser.datadict.getframeddata(example,senseid=senseid)
                 if not framed:
                     exit()
                 if framed.forms[self.analang] is None: # when?
@@ -7334,11 +7334,11 @@ class ExampleDict(dict):
         kwargs=exampletype(**kwargs)
         if senseid is None:
             return
-        framed=self.datadict.getframeddata(senseid=senseid,check=check)
+        framed=self.taskchooser.datadict.getframeddata(senseid=senseid,check=check)
         if framed is None:
             return
         log.info("exampletypeok framed: {}".format(framed))
-        # framed=self.datadict.getframeddata(senseid)
+        # framed=self.taskchooser.datadict.getframeddata(senseid)
         if kwargs['wglosses'] and not self.hasglosses(framed):
             log.info("Gloss check failed for {}".format(senseid))
             return
@@ -7415,10 +7415,10 @@ class FramedDataDict(dict):
     def refresh(self):
         self.clear()
     def updatelangs(self):
-        self.analang=self.chooser.params.analang()
-        self.audiolang=self.chooser.settings.audiolang
-        self.audiodir=self.chooser.settings.audiodir
-        self.glosslangs=self.chooser.settings.glosslangs
+        self.analang=self.taskchooser.params.analang()
+        self.audiolang=self.taskchooser.settings.audiolang
+        self.audiodir=self.taskchooser.settings.audiodir
+        self.glosslangs=self.taskchooser.settings.glosslangs
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def isthere(self,source):
         if source in self:
@@ -7460,11 +7460,11 @@ class FramedDataDict(dict):
             if element:
                 d=self[source]=FramedDataElement(self,source,senseid,**kwargs)
         return d #self[source]
-    def __init__(self, chooser, **kwargs):
+    def __init__(self, taskchooser, **kwargs):
         super(FramedDataDict, self).__init__()
-        self.frames=chooser.toneframes #[ps][name]
-        self.db=chooser.db
-        self.chooser=chooser
+        self.frames=taskchooser.toneframes #[ps][name]
+        self.db=taskchooser.db
+        self.taskchooser=taskchooser
 class FramedData(object):
     """This is a superclass to store methods, etc. common to both
     FramedDataSense and FramedDataElement, making the information gathered by
@@ -7621,13 +7621,13 @@ class FramedDataElement(FramedData):
     def filenameoptions(self):
         """This should generate possible filenames, with preferred (current
         schema) last, as that will be used if none are found."""
-        ps=self.parent.chooser.slices.ps()
+        ps=self.parent.taskchooser.slices.ps()
         pslocopts=[ps]
         # Except for data generated early in 2021, profile should not be there,
         # because it can change with analysis. But we include here to pick up
         # old files, in case they are there but not linked.
         # First option (legacy):
-        pslocopts.insert(0,ps+'_'+self.parent.chooser.slices.profile())
+        pslocopts.insert(0,ps+'_'+self.parent.taskchooser.slices.profile())
         fieldlocopts=[None]
         if (self.node.tag == 'example'):
             l=self.node.find("field[@type='location']//text")
