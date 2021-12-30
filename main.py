@@ -487,7 +487,7 @@ class StatusFrame(ui.Frame):
     def analangline(self):
         analang=self.settings.params.analang()
         langname=self.settings.languagenames[analang]
-        t=(_("Working on {}").format(langname))
+        t=(_("Studying {}").format(langname))
         if (langname == _("Language with code [{}]").format(analang)):
             self.proselabel(t,cmd=self.taskchooser.getanalangname,
                                             tt=_("Set analysis language Name"))
