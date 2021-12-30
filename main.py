@@ -2064,6 +2064,8 @@ class Settings(object):
             self.attrschanged.remove('check')
         if 'interfacelang' in self.attrschanged:
             self.attrschanged.remove('interfacelang')
+        if 'glosslangs' in self.attrschanged:
+            self.attrschanged.remove('glosslangs')
         soundattrs=['fs',
                     'sample_format',
                     'audio_card_index',
