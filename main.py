@@ -1095,7 +1095,7 @@ class Settings(object):
                     log.info("Value {}={} found in object".format(s,d[s]))
                 except:
                     log.log(4,"Value of {} not found in object".format(s))
-            elif hasattr(o,s):# and getattr(o,s) is not None:
+            elif hasattr(o,s) and getattr(o,s):
                 d[s]=getattr(o,s)
                 log.log(4,"Trying to dict self.{} with value {}, type {}"
                         "".format(s,d[s],type(d[s])))
