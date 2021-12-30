@@ -3090,6 +3090,60 @@ class TaskDressing(object):
                                 column=0, row=4
                                 )
         buttonFrame1.wait_window(window)
+    def getrunwindow(self,nowait=False,msg=None,title=None):
+        """Can't test for widget/window if the attribute hasn't been assigned,"
+        but the attribute is still there after window has been killed, so we
+        need to test for both."""
+        if title is None:
+            title=(_("Run Window"))
+        if self.exitFlag.istrue():
+            return
+        if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
+            log.info("Runwindow already there! Resetting frame...")
+            self.runwindow.resetframe() #I think I'll always want this here...
+        else:
+            self.runwindow=ui.Window(self.frame,title=title)
+        self.runwindow.title(title)
+        self.runwindow.lift()
+        if not nowait:
+            self.runwindow.wait(msg=msg)
+    def runcheck(self):
+        self.settings.storesettingsfile()
+        t=(_('Run Check'))
+        log.info("Running check...")
+        i=0
+        ps=self.slices.ps()
+        if not ps:
+            self.getps()
+        group=self.status.group()
+        analang=self.params.analang()
+        if None in [analang, ps, group]:
+            log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
+                                        self.analang, ps, group))
+        cvt=self.params.cvt()
+        check=self.params.check()
+        profile=self.slices.profile()
+        if not profile:
+            self.getprofile()
+        if cvt == 'T' and (check not in self.status.checks(tosort=True)
+                and check not in self.status.checks(toverify=True)
+                and check not in self.status.checks(tojoin=True)):
+            exit=self.getcheck()
+            if exit:
+                self.runcheck()
+            return #if the user didn't supply a check
+        self.settings.updatesortingstatus() # Not just tone anymore #settonevariables() #here, or later?
+        if isinstance(self,Sort):
+            self.maybesort()
+        elif isinstance(self,Report) and None not in [check,group]:
+            self.getresults()
+        else:
+            window=ui.Window(self.frame)
+            text=_('Error: please set Check/Subcheck first! ({}/{})').format(
+                                                     check,group)
+            ui.Label(window,text=text).grid(column=0, row=i)
+            i+=1
+            return
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -3175,18 +3229,48 @@ class TaskChooser(TaskDressing,ui.Window):
         self.datadict=FramedDataDict(self) #needs self.toneframes
     def makeexampledict(self):
         self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
-    def makeoptions(self):
-        """This function (and probably a few dependent functions, maybe
-        another class) provides a list of functions with prerequisites
-        that are minimally and/or optimally satisfied."""
-        tasks=[]
-        for task in [WordCollection, Placeholder, Check]:
-            tasks.append((task,task.tasktitle(task)))
-        return tasks
-        # [(Check,"Citation Form Sorting in Tone Frames"),
-        #         (WordCollection,"Placeholder for future checks"),
-        #         (Placeholder,"Placeholder for future checks")
-        #         ]
+    def guidtriage(self):
+        # import time
+        log.info("Doing guid triage... This takes awhile...")
+        start_time=time.time()
+        self.guids=self.db.guids
+        self.guidsinvalid=[] #nothing, for now...
+        self.senseids=self.db.senseids
+        self.senseidsinvalid=[] #nothing, for now...
+        print(time.time() - start_time,"seconds.")
+        print(len(self.guidsinvalid),'entries with invalid data found.')
+        self.db.guidsinvalid=self.guidsinvalid
+        self.guidsvalid=[]
+        for guid in self.guids:
+            if guid not in self.guidsinvalid:
+                self.guidsvalid+=[guid]
+        print(len(self.guidsvalid),'entries with valid data remaining.')
+        self.guidswanyps=self.db.get('guidwanyps') #any ps value works here.
+        print(len(self.guidswanyps),'entries with ps data found.')
+        self.guidsvalidwops=[]
+        self.guidsvalidwps=[]
+        for guid in self.guidsvalid:
+            if guid in self.guidswanyps:
+                self.guidsvalidwps+=[guid]
+            else:
+                self.guidsvalidwops+=[guid]
+        self.db.guidsvalidwps=self.guidsvalidwps #This is what we'll search
+        print(len(self.guidsvalidwops),'entries with valid data but no ps data.')
+        print(len(self.guidsvalidwps),'entries with valid data and ps data.')
+        print(time.time() - start_time,"seconds.")
+        # for var in [self.guids, self.guidswanyps, self.guidsvalidwops, self.guidsvalidwps, self.guidsinvalid, self.guidsvalid]:
+        #     print(len(var),str(var))
+        # for guid in self.guidswanyps:
+        #     if guid not in self.formstosearch[self.analangs[0]][None]:
+        #         guids+=[guid]
+        # print(len(guids),guids)
+        print("Set the above variables in "+str(time.time() - start_time)+" se"
+                "conds.")
+    def guidtriagebyps(self):
+        log.info("Doing guid triage by ps... This also takes awhile?...")
+        self.guidsvalidbyps={}
+        for ps in self.db.pss:
+            self.guidsvalidbyps[ps]=self.db.get('guidbyps',ps=ps)
     def gettask(self,event=None):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
@@ -3238,6 +3322,212 @@ class TaskChooser(TaskDressing,ui.Window):
             interfacelang('fr')
         else:
             interfacelang(iflang)
+    def makeoptions(self):
+        """This function (and probably a few dependent functions, maybe
+        another class) provides a list of functions with prerequisites
+        that are minimally and/or optimally satisfied."""
+        #if nothing to do??
+        tasks=[
+                WordCollectionCitation,
+                # WordCollectionLexeme
+                ]
+        if self.donew['somesort']:
+            tasks.append(ReportCitationT)
+            if self.donew['torecordT']:
+                tasks.append(RecordCitationT)
+        if self.donew['collectionlc']:
+            tasks.append(RecordCitation)
+            tasks.append(ReportCitation)
+            tasks.append(SortCitationT)
+        if self.donew['tonereport']:
+            tasks.append(JoinUFgroups)
+        if self.donew['recording']:
+            tasks.append(Transcribe)
+        # tasks.append(WordCollectionCitation),
+        # tasks.append(WordCollectionPlImp),
+        # tasks.append(ParseA), # input pl/imp, gives lx and ps
+        # tasks.append(ParseB), # user selects pl/imp, gives ls and ps
+        # tasks.append(SyllableProfileAnalysisCitation),
+        # tasks.append(SortTCitation),
+        # tasks.append(SyllableProfileAnalysisLexeme),
+        # tasks.append(TranscribeTCitation),
+        # tasks.append(RecordTCitation),
+        # tasks.append(RecordPlImp),
+        # tasks.append(Placeholder),
+        # tasks.append(Reports),
+        # tasks.append(SortV),
+        # tasks.append(SortC),
+        # tasks.append(SortTLexeme),
+        # tasks.append(TranscribeTLexeme),
+        # tasks.append(RecordTLexeme)
+        # ]:
+        tasktuples=[]
+        for task in tasks:
+            if hasattr(task,'tasktitle'):
+                if hasattr(task,'taskicon'):
+                    tasktuples.append((task,task.tasktitle(task),
+                                            task.taskicon(task)))
+                else:
+                    tasktuples.append((task,task.tasktitle(task),None))
+            else:
+                if hasattr(task,'taskicon'):
+                    tasktuples.append((task,str(task),task.taskicon(task)))
+                else:
+                    tasktuples.append((task,str(task),None))
+
+        return tasktuples
+        # [(Check,"Citation Form Sorting in Tone Frames"),
+        #         (WordCollection,"Placeholder for future checks"),
+        #         (Placeholder,"Placeholder for future checks")
+        #         ]bum
+    def convertlxtolc(self,window):
+        window.destroy()
+        log.info("this is where we convert; to do.")
+        backup=self.file.name+"_backupBeforeLx2LcConversion"
+        self.db.write(backup)
+        for e in self.db.nodes.findall('entry'):
+            lxs=e.findall('lexical-unit')
+            for lx in lxs:
+                log.info("Looking at entry w/guid: {}".format(e.get("guid")))
+                #,lx.find('text').get('lang')))
+                # log.info("Found {}".format([i for i in lx
+                # if i.findall('text')
+                # and [j for j in i.findall('text') if j.text]
+                # # and i.find('text').text
+                #         ]))
+                for lxf in [i for i in lx
+                            if i.findall('text') and
+                            [j for j in i.findall('text') if j.text]
+                        ]: #only forms with text info
+                    lxfl=lxf.get('lang')
+                    lxft=lxf.find('text')
+                    log.info("Moving {} from lang {}".format(lxft.text,lxfl))
+                    # lc=e.findall('citation')
+                    """This finds or creates, by lang:"""
+                    lc=self.db.citationformnodeofentry(e,lxfl)
+                    log.info("Moving to citation winfo {} from lang {}".format(lc.text,lxfl))
+                    if not lc.text: #don't overwrite info
+                        lc.text=lxft.text
+                        lxft.text='' #clear only on move
+        # self.db.write(self.file.name+str(now()))
+        self.db.write()
+        conversionlogfile=logwritelzma(log.filename)
+        #             tmpdb.nodes.findall('entry/citation')):
+        #     for f in n.findall('form'):
+        #         n.remove(f)
+        ErrorNotice("The conversion is done now, so {0} will quit. You may "
+                    "want to inspect your current file ({1}) and the backup "
+                    "({2}) to confirm this did what you wanted, before "
+                    "opening {0} again. In case there are any issues, the "
+                    "log file is also saved in {3}".format(program['name'],
+                                                self.file.name,
+                                                backup,
+                                                conversionlogfile),
+                    title=_("Conversion Done!"),
+                    wait=True)
+        sys.exit()
+    def asktoconvertlxtolc(self):
+        title=_("Convert lexeme field data to citation form fields?")
+        w=ui.Window(self,title=title)
+        instructions=_("Typically, dictionary work starts by collecting "
+                        "citation forms, and later moves to analyzing those "
+                        "forms into lexemes (meaningful, but not necessarily "
+                        "pronounceable, word parts). Sometimes, people store "
+                        "those citation forms in lexeme fields, though this "
+                        "is typically in error. {} can help you analyze your "
+                        "citation forms into lexeme forms, but they first need "
+                        "to be moved to the correct fields in your database."
+                        "".format(program['name']))
+        Question=_("Do you want {} to move data from your lexeme fields to "
+                    "citation fields, for each entry with no citation field "
+                    "data?".format(program['name']))
+        oktext=_("Move lexeme field data to citation fields")
+        noktext=_("No thanks; I'll manage this myself")
+        nbtext=_("N.B.: This is a fairly radical change to your database, "
+                "so it would be wise to back up your data.")
+        lt=ui.Label(w.frame, text=title, font='title',
+                    row=0, column=0, columnspan=2)
+        li=ui.Label(w.frame, text=instructions, font='instructions',
+                    row=1, column=0, columnspan=2)
+        lq=ui.Label(w.frame, text=Question, font='read',
+                    row=2, column=0, columnspan=2)
+        bok=ui.Button(w.frame, text=oktext,
+                        cmd=lambda w=w:self.convertlxtolc(w),
+                        row=3, column=0)
+        bnok=ui.Button(w.frame, text=noktext, cmd=w.destroy, row=3, column=1)
+        lnb=ui.Label(w.frame, text=nbtext, row=4, column=0, columnspan=2)
+        for l in [lt,li,lq,lnb]:
+            l.wrap()
+        return w
+    def whatsdone(self):
+        self.donew={}
+        for task in ['collectionlc','collectionlx','collectionplimp',
+                    'tonereport',
+                    'torecord',
+                    'torecordT',
+                    'recording',
+                    'somesort',
+                    'sortlc'
+                    ]:
+            self.donew[task]=False
+        lexemesdone=self.file.db.nentrieswlexemedata
+        citationsdone=self.file.db.nentrieswcitationdata
+        log.info("lexemesdone by lang: {}".format(lexemesdone))
+        log.info("citationsdone by lang: {}".format(citationsdone))
+        for l in lexemesdone:
+            if l in citationsdone and citationsdone[l] < lexemesdone[l]:
+                w=self.asktoconvertlxtolc()
+                w.wait_window(w) # wait for this answer before moving on
+                break #just ask this once
+        sorts=self.db.nfields
+        log.info("nfields by lang: {}".format(sorts))
+        sortsrecorded=self.db.nfieldswsoundfiles
+        log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
+        sortsnotrecorded={}
+        # l=self.params.analang()
+        # al=self.audiolang
+        for f in sorts:
+            if f not in sortsrecorded:
+                sortsrecorded[f]={}
+            sortsnotrecorded[f]={}
+            for l in sorts[f]:
+                if sorts[f][l] >=100: #what is a reasonable number here?
+                    """I don't think I can faithfully distinguish between
+                    sorting on lc v other fields here, at least not yet"""
+                    self.donew['somesort']=True
+                #This is a bit of a hack, but no analang nor audiolang yet.
+                maybeals=[i for i in self.db.audiolangs if l in i]
+                if maybeals:
+                    al=maybeals[0]
+                    log.info("Using audiolang {} for analang {}".format(al,l))
+                    if al not in sortsrecorded[f]:
+                        sortsrecorded[f][al]=0
+                    sortsnotrecorded[f][l]=sorts[f][l]-sortsrecorded[f][al]
+                    if sortsnotrecorded[f][l] >=100:
+                        self.donew['torecord']=True
+                else:
+                    log.info("Couldn't find plausible audiolang (among {}) "
+                            "for analang {}".format(self.db.audiolangs,l))
+        log.info("nexampleswosoundfiles by lang: {}".format(sortsnotrecorded))
+        for lang in self.file.db.nentrieswlexemedata:
+            if self.file.db.nentrieswlexemedata[lang] >=1700:
+                self.donew['collectionlx']=True
+        for lang in self.file.db.nentrieswcitationdata:
+            if self.file.db.nentrieswcitationdata[lang] >=1700:
+                self.donew['collectionlc']=True
+    def restart(self,filename=None):
+        if hasattr(self,'warning') and self.warning.winfo_exists():
+            self.warning.destroy()
+        self.parent.makecheck(filename)
+    def changedatabase(self):
+        log.debug("Removing database name, so user will be asked again.")
+        self.askwhichlift(file.getfilenames())
+        # program['root'].destroy()
+        # subprocess.call?
+        # __name__
+        # main()
+        sys.exit()
+        # self.restart(self.filename)
     def __init__(self,parent):
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
@@ -3345,14 +3635,120 @@ class WordCollection(ui.Window,TaskDressing):
             self.getscounts()
             self.settings.storesettingsfile(setting='profiledata') #since we changed this.
             self.runwindow.destroy()
+    def getlisttodo(self):
+        analang=self.params.analang()
+        all=self.db.get('entry',
+                        showurl=True).get()
+        # done=self.db.get('entry',path=['lexeme'],analang=analang,
+        #                 showurl=True).get()
+        # for i in all[:10]:
+        #     log.info("textnodecontents: {}".format(self.textnodefn(i,analang).text))
+        done=[i for i in all
+                    if self.textnodefn(i,analang).text
+                    # self.db.get('lexeme/form/text', node=i, analang=analang,
+                    # showurl=True
+                    #                 ).get('text') != ''
+                    ]
+        todo=[x for x in all if x not in done]
+        log.info("To do: ({}) {}".format(len(todo),todo))
+        return todo
+    def nextword(self,event=None):
+        self.storethisword()
+        self.db.write()
+        self.index+=1
+        self.getword()
+    def backword(self):
+        self.storethisword()
+        self.db.write()
+        self.index-=1
+        self.getword()
+    def storethisword(self):
+        self.lxtextnode.text=self.lxvar.get()
+    def getwords(self):
+        self.analang=self.params.analang()
+        self.entries=self.getlisttodo()
+        self.nentries=len(self.entries)
+        self.index=0
+        self.getword()
+    def getword(self):
+        try:
+            self.wordframe.destroy()
+        except Exception as e:
+            log.info("Probably nothing: {}".format(e))
+        self.wordframe=ui.Frame(self.frame,row=1,column=1,sticky='ew')
+        if not self.entries:
+            text+_("It looks like you're done collecting the Comparative "
+            "African Word List! Congratulations! You can still add words "
+            "through the 'Add a Word' button, to the left.")
+            ui.Label(self.wordframe, text=text, row=0, column=0)
+        text=_("Type the word in your language that goes with these meanings."
+                "").format(self.nentries)
+        ui.Label(self.wordframe, text=text, row=0, column=0)
+        progress="({}/{})".format(self.index+1,self.nentries)
+        ui.Label(self.wordframe, text=progress, row=1, column=3, font='small')
+        entry=self.entries[self.index]
+        glosses={}
+        for g in self.glosslangs:
+            glosses[g]=', '.join(self.db.get('gloss/text', node=entry,
+                                    glosslang=g).get('text'))
+        # glossframe=ui.Frame(self.wordframe, row=1, column=0)
+        glossesthere=' — '.join([glosses[i] for i in glosses if i])
+        ui.Label(self.wordframe, text=glossesthere, font='read',
+                row=1, column=0, columnspan=3, sticky='ew')
+        self.lxtextnode=self.textnodefn(entry,self.analang)
+        log.info("lxtextnode: {}".format(self.lxtextnode))
+        self.lxvar=tkinter.StringVar(value=self.lxtextnode.text)
+        # get('entry',path=['lexeme'],analang=self.analang,
+        #                 showurl=True).get()
+        # lxvar=tkinter.StringVar()
+        lxenter=ui.EntryField(self.wordframe,textvariable=self.lxvar,
+                                row=2,column=0,columnspan=3)
+        lxenter.focus_set()
+        lxenter.bind('<Return>',self.nextword)
+        # self.navigationframe=ui.Frame(self.frame, row=2, column=1,
+        #                                 columnspan=3, sticky='ew')
+        back=ui.Button(self.wordframe,text=_("Back"),cmd=self.backword,
+        row=3, column=0, sticky='w',anchor='w',
+        )
+        # ui.Label(self.navigationframe,text=" ",row=0, column=1, sticky='ew')
+        next=ui.Button(self.wordframe,text=_("Next"),cmd=self.nextword,
+        row=3, column=2, sticky='e',anchor='e',
+        )
+        # self.navigationframe.grid_columnconfigure(1,weight=1)
+        self.frame.grid_columnconfigure(1,weight=1)
+class WordCollectionLexeme(ui.Window,WordCollection,TaskDressing):
+    def tasktitle(self):
+        return _("Word Collection for Lexeme Forms")
+    def __init__(self, parent): #frame, filename=None
+        """This should never really be used, though I made it first, so I've
+        left it"""
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        log.info("Initializing {}".format(self.tasktitle()))
+        #Status frame is 0,0
+        self.textnodefn=self.db.lexemeformnodeofentry
+        self.getwords()
+class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
+    def taskicon(self):
+        return program['theme'].photo['iconCV']
+    def dobuttonkwargs(self):
+        return {'text':"Add a Word",
+                'fn':self.addmorpheme,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['CV'], #self.cvt
+                'sticky':'ew'
+                }
+    def tasktitle(self):
+        return _("Word Collection for Citation Forms")
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        log.info("Initializing Check2")
-        for r in range(5):
-            ui.Label(self.frame,
-                    text="This is a check placeholder.",
-                    row=r, column=0)
+        log.info("Initializing {}".format(self.tasktitle()))
+        #Status frame is 0,0
+        self.textnodefn=self.db.citationformnodeofentry
+        self.getwords()
 class Placeholder(ui.Window,TaskDressing):
     """Fake check, placeholder for now."""
     def tasktitle(self):
@@ -3365,190 +3761,58 @@ class Placeholder(ui.Window,TaskDressing):
             ui.Label(self.frame,
                     text="This is a check placeholder.",
                     row=r, column=0)
-class Check(TaskDressing,ui.Window):
-    """the parent is the *functional* head, the MainApplication."""
-    """the frame is the *GUI* head, the frame sitting in the MainApplication."""
-    def tasktitle(self):
-        return _("Citation Form Sorting in Tone Frames")
-    def __init__(self, parent): #frame, filename=None
-        self.start_time=time.time() #this enables boot time evaluation
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
-        log.info("status: {}".format(type(self.status)))
-        # Not sure what this was for (XML?):
-        self.pp=pprint.PrettyPrinter()
-        """Are we OK without these?"""
-        # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
-        # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
-        log.info("Done initializing check.")
-        """Testing Zone"""
-    """This should each be done only once, to make the objects from settings"""
-    """self.profilesbysense and self.profilecounts are loaded from file, or
-    created by analysis in init()"""
-    def makeanalysis(self,**kwargs):
-        if not hasattr(self,'analysis'):
-            self.analysis=Analysis(self.params,
-                                    self.slices,
-                                    self.status,
-                                    self.db,
-                                    **kwargs
-                                    )
-        else:
-            self.analysis.setslice(**kwargs)
-    """Guessing functions"""
-    def getpss(self):
-        pss=self.slices.pss() #make this one line, remove pss
-        return pss
-        #Why rebuild this here?
-    def nextps(self,guess=False):
-        """Make this smarter, but for now, just take value from the most
-        populous tuple"""
-        return self.slices.nextps()
-    def nextprofile(self,guess=False):
-        return self.slices.nextprofile()
-    def nextframe(self,sort=True,guess=False):
-        if len(todo) == 0:
-            log.info("No frames to do; asking to define another one")
-            self.addframe() #The above should change check, if completed.
-            return
-    def nextgroup(self,guess=False):
-        def default():
-            self.set('subcheck',priorities[0])
-        cvt=self.params.cvt()
-        if cvt != 'T': #only tone for now
-            log.debug("Only working on tone for now, not {}".format(cvt))
-            return
-        if (not hasattr(self,'subchecksprioritized') or
-                                cvt not in self.subchecksprioritized):
-            self.getsubchecksprioritized()
-        priorities=[x[0] for x in self.subchecksprioritized[cvt]
-                            if x[0] is not None]
-        if group in priorities:
-            log.debug("group: {}".format(group))
-            i=priorities.index(group)
-            if len(priorities)>i+1:
-                self.set('subcheck',priorities[i+1])
-            else:
-                default() #just iterate through for now
-        else:
-            default() #or guess == True): ever?
-        log.debug("group: {}".format(group))
-    """User Input functions"""
-    def addmodadhocsort(self):
-        def submitform():
-            if profilevar.get() == "":
-                log.debug("Give a name for this adhoc sort group!")
-                return
-            self.runwindow.destroy()
-            ids=[]
-            for var in [x for x in vars if len(x.get()) >1]:
-                log.log(2,"var {}: {}".format(vars.index(var),var.get()))
-                ids.append(var.get())
-            log.log(2,"ids: {}".format(ids))
-            profile=profilevar.get()
-            self.set('profile',profile,refresh=False)
-            #Add to dictionaries before updating them below
-            log.debug("profile: {}".format(profile))
-            """Fix this!"""
-            self.slices.adhoc(ids)#[ps][profile]=ids
-            """Is this OK?!?"""
-            self.slices.updateslices()
-            self.makecountssorted() #we need these to show up in the counts.
-            self.settings.storesettingsfile(setting='profiledata')#since we changed this.
-            #so we don't have to do this again after each profile analysis
-        self.getrunwindow()
-        profile=self.slices.profile()
-        ps=self.slices.ps()
-        if profile in [x[0] for x in self.slices.profiles()]: #profilecountsValid]:
-            new=True
-            title=_("New Ad Hoc Sort Group for {} Group".format(ps))
-        else:
-            new=False
-            title=_("Modify Existing Ad Hoc Sort Group for {} Group".format(ps))
-        self.runwindow.title(title)
-        padx=50
-        pady=10
-        ui.Label(self.runwindow.frame,text=title,font='title',
-                ).grid(row=0,column=0,sticky='ew')
-        allpssensids=self.slices.senseidsbyps(ps)
-        if len(allpssensids)>70:
-            self.runwindow.waitdone()
-            text=_("This is a large group ({})! Are you in the right "
-                    "grammatical category?".format(len(allpssensids)))
-            log.error(text)
-            w=ui.Label(self.runwindow.frame,text=text)
-            w.grid(row=1,column=0,sticky='ew')
-            b=ui.Button(self.runwindow.frame, text="OK", command=w.destroy, anchor='c')
-            b.grid(row=2,column=0,sticky='ew')
-            self.runwindow.wait_window(w)
-            w.destroy()
-        if self.runwindow.exitFlag.istrue():
-            return
-        else:
-            self.runwindow.wait()
-        ui.Label(self.runwindow.frame,text=title,font='title',
-                ).grid(row=0,column=0,sticky='ew')
-        text=_("This page will allow you to set up your own sets of dictionary "
-                "senses to sort, within the '{0}' grammatical category. \nYou "
-                "should only do this if the '{0}' grammatical category is so "
-                "small that sorting them by syllable profile gives you "
-                "unusably small slices of your database."
-                "\nIf you want to compare words that are currently in "
-                "different grammatical categories, put them first into the "
-                "same grammatical category in another tool (e.g., FLEx or "
-                "WeSay), then put them in an Ad Hoc group here."
-                # "\nIf you're looking at a group you created earlier, and "
-                "\nIf you want to create a new group, exit here, select a "
-                "non-Ad Hoc syllable profile, and try this window again."
-                "".format(ps))
-        inst=ui.Label(self.runwindow.frame,text=text,
-                row=1,column=0,sticky='ew'
-                )
-        inst.wrap()
-        qframe=ui.Frame(self.runwindow.frame)
-        qframe.grid(row=2,column=0,sticky='ew')
-        text=_("What do you want to call this group for sorting {} words?"
-                "".format(ps))
-        instq=ui.Label(qframe,text=text,
-                row=0,column=0,sticky='ew',pady=20)
-        if new:
-            default=None
-        else:
-            default=profile
-        profilevar=tkinter.StringVar(value=default)
-        namefield = ui.EntryField(qframe,textvariable=profilevar)
-        namefield.grid(row=0,column=1)
-        text=_("Select the {} words below that you want in this group, then "
-                "click ==>".format(ps))
-        ui.Label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
-        sub_btn=ui.Button(qframe,text = _("OK"),
-                  command = submitform,anchor ='c')
-        sub_btn.grid(row=1,column=1,sticky='w')
-        vars=list()
-        row=0
-        scroll=ui.ScrollingFrame(self.runwindow.frame)
-        for id in allpssensids:
-            log.debug("id: {}; index: {}; row: {}".format(id,
-                                                    allpssensids.index(id),row))
-            idn=allpssensids.index(id)
-            vars.append(tkinter.StringVar())
-            adhocslices=self.slices.adhoc()
-            if (ps in adhocslices and profile in adhocslices[ps] and
-                                                id in adhocslices[ps][profile]):
-                vars[idn].set(id)
-            else:
-                vars[idn].set(0)
-            framed=self.datadict.getframeddata(id)
-            forms=framed.formatted(noframe=True)
-            log.debug("forms: {}".format(forms))
-            ui.CheckButton(scroll.content, text = forms,
-                                variable = vars[allpssensids.index(id)],
-                                onvalue = id, offvalue = 0,
-                                ).grid(row=row,column=0,sticky='ew')
-            row+=1
-        scroll.grid(row=3,column=0,sticky='ew')
-        self.runwindow.waitdone()
-        self.runwindow.wait_window(scroll)
+class Tone(object):
+    """This keeps stuff used for Tone checks."""
+    def gimmesenseid(self,**kwargs):
+        ps=kwargs.get('ps',self.slices.ps())
+        idsbyps=self.db.get('sense',ps=ps).get('senseid')
+        return idsbyps[randint(0, len(idsbyps)-1)]
+    def gimmesenseidwgloss(self,**kwargs):
+        tried=0
+        gloss={}
+        ps=kwargs.get('ps',self.slices.ps())
+        for lang in self.glosslangs:
+            gloss[lang]=''
+        while '' in gloss.values():
+            senseid=self.gimmesenseid(ps=ps)
+            for lang in self.glosslangs:
+                gloss[lang]=self.db.glossordefn(senseid=senseid,glosslang=lang,
+                                                showurl=True)[0]
+            tried+=1
+            if tried> self.db.nsenseids*1.5:
+                errortext=_("I've tried (randomly) {} times, and not found one "
+                "of your {} senses with a gloss in each of these languages: "
+                "{}. \nAre you asking for gloss "
+                "languages which actually have data in your database? \nOr, are "
+                "you missing gloss fields (i.e., you have only 'definition' "
+                "fields)?").format(tried,self.db.nsenseids,langs)
+                log.error(errortext)
+                return errortext
+        log.debug("Found entry {} with glosses {}".format(senseid,gloss))
+        return senseid
+    def checkforsenseidstosort(self,cvt=None,ps=None,profile=None,check=None):
+        """This method just asks if any senseid in the given slice is unsorted.
+        It stops when it finds the first one."""
+        """use if sorting senseid lists aren't needed"""
+        """This is redundant with updatesortingstatus()"""
+        if cvt is None:
+            cvt=self.slices.cvt()
+        if ps is None:
+            ps=self.slices.ps()
+        if profile is None:
+            profile=self.slices.profile()
+        if check is None:
+            check=self.slices.check()
+        senseids=self.slices.senseids(ps=ps,profile=profile)
+        vts=False
+        for senseid in senseids:
+            v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
+                                                    location=check).get('text'))
+            if v not in ['',None]:
+                vts=True
+                break
+        self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
+        self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
     def addframe(self):
         log.info('Tone frame to add!')
         """I should add gloss2 option here, likely just with each language.
@@ -3766,27 +4030,159 @@ class Check(TaskDressing,ui.Window):
         text=_('See the tone frame around a word from the dictionary')
         chk_btn=ui.Button(self.addwindow.frame1,text = text, command = chk)
         chk_btn.grid(row=row+1,column=columnleft,pady=100)
-    """Set User Input"""
-    """Settings to and from files"""
-    def restart(self,filename=None):
-        if hasattr(self,'warning') and self.warning.winfo_exists():
-            self.warning.destroy()
-        self.parent.makecheck(filename)
-    def changedatabase(self):
-        log.debug("Removing database name, so user will be asked again.")
-        self.askwhichlift(file.getfilenames())
-        # program['root'].destroy()
-        # subprocess.call?
-        # __name__
-        # main()
-        sys.exit()
-        # self.restart(self.filename)
-    def verifictioncode(self,check=None,subcheck=None):
-        if subcheck is None: #do I ever want this to really be None?
-            subcheck=self.params.subcheck()
-        if check is None:
-            check=self.params.check()
-        return check+'='+subcheck
+    def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
+        """This is currently called in iteration, but doesn't refresh groups,
+        so it probably isn't useful anymore."""
+        self.checkforsenseidstosort(cvt=cvt,ps=ps,profile=profile,check=check)
+    def settonevariables(self):
+        """This is currently called before sorting. This is a waste, if you're
+        not going to sort afterwards –unless you need the groups."""
+        self.settings.updatesortingstatus() #this gets groups, too
+class JoinUFgroups(TaskDressing,ui.Window):
+    """docstring for JoinUFgroups."""
+    def tasktitle(self):
+        return _("Join Underlying Form Groups")
+    def tonegroupsjoinrename(self,**kwargs):
+        def clearerror(event=None):
+            errorlabel['text'] = ''
+        def submitform():
+            clearerror()
+            uf=named.get()
+            if uf == "":
+                noname=_("Give a name for this UF tone group!")
+                log.debug(noname)
+                errorlabel['text'] = noname
+                return
+            groupsselected=[]
+            for group in groupvars: #all group variables
+                groupsselected+=[group.get()] #value, name if selected, 0 if not
+            groupsselected=[x for x in groupsselected if x != '']
+            log.info("groupsselected:{}".format(groupsselected))
+            if uf in self.analysis.orderedUFs and uf not in groupsselected:
+                deja=_("That name is already there! (did you forget to include "
+                        "the ‘{}’ group?)".format(uf))
+                log.debug(deja)
+                errorlabel['text'] = deja
+                return
+            for group in groupsselected:
+                if group in self.analysis.senseidsbygroup: #selected ones only
+                    log.debug("Changing values from {} to {} for the following "
+                            "senseids: {}".format(group,uf,
+                                        self.analysis.senseidsbygroup[group]))
+                    for senseid in self.analysis.senseidsbygroup[group]:
+                        self.db.addtoneUF(senseid,uf,analang=self.analang)
+            self.db.write()
+            self.runwindow.destroy()
+            self.tonegroupsjoinrename() #call again, in case needed
+        def done():
+            self.runwindow.destroy()
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        self.getrunwindow()
+        title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
+                                                        ps,profile))
+        self.runwindow.title(title)
+        padx=50
+        pady=10
+        rwrow=gprow=qrow=0
+        t=ui.Label(self.runwindow.frame,text=title,font='title')
+        t.grid(row=rwrow,column=0,sticky='ew')
+        text=_("This page allows you to join the {0}-{1} draft underlying tone "
+                "groups created for you by {2}, \nwhich are almost certainly "
+                "too small for you. \nLooking at a draft report, and making "
+                "your own judgement about which groups belong together, select "
+                "all the groups that belong together, and give that new group "
+                "a name. Afterwards, you can do this again for other groups "
+                "that should be joined. \nIf for any reason you want to undo "
+                "the groups you create here (e.g., you make a mistake or sort "
+                "new data), just run the default report, which will redo the "
+                "default analysis, which will replace these groupings with new "
+                "split groupings. \nTo see a report based on what you do "
+                "here, run the tone reports in the Advanced menu (without "
+                "analysis). ".format(ps,profile,program['name']))
+        rwrow+=1
+        i=ui.Label(self.runwindow.frame,text=text,
+                    row=rwrow,column=0,sticky='ew')
+        i.wrap()
+        rwrow+=1
+        qframe=ui.Frame(self.runwindow.frame)
+        qframe.grid(row=rwrow,column=0,sticky='ew')
+        text=_("What do you want to call this UF tone group for {}-{} words?"
+                "".format(ps,profile))
+        qrow+=1
+        q=ui.Label(qframe,text=text,
+                    row=qrow,column=0,sticky='ew',pady=20
+                    )
+        q.wrap()
+        named=tkinter.StringVar() #store the new name here
+        namefield = ui.EntryField(qframe,textvariable=named)
+        namefield.grid(row=qrow,column=1)
+        namefield.bind('<Key>', clearerror)
+        errorlabel=ui.Label(qframe,text='',fg='red')
+        errorlabel.grid(row=qrow,column=2,sticky='ew',pady=20)
+        text=_("Select the groups below that you want in this {} group, then "
+                "click ==>".format(ps))
+        qrow+=1
+        d=ui.Label(qframe,text=text)
+        d.grid(row=qrow,column=0,sticky='ew',pady=20)
+        sub_btn=ui.Button(qframe,text = _("OK"), command = submitform, anchor ='c')
+        sub_btn.grid(row=qrow,column=1,sticky='w')
+        done_btn=ui.Button(qframe,text = _("Done —no change"), command = done,
+                                                                    anchor ='c')
+        done_btn.grid(row=qrow,column=2,sticky='w')
+        groupvars=list()
+        rwrow+=1
+        scroll=ui.ScrollingFrame(self.runwindow.frame)
+        scroll.grid(row=rwrow,column=0,sticky='ew')
+        self.makeanalysis()
+        self.analysis.donoUFanalysis()
+        nheaders=0
+        if not self.analysis.orderedUFs:
+            self.runwindow.waitdone()
+            self.runwindow.destroy()
+            ErrorNotice(title="No draft UF groups found!",
+                        text="You don't seem to have any analyzed groups to "
+                                "join/rename. Have you done a tone analyis?"
+                        )
+            return
+        # ufgroups= # order by structured groups? Store this somewhere?
+        for group in self.analysis.orderedUFs: #make a variable and button to select
+            idn=self.analysis.orderedUFs.index(group)
+            if idn % 5 == 0: #every five rows
+                col=1
+                for check in self.analysis.orderedchecks:
+                    col+=1
+                    cbh=ui.Label(scroll.content, text=check, font='small')
+                    cbh.grid(row=idn+nheaders,
+                            column=col,sticky='ew')
+                nheaders+=1
+            groupvars.append(tkinter.StringVar())
+            n=len(self.analysis.senseidsbygroup[group])
+            buttontext=group+' ({})'.format(n)
+            cb=ui.CheckButton(scroll.content, text = buttontext,
+                                variable = groupvars[idn],
+                                onvalue = group, offvalue = 0,
+                                )
+            cb.grid(row=idn+nheaders,column=0,sticky='ew')
+            # self.analysis.valuesbygroupcheck[group]:
+            col=1
+            for check in self.analysis.orderedchecks:
+                col+=1
+                if check in self.analysis.valuesbygroupcheck[group]:
+                    cbl=ui.Label(scroll.content,
+                        text=unlist(
+                                self.analysis.valuesbygroupcheck[group][check]
+                                    )
+                            )
+                    cbl.grid(row=idn+nheaders,column=col,sticky='ew')
+        self.runwindow.waitdone()
+        self.runwindow.wait_window(scroll)
+    def __init__(self, arg):
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+class Sort(object):
+    """This class takes methods common to all sort checks, and gives sort
+    checks a common identity."""
     def updatestatuslift(self,check=None,group=None,verified=False,refresh=True):
         if group is None: #do I ever want this to really be None?
             group=self.status.group()
@@ -3817,677 +4213,163 @@ class Check(TaskDressing,ui.Window):
         #This function updates the status variable, not the lift file.
         self.status.update(group=group,verified=verified)
         return
-    """Get from LIFT database functions"""
-    def gimmeguid(self):
-        idsbyps=self.db.get('guidbyps',lang=self.analang,ps=ps)
-        return idsbyps[randint(0, len(idsbyps))]
-    def gimmesenseidwgloss(self,**kwargs):
-        tried=0
-        gloss={}
-        ps=kwargs.get('ps',self.slices.ps())
-        for lang in self.glosslangs:
-            gloss[lang]=''
-        while '' in gloss.values():
-            senseid=self.gimmesenseid(ps=ps)
-            for lang in self.glosslangs:
-                gloss[lang]=self.db.glossordefn(senseid=senseid,glosslang=lang,
-                                                showurl=True)[0]
-            tried+=1
-            if tried> self.db.nsenseids*1.5:
-                errortext=_("I've tried (randomly) {} times, and not found one "
-                "of your {} senses with a gloss in each of these languages: "
-                "{}. \nAre you asking for gloss "
-                "languages which actually have data in your database? \nOr, are "
-                "you missing gloss fields (i.e., you have only 'definition' "
-                "fields)?").format(tried,self.db.nsenseids,langs)
-                log.error(errortext)
-                return errortext
-        log.debug("Found entry {} with glosses {}".format(senseid,gloss))
-        return senseid
-    def gimmesenseid(self,**kwargs):
-        ps=kwargs.get('ps',self.slices.ps())
-        idsbyps=self.db.get('sense',ps=ps).get('senseid')
-        return idsbyps[randint(0, len(idsbyps)-1)]
-    def frame1valuebynamepsprofile(self):
-        """I think this function is obsolete."""
-        """Define self.location based on lookup of check"""
-        """This should be done after ps and check name are set"""
-        self.location=self.toneframes[ps][check]['location']
-    def framevaluesbynamepsprofile(self,ps,profile,name):
-        """Tone group values actually used in a frame,
-        by frame name, and by data ps and profile."""
-        l=[]
-        for guid in self.db.profileswdata[ps][profile]:
-            group=self.db.get('pronunciationfieldvalue',guid=guid,
-                                fieldtype='tone',
-                                location=check)
-            l+=group
-        return list(dict.fromkeys(l))
-    """Mediating between LIFT and the user"""
-    def guidtriage(self):
-        # import time
-        log.info("Doing guid triage... This takes awhile...")
-        start_time=time.time()
-        self.guids=self.db.guids
-        self.guidsinvalid=[] #nothing, for now...
-        self.senseids=self.db.senseids
-        self.senseidsinvalid=[] #nothing, for now...
-        print(time.time() - start_time,"seconds.")
-        print(len(self.guidsinvalid),'entries with invalid data found.')
-        self.db.guidsinvalid=self.guidsinvalid
-        self.guidsvalid=[]
-        for guid in self.guids:
-            if guid not in self.guidsinvalid:
-                self.guidsvalid+=[guid]
-        print(len(self.guidsvalid),'entries with valid data remaining.')
-        self.guidswanyps=self.db.get('guidwanyps') #any ps value works here.
-        print(len(self.guidswanyps),'entries with ps data found.')
-        self.guidsvalidwops=[]
-        self.guidsvalidwps=[]
-        for guid in self.guidsvalid:
-            if guid in self.guidswanyps:
-                self.guidsvalidwps+=[guid]
-            else:
-                self.guidsvalidwops+=[guid]
-        self.db.guidsvalidwps=self.guidsvalidwps #This is what we'll search
-        print(len(self.guidsvalidwops),'entries with valid data but no ps data.')
-        print(len(self.guidsvalidwps),'entries with valid data and ps data.')
-        print(time.time() - start_time,"seconds.")
-        # for var in [self.guids, self.guidswanyps, self.guidsvalidwops, self.guidsvalidwps, self.guidsinvalid, self.guidsvalid]:
-        #     print(len(var),str(var))
-        # for guid in self.guidswanyps:
-        #     if guid not in self.formstosearch[self.analangs[0]][None]:
-        #         guids+=[guid]
-        # print(len(guids),guids)
-        print("Set the above variables in "+str(time.time() - start_time)+" se"
-                "conds.")
-    def guidtriagebyps(self):
-        log.info("Doing guid triage by ps... This also takes awhile?...")
-        self.guidsvalidbyps={}
-        for ps in self.db.pss:
-            self.guidsvalidbyps[ps]=self.db.get('guidbyps',ps=ps)
-    """Making the main window"""
-    def donewpyaudio(self):
-        try:
-            self.pyaudio.terminate()
-        except:
-            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
-    def soundcheckrefreshdone(self):
-        self.settings.storesettingsfile(setting='soundsettings')
-        self.soundsettingswindow.destroy()
-    def soundcheckrefresh(self):
-        self.soundsettingswindow.resetframe()
-        row=0
-        ui.Label(self.soundsettingswindow.frame, font='title',
-                text="Current Sound Card Settings (click any to change):",
-                row=row,column=0)
-        row+=1
-        ss=self.soundsettings
-        ss.check() #make defaults if not valid options
-        for varname, dict, cmd in [
-            ('audio_card_in', ss.cards['dict'], self.getsoundcardindex),
-            ('fs',ss.hypothetical['fss'], self.getsoundhz),
-            ('sample_format', ss.hypothetical['sample_formats'],
-                                                         self.getsoundformat),
-            ('audio_card_out', ss.cards['dict'], self.getsoundcardoutindex),
-                                                    ]:
-            text=_("Change")
-            var=getattr(ss,varname)
-            log.debug("{} in {}".format(var,dict))
-            l=dict[var]
-            if cmd == self.getsoundcardindex:
-                l=_("Microphone: ‘{}’").format(l)
-            if cmd == self.getsoundcardoutindex:
-                l=_("Speakers: ‘{}’").format(l)
-            l=ui.Label(self.soundsettingswindow.frame,text=l,
-                    row=row,column=0)
-            l.bind('<ButtonRelease>',cmd) #getattr(self,str(cmd)))
-            row+=1
-        br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
-        br.grid(row=row,column=0)
-        row+=1
-        l=_("You may need to change your microphone "
-            "\nand/or speaker sound card to get the "
-            "\nsampling and format you want.")
-        ui.Label(self.soundsettingswindow.frame,
-                text=l).grid(row=row,column=0)
-        row+=1
-        l=_("Make sure ‘record’ and ‘play’ work well here, "
-            "\nbefore recording real data!")
-        caveat=ui.Label(self.soundsettingswindow.frame,
-                text=l,font='read',
-                row=row,column=0)
-        caveat.wrap()
-        row+=1
-        l=_("See also note in documentation about verifying these "
-            "recordings in an external application, such as Praat.")
-        caveat=ui.Label(self.soundsettingswindow.frame,
-                text=l,font='instructions',
-                row=row,column=0)
-        caveat.wrap()
-        row+=1
-        l=_("If Praat is installed in your path, right click on play "
-            "to open in Praat.")
-        caveat=ui.Label(self.soundsettingswindow.frame,
-                text=l,font='default',
-                row=row,column=0)
-        caveat.wrap()
-        row+=1
-        bd=ui.Button(self.soundsettingswindow.frame,text=_("Done"),anchor='c',
-                                            cmd=self.soundcheckrefreshdone)
-        bd.grid(row=row,column=0)
-    def soundsettingscheck(self):
-        if not hasattr(self,'soundsettings'):
-            self.loadsoundsettings()
-    def soundcheck(self):
-        #Set the parameters of what could be
-        self.pyaudiocheck()
-        self.soundsettingscheck()
-        self.soundsettingswindow=ui.Window(self.frame,
-                                title=_('Select Sound Card Settings'))
-        self.soundcheckrefresh()
-        self.soundsettingswindow.wait_window(self.soundsettingswindow)
-        self.donewpyaudio()
-        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
-            self.soundsettingswindow.destroy()
-    def setsu(self):
-        self.su=True
-    def unsetsu(self):
-        self.su=False
-    def makeresultsframe(self):
-        if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
-            self.results = ui.Frame(self.runwindow.frame,width=800)
-            self.results.grid(row=0, column=0)
-        else:
-            log.error("Tried to get a results frame without a runwindow!")
-    def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
-        xlp.Paragraph(parent,t)
-        print(t)
-        log.debug(t)
-        self.buildregex()
-        log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
-                                                        self.regexCV))
-        matches=set(self.senseidformsbyregex(self.regex))
-        for typenum in self.typenumsRun:
-            # this removes senses already reported (e.g., in V1=V2)
-            matches-=self.basicreported[typenum]
-        log.log(2,"{} matches found!: {}".format(len(matches),matches))
-        group=self.status.group()
-        if 'x' in check:
-            n=self.checkcounts[ps][profile][check][
-                            group][self.subcheckcomparison]=len(matches)
-        else:
-            n=self.checkcounts[ps][profile][check][
-                            group]=len(matches)
-            if '=' in check:
-                xname=re.sub('=','x',check, count=1)
-                log.debug("looking for name {} in {}".format(xname,
-                                                    self.checkcodesbyprofile))
-                if xname in self.checkcodesbyprofile:
-                    log.debug("Adding {} value to name {}".format(len(matches),
-                                                                        xname))
-                    #put the results in that group, too
-                    log.debug(self.checkcounts)
-                    if xname not in self.checkcounts[ps][profile]:
-                        self.checkcounts[ps][profile][xname]={}
-                    if group not in self.checkcounts[ps][
-                                    profile][xname]:
-                        self.checkcounts[ps][profile][xname][group]={}
-                    self.checkcounts[ps][profile][xname][group][group
-                                                                ]=len(matches)
-                    log.debug(self.checkcounts)
-        if n>0:
-            titlebits='x'+ps+profile+check+group
-            if 'x' in check:
-                titlebits+='x'+self.subcheckcomparison
-            id=rx.id(titlebits)
-            ex=xlp.Example(parent,id)
-            for senseid in matches:
-                for typenum in self.typenumsRun:
-                    self.basicreported[typenum].add(senseid)
-                framed=self.datadict.getframeddata(senseid)
-                self.framedtoXLP(framed,parent=ex,listword=True)
-    def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
-        """This function iterates across check and group values
-        appropriate for the specified self.type, profile and check
-        values (ps is irrelevant here).
-        Because two functions called (buildregex and getframeddata) use
-        check and group to do their work, they and their
-        dependents would need to be changed to fit a new paradigm, if we
-        were to change the variable here. So rather, we store the current
-        check and group values, then iterate across logically
-        possible values (as above), then restore the value."""
-        """I need to find a way to limit these tests to appropriate
-        profiles..."""
-        check=self.params.check()
-        group=self.status.group()
-        if cvt in ['V','C']:
-            groups=self.s[self.analang][cvt]
-        """This sets each of the checks that are applicable for the given
-        profile; self.basicreported is from self.basicreport()"""
-        for typenum in self.basicreported:
-            log.log(2, '{}: {}'.format(typenum,self.basicreported[typenum]))
-        """setnamesbyprofile doesn't depend on ps"""
-        self.checkcodesbyprofile=sorted([x[0] for x in self.setnamesbyprofile()],
-                                        key=len,reverse=True)
-        """check set here"""
-        for check in self.checkcodesbyprofile:
-            if check not in self.checkcounts[ps][profile]:
-                self.checkcounts[ps][profile][check]={}
-            self.typenumsRun=[typenum for typenum in self.typenums
-                                        if re.search(typenum,check)]
-            log.debug('check: {}; self.type: {}; self.typenums: {}; '
-                        'self.typenumsRun: {}'.format(check,cvt,
-                                                self.typenums,self.typenumsRun))
-            if len(check) == 1:
-                log.debug("Error! {} Doesn't seem to be list formatted.".format(
-                                                                    check))
-            if 'x' in check:
-                log.debug('Hey, I cound a correspondence number!')
-                if cvt in ['V','C']:
-                    subcheckcomparisons=groups
-                elif cvt == 'CV':
-                    subchecks=self.s[self.analang]['C']
-                    subcheckcomparisons=self.s[self.analang]['V']
-                else:
-                    log.error("Sorry, I don't know how to compare cvt: {}"
-                                                        "".format(cvt))
-                for group in groups:
-                    if group not in self.checkcounts[ps][
-                                                    profile][check]:
-                        self.checkcounts[ps][profile][check][group]={}
-                    for self.subcheckcomparison in subcheckcomparisons:
-                        if group != self.subcheckcomparison:
-                            t=_("{} {} {}={}-{}".format(ps,profile,
-                                                check,group,
-                                                self.subcheckcomparison))
-                            self.wordsbypsprofilechecksubcheckp(parent=parent,
-                                                                            t=t)
-            else:
-                for group in groups:
-                    t=_("{} {} {}={}".format(ps,profile,check,
-                                                                group))
-                    self.wordsbypsprofilechecksubcheckp(parent=parent,t=t)
-    def idXLP(self,framed):
-        id='x' #string!
-        bits=[
-            self.params.cvt(),
-            self.slices.ps(),
-            self.slices.profile(),
-            ]
-        if hasattr(framed,'check'):
-            bits.append(framed.check)
-        if hasattr(framed,'tonegroup'):
-            bits.append(framed.tonegroup)
-        for lang in self.glosslangs:
-            if lang in framed.forms and framed.forms[lang] is not None:
-                bits+=framed.forms[lang]
-        for x in bits:
-            if x is not None:
-                id+=x
-        return rx.id(id) #for either example or listword
-    def framedtoXLP(self,framed,parent,listword=False,groups=True):
-        """This will likely only work when called by
-        wordsbypsprofilechecksubcheck; but is needed because it must return if
-        the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
-        """parent is an example in the XLP report"""
-        id=self.idXLP(framed)
-        if listword == True:
-            ex=xlp.ListWord(parent,id)
-        else:
-            exx=xlp.Example(parent,id) #the id goes here...
-            ex=xlp.Word(exx) #This doesn't have an id
-        if self.audiolang in framed.forms:
-            url=file.getdiredrelURL(self.reporttoaudiorelURL,
-                                                framed.forms[self.audiolang])
-            el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang],
-                                                                    str(url))
-        else:
-            el=xlp.LangData(ex,self.analang,framed.forms[self.analang])
-        if hasattr(framed,'tonegroup') and groups is True: #joined groups show each
-            elt=xlp.LangData(ex,self.analang,framed.tonegroup)
-        for lang in self.glosslangs:
-            if lang in framed.forms:
-                xlp.Gloss(ex,lang,framed.forms[lang])
-    def printcountssorted(self):
-        #This is only used in the basic report
-        log.info("Ranked and numbered syllable profiles, by grammatical category:")
-        nTotal=0
-        nTotals={}
-        for line in self.slices: #profilecounts:
-            profile=line[0]
-            ps=line[1]
-            nTotal+=self.slices[line]
-            if ps not in nTotals:
-                nTotals[ps]=0
-            nTotals[ps]+=self.slices[line]
-        print('Profiled data:',nTotal)
-        """Pull this?"""
-        for ps in self.slices.pss():
-            if ps == 'Invalid':
-                continue
-            log.debug("Part of Speech {}:".format(ps))
-            for line in self.slices.valid(ps=ps):
-                profile=line[0]
-                ps=line[1]
-                log.debug("{}: {}".format(profile,self.slices[line]))
-            print(ps,"(total):",nTotals[ps])
-    def printprofilesbyps(self):
-        #This is only used in the basic report
-        log.info("Syllable profiles actually in senses, by grammatical category:")
-        for ps in self.profilesbysense:
-            if ps == 'Invalid':
-                continue
-            print(ps, self.profilesbysense[ps])
-    def renamegroup(self,reverify=False):
-        #reverify indicates when it is called from the verification window
-        # (i.e.,) before the group is verified. This does two things differently:
-        # 1. verifyT is only called when reverify=True
-        # 2. self.nextsubcheck() button is only there when reverify=False
-        def updatelabels(event=None):
-            errorlabel['text'] = ''
-            a=newname.get()
-            try:
-                int(a) #Is this interpretable as an integer (default group)?
-                namehash.set('')
-            except ValueError:
-                x=hash_t.sub('T',newname.get())
-                y=hash_sp.sub('#',x)
-                z=hash_nbsp.sub('.',y)
-                namehash.set(z)
-        def updategroups():
-            groupsthere=self.status[cvt][ps][profile][check]['groups']
-            groupsdone=self.status[cvt][ps][profile][check]['done']
-            return groupsthere, groupsdone
+    def verifictioncode(self,check=None,subcheck=None):
+        if subcheck is None: #do I ever want this to really be None?
+            subcheck=self.params.subcheck()
+        if check is None:
+            check=self.params.check()
+        return check+'='+subcheck
+    def addmodadhocsort(self):
         def submitform():
-            updatelabels()
-            newtonevalue=formfield.get()
-            groupsthere, groupsdone = updategroups()
-            group=self.status.group()
-            if newtonevalue == "":
-                noname=_("Give a name for this tone melody!")
-                log.debug(noname)
-                errorlabel['text'] = noname
-                return 1
-            if newtonevalue != group: #only make changes!
-                if newtonevalue in groupsthere :
-                    deja=_("Sorry, there is already a group with "
-                                    "that label; If you want to join the "
-                                    "groups, give it a different name now, "
-                                    "and join it later".format(newtonevalue))
-                    log.debug(deja)
-                    errorlabel['text'] = deja
-                    return 1
-                self.updatebygroupsenseid(group,newtonevalue)
-                i=groupsthere.index(group) #put new value in the same place.
-                groupsthere.remove(group)
-                groupsthere.insert(i,newtonevalue)
-                if group in groupsdone: #if verified, change the name there, too
-                    i=groupsdone.index(group) #put new value in the same place.
-                    groupsdone.remove(group)
-                    groupsdone.insert(i,newtonevalue)
-                group=newtonevalue
-                self.settings.storesettingsfile(setting='status')
-            else: #move on, but notify in logs
-                log.info("User selected ‘{}’, but with no change.".format(ok))
-            if hasattr(self,'group_comparison'):
-                delattr(self,'group_comparison') # in either case
+            if profilevar.get() == "":
+                log.debug("Give a name for this adhoc sort group!")
+                return
             self.runwindow.destroy()
-            if reverify == True: #don't do this if running from menus
-                self.verifyT(menu=menu)
-            return
-        def addchar(x):
-            if x == '':
-                formfield.delete(0,tkinter.END)
-            else:
-                formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
-            updatelabels()
-        def done():
-            submitform()
-            self.donewpyaudio()
-        def next():
-            log.debug("running next group")
-            error=submitform()
-            if not error:
-                log.debug("group: {}".format(group))
-                self.status.nextgroup(wsorted=True)
-                log.debug("group: {}".format(group))
-                self.renamegroup(reverify=reverify)
-        def nextcheck():
-            log.debug("running next check")
-            error=submitform()
-            if not error:
-                log.debug("check: {}".format(check))
-                self.status.nextcheck(wsorted=True)
-                log.debug("check: {}".format(check))
-                self.renamegroup(reverify=reverify)
-        def nextprofile():
-            log.debug("running next profile")
-            error=submitform()
-            if not error:
-                log.debug("profile: {}".format(profile))
-                self.status.nextprofile(wsorted=True)
-                log.debug("profile: {}".format(profile))
-                self.renamegroup(reverify=reverify)
-        def setgroup_comparison():
-            w=self.getgroup(comparison=True,wsorted=True) #this returns its window
-            if w and w.winfo_exists(): #This window may be already gone
-                w.wait_window(w)
-            comparisonbuttons()
-        def comparisonbuttons():
-            try: #successive runs
-                compframe.compframeb.destroy()
-                log.info("Comparison frameb destroyed!")
-            except: #first run
-                log.info("Problem destroying comparison frame, making...")
-            buttonframew=int(program['screenw']/4)
-            # b['wraplength']=buttonframew
-            compframe.compframeb=ui.Frame(compframe)
-            compframe.compframeb.grid(row=1,column=0)
-            t=_('Compare with another group')
-            if (hasattr(self, 'group_comparison')
-                    and self.group_comparison in groupsthere and
-                    self.group_comparison != group):
-                log.info("Making comparison buttons for group {} now".format(
-                                                    self.group_comparison))
-                t=_('Compare with another group ({})').format(
-                                                    self.group_comparison)
-                compframe.bf2=ToneGroupButtonFrame(compframe.compframeb,
-                                        self, self.exs,
-                                        self.group_comparison,
-                                        showtonegroup=True,
-                                        playable=True,
-                                        unsortable=False, #no space, bad idea
-                                        alwaysrefreshable=True,
-                                        font='default',
-                                        wraplength=buttonframew
-                                        )
-                compframe.bf2.grid(row=0, column=0, sticky='w')
-            elif not hasattr(self, 'group_comparison'):
-                log.info("No comparison found !")
-            elif self.group_comparison not in groupsthere:
-                log.info("Comparison ({}) not in group list ({})"
-                            "".format(self.group_comparison,groupsthere))
-            elif self.group_comparison == group:
-                log.info("Comparison ({}) same as subgroup ({}); not showing."
-                            "".format(self.group_comparison,group))
-            else:
-                log.info("This should never happen (renamegroup/"
-                            "comparisonbuttons)")
-            sub_c['text']=t
-        cvt=self.params.cvt()
-        ps=self.slices.ps()
+            ids=[]
+            for var in [x for x in vars if len(x.get()) >1]:
+                log.log(2,"var {}: {}".format(vars.index(var),var.get()))
+                ids.append(var.get())
+            log.log(2,"ids: {}".format(ids))
+            profile=profilevar.get()
+            self.set('profile',profile,refresh=False)
+            #Add to dictionaries before updating them below
+            log.debug("profile: {}".format(profile))
+            """Fix this!"""
+            self.slices.adhoc(ids)#[ps][profile]=ids
+            """Is this OK?!?"""
+            self.slices.updateslices()
+            self.makecountssorted() #we need these to show up in the counts.
+            self.settings.storesettingsfile(setting='profiledata')#since we changed this.
+            #so we don't have to do this again after each profile analysis
+        self.getrunwindow()
         profile=self.slices.profile()
-        check=self.params.check()
-        buttonframew=int(program['screenw']/3.5)
-        if check == None:
-            self.getcheck(guess=True)
-            if check == None:
-                log.info("I asked for a check name, but didn't get one.")
-                return
-        if not self.status.groups(wsorted=True):
-            log.error("I don't have any sorted data for check: {}, "
-                        "ps-profile: {}-{},".format(check,ps,profile))
-            return
-        groupsthere, groupsdone = updategroups()
-        group=self.status.group()
-        if group is None or group not in groupsthere:
-            self.getgroup(guess=True,wsorted=True)
-            if group == None:
-                log.info("I asked for a framed tone group, but didn't get one.")
-                return
-        notthisgroup=groupsthere[:]
-        if group in groupsthere:
-            notthisgroup.remove(group)
+        ps=self.slices.ps()
+        if profile in [x[0] for x in self.slices.profiles()]: #profilecountsValid]:
+            new=True
+            title=_("New Ad Hoc Sort Group for {} Group".format(ps))
         else:
-            log.error(_("current group ({}) doesn't seem to be in list of "
-                "groups: ({})\n\tThis may be because we're looking for data that "
-                "isn't there, or maybe a setting is off.".format(group,
-                                                                groupsthere)))
-        newname=tkinter.StringVar(value=group)
-        namehash=tkinter.StringVar()
-        hash_t,hash_sp,hash_nbsp=rx.tonerxs()
+            new=False
+            title=_("Modify Existing Ad Hoc Sort Group for {} Group".format(ps))
+        self.runwindow.title(title)
         padx=50
         pady=10
-        title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
-                        ).format(ps,profile,group,check)
-        self.getrunwindow(title=title)
-        menu=self.runwindow.removeverifymenu()
-        titlel=ui.Label(self.runwindow.frame,text=title,font='title',
-                        row=0,column=0,sticky='ew',padx=padx,pady=pady
-                        )
-        getformtext=_("What new name do you want to call this surface tone "
-                        "group? A label that describes the surface tone form "
-                        "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
-        getform=ui.Label(self.runwindow.frame,
-                        text=getformtext,
-                        font='read',
-                        norender=True,
-                        row=1,column=0,sticky='ew',padx=padx,pady=pady
-                        )
-        getform.wrap()
-        inputframe=ui.Frame(self.runwindow.frame,
-                            row=2,column=0,sticky=''
-                            )
-        buttonframe=ui.Frame(inputframe,
-                            row=0,column=0,sticky='new'
-                            )
-        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
-        spaces=[' ',' ','']
-        for char in tonechars+spaces:
-            if char == ' ':
-                text=_('syllable break')
-                column=0
-                columnspan=int(len(tonechars)/2)+1
-                row=1
-            elif char == ' ':
-                text=_('word break')
-                columnspan=int(len(tonechars)/2)
-                column=columnspan+1
-                row=1
-            elif char == '':
-                text=_('clear entry')
-                column=0
-                columnspan=len(tonechars)
-                row=2
+        ui.Label(self.runwindow.frame,text=title,font='title',
+                ).grid(row=0,column=0,sticky='ew')
+        allpssensids=self.slices.senseidsbyps(ps)
+        if len(allpssensids)>70:
+            self.runwindow.waitdone()
+            text=_("This is a large group ({})! Are you in the right "
+                    "grammatical category?".format(len(allpssensids)))
+            log.error(text)
+            w=ui.Label(self.runwindow.frame,text=text)
+            w.grid(row=1,column=0,sticky='ew')
+            b=ui.Button(self.runwindow.frame, text="OK", command=w.destroy, anchor='c')
+            b.grid(row=2,column=0,sticky='ew')
+            self.runwindow.wait_window(w)
+            w.destroy()
+        if self.runwindow.exitFlag.istrue():
+            return
+        else:
+            self.runwindow.wait()
+        ui.Label(self.runwindow.frame,text=title,font='title',
+                ).grid(row=0,column=0,sticky='ew')
+        text=_("This page will allow you to set up your own sets of dictionary "
+                "senses to sort, within the '{0}' grammatical category. \nYou "
+                "should only do this if the '{0}' grammatical category is so "
+                "small that sorting them by syllable profile gives you "
+                "unusably small slices of your database."
+                "\nIf you want to compare words that are currently in "
+                "different grammatical categories, put them first into the "
+                "same grammatical category in another tool (e.g., FLEx or "
+                "WeSay), then put them in an Ad Hoc group here."
+                # "\nIf you're looking at a group you created earlier, and "
+                "\nIf you want to create a new group, exit here, select a "
+                "non-Ad Hoc syllable profile, and try this window again."
+                "".format(ps))
+        inst=ui.Label(self.runwindow.frame,text=text,
+                row=1,column=0,sticky='ew'
+                )
+        inst.wrap()
+        qframe=ui.Frame(self.runwindow.frame)
+        qframe.grid(row=2,column=0,sticky='ew')
+        text=_("What do you want to call this group for sorting {} words?"
+                "".format(ps))
+        instq=ui.Label(qframe,text=text,
+                row=0,column=0,sticky='ew',pady=20)
+        if new:
+            default=None
+        else:
+            default=profile
+        profilevar=tkinter.StringVar(value=default)
+        namefield = ui.EntryField(qframe,textvariable=profilevar)
+        namefield.grid(row=0,column=1)
+        text=_("Select the {} words below that you want in this group, then "
+                "click ==>".format(ps))
+        ui.Label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
+        sub_btn=ui.Button(qframe,text = _("OK"),
+                  command = submitform,anchor ='c')
+        sub_btn.grid(row=1,column=1,sticky='w')
+        vars=list()
+        row=0
+        scroll=ui.ScrollingFrame(self.runwindow.frame)
+        for id in allpssensids:
+            log.debug("id: {}; index: {}; row: {}".format(id,
+                                                    allpssensids.index(id),row))
+            idn=allpssensids.index(id)
+            vars.append(tkinter.StringVar())
+            adhocslices=self.slices.adhoc()
+            if (ps in adhocslices and profile in adhocslices[ps] and
+                                                id in adhocslices[ps][profile]):
+                vars[idn].set(id)
             else:
-                column=tonechars.index(char)
-                text=char
-                columnspan=1
-                row=0
-            ui.Button(buttonframe,text = text,
-                        command = lambda x=char:addchar(x),
-                        anchor ='c',
-                        row=row,
-                        column=column,
-                        sticky='nsew',
-                        columnspan=columnspan
-                        )
-        g=nn(notthisgroup,twoperline=True)
-        log.info("There: {}, NTG: {}; g:{}".format(groupsthere,notthisgroup,g))
-        groupslabel=ui.Label(inputframe,
-                            text='Other Groups:\n{}'.format(g),
-                            row=0,column=1,
-                            sticky='new',
-                            padx=padx,
-                            rowspan=2
-                            )
-        fieldframe=ui.Frame(inputframe,
-                            row=1,column=0,sticky='new'
-                            )
-        formfield = ui.EntryField(fieldframe,textvariable=newname,
-                                    row=1,column=0,sticky='new',
-                                    font='readbig')
-        formfield.bind('<KeyRelease>', updatelabels) #apply function after key
-        errorlabel=ui.Label(fieldframe,text='',
-                            fg='red',
-                            wraplength=int(self.frame.winfo_screenwidth()/3),
-                            row=1,column=1,sticky='nsew'
-                            )
-        formhashlabel=ui.Label(fieldframe,
-                                textvariable=namehash,
-                                anchor ='c',
-                                row=2,column=0,sticky='new'
-                                )
-        fieldframe.grid_columnconfigure(0, weight=1)
-        updatelabels()
-        responseframe=ui.Frame(self.runwindow.frame,
-                                row=3,
-                                column=0,
-                                sticky='',
-                                padx=padx,
-                                pady=pady
-                                )
-        ok=_('Use this name and go to:')
-        sub_lbl=ui.Label(responseframe,text = ok, font='read',
-                        row=0,column=0,sticky='ns'
-                        )
-        t=_('main screen')
-        sub_btn=ui.Button(responseframe,text = t, command = done, anchor ='c',
-                            row=0,column=1,sticky='ns'
-                            )
-        if reverify == False: #don't give this option if verifying
-            t=_('next group')
-            sub_btn=ui.Button(responseframe,text = t,command = next,anchor ='c',
-                                row=0,column=2,sticky='ns'
-                                )
-            t=_('next tone frame')
-            sub_f=ui.Button(responseframe,text = t,command = nextcheck,
-                            row=0,column=3,sticky='ns'
-                            )
-            t=_('next syllable profile')
-            sub_p=ui.Button(responseframe,text = t,command = nextprofile,
-                            row=0,column=4,sticky='ns'
-                            )
-        examplesframe=ui.Frame(self.runwindow.frame,
-                                row=4,column=0,sticky=''
-                                )
-        b=ToneGroupButtonFrame(examplesframe, self, self.exs,
-                                group,
-                                showtonegroup=True,
-                                # canary=entryview,
-                                playable=True,
-                                unsortable=True,
-                                alwaysrefreshable=True,
-                                row=0, column=0, sticky='w',
-                                wraplength=buttonframew
-                                )
-        compframe=ui.Frame(examplesframe,
-                    highlightthickness=10,
-                    highlightbackground=self.frame.theme.white,
-                    row=0,column=1,sticky='e'
-                    ) #no hlfg here
-        t=_('Compare with another group')
-        sub_c=ui.Button(compframe,
-                        text = t,
-                        command = setgroup_comparison,
-                        row=0,column=0
-                        )
-        comparisonbuttons()
+                vars[idn].set(0)
+            framed=self.datadict.getframeddata(id)
+            forms=framed.formatted(noframe=True)
+            log.debug("forms: {}".format(forms))
+            ui.CheckButton(scroll.content, text = forms,
+                                variable = vars[allpssensids.index(id)],
+                                onvalue = id, offvalue = 0,
+                                ).grid(row=row,column=0,sticky='ew')
+            row+=1
+        scroll.grid(row=3,column=0,sticky='ew')
         self.runwindow.waitdone()
-        sub_btn.wait_window(self.runwindow) #then move to next step
-        """Store these variables above, finish with (destroying window with
-        local variables):"""
+        self.runwindow.wait_window(scroll)
+class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
+    def taskicon(self):
+        return program['theme'].photo['iconT']
+    def tasktitle(self):
+        return _("Citation Form Sorting in Tone Frames")
+    def dobuttonkwargs(self):
+        return {'text':_("Sort!"),
+                'fn':self.maybesort, #taskchooser.mainwindowis.runcheck,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['T'], #self.cvt
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        parent.params.cvt('T') #before dressing inheritance
+        parent.settings.makeeverythingok()
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        log.info("status: {}".format(type(self.status)))
+        self.analang=self.settings.params.analang()
+        # Not sure what this was for (XML?):
+        self.pp=pprint.PrettyPrinter()
+        """Are we OK without these?"""
+        log.info("Done initializing check.")
+        """Testing Zone"""
+    """This should each be done only once, to make the objects from settings"""
+    """self.profilesbysense and self.profilecounts are loaded from file, or
+    created by analysis in init()"""
+    """Guessing functions"""
+    """User Input functions"""
+    """Set User Input"""
+    """Settings to and from files"""
+    """Get from LIFT database functions"""
+    """Mediating between LIFT and the user"""
+    """Making the main window"""
     """The sort process fns are here"""
     def maybesort(self):
         """This should look for one group to verify at a time, with sorting
@@ -5205,37 +5087,6 @@ class Check(TaskDressing,ui.Window):
     def marktosortguid(self,guid):
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
-    def checkforsenseidstosort(self,cvt=None,ps=None,profile=None,check=None):
-        """This method just asks if any senseid in the given slice is unsorted.
-        It stops when it finds the first one."""
-        """use if sorting senseid lists aren't needed"""
-        """This is redundant with updatesortingstatus()"""
-        if cvt is None:
-            cvt=self.slices.cvt()
-        if ps is None:
-            ps=self.slices.ps()
-        if profile is None:
-            profile=self.slices.profile()
-        if check is None:
-            check=self.slices.check()
-        senseids=self.slices.senseids(ps=ps,profile=profile)
-        vts=False
-        for senseid in senseids:
-            v=unlist(self.db.get("example/tonefield/form/text", senseid=senseid,
-                                                    location=check).get('text'))
-            if v not in ['',None]:
-                vts=True
-                break
-        self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
-        self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
-    def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
-        """This is currently called in iteration, but doesn't refresh groups,
-        so it probably isn't useful anymore."""
-        self.checkforsenseidstosort(cvt=cvt,ps=ps,profile=profile,check=check)
-    def settonevariables(self):
-        """This is currently called before sorting. This is a waste, if you're
-        not going to sort afterwards –unless you need the groups."""
-        self.settings.updatesortingstatus() #this gets groups, too
     def tryNAgain(self):
         check=self.params.check()
         if check in self.status.checks():
@@ -5308,669 +5159,561 @@ class Check(TaskDressing,ui.Window):
                         font='instructions'
                         )
         skipb.grid(column=0, row=1, sticky="ew")
-    def printentryinfo(self,guid):
-        outputs=[nn(self.db.citationorlexeme(guid=guid))]
-        for lang in self.glosslangs:
-            outputs.append(nn(self.db.glossordefn(guid=guid,glosslang=lang)))
-        outputs.append(nn(self.db.get('pronunciationfieldvalue',
-                                        fieldtype='tone',
-                                        location=group,guid=guid)))
-        return '\t'.join(outputs)
-    def guesssubcheck(self):
-        """obsolete"""
-        cvt=self.params.cvt()
-        if cvt == 'CV': #Dunno how to guess this yet...
-            if group in ([x[0] for x in self.subchecksprioritized['V']+
-                                self.subchecksprioritized['C']+
-                                self.subchecksprioritized['T']
-                                ]):
-                self.subcheck=self.scount[ps]['C'][0]+self.scount[ps]['V'][0]
-        else:
-            self.subcheck=firstoflist(self.subchecksprioritized[cvt],
-                                                            othersOK=True)[0]
     """Doing stuff"""
-    def getrunwindow(self,nowait=False,msg=None,title=None):
-        """Can't test for widget/window if the attribute hasn't been assigned,"
-        but the attribute is still there after window has been killed, so we
-        need to test for both."""
-        if title is None:
-            title=(_("Run Window"))
-        if self.exitFlag.istrue():
-            return
-        if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
-            log.info("Runwindow already there! Resetting frame...")
-            self.runwindow.resetframe() #I think I'll always want this here...
+    """These are old paradigm CV funcs, with too many arguments, and guids"""
+    def picked(self,choice,**kwargs):
+        return
+        entry.addresult(check, result='OK') #let's not translate this...
+        debug()
+        window=ui.Window(parent, title='Same! '+entry.lexeme+': '
+                        +entry.guid)
+        result=(entry.citation,nn(entry.plural),nn(entry.imperative),
+                    nn(entry.ps),nn(entry.gloss))
+        ui.Button(window.frame, width=80, text=result,
+            command=window.destroy).grid(column=0, row=0)
+        window.exitButton=''
+    def notpicked(self,choice):
+        """I should think through what I want for this button/script."""
+        if entry is None:
+            log.info("No entry!")
+            """Probably a bad idea"""
+            entry=Entry(db, parent, window, check, guid=choice)
+        entry.addresult(check, result='NOTok')
+        window=ui.Window(parent, title='notpicked: Different! '
+                        +entry.lexeme+': '+entry.guid)
+        result=entry.citation,nn(entry.plural),nn(entry.imperative),nn(entry.ps),
+        nn(entry.gloss)
+        ui.Label(window.frame, width=40, text=result).grid(row=0,column=0)
+        q=(_("What is wrong with this word?"))
+        ui.Label(window.frame, text=q).grid(column=0, row=1)
+        if check.name == "V1=V2":
+            bcv1nv2=(_("Two different vowels (V1≠V2)"))
+            bscv1isv2nsc=(_("Vowels are the same, but the wrong vowel"))
+            problemopts=[("badCheck",bcv1nv2),
+                ("badSubcheck",bscv1isv2nsc+" (V1=V2≠"+check.subcheck+")")]
         else:
-            self.runwindow=ui.Window(self.frame,title=title)
-        self.runwindow.title(title)
-        self.runwindow.lift()
-        if not nowait:
-            self.runwindow.wait(msg=msg)
-    def runcheck(self):
-        self.settings.storesettingsfile()
-        t=(_('Run Check'))
-        log.info("Running check...")
-        i=0
-        ps=self.slices.ps()
-        if not ps:
-            self.getps()
-        group=self.status.group()
-        analang=self.params.analang()
-        if None in [analang, ps, group]:
-            log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
-                                        self.analang, ps, group))
-        cvt=self.params.cvt()
-        check=self.params.check()
-        profile=self.slices.profile()
-        if not profile:
-            self.getprofile()
-        if cvt == 'T' and (check not in self.status.checks(tosort=True)
-                and check not in self.status.checks(toverify=True)
-                and check not in self.status.checks(tojoin=True)):
-            exit=self.getcheck()
-            if exit:
-                self.runcheck()
-            return #if the user didn't supply a check
-        self.settings.updatesortingstatus() # Not just tone anymore #settonevariables() #here, or later?
-        if cvt == 'T':
-            self.maybesort()
-        elif None not in [check,group]: #do the CV checks
-            self.getresults()
+            log.info("Sorry, that check isn't set up yet.")
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    window=window,
+                                    optionlist=problemopts,
+                                    command=Check.fixdiff,
+                                    width="50",
+                                    column=0, row=3
+                                    )
+        i=4 #start at this row
+        print(result)
+    def fixV12(parent, window, check, entry, choice):
+        """This and following scripts represent a structure of the program
+        which is way more complex than we want. We have to think through how
+        to organize the functions and windows in such a way as the UI is
+        straightforward and completely unconfusing."""
+        window.title=(_("TITLE!"))
+        ui.Label(window.frame, text=entry.citation+' - '+entry.gloss,
+                        anchor=tkinter.W).grid(column=0, row=0, columnspan=2)
+        q1=_("It looks like the vowels are the same, but not the correct vowel;"
+            " let's fix that.")
+        ui.Label(window.frame, text=q1,anchor=tkinter.W).grid(column=0, row=2,
+                                                                columnspan=2)
+        q2=_("What are the two vowels?")
+        ui.Label(window.frame, text=q2,anchor=tkinter.W).grid(column=0, row=3,
+                                                                columnspan=1)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                window=window,
+                                optionlist=check.db.vowels(),
+                                command=Check.fixVs,
+                                column=0, row=4
+                                )
+    def fixV1(parent, window, check, entry, choice):
+        t=(_('fixV1:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
+        print(t)
+        check.fix='V1'
+        #window.destroy()
+        #window=ui.Window(self.frame,, title=t, entry=entry, backcmd=fixdiff)
+        window.resetframe()
+        t2=(_("It looks like the vowels aren't the same; let's fix that."))
+        ui.Label(window.frame, text=t2, justify=tkinter.LEFT).grid(column=0,
+                                                                    row=0,
+                                                                columnspan=2)
+        t3=(_("What is the first vowel? (C_CV)"))
+        ui.Label(window.frame, text=t3, anchor=tkinter.W).grid(column=0,
+                                                                row=1,
+                                                                columnspan=1)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                window=window,
+                                optionlist=check.db.vowels(),
+                                command=Check.newform,
+                                column=0, row=2
+                                )
+    def fixV2(parent, window, check, entry, choice):
+        check.fix='V2'
+        t=(_('fixV2:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
+        t=(_("What is the second vowel?"))
+        ui.Label(window.frame, text=t,justify=tkinter.LEFT).grid(column=0, row=1, columnspan=1)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                    window=window,
+                                    optionlist=check.db.vowels(),
+                                    command=Check.newform,
+                                    column=0, row=2
+                                    )
+    def fixdiff(parent, window, check, entry, choice):
+        """We need to fix problems in a more intuitively obvious way"""
+        entry.problem=choice
+        entry.addresult(check, result=entry.problem)
+        window.destroy()
+        window=ui.Window(self.frame.parent, entry=entry, backcmd=notpickedback)
+        ui.Label(window, text="Let's fix those problems").grid(column=0, row=0)
+        if entry.problem == "badCheck": #This isn't the right check for this entry --re.search("V1≠V2",difference):
+            window.destroy()
+            t=(_("fixVs:Different vowels! "))+entry.lexeme+': '+entry.guid
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixV1(parent, window, check, entry, choice)
+            window.wait_window(window=window)
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixV2(parent, window, check, entry, choice) #I should make this wait until the first one finishes..…
+            window.wait_window(window=window)
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixVs(parent, window, check, entry, choice)
+        elif entry.problem == "badSubcheck": #This isn't the right subcheck for this entry --re.search("V1=V2≠"+Vo,difference): #
+            window.destroy()
+            t=(_("fixVs:Same Vowel, but wrong one! "))+entry.lexeme+': '+entry.guid
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixV12(parent, window, check, entry, choice)
         else:
-            window=ui.Window(self.frame)
-            text=_('Error: please set Check/Subcheck first! ({}/{})').format(
-                                                     check,group)
-            ui.Label(window,text=text).grid(column=0, row=i)
-            i+=1
-            return
-    def record(self):
-        self.settings.updatesortingstatus() #is this needed? This is the first fn on button click
-        if self.params.cvt() == 'T':
-            self.showtonegroupexs()
+            log.info("Huh? I don't understand what the user wants.")
+        Check.fixVs
+    def fixVs(parent, window, check, entry, choice):
+        #This isn't working yet.
+        log.info("running fixVs!!!!???!??!?!?!?")
+
+        #I need to rework this to work more generally..….
+        ui.Label(window.frame, text="I will make the following changes:").grid(column=0, row=0)
+        lexemeNew=entry.newform #newform(entry.lexeme,'v12',check.subcheck,choice)
+        citationNew = re.sub(entry.lexeme, lexemeNew, entry.citation)
+        ui.Label(window.frame, text="citation: "+entry.citation+" → "+citationNew).grid(column=0, row=1)
+        ui.Label(window.frame, text="lexeme: "+entry.lexeme+" → "+lexemeNew).grid(column=0, row=2)
+        fields={}
+        if entry.plural is not None:
+            pluralNew = re.sub(entry.lexeme, lexemeNew, entry.plural)
+            ui.Label(window.frame, text="plural: "+plural+" → "+pluralNew).grid(column=0, row=3)
+            fields={'Plural'}
+        if entry.imperative is not None:
+            imperativeNew = re.sub(entry.lexeme, lexemeNew, entry.imperative)
+            ui.Label(window.frame, text="imperative: "+entry.imperative+" → "+imperativeNew).grid(column=0, row=4)
+        def ok():
+            entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-ok')
+            entry.db.log(entry.guid+": lexeme: "+entry.lexeme+" → "+lexemeNew)
+            entry.put.lexeme(entry,lexemeNew)
+            entry.db.log(entry.guid+": citation: "+entry.citation+" → "+citationNew)
+            entry.put.citation(entry,citationNew)
+            #lift_mod.field(guid,fieldtype,newform)
+            entry.db.write() #put this in lift.py
+            window.destroy()
+        def notok():
+            entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-NOTok')
+        ui.Button(window, width=10, text="OK", command=ok).grid(row=1,column=0)
+        #This is where we should call addresult, and write to file.
+        ui.Button(window, width=15, text="Not OK (Go Back)", command=notok).grid(row=1,column=1)
+    def newform(parent, window, check, entry, choice):
+        #I need to rework this to work more generally..….
+        #or even to work once. The logic is bad.
+        C=check.C
+        V=check.V
+        xi=1
+        if check.fix == "V1":
+            r=str('('+V+')'+'('+C+')'+'('+V+')')
+            sub=(choice+r"\2\3")
+            log.info("Note: this assumes we're changing one of two vowels "
+                "separated by a consonant")
+            #I want to access the second group...
+            #print(r)
+        elif check.fix == "C1":
+            r=str('(('+C+'))'+'('+V+')'+'('+C+')')
+            print(r)
+            log.info("Note: this assumes we're changing one of two consonants "
+                "separated by a vowel")
+        elif check.fix == "V2":
+            r=str('('+V+')'+'('+C+')'+'('+V+')')
+            sub=(r"\1\2"+choice)
+            print("Note: this assumes we're changing one of two vowels "
+                "separated by a consonant")
+            #print(r)
+        elif check.fix == "C2":
+            r=str('('+C+')'+V+'('+C+')')
+            print(r)
         else:
-            self.showentryformstorecord()
-    def makelabelsnrecordingbuttons(self,parent,sense):
-        framed=self.datadict.getframeddata(sense['nodetoshow'])
-        t=framed.formatted(noframe=True)
-        for g in sense['glosses']:
-            if g:
-                t+='\t‘'+g
-                if ('plnode' in sense and
-                        sense['nodetoshow'] is sense['plnode']):
-                    t+=" (pl)"
-                if ('impnode' in sense and
-                        sense['nodetoshow'] is sense['impnode']):
-                    t+="!"
-                t+='’'
-        lxl=ui.Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,framed)
-        lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
-        lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
-    def showentryformstorecordpage(self,ps=None,profile=None):
-        #The info we're going for is stored above sense, hence guid.
-        if self.runwindow.exitFlag.istrue():
-            log.info('no runwindow; quitting!')
-            return
-        if not self.runwindow.frame.winfo_exists():
-            log.info('no runwindow frame; quitting!')
-            return
-        self.runwindow.resetframe()
-        self.runwindow.wait()
-        count=self.slices.count()
-        text=_("Record {} {} Words: click ‘Record’, talk, "
-                "and release ({} words)".format(profile,ps,
-                                                count))
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w')
-        buttonframes=ui.ScrollingFrame(self.runwindow.frame)
-        buttonframes.grid(row=1,column=0,sticky='w')
-        row=0
-        done=list()
-        for senseid in self.slices.senseids(ps=ps,profile=profile):
-            sense={}
-            sense['column']=0
-            sense['row']=row
-            sense['senseid']=senseid
-            sense['guid']=firstoflist(self.db.get('entry',
-                                        senseid=senseid).get('guid'))
-            if sense['guid'] in done: #only the first of multiple senses
-                continue
-            else:
-                done.append(sense['guid'])
-            """These following two have been shifted down a level, and will
-            now return a list of form elements, each. Something will need to be
-            adjusted here..."""
-            sense['lxnode']=firstoflist(self.db.get('lexeme',
-                                                guid=sense['guid'],
-                                                lang=self.analang).get())
-            sense['lcnode']=firstoflist(self.db.get('citation',
-                                                guid=sense['guid'],
-                                                lang=self.analang).get())
-            sense['glosses']=[]
-            for lang in self.glosslangs:
-                sense['glosses'].append(firstoflist(self.db.glossordefn(
-                                                guid=sense['guid'],
-                                                glosslang=lang
-                                                ),othersOK=True))
-            if self.db.pluralname is not None:
-                sense['plnode']=firstoflist(self.db.get('field',
-                                        guid=sense['guid'],
-                                        lang=self.analang,
-                                        fieldtype=self.db.pluralname).get())
-            if self.db.imperativename is not None:
-                sense['impnode']=firstoflist(self.db.get('field',
-                                        guid=sense['guid'],
-                                        lang=self.analang,
-                                        fieldtype=self.db.imperativename).get())
-            if sense['lcnode'] is not None:
-                sense['nodetoshow']=sense['lcnode']
-            else:
-                sense['nodetoshow']=sense['lxnode']
-            self.makelabelsnrecordingbuttons(buttonframes.content,sense)
-            for node in ['plnode','impnode']:
-                if (node in sense) and (sense[node] is not None):
-                    sense['column']+=2
-                    sense['nodetoshow']=sense[node]
-                    self.makelabelsnrecordingbuttons(buttonframes.content,
-                                                    sense)
-            row+=1
-        self.runwindow.waitdone()
-        self.runwindow.wait_window(self.runwindow.frame)
-    def showentryformstorecord(self,justone=True):
-        # Save these values before iterating over them
-        #Convert to iterate over local variables
-        self.getrunwindow()
-        if justone==True:
-            self.showentryformstorecordpage()
-        else:
-            for psprofile in self.status.valid(): #self.profilecountsValid:
-                if self.runwindow.exitFlag.istrue():
-                    return 1
-                ps=psprofile[2]
-                profile=psprofile[1]
-                nextb=ui.Button(self.runwindow,text=_("Next Group"),
-                                        cmd=self.runwindow.resetframe) # .frame.destroy
-                nextb.grid(row=0,column=1,sticky='ne')
-                self.showentryformstorecordpage(ps=ps,profile=profile)
-        self.donewpyaudio()
-    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
-        def setskip(event):
-            self.runwindow.frame.skip=True
-            entryframe.destroy()
-        self.getrunwindow()
-        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
-            return
-        log.debug("Working with skip: {}".format(skip))
-        if skip == 'skip':
-            self.runwindow.frame.skip=True
-        else:
-            self.runwindow.frame.skip=skip
-        text=_("Words and phrases to record: click ‘Record’, talk, and release")
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w',columnspan=2)
-        if (self.entriestoshow is None) and (senses is None):
-            ui.Label(self.runwindow.frame, anchor='w',
-                    text=_("Sorry, there are no entries to show!")).grid(row=1,
-                                    column=0,sticky='w')
-            return
-        if self.runwindow.frame.skip == False:
-            skipf=ui.Frame(self.runwindow.frame)
-            skipb=ui.Button(skipf, text=linebreakwords(_("Skip to next undone")),
-                        cmd=skipf.destroy)
-            skipf.grid(row=1,column=1,sticky='w')
-            skipb.grid(row=0,column=0,sticky='w')
-            skipb.bind('<ButtonRelease>', setskip)
-        if senses is None:
-            senses=self.entriestoshow
-        for senseid in senses:
-            log.debug("Working on {} with skip: {}".format(senseid,
-                                                    self.runwindow.frame.skip))
-            examples=self.db.get('example',senseid=senseid).get()
-            if examples == []:
-                log.debug(_("No examples! Add some, then come back."))
-                continue
-            if ((self.runwindow.frame.skip == True) and
-                (lift.atleastoneexamplehaslangformmissing(
-                                                    examples,
-                                                    self.audiolang) == False)):
-                continue
-            row=0
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            entryframe=ui.Frame(self.runwindow.frame)
-            entryframe.grid(row=1,column=0)
-            if progress is not None:
-                progressl=ui.Label(self.runwindow.frame, anchor='e',
-                    font='small',
-                    text="({} {}/{})".format(*progress)
-                    )
-                progressl.grid(row=0,column=2,sticky='ne')
-            """This is the title for each page: isolation form and glosses."""
-            titleframed=self.datadict.getframeddata(senseid,check=None)
-            if not titleframed or titleframed.forms[self.analang] is None:
-                entryframe.destroy() #is this ever needed?
-                continue
-            text=titleframed.formatted(noframe=True,showtonegroup=False)
-            ui.Label(entryframe, anchor='w', font='read',
-                    text=text).grid(row=row,
-                                    column=0,sticky='w')
-            """Then get each sorted example"""
-            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
-            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
-            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
-            examplesframe.grid(row=0,column=0,sticky='w')
-            examples.reverse()
-            for example in examples:
-                if (skip == True and
-                    lift.examplehaslangform(example,self.audiolang) == True):
-                    continue
-                """These should already be framed!"""
-                framed=self.datadict.getframeddata(example,senseid=senseid)
-                if not framed:
-                    exit()
-                if framed.forms[self.analang] is None: # when?
-                    continue
-                row+=1
-                """If I end up pulling from example nodes elsewhere, I should
-                probably make this a function, like getframeddata"""
-                text=framed.formatted()
-                if not framed:
-                    exit()
-                rb=RecordButtonFrame(examplesframe,self,framed)
-                rb.grid(row=row,column=0,sticky='w')
-                ui.Label(examplesframe, anchor='w',text=text
-                                        ).grid(row=row, column=1, sticky='w')
-            row+=1
-            d=ui.Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
-            d.grid(row=row,column=0)
-            self.runwindow.waitdone()
-            examplesframe.wait_window(entryframe)
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            if self.runwindow.frame.skip == True:
-                return 'skip'
-    def showtonegroupexs(self):
-        def next():
-            self.nextprofile()
-            self.runwindow.destroy()
-            self.showtonegroupexs()
-        if (not(hasattr(self,'examplespergrouptorecord')) or
-            (type(self.examplespergrouptorecord) is not int)):
-            self.examplespergrouptorecord=100
-            self.settings.storesettingsfile()
-        self.makeanalysis()
-        self.analysis.donoUFanalysis()
-        torecord=self.analysis.senseidsbygroup
-        ntorecord=len(torecord) #number of groups
-        nexs=len([k for i in torecord for j in torecord[i] for k in j])
-        nslice=self.slices.count()
-        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
-        skip=False
-        if ntorecord == 0:
-            log.error(_("How did we get no UR tone groups? {}-{}"
-                    "\nHave you run the tone report recently?"
-                    "\nDoing that for you now...").format(
-                            self.slices.profile(),
-                            self.slices.ps()
-                                                        ))
-            self.analysis.do()
-            self.showtonegroupexs()
-            return
-        batch={}
-        for i in range(self.examplespergrouptorecord):
-            batch[i]=[]
-            for ufgroup in torecord:
-                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
-                if len(torecord[ufgroup]) > i: #no done piles.
-                    senseid=[torecord[ufgroup][i]] #list of one
+            log.info("Fix "+check.fix +" undefined.")
+        def old():
+            if check.fix == ("V1" or "C1"):
+                ximin=1
+                ximax=1
+            elif check.fix == ("V2" or "C2"):
+                ximin=2
+                ximax=2
+            elif check.fix == ("V12" or "C12"):
+                ximin=1
+                ximax=2
+        #print(check.subcheck, value, entry.newform)
+        #I need this to find the point I'm trying to change, even if it has been
+        #changed before, and even if another part of the same word has already
+        #been changed, e.g., another vowel in another position. So I need to use
+        #the newform when present (i.e., changes have been made but not confirmed)
+        #but refer to the lexeme item for reference (e.g., which subcheck I'm running.)
+        try: # use a previous entry.newform, if it exists:
+            baseform=entry.newform
+            entry.newform=''
+            log.info("Using newform")
+        except:
+            baseform=entry.lexeme
+            log.info("Using lexeme")
+            #entry.newform = re.sub(check.subcheck, choice, entry.newform, count=1)
+        print('r: '+r)
+        print('sub: '+sub)
+        print('baseform: '+baseform)
+        entry.newform=re.sub(r, sub, baseform)
+        print('newform: '+entry.newform)
+        def old2():
+            for x in baseform:
+                if x == check.subcheck: # <= ximax ):
+                    if ximin <= xi <= ximax:
+                        try:
+                            entry.newform=entry.newform+choice #+str(xi)
+                        except:
+                            entry.newform=choice #+str(xi)
+                    else:
+                        try:
+                            entry.newform=entry.newform+x #+"_"
+                        except:
+                            entry.newform=x #+"_"
+                    xi += 1
                 else:
-                    print("Not enough examples, moving on:",i,ufgroup)
-                    continue
-                log.info(_('Giving user the number {} example from tone '
-                        'group {}'.format(i,ufgroup)))
-                exited=self.showsenseswithexamplestorecord(senseid,
-                            (ufgroup, i+1, self.examplespergrouptorecord),
-                            skip=skip)
-                if exited == 'skip':
-                    skip=True
-                if exited == True:
-                    return
-        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
-            self.runwindow.waitdone()
-            self.runwindow.resetframe()
-            ui.Label(self.runwindow.frame, anchor='w',font='read',
-            text=_("All done! Sort some more words, and come back.")
-            ).grid(row=0,column=0,sticky='w')
-            ui.Button(self.runwindow.frame,
-                    text=_("Continue to next syllable profile"),
-                    command=next).grid(row=1,column=0)
-        self.donewpyaudio()
-    def senseidformsbyregex(self,regex):
-        """This function takes in a compiled regex,
-        and outputs a list/dictionary of senseid/{senseid:form} form."""
-        output=[] #This is just a list of senseids now: (Do we need the dict?)
-        for form in self.formstosearch[ps]:
-            if regex.search(form):
-                output+=self.formstosearch[ps][form]
-        return output
-    def getresults(self):
-        self.getrunwindow()
-        self.makeresultsframe()
-        self.adhocreportfileXLP=''.join([str(self.reportbasefilename)
-                                        ,'_',str(ps)
-                                        ,'-',str(profile)
-                                        ,'_',str(check)
-                                        ,'_ReportXLP.xml'])
-        xlpr=self.xlpstart()
-        """"Do I need this?"""
-        self.results.grid(column=0,
-                        row=self.runwindow.frame.grid_info()['row']+1,
-                        columnspan=5,
-                        sticky=(tkinter.N, tkinter.S, tkinter.E, tkinter.W))
-        print(_("Getting results of Search request"))
-        c1 = "Any"
-        c2 = "Any"
-        i=0
-        """nn() here keeps None and {} from the output, takes one string,
-        list, or tuple."""
-        text=(_("{} roots of form {} by {}".format(ps,profile,check)))
-        ui.Label(self.results, text=text).grid(column=0, row=i)
-        self.runwindow.wait()
-        si=xlp.Section(xlpr,text)
-        # p=xlp.Paragraph(si,instr)
-        font=self.frame.fonts['read']
-        self.results.scroll=ui.ScrollingFrame(self.results)
-        self.results.scroll.grid(column=0, row=1)
-        senseid=0 # in case the following doesn't find anything:
-        for group in self.s[self.analang][cvt]:
-            log.debug('group: {}'.format(group))
-            self.buildregex() #It would be nice fo this to iterate through...
-            senseidstocheck=self.senseidformsbyregex(self.regex)
-            if len(senseidstocheck)>0:
-                id=rx.id('x'+ps+profile+check+group)
-                ex=xlp.Example(si,id)
-            for senseid in senseidstocheck: #self.senseidformstosearch[lang][ps]
-                # where self.regex(self.senseidformstosearch[lang][ps][senseid]):
-                """This regex is compiled!"""
-                framed=self.datadict.getframeddata(senseid) #not framed!
-                o=framed.formatted(noframe=True)
-                self.framedtoXLP(framed,parent=ex,listword=True)
-                def makeimg():
-                    img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
-                    "/pictures/button.png")
-                    if o[4] is not None:
-                        img = tkinter.PhotoImage(file = lift_file.liftdirstr()+'/'
-                        +o[4])
-                        #use this template to add other pictures to GUI.
-                    else:
-                        img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
-                            "/pictures/button.png")
-                        #Resizing image to fit on button
-                        image = Image.open(img)
-                        photoimage = image.resize((34, 26), Image.ANTIALIAS)
-                        photo = ImageTk.PhotoImage(image)
-                        photoimage = image.subsample(3, 3)
-                        ui.Button(self.results, width=800, image=photoimage).grid(column=0)
-                i+=1
-                # b=Button(self.results.scroll.content,
-                #         choice=senseid, text=o,
-                #         window=self.runwindow.frame,
-                #         row=i, column=0, font=font, command=self.picked)
-                col=0
-                for lang in [self.analang]+self.glosslangs:
-                    col+=1
-                    if lang in framed.forms:
-                        ui.Label(self.results.scroll.content,
-                            text=framed.forms[lang], font=font,
-                            anchor='w',padx=10).grid(row=i, column=col,
-                                                        sticky='w')
-                if self.su==True:
-                    notok=ui.Button(self.results.scroll.content,
-                            choice=senseid, text='X',
-                            window=self.runwindow.frame,
-                            width=15, row=i,
-                            column=1, command=self.notpicked)
-        xlpr.close(me=me)
-        self.runwindow.waitdone()
-        if senseid == 0: #i.e., nothing was found above
-            print(_('No results!'))
-            ui.Label(self.results, text=_("No results for ")+self.regexCV+"!"
-                            ).grid(column=0, row=i+1)
-            return
-    def buildregex(self):
-        """include profile (of those available for ps and check),
-        and subcheck (e.g., a: CaC\2)."""
-        """Provides self.regexCV and self.regex"""
-        self.regexCV=None #in case this was run before.
-        log.log(2,'profile:',profile)
-        log.log(2,'cvt:',cvt)
-        maxcount=re.subn(cvt, cvt, profile)[1]
-        if profile is None:
-            print("It doesn't look like you've picked a syllable profile yet.")
-            return
-        """Don't need this; only doing count=1 at a time. Let's start with
-        the easier ones, with the first occurrance changed."""
-        self.regexCV=str(profile) #Let's set this before changing it.
-        """One pass for all regexes, S3, then S2, then S1, as needed."""
-        cvts=['V','C']
-        cvt=self.params.cvt()
-        group=self.status.group()
-        if 'x' in check:
-            if self.subcheckcomparison in self.s[self.analang]['C']:
-                cvts=['C','V']
-        for t in cvts:
-            if t not in cvt:
-                continue
-            S=str(cvt)
-            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
-            compared=False
-            for occurrence in reversed(range(maxcount)):
-                occurrence+=1
-                if re.search(S+str(occurrence),check) is not None:
-                    """Get the (n=occurrence) S, regardless of intervening
-                    non S..."""
-                    regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
-                    if 'x' in check:
-                        if compared == False: #occurrence == 2:
-                            replS='\\1'+self.subcheckcomparison
-                            compared=True
-                        else: #if occurrence == 1:
-                            replS='\\1'+group
-                    else:
-                        replS='\\1'+group
-                    self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
-        """Final step: convert the CVx code to regex, and store in self."""
-        self.regex=rx.fromCV(self,lang=self.analang,
-                            word=True, compile=True)
-    def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None,xcounts=None):
-        #values should be a (lambda?) function that depends on x and y terms
-        #ycounts should be a lambda function that depends on yterms
-        log.info("Making table with caption {}".format(caption))
-        t=xlp.Table(parent,caption)
-        rows=list(yterms)
-        nrows=len(rows)
-        cols=list(xterms)
-        ncols=len(cols)
-        if nrows == 0:
-            return
-        if ncols == 0:
-            return
-        for row in ['header']+list(range(nrows)):
-            if row != 'header':
-                row=rows[row]
-            r=xlp.Row(t)
-            for col in ['header']+list(range(ncols)):
-                log.log(4,"row: {}; col: {}".format(row,col))
-                if col != 'header':
-                    col=cols[col]
-                log.log(4,"row: {}; col: {}".format(row,col))
-                if row == 'header' and col == 'header':
-                    log.log(2,"header corner")
-                    cell=xlp.Cell(r,content='',header=True)
-                elif row == 'header':
-                    log.log(2,"header row")
-                    if xcounts is not None:
-                        hxcontents='{} ({})'.format(col,xcounts(col))
-                    else:
-                        hxcontents='{}'.format(col)
-                    cell=xlp.Cell(r,content=linebreakwords(hxcontents),
-                                header=True,
-                                linebreakwords=True)
-                elif col == 'header':
-                    log.log(2,"header column")
-                    if ycounts is not None:
-                        hycontents='{} ({})'.format(row,ycounts(row))
-                    else:
-                        hycontents='{}'.format(row)
-                    cell=xlp.Cell(r,content=hycontents,
-                                header=True)
-                else:
-                    log.log(2,"Not a header")
                     try:
-                        value=values(col,row)
-                        log.log(2,"value ({},{}):{}".format(col,row,
-                                                        values(col,row)))
-                    except KeyError:
-                        log.info("Apparently no value for col:{}, row:{}"
-                                "".format(col,row))
-                        value=''
-                    finally: # we need each cell to be there...
-                        cell=xlp.Cell(r,content=value)
-    def tonegroupsjoinrename(self,**kwargs):
-        def clearerror(event=None):
-            errorlabel['text'] = ''
-        def submitform():
-            clearerror()
-            uf=named.get()
-            if uf == "":
-                noname=_("Give a name for this UF tone group!")
-                log.debug(noname)
-                errorlabel['text'] = noname
-                return
-            groupsselected=[]
-            for group in groupvars: #all group variables
-                groupsselected+=[group.get()] #value, name if selected, 0 if not
-            groupsselected=[x for x in groupsselected if x != '']
-            log.info("groupsselected:{}".format(groupsselected))
-            if uf in self.analysis.orderedUFs and uf not in groupsselected:
-                deja=_("That name is already there! (did you forget to include "
-                        "the ‘{}’ group?)".format(uf))
+                        entry.newform=entry.newform+x #+"_"
+                    except:
+                        entry.newform=x #+"_"
+                #entry.newform = re.sub(check.subcheck, choice, entry.lexeme, count=1)
+        print(entry.newform)
+        window.destroy()
+class Transcribe(TaskDressing,Tone,ui.Window):
+    def tasktitle(self):
+        return _("Transcribe Citation Form Sorting in Tone Frames")
+    def updatelabels(event=None):
+        errorlabel['text'] = ''
+        a=newname.get()
+        try:
+            int(a) #Is this interpretable as an integer (default group)?
+            namehash.set('')
+        except ValueError:
+            x=hash_t.sub('T',newname.get())
+            y=hash_sp.sub('#',x)
+            z=hash_nbsp.sub('.',y)
+            namehash.set(z)
+    def updategroups():
+        groupsthere=self.status[cvt][ps][profile][check]['groups']
+        groupsdone=self.status[cvt][ps][profile][check]['done']
+        return groupsthere, groupsdone
+    def submitform():
+        updatelabels()
+        newtonevalue=formfield.get()
+        groupsthere, groupsdone = updategroups()
+        group=self.status.group()
+        if newtonevalue == "":
+            noname=_("Give a name for this tone melody!")
+            log.debug(noname)
+            errorlabel['text'] = noname
+            return 1
+        if newtonevalue != group: #only make changes!
+            if newtonevalue in groupsthere :
+                deja=_("Sorry, there is already a group with "
+                                "that label; If you want to join the "
+                                "groups, give it a different name now, "
+                                "and join it later".format(newtonevalue))
                 log.debug(deja)
                 errorlabel['text'] = deja
+                return 1
+            self.updatebygroupsenseid(group,newtonevalue)
+            i=groupsthere.index(group) #put new value in the same place.
+            groupsthere.remove(group)
+            groupsthere.insert(i,newtonevalue)
+            if group in groupsdone: #if verified, change the name there, too
+                i=groupsdone.index(group) #put new value in the same place.
+                groupsdone.remove(group)
+                groupsdone.insert(i,newtonevalue)
+            group=newtonevalue
+            self.settings.storesettingsfile(setting='status')
+        else: #move on, but notify in logs
+            log.info("User selected ‘{}’, but with no change.".format(ok))
+        if hasattr(self,'group_comparison'):
+            delattr(self,'group_comparison') # in either case
+        self.runwindow.destroy()
+        return
+    def addchar(x):
+        if x == '':
+            formfield.delete(0,tkinter.END)
+        else:
+            formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
+        updatelabels()
+    def done():
+        submitform()
+        self.donewpyaudio()
+    def next():
+        log.debug("running next group")
+        error=submitform()
+        if not error:
+            log.debug("group: {}".format(group))
+            self.status.nextgroup(wsorted=True)
+            log.debug("group: {}".format(group))
+            self.makewindow()
+    def nextcheck():
+        log.debug("running next check")
+        error=submitform()
+        if not error:
+            log.debug("check: {}".format(check))
+            self.status.nextcheck(wsorted=True)
+            log.debug("check: {}".format(check))
+            self.makewindow()
+    def nextprofile():
+        log.debug("running next profile")
+        error=submitform()
+        if not error:
+            log.debug("profile: {}".format(profile))
+            self.status.nextprofile(wsorted=True)
+            log.debug("profile: {}".format(profile))
+            self.makewindow()
+    def setgroup_comparison():
+        w=self.getgroup(comparison=True,wsorted=True) #this returns its window
+        if w and w.winfo_exists(): #This window may be already gone
+            w.wait_window(w)
+        comparisonbuttons()
+    def comparisonbuttons():
+        try: #successive runs
+            compframe.compframeb.destroy()
+            log.info("Comparison frameb destroyed!")
+        except: #first run
+            log.info("Problem destroying comparison frame, making...")
+        buttonframew=int(program['screenw']/4)
+        # b['wraplength']=buttonframew
+        compframe.compframeb=ui.Frame(compframe)
+        compframe.compframeb.grid(row=1,column=0)
+        t=_('Compare with another group')
+        if (hasattr(self, 'group_comparison')
+                and self.group_comparison in groupsthere and
+                self.group_comparison != group):
+            log.info("Making comparison buttons for group {} now".format(
+                                                self.group_comparison))
+            t=_('Compare with another group ({})').format(
+                                                self.group_comparison)
+            compframe.bf2=ToneGroupButtonFrame(compframe.compframeb,
+                                    self, self.exs,
+                                    self.group_comparison,
+                                    showtonegroup=True,
+                                    playable=True,
+                                    unsortable=False, #no space, bad idea
+                                    alwaysrefreshable=True,
+                                    font='default',
+                                    wraplength=buttonframew
+                                    )
+            compframe.bf2.grid(row=0, column=0, sticky='w')
+        elif not hasattr(self, 'group_comparison'):
+            log.info("No comparison found !")
+        elif self.group_comparison not in groupsthere:
+            log.info("Comparison ({}) not in group list ({})"
+                        "".format(self.group_comparison,groupsthere))
+        elif self.group_comparison == group:
+            log.info("Comparison ({}) same as subgroup ({}); not showing."
+                        "".format(self.group_comparison,group))
+        else:
+            log.info("This should never happen (renamegroup/"
+                        "comparisonbuttons)")
+        sub_c['text']=t
+    def makewindow(self):
+        cvt=self.params.cvt()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        check=self.params.check()
+        buttonframew=int(program['screenw']/3.5)
+        if check == None:
+            self.getcheck(guess=True)
+            if check == None:
+                log.info("I asked for a check name, but didn't get one.")
                 return
-            for group in groupsselected:
-                if group in self.analysis.senseidsbygroup: #selected ones only
-                    log.debug("Changing values from {} to {} for the following "
-                            "senseids: {}".format(group,uf,
-                                        self.analysis.senseidsbygroup[group]))
-                    for senseid in self.analysis.senseidsbygroup[group]:
-                        self.db.addtoneUF(senseid,uf,analang=self.analang)
-            self.db.write()
-            self.runwindow.destroy()
-            self.tonegroupsjoinrename() #call again, in case needed
-        def done():
-            self.runwindow.destroy()
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        self.getrunwindow()
-        title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
-                                                        ps,profile))
-        self.runwindow.title(title)
+        if not self.status.groups(wsorted=True):
+            log.error("I don't have any sorted data for check: {}, "
+                        "ps-profile: {}-{},".format(check,ps,profile))
+            return
+        groupsthere, groupsdone = updategroups()
+        group=self.status.group()
+        if group is None or group not in groupsthere:
+            self.getgroup(guess=True,wsorted=True)
+            if group == None:
+                log.info("I asked for a framed tone group, but didn't get one.")
+                return
+        notthisgroup=groupsthere[:]
+        if group in groupsthere:
+            notthisgroup.remove(group)
+        else:
+            log.error(_("current group ({}) doesn't seem to be in list of "
+                "groups: ({})\n\tThis may be because we're looking for data that "
+                "isn't there, or maybe a setting is off.".format(group,
+                                                                groupsthere)))
+        newname=tkinter.StringVar(value=group)
+        namehash=tkinter.StringVar()
+        hash_t,hash_sp,hash_nbsp=rx.tonerxs()
         padx=50
         pady=10
-        rwrow=gprow=qrow=0
-        t=ui.Label(self.runwindow.frame,text=title,font='title')
-        t.grid(row=rwrow,column=0,sticky='ew')
-        text=_("This page allows you to join the {0}-{1} draft underlying tone "
-                "groups created for you by {2}, \nwhich are almost certainly "
-                "too small for you. \nLooking at a draft report, and making "
-                "your own judgement about which groups belong together, select "
-                "all the groups that belong together, and give that new group "
-                "a name. Afterwards, you can do this again for other groups "
-                "that should be joined. \nIf for any reason you want to undo "
-                "the groups you create here (e.g., you make a mistake or sort "
-                "new data), just run the default report, which will redo the "
-                "default analysis, which will replace these groupings with new "
-                "split groupings. \nTo see a report based on what you do "
-                "here, run the tone reports in the Advanced menu (without "
-                "analysis). ".format(ps,profile,program['name']))
-        rwrow+=1
-        i=ui.Label(self.runwindow.frame,text=text,
-                    row=rwrow,column=0,sticky='ew')
-        i.wrap()
-        rwrow+=1
-        qframe=ui.Frame(self.runwindow.frame)
-        qframe.grid(row=rwrow,column=0,sticky='ew')
-        text=_("What do you want to call this UF tone group for {}-{} words?"
-                "".format(ps,profile))
-        qrow+=1
-        q=ui.Label(qframe,text=text,
-                    row=qrow,column=0,sticky='ew',pady=20
-                    )
-        q.wrap()
-        named=tkinter.StringVar() #store the new name here
-        namefield = ui.EntryField(qframe,textvariable=named)
-        namefield.grid(row=qrow,column=1)
-        namefield.bind('<Key>', clearerror)
-        errorlabel=ui.Label(qframe,text='',fg='red')
-        errorlabel.grid(row=qrow,column=2,sticky='ew',pady=20)
-        text=_("Select the groups below that you want in this {} group, then "
-                "click ==>".format(ps))
-        qrow+=1
-        d=ui.Label(qframe,text=text)
-        d.grid(row=qrow,column=0,sticky='ew',pady=20)
-        sub_btn=ui.Button(qframe,text = _("OK"), command = submitform, anchor ='c')
-        sub_btn.grid(row=qrow,column=1,sticky='w')
-        done_btn=ui.Button(qframe,text = _("Done —no change"), command = done,
-                                                                    anchor ='c')
-        done_btn.grid(row=qrow,column=2,sticky='w')
-        groupvars=list()
-        rwrow+=1
-        scroll=ui.ScrollingFrame(self.runwindow.frame)
-        scroll.grid(row=rwrow,column=0,sticky='ew')
-        self.makeanalysis()
-        self.analysis.donoUFanalysis()
-        nheaders=0
-        if not self.analysis.orderedUFs:
-            self.runwindow.waitdone()
-            self.runwindow.destroy()
-            ErrorNotice(title="No draft UF groups found!",
-                        text="You don't seem to have any analyzed groups to "
-                                "join/rename. Have you done a tone analyis?"
+        title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
+                        ).format(ps,profile,group,check)
+        self.getrunwindow(title=title)
+        menu=self.runwindow.removeverifymenu()
+        titlel=ui.Label(self.runwindow.frame,text=title,font='title',
+                        row=0,column=0,sticky='ew',padx=padx,pady=pady
                         )
-            return
-        # ufgroups= # order by structured groups? Store this somewhere?
-        for group in self.analysis.orderedUFs: #make a variable and button to select
-            idn=self.analysis.orderedUFs.index(group)
-            if idn % 5 == 0: #every five rows
-                col=1
-                for check in self.analysis.orderedchecks:
-                    col+=1
-                    cbh=ui.Label(scroll.content, text=check, font='small')
-                    cbh.grid(row=idn+nheaders,
-                            column=col,sticky='ew')
-                nheaders+=1
-            groupvars.append(tkinter.StringVar())
-            n=len(self.analysis.senseidsbygroup[group])
-            buttontext=group+' ({})'.format(n)
-            cb=ui.CheckButton(scroll.content, text = buttontext,
-                                variable = groupvars[idn],
-                                onvalue = group, offvalue = 0,
-                                )
-            cb.grid(row=idn+nheaders,column=0,sticky='ew')
-            # self.analysis.valuesbygroupcheck[group]:
-            col=1
-            for check in self.analysis.orderedchecks:
-                col+=1
-                if check in self.analysis.valuesbygroupcheck[group]:
-                    cbl=ui.Label(scroll.content,
-                        text=unlist(
-                                self.analysis.valuesbygroupcheck[group][check]
-                                    )
+        getformtext=_("What new name do you want to call this surface tone "
+                        "group? A label that describes the surface tone form "
+                        "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
+        getform=ui.Label(self.runwindow.frame,
+                        text=getformtext,
+                        font='read',
+                        norender=True,
+                        row=1,column=0,sticky='ew',padx=padx,pady=pady
+                        )
+        getform.wrap()
+        inputframe=ui.Frame(self.runwindow.frame,
+                            row=2,column=0,sticky=''
                             )
-                    cbl.grid(row=idn+nheaders,column=col,sticky='ew')
+        buttonframe=ui.Frame(inputframe,
+                            row=0,column=0,sticky='new'
+                            )
+        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
+        spaces=[' ',' ','']
+        for char in tonechars+spaces:
+            if char == ' ':
+                text=_('syllable break')
+                column=0
+                columnspan=int(len(tonechars)/2)+1
+                row=1
+            elif char == ' ':
+                text=_('word break')
+                columnspan=int(len(tonechars)/2)
+                column=columnspan+1
+                row=1
+            elif char == '':
+                text=_('clear entry')
+                column=0
+                columnspan=len(tonechars)
+                row=2
+            else:
+                column=tonechars.index(char)
+                text=char
+                columnspan=1
+                row=0
+            ui.Button(buttonframe,text = text,
+                        command = lambda x=char:addchar(x),
+                        anchor ='c',
+                        row=row,
+                        column=column,
+                        sticky='nsew',
+                        columnspan=columnspan
+                        )
+        g=nn(notthisgroup,twoperline=True)
+        log.info("There: {}, NTG: {}; g:{}".format(groupsthere,notthisgroup,g))
+        groupslabel=ui.Label(inputframe,
+                            text='Other Groups:\n{}'.format(g),
+                            row=0,column=1,
+                            sticky='new',
+                            padx=padx,
+                            rowspan=2
+                            )
+        fieldframe=ui.Frame(inputframe,
+                            row=1,column=0,sticky='new'
+                            )
+        formfield = ui.EntryField(fieldframe,textvariable=newname,
+                                    row=1,column=0,sticky='new',
+                                    font='readbig')
+        formfield.bind('<KeyRelease>', updatelabels) #apply function after key
+        errorlabel=ui.Label(fieldframe,text='',
+                            fg='red',
+                            wraplength=int(self.frame.winfo_screenwidth()/3),
+                            row=1,column=1,sticky='nsew'
+                            )
+        formhashlabel=ui.Label(fieldframe,
+                                textvariable=namehash,
+                                anchor ='c',
+                                row=2,column=0,sticky='new'
+                                )
+        fieldframe.grid_columnconfigure(0, weight=1)
+        updatelabels()
+        responseframe=ui.Frame(self.runwindow.frame,
+                                row=3,
+                                column=0,
+                                sticky='',
+                                padx=padx,
+                                pady=pady
+                                )
+        ok=_('Use this name and go to:')
+        sub_lbl=ui.Label(responseframe,text = ok, font='read',
+                        row=0,column=0,sticky='ns'
+                        )
+        t=_('main screen')
+        sub_btn=ui.Button(responseframe,text = t, command = done, anchor ='c',
+                            row=0,column=1,sticky='ns'
+                            )
+        # if reverify == False: #don't give this option if verifying
+        t=_('next group')
+        sub_btn=ui.Button(responseframe,text = t,command = next,anchor ='c',
+                            row=0,column=2,sticky='ns'
+                            )
+        t=_('next tone frame')
+        sub_f=ui.Button(responseframe,text = t,command = nextcheck,
+                        row=0,column=3,sticky='ns'
+                        )
+        t=_('next syllable profile')
+        sub_p=ui.Button(responseframe,text = t,command = nextprofile,
+                        row=0,column=4,sticky='ns'
+                        )
+        examplesframe=ui.Frame(self.runwindow.frame,
+                                row=4,column=0,sticky=''
+                                )
+        b=ToneGroupButtonFrame(examplesframe, self, self.exs,
+                                group,
+                                showtonegroup=True,
+                                # canary=entryview,
+                                playable=True,
+                                unsortable=True,
+                                alwaysrefreshable=True,
+                                row=0, column=0, sticky='w',
+                                wraplength=buttonframew
+                                )
+        compframe=ui.Frame(examplesframe,
+                    highlightthickness=10,
+                    highlightbackground=self.frame.theme.white,
+                    row=0,column=1,sticky='e'
+                    ) #no hlfg here
+        t=_('Compare with another group')
+        sub_c=ui.Button(compframe,
+                        text = t,
+                        command = setgroup_comparison,
+                        row=0,column=0
+                        )
+        comparisonbuttons()
         self.runwindow.waitdone()
-        self.runwindow.wait_window(scroll)
+        sub_btn.wait_window(self.runwindow) #then move to next step
+        """Store these variables above, finish with (destroying window with
+        local variables):"""
+    def __init__(self, parent): #frame, filename=None
+        """Does this need Tone classing?"""
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+class Report(object):
+    def makeanalysis(self,**kwargs):
+        if not hasattr(self,'analysis'):
+            self.analysis=Analysis(self.params,
+                                    self.slices,
+                                    self.status,
+                                    self.db,
+                                    **kwargs
+                                    )
+        else:
+            self.analysis.setslice(**kwargs)
     def consultantcheck(self):
         self.reloadstatusdata()
         self.tonegroupreportcomprehensive()
@@ -6235,6 +5978,195 @@ class Check(TaskDressing,ui.Window):
         r.close()
         if me:
             resultswindow.destroy()
+    def makeresultsframe(self):
+        if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
+            self.results = ui.Frame(self.runwindow.frame,width=800)
+            self.results.grid(row=0, column=0)
+        else:
+            log.error("Tried to get a results frame without a runwindow!")
+    def getresults(self):
+        self.getrunwindow()
+        self.makeresultsframe()
+        self.adhocreportfileXLP=''.join([str(self.reportbasefilename)
+                                        ,'_',str(ps)
+                                        ,'-',str(profile)
+                                        ,'_',str(check)
+                                        ,'_ReportXLP.xml'])
+        xlpr=self.xlpstart()
+        """"Do I need this?"""
+        self.results.grid(column=0,
+                        row=self.runwindow.frame.grid_info()['row']+1,
+                        columnspan=5,
+                        sticky=(tkinter.N, tkinter.S, tkinter.E, tkinter.W))
+        print(_("Getting results of Search request"))
+        c1 = "Any"
+        c2 = "Any"
+        i=0
+        """nn() here keeps None and {} from the output, takes one string,
+        list, or tuple."""
+        text=(_("{} roots of form {} by {}".format(ps,profile,check)))
+        ui.Label(self.results, text=text).grid(column=0, row=i)
+        self.runwindow.wait()
+        si=xlp.Section(xlpr,text)
+        # p=xlp.Paragraph(si,instr)
+        font=self.frame.fonts['read']
+        self.results.scroll=ui.ScrollingFrame(self.results)
+        self.results.scroll.grid(column=0, row=1)
+        senseid=0 # in case the following doesn't find anything:
+        for group in self.s[self.analang][cvt]:
+            log.debug('group: {}'.format(group))
+            self.buildregex() #It would be nice fo this to iterate through...
+            senseidstocheck=self.senseidformsbyregex(self.regex)
+            if len(senseidstocheck)>0:
+                id=rx.id('x'+ps+profile+check+group)
+                ex=xlp.Example(si,id)
+            for senseid in senseidstocheck: #self.senseidformstosearch[lang][ps]
+                # where self.regex(self.senseidformstosearch[lang][ps][senseid]):
+                """This regex is compiled!"""
+                framed=self.datadict.getframeddata(senseid) #not framed!
+                o=framed.formatted(noframe=True)
+                self.framedtoXLP(framed,parent=ex,listword=True)
+                def makeimg():
+                    img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
+                    "/pictures/button.png")
+                    if o[4] is not None:
+                        img = tkinter.PhotoImage(file = lift_file.liftdirstr()+'/'
+                        +o[4])
+                        #use this template to add other pictures to GUI.
+                    else:
+                        img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
+                            "/pictures/button.png")
+                        #Resizing image to fit on button
+                        image = Image.open(img)
+                        photoimage = image.resize((34, 26), Image.ANTIALIAS)
+                        photo = ImageTk.PhotoImage(image)
+                        photoimage = image.subsample(3, 3)
+                        ui.Button(self.results, width=800, image=photoimage).grid(column=0)
+                i+=1
+                # b=Button(self.results.scroll.content,
+                #         choice=senseid, text=o,
+                #         window=self.runwindow.frame,
+                #         row=i, column=0, font=font, command=self.picked)
+                col=0
+                for lang in [self.analang]+self.glosslangs:
+                    col+=1
+                    if lang in framed.forms:
+                        ui.Label(self.results.scroll.content,
+                            text=framed.forms[lang], font=font,
+                            anchor='w',padx=10).grid(row=i, column=col,
+                                                        sticky='w')
+                if self.su==True:
+                    notok=ui.Button(self.results.scroll.content,
+                            choice=senseid, text='X',
+                            window=self.runwindow.frame,
+                            width=15, row=i,
+                            column=1, command=self.notpicked)
+        xlpr.close(me=me)
+        self.runwindow.waitdone()
+        if senseid == 0: #i.e., nothing was found above
+            print(_('No results!'))
+            ui.Label(self.results, text=_("No results for ")+self.regexCV+"!"
+                            ).grid(column=0, row=i+1)
+            return
+    def buildregex(self):
+        """include profile (of those available for ps and check),
+        and subcheck (e.g., a: CaC\2)."""
+        """Provides self.regexCV and self.regex"""
+        self.regexCV=None #in case this was run before.
+        log.log(2,'profile:',profile)
+        log.log(2,'cvt:',cvt)
+        maxcount=re.subn(cvt, cvt, profile)[1]
+        if profile is None:
+            print("It doesn't look like you've picked a syllable profile yet.")
+            return
+        """Don't need this; only doing count=1 at a time. Let's start with
+        the easier ones, with the first occurrance changed."""
+        self.regexCV=str(profile) #Let's set this before changing it.
+        """One pass for all regexes, S3, then S2, then S1, as needed."""
+        cvts=['V','C']
+        cvt=self.params.cvt()
+        group=self.status.group()
+        if 'x' in check:
+            if self.subcheckcomparison in self.s[self.analang]['C']:
+                cvts=['C','V']
+        for t in cvts:
+            if t not in cvt:
+                continue
+            S=str(cvt)
+            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
+            compared=False
+            for occurrence in reversed(range(maxcount)):
+                occurrence+=1
+                if re.search(S+str(occurrence),check) is not None:
+                    """Get the (n=occurrence) S, regardless of intervening
+                    non S..."""
+                    regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
+                    if 'x' in check:
+                        if compared == False: #occurrence == 2:
+                            replS='\\1'+self.subcheckcomparison
+                            compared=True
+                        else: #if occurrence == 1:
+                            replS='\\1'+group
+                    else:
+                        replS='\\1'+group
+                    self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
+        """Final step: convert the CVx code to regex, and store in self."""
+        self.regex=rx.fromCV(self,lang=self.analang,
+                            word=True, compile=True)
+    def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None,xcounts=None):
+        #values should be a (lambda?) function that depends on x and y terms
+        #ycounts should be a lambda function that depends on yterms
+        log.info("Making table with caption {}".format(caption))
+        t=xlp.Table(parent,caption)
+        rows=list(yterms)
+        nrows=len(rows)
+        cols=list(xterms)
+        ncols=len(cols)
+        if nrows == 0:
+            return
+        if ncols == 0:
+            return
+        for row in ['header']+list(range(nrows)):
+            if row != 'header':
+                row=rows[row]
+            r=xlp.Row(t)
+            for col in ['header']+list(range(ncols)):
+                log.log(4,"row: {}; col: {}".format(row,col))
+                if col != 'header':
+                    col=cols[col]
+                log.log(4,"row: {}; col: {}".format(row,col))
+                if row == 'header' and col == 'header':
+                    log.log(2,"header corner")
+                    cell=xlp.Cell(r,content='',header=True)
+                elif row == 'header':
+                    log.log(2,"header row")
+                    if xcounts is not None:
+                        hxcontents='{} ({})'.format(col,xcounts(col))
+                    else:
+                        hxcontents='{}'.format(col)
+                    cell=xlp.Cell(r,content=linebreakwords(hxcontents),
+                                header=True,
+                                linebreakwords=True)
+                elif col == 'header':
+                    log.log(2,"header column")
+                    if ycounts is not None:
+                        hycontents='{} ({})'.format(row,ycounts(row))
+                    else:
+                        hycontents='{}'.format(row)
+                    cell=xlp.Cell(r,content=hycontents,
+                                header=True)
+                else:
+                    log.log(2,"Not a header")
+                    try:
+                        value=values(col,row)
+                        log.log(2,"value ({},{}):{}".format(col,row,
+                                                        values(col,row)))
+                    except KeyError:
+                        log.info("Apparently no value for col:{}, row:{}"
+                                "".format(col,row))
+                        value=''
+                    finally: # we need each cell to be there...
+                        cell=xlp.Cell(r,content=value)
     def xlpstart(self,**kwargs):
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
@@ -6258,6 +6190,238 @@ class Check(TaskDressing,ui.Window):
         for lang in set([self.analang]+self.glosslangs)-set([None]):
             xlpreport.addlang({'id':lang,'name': self.settings.languagenames[lang]})
         return xlpreport
+    def senseidformsbyregex(self,regex):
+        """This function takes in a compiled regex,
+        and outputs a list/dictionary of senseid/{senseid:form} form."""
+        output=[] #This is just a list of senseids now: (Do we need the dict?)
+        for form in self.formstosearch[ps]:
+            if regex.search(form):
+                output+=self.formstosearch[ps][form]
+        return output
+    def buildregex(self):
+        """include profile (of those available for ps and check),
+        and subcheck (e.g., a: CaC\2)."""
+        """Provides self.regexCV and self.regex"""
+        self.regexCV=None #in case this was run before.
+        log.log(2,'profile:',profile)
+        log.log(2,'cvt:',cvt)
+        maxcount=re.subn(cvt, cvt, profile)[1]
+        if profile is None:
+            print("It doesn't look like you've picked a syllable profile yet.")
+            return
+        """Don't need this; only doing count=1 at a time. Let's start with
+        the easier ones, with the first occurrance changed."""
+        self.regexCV=str(profile) #Let's set this before changing it.
+        """One pass for all regexes, S3, then S2, then S1, as needed."""
+        cvts=['V','C']
+        cvt=self.params.cvt()
+        group=self.status.group()
+        if 'x' in check:
+            if self.subcheckcomparison in self.s[self.analang]['C']:
+                cvts=['C','V']
+        for t in cvts:
+            if t not in cvt:
+                continue
+            S=str(cvt)
+            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
+            compared=False
+            for occurrence in reversed(range(maxcount)):
+                occurrence+=1
+                if re.search(S+str(occurrence),check) is not None:
+                    """Get the (n=occurrence) S, regardless of intervening
+                    non S..."""
+                    regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
+                    if 'x' in check:
+                        if compared == False: #occurrence == 2:
+                            replS='\\1'+self.subcheckcomparison
+                            compared=True
+                        else: #if occurrence == 1:
+                            replS='\\1'+group
+                    else:
+                        replS='\\1'+group
+                    self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
+        """Final step: convert the CVx code to regex, and store in self."""
+        self.regex=rx.fromCV(self,lang=self.analang,
+                            word=True, compile=True)
+    def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
+        xlp.Paragraph(parent,t)
+        print(t)
+        log.debug(t)
+        self.buildregex()
+        log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
+                                                        self.regexCV))
+        matches=set(self.senseidformsbyregex(self.regex))
+        for typenum in self.typenumsRun:
+            # this removes senses already reported (e.g., in V1=V2)
+            matches-=self.basicreported[typenum]
+        log.log(2,"{} matches found!: {}".format(len(matches),matches))
+        group=self.status.group()
+        if 'x' in check:
+            n=self.checkcounts[ps][profile][check][
+                            group][self.subcheckcomparison]=len(matches)
+        else:
+            n=self.checkcounts[ps][profile][check][
+                            group]=len(matches)
+            if '=' in check:
+                xname=re.sub('=','x',check, count=1)
+                log.debug("looking for name {} in {}".format(xname,
+                                                    self.checkcodesbyprofile))
+                if xname in self.checkcodesbyprofile:
+                    log.debug("Adding {} value to name {}".format(len(matches),
+                                                                        xname))
+                    #put the results in that group, too
+                    log.debug(self.checkcounts)
+                    if xname not in self.checkcounts[ps][profile]:
+                        self.checkcounts[ps][profile][xname]={}
+                    if group not in self.checkcounts[ps][
+                                    profile][xname]:
+                        self.checkcounts[ps][profile][xname][group]={}
+                    self.checkcounts[ps][profile][xname][group][group
+                                                                ]=len(matches)
+                    log.debug(self.checkcounts)
+        if n>0:
+            titlebits='x'+ps+profile+check+group
+            if 'x' in check:
+                titlebits+='x'+self.subcheckcomparison
+            id=rx.id(titlebits)
+            ex=xlp.Example(parent,id)
+            for senseid in matches:
+                for typenum in self.typenumsRun:
+                    self.basicreported[typenum].add(senseid)
+                framed=self.datadict.getframeddata(senseid)
+                self.framedtoXLP(framed,parent=ex,listword=True)
+    def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
+        """This function iterates across check and group values
+        appropriate for the specified self.type, profile and check
+        values (ps is irrelevant here).
+        Because two functions called (buildregex and getframeddata) use
+        check and group to do their work, they and their
+        dependents would need to be changed to fit a new paradigm, if we
+        were to change the variable here. So rather, we store the current
+        check and group values, then iterate across logically
+        possible values (as above), then restore the value."""
+        """I need to find a way to limit these tests to appropriate
+        profiles..."""
+        check=self.params.check()
+        group=self.status.group()
+        if cvt in ['V','C']:
+            groups=self.s[self.analang][cvt]
+        """This sets each of the checks that are applicable for the given
+        profile; self.basicreported is from self.basicreport()"""
+        for typenum in self.basicreported:
+            log.log(2, '{}: {}'.format(typenum,self.basicreported[typenum]))
+        """setnamesbyprofile doesn't depend on ps"""
+        self.checkcodesbyprofile=sorted([x[0] for x in self.setnamesbyprofile()],
+                                        key=len,reverse=True)
+        """check set here"""
+        for check in self.checkcodesbyprofile:
+            if check not in self.checkcounts[ps][profile]:
+                self.checkcounts[ps][profile][check]={}
+            self.typenumsRun=[typenum for typenum in self.typenums
+                                        if re.search(typenum,check)]
+            log.debug('check: {}; self.type: {}; self.typenums: {}; '
+                        'self.typenumsRun: {}'.format(check,cvt,
+                                                self.typenums,self.typenumsRun))
+            if len(check) == 1:
+                log.debug("Error! {} Doesn't seem to be list formatted.".format(
+                                                                    check))
+            if 'x' in check:
+                log.debug('Hey, I cound a correspondence number!')
+                if cvt in ['V','C']:
+                    subcheckcomparisons=groups
+                elif cvt == 'CV':
+                    subchecks=self.s[self.analang]['C']
+                    subcheckcomparisons=self.s[self.analang]['V']
+                else:
+                    log.error("Sorry, I don't know how to compare cvt: {}"
+                                                        "".format(cvt))
+                for group in groups:
+                    if group not in self.checkcounts[ps][
+                                                    profile][check]:
+                        self.checkcounts[ps][profile][check][group]={}
+                    for self.subcheckcomparison in subcheckcomparisons:
+                        if group != self.subcheckcomparison:
+                            t=_("{} {} {}={}-{}".format(ps,profile,
+                                                check,group,
+                                                self.subcheckcomparison))
+                            self.wordsbypsprofilechecksubcheckp(parent=parent,
+                                                                            t=t)
+            else:
+                for group in groups:
+                    t=_("{} {} {}={}".format(ps,profile,check,
+                                                                group))
+                    self.wordsbypsprofilechecksubcheckp(parent=parent,t=t)
+    def idXLP(self,framed):
+        id='x' #string!
+        bits=[
+            self.params.cvt(),
+            self.slices.ps(),
+            self.slices.profile(),
+            ]
+        if hasattr(framed,'check'):
+            bits.append(framed.check)
+        if hasattr(framed,'tonegroup'):
+            bits.append(framed.tonegroup)
+        for lang in self.glosslangs:
+            if lang in framed.forms and framed.forms[lang] is not None:
+                bits+=framed.forms[lang]
+        for x in bits:
+            if x is not None:
+                id+=x
+        return rx.id(id) #for either example or listword
+    def framedtoXLP(self,framed,parent,listword=False,groups=True):
+        """This will likely only work when called by
+        wordsbypsprofilechecksubcheck; but is needed because it must return if
+        the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
+        """parent is an example in the XLP report"""
+        id=self.idXLP(framed)
+        if listword == True:
+            ex=xlp.ListWord(parent,id)
+        else:
+            exx=xlp.Example(parent,id) #the id goes here...
+            ex=xlp.Word(exx) #This doesn't have an id
+        if self.audiolang in framed.forms:
+            url=file.getdiredrelURL(self.reporttoaudiorelURL,
+                                                framed.forms[self.audiolang])
+            el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang],
+                                                                    str(url))
+        else:
+            el=xlp.LangData(ex,self.analang,framed.forms[self.analang])
+        if hasattr(framed,'tonegroup') and groups is True: #joined groups show each
+            elt=xlp.LangData(ex,self.analang,framed.tonegroup)
+        for lang in self.glosslangs:
+            if lang in framed.forms:
+                xlp.Gloss(ex,lang,framed.forms[lang])
+    def printcountssorted(self):
+        #This is only used in the basic report
+        log.info("Ranked and numbered syllable profiles, by grammatical category:")
+        nTotal=0
+        nTotals={}
+        for line in self.slices: #profilecounts:
+            profile=line[0]
+            ps=line[1]
+            nTotal+=self.slices[line]
+            if ps not in nTotals:
+                nTotals[ps]=0
+            nTotals[ps]+=self.slices[line]
+        print('Profiled data:',nTotal)
+        """Pull this?"""
+        for ps in self.slices.pss():
+            if ps == 'Invalid':
+                continue
+            log.debug("Part of Speech {}:".format(ps))
+            for line in self.slices.valid(ps=ps):
+                profile=line[0]
+                ps=line[1]
+                log.debug("{}: {}".format(profile,self.slices[line]))
+            print(ps,"(total):",nTotals[ps])
+    def printprofilesbyps(self):
+        #This is only used in the basic report
+        log.info("Syllable profiles actually in senses, by grammatical category:")
+        for ps in self.profilesbysense:
+            if ps == 'Invalid':
+                continue
+            print(ps, self.profilesbysense[ps])
     def basicreport(self,cvtstodo=['V']):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
@@ -6389,231 +6553,339 @@ class Check(TaskDressing,ui.Window):
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         self.frame.parent.waitdone()
         self.type=typeori
-    """These are old paradigm CV funcs, with too many arguments, and guids"""
-    def picked(self,choice,**kwargs):
-        return
-        entry.addresult(check, result='OK') #let's not translate this...
-        debug()
-        window=ui.Window(parent, title='Same! '+entry.lexeme+': '
-                        +entry.guid)
-        result=(entry.citation,nn(entry.plural),nn(entry.imperative),
-                    nn(entry.ps),nn(entry.gloss))
-        ui.Button(window.frame, width=80, text=result,
-            command=window.destroy).grid(column=0, row=0)
-        window.exitButton=''
-    def notpicked(self,choice):
-        """I should think through what I want for this button/script."""
-        if entry is None:
-            log.info("No entry!")
-            """Probably a bad idea"""
-            entry=Entry(db, parent, window, check, guid=choice)
-        entry.addresult(check, result='NOTok')
-        window=ui.Window(parent, title='notpicked: Different! '
-                        +entry.lexeme+': '+entry.guid)
-        result=entry.citation,nn(entry.plural),nn(entry.imperative),nn(entry.ps),
-        nn(entry.gloss)
-        ui.Label(window.frame, width=40, text=result).grid(row=0,column=0)
-        q=(_("What is wrong with this word?"))
-        ui.Label(window.frame, text=q).grid(column=0, row=1)
-        if check.name == "V1=V2":
-            bcv1nv2=(_("Two different vowels (V1≠V2)"))
-            bscv1isv2nsc=(_("Vowels are the same, but the wrong vowel"))
-            problemopts=[("badCheck",bcv1nv2),
-                ("badSubcheck",bscv1isv2nsc+" (V1=V2≠"+check.subcheck+")")]
-        else:
-            log.info("Sorry, that check isn't set up yet.")
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    window=window,
-                                    optionlist=problemopts,
-                                    command=Check.fixdiff,
-                                    width="50",
-                                    column=0, row=3
-                                    )
-        i=4 #start at this row
-        print(result)
-    def fixV12(parent, window, check, entry, choice):
-        """This and following scripts represent a structure of the program
-        which is way more complex than we want. We have to think through how
-        to organize the functions and windows in such a way as the UI is
-        straightforward and completely unconfusing."""
-        window.title=(_("TITLE!"))
-        ui.Label(window.frame, text=entry.citation+' - '+entry.gloss,
-                        anchor=tkinter.W).grid(column=0, row=0, columnspan=2)
-        q1=_("It looks like the vowels are the same, but not the correct vowel;"
-            " let's fix that.")
-        ui.Label(window.frame, text=q1,anchor=tkinter.W).grid(column=0, row=2,
-                                                                columnspan=2)
-        q2=_("What are the two vowels?")
-        ui.Label(window.frame, text=q2,anchor=tkinter.W).grid(column=0, row=3,
-                                                                columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,
-                                window=window,
-                                optionlist=check.db.vowels(),
-                                command=Check.fixVs,
-                                column=0, row=4
-                                )
-    def fixV1(parent, window, check, entry, choice):
-        t=(_('fixV1:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
-        print(t)
-        check.fix='V1'
-        #window.destroy()
-        #window=ui.Window(self.frame,, title=t, entry=entry, backcmd=fixdiff)
-        window.resetframe()
-        t2=(_("It looks like the vowels aren't the same; let's fix that."))
-        ui.Label(window.frame, text=t2, justify=tkinter.LEFT).grid(column=0,
-                                                                    row=0,
-                                                                columnspan=2)
-        t3=(_("What is the first vowel? (C_CV)"))
-        ui.Label(window.frame, text=t3, anchor=tkinter.W).grid(column=0,
-                                                                row=1,
-                                                                columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,
-                                window=window,
-                                optionlist=check.db.vowels(),
-                                command=Check.newform,
-                                column=0, row=2
-                                )
-    def fixV2(parent, window, check, entry, choice):
-        check.fix='V2'
-        t=(_('fixV2:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
-        t=(_("What is the second vowel?"))
-        ui.Label(window.frame, text=t,justify=tkinter.LEFT).grid(column=0, row=1, columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,
-                                    window=window,
-                                    optionlist=check.db.vowels(),
-                                    command=Check.newform,
-                                    column=0, row=2
-                                    )
-    def fixdiff(parent, window, check, entry, choice):
-        """We need to fix problems in a more intuitively obvious way"""
-        entry.problem=choice
-        entry.addresult(check, result=entry.problem)
-        window.destroy()
-        window=ui.Window(self.frame.parent, entry=entry, backcmd=notpickedback)
-        ui.Label(window, text="Let's fix those problems").grid(column=0, row=0)
-        if entry.problem == "badCheck": #This isn't the right check for this entry --re.search("V1≠V2",difference):
-            window.destroy()
-            t=(_("fixVs:Different vowels! "))+entry.lexeme+': '+entry.guid
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
-            Check.fixV1(parent, window, check, entry, choice)
-            window.wait_window(window=window)
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
-            Check.fixV2(parent, window, check, entry, choice) #I should make this wait until the first one finishes..…
-            window.wait_window(window=window)
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
-            Check.fixVs(parent, window, check, entry, choice)
-        elif entry.problem == "badSubcheck": #This isn't the right subcheck for this entry --re.search("V1=V2≠"+Vo,difference): #
-            window.destroy()
-            t=(_("fixVs:Same Vowel, but wrong one! "))+entry.lexeme+': '+entry.guid
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
-            Check.fixV12(parent, window, check, entry, choice)
-        else:
-            log.info("Huh? I don't understand what the user wants.")
-        Check.fixVs
-    def fixVs(parent, window, check, entry, choice):
-        #This isn't working yet.
-        log.info("running fixVs!!!!???!??!?!?!?")
-
-        #I need to rework this to work more generally..….
-        ui.Label(window.frame, text="I will make the following changes:").grid(column=0, row=0)
-        lexemeNew=entry.newform #newform(entry.lexeme,'v12',check.subcheck,choice)
-        citationNew = re.sub(entry.lexeme, lexemeNew, entry.citation)
-        ui.Label(window.frame, text="citation: "+entry.citation+" → "+citationNew).grid(column=0, row=1)
-        ui.Label(window.frame, text="lexeme: "+entry.lexeme+" → "+lexemeNew).grid(column=0, row=2)
-        fields={}
-        if entry.plural is not None:
-            pluralNew = re.sub(entry.lexeme, lexemeNew, entry.plural)
-            ui.Label(window.frame, text="plural: "+plural+" → "+pluralNew).grid(column=0, row=3)
-            fields={'Plural'}
-        if entry.imperative is not None:
-            imperativeNew = re.sub(entry.lexeme, lexemeNew, entry.imperative)
-            ui.Label(window.frame, text="imperative: "+entry.imperative+" → "+imperativeNew).grid(column=0, row=4)
-        def ok():
-            entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-ok')
-            entry.db.log(entry.guid+": lexeme: "+entry.lexeme+" → "+lexemeNew)
-            entry.put.lexeme(entry,lexemeNew)
-            entry.db.log(entry.guid+": citation: "+entry.citation+" → "+citationNew)
-            entry.put.citation(entry,citationNew)
-            #lift_mod.field(guid,fieldtype,newform)
-            entry.db.write() #put this in lift.py
-            window.destroy()
-        def notok():
-            entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-NOTok')
-        ui.Button(window, width=10, text="OK", command=ok).grid(row=1,column=0)
-        #This is where we should call addresult, and write to file.
-        ui.Button(window, width=15, text="Not OK (Go Back)", command=notok).grid(row=1,column=1)
-    def newform(parent, window, check, entry, choice):
-        #I need to rework this to work more generally..….
-        #or even to work once. The logic is bad.
-        C=check.C
-        V=check.V
-        xi=1
-        if check.fix == "V1":
-            r=str('('+V+')'+'('+C+')'+'('+V+')')
-            sub=(choice+r"\2\3")
-            log.info("Note: this assumes we're changing one of two vowels "
-                "separated by a consonant")
-            #I want to access the second group...
-            #print(r)
-        elif check.fix == "C1":
-            r=str('(('+C+'))'+'('+V+')'+'('+C+')')
-            print(r)
-            log.info("Note: this assumes we're changing one of two consonants "
-                "separated by a vowel")
-        elif check.fix == "V2":
-            r=str('('+V+')'+'('+C+')'+'('+V+')')
-            sub=(r"\1\2"+choice)
-            print("Note: this assumes we're changing one of two vowels "
-                "separated by a consonant")
-            #print(r)
-        elif check.fix == "C2":
-            r=str('('+C+')'+V+'('+C+')')
-            print(r)
-        else:
-            log.info("Fix "+check.fix +" undefined.")
-        def old():
-            if check.fix == ("V1" or "C1"):
-                ximin=1
-                ximax=1
-            elif check.fix == ("V2" or "C2"):
-                ximin=2
-                ximax=2
-            elif check.fix == ("V12" or "C12"):
-                ximin=1
-                ximax=2
-        #print(check.subcheck, value, entry.newform)
-        #I need this to find the point I'm trying to change, even if it has been
-        #changed before, and even if another part of the same word has already
-        #been changed, e.g., another vowel in another position. So I need to use
-        #the newform when present (i.e., changes have been made but not confirmed)
-        #but refer to the lexeme item for reference (e.g., which subcheck I'm running.)
-        try: # use a previous entry.newform, if it exists:
-            baseform=entry.newform
-            entry.newform=''
-            log.info("Using newform")
+class ReportCitation(Report,TaskDressing,ui.Window):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Make Reports on Citation Forms")
+    def __init__(self, parent): #frame, filename=None
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
+    """docstring for ReportCitationT."""
+    def tasktitle(self):
+        return _("Make Reports on Citation Form Sorting in Tone Frames")
+    def __init__(self, parent): #frame, filename=None
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+class Record(object):
+    """This holds all the Recording methods."""
+    def donewpyaudio(self):
+        try:
+            self.pyaudio.terminate()
         except:
-            baseform=entry.lexeme
-            log.info("Using lexeme")
-            #entry.newform = re.sub(check.subcheck, choice, entry.newform, count=1)
-        print('r: '+r)
-        print('sub: '+sub)
-        print('baseform: '+baseform)
-        entry.newform=re.sub(r, sub, baseform)
-        print('newform: '+entry.newform)
-        def old2():
-            for x in baseform:
-                if x == check.subcheck: # <= ximax ):
-                    if ximin <= xi <= ximax:
-                        try:
-                            entry.newform=entry.newform+choice #+str(xi)
-                        except:
-                            entry.newform=choice #+str(xi)
-                    else:
-                        try:
-                            entry.newform=entry.newform+x #+"_"
-                        except:
-                            entry.newform=x #+"_"
-                    xi += 1
+            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
+    def soundcheckrefreshdone(self):
+        self.settings.storesettingsfile(setting='soundsettings')
+        self.soundsettingswindow.destroy()
+    def soundcheckrefresh(self):
+        self.soundsettingswindow.resetframe()
+        row=0
+        ui.Label(self.soundsettingswindow.frame, font='title',
+                text="Current Sound Card Settings (click any to change):",
+                row=row,column=0)
+        row+=1
+        ss=self.soundsettings
+        ss.check() #make defaults if not valid options
+        for varname, dict, cmd in [
+            ('audio_card_in', ss.cards['dict'], self.getsoundcardindex),
+            ('fs',ss.hypothetical['fss'], self.getsoundhz),
+            ('sample_format', ss.hypothetical['sample_formats'],
+                                                         self.getsoundformat),
+            ('audio_card_out', ss.cards['dict'], self.getsoundcardoutindex),
+                                                    ]:
+            text=_("Change")
+            var=getattr(ss,varname)
+            log.debug("{} in {}".format(var,dict))
+            l=dict[var]
+            if cmd == self.getsoundcardindex:
+                l=_("Microphone: ‘{}’").format(l)
+            if cmd == self.getsoundcardoutindex:
+                l=_("Speakers: ‘{}’").format(l)
+            l=ui.Label(self.soundsettingswindow.frame,text=l,
+                    row=row,column=0)
+            l.bind('<ButtonRelease>',cmd) #getattr(self,str(cmd)))
+            row+=1
+        br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
+        br.grid(row=row,column=0)
+        row+=1
+        l=_("You may need to change your microphone "
+            "\nand/or speaker sound card to get the "
+            "\nsampling and format you want.")
+        ui.Label(self.soundsettingswindow.frame,
+                text=l).grid(row=row,column=0)
+        row+=1
+        l=_("Make sure ‘record’ and ‘play’ work well here, "
+            "\nbefore recording real data!")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='read',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        l=_("See also note in documentation about verifying these "
+            "recordings in an external application, such as Praat.")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='instructions',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        l=_("If Praat is installed in your path, right click on play "
+            "to open in Praat.")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='default',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        bd=ui.Button(self.soundsettingswindow.frame,text=_("Done"),anchor='c',
+                                            cmd=self.soundcheckrefreshdone)
+        bd.grid(row=row,column=0)
+    def soundsettingscheck(self):
+        if not hasattr(self,'soundsettings'):
+            self.loadsoundsettings()
+    def soundcheck(self):
+        #Set the parameters of what could be
+        self.pyaudiocheck()
+        self.soundsettingscheck()
+        self.soundsettingswindow=ui.Window(self.frame,
+                                title=_('Select Sound Card Settings'))
+        self.soundcheckrefresh()
+        self.soundsettingswindow.wait_window(self.soundsettingswindow)
+        self.donewpyaudio()
+        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
+            self.soundsettingswindow.destroy()
+    def makelabelsnrecordingbuttons(self,parent,sense):
+        framed=self.datadict.getframeddata(sense['nodetoshow'])
+        t=framed.formatted(noframe=True)
+        for g in sense['glosses']:
+            if g:
+                t+='\t‘'+g
+                if ('plnode' in sense and
+                        sense['nodetoshow'] is sense['plnode']):
+                    t+=" (pl)"
+                if ('impnode' in sense and
+                        sense['nodetoshow'] is sense['impnode']):
+                    t+="!"
+                t+='’'
+        lxl=ui.Label(parent, text=t)
+        lcb=RecordButtonFrame(parent,self,framed)
+        lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
+        lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
+    def showentryformstorecordpage(self,ps=None,profile=None):
+        #The info we're going for is stored above sense, hence guid.
+        if self.runwindow.exitFlag.istrue():
+            log.info('no runwindow; quitting!')
+            return
+        if not self.runwindow.frame.winfo_exists():
+            log.info('no runwindow frame; quitting!')
+            return
+        self.runwindow.resetframe()
+        self.runwindow.wait()
+        count=self.slices.count()
+        text=_("Record {} {} Words: click ‘Record’, talk, "
+                "and release ({} words)".format(profile,ps,
+                                                count))
+        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w')
+        buttonframes=ui.ScrollingFrame(self.runwindow.frame)
+        buttonframes.grid(row=1,column=0,sticky='w')
+        row=0
+        done=list()
+        for senseid in self.slices.senseids(ps=ps,profile=profile):
+            sense={}
+            sense['column']=0
+            sense['row']=row
+            sense['senseid']=senseid
+            sense['guid']=firstoflist(self.db.get('entry',
+                                        senseid=senseid).get('guid'))
+            if sense['guid'] in done: #only the first of multiple senses
+                continue
+            else:
+                done.append(sense['guid'])
+            """These following two have been shifted down a level, and will
+            now return a list of form elements, each. Something will need to be
+            adjusted here..."""
+            sense['lxnode']=firstoflist(self.db.get('lexeme',
+                                                guid=sense['guid'],
+                                                lang=self.analang).get())
+            sense['lcnode']=firstoflist(self.db.get('citation',
+                                                guid=sense['guid'],
+                                                lang=self.analang).get())
+            sense['glosses']=[]
+            for lang in self.glosslangs:
+                sense['glosses'].append(firstoflist(self.db.glossordefn(
+                                                guid=sense['guid'],
+                                                glosslang=lang
+                                                ),othersOK=True))
+            if self.db.pluralname is not None:
+                sense['plnode']=firstoflist(self.db.get('field',
+                                        guid=sense['guid'],
+                                        lang=self.analang,
+                                        fieldtype=self.db.pluralname).get())
+            if self.db.imperativename is not None:
+                sense['impnode']=firstoflist(self.db.get('field',
+                                        guid=sense['guid'],
+                                        lang=self.analang,
+                                        fieldtype=self.db.imperativename).get())
+            if sense['lcnode'] is not None:
+                sense['nodetoshow']=sense['lcnode']
+            else:
+                sense['nodetoshow']=sense['lxnode']
+            self.makelabelsnrecordingbuttons(buttonframes.content,sense)
+            for node in ['plnode','impnode']:
+                if (node in sense) and (sense[node] is not None):
+                    sense['column']+=2
+                    sense['nodetoshow']=sense[node]
+                    self.makelabelsnrecordingbuttons(buttonframes.content,
+                                                    sense)
+            row+=1
+        self.runwindow.waitdone()
+        self.runwindow.wait_window(self.runwindow.frame)
+    def showentryformstorecord(self,justone=True):
+        # Save these values before iterating over them
+        #Convert to iterate over local variables
+        self.getrunwindow()
+        if justone==True:
+            self.showentryformstorecordpage()
+        else:
+            for psprofile in self.status.valid(): #self.profilecountsValid:
+                if self.runwindow.exitFlag.istrue():
+                    return 1
+                ps=psprofile[2]
+                profile=psprofile[1]
+                nextb=ui.Button(self.runwindow,text=_("Next Group"),
+                                        cmd=self.runwindow.resetframe) # .frame.destroy
+                nextb.grid(row=0,column=1,sticky='ne')
+                self.showentryformstorecordpage(ps=ps,profile=profile)
+        self.donewpyaudio()
+    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
+        def setskip(event):
+            self.runwindow.frame.skip=True
+            entryframe.destroy()
+        self.getrunwindow()
+        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
+            return
+        log.debug("Working with skip: {}".format(skip))
+        if skip == 'skip':
+            self.runwindow.frame.skip=True
+        else:
+            self.runwindow.frame.skip=skip
+        text=_("Words and phrases to record: click ‘Record’, talk, and release")
+        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w',columnspan=2)
+        if (self.entriestoshow is None) and (senses is None):
+            ui.Label(self.runwindow.frame, anchor='w',
+                    text=_("Sorry, there are no entries to show!")).grid(row=1,
+                                    column=0,sticky='w')
+            return
+        if self.runwindow.frame.skip == False:
+            skipf=ui.Frame(self.runwindow.frame)
+            skipb=ui.Button(skipf, text=linebreakwords(_("Skip to next undone")),
+                        cmd=skipf.destroy)
+            skipf.grid(row=1,column=1,sticky='w')
+            skipb.grid(row=0,column=0,sticky='w')
+            skipb.bind('<ButtonRelease>', setskip)
+        if senses is None:
+            senses=self.entriestoshow
+        for senseid in senses:
+            log.debug("Working on {} with skip: {}".format(senseid,
+                                                    self.runwindow.frame.skip))
+            examples=self.db.get('example',senseid=senseid).get()
+            if examples == []:
+                log.debug(_("No examples! Add some, then come back."))
+                continue
+            if ((self.runwindow.frame.skip == True) and
+                (lift.atleastoneexamplehaslangformmissing(
+                                                    examples,
+                                                    self.audiolang) == False)):
+                continue
+            row=0
+            if self.runwindow.exitFlag.istrue():
+                return 1
+            entryframe=ui.Frame(self.runwindow.frame)
+            entryframe.grid(row=1,column=0)
+            if progress is not None:
+                progressl=ui.Label(self.runwindow.frame, anchor='e',
+                    font='small',
+                    text="({} {}/{})".format(*progress)
+                    )
+                progressl.grid(row=0,column=2,sticky='ne')
+            """This is the title for each page: isolation form and glosses."""
+            titleframed=self.datadict.getframeddata(senseid,check=None)
+            if not titleframed or titleframed.forms[self.analang] is None:
+                entryframe.destroy() #is this ever needed?
+                continue
+            text=titleframed.formatted(noframe=True,showtonegroup=False)
+            ui.Label(entryframe, anchor='w', font='read',
+                    text=text).grid(row=row,
+                                    column=0,sticky='w')
+            """Then get each sorted example"""
+            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
+            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
+            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
+            examplesframe.grid(row=0,column=0,sticky='w')
+            examples.reverse()
+            for example in examples:
+                if (skip == True and
+                    lift.examplehaslangform(example,self.audiolang) == True):
+                    continue
+                """These should already be framed!"""
+                framed=self.datadict.getframeddata(example,senseid=senseid)
+                if not framed:
+                    exit()
+                if framed.forms[self.analang] is None: # when?
+                    continue
+                row+=1
+                """If I end up pulling from example nodes elsewhere, I should
+                probably make this a function, like getframeddata"""
+                text=framed.formatted()
+                if not framed:
+                    exit()
+                rb=RecordButtonFrame(examplesframe,self,framed)
+                rb.grid(row=row,column=0,sticky='w')
+                ui.Label(examplesframe, anchor='w',text=text
+                                        ).grid(row=row, column=1, sticky='w')
+            row+=1
+            d=ui.Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
+            d.grid(row=row,column=0)
+            self.runwindow.waitdone()
+            examplesframe.wait_window(entryframe)
+            if self.runwindow.exitFlag.istrue():
+                return 1
+            if self.runwindow.frame.skip == True:
+                return 'skip'
+    def showtonegroupexs(self):
+        def next():
+            self.status.nextprofile()
+            self.runwindow.destroy()
+            self.showtonegroupexs()
+        if (not(hasattr(self,'examplespergrouptorecord')) or
+            (type(self.examplespergrouptorecord) is not int)):
+            self.examplespergrouptorecord=100
+            self.settings.storesettingsfile()
+        self.makeanalysis()
+        self.analysis.donoUFanalysis()
+        torecord=self.analysis.senseidsbygroup
+        ntorecord=len(torecord) #number of groups
+        nexs=len([k for i in torecord for j in torecord[i] for k in j])
+        nslice=self.slices.count()
+        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
+        skip=False
+        if ntorecord == 0:
+            log.error(_("How did we get no UR tone groups? {}-{}"
+                    "\nHave you run the tone report recently?"
+                    "\nDoing that for you now...").format(
+                            self.slices.profile(),
+                            self.slices.ps()
+                                                        ))
+            self.analysis.do()
+            self.showtonegroupexs()
+            return
+        batch={}
+        for i in range(self.examplespergrouptorecord):
+            batch[i]=[]
+            for ufgroup in torecord:
+                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
+                if len(torecord[ufgroup]) > i: #no done piles.
+                    senseid=[torecord[ufgroup][i]] #list of one
                 else:
                     try:
                         entry.newform=entry.newform+x #+"_"
@@ -6622,6 +6894,49 @@ class Check(TaskDressing,ui.Window):
                 #entry.newform = re.sub(check.subcheck, choice, entry.lexeme, count=1)
         print(entry.newform)
         window.destroy()
+    def record(self):
+        self.settings.updatesortingstatus() #is this needed? This is the first fn on button click
+        if self.params.cvt() == 'T':
+            self.showtonegroupexs()
+        else:
+            self.showentryformstorecord()
+class RecordCitation(Record,TaskDressing,ui.Window):
+    """docstring for RecordCitation."""
+    def dobuttonkwargs(self):
+        return {'text':_("Record Dictionary Words"),
+                'fn':self.showentryformstorecord,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['record'], #self.cvt
+                'sticky':'ew'
+                }
+    def tasktitle(self):
+        return _("Record Citation Forms")
+    def taskicon(self):
+        return program['theme'].photo['record']
+    def __init__(self, parent): #frame, filename=None
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        # self.do=self.showentryformstorecord
+class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
+    """docstring for RecordCitation."""
+    def dobuttonkwargs(self):
+        return {'text':_("Record Words in Tone Frames"),
+                'fn':self.showtonegroupexs,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['record'], #self.cvt
+                'sticky':'ew'
+                }
+    def taskicon(self):
+        return program['theme'].photo['record']
+    def tasktitle(self):
+        return _("Record Citation Form Sorting in Tone Frames")
+    def __init__(self, parent): #frame, filename=None
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        # self.do=self.showtonegroupexs
+"""Task definitions end here"""
 class Entry(lift.Entry): #Not in use
     def __init__(self, db, guid, window=None, check=None, problem=None,
         *args, **kwargs):
