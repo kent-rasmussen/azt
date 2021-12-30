@@ -197,7 +197,8 @@ class FileChooser(object):
             ErrorNotice(text,title='LIFT parse error',wait=True)
             # window=ui.Window(self)
             # ui.Label(window,text=text).grid(row=0,column=0)
-            file.remove('lift_url.py') #whatever the problem was, remove it.
+            file.writefilename() #just clear the default
+            # file.remove('lift_url.py') #whatever the problem was, remove it.
             # window.wait_window(window) #Let the user see the error
             raise #Then force a quit and retry
     def dailybackup(self):
