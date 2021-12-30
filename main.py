@@ -3557,10 +3557,8 @@ class TaskChooser(TaskDressing,ui.Window):
         # except:
         #     return
         splash.destroy()
-class WordCollection(ui.Window,TaskDressing):
+class WordCollection(object):
     """This task collects words, from the SIL CAWL, or one by one."""
-    def tasktitle(self):
-        return _("Word Collection")
     def addmorpheme(self):
         def makewindow(lang):
             def submitform(lang):
