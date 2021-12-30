@@ -4606,17 +4606,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         """Are we OK without these?"""
         log.info("Done initializing check.")
         """Testing Zone"""
-    """This should each be done only once, to make the objects from settings"""
-    """self.profilesbysense and self.profilecounts are loaded from file, or
-    created by analysis in init()"""
-    """Guessing functions"""
-    """User Input functions"""
-    """Set User Input"""
-    """Settings to and from files"""
-    """Get from LIFT database functions"""
-    """Mediating between LIFT and the user"""
-    """Making the main window"""
-    """The sort process fns are here"""
     def runcheck(self):
         self.settings.storesettingsfile()
         # t=(_('Run Check'))
