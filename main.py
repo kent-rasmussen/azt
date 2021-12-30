@@ -6070,51 +6070,6 @@ class Report(object):
             ui.Label(self.results, text=_("No results for ")+self.regexCV+"!"
                             ).grid(column=0, row=i+1)
             return
-    def buildregex(self):
-        """include profile (of those available for ps and check),
-        and subcheck (e.g., a: CaC\2)."""
-        """Provides self.regexCV and self.regex"""
-        self.regexCV=None #in case this was run before.
-        log.log(2,'profile:',profile)
-        log.log(2,'cvt:',cvt)
-        maxcount=re.subn(cvt, cvt, profile)[1]
-        if profile is None:
-            print("It doesn't look like you've picked a syllable profile yet.")
-            return
-        """Don't need this; only doing count=1 at a time. Let's start with
-        the easier ones, with the first occurrance changed."""
-        self.regexCV=str(profile) #Let's set this before changing it.
-        """One pass for all regexes, S3, then S2, then S1, as needed."""
-        cvts=['V','C']
-        cvt=self.params.cvt()
-        group=self.status.group()
-        if 'x' in check:
-            if self.subcheckcomparison in self.s[self.analang]['C']:
-                cvts=['C','V']
-        for t in cvts:
-            if t not in cvt:
-                continue
-            S=str(cvt)
-            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
-            compared=False
-            for occurrence in reversed(range(maxcount)):
-                occurrence+=1
-                if re.search(S+str(occurrence),check) is not None:
-                    """Get the (n=occurrence) S, regardless of intervening
-                    non S..."""
-                    regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
-                    if 'x' in check:
-                        if compared == False: #occurrence == 2:
-                            replS='\\1'+self.subcheckcomparison
-                            compared=True
-                        else: #if occurrence == 1:
-                            replS='\\1'+group
-                    else:
-                        replS='\\1'+group
-                    self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
-        """Final step: convert the CVx code to regex, and store in self."""
-        self.regex=rx.fromCV(self,lang=self.analang,
-                            word=True, compile=True)
     def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None,xcounts=None):
         #values should be a (lambda?) function that depends on x and y terms
         #ycounts should be a lambda function that depends on yterms
