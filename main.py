@@ -1084,12 +1084,12 @@ class Settings(object):
         else:
             o=self
         for s in self.settings[setting]['attributes']:
-            log.info("Looking for {} attr".format(s))
+            # log.info("Looking for {} attr".format(s))
             """This dictionary of functions isn't made until after the objects,
             at the end of settings init. So this block is not used in
             conversion, only in later saves."""
             if hasattr(self,'fndict') and s in self.fndict:
-                log.info("Trying to dict {} attr".format(s))
+                # log.info("Trying to dict {} attr".format(s))
                 try:
                     d[s]=self.fndict[s]()
                     log.info("Value {}={} found in object".format(s,d[s]))
@@ -1097,8 +1097,8 @@ class Settings(object):
                     log.log(4,"Value of {} not found in object".format(s))
             elif hasattr(o,s) and getattr(o,s):
                 d[s]=getattr(o,s)
-                log.log(4,"Trying to dict self.{} with value {}, type {}"
-                        "".format(s,d[s],type(d[s])))
+                # log.log(4,"Trying to dict self.{} with value {}, type {}"
+                #         "".format(s,d[s],type(d[s])))
             else:
                 log.error("Couldn't find {} in {}".format(s,setting))
         """This is the only glosslang > glosslangs conversion"""
