@@ -2046,7 +2046,8 @@ class Settings(object):
         """
         if not hasattr(self,'attrschanged'):
             return
-        self.taskchooser.status.build()
+        if hasattr(self.taskchooser,'status'):
+            self.taskchooser.status.build()
         t=self.taskchooser.params.cvt()
         if 'cvt' in self.attrschanged:
             self.taskchooser.status.renewchecks()
