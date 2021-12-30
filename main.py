@@ -3161,11 +3161,6 @@ class TaskDressing(object):
         """At some point, I need to think through which attributes are needed,
         and if I can get them all into objects, read/writeable with files."""
         """These are raw attributes from file"""
-        if hasattr(self,'settings'):
-            for k in self.settings.settings:
-                for attr in [i for i in self.settings.settings[k]['attributes']]:
-                    if hasattr(self.settings,attr):
-                        setattr(self,attr,getattr(self.settings,attr))
         """these are objects made by the task chooser"""
         self.inherittaskattrs()
         # super(TaskDressing, self).__init__(parent)
