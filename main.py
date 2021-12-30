@@ -4764,11 +4764,9 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                                     group,
                                     check
                                     )
-        titles=ui.Frame(self.runwindow.frame)
-        titles.grid(column=0, row=0, columnspan=2, sticky="w")
-        ui.Label(titles, text=title,
-                font='title'
-                ).grid(column=0, row=0, sticky="w")
+        titles=ui.Frame(self.runwindow.frame,
+                        column=0, row=0, columnspan=2, sticky="w")
+        ui.Label(titles, text=title, font='title', column=0, row=0, sticky="w")
         """Move this to bool vars, like for sortT"""
         if hasattr(self,'groupselected'): #so it doesn't get in way later.
             delattr(self,'groupselected')
