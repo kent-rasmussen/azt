@@ -7205,11 +7205,11 @@ class FramedDataDict(dict):
             if element:
                 d=self[source]=FramedDataElement(self,source,senseid,**kwargs)
         return d #self[source]
-    def __init__(self, check, **kwargs):
+    def __init__(self, chooser, **kwargs):
         super(FramedDataDict, self).__init__()
-        self.frames=check.toneframes #[ps][name]
-        self.db=check.db
-        self.check=check
+        self.frames=chooser.toneframes #[ps][name]
+        self.db=chooser.db
+        self.chooser=chooser
 class FramedData(object):
     """This is a superclass to store methods, etc. common to both
     FramedDataSense and FramedDataElement, making the information gathered by
@@ -7366,13 +7366,13 @@ class FramedDataElement(FramedData):
     def filenameoptions(self):
         """This should generate possible filenames, with preferred (current
         schema) last, as that will be used if none are found."""
-        ps=self.parent.check.slices.ps()
+        ps=self.parent.chooser.slices.ps()
         pslocopts=[ps]
         # Except for data generated early in 2021, profile should not be there,
         # because it can change with analysis. But we include here to pick up
         # old files, in case they are there but not linked.
         # First option (legacy):
-        pslocopts.insert(0,ps+'_'+self.parent.check.slices.profile())
+        pslocopts.insert(0,ps+'_'+self.parent.chooser.slices.profile())
         fieldlocopts=[None]
         if (self.node.tag == 'example'):
             l=self.node.find("field[@type='location']//text")
