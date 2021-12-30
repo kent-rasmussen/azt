@@ -61,6 +61,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getanalangs() #sets: self.analangs, self.audiolangs
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
+        self.getfields()
+        self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
         "with citation data) "
         log.info("Working on {} with {} entries, with lexeme data counts: {}, "
         "citation data counts: {} and {} senses".format(filename,self.nguids,
@@ -72,7 +74,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
         self.lcs=self.citations()
         self.lxs=self.lexemes()
-        self.getfields()
         self.getlocations()
         self.defaults=[ #these are lift related defaults
                     'analang',
@@ -742,6 +743,35 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     if self.lexemeformnodeofentry(i,lang).text
                             ]
             self.nentrieswlexemedata[lang]=len(self.entrieswlexemedata[lang])
+    def getfieldswsoundfiles(self):
+        """This is NOT sensitive to sense level fields, which is where we store
+        analysis and verification. This should just pick up entry form fields,
+        or CAWL numbers, etc, which shouldn't be coded for analang."""
+        fieldswsoundfiles={}
+        self.nfieldswsoundfiles={}
+        fields={}
+        self.nfields={}
+        fieldopts=['sense/example']+['field[@type="{}"]'.format(f)
+                                                        for f in self.fields]
+        for field in fieldopts:
+            fields[field]={}
+            fieldswsoundfiles[field]={}
+            self.nfields[field]={}
+            self.nfieldswsoundfiles[field]={}
+            for lang in self.analangs:
+                fields[field][lang]=[i for i in
+                    self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
+                                                                field,lang))
+                    if i.text
+                                    ]
+                self.nfields[field][lang]=len(fields[field][lang])
+            for lang in self.audiolangs:
+                fieldswsoundfiles[field][lang]=[i for i in
+                    self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
+                                                                field,lang))
+                    if i.text
+                                ]
+                self.nfieldswsoundfiles[field][lang]=len(fieldswsoundfiles[field][lang])
     def getguids(self):
         self.guids=self.get('entry').get('guid')
         self.nguids=len(self.guids)
