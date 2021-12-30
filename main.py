@@ -4587,7 +4587,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         return _("Citation Form Sorting in Tone Frames")
     def dobuttonkwargs(self):
         return {'text':_("Sort!"),
-                'fn':self.maybesort, #taskchooser.mainwindowis.runcheck,
+                'fn':self.runcheck,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
