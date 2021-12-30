@@ -6889,13 +6889,27 @@ class Record(object):
                 if len(torecord[ufgroup]) > i: #no done piles.
                     senseid=[torecord[ufgroup][i]] #list of one
                 else:
-                    try:
-                        entry.newform=entry.newform+x #+"_"
-                    except:
-                        entry.newform=x #+"_"
-                #entry.newform = re.sub(check.subcheck, choice, entry.lexeme, count=1)
-        print(entry.newform)
-        window.destroy()
+                    print("Not enough examples, moving on:",i,ufgroup)
+                    continue
+                log.info(_('Giving user the number {} example from tone '
+                        'group {}'.format(i,ufgroup)))
+                exited=self.showsenseswithexamplestorecord(senseid,
+                            (ufgroup, i+1, self.examplespergrouptorecord),
+                            skip=skip)
+                if exited == 'skip':
+                    skip=True
+                if exited == True:
+                    return
+        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
+            self.runwindow.waitdone()
+            self.runwindow.resetframe()
+            ui.Label(self.runwindow.frame, anchor='w',font='read',
+            text=_("All done! Sort some more words, and come back.")
+            ).grid(row=0,column=0,sticky='w')
+            ui.Button(self.runwindow.frame,
+                    text=_("Continue to next syllable profile"),
+                    command=next).grid(row=1,column=0)
+        self.donewpyaudio()
     def record(self):
         self.settings.updatesortingstatus() #is this needed? This is the first fn on button click
         if self.params.cvt() == 'T':
