@@ -1948,7 +1948,19 @@ class Settings(object):
         """if there's only one analysis language, use it."""
         nlangs=len(self.db.analangs)
         log.debug(_("Found {} analangs: {}".format(nlangs,self.db.analangs)))
-        if nlangs == 1:
+        if not nlangs:
+            errortext=_("There don't seem to be any language forms in your "
+            "database!")
+            basename=file.getfilenamebase(self.liftfilename)
+            parent=file.getfilenamebase(file.getfilenamedir(self.liftfilename))
+            if parent == basename and len(parent) == 3: #plausible iso
+                self.analang=parent
+                errortext+=_("\n(guessing [{}]; if that's not correct, exit now "
+                            "and fix it!)").format(self.analang)
+            log.info(errortext)
+            e=ErrorNotice(errortext,title="Error!",wait=True)
+            # return
+        elif nlangs == 1:
             self.analang=self.db.analangs[0]
             log.debug(_('Only one analang in file; using it: ({})'.format(
                                                         self.db.analangs[0])))
