@@ -2706,10 +2706,9 @@ class TaskDressing(object):
                                  column=0, row=4
                                  )
     def getglosslang2(self,event=None):
-        log.info("this sets the gloss")
-        window=ui.Window(self.frame,title='Select Gloss Language')
+        window=ui.Window(self.frame,title='Select Second Gloss Language')
         text=_('What other language do you want to use for glosses?')
-        ui.Label(window.frame,text=text).grid(column=0, row=1)
+        ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
         for lang in self.db.glosslangs:
             if lang == self.settings.glosslangs[0]:
