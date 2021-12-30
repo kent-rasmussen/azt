@@ -2397,36 +2397,43 @@ class Settings(object):
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.repocheck()
         self.settingsfilecheck()
-        self.initdefaults()
+        self.settingsinit() #init, clear, fields
         self.loadsettingsfile()
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
-        self.guessanalang() #needed for regexs
-        self.loadsettingsfile() # overwrites guess above, stored on runcheck
-        if self.analang is None:
+        if hasattr(self.taskchooser,'analang'): #i.e., new file
+            self.analang=self.taskchooser.analang #I need to keep this alive until objects are done
+        else:
+            self.guessanalang() #needed for regexs
+        if not self.analang:
+            log.error("No analysis language; exiting.")
             return
         self.langnames()
         self.guessaudiolang()
+        self.loadsettingsfile() # overwrites guess above, stored on runcheck
         self.makeglosslangs()
-        self.checkglosslangs()
-        self.notifyuserofextrasegments() #self.analang set by now
-        self.polygraphcheck()
-        self.checkinterpretations() #checks/sets values for self.distinguish
-        self.slists() #lift>check segment dicts: s[lang][segmenttype]
-        self.setupCVrxs() # self.rx (needs s)
-        self.checkforprofileanalysis()
-        """The line above may need to go after this block"""
-        self.loadsettingsfile(setting='status')
-        self.loadsettingsfile(setting='adhocgroups')
-        self.loadsettingsfile(setting='toneframes')
-        """Make these objects here only"""
-        self.makeparameters()
-        self.makeslicedict() #needs params
+        self.checkglosslangs() #if stated aren't in db, guess
+        self.makeparameters() #depends on nothing but self.analang
+        """The following should only be done after word collection"""
+        if self.taskchooser.donew['collectionlc']:
+            self.notifyuserofextrasegments() #self.analang set by now
+            self.polygraphcheck()
+            self.checkinterpretations() #checks/sets values for self.distinguish
+            self.slists() #lift>check segment dicts: s[lang][segmenttype]
+            self.setupCVrxs() # self.rx (needs s)
+            self.checkforprofileanalysis()
+            """The line above may need to go after this block"""
+            self.loadsettingsfile(setting='status')
+            self.loadsettingsfile(setting='adhocgroups')
+            self.loadsettingsfile(setting='toneframes')
+            """Make these objects here only"""
+            self.makeslicedict() #needs params
+            self.maketoneframes()
+            self.makestatus() #needs params, slices, data, toneframes, exs
+            self.makeeverythingok()
         self.settingsobjects() #needs params, glosslangs, slices
-        self.maketoneframes()
-        self.makestatus() #needs params, slices, data, toneframes, exs
+        self.moveattrstoobjects()
         self.attrschanged=[]
-        self.makeeverythingok()
 class TaskDressing(object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
@@ -2439,8 +2446,6 @@ class TaskDressing(object):
                         cmd=self.taskchooser.gettask,
                         row=0,column=2,
                         sticky='ne')
-        else:
-            log.info("Parent: {} ({})".format(self.parent,type(self.parent)))
     def mainlabelrelief(self,relief=None,refresh=False,event=None):
         #set None to make this a label instead of button:
         log.log(3,"setting button relief to {}, with refresh={}".format(relief,
