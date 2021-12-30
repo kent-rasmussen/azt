@@ -7865,6 +7865,8 @@ class StatusDict(dict):
                 self[cvt][ps][profile][check]['tosort'] == True):
                 return True
     def nextprofile(self, **kwargs):
+        """This function is here (not in slices) in order for it to be sensitive
+        to different kinds of profiles, via **kwargs"""
         kwargs=grouptype(**kwargs)
         # self.makeprofileok()
         profiles=self.profiles(**kwargs)
