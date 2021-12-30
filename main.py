@@ -293,19 +293,36 @@ class Menus(ui.Menu):
         profile=self.parent.slices.profile()
         if None not in [ps, profile, cvt]:
             if cvt == 'T':
-                changemenu.add_separator()
-                framemenu = ui.Menu(changemenu, tearoff=0)
-                changemenu.add_cascade(label=_("Tone Frame"), menu=framemenu)
-                framemenu.add_command(label=_("Next"),
-                        command=lambda x=check.status:StatusDict.nextcheck(x))
-                framemenu.add_command(label=_("Next to sort"),
-                        command=lambda x=check.status:StatusDict.nextcheck(x,
-                                                                tosort=True))
-                framemenu.add_command(label=_("Next with data already sorted"),
-                        command=lambda x=check.status:StatusDict.nextcheck(x,
-                                                                wsorted=True))
-                framemenu.add_command(label=_("Choose"),
-                                command=lambda x=check:Check.getcheck(x))
+                self.changemenu.add_separator()
+                self.cascade(self.changemenu,_("Tone Frame"),'framemenu')
+                self.checkmenus=[
+                            ("Choose", self.parent.getcheck),
+                            ]
+                # if isinstance(parent,Check):
+                #     checkmenus.append(("Next to Sort", self.parent.nextcheck,
+                #                                             tosort=True))
+                # elif isinstance(parent,Record):
+                #     checkmenus.append(("Next to Record", self.parent.nextcheck,
+                #                                             wsorted=True))
+                # else:
+                #     checkmenus.append(("Next to Record", self.parent.nextcheck))
+                for m in self.checkmenus:
+                    self.command(self.framemenu,
+                                label=_(m[0]),
+                                cmd=m[1]
+                                )
+                # framemenu = ui.Menu(changemenu, tearoff=0)
+                # changemenu.add_cascade(label=_("Tone Frame"), menu=framemenu)
+                # framemenu.add_command(label=_("Next"),
+                #         command=lambda x=check.status:StatusDict.nextcheck(x))
+                # framemenu.add_command(label=_("Next to sort"),
+                #         command=lambda x=check.status:StatusDict.nextcheck(x,
+                #                                                 tosort=True))
+                # framemenu.add_command(label=_("Next with data already sorted"),
+                #         command=lambda x=check.status:StatusDict.nextcheck(x,
+                #                                                 wsorted=True))
+                # framemenu.add_command(label=_("Choose"),
+                #                 command=lambda x=check:Check.getcheck(x))
             else:
                 self.changemenu.add_separator()
                 self.changemenu.add_command(label=_("Location in word"),
