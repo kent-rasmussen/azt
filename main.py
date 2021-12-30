@@ -7173,7 +7173,9 @@ class FramedDataDict(dict):
             self[source].updatelangs() #maybe it has been awhile...
             return self[source]
     def getframeddata(self, source=None, senseid=None, check=None, **kwargs):
-        """If this is going to feed a recording (i.e., sound file),
+        """Check here is the name of the specific check being run, e.g., V1=V2,
+        or the name of a tone frame. This is used in the example @location."""
+        """"If this is going to feed a recording (i.e., sound file),
         including the senseid is a good idea, even if not otherwise required."""
         self.updatelangs()
         sense=element=False
