@@ -7184,7 +7184,7 @@ class RecordButtonFrame(ui.Frame):
         if not hasattr(check,'soundsettings'):
             check.loadsoundsettings()
         self.callbackrecording=True
-        self.settings=check.soundsettings
+        self.settings=chooser.soundsettings
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
         self.test=kwargs.pop('test',None)
@@ -7205,7 +7205,7 @@ class RecordButtonFrame(ui.Frame):
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
-        if check.audiolang is None and self.test is not True:
+        if chooser.audiolang is None and self.test is not True:
             tlang=_("Set audio language to get record buttons!")
             log.error(tlang)
             ui.Label(self,text=tlang,borderwidth=1,
@@ -7252,8 +7252,8 @@ class ToneGroupButtonFrame(ui.Frame):
         self.sortnext()
         # remove()
     def unsort(self):
-        check=self.check.params.check()
-        self.check.removesenseidfromgroup(self._senseid,check,sorting=False)
+        check=self.chooser.params.check()
+        self.chooser.task.removesenseidfromgroup(self._senseid,check,sorting=False)
         self.refresh()
     def setcanary(self,canary):
         if canary.winfo_exists():
