@@ -2882,10 +2882,15 @@ class TaskDressing(object):
         elif guess is True:
             self.status.makecheckok(tosort=tosort,wsorted=wsorted)
         else:
+            log.info("Checks: {}".format(checks))
+            if self.params.cvt() == 'T':
+                checklist=checks
+            else:
+                checklist=[(c,self.params.cvcheckname(c)) for c in checks]
             text=_('What check do you want to do?')
             ui.Label(window.frame, text=text).grid(column=0, row=0)
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                    optionlist=checks,
+                                    optionlist=checklist,
                                     command=self.settings.setcheck,
                                     window=window,
                                     column=0, row=4
