@@ -1906,9 +1906,9 @@ class Settings(object):
         log.info("Found {} legacy verification nodes in {} seconds".format(n,
                                                 time.time()-start_time))
     def reloadprofiledata(self):
-        self.file.storesettingsfile()
+        self.settings.storesettingsfile()
         self.profilesbysense={}
-        self.file.storesettingsfile(setting='profiledata')
+        self.settings.storesettingsfile(setting='profiledata')
         self.restart()
     def reloadstatusdata(self):
         # This fn is very inefficient, as it iterates over everything in
