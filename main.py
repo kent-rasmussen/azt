@@ -2228,7 +2228,7 @@ class Settings(object):
         self.refreshattributechanges()
         window.destroy()
     def setglosslang2(self,choice,window):
-        if choice is not None:
+        if choice:
             self.glosslangs.lang2(choice)
         elif len(self.glosslangs)>1:
             self.glosslangs.pop(1) #if lang2 is None
@@ -2338,12 +2338,13 @@ class Settings(object):
         self.file.loadsettingsfile(setting='soundsettings')
     def langnames(self):
         """This is for getting the prose name for a language from a code."""
-        """It uses a xyz.ldml file, produced (at least) by WeSay."""
+        """It should ultimately use a xyz.ldml file, produced (at least)
+        by WeSay, but for now is just a dict."""
         #ET.register_namespace("", 'palaso')
         ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
         node=None
         self.languagenames={}
-        for xyz in self.db.analangs+self.db.glosslangs: #self.languagepaths.keys():
+        for xyz in [self.analang]+self.db.analangs+self.db.glosslangs:
             # log.info(' '.join('Looking for language name for',xyz))
             """This provides an ldml node"""
             #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
