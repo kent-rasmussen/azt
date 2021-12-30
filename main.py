@@ -7162,10 +7162,10 @@ class FramedDataDict(dict):
     def refresh(self):
         self.clear()
     def updatelangs(self):
-        self.analang=self.check.analang
-        self.audiolang=self.check.audiolang
-        self.audiodir=self.check.audiodir
-        self.glosslangs=self.check.glosslangs
+        self.analang=self.chooser.params.analang()
+        self.audiolang=self.chooser.settings.audiolang
+        self.audiodir=self.chooser.settings.audiodir
+        self.glosslangs=self.chooser.settings.glosslangs
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def isthere(self,source):
         if source in self:
