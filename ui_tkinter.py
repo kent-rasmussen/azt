@@ -77,9 +77,11 @@ class Theme(object):
                             ('small','images/AZT stacks6_sm.png'),
                             ('icon','images/AZT stacks6_icon.png'),
                             ('T','images/T alone clear6.png'),
+                            ('iconT','images/T alone clear6_icon.png'),
                             ('C','images/Z alone clear6.png'),
                             ('V','images/A alone clear6.png'),
                             ('CV','images/ZA alone clear6.png'),
+                            ('iconCV','images/ZA alone clear6_icon.png'),
                             ('backgrounded','images/AZT stacks6.png'),
                             #Set images for tasks
                             ('verifyT','images/Verify List.png'),
