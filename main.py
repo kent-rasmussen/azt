@@ -3158,6 +3158,9 @@ class TaskDressing(object):
         self.mainwindow=True
         self.withdraw() #made visible by chooser when complete
         self.maketitle()
+        ui.Label(self.frame, font='title',
+                text=self.tasktitle(),
+                row=0, column=0, columnspan=2)
         """At some point, I need to think through which attributes are needed,
         and if I can get them all into objects, read/writeable with files."""
         """These are raw attributes from file"""
