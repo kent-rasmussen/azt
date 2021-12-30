@@ -843,7 +843,8 @@ class StatusFrame(ui.Frame):
             self.sliceline()
             self.cvtline()
             self.maybeboard()
-        self.finalbuttons()
+        if not isinstance(self.task,TaskChooser):
+            self.finalbuttons()
 class Settings(object):
     """docstring for Settings."""
     def interfacelangwrapper(self,choice=None,window=None):
