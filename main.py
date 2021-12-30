@@ -826,11 +826,7 @@ class StatusFrame(ui.Frame):
         self.taskchooser=taskchooser
         self.task=task
         self.mainrelief=kwargs.pop('relief',None) #not for frame
-        self.cvt=self.settings.params.cvt()
-        self.ps=self.settings.slices.ps()
-        self.profile=self.settings.slices.profile()
-        self.check=self.settings.params.check()
-        self.checks=self.settings.status.checks()
+        kwargs['padx']=25
         super(StatusFrame, self).__init__(parent, **kwargs)
         self.makeproseframe()
         self.interfacelangline()
@@ -839,10 +835,15 @@ class StatusFrame(ui.Frame):
         if isinstance(self.task,WordCollection):
             self.fieldsline()
         if isinstance(self.task,Sort):
+            self.cvt=self.settings.params.cvt()
+            self.ps=self.settings.slices.ps()
+            self.profile=self.settings.slices.profile()
+            self.check=self.settings.params.check()
+            self.checks=self.settings.status.checks()
             self.sliceline()
             self.cvtline()
-            self.finalbuttons()
             self.maybeboard()
+        self.finalbuttons()
 class Settings(object):
     """docstring for Settings."""
     def interfacelangwrapper(self,choice=None,window=None):
