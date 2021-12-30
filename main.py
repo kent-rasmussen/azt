@@ -3226,7 +3226,7 @@ class TaskChooser(TaskDressing,ui.Window):
          21 [adnlangnames
                         ]:"""
     def makesettings(self):
-        self.settings=Settings(self,self.file)
+        self.settings=Settings(self,self.file) #give object, for name and db
     def makedatadict(self):
         self.datadict=FramedDataDict(self) #needs self.toneframes
     def makeexampledict(self):
