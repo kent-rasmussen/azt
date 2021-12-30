@@ -3733,18 +3733,6 @@ class Check(TaskDressing,ui.Window):
         ps=kwargs.get('ps',self.slices.ps())
         idsbyps=self.db.get('sense',ps=ps).get('senseid')
         return idsbyps[randint(0, len(idsbyps)-1)]
-    def framenamesbyps(self,ps):
-        """Names for all tone frames defined for the language."""
-        return self.status.checks()
-        if hasattr(self,'toneframes') and self.toneframes is not None:
-            if ps not in self.toneframes:
-                self.toneframes[ps]={}
-            else:
-                return list(self.toneframes[ps].keys())
-        #     else:
-        #         return []
-        # else:
-        return []
     def frame1valuebynamepsprofile(self):
         """I think this function is obsolete."""
         """Define self.location based on lookup of check"""
@@ -3897,12 +3885,6 @@ class Check(TaskDressing,ui.Window):
             self.results.grid(row=0, column=0)
         else:
             log.error("Tried to get a results frame without a runwindow!")
-    def getcheckspossible(self):
-        """This splits by tone or not, because the checks available for
-        segments depend on the number of segments in the selected syllable
-        profile, but for tone, they don't; tone frames depend only on ps."""
-        self.status.renewchecks()
-        self.status.checks()
     def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
         xlp.Paragraph(parent,t)
         print(t)
@@ -8179,8 +8161,6 @@ class StatusDict(dict):
         """This should only need to be done on a boot, when a new tone frame
         is defined, or when working on a new syllable profile for CV checks."""
         """This depends on cvt and profile, for CV checks"""
-        """replaces getcheckspossible"""
-        """replaces framenamesbyps"""
         """replaces self.checkspossible"""
         """replaces setnamesbyprofile"""
         if not hasattr(self,'_checksdict'):
