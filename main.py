@@ -2943,15 +2943,15 @@ class TaskDressing(object):
                         self.setgroup_comparison(g2[0],window)
                         return
                     buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                            optionlist=g2,
-                                            command=self.setgroup_comparison,
-                                            window=window,
-                                            column=0, row=4
-                                            )
+                                    optionlist=g2,
+                                    command=self.settings.setgroup_comparison,
+                                    window=window,
+                                    column=0, row=4
+                                    )
                 else:
                     buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
                                                 optionlist=g,
-                                                command=self.setgroup,
+                                                command=self.settings.setgroup,
                                                 window=window,
                                                 column=0, row=4
                                                 )
@@ -3004,7 +3004,7 @@ class TaskDressing(object):
         log.info("this sets the group")
         kwargs=grouptype(**kwargs) #if any should be True, set in wrappers above
         log.info("getgroup kwargs: {}".format(kwargs))
-        self.refreshattributechanges()
+        self.settings.refreshattributechanges()
         if cvt is None:
             cvt=self.params.cvt()
         if cvt == "V":
