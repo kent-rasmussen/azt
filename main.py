@@ -3140,43 +3140,6 @@ class TaskDressing(object):
         self.runwindow.lift()
         if not nowait:
             self.runwindow.wait(msg=msg)
-    def runcheck(self):
-        self.settings.storesettingsfile()
-        t=(_('Run Check'))
-        log.info("Running check...")
-        i=0
-        ps=self.slices.ps()
-        if not ps:
-            self.getps()
-        group=self.status.group()
-        analang=self.params.analang()
-        if None in [analang, ps, group]:
-            log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
-                                        self.analang, ps, group))
-        cvt=self.params.cvt()
-        check=self.params.check()
-        profile=self.slices.profile()
-        if not profile:
-            self.getprofile()
-        if cvt == 'T' and (check not in self.status.checks(tosort=True)
-                and check not in self.status.checks(toverify=True)
-                and check not in self.status.checks(tojoin=True)):
-            exit=self.getcheck()
-            if exit:
-                self.runcheck()
-            return #if the user didn't supply a check
-        self.settings.updatesortingstatus() # Not just tone anymore #settonevariables() #here, or later?
-        if isinstance(self,Sort):
-            self.maybesort()
-        elif isinstance(self,Report) and None not in [check,group]:
-            self.getresults()
-        else:
-            window=ui.Window(self.frame)
-            text=_('Error: please set Check/Subcheck first! ({}/{})').format(
-                                                     check,group)
-            ui.Label(window,text=text).grid(column=0, row=i)
-            i+=1
-            return
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -4379,6 +4342,244 @@ class Sort(object):
         scroll.grid(row=3,column=0,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
+class SortCV(Sort,TaskDressing,ui.Window):
+    """docstring for SortCV."""
+    def __init__(self, arg):
+        super(SortCV, self).__init__()
+        self.arg = arg
+        """These are old paradigm CV funcs, with too many arguments, and guids"""
+    def picked(self,choice,**kwargs):
+        return
+        entry.addresult(check, result='OK') #let's not translate this...
+        debug()
+        window=ui.Window(parent, title='Same! '+entry.lexeme+': '
+                        +entry.guid)
+        result=(entry.citation,nn(entry.plural),nn(entry.imperative),
+                    nn(entry.ps),nn(entry.gloss))
+        ui.Button(window.frame, width=80, text=result,
+            command=window.destroy).grid(column=0, row=0)
+        window.exitButton=''
+    def notpicked(self,choice):
+        """I should think through what I want for this button/script."""
+        if entry is None:
+            log.info("No entry!")
+            """Probably a bad idea"""
+            entry=Entry(db, parent, window, check, guid=choice)
+        entry.addresult(check, result='NOTok')
+        window=ui.Window(parent, title='notpicked: Different! '
+                        +entry.lexeme+': '+entry.guid)
+        result=entry.citation,nn(entry.plural),nn(entry.imperative),nn(entry.ps),
+        nn(entry.gloss)
+        ui.Label(window.frame, width=40, text=result).grid(row=0,column=0)
+        q=(_("What is wrong with this word?"))
+        ui.Label(window.frame, text=q).grid(column=0, row=1)
+        if check.name == "V1=V2":
+            bcv1nv2=(_("Two different vowels (V1≠V2)"))
+            bscv1isv2nsc=(_("Vowels are the same, but the wrong vowel"))
+            problemopts=[("badCheck",bcv1nv2),
+                ("badSubcheck",bscv1isv2nsc+" (V1=V2≠"+check.subcheck+")")]
+        else:
+            log.info("Sorry, that check isn't set up yet.")
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    window=window,
+                                    optionlist=problemopts,
+                                    command=Check.fixdiff,
+                                    width="50",
+                                    column=0, row=3
+                                    )
+        i=4 #start at this row
+        print(result)
+    def fixV12(parent, window, check, entry, choice):
+        """This and following scripts represent a structure of the program
+        which is way more complex than we want. We have to think through how
+        to organize the functions and windows in such a way as the UI is
+        straightforward and completely unconfusing."""
+        window.title=(_("TITLE!"))
+        ui.Label(window.frame, text=entry.citation+' - '+entry.gloss,
+                        anchor=tkinter.W).grid(column=0, row=0, columnspan=2)
+        q1=_("It looks like the vowels are the same, but not the correct vowel;"
+            " let's fix that.")
+        ui.Label(window.frame, text=q1,anchor=tkinter.W).grid(column=0, row=2,
+                                                                columnspan=2)
+        q2=_("What are the two vowels?")
+        ui.Label(window.frame, text=q2,anchor=tkinter.W).grid(column=0, row=3,
+                                                                columnspan=1)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                window=window,
+                                optionlist=check.db.vowels(),
+                                command=Check.fixVs,
+                                column=0, row=4
+                                )
+    def fixV1(parent, window, check, entry, choice):
+        t=(_('fixV1:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
+        print(t)
+        check.fix='V1'
+        #window.destroy()
+        #window=ui.Window(self.frame,, title=t, entry=entry, backcmd=fixdiff)
+        window.resetframe()
+        t2=(_("It looks like the vowels aren't the same; let's fix that."))
+        ui.Label(window.frame, text=t2, justify=tkinter.LEFT).grid(column=0,
+                                                                    row=0,
+                                                                columnspan=2)
+        t3=(_("What is the first vowel? (C_CV)"))
+        ui.Label(window.frame, text=t3, anchor=tkinter.W).grid(column=0,
+                                                                row=1,
+                                                                columnspan=1)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                window=window,
+                                optionlist=check.db.vowels(),
+                                command=Check.newform,
+                                column=0, row=2
+                                )
+    def fixV2(parent, window, check, entry, choice):
+        check.fix='V2'
+        t=(_('fixV2:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
+        t=(_("What is the second vowel?"))
+        ui.Label(window.frame, text=t,justify=tkinter.LEFT).grid(column=0, row=1, columnspan=1)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                    window=window,
+                                    optionlist=check.db.vowels(),
+                                    command=Check.newform,
+                                    column=0, row=2
+                                    )
+    def fixdiff(parent, window, check, entry, choice):
+        """We need to fix problems in a more intuitively obvious way"""
+        entry.problem=choice
+        entry.addresult(check, result=entry.problem)
+        window.destroy()
+        window=ui.Window(self.frame.parent, entry=entry, backcmd=notpickedback)
+        ui.Label(window, text="Let's fix those problems").grid(column=0, row=0)
+        if entry.problem == "badCheck": #This isn't the right check for this entry --re.search("V1≠V2",difference):
+            window.destroy()
+            t=(_("fixVs:Different vowels! "))+entry.lexeme+': '+entry.guid
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixV1(parent, window, check, entry, choice)
+            window.wait_window(window=window)
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixV2(parent, window, check, entry, choice) #I should make this wait until the first one finishes..…
+            window.wait_window(window=window)
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixVs(parent, window, check, entry, choice)
+        elif entry.problem == "badSubcheck": #This isn't the right subcheck for this entry --re.search("V1=V2≠"+Vo,difference): #
+            window.destroy()
+            t=(_("fixVs:Same Vowel, but wrong one! "))+entry.lexeme+': '+entry.guid
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixV12(parent, window, check, entry, choice)
+        else:
+            log.info("Huh? I don't understand what the user wants.")
+        Check.fixVs
+    def fixVs(parent, window, check, entry, choice):
+        #This isn't working yet.
+        log.info("running fixVs!!!!???!??!?!?!?")
+
+        #I need to rework this to work more generally..….
+        ui.Label(window.frame, text="I will make the following changes:").grid(column=0, row=0)
+        lexemeNew=entry.newform #newform(entry.lexeme,'v12',check.subcheck,choice)
+        citationNew = re.sub(entry.lexeme, lexemeNew, entry.citation)
+        ui.Label(window.frame, text="citation: "+entry.citation+" → "+citationNew).grid(column=0, row=1)
+        ui.Label(window.frame, text="lexeme: "+entry.lexeme+" → "+lexemeNew).grid(column=0, row=2)
+        fields={}
+        if entry.plural is not None:
+            pluralNew = re.sub(entry.lexeme, lexemeNew, entry.plural)
+            ui.Label(window.frame, text="plural: "+plural+" → "+pluralNew).grid(column=0, row=3)
+            fields={'Plural'}
+        if entry.imperative is not None:
+            imperativeNew = re.sub(entry.lexeme, lexemeNew, entry.imperative)
+            ui.Label(window.frame, text="imperative: "+entry.imperative+" → "+imperativeNew).grid(column=0, row=4)
+        def ok():
+            entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-ok')
+            entry.db.log(entry.guid+": lexeme: "+entry.lexeme+" → "+lexemeNew)
+            entry.put.lexeme(entry,lexemeNew)
+            entry.db.log(entry.guid+": citation: "+entry.citation+" → "+citationNew)
+            entry.put.citation(entry,citationNew)
+            #lift_mod.field(guid,fieldtype,newform)
+            entry.db.write() #put this in lift.py
+            window.destroy()
+        def notok():
+            entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-NOTok')
+        ui.Button(window, width=10, text="OK", command=ok).grid(row=1,column=0)
+        #This is where we should call addresult, and write to file.
+        ui.Button(window, width=15, text="Not OK (Go Back)", command=notok).grid(row=1,column=1)
+    def newform(parent, window, check, entry, choice):
+        #I need to rework this to work more generally..….
+        #or even to work once. The logic is bad.
+        C=check.C
+        V=check.V
+        xi=1
+        if check.fix == "V1":
+            r=str('('+V+')'+'('+C+')'+'('+V+')')
+            sub=(choice+r"\2\3")
+            log.info("Note: this assumes we're changing one of two vowels "
+                "separated by a consonant")
+            #I want to access the second group...
+            #print(r)
+        elif check.fix == "C1":
+            r=str('(('+C+'))'+'('+V+')'+'('+C+')')
+            print(r)
+            log.info("Note: this assumes we're changing one of two consonants "
+                "separated by a vowel")
+        elif check.fix == "V2":
+            r=str('('+V+')'+'('+C+')'+'('+V+')')
+            sub=(r"\1\2"+choice)
+            print("Note: this assumes we're changing one of two vowels "
+                "separated by a consonant")
+            #print(r)
+        elif check.fix == "C2":
+            r=str('('+C+')'+V+'('+C+')')
+            print(r)
+        else:
+            log.info("Fix "+check.fix +" undefined.")
+        def old():
+            if check.fix == ("V1" or "C1"):
+                ximin=1
+                ximax=1
+            elif check.fix == ("V2" or "C2"):
+                ximin=2
+                ximax=2
+            elif check.fix == ("V12" or "C12"):
+                ximin=1
+                ximax=2
+        #print(check.subcheck, value, entry.newform)
+        #I need this to find the point I'm trying to change, even if it has been
+        #changed before, and even if another part of the same word has already
+        #been changed, e.g., another vowel in another position. So I need to use
+        #the newform when present (i.e., changes have been made but not confirmed)
+        #but refer to the lexeme item for reference (e.g., which subcheck I'm running.)
+        try: # use a previous entry.newform, if it exists:
+            baseform=entry.newform
+            entry.newform=''
+            log.info("Using newform")
+        except:
+            baseform=entry.lexeme
+            log.info("Using lexeme")
+            #entry.newform = re.sub(check.subcheck, choice, entry.newform, count=1)
+        print('r: '+r)
+        print('sub: '+sub)
+        print('baseform: '+baseform)
+        entry.newform=re.sub(r, sub, baseform)
+        print('newform: '+entry.newform)
+        def old2():
+            for x in baseform:
+                if x == check.subcheck: # <= ximax ):
+                    if ximin <= xi <= ximax:
+                        try:
+                            entry.newform=entry.newform+choice #+str(xi)
+                        except:
+                            entry.newform=choice #+str(xi)
+                    else:
+                        try:
+                            entry.newform=entry.newform+x #+"_"
+                        except:
+                            entry.newform=x #+"_"
+                    xi += 1
+                else:
+                    try:
+                        entry.newform=entry.newform+x #+"_"
+                    except:
+                        entry.newform=x #+"_"
+                #entry.newform = re.sub(check.subcheck, choice, entry.lexeme, count=1)
+        print(entry.newform)
+        window.destroy()
 class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconT']
@@ -4416,6 +4617,33 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
     """Mediating between LIFT and the user"""
     """Making the main window"""
     """The sort process fns are here"""
+    def runcheck(self):
+        self.settings.storesettingsfile()
+        # t=(_('Run Check'))
+        log.info("Running check...")
+        # i=0
+        # ps=self.slices.ps()
+        # if not ps:
+        #     self.getps()
+        # group=self.status.group()
+        # analang=self.params.analang()
+        # if None in [analang, ps, group]:
+        #     log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
+        #                                 self.analang, ps, group))
+        cvt=self.params.cvt()
+        check=self.params.check()
+        profile=self.slices.profile()
+        if not profile:
+            self.getprofile()
+        if (check not in self.status.checks(tosort=True)
+                and check not in self.status.checks(toverify=True)
+                and check not in self.status.checks(tojoin=True)):
+            exit=self.getcheck()
+            if exit:
+                self.runcheck()
+            return #if the user didn't supply a check
+        self.settings.updatesortingstatus() # Not just tone anymore
+        self.maybesort()
     def maybesort(self):
         """This should look for one group to verify at a time, with sorting
         in between, then join and repeat"""
