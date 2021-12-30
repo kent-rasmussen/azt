@@ -2436,7 +2436,7 @@ class TaskDressing(object):
             return
         ui.Button(self.outsideframe,text=_("Tasks"), #.outsideframe
                         font='small',
-                        cmd=self.parent.gettask,
+                        cmd=self.taskchooser.gettask,
                         row=0,column=2,
                         sticky='ne')
         else:
@@ -2476,10 +2476,10 @@ class TaskDressing(object):
         self.setcontext()
         self.tableiteration+=1
     def hidegroupnames(self):
-        self.check.set('hidegroupnames', True, refresh=True)
+        self.settings.set('hidegroupnames', True, refresh=True)
         self.setcontext()
     def showgroupnames(self):
-        self.check.set('hidegroupnames', False, refresh=True)
+        self.settings.set('hidegroupnames', False, refresh=True)
         self.setcontext()
     def setcontext(self,context=None):
         self.context.menuinit() #This is a ContextMenu() method
