@@ -6973,39 +6973,52 @@ class DataList(list):
         self.extend(args)
 class Glosslangs(DataList):
     """docstring for Glosslangs."""
+    def sanitycheck(self):
+        """First, remove any duplicates."""
+        self.langs(list(set(self)))
+        if None in self.langs():
+            self.rm(None)
+        if len(self) > 2:
+            self=self[:2]
+            return
+        if len(self) < 1:
+            ErrorNotice("Hey, you have no gloss languages set!")
     def lang1(self,lang=None):
-        if lang is None:
+        if self and not lang:
             return self[0]
-        if len(self) > 1 and self[1] == lang: #don't have same language twice
-            self.pop(1)
-        if len(self) > 0:
+        if self:
             self[0]=lang
         else:
             self.append(lang)
+        self.sanitycheck()
     def lang2(self,lang=None):
-        if not lang and len(self) >1:
-            return self[1]
-        if lang:
-            if len(self) > 1 and self[0] != lang:
+        if len(self) >1:
+            if not lang:
+                return self[1]
+            elif self[0] != lang:
                 self[1]=lang
-            if len(self) == 1:
-                self.append(lang)
-            else:
-                log.debug("Tried to set second glosslang, without first set.")
+        elif len(self) == 1:
+            self.append(lang)
+        else:
+            log.debug("Tried to set second glosslang, without first set.")
+        self.sanitycheck()
     def langs(self,langs=None):
         if langs is None:
             return self
         else:
-            while len(langs) >=2 and langs[0] == langs[1]:
-                del langs[1]
-            self.clear()
-            self.extend(langs[:2])
+            n=min(len(langs),2)
+            for i in [0,1]:
+                if i < len(langs):
+                    self[i]=langs[i]
+                elif i < len(self):
+                    self.pop(i)
     def rm(self,lang):
         """This could be either position, and if lang1 will promote lang2"""
         self.remove(lang)
-    def __init__(self, *args):
+    def __init__(self, langlist=None):
         super(Glosslangs, self).__init__()
-        self.extend(args)
+        if langlist:
+            self.extend(langlist)
 class DictbyLang(dict):
     """docstring for DictbyLang."""
     def getformfromnode(self,node,truncate=False):
