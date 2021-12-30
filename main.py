@@ -562,13 +562,9 @@ class StatusFrame(ui.Frame):
         self.proselabel(t,cmd=self.taskchooser.getcvt,parent=line)
         #this continues on the same line:
         if self.cvt == 'T':
-            self.runtext=(_("Sort!"))
-            self.recordtext=(_("Record Sorted Examples"))
             self.toneframe(line)
             self.tonegroup(line)
         else:
-            self.runtext=(_("Report!")) #because CV doesn't actually sort yet...
-            self.recordtext=(_("Record Dictionary Words"))
             self.cvcheck(line)
     def toneframe(self,line):
         self.opts['columnplus']=1
