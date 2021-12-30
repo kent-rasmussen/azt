@@ -1045,6 +1045,16 @@ class Settings(object):
                 self.repo.add(savefile)
         if self.repo and not me:
             self.repo.commit()
+    def moveattrstoobjects(self):
+        # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
+        for attr in self.fndict:
+            if hasattr(self,attr):
+                log.info("moving attr {} to object ({})".format(attr,getattr(self,attr)))
+                self.fndict[attr](getattr(self,attr))
+                # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
+                if attr not in ['glosslangs']: #obj and attr have same name...
+                    delattr(self,attr)
+        # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
         self.fndict=fns={}
