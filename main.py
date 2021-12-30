@@ -280,17 +280,17 @@ class Menus(ui.Menu):
                         cmd=m[1]
                         )
         self.cascade(self.changemenu,_("Syllable profile"),'profilemenu')
-        for m in [("Next", self.parent.nextprofile),
-                    ("Choose", self.parent.getprofile),
+        for m in [("Next", self.parent.status.nextprofile),
+                    ("Choose", self.parent.status.getprofile),
                     ]:
             self.command(self.profilemenu,
                         label=_(m[0]),
                         cmd=m[1]
                         )
         """What to check stuff"""
-        cvt=check.params.cvt()
-        ps=check.slices.ps()
-        profile=check.slices.profile()
+        cvt=self.parent.params.cvt()
+        ps=self.parent.slices.ps()
+        profile=self.parent.slices.profile()
         if None not in [ps, profile, cvt]:
             if cvt == 'T':
                 changemenu.add_separator()
@@ -307,11 +307,11 @@ class Menus(ui.Menu):
                 framemenu.add_command(label=_("Choose"),
                                 command=lambda x=check:Check.getcheck(x))
             else:
-                changemenu.add_separator()
-                changemenu.add_command(label=_("Location in word"),
+                self.changemenu.add_separator()
+                self.changemenu.add_command(label=_("Location in word"),
                         command=lambda x=check:Check.getcheck(x))
                 if check.check is not None:
-                    changemenu.add_command(label=_("Segment(s) to check"),
+                    self.changemenu.add_command(label=_("Segment(s) to check"),
                         command=lambda x=check:Check.getgroup(x,tosort=True)) #any
         """Do"""
     def do(self):
