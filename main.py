@@ -2585,6 +2585,8 @@ class TaskDressing(object):
         for attr in ['params','slices','status','toneframes','glosslangs']:
             if hasattr(self.settings,attr):
                 setattr(self,attr,getattr(self.settings,attr))
+            else:
+                log.info("Didn't find {} in {}".format(attr,self.settings))
     def makestatusframe(self,dict=None):
         if hasattr(self,'slices'):
             dictnow={
