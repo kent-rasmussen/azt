@@ -3546,7 +3546,7 @@ class TaskChooser(TaskDressing,ui.Window):
             self.analang=self.file.analang #I need to keep this alive until objects are done
         self.makesettings()
         TaskDressing.__init__(self,parent)
-        if self.taskchooser.donew['collectionlx']:
+        if self.taskchooser.donew['collectionlc']:
             self.makedatadict()
             self.makeexampledict() #needed for makestatus, needs params,slices,data
             self.maxprofiles=5 # how many profiles to check before moving on to another ps
