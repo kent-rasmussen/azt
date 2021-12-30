@@ -614,7 +614,7 @@ class StatusFrame(ui.Frame):
         self.opts['columnplus']=0
     def cvcheck(self,line):
         self.opts['columnplus']=1
-        t=(_("working on {}".format(self.settings.params.check()[1]))) #check[1]
+        t=(_("working on {}".format(self.settings.params.cvcheckname())))
         self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
         # self.opts['row']+=1
     def finalbuttons(self):
