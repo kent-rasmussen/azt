@@ -8500,6 +8500,7 @@ class ErrorNotice(ui.Window):
         self.title = title
         self.text = text
         l=ui.Label(self.frame, text=text, row=0, column=0)
+        l.wrap()
         self.attributes("-topmost", True)
         if wait:
             self.wait_window(self)
