@@ -7153,8 +7153,6 @@ class ExampleDict(dict):
         self._outdict['framed']=framed
         return True
     def getexample(self,group,**kwargs):
-        # exampletype(**kwargs) #needed?
-        # wglosses=False,wsoundfile=False): #truncdefn=False, notonegroup=True,
         check=self.params.check()
         senseids=self.senseidsinslicegroup(group,check)
         if not senseids:
