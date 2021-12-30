@@ -1225,10 +1225,11 @@ class Settings(object):
             fields=self.defaultstoclear[field]
         for default in fields: #self.defaultstoclear[field]:
             setattr(self, default, None)
-    def settings(self):
-        setdefaults.fields(self.db) #sets self.pluralname and self.imperativename
+    def settingsinit(self):
         self.initdefaults() #provides self.defaults, list to load/save
         self.cleardefaults() #this resets all to none (to be set below)
+        self.pss() #sets self.nominalps and self.verbalps
+        self.fields() #sets self.pluralname and self.imperativename
     def getdirectories(self):
         self.directory=file.getfilenamedir(self.liftfilename)
         if not file.exists(self.directory):
@@ -1248,6 +1249,20 @@ class Settings(object):
         log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
+    def pss(self):
+        for ps in self.db.pss[:2]:
+            if ps in ['N','n','Noun','noun',
+                    'Nom','nom',
+                    'S','s','Sustantivo','sustantivo'
+                    ]:
+                self.nominalps=ps
+            elif ps in ['V','v','Verb','verb',
+                    'Verbe','verbe',
+                    'Verbo','verbo'
+                    ]:
+                self.verbalps=ps
+            else:
+                log.error("Not sure what to do with top ps {}".format(ps))
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
         fields=self.db.fields
@@ -1995,12 +2010,16 @@ class Settings(object):
                     self.audiolang=self.db.audiolangs[n]
                     return
     def makeglosslangs(self):
-        self.glosslangs=Glosslangs(self.glosslangs)
+        if self.glosslangs:
+            self.glosslangs=Glosslangs(self.glosslangs)
+        else:
+            self.glosslangs=Glosslangs()
     def checkglosslangs(self):
-        for lang in self.glosslangs:
-            if lang not in self.db.glosslangs:
-                self.glosslangs.rm(lang)
-        if len(self.glosslangs) == 0:
+        if self.glosslangs:
+            for lang in self.glosslangs:
+                if lang not in self.db.glosslangs:
+                    self.glosslangs.rm(lang)
+        if not self.glosslangs:
             self.guessglosslangs()
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
