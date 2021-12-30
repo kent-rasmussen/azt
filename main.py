@@ -2622,9 +2622,10 @@ class TaskDressing(object):
             return
         if hasattr(self.frame,'status') and self.frame.status.winfo_exists():
             self.frame.status.destroy()
-        self.frame.status=StatusFrame(self.frame, self.taskchooser,
+        self.frame.status=StatusFrame(self.frame, self.taskchooser, self,
                                         relief=self.mainrelief,
-                                        row=0, column=0, sticky='nw')
+                                        row=1, column=0, sticky='nw')
+        self.settings.storesettingsfile()
         self.makestatusframe(dictnow)
     def getinterfacelang(self,event=None):
         log.info("Asking for interface language...")
