@@ -1834,6 +1834,8 @@ class Settings(object):
                                                                 reverse=True)
         self.slices.scount(scount) #send to object
     def notifyuserofextrasegments(self):
+        if self.analang not in self.db.segmentsnotinregexes:
+            return
         invalids=self.db.segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
         extras=list(dict.fromkeys(invalids).keys())
