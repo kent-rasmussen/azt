@@ -7139,11 +7139,10 @@ class ExampleDict(dict):
         kwargs=exampletype(**kwargs)
         if senseid is None:
             return
-        framed=self.taskchooser.datadict.getframeddata(senseid=senseid,check=check)
+        framed=self.datadict.getframeddata(senseid=senseid,check=check)
         if framed is None:
             return
         log.info("exampletypeok framed: {}".format(framed))
-        # framed=self.taskchooser.datadict.getframeddata(senseid)
         if kwargs['wglosses'] and not self.hasglosses(framed):
             log.info("Gloss check failed for {}".format(senseid))
             return
