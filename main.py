@@ -3279,14 +3279,22 @@ class TaskChooser(TaskDressing,ui.Window):
         if hasattr(self,'task') and self.task.winfo_exists():
             self.task.destroy()
         optionlist=self.makeoptions()
-        ui.ButtonFrame(self.frame,
-                                optionlist=optionlist,
-                                command=self.maketask,
-                                # window=None,
-                                column=1, row=0,
-                                pady=(25,0)
-                                )
-        self.setmainwindow(self)
+        n=0
+        bpr=3
+        # compound='left', #image bottom, left, right, or top of text
+        bframe=ui.Frame(self.frame,column=1, row=1, pady=(25,0))
+        for o in optionlist:
+            ui.Button(bframe,
+                        text=o[1],
+                        command=lambda t=o[0]:self.maketask(t),
+                        column=n%bpr,
+                        row=int(n/bpr),
+                        compound='left',
+                        image=o[2],
+                        wraplength=int(program['root'].wraplength*.8/bpr),
+                        sticky='nesw'
+                        )
+            n+=1
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
