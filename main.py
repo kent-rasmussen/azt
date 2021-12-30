@@ -2586,7 +2586,8 @@ class TaskDressing(object):
             if hasattr(self.settings,attr):
                 setattr(self,attr,getattr(self.settings,attr))
     def makestatusframe(self,dict=None):
-        dictnow={
+        if hasattr(self,'slices'):
+            dictnow={
                 'iflang':self.settings.interfacelangwrapper(),
                 'analang':self.params.analang(),
                 'glang1':self.glosslangs.lang1(),
