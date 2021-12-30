@@ -4202,7 +4202,8 @@ class Sort(object):
             rms=[value]
         """The above doesn't test for profile, so we restrict that next"""
         for senseid in self.slices.inslice(senseids): #only for this ps-profile
-            rmlist=rms[:]+self.db.getverificationnodevaluebyframe(senseid,vtype=profile,
+            rmlist=rms[:]+self.db.getverificationnodevaluebyframe(
+                                        senseid,vtype=profile,
                                         analang=self.analang,
                                         frame=check)
             log.info("Removing {}".format(rmlist))
