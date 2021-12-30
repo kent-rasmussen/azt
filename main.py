@@ -920,7 +920,7 @@ class Settings(object):
                                 'menu',
                                 'mainrelief',
                                 'fontthemesmall',
-                                'hidegroupnames'
+                                'secondformfield'
                                 ]},
             'profiledata':{
                                 'file':'profiledatafile',
@@ -2177,6 +2177,18 @@ class Settings(object):
                 self.refreshattributechanges()
         else:
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
+    def setsecondformfieldN(self,choice,window=None):
+        # ps=Noun# t=self.params.cvt()
+        self.secondformfield[self.nominalps]=choice
+        self.attrschanged.append('secondformfield')
+        self.refreshattributechanges()
+        window.destroy()
+    def setsecondformfieldV(self,choice,window=None):
+        # ps=Noun# t=self.params.cvt()
+        self.secondformfield[self.verbalps]=choice
+        self.attrschanged.append('secondformfield')
+        self.refreshattributechanges()
+        window.destroy()
     def setprofile(self,choice,window):
         self.slices.profile(choice)
         self.attrschanged.append('profile')
@@ -2584,6 +2596,14 @@ class TaskDressing(object):
                 'group':self.status.group(),
                 'tableiteration':self.tableiteration
                 }
+        else:
+            dictnow={
+                    'iflang':self.settings.interfacelangwrapper(),
+                    'analang':self.params.analang(),
+                    'glang1':self.glosslangs.lang1(),
+                    'glang2':self.glosslangs.lang2(),
+                    'secondfields':str(self.settings.secondformfield)
+                    }
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
         if dict == dictnow:
@@ -2773,6 +2793,56 @@ class TaskDressing(object):
                                     column=0, row=0
                                     )
             window.wait_window(window)
+    def getsecondformfieldN(self,event=None):
+        log.info("Asking for secondformfield...")
+        ps=self.settings.nominalps
+        optionslist = self.db.fields #[(x,profilecounts[(x,ps)]) for x in profiles]
+        if not optionslist:
+            ErrorNotice("I don't see any appropriate fields; I'll give you "
+            "some commonly used ones to choose from.", wait=True)
+        title=_('Select Second Form Field for {}').format(ps)
+        window=ui.Window(self.frame,title=title)
+        ui.Label(window.frame, text=_("What is the database field for second "
+                            "forms for {} words?".format(ps)),column=0, row=0)
+        if optionslist:
+            optionslist.remove(self.imperativename)
+        else:
+            optionslist=self.settings.plopts
+        """What does this extra frame do?"""
+        window.scroll=ui.Frame(window.frame)
+        window.scroll.grid(column=0, row=2)
+        buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                optionlist=optionslist,
+                command=self.settings.setsecondformfieldN,
+                window=window,
+                column=0, row=0
+                )
+        window.wait_window(window)
+    def getsecondformfieldV(self,event=None):
+        log.info("Asking for secondformfield...")
+        ps=self.settings.verbalps
+        optionslist = self.db.fields
+        if not optionslist:
+            ErrorNotice("I don't see any appropriate fields; I'll give you "
+            "some commonly used ones to choose from.", wait=True)
+        title=_('Select Second Form Field for {}').format(ps)
+        window=ui.Window(self.frame,title=title)
+        ui.Label(window.frame, text=_("What is the database field for second "
+                            "forms for {} words?".format(ps)),column=0, row=0)
+        if optionslist:
+            optionslist.remove(self.pluralname)
+        else:
+            optionslist=self.settings.impopts
+        """What does this extra frame do?"""
+        window.scroll=ui.Frame(window.frame)
+        window.scroll.grid(column=0, row=2)
+        buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                optionlist=optionslist,
+                command=self.settings.setsecondformfieldV,
+                window=window,
+                column=0, row=0
+                )
+        window.wait_window(window)
     def getcheck(self,guess=False,event=None,**kwargs):
         log.info("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
