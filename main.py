@@ -3531,13 +3531,18 @@ class TaskChooser(TaskDressing,ui.Window):
         sys.exit()
         # self.restart(self.filename)
     def __init__(self,parent):
+        self.start_time=time.time() #this enables boot time evaluation
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
         self.setmainwindow(self)
         splash = Splash(self)
         self.getfile()
-        self.makesettings() #give whole object, for name and db
-        log.info("Settings: {}".format(self.settings))
+        # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
+        # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
+        self.whatsdone()
+        if hasattr(self.file,'analang'): #i.e., new file
+            self.analang=self.file.analang #I need to keep this alive until objects are done
+        self.makesettings()
         TaskDressing.__init__(self,parent)
         if self.taskchooser.donew['collectionlx']:
             self.makedatadict()
