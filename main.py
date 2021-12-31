@@ -7,6 +7,7 @@ program['production']=False #True for making screenshots
 program['version']='0.8.8oop' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
+exceptiononload=False
 import platform
 """Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
 information than 'DEBUG' does):
