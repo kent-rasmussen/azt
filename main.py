@@ -4730,19 +4730,19 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             row=0
             if self.exitFlag.istrue():
                 return
-            ui.Label(self.runwindow.frame, text=done).grid(row=row,column=0,
-                                                        columnspan=2)
+            ui.Label(self.runwindow.frame, text=done,
+                    row=row,column=0,columnspan=2)
             row+=1
             ui.Label(self.runwindow.frame, text='',
-                        image=self.frame.theme.photo[cvt]
-                        ).grid(row=row,column=0,columnspan=2)
+                        image=self.frame.theme.photo[cvt],
+                        row=row,column=0,columnspan=2)
             row+=1
             ctosort=self.status.checks(tosort=True)
             ctoverify=self.status.checks(toverify=True)
             ptosort=self.status.profiles(tosort=True)
             ptoverify=self.status.profiles(toverify=True)
-            ui.Label(self.runwindow.frame,text=_("Continue to")).grid(columnspan=2,
-                                                            row=row,column=0)
+            ui.Label(self.runwindow.frame,text=_("Continue to"),
+                    columnspan=2,row=row,column=0)
             row+=1
             if ctosort or ctoverify:
                 b1=ui.Button(self.runwindow.frame, anchor='c',
