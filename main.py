@@ -1104,8 +1104,8 @@ class Settings(object):
                 d[s]=getattr(o,s)
                 # log.log(4,"Trying to dict self.{} with value {}, type {}"
                 #         "".format(s,d[s],type(d[s])))
-            else:
-                log.error("Couldn't find {} in {}".format(s,setting))
+            # else:
+            #     log.error("Couldn't find {} in {}".format(s,setting))
         """This is the only glosslang > glosslangs conversion"""
         if 'glosslangs' in d and d['glosslangs'] in [None,[]]:
             if 'glosslang' in d and d['glosslang'] is not None:
