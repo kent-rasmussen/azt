@@ -9437,12 +9437,9 @@ def main():
     logsetup.shutdown()
 def mainproblem():
     log.info("Starting up help line...")
-    if me:
-        return #for now
-    if not me:
-        file=logwritelzma(log.filename)
-    else:
-        file='<zipped filename here>'
+    if program['testing'] and me:
+        return
+    file=log.writelzma()
     try: #Make this work whether root has run/still runs or not.
         program['root'].winfo_exists()
         log.info("Root there!")
