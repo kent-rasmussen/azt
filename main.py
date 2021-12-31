@@ -76,7 +76,6 @@ import sys
 import locale
 import gettext
 import sys
-import inspect
 import os
 import pprint #for settings and status files, etc.
 import subprocess
