@@ -3,7 +3,8 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A→Z+T'}
 program['tkinter']=True
-program['production']=False #True for making screenshots
+program['production']=False #True for making screenshots (default theme)
+program['testing']=True #True eliminates Error screens and zipped logs
 program['version']='0.8.8oop' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
