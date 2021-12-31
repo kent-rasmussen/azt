@@ -26,8 +26,8 @@ if platform.uname().node == 'karlap':
 else:
     loglevel='DEBUG'
     me=False
-from logsetup import *
-log=logsetup(loglevel)
+import logsetup
+log=logsetup.Log(loglevel)
 """My modules, which should log as above"""
 import lift
 import file
