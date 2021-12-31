@@ -854,6 +854,9 @@ class Window(Toplevel):
         if self.winfo_exists(): #If this has been destroyed, don't bother.
             if hasattr(self,'frame') and type(self.frame) is Frame:
                 self.frame.destroy()
+            for rc in [0,2]:
+                self.outsideframe.grid_rowconfigure(rc, weight=3)
+                self.outsideframe.grid_columnconfigure(rc, weight=3)
             self.frame=Frame(self.outsideframe,
                             row=1, column=1, sticky='nsew'
                             )
