@@ -182,7 +182,7 @@ class FileChooser(object):
         return str(newfile)
     def getfilename(self):
         self.name=file.getfilename()
-        if type(self.name) is list:
+        if not self.name or type(self.name) is list:
             self.askwhichlift(self.name)
         if not self.name or not file.exists(self.name):
             log.error("Didn't select a lexical database to check; exiting.")
