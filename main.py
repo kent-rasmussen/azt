@@ -2347,11 +2347,6 @@ class Settings(object):
                                     window=window,
                                     column=0, row=1
                                     )
-    def pyaudiocheck(self):
-        try:
-            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
-        except:
-            self.pyaudio=sound.AudioInterface()
     def makesoundsettings(self):
         if not hasattr(self,'soundsettings'):
             self.pyaudiocheck() #in case self.pyaudio isn't there yet
@@ -6601,6 +6596,11 @@ class Record(object):
             self.pyaudio.terminate()
         except:
             log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
+    def pyaudiocheck(self):
+        try:
+            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
+        except:
+            self.pyaudio=sound.AudioInterface()
     def soundcheckrefreshdone(self):
         self.settings.storesettingsfile(setting='soundsettings')
         self.soundsettingswindow.destroy()
