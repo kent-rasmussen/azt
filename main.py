@@ -7743,7 +7743,8 @@ class ToneGroupButtonFrame(ui.Frame):
                     return
             else:
                 log.error("self.exs.getexample didn't return an example "
-                                    "(without needing a sound file); returning")
+                        "(without needing a sound file); returning ({})"
+                        "".format(example))
                 return
         self._n=example['n']
         framed=example['framed']
