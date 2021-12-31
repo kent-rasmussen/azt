@@ -138,7 +138,7 @@ def writeinterfacelangtofile(lang):
     f.close()
 def getfilenames():
     """This just returns the list, if there."""
-    try:
+    try: #b/c sometimes we come directly here
         import lift_url
     except:
         log.debug("getfilename lift_url didn't import")
@@ -152,20 +152,15 @@ def getfilename():
         import lift_url
     except:
         log.debug("getfilename lift_url didn't import")
-        return lift()
-    if (hasattr(lift_url,'filename') and
-            lift_url.filename != () and
+        return
+    if (hasattr(lift_url,'filename') and lift_url.filename and
             exists(lift_url.filename)):
         log.debug("lift_url.py imported fine, and url points to a file.")
         return lift_url.filename
     else:
         log.debug("lift_url imported, but didn't contain a url that points "
                     "to a file: {}".format(dir(lift_url)))
-        f=getfilenames()
-        if f:
-            return f
-        else:
-            return lift()
+        return getfilenames()
 def gethome():
     home=pathlib.Path.home()
     if platform.uname().node == 'karlap':
