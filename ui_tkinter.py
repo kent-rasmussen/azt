@@ -2,8 +2,9 @@
 # coding=UTF-8
 import sys
 import platform
-import logging
-log = logging.getLogger(__name__) #bc not imported as a module...
+import logsetup
+log = logsetup.Log('DEBUG')
+log.info("Importing ui_tkinter.py")
 import unicodedata
 import tkinter #as gui
 import tkinter.font
@@ -1523,6 +1524,3 @@ def nfd(x):
 if __name__ == '__main__':
     """To Test:"""
     # loglevel='Debug'
-    loglevel='INFO'
-    from logsetup import *
-    log=logsetup(loglevel)

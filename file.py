@@ -5,8 +5,8 @@ from tkinter import Tk
 import pathlib
 import os
 import platform
-import logging
-log = logging.getLogger(__name__)
+import logsetup
+log = logsetup.Log('INFO')
 from importlib import reload as modulereload
 try: #Allow this module to be used without translation
     _

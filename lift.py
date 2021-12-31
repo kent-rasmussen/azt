@@ -16,7 +16,9 @@ import logging
 import ast #For string list interpretation
 import copy
 import collections
-log = logging.getLogger(__name__)
+import logsetup
+log = logsetup.Log('INFO')
+log.info("Importing lift.py")
 try: #Allow this module to be used without translation
     _
 except:
@@ -2268,10 +2270,6 @@ if __name__ == '__main__':
     #     return str(x)
     """To Test:"""
     # loglevel='Debug'
-    loglevel='INFO'
-    print('loglevel=',loglevel)
-    from logsetup import *
-    log=logsetup(loglevel)
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"

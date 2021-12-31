@@ -3419,7 +3419,7 @@ class TaskChooser(TaskDressing,ui.Window):
                         lxft.text='' #clear only on move
         # self.db.write(self.file.name+str(now()))
         self.db.write()
-        conversionlogfile=logwritelzma(log.filename)
+        conversionlogfile=log.writelzma(log.filename)
         #             tmpdb.nodes.findall('entry/citation')):
         #     for f in n.findall('form'):
         #         n.remove(f)
@@ -9433,7 +9433,7 @@ def main():
     """Translation starts here:"""
     myapp = TaskChooser(root) #TaskChooser MainApplication
     myapp.mainloop()
-    logshutdown() #in logsetup
+    logsetup.shutdown()
 def mainproblem():
     log.info("Starting up help line...")
     if me:
@@ -9467,7 +9467,7 @@ def mainproblem():
             row=1,column=0
             )
         m.bind("<Button-1>", lambda e: openweburl(durl))
-    lcontents=logcontents(log,50)
+    lcontents=log.contents(50)
     addr=program['Email']
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
     eurl+=('&body=Please replace this text with a description of what you '
