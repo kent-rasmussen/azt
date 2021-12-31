@@ -38,7 +38,7 @@ try:
     import sound
 except Exception as e:
     log.exception("Problem importing Sound/pyaudio. Is it installed? %s",e)
-    exceptiononload=True #logwritelzma(log.filename) #in logsetup
+    exceptiononload=True
 """Other people's stuff"""
 import threading
 import itertools
@@ -63,7 +63,7 @@ import ast
 import time
 import datetime
 import wave
-# #for some day..…
+# #for some day...
 # from PIL import Image #, ImageTk
 #import Image #, ImageTk
 import re
