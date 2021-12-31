@@ -7136,7 +7136,7 @@ class ExampleDict(dict):
         framed=self.datadict.getframeddata(senseid=senseid,check=check)
         if framed is None:
             return
-        log.info("exampletypeok framed: {}".format(framed))
+        # log.info("exampletypeok framed: {}".format(framed))
         if kwargs['wglosses'] and not self.hasglosses(framed):
             log.info("Gloss check failed for {}".format(senseid))
             return
