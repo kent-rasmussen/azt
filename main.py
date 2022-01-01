@@ -91,9 +91,9 @@ class FileChooser(object):
                 window.withdraw()
                 self.name=self.startnewfile()
                 log.info("self.name: {}".format(self.name))
-                if self.name in ['New','']:
-                    return
                 window.deiconify()
+                if self.name in ['New',''] or not hasattr(self,'analang'):
+                    return
             elif choice == 'Other':
                 self.name=file.lift()
                 if not self.name:
