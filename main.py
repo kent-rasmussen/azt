@@ -2640,8 +2640,9 @@ class TaskDressing(object):
         ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
         name = ui.EntryField(window.frame)
         name.grid(row=1,column=0,sticky='e')
-        ui.Button(window.frame,text='OK',cmd=submit,row=1,column=1,sticky='w')
+        name.focus_set()
         name.bind('<Return>',submit)
+        ui.Button(window.frame,text='OK',cmd=submit,row=1,column=1,sticky='w')
     def getanalang(self,event=None):
         if len(self.db.analangs) <2: #The user probably wants to change display.
             self.getanalangname()
@@ -3552,6 +3553,8 @@ class WordCollection(object):
             eff.grid(row=1,column=0)
             formfield = ui.EntryField(eff, render=True, textvariable=form[lang])
             formfield.grid(row=1,column=0)
+            formfield.focus_set()
+            formfield.bind('<Return>',submitform)
             formfield.rendered.grid(row=2,column=0,sticky='new')
             sub_btn=ui.Button(self.runwindow.frame2,text = ok,
                       command = lambda x=lang:submitform(x),anchor ='c')
