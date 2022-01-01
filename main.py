@@ -6632,10 +6632,17 @@ class Record(object):
         self.settings.storesettingsfile(setting='soundsettings')
         self.soundsettingswindow.destroy()
     def soundcheckrefresh(self):
+        def quitall():
+            self.soundsettingswindow.destroy()
+            self.on_quit()
         self.soundsettingswindow.resetframe()
         row=0
         ui.Label(self.soundsettingswindow.frame, font='title',
-                text="Current Sound Card Settings (click any to change):",
+                text="Current Sound Card Settings",
+                row=row,column=0)
+        row+=1
+        ui.Label(self.soundsettingswindow.frame, #font='title',
+                text="(click any to change)",
                 row=row,column=0)
         row+=1
         ss=self.soundsettings
@@ -6689,12 +6696,33 @@ class Record(object):
                 row=row,column=0)
         caveat.wrap()
         row+=1
-        bd=ui.Button(self.soundsettingswindow.frame,text=_("Done"),anchor='c',
-                                            cmd=self.soundcheckrefreshdone)
-        bd.grid(row=row,column=0)
+        bd=ui.Button(self.soundsettingswindow.frame,
+                    text=_("Done"),
+                    cmd=self.soundcheckrefreshdone,
+                    # anchor='c',
+                    row=row,column=0,
+                    sticky=''
+                    )
+        bd=ui.Button(self.soundsettingswindow.frame,
+                    text=_("Quit {}".format(program['name'])),
+                    # cmd=program['root'].on_quit,
+                    cmd=quitall,
+                    # anchor='c',
+                    row=row,column=1
+                    )
     def soundsettingscheck(self):
         if not hasattr(self.settings,'soundsettings'):
             self.settings.loadsoundsettings()
+    def missingsoundattr(self):
+        log.info(dir(self.soundsettings))
+        for s in ['fs', 'sample_format',
+                    'audio_card_in',
+                    'audio_card_out']:
+            if (not hasattr(self.soundsettings,s) or
+                            not getattr(self.soundsettings,s)):
+                log.info("Missing sound setting {}; asking again".format(s))
+                return True
+        self.settings.soundsettingsok=True
     def soundcheck(self):
         #Set the parameters of what could be
         self.pyaudiocheck()
@@ -6703,6 +6731,9 @@ class Record(object):
                                 title=_('Select Sound Card Settings'))
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.soundsettingswindow)
+        if not self.exitFlag.istrue() and self.missingsoundattr():
+            self.soundcheck()
+            return
         self.donewpyaudio()
         if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
             self.soundsettingswindow.destroy()
@@ -6968,6 +6999,11 @@ class Record(object):
             self.showtonegroupexs()
         else:
             self.showentryformstorecord()
+    def __init__(self):
+        self.makesoundsettings()
+        self.loadsoundsettings()
+        self.soundsettings=self.settings.soundsettings
+        self.soundcheck()
 class RecordCitation(Record,TaskDressing,ui.Window):
     """docstring for RecordCitation."""
     def dobuttonkwargs(self):
@@ -6985,6 +7021,7 @@ class RecordCitation(Record,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        Record.__init__(self)
         self.analang=self.params.analang()
         # self.do=self.showentryformstorecord
 class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
@@ -7004,6 +7041,7 @@ class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        Record.__init__(self)
         # self.do=self.showtonegroupexs
 """Task definitions end here"""
 class Entry(lift.Entry): #Not in use
