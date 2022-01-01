@@ -3249,7 +3249,8 @@ class TaskChooser(TaskDressing,ui.Window):
     def maketask(self,taskclass): #,filename=None
         self.unsetmainwindow()
         self.task=taskclass(self) #filename
-        self.task.deiconify()
+        if not self.task.exitFlag.istrue():
+            self.task.deiconify()
         # if hasattr(self,'task'): #for restarts
             # for w in self.frame.winfo_children():
             #     w.destroy()
