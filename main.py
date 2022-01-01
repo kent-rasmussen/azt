@@ -3519,29 +3519,26 @@ class TaskChooser(TaskDressing,ui.Window):
 class WordCollection(object):
     """This task collects words, from the SIL CAWL, or one by one."""
     def addmorpheme(self):
-        def makewindow(lang):
-            def submitform(lang):
-                self.runwindow.form[lang]=formfield.get()
+        def makewindow():
+            def submitform(event=None):
+                self.runwindow.form[lang]=form[lang].get()
                 self.runwindow.frame2.destroy()
-            def skipform(lang):
+            def skipform(event=None):
                 self.runwindow.frame2.destroy() #Just move on.
-            self.runwindow.frame2=ui.Frame(self.runwindow)
-            self.runwindow.frame2.grid(row=1,column=0,sticky='ew',padx=25,
-                                                                        pady=25)
+            self.runwindow.frame2=ui.Frame(self.runwindow.frame,
+                                            row=1,column=0,
+                                            sticky='ew',
+                                            padx=25,pady=25)
             if lang == self.analang:
-                text=_("What is the form of the new {} "
+                text=_("What is the form of the new "
                         "morpheme in {} \n(consonants and vowels only)?".format(
-                                    ps,
                                     self.settings.languagenames[lang]))
                 ok=_('Use this form')
-            elif lang in self.db.analangs:
-                return
             else:
-                text=_("What does {} ({}) mean in {}?".format(
+                text=_("What does ‘{}’ mean in {}?".format(
                                             self.runwindow.form[self.analang],
-                                            ps,
                                             self.settings.languagenames[lang]))
-                ok=_('Use this {} gloss for {}'.format(
+                ok=_('Use this {} gloss for ‘{}’'.format(
                                             self.settings.languagenames[lang],
                                             self.runwindow.form[self.analang]))
                 self.runwindow.glosslangs.append(lang)
@@ -3557,13 +3554,13 @@ class WordCollection(object):
             formfield.bind('<Return>',submitform)
             formfield.rendered.grid(row=2,column=0,sticky='new')
             sub_btn=ui.Button(self.runwindow.frame2,text = ok,
-                      command = lambda x=lang:submitform(x),anchor ='c')
+                      command = submitform,anchor ='c')
             sub_btn.grid(row=2,column=0,sticky='')
             if lang != self.analang:
                 sub_btnNo=ui.Button(self.runwindow.frame2,
                     text = _('Skip {} gloss').format(
                                         self.settings.languagenames[lang]),
-                    command = lambda lang=lang: skipform(lang))
+                    command = skipform)
                 sub_btnNo.grid(row=1,column=1,sticky='')
             self.runwindow.waitdone()
             sub_btn.wait_window(self.runwindow.frame2) #then move to next step
@@ -3574,28 +3571,35 @@ class WordCollection(object):
         padx=50
         pady=10
         self.runwindow.title(_("Add Morpheme to Dictionary"))
-        title=_("Add a {} {} morpheme to the dictionary").format(ps,
+        title=_("Add {} morpheme to the dictionary").format(
                             self.settings.languagenames[self.analang])
-        ui.Label(self.runwindow,text=title,font='title',
+        ui.Label(self.runwindow.frame,text=title,font='title',
                 justify=tkinter.LEFT,anchor='c'
                 ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
         # Run the above script (makewindow) for each language, analang first.
         # The user has a chance to enter a gloss for any gloss language
         # already in the datbase, and to skip any as needed/desired.
         for lang in [self.analang]+self.db.glosslangs:
+            if lang in self.runwindow.form:
+                continue #Someday: how to do monolingual form/gloss here
             if not self.runwindow.exitFlag.istrue():
-                makewindow(lang)
+                x=makewindow()
+                if x:
+                    return
         """get the new senseid back from this function, which generates it"""
         if not self.runwindow.exitFlag.istrue(): #don't do this if exited
-            senseid=self.db.addentry(ps=ps,analang=self.analang,
+            senseid=self.db.addentry(ps='',analang=self.analang,
                             glosslangs=self.runwindow.glosslangs,
                             form=self.runwindow.form)
             # Update profile information in the running instance, and in the file.
-            self.getprofileofsense(senseid)
-            self.status.updateslices()
-            self.getscounts()
-            self.settings.storesettingsfile(setting='profiledata') #since we changed this.
             self.runwindow.destroy()
+            """The following are useless without ps information, so they will
+            have to come later."""
+            # if self.taskchooser.donew['collectionlc']:
+            #     self.settings.getprofileofsense(senseid)
+            #     self.slices.updateslices()
+            #     self.settings.getscounts()
+            #     self.settings.storesettingsfile(setting='profiledata') #since we changed this.
     def getlisttodo(self):
         analang=self.params.analang()
         all=self.db.get('entry',
