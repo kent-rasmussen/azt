@@ -32,8 +32,8 @@ class Report(object):
         self.xlptypes()
         self.stylesheet()
         self.write()
-        if me:
-            self.compile() #This isn't working yet.
+        # if me:
+        #     self.compile() #This isn't working yet.
     def write(self):
         """This writes changes to XML which can be read by XXE as XLP."""
         doctype=self.node.tag
