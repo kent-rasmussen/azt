@@ -1142,8 +1142,8 @@ class Settings(object):
                             "{}".format(s,v,self.fndict[s]))
                 self.fndict[s](v)
             else:
-                log.debug("Trying to read {} to self with value {}, type {}"
-                            "".format(s,v,type(v)))
+                log.debug("Trying to read {} to {} with value {}, type {}"
+                            "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return d
     def storesettingsfile(self,setting='defaults',noobjects=False):
