@@ -938,7 +938,8 @@ class Settings(object):
                                 'menu',
                                 'mainrelief',
                                 'fontthemesmall',
-                                'secondformfield'
+                                'secondformfield',
+                                'soundsettingsok'
                                 ]},
             'profiledata':{
                                 'file':'profiledatafile',
