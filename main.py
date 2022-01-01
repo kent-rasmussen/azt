@@ -5728,7 +5728,7 @@ class Report(object):
                 for lang in [self.analang]+self.glosslangs:
                     if lang in framed.forms and framed.forms[lang]: #If all None, don't.
                         counts['examples']+=1
-                        if self.audiolang in framed.forms:
+                        if self.settings.audiolang in framed.forms:
                             counts['audio']+=1
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                                 groups=groups)
@@ -6318,9 +6318,9 @@ class Report(object):
         else:
             exx=xlp.Example(parent,id) #the id goes here...
             ex=xlp.Word(exx) #This doesn't have an id
-        if self.audiolang in framed.forms:
+        if self.settings.audiolang in framed.forms:
             url=file.getdiredrelURL(self.reporttoaudiorelURL,
-                                                framed.forms[self.audiolang])
+                                                framed.forms[self.settings.audiolang])
             el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang],
                                                                     str(url))
         else:
@@ -6693,8 +6693,8 @@ class Record(object):
                                             cmd=self.soundcheckrefreshdone)
         bd.grid(row=row,column=0)
     def soundsettingscheck(self):
-        if not hasattr(self,'soundsettings'):
-            self.loadsoundsettings()
+        if not hasattr(self.settings,'soundsettings'):
+            self.settings.loadsoundsettings()
     def soundcheck(self):
         #Set the parameters of what could be
         self.pyaudiocheck()
@@ -6769,12 +6769,12 @@ class Record(object):
                                                 guid=sense['guid'],
                                                 glosslang=lang
                                                 ),othersOK=True))
-            if self.db.pluralname is not None:
+            if self.settings.pluralname is not None:
                 sense['plnode']=firstoflist(self.db.get('field',
                                         guid=sense['guid'],
                                         lang=self.analang,
                                         fieldtype=self.db.pluralname).get())
-            if self.db.imperativename is not None:
+            if self.settings.imperativename is not None:
                 sense['impnode']=firstoflist(self.db.get('field',
                                         guid=sense['guid'],
                                         lang=self.analang,
@@ -6849,7 +6849,7 @@ class Record(object):
             if ((self.runwindow.frame.skip == True) and
                 (lift.atleastoneexamplehaslangformmissing(
                                                     examples,
-                                                    self.audiolang) == False)):
+                                                    self.settings.audiolang) == False)):
                 continue
             row=0
             if self.runwindow.exitFlag.istrue():
@@ -6879,7 +6879,7 @@ class Record(object):
             examples.reverse()
             for example in examples:
                 if (skip == True and
-                    lift.examplehaslangform(example,self.audiolang) == True):
+                    lift.examplehaslangform(example,self.settings.audiolang) == True):
                     continue
                 """These should already be framed!"""
                 framed=self.taskchooser.datadict.getframeddata(example,senseid=senseid)
@@ -6985,6 +6985,7 @@ class RecordCitation(Record,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        self.analang=self.params.analang()
         # self.do=self.showentryformstorecord
 class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
     """docstring for RecordCitation."""
@@ -7677,7 +7678,7 @@ class RecordButtonFrame(ui.Frame):
         if not hasattr(task.settings,'soundsettings'):
             task.settings.loadsoundsettings()
         self.callbackrecording=True
-        self.settings=task.soundsettings
+        self.settings=task.settings.soundsettings
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
         self.test=kwargs.pop('test',None)
@@ -7698,7 +7699,7 @@ class RecordButtonFrame(ui.Frame):
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
-        if task.audiolang is None and self.test is not True:
+        if task.settings.audiolang is None and self.test is not True:
             tlang=_("Set audio language to get record buttons!")
             log.error(tlang)
             ui.Label(self,text=tlang,borderwidth=1,
