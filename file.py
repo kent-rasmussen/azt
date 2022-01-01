@@ -93,7 +93,10 @@ def remove(file):
 def getnewlifturl(dir,xyz):
     dir=pathlib.Path(dir)
     dir=dir.joinpath(xyz)
-    if not exists(dir):
+    if exists(dir):
+        log.error("The directory {} already exits! Not Continuing.".format(dir))
+        return
+    else:
         dir.mkdir()
     url=dir.joinpath(xyz)
     url=url.with_suffix('.lift')
