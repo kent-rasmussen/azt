@@ -187,10 +187,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                 'id':(kwargs['form'][analang]+'_'+str(guid))
                                 })
         lexicalunit=ET.SubElement(entry, 'lexical-unit', attrib={})
-        form=ET.SubElement(lexicalunit, 'form',
-                                        attrib={'lang':analang})
-        text=ET.SubElement(form, 'text')
-        text.text=kwargs['form'][analang]
+        """Just adding citation, not lexeme forms, with this function,
+        though we need the lexeme field (above) to be there"""
+        # form=ET.SubElement(lexicalunit, 'form',
+        #                                 attrib={'lang':analang})
+        # text=ET.SubElement(form, 'text')
+        # text.text=kwargs['form'][analang]
         """At some point, I'll want to distinguish between these two"""
         citation=ET.SubElement(entry, 'citation', attrib={})
         form=ET.SubElement(citation, 'form', attrib={'lang':analang})
