@@ -3638,10 +3638,13 @@ class WordCollection(object):
             log.info("Probably nothing: {}".format(e))
         self.wordframe=ui.Frame(self.frame,row=1,column=1,sticky='ew')
         if not self.entries:
-            text+_("It looks like you're done collecting the Comparative "
+            text=_("It looks like you're done collecting the Comparative "
             "African Word List! Congratulations! You can still add words "
             "through the 'Add a Word' button, to the left.")
-            ui.Label(self.wordframe, text=text, row=0, column=0)
+            l=ui.Label(self.wordframe, text=text, row=0, column=0,
+                        wraplength=int(program['root'].wraplength*.6))
+            l.wrap()
+            return
         text=_("Type the word in your language that goes with these meanings."
                 "").format(self.nentries)
         ui.Label(self.wordframe, text=text, row=0, column=0)
