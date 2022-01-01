@@ -2322,7 +2322,11 @@ class Settings(object):
                 self.languagenames[xyz]="English"
             elif xyz == 'es':
                 self.languagenames[xyz]="Español"
-            elif xyz == 'ha':
+            elif xyz == 'pt':
+                self.languagenames[xyz]="Português"
+            elif xyz in ['id','ind']:
+                self.languagenames[xyz]="Bahasa Indonesia"
+            elif xyz in ['ha','hau']:
                 self.languagenames[xyz]="Hausa"
             elif xyz == 'swc':
                 self.languagenames[xyz]="Congo Swahili"
