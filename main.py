@@ -2287,40 +2287,6 @@ class Settings(object):
         self.soundsettings.sample_format=choice
         window.destroy()
         self.soundcheckrefresh()
-    def getsoundformat(self,event=None):
-        log.info("Asking for audio format...")
-        window=ui.Window(self.frame, title=_('Select Audio Format'))
-        ui.Label(window.frame, text=_('What audio format do you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
-        ss=self.soundsettings
-        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
-            name=ss.hypothetical['sample_formats'][sf]
-            l+=[(sf, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundformat,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundhz(self,event=None):
-        log.info("Asking for sampling frequency...")
-        window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
-        ui.Label(window.frame, text=_('What sampling frequency you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
-        ss=self.soundsettings
-        for fs in ss.cards['in'][ss.audio_card_in]:
-            name=ss.hypothetical['fss'][fs]
-            l+=[(fs, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundhz,
-                                    window=window,
-                                    column=0, row=1
-                                    )
     def setsoundcardindex(self,choice,window):
         self.soundsettings.audio_card_in=choice
         window.destroy()
@@ -2329,45 +2295,6 @@ class Settings(object):
         self.soundsettings.audio_card_out=choice
         window.destroy()
         self.soundcheckrefresh()
-    def getsoundcardindex(self,event=None):
-        log.info("Asking for input sound card...")
-        window=ui.Window(self.frame, title=_('Select Input Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to record sound with with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['in']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundcardindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundcardoutindex(self,event=None):
-        log.info("Asking for output sound card...")
-        window=ui.Window(self.frame, title=_('Select Output Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to play sound with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['out']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundcardoutindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def makesoundsettings(self):
-        if not hasattr(self,'soundsettings'):
-            self.pyaudiocheck() #in case self.pyaudio isn't there yet
-            self.soundsettings=sound.SoundSettings(self.pyaudio)
-    def loadsoundsettings(self):
-        self.makesoundsettings()
-        self.file.loadsettingsfile(setting='soundsettings')
     def langnames(self):
         """This is for getting the prose name for a language from a code."""
         """It should ultimately use a xyz.ldml file, produced (at least)
@@ -6615,6 +6542,79 @@ class Record(object):
             self.pyaudio.pa.get_format_from_width(1) #just check if its OK
         except:
             self.pyaudio=sound.AudioInterface()
+    def getsoundcardindex(self,event=None):
+        log.info("Asking for input sound card...")
+        window=ui.Window(self.frame, title=_('Select Input Sound Card'))
+        ui.Label(window.frame, text=_('What sound card do you '
+                                    'want to record sound with with?')
+                ).grid(column=0, row=0)
+        l=list()
+        for card in self.soundsettings.cards['in']:
+            name=self.soundsettings.cards['dict'][card]
+            l+=[(card, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundcardindex,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getsoundcardoutindex(self,event=None):
+        log.info("Asking for output sound card...")
+        window=ui.Window(self.frame, title=_('Select Output Sound Card'))
+        ui.Label(window.frame, text=_('What sound card do you '
+                                    'want to play sound with?')
+                ).grid(column=0, row=0)
+        l=list()
+        for card in self.soundsettings.cards['out']:
+            name=self.soundsettings.cards['dict'][card]
+            l+=[(card, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundcardoutindex,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getsoundformat(self,event=None):
+        log.info("Asking for audio format...")
+        window=ui.Window(self.frame, title=_('Select Audio Format'))
+        ui.Label(window.frame, text=_('What audio format do you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        l=list()
+        ss=self.soundsettings
+        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
+            name=ss.hypothetical['sample_formats'][sf]
+            l+=[(sf, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundformat,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getsoundhz(self,event=None):
+        log.info("Asking for sampling frequency...")
+        window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
+        ui.Label(window.frame, text=_('What sampling frequency you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        l=list()
+        ss=self.soundsettings
+        for fs in ss.cards['in'][ss.audio_card_in]:
+            name=ss.hypothetical['fss'][fs]
+            l+=[(fs, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundhz,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def makesoundsettings(self):
+        if not hasattr(self.settings,'soundsettings'):
+            self.pyaudiocheck() #in case self.pyaudio isn't there yet
+            self.settings.soundsettings=sound.SoundSettings(self.pyaudio)
+    def loadsoundsettings(self):
+        self.makesoundsettings()
+        self.settings.loadsettingsfile(setting='soundsettings')
     def soundcheckrefreshdone(self):
         self.settings.storesettingsfile(setting='soundsettings')
         self.soundsettingswindow.destroy()
