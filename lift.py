@@ -1056,7 +1056,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return self.get('ps',**kwargs).get('value')
     def pss(self): #get all POS values in the LIFT file
         counted = collections.Counter(self.ps())
-        ordered = [value for value, count in counted.most_common()]
+        ordered = [value for value, count in counted.most_common()
+                    if value not in [None, '']]
         log.info("Found these ps values, by frequency: {}".format(ordered))
         return ordered
     def getmorphtypes(self): #get all morph-type values in the LIFT file
