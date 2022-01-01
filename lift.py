@@ -1001,6 +1001,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def lexemeformnodeofentry(self,entry,analang):
         """This produces a list; specify senseid and analang as you like."""
         nodes=entry.findall('lexical-unit') #always there, even if empty
+        if not nodes:
+            log.error("This entry doesn't seem to have a lexeme form field: {}"
+                    "".format(entry.get("guid")))
         for node in nodes:
             formtexts=node.findall('form[@lang="{}"]/text'.format(analang))
             if formtexts:
