@@ -186,6 +186,14 @@ class FileChooser(object):
             return
         dir=file.getdirectory()
         newfile=file.getnewlifturl(dir,analang.get())
+        if not newfile:
+            ErrorNotice(_("Problem creating file; does the directory "
+                        "already exist?"),wait=True)
+            return
+        if file.exists(newfile):
+            ErrorNotice(_("The file {} already exists! {}").format(newfile),
+                                                                wait=True)
+            return
         log.info("Copying over stock to new LIFT file.")
         self.copytonewfile(newfile)
         return str(newfile)
