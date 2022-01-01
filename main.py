@@ -152,6 +152,8 @@ class FileChooser(object):
         if file.exists(newfile):
             log.info("Wrote empty LIFT file to {}".format(newfile))
     def startnewfile(self):
+        def done(event=None):
+            window.destroy()
         window=ui.Window(program['root'],title="Start New LIFT Database")
         ethnologueurl="https://www.ethnologue.com/"
         title=_("What is the Ethnologue (ISO 639-3) code?")#" of the language you "
@@ -170,7 +172,9 @@ class FileChooser(object):
         analang=tkinter.StringVar()
         e=ui.EntryField(entryframe, textvariable=analang, font='readbig',
                         width=5, row=0,column=0,sticky='w')
-        ui.Button(entryframe, text='OK', cmd=window.destroy, font='title',
+        e.bind('<Return>',done)
+        e.focus_set()
+        ui.Button(entryframe, text='OK', cmd=done, font='title',
                     row=0,column=1,sticky='e')
         l.wait_window(window)
         self.analang=analang.get()
