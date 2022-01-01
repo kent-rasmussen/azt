@@ -2555,7 +2555,9 @@ class TaskDressing(object):
             if hasattr(self.parent,attr):
                 setattr(self,attr,getattr(self.parent,attr))
         # Make these directly available:
-        for attr in ['params','slices','status','toneframes','glosslangs']:
+        for attr in ['params','slices','status','toneframes','glosslangs',
+                    'soundsettings'
+                    ]:
             if hasattr(self.settings,attr):
                 setattr(self,attr,getattr(self.settings,attr))
             else:
