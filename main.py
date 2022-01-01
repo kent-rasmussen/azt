@@ -3299,6 +3299,8 @@ class TaskChooser(TaskDressing,ui.Window):
             tasks.append(JoinUFgroups)
         if self.donew['recording']:
             tasks.append(Transcribe)
+        """What I'm working on now, just for easy testing:"""
+        tasks.append(WordCollectionCitation)
         # tasks.append(WordCollectionCitation),
         # tasks.append(WordCollectionPlImp),
         # tasks.append(ParseA), # input pl/imp, gives lx and ps
