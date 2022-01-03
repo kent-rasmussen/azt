@@ -3346,7 +3346,6 @@ class TaskChooser(TaskDressing,ui.Window):
                     tasktuples.append((task,str(task),task.taskicon(task)))
                 else:
                     tasktuples.append((task,str(task),None))
-
         return tasktuples
         # [(Check,"Citation Form Sorting in Tone Frames"),
         #         (WordCollection,"Placeholder for future checks"),
