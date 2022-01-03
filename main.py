@@ -6128,21 +6128,27 @@ class Report(object):
         for lang in set([self.analang]+self.glosslangs)-set([None]):
             xlpreport.addlang({'id':lang,'name': self.settings.languagenames[lang]})
         return xlpreport
-    def senseidformsbyregex(self,regex):
+    def senseidformsbyregex(self,regex,**kwargs):
         """This function takes in a compiled regex,
         and outputs a list/dictionary of senseid/{senseid:form} form."""
+        ps=kwargs.get('ps',self.slices.ps())
         output=[] #This is just a list of senseids now: (Do we need the dict?)
-        for form in self.formstosearch[ps]:
+        for form in self.settings.formstosearch[ps]:
             if regex.search(form):
-                output+=self.formstosearch[ps][form]
+                output+=self.settings.formstosearch[ps][form]
         return output
-    def buildregex(self):
+    def buildregex(self,**kwargs):
         """include profile (of those available for ps and check),
         and subcheck (e.g., a: CaC\2)."""
         """Provides self.regexCV and self.regex"""
         self.regexCV=None #in case this was run before.
         log.log(2,'profile:',profile)
         log.log(2,'cvt:',cvt)
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        group=kwargs.get('group',self.status.group())
         maxcount=re.subn(cvt, cvt, profile)[1]
         if profile is None:
             print("It doesn't look like you've picked a syllable profile yet.")
@@ -6152,8 +6158,6 @@ class Report(object):
         self.regexCV=str(profile) #Let's set this before changing it.
         """One pass for all regexes, S3, then S2, then S1, as needed."""
         cvts=['V','C']
-        cvt=self.params.cvt()
-        group=self.status.group()
         if 'x' in check:
             if self.subcheckcomparison in self.s[self.analang]['C']:
                 cvts=['C','V']
