@@ -6153,7 +6153,9 @@ class Report(object):
             return
         """Don't need this; only doing count=1 at a time. Let's start with
         the easier ones, with the first occurrance changed."""
+        # log.info("self.regexCV: {}".format(self.regexCV))
         self.regexCV=str(profile) #Let's set this before changing it.
+        # log.info("self.regexCV: {}".format(self.regexCV))
         """One pass for all regexes, S3, then S2, then S1, as needed."""
         cvts=['V','C']
         if 'x' in check:
@@ -6164,13 +6166,17 @@ class Report(object):
                 continue
             S=str(cvt)
             regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
+            # log.info("regexS: {}".format(regexS))
             compared=False
             for occurrence in reversed(range(maxcount)):
                 occurrence+=1
                 if re.search(S+str(occurrence),check) is not None:
                     """Get the (n=occurrence) S, regardless of intervening
                     non S..."""
+                    # log.info("regexS: {}".format(regexS))
                     regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
+                    # log.info("regS: {}".format(regS))
+                    # log.info("regexS: {}".format(regexS))
                     if 'x' in check:
                         if compared == False: #occurrence == 2:
                             replS='\\1'+self.subcheckcomparison
@@ -6179,7 +6185,10 @@ class Report(object):
                             replS='\\1'+group
                     else:
                         replS='\\1'+group
+                    # log.info("replS: {}".format(replS))
+                    # log.info("self.regexCV: {}".format(self.regexCV))
                     self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
+                    # log.info("self.regexCV: {}".format(self.regexCV))
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
