@@ -6517,6 +6517,7 @@ class Report(object):
         self.reportbasefilename=self.settings.reportbasefilename
         self.reporttoaudiorelURL=self.settings.reporttoaudiorelURL
         self.distinguish=self.settings.distinguish
+        self.profilesbysense=self.settings.profilesbysense
         self.s=self.settings.s
 class ReportCitation(Report,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
