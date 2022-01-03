@@ -3486,6 +3486,7 @@ class TaskChooser(TaskDressing,ui.Window):
         sys.exit()
         # self.restart(self.filename)
     def __init__(self,parent):
+        self.testdefault=ReportCitationT
         self.start_time=time.time() #this enables boot time evaluation
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
