@@ -6203,7 +6203,12 @@ class Report(object):
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
-    def wordsbypsprofilechecksubcheckp(self,parent='NoXLPparent',t="NoText!"):
+    def wordsbypsprofilechecksubcheckp(self,parent,t="NoText!",**kwargs):
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        group=kwargs.get('group',self.status.group())
         xlp.Paragraph(parent,t)
         print(t)
         log.debug(t)
@@ -6215,7 +6220,6 @@ class Report(object):
             # this removes senses already reported (e.g., in V1=V2)
             matches-=self.basicreported[ncvt]
         log.log(2,"{} matches found!: {}".format(len(matches),matches))
-        group=self.status.group()
         if 'x' in check:
             n=self.checkcounts[ps][profile][check][
                             group][self.subcheckcomparison]=len(matches)
@@ -6250,7 +6254,7 @@ class Report(object):
                     self.basicreported[ncvt].add(senseid)
                 framed=self.taskchooser.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,listword=True)
-    def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
+    def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent',**kwargs):
         """This function iterates across check and group values
         appropriate for the specified self.type, profile and check
         values (ps is irrelevant here).
@@ -6262,8 +6266,9 @@ class Report(object):
         possible values (as above), then restore the value."""
         """I need to find a way to limit these tests to appropriate
         profiles..."""
-        check=self.params.check()
-        group=self.status.group()
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
         if cvt in ['V','C']:
             groups=self.s[self.analang][cvt]
         """This sets each of the checks that are applicable for the given
@@ -6304,13 +6309,13 @@ class Report(object):
                             t=_("{} {} {}={}-{}".format(ps,profile,
                                                 check,group,
                                                 self.subcheckcomparison))
-                            self.wordsbypsprofilechecksubcheckp(parent=parent,
-                                                                            t=t)
+                            self.wordsbypsprofilechecksubcheckp(parent,t,
+                                            check=check, group=group,**kwargs)
             else:
                 for group in groups:
-                    t=_("{} {} {}={}".format(ps,profile,check,
-                                                                group))
-                    self.wordsbypsprofilechecksubcheckp(parent=parent,t=t)
+                    t=_("{} {} {}={}".format(ps,profile,check,group))
+                    self.wordsbypsprofilechecksubcheckp(parent,t,
+                                            check=check, group=group,**kwargs)
     def idXLP(self,framed):
         id='x' #string!
         bits=[
@@ -6420,7 +6425,7 @@ class Report(object):
         for ps in self.slices.pss()[0:2]: #just the first two (Noun and Verb)
             if ps not in self.checkcounts:
                 self.checkcounts[ps]={}
-            profiles=self.slices.profiles()
+            profiles=self.slices.profiles(ps=ps)
             t=_("{} data: (profiles: {})".format(ps,profiles))
             log.info(t)
             print(t)
@@ -6449,7 +6454,8 @@ class Report(object):
                     for ncvt in self.ncvts:
                         if ncvt not in self.basicreported:
                             self.basicreported[ncvt]=set()
-                    self.wordsbypsprofilechecksubcheck(s3)
+                    self.wordsbypsprofilechecksubcheck(s3,cvt=cvt,ps=ps,
+                                                        profile=profile)
         t=_("Summary coocurrence tables")
         s1s=xlp.Section(xlpr,t)
         for ps in self.checkcounts:
