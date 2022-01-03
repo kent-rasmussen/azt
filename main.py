@@ -4036,150 +4036,6 @@ class Tone(object):
         self.settings.updatesortingstatus() #this gets groups, too
     def __init__(self,parent):
         parent.params.cvt('T')
-class JoinUFgroups(Tone,TaskDressing,ui.Window):
-    """docstring for JoinUFgroups."""
-    def tasktitle(self):
-        return _("Join Underlying Form Groups")
-    def tonegroupsjoinrename(self,**kwargs):
-        def clearerror(event=None):
-            errorlabel['text'] = ''
-        def submitform():
-            clearerror()
-            uf=named.get()
-            if uf == "":
-                noname=_("Give a name for this UF tone group!")
-                log.debug(noname)
-                errorlabel['text'] = noname
-                return
-            groupsselected=[]
-            for group in groupvars: #all group variables
-                groupsselected+=[group.get()] #value, name if selected, 0 if not
-            groupsselected=[x for x in groupsselected if x != '']
-            log.info("groupsselected:{}".format(groupsselected))
-            if uf in self.analysis.orderedUFs and uf not in groupsselected:
-                deja=_("That name is already there! (did you forget to include "
-                        "the ‘{}’ group?)".format(uf))
-                log.debug(deja)
-                errorlabel['text'] = deja
-                return
-            for group in groupsselected:
-                if group in self.analysis.senseidsbygroup: #selected ones only
-                    log.debug("Changing values from {} to {} for the following "
-                            "senseids: {}".format(group,uf,
-                                        self.analysis.senseidsbygroup[group]))
-                    for senseid in self.analysis.senseidsbygroup[group]:
-                        self.db.addtoneUF(senseid,uf,analang=self.analang,
-                        write=False)
-            self.db.write()
-            self.runwindow.destroy()
-            self.tonegroupsjoinrename() #call again, in case needed
-        def done():
-            self.runwindow.destroy()
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        self.getrunwindow()
-        title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
-                                                        ps,profile))
-        self.runwindow.title(title)
-        padx=50
-        pady=10
-        rwrow=gprow=qrow=0
-        t=ui.Label(self.runwindow.frame,text=title,font='title')
-        t.grid(row=rwrow,column=0,sticky='ew')
-        text=_("This page allows you to join the {0}-{1} draft underlying tone "
-                "groups created for you by {2}, \nwhich are almost certainly "
-                "too small for you. \nLooking at a draft report, and making "
-                "your own judgement about which groups belong together, select "
-                "all the groups that belong together, and give that new group "
-                "a name. Afterwards, you can do this again for other groups "
-                "that should be joined. \nIf for any reason you want to undo "
-                "the groups you create here (e.g., you make a mistake or sort "
-                "new data), just run the default report, which will redo the "
-                "default analysis, which will replace these groupings with new "
-                "split groupings. \nTo see a report based on what you do "
-                "here, run the tone reports in the Advanced menu (without "
-                "analysis). ".format(ps,profile,program['name']))
-        rwrow+=1
-        i=ui.Label(self.runwindow.frame,text=text,
-                    row=rwrow,column=0,sticky='ew')
-        i.wrap()
-        rwrow+=1
-        qframe=ui.Frame(self.runwindow.frame)
-        qframe.grid(row=rwrow,column=0,sticky='ew')
-        text=_("What do you want to call this UF tone group for {}-{} words?"
-                "".format(ps,profile))
-        qrow+=1
-        q=ui.Label(qframe,text=text,
-                    row=qrow,column=0,sticky='ew',pady=20
-                    )
-        q.wrap()
-        named=tkinter.StringVar() #store the new name here
-        namefield = ui.EntryField(qframe,textvariable=named)
-        namefield.grid(row=qrow,column=1)
-        namefield.bind('<Key>', clearerror)
-        errorlabel=ui.Label(qframe,text='',fg='red')
-        errorlabel.grid(row=qrow,column=2,sticky='ew',pady=20)
-        text=_("Select the groups below that you want in this {} group, then "
-                "click ==>".format(ps))
-        qrow+=1
-        d=ui.Label(qframe,text=text)
-        d.grid(row=qrow,column=0,sticky='ew',pady=20)
-        sub_btn=ui.Button(qframe,text = _("OK"), command = submitform, anchor ='c')
-        sub_btn.grid(row=qrow,column=1,sticky='w')
-        done_btn=ui.Button(qframe,text = _("Done —no change"), command = done,
-                                                                    anchor ='c')
-        done_btn.grid(row=qrow,column=2,sticky='w')
-        groupvars=list()
-        rwrow+=1
-        scroll=ui.ScrollingFrame(self.runwindow.frame)
-        scroll.grid(row=rwrow,column=0,sticky='ew')
-        self.makeanalysis()
-        self.analysis.donoUFanalysis()
-        nheaders=0
-        if not self.analysis.orderedUFs:
-            self.runwindow.waitdone()
-            self.runwindow.destroy()
-            ErrorNotice(title="No draft UF groups found!",
-                        text="You don't seem to have any analyzed groups to "
-                                "join/rename. Have you done a tone analyis?"
-                        )
-            return
-        # ufgroups= # order by structured groups? Store this somewhere?
-        for group in self.analysis.orderedUFs: #make a variable and button to select
-            idn=self.analysis.orderedUFs.index(group)
-            if idn % 5 == 0: #every five rows
-                col=1
-                for check in self.analysis.orderedchecks:
-                    col+=1
-                    cbh=ui.Label(scroll.content, text=check, font='small')
-                    cbh.grid(row=idn+nheaders,
-                            column=col,sticky='ew')
-                nheaders+=1
-            groupvars.append(tkinter.StringVar())
-            n=len(self.analysis.senseidsbygroup[group])
-            buttontext=group+' ({})'.format(n)
-            cb=ui.CheckButton(scroll.content, text = buttontext,
-                                variable = groupvars[idn],
-                                onvalue = group, offvalue = 0,
-                                )
-            cb.grid(row=idn+nheaders,column=0,sticky='ew')
-            # self.analysis.valuesbygroupcheck[group]:
-            col=1
-            for check in self.analysis.orderedchecks:
-                col+=1
-                if check in self.analysis.valuesbygroupcheck[group]:
-                    cbl=ui.Label(scroll.content,
-                        text=unlist(
-                                self.analysis.valuesbygroupcheck[group][check]
-                                    )
-                            )
-                    cbl.grid(row=idn+nheaders,column=col,sticky='ew')
-        self.runwindow.waitdone()
-        self.runwindow.wait_window(scroll)
-    def __init__(self, arg):
-        Tone.__init__(self)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
@@ -4335,6 +4191,1277 @@ class Sort(object):
         scroll.grid(row=3,column=0,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
+class Record(object):
+    """This holds all the Recording methods."""
+    def donewpyaudio(self):
+        try:
+            self.pyaudio.terminate()
+        except:
+            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
+    def pyaudiocheck(self):
+        try:
+            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
+        except:
+            self.pyaudio=sound.AudioInterface()
+    def getsoundcardindex(self,event=None):
+        log.info("Asking for input sound card...")
+        window=ui.Window(self.frame, title=_('Select Input Sound Card'))
+        ui.Label(window.frame, text=_('What sound card do you '
+                                    'want to record sound with with?')
+                ).grid(column=0, row=0)
+        l=list()
+        for card in self.soundsettings.cards['in']:
+            name=self.soundsettings.cards['dict'][card]
+            l+=[(card, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundcardindex,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getsoundcardoutindex(self,event=None):
+        log.info("Asking for output sound card...")
+        window=ui.Window(self.frame, title=_('Select Output Sound Card'))
+        ui.Label(window.frame, text=_('What sound card do you '
+                                    'want to play sound with?')
+                ).grid(column=0, row=0)
+        l=list()
+        for card in self.soundsettings.cards['out']:
+            name=self.soundsettings.cards['dict'][card]
+            l+=[(card, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundcardoutindex,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getsoundformat(self,event=None):
+        log.info("Asking for audio format...")
+        window=ui.Window(self.frame, title=_('Select Audio Format'))
+        ui.Label(window.frame, text=_('What audio format do you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        l=list()
+        ss=self.soundsettings
+        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
+            name=ss.hypothetical['sample_formats'][sf]
+            l+=[(sf, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundformat,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getsoundhz(self,event=None):
+        log.info("Asking for sampling frequency...")
+        window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
+        ui.Label(window.frame, text=_('What sampling frequency you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        l=list()
+        ss=self.soundsettings
+        for fs in ss.cards['in'][ss.audio_card_in]:
+            name=ss.hypothetical['fss'][fs]
+            l+=[(fs, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundhz,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def makesoundsettings(self):
+        if not hasattr(self.settings,'soundsettings'):
+            self.pyaudiocheck() #in case self.pyaudio isn't there yet
+            self.settings.soundsettings=sound.SoundSettings(self.pyaudio)
+    def loadsoundsettings(self):
+        self.makesoundsettings()
+        self.settings.loadsettingsfile(setting='soundsettings')
+    def soundcheckrefreshdone(self):
+        self.settings.storesettingsfile(setting='soundsettings')
+        self.soundsettingswindow.destroy()
+    def soundcheckrefresh(self):
+        def quitall():
+            self.soundsettingswindow.destroy()
+            self.on_quit()
+        self.soundsettingswindow.resetframe()
+        row=0
+        ui.Label(self.soundsettingswindow.frame, font='title',
+                text="Current Sound Card Settings",
+                row=row,column=0)
+        row+=1
+        ui.Label(self.soundsettingswindow.frame, #font='title',
+                text="(click any to change)",
+                row=row,column=0)
+        row+=1
+        ss=self.soundsettings
+        ss.check() #make defaults if not valid options
+        for varname, dict, cmd in [
+            ('audio_card_in', ss.cards['dict'], self.getsoundcardindex),
+            ('fs',ss.hypothetical['fss'], self.getsoundhz),
+            ('sample_format', ss.hypothetical['sample_formats'],
+                                                         self.getsoundformat),
+            ('audio_card_out', ss.cards['dict'], self.getsoundcardoutindex),
+                                                    ]:
+            text=_("Change")
+            var=getattr(ss,varname)
+            log.debug("{} in {}".format(var,dict))
+            l=dict[var]
+            if cmd == self.getsoundcardindex:
+                l=_("Microphone: ‘{}’").format(l)
+            if cmd == self.getsoundcardoutindex:
+                l=_("Speakers: ‘{}’").format(l)
+            l=ui.Label(self.soundsettingswindow.frame,text=l,
+                    row=row,column=0)
+            l.bind('<ButtonRelease>',cmd) #getattr(self,str(cmd)))
+            row+=1
+        br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
+        br.grid(row=row,column=0)
+        row+=1
+        l=_("You may need to change your microphone "
+            "\nand/or speaker sound card to get the "
+            "\nsampling and format you want.")
+        ui.Label(self.soundsettingswindow.frame,
+                text=l).grid(row=row,column=0)
+        row+=1
+        l=_("Make sure ‘record’ and ‘play’ work well here, "
+            "\nbefore recording real data!")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='read',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        l=_("See also note in documentation about verifying these "
+            "recordings in an external application, such as Praat.")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='instructions',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        l=_("If Praat is installed in your path, right click on play "
+            "to open in Praat.")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='default',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        bd=ui.Button(self.soundsettingswindow.frame,
+                    text=_("Done"),
+                    cmd=self.soundcheckrefreshdone,
+                    # anchor='c',
+                    row=row,column=0,
+                    sticky=''
+                    )
+        bd=ui.Button(self.soundsettingswindow.frame,
+                    text=_("Quit {}".format(program['name'])),
+                    # cmd=program['root'].on_quit,
+                    cmd=quitall,
+                    # anchor='c',
+                    row=row,column=1
+                    )
+    def soundsettingscheck(self):
+        if not hasattr(self.settings,'soundsettings'):
+            self.settings.loadsoundsettings()
+    def missingsoundattr(self):
+        log.info(dir(self.soundsettings))
+        for s in ['fs', 'sample_format',
+                    'audio_card_in',
+                    'audio_card_out']:
+            if (not hasattr(self.soundsettings,s) or
+                            not getattr(self.soundsettings,s)):
+                log.info("Missing sound setting {}; asking again".format(s))
+                return True
+        self.settings.soundsettingsok=True
+    def soundcheck(self):
+        #Set the parameters of what could be
+        self.pyaudiocheck()
+        self.soundsettingscheck()
+        self.soundsettingswindow=ui.Window(self.frame,
+                                title=_('Select Sound Card Settings'))
+        self.soundcheckrefresh()
+        self.soundsettingswindow.wait_window(self.soundsettingswindow)
+        if not self.exitFlag.istrue() and self.missingsoundattr():
+            self.soundcheck()
+            return
+        self.donewpyaudio()
+        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
+            self.soundsettingswindow.destroy()
+    def makelabelsnrecordingbuttons(self,parent,sense):
+        framed=self.taskchooser.datadict.getframeddata(sense['nodetoshow'])
+        t=framed.formatted(noframe=True)
+        for g in sense['glosses']:
+            if g:
+                t+='\t‘'+g
+                if ('plnode' in sense and
+                        sense['nodetoshow'] is sense['plnode']):
+                    t+=" (pl)"
+                if ('impnode' in sense and
+                        sense['nodetoshow'] is sense['impnode']):
+                    t+="!"
+                t+='’'
+        lxl=ui.Label(parent, text=t)
+        lcb=RecordButtonFrame(parent,self,framed)
+        lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
+        lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
+    def showentryformstorecordpage(self,ps=None,profile=None):
+        #The info we're going for is stored above sense, hence guid.
+        if self.runwindow.exitFlag.istrue():
+            log.info('no runwindow; quitting!')
+            return
+        if not self.runwindow.frame.winfo_exists():
+            log.info('no runwindow frame; quitting!')
+            return
+        self.runwindow.resetframe()
+        self.runwindow.wait()
+        count=self.slices.count()
+        text=_("Record {} {} Words: click ‘Record’, talk, "
+                "and release ({} words)".format(profile,ps,
+                                                count))
+        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w')
+        buttonframes=ui.ScrollingFrame(self.runwindow.frame)
+        buttonframes.grid(row=1,column=0,sticky='w')
+        row=0
+        done=list()
+        for senseid in self.slices.senseids(ps=ps,profile=profile):
+            sense={}
+            sense['column']=0
+            sense['row']=row
+            sense['senseid']=senseid
+            sense['guid']=firstoflist(self.db.get('entry',
+                                        senseid=senseid).get('guid'))
+            if sense['guid'] in done: #only the first of multiple senses
+                continue
+            else:
+                done.append(sense['guid'])
+            """These following two have been shifted down a level, and will
+            now return a list of form elements, each. Something will need to be
+            adjusted here..."""
+            sense['lxnode']=firstoflist(self.db.get('lexeme',
+                                                guid=sense['guid'],
+                                                lang=self.analang).get())
+            sense['lcnode']=firstoflist(self.db.get('citation',
+                                                guid=sense['guid'],
+                                                lang=self.analang).get())
+            sense['glosses']=[]
+            for lang in self.glosslangs:
+                sense['glosses'].append(firstoflist(self.db.glossordefn(
+                                                guid=sense['guid'],
+                                                glosslang=lang
+                                                ),othersOK=True))
+            if self.settings.pluralname is not None:
+                sense['plnode']=firstoflist(self.db.get('field',
+                                        guid=sense['guid'],
+                                        lang=self.analang,
+                                        fieldtype=self.db.pluralname).get())
+            if self.settings.imperativename is not None:
+                sense['impnode']=firstoflist(self.db.get('field',
+                                        guid=sense['guid'],
+                                        lang=self.analang,
+                                        fieldtype=self.db.imperativename).get())
+            if sense['lcnode'] is not None:
+                sense['nodetoshow']=sense['lcnode']
+            else:
+                sense['nodetoshow']=sense['lxnode']
+            self.makelabelsnrecordingbuttons(buttonframes.content,sense)
+            for node in ['plnode','impnode']:
+                if (node in sense) and (sense[node] is not None):
+                    sense['column']+=2
+                    sense['nodetoshow']=sense[node]
+                    self.makelabelsnrecordingbuttons(buttonframes.content,
+                                                    sense)
+            row+=1
+        self.runwindow.waitdone()
+        self.runwindow.wait_window(self.runwindow.frame)
+    def showentryformstorecord(self,justone=True):
+        # Save these values before iterating over them
+        #Convert to iterate over local variables
+        self.getrunwindow()
+        if justone==True:
+            self.showentryformstorecordpage()
+        else:
+            for psprofile in self.status.valid(): #self.profilecountsValid:
+                if self.runwindow.exitFlag.istrue():
+                    return 1
+                ps=psprofile[2]
+                profile=psprofile[1]
+                nextb=ui.Button(self.runwindow,text=_("Next Group"),
+                                        cmd=self.runwindow.resetframe) # .frame.destroy
+                nextb.grid(row=0,column=1,sticky='ne')
+                self.showentryformstorecordpage(ps=ps,profile=profile)
+        self.donewpyaudio()
+    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
+        def setskip(event):
+            self.runwindow.frame.skip=True
+            entryframe.destroy()
+        self.getrunwindow()
+        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
+            return
+        log.debug("Working with skip: {}".format(skip))
+        if skip == 'skip':
+            self.runwindow.frame.skip=True
+        else:
+            self.runwindow.frame.skip=skip
+        text=_("Words and phrases to record: click ‘Record’, talk, and release")
+        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w',columnspan=2)
+        if (self.settings.entriestoshow is None) and (senses is None):
+            ui.Label(self.runwindow.frame, anchor='w',
+                    text=_("Sorry, there are no entries to show!")).grid(row=1,
+                                    column=0,sticky='w')
+            return
+        if self.runwindow.frame.skip == False:
+            skipf=ui.Frame(self.runwindow.frame)
+            skipb=ui.Button(skipf, text=linebreakwords(_("Skip to next undone")),
+                        cmd=skipf.destroy)
+            skipf.grid(row=1,column=1,sticky='w')
+            skipb.grid(row=0,column=0,sticky='w')
+            skipb.bind('<ButtonRelease>', setskip)
+        if senses is None:
+            senses=self.settings.entriestoshow
+        for senseid in senses:
+            log.debug("Working on {} with skip: {}".format(senseid,
+                                                    self.runwindow.frame.skip))
+            examples=self.db.get('example',senseid=senseid).get()
+            if examples == []:
+                log.debug(_("No examples! Add some, then come back."))
+                continue
+            if ((self.runwindow.frame.skip == True) and
+                (lift.atleastoneexamplehaslangformmissing(
+                                                    examples,
+                                                    self.settings.audiolang) == False)):
+                continue
+            row=0
+            if self.runwindow.exitFlag.istrue():
+                return 1
+            entryframe=ui.Frame(self.runwindow.frame)
+            entryframe.grid(row=1,column=0)
+            if progress is not None:
+                progressl=ui.Label(self.runwindow.frame, anchor='e',
+                    font='small',
+                    text="({} {}/{})".format(*progress)
+                    )
+                progressl.grid(row=0,column=2,sticky='ne')
+            """This is the title for each page: isolation form and glosses."""
+            titleframed=self.taskchooser.datadict.getframeddata(senseid,check=None)
+            if not titleframed or titleframed.forms[self.analang] is None:
+                entryframe.destroy() #is this ever needed?
+                continue
+            text=titleframed.formatted(noframe=True,showtonegroup=False)
+            ui.Label(entryframe, anchor='w', font='read',
+                    text=text).grid(row=row,
+                                    column=0,sticky='w')
+            """Then get each sorted example"""
+            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
+            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
+            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
+            examplesframe.grid(row=0,column=0,sticky='w')
+            examples.reverse()
+            for example in examples:
+                if (skip == True and
+                    lift.examplehaslangform(example,self.settings.audiolang) == True):
+                    continue
+                """These should already be framed!"""
+                framed=self.taskchooser.datadict.getframeddata(example,senseid=senseid)
+                if not framed:
+                    exit()
+                if framed.forms[self.analang] is None: # when?
+                    continue
+                row+=1
+                """If I end up pulling from example nodes elsewhere, I should
+                probably make this a function, like getframeddata"""
+                text=framed.formatted()
+                if not framed:
+                    exit()
+                rb=RecordButtonFrame(examplesframe,self,framed)
+                rb.grid(row=row,column=0,sticky='w')
+                ui.Label(examplesframe, anchor='w',text=text
+                                        ).grid(row=row, column=1, sticky='w')
+            row+=1
+            d=ui.Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
+            d.grid(row=row,column=0)
+            self.runwindow.waitdone()
+            examplesframe.wait_window(entryframe)
+            if self.runwindow.exitFlag.istrue():
+                return 1
+            if self.runwindow.frame.skip == True:
+                return 'skip'
+    def showtonegroupexs(self):
+        def next():
+            self.status.nextprofile()
+            self.runwindow.destroy()
+            self.showtonegroupexs()
+        if (not(hasattr(self,'examplespergrouptorecord')) or
+            (type(self.examplespergrouptorecord) is not int)):
+            self.examplespergrouptorecord=100
+            self.settings.storesettingsfile()
+        self.makeanalysis()
+        self.analysis.donoUFanalysis()
+        torecord=self.analysis.senseidsbygroup
+        ntorecord=len(torecord) #number of groups
+        nexs=len([k for i in torecord for j in torecord[i] for k in j])
+        nslice=self.slices.count()
+        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
+        skip=False
+        if ntorecord == 0:
+            log.error(_("How did we get no UR tone groups? {}-{}"
+                    "\nHave you run the tone report recently?"
+                    "\nDoing that for you now...").format(
+                            self.slices.profile(),
+                            self.slices.ps()
+                                                        ))
+            self.analysis.do()
+            self.showtonegroupexs()
+            return
+        batch={}
+        for i in range(self.examplespergrouptorecord):
+            batch[i]=[]
+            for ufgroup in torecord:
+                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
+                if len(torecord[ufgroup]) > i: #no done piles.
+                    senseid=[torecord[ufgroup][i]] #list of one
+                else:
+                    print("Not enough examples, moving on:",i,ufgroup)
+                    continue
+                log.info(_('Giving user the number {} example from tone '
+                        'group {}'.format(i,ufgroup)))
+                exited=self.showsenseswithexamplestorecord(senseid,
+                            (ufgroup, i+1, self.examplespergrouptorecord),
+                            skip=skip)
+                if exited == 'skip':
+                    skip=True
+                if exited == True:
+                    return
+        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
+            self.runwindow.waitdone()
+            self.runwindow.resetframe()
+            ui.Label(self.runwindow.frame, anchor='w',font='read',
+            text=_("All done! Sort some more words, and come back.")
+            ).grid(row=0,column=0,sticky='w')
+            ui.Button(self.runwindow.frame,
+                    text=_("Continue to next syllable profile"),
+                    command=next).grid(row=1,column=0)
+        self.donewpyaudio()
+    def record(self):
+        self.settings.updatesortingstatus() #is this needed? This is the first fn on button click
+        if self.params.cvt() == 'T':
+            self.showtonegroupexs()
+        else:
+            self.showentryformstorecord()
+    def __init__(self):
+        self.makesoundsettings()
+        self.loadsoundsettings()
+        self.soundsettings=self.settings.soundsettings
+        self.soundcheck()
+class Report(object):
+    def consultantcheck(self):
+        self.settings.reloadstatusdata()
+        self.tonegroupreportcomprehensive()
+    def tonegroupreportcomprehensive(self,**kwargs):
+        pss=self.slices.pss()[:self.settings.maxpss]
+        d={}
+        for ps in pss:
+            d[ps]=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
+        log.info("Starting comprehensive reports for {}".format(d))
+        for ps in pss:
+            for profile in d[ps]:
+                self.tonegroupreport(ps=ps,profile=profile)
+    def tonegroupreport(self,**kwargs):
+        """This should iterate over at least some profiles; top 2-3?
+        those with 2-4 verified frames? Selectable with radio buttons?"""
+        #default=True redoes the UF analysis (removing any joining/renaming)
+        def examplestoXLP(examples,parent,senseid):
+            counts['senses']+=1
+            for example in examples:
+                framed=self.taskchooser.datadict.getframeddata(example,senseid)
+                # skip empty examples:
+                if not framed.forms or self.analang not in framed.forms:
+                    continue
+                framed.gettonegroup() #wanted for id, not for display
+                for lang in [self.analang]+self.glosslangs:
+                    if lang in framed.forms and framed.forms[lang]: #If all None, don't.
+                        counts['examples']+=1
+                        if self.settings.audiolang in framed.forms:
+                            counts['audio']+=1
+                        self.framedtoXLP(framed,parent=parent,listword=True,
+                                                                groups=groups)
+                        break #do it on first present lang, and do next ex
+        r=self.status.last('report',update=True)
+        s=self.status.last('sort')
+        if s:
+            t=r>s
+        else:
+            t=False
+        self.datadict.refresh() #get the most recent data
+        silent=kwargs.get('silent',False)
+        bylocation=kwargs.get('bylocation',False)
+        default=kwargs.get('default',True)
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
+        groups=not default #show groups on all non-default reports
+        if not checks:
+            if 'profile' in kwargs:
+                log.error("{} {} came up with no checks.".format(ps,profile))
+                return
+            self.getprofile(wsorted=True)
+        log.info("Starting report {} {} at {}; last sort at {} (since={})..."
+                "".format(ps,profile,r,s,t))
+        self.settings.storesettingsfile()
+        waitmsg="{} {} Tone Report in Process".format(ps,profile)
+        resultswindow=ResultWindow(self.parent,msg=waitmsg)
+        bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
+        if not default:
+            bits.append('mod')
+        self.tonereportfile='_'.join(bits)+".txt"
+        checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
+        if not checks:
+            error=_("Hey, sort some morphemes in at least one frame before "
+                        "trying to make a tone report!")
+            log.error(error)
+            resultswindow.waitdone()
+            resultswindow.destroy()
+            ErrorNotice(error)
+            return
+        start_time=time.time()
+        counts={'senses':0,'examples':0, 'audio':0}
+        self.makeanalysis(ps=ps,profile=profile)
+        if default:
+            self.analysis.do() #full analysis from scratch, output to UF fields
+        else:
+            self.analysis.donoUFanalysis() #based on (sense) UF fields
+        """These are from LIFT, ordered by similarity for the report."""
+        if not self.analysis.orderedchecks or not self.analysis.orderedUFs:
+            log.error("Problem with checks: {} (in {} {})."
+                    "".format(checks,ps,profile))
+            log.error("valuesbygroupcheck: {}, valuesbycheckgroup: {}"
+                        "".format(self.analysis.valuesbygroupcheck,
+                                    self.analysis.valuesbycheckgroup))
+            log.error("Ordered checks is {}, ordered UFs: {}"
+                    "".format(self.analysis.orderedchecks,
+                            self.analysis.orderedUFs))
+            log.error("comparisonUFs: {}, comparisonchecks: {}"
+                    "".format(self.analysis.comparisonUFs,
+                            self.analysis.comparisonchecks))
+        grouplist=self.analysis.orderedUFs
+        checks=self.analysis.orderedchecks
+        r = open(self.tonereportfile, "w", encoding='utf-8')
+        title=_("Tone Report")
+        resultswindow.scroll=ui.ScrollingFrame(resultswindow.frame)
+        resultswindow.scroll.grid(row=0,column=0)
+        window=resultswindow.scroll.content
+        window.row=0
+        xlpr=self.xlpstart(reporttype='Tone',
+                            ps=ps,
+                            profile=profile,
+                            bylocation=bylocation,
+                            default=default
+                            )
+        s1=xlp.Section(xlpr,title='Introduction')
+        text=_("This report follows an analysis of sortings of {} morphemes "
+        "(roots or affixes) across the following frames: {}. {} stores these "
+        "sortings in lift examples, which are output here, with any glossing "
+        "and sound file links found in each lift sense example. "
+        "Each group in "
+        "this report is distinct from the others, in terms of its grouping "
+        "across the multiple frames used. Sound files should be available "
+        "through links, if the audio directory with those files is in the same "
+        "directory as this file.".format(ps,checks,program['name']))
+        p1=xlp.Paragraph(s1,text=text)
+        text=_("As a warning to the analyst who may not understand the "
+        "implications of this *automated analysis*, you may have too few "
+        "groupings here, particularly if you have sorted on fewer frames than "
+        "necessary to distinguish all your underlying tone melodies. On the "
+        "other hand, if your team has been overly precise, or if your database "
+        "contains bad information (sorting information which is arbitrary or "
+        "otherwise inappropriate for the language), then you likely have more "
+        "groups here than you have underlying tone melodies. However, if you "
+        "have avoided each of these two errors, this report should contain a "
+        "decent draft of your underlying tone melody groups. It does not "
+        "pretend to tell you what the values of those groups are, nor how "
+        "those groups interact with morphology in interesting ways (hopefully "
+        "you can do each of these better than a computer could).")
+        p2=xlp.Paragraph(s1,text=text)
+        def output(window,r,text):
+            r.write(text+'\n')
+            if not silent:
+                ui.Label(window,text=text,
+                        font=window.theme.fonts['report'],
+                        row=window.row,column=0, sticky="w"
+                        )
+            window.row+=1
+        t=_("Summary of Frames by Draft Underlying Melody")
+        m=7 #only this many columns in a table
+        # Don't bother with lanscape if we're splitting the table in any case.
+        if m >= len(checks) > 6:
+            landscape=True
+        else:
+            landscape=False
+        s1s=xlp.Section(xlpr,t,landscape=landscape)
+        caption=' '.join([ps,profile])
+        ptext=_("The following table shows correspondences across sortings by "
+                "tone frames, with a row for each unique pairing. ")
+        if default == True:
+            ptext+=_("This is a default report, where {} "
+                "intentionally splits these groups, so you can see wherever "
+                "differences lie, even if those differences are likely "
+                "meaningless (e.g., 'NA' means the user skipped sorting those "
+                "words in that frame, but this will still distinguish one "
+                "group from another). To help the qualified analyst navigate "
+                "such a large selection of small slices of the data, the data "
+                "is sorted (both here and in the section ordering) by "
+                "similarity of groups. That similarity is structured, and "
+                "it is provided here, so you can see the analysis of group "
+                "relationships for yourself: {}. "
+                "And here are the structured similarity relationships for the "
+                "Frames: {}"
+                "".format(program['name'],
+                        str(self.analysis.comparisonUFs),
+                        str(self.analysis.comparisonchecks)))
+        else:
+            ptext+=_("This is a non-default report, where a user has changed "
+            "the default (hyper-split) groups created by {}.".format(
+                                                        program['name']))
+        p0=xlp.Paragraph(s1s,text=ptext)
+        self.analysis.orderedchecks=list(self.analysis.valuesbycheckgroup)
+        for slice in range(int(len(self.analysis.orderedchecks)/m)+1):
+            locslice=self.analysis.orderedchecks[slice*m:(slice+1)*m]
+            if len(locslice) >0:
+                self.buildXLPtable(s1s,caption+str(slice),
+                        yterms=grouplist,
+                        xterms=locslice,
+                        values=lambda x,y:nn(unlist(
+                self.analysis.valuesbygroupcheck[y][x],ignore=[None, 'NA']
+                                            )),
+                        ycounts=lambda x:len(self.analysis.senseidsbygroup[x]),
+                        xcounts=lambda y:len(self.analysis.valuesbycheck[y]))
+        #Can I break this for multithreading?
+        for group in grouplist: #These already include ps-profile
+            log.info("building report for {} ({}/{}, n={})".format(group,
+                grouplist.index(group)+1,len(grouplist),
+                len(self.analysis.senseidsbygroup[group])
+                ))
+            sectitle=_('\n{}'.format(str(group)))
+            s1=xlp.Section(xlpr,title=sectitle)
+            output(window,r,sectitle)
+            l=list()
+            for x in self.analysis.valuesbygroupcheck[group]:
+                l.append("{}: {}".format(x,', '.join(
+                    [i for i in self.analysis.valuesbygroupcheck[group][x]
+                                                            if i is not None]
+                        )))
+            if not l:
+                l=[_('<no frames with a sort value>')]
+            text=_('Values by frame: {}'.format('\t'.join(l)))
+            log.info(text)
+            p1=xlp.Paragraph(s1,text)
+            output(window,r,text)
+            if bylocation == True:
+                textout=list()
+                #This is better than checks, just whats there for this group
+                for check in self.analysis.valuesbygroupcheck[group]:
+                    id=rx.id('x'+sectitle+check)
+                    headtext='{}: {}'.format(check,', '.join(
+                            [i for i in
+                            self.analysis.valuesbygroupcheck[group][check]
+                            if i is not None]
+                                            ))
+                    e1=xlp.Example(s1,id,heading=headtext)
+                    for senseid in self.analysis.senseidsbygroup[group]:
+                        #This is for window/text output only, not in XLP file
+                        framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
+                        text=framed.formatted(noframe=True,showtonegroup=False)
+                        #This is put in XLP file:
+                        examples=self.db.get('example',location=check,
+                                                senseid=senseid).get()
+                        examplestoXLP(examples,e1,senseid,groups=groups)
+                        if text not in textout:
+                            output(window,r,text)
+                            textout.append(text)
+                    if not e1.node.find('listWord'):
+                        s1.node.remove(e1.node) #Don't show examples w/o data
+            else:
+                for senseid in self.analysis.senseidsbygroup[group]:
+                    #This is for window/text output only, not in XLP file
+                    framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
+                    if not framed:
+                        continue
+                    text=framed.formatted(noframe=True, showtonegroup=False)
+                    #This is put in XLP file:
+                    examples=self.db.get('example',senseid=senseid).get()
+                    log.log(2,"{} examples found: {}".format(len(examples),
+                                                                    examples))
+                    if examples != []:
+                        id=self.idXLP(framed)+'_examples'
+                        headtext=text.replace('\t',' ')
+                        e1=xlp.Example(s1,id,heading=headtext)
+                        log.info("Asking for the following {} examples from id "
+                                "{}: {}".format(len(examples),senseid,examples))
+                        examplestoXLP(examples,e1,senseid)
+                    else:
+                        self.framedtoXLP(framed,parent=s1,groups=groups)
+                    output(window,r,text)
+        sectitle=_('\nData Summary')
+        s2=xlp.Section(xlpr,title=sectitle)
+        eps='{:.2%}'.format(float(counts['examples']/counts['senses']))
+        audiopercent='{:.2%}'.format(float(counts['audio']/counts['examples']))
+        ptext=_("This report contains {} senses, {} examples, and "
+                "{} sound files. That is an average of {} examples/sense, and "
+                "{} of examples with sound files."
+                "").format(counts['senses'],counts['examples'],counts['audio'],
+                            eps,audiopercent)
+        ps2=xlp.Paragraph(s2,text=ptext)
+        resultswindow.waitdone()
+        xlpr.close(me=me)
+        text=("Finished in "+str(time.time() - start_time)+" seconds.")
+        output(window,r,text)
+        text=_("(Report is also available at ("+self.tonereportfile+")")
+        output(window,r,text)
+        r.close()
+        if me:
+            resultswindow.destroy()
+    def makeresultsframe(self):
+        if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
+            self.results = ui.Frame(self.runwindow.frame,width=800)
+            self.results.grid(row=0, column=0)
+        else:
+            log.error("Tried to get a results frame without a runwindow!")
+    def getresults(self,**kwargs):
+        self.getrunwindow()
+        self.makeresultsframe()
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        self.adhocreportfileXLP=''.join([str(self.reportbasefilename)
+                                        ,'_',str(ps)
+                                        ,'-',str(profile)
+                                        ,'_',str(check)
+                                        ,'_ReportXLP.xml'])
+        xlpr=self.xlpstart()
+        """"Do I need this?"""
+        self.results.grid(column=0,
+                        row=self.runwindow.frame.grid_info()['row']+1,
+                        columnspan=5,
+                        sticky=(tkinter.N, tkinter.S, tkinter.E, tkinter.W))
+        print(_("Getting results of Search request"))
+        c1 = "Any"
+        c2 = "Any"
+        i=0
+        """nn() here keeps None and {} from the output, takes one string,
+        list, or tuple."""
+        text=(_("{} roots of form {} by {}".format(ps,profile,check)))
+        ui.Label(self.results, text=text).grid(column=0, row=i)
+        self.runwindow.wait()
+        si=xlp.Section(xlpr,text)
+        self.results.scroll=ui.ScrollingFrame(self.results)
+        self.results.scroll.grid(column=0, row=1)
+        senseid=0 # in case the following doesn't find anything:
+        # These lines get all senseids, to test that we're not losing any, below
+        # This is the first of three blocks to uncomment (on line, then logs)
+        # self.regexCV=profile
+        # self.regex=rx.fromCV(self,lang=self.analang,
+        #                     word=True, compile=True)
+        # rxsenseidsinslice=self.senseidformsbyregex(self.regex)
+        # senseidsinslice=self.slices.senseids()
+        # log.info("nrxsenseidsinslice: {}".format(len(rxsenseidsinslice)))
+        # log.info("nsenseidsinslice: {}".format(len(senseidsinslice)))
+        # senseidsnotsearchable=set(senseidsinslice)-set(rxsenseidsinslice)
+        # log.info("senseidsnotsearchable: {}".format(len(senseidsnotsearchable)))
+        # log.info("senseidsnotsearchable: {}".format(senseidsnotsearchable))
+        for group in self.s[self.analang][cvt]:
+            # log.debug('group: {}'.format(group))
+            self.buildregex(group=group) #It would be nice fo this to iterate through...
+            # log.info("self.regexCV: {}".format(self.regexCV))
+            # log.info("self.regex: {}".format(self.regex))
+            senseidstocheck=self.senseidformsbyregex(self.regex)
+            # log.info("Found {} senseids".format(len(senseidstocheck)))
+            if len(senseidstocheck)>0:
+                id=rx.id('x'+ps+profile+check+group)
+                ex=xlp.Example(si,id)
+            for senseid in senseidstocheck:
+                # Uncomment to test:
+                # rxsenseidsinslice.remove(senseid)
+                """This regex is compiled!"""
+                framed=self.taskchooser.datadict.getframeddata(senseid)
+                o=framed.formatted(noframe=True)
+                self.framedtoXLP(framed,parent=ex,listword=True)
+                i+=1
+                col=0
+                for lang in [self.analang]+self.glosslangs:
+                    col+=1
+                    if lang in framed.forms:
+                        ui.Label(self.results.scroll.content,
+                            text=framed.forms[lang], font='read',
+                            anchor='w',padx=10).grid(row=i, column=col,
+                                                        sticky='w')
+        xlpr.close(me=me)
+        self.runwindow.waitdone()
+        # Report on testing blocks above
+        # log.info("senseids remaining (rx): ({}) {}".format(
+        #                                                 len(rxsenseidsinslice),
+        #                                                 rxsenseidsinslice))
+        # log.info("senseids remaining: ({}) {}".format(len(senseidsinslice),
+        #                                                     senseidsinslice))
+        if senseid == 0: #i.e., nothing was found above
+            print(_('No results!'))
+            ui.Label(self.results, text=_("No results for ")+self.regexCV+"!"
+                            ).grid(column=0, row=i+1)
+            return
+    def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None,xcounts=None):
+        #values should be a (lambda?) function that depends on x and y terms
+        #ycounts should be a lambda function that depends on yterms
+        log.info("Making table with caption {}".format(caption))
+        t=xlp.Table(parent,caption)
+        rows=list(yterms)
+        nrows=len(rows)
+        cols=list(xterms)
+        ncols=len(cols)
+        if nrows == 0:
+            return
+        if ncols == 0:
+            return
+        for row in ['header']+list(range(nrows)):
+            if row != 'header':
+                row=rows[row]
+            r=xlp.Row(t)
+            for col in ['header']+list(range(ncols)):
+                log.log(4,"row: {}; col: {}".format(row,col))
+                if col != 'header':
+                    col=cols[col]
+                log.log(4,"row: {}; col: {}".format(row,col))
+                if row == 'header' and col == 'header':
+                    log.log(2,"header corner")
+                    cell=xlp.Cell(r,content='',header=True)
+                elif row == 'header':
+                    log.log(2,"header row")
+                    if xcounts is not None:
+                        hxcontents='{} ({})'.format(col,xcounts(col))
+                    else:
+                        hxcontents='{}'.format(col)
+                    cell=xlp.Cell(r,content=linebreakwords(hxcontents),
+                                header=True,
+                                linebreakwords=True)
+                elif col == 'header':
+                    log.log(2,"header column")
+                    if ycounts is not None:
+                        hycontents='{} ({})'.format(row,ycounts(row))
+                    else:
+                        hycontents='{}'.format(row)
+                    cell=xlp.Cell(r,content=hycontents,
+                                header=True)
+                else:
+                    log.log(2,"Not a header")
+                    try:
+                        value=values(col,row)
+                        log.log(2,"value ({},{}):{}".format(col,row,
+                                                        values(col,row)))
+                    except KeyError:
+                        log.info("Apparently no value for col:{}, row:{}"
+                                "".format(col,row))
+                        value=''
+                    finally: # we need each cell to be there...
+                        cell=xlp.Cell(r,content=value)
+    def xlpstart(self,**kwargs):
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        reporttype=kwargs.get('reporttype','adhoc')
+        bylocation=kwargs.get('bylocation',False)
+        default=kwargs.get('default',True)
+        if reporttype == 'Tone':
+            if bylocation:
+                reporttype='Tone-bylocation'
+        elif not re.search('Basic',reporttype): #We don't want this in the title
+            #this is only for adhoc "big button" reports.
+            reporttype=str(self.params.check())
+        reporttype=' '.join([ps,profile,reporttype])
+        bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
+        if not default:
+            bits.append('mod')
+        reportfileXLP='_'.join(bits)+".xml"
+        xlpreport=xlp.Report(reportfileXLP,reporttype,
+                        self.settings.languagenames[self.analang])
+        langsalreadythere=[]
+        for lang in set([self.analang]+self.glosslangs)-set([None]):
+            xlpreport.addlang({'id':lang,'name': self.settings.languagenames[lang]})
+        return xlpreport
+    def senseidformsbyregex(self,regex,**kwargs):
+        """This function takes in a compiled regex,
+        and outputs a list/dictionary of senseid/{senseid:form} form."""
+        ps=kwargs.get('ps',self.slices.ps())
+        output=[] #This is just a list of senseids now: (Do we need the dict?)
+        for form in self.settings.formstosearch[ps]:
+            if regex.search(form):
+                output+=self.settings.formstosearch[ps][form]
+        return output
+    def buildregex(self,**kwargs):
+        """include profile (of those available for ps and check),
+        and subcheck (e.g., a: CaC\2)."""
+        """Provides self.regexCV and self.regex"""
+        self.regexCV=None #in case this was run before.
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        group=kwargs.get('group',self.status.group())
+        maxcount=re.subn(cvt, cvt, profile)[1]
+        if profile is None:
+            print("It doesn't look like you've picked a syllable profile yet.")
+            return
+        """Don't need this; only doing count=1 at a time. Let's start with
+        the easier ones, with the first occurrance changed."""
+        # log.info("self.regexCV: {}".format(self.regexCV))
+        self.regexCV=str(profile) #Let's set this before changing it.
+        # log.info("self.regexCV: {}".format(self.regexCV))
+        """One pass for all regexes, S3, then S2, then S1, as needed."""
+        cvts=['V','C']
+        if 'x' in check:
+            if self.subcheckcomparison in self.s[self.analang]['C']:
+                cvts=['C','V']
+        for t in cvts:
+            if t not in cvt:
+                continue
+            S=str(cvt)
+            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
+            # log.info("regexS: {}".format(regexS))
+            compared=False
+            for occurrence in reversed(range(maxcount)):
+                occurrence+=1
+                if re.search(S+str(occurrence),check) is not None:
+                    """Get the (n=occurrence) S, regardless of intervening
+                    non S..."""
+                    # log.info("regexS: {}".format(regexS))
+                    regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
+                    # log.info("regS: {}".format(regS))
+                    # log.info("regexS: {}".format(regexS))
+                    if 'x' in check:
+                        if compared == False: #occurrence == 2:
+                            replS='\\1'+self.subcheckcomparison
+                            compared=True
+                        else: #if occurrence == 1:
+                            replS='\\1'+group
+                    else:
+                        replS='\\1'+group
+                    # log.info("replS: {}".format(replS))
+                    # log.info("self.regexCV: {}".format(self.regexCV))
+                    self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
+                    # log.info("self.regexCV: {}".format(self.regexCV))
+        """Final step: convert the CVx code to regex, and store in self."""
+        self.regex=rx.fromCV(self,lang=self.analang,
+                            word=True, compile=True)
+    def wordsbypsprofilechecksubcheckp(self,parent,t="NoText!",**kwargs):
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        group=kwargs.get('group',self.status.group())
+        xlp.Paragraph(parent,t)
+        print(t)
+        log.debug(t)
+        self.buildregex()
+        log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
+                                                        self.regexCV))
+        matches=set(self.senseidformsbyregex(self.regex))
+        for ncvt in self.ncvtsRun:
+            # this removes senses already reported (e.g., in V1=V2)
+            matches-=self.basicreported[ncvt]
+        log.log(2,"{} matches found!: {}".format(len(matches),matches))
+        if 'x' in check:
+            n=self.checkcounts[ps][profile][check][
+                            group][self.subcheckcomparison]=len(matches)
+        else:
+            n=self.checkcounts[ps][profile][check][
+                            group]=len(matches)
+            if '=' in check:
+                xname=re.sub('=','x',check, count=1)
+                log.debug("looking for name {} in {}".format(xname,self.checks))
+                if xname in self.checks:
+                    log.debug("Adding {} value to name {}".format(len(matches),
+                                                                        xname))
+                    #put the results in that group, too
+                    log.debug(self.checkcounts)
+                    if xname not in self.checkcounts[ps][profile]:
+                        self.checkcounts[ps][profile][xname]={}
+                    if group not in self.checkcounts[ps][
+                                    profile][xname]:
+                        self.checkcounts[ps][profile][xname][group]={}
+                    self.checkcounts[ps][profile][xname][group][group
+                                                                ]=len(matches)
+                    log.debug(self.checkcounts)
+        if n>0:
+            titlebits='x'+ps+profile+check+group
+            if 'x' in check:
+                titlebits+='x'+self.subcheckcomparison
+            id=rx.id(titlebits)
+            ex=xlp.Example(parent,id)
+            for senseid in matches:
+                for ncvt in self.ncvtsRun:
+                    self.basicreported[ncvt].add(senseid)
+                framed=self.taskchooser.datadict.getframeddata(senseid)
+                self.framedtoXLP(framed,parent=ex,listword=True)
+    def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent',**kwargs):
+        """This function iterates across check and group values
+        appropriate for the specified self.type, profile and check
+        values (ps is irrelevant here).
+        Because two functions called (buildregex and getframeddata) use
+        check and group to do their work, they and their
+        dependents would need to be changed to fit a new paradigm, if we
+        were to change the variable here. So rather, we store the current
+        check and group values, then iterate across logically
+        possible values (as above), then restore the value."""
+        """I need to find a way to limit these tests to appropriate
+        profiles..."""
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        if cvt in ['V','C']:
+            groups=self.s[self.analang][cvt]
+        """This sets each of the checks that are applicable for the given
+        profile; self.basicreported is from self.basicreport()"""
+        for ncvt in self.basicreported:
+            log.log(2, '{}: {}'.format(ncvt,self.basicreported[ncvt]))
+        #CV checks depend on profile, too
+        self.checks=self.status.checks(cvt=cvt,profile=profile)
+        """check set here"""
+        for check in self.checks: #self.checkcodesbyprofile:
+            if check not in self.checkcounts[ps][profile]:
+                self.checkcounts[ps][profile][check]={}
+            self.ncvtsRun=[ncvt for ncvt in self.ncvts
+                                        if re.search(ncvt,check)]
+            log.debug('check: {}; self.type: {}; self.ncvts: {}; '
+                        'self.ncvtsRun: {}'.format(check,cvt,
+                                                self.ncvts,self.ncvtsRun))
+            if len(check) == 1:
+                log.debug("Error! {} Doesn't seem to be list formatted.".format(
+                                                                    check))
+            if 'x' in check:
+                log.debug('Hey, I cound a correspondence number!')
+                if cvt in ['V','C']:
+                    subcheckcomparisons=groups
+                elif cvt == 'CV':
+                    subchecks=self.s[self.analang]['C']
+                    subcheckcomparisons=self.s[self.analang]['V']
+                else:
+                    log.error("Sorry, I don't know how to compare cvt: {}"
+                                                        "".format(cvt))
+                for group in groups:
+                    if group not in self.checkcounts[ps][profile][check]:
+                        self.checkcounts[ps][profile][check][group]={}
+                    for self.subcheckcomparison in subcheckcomparisons:
+                        if group != self.subcheckcomparison:
+                            t=_("{} {} {}={}-{}".format(ps,profile,
+                                                check,group,
+                                                self.subcheckcomparison))
+                            self.wordsbypsprofilechecksubcheckp(parent,t,
+                                            check=check, group=group,**kwargs)
+            else:
+                for group in groups:
+                    t=_("{} {} {}={}".format(ps,profile,check,group))
+                    self.wordsbypsprofilechecksubcheckp(parent,t,
+                                            check=check, group=group,**kwargs)
+    def idXLP(self,framed):
+        id='x' #string!
+        bits=[
+            self.params.cvt(),
+            self.slices.ps(),
+            self.slices.profile(),
+            ]
+        if hasattr(framed,'check'):
+            bits.append(framed.check)
+        if hasattr(framed,'tonegroup'):
+            bits.append(framed.tonegroup)
+        for lang in self.glosslangs:
+            if lang in framed.forms and framed.forms[lang] is not None:
+                bits+=framed.forms[lang]
+        for x in bits:
+            if x is not None:
+                id+=x
+        return rx.id(id) #for either example or listword
+    def framedtoXLP(self,framed,parent,listword=False,groups=True):
+        """This will likely only work when called by
+        wordsbypsprofilechecksubcheck; but is needed because it must return if
+        the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
+        """parent is an example in the XLP report"""
+        id=self.idXLP(framed)
+        if listword == True:
+            ex=xlp.ListWord(parent,id)
+        else:
+            exx=xlp.Example(parent,id) #the id goes here...
+            ex=xlp.Word(exx) #This doesn't have an id
+        if self.settings.audiolang in framed.forms:
+            url=file.getdiredrelURL(self.reporttoaudiorelURL,
+                                                framed.forms[self.settings.audiolang])
+            el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang],
+                                                                    str(url))
+        else:
+            el=xlp.LangData(ex,self.analang,framed.forms[self.analang])
+        if hasattr(framed,'tonegroup') and groups is True: #joined groups show each
+            elt=xlp.LangData(ex,self.analang,framed.tonegroup)
+        for lang in self.glosslangs:
+            if lang in framed.forms:
+                xlp.Gloss(ex,lang,framed.forms[lang])
+    def printcountssorted(self):
+        #This is only used in the basic report
+        log.info("Ranked and numbered syllable profiles, by grammatical category:")
+        nTotal=0
+        nTotals={}
+        for line in self.slices: #profilecounts:
+            profile=line[0]
+            ps=line[1]
+            nTotal+=self.slices[line]
+            if ps not in nTotals:
+                nTotals[ps]=0
+            nTotals[ps]+=self.slices[line]
+        print('Profiled data:',nTotal)
+        """Pull this?"""
+        for ps in self.slices.pss():
+            if ps == 'Invalid':
+                continue
+            log.debug("Part of Speech {}:".format(ps))
+            for line in self.slices.valid(ps=ps):
+                profile=line[0]
+                ps=line[1]
+                log.debug("{}: {}".format(profile,self.slices[line]))
+            print(ps,"(total):",nTotals[ps])
+    def printprofilesbyps(self):
+        #This is only used in the basic report
+        log.info("Syllable profiles actually in senses, by grammatical category:")
+        for ps in self.profilesbysense:
+            if ps == 'Invalid':
+                continue
+            print(ps, self.profilesbysense[ps])
+    def basicreport(self):
+        """We iterate across these values in this script, so we save current
+        values here, and restore them at the end."""
+        #Convert to iterate over local variables
+        start_time=time.time() #move this to function?
+        instr=_("The data in this report is given by most restrictive test "
+                "first, followed by less restrictive tests (e.g., V1=V2 "
+                "before V1 or V2). Additionally, each word only "
+                "appears once per segment in a given position, so a word that "
+                "occurs in a more restrictive environment will not appear in "
+                "the later less restrictive environments. But where multiple "
+                "examples of a segment type occur with different values, e.g., "
+                "V1≠V2, those words will appear multiple times, e.g., for "
+                "both V1=x and V2=y.")
+        self.basicreportfile=''.join([str(self.reportbasefilename)
+                                            ,'_',''.join(self.cvtstodo)
+                                            ,'_BasicReport.txt'])
+        xlpr=self.xlpstart(reporttype='Basic '+''.join(self.cvtstodo))
+        si=xlp.Section(xlpr,"Introduction")
+        p=xlp.Paragraph(si,instr)
+        sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
+        print(instr)
+        log.info(instr)
+        #There is no runwindow here...
+        self.basicreported={}
+        self.checkcounts={}
+        self.printprofilesbyps()
+        self.printcountssorted()
+        t=_("This report covers the following top two Grammatical categories, "
+            "with the top {} syllable profiles in each. "
+            "This is of course configurable, but I assume you don't want "
+            "everything.".format(self.settings.maxprofiles))
+        log.info(t)
+        print(t)
+        p=xlp.Paragraph(si,t)
+        for ps in self.slices.pss()[0:2]: #just the first two (Noun and Verb)
+            if ps not in self.checkcounts:
+                self.checkcounts[ps]={}
+            profiles=self.slices.profiles(ps=ps)
+            t=_("{} data: (profiles: {})".format(ps,profiles))
+            log.info(t)
+            print(t)
+            s1=xlp.Section(xlpr,t)
+            t=_("This section covers the following top syllable profiles "
+                "which are found in {}s: {}".format(ps,profiles))
+            p=xlp.Paragraph(s1,t)
+            log.info(t)
+            print(t)
+            for profile in profiles:
+                if profile not in self.checkcounts[ps]:
+                    self.checkcounts[ps][profile]={}
+                t=_("{} {}s".format(profile,ps))
+                s2=xlp.Section(s1,t,level=2)
+                print(t)
+                log.info(t)
+                for cvt in self.cvtstodo:
+                    t=_("{} checks".format(self.params.cvtdict()[cvt]['sg']))
+                    print(t)
+                    log.info(t)
+                    sid=" ".join([t,"for",profile,ps+'s'])
+                    s3=xlp.Section(s2,sid,level=3)
+                    maxcount=re.subn(cvt, cvt, profile)[1]
+                    """Get these reports from C1/V1 to total number of C/V"""
+                    self.ncvts=[cvt+str(n+1) for n in range(maxcount)]
+                    for ncvt in self.ncvts:
+                        if ncvt not in self.basicreported:
+                            self.basicreported[ncvt]=set()
+                    self.wordsbypsprofilechecksubcheck(s3,cvt=cvt,ps=ps,
+                                                        profile=profile)
+        t=_("Summary coocurrence tables")
+        s1s=xlp.Section(xlpr,t)
+        for ps in self.checkcounts:
+            s2s=xlp.Section(s1s,ps,level=2)
+            for profile in self.checkcounts[ps]:
+                s3s=xlp.Section(s2s,' '.join([ps,profile]),level=3)
+                for name in self.checkcounts[ps][profile]:
+                    rows=list(self.checkcounts[ps][profile][name])
+                    nrows=len(rows)
+                    if nrows == 0:
+                        continue
+                    if 'x' in name:
+                        cols=list(self.checkcounts[ps][profile][name][rows[0]])
+                    else:
+                        cols=['n']
+                    ncols=len(cols)
+                    if ncols == 0:
+                        continue
+                    caption=' '.join([ps,profile,name])
+                    t=xlp.Table(s3s,caption)
+                    for x1 in ['header']+list(range(nrows)):
+                        if x1 != 'header':
+                            x1=rows[x1]
+                        h=xlp.Row(t)
+                        for x2 in ['header']+list(range(ncols)):
+                            log.debug("x1: {}; x2: {}".format(x1,x2))
+                            if x2 != 'header':
+                                x2=cols[x2]
+                            log.debug("x1: {}; x2: {}".format(x1,x2))
+                            log.debug("countbyname: {}".format(self.checkcounts[
+                                    ps][profile][name]))
+                            if x1 != 'header' and x2 not in ['header','n']:
+                                log.debug("value: {}".format(self.checkcounts[
+                                    ps][profile][name][x1][x2]))
+                            if x1 == 'header' and x2 == 'header':
+                                log.debug("header corner")
+                                cell=xlp.Cell(h,content=name,header=True)
+                            elif x1 == 'header':
+                                log.debug("header row")
+                                cell=xlp.Cell(h,content=x2,header=True)
+                            elif x2 == 'header':
+                                log.debug("header column")
+                                cell=xlp.Cell(h,content=x1,header=True)
+                            else:
+                                log.debug("Not a header")
+                                if x2 == 'n':
+                                    value=self.checkcounts[ps][
+                                                    profile][name][x1]
+                                else:
+                                    value=self.checkcounts[ps][
+                                                    profile][name][x1][x2]
+                                cell=xlp.Cell(h,content=value)
+        log.info(self.checkcounts)
+        xlpr.close(me=me)
+        log.info("Finished in {} seconds.".format(str(time.time()-start_time)))
+        sys.stdout.close()
+        sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
+        self.frame.parent.waitdone()
+    def __init__(self):
+        self.reportbasefilename=self.settings.reportbasefilename
+        self.reporttoaudiorelURL=self.settings.reporttoaudiorelURL
+        self.distinguish=self.settings.distinguish
+        self.profilesbysense=self.settings.profilesbysense
+        self.s=self.settings.s
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
@@ -5724,816 +6851,190 @@ class Transcribe(TaskDressing,Tone,ui.Window):
         """Does this need Tone classing?"""
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-class Report(object):
-    def consultantcheck(self):
-        self.settings.reloadstatusdata()
-        self.tonegroupreportcomprehensive()
-    def tonegroupreportcomprehensive(self,**kwargs):
-        pss=self.slices.pss()[:self.settings.maxpss]
-        d={}
-        for ps in pss:
-            d[ps]=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
-        log.info("Starting comprehensive reports for {}".format(d))
-        for ps in pss:
-            for profile in d[ps]:
-                self.tonegroupreport(ps=ps,profile=profile)
-    def tonegroupreport(self,**kwargs):
-        """This should iterate over at least some profiles; top 2-3?
-        those with 2-4 verified frames? Selectable with radio buttons?"""
-        #default=True redoes the UF analysis (removing any joining/renaming)
-        def examplestoXLP(examples,parent,senseid):
-            counts['senses']+=1
-            for example in examples:
-                framed=self.taskchooser.datadict.getframeddata(example,senseid)
-                # skip empty examples:
-                if not framed.forms or self.analang not in framed.forms:
-                    continue
-                framed.gettonegroup() #wanted for id, not for display
-                for lang in [self.analang]+self.glosslangs:
-                    if lang in framed.forms and framed.forms[lang]: #If all None, don't.
-                        counts['examples']+=1
-                        if self.settings.audiolang in framed.forms:
-                            counts['audio']+=1
-                        self.framedtoXLP(framed,parent=parent,listword=True,
-                                                                groups=groups)
-                        break #do it on first present lang, and do next ex
-        r=self.status.last('report',update=True)
-        s=self.status.last('sort')
-        if s:
-            t=r>s
-        else:
-            t=False
-        self.datadict.refresh() #get the most recent data
-        silent=kwargs.get('silent',False)
-        bylocation=kwargs.get('bylocation',False)
-        default=kwargs.get('default',True)
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
-        groups=not default #show groups on all non-default reports
-        if not checks:
-            if 'profile' in kwargs:
-                log.error("{} {} came up with no checks.".format(ps,profile))
+class JoinUFgroups(Tone,TaskDressing,ui.Window):
+    """docstring for JoinUFgroups."""
+    def tasktitle(self):
+        return _("Join Underlying Form Groups")
+    def tonegroupsjoinrename(self,**kwargs):
+        def clearerror(event=None):
+            errorlabel['text'] = ''
+        def submitform():
+            clearerror()
+            uf=named.get()
+            if uf == "":
+                noname=_("Give a name for this UF tone group!")
+                log.debug(noname)
+                errorlabel['text'] = noname
                 return
-            self.getprofile(wsorted=True)
-        log.info("Starting report {} {} at {}; last sort at {} (since={})..."
-                "".format(ps,profile,r,s,t))
-        self.settings.storesettingsfile()
-        waitmsg="{} {} Tone Report in Process".format(ps,profile)
-        resultswindow=ResultWindow(self.parent,msg=waitmsg)
-        bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
-        if not default:
-            bits.append('mod')
-        self.tonereportfile='_'.join(bits)+".txt"
-        checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
-        if not checks:
-            error=_("Hey, sort some morphemes in at least one frame before "
-                        "trying to make a tone report!")
-            log.error(error)
-            resultswindow.waitdone()
-            resultswindow.destroy()
-            ErrorNotice(error)
-            return
-        start_time=time.time()
-        counts={'senses':0,'examples':0, 'audio':0}
-        self.makeanalysis(ps=ps,profile=profile)
-        if default:
-            self.analysis.do() #full analysis from scratch, output to UF fields
-        else:
-            self.analysis.donoUFanalysis() #based on (sense) UF fields
-        """These are from LIFT, ordered by similarity for the report."""
-        if not self.analysis.orderedchecks or not self.analysis.orderedUFs:
-            log.error("Problem with checks: {} (in {} {})."
-                    "".format(checks,ps,profile))
-            log.error("valuesbygroupcheck: {}, valuesbycheckgroup: {}"
-                        "".format(self.analysis.valuesbygroupcheck,
-                                    self.analysis.valuesbycheckgroup))
-            log.error("Ordered checks is {}, ordered UFs: {}"
-                    "".format(self.analysis.orderedchecks,
-                            self.analysis.orderedUFs))
-            log.error("comparisonUFs: {}, comparisonchecks: {}"
-                    "".format(self.analysis.comparisonUFs,
-                            self.analysis.comparisonchecks))
-        grouplist=self.analysis.orderedUFs
-        checks=self.analysis.orderedchecks
-        r = open(self.tonereportfile, "w", encoding='utf-8')
-        title=_("Tone Report")
-        resultswindow.scroll=ui.ScrollingFrame(resultswindow.frame)
-        resultswindow.scroll.grid(row=0,column=0)
-        window=resultswindow.scroll.content
-        window.row=0
-        xlpr=self.xlpstart(reporttype='Tone',
-                            ps=ps,
-                            profile=profile,
-                            bylocation=bylocation,
-                            default=default
-                            )
-        s1=xlp.Section(xlpr,title='Introduction')
-        text=_("This report follows an analysis of sortings of {} morphemes "
-        "(roots or affixes) across the following frames: {}. {} stores these "
-        "sortings in lift examples, which are output here, with any glossing "
-        "and sound file links found in each lift sense example. "
-        "Each group in "
-        "this report is distinct from the others, in terms of its grouping "
-        "across the multiple frames used. Sound files should be available "
-        "through links, if the audio directory with those files is in the same "
-        "directory as this file.".format(ps,checks,program['name']))
-        p1=xlp.Paragraph(s1,text=text)
-        text=_("As a warning to the analyst who may not understand the "
-        "implications of this *automated analysis*, you may have too few "
-        "groupings here, particularly if you have sorted on fewer frames than "
-        "necessary to distinguish all your underlying tone melodies. On the "
-        "other hand, if your team has been overly precise, or if your database "
-        "contains bad information (sorting information which is arbitrary or "
-        "otherwise inappropriate for the language), then you likely have more "
-        "groups here than you have underlying tone melodies. However, if you "
-        "have avoided each of these two errors, this report should contain a "
-        "decent draft of your underlying tone melody groups. It does not "
-        "pretend to tell you what the values of those groups are, nor how "
-        "those groups interact with morphology in interesting ways (hopefully "
-        "you can do each of these better than a computer could).")
-        p2=xlp.Paragraph(s1,text=text)
-        def output(window,r,text):
-            r.write(text+'\n')
-            if not silent:
-                ui.Label(window,text=text,
-                        font=window.theme.fonts['report'],
-                        row=window.row,column=0, sticky="w"
-                        )
-            window.row+=1
-        t=_("Summary of Frames by Draft Underlying Melody")
-        m=7 #only this many columns in a table
-        # Don't bother with lanscape if we're splitting the table in any case.
-        if m >= len(checks) > 6:
-            landscape=True
-        else:
-            landscape=False
-        s1s=xlp.Section(xlpr,t,landscape=landscape)
-        caption=' '.join([ps,profile])
-        ptext=_("The following table shows correspondences across sortings by "
-                "tone frames, with a row for each unique pairing. ")
-        if default == True:
-            ptext+=_("This is a default report, where {} "
-                "intentionally splits these groups, so you can see wherever "
-                "differences lie, even if those differences are likely "
-                "meaningless (e.g., 'NA' means the user skipped sorting those "
-                "words in that frame, but this will still distinguish one "
-                "group from another). To help the qualified analyst navigate "
-                "such a large selection of small slices of the data, the data "
-                "is sorted (both here and in the section ordering) by "
-                "similarity of groups. That similarity is structured, and "
-                "it is provided here, so you can see the analysis of group "
-                "relationships for yourself: {}. "
-                "And here are the structured similarity relationships for the "
-                "Frames: {}"
-                "".format(program['name'],
-                        str(self.analysis.comparisonUFs),
-                        str(self.analysis.comparisonchecks)))
-        else:
-            ptext+=_("This is a non-default report, where a user has changed "
-            "the default (hyper-split) groups created by {}.".format(
-                                                        program['name']))
-        p0=xlp.Paragraph(s1s,text=ptext)
-        self.analysis.orderedchecks=list(self.analysis.valuesbycheckgroup)
-        for slice in range(int(len(self.analysis.orderedchecks)/m)+1):
-            locslice=self.analysis.orderedchecks[slice*m:(slice+1)*m]
-            if len(locslice) >0:
-                self.buildXLPtable(s1s,caption+str(slice),
-                        yterms=grouplist,
-                        xterms=locslice,
-                        values=lambda x,y:nn(unlist(
-                self.analysis.valuesbygroupcheck[y][x],ignore=[None, 'NA']
-                                            )),
-                        ycounts=lambda x:len(self.analysis.senseidsbygroup[x]),
-                        xcounts=lambda y:len(self.analysis.valuesbycheck[y]))
-        #Can I break this for multithreading?
-        for group in grouplist: #These already include ps-profile
-            log.info("building report for {} ({}/{}, n={})".format(group,
-                grouplist.index(group)+1,len(grouplist),
-                len(self.analysis.senseidsbygroup[group])
-                ))
-            sectitle=_('\n{}'.format(str(group)))
-            s1=xlp.Section(xlpr,title=sectitle)
-            output(window,r,sectitle)
-            l=list()
-            for x in self.analysis.valuesbygroupcheck[group]:
-                l.append("{}: {}".format(x,', '.join(
-                    [i for i in self.analysis.valuesbygroupcheck[group][x]
-                                                            if i is not None]
-                        )))
-            if not l:
-                l=[_('<no frames with a sort value>')]
-            text=_('Values by frame: {}'.format('\t'.join(l)))
-            log.info(text)
-            p1=xlp.Paragraph(s1,text)
-            output(window,r,text)
-            if bylocation == True:
-                textout=list()
-                #This is better than checks, just whats there for this group
-                for check in self.analysis.valuesbygroupcheck[group]:
-                    id=rx.id('x'+sectitle+check)
-                    headtext='{}: {}'.format(check,', '.join(
-                            [i for i in
-                            self.analysis.valuesbygroupcheck[group][check]
-                            if i is not None]
-                                            ))
-                    e1=xlp.Example(s1,id,heading=headtext)
+            groupsselected=[]
+            for group in groupvars: #all group variables
+                groupsselected+=[group.get()] #value, name if selected, 0 if not
+            groupsselected=[x for x in groupsselected if x != '']
+            log.info("groupsselected:{}".format(groupsselected))
+            if uf in self.analysis.orderedUFs and uf not in groupsselected:
+                deja=_("That name is already there! (did you forget to include "
+                        "the ‘{}’ group?)".format(uf))
+                log.debug(deja)
+                errorlabel['text'] = deja
+                return
+            for group in groupsselected:
+                if group in self.analysis.senseidsbygroup: #selected ones only
+                    log.debug("Changing values from {} to {} for the following "
+                            "senseids: {}".format(group,uf,
+                                        self.analysis.senseidsbygroup[group]))
                     for senseid in self.analysis.senseidsbygroup[group]:
-                        #This is for window/text output only, not in XLP file
-                        framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
-                        text=framed.formatted(noframe=True,showtonegroup=False)
-                        #This is put in XLP file:
-                        examples=self.db.get('example',location=check,
-                                                senseid=senseid).get()
-                        examplestoXLP(examples,e1,senseid,groups=groups)
-                        if text not in textout:
-                            output(window,r,text)
-                            textout.append(text)
-                    if not e1.node.find('listWord'):
-                        s1.node.remove(e1.node) #Don't show examples w/o data
-            else:
-                for senseid in self.analysis.senseidsbygroup[group]:
-                    #This is for window/text output only, not in XLP file
-                    framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
-                    if not framed:
-                        continue
-                    text=framed.formatted(noframe=True, showtonegroup=False)
-                    #This is put in XLP file:
-                    examples=self.db.get('example',senseid=senseid).get()
-                    log.log(2,"{} examples found: {}".format(len(examples),
-                                                                    examples))
-                    if examples != []:
-                        id=self.idXLP(framed)+'_examples'
-                        headtext=text.replace('\t',' ')
-                        e1=xlp.Example(s1,id,heading=headtext)
-                        log.info("Asking for the following {} examples from id "
-                                "{}: {}".format(len(examples),senseid,examples))
-                        examplestoXLP(examples,e1,senseid)
-                    else:
-                        self.framedtoXLP(framed,parent=s1,groups=groups)
-                    output(window,r,text)
-        sectitle=_('\nData Summary')
-        s2=xlp.Section(xlpr,title=sectitle)
-        eps='{:.2%}'.format(float(counts['examples']/counts['senses']))
-        audiopercent='{:.2%}'.format(float(counts['audio']/counts['examples']))
-        ptext=_("This report contains {} senses, {} examples, and "
-                "{} sound files. That is an average of {} examples/sense, and "
-                "{} of examples with sound files."
-                "").format(counts['senses'],counts['examples'],counts['audio'],
-                            eps,audiopercent)
-        ps2=xlp.Paragraph(s2,text=ptext)
-        resultswindow.waitdone()
-        xlpr.close(me=me)
-        text=("Finished in "+str(time.time() - start_time)+" seconds.")
-        output(window,r,text)
-        text=_("(Report is also available at ("+self.tonereportfile+")")
-        output(window,r,text)
-        r.close()
-        if me:
-            resultswindow.destroy()
-    def makeresultsframe(self):
-        if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
-            self.results = ui.Frame(self.runwindow.frame,width=800)
-            self.results.grid(row=0, column=0)
-        else:
-            log.error("Tried to get a results frame without a runwindow!")
-    def getresults(self,**kwargs):
+                        self.db.addtoneUF(senseid,uf,analang=self.analang,
+                        write=False)
+            self.db.write()
+            self.runwindow.destroy()
+            self.tonegroupsjoinrename() #call again, in case needed
+        def done():
+            self.runwindow.destroy()
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
         self.getrunwindow()
-        self.makeresultsframe()
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
-        self.adhocreportfileXLP=''.join([str(self.reportbasefilename)
-                                        ,'_',str(ps)
-                                        ,'-',str(profile)
-                                        ,'_',str(check)
-                                        ,'_ReportXLP.xml'])
-        xlpr=self.xlpstart()
-        """"Do I need this?"""
-        self.results.grid(column=0,
-                        row=self.runwindow.frame.grid_info()['row']+1,
-                        columnspan=5,
-                        sticky=(tkinter.N, tkinter.S, tkinter.E, tkinter.W))
-        print(_("Getting results of Search request"))
-        c1 = "Any"
-        c2 = "Any"
-        i=0
-        """nn() here keeps None and {} from the output, takes one string,
-        list, or tuple."""
-        text=(_("{} roots of form {} by {}".format(ps,profile,check)))
-        ui.Label(self.results, text=text).grid(column=0, row=i)
-        self.runwindow.wait()
-        si=xlp.Section(xlpr,text)
-        self.results.scroll=ui.ScrollingFrame(self.results)
-        self.results.scroll.grid(column=0, row=1)
-        senseid=0 # in case the following doesn't find anything:
-        # These lines get all senseids, to test that we're not losing any, below
-        # This is the first of three blocks to uncomment (on line, then logs)
-        # self.regexCV=profile
-        # self.regex=rx.fromCV(self,lang=self.analang,
-        #                     word=True, compile=True)
-        # rxsenseidsinslice=self.senseidformsbyregex(self.regex)
-        # senseidsinslice=self.slices.senseids()
-        # log.info("nrxsenseidsinslice: {}".format(len(rxsenseidsinslice)))
-        # log.info("nsenseidsinslice: {}".format(len(senseidsinslice)))
-        # senseidsnotsearchable=set(senseidsinslice)-set(rxsenseidsinslice)
-        # log.info("senseidsnotsearchable: {}".format(len(senseidsnotsearchable)))
-        # log.info("senseidsnotsearchable: {}".format(senseidsnotsearchable))
-        for group in self.s[self.analang][cvt]:
-            # log.debug('group: {}'.format(group))
-            self.buildregex(group=group) #It would be nice fo this to iterate through...
-            # log.info("self.regexCV: {}".format(self.regexCV))
-            # log.info("self.regex: {}".format(self.regex))
-            senseidstocheck=self.senseidformsbyregex(self.regex)
-            # log.info("Found {} senseids".format(len(senseidstocheck)))
-            if len(senseidstocheck)>0:
-                id=rx.id('x'+ps+profile+check+group)
-                ex=xlp.Example(si,id)
-            for senseid in senseidstocheck:
-                # Uncomment to test:
-                # rxsenseidsinslice.remove(senseid)
-                """This regex is compiled!"""
-                framed=self.taskchooser.datadict.getframeddata(senseid)
-                o=framed.formatted(noframe=True)
-                self.framedtoXLP(framed,parent=ex,listword=True)
-                i+=1
-                col=0
-                for lang in [self.analang]+self.glosslangs:
+        title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
+                                                        ps,profile))
+        self.runwindow.title(title)
+        padx=50
+        pady=10
+        rwrow=gprow=qrow=0
+        t=ui.Label(self.runwindow.frame,text=title,font='title')
+        t.grid(row=rwrow,column=0,sticky='ew')
+        text=_("This page allows you to join the {0}-{1} draft underlying tone "
+                "groups created for you by {2}, \nwhich are almost certainly "
+                "too small for you. \nLooking at a draft report, and making "
+                "your own judgement about which groups belong together, select "
+                "all the groups that belong together, and give that new group "
+                "a name. Afterwards, you can do this again for other groups "
+                "that should be joined. \nIf for any reason you want to undo "
+                "the groups you create here (e.g., you make a mistake or sort "
+                "new data), just run the default report, which will redo the "
+                "default analysis, which will replace these groupings with new "
+                "split groupings. \nTo see a report based on what you do "
+                "here, run the tone reports in the Advanced menu (without "
+                "analysis). ".format(ps,profile,program['name']))
+        rwrow+=1
+        i=ui.Label(self.runwindow.frame,text=text,
+                    row=rwrow,column=0,sticky='ew')
+        i.wrap()
+        rwrow+=1
+        qframe=ui.Frame(self.runwindow.frame)
+        qframe.grid(row=rwrow,column=0,sticky='ew')
+        text=_("What do you want to call this UF tone group for {}-{} words?"
+                "".format(ps,profile))
+        qrow+=1
+        q=ui.Label(qframe,text=text,
+                    row=qrow,column=0,sticky='ew',pady=20
+                    )
+        q.wrap()
+        named=tkinter.StringVar() #store the new name here
+        namefield = ui.EntryField(qframe,textvariable=named)
+        namefield.grid(row=qrow,column=1)
+        namefield.bind('<Key>', clearerror)
+        errorlabel=ui.Label(qframe,text='',fg='red')
+        errorlabel.grid(row=qrow,column=2,sticky='ew',pady=20)
+        text=_("Select the groups below that you want in this {} group, then "
+                "click ==>".format(ps))
+        qrow+=1
+        d=ui.Label(qframe,text=text)
+        d.grid(row=qrow,column=0,sticky='ew',pady=20)
+        sub_btn=ui.Button(qframe,text = _("OK"), command = submitform, anchor ='c')
+        sub_btn.grid(row=qrow,column=1,sticky='w')
+        done_btn=ui.Button(qframe,text = _("Done —no change"), command = done,
+                                                                    anchor ='c')
+        done_btn.grid(row=qrow,column=2,sticky='w')
+        groupvars=list()
+        rwrow+=1
+        scroll=ui.ScrollingFrame(self.runwindow.frame)
+        scroll.grid(row=rwrow,column=0,sticky='ew')
+        self.makeanalysis()
+        self.analysis.donoUFanalysis()
+        nheaders=0
+        if not self.analysis.orderedUFs:
+            self.runwindow.waitdone()
+            self.runwindow.destroy()
+            ErrorNotice(title="No draft UF groups found!",
+                        text="You don't seem to have any analyzed groups to "
+                                "join/rename. Have you done a tone analyis?"
+                        )
+            return
+        # ufgroups= # order by structured groups? Store this somewhere?
+        for group in self.analysis.orderedUFs: #make a variable and button to select
+            idn=self.analysis.orderedUFs.index(group)
+            if idn % 5 == 0: #every five rows
+                col=1
+                for check in self.analysis.orderedchecks:
                     col+=1
-                    if lang in framed.forms:
-                        ui.Label(self.results.scroll.content,
-                            text=framed.forms[lang], font='read',
-                            anchor='w',padx=10).grid(row=i, column=col,
-                                                        sticky='w')
-        xlpr.close(me=me)
+                    cbh=ui.Label(scroll.content, text=check, font='small')
+                    cbh.grid(row=idn+nheaders,
+                            column=col,sticky='ew')
+                nheaders+=1
+            groupvars.append(tkinter.StringVar())
+            n=len(self.analysis.senseidsbygroup[group])
+            buttontext=group+' ({})'.format(n)
+            cb=ui.CheckButton(scroll.content, text = buttontext,
+                                variable = groupvars[idn],
+                                onvalue = group, offvalue = 0,
+                                )
+            cb.grid(row=idn+nheaders,column=0,sticky='ew')
+            # self.analysis.valuesbygroupcheck[group]:
+            col=1
+            for check in self.analysis.orderedchecks:
+                col+=1
+                if check in self.analysis.valuesbygroupcheck[group]:
+                    cbl=ui.Label(scroll.content,
+                        text=unlist(
+                                self.analysis.valuesbygroupcheck[group][check]
+                                    )
+                            )
+                    cbl.grid(row=idn+nheaders,column=col,sticky='ew')
         self.runwindow.waitdone()
-        # Report on testing blocks above
-        # log.info("senseids remaining (rx): ({}) {}".format(
-        #                                                 len(rxsenseidsinslice),
-        #                                                 rxsenseidsinslice))
-        # log.info("senseids remaining: ({}) {}".format(len(senseidsinslice),
-        #                                                     senseidsinslice))
-        if senseid == 0: #i.e., nothing was found above
-            print(_('No results!'))
-            ui.Label(self.results, text=_("No results for ")+self.regexCV+"!"
-                            ).grid(column=0, row=i+1)
-            return
-    def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None,xcounts=None):
-        #values should be a (lambda?) function that depends on x and y terms
-        #ycounts should be a lambda function that depends on yterms
-        log.info("Making table with caption {}".format(caption))
-        t=xlp.Table(parent,caption)
-        rows=list(yterms)
-        nrows=len(rows)
-        cols=list(xterms)
-        ncols=len(cols)
-        if nrows == 0:
-            return
-        if ncols == 0:
-            return
-        for row in ['header']+list(range(nrows)):
-            if row != 'header':
-                row=rows[row]
-            r=xlp.Row(t)
-            for col in ['header']+list(range(ncols)):
-                log.log(4,"row: {}; col: {}".format(row,col))
-                if col != 'header':
-                    col=cols[col]
-                log.log(4,"row: {}; col: {}".format(row,col))
-                if row == 'header' and col == 'header':
-                    log.log(2,"header corner")
-                    cell=xlp.Cell(r,content='',header=True)
-                elif row == 'header':
-                    log.log(2,"header row")
-                    if xcounts is not None:
-                        hxcontents='{} ({})'.format(col,xcounts(col))
-                    else:
-                        hxcontents='{}'.format(col)
-                    cell=xlp.Cell(r,content=linebreakwords(hxcontents),
-                                header=True,
-                                linebreakwords=True)
-                elif col == 'header':
-                    log.log(2,"header column")
-                    if ycounts is not None:
-                        hycontents='{} ({})'.format(row,ycounts(row))
-                    else:
-                        hycontents='{}'.format(row)
-                    cell=xlp.Cell(r,content=hycontents,
-                                header=True)
-                else:
-                    log.log(2,"Not a header")
-                    try:
-                        value=values(col,row)
-                        log.log(2,"value ({},{}):{}".format(col,row,
-                                                        values(col,row)))
-                    except KeyError:
-                        log.info("Apparently no value for col:{}, row:{}"
-                                "".format(col,row))
-                        value=''
-                    finally: # we need each cell to be there...
-                        cell=xlp.Cell(r,content=value)
-    def xlpstart(self,**kwargs):
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        reporttype=kwargs.get('reporttype','adhoc')
-        bylocation=kwargs.get('bylocation',False)
-        default=kwargs.get('default',True)
-        if reporttype == 'Tone':
-            if bylocation:
-                reporttype='Tone-bylocation'
-        elif not re.search('Basic',reporttype): #We don't want this in the title
-            #this is only for adhoc "big button" reports.
-            reporttype=str(self.params.check())
-        reporttype=' '.join([ps,profile,reporttype])
-        bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
-        if not default:
-            bits.append('mod')
-        reportfileXLP='_'.join(bits)+".xml"
-        xlpreport=xlp.Report(reportfileXLP,reporttype,
-                        self.settings.languagenames[self.analang])
-        langsalreadythere=[]
-        for lang in set([self.analang]+self.glosslangs)-set([None]):
-            xlpreport.addlang({'id':lang,'name': self.settings.languagenames[lang]})
-        return xlpreport
-    def senseidformsbyregex(self,regex,**kwargs):
-        """This function takes in a compiled regex,
-        and outputs a list/dictionary of senseid/{senseid:form} form."""
-        ps=kwargs.get('ps',self.slices.ps())
-        output=[] #This is just a list of senseids now: (Do we need the dict?)
-        for form in self.settings.formstosearch[ps]:
-            if regex.search(form):
-                output+=self.settings.formstosearch[ps][form]
-        return output
-    def buildregex(self,**kwargs):
-        """include profile (of those available for ps and check),
-        and subcheck (e.g., a: CaC\2)."""
-        """Provides self.regexCV and self.regex"""
-        self.regexCV=None #in case this was run before.
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
-        group=kwargs.get('group',self.status.group())
-        maxcount=re.subn(cvt, cvt, profile)[1]
-        if profile is None:
-            print("It doesn't look like you've picked a syllable profile yet.")
-            return
-        """Don't need this; only doing count=1 at a time. Let's start with
-        the easier ones, with the first occurrance changed."""
-        # log.info("self.regexCV: {}".format(self.regexCV))
-        self.regexCV=str(profile) #Let's set this before changing it.
-        # log.info("self.regexCV: {}".format(self.regexCV))
-        """One pass for all regexes, S3, then S2, then S1, as needed."""
-        cvts=['V','C']
-        if 'x' in check:
-            if self.subcheckcomparison in self.s[self.analang]['C']:
-                cvts=['C','V']
-        for t in cvts:
-            if t not in cvt:
-                continue
-            S=str(cvt)
-            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
-            # log.info("regexS: {}".format(regexS))
-            compared=False
-            for occurrence in reversed(range(maxcount)):
-                occurrence+=1
-                if re.search(S+str(occurrence),check) is not None:
-                    """Get the (n=occurrence) S, regardless of intervening
-                    non S..."""
-                    # log.info("regexS: {}".format(regexS))
-                    regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
-                    # log.info("regS: {}".format(regS))
-                    # log.info("regexS: {}".format(regexS))
-                    if 'x' in check:
-                        if compared == False: #occurrence == 2:
-                            replS='\\1'+self.subcheckcomparison
-                            compared=True
-                        else: #if occurrence == 1:
-                            replS='\\1'+group
-                    else:
-                        replS='\\1'+group
-                    # log.info("replS: {}".format(replS))
-                    # log.info("self.regexCV: {}".format(self.regexCV))
-                    self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
-                    # log.info("self.regexCV: {}".format(self.regexCV))
-        """Final step: convert the CVx code to regex, and store in self."""
-        self.regex=rx.fromCV(self,lang=self.analang,
-                            word=True, compile=True)
-    def wordsbypsprofilechecksubcheckp(self,parent,t="NoText!",**kwargs):
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
-        group=kwargs.get('group',self.status.group())
-        xlp.Paragraph(parent,t)
-        print(t)
-        log.debug(t)
-        self.buildregex()
-        log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
-                                                        self.regexCV))
-        matches=set(self.senseidformsbyregex(self.regex))
-        for ncvt in self.ncvtsRun:
-            # this removes senses already reported (e.g., in V1=V2)
-            matches-=self.basicreported[ncvt]
-        log.log(2,"{} matches found!: {}".format(len(matches),matches))
-        if 'x' in check:
-            n=self.checkcounts[ps][profile][check][
-                            group][self.subcheckcomparison]=len(matches)
-        else:
-            n=self.checkcounts[ps][profile][check][
-                            group]=len(matches)
-            if '=' in check:
-                xname=re.sub('=','x',check, count=1)
-                log.debug("looking for name {} in {}".format(xname,self.checks))
-                if xname in self.checks:
-                    log.debug("Adding {} value to name {}".format(len(matches),
-                                                                        xname))
-                    #put the results in that group, too
-                    log.debug(self.checkcounts)
-                    if xname not in self.checkcounts[ps][profile]:
-                        self.checkcounts[ps][profile][xname]={}
-                    if group not in self.checkcounts[ps][
-                                    profile][xname]:
-                        self.checkcounts[ps][profile][xname][group]={}
-                    self.checkcounts[ps][profile][xname][group][group
-                                                                ]=len(matches)
-                    log.debug(self.checkcounts)
-        if n>0:
-            titlebits='x'+ps+profile+check+group
-            if 'x' in check:
-                titlebits+='x'+self.subcheckcomparison
-            id=rx.id(titlebits)
-            ex=xlp.Example(parent,id)
-            for senseid in matches:
-                for ncvt in self.ncvtsRun:
-                    self.basicreported[ncvt].add(senseid)
-                framed=self.taskchooser.datadict.getframeddata(senseid)
-                self.framedtoXLP(framed,parent=ex,listword=True)
-    def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent',**kwargs):
-        """This function iterates across check and group values
-        appropriate for the specified self.type, profile and check
-        values (ps is irrelevant here).
-        Because two functions called (buildregex and getframeddata) use
-        check and group to do their work, they and their
-        dependents would need to be changed to fit a new paradigm, if we
-        were to change the variable here. So rather, we store the current
-        check and group values, then iterate across logically
-        possible values (as above), then restore the value."""
-        """I need to find a way to limit these tests to appropriate
-        profiles..."""
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        if cvt in ['V','C']:
-            groups=self.s[self.analang][cvt]
-        """This sets each of the checks that are applicable for the given
-        profile; self.basicreported is from self.basicreport()"""
-        for ncvt in self.basicreported:
-            log.log(2, '{}: {}'.format(ncvt,self.basicreported[ncvt]))
-        #CV checks depend on profile, too
-        self.checks=self.status.checks(cvt=cvt,profile=profile)
-        """check set here"""
-        for check in self.checks: #self.checkcodesbyprofile:
-            if check not in self.checkcounts[ps][profile]:
-                self.checkcounts[ps][profile][check]={}
-            self.ncvtsRun=[ncvt for ncvt in self.ncvts
-                                        if re.search(ncvt,check)]
-            log.debug('check: {}; self.type: {}; self.ncvts: {}; '
-                        'self.ncvtsRun: {}'.format(check,cvt,
-                                                self.ncvts,self.ncvtsRun))
-            if len(check) == 1:
-                log.debug("Error! {} Doesn't seem to be list formatted.".format(
-                                                                    check))
-            if 'x' in check:
-                log.debug('Hey, I cound a correspondence number!')
-                if cvt in ['V','C']:
-                    subcheckcomparisons=groups
-                elif cvt == 'CV':
-                    subchecks=self.s[self.analang]['C']
-                    subcheckcomparisons=self.s[self.analang]['V']
-                else:
-                    log.error("Sorry, I don't know how to compare cvt: {}"
-                                                        "".format(cvt))
-                for group in groups:
-                    if group not in self.checkcounts[ps][profile][check]:
-                        self.checkcounts[ps][profile][check][group]={}
-                    for self.subcheckcomparison in subcheckcomparisons:
-                        if group != self.subcheckcomparison:
-                            t=_("{} {} {}={}-{}".format(ps,profile,
-                                                check,group,
-                                                self.subcheckcomparison))
-                            self.wordsbypsprofilechecksubcheckp(parent,t,
-                                            check=check, group=group,**kwargs)
-            else:
-                for group in groups:
-                    t=_("{} {} {}={}".format(ps,profile,check,group))
-                    self.wordsbypsprofilechecksubcheckp(parent,t,
-                                            check=check, group=group,**kwargs)
-    def idXLP(self,framed):
-        id='x' #string!
-        bits=[
-            self.params.cvt(),
-            self.slices.ps(),
-            self.slices.profile(),
-            ]
-        if hasattr(framed,'check'):
-            bits.append(framed.check)
-        if hasattr(framed,'tonegroup'):
-            bits.append(framed.tonegroup)
-        for lang in self.glosslangs:
-            if lang in framed.forms and framed.forms[lang] is not None:
-                bits+=framed.forms[lang]
-        for x in bits:
-            if x is not None:
-                id+=x
-        return rx.id(id) #for either example or listword
-    def framedtoXLP(self,framed,parent,listword=False,groups=True):
-        """This will likely only work when called by
-        wordsbypsprofilechecksubcheck; but is needed because it must return if
-        the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
-        """parent is an example in the XLP report"""
-        id=self.idXLP(framed)
-        if listword == True:
-            ex=xlp.ListWord(parent,id)
-        else:
-            exx=xlp.Example(parent,id) #the id goes here...
-            ex=xlp.Word(exx) #This doesn't have an id
-        if self.settings.audiolang in framed.forms:
-            url=file.getdiredrelURL(self.reporttoaudiorelURL,
-                                                framed.forms[self.settings.audiolang])
-            el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang],
-                                                                    str(url))
-        else:
-            el=xlp.LangData(ex,self.analang,framed.forms[self.analang])
-        if hasattr(framed,'tonegroup') and groups is True: #joined groups show each
-            elt=xlp.LangData(ex,self.analang,framed.tonegroup)
-        for lang in self.glosslangs:
-            if lang in framed.forms:
-                xlp.Gloss(ex,lang,framed.forms[lang])
-    def printcountssorted(self):
-        #This is only used in the basic report
-        log.info("Ranked and numbered syllable profiles, by grammatical category:")
-        nTotal=0
-        nTotals={}
-        for line in self.slices: #profilecounts:
-            profile=line[0]
-            ps=line[1]
-            nTotal+=self.slices[line]
-            if ps not in nTotals:
-                nTotals[ps]=0
-            nTotals[ps]+=self.slices[line]
-        print('Profiled data:',nTotal)
-        """Pull this?"""
-        for ps in self.slices.pss():
-            if ps == 'Invalid':
-                continue
-            log.debug("Part of Speech {}:".format(ps))
-            for line in self.slices.valid(ps=ps):
-                profile=line[0]
-                ps=line[1]
-                log.debug("{}: {}".format(profile,self.slices[line]))
-            print(ps,"(total):",nTotals[ps])
-    def printprofilesbyps(self):
-        #This is only used in the basic report
-        log.info("Syllable profiles actually in senses, by grammatical category:")
-        for ps in self.profilesbysense:
-            if ps == 'Invalid':
-                continue
-            print(ps, self.profilesbysense[ps])
-    def basicreport(self):
-        """We iterate across these values in this script, so we save current
-        values here, and restore them at the end."""
-        #Convert to iterate over local variables
-        start_time=time.time() #move this to function?
-        instr=_("The data in this report is given by most restrictive test "
-                "first, followed by less restrictive tests (e.g., V1=V2 "
-                "before V1 or V2). Additionally, each word only "
-                "appears once per segment in a given position, so a word that "
-                "occurs in a more restrictive environment will not appear in "
-                "the later less restrictive environments. But where multiple "
-                "examples of a segment type occur with different values, e.g., "
-                "V1≠V2, those words will appear multiple times, e.g., for "
-                "both V1=x and V2=y.")
-        self.basicreportfile=''.join([str(self.reportbasefilename)
-                                            ,'_',''.join(self.cvtstodo)
-                                            ,'_BasicReport.txt'])
-        xlpr=self.xlpstart(reporttype='Basic '+''.join(self.cvtstodo))
-        si=xlp.Section(xlpr,"Introduction")
-        p=xlp.Paragraph(si,instr)
-        sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
-        print(instr)
-        log.info(instr)
-        #There is no runwindow here...
-        self.basicreported={}
-        self.checkcounts={}
-        self.printprofilesbyps()
-        self.printcountssorted()
-        t=_("This report covers the following top two Grammatical categories, "
-            "with the top {} syllable profiles in each. "
-            "This is of course configurable, but I assume you don't want "
-            "everything.".format(self.settings.maxprofiles))
-        log.info(t)
-        print(t)
-        p=xlp.Paragraph(si,t)
-        for ps in self.slices.pss()[0:2]: #just the first two (Noun and Verb)
-            if ps not in self.checkcounts:
-                self.checkcounts[ps]={}
-            profiles=self.slices.profiles(ps=ps)
-            t=_("{} data: (profiles: {})".format(ps,profiles))
-            log.info(t)
-            print(t)
-            s1=xlp.Section(xlpr,t)
-            t=_("This section covers the following top syllable profiles "
-                "which are found in {}s: {}".format(ps,profiles))
-            p=xlp.Paragraph(s1,t)
-            log.info(t)
-            print(t)
-            for profile in profiles:
-                if profile not in self.checkcounts[ps]:
-                    self.checkcounts[ps][profile]={}
-                t=_("{} {}s".format(profile,ps))
-                s2=xlp.Section(s1,t,level=2)
-                print(t)
-                log.info(t)
-                for cvt in self.cvtstodo:
-                    t=_("{} checks".format(self.params.cvtdict()[cvt]['sg']))
-                    print(t)
-                    log.info(t)
-                    sid=" ".join([t,"for",profile,ps+'s'])
-                    s3=xlp.Section(s2,sid,level=3)
-                    maxcount=re.subn(cvt, cvt, profile)[1]
-                    """Get these reports from C1/V1 to total number of C/V"""
-                    self.ncvts=[cvt+str(n+1) for n in range(maxcount)]
-                    for ncvt in self.ncvts:
-                        if ncvt not in self.basicreported:
-                            self.basicreported[ncvt]=set()
-                    self.wordsbypsprofilechecksubcheck(s3,cvt=cvt,ps=ps,
-                                                        profile=profile)
-        t=_("Summary coocurrence tables")
-        s1s=xlp.Section(xlpr,t)
-        for ps in self.checkcounts:
-            s2s=xlp.Section(s1s,ps,level=2)
-            for profile in self.checkcounts[ps]:
-                s3s=xlp.Section(s2s,' '.join([ps,profile]),level=3)
-                for name in self.checkcounts[ps][profile]:
-                    rows=list(self.checkcounts[ps][profile][name])
-                    nrows=len(rows)
-                    if nrows == 0:
-                        continue
-                    if 'x' in name:
-                        cols=list(self.checkcounts[ps][profile][name][rows[0]])
-                    else:
-                        cols=['n']
-                    ncols=len(cols)
-                    if ncols == 0:
-                        continue
-                    caption=' '.join([ps,profile,name])
-                    t=xlp.Table(s3s,caption)
-                    for x1 in ['header']+list(range(nrows)):
-                        if x1 != 'header':
-                            x1=rows[x1]
-                        h=xlp.Row(t)
-                        for x2 in ['header']+list(range(ncols)):
-                            log.debug("x1: {}; x2: {}".format(x1,x2))
-                            if x2 != 'header':
-                                x2=cols[x2]
-                            log.debug("x1: {}; x2: {}".format(x1,x2))
-                            log.debug("countbyname: {}".format(self.checkcounts[
-                                    ps][profile][name]))
-                            if x1 != 'header' and x2 not in ['header','n']:
-                                log.debug("value: {}".format(self.checkcounts[
-                                    ps][profile][name][x1][x2]))
-                            if x1 == 'header' and x2 == 'header':
-                                log.debug("header corner")
-                                cell=xlp.Cell(h,content=name,header=True)
-                            elif x1 == 'header':
-                                log.debug("header row")
-                                cell=xlp.Cell(h,content=x2,header=True)
-                            elif x2 == 'header':
-                                log.debug("header column")
-                                cell=xlp.Cell(h,content=x1,header=True)
-                            else:
-                                log.debug("Not a header")
-                                if x2 == 'n':
-                                    value=self.checkcounts[ps][
-                                                    profile][name][x1]
-                                else:
-                                    value=self.checkcounts[ps][
-                                                    profile][name][x1][x2]
-                                cell=xlp.Cell(h,content=value)
-        log.info(self.checkcounts)
-        xlpr.close(me=me)
-        log.info("Finished in {} seconds.".format(str(time.time()-start_time)))
-        sys.stdout.close()
-        sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        self.frame.parent.waitdone()
-    def __init__(self):
-        self.reportbasefilename=self.settings.reportbasefilename
-        self.reporttoaudiorelURL=self.settings.reporttoaudiorelURL
-        self.distinguish=self.settings.distinguish
-        self.profilesbysense=self.settings.profilesbysense
-        self.s=self.settings.s
+        self.runwindow.wait_window(scroll)
+    def __init__(self, arg):
+        Tone.__init__(self)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+class RecordCitation(Record,Segments,TaskDressing,ui.Window):
+    """docstring for RecordCitation."""
+    def dobuttonkwargs(self):
+        return {'text':_("Record Dictionary Words"),
+                'fn':self.showentryformstorecord,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['record'], #self.cvt
+                'sticky':'ew'
+                }
+    def tasktitle(self):
+        return _("Record Citation Forms")
+    def taskicon(self):
+        return program['theme'].photo['record']
+    def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Record.__init__(self)
+        # self.do=self.showentryformstorecord
+class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
+    """docstring for RecordCitation."""
+    def dobuttonkwargs(self):
+        return {'text':_("Record Words in Tone Frames"),
+                'fn':self.showtonegroupexs,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['record'], #self.cvt
+                'sticky':'ew'
+                }
+    def taskicon(self):
+        return program['theme'].photo['record']
+    def tasktitle(self):
+        return _("Record Citation Form Sorting in Tone Frames")
+    def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Record.__init__(self)
+        # self.do=self.showtonegroupexs
 class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
@@ -6690,507 +7191,6 @@ class ReportCitationBasicT(Report,Tone,TaskDressing,ui.Window):
         # self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
-class Record(object):
-    """This holds all the Recording methods."""
-    def donewpyaudio(self):
-        try:
-            self.pyaudio.terminate()
-        except:
-            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
-    def pyaudiocheck(self):
-        try:
-            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
-        except:
-            self.pyaudio=sound.AudioInterface()
-    def getsoundcardindex(self,event=None):
-        log.info("Asking for input sound card...")
-        window=ui.Window(self.frame, title=_('Select Input Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to record sound with with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['in']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.settings.setsoundcardindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundcardoutindex(self,event=None):
-        log.info("Asking for output sound card...")
-        window=ui.Window(self.frame, title=_('Select Output Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to play sound with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['out']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.settings.setsoundcardoutindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundformat(self,event=None):
-        log.info("Asking for audio format...")
-        window=ui.Window(self.frame, title=_('Select Audio Format'))
-        ui.Label(window.frame, text=_('What audio format do you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
-        ss=self.soundsettings
-        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
-            name=ss.hypothetical['sample_formats'][sf]
-            l+=[(sf, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.settings.setsoundformat,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundhz(self,event=None):
-        log.info("Asking for sampling frequency...")
-        window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
-        ui.Label(window.frame, text=_('What sampling frequency you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
-        ss=self.soundsettings
-        for fs in ss.cards['in'][ss.audio_card_in]:
-            name=ss.hypothetical['fss'][fs]
-            l+=[(fs, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.settings.setsoundhz,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def makesoundsettings(self):
-        if not hasattr(self.settings,'soundsettings'):
-            self.pyaudiocheck() #in case self.pyaudio isn't there yet
-            self.settings.soundsettings=sound.SoundSettings(self.pyaudio)
-    def loadsoundsettings(self):
-        self.makesoundsettings()
-        self.settings.loadsettingsfile(setting='soundsettings')
-    def soundcheckrefreshdone(self):
-        self.settings.storesettingsfile(setting='soundsettings')
-        self.soundsettingswindow.destroy()
-    def soundcheckrefresh(self):
-        def quitall():
-            self.soundsettingswindow.destroy()
-            self.on_quit()
-        self.soundsettingswindow.resetframe()
-        row=0
-        ui.Label(self.soundsettingswindow.frame, font='title',
-                text="Current Sound Card Settings",
-                row=row,column=0)
-        row+=1
-        ui.Label(self.soundsettingswindow.frame, #font='title',
-                text="(click any to change)",
-                row=row,column=0)
-        row+=1
-        ss=self.soundsettings
-        ss.check() #make defaults if not valid options
-        for varname, dict, cmd in [
-            ('audio_card_in', ss.cards['dict'], self.getsoundcardindex),
-            ('fs',ss.hypothetical['fss'], self.getsoundhz),
-            ('sample_format', ss.hypothetical['sample_formats'],
-                                                         self.getsoundformat),
-            ('audio_card_out', ss.cards['dict'], self.getsoundcardoutindex),
-                                                    ]:
-            text=_("Change")
-            var=getattr(ss,varname)
-            log.debug("{} in {}".format(var,dict))
-            l=dict[var]
-            if cmd == self.getsoundcardindex:
-                l=_("Microphone: ‘{}’").format(l)
-            if cmd == self.getsoundcardoutindex:
-                l=_("Speakers: ‘{}’").format(l)
-            l=ui.Label(self.soundsettingswindow.frame,text=l,
-                    row=row,column=0)
-            l.bind('<ButtonRelease>',cmd) #getattr(self,str(cmd)))
-            row+=1
-        br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
-        br.grid(row=row,column=0)
-        row+=1
-        l=_("You may need to change your microphone "
-            "\nand/or speaker sound card to get the "
-            "\nsampling and format you want.")
-        ui.Label(self.soundsettingswindow.frame,
-                text=l).grid(row=row,column=0)
-        row+=1
-        l=_("Make sure ‘record’ and ‘play’ work well here, "
-            "\nbefore recording real data!")
-        caveat=ui.Label(self.soundsettingswindow.frame,
-                text=l,font='read',
-                row=row,column=0)
-        caveat.wrap()
-        row+=1
-        l=_("See also note in documentation about verifying these "
-            "recordings in an external application, such as Praat.")
-        caveat=ui.Label(self.soundsettingswindow.frame,
-                text=l,font='instructions',
-                row=row,column=0)
-        caveat.wrap()
-        row+=1
-        l=_("If Praat is installed in your path, right click on play "
-            "to open in Praat.")
-        caveat=ui.Label(self.soundsettingswindow.frame,
-                text=l,font='default',
-                row=row,column=0)
-        caveat.wrap()
-        row+=1
-        bd=ui.Button(self.soundsettingswindow.frame,
-                    text=_("Done"),
-                    cmd=self.soundcheckrefreshdone,
-                    # anchor='c',
-                    row=row,column=0,
-                    sticky=''
-                    )
-        bd=ui.Button(self.soundsettingswindow.frame,
-                    text=_("Quit {}".format(program['name'])),
-                    # cmd=program['root'].on_quit,
-                    cmd=quitall,
-                    # anchor='c',
-                    row=row,column=1
-                    )
-    def soundsettingscheck(self):
-        if not hasattr(self.settings,'soundsettings'):
-            self.settings.loadsoundsettings()
-    def missingsoundattr(self):
-        log.info(dir(self.soundsettings))
-        for s in ['fs', 'sample_format',
-                    'audio_card_in',
-                    'audio_card_out']:
-            if (not hasattr(self.soundsettings,s) or
-                            not getattr(self.soundsettings,s)):
-                log.info("Missing sound setting {}; asking again".format(s))
-                return True
-        self.settings.soundsettingsok=True
-    def soundcheck(self):
-        #Set the parameters of what could be
-        self.pyaudiocheck()
-        self.soundsettingscheck()
-        self.soundsettingswindow=ui.Window(self.frame,
-                                title=_('Select Sound Card Settings'))
-        self.soundcheckrefresh()
-        self.soundsettingswindow.wait_window(self.soundsettingswindow)
-        if not self.exitFlag.istrue() and self.missingsoundattr():
-            self.soundcheck()
-            return
-        self.donewpyaudio()
-        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
-            self.soundsettingswindow.destroy()
-    def makelabelsnrecordingbuttons(self,parent,sense):
-        framed=self.taskchooser.datadict.getframeddata(sense['nodetoshow'])
-        t=framed.formatted(noframe=True)
-        for g in sense['glosses']:
-            if g:
-                t+='\t‘'+g
-                if ('plnode' in sense and
-                        sense['nodetoshow'] is sense['plnode']):
-                    t+=" (pl)"
-                if ('impnode' in sense and
-                        sense['nodetoshow'] is sense['impnode']):
-                    t+="!"
-                t+='’'
-        lxl=ui.Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,framed)
-        lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
-        lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
-    def showentryformstorecordpage(self,ps=None,profile=None):
-        #The info we're going for is stored above sense, hence guid.
-        if self.runwindow.exitFlag.istrue():
-            log.info('no runwindow; quitting!')
-            return
-        if not self.runwindow.frame.winfo_exists():
-            log.info('no runwindow frame; quitting!')
-            return
-        self.runwindow.resetframe()
-        self.runwindow.wait()
-        count=self.slices.count()
-        text=_("Record {} {} Words: click ‘Record’, talk, "
-                "and release ({} words)".format(profile,ps,
-                                                count))
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w')
-        buttonframes=ui.ScrollingFrame(self.runwindow.frame)
-        buttonframes.grid(row=1,column=0,sticky='w')
-        row=0
-        done=list()
-        for senseid in self.slices.senseids(ps=ps,profile=profile):
-            sense={}
-            sense['column']=0
-            sense['row']=row
-            sense['senseid']=senseid
-            sense['guid']=firstoflist(self.db.get('entry',
-                                        senseid=senseid).get('guid'))
-            if sense['guid'] in done: #only the first of multiple senses
-                continue
-            else:
-                done.append(sense['guid'])
-            """These following two have been shifted down a level, and will
-            now return a list of form elements, each. Something will need to be
-            adjusted here..."""
-            sense['lxnode']=firstoflist(self.db.get('lexeme',
-                                                guid=sense['guid'],
-                                                lang=self.analang).get())
-            sense['lcnode']=firstoflist(self.db.get('citation',
-                                                guid=sense['guid'],
-                                                lang=self.analang).get())
-            sense['glosses']=[]
-            for lang in self.glosslangs:
-                sense['glosses'].append(firstoflist(self.db.glossordefn(
-                                                guid=sense['guid'],
-                                                glosslang=lang
-                                                ),othersOK=True))
-            if self.settings.pluralname is not None:
-                sense['plnode']=firstoflist(self.db.get('field',
-                                        guid=sense['guid'],
-                                        lang=self.analang,
-                                        fieldtype=self.db.pluralname).get())
-            if self.settings.imperativename is not None:
-                sense['impnode']=firstoflist(self.db.get('field',
-                                        guid=sense['guid'],
-                                        lang=self.analang,
-                                        fieldtype=self.db.imperativename).get())
-            if sense['lcnode'] is not None:
-                sense['nodetoshow']=sense['lcnode']
-            else:
-                sense['nodetoshow']=sense['lxnode']
-            self.makelabelsnrecordingbuttons(buttonframes.content,sense)
-            for node in ['plnode','impnode']:
-                if (node in sense) and (sense[node] is not None):
-                    sense['column']+=2
-                    sense['nodetoshow']=sense[node]
-                    self.makelabelsnrecordingbuttons(buttonframes.content,
-                                                    sense)
-            row+=1
-        self.runwindow.waitdone()
-        self.runwindow.wait_window(self.runwindow.frame)
-    def showentryformstorecord(self,justone=True):
-        # Save these values before iterating over them
-        #Convert to iterate over local variables
-        self.getrunwindow()
-        if justone==True:
-            self.showentryformstorecordpage()
-        else:
-            for psprofile in self.status.valid(): #self.profilecountsValid:
-                if self.runwindow.exitFlag.istrue():
-                    return 1
-                ps=psprofile[2]
-                profile=psprofile[1]
-                nextb=ui.Button(self.runwindow,text=_("Next Group"),
-                                        cmd=self.runwindow.resetframe) # .frame.destroy
-                nextb.grid(row=0,column=1,sticky='ne')
-                self.showentryformstorecordpage(ps=ps,profile=profile)
-        self.donewpyaudio()
-    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
-        def setskip(event):
-            self.runwindow.frame.skip=True
-            entryframe.destroy()
-        self.getrunwindow()
-        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
-            return
-        log.debug("Working with skip: {}".format(skip))
-        if skip == 'skip':
-            self.runwindow.frame.skip=True
-        else:
-            self.runwindow.frame.skip=skip
-        text=_("Words and phrases to record: click ‘Record’, talk, and release")
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w',columnspan=2)
-        if (self.settings.entriestoshow is None) and (senses is None):
-            ui.Label(self.runwindow.frame, anchor='w',
-                    text=_("Sorry, there are no entries to show!")).grid(row=1,
-                                    column=0,sticky='w')
-            return
-        if self.runwindow.frame.skip == False:
-            skipf=ui.Frame(self.runwindow.frame)
-            skipb=ui.Button(skipf, text=linebreakwords(_("Skip to next undone")),
-                        cmd=skipf.destroy)
-            skipf.grid(row=1,column=1,sticky='w')
-            skipb.grid(row=0,column=0,sticky='w')
-            skipb.bind('<ButtonRelease>', setskip)
-        if senses is None:
-            senses=self.settings.entriestoshow
-        for senseid in senses:
-            log.debug("Working on {} with skip: {}".format(senseid,
-                                                    self.runwindow.frame.skip))
-            examples=self.db.get('example',senseid=senseid).get()
-            if examples == []:
-                log.debug(_("No examples! Add some, then come back."))
-                continue
-            if ((self.runwindow.frame.skip == True) and
-                (lift.atleastoneexamplehaslangformmissing(
-                                                    examples,
-                                                    self.settings.audiolang) == False)):
-                continue
-            row=0
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            entryframe=ui.Frame(self.runwindow.frame)
-            entryframe.grid(row=1,column=0)
-            if progress is not None:
-                progressl=ui.Label(self.runwindow.frame, anchor='e',
-                    font='small',
-                    text="({} {}/{})".format(*progress)
-                    )
-                progressl.grid(row=0,column=2,sticky='ne')
-            """This is the title for each page: isolation form and glosses."""
-            titleframed=self.taskchooser.datadict.getframeddata(senseid,check=None)
-            if not titleframed or titleframed.forms[self.analang] is None:
-                entryframe.destroy() #is this ever needed?
-                continue
-            text=titleframed.formatted(noframe=True,showtonegroup=False)
-            ui.Label(entryframe, anchor='w', font='read',
-                    text=text).grid(row=row,
-                                    column=0,sticky='w')
-            """Then get each sorted example"""
-            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
-            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
-            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
-            examplesframe.grid(row=0,column=0,sticky='w')
-            examples.reverse()
-            for example in examples:
-                if (skip == True and
-                    lift.examplehaslangform(example,self.settings.audiolang) == True):
-                    continue
-                """These should already be framed!"""
-                framed=self.taskchooser.datadict.getframeddata(example,senseid=senseid)
-                if not framed:
-                    exit()
-                if framed.forms[self.analang] is None: # when?
-                    continue
-                row+=1
-                """If I end up pulling from example nodes elsewhere, I should
-                probably make this a function, like getframeddata"""
-                text=framed.formatted()
-                if not framed:
-                    exit()
-                rb=RecordButtonFrame(examplesframe,self,framed)
-                rb.grid(row=row,column=0,sticky='w')
-                ui.Label(examplesframe, anchor='w',text=text
-                                        ).grid(row=row, column=1, sticky='w')
-            row+=1
-            d=ui.Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
-            d.grid(row=row,column=0)
-            self.runwindow.waitdone()
-            examplesframe.wait_window(entryframe)
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            if self.runwindow.frame.skip == True:
-                return 'skip'
-    def showtonegroupexs(self):
-        def next():
-            self.status.nextprofile()
-            self.runwindow.destroy()
-            self.showtonegroupexs()
-        if (not(hasattr(self,'examplespergrouptorecord')) or
-            (type(self.examplespergrouptorecord) is not int)):
-            self.examplespergrouptorecord=100
-            self.settings.storesettingsfile()
-        self.makeanalysis()
-        self.analysis.donoUFanalysis()
-        torecord=self.analysis.senseidsbygroup
-        ntorecord=len(torecord) #number of groups
-        nexs=len([k for i in torecord for j in torecord[i] for k in j])
-        nslice=self.slices.count()
-        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
-        skip=False
-        if ntorecord == 0:
-            log.error(_("How did we get no UR tone groups? {}-{}"
-                    "\nHave you run the tone report recently?"
-                    "\nDoing that for you now...").format(
-                            self.slices.profile(),
-                            self.slices.ps()
-                                                        ))
-            self.analysis.do()
-            self.showtonegroupexs()
-            return
-        batch={}
-        for i in range(self.examplespergrouptorecord):
-            batch[i]=[]
-            for ufgroup in torecord:
-                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
-                if len(torecord[ufgroup]) > i: #no done piles.
-                    senseid=[torecord[ufgroup][i]] #list of one
-                else:
-                    print("Not enough examples, moving on:",i,ufgroup)
-                    continue
-                log.info(_('Giving user the number {} example from tone '
-                        'group {}'.format(i,ufgroup)))
-                exited=self.showsenseswithexamplestorecord(senseid,
-                            (ufgroup, i+1, self.examplespergrouptorecord),
-                            skip=skip)
-                if exited == 'skip':
-                    skip=True
-                if exited == True:
-                    return
-        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
-            self.runwindow.waitdone()
-            self.runwindow.resetframe()
-            ui.Label(self.runwindow.frame, anchor='w',font='read',
-            text=_("All done! Sort some more words, and come back.")
-            ).grid(row=0,column=0,sticky='w')
-            ui.Button(self.runwindow.frame,
-                    text=_("Continue to next syllable profile"),
-                    command=next).grid(row=1,column=0)
-        self.donewpyaudio()
-    def record(self):
-        self.settings.updatesortingstatus() #is this needed? This is the first fn on button click
-        if self.params.cvt() == 'T':
-            self.showtonegroupexs()
-        else:
-            self.showentryformstorecord()
-    def __init__(self):
-        self.makesoundsettings()
-        self.loadsoundsettings()
-        self.soundsettings=self.settings.soundsettings
-        self.soundcheck()
-class RecordCitation(Record,Segments,TaskDressing,ui.Window):
-    """docstring for RecordCitation."""
-    def dobuttonkwargs(self):
-        return {'text':_("Record Dictionary Words"),
-                'fn':self.showentryformstorecord,
-                'font':'title',
-                'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['record'], #self.cvt
-                'sticky':'ew'
-                }
-    def tasktitle(self):
-        return _("Record Citation Forms")
-    def taskicon(self):
-        return program['theme'].photo['record']
-    def __init__(self, parent): #frame, filename=None
-        Segments.__init__(self,parent)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
-        Record.__init__(self)
-        # self.do=self.showentryformstorecord
-class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
-    """docstring for RecordCitation."""
-    def dobuttonkwargs(self):
-        return {'text':_("Record Words in Tone Frames"),
-                'fn':self.showtonegroupexs,
-                'font':'title',
-                'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['record'], #self.cvt
-                'sticky':'ew'
-                }
-    def taskicon(self):
-        return program['theme'].photo['record']
-    def tasktitle(self):
-        return _("Record Citation Form Sorting in Tone Frames")
-    def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
-        Record.__init__(self)
-        # self.do=self.showtonegroupexs
 """Task definitions end here"""
 class Entry(lift.Entry): #Not in use
     def __init__(self, db, guid, window=None, check=None, problem=None,
