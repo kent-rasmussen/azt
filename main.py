@@ -4049,7 +4049,8 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                             "senseids: {}".format(group,uf,
                                         self.analysis.senseidsbygroup[group]))
                     for senseid in self.analysis.senseidsbygroup[group]:
-                        self.db.addtoneUF(senseid,uf,analang=self.analang)
+                        self.db.addtoneUF(senseid,uf,analang=self.analang,
+                        write=False)
             self.db.write()
             self.runwindow.destroy()
             self.tonegroupsjoinrename() #call again, in case needed

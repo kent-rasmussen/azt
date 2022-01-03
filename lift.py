@@ -254,8 +254,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l.insert(i,add) #put where removed from, if done.
             changed=True
         textnode.text=str(l)
-        if changed == True:
-            self.updatemoddatetime(senseid=senseid)
+        if changed:
+            self.updatemoddatetime(senseid=senseid,write=write)
         log.log(2,"Empty node? {}; {}".format(textnode.text,l))
         if not l:
             log.debug("removing empty verification node from this sense")
@@ -528,8 +528,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         else:
             t[0].text=group
         self.updatemoddatetime(guid=guid,senseid=senseid)
-        if write:
-            self.write()
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
@@ -601,7 +599,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             <trait name="location" value="With Other Stuff" />
         </pronunciation>
         """
-    def updatemoddatetime(self,guid=None,senseid=None):
+    def updatemoddatetime(self,guid=None,senseid=None,write=True):
         """This updates the fieldvalue, ignorant of current value."""
         if senseid is not None:
             surl=self.get('sense',senseid=senseid) #url object
@@ -613,7 +611,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         elif guid is not None: #only if no senseid given
             for e in self.get('entry',guid=guid).get():
                 e.attrib['dateModified']=getnow()
-        self.write()
+        if write:
+            self.write()
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
