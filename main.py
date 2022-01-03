@@ -4159,6 +4159,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def __init__(self, arg):
+        Tone.__init__(self)
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
 class Sort(object):
@@ -4569,7 +4570,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        parent.params.cvt('T') #before dressing inheritance
+        Tone.__init__(self,parent)
         parent.settings.makeeverythingok()
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
@@ -6560,11 +6561,13 @@ class ReportCitation(Report,TaskDressing,ui.Window):
             ui.Label(window,text=text).grid(column=0, row=i)
             i+=1
             return
+        Tone.__init__(self,parent)
 class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Make Reports on Citation Form Sorting in Tone Frames")
     def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
@@ -7063,6 +7066,7 @@ class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Record Citation Form Sorting in Tone Frames")
     def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Record.__init__(self)
