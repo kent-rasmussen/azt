@@ -6864,7 +6864,7 @@ class Record(object):
         text=_("Words and phrases to record: click ‘Record’, talk, and release")
         instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w',columnspan=2)
-        if (self.entriestoshow is None) and (senses is None):
+        if (self.settings.entriestoshow is None) and (senses is None):
             ui.Label(self.runwindow.frame, anchor='w',
                     text=_("Sorry, there are no entries to show!")).grid(row=1,
                                     column=0,sticky='w')
@@ -6877,7 +6877,7 @@ class Record(object):
             skipb.grid(row=0,column=0,sticky='w')
             skipb.bind('<ButtonRelease>', setskip)
         if senses is None:
-            senses=self.entriestoshow
+            senses=self.settings.entriestoshow
         for senseid in senses:
             log.debug("Working on {} with skip: {}".format(senseid,
                                                     self.runwindow.frame.skip))
