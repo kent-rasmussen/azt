@@ -2649,13 +2649,12 @@ class TaskDressing(object):
                 # if self.analang in self.adnlangnames:
             self.settings.storesettingsfile()
             window.destroy()
-        analang=self.params.analang()
         window=ui.Window(self.frame,title=_('Enter Analysis Language Name'))
-        curname=self.settings.languagenames[analang]
-        defaultname=_("Language with code [{}]").format(analang)
+        curname=self.settings.languagenames[self.analang]
+        defaultname=_("Language with code [{}]").format(self.analang)
         t=_("How do you want to display the name of {}").format(curname)
         if curname != defaultname:
-            t+=_(", with ISO 639-3 code [{}]").format(analang)
+            t+=_(", with ISO 639-3 code [{}]").format(self.analang)
         t+='?' # _("Language with code [{}]").format(xyz)
         ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
         name = ui.EntryField(window.frame)
