@@ -6629,6 +6629,15 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Make Reports on Citation Form Sorting in Tone Frames")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.do,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['icon'],
+                'sticky':'ew'
+                }
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
