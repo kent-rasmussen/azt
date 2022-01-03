@@ -1420,6 +1420,9 @@ class Settings(object):
                     else:
                         col=1 #not header
                         row+=1
+        row+=1
+        b=ui.Button(pgw.frame,text=oktext,command=makechanges, width=15,
+                    column=0, row=row, sticky='e',padx=15)
         pgw.wait_window(pgw)
         if not self.taskchooser.exitFlag.istrue():
             nochanges() #this is the default exit behavior
