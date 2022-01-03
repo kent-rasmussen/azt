@@ -6550,6 +6550,7 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        Report.__init__(self)
 class Record(object):
     """This holds all the Recording methods."""
     def donewpyaudio(self):
