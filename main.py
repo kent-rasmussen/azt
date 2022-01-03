@@ -3605,7 +3605,7 @@ class WordCollection(object):
         # for i in all[:10]:
         #     log.info("textnodecontents: {}".format(self.textnodefn(i,analang).text))
         done=[i for i in all
-                    if self.textnodefn(i,analang).text
+                    if self.textnodefn(i,self.analang).text
                     # self.db.get('lexeme/form/text', node=i, analang=analang,
                     # showurl=True
                     #                 ).get('text') != ''
@@ -3626,7 +3626,6 @@ class WordCollection(object):
     def storethisword(self):
         self.lxtextnode.text=self.lxvar.get()
     def getwords(self):
-        self.analang=self.params.analang()
         self.entries=self.getlisttodo()
         self.nentries=len(self.entries)
         self.index=0
@@ -7025,7 +7024,6 @@ class RecordCitation(Record,TaskDressing,ui.Window):
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Record.__init__(self)
-        self.analang=self.params.analang()
         # self.do=self.showentryformstorecord
 class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
     """docstring for RecordCitation."""
