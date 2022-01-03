@@ -521,12 +521,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def addtoneUF(self,senseid,group,analang,guid=None,**kwargs):
         showurl=kwargs.get('showurl',False)
         write=kwargs.get('write',True)
-        node=self.get('sense',senseid=senseid).get() #give the sense.
+        node=self.get('sense',senseid=senseid,showurl=showurl).get()
         if node == []:
             log.info("Sorry, this didn't return a node: guid {}; senseid {}"
                                         "".format(guid,senseid))
             return
-        t=self.get('field/form/text',node=node[0],ftype='tone').get()
+        t=self.get('field/form/text',node=node[0],ftype='tone',
+                    showurl=showurl
+                    ).get()
         if t == []:
             # log.info("No sense level tone field found, making")
             p=Node(node[0],'field',attrib={'type':'tone'})
