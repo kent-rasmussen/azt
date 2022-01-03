@@ -6648,6 +6648,26 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
         self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
+class ReportCitationBasicT(Report,Tone,TaskDressing,ui.Window):
+    """docstring for ReportCitationT."""
+    def tasktitle(self):
+        return _("Report on several slices of Citation Forms (in Tone Frames)")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.do,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['icon'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        self.do=self.tonegroupreportcomprehensive
+        # self.do=self.tonegroupreport
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
 class Record(object):
     """This holds all the Recording methods."""
     def donewpyaudio(self):
