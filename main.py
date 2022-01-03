@@ -5454,9 +5454,9 @@ class Transcribe(TaskDressing,Tone,ui.Window):
         log.debug("running next group")
         error=submitform()
         if not error:
-            log.debug("group: {}".format(group))
+            # log.debug("group: {}".format(group))
             self.status.nextgroup(wsorted=True)
-            log.debug("group: {}".format(group))
+            # log.debug("group: {}".format(group))
             self.makewindow()
     def nextcheck():
         log.debug("running next check")
@@ -6011,22 +6011,6 @@ class Report(object):
                 framed=self.taskchooser.datadict.getframeddata(senseid) #not framed!
                 o=framed.formatted(noframe=True)
                 self.framedtoXLP(framed,parent=ex,listword=True)
-                def makeimg():
-                    img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
-                    "/pictures/button.png")
-                    if o[4] is not None:
-                        img = tkinter.PhotoImage(file = lift_file.liftdirstr()+'/'
-                        +o[4])
-                        #use this template to add other pictures to GUI.
-                    else:
-                        img = tkinter.PhotoImage(file = lift_file.liftdirstr()+
-                            "/pictures/button.png")
-                        #Resizing image to fit on button
-                        image = Image.open(img)
-                        photoimage = image.resize((34, 26), Image.ANTIALIAS)
-                        photo = ImageTk.PhotoImage(image)
-                        photoimage = image.subsample(3, 3)
-                        ui.Button(self.results, width=800, image=photoimage).grid(column=0)
                 i+=1
                 # b=Button(self.results.scroll.content,
                 #         choice=senseid, text=o,
