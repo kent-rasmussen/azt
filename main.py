@@ -3132,6 +3132,7 @@ class TaskDressing(object):
         """These are raw attributes from file"""
         """these are objects made by the task chooser"""
         self.inherittaskattrs()
+        self.analang=self.params.analang() # Every task gets this here
         # super(TaskDressing, self).__init__(parent)
         for k in ['settings',
                     'menu','mainrelief','fontthemesmall',
