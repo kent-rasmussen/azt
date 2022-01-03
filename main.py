@@ -2257,11 +2257,11 @@ class Settings(object):
         window.destroy()
         self.reloadprofiledata()
     def setgroup(self,choice,window):
-        log.debug("group: {}".format(choice))
+        # log.debug("group: {}".format(choice))
         self.status.group(choice)
-        log.debug("group: {}".format(choice))
+        # log.debug("group: {}".format(choice))
         window.destroy()
-        log.debug("group: {}".format(choice))
+        # log.debug("group: {}".format(choice))
     def setgroup_comparison(self,choice,window):
         if hasattr(self,'group_comparison'):
             log.debug("group_comparison: {}".format(self.group_comparison))
