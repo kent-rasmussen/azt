@@ -6607,7 +6607,24 @@ class ReportCitationBasic(Report,TaskDressing,ui.Window):
             ui.Label(window,text=text).grid(column=0, row=i)
             i+=1
             return
+class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
+    """docstring for ReportCitationT."""
+    def tasktitle(self):
+        return _("Initialize Consultant Check")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.consultantcheck,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['icon'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
 class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
