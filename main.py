@@ -6228,9 +6228,8 @@ class Report(object):
                             group]=len(matches)
             if '=' in check:
                 xname=re.sub('=','x',check, count=1)
-                log.debug("looking for name {} in {}".format(xname,
-                                                    self.checkcodesbyprofile))
-                if xname in self.checkcodesbyprofile:
+                log.debug("looking for name {} in {}".format(xname,self.checks))
+                if xname in self.checks:
                     log.debug("Adding {} value to name {}".format(len(matches),
                                                                         xname))
                     #put the results in that group, too
@@ -6275,11 +6274,10 @@ class Report(object):
         profile; self.basicreported is from self.basicreport()"""
         for ncvt in self.basicreported:
             log.log(2, '{}: {}'.format(ncvt,self.basicreported[ncvt]))
-        """setnamesbyprofile doesn't depend on ps"""
-        self.checkcodesbyprofile=sorted([x[0] for x in self.setnamesbyprofile()],
-                                        key=len,reverse=True)
+        #CV checks depend on profile, too
+        self.checks=self.status.checks(cvt=cvt,profile=profile)
         """check set here"""
-        for check in self.checkcodesbyprofile:
+        for check in self.checks: #self.checkcodesbyprofile:
             if check not in self.checkcounts[ps][profile]:
                 self.checkcounts[ps][profile][check]={}
             self.ncvtsRun=[ncvt for ncvt in self.ncvts
