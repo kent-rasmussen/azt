@@ -5906,7 +5906,10 @@ class Report(object):
                     [i for i in self.analysis.valuesbygroupcheck[group][x]
                                                             if i is not None]
                         )))
+            if not l:
+                l=[_('<no frames with a sort value>')]
             text=_('Values by frame: {}'.format('\t'.join(l)))
+            log.info(text)
             p1=xlp.Paragraph(s1,text)
             output(window,r,text)
             if bylocation == True:
