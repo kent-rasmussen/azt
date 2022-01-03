@@ -2644,7 +2644,8 @@ class TaskDressing(object):
             if (not hasattr(self.taskchooser,'adnlangnames') or
                     not self.taskchooser.adnlangnames):
                 self.taskchooser.adnlangnames={}
-            self.settings.adnlangnames[analang]=self.settings.languagenames[analang]
+            if "Language with code [" not in name.get():
+                self.settings.adnlangnames[analang]=name.get()
                 # if self.analang in self.adnlangnames:
             self.settings.storesettingsfile()
             window.destroy()
