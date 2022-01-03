@@ -3439,8 +3439,6 @@ class TaskChooser(TaskDressing,ui.Window):
         sortsrecorded=self.db.nfieldswsoundfiles
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
-        # l=self.params.analang()
-        # al=self.audiolang
         for f in sorts:
             if f not in sortsrecorded:
                 sortsrecorded[f]={}
@@ -3600,7 +3598,6 @@ class WordCollection(object):
             #     self.settings.getscounts()
             #     self.settings.storesettingsfile(setting='profiledata') #since we changed this.
     def getlisttodo(self):
-        analang=self.params.analang()
         all=self.db.get('entry',
                         showurl=True).get()
         # done=self.db.get('entry',path=['lexeme'],analang=analang,
