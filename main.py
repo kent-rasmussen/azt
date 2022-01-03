@@ -3740,6 +3740,11 @@ class Placeholder(ui.Window,TaskDressing):
             ui.Label(self.frame,
                     text="This is a check placeholder.",
                     row=r, column=0)
+class Segments(object):
+    """docstring for Segments."""
+    def __init__(self, parent):
+        if parent.params.cvt() == 'T':
+            parent.settings.setcvt('V')
 class Tone(object):
     """This keeps stuff used for Tone checks."""
     def makeanalysis(self,**kwargs):
