@@ -6028,10 +6028,6 @@ class Report(object):
                 o=framed.formatted(noframe=True)
                 self.framedtoXLP(framed,parent=ex,listword=True)
                 i+=1
-                # b=Button(self.results.scroll.content,
-                #         choice=senseid, text=o,
-                #         window=self.runwindow.frame,
-                #         row=i, column=0, font=font, command=self.picked)
                 col=0
                 for lang in [self.analang]+self.glosslangs:
                     col+=1
@@ -6040,12 +6036,6 @@ class Report(object):
                             text=framed.forms[lang], font=font,
                             anchor='w',padx=10).grid(row=i, column=col,
                                                         sticky='w')
-                if self.su==True:
-                    notok=ui.Button(self.results.scroll.content,
-                            choice=senseid, text='X',
-                            window=self.runwindow.frame,
-                            width=15, row=i,
-                            column=1, command=self.notpicked)
         xlpr.close(me=me)
         self.runwindow.waitdone()
         # Report on testing blocks above
