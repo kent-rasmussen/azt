@@ -5969,9 +5969,13 @@ class Report(object):
             self.results.grid(row=0, column=0)
         else:
             log.error("Tried to get a results frame without a runwindow!")
-    def getresults(self):
+    def getresults(self,**kwargs):
         self.getrunwindow()
         self.makeresultsframe()
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
         self.adhocreportfileXLP=''.join([str(self.reportbasefilename)
                                         ,'_',str(ps)
                                         ,'-',str(profile)
@@ -5994,7 +5998,6 @@ class Report(object):
         self.runwindow.wait()
         si=xlp.Section(xlpr,text)
         # p=xlp.Paragraph(si,instr)
-        font=self.frame.fonts['read']
         self.results.scroll=ui.ScrollingFrame(self.results)
         self.results.scroll.grid(column=0, row=1)
         senseid=0 # in case the following doesn't find anything:
