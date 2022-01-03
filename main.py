@@ -4015,6 +4015,8 @@ class Tone(object):
         """This is currently called before sorting. This is a waste, if you're
         not going to sort afterwards –unless you need the groups."""
         self.settings.updatesortingstatus() #this gets groups, too
+    def __init__(self,parent):
+        parent.params.cvt('T')
 class JoinUFgroups(Tone,TaskDressing,ui.Window):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
