@@ -6513,6 +6513,7 @@ class ReportCitation(Report,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        Report.__init__(self)
     def runcheck(self):
         """This needs to get stripped down and updated for just this check"""
         self.settings.storesettingsfile()
