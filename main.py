@@ -6635,6 +6635,8 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
+        self.do=self.tonegroupreportcomprehensive
+        self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
 class Record(object):
