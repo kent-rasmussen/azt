@@ -6627,7 +6627,7 @@ class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Initialize Consultant Check")
     def dobuttonkwargs(self):
-        return {'text':"Report!",
+        return {'text':"Start!",
                 'fn':self.consultantcheck,
                 # column=0,
                 'font':'title',
