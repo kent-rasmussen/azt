@@ -1959,7 +1959,7 @@ class Settings(object):
         # This also has no access to verification information, which comes only
         # from verifyT()
         start_time=time.time()
-        self.file.storesettingsfile()
+        self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
         cvts=[i for i in self.params.cvts() if i in self.status]
         if not cvts:
@@ -1982,7 +1982,7 @@ class Settings(object):
         self.status.cull()
         if None in self.status: #This should never be there
             del self.status[None]
-        self.file.storesettingsfile(setting='status')
+        self.storesettingsfile(setting='status')
         log.info("Status settings refreshed from LIFT in {}s".format(
                                                         time.time()-start_time))
     def guessanalang(self):
@@ -5719,7 +5719,7 @@ class Transcribe(TaskDressing,Tone,ui.Window):
         TaskDressing.__init__(self,parent)
 class Report(object):
     def consultantcheck(self):
-        self.reloadstatusdata()
+        self.settings.reloadstatusdata()
         self.tonegroupreportcomprehensive()
     def tonegroupreportcomprehensive(self,**kwargs):
         pss=self.slices.pss()[:self.settings.maxpss]
