@@ -6513,6 +6513,7 @@ class Report(object):
         self.type=typeori
     def __init__(self):
         self.reportbasefilename=self.settings.reportbasefilename
+        self.reporttoaudiorelURL=self.settings.reporttoaudiorelURL
         self.distinguish=self.settings.distinguish
         self.s=self.settings.s
 class ReportCitation(Report,TaskDressing,ui.Window):
