@@ -1345,37 +1345,43 @@ class Settings(object):
         oktext=_("OK")
         nochangetext=_("Exit {} with no changes".format(program['name']))
         log.info("Asking about Digraphs and Trigraphs!")
-        pgw=ui.Window(self.frame,title="A→Z+T Digraphs and Trigraphs")
+        titlet="A→Z+T Digraphs and Trigraphs"
+        pgw=ui.Window(self.taskchooser.frame,title=titlet)
         t=_("Select which of the following graph sequences found in your data "
                 "refer to a single sound (digraph or trigraph) in {}".format(
-            unlist([self.settings.languagenames[y] for y in self.db.analangs])))
-        title=ui.Label(pgw.frame,text=t,
-                        column=0, row=0
+            unlist([self.languagenames[y] for y in self.db.analangs])))
+        row=0
+        title=ui.Label(pgw.frame,text=titlet, font='title',
+                        column=0, row=row
                         )
         title.wrap()
+        row+=1
+        b=ui.Button(pgw.frame,text=nochangetext,command=nochanges,
+                    column=0, row=row, sticky='e')
+        row+=1
+        instr=ui.Label(pgw.frame,text=t,
+                        column=0, row=row
+                        )
+        instr.wrap()
         t=_("If your data contains a digraph or trigraph that isn't listed "
             "here, please click here to Email me, and I can add it.")
-        t2=ui.Label(pgw.frame,text=t)
-        t2.grid(column=0, row=1)
+        row+=1
+        t2=ui.Label(pgw.frame,text=t,column=0, row=row)
         t2.bind("<Button-1>", lambda e: openweburl(eurl))
         t=_("Clicking ‘{}’ will restart {} and trigger another syllable "
             "profile analysis. \nIf you don't want that, click ‘{}’ ==>"
             "\nEither way, you won't get past this window until you answer "
             "This question.".format(
                                         oktext,program['name'],nochangetext))
-        t3=ui.Label(pgw.frame,text=t)
-        t3.grid(column=0, row=2)
+        row+=1
+        t3=ui.Label(pgw.frame,text=t,column=0, row=row)
         eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
                                                             program['Email'])
-        b=ui.Button(pgw.frame,text=nochangetext,command=nochanges)
-        b.grid(column=1, row=2)
-        b=ui.Button(pgw.frame,text=oktext,command=makechanges)
-        b.grid(column=1, row=3)
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         vars={}
-        scroll=ui.ScrollingFrame(pgw.frame)
-        scroll.grid(row=3, column=0)
+        row+=1
+        scroll=ui.ScrollingFrame(pgw.frame, row=row, column=0)
         row=0
         ncols=4 # increase this for wider window
         for lang in self.db.analangs:
