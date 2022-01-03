@@ -2419,6 +2419,11 @@ class Settings(object):
 class TaskDressing(object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
+    def taskicon(self):
+        return program['theme'].photo['icon'] #default
+    def tasktitle(self):
+        return _("Unnamed {} Task ({})".format(program['name'],
+                                                type(self).__name__))
     def _taskchooserbutton(self):
         if (isinstance(self,TaskChooser) or
                 len(self.taskchooser.makeoptions())<2):
