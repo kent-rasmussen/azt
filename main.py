@@ -388,58 +388,67 @@ class Menus(ui.Menu):
                         command=lambda x=check:Check.joinT(x))
         """Advanced"""
     def advanced(self):
-        advancedmenu = ui.Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label=_("Advanced"), menu=advancedmenu)
-        filemenu = ui.Menu(self.menubar, tearoff=0)
-        filemenu.add_command(label=_("Dictionary Morpheme"),
-                        command=lambda x=check:Check.addmorpheme(x))
-        advancedmenu.add_command(label=_("Add Tone frame"),
-                        command=lambda x=check:Check.addframe(x))
-        advancedmenu.add_command(label=_("Transcribe/(re)name Framed Tone Group"),
-                                command=lambda x=check:Check.renamegroup(x))
-        advtonemenu = ui.Menu(self.menubar, tearoff=0)
-        advancedmenu.add_cascade(label=_("Tone Reports"), menu=advtonemenu)
-        advtonemenu.add_command(label=_("Name/join UF Tone Groups"),
-                        command=lambda x=check:Check.tonegroupsjoinrename(x))
-        advtonemenu.add_command(label=_("Custom groups by sense"),
-                                command=lambda x=check:Check.tonegroupreport(x,
-                                                                default=False))
-        advtonemenu.add_command(label=_("Custom groups by location"),
-                                command=lambda x=check:Check.tonegroupreport(x,
-                                                bylocation=True, default=False))
-        advtonemenu.add_command(
-                    label=_("Custom groups by sense (comprehensive)"),
-                    command=lambda x=check:Check.tonegroupreportcomprehensive(x,
-                                                                default=False))
-        redomenu = ui.Menu(self.menubar, tearoff=0)
-        redomenu.add_command(label=_("Previously skipped data"),
-                                command=lambda x=check:Check.tryNAgain(x))
-        advancedmenu.add_cascade(label=_("Redo"), menu=redomenu)
-        advancedmenu.add_cascade(label=_("Add other"), menu=filemenu)
-        redomenu.add_command(
-                        label=_("Verification of current framed group"),
-                        command=lambda x=check:Check.reverify(x))
-        redomenu.add_command(
-                        label=_("Digraph and Trigraph settings (Restart)"),
-                        command=lambda x=check:Check.askaboutpolygraphs(x))
-        redomenu.add_command(
-                        label=_("Syllable Profile Analysis (Restart)"),
-                        command=lambda x=check:Check.reloadprofiledata(x))
-        redomenu.add_command(
-                        label=_("Change to another Database (Restart)"),
-                        command=lambda x=check:Check.changedatabase(x))
-        redomenu.add_command(
-                        label=_("Verification Status file (several minutes)"),
-                        command=lambda x=check:Check.reloadstatusdata(x))
-        advancedmenu.add_command(
-                        label=_("Segment Interpretation Settings"),
-                        command=lambda x=check:Check.setSdistinctions(x))
-        advancedmenu.add_command(
-                        label=_("Add/Modify Ad Hoc Sorting Group"),
-                        command=lambda x=check:Check.addmodadhocsort(x))
-        advancedmenu.add_command(
-                label=_("Number of Examples to Record"),
-                command=lambda x=check:Check.getexamplespergrouptorecord(x))
+        self.cascade(self,_("Advanced"),'advancedmenu')
+        for m in [
+                (_("Change to another Database (Restart)"),
+                            self.parent.taskchooser.changedatabase),
+                ]:
+            self.command(self.advancedmenu,
+                        label=_(m[0]),
+                        cmd=m[1]
+                        )
+        # advancedmenu = ui.Menu(self.menubar, tearoff=0)
+        # self.menubar.add_cascade(label=_("Advanced"), menu=advancedmenu)
+        # filemenu = ui.Menu(self.menubar, tearoff=0)
+        # filemenu.add_command(label=_("Dictionary Morpheme"),
+        #                 command=lambda x=check:Check.addmorpheme(x))
+        # advancedmenu.add_command(label=_("Add Tone frame"),
+        #                 command=lambda x=check:Check.addframe(x))
+        # advancedmenu.add_command(label=_("Transcribe/(re)name Framed Tone Group"),
+        #                         command=lambda x=check:Check.renamegroup(x))
+        # advtonemenu = ui.Menu(self.menubar, tearoff=0)
+        # advancedmenu.add_cascade(label=_("Tone Reports"), menu=advtonemenu)
+        # advtonemenu.add_command(label=_("Name/join UF Tone Groups"),
+        #                 command=lambda x=check:Check.tonegroupsjoinrename(x))
+        # advtonemenu.add_command(label=_("Custom groups by sense"),
+        #                         command=lambda x=check:Check.tonegroupreport(x,
+        #                                                         default=False))
+        # advtonemenu.add_command(label=_("Custom groups by location"),
+        #                         command=lambda x=check:Check.tonegroupreport(x,
+        #                                         bylocation=True, default=False))
+        # advtonemenu.add_command(
+        #             label=_("Custom groups by sense (comprehensive)"),
+        #             command=lambda x=check:Check.tonegroupreportcomprehensive(x,
+        #                                                         default=False))
+        # redomenu = ui.Menu(self.menubar, tearoff=0)
+        # redomenu.add_command(label=_("Previously skipped data"),
+        #                         command=lambda x=check:Check.tryNAgain(x))
+        # advancedmenu.add_cascade(label=_("Redo"), menu=redomenu)
+        # advancedmenu.add_cascade(label=_("Add other"), menu=filemenu)
+        # redomenu.add_command(
+        #                 label=_("Verification of current framed group"),
+        #                 command=lambda x=check:Check.reverify(x))
+        # redomenu.add_command(
+        #                 label=_("Digraph and Trigraph settings (Restart)"),
+        #                 command=lambda x=check:Check.askaboutpolygraphs(x))
+        # redomenu.add_command(
+        #                 label=_("Syllable Profile Analysis (Restart)"),
+        #                 command=lambda x=check:Check.reloadprofiledata(x))
+        # redomenu.add_command(
+        #                 label=_("Change to another Database (Restart)"),
+        #                 command=lambda x=check:Check.changedatabase(x))
+        # redomenu.add_command(
+        #                 label=_("Verification Status file (several minutes)"),
+        #                 command=lambda x=check:Check.reloadstatusdata(x))
+        # advancedmenu.add_command(
+        #                 label=_("Segment Interpretation Settings"),
+        #                 command=lambda x=check:Check.setSdistinctions(x))
+        # advancedmenu.add_command(
+        #                 label=_("Add/Modify Ad Hoc Sorting Group"),
+        #                 command=lambda x=check:Check.addmodadhocsort(x))
+        # advancedmenu.add_command(
+        #         label=_("Number of Examples to Record"),
+        #         command=lambda x=check:Check.getexamplespergrouptorecord(x))
         """Unused for now"""
         # settingsmenu = ui.Menu(menubar, tearoff=0)
         # changestuffmenu.add_cascade(label=_("Settings"), menu=settingsmenu)
@@ -455,6 +464,7 @@ class Menus(ui.Menu):
         self.languages()
         if isinstance(self.parent,Sort):
             self.parameterslice()
+        self.advanced()
 class StatusFrame(ui.Frame):
     """This contains all the info about what the user is currently working on,
     and buttons to change it."""
