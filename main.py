@@ -3291,13 +3291,17 @@ class TaskChooser(TaskDressing,ui.Window):
         if self.donew['collectionlc']:
             tasks.append(RecordCitation)
             tasks.append(ReportCitation)
+            tasks.append(ReportCitationBasic)
             tasks.append(SortCitationT)
         if self.donew['tonereport']:
             tasks.append(JoinUFgroups)
         if self.donew['recording']:
             tasks.append(Transcribe)
+        if me:
+            tasks.append(ReportConsultantCheck)
         """What I'm working on now, just for easy testing:"""
-        tasks.append(WordCollectionCitation)
+        if me:
+            tasks.append(self.testdefault)
         # tasks.append(WordCollectionCitation),
         # tasks.append(WordCollectionPlImp),
         # tasks.append(ParseA), # input pl/imp, gives lx and ps
