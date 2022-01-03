@@ -5997,7 +5997,6 @@ class Report(object):
         ui.Label(self.results, text=text).grid(column=0, row=i)
         self.runwindow.wait()
         si=xlp.Section(xlpr,text)
-        # p=xlp.Paragraph(si,instr)
         self.results.scroll=ui.ScrollingFrame(self.results)
         self.results.scroll.grid(column=0, row=1)
         senseid=0 # in case the following doesn't find anything:
