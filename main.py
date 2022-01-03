@@ -1709,13 +1709,13 @@ class Settings(object):
         self.runwindow.waitdone()
     def checkforprofileanalysis(self):
         if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
-            t=time.time()-self.start_time
+            t=time.time()-self.taskchooser.start_time
             log.info("Starting profile analysis at {}".format(t))
             self.getprofiles() #creates self.profilesbysense nested dicts
             for var in ['rx','profilesbysense']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
-            self.file.storesettingsfile(setting='profiledata')
-            e=time.time()-self.start_time
+            self.storesettingsfile(setting='profiledata')
+            e=time.time()-self.taskchooser.start_time
             log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
     def addpstoprofileswdata(self,ps=None):
         if ps is None:
