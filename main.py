@@ -8837,27 +8837,30 @@ class StatusDict(dict):
             self._checksdict={}
         if not hasattr(self,'_cvchecknames'):
             self._cvchecknames={}
-        t=self._checkparameters.cvt()
-        if not t:
+        cvt=kwargs.get('cvt',self._checkparameters.cvt())
+        # t=self._checkparameters.cvt()
+        if not cvt:
             log.error("No type is set; can't renew checks!")
-        if t not in self._checksdict:
-            self._checksdict[t]={}
-        if t == 'T':
+        if cvt not in self._checksdict:
+            self._checksdict[cvt]={}
+        if cvt == 'T':
             toneframes=self.toneframes()
             for ps in self._slicedict.pss():
                 if ps in toneframes:
-                    self._checksdict[t][ps]=list(toneframes[ps])
+                    self._checksdict[cvt][ps]=list(toneframes[ps])
         else:
             """This depends on profile only"""
             profile=kwargs.get('profile',self._slicedict.profile())
-            n=profile.count(t)
-            log.debug('Found {} instances of {} in {}'.format(n,t,profile))
-            self._checksdict[t][profile]=list()
+            n=profile.count(cvt)
+            log.debug('Found {} instances of {} in {}'.format(n,cvt,profile))
+            self._checksdict[cvt][profile]=list()
             for i in range(n): # get max checks and lesser
-                syltuples=self._checkparameters._Schecks[t][i+1] #range+1 = syl
-                c=self._checksdict[t][profile].extend([t[0] for t in syltuples])
+                syltuples=self._checkparameters._Schecks[cvt][i+1] #range+1 = syl
+                c=self._checksdict[cvt][profile].extend(
+                                                    [t[0] for t in syltuples])
                 log.info("Check codes to date: {}".format(c))
-            self._checksdict[t][profile].sort(key=lambda x:len(x[0]),reverse=True)
+            self._checksdict[cvt][profile].sort(
+                                            key=lambda x:len(x[0]),reverse=True)
     def node(self,**kwargs):
         """This will fail if fed None values"""
         kwargs=self.checkslicetypecurrent(**kwargs)
