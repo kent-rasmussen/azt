@@ -6299,8 +6299,7 @@ class Report(object):
                     log.error("Sorry, I don't know how to compare cvt: {}"
                                                         "".format(cvt))
                 for group in groups:
-                    if group not in self.checkcounts[ps][
-                                                    profile][check]:
+                    if group not in self.checkcounts[ps][profile][check]:
                         self.checkcounts[ps][profile][check][group]={}
                     for self.subcheckcomparison in subcheckcomparisons:
                         if group != self.subcheckcomparison:
