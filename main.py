@@ -6856,6 +6856,16 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
         return _("Join Underlying Form Groups")
+    def dobuttonkwargs(self):
+        return {'text':_("Join draft UF Groups"),
+                'fn':self.tonegroupsjoinrename,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['record'], #self.cvt
+                'sticky':'ew'
+                }
+    def taskicon(self):
+        return program['theme'].photo['icon']
     def tonegroupsjoinrename(self,**kwargs):
         def clearerror(event=None):
             errorlabel['text'] = ''
