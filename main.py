@@ -6518,7 +6518,7 @@ class Report(object):
 class ReportCitation(Report,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
-        return _("Make Reports on Citation Forms")
+        return _("Make Reports on Citation Forms (one slice)")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.runcheck,
