@@ -3233,7 +3233,7 @@ class TaskChooser(TaskDressing,ui.Window):
                         row=int(n/bpr),
                         compound='left',
                         image=o[2],
-                        wraplength=int(program['root'].wraplength*.8/bpr),
+                        wraplength=int(program['root'].wraplength*.7/bpr),
                         sticky='nesw'
                         )
             n+=1
