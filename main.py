@@ -3726,6 +3726,16 @@ class Placeholder(ui.Window,TaskDressing):
                     row=r, column=0)
 class Tone(object):
     """This keeps stuff used for Tone checks."""
+    def makeanalysis(self,**kwargs):
+        if not hasattr(self,'analysis'):
+            self.analysis=Analysis(self.params,
+                                    self.slices,
+                                    self.status,
+                                    self.db,
+                                    **kwargs
+                                    )
+        else:
+            self.analysis.setslice(**kwargs)
     def gimmesenseid(self,**kwargs):
         ps=kwargs.get('ps',self.slices.ps())
         idsbyps=self.db.get('sense',ps=ps).get('senseid')
@@ -5689,16 +5699,6 @@ class Transcribe(TaskDressing,Tone,ui.Window):
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
 class Report(object):
-    def makeanalysis(self,**kwargs):
-        if not hasattr(self,'analysis'):
-            self.analysis=Analysis(self.params,
-                                    self.slices,
-                                    self.status,
-                                    self.db,
-                                    **kwargs
-                                    )
-        else:
-            self.analysis.setslice(**kwargs)
     def consultantcheck(self):
         self.reloadstatusdata()
         self.tonegroupreportcomprehensive()
