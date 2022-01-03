@@ -374,7 +374,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "field? ({}-{})".format(senseid,location))
                 glossesnode=self.get("example/translation", senseid=senseid,
                             location=location, showurl=True).get('node')
-                for lang in glosslangs:
+                #If the glosslang data isn't all provided, ignore it.
+                for lang in [g for g in glosslangs if g in forms and forms[g]]:
                     glossvaluenode=self.get("form/text",
                                 node=glossesnode[0], senseid=senseid, glosslang=lang,
                                 location=location, showurl=True).get('node')
