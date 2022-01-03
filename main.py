@@ -6518,32 +6518,23 @@ class ReportCitation(Report,TaskDressing,ui.Window):
         """This needs to get stripped down and updated for just this check"""
         self.settings.storesettingsfile()
         t=(_('Run Check'))
-        log.info("Running check...")
+        log.info("Running report...")
         i=0
+        cvt=self.params.cvt()
+        if cvt == 'T':
+            w=self.taskchooser.getcvt()
+            w.wait_window(w)
+            cvt=self.params.cvt()
+            if cvt == 'T':
+                ErrorNotice("Pick Consonants, Vowels, or CV for this report.")
+                return
         ps=self.slices.ps()
         if not ps:
             self.getps()
-        group=self.status.group()
-        analang=self.params.analang()
-        if None in [analang, ps, group]:
-            log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
-                                        self.analang, ps, group))
-        cvt=self.params.cvt()
         check=self.params.check()
         profile=self.slices.profile()
         if not profile:
             self.getprofile()
-        if cvt == 'T' and (check not in self.status.checks(tosort=True)
-                and check not in self.status.checks(toverify=True)
-                and check not in self.status.checks(tojoin=True)):
-            exit=self.getcheck()
-            if exit:
-                self.runcheck()
-            return #if the user didn't supply a check
-        self.settings.updatesortingstatus() # Not just tone anymore #settonevariables() #here, or later?
-        if isinstance(self,Sort):
-            self.maybesort()
-        elif isinstance(self,Report) and None not in [check,group]:
             self.getresults()
         else:
             window=ui.Window(self.frame)
