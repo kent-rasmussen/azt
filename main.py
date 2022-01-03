@@ -6561,6 +6561,52 @@ class ReportCitation(Report,TaskDressing,ui.Window):
             ui.Label(window,text=text).grid(column=0, row=i)
             i+=1
             return
+class ReportCitationBasic(Report,TaskDressing,ui.Window):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Make Basic Report on Citation Forms")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.basicreport,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['icon'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+    def runcheck(self):
+        """This needs to get stripped down and updated for just this check"""
+        self.settings.storesettingsfile()
+        t=(_('Run Check'))
+        log.info("Running report...")
+        i=0
+        cvt=self.params.cvt()
+        if cvt == 'T':
+            w=self.taskchooser.getcvt()
+            w.wait_window(w)
+            cvt=self.params.cvt()
+            if cvt == 'T':
+                ErrorNotice("Pick Consonants, Vowels, or CV for this report.")
+                return
+        ps=self.slices.ps()
+        if not ps:
+            self.getps()
+        check=self.params.check()
+        profile=self.slices.profile()
+        if not profile:
+            self.getprofile()
+            self.getresults()
+        else:
+            window=ui.Window(self.frame)
+            text=_('Error: please set Check/Subcheck first! ({}/{})').format(
+                                                     check,group)
+            ui.Label(window,text=text).grid(column=0, row=i)
+            i+=1
+            return
         Tone.__init__(self,parent)
 class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
