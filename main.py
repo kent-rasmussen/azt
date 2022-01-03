@@ -5726,9 +5726,7 @@ class Report(object):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
         #default=True redoes the UF analysis (removing any joining/renaming)
-        def examplestoXLP(examples,parent,senseid,groups=True):
-            if not default:
-                groups=True #show groups on all non-default reports
+        def examplestoXLP(examples,parent,senseid):
             counts['senses']+=1
             for example in examples:
                 framed=self.taskchooser.datadict.getframeddata(example,senseid)
@@ -5757,6 +5755,7 @@ class Report(object):
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
+        groups=not default #show groups on all non-default reports
         if not checks:
             if 'profile' in kwargs:
                 log.error("{} {} came up with no checks.".format(ps,profile))
@@ -5928,7 +5927,7 @@ class Report(object):
                         #This is put in XLP file:
                         examples=self.db.get('example',location=check,
                                                 senseid=senseid).get()
-                        examplestoXLP(examples,e1,senseid,groups=False)
+                        examplestoXLP(examples,e1,senseid,groups=groups)
                         if text not in textout:
                             output(window,r,text)
                             textout.append(text)
