@@ -6013,18 +6013,20 @@ class Report(object):
         # log.info("senseidsnotsearchable: {}".format(len(senseidsnotsearchable)))
         # log.info("senseidsnotsearchable: {}".format(senseidsnotsearchable))
         for group in self.s[self.analang][cvt]:
-            log.debug('group: {}'.format(group))
-            self.buildregex() #It would be nice fo this to iterate through...
+            # log.debug('group: {}'.format(group))
+            self.buildregex(group=group) #It would be nice fo this to iterate through...
+            # log.info("self.regexCV: {}".format(self.regexCV))
+            # log.info("self.regex: {}".format(self.regex))
             senseidstocheck=self.senseidformsbyregex(self.regex)
+            # log.info("Found {} senseids".format(len(senseidstocheck)))
             if len(senseidstocheck)>0:
                 id=rx.id('x'+ps+profile+check+group)
                 ex=xlp.Example(si,id)
-            for senseid in senseidstocheck: #self.senseidformstosearch[lang][ps]
-                # where self.regex(self.senseidformstosearch[lang][ps][senseid]):
+            for senseid in senseidstocheck:
                 # Uncomment to test:
                 # rxsenseidsinslice.remove(senseid)
                 """This regex is compiled!"""
-                framed=self.taskchooser.datadict.getframeddata(senseid) #not framed!
+                framed=self.taskchooser.datadict.getframeddata(senseid)
                 o=framed.formatted(noframe=True)
                 self.framedtoXLP(framed,parent=ex,listword=True)
                 i+=1
