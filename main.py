@@ -6493,6 +6493,10 @@ class Report(object):
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         self.frame.parent.waitdone()
         self.type=typeori
+    def __init__(self):
+        self.reportbasefilename=self.settings.reportbasefilename
+        self.distinguish=self.settings.distinguish
+        self.s=self.settings.s
 class ReportCitation(Report,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
