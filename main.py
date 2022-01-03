@@ -2914,7 +2914,7 @@ class TaskDressing(object):
                           "\nSyllable Profile (currently {}), and "
                           "\nTone Frame (currently {})"
                           "\nBefore this function will do anything!"
-                          "".format(self.params.typedict()[cvt]['sg'], ps,
+                          "".format(self.params.cvtdict()[cvt]['sg'], ps,
                           profile, check)).grid(column=0, row=0)
             return 1
         else:
@@ -5717,7 +5717,7 @@ class Report(object):
         pss=self.slices.pss()[:maxpss]
         d={}
         for ps in pss:
-            d[ps]=self.slices.profiles(ps=ps)[:maxprofiles]
+            d[ps]=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
         log.info("Starting comprehensive reports for {}".format(d))
         for ps in pss:
             for profile in d[ps]:
@@ -6213,9 +6213,9 @@ class Report(object):
         log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
                                                         self.regexCV))
         matches=set(self.senseidformsbyregex(self.regex))
-        for typenum in self.typenumsRun:
+        for ncvt in self.ncvtsRun:
             # this removes senses already reported (e.g., in V1=V2)
-            matches-=self.basicreported[typenum]
+            matches-=self.basicreported[ncvt]
         log.log(2,"{} matches found!: {}".format(len(matches),matches))
         group=self.status.group()
         if 'x' in check:
@@ -6248,8 +6248,8 @@ class Report(object):
             id=rx.id(titlebits)
             ex=xlp.Example(parent,id)
             for senseid in matches:
-                for typenum in self.typenumsRun:
-                    self.basicreported[typenum].add(senseid)
+                for ncvt in self.ncvtsRun:
+                    self.basicreported[ncvt].add(senseid)
                 framed=self.taskchooser.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,listword=True)
     def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent'):
@@ -6270,8 +6270,8 @@ class Report(object):
             groups=self.s[self.analang][cvt]
         """This sets each of the checks that are applicable for the given
         profile; self.basicreported is from self.basicreport()"""
-        for typenum in self.basicreported:
-            log.log(2, '{}: {}'.format(typenum,self.basicreported[typenum]))
+        for ncvt in self.basicreported:
+            log.log(2, '{}: {}'.format(ncvt,self.basicreported[ncvt]))
         """setnamesbyprofile doesn't depend on ps"""
         self.checkcodesbyprofile=sorted([x[0] for x in self.setnamesbyprofile()],
                                         key=len,reverse=True)
@@ -6279,11 +6279,11 @@ class Report(object):
         for check in self.checkcodesbyprofile:
             if check not in self.checkcounts[ps][profile]:
                 self.checkcounts[ps][profile][check]={}
-            self.typenumsRun=[typenum for typenum in self.typenums
-                                        if re.search(typenum,check)]
-            log.debug('check: {}; self.type: {}; self.typenums: {}; '
-                        'self.typenumsRun: {}'.format(check,cvt,
-                                                self.typenums,self.typenumsRun))
+            self.ncvtsRun=[ncvt for ncvt in self.ncvts
+                                        if re.search(ncvt,check)]
+            log.debug('check: {}; self.type: {}; self.ncvts: {}; '
+                        'self.ncvtsRun: {}'.format(check,cvt,
+                                                self.ncvts,self.ncvtsRun))
             if len(check) == 1:
                 log.debug("Error! {} Doesn't seem to be list formatted.".format(
                                                                     check))
@@ -6402,9 +6402,9 @@ class Report(object):
                 "V1≠V2, those words will appear multiple times, e.g., for "
                 "both V1=x and V2=y.")
         self.basicreportfile=''.join([str(self.reportbasefilename)
-                                            ,'_',''.join(cvtstodo)
+                                            ,'_',''.join(self.cvtstodo)
                                             ,'_BasicReport.txt'])
-        xlpr=self.xlpstart(reporttype='Basic '+''.join(cvtstodo))
+        xlpr=self.xlpstart(reporttype='Basic '+''.join(self.cvtstodo))
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
@@ -6443,18 +6443,18 @@ class Report(object):
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
                 log.info(t)
-                for cvt in cvtstodo:
-                    t=_("{} checks".format(self.params.typedict()[cvt]['sg']))
+                for cvt in self.cvtstodo:
+                    t=_("{} checks".format(self.params.cvtdict()[cvt]['sg']))
                     print(t)
                     log.info(t)
                     sid=" ".join([t,"for",profile,ps+'s'])
                     s3=xlp.Section(s2,sid,level=3)
                     maxcount=re.subn(cvt, cvt, profile)[1]
                     """Get these reports from C1/V1 to total number of C/V"""
-                    self.typenums=[cvt+str(n+1) for n in range(maxcount)]
-                    for typenum in self.typenums:
-                        if typenum not in self.basicreported:
-                            self.basicreported[typenum]=set()
+                    self.ncvts=[cvt+str(n+1) for n in range(maxcount)]
+                    for ncvt in self.ncvts:
+                        if ncvt not in self.basicreported:
+                            self.basicreported[ncvt]=set()
                     self.wordsbypsprofilechecksubcheck(s3)
         t=_("Summary coocurrence tables")
         s1s=xlp.Section(xlpr,t)
@@ -9015,7 +9015,6 @@ class CheckParameters(dict):
         """replaces setnamesall"""
         """replaces self.checknamesall"""
         super(CheckParameters, self).__init__()
-        """This replaces typedict"""
         self._analang=analang
         self._cvts={
                 'V':{'sg':_('Vowel'),'pl':_('Vowels')},
