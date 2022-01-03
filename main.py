@@ -5952,6 +5952,8 @@ class Report(object):
                         log.info("Asking for the following {} examples from id "
                                 "{}: {}".format(len(examples),senseid,examples))
                         examplestoXLP(examples,e1,senseid)
+                    else:
+                        self.framedtoXLP(framed,parent=s1,groups=groups)
                     output(window,r,text)
         sectitle=_('\nData Summary')
         s2=xlp.Section(xlpr,title=sectitle)
