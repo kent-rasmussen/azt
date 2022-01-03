@@ -532,7 +532,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             p.makeformnode(analang,text=group)
         else:
             t[0].text=group
-        self.updatemoddatetime(guid=guid,senseid=senseid)
+        self.updatemoddatetime(guid=guid,senseid=senseid,write=write)
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
