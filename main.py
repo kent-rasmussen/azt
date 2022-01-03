@@ -6591,6 +6591,8 @@ class ReportCitationBasic(Report,TaskDressing,ui.Window):
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.cvtstodo=['V','C']#'CV'
+        # This is really hard on memory, with correspondences.
+        self.settings.maxprofiles=2
     def runcheck(self):
         """This needs to get stripped down and updated for just this check"""
         self.settings.storesettingsfile()
