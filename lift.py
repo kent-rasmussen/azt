@@ -528,10 +528,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             return
         t=self.get('field/form/text',node=node[0],ftype='tone').get()
         if t == []:
+            # log.info("No sense level tone field found, making")
             p=Node(node[0],'field',attrib={'type':'tone'})
             p.makeformnode(analang,text=group)
         else:
+            # log.info("Sense level tone field found ({}), using".format(
+            #                                                         t[0].text
+            #                                                         ))
             t[0].text=group
+        # t=self.get('field/form/text',node=node[0],ftype='tone',
+        #             showurl=True
+        #             ).get()
+        # log.info("Sense level tone field now ‘{}’.".format(t[0].text))
+        # prettyprint(node[0])
         self.updatemoddatetime(guid=guid,senseid=senseid,write=write)
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
