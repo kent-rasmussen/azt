@@ -6534,7 +6534,7 @@ class Report(object):
         self.distinguish=self.settings.distinguish
         self.profilesbysense=self.settings.profilesbysense
         self.s=self.settings.s
-class ReportCitation(Report,TaskDressing,ui.Window):
+class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Make Reports on Citation Forms (one slice)")
@@ -6548,6 +6548,7 @@ class ReportCitation(Report,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
@@ -6580,7 +6581,7 @@ class ReportCitation(Report,TaskDressing,ui.Window):
             ui.Label(window,text=text).grid(column=0, row=i)
             i+=1
             return
-class ReportCitationBasic(Report,TaskDressing,ui.Window):
+class ReportCitationBasic(Report,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("General CV Report on Citation Forms")
@@ -6594,6 +6595,7 @@ class ReportCitationBasic(Report,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
@@ -7149,7 +7151,7 @@ class Record(object):
         self.loadsoundsettings()
         self.soundsettings=self.settings.soundsettings
         self.soundcheck()
-class RecordCitation(Record,TaskDressing,ui.Window):
+class RecordCitation(Record,Segments,TaskDressing,ui.Window):
     """docstring for RecordCitation."""
     def dobuttonkwargs(self):
         return {'text':_("Record Dictionary Words"),
@@ -7164,6 +7166,7 @@ class RecordCitation(Record,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['record']
     def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Record.__init__(self)
