@@ -1,7 +1,7 @@
 #Roadmap
 Make CAWL elicitation work with databases already in process
 menus
-Cut down on the file writing during report generation
+Make CV basic report less resource intensive
 
 select which profiles to include in a given tone report
 
