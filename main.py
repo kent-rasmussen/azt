@@ -2377,6 +2377,7 @@ class Settings(object):
         self.db=liftfileobject.db
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.repocheck()
+        self.setinvalidcharacters()
         self.settingsfilecheck()
         self.settingsinit() #init, clear, fields
         self.loadsettingsfile()
