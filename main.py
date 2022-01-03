@@ -1905,8 +1905,11 @@ class Settings(object):
         self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
     def setupCVrxs(self):
         self.rx={}
-        for sclass in list(self.s[self.analang]):
+        for sclass in list(self.s[self.analang])+['C']: #be sure to do C last
             if self.s[self.analang][sclass] != []: #don't make if empty
+                if sclass in ['G','N','S','D'] and not self.distinguish[sclass]:
+                    self.s[self.analang]['C']+=self.s[self.analang][sclass]
+                    continue
                 self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
         #Compile preferred regexs here
         for cc in ['CG','CS','NC','VN','VV']:
