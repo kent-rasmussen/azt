@@ -6501,6 +6501,15 @@ class ReportCitation(Report,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Make Reports on Citation Forms")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.runcheck,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['icon'],
+                'sticky':'ew'
+                }
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
