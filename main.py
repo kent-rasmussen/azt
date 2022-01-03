@@ -6035,7 +6035,7 @@ class Report(object):
                     col+=1
                     if lang in framed.forms:
                         ui.Label(self.results.scroll.content,
-                            text=framed.forms[lang], font=font,
+                            text=framed.forms[lang], font='read',
                             anchor='w',padx=10).grid(row=i, column=col,
                                                         sticky='w')
         xlpr.close(me=me)
