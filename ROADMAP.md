@@ -1,5 +1,5 @@
 #Roadmap
-Think through getting settings to and from file in a faithful manner.
+Make CAWL elicitation work with databases already in process
 menus
 Cut down on the file writing during report generation
 
