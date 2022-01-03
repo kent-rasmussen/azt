@@ -5841,7 +5841,7 @@ class Report(object):
         p2=xlp.Paragraph(s1,text=text)
         def output(window,r,text):
             r.write(text+'\n')
-            if silent == False:
+            if not silent:
                 ui.Label(window,text=text,
                         font=window.theme.fonts['report'],
                         row=window.row,column=0, sticky="w"
@@ -8176,7 +8176,8 @@ class Analysis(object):
             # self.groups[name]['senseids']=unnamed[k]
             self.senseidsbygroup[name]=unnamed[k]
             for senseid in unnamed[k]:
-                self._db.addtoneUF(senseid,name,analang=self.analang,write=False)
+                self._db.addtoneUF(senseid,name,analang=self.analang,
+                                    write=False)
         log.info("Done adding senseids to groups.")
         # return self.groups
     def tonegroupsbyUFcheckfromLIFT(self):
