@@ -1308,12 +1308,12 @@ class Settings(object):
     def askaboutpolygraphs(self):
         def nochanges():
             log.info("Trying to make no changes")
-            if foundchanges() and not self.exitFlag.istrue():
+            if foundchanges() and not pgw.exitFlag.istrue():
                 log.info("Found changes; exiting.")
                 pgw.destroy()
                 self.parent.destroy()
                 exit()
-            elif not self.exitFlag.istrue():
+            elif not pgw.exitFlag.istrue():
                 pgw.destroy()
         def makechanges():
             log.info("Changes called for; like it or not, redoing analysis.")
@@ -1415,7 +1415,7 @@ class Settings(object):
                         col=1 #not header
                         row+=1
         pgw.wait_window(pgw)
-        if not self.exitFlag.istrue():
+        if not self.taskchooser.exitFlag.istrue():
             nochanges() #this is the default exit behavior
     def polygraphcheck(self):
         log.info("Checking for Digraphs and Trigraphs!")
