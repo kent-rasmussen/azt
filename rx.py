@@ -159,7 +159,7 @@ def fromCV(check, lang, word=False, compile=False):
         log.log(2,'CVs: {}'.format(CVs))
     # if C includes [N,?], find C first; if it doesn't, move on to [N,?].
     # if we distinguish [N,?]# (only), C# is already gone, so other C's here.
-    for x in ["V","C","N","ʔ","G","S"]:
+    for x in check.s[lang]: #["V","C","N","ʔ","G","S"]:
         if x in check.s[lang]: #just pull out big ones first
             rxthis=s(check,x,lang) #this should have parens for each S
             CVs=re.sub(x,rxthis,CVs)
