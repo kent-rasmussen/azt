@@ -627,6 +627,8 @@ class StatusFrame(ui.Frame):
         elif (check in self.settings.status.checks(torecord=True) and
             profile in self.settings.status.profiles(torecord=True)):
             cmd=self.taskchooser.getgrouptorecord
+        else:
+            cmd=None
         log.info("check: {}; profile: {}; \n{}-{}; \n{}-{}; \n{}-{};"
                     "".format(check,profile,
                                 self.settings.status.checks(wsorted=True),
