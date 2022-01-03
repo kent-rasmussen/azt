@@ -5712,9 +5712,7 @@ class Report(object):
         self.reloadstatusdata()
         self.tonegroupreportcomprehensive()
     def tonegroupreportcomprehensive(self,**kwargs):
-        maxpss=2 #number of profiles
-        maxprofiles=5 #number of profiles
-        pss=self.slices.pss()[:maxpss]
+        pss=self.slices.pss()[:self.settings.maxpss]
         d={}
         for ps in pss:
             d[ps]=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
@@ -6419,11 +6417,11 @@ class Report(object):
         t=_("This report covers the following top two Grammatical categories, "
             "with the top {} syllable profiles in each. "
             "This is of course configurable, but I assume you don't want "
-            "everything.".format(self.maxprofiles))
+            "everything.".format(self.settings.maxprofiles))
         log.info(t)
         print(t)
         p=xlp.Paragraph(si,t)
-        for ps in self.pss[0:2]: #just the first two (Noun and Verb)
+        for ps in self.slices.pss()[0:2]: #just the first two (Noun and Verb)
             if ps not in self.checkcounts:
                 self.checkcounts[ps]={}
             profiles=self.slices.profiles()
