@@ -6852,10 +6852,6 @@ class Transcribe(Tone,TaskDressing,ui.Window):
         sub_btn.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
-    def __init__(self, parent): #frame, filename=None
-        """Does this need Tone classing?"""
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
 class JoinUFgroups(Tone,TaskDressing,ui.Window):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
