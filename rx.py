@@ -19,7 +19,7 @@ def urlok(x):
 def id(x):
     x=x.replace('˥','4').replace('˦','3').replace('˧','2'
         ).replace('˨','1').replace('˩','0')
-    return re.sub('[][  .!=\(\),\'/?ꞌ\n:;+]','_',x) #remove charcters that are invalid for ids
+    return re.sub('[][  .!=\(\),\'/?ꞌ\n:;+*]','_',x) #remove charcters that are invalid for ids
 def tonerxs():
     return (re.compile('[˥˦˧˨˩]+', re.UNICODE),
             re.compile(' ', re.UNICODE),
