@@ -4333,12 +4333,11 @@ class Sort(object):
         scroll.grid(row=3,column=0,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
-class SortCV(Sort,TaskDressing,ui.Window):
+class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
-    def __init__(self, arg):
-        super(SortCV, self).__init__()
-        self.arg = arg
-        """These are old paradigm CV funcs, with too many arguments, and guids"""
+    def __init__(self, parent):
+        Segments.__init__(self,parent)
+        super(SortCV, parent).__init__()
     def picked(self,choice,**kwargs):
         return
         entry.addresult(check, result='OK') #let's not translate this...
