@@ -6382,13 +6382,10 @@ class Report(object):
             if ps == 'Invalid':
                 continue
             print(ps, self.profilesbysense[ps])
-    def basicreport(self,cvtstodo=['V']):
+    def basicreport(self):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
         #Convert to iterate over local variables
-        typeori=cvt
-        psori=self.slices.ps()
-        profileori=self.slices.profile()
         start_time=time.time() #move this to function?
         instr=_("The data in this report is given by most restrictive test "
                 "first, followed by less restrictive tests (e.g., V1=V2 "
@@ -6409,7 +6406,6 @@ class Report(object):
         print(instr)
         log.info(instr)
         #There is no runwindow here...
-        self.parent.waitdone() #non-widget parent deiconifies no window...
         self.basicreported={}
         self.checkcounts={}
         self.printprofilesbyps()
@@ -6512,7 +6508,6 @@ class Report(object):
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         self.frame.parent.waitdone()
-        self.type=typeori
     def __init__(self):
         self.reportbasefilename=self.settings.reportbasefilename
         self.reporttoaudiorelURL=self.settings.reporttoaudiorelURL
