@@ -6000,6 +6000,18 @@ class Report(object):
         self.results.scroll=ui.ScrollingFrame(self.results)
         self.results.scroll.grid(column=0, row=1)
         senseid=0 # in case the following doesn't find anything:
+        # These lines get all senseids, to test that we're not losing any, below
+        # This is the first of three blocks to uncomment (on line, then logs)
+        # self.regexCV=profile
+        # self.regex=rx.fromCV(self,lang=self.analang,
+        #                     word=True, compile=True)
+        # rxsenseidsinslice=self.senseidformsbyregex(self.regex)
+        # senseidsinslice=self.slices.senseids()
+        # log.info("nrxsenseidsinslice: {}".format(len(rxsenseidsinslice)))
+        # log.info("nsenseidsinslice: {}".format(len(senseidsinslice)))
+        # senseidsnotsearchable=set(senseidsinslice)-set(rxsenseidsinslice)
+        # log.info("senseidsnotsearchable: {}".format(len(senseidsnotsearchable)))
+        # log.info("senseidsnotsearchable: {}".format(senseidsnotsearchable))
         for group in self.s[self.analang][cvt]:
             log.debug('group: {}'.format(group))
             self.buildregex() #It would be nice fo this to iterate through...
@@ -6009,6 +6021,8 @@ class Report(object):
                 ex=xlp.Example(si,id)
             for senseid in senseidstocheck: #self.senseidformstosearch[lang][ps]
                 # where self.regex(self.senseidformstosearch[lang][ps][senseid]):
+                # Uncomment to test:
+                # rxsenseidsinslice.remove(senseid)
                 """This regex is compiled!"""
                 framed=self.taskchooser.datadict.getframeddata(senseid) #not framed!
                 o=framed.formatted(noframe=True)
@@ -6034,6 +6048,12 @@ class Report(object):
                             column=1, command=self.notpicked)
         xlpr.close(me=me)
         self.runwindow.waitdone()
+        # Report on testing blocks above
+        # log.info("senseids remaining (rx): ({}) {}".format(
+        #                                                 len(rxsenseidsinslice),
+        #                                                 rxsenseidsinslice))
+        # log.info("senseids remaining: ({}) {}".format(len(senseidsinslice),
+        #                                                     senseidsinslice))
         if senseid == 0: #i.e., nothing was found above
             print(_('No results!'))
             ui.Label(self.results, text=_("No results for ")+self.regexCV+"!"
