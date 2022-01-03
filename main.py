@@ -2255,11 +2255,12 @@ class Settings(object):
         self.attrschanged.append('profile')
         self.refreshattributechanges()
         window.destroy()
-    def setcvt(self,choice,window):
+    def setcvt(self,choice,window=None):
         self.params.cvt(choice)
         self.attrschanged.append('cvt')
         self.refreshattributechanges()
-        window.destroy()
+        if window:
+            window.destroy()
     def setanalang(self,choice,window):
         self.params.analang(choice)
         self.attrschanged.append('analang')
