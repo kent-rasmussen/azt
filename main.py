@@ -2741,6 +2741,7 @@ class TaskDressing(object):
                                     window=window,
                                     column=0, row=1
                                     )
+        return window
     def getps(self,event=None):
         log.info("Asking for ps...")
         # self.refreshattributechanges()
