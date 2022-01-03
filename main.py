@@ -6532,7 +6532,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                         )
         skipb.grid(column=0, row=1, sticky="ew")
     """Doing stuff"""
-class Transcribe(TaskDressing,Tone,ui.Window):
+class Transcribe(Tone,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Transcribe Citation Form Sorting in Tone Frames")
     def updatelabels(event=None):
