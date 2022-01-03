@@ -6567,7 +6567,7 @@ class ReportCitation(Report,TaskDressing,ui.Window):
 class ReportCitationBasic(Report,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
-        return _("Make Basic Report on Citation Forms")
+        return _("General CV Report on Citation Forms")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
@@ -6581,6 +6581,7 @@ class ReportCitationBasic(Report,TaskDressing,ui.Window):
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
+        self.cvtstodo=['V','C']#'CV'
     def runcheck(self):
         """This needs to get stripped down and updated for just this check"""
         self.settings.storesettingsfile()
@@ -6632,6 +6633,7 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Make Reports on Citation Form Sorting in Tone Frames")
+        return _("Report on one slice of Citation Forms (in Tone Frames)")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
