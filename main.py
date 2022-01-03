@@ -1388,7 +1388,7 @@ class Settings(object):
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
             row+=1
-            title=ui.Label(scroll.content,text=self.settings.languagenames[lang],
+            title=ui.Label(scroll.content,text=self.languagenames[lang],
                                                         font='read')
             title.grid(column=0, row=row, columnspan=ncols)
             vars[lang]={}
