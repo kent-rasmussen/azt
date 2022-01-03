@@ -6534,7 +6534,21 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
     """Doing stuff"""
 class Transcribe(Tone,TaskDressing,ui.Window):
     def tasktitle(self):
-        return _("Transcribe Citation Form Sorting in Tone Frames")
+        return _("Transcribe Citation Form Sorted Tone Groups")
+    def dobuttonkwargs(self):
+        return {'text':_("Transcribe Surface Tone Groups"),
+                'fn':self.makewindow,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['icon'], #self.cvt
+                'sticky':'ew'
+                }
+    def taskicon(self):
+        return program['theme'].photo['icon']
+    def __init__(self, parent): #frame, filename=None
+        """Does this need Tone classing?"""
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
     def updatelabels(event=None):
         errorlabel['text'] = ''
         a=newname.get()
