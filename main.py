@@ -8992,14 +8992,14 @@ class StatusDict(dict):
         return kwargs
     def last(self,task,update=False,**kwargs):
         profile=kwargs.get('profile',self._slicedict.profile())
-        if not hasattr(self,'_last'):
-            self._last={}
-        if task not in self._last:
-            self._last[task]={}
+        sn=self.node(**kwargs)
+        if 'last' not in sn:
+            sn['last']={}
         if update:
-            self._last[task][profile]=now()
-        if profile in self._last[task]:
-            return self._last[task][profile]
+            sn['last'][task]=now()
+            self.store()
+        if task in sn['last']:
+            return sn['last'][task]
     def __init__(self,checkparameters,slicedict,toneframes,filename,dict):
         """To populate subchecks, use self.groups()"""
         self._filename=filename
