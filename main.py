@@ -3296,6 +3296,10 @@ class TaskChooser(TaskDressing,ui.Window):
         another class) provides a list of functions with prerequisites
         that are minimally and/or optimally satisfied."""
         #if nothing to do??
+        """Separate these into
+        Data Collection: collect, sort
+        Analysis: report, transcribe, joinUF
+        Maybe make a button to switch between the two?"""
         tasks=[
                 WordCollectionCitation,
                 # WordCollectionLexeme
