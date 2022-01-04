@@ -6901,6 +6901,9 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
             self.db.write()
             self.runwindow.destroy()
             self.tonegroupsjoinrename() #call again, in case needed
+        def redo():
+            self.analysis.do()
+            done()
         def done():
             self.runwindow.destroy()
         ps=kwargs.get('ps',self.slices.ps())
@@ -6914,23 +6917,26 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         rwrow=gprow=qrow=0
         t=ui.Label(self.runwindow.frame,text=title,font='title')
         t.grid(row=rwrow,column=0,sticky='ew')
-        text=_("This page allows you to join the {0}-{1} draft underlying tone "
-                "groups created for you by {2}, \nwhich are almost certainly "
+        redotext=_("Redo the analysis;\nstart these groups over")
+        text=_("This page allows you to join the {}-{} draft underlying tone "
+                "groups created for you by {}, \nwhich are almost certainly "
                 "too small for you. \nLooking at a draft report, and making "
                 "your own judgement about which groups belong together, select "
-                "all the groups that belong together, and give that new group "
-                "a name. Afterwards, you can do this again for other groups "
+                "all the groups that belong together in one group, and "
+                "give that new group "
+                "a name. You can then repeat this for other groups "
                 "that should be joined. \nIf for any reason you want to undo "
-                "the groups you create here (e.g., you make a mistake or sort "
-                "new data), just run the default report, which will redo the "
-                "default analysis, which will replace these groupings with new "
-                "split groupings. \nTo see a report based on what you do "
-                "here, run the tone reports in the Advanced menu (without "
-                "analysis). ".format(ps,profile,program['name']))
+                "the groups you create here, you can start over with an new "
+                "analysis by pressing the ‘{}’ button. \nOtherwise, these "
+                "joined groups will be reflected in reports until you sort "
+                "more data.".format(ps,profile,program['name'],
+                                                redotext.replace('\n',' ')))
         rwrow+=1
         i=ui.Label(self.runwindow.frame,text=text,
                     row=rwrow,column=0,sticky='ew')
         i.wrap()
+        ui.Button(self.runwindow.frame,text=redotext, cmd=redo,
+                    row=rwrow,column=1,sticky='ew')
         rwrow+=1
         qframe=ui.Frame(self.runwindow.frame)
         qframe.grid(row=rwrow,column=0,sticky='ew')
