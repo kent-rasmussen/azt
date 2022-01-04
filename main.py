@@ -9642,6 +9642,7 @@ def main():
     log.info("Theme name: {}".format(program['theme'].name))
     root.program=program
     root.wraplength=root.winfo_screenwidth()-300 #exit button
+    root.wraplength=int(root.winfo_screenwidth()*.7) #exit button
     root.renderings={} #initialize this somewhere...
     root.withdraw()
     if platform.system() != 'Linux': #this is only for MS Windows!
