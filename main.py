@@ -4188,8 +4188,8 @@ class Sort(object):
         scroll.grid(row=3,column=0,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
-class Record(object):
-    """This holds all the Recording methods."""
+class Record(Sound):
+    """This holds all the Sound methods specific for Recording."""
     def donewpyaudio(self):
         try:
             self.pyaudio.terminate()
