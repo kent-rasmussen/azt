@@ -6967,9 +6967,11 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         if not self.analysis.orderedUFs:
             self.runwindow.waitdone()
             self.runwindow.destroy()
-            ErrorNotice(title="No draft UF groups found!",
-                        text="You don't seem to have any analyzed groups to "
-                                "join/rename. Have you done a tone analyis?"
+            ErrorNotice(title="No draft UF groups found for {} words!"
+                                "".format(ps),
+                        text="You don't seem to have any analyzed {0} groups "
+                        "to join/rename. Have you done a tone analyis for {0} "
+                        "words?".format(ps)
                         )
             return
         # ufgroups= # order by structured groups? Store this somewhere?
