@@ -8295,6 +8295,7 @@ class Analysis(object):
         self.sorttoUFs() # > self.senseidsbygroup and self.valuesbygroupcheck
         self._db.write()
         self.doanyway()
+        self._status.last('analysis')
     def doanyway(self):
         """compare(x=UFs/checks) give self.comparison(x) and self.ordered(x)"""
         self.comparechecks() #also self.valuesbygroupcheck -> …checkgroup
