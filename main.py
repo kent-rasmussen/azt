@@ -4678,12 +4678,14 @@ class Report(object):
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                                 groups=groups)
                         break #do it on first present lang, and do next ex
-        r=self.status.last('report',update=True)
+        a=self.status.last('analysis')
         s=self.status.last('sort')
-        if s:
-            t=r>s
+        if a and s:
+            analysisOK=a>s
+        elif a:
+            analysisOK=True # b/c analysis would be more recent than last sorting
         else:
-            t=False
+            analysisOK=False # w/o info, trigger reanalysis
         self.datadict.refresh() #get the most recent data
         silent=kwargs.get('silent',False)
         bylocation=kwargs.get('bylocation',False)
@@ -4698,7 +4700,7 @@ class Report(object):
                 return
             self.getprofile(wsorted=True)
         log.info("Starting report {} {} at {}; last sort at {} (since={})..."
-                "".format(ps,profile,r,s,t))
+                "".format(ps,profile,a,s,analysisOK))
         self.settings.storesettingsfile()
         waitmsg="{} {} Tone Report in Process".format(ps,profile)
         resultswindow=ResultWindow(self.parent,msg=waitmsg)
