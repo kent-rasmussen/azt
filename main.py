@@ -863,7 +863,10 @@ class StatusFrame(ui.Frame):
         self.glosslangline()
         if isinstance(self.task,WordCollection):
             self.fieldsline()
-        if isinstance(self.task,Sort) or isinstance(self.task,Report):
+        if (isinstance(self.task,Sort) or
+            isinstance(self.task,Report) or
+            isinstance(self.task,Tone)
+            ):
             self.cvt=self.settings.params.cvt()
             self.ps=self.settings.slices.ps()
             self.profile=self.settings.slices.profile()
