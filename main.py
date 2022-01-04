@@ -8312,7 +8312,7 @@ class Analysis(object):
         self._slices=slices
         self._status=status
         self._db=db
-        self.analang=self._params.analang
+        self.analang=self._params.analang()
         self.setslice(**kwargs)
 class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
