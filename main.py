@@ -6549,8 +6549,9 @@ class Transcribe(Tone,TaskDressing,ui.Window):
         return program['theme'].photo['icon']
     def __init__(self, parent): #frame, filename=None
         """Does this need Tone classing?"""
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
+        Tone.__init__(self, parent)
+        ui.Window.__init__(self, parent)
+        TaskDressing.__init__(self, parent)
     def updatelabels(event=None):
         errorlabel['text'] = ''
         a=newname.get()
@@ -6862,7 +6863,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                 'fn':self.tonegroupsjoinrename,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['record'], #self.cvt
+                'image':self.taskchooser.theme.photo['icon'], #self.cvt
                 'sticky':'ew'
                 }
     def taskicon(self):
