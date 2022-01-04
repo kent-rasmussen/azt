@@ -6718,7 +6718,6 @@ class Transcribe(Tone,TaskDressing,ui.Window):
         title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
                         ).format(ps,profile,group,check)
         self.getrunwindow(title=title)
-        menu=self.runwindow.removeverifymenu()
         titlel=ui.Label(self.runwindow.frame,text=title,font='title',
                         row=0,column=0,sticky='ew',padx=padx,pady=pady
                         )
