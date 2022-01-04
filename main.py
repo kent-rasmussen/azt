@@ -4718,10 +4718,10 @@ class Report(object):
         start_time=time.time()
         counts={'senses':0,'examples':0, 'audio':0}
         self.makeanalysis(ps=ps,profile=profile)
-        if default:
-            self.analysis.do() #full analysis from scratch, output to UF fields
-        else:
+        if analysisOK:
             self.analysis.donoUFanalysis() #based on (sense) UF fields
+        else:
+            self.analysis.do() #full analysis from scratch, output to UF fields
         """These are from LIFT, ordered by similarity for the report."""
         if not self.analysis.orderedchecks or not self.analysis.orderedUFs:
             log.error("Problem with checks: {} (in {} {})."
