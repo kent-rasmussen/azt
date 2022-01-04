@@ -7004,10 +7004,10 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                     cbl.grid(row=idn+nheaders,column=col,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
-    def __init__(self, arg):
-        Tone.__init__(self)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
+    def __init__(self, parent):
+        Tone.__init__(self, parent)
+        ui.Window.__init__(self, parent)
+        TaskDressing.__init__(self, parent)
 class RecordCitation(Record,Segments,TaskDressing,ui.Window):
     """docstring for RecordCitation."""
     def dobuttonkwargs(self):
@@ -7180,7 +7180,6 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
-        self.do=self.tonegroupreportcomprehensive
         self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
