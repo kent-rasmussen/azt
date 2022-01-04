@@ -4895,7 +4895,7 @@ class Report(object):
                     output(window,r,text)
         sectitle=_('\nData Summary')
         s2=xlp.Section(xlpr,title=sectitle)
-        eps='{:.2%}'.format(float(counts['examples']/counts['senses']))
+        eps='{:.1%}'.format(float(counts['examples']/counts['senses']))
         audiopercent='{:.2%}'.format(float(counts['audio']/counts['examples']))
         ptext=_("This report contains {} senses, {} examples, and "
                 "{} sound files. That is an average of {} examples/sense, and "
