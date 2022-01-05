@@ -519,10 +519,12 @@ class UI(ObectwArgs):
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
             log.debug("There is already a wait window: {}".format(self.ww))
             return
+        self.withdraw()
         self.ww=Wait(self,msg)
     def waitdone(self):
         try:
             self.ww.close()
+            self.deiconify()
         except tkinter.TclError:
             pass
     def __init__(self): #because this is used everywhere.
