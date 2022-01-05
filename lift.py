@@ -63,7 +63,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getanalangs() #sets: self.analangs, self.audiolangs
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
-        self.getfields()
+        self.getfields() #sets self.fields (of entry)
+        self.getsensefields() #sets self.sensefields (fields of sense)
         self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
         "with citation data) "
         log.info("Working on {} with {} entries, with lexeme data counts: {}, "
