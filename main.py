@@ -137,12 +137,15 @@ class FileChooser(object):
         return self.cawldb
     def copytonewfile(self,newfile):
         log.info("Beginning Copy of stock to new LIFT file.")
+        self.loadCAWL()
+        for n in (self.cawldb.nodes.findall('entry/lexical-unit')+
+                    self.cawldb.nodes.findall('entry/citation')):
             for f in n.findall('form'):
                 n.remove(f)
         log.info("Stripped stock LIFT file.")
         log.info("Trying to write empty LIFT file to {}".format(newfile))
         try:
-            tmpdb.write(str(newfile))
+            self.cawldb.write(str(newfile))
         except Exception as e:
             log.error("Exception: {}".format(e))
         log.info("Tried to write empty LIFT file to {}".format(newfile))
