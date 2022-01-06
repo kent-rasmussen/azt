@@ -567,7 +567,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     return
         form=Node(node,'form',attrib={'lang':lang})
         t=form.maketextnode(text=url)
-        prettyprint(node)
+        # prettyprint(node)
         """Can't really do this without knowing what entry or sense I'm in..."""
         self.write()
     def addmodcitationfields(self,entry,langform,lang):
