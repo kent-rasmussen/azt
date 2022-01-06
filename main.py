@@ -118,13 +118,12 @@ class FileChooser(object):
                                 column=0, row=1
                                 )
         window.wait_window(window)
-    def copytonewfile(self,newfile):
-        log.info("Beginning Copy of stock to new LIFT file.")
+    def loadCAWL(self):
         stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
         if file.exists(stockCAWL):
             log.info("Found stock LIFT file: {}".format(stockCAWL))
         try:
-            tmpdb=lift.Lift(str(stockCAWL))
+            self.cawldb=lift.Lift(str(stockCAWL))
             log.info("Parsed ET.")
             log.info("Got ET Root.")
         except Exception as e:
@@ -134,12 +133,10 @@ class FileChooser(object):
                     "try again.").format(stockCAWL)
             ErrorNotice(text,wait=True)
             return
-        log.info("Parsed stock LIFT file to tree.")
-        """This returns the root node of an ElementTree tree (the entire
-        tree as nodes), to edit the XML."""
-        log.info("Parsed stock LIFT file to nodes.")
-        for n in (tmpdb.nodes.findall('entry/lexical-unit')+
-                    tmpdb.nodes.findall('entry/citation')):
+        log.info("Parsed stock LIFT file to tree/nodes.")
+        return self.cawldb
+    def copytonewfile(self,newfile):
+        log.info("Beginning Copy of stock to new LIFT file.")
             for f in n.findall('form'):
                 n.remove(f)
         log.info("Stripped stock LIFT file.")
