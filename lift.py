@@ -410,8 +410,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             exfieldvalue=p.makefieldnode(fieldtype,glosslangs[0],text=tonevalue,
                                                                 gimmetext=True)
             p.makefieldnode('location',glosslangs[0],text=location)
-        self.write()
-        self.updatemoddatetime(senseid=senseid)
+        if write:
+            self.write()
+        self.updatemoddatetime(senseid=senseid,write=write)
     def forminnode(self,node,value):
         """Returns True if `value` is in *any* text node child of any form child
         of node: [node/'form'/'text' = value] Is this needed?"""
