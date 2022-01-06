@@ -3439,13 +3439,17 @@ class TaskChooser(TaskDressing,ui.Window):
         return w
     def whatsdone(self):
         self.donew={}
-        for task in ['collectionlc','collectionlx','collectionplimp',
+        for task in ['collectionlc','parsedlx','collectionplimp',
                     'tonereport',
                     'torecord',
                     'torecordT',
                     'recording',
+                    'somesortT',
                     'somesort',
-                    'sortlc'
+                    'sortlc',
+                    'somerecording',
+                    'somerecordingT',
+                    'analysis'
                     ]:
             self.donew[task]=False
         lexemesdone=self.file.db.nentrieswlexemedata
