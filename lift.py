@@ -437,7 +437,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if len(examples)>1:
                     log.error("Found multiple/duplicate examples (of the same "
                         "location ({}) in the same sense: {})"
-                    "".format(l,[x.find('form/text').text for x in examples]))
+                    "".format(l,[x.find('form/text').text for x in examples
+                                    if x.find('form/text')]))
                     """Before implementing the following, we need a test for
                     presence of audio file link, and different tone values,
                     including which to preserve if different (i.e., not '')"""
