@@ -428,6 +428,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 int(x)
             except (ValueError,TypeError):
                 return x
+        emptytextnode=EmptyTextNodePlaceholder()
         dup=False
         senses=self.nodes.findall('entry/sense')
         for sense in senses:
@@ -449,48 +450,93 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     uniq={}
                     first={}
                     langs=self.analangs+self.glosslangs
-                    for n in langs+['value']:
+                    for n in self.analangs:
+                        nodes['al-'+n]=[]
+                    for n in self.glosslangs:
+                        nodes['gl-'+n]=[]
+                    for n in ['value']:
                         nodes[n]=[]
                     for example in examples:
                         for lang in self.analangs:
-                            nodes[lang].extend(example.findall(
-                                        "form[@lang='{}']/text".format(lang)))
+                            log.info("looking for {} (analang) data".format(lang))
+                            l=example.findall("form[@lang='{}']/text"
+                                                "".format(lang))
+                            """I actually don't want data from alternate analangs.
+                            A→Z+T should be producing examples with exactly
+                            one analang (at least for now), so if I find one
+                            here, that should be good."""
+                            # if not l:
+                            #     log.info("empty node found for {}".format(lang))
+                            #     l=[emptytextnode] #must distinguish empty/missing nodes
+                            nodes['al-'+lang].extend(l)
                         for lang in self.glosslangs:
-                            nodes[lang].extend(example.findall(
-                                            "translation/form[@lang='{}']/text"
-                                            "".format(lang)))
+                            log.info("looking for {} (glosslang) data".format(lang))
+                            g=example.findall("translation/form[@lang='{}']"
+                                            "/text".format(lang))
+                            if not g:
+                                log.info("empty node found for {}".format(lang))
+                                g=[emptytextnode]
+                            nodes['gl-'+lang].extend(g)
                         #This should ultimately have [@lang='{}'].analang
-                        nodes['value'].extend(example.findall(
-                                    "field[@type='tone']/form/text"))
+                        t=example.findall("field[@type='tone']/form/text")
+                        if not t:
+                            log.info("empty tone node found")
+                            t=[emptytextnode]
+                        nodes['value'].extend(t)
                     for n in nodes:
                         uniq[n]=list(set([i.text for i in nodes[n]
                                                             if i is not None]))
                     if [n for n in uniq if len(uniq[n]) >1]: #any multiples
-                        if not [l for l in langs if len(uniq[l]) >1]: #nonlang
+                        # if not [l for l in langs if len(uniq[l]) >1]: #nonlang
+                        if not [l for l in uniq if len(uniq[l]) >1
+                                                    if l != 'value']: #nonlang
                             nonint=[noninteger(j) for j in uniq['value'] #nonint
                                                 if noninteger(j) is not None]
-                            if not len(nonint) or len(nonint) >1:
-                                log.info("Sorry, I don't know how to combine "
+                            nonnone=[j for j in uniq['value'] #nonint
+                                                if j is not None]
+                            if not nonint or len(nonint) >1:
+                                if nonnone and len(nonnone) == 1:
+                                    """This is where we save an integer tone
+                                    value, and ditch a None value."""
+                                    log.info("A single non-None value found: {}"
+                                            "".format(nonnone[0]))
+                                    savevalue=nonnone[0]
+                                else:
+                                    log.info("Sorry, I don't know how to combine "
                                         "these example values: {} ({})"
                                         "".format(uniq[n],n))
-                                continue
+                                    continue
                             else: #only one noninteger tone value
-                                for example in examples:
-                                    #This should ultimately have [@lang='{}'].analang
-                                    url=("field[@type='tone']/form[text='{}']"
+                                savevalue=nonint[0]
+                                log.info("A single non-integer value found: {}"
                                         "".format(nonint[0]))
-                                    if not example.find(url):
-                                        log.info("Removing duplicate ({}) "
-                                        "example with value: {}".format(l,
-                                            example.find(
-                                                "field[@type='tone']/form/text"
-                                                            ).text
-                                                )                    )
-                                        sense.remove(example)
-                                    else:
-                                        log.info("Keeping duplicate ({}) "
-                                        "example with value: {}".format(l,
-                                            nonint[0]))
+                            log.info("These examples have the same "
+                                        "language data, so we will merge their "
+                                        "tone values, if possible. ({})"
+                                        "".format(uniq))
+                            for example in examples:
+                                #This should ultimately have [@lang='{}'].analang
+                                url=("field[@type='tone']/form[text='{}']"
+                                    "".format(savevalue))
+                                if not example.find(url):
+                                    et=example.find(
+                                        "field[@type='tone']/form/text"
+                                        )
+                                    if not et:
+                                        et=emptytextnode
+                                    log.info("Removing duplicate ({}) "
+                                    "example with value: {}"
+                                    "".format(l, et.text))
+                                    sense.remove(example)
+                                else:
+                                    log.info("Keeping duplicate ({}) "
+                                    "example with value: {}".format(l,
+                                        savevalue))
+                        else:
+                            log.info("It looks like we are dealing with "
+                                "different language data in the examples, so "
+                                "you  will need to resolve this manually: {}"
+                                "".format(uniq))
                     else:
                         log.info("It looks like all examples have all the same "
                             "values, so we're deleting all but the first: {}"
@@ -981,6 +1027,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Found these morph-type values: {}".format(m))
         return m
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
+class EmptyTextNodePlaceholder(object):
+    """Just be able to return self.text when asked."""
+    def __init__(self):
+        # super(EmptyTextNodePlaceholder, self).__init__()
+        self.text = None
+
 class Node(ET.Element):
     def makefieldnode(self,type,lang,text=None,gimmetext=False):
         n=Node(self,'field',attrib={'type':type})
