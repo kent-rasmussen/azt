@@ -230,15 +230,15 @@ class Theme(object):
         except NameError:
             scale=1
         if fonttheme == 'smaller':
-            default=12*scale
+            default=int(12*scale)
         else:
-            default=18*scale
+            default=int(18*scale)
         title=bigger=int(default*2)
         big=int(default*5/3)
         normal=int(default*4/3)
         default=int(default)
         small=int(default*2/3)
-        log.log(4,"Default font size: {}".format(default))
+        log.info("Using default font size: {}".format(default))
         andika="Andika"# not "Andika SIL"
         charis="Charis SIL"
         self.fonts={
