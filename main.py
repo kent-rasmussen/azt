@@ -6295,7 +6295,7 @@ class FramedData(object):
             """setframe is a FramedDataSense method, so should only apply there,
             but also only be needed there, as FramedDataExample has applynoframe
             in its init."""
-            if not hasattr(self,'framed'):
+            if not hasattr(self,'framed') and isinstance(self,FramedDataSense):
                 self.setframe() #self.noframe() #Assume no frame if not explicitly applied
             toformat.appendformsbylang(self.framed,self.analang,quote=False)
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
