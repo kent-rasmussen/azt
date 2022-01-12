@@ -4945,7 +4945,7 @@ class Check():
                 framed=self.datadict.getframeddata(example,senseid=senseid)
                 if not framed:
                     exit()
-                if framed.forms[self.analang] is None: # when?
+                if framed.forms[self.analang] is None or framed.framed == 'NA':
                     continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
@@ -6510,6 +6510,7 @@ class FramedDataElement(FramedData):
             return
         if hasattr(self,'tonegroups') and unlist(self.tonegroups) == 'NA':
             log.error("Sorry, this example was skipped in sorting")
+            self.framed='NA'
             return
         self.applynoframe() #because we want self.framed=self.forms
         self.makeaudiofilename() #generate self.filename and self.filenameURL
