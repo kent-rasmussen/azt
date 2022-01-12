@@ -3189,7 +3189,10 @@ class TaskChooser(TaskDressing,ui.Window):
     task on opening, and allows users to choose others (any with minimum
     prequisites satisfied)."""
     def tasktitle(self):
-        return _("Task Chooser")
+        if self.datacollection:
+            return _("Data Collection Tasks")
+        else:
+            return _("Analysis Tasks")
     def getfile(self):
         # def getit(attr):
         #     if hasattr(self.file,attr):
