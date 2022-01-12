@@ -3158,9 +3158,6 @@ class TaskDressing(object):
         self.mainwindow=True
         self.withdraw() #made visible by chooser when complete
         self.maketitle()
-        ui.Label(self.frame, font='title',
-                text=self.tasktitle(),
-                row=0, column=0, columnspan=2)
         """At some point, I need to think through which attributes are needed,
         and if I can get them all into objects, read/writeable with files."""
         """These are raw attributes from file"""
@@ -3253,10 +3250,16 @@ class TaskChooser(TaskDressing,ui.Window):
     def gettask(self,event=None):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
-        self.unsetmainwindow() #first, so the program stays alive
-        self.setmainwindow(self)
+        if self.mainwindow:
+            self.datacollection=not self.datacollection
+            self.maketitle() #b/c this changes
+        else:
+            self.unsetmainwindow() #first, so the program stays alive
         if hasattr(self,'task') and self.task.winfo_exists():
             self.task.on_quit() #destroy and set flag
+        if hasattr(self,'optionsframe'):
+            self.optionsframe.destroy()
+        self._taskchooserbutton()
         optionlist=self.makeoptions()
         n=0
         bpr=3
