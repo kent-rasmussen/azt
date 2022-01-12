@@ -222,8 +222,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l=list()
         return l
     """Make this a class!!!"""
-    def pylang(self,analang):
+    def pylanglegacy(self,analang):
          return 'py-'+analang
+    def pylang(self,analang):
+         return analang+'-x-py'
     def modverificationnode(self,senseid,vtype,analang,add=None,rms=[],addifrmd=False):
         """this node stores a python symbolic representation, specific to an
         analysis language"""
