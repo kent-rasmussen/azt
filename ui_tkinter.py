@@ -262,7 +262,8 @@ class Theme(object):
                 'readbig':tkinter.font.Font(family=charis, size=bigger,
                                             weight='bold'),
                 'small':tkinter.font.Font(family=charis, size=small),
-                'default':tkinter.font.Font(family=charis, size=default)
+                'default':tkinter.font.Font(family=charis, size=default),
+                'fixed':tkinter.font.Font(family='TkFixedFont', size=small)
                     }
         """additional keyword options (ignored if font is specified):
         family - font family i.e. Courier, Times
