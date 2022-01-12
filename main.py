@@ -2953,7 +2953,7 @@ class TaskDressing(object):
                           "".format(ps,profile,check,kwargs)
                           ).grid(column=0, row=0)
             elif guess == True:
-                self.setgroup(g[0],window) #don't ask, just set
+                self.settings.setgroup(g[0],window) #don't ask, just set
             else:
                 ui.Label(window.frame,
                           text="What {}-{} tone group in the ‘{}’ frame do "
