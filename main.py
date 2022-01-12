@@ -3281,7 +3281,10 @@ class TaskChooser(TaskDressing,ui.Window):
         """This function makes the task after the highest optimally
         satisfied task"""
         optionlist=self.makeoptions()
-        self.maketask(optionlist[-1][0]) #last item, the code
+        if hasattr(self,'testdefault'):
+            self.maketask(self.testdefault)
+        else:
+            self.maketask(optionlist[-1][0]) #last item, the code
     def maketask(self,taskclass): #,filename=None
         self.unsetmainwindow()
         self.task=taskclass(self) #filename
