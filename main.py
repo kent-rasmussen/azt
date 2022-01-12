@@ -3139,6 +3139,13 @@ class TaskDressing(object):
         self.runwindow.lift()
         if not nowait:
             self.runwindow.wait(msg=msg)
+    """Functions that everyone needs"""
+    def verifictioncode(self,check=None,subcheck=None):
+        if subcheck is None: #do I ever want this to really be None?
+            subcheck=self.params.subcheck()
+        if check is None:
+            check=self.params.check()
+        return check+'='+subcheck
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
