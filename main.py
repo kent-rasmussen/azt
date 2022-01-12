@@ -3290,12 +3290,6 @@ class TaskChooser(TaskDressing,ui.Window):
         self.task=taskclass(self) #filename
         if not self.task.exitFlag.istrue():
             self.task.deiconify()
-        # if hasattr(self,'task'): #for restarts
-            # for w in self.frame.winfo_children():
-            #     w.destroy()
-            # for w in self.check.frame.winfo_children():
-            #     w.destroy()
-            # self.check.frame.destroy()
     def unsetmainwindow(self):
         """self.mainwindowis tracks who the mainwindow is for the chooser,
         x.mainwindow tracks if the object is the mainwindow, so it will
