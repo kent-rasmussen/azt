@@ -3479,8 +3479,8 @@ class TaskChooser(TaskDressing,ui.Window):
                     'analysis'
                     ]:
             self.donew[task]=False
-        lexemesdone=self.file.db.nentrieswlexemedata
-        citationsdone=self.file.db.nentrieswcitationdata
+        lexemesdone=self.db.nentrieswlexemedata
+        citationsdone=self.db.nentrieswcitationdata
         log.info("lexemesdone by lang: {}".format(lexemesdone))
         log.info("citationsdone by lang: {}".format(citationsdone))
         for l in lexemesdone:
