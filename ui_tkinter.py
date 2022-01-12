@@ -11,6 +11,11 @@ import tkinter.font
 import tkinter.scrolledtext
 import file #for image pathnames
 from random import randint #for theme selection
+try:
+    _
+except:
+    def _(x):
+        return x
 # import tkintermod
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
 """These classes have no dependencies"""
