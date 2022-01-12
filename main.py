@@ -3321,28 +3321,34 @@ class TaskChooser(TaskDressing,ui.Window):
         Data Collection: collect, sort
         Analysis: report, transcribe, joinUF
         Maybe make a button to switch between the two?"""
-        tasks=[
-                WordCollectionCitation,
-                # WordCollectionLexeme
-                ]
-        if self.donew['somesort']:
-            tasks.append(ReportCitationT)
-            if self.donew['torecordT']:
-                tasks.append(RecordCitationT)
-        if self.donew['collectionlc']:
-            tasks.append(RecordCitation)
-            tasks.append(ReportCitation)
-            tasks.append(ReportCitationBasic)
-            tasks.append(SortCitationT)
-        if self.donew['tonereport']:
-            tasks.append(JoinUFgroups)
-        if self.donew['recording']:
-            tasks.append(Transcribe)
-        if me:
-            tasks.append(ReportConsultantCheck)
-        """What I'm working on now, just for easy testing:"""
-        if me:
-            tasks.append(self.testdefault)
+        if self.datacollection:
+            tasks=[
+                    WordCollectionCitation,
+                    # WordCollectionLexeme
+                    ]
+            if self.donew['collectionlc']:
+                tasks.append(RecordCitation)
+                tasks.append(SortCitationT)
+                if self.donew['torecordT']:
+                    tasks.append(RecordCitationT)
+            # if self.donew['parsedlx']:
+            #     tasks.append(SortRoots)
+        else: #i.e., analysis tasks
+            tasks=[
+                    ReportCitation,
+                    ]
+            if self.donew['somesortT']:
+                tasks.append(ReportCitationT)
+                tasks.append(ReportCitationTlocation)
+                tasks.append(ReportCitationBasicT)
+                if self.donew['collectionlc']:
+                    tasks.append(ReportCitationBasic)
+                    if self.donew['somerecordingT']:
+                        tasks.append(Transcribe)
+                        if self.donew['analysis']:
+                            tasks.append(JoinUFgroups)
+            if me:
+                tasks.append(ReportConsultantCheck)
         # tasks.append(WordCollectionCitation),
         # tasks.append(WordCollectionPlImp),
         # tasks.append(ParseA), # input pl/imp, gives lx and ps
