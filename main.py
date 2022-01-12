@@ -2640,7 +2640,7 @@ class TaskDressing(object):
             return
         log.info("Dict changes; checking attributes and updating the UI. ({})"
                                                             "".format(dictnow))
-        if self.taskchooser.donew['collectionlx']:
+        if self.taskchooser.donew['collectionlc']:
             self.settings.makeeverythingok()
         #This will probably need to be reworked
         if self.exitFlag.istrue():
