@@ -2522,6 +2522,9 @@ class TaskDressing(object):
             log.info("Using theme '{}'.".format(program['theme'].name))
             title+=_(' ('+program['theme'].name+')')
         self.title(title)
+        ui.Label(self.frame, font='title',
+                text=self.tasktitle(),
+                row=0, column=0, columnspan=2)
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
