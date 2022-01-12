@@ -17,7 +17,7 @@ import ast #For string list interpretation
 import copy
 import collections
 import logsetup
-log = logsetup.Log('INFO')
+log = logsetup.Log('DEBUG')
 log.info("Importing lift.py")
 try: #Allow this module to be used without translation
     _
