@@ -2441,14 +2441,22 @@ class TaskDressing(object):
         return _("Unnamed {} Task ({})".format(program['name'],
                                                 type(self).__name__))
     def _taskchooserbutton(self):
-        if (isinstance(self,TaskChooser) or
-                len(self.taskchooser.makeoptions())<2):
+        if len(self.taskchooser.makeoptions())<2:
             return
-        ui.Button(self.outsideframe,text=_("Tasks"), #.outsideframe
-                        font='small',
-                        cmd=self.taskchooser.gettask,
-                        row=0,column=2,
-                        sticky='ne')
+        if isinstance(self,TaskChooser):
+            if self.datacollection:
+                text=_("Analyze")
+            else:
+                text=_("Collect Data")
+        else:
+            text=_("Tasks")
+        if hasattr(self,'chooserbutton'):
+            self.chooserbutton.destroy()
+        self.chooserbutton=ui.Button(self.outsideframe,text=text,
+                                    font='small',
+                                    cmd=self.taskchooser.gettask,
+                                    row=0,column=2,
+                                    sticky='ne')
     def mainlabelrelief(self,relief=None,refresh=False,event=None):
         #set None to make this a label instead of button:
         log.log(3,"setting button relief to {}, with refresh={}".format(relief,
