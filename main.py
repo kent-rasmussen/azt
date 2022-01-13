@@ -6590,117 +6590,137 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconT']
     def __init__(self, parent): #frame, filename=None
-        """Does this need Tone classing?"""
         Tone.__init__(self, parent)
         ui.Window.__init__(self, parent)
         TaskDressing.__init__(self, parent)
-    def updatelabels(event=None):
-        errorlabel['text'] = ''
-        a=newname.get()
+        Sound.__init__(self)
+    def updatelabels(self,event=None):
+        self.errorlabel['text'] = ''
+        a=self.newname.get()
         try:
             int(a) #Is this interpretable as an integer (default group)?
-            namehash.set('')
+            self.namehash.set('')
         except ValueError:
-            x=hash_t.sub('T',newname.get())
-            y=hash_sp.sub('#',x)
-            z=hash_nbsp.sub('.',y)
-            namehash.set(z)
-    def updategroups():
-        groupsthere=self.status[cvt][ps][profile][check]['groups']
-        groupsdone=self.status[cvt][ps][profile][check]['done']
-        return groupsthere, groupsdone
-    def submitform():
-        updatelabels()
-        newtonevalue=formfield.get()
-        groupsthere, groupsdone = updategroups()
-        group=self.status.group()
+            x=self.hash_t.sub('T',self.newname.get())
+            y=self.hash_sp.sub('#',x)
+            z=self.hash_nbsp.sub('.',y)
+            self.namehash.set(z)
+    def updategroups(self):
+        # cvt=self.params.cvt()
+        # ps=self.slices.ps()
+        # profile=self.slices.profile()
+        # check=self.params.check()
+        self.groups=self.status.groups(wsorted=True)
+        # self.status[cvt][ps][profile][check]['groups']
+        # self.status[cvt][ps][profile][check]['done']
+        self.groupsdone=self.status.verified()
+        self.group=self.status.group()
+        log.info("group: {}, groups: {}".format(self.group,self.groups))
+        if not self.groups:
+            ErrorNotice("No groups in that slice; try another!")
+            return
+        log.info("group: {}, groups: {}".format(self.group,self.groups))
+        if not self.group or self.group not in self.groups:
+            self.getgroup(wsorted=True) #guess=True,
+            if not self.group:
+                log.info("I asked for a framed tone group, but didn't get one.")
+                return
+        log.info("group: {}, groups: {}".format(self.group,self.groups))
+        self.othergroups=self.groups[:]
+        try:
+            self.othergroups.remove(self.group)
+        except ValueError:
+            log.error(_("current group ({}) doesn't seem to be in list of "
+                "groups: ({})\n\tThis may be because we're looking for data "
+                "that isn't there, or maybe a setting is off.".format(
+                                                    self.group, self.groups)))
+            return
+        return 1
+    def submitform(self):
+        self.updatelabels()
+        newtonevalue=self.formfield.get()
+        self.updategroups()
         if newtonevalue == "":
             noname=_("Give a name for this tone melody!")
             log.debug(noname)
-            errorlabel['text'] = noname
+            self.errorlabel['text'] = noname
             return 1
-        if newtonevalue != group: #only make changes!
-            if newtonevalue in groupsthere :
+        if newtonevalue != self.group: #only make changes!
+            if newtonevalue in self.groups :
                 deja=_("Sorry, there is already a group with "
                                 "that label; If you want to join the "
                                 "groups, give it a different name now, "
                                 "and join it later".format(newtonevalue))
                 log.debug(deja)
-                errorlabel['text'] = deja
+                self.errorlabel['text'] = deja
                 return 1
-            self.updatebygroupsenseid(group,newtonevalue)
-            i=groupsthere.index(group) #put new value in the same place.
-            groupsthere.remove(group)
-            groupsthere.insert(i,newtonevalue)
-            if group in groupsdone: #if verified, change the name there, too
-                i=groupsdone.index(group) #put new value in the same place.
-                groupsdone.remove(group)
-                groupsdone.insert(i,newtonevalue)
-            group=newtonevalue
+            self.updatebygroupsenseid(self.group,newtonevalue)
+            self.status.renamegroup(self.group,newtonevalue)
             self.settings.storesettingsfile(setting='status')
         else: #move on, but notify in logs
-            log.info("User selected ‘{}’, but with no change.".format(ok))
+            log.info("User selected ‘{}’, but with no change.".format(
+                                                                self.oktext))
         if hasattr(self,'group_comparison'):
             delattr(self,'group_comparison') # in either case
         self.runwindow.destroy()
         return
-    def addchar(x):
+    def addchar(self,x):
         if x == '':
-            formfield.delete(0,tkinter.END)
+            self.formfield.delete(0,tkinter.END)
         else:
-            formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
-        updatelabels()
-    def done():
-        submitform()
+            self.formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
+        self.updatelabels()
+    def done(self):
+        self.submitform()
         self.donewpyaudio()
-    def next():
+    def next(self):
         log.debug("running next group")
-        error=submitform()
+        error=self.submitform()
         if not error:
             # log.debug("group: {}".format(group))
             self.status.nextgroup(wsorted=True)
             # log.debug("group: {}".format(group))
             self.makewindow()
-    def nextcheck():
+    def nextcheck(self):
         log.debug("running next check")
-        error=submitform()
+        error=self.submitform()
         if not error:
-            log.debug("check: {}".format(check))
+            # log.debug("check: {}".format(check))
             self.status.nextcheck(wsorted=True)
-            log.debug("check: {}".format(check))
+            # log.debug("check: {}".format(check))
             self.makewindow()
-    def nextprofile():
+    def nextprofile(self):
         log.debug("running next profile")
-        error=submitform()
+        error=self.submitform()
         if not error:
-            log.debug("profile: {}".format(profile))
+            # log.debug("profile: {}".format(profile))
             self.status.nextprofile(wsorted=True)
-            log.debug("profile: {}".format(profile))
+            # log.debug("profile: {}".format(profile))
             self.makewindow()
-    def setgroup_comparison():
+    def setgroup_comparison(self):
         w=self.getgroup(comparison=True,wsorted=True) #this returns its window
         if w and w.winfo_exists(): #This window may be already gone
             w.wait_window(w)
-        comparisonbuttons()
-    def comparisonbuttons():
+        self.comparisonbuttons()
+    def comparisonbuttons(self):
         try: #successive runs
-            compframe.compframeb.destroy()
+            self.compframe.compframeb.destroy()
             log.info("Comparison frameb destroyed!")
         except: #first run
             log.info("Problem destroying comparison frame, making...")
-        buttonframew=int(program['screenw']/4)
+        # self.buttonframew=int(program['screenw']/4)
         # b['wraplength']=buttonframew
-        compframe.compframeb=ui.Frame(compframe)
-        compframe.compframeb.grid(row=1,column=0)
+        self.compframe.compframeb=ui.Frame(self.compframe)
+        self.compframe.compframeb.grid(row=1,column=0)
         t=_('Compare with another group')
         if (hasattr(self, 'group_comparison')
-                and self.group_comparison in groupsthere and
-                self.group_comparison != group):
+                and self.group_comparison in self.groups and
+                self.group_comparison != self.group):
             log.info("Making comparison buttons for group {} now".format(
                                                 self.group_comparison))
             t=_('Compare with another group ({})').format(
                                                 self.group_comparison)
-            compframe.bf2=ToneGroupButtonFrame(compframe.compframeb,
+            self.compframe.bf2=ToneGroupButtonFrame(self.compframe.compframeb,
                                     self, self.exs,
                                     self.group_comparison,
                                     showtonegroup=True,
@@ -6708,27 +6728,27 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
                                     unsortable=False, #no space, bad idea
                                     alwaysrefreshable=True,
                                     font='default',
-                                    wraplength=buttonframew
+                                    wraplength=self.buttonframew
                                     )
-            compframe.bf2.grid(row=0, column=0, sticky='w')
+            self.compframe.bf2.grid(row=0, column=0, sticky='w')
         elif not hasattr(self, 'group_comparison'):
             log.info("No comparison found !")
-        elif self.group_comparison not in groupsthere:
+        elif self.group_comparison not in self.groups:
             log.info("Comparison ({}) not in group list ({})"
-                        "".format(self.group_comparison,groupsthere))
+                        "".format(self.group_comparison,self.groups))
         elif self.group_comparison == group:
             log.info("Comparison ({}) same as subgroup ({}); not showing."
-                        "".format(self.group_comparison,group))
+                        "".format(self.group_comparison,self.group))
         else:
             log.info("This should never happen (renamegroup/"
                         "comparisonbuttons)")
-        sub_c['text']=t
+        self.sub_c['text']=t
     def makewindow(self):
         cvt=self.params.cvt()
         ps=self.slices.ps()
         profile=self.slices.profile()
         check=self.params.check()
-        buttonframew=int(program['screenw']/3.5)
+        self.buttonframew=int(program['screenw']/3.5)
         if check == None:
             self.getcheck(guess=True)
             if check == None:
@@ -6738,28 +6758,17 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
             log.error("I don't have any sorted data for check: {}, "
                         "ps-profile: {}-{},".format(check,ps,profile))
             return
-        groupsthere, groupsdone = updategroups()
-        group=self.status.group()
-        if group is None or group not in groupsthere:
-            self.getgroup(guess=True,wsorted=True)
-            if group == None:
-                log.info("I asked for a framed tone group, but didn't get one.")
-                return
-        notthisgroup=groupsthere[:]
-        if group in groupsthere:
-            notthisgroup.remove(group)
-        else:
-            log.error(_("current group ({}) doesn't seem to be in list of "
-                "groups: ({})\n\tThis may be because we're looking for data that "
-                "isn't there, or maybe a setting is off.".format(group,
-                                                                groupsthere)))
-        newname=tkinter.StringVar(value=group)
-        namehash=tkinter.StringVar()
-        hash_t,hash_sp,hash_nbsp=rx.tonerxs()
+        groupsok=self.updategroups()
+        if not groupsok:
+            log.error("Problem with log; check earlier message.")
+            return
+        self.newname=tkinter.StringVar(value=self.group)
+        self.namehash=tkinter.StringVar()
+        self.hash_t,self.hash_sp,self.hash_nbsp=rx.tonerxs()
         padx=50
         pady=10
         title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
-                        ).format(ps,profile,group,check)
+                        ).format(ps,profile,self.group,check)
         self.getrunwindow(title=title)
         titlel=ui.Label(self.runwindow.frame,text=title,font='title',
                         row=0,column=0,sticky='ew',padx=padx,pady=pady
@@ -6804,15 +6813,16 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
                 columnspan=1
                 row=0
             ui.Button(buttonframe,text = text,
-                        command = lambda x=char:addchar(x),
+                        command = lambda x=char:self.addchar(x),
                         anchor ='c',
                         row=row,
                         column=column,
                         sticky='nsew',
                         columnspan=columnspan
                         )
-        g=nn(notthisgroup,twoperline=True)
-        log.info("There: {}, NTG: {}; g:{}".format(groupsthere,notthisgroup,g))
+        g=nn(self.othergroups,twoperline=True)
+        log.info("There: {}, NTG: {}; g:{}".format(self.groups,
+                                                    self.othergroups,g))
         groupslabel=ui.Label(inputframe,
                             text='Other Groups:\n{}'.format(g),
                             row=0,column=1,
@@ -6823,22 +6833,22 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
         fieldframe=ui.Frame(inputframe,
                             row=1,column=0,sticky='new'
                             )
-        formfield = ui.EntryField(fieldframe,textvariable=newname,
+        self.formfield = ui.EntryField(fieldframe,textvariable=self.newname,
                                     row=1,column=0,sticky='new',
                                     font='readbig')
-        formfield.bind('<KeyRelease>', updatelabels) #apply function after key
-        errorlabel=ui.Label(fieldframe,text='',
+        self.formfield.bind('<KeyRelease>', self.updatelabels) #apply function after key
+        self.errorlabel=ui.Label(fieldframe,text='',
                             fg='red',
                             wraplength=int(self.frame.winfo_screenwidth()/3),
                             row=1,column=1,sticky='nsew'
                             )
-        formhashlabel=ui.Label(fieldframe,
-                                textvariable=namehash,
+        self.formhashlabel=ui.Label(fieldframe,
+                                textvariable=self.namehash,
                                 anchor ='c',
                                 row=2,column=0,sticky='new'
                                 )
         fieldframe.grid_columnconfigure(0, weight=1)
-        updatelabels()
+        self.updatelabels()
         responseframe=ui.Frame(self.runwindow.frame,
                                 row=3,
                                 column=0,
@@ -6846,54 +6856,49 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
                                 padx=padx,
                                 pady=pady
                                 )
-        ok=_('Use this name and go to:')
-        sub_lbl=ui.Label(responseframe,text = ok, font='read',
-                        row=0,column=0,sticky='ns'
+        self.oktext=_('Use this name and go to:')
+        column=0
+        sub_lbl=ui.Label(responseframe,text = self.oktext, font='read',
+                        row=0,column=column,sticky='ns'
                         )
-        t=_('main screen')
-        sub_btn=ui.Button(responseframe,text = t, command = done, anchor ='c',
-                            row=0,column=1,sticky='ns'
-                            )
-        # if reverify == False: #don't give this option if verifying
-        t=_('next group')
-        sub_btn=ui.Button(responseframe,text = t,command = next,anchor ='c',
-                            row=0,column=2,sticky='ns'
-                            )
-        t=_('next tone frame')
-        sub_f=ui.Button(responseframe,text = t,command = nextcheck,
-                        row=0,column=3,sticky='ns'
-                        )
-        t=_('next syllable profile')
-        sub_p=ui.Button(responseframe,text = t,command = nextprofile,
-                        row=0,column=4,sticky='ns'
-                        )
+        for button in [
+                        (_('main screen'), self.done),
+                        (_('next group'), self.next),
+                        (_('next tone frame'), self.nextcheck),
+                        (_('next syllable profile'), self.nextprofile),
+                        ]:
+            column+=1
+            ui.Button(responseframe,text = button[0], command = button[1],
+                                anchor ='c',
+                                row=0,column=column,sticky='ns'
+                                )
         examplesframe=ui.Frame(self.runwindow.frame,
                                 row=4,column=0,sticky=''
                                 )
         b=ToneGroupButtonFrame(examplesframe, self, self.exs,
-                                group,
+                                self.group,
                                 showtonegroup=True,
                                 # canary=entryview,
                                 playable=True,
                                 unsortable=True,
                                 alwaysrefreshable=True,
                                 row=0, column=0, sticky='w',
-                                wraplength=buttonframew
+                                wraplength=self.buttonframew
                                 )
-        compframe=ui.Frame(examplesframe,
+        self.compframe=ui.Frame(examplesframe,
                     highlightthickness=10,
                     highlightbackground=self.frame.theme.white,
                     row=0,column=1,sticky='e'
                     ) #no hlfg here
         t=_('Compare with another group')
-        sub_c=ui.Button(compframe,
+        self.sub_c=ui.Button(self.compframe,
                         text = t,
-                        command = setgroup_comparison,
+                        command = self.setgroup_comparison,
                         row=0,column=0
                         )
-        comparisonbuttons()
+        self.comparisonbuttons()
         self.runwindow.waitdone()
-        sub_btn.wait_window(self.runwindow) #then move to next step
+        self.sub_c.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
 class JoinUFgroups(Tone,TaskDressing,ui.Window):
