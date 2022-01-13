@@ -7218,6 +7218,14 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Make Reports on Citation Form Sorting in Tone Frames")
         return _("Report on one slice of Citation Forms (in Tone Frames)")
+class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
+    """docstring for ReportCitationT."""
+    def tasktitle(self):
+        return _("Tone Report by frames")
+        # "Make Reports on Citation Form Sorting in Tone Frames")
+        # return _("Report on one slice of Citation Forms (in Tone Frames)")
+    def taskicon(self):
+        return program['theme'].photo['iconT']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
@@ -7233,10 +7241,14 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
         self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
+        self.bylocation=True
 class ReportCitationBasicT(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
-        return _("Report on several slices of Citation Forms (in Tone Frames)")
+        return _("Comprehensive Tone Report")
+        # Report on several slices of Citation Forms (in Tone Frames)")
+    def taskicon(self):
+        return program['theme'].photo['iconT']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
