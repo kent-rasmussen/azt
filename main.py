@@ -3753,7 +3753,7 @@ class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
                 'sticky':'ew'
                 }
     def tasktitle(self):
-        return _("Word Collection for Citation Forms")
+        return _("Word Collection") # for Citation Forms
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
@@ -5738,7 +5738,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconT']
     def tasktitle(self):
-        return _("Citation Form Sorting in Tone Frames")
+        return _("Sort by Tone") #Citation Form Sorting in Tone Frames
     def dobuttonkwargs(self):
         return {'text':_("Sort!"),
                 'fn':self.runcheck,
@@ -6576,9 +6576,9 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                         )
         skipb.grid(column=0, row=1, sticky="ew")
     """Doing stuff"""
-class Transcribe(Tone,TaskDressing,ui.Window):
+class Transcribe(Tone,Sound,TaskDressing,ui.Window):
     def tasktitle(self):
-        return _("Transcribe Citation Form Sorted Tone Groups")
+        return _("Transcribe Tone")
     def dobuttonkwargs(self):
         return {'text':_("Transcribe Surface Tone Groups"),
                 'fn':self.makewindow,
@@ -6588,7 +6588,7 @@ class Transcribe(Tone,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program['theme'].photo['icon']
+        return program['theme'].photo['iconT']
     def __init__(self, parent): #frame, filename=None
         """Does this need Tone classing?"""
         Tone.__init__(self, parent)
@@ -7069,7 +7069,7 @@ class RecordCitation(Record,Segments,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def tasktitle(self):
-        return _("Record Citation Forms")
+        return _("Record Words") #Citation Forms
     def taskicon(self):
         return program['theme'].photo['record']
     def __init__(self, parent): #frame, filename=None
@@ -7091,7 +7091,7 @@ class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['record']
     def tasktitle(self):
-        return _("Record Citation Form Sorting in Tone Frames")
+        return _("Record Tone Frames") #Citation Form Sorting in Tone Frames
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
@@ -7101,7 +7101,9 @@ class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
 class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
-        return _("Make Reports on Citation Forms (one slice)")
+        return _("Alphabet Report") # on One Data Slice
+    def taskicon(self):
+        return program['theme'].photo['iconCV']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.runcheck,
@@ -7148,7 +7150,9 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
 class ReportCitationBasic(Report,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
-        return _("General CV Report on Citation Forms")
+        return _("Comprehensive Alphabet Report") # on Citation Forms
+    def taskicon(self):
+        return program['theme'].photo['iconCV']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
