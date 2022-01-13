@@ -3544,6 +3544,11 @@ class TaskChooser(TaskDressing,ui.Window):
         for lang in self.file.db.nentrieswcitationdata:
             if self.file.db.nentrieswcitationdata[lang] >=1700:
                 self.donew['collectionlc']=True
+        for f in self.db.sensefields:
+            if 'verification' in f:
+                self.donew['analysis']=True
+                break
+        log.info("Analysis of what you're done with: {}".format(self.donew))
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
