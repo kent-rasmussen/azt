@@ -7,6 +7,8 @@
 - [**Miscellaneous**](#miscellaneous)
 
 ## Check Out the [Ordered Task List](TASKS.md)
+[These tasks](TASKS.md) should simplify a lot of the organization of your project.
+
 ## Practical Prerequisites
 ### [LIFT](https://code.google.com/archive/p/lift-standard/) Database to Check
 [A→Z+T](https://github.com/kent-rasmussen/azt) requires a [LIFT](https://code.google.com/archive/p/lift-standard/) database to check. Fortunately these are not difficult to generate; [LIFT](https://code.google.com/archive/p/lift-standard/) is an open XML specification for storing lexical data. [LIFT](https://code.google.com/archive/p/lift-standard/) databases can be created by a number of routes:
