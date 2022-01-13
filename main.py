@@ -3540,7 +3540,7 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
         for lang in self.file.db.nentrieswlexemedata:
             if self.file.db.nentrieswlexemedata[lang] >=1700:
-                self.donew['collectionlx']=True
+                self.donew['parsedlx']=True
         for lang in self.file.db.nentrieswcitationdata:
             # if self.file.db.nentrieswcitationdata[lang] >=1700:
             if not self.cawlmissing:
