@@ -19,7 +19,7 @@ Before you can [Set up A→Z+T for normal use](#set-up-azt-for-normal-use), you 
 2. Open a terminal (hit the Windows key then type `cmd` in the search box), and paste each of these (and hit enter):
     - `python -m pip install --upgrade pip setuptools wheel`
     - `python -m pip install pyaudio Pillow lxml`
-    - `python -m pip install patiencediff`
+    - `python -m pip install patiencediff` (not required as of Jan 2022; if you get an error here, just skip it)
 
 ## Install Git and Download A→Z+T
 
