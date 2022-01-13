@@ -3513,8 +3513,16 @@ class TaskChooser(TaskDressing,ui.Window):
                     if al not in sortsrecorded[f]:
                         sortsrecorded[f][al]=0
                     sortsnotrecorded[f][l]=sorts[f][l]-sortsrecorded[f][al]
-                    if sortsnotrecorded[f][l] >=100:
-                        self.donew['torecord']=True
+                    if sortsnotrecorded[f][l] >= 100:
+                        if f == 'sense/example':
+                            self.donew['torecordT']=True
+                        else:
+                            self.donew['torecord']=True
+                    if sortsrecorded[f][al] >= 100:
+                        if f == 'sense/example':
+                            self.donew['somerecordingT']=True
+                        else:
+                            self.donew['somerecording']=True
                 else:
                     log.info("Couldn't find plausible audiolang (among {}) "
                             "for analang {}".format(self.db.audiolangs,l))
