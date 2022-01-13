@@ -440,8 +440,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if len(examples)>1:
                     log.error("Found multiple/duplicate examples (of the same "
                         "location ({}) in the same sense: {})"
-                    "".format(l,[x.find('form/text').text for x in examples
-                                    if x.find('form/text')]))
+                    "".format(l,[
+                        x.findall('form[@lang="{}"]/text'.format(lang)).text
+                            for x in examples
+                            for lang in self.analangs
+                            if x.find('form[@lang="{}"]/text'.format(lang))]))
                     """Before implementing the following, we need a test for
                     presence of audio file link, and different tone values,
                     including which to preserve if different (i.e., not '')"""
@@ -518,6 +521,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                         "".format(uniq))
                             for example in examples:
                                 #This should ultimately have [@lang='{}'].analang
+                                l=[i.text for i in example.findall(
+                                                    'form[@lang="{}"]/text'
+                                                    ''.format(self.analangs[0]))
+                                        if i]
                                 url=("field[@type='tone']/form[text='{}']"
                                     "".format(savevalue))
                                 if not example.find(url):
