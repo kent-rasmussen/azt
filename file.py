@@ -175,6 +175,9 @@ def getdirectory():
     f=filedialog.askdirectory(initialdir = home, title = _("Select a new "
                             "location for your LIFT Lexicon and other Files"))
     return f
+def getfilesofdirectory(dir):
+    # return pathlib.Path(dir).iterdir()
+    return pathlib.Path(dir).glob('*')
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()
