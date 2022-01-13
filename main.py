@@ -3542,7 +3542,8 @@ class TaskChooser(TaskDressing,ui.Window):
             if self.file.db.nentrieswlexemedata[lang] >=1700:
                 self.donew['collectionlx']=True
         for lang in self.file.db.nentrieswcitationdata:
-            if self.file.db.nentrieswcitationdata[lang] >=1700:
+            # if self.file.db.nentrieswcitationdata[lang] >=1700:
+            if not self.cawlmissing:
                 self.donew['collectionlc']=True
         for f in self.db.sensefields:
             if 'verification' in f:
