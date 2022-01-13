@@ -1,5 +1,5 @@
 # Ordered Task List
 
-## Data Collection Tasks
+## [Data Collection Tasks](TASKSCOLLECTION.md)
 
-## Analysis Tasks
+## [Analysis Tasks](TASKSANALYSIS.md)
