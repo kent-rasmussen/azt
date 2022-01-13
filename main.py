@@ -4992,6 +4992,7 @@ class Report(object):
         r.close()
         if me:
             resultswindow.destroy()
+        self.status.last('report',update=True)
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
             self.results = ui.Frame(self.runwindow.frame,width=800)
