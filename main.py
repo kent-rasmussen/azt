@@ -7216,8 +7216,27 @@ class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
 class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
-        return _("Make Reports on Citation Form Sorting in Tone Frames")
-        return _("Report on one slice of Citation Forms (in Tone Frames)")
+        return _("Tone Report")
+        # "Make Reports on Citation Form Sorting in Tone Frames")
+        # return _("Report on one slice of Citation Forms (in Tone Frames)")
+    def taskicon(self):
+        return program['theme'].photo['iconT']
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.do,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['icon'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        self.do=self.tonegroupreport
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+        self.bylocation=False
 class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
