@@ -3526,7 +3526,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 else:
                     log.info("Couldn't find plausible audiolang (among {}) "
                             "for analang {}".format(self.db.audiolangs,l))
-        log.info("nexampleswosoundfiles by lang: {}".format(sortsnotrecorded))
+        log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
         for lang in self.file.db.nentrieswlexemedata:
             if self.file.db.nentrieswlexemedata[lang] >=1700:
                 self.donew['collectionlx']=True
