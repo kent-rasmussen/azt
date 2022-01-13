@@ -9823,7 +9823,12 @@ if __name__ == "__main__":
         mainproblem()
     else:
         try:
-            main()
+            import profile
+            profile.run('main()', 'userlogs/profile.tmp')
+            import pstats
+            p = pstats.Stats('userlogs/profile.tmp')
+            p.sort_stats('cumulative').print_stats(10)
+            # main()
         except SystemExit:
             log.info("Shutting down by user request")
         except KeyboardInterrupt:
