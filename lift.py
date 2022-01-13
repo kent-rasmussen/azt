@@ -1264,6 +1264,8 @@ class LiftURL():
     def gloss(self):
         self.baselevel()
         self.build("gloss","lang","glosslang")
+        if 'gloss' in self.kwargs and self.kwargs['gloss']:
+            self.text("gloss")
     def definition(self):
         self.baselevel()
         self.build("definition")
@@ -1313,6 +1315,19 @@ class LiftURL():
         if 'tonevalue' in self.kwargs:
             self.kwargs['formtext']='tonevalue'
             self.form("tonevalue",'glosslang')
+            self.kwargs['formtext']=None
+        else: #don't force a text node with no text value
+            self.kwargs['formtext']=None
+            self.form(lang='glosslang')
+    def cawlfield(self):
+        log.log(4,"Making CAWL field")
+        self.baselevel()
+        self.kwargs['ftype']='SILCAWL'
+        self.level['cawlfield']=self.level['cur']+1 #so this won't repeat
+        self.field()
+        if 'cawlvalue' in self.kwargs:
+            self.kwargs['formtext']='cawlvalue'
+            self.form("cawlvalue",'glosslang')
             self.kwargs['formtext']=None
         else: #don't force a text node with no text value
             self.kwargs['formtext']=None
@@ -1716,6 +1731,8 @@ class LiftURL():
         self.attrs['tonefield']=['tonevalue']
         self.attrs['toneUFfield']=['toneUFvalue']
         self.attrs['locationfield']=['location']
+        self.attrs['cawlfield']=['fvalue']
+        self.attrs['gloss']=['glosslang']
     def setchildren(self):
         """These are the kwargs that imply a field. field names also added to
         ensure that depenents get picked up.
@@ -1726,7 +1743,8 @@ class LiftURL():
         self.children['entry']=['lexeme','pronunciation','sense','field',
                                             'citation','morphtype','trait']
         self.children['sense']=['ps','definition','gloss',
-                                            'example','toneUFfield','field']
+                                'example','toneUFfield','cawlfield','field'
+                                            ]
         self.children['example']=['form','translation','locationfield',
                                             'tonefield','field']
         self.children['field']=['form']
