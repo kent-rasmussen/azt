@@ -261,8 +261,8 @@ class SoundFilePlayer(object):
     def getformat(self):
         format=self.pa.get_format_from_width(self.wf.getsampwidth())
         return format
-    def play(self):
-        log.debug("I'm playing the recording now")
+    def play(self,event=None):
+        log.debug("I'm playing the recording now ({})".format(self.filenameURL))
         self.streamclose() #just in case
         timeout=5 #seconds or None
         process=False
