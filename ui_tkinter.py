@@ -571,6 +571,7 @@ class Root(Exitable,tkinter.Tk):
             self.theme=theme
         else:
             self.theme=Theme(program) #OK if program==None
+        self.renderings={}
         Exitable.__init__(self)
         UI.__init__(self)
 """These have parent (Childof), but no grid"""
