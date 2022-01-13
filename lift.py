@@ -2356,6 +2356,36 @@ if __name__ == '__main__':
 
         return
     oldtonevalue=2
+    g='snore'
+    lang='en'
+    cawls=lift.get('cawlfield/form/text').get('text')
+    log.info("CAWL ({}): {}".format(len(cawls),cawls))
+    missing=[]
+    for i in range(1700):
+        if "{:04}".format(i+1) not in cawls:
+            missing.append(i+1)
+    log.info("CAWL entries missing ({}): {}".format(len(missing),missing))
+    exit()
+    e=lift.get('entry',gloss=g,glosslang=lang,
+                            #ftype='SILCAWL',
+                            # cawlvalue="{:04}".format(n+1),
+                            showurl=True
+                            ).get('node')
+    if e:
+        log.info(e)
+    else:
+        log.info("No entry! ({})".format(e))
+    exit()
+    for n in range(1705):
+        sense=lift.get('entry',path=['cawlfield'],#ftype='SILCAWL',
+                        cawlvalue="{:04}".format(n+1),
+                        showurl=True
+                        ).get('node')
+        if sense:
+            log.info("{} found!".format(n))
+        else:
+            log.info("{} not found!".format(n))
+    exit()
     for senseid in senseids:
         for location in locations:# b=lift.get('sense',fieldtype='tone',location=locations[0],
         #             tonevalue=subcheck,showurl=True).get('senseid')
