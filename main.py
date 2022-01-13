@@ -6909,7 +6909,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program['theme'].photo['icon']
+        return program['theme'].photo['iconT']
     def tonegroupsjoinrename(self,**kwargs):
         def clearerror(event=None):
             errorlabel['text'] = ''
@@ -6944,8 +6944,11 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
             self.runwindow.destroy()
             self.tonegroupsjoinrename() #call again, in case needed
         def redo():
+            self.runwindow.wait(_("Redoing Tone Analysis"))
             self.analysis.do()
-            done()
+            # self.runwindow.waitdone()
+            # self.runwindow.destroy()
+            self.tonegroupsjoinrename() #call again, in case needed
         def done():
             self.runwindow.destroy()
         ps=kwargs.get('ps',self.slices.ps())
