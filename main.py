@@ -7253,6 +7253,7 @@ class ReportCitationBasicT(Report,Tone,TaskDressing,ui.Window):
         # self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
+        self.bylocation=False
 """Task definitions end here"""
 class Entry(lift.Entry): #Not in use
     def __init__(self, db, guid, window=None, check=None, problem=None,
