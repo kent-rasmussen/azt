@@ -3498,6 +3498,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 w=self.asktoconvertlxtolc()
                 w.wait_window(w) # wait for this answer before moving on
                 break #just ask this once
+        self.getcawlmissing()
         sorts=self.db.nfields
         log.info("nfields by lang: {}".format(sorts))
         sortsrecorded=self.db.nfieldswsoundfiles
