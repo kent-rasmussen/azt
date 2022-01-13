@@ -9005,6 +9005,14 @@ class StatusDict(dict):
             self._group=group
         else:
             return str(getattr(self,'_group',None))
+    def renamegroup(self,j,k,**kwargs):
+        sn=self.node(**kwargs)
+        if j in sn['done']:
+            sn['done'][sn['done'].index(j)]=k
+        if j in sn['groups']:
+            sn['groups'][sn['groups'].index(j)]=k
+        if self.group() == j:
+            self.group(k)
     def makegroupok(self,**kwargs):
         kwargs=grouptype(**kwargs)
         groups=self.groups(**kwargs)
