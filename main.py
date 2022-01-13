@@ -3840,6 +3840,34 @@ class Tone(object):
                 break
         self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
         self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
+    def updatebygroupsenseid(self,oldtonevalue,newtonevalue,verified=False):
+        # This function updates the field value and verification status (which
+        # contains the field value) in the lift file.
+        # This is all the words in the database with the given
+        # location:value correspondence (any ps/profile)
+        check=self.params.check()
+        lst2=self.db.get('sense',location=check,tonevalue=oldtonevalue
+                                                                ).get('senseid')
+        # We are agnostic of verification status of any given entry, so just
+        # use this to change names, not to mark verification status (do that
+        # with self.updatestatuslift())
+        rm=self.verifictioncode(check,oldtonevalue)
+        add=self.verifictioncode(check,newtonevalue)
+        """The above doesn't test for profile, so we restrict that next"""
+        profile=self.slices.profile()
+        senseids=self.slices.inslice(lst2)
+        for senseid in senseids:
+            """This updates the fieldvalue from 'fieldvalue' to
+            'newfieldvalue'."""
+            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
+                                location=check,#fieldvalue=oldtonevalue,
+                                fieldvalue=newtonevalue,write=False)
+            self.db.modverificationnode(senseid=senseid,
+                            vtype=profile,
+                            analang=self.analang,
+                            add=add,rms=[rm],
+                            addifrmd=True,write=False)
+        self.db.write() #once done iterating over senseids
     def addframe(self):
         log.info('Tone frame to add!')
         """I should add gloss2 option here, likely just with each language.
@@ -4688,6 +4716,9 @@ class Record(Sound):
 class Report(object):
     def consultantcheck(self):
         self.settings.reloadstatusdata()
+        self.bylocation=False
+        self.tonegroupreportcomprehensive()
+        self.bylocation=True
         self.tonegroupreportcomprehensive()
     def tonegroupreportcomprehensive(self,**kwargs):
         pss=self.slices.pss()[:self.settings.maxpss]
@@ -4728,7 +4759,6 @@ class Report(object):
             analysisOK=False # w/o info, trigger reanalysis
         self.datadict.refresh() #get the most recent data
         silent=kwargs.get('silent',False)
-        bylocation=kwargs.get('bylocation',False)
         default=kwargs.get('default',True)
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
@@ -4788,7 +4818,7 @@ class Report(object):
         xlpr=self.xlpstart(reporttype='Tone',
                             ps=ps,
                             profile=profile,
-                            bylocation=bylocation,
+                            # bylocation=self.bylocation,
                             default=default
                             )
         s1=xlp.Section(xlpr,title='Introduction')
@@ -4890,7 +4920,7 @@ class Report(object):
             log.info(text)
             p1=xlp.Paragraph(s1,text)
             output(window,r,text)
-            if bylocation == True:
+            if self.bylocation:
                 textout=list()
                 #This is better than checks, just whats there for this group
                 for check in self.analysis.valuesbygroupcheck[group]:
@@ -5100,10 +5130,9 @@ class Report(object):
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         reporttype=kwargs.get('reporttype','adhoc')
-        bylocation=kwargs.get('bylocation',False)
         default=kwargs.get('default',True)
         if reporttype == 'Tone':
-            if bylocation:
+            if self.bylocation:
                 reporttype='Tone-bylocation'
         elif not re.search('Basic',reporttype): #We don't want this in the title
             #this is only for adhoc "big button" reports.
