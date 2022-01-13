@@ -1136,6 +1136,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Found these morph-type values: {}".format(m))
         return m
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
+class EmptyTextNodePlaceholder(object):
+    """Just be able to return self.text when asked."""
+    def __init__(self):
+        # super(EmptyTextNodePlaceholder, self).__init__()
+        self.text = None
+
 class Node(ET.Element):
     def makefieldnode(self,type,lang,text=None,gimmetext=False):
         n=Node(self,'field',attrib={'type':type})
