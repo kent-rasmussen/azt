@@ -6377,34 +6377,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
-    def updatebygroupsenseid(self,oldtonevalue,newtonevalue,verified=False):
-        # This function updates the field value and verification status (which
-        # contains the field value) in the lift file.
-        # This is all the words in the database with the given
-        # location:value correspondence (any ps/profile)
-        check=self.params.check()
-        lst2=self.db.get('sense',location=check,tonevalue=oldtonevalue
-                                                                ).get('senseid')
-        # We are agnostic of verification status of any given entry, so just
-        # use this to change names, not to mark verification status (do that
-        # with self.updatestatuslift())
-        rm=self.verifictioncode(check,oldtonevalue)
-        add=self.verifictioncode(check,newtonevalue)
-        """The above doesn't test for profile, so we restrict that next"""
-        profile=self.slices.profile()
-        senseids=self.slices.inslice(lst2)
-        for senseid in senseids:
-            """This updates the fieldvalue from 'fieldvalue' to
-            'newfieldvalue'."""
-            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
-                                location=check,#fieldvalue=oldtonevalue,
-                                fieldvalue=newtonevalue)
-            self.db.modverificationnode(senseid=senseid,
-                            vtype=profile,
-                            analang=self.analang,
-                            add=add,rms=[rm],
-                            addifrmd=True)
-        self.db.write() #once done iterating over senseids
     def addtonegroup(self):
         log.info("Adding a tone group!")
         values=[0,] #always have something here
@@ -6436,7 +6408,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                                     analang=self.analang,
                                     fieldtype='tone',location=check,
                                     framed=framed,
-                                    fieldvalue=group
+                                    fieldvalue=group,
+                                    write=False
                                     )
         tonegroup=unlist(self.db.get("example/tonefield/form/text",
                         senseid=senseid, location=check).get('text'))
@@ -6471,7 +6444,9 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         self.db.addmodexamplefields(senseid=senseid,
                                 analang=self.analang,
                                 fieldtype='tone',location=check,
-                                fieldvalue='',showurl=True) #this value should be the only change
+                                fieldvalue='',  #this value only change
+                                showurl=True,
+                                write=False)
         log.info("Checking that removal worked")
         tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
                             location=check).get('text')
@@ -6489,7 +6464,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         rm=self.verifictioncode(check,group)
         profile=self.slices.profile()
         self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
-                                                                        rms=[rm])
+                                                        rms=[rm],write=False)
         self.status.last('sort',update=True)
         self.db.write() #This is not iterated over
         if sorting:
