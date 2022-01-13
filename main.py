@@ -3264,9 +3264,9 @@ class TaskChooser(TaskDressing,ui.Window):
         n=0
         bpr=3
         # compound='left', #image bottom, left, right, or top of text
-        bframe=ui.Frame(self.frame,column=1, row=1, pady=(25,0))
+        self.optionsframe=ui.Frame(self.frame,column=1, row=1, pady=(25,0))
         for o in optionlist:
-            ui.Button(bframe,
+            ui.Button(self.optionsframe,
                         text=o[1],
                         command=lambda t=o[0]:self.maketask(t),
                         column=n%bpr,
