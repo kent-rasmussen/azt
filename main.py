@@ -8257,7 +8257,7 @@ class Analysis(object):
                     senseid=senseid,location=check).get('text')
                 if group: #store location:group by senseid
                     self.senseiddict[senseid][check]=group
-        log.info("Done collecting groups by location for each senseid.")
+        # log.info("Done collecting groups by location for each senseid.")
         return self.senseiddict #was output
     def sorttoUFs(self):
         """Input is a dict keyed by location, valued with location:group dicts
@@ -8278,8 +8278,8 @@ class Analysis(object):
                 unnamed[k].append(senseid)
             except KeyError:
                 unnamed[k]=[senseid]
-        log.info("Done collecting combinations of groups values "
-                "by location: {}".format(unnamed))
+        # log.info("Done collecting combinations of groups values "
+        #         "by location: {}".format(unnamed))
         # self.groups={}
         self.valuesbygroupcheck={}
         self.senseidsbygroup={}
