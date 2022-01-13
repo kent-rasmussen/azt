@@ -3465,6 +3465,15 @@ class TaskChooser(TaskDressing,ui.Window):
         for l in [lt,li,lq,lnb]:
             l.wrap()
         return w
+    def getcawlmissing(self):
+        cawls=self.db.get('cawlfield/form/text').get('text')
+        # log.info("CAWL ({}): {}".format(len(cawls),cawls))
+        self.cawlmissing=[]
+        for i in range(1700):
+            if "{:04}".format(i+1) not in cawls:
+                self.cawlmissing.append(i+1)
+        log.info("CAWL missing ({}): {}".format(len(self.cawlmissing),
+                                                    self.cawlmissing))
     def whatsdone(self):
         self.donew={}
         for task in ['collectionlc','parsedlx','collectionplimp',
