@@ -4129,12 +4129,6 @@ class Sort(object):
         #This function updates the status variable, not the lift file.
         self.status.update(group=group,verified=verified)
         return
-    def verifictioncode(self,check=None,subcheck=None):
-        if subcheck is None: #do I ever want this to really be None?
-            subcheck=self.params.subcheck()
-        if check is None:
-            check=self.params.check()
-        return check+'='+subcheck
     def addmodadhocsort(self):
         def submitform():
             if profilevar.get() == "":
