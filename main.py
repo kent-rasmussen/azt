@@ -8336,15 +8336,17 @@ class Analysis(object):
                     self.senseidsbygroup[group]=[senseid]
         return self.senseidsbygroup #?
     def donoUFanalysis(self):
+        log.info("Reading tone group analysis from UF tone fields")
         self.senseidsbyUFsfromLIFT() # > self.senseidsbygroup
         self.tonegroupsbyUFcheckfromLIFT() # > self.valuesbygroupcheck
         self.doanyway()
     def do(self):
+        log.info("Starting tone group analysis from lift examples")
         self.checkgroupsbysenseid() # > self.senseiddict
         self.sorttoUFs() # > self.senseidsbygroup and self.valuesbygroupcheck
         self._db.write()
         self.doanyway()
-        self._status.last('analysis')
+        self._status.last('analysis',update=True)
     def doanyway(self):
         """compare(x=UFs/checks) give self.comparison(x) and self.ordered(x)"""
         self.comparechecks() #also self.valuesbygroupcheck -> …checkgroup
