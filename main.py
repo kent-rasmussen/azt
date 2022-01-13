@@ -4252,8 +4252,6 @@ class Sort(object):
         self.runwindow.wait_window(scroll)
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
-class Record(Sound):
-    """This holds all the Sound methods specific for Recording."""
     def donewpyaudio(self):
         try:
             self.pyaudio.terminate()
@@ -4421,7 +4419,7 @@ class Record(Sound):
                     )
     def soundsettingscheck(self):
         if not hasattr(self.settings,'soundsettings'):
-            self.settings.loadsoundsettings()
+            self.loadsoundsettings()
     def missingsoundattr(self):
         log.info(dir(self.soundsettings))
         for s in ['fs', 'sample_format',
@@ -4436,6 +4434,7 @@ class Record(Sound):
         #Set the parameters of what could be
         self.pyaudiocheck()
         self.soundsettingscheck()
+        self.soundsettings=self.settings.soundsettings
         self.soundsettingswindow=ui.Window(self.frame,
                                 title=_('Select Sound Card Settings'))
         self.soundcheckrefresh()
@@ -4463,6 +4462,10 @@ class Record(Sound):
         lcb=RecordButtonFrame(parent,self,framed)
         lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
+    def __init__(self):
+        self.soundcheck()
+class Record(Sound):
+    """This holds all the Sound methods specific for Recording."""
     def showentryformstorecordpage(self,ps=None,profile=None):
         #The info we're going for is stored above sense, hence guid.
         if self.runwindow.exitFlag.istrue():
@@ -4709,10 +4712,7 @@ class Record(Sound):
         else:
             self.showentryformstorecord()
     def __init__(self):
-        self.makesoundsettings()
-        self.loadsoundsettings()
-        self.soundsettings=self.settings.soundsettings
-        self.soundcheck()
+        Sound.__init__(self)
 class Report(object):
     def consultantcheck(self):
         self.settings.reloadstatusdata()
