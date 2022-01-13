@@ -8295,7 +8295,7 @@ class Analysis(object):
             for senseid in unnamed[k]:
                 self._db.addtoneUF(senseid,name,analang=self.analang,
                                     write=False)
-        log.info("Done adding senseids to groups.")
+        # log.info("Done adding senseids to groups.")
         # return self.groups
     def tonegroupsbyUFcheckfromLIFT(self):
         #returns dictionary keyed by [group][location]=groupvalue
@@ -8318,7 +8318,7 @@ class Analysis(object):
                     log.info(_("Removing empty {} key from {} values"
                                 "").format(check,group))
                     del values[group][check] #don't leave key:None pairs
-        log.info("Done collecting groups by location/check for each UF group.")
+        # log.info("Done collecting groups by location/check for each UF group.")
     def senseidsbyUFsfromLIFT(self):
         """This returns a dict of {UFtonegroup:[senseids]}"""
         log.debug(_("Looking for sensids by UF tone groups for {}-{}").format(
