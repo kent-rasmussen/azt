@@ -3277,6 +3277,7 @@ class TaskChooser(TaskDressing,ui.Window):
                         sticky='nesw'
                         )
             n+=1
+        self.setmainwindow(self) #deiconify here
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
