@@ -804,6 +804,73 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def getguids(self):
         self.guids=self.get('entry').get('guid')
         self.nguids=len(self.guids)
+    def fillentryAwB(self,a,b):
+        """This is for filling in a database with SIL CAWL info; it doesn't
+        treat lexeme or citation, etc. info, just sense/gloss, CAWL, and
+        semantic domain fields."""
+        """Nothing (yet?) fancy for testing for each having a node, nor
+        combining them; only moves if A node is absent or empty."""
+        asense=a.find('sense')
+        agloss={}
+        """Start by getting info from node A to match against"""
+        for n in [i for i in asense if i.tag == 'gloss']:
+            lang=n.get('lang')
+            agloss[lang]=n.find('text')
+            if agloss[lang]:
+                agloss[lang]=agloss[lang].text
+        """For now, these two are either there or not."""
+        asilcawl=asense.find("field[@type='SILCAWL']")
+        if isinstance(asilcawl,ET.Element):
+            asilcawlt=asilcawl.find('form/text').text
+        else:
+            asilcawlt=EmptyTextNodePlaceholder()
+        asdn=asense.find("trait[@name='semantic-domain-ddp4']")
+        if isinstance(asdn,ET.Element):
+            asd=asdn.get('value')
+        else:
+            asd=None
+        """Then test if node B has the more info, and if so, add to A"""
+        bsense=b.find('sense')
+        for n in [i for i in bsense if i.tag == 'gloss']:
+            lang=n.get('lang')
+            if n.find('text') and (lang not in agloss or not agloss[lang]):
+                asense.append(n) #append the node wholesale, not values.
+        bsilcawl=bsense.find("field[@type='SILCAWL']")
+        bsilcawlt=bsilcawl.find('form/text').text
+        if isinstance(bsilcawl,ET.Element): #Should always be, but just to be sure
+            if not asilcawlt or bsilcawlt != asilcawlt:
+                asense.append(bsilcawl) #copy over if empty or not the same
+            #     log.info("yes,")
+            # try:
+            #     log.info("bsilcawl copied over to asense?: {}/{}".format(
+            #     asilcawl.find('form/text').text,
+            #     bsilcawl.find('form/text').text
+            #     ))
+            # except:
+            #     log.info("bsilcawl copied over to asense?: {}/{}".format(
+            #     asilcawl,
+            #     bsilcawl.find('form/text').text
+            #     ))
+        bsdn=bsense.find("trait[@name='semantic-domain-ddp4']")
+        bsd=bsdn.get('value')
+        if bsd: #Should always be, but just to be sure
+            if not asd or bsd != asd:
+                asense.append(bsdn) #copy over if empty or not the same
+            #     try:
+            #         log.info("bsdn copied over to asense: {}/{}".format(
+            #         asdn.get('value'),
+            #         bsdn.get('value')
+            #         ))
+            #     except:
+            #         log.info("bsdn copied over to asense: {}/{}".format(
+            #         asdn,
+            #         bsdn.get('value')
+            #         ))
+            # else:
+            #     log.info("bsdn not copied over to asense: {}/{}".format(
+            #     asdn.get('value'),
+            #     bsdn.get('value')
+            #     ))
     """Set up"""
     def nc(self):
         nounclasses="1 2 3 4 5 6 7 8 9 10 11 12 13 14"
