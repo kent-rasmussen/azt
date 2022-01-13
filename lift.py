@@ -1000,28 +1000,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def slists(self):
         self.segmentsnotinregexes={}
         self.clist()
-    # def getformstosearch(self):
-    #     """This outputs a dictionary of form {analang: {guid:form}*}*, where
-    #     form is citation if available, or else lexeme. This is to be flexible
-    #     for entries in process of analysis, and to have a dictionary to check
-    #     with regexes for output."""
-    #     fts={}
-    #     for lang in self.analangs:
-    #         fts[lang]={} #This will erase all previous data!!
-    #         for ps in self.pss+[None]: #I need to break this up.
-    #             fts[lang][ps]={}
-    #             for s in self.get('sense',analang=lang,ps=ps).get('senseid'):
-    #                 f=self.citation(senseid=s,analang=lang)
-    #                 # if f == []:
-    #                 #     f=self.lexeme(senseid=s,analang=lang)
-    #                 for fi in f:
-    #                     if fi in fts[lang][ps]:
-    #                         fts[lang][ps][fi].append(s)
-    #                     else:
-    #                         fts[lang][ps][fi]=[s]
-    #     log.debug("Found the following forms to search: {}".format(
-    #                                                         fts))
-    #     return fts
     """Get stuff"""
     def gloss(self,**kwargs):
         return self.get('gloss/text', **kwargs).get('text')
