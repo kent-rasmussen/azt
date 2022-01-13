@@ -3682,6 +3682,46 @@ class WordCollection(object):
         todo=[x for x in all if x not in done]
         log.info("To do: ({}) {}".format(len(todo),todo))
         return todo
+    def addCAWLentries(self):
+        log.info("Adding unfilled CAWL entries to established database.")
+        self.file.loadCAWL()
+        self.cawldb=self.file.cawldb
+        added=[]
+        modded=[]
+        for n in self.taskchooser.cawlmissing:
+            log.info("Working on SILCAWL line #{:04}.".format(n))
+            e=self.cawldb.get('entry', path=['cawlfield'],
+                                    cawlvalue="{:04}".format(n),
+                                    ).get('node')[0] #certain to be there
+            entry=None #in case no selected glosslangs in CAWL
+            for lang in self.glosslangs:
+                g=e.findall("sense/gloss[@lang='{}']/text".format(lang))
+                if not g:
+                    continue #don't worry about glosslangs not in CAWL
+                else:
+                    g=g[0].text
+                """any entry with a matching gloss"""
+                entry=self.db.get('entry',gloss=g,glosslang=lang,
+                                        ).get('node') #maybe []
+                if entry:
+                    log.info("Found gloss of SILCAWL line #{:04} ({}); "
+                            "adding info to that entry.".format(n,g))
+                    self.db.fillentryAwB(entry[0],e)
+                    modded.append(n)
+                    break
+            if not entry: #i.e., no match for any self.glosslangs gloss
+                log.info("Gloss of SILCAWL line #{:04} ({}) not found; "
+                        "copying over that entry.".format(n,g))
+                self.db.nodes.append(e)
+                added.append(n)
+        if added or modded:
+            self.db.write()
+            text=_("Added {} entries from the SILCAWL: ({})"
+            "\nModded {} entries with new information from the SILCAWL: ({})"
+            "").format(len(added),added,len(modded),modded)
+            log.info(text)
+            ErrorNotice(text,title="Entries Added!")
+            self.taskchooser.makedefaulttask() #go to add task immediately
     def nextword(self,event=None):
         self.storethisword()
         self.db.write()
