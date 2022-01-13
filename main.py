@@ -3692,6 +3692,12 @@ class WordCollection(object):
             l=ui.Label(self.wordframe, text=text, row=0, column=0,
                         wraplength=int(program['root'].wraplength*.6))
             l.wrap()
+            nope=_("No, I haven't done the CAWL yet; "
+                    "\nplease add it to my database, "
+                    "\nso I can fill it out.")
+            b=ui.Button(self.wordframe, text=nope, cmd=self.addCAWLentries,
+                        row=1, column=0, sticky='',
+                        wraplength=int(program['root'].wraplength*.6))
             return
         text=_("Type the word in your language that goes with these meanings."
                 "").format(self.nentries)
