@@ -2650,6 +2650,7 @@ class TaskDressing(object):
         self.frame.status=StatusFrame(self.frame, self.taskchooser, self,
                                         relief=self.mainrelief,
                                         row=1, column=0, sticky='nw')
+        self.frame.update_idletasks()
         self.settings.storesettingsfile()
         self.makestatusframe(dictnow)
     def getinterfacelang(self,event=None):
