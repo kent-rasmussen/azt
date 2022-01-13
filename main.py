@@ -3667,6 +3667,8 @@ class WordCollection(object):
             #     self.settings.getscounts()
             #     self.settings.storesettingsfile(setting='profiledata') #since we changed this.
     def getlisttodo(self):
+        """Whichever field is being asked for (textnodefn), this fn returns
+        which are left to do."""
         all=self.db.get('entry',
                         showurl=True).get()
         # done=self.db.get('entry',path=['lexeme'],analang=analang,
