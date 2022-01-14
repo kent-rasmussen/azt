@@ -27,7 +27,7 @@ def setlevel(loglevel,thislog=None):
     if not thislog:
         thislog=logging.root
     thislog.setLevel(loglevel)
-    log.info("Current {} logger level: {}".format(thislog,thislog.level))
+    # log.info("Current {} logger level: {}".format(thislog,thislog.level))
 def getlogdir():
     """Can't do this in file, which depends on this..."""
     logdir=pathlib.Path.joinpath(pathlib.Path(__file__).parent,'userlogs')
