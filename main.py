@@ -4434,10 +4434,24 @@ class Sound(object):
     def soundcheckrefreshdone(self):
         self.settings.storesettingsfile(setting='soundsettings')
         self.soundsettingswindow.destroy()
-    def soundcheckrefresh(self):
+    def soundcheckrefresh(self,dict=None):
         def quitall():
             self.soundsettingswindow.destroy()
             self.on_quit()
+        dictnow={
+                'audio_card_in':self.soundsettings.audio_card_in,
+                'fs':self.soundsettings.fs,
+                'sample_format': self.soundsettings.sample_format,
+                'audio_card_out': self.soundsettings.audio_card_out
+                }
+        """Call this just once. If nothing changed, wait; if changes, run,
+        then run again."""
+        if dict == dictnow:
+            self.settings.setrefreshdelay()
+            self.parent.after(self.settings.refreshdelay,
+                                self.soundcheckrefresh,
+                                dictnow)
+            return
         self.soundsettingswindow.resetframe()
         row=0
         ui.Label(self.soundsettingswindow.frame, font='title',
@@ -4492,8 +4506,9 @@ class Sound(object):
                 row=row,column=0)
         caveat.wrap()
         row+=1
-        l=_("If Praat is installed in your path, right click on play "
-            "to open in Praat.")
+        play=_("Play")
+        l=_("If Praat is installed in your OS path, right click on ‘{}’ above "
+            "to open in Praat.".format(play))
         caveat=ui.Label(self.soundsettingswindow.frame,
                 text=l,font='default',
                 row=row,column=0)
@@ -4513,6 +4528,7 @@ class Sound(object):
                     # anchor='c',
                     row=row,column=1
                     )
+        self.soundcheckrefresh(dictnow)
     def soundsettingscheck(self):
         if not hasattr(self.settings,'soundsettings'):
             self.loadsoundsettings()
