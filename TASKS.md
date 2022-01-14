@@ -1,5 +1,7 @@
 # Ordered Task List
-A→Z+T is now organized into a series of discrete tasks, which are divided into the following two groups:, on those where it is being manipulated, processed, or in some other way analyzed.
+A→Z+T is now organized into a series of discrete tasks, which are divided into the following two groups.
+
+There is a chooser to help you stay focused on one or the other of these, and with a button to switch between them.
 
 ## [Data Collection Tasks](TASKSCOLLECTION.md)
 
