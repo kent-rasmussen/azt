@@ -4657,8 +4657,9 @@ class Record(Sound):
             for psprofile in self.status.valid(): #self.profilecountsValid:
                 if self.runwindow.exitFlag.istrue():
                     return 1
-                ps=psprofile[2]
-                profile=psprofile[1]
+                ps=psprofile[1]
+                profile=psprofile[0]
+                log.info("Working on ps {} and profile {}".format(ps,profile))
                 nextb=ui.Button(self.runwindow,text=_("Next Group"),
                                         cmd=self.runwindow.resetframe) # .frame.destroy
                 nextb.grid(row=0,column=1,sticky='ne')
