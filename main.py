@@ -4647,11 +4647,11 @@ class Record(Sound):
             row+=1
         self.runwindow.waitdone()
         self.runwindow.wait_window(self.runwindow.frame)
-    def showentryformstorecord(self,justone=True):
+    def showentryformstorecord(self,justone=False):
         # Save these values before iterating over them
         #Convert to iterate over local variables
         self.getrunwindow()
-        if justone==True:
+        if justone:
             self.showentryformstorecordpage()
         else:
             for psprofile in self.slices.valid(): #self.profilecountsValid:
