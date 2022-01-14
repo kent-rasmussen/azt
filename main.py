@@ -2314,15 +2314,12 @@ class Settings(object):
     def setsoundhz(self,choice,window):
         self.soundsettings.fs=choice
         window.destroy()
-        self.soundcheckrefresh()
     def setsoundformat(self,choice,window):
         self.soundsettings.sample_format=choice
         window.destroy()
-        self.soundcheckrefresh()
     def setsoundcardindex(self,choice,window):
         self.soundsettings.audio_card_in=choice
         window.destroy()
-        self.soundcheckrefresh()
     def setsoundcardoutindex(self,choice,window):
         self.soundsettings.audio_card_out=choice
         window.destroy()
