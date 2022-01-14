@@ -7368,7 +7368,7 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
 class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
-        return _("Tone Report by frames")
+        return _("Tone Report (by frames)")
         # "Make Reports on Citation Form Sorting in Tone Frames")
         # return _("Report on one slice of Citation Forms (in Tone Frames)")
     def taskicon(self):
