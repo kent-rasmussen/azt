@@ -7671,7 +7671,7 @@ class FramedDataDict(dict):
         return d #self[source]
     def __init__(self, taskchooser, **kwargs):
         super(FramedDataDict, self).__init__()
-        self.frames=taskchooser.toneframes #[ps][name]
+        self.frames=taskchooser.settings.toneframes #[ps][name]
         self.db=taskchooser.db
         self.taskchooser=taskchooser
 class FramedData(object):
