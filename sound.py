@@ -172,11 +172,11 @@ class SoundSettings(object):
                                 8000:'8khz'
                                 }
         self.hypothetical['sample_formats']={
-                                            pyaudio.paFloat32:'32 bit float',
+                                            # pyaudio.paFloat32:'32 bit float',
                                             pyaudio.paInt32:'32 bit integer',
                                             pyaudio.paInt24:'24 bit integer',
                                             pyaudio.paInt16:'16 bit integer',
-                                            pyaudio.paInt8:'8 bit integer'
+                                            # pyaudio.paInt8:'8 bit integer'
                                             }
     def check(self):
         if (self.audio_card_in not in self.cards['in']
