@@ -2389,6 +2389,22 @@ class Settings(object):
             self.refreshdelay=10000 #ten seconds if working in another window
         else:
             self.refreshdelay=1000 #one second if not working in another window
+    def ifcollectionlc(self):
+        self.notifyuserofextrasegments() #self.analang set by now
+        self.polygraphcheck()
+        self.checkinterpretations() #checks/sets values for self.distinguish
+        self.slists() #lift>check segment dicts: s[lang][segmenttype]
+        self.setupCVrxs() # self.rx (needs s)
+        self.checkforprofileanalysis()
+        """The line above may need to go after this block"""
+        self.loadsettingsfile(setting='status')
+        self.loadsettingsfile(setting='adhocgroups')
+        self.loadsettingsfile(setting='toneframes')
+        """Make these objects here only"""
+        self.makeslicedict() #needs params
+        self.maketoneframes()
+        self.makestatus() #needs params, slices, data, toneframes, exs
+        self.makeeverythingok()
     def __init__(self,taskchooser,liftfileobject):
         self.taskchooser=taskchooser
         self.liftfilename=liftfileobject.name
@@ -2416,21 +2432,8 @@ class Settings(object):
         self.makeparameters() #depends on nothing but self.analang
         """The following should only be done after word collection"""
         if self.taskchooser.donew['collectionlc']:
-            self.notifyuserofextrasegments() #self.analang set by now
-            self.polygraphcheck()
-            self.checkinterpretations() #checks/sets values for self.distinguish
-            self.slists() #lift>check segment dicts: s[lang][segmenttype]
-            self.setupCVrxs() # self.rx (needs s)
-            self.checkforprofileanalysis()
-            """The line above may need to go after this block"""
-            self.loadsettingsfile(setting='status')
-            self.loadsettingsfile(setting='adhocgroups')
-            self.loadsettingsfile(setting='toneframes')
-            """Make these objects here only"""
-            self.makeslicedict() #needs params
-            self.maketoneframes()
-            self.makestatus() #needs params, slices, data, toneframes, exs
-            self.makeeverythingok()
+            self.ifcollectionlc()
+            self.taskchooser.ifcollectionlcsettingsdone=True
         self.settingsobjects() #needs params, glosslangs, slices
         self.moveattrstoobjects()
         self.attrschanged=[]
@@ -3566,10 +3569,20 @@ class TaskChooser(TaskDressing,ui.Window):
         # main()
         sys.exit()
         # self.restart(self.filename)
+    def ifcollectionlc(self):
+        if not self.ifcollectionlcsettingsdone: #only do this once
+            self.settings.ifcollectionlc()
+            self.inherittaskattrs()
+            self.makedatadict()
+            self.makeexampledict() #needed for makestatus, needs params,slices,data
+            self.maxprofiles=5 # how many profiles to check before moving on to another ps
+            self.maxpss=2 #don't automatically give more than two grammatical categories
+            self.ifcollectionlcsettingsdone=True
     def __init__(self,parent):
         # self.testdefault=Transcribe
         self.start_time=time.time() #this enables boot time evaluation
         self.datacollection=True # everyone starts here?
+        self.ifcollectionlcsettingsdone=False
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
         self.setmainwindow(self)
@@ -3583,10 +3596,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.makesettings()
         TaskDressing.__init__(self,parent)
         if self.taskchooser.donew['collectionlc']:
-            self.makedatadict()
-            self.makeexampledict() #needed for makestatus, needs params,slices,data
-            self.maxprofiles=5 # how many profiles to check before moving on to another ps
-            self.maxpss=2 #don't automatically give more than two grammatical categories
+            self.ifcollectionlc()
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
