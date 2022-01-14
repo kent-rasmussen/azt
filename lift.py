@@ -12,7 +12,6 @@ import datetime
 import re #needed?
 import os
 import rx
-import logging
 import ast #For string list interpretation
 import copy
 import collections

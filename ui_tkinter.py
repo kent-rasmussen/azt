@@ -3,7 +3,9 @@
 import sys
 import platform
 import logsetup
-log = logsetup.Log('DEBUG')
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
 log.info("Importing ui_tkinter.py")
 import unicodedata
 import tkinter #as gui

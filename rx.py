@@ -1,8 +1,10 @@
 ## coding=UTF-8
 import re
 import time
-import logging
-log = logging.getLogger(__name__)
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
 """This is called from a number of places"""
 framerx=re.compile('__') #replace this w/data in frames.
 def urlok(x):
