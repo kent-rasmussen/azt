@@ -1878,6 +1878,8 @@ class Settings(object):
                                                                 reverse=True)
         self.slices.scount(scount) #send to object
     def notifyuserofextrasegments(self):
+        if not hasattr(self,'analang'):
+            self.analang=self.params.analang()
         if self.analang not in self.db.segmentsnotinregexes:
             return
         invalids=self.db.segmentsnotinregexes[self.analang]
