@@ -1,11 +1,11 @@
 # Ordered Task List
-A→Z+T is now organized into a series of discrete tasks, which are divided into the following two groups.
+A→Z+T is now organized into a series of discrete tasks, which are divided into the two groups below.
 
 There is a chooser to help you stay focused on one or the other of these, and with a button to switch between them.
 
 ## [Data Collection Tasks](TASKSCOLLECTION.md)
 
-In [these tasks](TASKSCOLLECTION.md), language data is being collected. These should only be done by competent speakers of the language being of study. These may or may not have much linguistic training; the important point of these tasks is that good data be collected well.
+In [these tasks](TASKSCOLLECTION.md), language data is being collected. These should only be done by competent speakers of the language being studied. These people may or may not have much linguistic training; the important point of these tasks is that good data be collected well.
 
 This currently includes collecting words, and sorting them into groups that sound the same in various contexts, and recording those words in those contexts. For more information on specific data collection tasks, see [this page](TASKSCOLLECTION.md).
 
