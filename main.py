@@ -3567,7 +3567,9 @@ class TaskChooser(TaskDressing,ui.Window):
         sys.exit()
         # self.restart(self.filename)
     def ifcollectionlc(self):
+        log.info("Considering finishing setup for post-collection projects")
         if not self.ifcollectionlcsettingsdone: #only do this once
+            log.info("Finishing setup for post-collection projects")
             self.settings.ifcollectionlc()
             self.inherittaskattrs()
             self.makedatadict()
