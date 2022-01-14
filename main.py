@@ -3730,7 +3730,7 @@ class WordCollection(object):
             "").format(len(added),added,len(modded),modded)
             log.info(text)
             ErrorNotice(text,title="Entries Added!")
-            self.taskchooser.makedefaulttask() #go to add task immediately
+            self.getwords()
     def nextword(self,event=None):
         def cont():
             self.taskchooser.whatsdone()
