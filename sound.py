@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-from tkinter import Frame,Tk
+# from tkinter import Frame,Tk
 # from tkinter import Tk as tkinter.Tk
 import pyaudio
 import wave
