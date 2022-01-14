@@ -3800,7 +3800,7 @@ class WordCollection(object):
         ui.Label(self.wordframe, text=glossesthere, font='read',
                 row=1, column=0, columnspan=3, sticky='ew')
         self.lxtextnode=self.textnodefn(entry,self.analang)
-        log.info("lxtextnode: {}".format(self.lxtextnode))
+        # log.info("lxtextnode: {}".format(self.lxtextnode))
         self.lxvar=tkinter.StringVar(value=self.lxtextnode.text)
         # get('entry',path=['lexeme'],analang=self.analang,
         #                 showurl=True).get()
