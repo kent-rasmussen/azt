@@ -8062,6 +8062,7 @@ class RecordButtonFrame(ui.Frame):
         self.r=ui.Button(self,text=_('Redo'),command=self.function)
         self.r.grid(row=0, column=2,sticky='w')
         self.r.bind('<ButtonRelease>', self._redo)
+        self.r.update_idletasks()
     def function(self):
         pass
     def addlink(self):
