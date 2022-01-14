@@ -353,6 +353,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             # Set values for any duplicates, too. Don't leave inconsisted data.
         tonevalue=kwargs.get('fieldvalue') #don't test for this above
         analang=kwargs.get('analang')
+        write=kwargs.get('write',False) #This an object with values
         framed=kwargs.get('framed',None) #This an object with values
         if framed:
             forms=framed.framed #because this should always be framed
