@@ -2403,6 +2403,8 @@ class Settings(object):
         self.maketoneframes()
         self.makestatus() #needs params, slices, data, toneframes, exs
         self.makeeverythingok()
+        self.settingsobjects() #needs params, glosslangs, slices
+        self.moveattrstoobjects()
     def __init__(self,taskchooser,liftfileobject):
         self.taskchooser=taskchooser
         self.liftfilename=liftfileobject.name
@@ -2431,9 +2433,6 @@ class Settings(object):
         """The following should only be done after word collection"""
         if self.taskchooser.donew['collectionlc']:
             self.ifcollectionlc()
-            self.taskchooser.ifcollectionlcsettingsdone=True
-        self.settingsobjects() #needs params, glosslangs, slices
-        self.moveattrstoobjects()
         self.attrschanged=[]
 class TaskDressing(object):
     """This Class covers elements that belong to (or should be available to)
