@@ -9899,7 +9899,6 @@ def mainproblem():
             w.destroy()
     except:
         errorroot = ui.Root(program=program)
-        errorroot.renderings={}
     errorroot.withdraw()
     errorw=ui.Window(errorroot)
     errorw.title("Serious Problem!")
