@@ -1,7 +1,9 @@
 # coding=UTF-8
 import rx
-import logging
-log = logging.getLogger(__name__)
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
 class Base():
     pass
 def debug():

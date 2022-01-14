@@ -5,8 +5,10 @@ from tkinter import Frame,Tk
 import pyaudio
 import wave
 import file
-import logging
-log = logging.getLogger(__name__)
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
 import sys
 
 class AudioInterface(pyaudio.PyAudio):
@@ -494,9 +496,6 @@ if __name__ == "__main__":
     # print(pyaudio.paInt8)
     import time
     import timeit
-    loglevel=5
-    from logsetup import *
-    log=logsetup(loglevel)
     try: #Allow this module to be used without translation
         _
     except:

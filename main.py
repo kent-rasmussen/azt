@@ -27,7 +27,8 @@ else:
     loglevel='DEBUG'
     me=False
 import logsetup
-log=logsetup.Log(loglevel)
+log=logsetup.getlog('root') #not ever a module
+logsetup.setlevel(loglevel)
 """My modules, which should log as above"""
 import lift
 import file
