@@ -2153,8 +2153,6 @@ class Settings(object):
                                 ) #self.profilecounts
         if hasattr(self,'sextracted'):
             self.getscounts()
-        self.slices.ps(self.ps)
-        self.slices.profile(self.profile)
     def maketoneframes(self):
         if not hasattr(self,'toneframes'):
             self.toneframes={}
