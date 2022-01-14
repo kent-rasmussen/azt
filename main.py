@@ -3732,14 +3732,31 @@ class WordCollection(object):
             ErrorNotice(text,title="Entries Added!")
             self.taskchooser.makedefaulttask() #go to add task immediately
     def nextword(self,event=None):
+        def cont():
+            self.taskchooser.whatsdone()
+            self.taskchooser.ifcollectionlc()
+            self.taskchooser.makedefaulttask()
+            self.e.on_quit()
         self.storethisword()
         self.db.write()
-        self.index+=1
-        self.getword()
+        if self.index < len(self.entries)-1:
+            self.index+=1
+            self.getword()
+        else:
+            oktext=_("Continue")
+            t=_("Congratulations! \nIt looks like you got to the end of what "
+            "was left to collect. "
+            "\nYou can navigate through the words you just collected, "
+            "\nor press ‘{}’ to go on to the next task.").format(oktext)
+            self.e=ErrorNotice(t,title="Done!")
+            b=ui.Button(self.e.frame,text=oktext, cmd=cont, row=1, column=1)
     def backword(self):
         self.storethisword()
         self.db.write()
-        self.index-=1
+        if self.index == 0:
+            self.index=len(self.entries)-1
+        else:
+            self.index-=1
         self.getword()
     def storethisword(self):
         self.lxtextnode.text=self.lxvar.get()
