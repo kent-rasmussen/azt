@@ -9851,7 +9851,7 @@ def ofromstr(x):
     try:
         return ast.literal_eval(x)
     except (SyntaxError,ValueError) as e:
-        log.debug("Assuming ‘{}’ is a string ({})".format(x,e))
+        # log.debug("Assuming ‘{}’ is a string ({})".format(x,e))
         return x
 def main():
     global program
