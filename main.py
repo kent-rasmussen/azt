@@ -32,7 +32,7 @@ logsetup.setlevel(loglevel)
 """My modules, which should log as above"""
 import lift
 import file
-import profiles
+# import profiles
 import setdefaults
 import xlp
 try:
