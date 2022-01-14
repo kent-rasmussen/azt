@@ -3420,7 +3420,7 @@ class TaskChooser(TaskDressing,ui.Window):
                         lxft.text='' #clear only on move
         # self.db.write(self.file.name+str(now()))
         self.db.write()
-        conversionlogfile=log.writelzma(log.filename)
+        conversionlogfile=logsetup.writelzma() # log.filename no longer needed
         #             tmpdb.nodes.findall('entry/citation')):
         #     for f in n.findall('form'):
         #         n.remove(f)
@@ -9890,7 +9890,7 @@ def mainproblem():
     log.info("Starting up help line...")
     if program['testing'] and me:
         return
-    file=log.writelzma()
+    file=logsetup.writelzma()
     try: #Make this work whether root has run/still runs or not.
         program['root'].winfo_exists()
         log.info("Root there!")
@@ -9916,7 +9916,7 @@ def mainproblem():
             row=1,column=0
             )
         m.bind("<Button-1>", lambda e: openweburl(durl))
-    lcontents=log.contents(50)
+    lcontents=logsetup.contents(50)
     addr=program['Email']
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
     eurl+=('&body=Please replace this text with a description of what you '
@@ -9933,7 +9933,7 @@ def mainproblem():
         )
     n.bind("<Button-1>", lambda e: openweburl(eurl))
     o=ui.Label(errorw.frame,text="The end of {} / {} are below:"
-                                "".format(log.filename,file),
+                                "".format(logsetup.getlogfilename(),file),
                                 justify='left',
                                 font='report',
                                 row=3,column=0,
