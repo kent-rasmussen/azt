@@ -3146,12 +3146,11 @@ class TaskDressing(object):
         if not nowait:
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
-    def verifictioncode(self,check=None,subcheck=None):
-        if subcheck is None: #do I ever want this to really be None?
-            subcheck=self.params.subcheck()
-        if check is None:
-            check=self.params.check()
-        return check+'='+subcheck
+    def verifictioncode(self,**kwargs):
+        check=kwargs.get('check',self.params.check())
+        group=kwargs.get('group',self.status.group())
+        log.info("about to return {}={}".format(check,group))
+        return check+'='+group
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -3957,8 +3956,8 @@ class Tone(object):
         # We are agnostic of verification status of any given entry, so just
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
-        rm=self.verifictioncode(check,oldtonevalue)
-        add=self.verifictioncode(check,newtonevalue)
+        rm=self.verifictioncode(check=check,group=oldtonevalue)
+        add=self.verifictioncode(check=check,group=newtonevalue)
         """The above doesn't test for profile, so we restrict that next"""
         profile=self.slices.profile()
         senseids=self.slices.inslice(lst2)
@@ -4204,19 +4203,22 @@ class Tone(object):
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
-    def updatestatuslift(self,check=None,group=None,verified=False,refresh=True):
-        if group is None: #do I ever want this to really be None?
-            group=self.status.group()
-        if check is None:
-            check=self.params.check()
-        profile=self.slices.profile()
     def timetowrite(self):
         """only write to file every self.writeeverynsorts times you might."""
         self.writeable+=1
         return not self.writeable%self.writeeverynsorts
+    def updatestatuslift(self,verified=False,**kwargs):
+        """This should be called only by update status, when there is an actual
+        change in status to write to file."""
+        write=kwargs.get('write',True)
+        check=kwargs.get('check',self.params.check())
+        group=kwargs.get('group',self.status.group())
+        #     check=self.params.check()
+        profile=kwargs.get('profile',self.slices.profile())
+        # profile=self.slices.profile()
         senseids=self.db.get("sense", location=check, tonevalue=group,
                             path=['tonefield']).get('senseid')
-        value=self.verifictioncode(check,group)
+        value=self.verifictioncode(check=check,group=group)
         if verified == True:
             add=value
             rms=[]
@@ -4235,9 +4237,13 @@ class Sort(object):
                                         add=add,rms=rmlist)
         if refresh == True:
             self.db.write() #for when not iterated over, or on last repeat
-    def updatestatus(self,group=None,verified=False,refresh=True):
+    def updatestatus(self,verified=False,**kwargs):
         #This function updates the status variable, not the lift file.
-        self.status.update(group=group,verified=verified)
+        group=kwargs.get('group',self.status.group())
+        write=kwargs.get('write',True)
+        r=self.status.update(group=group,verified=verified,write=write)
+        if r: #only do this if there is a change in status
+            self.updatestatuslift(group=group,verified=verified,write=write)
         return
     def addmodadhocsort(self):
         def submitform():
@@ -6176,7 +6182,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     (N.B.: This is only used for groups added during the current
                     run. At the beginning of a run, all used groups have buttons
                     created above.)"""
-                    self.addtonefieldex(senseid,framed,group) #button needs this
+                    self.addtonefieldex(senseid,framed,group=group,write=False) #button needs this
                     addgroupbutton(group)
                     #adjust window for new button
                     scroll.windowsize()
@@ -6191,7 +6197,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     log.debug('Group selected: {} ({})'.format(group,
                                                                 groupselected))
                     """This needs to *not* operate on "exit" button."""
-                    self.addtonefieldex(senseid,framed,group)
+                    self.addtonefieldex(senseid,framed,group=group,write=False)
             else:
                 log.debug('No group selected: {}'.format(groupselected))
                 return 1 # this should only happen on Exit
@@ -6554,7 +6560,9 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         newgroup=max(values)+1
         groups.append(str(newgroup))
         return str(newgroup)
-    def addtonefieldex(self,senseid,framed,group):
+    def addtonefieldex(self,senseid,framed,**kwargs):
+        group=kwargs.get('group',self.status.group())
+        write=kwargs.get('write',True)
         guid=None
         if group is None or group == '':
             log.error("groupselected: {}; this should never happen"
