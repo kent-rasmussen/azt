@@ -518,9 +518,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "".format(uniq))
                         for example in examples[1:]:
                             sense.remove(example)
-        if dup:
-            self.write()
-        else:
+        #     self.write()
+        # else:
+        if not dup:
             log.info("No duplicate examples (same sense and location) were "
                     "found in the lexicon.")
     def addtoneUF(self,senseid,group,analang,guid=None,**kwargs):
