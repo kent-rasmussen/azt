@@ -5925,7 +5925,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 and check not in self.status.checks(toverify=True)
                 and check not in self.status.checks(tojoin=True)):
             exit=self.getcheck()
-            if exit:
+            if exit and not self.exitFlag:
                 self.runcheck()
             return #if the user didn't supply a check
         self.settings.updatesortingstatus() # Not just tone anymore
