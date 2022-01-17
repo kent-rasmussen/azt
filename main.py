@@ -4130,7 +4130,9 @@ class Check():
             self.getcheck() #guess=True
         done=self.status.verified()
         if group not in done:
-            self.getgroup(wsorted=True)
+            w=self.getgroup(wsorted=True)
+            if w:
+                w.wait_window(w)
             if group == None:
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
