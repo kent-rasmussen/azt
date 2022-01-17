@@ -2953,7 +2953,7 @@ class TaskDressing(object):
                           "grouped in the ‘{}’ frame yet \n({})."
                           "".format(ps,profile,check,kwargs)
                           ).grid(column=0, row=0)
-            elif guess == True:
+            elif guess == True or (len(g) == 1 and not kwargs['comparison']):
                 self.settings.setgroup(g[0],window) #don't ask, just set
             else:
                 ui.Label(window.frame,
