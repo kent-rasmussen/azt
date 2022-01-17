@@ -8186,8 +8186,7 @@ class ToneGroupButtonFrame(ui.Frame):
         self.sortnext()
         # remove()
     def unsort(self):
-        check=self.task.params.check()
-        self.task.removesenseidfromgroup(self._senseid,check,sorting=False)
+        self.task.removesenseidfromgroup(self._senseid,sorting=False)
         self.refresh()
     def setcanary(self,canary):
         if canary.winfo_exists():
