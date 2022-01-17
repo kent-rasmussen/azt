@@ -3897,7 +3897,7 @@ class Tone(object):
             self.analysis.setslice(**kwargs)
     def gimmesenseid(self,**kwargs):
         ps=kwargs.get('ps',self.slices.ps())
-        idsbyps=self.db.get('sense',ps=ps).get('senseid')
+        idsbyps=self.slices.senseids(ps=ps)
         return idsbyps[randint(0, len(idsbyps)-1)]
     def gimmesenseidwgloss(self,**kwargs):
         tried=0
@@ -3973,7 +3973,7 @@ class Tone(object):
                             add=add,rms=[rm],
                             addifrmd=True,write=False)
         self.db.write() #once done iterating over senseids
-    def addframe(self):
+    def addframe(self,**kwargs):
         log.info('Tone frame to add!')
         """I should add gloss2 option here, likely just with each language.
         This is not a problem for LFIT translation fields, and it would help to
@@ -4008,11 +4008,10 @@ class Tone(object):
             #     frame[lang]=str(
             #         db['before'][lang]['text']+'__'+db['after'][lang]['text'])
             log.info('gimmesenseid::')
-            senseid=self.gimmesenseidwgloss() #don't give exs w/o all glosses
+            senseid=self.gimmesenseidwgloss(ps=ps) #don't give exs w/o all glosses
             log.info('gimmesenseid result: {}'.format(senseid))
             """This will need to be updated to slices!"""
-            if senseid not in [i for j in self.profilesbysense[self.ps].values()
-                                                                    for i in j]:
+            if senseid not in self.slices.senseids(ps=ps):
                 log.info('bad senseid; showing error')
                 self.addwindow.framechk=ui.Frame(self.addwindow.scroll.content)
                 self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
