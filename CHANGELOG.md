@@ -1,5 +1,17 @@
 # A→Z+T Changelog
 
+# Version 0.8.9
+Complete rework of UI, now task oriented, with tasks divided by data collection and analysis functions.
+mercurial (if installed) now adds
+    ProfileData.dat
+    ToneFrames.dat
+    VerificationStatus.dat
+put UF fields in form/text nodes
+(non)-default report now more intuitive. If sort since last report, report runs again.
+User also has button to rerun analysis manually.
+Check for sound card now shows on every sound task beginning.
+
+
 # Version 0.8.7
 changed .py config files to .ini and .dat, with clearer and simpler syntax. This should automatically migrate, but please let me know if it doesn't.
 should put those files into hg repository
