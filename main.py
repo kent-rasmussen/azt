@@ -2929,10 +2929,10 @@ class TaskDressing(object):
         """Window is called in getgroup"""
         log.info("getframedtonegroup kwargs: {}".format(kwargs))
         kwargs=grouptype(**kwargs)
-        cvt=self.params.cvt()
-        ps=self.slices.ps()
-        profile=self.slices.profile()
-        check=self.params.check()
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
         if (None in [cvt, ps, profile, check]
                 or cvt != 'T'):
             ui.Label(window.frame,
@@ -2989,6 +2989,7 @@ class TaskDressing(object):
     def getV(self,window,event=None, **kwargs):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
+        ps=kwargs.get('ps',self.slices.ps())
         if ps is None:
             ui.Label(window.frame,
                           text='Error: please set Grammatical category first! ('
@@ -3010,6 +3011,7 @@ class TaskDressing(object):
     def getC(self,window,event=None, **kwargs):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
+        ps=kwargs.get('ps',self.slices.ps())
         if ps is None:
             text=_('Error: please set Grammatical category first! ')+'('
             +str(ps)+')'
@@ -3031,13 +3033,12 @@ class TaskDressing(object):
                                     window=window,
                                     column=0, row=0
                                     )
-    def getgroup(self,guess=False,cvt=None,event=None,**kwargs):
+    def getgroup(self,guess=False,event=None,**kwargs):
         log.info("this sets the group")
         kwargs=grouptype(**kwargs) #if any should be True, set in wrappers above
         log.info("getgroup kwargs: {}".format(kwargs))
         self.settings.refreshattributechanges()
-        if cvt is None:
-            cvt=self.params.cvt()
+        cvt=kwargs.get('cvt',self.params.cvt())
         if cvt == "V":
             w=ui.Window(self.frame,title=_('Select Vowel'))
             self.getV(window=w,**kwargs)
@@ -3049,7 +3050,7 @@ class TaskDressing(object):
         elif cvt == "CV":
             CV=''
             for cvt in ['C','V']:
-                self.getgroup(cvt=cvt,**kwargs)
+                self.getgroup(**kwargs)
                 CV+=group
             group=CV
             cvt = "CV"
