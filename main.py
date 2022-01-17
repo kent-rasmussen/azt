@@ -956,7 +956,8 @@ class Settings(object):
                                 'mainrelief',
                                 'fontthemesmall',
                                 'secondformfield',
-                                'soundsettingsok'
+                                'soundsettingsok',
+                                'writeeverynsorts'
                                 ]},
             'profiledata':{
                                 'file':'profiledatafile',
@@ -4209,6 +4210,10 @@ class Sort(object):
         if check is None:
             check=self.params.check()
         profile=self.slices.profile()
+    def timetowrite(self):
+        """only write to file every self.writeeverynsorts times you might."""
+        self.writeable+=1
+        return not self.writeable%self.writeeverynsorts
         senseids=self.db.get("sense", location=check, tonevalue=group,
                             path=['tonefield']).get('senseid')
         value=self.verifictioncode(check,group)
@@ -4349,6 +4354,12 @@ class Sort(object):
         scroll.grid(row=3,column=0,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
+    def __init__(self):
+        if not self.settings.writeeverynsorts: #0/None are not sensible values
+            self.settings.writeeverynsorts=5
+            self.settings.storesettingsfile()
+        self.writeeverynsorts=self.settings.writeeverynsorts
+        self.writeable=0 #start the count
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
     def donewpyaudio(self):
@@ -6185,6 +6196,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 log.debug('No group selected: {}'.format(groupselected))
                 return 1 # this should only happen on Exit
             self.status.marksenseidsorted(senseid)
+            if self.timetowrite():
+                self.db.write()
         log.info('Running sortT:')
         self.getrunwindow()
         """sortingstatus() checks by ps,profile,check (frame),
@@ -6260,8 +6273,10 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
     def verifyT(self,menu=False):
         def updatestatus():
             log.info("Updating status with {}, {}, {}".format(check,group,verified))
-            self.updatestatus(verified=verified)
-            self.updatestatuslift(check,group,verified=verified)
+            if self.timetowrite():
+                self.updatestatus(verified=verified)
+            else:
+                self.updatestatus(verified=verified,write=False)
         log.info("Running verifyT!")
         """Show entries each in a row, users mark those that are different, and we
         remove that group designation from the entry (so the entry will show up on
@@ -6380,7 +6395,10 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         # it will fail.
         # should move to specify location and fieldvalue in button lambda
         def notok():
-            self.removesenseidfromgroup(senseid,check,sorting=True)
+            if self.timetowrite():
+                self.removesenseidfromgroup(senseid,sorting=True)
+            else:
+                self.removesenseidfromgroup(senseid,sorting=True,write=False)
             bf.destroy()
         if 'font' not in kwargs:
             kwargs['font']='read'
