@@ -4235,8 +4235,9 @@ class Sort(object):
             log.info("Removing {}".format(rmlist))
             self.db.modverificationnode(senseid,vtype=profile,
                                         analang=self.analang,
-                                        add=add,rms=rmlist)
-        if refresh == True:
+                                        add=add,rms=rmlist,
+                                        write=False)
+        if write == True:
             self.db.write() #for when not iterated over, or on last repeat
     def updatestatus(self,verified=False,**kwargs):
         #This function updates the status variable, not the lift file.
@@ -6539,11 +6540,10 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             """All the senses we're looking at, by ps/profile"""
             self.updatebygroupsenseid(*groupstojoin)
             groups.remove(groupstojoin[0])
-            refresh=False
+            write=False
             for group in groupstojoin: #not verified=True --since joined
-                self.updatestatuslift(group=group,refresh=refresh)
-                self.updatestatus(group=group,refresh=refresh)
-                refresh=True #For second group
+                self.updatestatus(group=group,write=write)
+                write=True #For second group
             self.maybesort() #go back to verify, etc.
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
