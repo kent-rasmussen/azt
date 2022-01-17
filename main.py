@@ -4138,6 +4138,7 @@ class Check():
                 return
         else:
             done.remove(group)
+        self.updatesortingstatus()
         self.maybesort()
     def verifyT(self,menu=False):
         def updatestatus():
