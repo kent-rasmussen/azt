@@ -6602,6 +6602,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             check=self.params.check()
         if group is None:
             group=self.status.group()
+        group=kwargs.get('group',self.status.group())
+        write=kwargs.get('write',True)
         sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
         #This should only *mod* if already there
@@ -6630,7 +6632,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
                                                         rms=[rm],write=False)
         self.status.last('sort',update=True)
-        self.db.write() #This is not iterated over
+        if write:
+            self.db.write()
         if sorting:
             self.status.marksenseidtosort(senseid)
     def marksortedguid(self,guid):
@@ -9173,8 +9176,9 @@ class StatusDict(dict):
         if g is not None:
             self._recorded=g
         return self._recorded
-    def update(self,group=None,verified=False,refresh=True):
+    def update(self,group=None,verified=False,write=True):
         """This function updates the status variable, not the lift file."""
+        changed=False
         if group is None:
             group=self.group()
         log.info("Verification before update (verifying {} as {}): {}".format(
@@ -9184,12 +9188,15 @@ class StatusDict(dict):
         if verified == True:
             if group not in n['done']:
                 n['done'].append(group)
+                changed=True
         if verified == False:
             if group in n['done']:
                 n['done'].remove(group)
-        if refresh == True:
+                changed=True
+        if write and changed:
             self.store()
         log.info("Verification after update: {}".format(self.verified()))
+        return changed
     def group(self,group=None):
         """This maintains the group we are actually on, pulled from data
         located by current slice and parameters"""
