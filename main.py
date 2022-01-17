@@ -6584,9 +6584,10 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(tonegroup,group))
         self.status.last('sort',update=True)
-        self.updatestatus(group=group) #this marks the group unverified.
         self.status.tojoin(True) # will need to be distinguished again
-        self.db.write() #This is never iterated over; just one entry at a time.
+        self.updatestatus(group=group,write=write) # marks the group unverified.
+        if write:
+            self.db.write() #This is never iterated over; just one entry at a time.
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
         self.db.addpronunciationfields(
