@@ -4098,7 +4098,7 @@ class Tone(object):
             self.status.renewchecks()
             self.settings.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
-        ps=self.slices.ps()
+        ps=kwargs.get('ps',self.slices.ps())
         wtitle=_("Define a New {} Tone Frame").format(ps)
         self.addwindow=ui.Window(self.frame, title=wtitle)
         self.addwindow.scroll=ui.ScrollingFrame(self.addwindow)
