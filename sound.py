@@ -4,6 +4,7 @@
 # from tkinter import Tk as tkinter.Tk
 import pyaudio
 import wave
+# import soundfile
 import file
 import logsetup
 log=logsetup.getlog(__name__)
@@ -377,6 +378,7 @@ class SoundFilePlayer(object):
             if process:
                 p.terminate() #for processes, not threads
         self.wf.close()
+        # soundfile.SoundFile.close()
     def __init__(self,filenameURL,pyaudio,settings):
         self.pa=pyaudio
         self.filenameURL=filenameURL
