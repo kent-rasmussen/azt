@@ -4021,8 +4021,6 @@ class Tone(object):
                         justify=tkinter.LEFT,anchor='w')
                 lt.grid(row=0,column=0,#row=row,column=columnleft,
                         sticky='w',columnspan=2)
-                del self.toneframes[self.ps][self.name]
-                self.name=self.nameori
                 return
             """Define the new frame"""
             checkdefntoadd={}
