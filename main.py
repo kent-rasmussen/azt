@@ -4093,6 +4093,9 @@ class Tone(object):
             if hasattr(self.addwindow,'framechk'):
                 self.addwindow.framechk.destroy()
         def submit(checkdefntoadd,checktoadd):
+            log.info("Submitting {} frame with these values: {}".format(
+                                                    checktoadd,checkdefntoadd
+                                                    ))
             # Having made and unset these, we now reset and write them to file.
             self.toneframes.addframe(ps,checktoadd,checkdefntoadd)
             self.status.renewchecks()
