@@ -1262,7 +1262,8 @@ class Settings(object):
         for default in fields: #self.defaultstoclear[field]:
             setattr(self, default, None)
     def settingsinit(self):
-        self.initdefaults() #provides self.defaults, list to load/save
+        # self.defaults is already there, from settingsfilecheck
+        self.initdefaults() #provides self.defaultstoclear, needed?
         self.cleardefaults() #this resets all to none (to be set below)
         self.pss() #sets self.nominalps and self.verbalps
         self.fields() #sets self.pluralname and self.imperativename
