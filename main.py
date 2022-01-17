@@ -6738,7 +6738,10 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
             return
         log.info("group: {}, groups: {}".format(self.group,self.groups))
         if not self.group or self.group not in self.groups:
-            self.getgroup(wsorted=True) #guess=True,
+            w=self.getgroup(wsorted=True) #guess=True,
+            if w.winfo_exists():
+                w.wait_window(w)
+            self.group=self.status.group()
             if not self.group:
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
