@@ -1133,8 +1133,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Found these ps values, by frequency: {}".format(ordered))
         return ordered
     def getmorphtypes(self): #get all morph-type values in the LIFT file
-        m=collections.Counter(self.get('morphtype',showurl=True).get('value')
-                                                                ).most_common()
+        m=collections.Counter(self.get('morphtype').get('value')).most_common()
         log.info("Found these morph-type values: {}".format(m))
         return m
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
