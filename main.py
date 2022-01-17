@@ -6821,6 +6821,8 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
         w=self.getgroup(comparison=True,wsorted=True) #this returns its window
         if w and w.winfo_exists(): #This window may be already gone
             w.wait_window(w)
+        if hasattr(self.settings,'group_comparison'):
+            self.group_comparison=self.settings.group_comparison
         self.comparisonbuttons()
     def comparisonbuttons(self):
         try: #successive runs
