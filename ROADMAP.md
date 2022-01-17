@@ -1,5 +1,5 @@
 #Roadmap
-fix logging problem
+migrate sound.py from wave to soundfile (or scipy.io.wavfile)
 menus
 Make CV basic report less resource intensive
 
