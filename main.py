@@ -6602,6 +6602,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             check=self.params.check()
         if group is None:
             group=self.status.group()
+    def removesenseidfromgroup(self,senseid,**kwargs):
+        check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
         sorting=kwargs.get('sorting',True) #Default to verify button
@@ -6627,8 +6629,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             log.error("Found {} tone values: {}; Fix this!"
                                             "".format(len(tgroups),tgroups))
             return
-        rm=self.verifictioncode(check,group)
-        profile=self.slices.profile()
+        rm=self.verifictioncode(check=check,group=group)
+        profile=kwargs.get('profile',self.slices.profile())
         self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
                                                         rms=[rm],write=False)
         self.status.last('sort',update=True)
