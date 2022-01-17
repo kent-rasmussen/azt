@@ -6597,11 +6597,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
-    def removesenseidfromgroup(self,senseid,check=None,group=None,**kwargs):
-        if check is None:
-            check=self.params.check()
-        if group is None:
-            group=self.status.group()
     def removesenseidfromgroup(self,senseid,**kwargs):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
