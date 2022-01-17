@@ -2971,7 +2971,7 @@ class TaskDressing(object):
                                     "to compare with!")
                         return
                     if len(g2) == 1:
-                        self.setgroup_comparison(g2[0],window)
+                        self.settings.setgroup_comparison(g2[0],window)
                         return
                     buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
                                     optionlist=g2,
