@@ -2872,6 +2872,9 @@ class TaskDressing(object):
                 )
         window.wait_window(window)
     def getcheck(self,guess=False,event=None,**kwargs):
+        def giveup():
+            window.destroy()
+            self.on_quit()
         log.info("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
         log.info("Getting the check name...")
@@ -2901,7 +2904,7 @@ class TaskDressing(object):
             b.grid(column=0, row=1,sticky='')
             """I need to make this quit the whole program, immediately."""
             b2=ui.Button(window.frame, text=_("Quit A→Z+T"),
-                    cmd=self.destroy,
+                    cmd=giveup,
                     anchor='c')
             b2.grid(column=1, row=1,sticky='')
             b.wait_window(window)
