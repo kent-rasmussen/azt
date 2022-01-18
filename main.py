@@ -4948,7 +4948,8 @@ class Check():
                 framed=self.datadict.getframeddata(example,senseid=senseid)
                 if not framed:
                     exit()
-                if framed.forms[self.analang] is None or framed.framed == 'NA':
+                if (self.analang not in framed.forms or
+                        not framed.forms[self.analang] or framed.framed == 'NA'):
                     continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
