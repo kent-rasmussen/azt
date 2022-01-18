@@ -4863,7 +4863,7 @@ class Check():
         if justone==True:
             self.showentryformstorecordpage()
         else:
-            for psprofile in self.status.valid(): #self.profilecountsValid:
+            for psprofile in self.slices.valid(): #self.profilecountsValid:
                 if self.runwindow.exitFlag.istrue():
                     return 1
                 ps=psprofile[2]
