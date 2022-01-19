@@ -18,6 +18,11 @@ def urlok(x):
     for i in [d,p,l]:
         x=re.sub('['+i[0]+']',i[1],x)
     return x
+"""passthrough fns"""
+def sub(*args,**kwargs):
+    return re.sub(*args,**kwargs)
+def compile(x):
+    return re.compile(x)
 def id(x):
     x=x.replace('˥','4').replace('˦','3').replace('˧','2'
         ).replace('˨','1').replace('˩','0')

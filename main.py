@@ -67,7 +67,6 @@ import wave
 # #for some day...
 # from PIL import Image #, ImageTk
 #import Image #, ImageTk
-import re
 import configparser
 import rx
 import inspect #this is for determining this file name and location
