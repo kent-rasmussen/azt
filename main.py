@@ -5417,11 +5417,12 @@ class Report(object):
         self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
         log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
                                                         self.regexCV))
-        matches=set(self.senseidformsbyregex(self.regex))
-        for ncvt in self.ncvts: #for basic reports
-            if ncvt in self.basicreported:
-                # this removes senses already reported (e.g., in V1=V2)
-                matches-=self.basicreported[ncvt]
+        matches=set(self.senseidformsbyregex(self.regex,ps=ps))
+        if 'x' not in check: #don't do this for correlation reports; repeat data
+            for ncvt in self.ncvts: #for basic reports
+                if ncvt in self.basicreported:
+                    # this removes senses already reported (e.g., in V1=V2)
+                    matches-=self.basicreported[ncvt]
         log.log(2,"{} matches found!: {}".format(len(matches),matches))
         if 'x' not in check:
             try:
@@ -5444,12 +5445,13 @@ class Report(object):
                                 "".format(ps,profile,check,group))
                         n=self.checkcounts[ps][profile][check][
                                                             group]=len(matches)
-        if 'x' in check or '=' in check:
-            if '=' in check:
+        if 'x' in check or len(check.split('=')) == 2:
+            if 'x' in check:
+                othergroup=self.groupcomparison
+            else: #if len(check.split('=')) == 2:
+                """put X=Y data in XxY"""
                 othergroup=group
                 check=rx.sub('=','x',check, count=1)
-            else:
-                othergroup=self.groupcomparison
             try:
                 n=self.checkcounts[ps][profile][check][
                                                 group][othergroup]=len(matches)
@@ -5493,11 +5495,12 @@ class Report(object):
             id=rx.id(titlebits)
             ex=xlp.Example(parent,id)
             for senseid in matches:
-                for ncvt in self.ncvts: #for basic reports
-                    try:
-                        self.basicreported[ncvt].add(senseid)
-                    except KeyError:
-                        self.basicreported[ncvt]=set([senseid])
+                if 'x' not in check: #This won't add XxY data again.
+                    for ncvt in self.ncvts:
+                        try:
+                            self.basicreported[ncvt].add(senseid)
+                        except KeyError:
+                            self.basicreported[ncvt]=set([senseid])
                 framed=self.taskchooser.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,listword=True)
                 if hasattr(self,'results'): #i.e., showing results in window
