@@ -30,6 +30,7 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
   - each frame can be used with almost all words in the class for which they were designed (i.e., noun or verb).
 - This may take several hours, or longer.
 - If you don't already understand what this entails, you will need help from a linguist near you.
+- If you think you _do_ already understand what this entails, please watch [these videos](https://github.com/kent-rasmussen/azt/wiki/Designing-Tone-Frames), just so we're on the same page.
 
 ## Define Your Tone Frames in A→Z+T
 - Instructions are [here](USAGE.md#tone-frames).
