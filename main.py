@@ -5344,7 +5344,7 @@ class Report(object):
         and subcheck (e.g., a: CaC\2)."""
         """Provides self.regexCV and self.regex"""
         cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
+        # ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
