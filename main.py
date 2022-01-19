@@ -893,7 +893,8 @@ class StatusFrame(ui.Frame):
         if isinstance(self.task,WordCollection):
             self.fieldsline()
         if (isinstance(self.task,Sort) or
-            isinstance(self.task,Report) or
+            (isinstance(self.task,Report) and
+                not isinstance(self.task,ReportCitationBasic)) or
             isinstance(self.task,Tone)
             ):
             self.cvt=self.settings.params.cvt()
