@@ -5745,15 +5745,18 @@ class Report(object):
                             if x1 != 'header' and x2 not in ['header','n']:
                                 log.debug("value: {}".format(self.checkcounts[
                                     ps][profile][name][x1][x2]))
+                            # if x1 != 'header' and x2 not in ['header','n']:
+                            #     log.debug("value: {}".format(self.checkcounts[
+                            #         ps][profile][name][x1][x2]))
                             if x1 == 'header' and x2 == 'header':
-                                log.debug("header corner")
-                                cell=xlp.Cell(h,content=name,header=True)
+                                # log.debug("header corner")
+                                # cell=xlp.Cell(h,content=name,header=True)
                                 cell=xlp.Cell(h,content='',header=True)
                             elif x1 == 'header':
-                                log.debug("header row")
+                                # log.debug("header row")
                                 cell=xlp.Cell(h,content=x2,header=True)
                             elif x2 == 'header':
-                                log.debug("header column")
+                                # log.debug("header column")
                                 cell=xlp.Cell(h,content=x1,header=True)
                             else:
                                 # log.debug("Not a header")
