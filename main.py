@@ -5207,7 +5207,11 @@ class Report(object):
         si=xlp.Section(xlpr,text)
         self.results.scroll=ui.ScrollingFrame(self.results)
         self.results.scroll.grid(column=0, row=1)
-        senseid=0 # in case the following doesn't find anything:
+        if 'x' in check and cvt != 'CV': #CV has no C=V...
+            self.docheckreport(si,check=rx.sub('x','=',check, count=1))
+        self.docheckreport(si) #this needs parent
+        if 'x' in check:
+            self.coocurrencetables(xlpr)
         # These lines get all senseids, to test that we're not losing any, below
         # This is the first of three blocks to uncomment (on line, then logs)
         # self.regexCV=profile
@@ -5220,32 +5224,6 @@ class Report(object):
         # senseidsnotsearchable=set(senseidsinslice)-set(rxsenseidsinslice)
         # log.info("senseidsnotsearchable: {}".format(len(senseidsnotsearchable)))
         # log.info("senseidsnotsearchable: {}".format(senseidsnotsearchable))
-        for group in self.s[self.analang][cvt]:
-            # log.debug('group: {}'.format(group))
-            self.buildregex(group=group) #It would be nice fo this to iterate through...
-            # log.info("self.regexCV: {}".format(self.regexCV))
-            # log.info("self.regex: {}".format(self.regex))
-            senseidstocheck=self.senseidformsbyregex(self.regex)
-            # log.info("Found {} senseids".format(len(senseidstocheck)))
-            if len(senseidstocheck)>0:
-                id=rx.id('x'+ps+profile+check+group)
-                ex=xlp.Example(si,id)
-            for senseid in senseidstocheck:
-                # Uncomment to test:
-                # rxsenseidsinslice.remove(senseid)
-                """This regex is compiled!"""
-                framed=self.taskchooser.datadict.getframeddata(senseid)
-                o=framed.formatted(noframe=True)
-                self.framedtoXLP(framed,parent=ex,listword=True)
-                i+=1
-                col=0
-                for lang in [self.analang]+self.glosslangs:
-                    col+=1
-                    if lang in framed.forms:
-                        ui.Label(self.results.scroll.content,
-                            text=framed.forms[lang], font='read',
-                            anchor='w',padx=10).grid(row=i, column=col,
-                                                        sticky='w')
         xlpr.close(me=me)
         self.runwindow.waitdone()
         # Report on testing blocks above
@@ -5364,7 +5342,6 @@ class Report(object):
         """include profile (of those available for ps and check),
         and subcheck (e.g., a: CaC\2)."""
         """Provides self.regexCV and self.regex"""
-        self.regexCV=None #in case this was run before.
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
@@ -5382,19 +5359,24 @@ class Report(object):
         # log.info("self.regexCV: {}".format(self.regexCV))
         """One pass for all regexes, S3, then S2, then S1, as needed."""
         cvts=['V','C']
+        # log.info("maxcount: {}".format(maxcount))
+        # log.info("check: {}".format(check))
+        # log.info("group: {}".format(group))
+        # log.info("self.groupcomparison: {}".format(self.groupcomparison))
         if 'x' in check:
-            if self.subcheckcomparison in self.s[self.analang]['C']:
-                cvts=['C','V']
+            if self.groupcomparison in self.status.groups(cvt='C'):
+                # self.s[self.analang]['V']:
+                cvts=['C','V'] #comparison needs to be done first
+        compared=False #don't reset this for each cvt
         for t in cvts:
             if t not in cvt:
                 continue
-            S=str(cvt)
+            S=str(t) #should this ever be cvt? Do I ever want CV1xCV2,CV1=CV2?
             regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
             # log.info("regexS: {}".format(regexS))
-            compared=False
             for occurrence in reversed(range(maxcount)):
                 occurrence+=1
-                log.info("S+str(occurrence): {}".format(S+str(occurrence)))
+                # log.info("S+str(occurrence): {}".format(S+str(occurrence)))
                 # if re.search(S+str(occurrence),check) is not None:
                 if S+str(occurrence) in check:
                     """Get the (n=occurrence) S, regardless of intervening
@@ -5405,16 +5387,19 @@ class Report(object):
                     # log.info("regexS: {}".format(regexS))
                     if 'x' in check:
                         if compared == False: #occurrence == 2:
-                            replS='\\1'+self.subcheckcomparison
+                            replS='\\1'+self.groupcomparison
                             compared=True
                         else: #if occurrence == 1:
                             replS='\\1'+group
                     else:
+                        # log.info("Not comparing: {}".format(check))
                         replS='\\1'+group
+                    # log.info("regS: {}".format(regS))
                     # log.info("replS: {}".format(replS))
                     # log.info("self.regexCV: {}".format(self.regexCV))
                     self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
                     # log.info("self.regexCV: {}".format(self.regexCV))
+        # log.info("self.regexCV: {}".format(self.regexCV))
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
@@ -5427,13 +5412,15 @@ class Report(object):
         xlp.Paragraph(parent,t)
         print(t)
         log.debug(t)
-        self.buildregex()
+        """possibly iterating over all these parameters, used by buildregex"""
+        self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
         log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
                                                         self.regexCV))
         matches=set(self.senseidformsbyregex(self.regex))
-        for ncvt in self.ncvtsRun:
-            # this removes senses already reported (e.g., in V1=V2)
-            matches-=self.basicreported[ncvt]
+        for ncvt in self.ncvts: #for basic reports
+            if ncvt in self.basicreported:
+                # this removes senses already reported (e.g., in V1=V2)
+                matches-=self.basicreported[ncvt]
         log.log(2,"{} matches found!: {}".format(len(matches),matches))
         if 'x' not in check:
             try:
@@ -5501,12 +5488,15 @@ class Report(object):
         if n>0:
             titlebits='x'+ps+profile+check+group
             if 'x' in check:
-                titlebits+='x'+self.subcheckcomparison
+                titlebits+='x'+othergroup
             id=rx.id(titlebits)
             ex=xlp.Example(parent,id)
             for senseid in matches:
-                for ncvt in self.ncvtsRun:
-                    self.basicreported[ncvt].add(senseid)
+                for ncvt in self.ncvts: #for basic reports
+                    try:
+                        self.basicreported[ncvt].add(senseid)
+                    except KeyError:
+                        self.basicreported[ncvt]=set([senseid])
                 framed=self.taskchooser.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,listword=True)
                 if hasattr(self,'results'): #i.e., showing results in window
@@ -5532,54 +5522,46 @@ class Report(object):
         possible values (as above), then restore the value."""
         """I need to find a way to limit these tests to appropriate
         profiles..."""
-        cvt=kwargs.get('cvt',self.params.cvt())
+        cvt=kwargs.pop('cvt',self.params.cvt()) #only send on one
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
-        if cvt in ['V','C']:
-            groups=self.s[self.analang][cvt]
-        """This sets each of the checks that are applicable for the given
-        profile; self.basicreported is from self.basicreport()"""
-        for ncvt in self.basicreported:
-            log.log(2, '{}: {}'.format(ncvt,self.basicreported[ncvt]))
+        groups=self.status.groups(cvt=cvt)
         #CV checks depend on profile, too
         self.checks=self.status.checks(cvt=cvt,profile=profile)
         """check set here"""
         for check in self.checks: #self.checkcodesbyprofile:
-            if check not in self.checkcounts[ps][profile]:
-                self.checkcounts[ps][profile][check]={}
-            self.ncvtsRun=[ncvt for ncvt in self.ncvts
-                                        if re.search(ncvt,check)]
-            log.debug('check: {}; self.type: {}; self.ncvts: {}; '
-                        'self.ncvtsRun: {}'.format(check,cvt,
-                                                self.ncvts,self.ncvtsRun))
-            if len(check) == 1:
-                log.debug("Error! {} Doesn't seem to be list formatted.".format(
-                                                                    check))
-            if 'x' in check:
-                log.debug('Hey, I cound a correspondence number!')
-                if cvt in ['V','C']:
-                    subcheckcomparisons=groups
-                elif cvt == 'CV':
-                    subchecks=self.s[self.analang]['C']
-                    subcheckcomparisons=self.s[self.analang]['V']
-                else:
-                    log.error("Sorry, I don't know how to compare cvt: {}"
-                                                        "".format(cvt))
-                for group in groups:
-                    if group not in self.checkcounts[ps][profile][check]:
-                        self.checkcounts[ps][profile][check][group]={}
-                    for self.subcheckcomparison in subcheckcomparisons:
-                        if group != self.subcheckcomparison:
-                            t=_("{} {} {}={}-{}".format(ps,profile,
-                                                check,group,
-                                                self.subcheckcomparison))
-                            self.wordsbypsprofilechecksubcheckp(parent,t,
-                                            check=check, group=group,**kwargs)
+            """multithread here"""
+            self.docheckreport(parent,check=check,cvt=cvt,**kwargs)
+    def docheckreport(self,parent,**kwargs):
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.pop('check',self.params.check()) #don't pass this twice!
+        groups=self.status.groups(cvt=cvt)
+        self.ncvts=rx.split('[=x]',check)
+        if 'x' in check:
+            log.debug('Hey, I cound a correspondence number!')
+            if cvt in ['V','C']:
+                groupcomparisons=groups
+            elif cvt == 'CV':
+                groups=self.status.groups(cvt='C')
+                groupcomparisons=self.status.groups(cvt='V')
             else:
-                for group in groups:
-                    t=_("{} {} {}={}".format(ps,profile,check,group))
-                    self.wordsbypsprofilechecksubcheckp(parent,t,
-                                            check=check, group=group,**kwargs)
+                log.error("Sorry, I don't know how to compare cvt: {}"
+                                                    "".format(cvt))
+            for group in groups:
+                for self.groupcomparison in groupcomparisons:
+                    if group != self.groupcomparison:
+                        t=_("{} {} {}={}-{}".format(ps,profile,
+                                            check,group,
+                                            self.groupcomparison))
+                        self.wordsbypsprofilechecksubcheckp(parent,t,
+                                        check=check, group=group,**kwargs)
+        else:
+            for group in groups:
+                t=_("{} {} {}={}".format(ps,profile,check,group))
+                self.wordsbypsprofilechecksubcheckp(parent,t,
+                                        check=check, group=group,**kwargs)
     def idXLP(self,framed):
         id='x' #string!
         bits=[
@@ -5687,8 +5669,6 @@ class Report(object):
         print(t)
         p=xlp.Paragraph(si,t)
         for ps in self.slices.pss()[0:2]: #just the first two (Noun and Verb)
-            if ps not in self.checkcounts:
-                self.checkcounts[ps]={}
             profiles=self.slices.profiles(ps=ps)
             t=_("{} data: (profiles: {})".format(ps,profiles))
             log.info(t)
@@ -5700,8 +5680,6 @@ class Report(object):
             log.info(t)
             print(t)
             for profile in profiles:
-                if profile not in self.checkcounts[ps]:
-                    self.checkcounts[ps][profile]={}
                 t=_("{} {}s".format(profile,ps))
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
