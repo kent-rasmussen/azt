@@ -7457,35 +7457,6 @@ class ReportCitationBasic(Report,Segments,TaskDressing,ui.Window):
         self.cvtstodo=['V','C']#'CV'
         # This is really hard on memory, with correspondences.
         self.settings.maxprofiles=2
-    def runcheck(self):
-        """This needs to get stripped down and updated for just this check"""
-        self.settings.storesettingsfile()
-        t=(_('Run Check'))
-        log.info("Running report...")
-        i=0
-        cvt=self.params.cvt()
-        if cvt == 'T':
-            w=self.taskchooser.getcvt()
-            w.wait_window(w)
-            cvt=self.params.cvt()
-            if cvt == 'T':
-                ErrorNotice("Pick Consonants, Vowels, or CV for this report.")
-                return
-        ps=self.slices.ps()
-        if not ps:
-            self.getps()
-        check=self.params.check()
-        profile=self.slices.profile()
-        if not profile:
-            self.getprofile()
-            self.getresults()
-        else:
-            window=ui.Window(self.frame)
-            text=_('Error: please set Check/Subcheck first! ({}/{})').format(
-                                                     check,group)
-            ui.Label(window,text=text).grid(column=0, row=i)
-            i+=1
-            return
 class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
