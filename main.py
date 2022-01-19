@@ -276,6 +276,9 @@ class Menus(ui.Menu):
         self.cascade(self,_("Change"),'changemenu')
         # changemenu = ui.Menu(self.menubar, tearoff=0)
         # self.menubar.add_cascade(label=_("Change"), menu=changemenu)
+        self.languages()
+        if isinstance(self.parent,Sort):
+            self.parameterslice()
     def languages(self):
         """Language stuff"""
         self.cascade(self.changemenu,_("Languages"),'languagemenu')
