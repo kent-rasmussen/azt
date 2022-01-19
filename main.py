@@ -302,7 +302,7 @@ class Menus(ui.Menu):
                         )
         self.cascade(self.changemenu,_("Syllable profile"),'profilemenu')
         for m in [("Next", self.parent.status.nextprofile),
-                    ("Choose", self.parent.status.getprofile),
+                    ("Choose", self.parent.getprofile),
                     ]:
             self.command(self.profilemenu,
                         label=_(m[0]),
@@ -393,11 +393,38 @@ class Menus(ui.Menu):
         """Advanced"""
     def advanced(self):
         self.cascade(self,_("Advanced"),'advancedmenu')
-        for m in [
-                (_("Change to another Database (Restart)"),
+        options=[(_("Change to another Database (Restart)"),
                             self.parent.taskchooser.changedatabase),
-                ]:
+                (_("Digraph and Trigraph settings (Restart)"),
+                            self.parent.settings.askaboutpolygraphs),
+                (_("Syllable Profile Analysis (Restart)"),
+                            self.parent.settings.reloadprofiledata),
+                (_("Verification Status file (several minutes)"),
+                            self.parent.settings.reloadstatusdata),
+                (_("Segment Interpretation Settings"),
+                            self.parent.settings.setSdistinctions),
+                (_("Number of Examples to Record"),
+                        self.parent.taskchooser.getexamplespergrouptorecord),
+                ]
+        for m in options:
             self.command(self.advancedmenu,
+                        label=_(m[0]),
+                        cmd=m[1]
+                        )
+        if isinstance(self.parent,Sort):
+            self.sort()
+    def sort(self):
+        self.advancedmenu.add_separator()
+        options=[(_("Add/Modify Ad Hoc Sorting Group"),
+                                                self.parent.addmodadhocsort),]
+        if isinstance(self.parent,SortCitationT):
+            options.extend([(_("Resort skipped data"), self.parent.tryNAgain),
+                            (_("Reverify current framed group"),
+                                                        self.parent.reverify),
+                            (_("Join Groups"), self.parent.joinT)
+                            ])
+            for m in options:
+                self.command(self.advancedmenu,
                         label=_(m[0]),
                         cmd=m[1]
                         )
