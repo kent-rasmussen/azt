@@ -5533,6 +5533,15 @@ class Report(object):
         for check in self.checks: #self.checkcodesbyprofile:
             """multithread here"""
             self.docheckreport(parent,check=check,cvt=cvt,**kwargs)
+    def orderchecks(self,checklist):
+        checks=[i for i in checksuchecklistnordered if '=' in i]
+        checks.sort(key=len,reverse=True)
+        checksimple=[i for i in checklist if '=' not in i
+                                                if 'x' not in i]
+        checksimple.sort(key=len)
+        checkscoocurrance=[i for i in checklist if 'x' in i]
+        checkscoocurrance.sort(key=len)
+        return checks+checksimple+checkscoocurrance
     def docheckreport(self,parent,**kwargs):
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
