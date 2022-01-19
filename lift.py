@@ -552,12 +552,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
-    def addmediafields(self,node, url,lang, showurl=False):
+    def addmediafields(self, node, url, lang,**kwargs):
         """This fuction will add an XML node to the lift tree, like a new
         example field."""
         """The program should know before calling this, that there isn't
         already the relevant node --since it is agnostic of what is already
         there."""
+        showurl=kwargs.get('showurl',False)
+        write=kwargs.get('write',True)
         log.info("Adding {} value to {} location".format(url,node))
         possibles=node.findall("form[@lang='{lang}']/text".format(lang=lang))
         for possible in possibles:
@@ -571,7 +573,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         t=form.maketextnode(text=url)
         # prettyprint(node)
         """Can't really do this without knowing what entry or sense I'm in..."""
-        self.write()
+        if write:
+            self.write()
     def addmodcitationfields(self,entry,langform,lang):
         citation=entry.find('citation')
         if citation is None:
