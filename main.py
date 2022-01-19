@@ -5188,6 +5188,7 @@ class Report(object):
                                         ,'-',str(profile)
                                         ,'_',str(check)
                                         ,'_ReportXLP.xml'])
+        self.checkcounts={}
         xlpr=self.xlpstart()
         """"Do I need this?"""
         self.results.grid(column=0,
@@ -5197,11 +5198,11 @@ class Report(object):
         print(_("Getting results of Search request"))
         c1 = "Any"
         c2 = "Any"
-        i=0
+        self.results.row=0
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
         text=(_("{} roots of form {} by {}".format(ps,profile,check)))
-        ui.Label(self.results, text=text).grid(column=0, row=i)
+        ui.Label(self.results, text=text).grid(column=0, row=self.results.row)
         self.runwindow.wait()
         si=xlp.Section(xlpr,text)
         self.results.scroll=ui.ScrollingFrame(self.results)
@@ -5253,10 +5254,26 @@ class Report(object):
         #                                                 rxsenseidsinslice))
         # log.info("senseids remaining: ({}) {}".format(len(senseidsinslice),
         #                                                     senseidsinslice))
-        if senseid == 0: #i.e., nothing was found above
-            print(_('No results!'))
-            ui.Label(self.results, text=_("No results for ")+self.regexCV+"!"
-                            ).grid(column=0, row=i+1)
+        n=0
+        for ps in self.checkcounts:
+            for profile in self.checkcounts[ps]:
+                for check in self.checkcounts[ps][profile]:
+                    for group in self.checkcounts[ps][profile][check]:
+                        i=self.checkcounts[ps][profile][check][group]
+                        if isinstance(i,int):
+                            n+=i
+                        else:
+                            for g2 in i:
+                                i2=i[g2]
+                                if isinstance(i2,int):
+                                    n+=i2
+                                else:
+                                    log.info("Not sure what I'm dealing with! "
+                                            "({})".format(i2))
+        if not n: #i.e., nothing was found above
+            text=_("No results for {}/{} ({})!").format(profile,check,ps)
+            log.info(text)
+            ui.Label(self.results, text=text, column=0, row=self.results.row+1)
             return
     def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None,xcounts=None):
         #values should be a (lambda?) function that depends on x and y terms
@@ -5418,28 +5435,69 @@ class Report(object):
             # this removes senses already reported (e.g., in V1=V2)
             matches-=self.basicreported[ncvt]
         log.log(2,"{} matches found!: {}".format(len(matches),matches))
-        if 'x' in check:
-            n=self.checkcounts[ps][profile][check][
-                            group][self.subcheckcomparison]=len(matches)
-        else:
-            n=self.checkcounts[ps][profile][check][
-                            group]=len(matches)
+        if 'x' not in check:
+            try:
+                n=self.checkcounts[ps][profile][check][group]=len(matches)
+            except:
+                try:
+                    self.checkcounts[ps][profile][check]={}
+                    n=self.checkcounts[ps][profile][check][group]=len(matches)
+                except:
+                    try:
+                        self.checkcounts[ps][profile]={}
+                        self.checkcounts[ps][profile][check]={}
+                        n=self.checkcounts[ps][profile][check][
+                                                            group]=len(matches)
+                    except:
+                        self.checkcounts[ps]={}
+                        self.checkcounts[ps][profile]={}
+                        self.checkcounts[ps][profile][check]={}
+                        log.info("ps: {}, profile: {}, check: {}, group: {}"
+                                "".format(ps,profile,check,group))
+                        n=self.checkcounts[ps][profile][check][
+                                                            group]=len(matches)
+        if 'x' in check or '=' in check:
             if '=' in check:
-                xname=re.sub('=','x',check, count=1)
-                log.debug("looking for name {} in {}".format(xname,self.checks))
-                if xname in self.checks:
-                    log.debug("Adding {} value to name {}".format(len(matches),
-                                                                        xname))
-                    #put the results in that group, too
-                    log.debug(self.checkcounts)
-                    if xname not in self.checkcounts[ps][profile]:
-                        self.checkcounts[ps][profile][xname]={}
-                    if group not in self.checkcounts[ps][
-                                    profile][xname]:
-                        self.checkcounts[ps][profile][xname][group]={}
-                    self.checkcounts[ps][profile][xname][group][group
-                                                                ]=len(matches)
-                    log.debug(self.checkcounts)
+                othergroup=group
+                check=rx.sub('=','x',check, count=1)
+            else:
+                othergroup=self.groupcomparison
+            try:
+                n=self.checkcounts[ps][profile][check][
+                                                group][othergroup]=len(matches)
+            except KeyError:
+                try:
+                    self.checkcounts[ps][profile][check][group]={}
+                    n=self.checkcounts[ps][profile][check][
+                                                group][othergroup]=len(matches)
+                except KeyError:
+                    try:
+                        self.checkcounts[ps][profile][check]={}
+                        self.checkcounts[ps][profile][check][group]={}
+                        n=self.checkcounts[ps][profile][check][
+                                                group][othergroup]=len(matches)
+                    except KeyError:
+                        try:
+                            self.checkcounts[ps][profile]={}
+                            self.checkcounts[ps][profile][check]={}
+                            self.checkcounts[ps][profile][check][group]={}
+                            n=self.checkcounts[ps][profile][check][
+                                                group][othergroup]=len(matches)
+                        except KeyError:
+                            try:
+                                self.checkcounts[ps]={}
+                                self.checkcounts[ps][profile]={}
+                                self.checkcounts[ps][profile][check]={}
+                                self.checkcounts[ps][profile][check][group]={}
+                                n=self.checkcounts[ps][profile][check][
+                                                group][othergroup]=len(matches)
+                            except KeyError:
+                                self.checkcounts[ps]={}
+                                self.checkcounts[ps][profile]={}
+                                self.checkcounts[ps][profile][check]={}
+                                self.checkcounts[ps][profile][check][group]={}
+                                n=self.checkcounts[ps][profile][check][
+                                                group][othergroup]=len(matches)
         if n>0:
             titlebits='x'+ps+profile+check+group
             if 'x' in check:
@@ -5451,6 +5509,17 @@ class Report(object):
                     self.basicreported[ncvt].add(senseid)
                 framed=self.taskchooser.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,listword=True)
+                if hasattr(self,'results'): #i.e., showing results in window
+                    self.results.row+=1
+                    col=0
+                    for lang in [self.analang]+self.glosslangs:
+                        col+=1
+                        if lang in framed.forms and framed.forms[lang]:
+                            ui.Label(self.results.scroll.content,
+                                    text=framed.forms[lang], font='read',
+                                    anchor='w',padx=10, row=self.results.row,
+                                    column=col,
+                                    sticky='w')
     def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent',**kwargs):
         """This function iterates across check and group values
         appropriate for the specified self.type, profile and check
