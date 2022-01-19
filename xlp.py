@@ -8,9 +8,11 @@ import logsetup
 log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
+import time
 import subprocess
 class Report(object):
     def __init__(self,filename,report,langname):
+        self.start_time=time.time()
         self.filename=filename
         self.stylesheetdir=file.getstylesheetdir(filename)
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
@@ -34,6 +36,10 @@ class Report(object):
         self.xlptypes()
         self.stylesheet()
         self.write()
+        t=time.time()-self.start_time
+        m=int(t/60)
+        s=t%60
+        log.info("Finished in {} minutes, {} seconds.".format(m,s))
         # if me:
         #     self.compile() #This isn't working yet.
     def write(self):
