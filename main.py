@@ -5714,19 +5714,22 @@ class Report(object):
             s2s=xlp.Section(s1s,ps,level=2)
             for profile in self.checkcounts[ps]:
                 s3s=xlp.Section(s2s,' '.join([ps,profile]),level=3)
-                for name in self.checkcounts[ps][profile]:
-                    rows=list(self.checkcounts[ps][profile][name])
                     nrows=len(rows)
                     if nrows == 0:
+                checks=self.orderchecks(self.checkcounts[ps][profile].keys())
+                for check in checks:
+                    log.debug("Counts by ({}) check: {}".format(
+                        check,self.checkcounts[ps][profile][check]))
+                    rows=list(self.checkcounts[ps][profile][check])
                         continue
-                    if 'x' in name:
-                        cols=list(self.checkcounts[ps][profile][name][rows[0]])
+                    if 'x' in check:
+                        cols=list(self.checkcounts[ps][profile][check][rows[0]])
                     else:
-                        cols=['n']
                     ncols=len(cols)
                     if ncols == 0:
+                        cols=[check]
                         continue
-                    caption=' '.join([ps,profile,name])
+                    caption=' '.join([ps,profile,check])
                     t=xlp.Table(s3s,caption)
                     for x1 in ['header']+list(range(nrows)):
                         if x1 != 'header':
@@ -5752,13 +5755,13 @@ class Report(object):
                                 log.debug("header column")
                                 cell=xlp.Cell(h,content=x1,header=True)
                             else:
-                                log.debug("Not a header")
-                                if x2 == 'n':
+                                # log.debug("Not a header")
+                                if x2 == check:
                                     value=self.checkcounts[ps][
-                                                    profile][name][x1]
+                                                    profile][check][x1]
                                 else:
                                     value=self.checkcounts[ps][
-                                                    profile][name][x1][x2]
+                                                    profile][check][x1][x2]
                                 if not value:
                                     value=''
                                 cell=xlp.Cell(h,content=value)
