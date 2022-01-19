@@ -824,7 +824,7 @@ class StatusFrame(ui.Frame):
                             bcht=ui.ToolTip(bch,_("Go to the next tone frame"))
                         else:
                             ui.Label(self.leaderboardtable,
-                                    text=linebreakwords(frame),
+                                    text=rx.linebreakwords(frame),
                                     font='reportheader',
                                     row=row,column=column,sticky='s',ipadx=5)
                     elif profile == 'next':
@@ -1085,8 +1085,9 @@ class Settings(object):
         to not have periods (.) in their filenames. So we take the base
         name from the lift file, and replace periods with underscores,
         to make our modules basename."""
-        self.liftnamebase=re.sub('\.','_', str(
-                                    file.getfilenamebase(self.liftfilename)))
+        self.liftnamebase=rx.pymoduleable(file.getfilenamebase(
+                                                            self.liftfilename))
+        # re.sub('\.','_', str(
         basename=file.getdiredurl(self.directory,self.liftnamebase)
         self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
         self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
@@ -1962,15 +1963,15 @@ class Settings(object):
         #Compile preferred regexs here
         for cc in ['CG','CS','NC','VN','VV']:
             ccc=cc.replace('C','[CSGDʔN]{1}')
-            self.rx[cc]=re.compile(ccc)
+            self.rx[cc]=rx.compile(ccc)
         for c in ['N','S','G','ʔ','D']:
             if c == 'N': #i.e., before C
-                self.rx[c+'_']=re.compile(c+'(?!([CSGDʔ]|\Z))') #{1}|
+                self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))') #{1}|
             elif c in ['ʔ','D']:
-                self.rx[c+'_']=re.compile(c+'(?!\Z)')
+                self.rx[c+'_']=rx.compile(c+'(?!\Z)')
             else:
-                self.rx[c+'_']=re.compile('(?<![CSGDNʔ])'+c)
-            self.rx[c+'wd']=re.compile(c+'(?=\Z)')
+                self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c)
+            self.rx[c+'wd']=rx.compile(c+'(?=\Z)')
     def checkforlegacyverification(self):
         start_time=time.time()
         n=0
@@ -4045,7 +4046,7 @@ class Tone(object):
             if checktoadd in ['', None]:
                 text=_('Sorry, empty name! \nPlease provide at least \na frame '
                     'name, to distinguish it \nfrom other frames.')
-                log.error(re.sub('\n','',text))
+                log.error(rx.delinebreak(text))
                 if hasattr(self.addwindow,'framechk'):
                     self.addwindow.framechk.destroy()
                 self.addwindow.framechk=ui.Frame(self.addwindow.scroll.content)
@@ -4758,7 +4759,8 @@ class Record(Sound):
             return
         if self.runwindow.frame.skip == False:
             skipf=ui.Frame(self.runwindow.frame)
-            skipb=ui.Button(skipf, text=linebreakwords(_("Skip to next undone")),
+            skipb=ui.Button(skipf,
+                        text=rx.linebreakwords(_("Skip to next undone")),
                         cmd=skipf.destroy)
             skipf.grid(row=1,column=1,sticky='w')
             skipb.grid(row=0,column=0,sticky='w')
@@ -5287,7 +5289,7 @@ class Report(object):
                         hxcontents='{} ({})'.format(col,xcounts(col))
                     else:
                         hxcontents='{}'.format(col)
-                    cell=xlp.Cell(r,content=linebreakwords(hxcontents),
+                    cell=xlp.Cell(r,content=rx.linebreakwords(hxcontents),
                                 header=True,
                                 linebreakwords=True)
                 elif col == 'header':
@@ -5318,7 +5320,7 @@ class Report(object):
         if reporttype == 'Tone':
             if self.bylocation:
                 reporttype='Tone-bylocation'
-        elif not re.search('Basic',reporttype): #We don't want this in the title
+        elif not 'Basic' in reporttype: #We don't want this in the title
             #this is only for adhoc "big button" reports.
             reporttype=str(self.params.check())
         reporttype=' '.join([ps,profile,reporttype])
@@ -5351,7 +5353,8 @@ class Report(object):
         profile=kwargs.get('profile',self.slices.profile())
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
-        maxcount=re.subn(cvt, cvt, profile)[1]
+        maxcount=rx.countxiny(cvt, profile)
+        # re.subn(cvt, cvt, profile)[1]
         if profile is None:
             print("It doesn't look like you've picked a syllable profile yet.")
             return
@@ -5374,7 +5377,9 @@ class Report(object):
             compared=False
             for occurrence in reversed(range(maxcount)):
                 occurrence+=1
-                if re.search(S+str(occurrence),check) is not None:
+                log.info("S+str(occurrence): {}".format(S+str(occurrence)))
+                # if re.search(S+str(occurrence),check) is not None:
+                if S+str(occurrence) in check:
                     """Get the (n=occurrence) S, regardless of intervening
                     non S..."""
                     # log.info("regexS: {}".format(regexS))
@@ -5391,7 +5396,7 @@ class Report(object):
                         replS='\\1'+group
                     # log.info("replS: {}".format(replS))
                     # log.info("self.regexCV: {}".format(self.regexCV))
-                    self.regexCV=re.sub(regS,replS,self.regexCV, count=1)
+                    self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
                     # log.info("self.regexCV: {}".format(self.regexCV))
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
@@ -5638,12 +5643,13 @@ class Report(object):
                     log.info(t)
                     sid=" ".join([t,"for",profile,ps+'s'])
                     s3=xlp.Section(s2,sid,level=3)
-                    maxcount=re.subn(cvt, cvt, profile)[1]
                     """Get these reports from C1/V1 to total number of C/V"""
                     self.ncvts=[cvt+str(n+1) for n in range(maxcount)]
                     for ncvt in self.ncvts:
                         if ncvt not in self.basicreported:
                             self.basicreported[ncvt]=set()
+                    maxcount=rx.countxiny(cvt, profile)
+                    # re.subn(cvt, cvt, profile)[1]
                     self.wordsbypsprofilechecksubcheck(s3,cvt=cvt,ps=ps,
                                                         profile=profile)
         t=_("Summary coocurrence tables")
@@ -5843,16 +5849,16 @@ class SortCV(Sort,Segments,TaskDressing,ui.Window):
         #I need to rework this to work more generally..….
         ui.Label(window.frame, text="I will make the following changes:").grid(column=0, row=0)
         lexemeNew=entry.newform #newform(entry.lexeme,'v12',check.subcheck,choice)
-        citationNew = re.sub(entry.lexeme, lexemeNew, entry.citation)
+        """citationNew = re.sub(entry.lexeme, lexemeNew, entry.citation)"""
         ui.Label(window.frame, text="citation: "+entry.citation+" → "+citationNew).grid(column=0, row=1)
         ui.Label(window.frame, text="lexeme: "+entry.lexeme+" → "+lexemeNew).grid(column=0, row=2)
         fields={}
         if entry.plural is not None:
-            pluralNew = re.sub(entry.lexeme, lexemeNew, entry.plural)
+            """pluralNew = re.sub(entry.lexeme, lexemeNew, entry.plural)"""
             ui.Label(window.frame, text="plural: "+plural+" → "+pluralNew).grid(column=0, row=3)
             fields={'Plural'}
         if entry.imperative is not None:
-            imperativeNew = re.sub(entry.lexeme, lexemeNew, entry.imperative)
+            """imperativeNew = re.sub(entry.lexeme, lexemeNew, entry.imperative)"""
             ui.Label(window.frame, text="imperative: "+entry.imperative+" → "+imperativeNew).grid(column=0, row=4)
         def ok():
             entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-ok')
@@ -5924,7 +5930,7 @@ class SortCV(Sort,Segments,TaskDressing,ui.Window):
         print('r: '+r)
         print('sub: '+sub)
         print('baseform: '+baseform)
-        entry.newform=re.sub(r, sub, baseform)
+        """entry.newform=re.sub(r, sub, baseform)"""
         print('newform: '+entry.newform)
         def old2():
             for x in baseform:
@@ -9808,9 +9814,6 @@ def nonspace(x):
         return x
     else:
         return " "
-def linebreakwords(x):
-    log.log(4,"working on {}".format(x))
-    return re.sub(' ','\n',x)
 def nn(x,oneperline=False,twoperline=False):
     """Don't print "None" in the UI..."""
     if type(x) is list or type(x) is tuple:
