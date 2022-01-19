@@ -7683,10 +7683,10 @@ class DictbyLang(dict):
     def frame(self,framedict,langs): #langs can/should be ordered
         """the frame only applies if there is a language value; I hope that's
         what we want..."""
-        log.info("Applying frame {} in these langs: {}".format(framedict,langs))
-        log.info("Using regex {}".format(rx.framerx))
+        # log.info("Applying frame {} in these langs: {}".format(framedict,langs))
+        # log.info("Using regex {}".format(rx.framerx))
         for l in [i for i in langs if i in framedict if i in self and self[i] != []]:
-            log.info("Using lang {}".format(l))
+            # log.info("Using lang {}".format(l))
             if self[l] is not None:
                 self.framed[l]=rx.framerx.sub(self[l],framedict[l])
             else:
@@ -7817,8 +7817,9 @@ class FramedDataDict(dict):
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def isthere(self,source):
         if source in self:
-            log.debug("source {} already there, using...".format(source))
             self[source].updatelangs() #maybe it has been awhile...
+            log.debug("source {} already there, using with forms {}"
+            "".format(source,self[source].forms))
             return self[source]
     def getframeddata(self, source=None, senseid=None, check=None, **kwargs):
         """Check here is the name of the specific check being run, e.g., V1=V2,
@@ -7844,16 +7845,16 @@ class FramedDataDict(dict):
                                             location=check
                                             ).get('node'))
             element=True
-        log.info("sense: {}, element: {} (after build)".format(sense,element))
+        # log.info("sense: {}, element: {} (after build)".format(sense,element))
         d=self.isthere(source)
         if source and not d:
-            log.debug("FramedData {} not already done; making…".format(source))
             """certain limited cases have sense w/o check (like page titles)
             or element without senseid (like when not recording)"""
             if sense:
                 d=self[source]=FramedDataSense(self,source,check,**kwargs)
             if element:
                 d=self[source]=FramedDataElement(self,source,senseid,**kwargs)
+            log.debug("FramedData {} made with forms {}".format(source,d.forms))
         return d #self[source]
     def __init__(self, taskchooser, **kwargs):
         super(FramedDataDict, self).__init__()
@@ -7928,9 +7929,9 @@ class FramedDataSense(FramedData):
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
             self.check=frame
-            log.info("setframe framed: {}".format(self.forms.framed))
+            # log.info("setframe framed: {}".format(self.forms.framed))
         else:
-            log.info("setframe setting no frame")
+            # log.info("setframe setting no frame")
             self.applynoframe() #enforce the docstring above
         self.tonegroups=self.db.get('example/tonefield/form/text',
                     senseid=self.senseid, location=frame).get('text')
@@ -7953,8 +7954,8 @@ class FramedDataSense(FramedData):
             return
         self.parsesense(self.db,senseid)
         self.setframe(check)
-        log.info("FramedDataSense initalization done, with forms {}"
-                    "".format(self.forms))
+        # log.info("FramedDataSense initalization done, with forms {}"
+        #             "".format(self.forms))
 class FramedDataElement(FramedData):
     """This class formats for display a node with form/text elements
     (e.g., examples), without access to senseid or entry guids (parent nodes).
@@ -8119,8 +8120,8 @@ class FramedDataElement(FramedData):
             </field>
         </example>
         """
-        log.info("FramedDataElement initalization done, with forms: {}"
-                    "".format(self.forms))
+        # log.info("FramedDataElement initalization done, with forms: {}"
+        #             "".format(self.forms))
 class MainApplication(ui.Window):
     def setmasterconfig(self): #,program
         """Configure variables for the root window (master)"""
