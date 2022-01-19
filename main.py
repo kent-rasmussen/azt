@@ -9261,6 +9261,11 @@ class StatusDict(dict):
             log.debug('Found {} instances of {} in {}'.format(n,cvt,profile))
             self._checksdict[cvt][profile]=list()
             for i in range(n): # get max checks and lesser
+                if i+1 >6:
+                    log.info("We aren't doing checks with more than 6 "
+                            "consonants or vowels ({} in {}); If you need "
+                            "that, please let me know.".format(i+1,profile))
+                    continue
                 syltuples=self._checkparameters._Schecks[cvt][i+1] #range+1 = syl
                 c=self._checksdict[cvt][profile].extend(
                                                     [t[0] for t in syltuples])
