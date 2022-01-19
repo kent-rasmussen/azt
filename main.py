@@ -9522,14 +9522,16 @@ class CheckParameters(dict):
                     ]
                 },
             "CV":{
-                1:[("#CV1", "Word-initial CV"),
+                1:[
+                    # ("#CV1", "Word-initial CV"),
                     ("C1xV1", "Correspondence of C1 and V1"),
-                    ("CV1", "First/only CV")
+                    # ("CV1", "First/only CV")
                     ],
-                2:[("CV2", "Second CV"),
+                2:[
+                    # ("CV2", "Second CV"),
                     ("C2xV2", "Correspondence of C2 and V2"),
                     ("CV1=CV2","Same First/only Two CVs"),
-                    ("CV2#", "Word-final CV")
+                    # ("CV2#", "Word-final CV")
                     ],
                 3:[
                     ("CV1=CV2=CV3","Same First/only Three CVs"),
