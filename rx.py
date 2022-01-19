@@ -18,6 +18,16 @@ def urlok(x):
     for i in [d,p,l]:
         x=re.sub('['+i[0]+']',i[1],x)
     return x
+def split(delre,str):
+    return re.split(delre,str)
+def countxiny(x,y):
+    return re.subn(x, x, y)[1]
+def linebreakwords(x):
+    return re.sub(' ','\n',x)
+def pymoduleable(x):
+    return re.sub('\.','_', str(x))
+def delinebreak(x):
+    return re.sub('\n','',x)
 """passthrough fns"""
 def sub(*args,**kwargs):
     return re.sub(*args,**kwargs)
