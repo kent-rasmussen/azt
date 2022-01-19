@@ -4158,7 +4158,7 @@ class Tone(object):
                                                     ))
             # Having made and unset these, we now reset and write them to file.
             self.toneframes.addframe(ps,checktoadd,checkdefntoadd)
-            self.status.renewchecks()
+            self.status.renewchecks() #renew (not update), because of new frame
             self.settings.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
         ps=kwargs.get('ps',self.slices.ps())
