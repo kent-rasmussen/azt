@@ -2143,16 +2143,16 @@ class Settings(object):
             self.taskchooser.status.build()
         t=self.taskchooser.params.cvt()
         if 'cvt' in self.attrschanged:
-            self.taskchooser.status.renewchecks()
+            self.taskchooser.status.updatechecksbycvt()
             self.taskchooser.status.makecheckok()
             self.attrschanged.remove('cvt')
         if 'ps' in self.attrschanged:
             if t == 'T':
-                self.taskchooser.status.renewchecks()
+                self.taskchooser.status.updatechecksbycvt()
             self.attrschanged.remove('ps')
         if 'profile' in self.attrschanged:
             if t != 'T':
-                self.taskchooser.status.renewchecks()
+                self.taskchooser.status.updatechecksbycvt()
             self.attrschanged.remove('profile')
         if 'check' in self.attrschanged:
             self.attrschanged.remove('check')
