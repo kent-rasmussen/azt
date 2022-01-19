@@ -3406,7 +3406,9 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(ReportCitationTlocation)
                 tasks.append(ReportCitationBasicT)
                 if self.donew['collectionlc']:
-                    tasks.append(ReportCitationBasic)
+                    """This currently takes way too much time. Until it gets
+                    mutithreaded, it will not be an option"""
+                    # tasks.append(ReportCitationBasic)
                     if self.donew['somerecordingT']:
                         tasks.append(Transcribe)
                         if self.donew['analysis']:
