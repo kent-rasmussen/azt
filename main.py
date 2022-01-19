@@ -7438,7 +7438,7 @@ class ReportCitationBasic(Report,Segments,TaskDressing,ui.Window):
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
-        self.cvtstodo=['V','C']#'CV'
+        self.cvtstodo=['V','C','CV']
         # This is really hard on memory, with correspondences.
         self.settings.maxprofiles=2
 class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
