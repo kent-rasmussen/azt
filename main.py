@@ -5708,43 +5708,33 @@ class Report(object):
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         self.frame.parent.waitdone()
     def coocurrencetables(self,xlpr):
-        t=_("Summary coocurrence tables")
+        t=_("Summary Co-ocurrence Tables")
         s1s=xlp.Section(xlpr,t)
         for ps in self.checkcounts:
             s2s=xlp.Section(s1s,ps,level=2)
             for profile in self.checkcounts[ps]:
                 s3s=xlp.Section(s2s,' '.join([ps,profile]),level=3)
-                    nrows=len(rows)
-                    if nrows == 0:
+                log.info("names used ({}-{}): {}".format(ps,profile,
+                                self.checkcounts[ps][profile].keys()))
                 checks=self.orderchecks(self.checkcounts[ps][profile].keys())
                 for check in checks:
                     log.debug("Counts by ({}) check: {}".format(
                         check,self.checkcounts[ps][profile][check]))
                     rows=list(self.checkcounts[ps][profile][check])
+                    if not len(rows):
                         continue
                     if 'x' in check:
                         cols=list(self.checkcounts[ps][profile][check][rows[0]])
                     else:
-                    ncols=len(cols)
-                    if ncols == 0:
                         cols=[check]
+                    if not len(cols):
                         continue
                     caption=' '.join([ps,profile,check])
                     t=xlp.Table(s3s,caption)
-                    for x1 in ['header']+list(range(nrows)):
-                        if x1 != 'header':
-                            x1=rows[x1]
+                    for x1 in ['header']+rows:
                         h=xlp.Row(t)
-                        for x2 in ['header']+list(range(ncols)):
+                        for x2 in ['header']+cols:
                             log.debug("x1: {}; x2: {}".format(x1,x2))
-                            if x2 != 'header':
-                                x2=cols[x2]
-                            log.debug("x1: {}; x2: {}".format(x1,x2))
-                            log.debug("countbyname: {}".format(self.checkcounts[
-                                    ps][profile][name]))
-                            if x1 != 'header' and x2 not in ['header','n']:
-                                log.debug("value: {}".format(self.checkcounts[
-                                    ps][profile][name][x1][x2]))
                             # if x1 != 'header' and x2 not in ['header','n']:
                             #     log.debug("value: {}".format(self.checkcounts[
                             #         ps][profile][name][x1][x2]))
