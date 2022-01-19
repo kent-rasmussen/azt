@@ -5528,7 +5528,8 @@ class Report(object):
         profile=kwargs.get('profile',self.slices.profile())
         groups=self.status.groups(cvt=cvt)
         #CV checks depend on profile, too
-        self.checks=self.status.checks(cvt=cvt,profile=profile)
+        checksunordered=self.status.checks(cvt=cvt,profile=profile)
+        self.checks=self.orderchecks(checksunordered)
         """check set here"""
         for check in self.checks: #self.checkcodesbyprofile:
             """multithread here"""
