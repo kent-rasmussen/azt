@@ -458,13 +458,16 @@ class Menus(ui.Menu):
         # changestuffmenu.add_cascade(label=_("Settings"), menu=settingsmenu)
         """help"""
     def help(self):
-        helpmenu = ui.Menu(self.menubar, tearoff=0)
-        helpmenu.add_command(label=_("About"),
-                        command=self.helpabout)
-        self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
+        self.cascade(self,_("Help"),'helpmenu')
+        for m in [("About", self.parent.helpabout)]:
+            self.command(self.helpmenu,
+                        label=_(m[0]),
+                        cmd=m[1]
+                        )
     def __init__(self, parent):
         super(Menus, self).__init__(parent)
         self.advanced()
+        self.help()
 class StatusFrame(ui.Frame):
     """This contains all the info about what the user is currently working on,
     and buttons to change it."""
