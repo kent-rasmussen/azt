@@ -2511,6 +2511,20 @@ class TaskDressing(object):
         self.menu=True
         self.setcontext()
         self.unbind_all('<Enter>')
+    def correlatemenus(self):
+        log.info("Menus: {}; {} (chooser)".format(self.menu,self.taskchooser.menu))
+        if hasattr(self,'task'):
+            log.info("Menus: {}; {} (task)".format(self.menu,self.task.menu))
+        if self.menu != self.taskchooser.menu: #for tasks
+            if self.menu:
+                self._removemenus()
+            else:
+                self._setmenus()
+        elif hasattr(self,'task') and self.menu != self.task.menu: #for chooser
+            if self.menu:
+                self._removemenus()
+            else:
+                self._setmenus()
     def setfontsdefault(self):
         self.theme.setfonts()
         self.fontthemesmall=False
@@ -2622,7 +2636,8 @@ class TaskDressing(object):
                     'db',
                     'datadict','exs',
                     'settings',
-                    'menu','mainrelief','fontthemesmall',
+                    # 'menu',
+                    'mainrelief','fontthemesmall',
                     'hidegroupnames'
                     # 'glosslangs',
                     # 'analang',
@@ -3181,9 +3196,14 @@ class TaskDressing(object):
         group=kwargs.get('group',self.status.group())
         log.info("about to return {}={}".format(check,group))
         return check+'='+group
+    def timetowrite(self):
+        """only write to file every self.writeeverynwrites times you might."""
+        self.writeable+=1 #and tally here each time this is asked
+        return not self.writeable%self.writeeverynwrites
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
+        self.menu=False #initialize once
         if isinstance(self,TaskChooser):
             self.taskchooser=self
         else:
@@ -3201,7 +3221,8 @@ class TaskDressing(object):
         self.analang=self.params.analang() # Every task gets this here
         # super(TaskDressing, self).__init__(parent)
         for k in ['settings',
-                    'menu','mainrelief','fontthemesmall',
+                    # 'menu',
+                    'mainrelief','fontthemesmall',
                     'hidegroupnames']:
             if not hasattr(self,k):
                 if hasattr(parent,k):
@@ -3212,6 +3233,12 @@ class TaskDressing(object):
         self.tableiteration=0
         self.makestatusframe()
         self._taskchooserbutton()
+        self.correlatemenus()
+        if not self.settings.writeeverynwrites: #0/None are not sensible values
+            self.settings.writeeverynwrites=5
+            self.settings.storesettingsfile()
+        self.writeeverynwrites=self.settings.writeeverynwrites
+        self.writeable=0 #start the count
         # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=self.taskchooser)
         # self.setfontsdefault()
 class TaskChooser(TaskDressing,ui.Window):
@@ -3289,6 +3316,7 @@ class TaskChooser(TaskDressing,ui.Window):
             self.datacollection=not self.datacollection
             self.maketitle() #b/c this changes
         else:
+            self.correlatemenus() #only if moving to this window
             self.unsetmainwindow() #first, so the program stays alive
         if hasattr(self,'task') and self.task.winfo_exists():
             self.task.on_quit() #destroy and set flag
@@ -8127,7 +8155,11 @@ class RecordButtonFrame(ui.Frame):
     def addlink(self):
         if self.test:
             return
-        self.db.addmediafields(self.node,self.filename,self.audiolang)
+        if self.task.timetowrite():
+            self.db.addmediafields(self.node,self.filename,self.audiolang)
+        else:
+            self.db.addmediafields(self.node,self.filename,self.audiolang,
+                                                                    write=False)
         self.task.status.last('recording',update=True)
     def __init__(self,parent,task,framed=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
