@@ -5748,6 +5748,7 @@ class Report(object):
                             if x1 == 'header' and x2 == 'header':
                                 log.debug("header corner")
                                 cell=xlp.Cell(h,content=name,header=True)
+                                cell=xlp.Cell(h,content='',header=True)
                             elif x1 == 'header':
                                 log.debug("header row")
                                 cell=xlp.Cell(h,content=x2,header=True)
