@@ -5668,8 +5668,8 @@ class Report(object):
         log.info(t)
         print(t)
         p=xlp.Paragraph(si,t)
-        for ps in self.slices.pss()[0:2]: #just the first two (Noun and Verb)
-            profiles=self.slices.profiles(ps=ps)
+        for ps in self.slices.pss()[:2]: #just the first two (Noun and Verb)
+            profiles=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
             t=_("{} data: (profiles: {})".format(ps,profiles))
             log.info(t)
             print(t)
