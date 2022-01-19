@@ -5654,6 +5654,7 @@ class Report(object):
                 "examples of a segment type occur with different values, e.g., "
                 "V1≠V2, those words will appear multiple times, e.g., for "
                 "both V1=x and V2=y.")
+        self.wait(msg="Running {}".format(self.tasktitle()))
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                             ,'_',''.join(self.cvtstodo)
                                             ,'_BasicReport.txt'])
@@ -5706,7 +5707,7 @@ class Report(object):
         xlpr.close(me=me)
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        self.frame.parent.waitdone()
+        self.waitdone()
     def coocurrencetables(self,xlpr):
         t=_("Summary Co-ocurrence Tables")
         s1s=xlp.Section(xlpr,t)
