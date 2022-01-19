@@ -9147,8 +9147,6 @@ class StatusDict(dict):
         """This just pulls the correct list from the dict, and updates params"""
         """It doesn't allow for input, as other fns do"""
         cvt=kwargs.get('cvt',self._checkparameters.cvt())
-        if not hasattr(self,'_checksdict'):
-            self._checksdict={}
         if cvt not in self._checksdict:
             self._checksdict[cvt]={}
             self.renewchecks(**kwargs)
@@ -9171,10 +9169,6 @@ class StatusDict(dict):
         """This depends on cvt and profile, for CV checks"""
         """replaces self.checkspossible"""
         """replaces setnamesbyprofile"""
-        if not hasattr(self,'_checksdict'):
-            self._checksdict={}
-        if not hasattr(self,'_cvchecknames'):
-            self._cvchecknames={}
         cvt=kwargs.get('cvt',self._checkparameters.cvt())
         # t=self._checkparameters.cvt()
         if not cvt:
@@ -9327,6 +9321,8 @@ class StatusDict(dict):
         self._checkparameters=checkparameters
         self._slicedict=slicedict
         self._toneframes=toneframes
+        self._checksdict={}
+        self._cvchecknames={}
 class CheckParameters(dict):
     """This stores and returns current cvt/type and check only; there is not check
     here that the setting is valid (done in status), nor that the consequences
