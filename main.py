@@ -5721,6 +5721,14 @@ class Report(object):
                     # re.subn(cvt, cvt, profile)[1]
                     self.wordsbypsprofilechecksubcheck(s3,cvt=cvt,ps=ps,
                                                         profile=profile)
+        self.coocurrencetables(xlpr)
+        log.info(self.checkcounts)
+        xlpr.close(me=me)
+        log.info("Finished in {} seconds.".format(str(time.time()-start_time)))
+        sys.stdout.close()
+        sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
+        self.frame.parent.waitdone()
+    def coocurrencetables(self,xlpr):
         t=_("Summary coocurrence tables")
         s1s=xlp.Section(xlpr,t)
         for ps in self.checkcounts:
@@ -5773,12 +5781,6 @@ class Report(object):
                                     value=self.checkcounts[ps][
                                                     profile][name][x1][x2]
                                 cell=xlp.Cell(h,content=value)
-        log.info(self.checkcounts)
-        xlpr.close(me=me)
-        log.info("Finished in {} seconds.".format(str(time.time()-start_time)))
-        sys.stdout.close()
-        sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        self.frame.parent.waitdone()
     def __init__(self):
         self.reportbasefilename=self.settings.reportbasefilename
         self.reporttoaudiorelURL=self.settings.reporttoaudiorelURL
