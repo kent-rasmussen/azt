@@ -986,7 +986,7 @@ class Settings(object):
                                 'fontthemesmall',
                                 'secondformfield',
                                 'soundsettingsok',
-                                'writeeverynsorts'
+                                'writeeverynwrites'
                                 ]},
             'profiledata':{
                                 'file':'profiledatafile',
@@ -4233,10 +4233,6 @@ class Tone(object):
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
-    def timetowrite(self):
-        """only write to file every self.writeeverynsorts times you might."""
-        self.writeable+=1
-        return not self.writeable%self.writeeverynsorts
     def updatestatuslift(self,verified=False,**kwargs):
         """This should be called only by update status, when there is an actual
         change in status to write to file."""
@@ -4391,12 +4387,6 @@ class Sort(object):
         scroll.grid(row=3,column=0,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
-    def __init__(self):
-        if not self.settings.writeeverynsorts: #0/None are not sensible values
-            self.settings.writeeverynsorts=5
-            self.settings.storesettingsfile()
-        self.writeeverynsorts=self.settings.writeeverynsorts
-        self.writeable=0 #start the count
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
     def donewpyaudio(self):
