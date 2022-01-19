@@ -5638,7 +5638,6 @@ class Report(object):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
         #Convert to iterate over local variables
-        start_time=time.time() #move this to function?
         instr=_("The data in this report is given by most restrictive test "
                 "first, followed by less restrictive tests (e.g., V1=V2 "
                 "before V1 or V2). Additionally, each word only "
@@ -5698,7 +5697,6 @@ class Report(object):
         self.coocurrencetables(xlpr)
         log.info(self.checkcounts)
         xlpr.close(me=me)
-        log.info("Finished in {} seconds.".format(str(time.time()-start_time)))
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         self.frame.parent.waitdone()
