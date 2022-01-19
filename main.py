@@ -7426,14 +7426,14 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
         profile=self.slices.profile()
         if not profile:
             self.getprofile()
-            self.getresults()
-        else:
+        if not profile or not ps:
             window=ui.Window(self.frame)
-            text=_('Error: please set Check/Subcheck first! ({}/{})').format(
-                                                     check,group)
+            text=_('Error: please set Ps-Profile first! ({}/{}/{})').format(
+                                                     ps,check,profile)
             ui.Label(window,text=text).grid(column=0, row=i)
             i+=1
             return
+        self.getresults()
 class ReportCitationBasic(Report,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
