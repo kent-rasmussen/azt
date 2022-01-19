@@ -3402,18 +3402,18 @@ class TaskChooser(TaskDressing,ui.Window):
             tasks=[
                     ReportCitation,
                     ]
+            if self.donew['collectionlc']:
+                """This currently takes way too much time. Until it gets
+                mutithreaded, it will not be an option"""
+                tasks.append(ReportCitationBasic)
             if self.donew['somesortT']:
                 tasks.append(ReportCitationT)
                 tasks.append(ReportCitationTlocation)
                 tasks.append(ReportCitationBasicT)
-                if self.donew['collectionlc']:
-                    """This currently takes way too much time. Until it gets
-                    mutithreaded, it will not be an option"""
-                    # tasks.append(ReportCitationBasic)
-                    if self.donew['somerecordingT']:
-                        tasks.append(Transcribe)
-                        if self.donew['analysis']:
-                            tasks.append(JoinUFgroups)
+                if self.donew['somerecordingT']:
+                    tasks.append(Transcribe)
+                    if self.donew['analysis']:
+                        tasks.append(JoinUFgroups)
             if me:
                 tasks.append(ReportConsultantCheck)
         # tasks.append(WordCollectionCitation),
