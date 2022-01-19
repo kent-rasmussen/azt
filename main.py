@@ -9062,15 +9062,20 @@ class StatusDict(dict):
         if kwargs['torecord']:
             return list(set(sn['groups'])-set(sn['recorded']))
         else: #give theoretical possibilities (C or V only)
-            if kwargs['cvt'] == 'V':
-                todo=[self.scount[kwargs['ps']]['V']] #that's all that's there, for now.
-            if kwargs['cvt'] == 'C':
-                todo=list()
-                for s in self.scount[['ps']]:
-                    if s != 'V':
-                        todo.extend(self.scount[kwargs['ps']][s]) #list of tuples
+            """The following two are meaningless, without with kwargs above"""
             if kwargs['cvt'] in ['CV','T']:
                 return None
+            """This is organized class:(segment,count)"""
+            thispsdict=self._slicedict.scount()[kwargs['ps']]
+            if kwargs['cvt'] == 'V': #There is so far only on V grouping
+                todo=[i[0] for i in thispsdict['V']] #that's all that's there, for now.
+            elif kwargs['cvt'] == 'C':
+                todo=list() #because there are multiple C groupings
+                for s in thispsdict:
+                    if s != 'V':
+                        todo.extend([i[0] for i in thispsdict[s]])
+                        #list of tuples
+            return todo
     def senseidstosort(self): #,ps=None,profile=None
         return self._idstosort
     def senseidssorted(self): #,ps=None,profile=None
