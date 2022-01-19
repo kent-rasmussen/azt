@@ -5690,11 +5690,6 @@ class Report(object):
                     log.info(t)
                     sid=" ".join([t,"for",profile,ps+'s'])
                     s3=xlp.Section(s2,sid,level=3)
-                    """Get these reports from C1/V1 to total number of C/V"""
-                    self.ncvts=[cvt+str(n+1) for n in range(maxcount)]
-                    for ncvt in self.ncvts:
-                        if ncvt not in self.basicreported:
-                            self.basicreported[ncvt]=set()
                     maxcount=rx.countxiny(cvt, profile)
                     # re.subn(cvt, cvt, profile)[1]
                     self.wordsbypsprofilechecksubcheck(s3,cvt=cvt,ps=ps,
