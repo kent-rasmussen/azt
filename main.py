@@ -6042,7 +6042,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         parent.settings.makeeverythingok()
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        Sort.__init__(self)
+        # Sort.__init__(self)
         log.info("status: {}".format(type(self.status)))
         self.analang=self.settings.params.analang()
         # Not sure what this was for (XML?):
