@@ -5759,6 +5759,8 @@ class Report(object):
                                 else:
                                     value=self.checkcounts[ps][
                                                     profile][name][x1][x2]
+                                if not value:
+                                    value=''
                                 cell=xlp.Cell(h,content=value)
     def __init__(self):
         self.reportbasefilename=self.settings.reportbasefilename
