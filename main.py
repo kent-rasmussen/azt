@@ -9218,12 +9218,18 @@ class StatusDict(dict):
                             "consonants or vowels ({} in {}); If you need "
                             "that, please let me know.".format(i+1,profile))
                     continue
+                """This is a list of (code, name) tuples"""
                 syltuples=self._checkparameters._Schecks[cvt][i+1] #range+1 = syl
-                c=self._checksdict[cvt][profile].extend(
+                self._checksdict[cvt][profile].extend(
                                                     [t[0] for t in syltuples])
-                log.info("Check codes to date: {}".format(c))
+                # log.info("Check codes to date: {}".format(
+                #                                 self._checksdict[cvt][profile]
+                #                                         ))
             self._checksdict[cvt][profile].sort(
                                             key=lambda x:len(x[0]),reverse=True)
+            log.info("Check codes found: {}".format(
+                                                self._checksdict[cvt][profile]
+                                                    ))
     def node(self,**kwargs):
         """This will fail if fed None values"""
         kwargs=self.checkslicetypecurrent(**kwargs)
