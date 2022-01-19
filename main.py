@@ -464,10 +464,6 @@ class Menus(ui.Menu):
         self.menubar.add_cascade(label=_("Help"), menu=helpmenu)
     def __init__(self, parent):
         super(Menus, self).__init__(parent)
-        self.change()
-        self.languages()
-        if isinstance(self.parent,Sort):
-            self.parameterslice()
         self.advanced()
 class StatusFrame(ui.Frame):
     """This contains all the info about what the user is currently working on,
