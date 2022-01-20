@@ -913,8 +913,8 @@ class StatusFrame(ui.Frame):
             self.check=self.settings.params.check()
             self.checks=self.settings.status.checks()
             self.sliceline()
-            self.cvtline()
             if not isinstance(self.task,Report):
+                self.cvtline()
                 self.maybeboard()
         if not isinstance(self.task,TaskChooser):
             self.finalbuttons()
