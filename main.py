@@ -3245,9 +3245,14 @@ class TaskDressing(object):
         return check+'='+group
     def maybewrite(self):
         if self.timetowrite():
-            self.wait("Writing to LIFT")
+            try:
+                self.runwindow.wait("Writing to LIFT")
+                w=self.runwindow
+            except KeyError:
+                self.wait("Writing to LIFT")
+                w=self
             self.db.write()
-            self.waitdone()
+            w.waitdone()
     def timetowrite(self):
         """only write to file every self.writeeverynwrites times you might."""
         self.writeable+=1 #and tally here each time this is asked
