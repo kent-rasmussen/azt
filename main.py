@@ -6066,6 +6066,44 @@ class SortCV(Sort,Segments,TaskDressing,ui.Window):
                 #entry.newform = re.sub(check.subcheck, choice, entry.lexeme, count=1)
         print(entry.newform)
         window.destroy()
+class SortV(Sort,Segments,TaskDressing,ui.Window):
+    def taskicon(self):
+        return program['theme'].photo['iconV']
+    def tasktitle(self):
+        return _("Sort Vowels") #Citation Form Sorting in Tone Frames
+    def dobuttonkwargs(self):
+        return {'text':_("Sort!"),
+                'fn':self.runcheck,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['V'], #self.cvt
+                'sticky':'ew'
+                }
+    def __init__(self, parent):
+        Segments.__init__(self,parent)
+        super(SortCV, parent).__init__()
+        self.params.cvt('V')
+        # Sort.__init__(self)
+class SortC(Sort,Segments,TaskDressing,ui.Window):
+    def taskicon(self):
+        return program['theme'].photo['iconC']
+    def tasktitle(self):
+        return _("Sort Consonants") #Citation Form Sorting in Tone Frames
+    def dobuttonkwargs(self):
+        return {'text':_("Sort!"),
+                'fn':self.runcheck,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['C'], #self.cvt
+                'sticky':'ew'
+                }
+    def __init__(self, parent):
+        Segments.__init__(self,parent)
+        super(SortCV, parent).__init__()
+        self.params.cvt('V')
+        # Sort.__init__(self)
 class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconT']
