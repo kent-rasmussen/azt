@@ -4365,7 +4365,7 @@ class Sort(object):
                 ids.append(var.get())
             log.log(2,"ids: {}".format(ids))
             profile=profilevar.get()
-            self.set('profile',profile,refresh=False)
+            self.settings.set('profile',profile,refresh=False)
             #Add to dictionaries before updating them below
             log.debug("profile: {}".format(profile))
             """Fix this!"""
