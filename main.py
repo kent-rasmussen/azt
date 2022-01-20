@@ -2590,9 +2590,9 @@ class TaskDressing(object):
         h=h/2
         self.parent.geometry("%dx%d+0+0" % (w, h))
     def helpabout(self):
-        window=ui.Window(self)
-        title=(_("{name} Dictionary and Orthography Checker".format(name=program['name'])))
-        window.title(title)
+        title=(_("{name} Dictionary and Orthography Checker"
+                "".format(name=program['name'])))
+        window=ui.Window(self, title=title)
         ui.Label(window.frame,
                 text=_("version: {}").format(program['version']),
                 anchor='c',padx=50,
