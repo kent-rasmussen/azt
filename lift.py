@@ -238,9 +238,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
          return 'py-'+analang
     def pylang(self,analang):
          return analang+'-x-py'
-    def modverificationnode(self,senseid,vtype,analang,add=None,rms=[],addifrmd=False):
+    def modverificationnode(self,senseid,vtype,analang,**kwargs):
         """this node stores a python symbolic representation, specific to an
         analysis language"""
+        showurl=kwargs.get('showurl',False)
+        write=kwargs.get('write',True)
+        add=kwargs.get('add',None)
+        rms=kwargs.get('rms',[])
+        addifrmd=kwargs.get('addifrmd',False)
         textnode, fieldnode, sensenode=self.addverificationnode(
                                             senseid,vtype=vtype,analang=analang)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
