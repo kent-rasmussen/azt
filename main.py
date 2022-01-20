@@ -3861,7 +3861,8 @@ class WordCollection(object):
             self.taskchooser.makedefaulttask()
             self.e.on_quit()
         self.storethisword()
-        self.db.write()
+        if self.timetowrite():
+            self.db.write()
         if self.index < len(self.entries)-1:
             self.index+=1
             self.getword()
