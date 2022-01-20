@@ -1,4 +1,7 @@
 #Roadmap
+make ad hoc profiles usable (not sure if just unselectable, or if unselected by frame check, too)!
+  Hidegroup names (usage?)
+
 migrate sound.py from wave to soundfile (or scipy.io.wavfile)
 menus
 Make CV basic report less resource intensive
