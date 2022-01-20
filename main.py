@@ -4974,7 +4974,7 @@ class Report(object):
                         if self.settings.audiolang in framed.forms:
                             counts['audio']+=1
                         self.framedtoXLP(framed,parent=parent,listword=True,
-                                                                groups=groups)
+                                                        showgroups=showgroups)
                         break #do it on first present lang, and do next ex
         a=self.status.last('analysis')
         s=self.status.last('sort')
@@ -4990,7 +4990,7 @@ class Report(object):
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
-        groups=not default #show groups on all non-default reports
+        showgroups=not default #show groups on all non-default reports
         if not checks:
             if 'profile' in kwargs:
                 log.error("{} {} came up with no checks.".format(ps,profile))
@@ -5165,7 +5165,7 @@ class Report(object):
                         #This is put in XLP file:
                         examples=self.db.get('example',location=check,
                                                 senseid=senseid).get()
-                        examplestoXLP(examples,e1,senseid,groups=groups)
+                        examplestoXLP(examples,e1,senseid)
                         if text not in textout:
                             output(window,r,text)
                             textout.append(text)
@@ -5190,7 +5190,7 @@ class Report(object):
                                 "{}: {}".format(len(examples),senseid,examples))
                         examplestoXLP(examples,e1,senseid)
                     else:
-                        self.framedtoXLP(framed,parent=s1,groups=groups)
+                        self.framedtoXLP(framed,parent=s1,showgroups=showgroups)
                     output(window,r,text)
         sectitle=_('\nData Summary')
         s2=xlp.Section(xlpr,title=sectitle)
@@ -5543,7 +5543,7 @@ class Report(object):
                         except KeyError:
                             self.basicreported[ncvt]=set([senseid])
                 framed=self.taskchooser.datadict.getframeddata(senseid)
-                self.framedtoXLP(framed,parent=ex,listword=True)
+                self.framedtoXLP(framed,parent=ex,listword=True) #showgroups?
                 if hasattr(self,'results'): #i.e., showing results in window
                     self.results.row+=1
                     col=0
@@ -5632,7 +5632,7 @@ class Report(object):
             if x is not None:
                 id+=x
         return rx.id(id) #for either example or listword
-    def framedtoXLP(self,framed,parent,listword=False,groups=True):
+    def framedtoXLP(self,framed,parent,listword=False,showgroups=True):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
