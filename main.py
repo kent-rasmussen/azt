@@ -3204,14 +3204,15 @@ class TaskDressing(object):
                 "Up to how many examples do you want to record for each group?"
                 "".format(program['name'])
                 )
-        ui.Label(window.frame, text=title, font='title').grid(column=0,
-                                                                        row=0)
-        ui.Label(window.frame, text=text, justify='left').grid(column=0, row=1)
+        t=ui.Label(window.frame, text=title, font='title',column=0, row=0)
+        l=ui.Label(window.frame, text=text, justify='left',column=0, row=1)
+        t.wrap()
+        l.wrap()
         buttonFrame1=ui.ButtonFrame(window.frame,
-                                optionlist=self.npossible,
-                                command=self.setexamplespergrouptorecord,
-                                window=window,
-                                column=0, row=4
+                            optionlist=self.npossible,
+                            command=self.settings.setexamplespergrouptorecord,
+                            window=window,
+                            column=0, row=4
                                 )
         buttonFrame1.wait_window(window)
     def getrunwindow(self,nowait=False,msg=None,title=None):
