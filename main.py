@@ -1120,7 +1120,7 @@ class Settings(object):
                     self.repo and
                     not me):
                 self.repo.add(savefile)
-        if self.repo and not me:
+        if self.repo:
             self.repo.commit()
     def moveattrstoobjects(self):
         # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
@@ -9585,6 +9585,9 @@ class Repository(object):
                 log.info("Hg add OK".format(r))
     def commit(self,file=None):
         args=["commit", file, '-m', "Autocommit from AZT"]
+        if me: #I only want to commit manually to people's repos
+            log.info("Not committing as asked: {}".format(args))
+            return
         r=self.do([i for i in args if i is not None])
         if r:
             log.info("Hg commit: {}".format(r))
