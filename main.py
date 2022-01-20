@@ -3974,7 +3974,7 @@ class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
                 'sticky':'ew'
                 }
     def tasktitle(self):
-        return _("Word Collection") # for Citation Forms
+        return _("Add Words") # for Citation Forms
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
@@ -6108,7 +6108,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconT']
     def tasktitle(self):
-        return _("Sort by Tone") #Citation Form Sorting in Tone Frames
+        return _("Sort Tone") #Citation Form Sorting in Tone Frames
     def dobuttonkwargs(self):
         return {'text':_("Sort!"),
                 'fn':self.runcheck,
@@ -7455,7 +7455,7 @@ class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['record']
     def tasktitle(self):
-        return _("Record Tone Frames") #Citation Form Sorting in Tone Frames
+        return _("Record Tone") #Citation Form Sorting in Tone Frames
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
