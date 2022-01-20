@@ -3668,7 +3668,10 @@ class TaskChooser(TaskDressing,ui.Window):
         self.parent.makecheck(filename)
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
-        self.askwhichlift(file.getfilenames())
+        self.file.askwhichlift(file.getfilenames())
+        text=_("{} will now exit; restart to work with the new database."
+                "".format(program['name']))
+        ErrorNotice(text,title=_("Change Database"),wait=True)
         # program['root'].destroy()
         # subprocess.call?
         # __name__
