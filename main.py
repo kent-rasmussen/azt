@@ -4371,8 +4371,8 @@ class Sort(object):
             """Fix this!"""
             self.slices.adhoc(ids)#[ps][profile]=ids
             """Is this OK?!?"""
-            self.slices.updateslices()
-            self.makecountssorted() #we need these to show up in the counts.
+            self.slices.updateslices() #This pulls from profilesbysense
+            # self.makecountssorted() #we need these to show up in the counts.
             self.settings.storesettingsfile(setting='profiledata')#since we changed this.
             #so we don't have to do this again after each profile analysis
         self.getrunwindow()
