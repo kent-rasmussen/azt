@@ -394,16 +394,14 @@ class Menus(ui.Menu):
         self.cascade(self,_("Advanced"),'advancedmenu')
         options=[(_("Change to another Database (Restart)"),
                             self.parent.taskchooser.changedatabase),
-                (_("Digraph and Trigraph settings (Restart)"),
+                (_("Digraph and Trigraph settings"),
                             self.parent.settings.askaboutpolygraphs),
-                (_("Syllable Profile Analysis (Restart)"),
-                            self.parent.settings.reloadprofiledata),
-                (_("Verification Status file (several minutes)"),
-                            self.parent.settings.reloadstatusdata),
                 (_("Segment Interpretation Settings"),
                             self.parent.settings.setSdistinctions),
-                (_("Number of Examples to Record"),
-                        self.parent.taskchooser.getexamplespergrouptorecord),
+                (_("Syllable Profile Analysis (Restart)"),
+                            self.parent.settings.reloadprofiledata),
+                (_("Remake Status file (several minutes)"),
+                            self.parent.settings.reloadstatusdata),
                 ]
         for m in options:
             self.command(self.advancedmenu,
