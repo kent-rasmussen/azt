@@ -4987,6 +4987,7 @@ class Report(object):
                         break #do it on first present lang, and do next ex
         a=self.status.last('analysis')
         s=self.status.last('sort')
+        j=self.status.last('join')
         if a and s:
             analysisOK=a>s
         elif a:
@@ -4999,7 +5000,10 @@ class Report(object):
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
-        showgroups=not default #show groups on all non-default reports
+        if analysisOK and j and j > a:
+            showgroups=True #show groups on all non-default reports
+        else:
+            showgroups=False #show groups on all non-default reports
         if not checks:
             if 'profile' in kwargs:
                 log.error("{} {} came up with no checks.".format(ps,profile))
@@ -7260,6 +7264,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                         write=False)
             self.db.write()
             self.runwindow.destroy()
+            self.status.last('join',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
         def redo():
             self.runwindow.wait(_("Redoing Tone Analysis"))
