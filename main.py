@@ -8300,7 +8300,7 @@ class RecordButtonFrame(ui.Frame):
             return
         self.db.addmediafields(self.node,self.filename,self.audiolang,
                                                                     write=False)
-        self.maybewrite()
+        self.task.maybewrite()
         self.task.status.last('recording',update=True)
     def __init__(self,parent,task,framed=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
