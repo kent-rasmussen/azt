@@ -3391,9 +3391,10 @@ class TaskChooser(TaskDressing,ui.Window):
                         command=lambda t=o[0]:self.maketask(t),
                         column=n%bpr,
                         row=int(n/bpr),
-                        compound='left',
+                        compound='top', #left, bottom
                         image=o[2],
                         wraplength=int(program['root'].wraplength*.6/bpr),
+                        anchor='s',
                         sticky='nesw'
                         )
             n+=1
