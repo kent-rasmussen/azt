@@ -92,6 +92,29 @@ def makeprecomposed(x):
     for s in subs:
         x=re.sub(s,subs[s],x)
     return x
+def fixunicodeerrorsWindows(x):
+    errordict={
+                'É”': 'ɔ',
+                'É›': 'ɛ',
+                'É²': 'ɲ',
+                'Å‹': 'ŋ',
+                'Ã®': 'î',
+                'Ã´': 'ô',
+                'Ã¯': 'ï',
+                'Ã»': 'û',
+                'Ã ': 'à',
+                'â€˜': '',
+                'â€™': '',
+                'Å“': 'œ',
+                'Ã¢': 'â'
+                }
+    for e in errordict:
+        if e in x:
+            x=re.sub(e,errordict[e],x)
+    return x
+    # ls |grep 'É”\|É›\|É²\|Å‹\|Ã®\|Ã´\|Ã¯\|Ã»\|Ã \|â€˜\|â€™\|Å“\|Ã¢'
+    # mv `ls |grep 'É”\|É›\|É²\|Å‹\|Ã®\|Ã´\|Ã¯\|Ã»\|Ã \|â€˜\|â€™\|Å“\|Ã¢'` messedup/
+    # rename -n 's/É”/ɔ/g;s/É›/ɛ/g;s/É²/ɲ/g;s/Å‹/ŋ/g;s/Ã®/î/g;s/Ã´/ô/g;s/Ã¯/ï/g;s/Ã»/û/g;s/Ã /à/g;s/â€˜//g;s/â€™//g;s/Å“/œ/g;s/Ã¢/â/g' *
 def stripdiacritics(check,x):
     if 'd' in check.rx:
         return check.rx['d'].sub('',x)
