@@ -3247,7 +3247,7 @@ class TaskDressing(object):
         if self.timetowrite():
             self.wait("Writing to LIFT")
             self.db.write()
-            self.waitdont()
+            self.waitdone()
     def timetowrite(self):
         """only write to file every self.writeeverynwrites times you might."""
         self.writeable+=1 #and tally here each time this is asked
