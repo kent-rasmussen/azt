@@ -4036,150 +4036,6 @@ class Tone(object):
         self.settings.updatesortingstatus() #this gets groups, too
     def __init__(self,parent):
         parent.params.cvt('T')
-class JoinUFgroups(Tone,TaskDressing,ui.Window):
-    """docstring for JoinUFgroups."""
-    def tasktitle(self):
-        return _("Join Underlying Form Groups")
-    def tonegroupsjoinrename(self,**kwargs):
-        def clearerror(event=None):
-            errorlabel['text'] = ''
-        def submitform():
-            clearerror()
-            uf=named.get()
-            if uf == "":
-                noname=_("Give a name for this UF tone group!")
-                log.debug(noname)
-                errorlabel['text'] = noname
-                return
-            groupsselected=[]
-            for group in groupvars: #all group variables
-                groupsselected+=[group.get()] #value, name if selected, 0 if not
-            groupsselected=[x for x in groupsselected if x != '']
-            log.info("groupsselected:{}".format(groupsselected))
-            if uf in self.analysis.orderedUFs and uf not in groupsselected:
-                deja=_("That name is already there! (did you forget to include "
-                        "the ‘{}’ group?)".format(uf))
-                log.debug(deja)
-                errorlabel['text'] = deja
-                return
-            for group in groupsselected:
-                if group in self.analysis.senseidsbygroup: #selected ones only
-                    log.debug("Changing values from {} to {} for the following "
-                            "senseids: {}".format(group,uf,
-                                        self.analysis.senseidsbygroup[group]))
-                    for senseid in self.analysis.senseidsbygroup[group]:
-                        self.db.addtoneUF(senseid,uf,analang=self.analang,
-                        write=False)
-            self.db.write()
-            self.runwindow.destroy()
-            self.tonegroupsjoinrename() #call again, in case needed
-        def done():
-            self.runwindow.destroy()
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        self.getrunwindow()
-        title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
-                                                        ps,profile))
-        self.runwindow.title(title)
-        padx=50
-        pady=10
-        rwrow=gprow=qrow=0
-        t=ui.Label(self.runwindow.frame,text=title,font='title')
-        t.grid(row=rwrow,column=0,sticky='ew')
-        text=_("This page allows you to join the {0}-{1} draft underlying tone "
-                "groups created for you by {2}, \nwhich are almost certainly "
-                "too small for you. \nLooking at a draft report, and making "
-                "your own judgement about which groups belong together, select "
-                "all the groups that belong together, and give that new group "
-                "a name. Afterwards, you can do this again for other groups "
-                "that should be joined. \nIf for any reason you want to undo "
-                "the groups you create here (e.g., you make a mistake or sort "
-                "new data), just run the default report, which will redo the "
-                "default analysis, which will replace these groupings with new "
-                "split groupings. \nTo see a report based on what you do "
-                "here, run the tone reports in the Advanced menu (without "
-                "analysis). ".format(ps,profile,program['name']))
-        rwrow+=1
-        i=ui.Label(self.runwindow.frame,text=text,
-                    row=rwrow,column=0,sticky='ew')
-        i.wrap()
-        rwrow+=1
-        qframe=ui.Frame(self.runwindow.frame)
-        qframe.grid(row=rwrow,column=0,sticky='ew')
-        text=_("What do you want to call this UF tone group for {}-{} words?"
-                "".format(ps,profile))
-        qrow+=1
-        q=ui.Label(qframe,text=text,
-                    row=qrow,column=0,sticky='ew',pady=20
-                    )
-        q.wrap()
-        named=tkinter.StringVar() #store the new name here
-        namefield = ui.EntryField(qframe,textvariable=named)
-        namefield.grid(row=qrow,column=1)
-        namefield.bind('<Key>', clearerror)
-        errorlabel=ui.Label(qframe,text='',fg='red')
-        errorlabel.grid(row=qrow,column=2,sticky='ew',pady=20)
-        text=_("Select the groups below that you want in this {} group, then "
-                "click ==>".format(ps))
-        qrow+=1
-        d=ui.Label(qframe,text=text)
-        d.grid(row=qrow,column=0,sticky='ew',pady=20)
-        sub_btn=ui.Button(qframe,text = _("OK"), command = submitform, anchor ='c')
-        sub_btn.grid(row=qrow,column=1,sticky='w')
-        done_btn=ui.Button(qframe,text = _("Done —no change"), command = done,
-                                                                    anchor ='c')
-        done_btn.grid(row=qrow,column=2,sticky='w')
-        groupvars=list()
-        rwrow+=1
-        scroll=ui.ScrollingFrame(self.runwindow.frame)
-        scroll.grid(row=rwrow,column=0,sticky='ew')
-        self.makeanalysis()
-        self.analysis.donoUFanalysis()
-        nheaders=0
-        if not self.analysis.orderedUFs:
-            self.runwindow.waitdone()
-            self.runwindow.destroy()
-            ErrorNotice(title="No draft UF groups found!",
-                        text="You don't seem to have any analyzed groups to "
-                                "join/rename. Have you done a tone analyis?"
-                        )
-            return
-        # ufgroups= # order by structured groups? Store this somewhere?
-        for group in self.analysis.orderedUFs: #make a variable and button to select
-            idn=self.analysis.orderedUFs.index(group)
-            if idn % 5 == 0: #every five rows
-                col=1
-                for check in self.analysis.orderedchecks:
-                    col+=1
-                    cbh=ui.Label(scroll.content, text=check, font='small')
-                    cbh.grid(row=idn+nheaders,
-                            column=col,sticky='ew')
-                nheaders+=1
-            groupvars.append(tkinter.StringVar())
-            n=len(self.analysis.senseidsbygroup[group])
-            buttontext=group+' ({})'.format(n)
-            cb=ui.CheckButton(scroll.content, text = buttontext,
-                                variable = groupvars[idn],
-                                onvalue = group, offvalue = 0,
-                                )
-            cb.grid(row=idn+nheaders,column=0,sticky='ew')
-            # self.analysis.valuesbygroupcheck[group]:
-            col=1
-            for check in self.analysis.orderedchecks:
-                col+=1
-                if check in self.analysis.valuesbygroupcheck[group]:
-                    cbl=ui.Label(scroll.content,
-                        text=unlist(
-                                self.analysis.valuesbygroupcheck[group][check]
-                                    )
-                            )
-                    cbl.grid(row=idn+nheaders,column=col,sticky='ew')
-        self.runwindow.waitdone()
-        self.runwindow.wait_window(scroll)
-    def __init__(self, arg):
-        Tone.__init__(self)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
@@ -4335,1398 +4191,467 @@ class Sort(object):
         scroll.grid(row=3,column=0,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
-class SortCV(Sort,Segments,TaskDressing,ui.Window):
-    """docstring for SortCV."""
-    def __init__(self, parent):
-        Segments.__init__(self,parent)
-        super(SortCV, parent).__init__()
-    def picked(self,choice,**kwargs):
-        return
-        entry.addresult(check, result='OK') #let's not translate this...
-        debug()
-        window=ui.Window(parent, title='Same! '+entry.lexeme+': '
-                        +entry.guid)
-        result=(entry.citation,nn(entry.plural),nn(entry.imperative),
-                    nn(entry.ps),nn(entry.gloss))
-        ui.Button(window.frame, width=80, text=result,
-            command=window.destroy).grid(column=0, row=0)
-        window.exitButton=''
-    def notpicked(self,choice):
-        """I should think through what I want for this button/script."""
-        if entry is None:
-            log.info("No entry!")
-            """Probably a bad idea"""
-            entry=Entry(db, parent, window, check, guid=choice)
-        entry.addresult(check, result='NOTok')
-        window=ui.Window(parent, title='notpicked: Different! '
-                        +entry.lexeme+': '+entry.guid)
-        result=entry.citation,nn(entry.plural),nn(entry.imperative),nn(entry.ps),
-        nn(entry.gloss)
-        ui.Label(window.frame, width=40, text=result).grid(row=0,column=0)
-        q=(_("What is wrong with this word?"))
-        ui.Label(window.frame, text=q).grid(column=0, row=1)
-        if check.name == "V1=V2":
-            bcv1nv2=(_("Two different vowels (V1≠V2)"))
-            bscv1isv2nsc=(_("Vowels are the same, but the wrong vowel"))
-            problemopts=[("badCheck",bcv1nv2),
-                ("badSubcheck",bscv1isv2nsc+" (V1=V2≠"+check.subcheck+")")]
-        else:
-            log.info("Sorry, that check isn't set up yet.")
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    window=window,
-                                    optionlist=problemopts,
-                                    command=Check.fixdiff,
-                                    width="50",
-                                    column=0, row=3
-                                    )
-        i=4 #start at this row
-        print(result)
-    def fixV12(parent, window, check, entry, choice):
-        """This and following scripts represent a structure of the program
-        which is way more complex than we want. We have to think through how
-        to organize the functions and windows in such a way as the UI is
-        straightforward and completely unconfusing."""
-        window.title=(_("TITLE!"))
-        ui.Label(window.frame, text=entry.citation+' - '+entry.gloss,
-                        anchor=tkinter.W).grid(column=0, row=0, columnspan=2)
-        q1=_("It looks like the vowels are the same, but not the correct vowel;"
-            " let's fix that.")
-        ui.Label(window.frame, text=q1,anchor=tkinter.W).grid(column=0, row=2,
-                                                                columnspan=2)
-        q2=_("What are the two vowels?")
-        ui.Label(window.frame, text=q2,anchor=tkinter.W).grid(column=0, row=3,
-                                                                columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,
-                                window=window,
-                                optionlist=check.db.vowels(),
-                                command=Check.fixVs,
-                                column=0, row=4
-                                )
-    def fixV1(parent, window, check, entry, choice):
-        t=(_('fixV1:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
-        print(t)
-        check.fix='V1'
-        #window.destroy()
-        #window=ui.Window(self.frame,, title=t, entry=entry, backcmd=fixdiff)
-        window.resetframe()
-        t2=(_("It looks like the vowels aren't the same; let's fix that."))
-        ui.Label(window.frame, text=t2, justify=tkinter.LEFT).grid(column=0,
-                                                                    row=0,
-                                                                columnspan=2)
-        t3=(_("What is the first vowel? (C_CV)"))
-        ui.Label(window.frame, text=t3, anchor=tkinter.W).grid(column=0,
-                                                                row=1,
-                                                                columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,
-                                window=window,
-                                optionlist=check.db.vowels(),
-                                command=Check.newform,
-                                column=0, row=2
-                                )
-    def fixV2(parent, window, check, entry, choice):
-        check.fix='V2'
-        t=(_('fixV2:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
-        t=(_("What is the second vowel?"))
-        ui.Label(window.frame, text=t,justify=tkinter.LEFT).grid(column=0, row=1, columnspan=1)
-        ButtonFrame1=ui.ButtonFrame(window.frame,
-                                    window=window,
-                                    optionlist=check.db.vowels(),
-                                    command=Check.newform,
-                                    column=0, row=2
-                                    )
-    def fixdiff(parent, window, check, entry, choice):
-        """We need to fix problems in a more intuitively obvious way"""
-        entry.problem=choice
-        entry.addresult(check, result=entry.problem)
-        window.destroy()
-        window=ui.Window(self.frame.parent, entry=entry, backcmd=notpickedback)
-        ui.Label(window, text="Let's fix those problems").grid(column=0, row=0)
-        if entry.problem == "badCheck": #This isn't the right check for this entry --re.search("V1≠V2",difference):
-            window.destroy()
-            t=(_("fixVs:Different vowels! "))+entry.lexeme+': '+entry.guid
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
-            Check.fixV1(parent, window, check, entry, choice)
-            window.wait_window(window=window)
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
-            Check.fixV2(parent, window, check, entry, choice) #I should make this wait until the first one finishes..…
-            window.wait_window(window=window)
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
-            Check.fixVs(parent, window, check, entry, choice)
-        elif entry.problem == "badSubcheck": #This isn't the right subcheck for this entry --re.search("V1=V2≠"+Vo,difference): #
-            window.destroy()
-            t=(_("fixVs:Same Vowel, but wrong one! "))+entry.lexeme+': '+entry.guid
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
-            Check.fixV12(parent, window, check, entry, choice)
-        else:
-            log.info("Huh? I don't understand what the user wants.")
-        Check.fixVs
-    def fixVs(parent, window, check, entry, choice):
-        #This isn't working yet.
-        log.info("running fixVs!!!!???!??!?!?!?")
-
-        #I need to rework this to work more generally..….
-        ui.Label(window.frame, text="I will make the following changes:").grid(column=0, row=0)
-        lexemeNew=entry.newform #newform(entry.lexeme,'v12',check.subcheck,choice)
-        citationNew = re.sub(entry.lexeme, lexemeNew, entry.citation)
-        ui.Label(window.frame, text="citation: "+entry.citation+" → "+citationNew).grid(column=0, row=1)
-        ui.Label(window.frame, text="lexeme: "+entry.lexeme+" → "+lexemeNew).grid(column=0, row=2)
-        fields={}
-        if entry.plural is not None:
-            pluralNew = re.sub(entry.lexeme, lexemeNew, entry.plural)
-            ui.Label(window.frame, text="plural: "+plural+" → "+pluralNew).grid(column=0, row=3)
-            fields={'Plural'}
-        if entry.imperative is not None:
-            imperativeNew = re.sub(entry.lexeme, lexemeNew, entry.imperative)
-            ui.Label(window.frame, text="imperative: "+entry.imperative+" → "+imperativeNew).grid(column=0, row=4)
-        def ok():
-            entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-ok')
-            entry.db.log(entry.guid+": lexeme: "+entry.lexeme+" → "+lexemeNew)
-            entry.put.lexeme(entry,lexemeNew)
-            entry.db.log(entry.guid+": citation: "+entry.citation+" → "+citationNew)
-            entry.put.citation(entry,citationNew)
-            #lift_mod.field(guid,fieldtype,newform)
-            entry.db.write() #put this in lift.py
-            window.destroy()
-        def notok():
-            entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-NOTok')
-        ui.Button(window, width=10, text="OK", command=ok).grid(row=1,column=0)
-        #This is where we should call addresult, and write to file.
-        ui.Button(window, width=15, text="Not OK (Go Back)", command=notok).grid(row=1,column=1)
-    def newform(parent, window, check, entry, choice):
-        #I need to rework this to work more generally..….
-        #or even to work once. The logic is bad.
-        C=check.C
-        V=check.V
-        xi=1
-        if check.fix == "V1":
-            r=str('('+V+')'+'('+C+')'+'('+V+')')
-            sub=(choice+r"\2\3")
-            log.info("Note: this assumes we're changing one of two vowels "
-                "separated by a consonant")
-            #I want to access the second group...
-            #print(r)
-        elif check.fix == "C1":
-            r=str('(('+C+'))'+'('+V+')'+'('+C+')')
-            print(r)
-            log.info("Note: this assumes we're changing one of two consonants "
-                "separated by a vowel")
-        elif check.fix == "V2":
-            r=str('('+V+')'+'('+C+')'+'('+V+')')
-            sub=(r"\1\2"+choice)
-            print("Note: this assumes we're changing one of two vowels "
-                "separated by a consonant")
-            #print(r)
-        elif check.fix == "C2":
-            r=str('('+C+')'+V+'('+C+')')
-            print(r)
-        else:
-            log.info("Fix "+check.fix +" undefined.")
-        def old():
-            if check.fix == ("V1" or "C1"):
-                ximin=1
-                ximax=1
-            elif check.fix == ("V2" or "C2"):
-                ximin=2
-                ximax=2
-            elif check.fix == ("V12" or "C12"):
-                ximin=1
-                ximax=2
-        #print(check.subcheck, value, entry.newform)
-        #I need this to find the point I'm trying to change, even if it has been
-        #changed before, and even if another part of the same word has already
-        #been changed, e.g., another vowel in another position. So I need to use
-        #the newform when present (i.e., changes have been made but not confirmed)
-        #but refer to the lexeme item for reference (e.g., which subcheck I'm running.)
-        try: # use a previous entry.newform, if it exists:
-            baseform=entry.newform
-            entry.newform=''
-            log.info("Using newform")
-        except:
-            baseform=entry.lexeme
-            log.info("Using lexeme")
-            #entry.newform = re.sub(check.subcheck, choice, entry.newform, count=1)
-        print('r: '+r)
-        print('sub: '+sub)
-        print('baseform: '+baseform)
-        entry.newform=re.sub(r, sub, baseform)
-        print('newform: '+entry.newform)
-        def old2():
-            for x in baseform:
-                if x == check.subcheck: # <= ximax ):
-                    if ximin <= xi <= ximax:
-                        try:
-                            entry.newform=entry.newform+choice #+str(xi)
-                        except:
-                            entry.newform=choice #+str(xi)
-                    else:
-                        try:
-                            entry.newform=entry.newform+x #+"_"
-                        except:
-                            entry.newform=x #+"_"
-                    xi += 1
-                else:
-                    try:
-                        entry.newform=entry.newform+x #+"_"
-                    except:
-                        entry.newform=x #+"_"
-                #entry.newform = re.sub(check.subcheck, choice, entry.lexeme, count=1)
-        print(entry.newform)
-        window.destroy()
-class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
-    def taskicon(self):
-        return program['theme'].photo['iconT']
-    def tasktitle(self):
-        return _("Citation Form Sorting in Tone Frames")
-    def dobuttonkwargs(self):
-        return {'text':_("Sort!"),
-                'fn':self.runcheck,
-                # column=0,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['T'], #self.cvt
-                'sticky':'ew'
-                }
-    def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
-        parent.settings.makeeverythingok()
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
-        log.info("status: {}".format(type(self.status)))
-        self.analang=self.settings.params.analang()
-        # Not sure what this was for (XML?):
-        self.pp=pprint.PrettyPrinter()
-        """Are we OK without these?"""
-        log.info("Done initializing check.")
-        """Testing Zone"""
-    def runcheck(self):
-        self.settings.storesettingsfile()
-        # t=(_('Run Check'))
-        log.info("Running check...")
-        # i=0
-        # ps=self.slices.ps()
-        # if not ps:
-        #     self.getps()
-        # group=self.status.group()
-        # analang=self.params.analang()
-        # if None in [analang, ps, group]:
-        #     log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
-        #                                 self.analang, ps, group))
-        cvt=self.params.cvt()
-        check=self.params.check()
-        profile=self.slices.profile()
-        if not profile:
-            self.getprofile()
-        if (check not in self.status.checks(tosort=True)
-                and check not in self.status.checks(toverify=True)
-                and check not in self.status.checks(tojoin=True)):
-            exit=self.getcheck()
-            if exit:
-                self.runcheck()
-            return #if the user didn't supply a check
-        self.settings.updatesortingstatus() # Not just tone anymore
-        self.maybesort()
-    def maybesort(self):
-        """This should look for one group to verify at a time, with sorting
-        in between, then join and repeat"""
-        def notdonewarning(): #Use this!!
-            self.getrunwindow(nowait=True)
-            buttontxt=_("Sort!")
-            text=_("Hey, you're not done with {} {} words in the {} frame!"
-                    "\nCome back when you have time; restart where you left "
-                    "off by pressing ‘{}’".format(ps,profile,check,buttontxt))
-            ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
-        def tosortupdate():
-            log.info("maybesort tosortbool:{}; tosort:{}; sorted:{}".format(
-                                self.status.tosort(),
-                                self.status.senseidstosort(),
-                                self.status.senseidssorted()
-                                ))
-        cvt=self.params.cvt()
-        check=self.params.check()
-        ps=self.slices.ps()
-        profile=self.slices.profile()
-        log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,ps,profile,check))
-        tosortupdate()
-        log.info("Maybe SortT (from maybesort)")
-        if self.status.checktosort(check):
-            log.info("SortT (from maybesort)")
-            quit=self.sortT()
-            if quit == True:
-                if not self.exitFlag.istrue():
-                    notdonewarning()
-                return
-        tosortupdate()
-        log.info("Going to verify the first of these groups now: {}".format(
-                                    self.status.groups(toverify=True)))
-        log.info("Maybe verifyT (from maybesort)")
-        groupstoverify=self.status.groups(toverify=True)
-        if groupstoverify:
-            self.status.group(groupstoverify[0]) #just pick the first now
-            log.info("verifyT (from maybesort)")
-            exitv=self.verifyT()
-            """This menu should be gone altogether, from this window"""
-            self.runwindow.removeverifymenu() #remove verification windows here, if made
-            if exitv == True: #fix this!
-                if not self.exitFlag.istrue():
-                    notdonewarning()
-                return
-            self.maybesort()
-            return
-        # Offer to join in any case:
-        if self.status.tojoin():
-            log.info("joinT (from maybesort)")
-            exit=self.joinT()
-            log.debug("exit: {}".format(exit))
-        else:
-            exit=False
-        if exit:
-            if not self.exitFlag:
-                self.notdonewarning()
-            #This happens when the user exits the window
-            log.debug("exiting joinT True")
-            #Give an error window here
-            return
-        elif not exit:
-            def nframe():
-                r=self.status.nextcheck(tosort=True)
-                if not r:
-                    self.status.nextcheck(toverify=True)
-                self.runwindow.destroy()
-                self.runcheck()
-            def aframe():
-                self.runwindow.destroy()
-                self.addframe()
-                self.addwindow.wait_window(self.addwindow)
-                self.runcheck()
-            def nprofile():
-                r=self.status.nextprofile(tosort=True)
-                if not r:
-                    self.status.nextprofile(toverify=True)
-                self.runwindow.destroy()
-                self.runcheck()
-            def nps():
-                self.slices.nextps()
-                r=self.status.nextprofile(tosort=True)
-                if not r:
-                    self.status.nextprofile(toverify=True)
-                self.runwindow.destroy()
-                self.runcheck()
-            self.getrunwindow()
-            done=_("All ‘{}’ tone groups in the ‘{}’ frame are verified and "
-                    "distinct!".format(profile,check))
-            row=0
-            if self.exitFlag.istrue():
-                return
-            ui.Label(self.runwindow.frame, text=done,
-                    row=row,column=0,columnspan=2)
-            row+=1
-            ui.Label(self.runwindow.frame, text='',
-                        image=self.frame.theme.photo[cvt],
-                        row=row,column=0,columnspan=2)
-            row+=1
-            ctosort=self.status.checks(tosort=True)
-            ctoverify=self.status.checks(toverify=True)
-            ptosort=self.status.profiles(tosort=True)
-            ptoverify=self.status.profiles(toverify=True)
-            ui.Label(self.runwindow.frame,text=_("Continue to"),
-                    columnspan=2,row=row,column=0)
-            row+=1
-            if ctosort or ctoverify:
-                b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=_("Next frame to sort"),
-                    command=nframe)
-                b1t=ui.ToolTip(b1,_("Automatically pick "
-                                "the next tone frame to sort for "
-                                "the ‘{}’ profile.".format(profile)))
-            else:
-                b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=_("Define a new frame"),
-                    command=aframe)
-                b1t=ui.ToolTip(b1,_("You're done with tone frames already defined "
-                                "for the ‘{}’ profile. If you want to continue "
-                                "with this profile, define a new frame here."
-                                "".format(profile)))
-            b1.grid(row=row,column=0,sticky='e')
-            if ptosort or ptoverify:
-                b2=ui.Button(self.runwindow.frame, anchor='c',
-                    text=_("Next syllable profile to sort"),
-                    command=nprofile)
-                b2t=ui.ToolTip(b2,_("You're done with ‘{0}’ tone frames already "
-                                "defined for the ‘{1}’ profile. Click here to "
-                                "Automatically select the next syllable "
-                                "profile for ‘{0}’.".format(ps, profile)))
-            else:
-                b2=ui.Button(self.runwindow.frame, anchor='c',
-                    text=_("Next Grammatical Category"),
-                    command=nps)
-                b2t=ui.ToolTip(b2,_("You're done with tone frames already "
-                                "defined for the top ‘{}’ syllable profiles. "
-                                "Click here to automatically select the next "
-                                "grammatical category.".format(ps)))
-            b2.grid(row=row,column=1,sticky='w')
-            if self.parent.exitFlag.istrue():
-                return
-            w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
-                                        self.parent.winfo_screenwidth()/150))
-            log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
-                                    b1.winfo_reqwidth(),b2.winfo_reqwidth(),w))
-            b1.config(width=w)
-            b2.config(width=w)
-            self.runwindow.waitdone()
-            return
-    def sortT(self):
-        # This window/frame/function shows one entry at a time (with pic?)
-        # for the user to select a tone group based on buttons defined below.
-        # We work only with one ps and profile at a time (of course).
-        # The end result is that the user is shown one word to compare against
-        # a set of other words, and is asked to say which one it is like.
-        # In the event that the word isn't like any of them (and on the first
-        # word!), a new group is formed, and added to the list of comparatives
-        # (which is autogenerated, to update whenever a group is added or
-        # taken out). Whenever a group is selected, the word being iterated
-        # through is marked as the same tone group, and that tone group is
-        # marked as unverified (not yet implimented!).
-        # Groups are initially unlabelled for content, with each group labeled
-        # with an integer --we just need a unique name, in any case, and the
-        # groups are by frame (surface distinctions), rather than by lexeme
-        # (underlying distinctions) in any case.
-        #This function should exit 1 on a window close, or finish with None
-        def presenttosort():
-            groupselected=None
-            """these just pull the current lists from the object"""
-            senseids=self.status.senseidstosort()
-            sorted=self.status.senseidssorted()
-            senseid=senseids[0]
-            progress=(str(thissort.index(senseid)+1)+'/'+str(len(thissort)))
-            framed=self.taskchooser.datadict.getframeddata(senseid)
-            framed.setframe(check)
-            """After the first entry, sort by groups."""
-            log.debug('tonegroups: {}'.format(self.status.groups(wsorted=True)))
-            if self.runwindow.exitFlag.istrue():
-                return 1,1
-            ui.Label(titles, text=progress, font='report', anchor='w'
-                                            ).grid(column=1, row=0, sticky="ew")
-            text=framed.formatted()
-            entryview=ui.Frame(self.runwindow.frame)
-            self.sortitem=ui.Label(entryview, text=text,font='readbig',
-                                    column=0,row=0, sticky="w",pady=50)
-            entryview.grid(column=1, row=1, sticky="new")
-            self.sortitem.wrap()
-            self.runwindow.waitdone()
-            for b in groupbuttonlist:
-                b.setcanary(self.sortitem)
-            self.runwindow.wait_window(window=self.sortitem)
-            if self.runwindow.exitFlag.istrue():
-                return 1,1
-            else:
-                return senseid,framed
-        def addgroupbutton(group):
-            if self.runwindow.exitFlag.istrue():
-                return #just don't die
-            b=ToneGroupButtonFrame(groupbuttons, self, self.exs,
-                                    group,
-                                    showtonegroup=True,
-                                    alwaysrefreshable=True
-                                    )
-            b.grid(row=groupbuttons.row, column=0, sticky='w')
-            groupvars[group]=b.var()
-            groupbuttons.row+=1
-            groupbuttonlist.append(b)
-            b.update_idletasks()
-        def sortselected(senseid,framed):
-            selectedgroups=selected(groupvars)
-            log.info("selectedgroups: {}".format(selectedgroups))
-            for k in groupvars:
-                log.info("{} value: {}".format(k,groupvars[k].get()))
-            if len(selectedgroups)>1:
-                log.error("More than one group selected: {}".format(
-                                                                selectedgroups))
-                return 2
-            groupselected=unlist(selectedgroups)
-            if groupselected in groupvars:
-                groupvars[groupselected].set(False)
-            else:
-                log.error("selected {}; not in {}".format(groupselected,groupvars))
-                return
-            if groupselected:
-                if groupselected in ["NONEOFTHEABOVE",'ok']:
-                    """If there are no groups yet, or if the user asks for
-                    another group, make a new group."""
-                    group=self.addtonegroup()
-                    """And give the user a button for it, for future words
-                    (N.B.: This is only used for groups added during the current
-                    run. At the beginning of a run, all used groups have buttons
-                    created above.)"""
-                    self.addtonefieldex(senseid,framed,group) #button needs this
-                    addgroupbutton(group)
-                    #adjust window for new button
-                    scroll.windowsize()
-                    log.debug('Group added: {}'.format(groupselected))
-                    """group with the above?"""
-                    """Group these last two?"""
-                else:
-                    if groupselected == 'skip':
-                        group='NA'
-                    else:
-                        group=groupselected
-                    log.debug('Group selected: {} ({})'.format(group,
-                                                                groupselected))
-                    """This needs to *not* operate on "exit" button."""
-                    self.addtonefieldex(senseid,framed,group)
-            else:
-                log.debug('No group selected: {}'.format(groupselected))
-                return 1 # this should only happen on Exit
-            self.status.marksenseidsorted(senseid)
-        log.info('Running sortT:')
-        self.getrunwindow()
-        """sortingstatus() checks by ps,profile,check (frame),
-        for the presence of a populated fieldtype='tone'. So any time any of
-        the above is changed, this variable should be reset."""
-        """Can't do this test suite unless there are unsorted entries..."""
-        """things that don't change in this fn"""
-        thissort=self.status.senseidstosort()[:] #current list
-        log.info("Going to sort these senseids: {}".format(self.status.senseidstosort()))
-        groups=self.status.groups(wsorted=True)
-        check=self.params.check()
-        """Children of runwindow.frame"""
-        if self.exitFlag.istrue():
-            return
-        titles=ui.Frame(self.runwindow.frame)
-        titles.grid(row=0, column=0, sticky="ew", columnspan=2)
-        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['sortT'],
-                        text='',
-                        ).grid(row=1,column=0,rowspan=3,sticky='nw')
-        scroll=self.runwindow.frame.scroll=ui.ScrollingFrame(self.runwindow.frame)
-        scroll.grid(row=2, column=1, sticky="new")
-        """Titles"""
-        title=_("Sort {} Tone (in ‘{}’ frame)").format(
-                                        self.settings.languagenames[self.analang],
-                                        check)
-        ui.Label(titles, text=title,font='title',anchor='c').grid(
-                                            column=0, row=0, sticky="ew")
-        instructions=_("Select the one with the same tone melody as")
-        ui.Label(titles, text=instructions, font='instructions',
-                anchor='c').grid(column=0, row=1, sticky="ew")
-        """Children of self.runwindow.frame.scroll.content"""
-        groupbuttons=scroll.content.groups=ui.Frame(scroll.content)
-        groupbuttons.grid(row=0,column=0,sticky="ew")
-        scroll.content.anotherskip=ui.Frame(scroll.content)
-        scroll.content.anotherskip.grid(row=1,column=0)
-        """Children of self.runwindow.frame.scroll.content.groups"""
-        groupbuttons.row=0 #rows for this frame
-        groupvars={}
-        groupbuttonlist=list()
-        entryview=ui.Frame(self.runwindow.frame)
-        for group in groups:
-            addgroupbutton(group)
-        """Children of self.runwindow.frame.scroll.content.anotherskip"""
-        self.getanotherskip(scroll.content.anotherskip,groupvars)
-        log.info("getanotherskip vardict (1): {}".format(groupvars))
-        """Stuff that changes by lexical entry
-        The second frame, for the other two buttons, which also scroll"""
-        while self.status.tosort(): # and not self.runwindow.exitFlag.istrue():
-            senseid,framed=presenttosort()
-            if senseid == 1:
-                return 1
-            sortselected(senseid,framed)
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        self.runwindow.resetframe()
-        return
-    def reverify(self):
-        group=self.status.group()
-        check=self.params.check()
-        log.info("Reverifying a framed tone group, at user request: {}-{}"
-                    "".format(check,group))
-        if check not in self.status.checks(wsorted=True):
-            self.getcheck() #guess=True
-        done=self.status.verified()
-        if group not in done:
-            w=self.getgroup(wsorted=True)
-            if w:
-                w.wait_window(w)
-            if group == None:
-                log.info("I asked for a framed tone group, but didn't get one.")
-                return
-        else:
-            done.remove(group)
-        self.updatesortingstatus()
-        self.maybesort()
-    def verifyT(self,menu=False):
-        def updatestatus():
-            log.info("Updating status with {}, {}, {}".format(check,group,verified))
-            self.updatestatus(verified=verified)
-            self.updatestatuslift(check,group,verified=verified)
-        log.info("Running verifyT!")
-        """Show entries each in a row, users mark those that are different, and we
-        remove that group designation from the entry (so the entry will show up on
-        the next sorting). After all entries have been verified as "the same",
-        click a button at the bottom of the screen for "verify", or "these are
-        all the same", or some such. register with addresults (or elsewhere?).
-        To show this window for a given tone group, we need to look through the
-        tone group for any entries that aren't marked for verified (or will we
-        just mark it one place, and that we're marking faithfully?)
-        If we mark toneframes[lang][ps][name][melody]=None (v 'verified'), that
-        could be enough, if we're storing that info somewhere --writing xml?
-        on clicking 'verify', we take the user back to sort (to resort anything
-        that got pulled from the group), then on to the next largest unverified
-        pile.
-        """
-        #This function should exit 1 on a window close, 0/None on all ok.
-        check=self.params.check()
-        groups=self.status.groups(toverify=True) #needed for progress
-        group=self.status.group()
-        # The title for this page changes by group, below.
-        self.getrunwindow(msg="preparing to verify group: {}".format(group))
-        # if menu == True:
-        #     self.runwindow.doverifymenu()
-        # ContextMenu(self.runwindow, context='verifyT') #once for all
-        oktext='These all have the same tone'
-        instructions=_("Read down this list to verify they all have the same "
-            "tone melody. Select any word with a different tone melody to "
-            "remove it from the list.")
-        """group is set here, but probably OK"""
-        self.status.build()
-        last=False
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        if group in self.status.verified():
-            log.info("‘{}’ already verified, continuing.".format(group))
-            return
-        senseids=self.exs.senseidsinslicegroup(group,check)
-        if not senseids:
-            groups=self.status.groups() #from which to remove, put back
-            log.info("Groups: {}".format(self.status.groups(toverify=True)))
-            verified=False
-            log.info("Group ‘{}’ has no examples; continuing.".format(group))
-            log.info("Groups: {}".format(self.status.groups(toverify=True)))
-            updatestatus()
-            log.info("Group-groups: {}-{}".format(group,groups))
-            if groups:
-                groups.remove(group)
-            log.info("Group-groups: {}-{}".format(group,groups))
-            self.status.groups(groups,wsorted=True)
-            log.info("Groups: {}".format(self.status.groups(toverify=True)))
-            return
-        elif len(senseids) == 1:
-            verified=True
-            log.info("Group ‘{}’ only has {} example; marking verified and "
-                    "continuing.".format(group,len(senseids)))
-            updatestatus()
-            return
-        title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
-                                    self.settings.languagenames[self.analang],
-                                    group,
-                                    check
-                                    )
-        titles=ui.Frame(self.runwindow.frame,
-                        column=0, row=0, columnspan=2, sticky="w")
-        ui.Label(titles, text=title, font='title', column=0, row=0, sticky="w")
-        """Move this to bool vars, like for sortT"""
-        if hasattr(self,'groupselected'): #so it doesn't get in way later.
-            delattr(self,'groupselected')
-        row=0
-        column=0
-        if group in groups:
-            progress=('('+str(groups.index(group)+1)+'/'+str(len(
-                                                            groups))+')')
-            ui.Label(titles,text=progress,anchor='w',row=0,column=1,sticky="ew")
-        ui.Label(titles, text=instructions,
-                row=1, column=0, columnspan=2, sticky="wns")
-        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['verifyT'],
-                        text='', row=1,column=0,
-                        # rowspan=3,
-                        sticky='nws')
-        """Scroll after instructions"""
-        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
-                                    row=1,column=1,
-                                    # columnspan=2,
-                                    sticky='wsn')
-        row+=1
-        """put entry buttons here."""
-        for senseid in senseids:
-            if senseid is None: #needed?
-                continue
-            self.verifybutton(self.sframe.content,senseid,
-                                row, column,
-                                label=False)
-            row+=1
-        bf=ui.Frame(self.sframe.content)
-        bf.grid(row=row, column=0, sticky="ew")
-        b=ui.Button(bf, text=oktext,
-                        cmd=bf.destroy,
-                        anchor="w",
-                        font='instructions'
-                        )
-        b.grid(column=0, row=0, sticky="ew")
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        self.sframe.windowsize()
-        self.runwindow.waitdone()
-        b.wait_window(bf)
-        if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
-            return 1
-        log.debug("User selected ‘{}’, moving on.".format(oktext))
-        self.status.last('verify',update=True)
-        verified=True
-        updatestatus()
-    def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
-        # This must run one subcheck at a time. If the subcheck changes,
-        # it will fail.
-        # should move to specify location and fieldvalue in button lambda
-        def notok():
-            self.removesenseidfromgroup(senseid,check,sorting=True)
-            bf.destroy()
-        if 'font' not in kwargs:
-            kwargs['font']='read'
-        if 'anchor' not in kwargs:
-            kwargs['anchor']='w'
-        #This should be pulling from the example, as it is there already
-        framed=self.taskchooser.datadict.getframeddata(senseid)
-        check=self.params.check()
-        framed.setframe(check)
-        text=framed.formatted(showtonegroup=False)
-        if label==True:
-            b=ui.Label(parent, text=text,
-                    **kwargs
-                    ).grid(column=column, row=row,
-                            sticky="ew",
-                            ipady=15)
-        else:
-            bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
-            bf.grid(column=0, row=row, sticky='ew')
-            b=ui.Button(bf, text=text, pady='0',
-                    cmd=notok,
-                    **kwargs
-                    ).grid(column=column, row=0,
-                            sticky="ew",
-                            ipady=15 #Inside the buttons...
-                            )
-    def joinT(self):
-        log.info("Running joinT!")
-        """This window shows up after sorting, or maybe after verification, to
-        allow the user to join groups that look the same. I think before
-        verification, as this would require the new pile to be verified again.
-        also, the joining would provide for one less group to match against
-        (hopefully semi automatically).
-        """
-        #This function should exit 1 on a window close, 0/None on all ok.
-        self.getrunwindow()
-        cvt=self.params.cvt()
-        check=self.params.check()
-        ps=self.slices.ps()
-        profile=self.slices.profile()
-        groups=self.status.groups(wsorted=True) #these should be verified, too.
-        if len(groups) <2:
-            log.debug("No tone groups to distinguish!")
-            if not self.exitFlag.istrue():
-                self.runwindow.waitdone()
-            return 0
-        title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
-                                        self.settings.languagenames[self.analang],
-                                        check
-                                        )
-        oktext=_('These are all different')
-        introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
-                "sorted into the groups exemplified below (in the ‘{}’ frame). "
-                "Do any of these have the same tone melody? "
-                "If so, click on two groups to join, then ‘{ok}’. "
-                "If not, just click ‘{ok}’."
-                ).format(ps,profile,check,ok=oktext)
-        log.debug(introtext)
-        self.runwindow.resetframe()
-        self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
-                                            column=0, row=0,
-                                            columnspan=2, sticky="ew"
-                                            )
-        ltitle=ui.Label(self.runwindow.frame.titles, text=title,
-                font='title',
-                column=0, row=0, sticky="ew",
-                )
-        i=ui.Label(self.runwindow.frame.titles,
-                    text=introtext,
-                    row=1,column=0, sticky="w",
-                    )
-        i.wrap()
-        ui.Label(self.runwindow.frame,
-                image=self.frame.theme.photo['joinT'],
-                text='',
-                row=1,column=0,rowspan=2,sticky='nw'
-                )
-        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
-                                        row=1,column=1,sticky='w')
-        self.sortitem=self.sframe.content
-        row=0
-        groupvars={}
-        b={}
-        for group in groups:
-            b[group]=ToneGroupButtonFrame(self.sortitem, self, self.exs, group,
-                                    showtonegroup=True,
-                                    labelizeonselect=True
-                                    )
-            b[group].grid(column=0, row=row, sticky='ew')
-            groupvars[group]=b[group].var()
-            row+=1
-        """If all is good, destroy this frame."""
-        self.runwindow.waitdone()
-        ngroupstojoin=0
-        while ngroupstojoin < 2:
-            bok=ui.Button(self.sortitem, text=oktext,
-                    cmd=self.sortitem.destroy,
-                    anchor="c",
-                    font='instructions'
-                    )
-            bok.grid(column=0, row=row, sticky="ew")
-            for group in b:
-                b[group].setcanary(bok) #this must be done after bok exists
-            log.info("making button!")
-            self.runwindow.frame.wait_window(bok)
-            groupstojoin=selected(groupvars)
-            ngroupstojoin=len(groupstojoin)
-            if ngroupstojoin == 2 or not self.sortitem.winfo_exists():
-                break
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        if ngroupstojoin < 2:
-            log.info("User selected ‘{}’ with {} groups selected, moving on."
-                    "".format(oktext,ngroupstojoin))
-            #this avoids asking the user about it again, until more sorting:
-            self.status.tojoin(False)
-            return 0
-        elif ngroupstojoin > 2:
-            log.info("User selected ‘{}’ with {} groups selected, This is "
-                    "probably a mistake ({} selected)."
-                    "".format(oktext,ngroupstojoin,groupstojoin))
-            return self.joinT() #try again
-        else:
-            log.info("User selected ‘{}’ with {} groups selected, joining "
-                    "them. ({} selected)."
-                    "".format(oktext,ngroupstojoin,groupstojoin))
-            msg=_("Now we're going to move group ‘{0}’ into "
-                "‘{1}’, marking ‘{1}’ unverified.".format(*groupstojoin))
-            self.runwindow.wait(msg=msg)
-            log.debug(msg)
-            """All the senses we're looking at, by ps/profile"""
-            self.updatebygroupsenseid(*groupstojoin)
-            groups.remove(groupstojoin[0])
-            refresh=False
-            for group in groupstojoin: #not verified=True --since joined
-                self.updatestatuslift(group=group,refresh=refresh)
-                self.updatestatus(group=group,refresh=refresh)
-                refresh=True #For second group
-            self.maybesort() #go back to verify, etc.
-        """'These are all different' doesn't need to be saved anywhere, as this
-        can happen at any time. Just move on to verification, where each group's
-        sameness will be verified and recorded."""
-    def updatebygroupsenseid(self,oldtonevalue,newtonevalue,verified=False):
-        # This function updates the field value and verification status (which
-        # contains the field value) in the lift file.
-        # This is all the words in the database with the given
-        # location:value correspondence (any ps/profile)
-        check=self.params.check()
-        lst2=self.db.get('sense',location=check,tonevalue=oldtonevalue
-                                                                ).get('senseid')
-        # We are agnostic of verification status of any given entry, so just
-        # use this to change names, not to mark verification status (do that
-        # with self.updatestatuslift())
-        rm=self.verifictioncode(check,oldtonevalue)
-        add=self.verifictioncode(check,newtonevalue)
-        """The above doesn't test for profile, so we restrict that next"""
-        profile=self.slices.profile()
-        senseids=self.slices.inslice(lst2)
-        for senseid in senseids:
-            """This updates the fieldvalue from 'fieldvalue' to
-            'newfieldvalue'."""
-            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
-                                location=check,#fieldvalue=oldtonevalue,
-                                fieldvalue=newtonevalue)
-            self.db.modverificationnode(senseid=senseid,
-                            vtype=profile,
-                            analang=self.analang,
-                            add=add,rms=[rm],
-                            addifrmd=True)
-        self.db.write() #once done iterating over senseids
-    def addtonegroup(self):
-        log.info("Adding a tone group!")
-        values=[0,] #always have something here
-        groups=self.status.groups(wsorted=True)
-        for i in groups:
-            try:
-                values+=[int(i)]
-            except:
-                log.info('Tone group {} cannot be interpreted as an integer!'
-                        ''.format(i))
-        newgroup=max(values)+1
-        groups.append(str(newgroup))
-        return str(newgroup)
-    def addtonefieldex(self,senseid,framed,group):
-        guid=None
-        if group is None or group == '':
-            log.error("groupselected: {}; this should never happen"
-                        "".format(group))
-            exit()
-        check=self.params.check()
-        log.debug("Adding {} value to {} location in 'tone' fieldtype, "
-                "senseid: {} guid: {} (in main_lift.py)".format(
-                    group,
-                    check,
-                    senseid,
-                    guid))
-        self.db.addmodexamplefields( #This should only mod if already there
-                                    senseid=senseid,
-                                    analang=self.analang,
-                                    fieldtype='tone',location=check,
-                                    framed=framed,
-                                    fieldvalue=group
-                                    )
-        tonegroup=unlist(self.db.get("example/tonefield/form/text",
-                        senseid=senseid, location=check).get('text'))
-        if tonegroup != group:
-            log.error("Field addition failed! LIFT says {}, not {}.".format(
-                                                tonegroup,group))
-        else:
-            log.info("Field addition succeeded! LIFT says {}, which is {}."
-                                        "".format(tonegroup,group))
-        self.status.last('sort',update=True)
-        self.updatestatus(group=group) #this marks the group unverified.
-        self.status.tojoin(True) # will need to be distinguished again
-        self.db.write() #This is never iterated over; just one entry at a time.
-    def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
-        senseid=None
-        self.db.addpronunciationfields(
-                                    guid,senseid,self.analang,self.glosslangs,
-                                    lang='en',
-                                    forms=framed,
-                                    fieldtype='tone',location=check,
-                                    fieldvalue=self.groupselected,
-                                    ps=None
-                                    )
-    def removesenseidfromgroup(self,senseid,check=None,group=None,**kwargs):
-        if check is None:
-            check=self.params.check()
-        if group is None:
-            group=self.status.group()
-        sorting=kwargs.get('sorting',True) #Default to verify button
-        log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
-        #This should only *mod* if already there
-        self.db.addmodexamplefields(senseid=senseid,
-                                analang=self.analang,
-                                fieldtype='tone',location=check,
-                                fieldvalue='',showurl=True) #this value should be the only change
-        log.info("Checking that removal worked")
-        tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
-                            location=check).get('text')
-        if tgroups in [[],'',['']]:
-            log.info("Field removal succeeded! LIFT says '{}', = []."
-                                                            "".format(tgroups))
-        elif len(tgroups) == 1:
-            tgroup=tgroups[0]
-            log.error("Field removal failed! LIFT says '{}', != []."
-                                                            "".format(tgroup))
-        elif len(tgroups) > 1:
-            log.error("Found {} tone values: {}; Fix this!"
-                                            "".format(len(tgroups),tgroups))
-            return
-        rm=self.verifictioncode(check,group)
-        profile=self.slices.profile()
-        self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
-                                                                        rms=[rm])
-        self.status.last('sort',update=True)
-        self.db.write() #This is not iterated over
-        if sorting:
-            self.status.marksenseidtosort(senseid)
-    def marksortedguid(self,guid):
-        """I think these are only valuable during a check, so we don't have to
-        constantly refresh sortingstatus() from the lift file."""
-        """These four functions should be generalizable"""
-        self.guidssorted.append(guid)
-        self.guidstosort.remove(guid)
-    def marktosortguid(self,guid):
-        self.guidstosort.append(guid)
-        self.guidssorted.remove(guid)
-    def tryNAgain(self):
-        check=self.params.check()
-        if check in self.status.checks():
-            senseids=self.slices.senseids()
-        else:
-            #Give an error window here
-            log.error("Not Trying again; set a tone frame first!")
-            self.getrunwindow(nowait=True)
-            buttontxt=_("Sort!")
-            text=_("Not Trying Again; set a tone frame first!")
-            ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
-            return
-        for senseid in senseids: #this is a ps-profile slice
-            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
-                            location=check,fieldvalue='', #just clear this
-                            oldfieldvalue='NA', showurl=True #if this
-                            )
-        self.runcheck()
-    def getanotherskip(self,parent,vardict):
-        """This function presents a group of buttons for the user to choose
-        from, one for each tone group in that location/ps/profile in the
-        database, plus one for the user to indicate that the word doesn't
-        belong in any of those (new group), plus one to for the user to
-        indicate that the word/frame combo doesn't work (skip)."""
-        def firstok():
-            vardict['ok'].set(True)
-            remove(okb) #use this button exactly once
-            differentbutton()
-            sortnext()
-        def different():
-            vardict['NONEOFTHEABOVE'].set(True)
-            sortnext()
-        def skip():
-            vardict['skip'].set(True)
-            sortnext()
-        def remove(x):
-            x.destroy()
-        def sortnext():
-            self.sortitem.destroy()
-        def differentbutton():
-            vardict['NONEOFTHEABOVE']=tkinter.BooleanVar()
-            difb=ui.Button(bf, text=newgroup,
-                        cmd=different,
-                        anchor="w",
-                        font='instructions'
-                        )
-            difb.grid(column=0, row=0, sticky="ew")
-        row=0
-        firstOK=_("This word is OK in this frame")
-        newgroup=_("Different")
-        skiptext=_("Skip this word/phrase")
-        """This should just add a button, not reload the frame"""
-        row+=10
-        bf=ui.Frame(parent)
-        bf.grid(column=0, row=row, sticky="w")
-        if not self.status.groups(wsorted=True):
-            vardict['ok']=tkinter.BooleanVar()
-            okb=ui.Button(bf, text=firstOK,
-                            cmd=firstok,
-                            anchor="w",
-                            font='instructions'
-                            )
-            okb.grid(column=0, row=0, sticky="ew")
-        else:
-            differentbutton()
-        vardict['skip']=tkinter.BooleanVar()
-        skipb=ui.Button(bf, text=skiptext,
-                        cmd=skip,
-                        anchor="w",
-                        font='instructions'
-                        )
-        skipb.grid(column=0, row=1, sticky="ew")
-    """Doing stuff"""
-class Transcribe(TaskDressing,Tone,ui.Window):
-    def tasktitle(self):
-        return _("Transcribe Citation Form Sorting in Tone Frames")
-    def updatelabels(event=None):
-        errorlabel['text'] = ''
-        a=newname.get()
+class Record(object):
+    """This holds all the Recording methods."""
+    def donewpyaudio(self):
         try:
-            int(a) #Is this interpretable as an integer (default group)?
-            namehash.set('')
-        except ValueError:
-            x=hash_t.sub('T',newname.get())
-            y=hash_sp.sub('#',x)
-            z=hash_nbsp.sub('.',y)
-            namehash.set(z)
-    def updategroups():
-        groupsthere=self.status[cvt][ps][profile][check]['groups']
-        groupsdone=self.status[cvt][ps][profile][check]['done']
-        return groupsthere, groupsdone
-    def submitform():
-        updatelabels()
-        newtonevalue=formfield.get()
-        groupsthere, groupsdone = updategroups()
-        group=self.status.group()
-        if newtonevalue == "":
-            noname=_("Give a name for this tone melody!")
-            log.debug(noname)
-            errorlabel['text'] = noname
-            return 1
-        if newtonevalue != group: #only make changes!
-            if newtonevalue in groupsthere :
-                deja=_("Sorry, there is already a group with "
-                                "that label; If you want to join the "
-                                "groups, give it a different name now, "
-                                "and join it later".format(newtonevalue))
-                log.debug(deja)
-                errorlabel['text'] = deja
-                return 1
-            self.updatebygroupsenseid(group,newtonevalue)
-            i=groupsthere.index(group) #put new value in the same place.
-            groupsthere.remove(group)
-            groupsthere.insert(i,newtonevalue)
-            if group in groupsdone: #if verified, change the name there, too
-                i=groupsdone.index(group) #put new value in the same place.
-                groupsdone.remove(group)
-                groupsdone.insert(i,newtonevalue)
-            group=newtonevalue
-            self.settings.storesettingsfile(setting='status')
-        else: #move on, but notify in logs
-            log.info("User selected ‘{}’, but with no change.".format(ok))
-        if hasattr(self,'group_comparison'):
-            delattr(self,'group_comparison') # in either case
-        self.runwindow.destroy()
-        return
-    def addchar(x):
-        if x == '':
-            formfield.delete(0,tkinter.END)
-        else:
-            formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
-        updatelabels()
-    def done():
-        submitform()
-        self.donewpyaudio()
-    def next():
-        log.debug("running next group")
-        error=submitform()
-        if not error:
-            # log.debug("group: {}".format(group))
-            self.status.nextgroup(wsorted=True)
-            # log.debug("group: {}".format(group))
-            self.makewindow()
-    def nextcheck():
-        log.debug("running next check")
-        error=submitform()
-        if not error:
-            log.debug("check: {}".format(check))
-            self.status.nextcheck(wsorted=True)
-            log.debug("check: {}".format(check))
-            self.makewindow()
-    def nextprofile():
-        log.debug("running next profile")
-        error=submitform()
-        if not error:
-            log.debug("profile: {}".format(profile))
-            self.status.nextprofile(wsorted=True)
-            log.debug("profile: {}".format(profile))
-            self.makewindow()
-    def setgroup_comparison():
-        w=self.getgroup(comparison=True,wsorted=True) #this returns its window
-        if w and w.winfo_exists(): #This window may be already gone
-            w.wait_window(w)
-        comparisonbuttons()
-    def comparisonbuttons():
-        try: #successive runs
-            compframe.compframeb.destroy()
-            log.info("Comparison frameb destroyed!")
-        except: #first run
-            log.info("Problem destroying comparison frame, making...")
-        buttonframew=int(program['screenw']/4)
-        # b['wraplength']=buttonframew
-        compframe.compframeb=ui.Frame(compframe)
-        compframe.compframeb.grid(row=1,column=0)
-        t=_('Compare with another group')
-        if (hasattr(self, 'group_comparison')
-                and self.group_comparison in groupsthere and
-                self.group_comparison != group):
-            log.info("Making comparison buttons for group {} now".format(
-                                                self.group_comparison))
-            t=_('Compare with another group ({})').format(
-                                                self.group_comparison)
-            compframe.bf2=ToneGroupButtonFrame(compframe.compframeb,
-                                    self, self.exs,
-                                    self.group_comparison,
-                                    showtonegroup=True,
-                                    playable=True,
-                                    unsortable=False, #no space, bad idea
-                                    alwaysrefreshable=True,
-                                    font='default',
-                                    wraplength=buttonframew
+            self.pyaudio.terminate()
+        except:
+            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
+    def pyaudiocheck(self):
+        try:
+            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
+        except:
+            self.pyaudio=sound.AudioInterface()
+    def getsoundcardindex(self,event=None):
+        log.info("Asking for input sound card...")
+        window=ui.Window(self.frame, title=_('Select Input Sound Card'))
+        ui.Label(window.frame, text=_('What sound card do you '
+                                    'want to record sound with with?')
+                ).grid(column=0, row=0)
+        l=list()
+        for card in self.soundsettings.cards['in']:
+            name=self.soundsettings.cards['dict'][card]
+            l+=[(card, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundcardindex,
+                                    window=window,
+                                    column=0, row=1
                                     )
-            compframe.bf2.grid(row=0, column=0, sticky='w')
-        elif not hasattr(self, 'group_comparison'):
-            log.info("No comparison found !")
-        elif self.group_comparison not in groupsthere:
-            log.info("Comparison ({}) not in group list ({})"
-                        "".format(self.group_comparison,groupsthere))
-        elif self.group_comparison == group:
-            log.info("Comparison ({}) same as subgroup ({}); not showing."
-                        "".format(self.group_comparison,group))
-        else:
-            log.info("This should never happen (renamegroup/"
-                        "comparisonbuttons)")
-        sub_c['text']=t
-    def makewindow(self):
-        cvt=self.params.cvt()
-        ps=self.slices.ps()
-        profile=self.slices.profile()
-        check=self.params.check()
-        buttonframew=int(program['screenw']/3.5)
-        if check == None:
-            self.getcheck(guess=True)
-            if check == None:
-                log.info("I asked for a check name, but didn't get one.")
-                return
-        if not self.status.groups(wsorted=True):
-            log.error("I don't have any sorted data for check: {}, "
-                        "ps-profile: {}-{},".format(check,ps,profile))
+    def getsoundcardoutindex(self,event=None):
+        log.info("Asking for output sound card...")
+        window=ui.Window(self.frame, title=_('Select Output Sound Card'))
+        ui.Label(window.frame, text=_('What sound card do you '
+                                    'want to play sound with?')
+                ).grid(column=0, row=0)
+        l=list()
+        for card in self.soundsettings.cards['out']:
+            name=self.soundsettings.cards['dict'][card]
+            l+=[(card, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundcardoutindex,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getsoundformat(self,event=None):
+        log.info("Asking for audio format...")
+        window=ui.Window(self.frame, title=_('Select Audio Format'))
+        ui.Label(window.frame, text=_('What audio format do you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        l=list()
+        ss=self.soundsettings
+        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
+            name=ss.hypothetical['sample_formats'][sf]
+            l+=[(sf, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundformat,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def getsoundhz(self,event=None):
+        log.info("Asking for sampling frequency...")
+        window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
+        ui.Label(window.frame, text=_('What sampling frequency you '
+                                    'want to work with?')
+                ).grid(column=0, row=0)
+        l=list()
+        ss=self.soundsettings
+        for fs in ss.cards['in'][ss.audio_card_in]:
+            name=ss.hypothetical['fss'][fs]
+            l+=[(fs, name)]
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=l,
+                                    command=self.settings.setsoundhz,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+    def makesoundsettings(self):
+        if not hasattr(self.settings,'soundsettings'):
+            self.pyaudiocheck() #in case self.pyaudio isn't there yet
+            self.settings.soundsettings=sound.SoundSettings(self.pyaudio)
+    def loadsoundsettings(self):
+        self.makesoundsettings()
+        self.settings.loadsettingsfile(setting='soundsettings')
+    def soundcheckrefreshdone(self):
+        self.settings.storesettingsfile(setting='soundsettings')
+        self.soundsettingswindow.destroy()
+    def soundcheckrefresh(self):
+        def quitall():
+            self.soundsettingswindow.destroy()
+            self.on_quit()
+        self.soundsettingswindow.resetframe()
+        row=0
+        ui.Label(self.soundsettingswindow.frame, font='title',
+                text="Current Sound Card Settings",
+                row=row,column=0)
+        row+=1
+        ui.Label(self.soundsettingswindow.frame, #font='title',
+                text="(click any to change)",
+                row=row,column=0)
+        row+=1
+        ss=self.soundsettings
+        ss.check() #make defaults if not valid options
+        for varname, dict, cmd in [
+            ('audio_card_in', ss.cards['dict'], self.getsoundcardindex),
+            ('fs',ss.hypothetical['fss'], self.getsoundhz),
+            ('sample_format', ss.hypothetical['sample_formats'],
+                                                         self.getsoundformat),
+            ('audio_card_out', ss.cards['dict'], self.getsoundcardoutindex),
+                                                    ]:
+            text=_("Change")
+            var=getattr(ss,varname)
+            log.debug("{} in {}".format(var,dict))
+            l=dict[var]
+            if cmd == self.getsoundcardindex:
+                l=_("Microphone: ‘{}’").format(l)
+            if cmd == self.getsoundcardoutindex:
+                l=_("Speakers: ‘{}’").format(l)
+            l=ui.Label(self.soundsettingswindow.frame,text=l,
+                    row=row,column=0)
+            l.bind('<ButtonRelease>',cmd) #getattr(self,str(cmd)))
+            row+=1
+        br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
+        br.grid(row=row,column=0)
+        row+=1
+        l=_("You may need to change your microphone "
+            "\nand/or speaker sound card to get the "
+            "\nsampling and format you want.")
+        ui.Label(self.soundsettingswindow.frame,
+                text=l).grid(row=row,column=0)
+        row+=1
+        l=_("Make sure ‘record’ and ‘play’ work well here, "
+            "\nbefore recording real data!")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='read',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        l=_("See also note in documentation about verifying these "
+            "recordings in an external application, such as Praat.")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='instructions',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        l=_("If Praat is installed in your path, right click on play "
+            "to open in Praat.")
+        caveat=ui.Label(self.soundsettingswindow.frame,
+                text=l,font='default',
+                row=row,column=0)
+        caveat.wrap()
+        row+=1
+        bd=ui.Button(self.soundsettingswindow.frame,
+                    text=_("Done"),
+                    cmd=self.soundcheckrefreshdone,
+                    # anchor='c',
+                    row=row,column=0,
+                    sticky=''
+                    )
+        bd=ui.Button(self.soundsettingswindow.frame,
+                    text=_("Quit {}".format(program['name'])),
+                    # cmd=program['root'].on_quit,
+                    cmd=quitall,
+                    # anchor='c',
+                    row=row,column=1
+                    )
+    def soundsettingscheck(self):
+        if not hasattr(self.settings,'soundsettings'):
+            self.settings.loadsoundsettings()
+    def missingsoundattr(self):
+        log.info(dir(self.soundsettings))
+        for s in ['fs', 'sample_format',
+                    'audio_card_in',
+                    'audio_card_out']:
+            if (not hasattr(self.soundsettings,s) or
+                            not getattr(self.soundsettings,s)):
+                log.info("Missing sound setting {}; asking again".format(s))
+                return True
+        self.settings.soundsettingsok=True
+    def soundcheck(self):
+        #Set the parameters of what could be
+        self.pyaudiocheck()
+        self.soundsettingscheck()
+        self.soundsettingswindow=ui.Window(self.frame,
+                                title=_('Select Sound Card Settings'))
+        self.soundcheckrefresh()
+        self.soundsettingswindow.wait_window(self.soundsettingswindow)
+        if not self.exitFlag.istrue() and self.missingsoundattr():
+            self.soundcheck()
             return
-        groupsthere, groupsdone = updategroups()
-        group=self.status.group()
-        if group is None or group not in groupsthere:
-            self.getgroup(guess=True,wsorted=True)
-            if group == None:
-                log.info("I asked for a framed tone group, but didn't get one.")
-                return
-        notthisgroup=groupsthere[:]
-        if group in groupsthere:
-            notthisgroup.remove(group)
-        else:
-            log.error(_("current group ({}) doesn't seem to be in list of "
-                "groups: ({})\n\tThis may be because we're looking for data that "
-                "isn't there, or maybe a setting is off.".format(group,
-                                                                groupsthere)))
-        newname=tkinter.StringVar(value=group)
-        namehash=tkinter.StringVar()
-        hash_t,hash_sp,hash_nbsp=rx.tonerxs()
-        padx=50
-        pady=10
-        title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
-                        ).format(ps,profile,group,check)
-        self.getrunwindow(title=title)
-        menu=self.runwindow.removeverifymenu()
-        titlel=ui.Label(self.runwindow.frame,text=title,font='title',
-                        row=0,column=0,sticky='ew',padx=padx,pady=pady
-                        )
-        getformtext=_("What new name do you want to call this surface tone "
-                        "group? A label that describes the surface tone form "
-                        "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
-        getform=ui.Label(self.runwindow.frame,
-                        text=getformtext,
-                        font='read',
-                        norender=True,
-                        row=1,column=0,sticky='ew',padx=padx,pady=pady
-                        )
-        getform.wrap()
-        inputframe=ui.Frame(self.runwindow.frame,
-                            row=2,column=0,sticky=''
-                            )
-        buttonframe=ui.Frame(inputframe,
-                            row=0,column=0,sticky='new'
-                            )
-        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
-        spaces=[' ',' ','']
-        for char in tonechars+spaces:
-            if char == ' ':
-                text=_('syllable break')
-                column=0
-                columnspan=int(len(tonechars)/2)+1
-                row=1
-            elif char == ' ':
-                text=_('word break')
-                columnspan=int(len(tonechars)/2)
-                column=columnspan+1
-                row=1
-            elif char == '':
-                text=_('clear entry')
-                column=0
-                columnspan=len(tonechars)
-                row=2
+        self.donewpyaudio()
+        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
+            self.soundsettingswindow.destroy()
+    def makelabelsnrecordingbuttons(self,parent,sense):
+        framed=self.taskchooser.datadict.getframeddata(sense['nodetoshow'])
+        t=framed.formatted(noframe=True)
+        for g in sense['glosses']:
+            if g:
+                t+='\t‘'+g
+                if ('plnode' in sense and
+                        sense['nodetoshow'] is sense['plnode']):
+                    t+=" (pl)"
+                if ('impnode' in sense and
+                        sense['nodetoshow'] is sense['impnode']):
+                    t+="!"
+                t+='’'
+        lxl=ui.Label(parent, text=t)
+        lcb=RecordButtonFrame(parent,self,framed)
+        lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
+        lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
+    def showentryformstorecordpage(self,ps=None,profile=None):
+        #The info we're going for is stored above sense, hence guid.
+        if self.runwindow.exitFlag.istrue():
+            log.info('no runwindow; quitting!')
+            return
+        if not self.runwindow.frame.winfo_exists():
+            log.info('no runwindow frame; quitting!')
+            return
+        self.runwindow.resetframe()
+        self.runwindow.wait()
+        count=self.slices.count()
+        text=_("Record {} {} Words: click ‘Record’, talk, "
+                "and release ({} words)".format(profile,ps,
+                                                count))
+        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w')
+        buttonframes=ui.ScrollingFrame(self.runwindow.frame)
+        buttonframes.grid(row=1,column=0,sticky='w')
+        row=0
+        done=list()
+        for senseid in self.slices.senseids(ps=ps,profile=profile):
+            sense={}
+            sense['column']=0
+            sense['row']=row
+            sense['senseid']=senseid
+            sense['guid']=firstoflist(self.db.get('entry',
+                                        senseid=senseid).get('guid'))
+            if sense['guid'] in done: #only the first of multiple senses
+                continue
             else:
-                column=tonechars.index(char)
-                text=char
-                columnspan=1
-                row=0
-            ui.Button(buttonframe,text = text,
-                        command = lambda x=char:addchar(x),
-                        anchor ='c',
-                        row=row,
-                        column=column,
-                        sticky='nsew',
-                        columnspan=columnspan
-                        )
-        g=nn(notthisgroup,twoperline=True)
-        log.info("There: {}, NTG: {}; g:{}".format(groupsthere,notthisgroup,g))
-        groupslabel=ui.Label(inputframe,
-                            text='Other Groups:\n{}'.format(g),
-                            row=0,column=1,
-                            sticky='new',
-                            padx=padx,
-                            rowspan=2
-                            )
-        fieldframe=ui.Frame(inputframe,
-                            row=1,column=0,sticky='new'
-                            )
-        formfield = ui.EntryField(fieldframe,textvariable=newname,
-                                    row=1,column=0,sticky='new',
-                                    font='readbig')
-        formfield.bind('<KeyRelease>', updatelabels) #apply function after key
-        errorlabel=ui.Label(fieldframe,text='',
-                            fg='red',
-                            wraplength=int(self.frame.winfo_screenwidth()/3),
-                            row=1,column=1,sticky='nsew'
-                            )
-        formhashlabel=ui.Label(fieldframe,
-                                textvariable=namehash,
-                                anchor ='c',
-                                row=2,column=0,sticky='new'
-                                )
-        fieldframe.grid_columnconfigure(0, weight=1)
-        updatelabels()
-        responseframe=ui.Frame(self.runwindow.frame,
-                                row=3,
-                                column=0,
-                                sticky='',
-                                padx=padx,
-                                pady=pady
-                                )
-        ok=_('Use this name and go to:')
-        sub_lbl=ui.Label(responseframe,text = ok, font='read',
-                        row=0,column=0,sticky='ns'
-                        )
-        t=_('main screen')
-        sub_btn=ui.Button(responseframe,text = t, command = done, anchor ='c',
-                            row=0,column=1,sticky='ns'
-                            )
-        # if reverify == False: #don't give this option if verifying
-        t=_('next group')
-        sub_btn=ui.Button(responseframe,text = t,command = next,anchor ='c',
-                            row=0,column=2,sticky='ns'
-                            )
-        t=_('next tone frame')
-        sub_f=ui.Button(responseframe,text = t,command = nextcheck,
-                        row=0,column=3,sticky='ns'
-                        )
-        t=_('next syllable profile')
-        sub_p=ui.Button(responseframe,text = t,command = nextprofile,
-                        row=0,column=4,sticky='ns'
-                        )
-        examplesframe=ui.Frame(self.runwindow.frame,
-                                row=4,column=0,sticky=''
-                                )
-        b=ToneGroupButtonFrame(examplesframe, self, self.exs,
-                                group,
-                                showtonegroup=True,
-                                # canary=entryview,
-                                playable=True,
-                                unsortable=True,
-                                alwaysrefreshable=True,
-                                row=0, column=0, sticky='w',
-                                wraplength=buttonframew
-                                )
-        compframe=ui.Frame(examplesframe,
-                    highlightthickness=10,
-                    highlightbackground=self.frame.theme.white,
-                    row=0,column=1,sticky='e'
-                    ) #no hlfg here
-        t=_('Compare with another group')
-        sub_c=ui.Button(compframe,
-                        text = t,
-                        command = setgroup_comparison,
-                        row=0,column=0
-                        )
-        comparisonbuttons()
+                done.append(sense['guid'])
+            """These following two have been shifted down a level, and will
+            now return a list of form elements, each. Something will need to be
+            adjusted here..."""
+            sense['lxnode']=firstoflist(self.db.get('lexeme',
+                                                guid=sense['guid'],
+                                                lang=self.analang).get())
+            sense['lcnode']=firstoflist(self.db.get('citation',
+                                                guid=sense['guid'],
+                                                lang=self.analang).get())
+            sense['glosses']=[]
+            for lang in self.glosslangs:
+                sense['glosses'].append(firstoflist(self.db.glossordefn(
+                                                guid=sense['guid'],
+                                                glosslang=lang
+                                                ),othersOK=True))
+            if self.settings.pluralname is not None:
+                sense['plnode']=firstoflist(self.db.get('field',
+                                        guid=sense['guid'],
+                                        lang=self.analang,
+                                        fieldtype=self.db.pluralname).get())
+            if self.settings.imperativename is not None:
+                sense['impnode']=firstoflist(self.db.get('field',
+                                        guid=sense['guid'],
+                                        lang=self.analang,
+                                        fieldtype=self.db.imperativename).get())
+            if sense['lcnode'] is not None:
+                sense['nodetoshow']=sense['lcnode']
+            else:
+                sense['nodetoshow']=sense['lxnode']
+            self.makelabelsnrecordingbuttons(buttonframes.content,sense)
+            for node in ['plnode','impnode']:
+                if (node in sense) and (sense[node] is not None):
+                    sense['column']+=2
+                    sense['nodetoshow']=sense[node]
+                    self.makelabelsnrecordingbuttons(buttonframes.content,
+                                                    sense)
+            row+=1
         self.runwindow.waitdone()
-        sub_btn.wait_window(self.runwindow) #then move to next step
-        """Store these variables above, finish with (destroying window with
-        local variables):"""
-    def __init__(self, parent): #frame, filename=None
-        """Does this need Tone classing?"""
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
+        self.runwindow.wait_window(self.runwindow.frame)
+    def showentryformstorecord(self,justone=True):
+        # Save these values before iterating over them
+        #Convert to iterate over local variables
+        self.getrunwindow()
+        if justone==True:
+            self.showentryformstorecordpage()
+        else:
+            for psprofile in self.status.valid(): #self.profilecountsValid:
+                if self.runwindow.exitFlag.istrue():
+                    return 1
+                ps=psprofile[2]
+                profile=psprofile[1]
+                nextb=ui.Button(self.runwindow,text=_("Next Group"),
+                                        cmd=self.runwindow.resetframe) # .frame.destroy
+                nextb.grid(row=0,column=1,sticky='ne')
+                self.showentryformstorecordpage(ps=ps,profile=profile)
+        self.donewpyaudio()
+    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
+        def setskip(event):
+            self.runwindow.frame.skip=True
+            entryframe.destroy()
+        self.getrunwindow()
+        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
+            return
+        log.debug("Working with skip: {}".format(skip))
+        if skip == 'skip':
+            self.runwindow.frame.skip=True
+        else:
+            self.runwindow.frame.skip=skip
+        text=_("Words and phrases to record: click ‘Record’, talk, and release")
+        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w',columnspan=2)
+        if (self.settings.entriestoshow is None) and (senses is None):
+            ui.Label(self.runwindow.frame, anchor='w',
+                    text=_("Sorry, there are no entries to show!")).grid(row=1,
+                                    column=0,sticky='w')
+            return
+        if self.runwindow.frame.skip == False:
+            skipf=ui.Frame(self.runwindow.frame)
+            skipb=ui.Button(skipf, text=linebreakwords(_("Skip to next undone")),
+                        cmd=skipf.destroy)
+            skipf.grid(row=1,column=1,sticky='w')
+            skipb.grid(row=0,column=0,sticky='w')
+            skipb.bind('<ButtonRelease>', setskip)
+        if senses is None:
+            senses=self.settings.entriestoshow
+        for senseid in senses:
+            log.debug("Working on {} with skip: {}".format(senseid,
+                                                    self.runwindow.frame.skip))
+            examples=self.db.get('example',senseid=senseid).get()
+            if examples == []:
+                log.debug(_("No examples! Add some, then come back."))
+                continue
+            if ((self.runwindow.frame.skip == True) and
+                (lift.atleastoneexamplehaslangformmissing(
+                                                    examples,
+                                                    self.settings.audiolang) == False)):
+                continue
+            row=0
+            if self.runwindow.exitFlag.istrue():
+                return 1
+            entryframe=ui.Frame(self.runwindow.frame)
+            entryframe.grid(row=1,column=0)
+            if progress is not None:
+                progressl=ui.Label(self.runwindow.frame, anchor='e',
+                    font='small',
+                    text="({} {}/{})".format(*progress)
+                    )
+                progressl.grid(row=0,column=2,sticky='ne')
+            """This is the title for each page: isolation form and glosses."""
+            titleframed=self.taskchooser.datadict.getframeddata(senseid,check=None)
+            if not titleframed or titleframed.forms[self.analang] is None:
+                entryframe.destroy() #is this ever needed?
+                continue
+            text=titleframed.formatted(noframe=True,showtonegroup=False)
+            ui.Label(entryframe, anchor='w', font='read',
+                    text=text).grid(row=row,
+                                    column=0,sticky='w')
+            """Then get each sorted example"""
+            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
+            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
+            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
+            examplesframe.grid(row=0,column=0,sticky='w')
+            examples.reverse()
+            for example in examples:
+                if (skip == True and
+                    lift.examplehaslangform(example,self.settings.audiolang) == True):
+                    continue
+                """These should already be framed!"""
+                framed=self.taskchooser.datadict.getframeddata(example,senseid=senseid)
+                if not framed:
+                    exit()
+                if framed.forms[self.analang] is None: # when?
+                    continue
+                row+=1
+                """If I end up pulling from example nodes elsewhere, I should
+                probably make this a function, like getframeddata"""
+                text=framed.formatted()
+                if not framed:
+                    exit()
+                rb=RecordButtonFrame(examplesframe,self,framed)
+                rb.grid(row=row,column=0,sticky='w')
+                ui.Label(examplesframe, anchor='w',text=text
+                                        ).grid(row=row, column=1, sticky='w')
+            row+=1
+            d=ui.Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
+            d.grid(row=row,column=0)
+            self.runwindow.waitdone()
+            examplesframe.wait_window(entryframe)
+            if self.runwindow.exitFlag.istrue():
+                return 1
+            if self.runwindow.frame.skip == True:
+                return 'skip'
+    def showtonegroupexs(self):
+        def next():
+            self.status.nextprofile()
+            self.runwindow.destroy()
+            self.showtonegroupexs()
+        if (not(hasattr(self,'examplespergrouptorecord')) or
+            (type(self.examplespergrouptorecord) is not int)):
+            self.examplespergrouptorecord=100
+            self.settings.storesettingsfile()
+        self.makeanalysis()
+        self.analysis.donoUFanalysis()
+        torecord=self.analysis.senseidsbygroup
+        ntorecord=len(torecord) #number of groups
+        nexs=len([k for i in torecord for j in torecord[i] for k in j])
+        nslice=self.slices.count()
+        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
+        skip=False
+        if ntorecord == 0:
+            log.error(_("How did we get no UR tone groups? {}-{}"
+                    "\nHave you run the tone report recently?"
+                    "\nDoing that for you now...").format(
+                            self.slices.profile(),
+                            self.slices.ps()
+                                                        ))
+            self.analysis.do()
+            self.showtonegroupexs()
+            return
+        batch={}
+        for i in range(self.examplespergrouptorecord):
+            batch[i]=[]
+            for ufgroup in torecord:
+                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
+                if len(torecord[ufgroup]) > i: #no done piles.
+                    senseid=[torecord[ufgroup][i]] #list of one
+                else:
+                    print("Not enough examples, moving on:",i,ufgroup)
+                    continue
+                log.info(_('Giving user the number {} example from tone '
+                        'group {}'.format(i,ufgroup)))
+                exited=self.showsenseswithexamplestorecord(senseid,
+                            (ufgroup, i+1, self.examplespergrouptorecord),
+                            skip=skip)
+                if exited == 'skip':
+                    skip=True
+                if exited == True:
+                    return
+        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
+            self.runwindow.waitdone()
+            self.runwindow.resetframe()
+            ui.Label(self.runwindow.frame, anchor='w',font='read',
+            text=_("All done! Sort some more words, and come back.")
+            ).grid(row=0,column=0,sticky='w')
+            ui.Button(self.runwindow.frame,
+                    text=_("Continue to next syllable profile"),
+                    command=next).grid(row=1,column=0)
+        self.donewpyaudio()
+    def record(self):
+        self.settings.updatesortingstatus() #is this needed? This is the first fn on button click
+        if self.params.cvt() == 'T':
+            self.showtonegroupexs()
+        else:
+            self.showentryformstorecord()
+    def __init__(self):
+        self.makesoundsettings()
+        self.loadsoundsettings()
+        self.soundsettings=self.settings.soundsettings
+        self.soundcheck()
 class Report(object):
     def consultantcheck(self):
         self.settings.reloadstatusdata()
@@ -6537,6 +5462,1579 @@ class Report(object):
         self.distinguish=self.settings.distinguish
         self.profilesbysense=self.settings.profilesbysense
         self.s=self.settings.s
+class SortCV(Sort,Segments,TaskDressing,ui.Window):
+    """docstring for SortCV."""
+    def __init__(self, parent):
+        Segments.__init__(self,parent)
+        super(SortCV, parent).__init__()
+    def picked(self,choice,**kwargs):
+        return
+        entry.addresult(check, result='OK') #let's not translate this...
+        debug()
+        window=ui.Window(parent, title='Same! '+entry.lexeme+': '
+                        +entry.guid)
+        result=(entry.citation,nn(entry.plural),nn(entry.imperative),
+                    nn(entry.ps),nn(entry.gloss))
+        ui.Button(window.frame, width=80, text=result,
+            command=window.destroy).grid(column=0, row=0)
+        window.exitButton=''
+    def notpicked(self,choice):
+        """I should think through what I want for this button/script."""
+        if entry is None:
+            log.info("No entry!")
+            """Probably a bad idea"""
+            entry=Entry(db, parent, window, check, guid=choice)
+        entry.addresult(check, result='NOTok')
+        window=ui.Window(parent, title='notpicked: Different! '
+                        +entry.lexeme+': '+entry.guid)
+        result=entry.citation,nn(entry.plural),nn(entry.imperative),nn(entry.ps),
+        nn(entry.gloss)
+        ui.Label(window.frame, width=40, text=result).grid(row=0,column=0)
+        q=(_("What is wrong with this word?"))
+        ui.Label(window.frame, text=q).grid(column=0, row=1)
+        if check.name == "V1=V2":
+            bcv1nv2=(_("Two different vowels (V1≠V2)"))
+            bscv1isv2nsc=(_("Vowels are the same, but the wrong vowel"))
+            problemopts=[("badCheck",bcv1nv2),
+                ("badSubcheck",bscv1isv2nsc+" (V1=V2≠"+check.subcheck+")")]
+        else:
+            log.info("Sorry, that check isn't set up yet.")
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    window=window,
+                                    optionlist=problemopts,
+                                    command=Check.fixdiff,
+                                    width="50",
+                                    column=0, row=3
+                                    )
+        i=4 #start at this row
+        print(result)
+    def fixV12(parent, window, check, entry, choice):
+        """This and following scripts represent a structure of the program
+        which is way more complex than we want. We have to think through how
+        to organize the functions and windows in such a way as the UI is
+        straightforward and completely unconfusing."""
+        window.title=(_("TITLE!"))
+        ui.Label(window.frame, text=entry.citation+' - '+entry.gloss,
+                        anchor=tkinter.W).grid(column=0, row=0, columnspan=2)
+        q1=_("It looks like the vowels are the same, but not the correct vowel;"
+            " let's fix that.")
+        ui.Label(window.frame, text=q1,anchor=tkinter.W).grid(column=0, row=2,
+                                                                columnspan=2)
+        q2=_("What are the two vowels?")
+        ui.Label(window.frame, text=q2,anchor=tkinter.W).grid(column=0, row=3,
+                                                                columnspan=1)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                window=window,
+                                optionlist=check.db.vowels(),
+                                command=Check.fixVs,
+                                column=0, row=4
+                                )
+    def fixV1(parent, window, check, entry, choice):
+        t=(_('fixV1:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
+        print(t)
+        check.fix='V1'
+        #window.destroy()
+        #window=ui.Window(self.frame,, title=t, entry=entry, backcmd=fixdiff)
+        window.resetframe()
+        t2=(_("It looks like the vowels aren't the same; let's fix that."))
+        ui.Label(window.frame, text=t2, justify=tkinter.LEFT).grid(column=0,
+                                                                    row=0,
+                                                                columnspan=2)
+        t3=(_("What is the first vowel? (C_CV)"))
+        ui.Label(window.frame, text=t3, anchor=tkinter.W).grid(column=0,
+                                                                row=1,
+                                                                columnspan=1)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                window=window,
+                                optionlist=check.db.vowels(),
+                                command=Check.newform,
+                                column=0, row=2
+                                )
+    def fixV2(parent, window, check, entry, choice):
+        check.fix='V2'
+        t=(_('fixV2:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
+        t=(_("What is the second vowel?"))
+        ui.Label(window.frame, text=t,justify=tkinter.LEFT).grid(column=0, row=1, columnspan=1)
+        ButtonFrame1=ui.ButtonFrame(window.frame,
+                                    window=window,
+                                    optionlist=check.db.vowels(),
+                                    command=Check.newform,
+                                    column=0, row=2
+                                    )
+    def fixdiff(parent, window, check, entry, choice):
+        """We need to fix problems in a more intuitively obvious way"""
+        entry.problem=choice
+        entry.addresult(check, result=entry.problem)
+        window.destroy()
+        window=ui.Window(self.frame.parent, entry=entry, backcmd=notpickedback)
+        ui.Label(window, text="Let's fix those problems").grid(column=0, row=0)
+        if entry.problem == "badCheck": #This isn't the right check for this entry --re.search("V1≠V2",difference):
+            window.destroy()
+            t=(_("fixVs:Different vowels! "))+entry.lexeme+': '+entry.guid
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixV1(parent, window, check, entry, choice)
+            window.wait_window(window=window)
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixV2(parent, window, check, entry, choice) #I should make this wait until the first one finishes..…
+            window.wait_window(window=window)
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixVs(parent, window, check, entry, choice)
+        elif entry.problem == "badSubcheck": #This isn't the right subcheck for this entry --re.search("V1=V2≠"+Vo,difference): #
+            window.destroy()
+            t=(_("fixVs:Same Vowel, but wrong one! "))+entry.lexeme+': '+entry.guid
+            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            Check.fixV12(parent, window, check, entry, choice)
+        else:
+            log.info("Huh? I don't understand what the user wants.")
+        Check.fixVs
+    def fixVs(parent, window, check, entry, choice):
+        #This isn't working yet.
+        log.info("running fixVs!!!!???!??!?!?!?")
+
+        #I need to rework this to work more generally..….
+        ui.Label(window.frame, text="I will make the following changes:").grid(column=0, row=0)
+        lexemeNew=entry.newform #newform(entry.lexeme,'v12',check.subcheck,choice)
+        citationNew = re.sub(entry.lexeme, lexemeNew, entry.citation)
+        ui.Label(window.frame, text="citation: "+entry.citation+" → "+citationNew).grid(column=0, row=1)
+        ui.Label(window.frame, text="lexeme: "+entry.lexeme+" → "+lexemeNew).grid(column=0, row=2)
+        fields={}
+        if entry.plural is not None:
+            pluralNew = re.sub(entry.lexeme, lexemeNew, entry.plural)
+            ui.Label(window.frame, text="plural: "+plural+" → "+pluralNew).grid(column=0, row=3)
+            fields={'Plural'}
+        if entry.imperative is not None:
+            imperativeNew = re.sub(entry.lexeme, lexemeNew, entry.imperative)
+            ui.Label(window.frame, text="imperative: "+entry.imperative+" → "+imperativeNew).grid(column=0, row=4)
+        def ok():
+            entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-ok')
+            entry.db.log(entry.guid+": lexeme: "+entry.lexeme+" → "+lexemeNew)
+            entry.put.lexeme(entry,lexemeNew)
+            entry.db.log(entry.guid+": citation: "+entry.citation+" → "+citationNew)
+            entry.put.citation(entry,citationNew)
+            #lift_mod.field(guid,fieldtype,newform)
+            entry.db.write() #put this in lift.py
+            window.destroy()
+        def notok():
+            entry.addresult(check, result=entry.lexeme+'->'+lexemeNew+'-NOTok')
+        ui.Button(window, width=10, text="OK", command=ok).grid(row=1,column=0)
+        #This is where we should call addresult, and write to file.
+        ui.Button(window, width=15, text="Not OK (Go Back)", command=notok).grid(row=1,column=1)
+    def newform(parent, window, check, entry, choice):
+        #I need to rework this to work more generally..….
+        #or even to work once. The logic is bad.
+        C=check.C
+        V=check.V
+        xi=1
+        if check.fix == "V1":
+            r=str('('+V+')'+'('+C+')'+'('+V+')')
+            sub=(choice+r"\2\3")
+            log.info("Note: this assumes we're changing one of two vowels "
+                "separated by a consonant")
+            #I want to access the second group...
+            #print(r)
+        elif check.fix == "C1":
+            r=str('(('+C+'))'+'('+V+')'+'('+C+')')
+            print(r)
+            log.info("Note: this assumes we're changing one of two consonants "
+                "separated by a vowel")
+        elif check.fix == "V2":
+            r=str('('+V+')'+'('+C+')'+'('+V+')')
+            sub=(r"\1\2"+choice)
+            print("Note: this assumes we're changing one of two vowels "
+                "separated by a consonant")
+            #print(r)
+        elif check.fix == "C2":
+            r=str('('+C+')'+V+'('+C+')')
+            print(r)
+        else:
+            log.info("Fix "+check.fix +" undefined.")
+        def old():
+            if check.fix == ("V1" or "C1"):
+                ximin=1
+                ximax=1
+            elif check.fix == ("V2" or "C2"):
+                ximin=2
+                ximax=2
+            elif check.fix == ("V12" or "C12"):
+                ximin=1
+                ximax=2
+        #print(check.subcheck, value, entry.newform)
+        #I need this to find the point I'm trying to change, even if it has been
+        #changed before, and even if another part of the same word has already
+        #been changed, e.g., another vowel in another position. So I need to use
+        #the newform when present (i.e., changes have been made but not confirmed)
+        #but refer to the lexeme item for reference (e.g., which subcheck I'm running.)
+        try: # use a previous entry.newform, if it exists:
+            baseform=entry.newform
+            entry.newform=''
+            log.info("Using newform")
+        except:
+            baseform=entry.lexeme
+            log.info("Using lexeme")
+            #entry.newform = re.sub(check.subcheck, choice, entry.newform, count=1)
+        print('r: '+r)
+        print('sub: '+sub)
+        print('baseform: '+baseform)
+        entry.newform=re.sub(r, sub, baseform)
+        print('newform: '+entry.newform)
+        def old2():
+            for x in baseform:
+                if x == check.subcheck: # <= ximax ):
+                    if ximin <= xi <= ximax:
+                        try:
+                            entry.newform=entry.newform+choice #+str(xi)
+                        except:
+                            entry.newform=choice #+str(xi)
+                    else:
+                        try:
+                            entry.newform=entry.newform+x #+"_"
+                        except:
+                            entry.newform=x #+"_"
+                    xi += 1
+                else:
+                    try:
+                        entry.newform=entry.newform+x #+"_"
+                    except:
+                        entry.newform=x #+"_"
+                #entry.newform = re.sub(check.subcheck, choice, entry.lexeme, count=1)
+        print(entry.newform)
+        window.destroy()
+class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
+    def taskicon(self):
+        return program['theme'].photo['iconT']
+    def tasktitle(self):
+        return _("Citation Form Sorting in Tone Frames")
+    def dobuttonkwargs(self):
+        return {'text':_("Sort!"),
+                'fn':self.runcheck,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['T'], #self.cvt
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self,parent)
+        parent.settings.makeeverythingok()
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        log.info("status: {}".format(type(self.status)))
+        self.analang=self.settings.params.analang()
+        # Not sure what this was for (XML?):
+        self.pp=pprint.PrettyPrinter()
+        """Are we OK without these?"""
+        log.info("Done initializing check.")
+        """Testing Zone"""
+    def runcheck(self):
+        self.settings.storesettingsfile()
+        # t=(_('Run Check'))
+        log.info("Running check...")
+        # i=0
+        # ps=self.slices.ps()
+        # if not ps:
+        #     self.getps()
+        # group=self.status.group()
+        # analang=self.params.analang()
+        # if None in [analang, ps, group]:
+        #     log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
+        #                                 self.analang, ps, group))
+        cvt=self.params.cvt()
+        check=self.params.check()
+        profile=self.slices.profile()
+        if not profile:
+            self.getprofile()
+        if (check not in self.status.checks(tosort=True)
+                and check not in self.status.checks(toverify=True)
+                and check not in self.status.checks(tojoin=True)):
+            exit=self.getcheck()
+            if exit:
+                self.runcheck()
+            return #if the user didn't supply a check
+        self.settings.updatesortingstatus() # Not just tone anymore
+        self.maybesort()
+    def maybesort(self):
+        """This should look for one group to verify at a time, with sorting
+        in between, then join and repeat"""
+        def notdonewarning(): #Use this!!
+            self.getrunwindow(nowait=True)
+            buttontxt=_("Sort!")
+            text=_("Hey, you're not done with {} {} words in the {} frame!"
+                    "\nCome back when you have time; restart where you left "
+                    "off by pressing ‘{}’".format(ps,profile,check,buttontxt))
+            ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+        def tosortupdate():
+            log.info("maybesort tosortbool:{}; tosort:{}; sorted:{}".format(
+                                self.status.tosort(),
+                                self.status.senseidstosort(),
+                                self.status.senseidssorted()
+                                ))
+        cvt=self.params.cvt()
+        check=self.params.check()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,ps,profile,check))
+        tosortupdate()
+        log.info("Maybe SortT (from maybesort)")
+        if self.status.checktosort(check):
+            log.info("SortT (from maybesort)")
+            quit=self.sortT()
+            if quit == True:
+                if not self.exitFlag.istrue():
+                    notdonewarning()
+                return
+        tosortupdate()
+        log.info("Going to verify the first of these groups now: {}".format(
+                                    self.status.groups(toverify=True)))
+        log.info("Maybe verifyT (from maybesort)")
+        groupstoverify=self.status.groups(toverify=True)
+        if groupstoverify:
+            self.status.group(groupstoverify[0]) #just pick the first now
+            log.info("verifyT (from maybesort)")
+            exitv=self.verifyT()
+            """This menu should be gone altogether, from this window"""
+            self.runwindow.removeverifymenu() #remove verification windows here, if made
+            if exitv == True: #fix this!
+                if not self.exitFlag.istrue():
+                    notdonewarning()
+                return
+            self.maybesort()
+            return
+        # Offer to join in any case:
+        if self.status.tojoin():
+            log.info("joinT (from maybesort)")
+            exit=self.joinT()
+            log.debug("exit: {}".format(exit))
+        else:
+            exit=False
+        if exit:
+            if not self.exitFlag:
+                self.notdonewarning()
+            #This happens when the user exits the window
+            log.debug("exiting joinT True")
+            #Give an error window here
+            return
+        elif not exit:
+            def nframe():
+                r=self.status.nextcheck(tosort=True)
+                if not r:
+                    self.status.nextcheck(toverify=True)
+                self.runwindow.destroy()
+                self.runcheck()
+            def aframe():
+                self.runwindow.destroy()
+                self.addframe()
+                self.addwindow.wait_window(self.addwindow)
+                self.runcheck()
+            def nprofile():
+                r=self.status.nextprofile(tosort=True)
+                if not r:
+                    self.status.nextprofile(toverify=True)
+                self.runwindow.destroy()
+                self.runcheck()
+            def nps():
+                self.slices.nextps()
+                r=self.status.nextprofile(tosort=True)
+                if not r:
+                    self.status.nextprofile(toverify=True)
+                self.runwindow.destroy()
+                self.runcheck()
+            self.getrunwindow()
+            done=_("All ‘{}’ tone groups in the ‘{}’ frame are verified and "
+                    "distinct!".format(profile,check))
+            row=0
+            if self.exitFlag.istrue():
+                return
+            ui.Label(self.runwindow.frame, text=done,
+                    row=row,column=0,columnspan=2)
+            row+=1
+            ui.Label(self.runwindow.frame, text='',
+                        image=self.frame.theme.photo[cvt],
+                        row=row,column=0,columnspan=2)
+            row+=1
+            ctosort=self.status.checks(tosort=True)
+            ctoverify=self.status.checks(toverify=True)
+            ptosort=self.status.profiles(tosort=True)
+            ptoverify=self.status.profiles(toverify=True)
+            ui.Label(self.runwindow.frame,text=_("Continue to"),
+                    columnspan=2,row=row,column=0)
+            row+=1
+            if ctosort or ctoverify:
+                b1=ui.Button(self.runwindow.frame, anchor='c',
+                    text=_("Next frame to sort"),
+                    command=nframe)
+                b1t=ui.ToolTip(b1,_("Automatically pick "
+                                "the next tone frame to sort for "
+                                "the ‘{}’ profile.".format(profile)))
+            else:
+                b1=ui.Button(self.runwindow.frame, anchor='c',
+                    text=_("Define a new frame"),
+                    command=aframe)
+                b1t=ui.ToolTip(b1,_("You're done with tone frames already defined "
+                                "for the ‘{}’ profile. If you want to continue "
+                                "with this profile, define a new frame here."
+                                "".format(profile)))
+            b1.grid(row=row,column=0,sticky='e')
+            if ptosort or ptoverify:
+                b2=ui.Button(self.runwindow.frame, anchor='c',
+                    text=_("Next syllable profile to sort"),
+                    command=nprofile)
+                b2t=ui.ToolTip(b2,_("You're done with ‘{0}’ tone frames already "
+                                "defined for the ‘{1}’ profile. Click here to "
+                                "Automatically select the next syllable "
+                                "profile for ‘{0}’.".format(ps, profile)))
+            else:
+                b2=ui.Button(self.runwindow.frame, anchor='c',
+                    text=_("Next Grammatical Category"),
+                    command=nps)
+                b2t=ui.ToolTip(b2,_("You're done with tone frames already "
+                                "defined for the top ‘{}’ syllable profiles. "
+                                "Click here to automatically select the next "
+                                "grammatical category.".format(ps)))
+            b2.grid(row=row,column=1,sticky='w')
+            if self.parent.exitFlag.istrue():
+                return
+            w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
+                                        self.parent.winfo_screenwidth()/150))
+            log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
+                                    b1.winfo_reqwidth(),b2.winfo_reqwidth(),w))
+            b1.config(width=w)
+            b2.config(width=w)
+            self.runwindow.waitdone()
+            return
+    def sortT(self):
+        # This window/frame/function shows one entry at a time (with pic?)
+        # for the user to select a tone group based on buttons defined below.
+        # We work only with one ps and profile at a time (of course).
+        # The end result is that the user is shown one word to compare against
+        # a set of other words, and is asked to say which one it is like.
+        # In the event that the word isn't like any of them (and on the first
+        # word!), a new group is formed, and added to the list of comparatives
+        # (which is autogenerated, to update whenever a group is added or
+        # taken out). Whenever a group is selected, the word being iterated
+        # through is marked as the same tone group, and that tone group is
+        # marked as unverified (not yet implimented!).
+        # Groups are initially unlabelled for content, with each group labeled
+        # with an integer --we just need a unique name, in any case, and the
+        # groups are by frame (surface distinctions), rather than by lexeme
+        # (underlying distinctions) in any case.
+        #This function should exit 1 on a window close, or finish with None
+        def presenttosort():
+            groupselected=None
+            """these just pull the current lists from the object"""
+            senseids=self.status.senseidstosort()
+            sorted=self.status.senseidssorted()
+            senseid=senseids[0]
+            progress=(str(thissort.index(senseid)+1)+'/'+str(len(thissort)))
+            framed=self.taskchooser.datadict.getframeddata(senseid)
+            framed.setframe(check)
+            """After the first entry, sort by groups."""
+            log.debug('tonegroups: {}'.format(self.status.groups(wsorted=True)))
+            if self.runwindow.exitFlag.istrue():
+                return 1,1
+            ui.Label(titles, text=progress, font='report', anchor='w'
+                                            ).grid(column=1, row=0, sticky="ew")
+            text=framed.formatted()
+            entryview=ui.Frame(self.runwindow.frame)
+            self.sortitem=ui.Label(entryview, text=text,font='readbig',
+                                    column=0,row=0, sticky="w",pady=50)
+            entryview.grid(column=1, row=1, sticky="new")
+            self.sortitem.wrap()
+            self.runwindow.waitdone()
+            for b in groupbuttonlist:
+                b.setcanary(self.sortitem)
+            self.runwindow.wait_window(window=self.sortitem)
+            if self.runwindow.exitFlag.istrue():
+                return 1,1
+            else:
+                return senseid,framed
+        def addgroupbutton(group):
+            if self.runwindow.exitFlag.istrue():
+                return #just don't die
+            b=ToneGroupButtonFrame(groupbuttons, self, self.exs,
+                                    group,
+                                    showtonegroup=True,
+                                    alwaysrefreshable=True
+                                    )
+            b.grid(row=groupbuttons.row, column=0, sticky='w')
+            groupvars[group]=b.var()
+            groupbuttons.row+=1
+            groupbuttonlist.append(b)
+            b.update_idletasks()
+        def sortselected(senseid,framed):
+            selectedgroups=selected(groupvars)
+            log.info("selectedgroups: {}".format(selectedgroups))
+            for k in groupvars:
+                log.info("{} value: {}".format(k,groupvars[k].get()))
+            if len(selectedgroups)>1:
+                log.error("More than one group selected: {}".format(
+                                                                selectedgroups))
+                return 2
+            groupselected=unlist(selectedgroups)
+            if groupselected in groupvars:
+                groupvars[groupselected].set(False)
+            else:
+                log.error("selected {}; not in {}".format(groupselected,groupvars))
+                return
+            if groupselected:
+                if groupselected in ["NONEOFTHEABOVE",'ok']:
+                    """If there are no groups yet, or if the user asks for
+                    another group, make a new group."""
+                    group=self.addtonegroup()
+                    """And give the user a button for it, for future words
+                    (N.B.: This is only used for groups added during the current
+                    run. At the beginning of a run, all used groups have buttons
+                    created above.)"""
+                    self.addtonefieldex(senseid,framed,group) #button needs this
+                    addgroupbutton(group)
+                    #adjust window for new button
+                    scroll.windowsize()
+                    log.debug('Group added: {}'.format(groupselected))
+                    """group with the above?"""
+                    """Group these last two?"""
+                else:
+                    if groupselected == 'skip':
+                        group='NA'
+                    else:
+                        group=groupselected
+                    log.debug('Group selected: {} ({})'.format(group,
+                                                                groupselected))
+                    """This needs to *not* operate on "exit" button."""
+                    self.addtonefieldex(senseid,framed,group)
+            else:
+                log.debug('No group selected: {}'.format(groupselected))
+                return 1 # this should only happen on Exit
+            self.status.marksenseidsorted(senseid)
+        log.info('Running sortT:')
+        self.getrunwindow()
+        """sortingstatus() checks by ps,profile,check (frame),
+        for the presence of a populated fieldtype='tone'. So any time any of
+        the above is changed, this variable should be reset."""
+        """Can't do this test suite unless there are unsorted entries..."""
+        """things that don't change in this fn"""
+        thissort=self.status.senseidstosort()[:] #current list
+        log.info("Going to sort these senseids: {}".format(self.status.senseidstosort()))
+        groups=self.status.groups(wsorted=True)
+        check=self.params.check()
+        """Children of runwindow.frame"""
+        if self.exitFlag.istrue():
+            return
+        titles=ui.Frame(self.runwindow.frame)
+        titles.grid(row=0, column=0, sticky="ew", columnspan=2)
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['sortT'],
+                        text='',
+                        ).grid(row=1,column=0,rowspan=3,sticky='nw')
+        scroll=self.runwindow.frame.scroll=ui.ScrollingFrame(self.runwindow.frame)
+        scroll.grid(row=2, column=1, sticky="new")
+        """Titles"""
+        title=_("Sort {} Tone (in ‘{}’ frame)").format(
+                                        self.settings.languagenames[self.analang],
+                                        check)
+        ui.Label(titles, text=title,font='title',anchor='c').grid(
+                                            column=0, row=0, sticky="ew")
+        instructions=_("Select the one with the same tone melody as")
+        ui.Label(titles, text=instructions, font='instructions',
+                anchor='c').grid(column=0, row=1, sticky="ew")
+        """Children of self.runwindow.frame.scroll.content"""
+        groupbuttons=scroll.content.groups=ui.Frame(scroll.content)
+        groupbuttons.grid(row=0,column=0,sticky="ew")
+        scroll.content.anotherskip=ui.Frame(scroll.content)
+        scroll.content.anotherskip.grid(row=1,column=0)
+        """Children of self.runwindow.frame.scroll.content.groups"""
+        groupbuttons.row=0 #rows for this frame
+        groupvars={}
+        groupbuttonlist=list()
+        entryview=ui.Frame(self.runwindow.frame)
+        for group in groups:
+            addgroupbutton(group)
+        """Children of self.runwindow.frame.scroll.content.anotherskip"""
+        self.getanotherskip(scroll.content.anotherskip,groupvars)
+        log.info("getanotherskip vardict (1): {}".format(groupvars))
+        """Stuff that changes by lexical entry
+        The second frame, for the other two buttons, which also scroll"""
+        while self.status.tosort(): # and not self.runwindow.exitFlag.istrue():
+            senseid,framed=presenttosort()
+            if senseid == 1:
+                return 1
+            sortselected(senseid,framed)
+        if self.runwindow.exitFlag.istrue():
+            return 1
+        self.runwindow.resetframe()
+        return
+    def reverify(self):
+        group=self.status.group()
+        check=self.params.check()
+        log.info("Reverifying a framed tone group, at user request: {}-{}"
+                    "".format(check,group))
+        if check not in self.status.checks(wsorted=True):
+            self.getcheck() #guess=True
+        done=self.status.verified()
+        if group not in done:
+            self.getgroup(wsorted=True)
+            if group == None:
+                log.info("I asked for a framed tone group, but didn't get one.")
+                return
+        else:
+            done.remove(group)
+        self.maybesort()
+    def verifyT(self,menu=False):
+        def updatestatus():
+            log.info("Updating status with {}, {}, {}".format(check,group,verified))
+            self.updatestatus(verified=verified)
+            self.updatestatuslift(check,group,verified=verified)
+        log.info("Running verifyT!")
+        """Show entries each in a row, users mark those that are different, and we
+        remove that group designation from the entry (so the entry will show up on
+        the next sorting). After all entries have been verified as "the same",
+        click a button at the bottom of the screen for "verify", or "these are
+        all the same", or some such. register with addresults (or elsewhere?).
+        To show this window for a given tone group, we need to look through the
+        tone group for any entries that aren't marked for verified (or will we
+        just mark it one place, and that we're marking faithfully?)
+        If we mark toneframes[lang][ps][name][melody]=None (v 'verified'), that
+        could be enough, if we're storing that info somewhere --writing xml?
+        on clicking 'verify', we take the user back to sort (to resort anything
+        that got pulled from the group), then on to the next largest unverified
+        pile.
+        """
+        #This function should exit 1 on a window close, 0/None on all ok.
+        check=self.params.check()
+        groups=self.status.groups(toverify=True) #needed for progress
+        group=self.status.group()
+        # The title for this page changes by group, below.
+        self.getrunwindow(msg="preparing to verify group: {}".format(group))
+        # if menu == True:
+        #     self.runwindow.doverifymenu()
+        # ContextMenu(self.runwindow, context='verifyT') #once for all
+        oktext='These all have the same tone'
+        instructions=_("Read down this list to verify they all have the same "
+            "tone melody. Select any word with a different tone melody to "
+            "remove it from the list.")
+        """group is set here, but probably OK"""
+        self.status.build()
+        last=False
+        if self.runwindow.exitFlag.istrue():
+            return 1
+        if group in self.status.verified():
+            log.info("‘{}’ already verified, continuing.".format(group))
+            return
+        senseids=self.exs.senseidsinslicegroup(group,check)
+        if not senseids:
+            groups=self.status.groups() #from which to remove, put back
+            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            verified=False
+            log.info("Group ‘{}’ has no examples; continuing.".format(group))
+            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            updatestatus()
+            log.info("Group-groups: {}-{}".format(group,groups))
+            if groups:
+                groups.remove(group)
+            log.info("Group-groups: {}-{}".format(group,groups))
+            self.status.groups(groups,wsorted=True)
+            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            return
+        elif len(senseids) == 1:
+            verified=True
+            log.info("Group ‘{}’ only has {} example; marking verified and "
+                    "continuing.".format(group,len(senseids)))
+            updatestatus()
+            return
+        title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
+                                    self.settings.languagenames[self.analang],
+                                    group,
+                                    check
+                                    )
+        titles=ui.Frame(self.runwindow.frame,
+                        column=0, row=0, columnspan=2, sticky="w")
+        ui.Label(titles, text=title, font='title', column=0, row=0, sticky="w")
+        """Move this to bool vars, like for sortT"""
+        if hasattr(self,'groupselected'): #so it doesn't get in way later.
+            delattr(self,'groupselected')
+        row=0
+        column=0
+        if group in groups:
+            progress=('('+str(groups.index(group)+1)+'/'+str(len(
+                                                            groups))+')')
+            ui.Label(titles,text=progress,anchor='w',row=0,column=1,sticky="ew")
+        ui.Label(titles, text=instructions,
+                row=1, column=0, columnspan=2, sticky="wns")
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['verifyT'],
+                        text='', row=1,column=0,
+                        # rowspan=3,
+                        sticky='nws')
+        """Scroll after instructions"""
+        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
+                                    row=1,column=1,
+                                    # columnspan=2,
+                                    sticky='wsn')
+        row+=1
+        """put entry buttons here."""
+        for senseid in senseids:
+            if senseid is None: #needed?
+                continue
+            self.verifybutton(self.sframe.content,senseid,
+                                row, column,
+                                label=False)
+            row+=1
+        bf=ui.Frame(self.sframe.content)
+        bf.grid(row=row, column=0, sticky="ew")
+        b=ui.Button(bf, text=oktext,
+                        cmd=bf.destroy,
+                        anchor="w",
+                        font='instructions'
+                        )
+        b.grid(column=0, row=0, sticky="ew")
+        if self.runwindow.exitFlag.istrue():
+            return 1
+        self.sframe.windowsize()
+        self.runwindow.waitdone()
+        b.wait_window(bf)
+        if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
+            return 1
+        log.debug("User selected ‘{}’, moving on.".format(oktext))
+        self.status.last('verify',update=True)
+        verified=True
+        updatestatus()
+    def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
+        # This must run one subcheck at a time. If the subcheck changes,
+        # it will fail.
+        # should move to specify location and fieldvalue in button lambda
+        def notok():
+            self.removesenseidfromgroup(senseid,check,sorting=True)
+            bf.destroy()
+        if 'font' not in kwargs:
+            kwargs['font']='read'
+        if 'anchor' not in kwargs:
+            kwargs['anchor']='w'
+        #This should be pulling from the example, as it is there already
+        framed=self.taskchooser.datadict.getframeddata(senseid)
+        check=self.params.check()
+        framed.setframe(check)
+        text=framed.formatted(showtonegroup=False)
+        if label==True:
+            b=ui.Label(parent, text=text,
+                    **kwargs
+                    ).grid(column=column, row=row,
+                            sticky="ew",
+                            ipady=15)
+        else:
+            bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
+            bf.grid(column=0, row=row, sticky='ew')
+            b=ui.Button(bf, text=text, pady='0',
+                    cmd=notok,
+                    **kwargs
+                    ).grid(column=column, row=0,
+                            sticky="ew",
+                            ipady=15 #Inside the buttons...
+                            )
+    def joinT(self):
+        log.info("Running joinT!")
+        """This window shows up after sorting, or maybe after verification, to
+        allow the user to join groups that look the same. I think before
+        verification, as this would require the new pile to be verified again.
+        also, the joining would provide for one less group to match against
+        (hopefully semi automatically).
+        """
+        #This function should exit 1 on a window close, 0/None on all ok.
+        self.getrunwindow()
+        cvt=self.params.cvt()
+        check=self.params.check()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        groups=self.status.groups(wsorted=True) #these should be verified, too.
+        if len(groups) <2:
+            log.debug("No tone groups to distinguish!")
+            if not self.exitFlag.istrue():
+                self.runwindow.waitdone()
+            return 0
+        title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
+                                        self.settings.languagenames[self.analang],
+                                        check
+                                        )
+        oktext=_('These are all different')
+        introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
+                "sorted into the groups exemplified below (in the ‘{}’ frame). "
+                "Do any of these have the same tone melody? "
+                "If so, click on two groups to join, then ‘{ok}’. "
+                "If not, just click ‘{ok}’."
+                ).format(ps,profile,check,ok=oktext)
+        log.debug(introtext)
+        self.runwindow.resetframe()
+        self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
+                                            column=0, row=0,
+                                            columnspan=2, sticky="ew"
+                                            )
+        ltitle=ui.Label(self.runwindow.frame.titles, text=title,
+                font='title',
+                column=0, row=0, sticky="ew",
+                )
+        i=ui.Label(self.runwindow.frame.titles,
+                    text=introtext,
+                    row=1,column=0, sticky="w",
+                    )
+        i.wrap()
+        ui.Label(self.runwindow.frame,
+                image=self.frame.theme.photo['joinT'],
+                text='',
+                row=1,column=0,rowspan=2,sticky='nw'
+                )
+        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
+                                        row=1,column=1,sticky='w')
+        self.sortitem=self.sframe.content
+        row=0
+        groupvars={}
+        b={}
+        for group in groups:
+            b[group]=ToneGroupButtonFrame(self.sortitem, self, self.exs, group,
+                                    showtonegroup=True,
+                                    labelizeonselect=True
+                                    )
+            b[group].grid(column=0, row=row, sticky='ew')
+            groupvars[group]=b[group].var()
+            row+=1
+        """If all is good, destroy this frame."""
+        self.runwindow.waitdone()
+        ngroupstojoin=0
+        while ngroupstojoin < 2:
+            bok=ui.Button(self.sortitem, text=oktext,
+                    cmd=self.sortitem.destroy,
+                    anchor="c",
+                    font='instructions'
+                    )
+            bok.grid(column=0, row=row, sticky="ew")
+            for group in b:
+                b[group].setcanary(bok) #this must be done after bok exists
+            log.info("making button!")
+            self.runwindow.frame.wait_window(bok)
+            groupstojoin=selected(groupvars)
+            ngroupstojoin=len(groupstojoin)
+            if ngroupstojoin == 2 or not self.sortitem.winfo_exists():
+                break
+        if self.runwindow.exitFlag.istrue():
+            return 1
+        if ngroupstojoin < 2:
+            log.info("User selected ‘{}’ with {} groups selected, moving on."
+                    "".format(oktext,ngroupstojoin))
+            #this avoids asking the user about it again, until more sorting:
+            self.status.tojoin(False)
+            return 0
+        elif ngroupstojoin > 2:
+            log.info("User selected ‘{}’ with {} groups selected, This is "
+                    "probably a mistake ({} selected)."
+                    "".format(oktext,ngroupstojoin,groupstojoin))
+            return self.joinT() #try again
+        else:
+            log.info("User selected ‘{}’ with {} groups selected, joining "
+                    "them. ({} selected)."
+                    "".format(oktext,ngroupstojoin,groupstojoin))
+            msg=_("Now we're going to move group ‘{0}’ into "
+                "‘{1}’, marking ‘{1}’ unverified.".format(*groupstojoin))
+            self.runwindow.wait(msg=msg)
+            log.debug(msg)
+            """All the senses we're looking at, by ps/profile"""
+            self.updatebygroupsenseid(*groupstojoin)
+            groups.remove(groupstojoin[0])
+            refresh=False
+            for group in groupstojoin: #not verified=True --since joined
+                self.updatestatuslift(group=group,refresh=refresh)
+                self.updatestatus(group=group,refresh=refresh)
+                refresh=True #For second group
+            self.maybesort() #go back to verify, etc.
+        """'These are all different' doesn't need to be saved anywhere, as this
+        can happen at any time. Just move on to verification, where each group's
+        sameness will be verified and recorded."""
+    def updatebygroupsenseid(self,oldtonevalue,newtonevalue,verified=False):
+        # This function updates the field value and verification status (which
+        # contains the field value) in the lift file.
+        # This is all the words in the database with the given
+        # location:value correspondence (any ps/profile)
+        check=self.params.check()
+        lst2=self.db.get('sense',location=check,tonevalue=oldtonevalue
+                                                                ).get('senseid')
+        # We are agnostic of verification status of any given entry, so just
+        # use this to change names, not to mark verification status (do that
+        # with self.updatestatuslift())
+        rm=self.verifictioncode(check,oldtonevalue)
+        add=self.verifictioncode(check,newtonevalue)
+        """The above doesn't test for profile, so we restrict that next"""
+        profile=self.slices.profile()
+        senseids=self.slices.inslice(lst2)
+        for senseid in senseids:
+            """This updates the fieldvalue from 'fieldvalue' to
+            'newfieldvalue'."""
+            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
+                                location=check,#fieldvalue=oldtonevalue,
+                                fieldvalue=newtonevalue)
+            self.db.modverificationnode(senseid=senseid,
+                            vtype=profile,
+                            analang=self.analang,
+                            add=add,rms=[rm],
+                            addifrmd=True)
+        self.db.write() #once done iterating over senseids
+    def addtonegroup(self):
+        log.info("Adding a tone group!")
+        values=[0,] #always have something here
+        groups=self.status.groups(wsorted=True)
+        for i in groups:
+            try:
+                values+=[int(i)]
+            except:
+                log.info('Tone group {} cannot be interpreted as an integer!'
+                        ''.format(i))
+        newgroup=max(values)+1
+        groups.append(str(newgroup))
+        return str(newgroup)
+    def addtonefieldex(self,senseid,framed,group):
+        guid=None
+        if group is None or group == '':
+            log.error("groupselected: {}; this should never happen"
+                        "".format(group))
+            exit()
+        check=self.params.check()
+        log.debug("Adding {} value to {} location in 'tone' fieldtype, "
+                "senseid: {} guid: {} (in main_lift.py)".format(
+                    group,
+                    check,
+                    senseid,
+                    guid))
+        self.db.addmodexamplefields( #This should only mod if already there
+                                    senseid=senseid,
+                                    analang=self.analang,
+                                    fieldtype='tone',location=check,
+                                    framed=framed,
+                                    fieldvalue=group
+                                    )
+        tonegroup=unlist(self.db.get("example/tonefield/form/text",
+                        senseid=senseid, location=check).get('text'))
+        if tonegroup != group:
+            log.error("Field addition failed! LIFT says {}, not {}.".format(
+                                                tonegroup,group))
+        else:
+            log.info("Field addition succeeded! LIFT says {}, which is {}."
+                                        "".format(tonegroup,group))
+        self.status.last('sort',update=True)
+        self.updatestatus(group=group) #this marks the group unverified.
+        self.status.tojoin(True) # will need to be distinguished again
+        self.db.write() #This is never iterated over; just one entry at a time.
+    def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
+        senseid=None
+        self.db.addpronunciationfields(
+                                    guid,senseid,self.analang,self.glosslangs,
+                                    lang='en',
+                                    forms=framed,
+                                    fieldtype='tone',location=check,
+                                    fieldvalue=self.groupselected,
+                                    ps=None
+                                    )
+    def removesenseidfromgroup(self,senseid,check=None,group=None,**kwargs):
+        if check is None:
+            check=self.params.check()
+        if group is None:
+            group=self.status.group()
+        sorting=kwargs.get('sorting',True) #Default to verify button
+        log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
+        #This should only *mod* if already there
+        self.db.addmodexamplefields(senseid=senseid,
+                                analang=self.analang,
+                                fieldtype='tone',location=check,
+                                fieldvalue='',showurl=True) #this value should be the only change
+        log.info("Checking that removal worked")
+        tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
+                            location=check).get('text')
+        if tgroups in [[],'',['']]:
+            log.info("Field removal succeeded! LIFT says '{}', = []."
+                                                            "".format(tgroups))
+        elif len(tgroups) == 1:
+            tgroup=tgroups[0]
+            log.error("Field removal failed! LIFT says '{}', != []."
+                                                            "".format(tgroup))
+        elif len(tgroups) > 1:
+            log.error("Found {} tone values: {}; Fix this!"
+                                            "".format(len(tgroups),tgroups))
+            return
+        rm=self.verifictioncode(check,group)
+        profile=self.slices.profile()
+        self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
+                                                                        rms=[rm])
+        self.status.last('sort',update=True)
+        self.db.write() #This is not iterated over
+        if sorting:
+            self.status.marksenseidtosort(senseid)
+    def marksortedguid(self,guid):
+        """I think these are only valuable during a check, so we don't have to
+        constantly refresh sortingstatus() from the lift file."""
+        """These four functions should be generalizable"""
+        self.guidssorted.append(guid)
+        self.guidstosort.remove(guid)
+    def marktosortguid(self,guid):
+        self.guidstosort.append(guid)
+        self.guidssorted.remove(guid)
+    def tryNAgain(self):
+        check=self.params.check()
+        if check in self.status.checks():
+            senseids=self.slices.senseids()
+        else:
+            #Give an error window here
+            log.error("Not Trying again; set a tone frame first!")
+            self.getrunwindow(nowait=True)
+            buttontxt=_("Sort!")
+            text=_("Not Trying Again; set a tone frame first!")
+            ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+            return
+        for senseid in senseids: #this is a ps-profile slice
+            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
+                            location=check,fieldvalue='', #just clear this
+                            oldfieldvalue='NA', showurl=True #if this
+                            )
+        self.runcheck()
+    def getanotherskip(self,parent,vardict):
+        """This function presents a group of buttons for the user to choose
+        from, one for each tone group in that location/ps/profile in the
+        database, plus one for the user to indicate that the word doesn't
+        belong in any of those (new group), plus one to for the user to
+        indicate that the word/frame combo doesn't work (skip)."""
+        def firstok():
+            vardict['ok'].set(True)
+            remove(okb) #use this button exactly once
+            differentbutton()
+            sortnext()
+        def different():
+            vardict['NONEOFTHEABOVE'].set(True)
+            sortnext()
+        def skip():
+            vardict['skip'].set(True)
+            sortnext()
+        def remove(x):
+            x.destroy()
+        def sortnext():
+            self.sortitem.destroy()
+        def differentbutton():
+            vardict['NONEOFTHEABOVE']=tkinter.BooleanVar()
+            difb=ui.Button(bf, text=newgroup,
+                        cmd=different,
+                        anchor="w",
+                        font='instructions'
+                        )
+            difb.grid(column=0, row=0, sticky="ew")
+        row=0
+        firstOK=_("This word is OK in this frame")
+        newgroup=_("Different")
+        skiptext=_("Skip this word/phrase")
+        """This should just add a button, not reload the frame"""
+        row+=10
+        bf=ui.Frame(parent)
+        bf.grid(column=0, row=row, sticky="w")
+        if not self.status.groups(wsorted=True):
+            vardict['ok']=tkinter.BooleanVar()
+            okb=ui.Button(bf, text=firstOK,
+                            cmd=firstok,
+                            anchor="w",
+                            font='instructions'
+                            )
+            okb.grid(column=0, row=0, sticky="ew")
+        else:
+            differentbutton()
+        vardict['skip']=tkinter.BooleanVar()
+        skipb=ui.Button(bf, text=skiptext,
+                        cmd=skip,
+                        anchor="w",
+                        font='instructions'
+                        )
+        skipb.grid(column=0, row=1, sticky="ew")
+    """Doing stuff"""
+class Transcribe(TaskDressing,Tone,ui.Window):
+    def tasktitle(self):
+        return _("Transcribe Citation Form Sorting in Tone Frames")
+    def updatelabels(event=None):
+        errorlabel['text'] = ''
+        a=newname.get()
+        try:
+            int(a) #Is this interpretable as an integer (default group)?
+            namehash.set('')
+        except ValueError:
+            x=hash_t.sub('T',newname.get())
+            y=hash_sp.sub('#',x)
+            z=hash_nbsp.sub('.',y)
+            namehash.set(z)
+    def updategroups():
+        groupsthere=self.status[cvt][ps][profile][check]['groups']
+        groupsdone=self.status[cvt][ps][profile][check]['done']
+        return groupsthere, groupsdone
+    def submitform():
+        updatelabels()
+        newtonevalue=formfield.get()
+        groupsthere, groupsdone = updategroups()
+        group=self.status.group()
+        if newtonevalue == "":
+            noname=_("Give a name for this tone melody!")
+            log.debug(noname)
+            errorlabel['text'] = noname
+            return 1
+        if newtonevalue != group: #only make changes!
+            if newtonevalue in groupsthere :
+                deja=_("Sorry, there is already a group with "
+                                "that label; If you want to join the "
+                                "groups, give it a different name now, "
+                                "and join it later".format(newtonevalue))
+                log.debug(deja)
+                errorlabel['text'] = deja
+                return 1
+            self.updatebygroupsenseid(group,newtonevalue)
+            i=groupsthere.index(group) #put new value in the same place.
+            groupsthere.remove(group)
+            groupsthere.insert(i,newtonevalue)
+            if group in groupsdone: #if verified, change the name there, too
+                i=groupsdone.index(group) #put new value in the same place.
+                groupsdone.remove(group)
+                groupsdone.insert(i,newtonevalue)
+            group=newtonevalue
+            self.settings.storesettingsfile(setting='status')
+        else: #move on, but notify in logs
+            log.info("User selected ‘{}’, but with no change.".format(ok))
+        if hasattr(self,'group_comparison'):
+            delattr(self,'group_comparison') # in either case
+        self.runwindow.destroy()
+        return
+    def addchar(x):
+        if x == '':
+            formfield.delete(0,tkinter.END)
+        else:
+            formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
+        updatelabels()
+    def done():
+        submitform()
+        self.donewpyaudio()
+    def next():
+        log.debug("running next group")
+        error=submitform()
+        if not error:
+            # log.debug("group: {}".format(group))
+            self.status.nextgroup(wsorted=True)
+            # log.debug("group: {}".format(group))
+            self.makewindow()
+    def nextcheck():
+        log.debug("running next check")
+        error=submitform()
+        if not error:
+            log.debug("check: {}".format(check))
+            self.status.nextcheck(wsorted=True)
+            log.debug("check: {}".format(check))
+            self.makewindow()
+    def nextprofile():
+        log.debug("running next profile")
+        error=submitform()
+        if not error:
+            log.debug("profile: {}".format(profile))
+            self.status.nextprofile(wsorted=True)
+            log.debug("profile: {}".format(profile))
+            self.makewindow()
+    def setgroup_comparison():
+        w=self.getgroup(comparison=True,wsorted=True) #this returns its window
+        if w and w.winfo_exists(): #This window may be already gone
+            w.wait_window(w)
+        comparisonbuttons()
+    def comparisonbuttons():
+        try: #successive runs
+            compframe.compframeb.destroy()
+            log.info("Comparison frameb destroyed!")
+        except: #first run
+            log.info("Problem destroying comparison frame, making...")
+        buttonframew=int(program['screenw']/4)
+        # b['wraplength']=buttonframew
+        compframe.compframeb=ui.Frame(compframe)
+        compframe.compframeb.grid(row=1,column=0)
+        t=_('Compare with another group')
+        if (hasattr(self, 'group_comparison')
+                and self.group_comparison in groupsthere and
+                self.group_comparison != group):
+            log.info("Making comparison buttons for group {} now".format(
+                                                self.group_comparison))
+            t=_('Compare with another group ({})').format(
+                                                self.group_comparison)
+            compframe.bf2=ToneGroupButtonFrame(compframe.compframeb,
+                                    self, self.exs,
+                                    self.group_comparison,
+                                    showtonegroup=True,
+                                    playable=True,
+                                    unsortable=False, #no space, bad idea
+                                    alwaysrefreshable=True,
+                                    font='default',
+                                    wraplength=buttonframew
+                                    )
+            compframe.bf2.grid(row=0, column=0, sticky='w')
+        elif not hasattr(self, 'group_comparison'):
+            log.info("No comparison found !")
+        elif self.group_comparison not in groupsthere:
+            log.info("Comparison ({}) not in group list ({})"
+                        "".format(self.group_comparison,groupsthere))
+        elif self.group_comparison == group:
+            log.info("Comparison ({}) same as subgroup ({}); not showing."
+                        "".format(self.group_comparison,group))
+        else:
+            log.info("This should never happen (renamegroup/"
+                        "comparisonbuttons)")
+        sub_c['text']=t
+    def makewindow(self):
+        cvt=self.params.cvt()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        check=self.params.check()
+        buttonframew=int(program['screenw']/3.5)
+        if check == None:
+            self.getcheck(guess=True)
+            if check == None:
+                log.info("I asked for a check name, but didn't get one.")
+                return
+        if not self.status.groups(wsorted=True):
+            log.error("I don't have any sorted data for check: {}, "
+                        "ps-profile: {}-{},".format(check,ps,profile))
+            return
+        groupsthere, groupsdone = updategroups()
+        group=self.status.group()
+        if group is None or group not in groupsthere:
+            self.getgroup(guess=True,wsorted=True)
+            if group == None:
+                log.info("I asked for a framed tone group, but didn't get one.")
+                return
+        notthisgroup=groupsthere[:]
+        if group in groupsthere:
+            notthisgroup.remove(group)
+        else:
+            log.error(_("current group ({}) doesn't seem to be in list of "
+                "groups: ({})\n\tThis may be because we're looking for data that "
+                "isn't there, or maybe a setting is off.".format(group,
+                                                                groupsthere)))
+        newname=tkinter.StringVar(value=group)
+        namehash=tkinter.StringVar()
+        hash_t,hash_sp,hash_nbsp=rx.tonerxs()
+        padx=50
+        pady=10
+        title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
+                        ).format(ps,profile,group,check)
+        self.getrunwindow(title=title)
+        menu=self.runwindow.removeverifymenu()
+        titlel=ui.Label(self.runwindow.frame,text=title,font='title',
+                        row=0,column=0,sticky='ew',padx=padx,pady=pady
+                        )
+        getformtext=_("What new name do you want to call this surface tone "
+                        "group? A label that describes the surface tone form "
+                        "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
+        getform=ui.Label(self.runwindow.frame,
+                        text=getformtext,
+                        font='read',
+                        norender=True,
+                        row=1,column=0,sticky='ew',padx=padx,pady=pady
+                        )
+        getform.wrap()
+        inputframe=ui.Frame(self.runwindow.frame,
+                            row=2,column=0,sticky=''
+                            )
+        buttonframe=ui.Frame(inputframe,
+                            row=0,column=0,sticky='new'
+                            )
+        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
+        spaces=[' ',' ','']
+        for char in tonechars+spaces:
+            if char == ' ':
+                text=_('syllable break')
+                column=0
+                columnspan=int(len(tonechars)/2)+1
+                row=1
+            elif char == ' ':
+                text=_('word break')
+                columnspan=int(len(tonechars)/2)
+                column=columnspan+1
+                row=1
+            elif char == '':
+                text=_('clear entry')
+                column=0
+                columnspan=len(tonechars)
+                row=2
+            else:
+                column=tonechars.index(char)
+                text=char
+                columnspan=1
+                row=0
+            ui.Button(buttonframe,text = text,
+                        command = lambda x=char:addchar(x),
+                        anchor ='c',
+                        row=row,
+                        column=column,
+                        sticky='nsew',
+                        columnspan=columnspan
+                        )
+        g=nn(notthisgroup,twoperline=True)
+        log.info("There: {}, NTG: {}; g:{}".format(groupsthere,notthisgroup,g))
+        groupslabel=ui.Label(inputframe,
+                            text='Other Groups:\n{}'.format(g),
+                            row=0,column=1,
+                            sticky='new',
+                            padx=padx,
+                            rowspan=2
+                            )
+        fieldframe=ui.Frame(inputframe,
+                            row=1,column=0,sticky='new'
+                            )
+        formfield = ui.EntryField(fieldframe,textvariable=newname,
+                                    row=1,column=0,sticky='new',
+                                    font='readbig')
+        formfield.bind('<KeyRelease>', updatelabels) #apply function after key
+        errorlabel=ui.Label(fieldframe,text='',
+                            fg='red',
+                            wraplength=int(self.frame.winfo_screenwidth()/3),
+                            row=1,column=1,sticky='nsew'
+                            )
+        formhashlabel=ui.Label(fieldframe,
+                                textvariable=namehash,
+                                anchor ='c',
+                                row=2,column=0,sticky='new'
+                                )
+        fieldframe.grid_columnconfigure(0, weight=1)
+        updatelabels()
+        responseframe=ui.Frame(self.runwindow.frame,
+                                row=3,
+                                column=0,
+                                sticky='',
+                                padx=padx,
+                                pady=pady
+                                )
+        ok=_('Use this name and go to:')
+        sub_lbl=ui.Label(responseframe,text = ok, font='read',
+                        row=0,column=0,sticky='ns'
+                        )
+        t=_('main screen')
+        sub_btn=ui.Button(responseframe,text = t, command = done, anchor ='c',
+                            row=0,column=1,sticky='ns'
+                            )
+        # if reverify == False: #don't give this option if verifying
+        t=_('next group')
+        sub_btn=ui.Button(responseframe,text = t,command = next,anchor ='c',
+                            row=0,column=2,sticky='ns'
+                            )
+        t=_('next tone frame')
+        sub_f=ui.Button(responseframe,text = t,command = nextcheck,
+                        row=0,column=3,sticky='ns'
+                        )
+        t=_('next syllable profile')
+        sub_p=ui.Button(responseframe,text = t,command = nextprofile,
+                        row=0,column=4,sticky='ns'
+                        )
+        examplesframe=ui.Frame(self.runwindow.frame,
+                                row=4,column=0,sticky=''
+                                )
+        b=ToneGroupButtonFrame(examplesframe, self, self.exs,
+                                group,
+                                showtonegroup=True,
+                                # canary=entryview,
+                                playable=True,
+                                unsortable=True,
+                                alwaysrefreshable=True,
+                                row=0, column=0, sticky='w',
+                                wraplength=buttonframew
+                                )
+        compframe=ui.Frame(examplesframe,
+                    highlightthickness=10,
+                    highlightbackground=self.frame.theme.white,
+                    row=0,column=1,sticky='e'
+                    ) #no hlfg here
+        t=_('Compare with another group')
+        sub_c=ui.Button(compframe,
+                        text = t,
+                        command = setgroup_comparison,
+                        row=0,column=0
+                        )
+        comparisonbuttons()
+        self.runwindow.waitdone()
+        sub_btn.wait_window(self.runwindow) #then move to next step
+        """Store these variables above, finish with (destroying window with
+        local variables):"""
+    def __init__(self, parent): #frame, filename=None
+        """Does this need Tone classing?"""
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+class JoinUFgroups(Tone,TaskDressing,ui.Window):
+    """docstring for JoinUFgroups."""
+    def tasktitle(self):
+        return _("Join Underlying Form Groups")
+    def tonegroupsjoinrename(self,**kwargs):
+        def clearerror(event=None):
+            errorlabel['text'] = ''
+        def submitform():
+            clearerror()
+            uf=named.get()
+            if uf == "":
+                noname=_("Give a name for this UF tone group!")
+                log.debug(noname)
+                errorlabel['text'] = noname
+                return
+            groupsselected=[]
+            for group in groupvars: #all group variables
+                groupsselected+=[group.get()] #value, name if selected, 0 if not
+            groupsselected=[x for x in groupsselected if x != '']
+            log.info("groupsselected:{}".format(groupsselected))
+            if uf in self.analysis.orderedUFs and uf not in groupsselected:
+                deja=_("That name is already there! (did you forget to include "
+                        "the ‘{}’ group?)".format(uf))
+                log.debug(deja)
+                errorlabel['text'] = deja
+                return
+            for group in groupsselected:
+                if group in self.analysis.senseidsbygroup: #selected ones only
+                    log.debug("Changing values from {} to {} for the following "
+                            "senseids: {}".format(group,uf,
+                                        self.analysis.senseidsbygroup[group]))
+                    for senseid in self.analysis.senseidsbygroup[group]:
+                        self.db.addtoneUF(senseid,uf,analang=self.analang,
+                        write=False)
+            self.db.write()
+            self.runwindow.destroy()
+            self.tonegroupsjoinrename() #call again, in case needed
+        def done():
+            self.runwindow.destroy()
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        self.getrunwindow()
+        title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
+                                                        ps,profile))
+        self.runwindow.title(title)
+        padx=50
+        pady=10
+        rwrow=gprow=qrow=0
+        t=ui.Label(self.runwindow.frame,text=title,font='title')
+        t.grid(row=rwrow,column=0,sticky='ew')
+        text=_("This page allows you to join the {0}-{1} draft underlying tone "
+                "groups created for you by {2}, \nwhich are almost certainly "
+                "too small for you. \nLooking at a draft report, and making "
+                "your own judgement about which groups belong together, select "
+                "all the groups that belong together, and give that new group "
+                "a name. Afterwards, you can do this again for other groups "
+                "that should be joined. \nIf for any reason you want to undo "
+                "the groups you create here (e.g., you make a mistake or sort "
+                "new data), just run the default report, which will redo the "
+                "default analysis, which will replace these groupings with new "
+                "split groupings. \nTo see a report based on what you do "
+                "here, run the tone reports in the Advanced menu (without "
+                "analysis). ".format(ps,profile,program['name']))
+        rwrow+=1
+        i=ui.Label(self.runwindow.frame,text=text,
+                    row=rwrow,column=0,sticky='ew')
+        i.wrap()
+        rwrow+=1
+        qframe=ui.Frame(self.runwindow.frame)
+        qframe.grid(row=rwrow,column=0,sticky='ew')
+        text=_("What do you want to call this UF tone group for {}-{} words?"
+                "".format(ps,profile))
+        qrow+=1
+        q=ui.Label(qframe,text=text,
+                    row=qrow,column=0,sticky='ew',pady=20
+                    )
+        q.wrap()
+        named=tkinter.StringVar() #store the new name here
+        namefield = ui.EntryField(qframe,textvariable=named)
+        namefield.grid(row=qrow,column=1)
+        namefield.bind('<Key>', clearerror)
+        errorlabel=ui.Label(qframe,text='',fg='red')
+        errorlabel.grid(row=qrow,column=2,sticky='ew',pady=20)
+        text=_("Select the groups below that you want in this {} group, then "
+                "click ==>".format(ps))
+        qrow+=1
+        d=ui.Label(qframe,text=text)
+        d.grid(row=qrow,column=0,sticky='ew',pady=20)
+        sub_btn=ui.Button(qframe,text = _("OK"), command = submitform, anchor ='c')
+        sub_btn.grid(row=qrow,column=1,sticky='w')
+        done_btn=ui.Button(qframe,text = _("Done —no change"), command = done,
+                                                                    anchor ='c')
+        done_btn.grid(row=qrow,column=2,sticky='w')
+        groupvars=list()
+        rwrow+=1
+        scroll=ui.ScrollingFrame(self.runwindow.frame)
+        scroll.grid(row=rwrow,column=0,sticky='ew')
+        self.makeanalysis()
+        self.analysis.donoUFanalysis()
+        nheaders=0
+        if not self.analysis.orderedUFs:
+            self.runwindow.waitdone()
+            self.runwindow.destroy()
+            ErrorNotice(title="No draft UF groups found!",
+                        text="You don't seem to have any analyzed groups to "
+                                "join/rename. Have you done a tone analyis?"
+                        )
+            return
+        # ufgroups= # order by structured groups? Store this somewhere?
+        for group in self.analysis.orderedUFs: #make a variable and button to select
+            idn=self.analysis.orderedUFs.index(group)
+            if idn % 5 == 0: #every five rows
+                col=1
+                for check in self.analysis.orderedchecks:
+                    col+=1
+                    cbh=ui.Label(scroll.content, text=check, font='small')
+                    cbh.grid(row=idn+nheaders,
+                            column=col,sticky='ew')
+                nheaders+=1
+            groupvars.append(tkinter.StringVar())
+            n=len(self.analysis.senseidsbygroup[group])
+            buttontext=group+' ({})'.format(n)
+            cb=ui.CheckButton(scroll.content, text = buttontext,
+                                variable = groupvars[idn],
+                                onvalue = group, offvalue = 0,
+                                )
+            cb.grid(row=idn+nheaders,column=0,sticky='ew')
+            # self.analysis.valuesbygroupcheck[group]:
+            col=1
+            for check in self.analysis.orderedchecks:
+                col+=1
+                if check in self.analysis.valuesbygroupcheck[group]:
+                    cbl=ui.Label(scroll.content,
+                        text=unlist(
+                                self.analysis.valuesbygroupcheck[group][check]
+                                    )
+                            )
+                    cbl.grid(row=idn+nheaders,column=col,sticky='ew')
+        self.runwindow.waitdone()
+        self.runwindow.wait_window(scroll)
+    def __init__(self, arg):
+        Tone.__init__(self)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+class RecordCitation(Record,Segments,TaskDressing,ui.Window):
+    """docstring for RecordCitation."""
+    def dobuttonkwargs(self):
+        return {'text':_("Record Dictionary Words"),
+                'fn':self.showentryformstorecord,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['record'], #self.cvt
+                'sticky':'ew'
+                }
+    def tasktitle(self):
+        return _("Record Citation Forms")
+    def taskicon(self):
+        return program['theme'].photo['record']
+    def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Record.__init__(self)
+        # self.do=self.showentryformstorecord
+class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
+    """docstring for RecordCitation."""
+    def dobuttonkwargs(self):
+        return {'text':_("Record Words in Tone Frames"),
+                'fn':self.showtonegroupexs,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['record'], #self.cvt
+                'sticky':'ew'
+                }
+    def taskicon(self):
+        return program['theme'].photo['record']
+    def tasktitle(self):
+        return _("Record Citation Form Sorting in Tone Frames")
+    def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Record.__init__(self)
+        # self.do=self.showtonegroupexs
 class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
@@ -6693,507 +7191,6 @@ class ReportCitationBasicT(Report,Tone,TaskDressing,ui.Window):
         # self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
-class Record(object):
-    """This holds all the Recording methods."""
-    def donewpyaudio(self):
-        try:
-            self.pyaudio.terminate()
-        except:
-            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
-    def pyaudiocheck(self):
-        try:
-            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
-        except:
-            self.pyaudio=sound.AudioInterface()
-    def getsoundcardindex(self,event=None):
-        log.info("Asking for input sound card...")
-        window=ui.Window(self.frame, title=_('Select Input Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to record sound with with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['in']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.settings.setsoundcardindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundcardoutindex(self,event=None):
-        log.info("Asking for output sound card...")
-        window=ui.Window(self.frame, title=_('Select Output Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to play sound with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['out']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.settings.setsoundcardoutindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundformat(self,event=None):
-        log.info("Asking for audio format...")
-        window=ui.Window(self.frame, title=_('Select Audio Format'))
-        ui.Label(window.frame, text=_('What audio format do you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
-        ss=self.soundsettings
-        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
-            name=ss.hypothetical['sample_formats'][sf]
-            l+=[(sf, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.settings.setsoundformat,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundhz(self,event=None):
-        log.info("Asking for sampling frequency...")
-        window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
-        ui.Label(window.frame, text=_('What sampling frequency you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
-        ss=self.soundsettings
-        for fs in ss.cards['in'][ss.audio_card_in]:
-            name=ss.hypothetical['fss'][fs]
-            l+=[(fs, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.settings.setsoundhz,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def makesoundsettings(self):
-        if not hasattr(self.settings,'soundsettings'):
-            self.pyaudiocheck() #in case self.pyaudio isn't there yet
-            self.settings.soundsettings=sound.SoundSettings(self.pyaudio)
-    def loadsoundsettings(self):
-        self.makesoundsettings()
-        self.settings.loadsettingsfile(setting='soundsettings')
-    def soundcheckrefreshdone(self):
-        self.settings.storesettingsfile(setting='soundsettings')
-        self.soundsettingswindow.destroy()
-    def soundcheckrefresh(self):
-        def quitall():
-            self.soundsettingswindow.destroy()
-            self.on_quit()
-        self.soundsettingswindow.resetframe()
-        row=0
-        ui.Label(self.soundsettingswindow.frame, font='title',
-                text="Current Sound Card Settings",
-                row=row,column=0)
-        row+=1
-        ui.Label(self.soundsettingswindow.frame, #font='title',
-                text="(click any to change)",
-                row=row,column=0)
-        row+=1
-        ss=self.soundsettings
-        ss.check() #make defaults if not valid options
-        for varname, dict, cmd in [
-            ('audio_card_in', ss.cards['dict'], self.getsoundcardindex),
-            ('fs',ss.hypothetical['fss'], self.getsoundhz),
-            ('sample_format', ss.hypothetical['sample_formats'],
-                                                         self.getsoundformat),
-            ('audio_card_out', ss.cards['dict'], self.getsoundcardoutindex),
-                                                    ]:
-            text=_("Change")
-            var=getattr(ss,varname)
-            log.debug("{} in {}".format(var,dict))
-            l=dict[var]
-            if cmd == self.getsoundcardindex:
-                l=_("Microphone: ‘{}’").format(l)
-            if cmd == self.getsoundcardoutindex:
-                l=_("Speakers: ‘{}’").format(l)
-            l=ui.Label(self.soundsettingswindow.frame,text=l,
-                    row=row,column=0)
-            l.bind('<ButtonRelease>',cmd) #getattr(self,str(cmd)))
-            row+=1
-        br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
-        br.grid(row=row,column=0)
-        row+=1
-        l=_("You may need to change your microphone "
-            "\nand/or speaker sound card to get the "
-            "\nsampling and format you want.")
-        ui.Label(self.soundsettingswindow.frame,
-                text=l).grid(row=row,column=0)
-        row+=1
-        l=_("Make sure ‘record’ and ‘play’ work well here, "
-            "\nbefore recording real data!")
-        caveat=ui.Label(self.soundsettingswindow.frame,
-                text=l,font='read',
-                row=row,column=0)
-        caveat.wrap()
-        row+=1
-        l=_("See also note in documentation about verifying these "
-            "recordings in an external application, such as Praat.")
-        caveat=ui.Label(self.soundsettingswindow.frame,
-                text=l,font='instructions',
-                row=row,column=0)
-        caveat.wrap()
-        row+=1
-        l=_("If Praat is installed in your path, right click on play "
-            "to open in Praat.")
-        caveat=ui.Label(self.soundsettingswindow.frame,
-                text=l,font='default',
-                row=row,column=0)
-        caveat.wrap()
-        row+=1
-        bd=ui.Button(self.soundsettingswindow.frame,
-                    text=_("Done"),
-                    cmd=self.soundcheckrefreshdone,
-                    # anchor='c',
-                    row=row,column=0,
-                    sticky=''
-                    )
-        bd=ui.Button(self.soundsettingswindow.frame,
-                    text=_("Quit {}".format(program['name'])),
-                    # cmd=program['root'].on_quit,
-                    cmd=quitall,
-                    # anchor='c',
-                    row=row,column=1
-                    )
-    def soundsettingscheck(self):
-        if not hasattr(self.settings,'soundsettings'):
-            self.settings.loadsoundsettings()
-    def missingsoundattr(self):
-        log.info(dir(self.soundsettings))
-        for s in ['fs', 'sample_format',
-                    'audio_card_in',
-                    'audio_card_out']:
-            if (not hasattr(self.soundsettings,s) or
-                            not getattr(self.soundsettings,s)):
-                log.info("Missing sound setting {}; asking again".format(s))
-                return True
-        self.settings.soundsettingsok=True
-    def soundcheck(self):
-        #Set the parameters of what could be
-        self.pyaudiocheck()
-        self.soundsettingscheck()
-        self.soundsettingswindow=ui.Window(self.frame,
-                                title=_('Select Sound Card Settings'))
-        self.soundcheckrefresh()
-        self.soundsettingswindow.wait_window(self.soundsettingswindow)
-        if not self.exitFlag.istrue() and self.missingsoundattr():
-            self.soundcheck()
-            return
-        self.donewpyaudio()
-        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
-            self.soundsettingswindow.destroy()
-    def makelabelsnrecordingbuttons(self,parent,sense):
-        framed=self.taskchooser.datadict.getframeddata(sense['nodetoshow'])
-        t=framed.formatted(noframe=True)
-        for g in sense['glosses']:
-            if g:
-                t+='\t‘'+g
-                if ('plnode' in sense and
-                        sense['nodetoshow'] is sense['plnode']):
-                    t+=" (pl)"
-                if ('impnode' in sense and
-                        sense['nodetoshow'] is sense['impnode']):
-                    t+="!"
-                t+='’'
-        lxl=ui.Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,framed)
-        lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
-        lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
-    def showentryformstorecordpage(self,ps=None,profile=None):
-        #The info we're going for is stored above sense, hence guid.
-        if self.runwindow.exitFlag.istrue():
-            log.info('no runwindow; quitting!')
-            return
-        if not self.runwindow.frame.winfo_exists():
-            log.info('no runwindow frame; quitting!')
-            return
-        self.runwindow.resetframe()
-        self.runwindow.wait()
-        count=self.slices.count()
-        text=_("Record {} {} Words: click ‘Record’, talk, "
-                "and release ({} words)".format(profile,ps,
-                                                count))
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w')
-        buttonframes=ui.ScrollingFrame(self.runwindow.frame)
-        buttonframes.grid(row=1,column=0,sticky='w')
-        row=0
-        done=list()
-        for senseid in self.slices.senseids(ps=ps,profile=profile):
-            sense={}
-            sense['column']=0
-            sense['row']=row
-            sense['senseid']=senseid
-            sense['guid']=firstoflist(self.db.get('entry',
-                                        senseid=senseid).get('guid'))
-            if sense['guid'] in done: #only the first of multiple senses
-                continue
-            else:
-                done.append(sense['guid'])
-            """These following two have been shifted down a level, and will
-            now return a list of form elements, each. Something will need to be
-            adjusted here..."""
-            sense['lxnode']=firstoflist(self.db.get('lexeme',
-                                                guid=sense['guid'],
-                                                lang=self.analang).get())
-            sense['lcnode']=firstoflist(self.db.get('citation',
-                                                guid=sense['guid'],
-                                                lang=self.analang).get())
-            sense['glosses']=[]
-            for lang in self.glosslangs:
-                sense['glosses'].append(firstoflist(self.db.glossordefn(
-                                                guid=sense['guid'],
-                                                glosslang=lang
-                                                ),othersOK=True))
-            if self.settings.pluralname is not None:
-                sense['plnode']=firstoflist(self.db.get('field',
-                                        guid=sense['guid'],
-                                        lang=self.analang,
-                                        fieldtype=self.db.pluralname).get())
-            if self.settings.imperativename is not None:
-                sense['impnode']=firstoflist(self.db.get('field',
-                                        guid=sense['guid'],
-                                        lang=self.analang,
-                                        fieldtype=self.db.imperativename).get())
-            if sense['lcnode'] is not None:
-                sense['nodetoshow']=sense['lcnode']
-            else:
-                sense['nodetoshow']=sense['lxnode']
-            self.makelabelsnrecordingbuttons(buttonframes.content,sense)
-            for node in ['plnode','impnode']:
-                if (node in sense) and (sense[node] is not None):
-                    sense['column']+=2
-                    sense['nodetoshow']=sense[node]
-                    self.makelabelsnrecordingbuttons(buttonframes.content,
-                                                    sense)
-            row+=1
-        self.runwindow.waitdone()
-        self.runwindow.wait_window(self.runwindow.frame)
-    def showentryformstorecord(self,justone=True):
-        # Save these values before iterating over them
-        #Convert to iterate over local variables
-        self.getrunwindow()
-        if justone==True:
-            self.showentryformstorecordpage()
-        else:
-            for psprofile in self.status.valid(): #self.profilecountsValid:
-                if self.runwindow.exitFlag.istrue():
-                    return 1
-                ps=psprofile[2]
-                profile=psprofile[1]
-                nextb=ui.Button(self.runwindow,text=_("Next Group"),
-                                        cmd=self.runwindow.resetframe) # .frame.destroy
-                nextb.grid(row=0,column=1,sticky='ne')
-                self.showentryformstorecordpage(ps=ps,profile=profile)
-        self.donewpyaudio()
-    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
-        def setskip(event):
-            self.runwindow.frame.skip=True
-            entryframe.destroy()
-        self.getrunwindow()
-        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
-            return
-        log.debug("Working with skip: {}".format(skip))
-        if skip == 'skip':
-            self.runwindow.frame.skip=True
-        else:
-            self.runwindow.frame.skip=skip
-        text=_("Words and phrases to record: click ‘Record’, talk, and release")
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w',columnspan=2)
-        if (self.settings.entriestoshow is None) and (senses is None):
-            ui.Label(self.runwindow.frame, anchor='w',
-                    text=_("Sorry, there are no entries to show!")).grid(row=1,
-                                    column=0,sticky='w')
-            return
-        if self.runwindow.frame.skip == False:
-            skipf=ui.Frame(self.runwindow.frame)
-            skipb=ui.Button(skipf, text=linebreakwords(_("Skip to next undone")),
-                        cmd=skipf.destroy)
-            skipf.grid(row=1,column=1,sticky='w')
-            skipb.grid(row=0,column=0,sticky='w')
-            skipb.bind('<ButtonRelease>', setskip)
-        if senses is None:
-            senses=self.settings.entriestoshow
-        for senseid in senses:
-            log.debug("Working on {} with skip: {}".format(senseid,
-                                                    self.runwindow.frame.skip))
-            examples=self.db.get('example',senseid=senseid).get()
-            if examples == []:
-                log.debug(_("No examples! Add some, then come back."))
-                continue
-            if ((self.runwindow.frame.skip == True) and
-                (lift.atleastoneexamplehaslangformmissing(
-                                                    examples,
-                                                    self.settings.audiolang) == False)):
-                continue
-            row=0
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            entryframe=ui.Frame(self.runwindow.frame)
-            entryframe.grid(row=1,column=0)
-            if progress is not None:
-                progressl=ui.Label(self.runwindow.frame, anchor='e',
-                    font='small',
-                    text="({} {}/{})".format(*progress)
-                    )
-                progressl.grid(row=0,column=2,sticky='ne')
-            """This is the title for each page: isolation form and glosses."""
-            titleframed=self.taskchooser.datadict.getframeddata(senseid,check=None)
-            if not titleframed or titleframed.forms[self.analang] is None:
-                entryframe.destroy() #is this ever needed?
-                continue
-            text=titleframed.formatted(noframe=True,showtonegroup=False)
-            ui.Label(entryframe, anchor='w', font='read',
-                    text=text).grid(row=row,
-                                    column=0,sticky='w')
-            """Then get each sorted example"""
-            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
-            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
-            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
-            examplesframe.grid(row=0,column=0,sticky='w')
-            examples.reverse()
-            for example in examples:
-                if (skip == True and
-                    lift.examplehaslangform(example,self.settings.audiolang) == True):
-                    continue
-                """These should already be framed!"""
-                framed=self.taskchooser.datadict.getframeddata(example,senseid=senseid)
-                if not framed:
-                    exit()
-                if framed.forms[self.analang] is None: # when?
-                    continue
-                row+=1
-                """If I end up pulling from example nodes elsewhere, I should
-                probably make this a function, like getframeddata"""
-                text=framed.formatted()
-                if not framed:
-                    exit()
-                rb=RecordButtonFrame(examplesframe,self,framed)
-                rb.grid(row=row,column=0,sticky='w')
-                ui.Label(examplesframe, anchor='w',text=text
-                                        ).grid(row=row, column=1, sticky='w')
-            row+=1
-            d=ui.Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
-            d.grid(row=row,column=0)
-            self.runwindow.waitdone()
-            examplesframe.wait_window(entryframe)
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            if self.runwindow.frame.skip == True:
-                return 'skip'
-    def showtonegroupexs(self):
-        def next():
-            self.status.nextprofile()
-            self.runwindow.destroy()
-            self.showtonegroupexs()
-        if (not(hasattr(self,'examplespergrouptorecord')) or
-            (type(self.examplespergrouptorecord) is not int)):
-            self.examplespergrouptorecord=100
-            self.settings.storesettingsfile()
-        self.makeanalysis()
-        self.analysis.donoUFanalysis()
-        torecord=self.analysis.senseidsbygroup
-        ntorecord=len(torecord) #number of groups
-        nexs=len([k for i in torecord for j in torecord[i] for k in j])
-        nslice=self.slices.count()
-        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
-        skip=False
-        if ntorecord == 0:
-            log.error(_("How did we get no UR tone groups? {}-{}"
-                    "\nHave you run the tone report recently?"
-                    "\nDoing that for you now...").format(
-                            self.slices.profile(),
-                            self.slices.ps()
-                                                        ))
-            self.analysis.do()
-            self.showtonegroupexs()
-            return
-        batch={}
-        for i in range(self.examplespergrouptorecord):
-            batch[i]=[]
-            for ufgroup in torecord:
-                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
-                if len(torecord[ufgroup]) > i: #no done piles.
-                    senseid=[torecord[ufgroup][i]] #list of one
-                else:
-                    print("Not enough examples, moving on:",i,ufgroup)
-                    continue
-                log.info(_('Giving user the number {} example from tone '
-                        'group {}'.format(i,ufgroup)))
-                exited=self.showsenseswithexamplestorecord(senseid,
-                            (ufgroup, i+1, self.examplespergrouptorecord),
-                            skip=skip)
-                if exited == 'skip':
-                    skip=True
-                if exited == True:
-                    return
-        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
-            self.runwindow.waitdone()
-            self.runwindow.resetframe()
-            ui.Label(self.runwindow.frame, anchor='w',font='read',
-            text=_("All done! Sort some more words, and come back.")
-            ).grid(row=0,column=0,sticky='w')
-            ui.Button(self.runwindow.frame,
-                    text=_("Continue to next syllable profile"),
-                    command=next).grid(row=1,column=0)
-        self.donewpyaudio()
-    def record(self):
-        self.settings.updatesortingstatus() #is this needed? This is the first fn on button click
-        if self.params.cvt() == 'T':
-            self.showtonegroupexs()
-        else:
-            self.showentryformstorecord()
-    def __init__(self):
-        self.makesoundsettings()
-        self.loadsoundsettings()
-        self.soundsettings=self.settings.soundsettings
-        self.soundcheck()
-class RecordCitation(Record,Segments,TaskDressing,ui.Window):
-    """docstring for RecordCitation."""
-    def dobuttonkwargs(self):
-        return {'text':_("Record Dictionary Words"),
-                'fn':self.showentryformstorecord,
-                'font':'title',
-                'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['record'], #self.cvt
-                'sticky':'ew'
-                }
-    def tasktitle(self):
-        return _("Record Citation Forms")
-    def taskicon(self):
-        return program['theme'].photo['record']
-    def __init__(self, parent): #frame, filename=None
-        Segments.__init__(self,parent)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
-        Record.__init__(self)
-        # self.do=self.showentryformstorecord
-class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
-    """docstring for RecordCitation."""
-    def dobuttonkwargs(self):
-        return {'text':_("Record Words in Tone Frames"),
-                'fn':self.showtonegroupexs,
-                'font':'title',
-                'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['record'], #self.cvt
-                'sticky':'ew'
-                }
-    def taskicon(self):
-        return program['theme'].photo['record']
-    def tasktitle(self):
-        return _("Record Citation Form Sorting in Tone Frames")
-    def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
-        Record.__init__(self)
-        # self.do=self.showtonegroupexs
 """Task definitions end here"""
 class Entry(lift.Entry): #Not in use
     def __init__(self, db, guid, window=None, check=None, problem=None,
