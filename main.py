@@ -3909,6 +3909,7 @@ class WordCollection(object):
                         wraplength=int(program['root'].wraplength*.6))
             return
         text=_("Type the word in your language that goes with these meanings."
+                "\nGive a single word (not a phrase) wherever possible."
                 "").format(self.nentries)
         ui.Label(self.wordframe, text=text, row=0, column=0)
         progress="({}/{})".format(self.index+1,self.nentries)
