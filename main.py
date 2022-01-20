@@ -3243,6 +3243,11 @@ class TaskDressing(object):
         group=kwargs.get('group',self.status.group())
         log.info("about to return {}={}".format(check,group))
         return check+'='+group
+    def maybewrite(self):
+        if self.timetowrite():
+            self.wait("Writing to LIFT")
+            self.db.write()
+            self.waitdont()
     def timetowrite(self):
         """only write to file every self.writeeverynwrites times you might."""
         self.writeable+=1 #and tally here each time this is asked
@@ -3861,8 +3866,7 @@ class WordCollection(object):
             self.taskchooser.makedefaulttask()
             self.e.on_quit()
         self.storethisword()
-        if self.timetowrite():
-            self.db.write()
+        self.maybewrite()
         if self.index < len(self.entries)-1:
             self.index+=1
             self.getword()
@@ -6368,8 +6372,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 log.debug('No group selected: {}'.format(groupselected))
                 return 1 # this should only happen on Exit
             self.status.marksenseidsorted(senseid)
-            if self.timetowrite():
-                self.db.write()
+            self.maybewrite()
         log.info('Running sortT:')
         self.getrunwindow()
         """sortingstatus() checks by ps,profile,check (frame),
@@ -6445,10 +6448,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
     def verifyT(self,menu=False):
         def updatestatus():
             log.info("Updating status with {}, {}, {}".format(check,group,verified))
-            if self.timetowrite():
-                self.updatestatus(verified=verified)
-            else:
-                self.updatestatus(verified=verified,write=False)
+            self.updatestatus(verified=verified,write=False)
+            self.maybewrite()
         log.info("Running verifyT!")
         """Show entries each in a row, users mark those that are different, and we
         remove that group designation from the entry (so the entry will show up on
@@ -6567,10 +6568,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         # it will fail.
         # should move to specify location and fieldvalue in button lambda
         def notok():
-            if self.timetowrite():
-                self.removesenseidfromgroup(senseid,sorting=True)
-            else:
-                self.removesenseidfromgroup(senseid,sorting=True,write=False)
+            self.removesenseidfromgroup(senseid,sorting=True,write=False)
+            self.maybewrite()
             bf.destroy()
         if 'font' not in kwargs:
             kwargs['font']='read'
@@ -8243,11 +8242,9 @@ class RecordButtonFrame(ui.Frame):
     def addlink(self):
         if self.test:
             return
-        if self.task.timetowrite():
-            self.db.addmediafields(self.node,self.filename,self.audiolang)
-        else:
-            self.db.addmediafields(self.node,self.filename,self.audiolang,
+        self.db.addmediafields(self.node,self.filename,self.audiolang,
                                                                     write=False)
+        self.maybewrite()
         self.task.status.last('recording',update=True)
     def __init__(self,parent,task,framed=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
