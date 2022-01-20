@@ -495,7 +495,9 @@ class Menus(ui.Menu):
         """help"""
     def help(self):
         self.cascade(self,_("Help"),'helpmenu')
-        for m in [("About", self.parent.helpabout)]:
+        for m in [("About", self.parent.helpabout),
+                    ("What's with the New Interface?", self.parent.helpnewinterface)
+                    ]:
             self.command(self.helpmenu,
                         label=_(m[0]),
                         cmd=m[1]
@@ -2589,6 +2591,34 @@ class TaskDressing(object):
         w=w/2
         h=h/2
         self.parent.geometry("%dx%d+0+0" % (w, h))
+    def helpnewinterface(self):
+        title=(_("{} Dictionary and Orthography Checker"
+                "".format(program['name'])))
+        window=ui.Window(self, title=title)
+        text=_("{0} has a new interface, starting mid January 2022. You "
+                "should still be able to do everything you did before, though "
+                "you will probably get to each function a bit differently "
+                "—hopefully more intuitively."
+                "\nTasks are organized into Data Collection and Analysis, "
+                "and you can switch between them with the button in the upper "
+                "right of the main {0} window."
+                "").format(program['name'])
+        url='https://github.com/kent-rasmussen/azt/blob/main/TASKS.md'
+        webtext=_("For more information on {} tasks, please check out the "
+                "documentation at {} ").format(program['name'],url)
+        ui.Label(window.frame, image=self.frame.theme.photo['icon'],
+                text=title, font='title',compound="bottom",
+                row=0,column=0,sticky='we'
+                )
+        l=ui.Label(window.frame, text=text, padx=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=1,column=0,pady=(50,0),sticky='we'
+                )
+        webl=ui.Label(window.frame, text=webtext, padx=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=2,column=0,sticky='we'
+                )
+        webl.bind("<Button-1>", lambda e: openweburl(url))
     def helpabout(self):
         title=(_("{name} Dictionary and Orthography Checker"
                 "".format(name=program['name'])))
