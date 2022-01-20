@@ -397,7 +397,7 @@ class Menus(ui.Menu):
                 (_("Digraph and Trigraph settings"),
                             self.parent.settings.askaboutpolygraphs),
                 (_("Segment Interpretation Settings"),
-                            self.parent.settings.setSdistinctions),
+                            self.parent.setSdistinctions),
                 (_("Syllable Profile Analysis (Restart)"),
                             self.parent.settings.reloadprofiledata),
                 (_("Remake Status file (several minutes)"),
