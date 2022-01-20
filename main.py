@@ -3971,14 +3971,14 @@ class WordCollectionLexeme(ui.Window,WordCollection,TaskDressing):
         self.getwords()
 class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
     def taskicon(self):
-        return program['theme'].photo['iconCV']
+        return program['theme'].photo['iconWord']
     def dobuttonkwargs(self):
         return {'text':"Add a Word",
                 'fn':self.addmorpheme,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['CV'], #self.cvt
+                'image':self.taskchooser.theme.photo['Word'],
                 'sticky':'ew'
                 }
     def tasktitle(self):
@@ -7437,13 +7437,13 @@ class RecordCitation(Record,Segments,TaskDressing,ui.Window):
                 'fn':self.showentryformstorecord,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['record'], #self.cvt
+                'image':self.taskchooser.theme.photo['WordR'],
                 'sticky':'ew'
                 }
     def tasktitle(self):
         return _("Record Words") #Citation Forms
     def taskicon(self):
-        return program['theme'].photo['record']
+        return program['theme'].photo['iconWordR']
     def __init__(self, parent): #frame, filename=None
         Segments.__init__(self,parent)
         ui.Window.__init__(self,parent)
@@ -7457,11 +7457,11 @@ class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
                 'fn':self.showtonegroupexs,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['record'], #self.cvt
+                'image':self.taskchooser.theme.photo['TR'],
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program['theme'].photo['record']
+        return program['theme'].photo['iconTR']
     def tasktitle(self):
         return _("Record Tone") #Citation Form Sorting in Tone Frames
     def __init__(self, parent): #frame, filename=None
