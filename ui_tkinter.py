@@ -86,6 +86,8 @@ class Theme(object):
                             ('icon','images/AZT stacks6_icon.png'),
                             ('T','images/T alone clear6.png'),
                             ('iconT','images/T alone clear6_icon.png'),
+                            ('iconC','images/Z alone clear6_icon.png'),
+                            ('iconV','images/A alone clear6_icon.png'),
                             ('C','images/Z alone clear6.png'),
                             ('V','images/A alone clear6.png'),
                             ('CV','images/ZA alone clear6.png'),
