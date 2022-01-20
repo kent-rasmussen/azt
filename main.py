@@ -417,7 +417,8 @@ class Menus(ui.Menu):
         options=[(_("Add/Modify Ad Hoc Sorting Group"),
                                                 self.parent.addmodadhocsort),]
         if isinstance(self.parent,SortCitationT):
-            options.extend([(_("Resort skipped data"), self.parent.tryNAgain),
+            options.extend([(_("Add Tone frame"), self.parent.addframe),
+                            (_("Resort skipped data"), self.parent.tryNAgain),
                             (_("Reverify current framed group"),
                                                         self.parent.reverify),
                             (_("Join Groups"), self.parent.joinT)
