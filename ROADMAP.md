@@ -1,4 +1,8 @@
 #Roadmap
+background writes to disk
+  -mark when happening, to not do a second at same time.
+  -use last, and don't write more than once per 5 mins?
+
 make ad hoc profiles usable (not sure if just unselectable, or if unselected by frame check, too)!
   Hidegroup names (usage?)
 
