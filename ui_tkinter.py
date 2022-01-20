@@ -88,10 +88,18 @@ class Theme(object):
                             ('iconT','images/T alone clear6_icon.png'),
                             ('iconC','images/Z alone clear6_icon.png'),
                             ('iconV','images/A alone clear6_icon.png'),
+                            ('iconCV','images/ZA alone clear6_icon.png'),
+                            ('iconWord','images/ZAZA clear stacks6_icon.png'),
+                            ('iconWordR','images/ZAZA Rclear stacks6_icon.png'),
+                            ('iconTR','images/T Rclear stacks6_icon.png'),
                             ('C','images/Z alone clear6.png'),
                             ('V','images/A alone clear6.png'),
                             ('CV','images/ZA alone clear6.png'),
-                            ('iconCV','images/ZA alone clear6_icon.png'),
+                            ('CV','images/ZA alone clear6.png'),
+                            ('CV','images/ZA alone clear6.png'),
+                            ('TR','images/T Rclear stacks6.png'),
+                            ('Word','images/ZAZA clear stacks6.png'),
+                            ('WordR','images/ZAZA Rclear stacks6.png'),
                             ('backgrounded','images/AZT stacks6.png'),
                             #Set images for tasks
                             ('verifyT','images/Verify List.png'),
@@ -1046,7 +1054,7 @@ class ButtonFrame(Frame):
             if choice['name'] == ["Null"]:
                 command=newvowel #come up with something better here..…
             if 'description' in choice:
-                print(choice['name'],str(choice['description']))
+                # print(choice['name'],str(choice['description']))
                 text=choice['name']+' ('+str(choice['description'])+')'
             else:
                 text=choice['name']
