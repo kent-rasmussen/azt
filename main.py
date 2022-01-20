@@ -3444,6 +3444,9 @@ class TaskChooser(TaskDressing,ui.Window):
                     ]
             if self.donew['collectionlc']:
                 tasks.append(RecordCitation)
+                """Do these next"""
+                # tasks.append(SortV)
+                # tasks.append(SortC)
                 tasks.append(SortCitationT)
                 if self.donew['torecordT']:
                     tasks.append(RecordCitationT)
