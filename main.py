@@ -7448,13 +7448,13 @@ class RecordCitation(Record,Segments,TaskDressing,ui.Window):
                 'fn':self.showentryformstorecord,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['WordR'],
+                'image':self.taskchooser.theme.photo['WordRec'],
                 'sticky':'ew'
                 }
     def tasktitle(self):
         return _("Record Words") #Citation Forms
     def taskicon(self):
-        return program['theme'].photo['iconWordR']
+        return program['theme'].photo['iconWordRec']
     def __init__(self, parent): #frame, filename=None
         Segments.__init__(self,parent)
         ui.Window.__init__(self,parent)
@@ -7468,11 +7468,11 @@ class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
                 'fn':self.showtonegroupexs,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['TR'],
+                'image':self.taskchooser.theme.photo['TRec'],
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program['theme'].photo['iconTR']
+        return program['theme'].photo['iconTRec']
     def tasktitle(self):
         return _("Record Tone") #Citation Form Sorting in Tone Frames
     def __init__(self, parent): #frame, filename=None
@@ -7486,14 +7486,14 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Alphabet Report") # on One Data Slice
     def taskicon(self):
-        return program['theme'].photo['iconCV']
+        return program['theme'].photo['iconCVRep']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.runcheck,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['icon'],
+                'image':self.taskchooser.theme.photo['CVRep'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
@@ -7578,14 +7578,14 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
         # "Make Reports on Citation Form Sorting in Tone Frames")
         # return _("Report on one slice of Citation Forms (in Tone Frames)")
     def taskicon(self):
-        return program['theme'].photo['iconT']
+        return program['theme'].photo['iconTRep']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['icon'],
+                'image':self.taskchooser.theme.photo['TRep'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
@@ -7602,14 +7602,14 @@ class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
         # "Make Reports on Citation Form Sorting in Tone Frames")
         # return _("Report on one slice of Citation Forms (in Tone Frames)")
     def taskicon(self):
-        return program['theme'].photo['iconT']
+        return program['theme'].photo['iconTRep']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['icon'],
+                'image':self.taskchooser.theme.photo['TRep'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
@@ -7625,14 +7625,14 @@ class ReportCitationBasicT(Report,Tone,TaskDressing,ui.Window):
         return _("Comprehensive Tone Report")
         # Report on several slices of Citation Forms (in Tone Frames)")
     def taskicon(self):
-        return program['theme'].photo['iconT']
+        return program['theme'].photo['iconTRepcomp']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['icon'],
+                'image':self.taskchooser.theme.photo['TRepcomp'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
