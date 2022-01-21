@@ -1898,6 +1898,11 @@ class LiftURL():
         log.log(4,"Final URL: {}".format(self.url))
         # self.printurl()
 """Functions I'm using, but not in a class"""
+def textornone(x):
+    try:
+        return x.text
+    except AttributeError:
+        return x
 def prettyprint(node):
     # This fn is for seeing the Element contents before writing them (in case of
     # ElementTree errors that aren't otherwise understandable).
