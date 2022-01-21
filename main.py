@@ -3935,8 +3935,9 @@ class WordCollection(object):
                                     glosslang=g).get('text'))
         # glossframe=ui.Frame(self.wordframe, row=1, column=0)
         glossesthere=' — '.join([glosses[i] for i in glosses if i])
-        ui.Label(self.wordframe, text=glossesthere, font='read',
+        l=ui.Label(self.wordframe, text=glossesthere, font='read',
                 row=1, column=0, columnspan=3, sticky='ew')
+        l.wrap()
         self.lxtextnode=self.textnodefn(entry,self.analang)
         # log.info("lxtextnode: {}".format(self.lxtextnode))
         self.lxvar=tkinter.StringVar(value=self.lxtextnode.text)
