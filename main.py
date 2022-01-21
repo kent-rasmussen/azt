@@ -3889,7 +3889,7 @@ class WordCollection(object):
             b=ui.Button(self.e.frame,text=oktext, cmd=cont, row=1, column=1)
     def backword(self):
         self.storethisword()
-        self.db.write()
+        self.maybewrite()
         if self.index == 0:
             self.index=len(self.entries)-1
         else:
