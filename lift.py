@@ -501,7 +501,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             g=example.findall("translation/form[@lang='{}']"
                                             "/text".format(lang))
                             if not g:
-                                log.info("empty node found for {}".format(lang))
+                                log.info("No text node found for {}".format(lang))
                                 g=[emptytextnode]
                             nodes['gl-'+lang].extend(g)
                         #This should ultimately have [@lang='{}'].analang
