@@ -6,8 +6,13 @@
 - [**Subsequent Runs (Tone)**](#subsequent-runs-tone-sort-and-follow-directions-)
 - [**Miscellaneous**](#miscellaneous)
 
+## Check Out the [Ordered Task List](TASKS.md)
+[These tasks](TASKS.md) should simplify a lot of the organization of your project.
+
 ## Practical Prerequisites
 ### [LIFT](https://code.google.com/archive/p/lift-standard/) Database to Check
+UPDATE: You can now start your database in A→Z+T, using the [Data Collection Tasks](TASKSCOLLECTION.md). If you do this, you can skip down to [Collaboration and Archival](USAGE.md#collaboration-and-archival), below.
+
 [A→Z+T](https://github.com/kent-rasmussen/azt) requires a [LIFT](https://code.google.com/archive/p/lift-standard/) database to check. Fortunately these are not difficult to generate; [LIFT](https://code.google.com/archive/p/lift-standard/) is an open XML specification for storing lexical data. [LIFT](https://code.google.com/archive/p/lift-standard/) databases can be created by a number of routes:
 
 - Collect words in [WeSay](https://software.sil.org/wesay/) ([Download 1.6.10.0 here](https://software.sil.org/downloads/r/wesay/WeSayInstaller.1.6.10.0.msi)).

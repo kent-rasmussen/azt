@@ -5,8 +5,10 @@ from tkinter import Tk
 import pathlib
 import os
 import platform
-import logging
-log = logging.getLogger(__name__)
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
 from importlib import reload as modulereload
 try: #Allow this module to be used without translation
     _
@@ -37,20 +39,20 @@ def getfilenamebase(filename):
 def gettranslationdirin(exedir):
     dir=pathlib.Path.joinpath(exedir,'translations')
     return dir
-def getimagesdir(filename):
-    dir=pathlib.Path.joinpath(getfilenamedir(filename),'images')
+def getimagesdir(dirname):
+    dir=pathlib.Path.joinpath(dirname,'images')
     if not os.path.exists(dir):
         os.mkdir(dir)
     return dir
-def getaudiodir(filename):
-    dir=pathlib.Path.joinpath(getfilenamedir(filename),'audio')
+def getaudiodir(dirname):
+    dir=pathlib.Path.joinpath(dirname,'audio')
     log.debug("Looking for {}".format(dir))
     if not os.path.exists(dir):
         log.debug("{} not there, making it!".format(dir))
         os.mkdir(dir)
     return dir
-def getreportdir(filename):
-    dir=pathlib.Path.joinpath(getfilenamedir(filename),'reports')
+def getreportdir(dirname):
+    dir=pathlib.Path.joinpath(dirname,'reports')
     log.debug("Looking for {}".format(dir))
     if not os.path.exists(dir):
         log.debug("{} not there, making it!".format(dir))
@@ -78,7 +80,6 @@ def gettransformsdir():
         log.error("HELP! not sure why {} is not there!".format(dir))
         # os.mkdir(dir)
     return dir
-
 def exists(file):
     if os.path.exists(file):
         return True
@@ -91,6 +92,17 @@ def remove(file):
         os.remove(fullpathname(file))
     else:
         log.debug(_("Tried to remove {}, but I can't find it.").format(file))
+def getnewlifturl(dir,xyz):
+    dir=pathlib.Path(dir)
+    dir=dir.joinpath(xyz)
+    if exists(dir):
+        log.error("The directory {} already exits! Not Continuing.".format(dir))
+        return
+    else:
+        dir.mkdir()
+    url=dir.joinpath(xyz)
+    url=url.with_suffix('.lift')
+    return url
 def getdiredurl(dir,filename):
     return pathlib.Path.joinpath(dir,filename)
 def getdiredrelURL(reldir,filename):
@@ -131,7 +143,7 @@ def writeinterfacelangtofile(lang):
     f.close()
 def getfilenames():
     """This just returns the list, if there."""
-    try:
+    try: #b/c sometimes we come directly here
         import lift_url
     except:
         log.debug("getfilename lift_url didn't import")
@@ -145,25 +157,29 @@ def getfilename():
         import lift_url
     except:
         log.debug("getfilename lift_url didn't import")
-        return lift()
-    if (hasattr(lift_url,'filename') and
-            lift_url.filename != () and
+        return
+    if (hasattr(lift_url,'filename') and lift_url.filename and
             exists(lift_url.filename)):
         log.debug("lift_url.py imported fine, and url points to a file.")
         return lift_url.filename
     else:
         log.debug("lift_url imported, but didn't contain a url that points "
                     "to a file: {}".format(dir(lift_url)))
-        f=getfilenames()
-        if f:
-            return f
-        else:
-            return lift()
+        return getfilenames()
 def gethome():
     home=pathlib.Path.home()
     if platform.uname().node == 'karlap':
         home=pathlib.Path.joinpath(home, "Assignment","Tools","WeSay")
     return home
+def getdirectory():
+    Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
+    home=gethome()
+    f=filedialog.askdirectory(initialdir = home, title = _("Select a new "
+                            "location for your LIFT Lexicon and other Files"))
+    return f
+def getfilesofdirectory(dir):
+    # return pathlib.Path(dir).iterdir()
+    return pathlib.Path(dir).glob('*')
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()
@@ -190,7 +206,7 @@ def writefilename(filename=''):
         log.error("writefilename lift_url didn't import.")
         filenames=[]
     if filename and filename not in filenames:
-        filenames.append(filename)
+        filenames.append(str(filename))
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
     f = open(file, 'w', encoding='utf-8') # to append, "a"
     f.write('filename="'+str(filename)+'"\n')

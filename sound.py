@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-from tkinter import Frame,Tk
+# from tkinter import Frame,Tk
 # from tkinter import Tk as tkinter.Tk
 import pyaudio
 import wave
+# import soundfile
 import file
-import logging
-log = logging.getLogger(__name__)
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
 import sys
 
 class AudioInterface(pyaudio.PyAudio):
@@ -170,11 +173,11 @@ class SoundSettings(object):
                                 8000:'8khz'
                                 }
         self.hypothetical['sample_formats']={
-                                            pyaudio.paFloat32:'32 bit float',
+                                            # pyaudio.paFloat32:'32 bit float',
                                             pyaudio.paInt32:'32 bit integer',
                                             pyaudio.paInt24:'24 bit integer',
                                             pyaudio.paInt16:'16 bit integer',
-                                            pyaudio.paInt8:'8 bit integer'
+                                            # pyaudio.paInt8:'8 bit integer'
                                             }
     def check(self):
         if (self.audio_card_in not in self.cards['in']
@@ -261,8 +264,8 @@ class SoundFilePlayer(object):
     def getformat(self):
         format=self.pa.get_format_from_width(self.wf.getsampwidth())
         return format
-    def play(self):
-        log.debug("I'm playing the recording now")
+    def play(self,event=None):
+        log.debug("I'm playing the recording now ({})".format(self.filenameURL))
         self.streamclose() #just in case
         timeout=5 #seconds or None
         process=False
@@ -375,6 +378,7 @@ class SoundFilePlayer(object):
             if process:
                 p.terminate() #for processes, not threads
         self.wf.close()
+        # soundfile.SoundFile.close()
     def __init__(self,filenameURL,pyaudio,settings):
         self.pa=pyaudio
         self.filenameURL=filenameURL
@@ -494,9 +498,6 @@ if __name__ == "__main__":
     # print(pyaudio.paInt8)
     import time
     import timeit
-    loglevel=5
-    from logsetup import *
-    log=logsetup(loglevel)
     try: #Allow this module to be used without translation
         _
     except:

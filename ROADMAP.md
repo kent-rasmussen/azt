@@ -1,15 +1,19 @@
 #Roadmap
-Cut down on the file writing during report generation
+background writes to disk
+  -mark when happening, to not do a second at same time.
+  -use last, and don't write more than once per 5 mins?
+
+make ad hoc profiles usable (not sure if just unselectable, or if unselected by frame check, too)!
+  Hidegroup names (usage?)
+
+migrate sound.py from wave to soundfile (or scipy.io.wavfile)
+menus
+Make CV basic report less resource intensive
 
 select which profiles to include in a given tone report
 
-bring some more ui stuff into ui_tkinter.py
 make lift-status update take in verification info, too.
 
-do something with mercurial to add (or rather ini versions)
-    ProfileData.py
-    ToneFrames.py
-    VerificationStatus.py
 use last time in logic store somewhere?
 
 At this point, this is just a bunch of random notes on stuff I need to follow up on:
@@ -18,13 +22,11 @@ add python3 -m pip install mercurial to docs
   maybe make tone report work off of examples present, rather than tone frames?
 Fix logic problem in maybesort: (endless cycling, with or without verification page:
   marking verified and continuing.)
-put UF fields in form/text nodes?
-Add setting for sort since last report.
-  - make sensitive to non-default group names
-Make checks for sound cards being there more frequent? If not, send to settings?
 think through commits to hg, including merge with paitence, and which files should be added automatically.
 Move things into the correct fields (def > gloss)
 <!-- updatecounts() is replaced by getscounts(), to be run after profile data is added -->
+<!-- analang=kwargs.get('analang',self.params.analang()) # ever use kwargs for analang? -->
+analang=self.params.analang()
 cvt=kwargs.get('cvt',self.params.cvt())
 ps=kwargs.get('ps',self.slices.ps())
 profile=kwargs.get('profile',self.slices.profile())

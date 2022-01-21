@@ -2,14 +2,22 @@
 # coding=UTF-8
 import sys
 import platform
-import logging
-log = logging.getLogger(__name__) #bc not imported as a module...
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
+log.info("Importing ui_tkinter.py")
 import unicodedata
 import tkinter #as gui
 import tkinter.font
 import tkinter.scrolledtext
 import file #for image pathnames
 from random import randint #for theme selection
+try:
+    _
+except:
+    def _(x):
+        return x
 # import tkintermod
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
 """These classes have no dependencies"""
@@ -77,9 +85,21 @@ class Theme(object):
                             ('small','images/AZT stacks6_sm.png'),
                             ('icon','images/AZT stacks6_icon.png'),
                             ('T','images/T alone clear6.png'),
+                            ('iconT','images/T alone clear6_icon.png'),
+                            ('iconC','images/Z alone clear6_icon.png'),
+                            ('iconV','images/A alone clear6_icon.png'),
+                            ('iconCV','images/ZA alone clear6_icon.png'),
+                            ('iconWord','images/ZAZA clear stacks6_icon.png'),
+                            ('iconWordR','images/ZAZA Rclear stacks6_icon.png'),
+                            ('iconTR','images/T Rclear stacks6_icon.png'),
                             ('C','images/Z alone clear6.png'),
                             ('V','images/A alone clear6.png'),
                             ('CV','images/ZA alone clear6.png'),
+                            ('CV','images/ZA alone clear6.png'),
+                            ('CV','images/ZA alone clear6.png'),
+                            ('TR','images/T Rclear stacks6.png'),
+                            ('Word','images/ZAZA clear stacks6.png'),
+                            ('WordR','images/ZAZA Rclear stacks6.png'),
                             ('backgrounded','images/AZT stacks6.png'),
                             #Set images for tasks
                             ('verifyT','images/Verify List.png'),
@@ -254,7 +274,8 @@ class Theme(object):
                 'readbig':tkinter.font.Font(family=charis, size=bigger,
                                             weight='bold'),
                 'small':tkinter.font.Font(family=charis, size=small),
-                'default':tkinter.font.Font(family=charis, size=default)
+                'default':tkinter.font.Font(family=charis, size=default),
+                'fixed':tkinter.font.Font(family='TkFixedFont', size=small)
                     }
         """additional keyword options (ignored if font is specified):
         family - font family i.e. Courier, Times
@@ -264,9 +285,37 @@ class Theme(object):
         underline - font underlining (0 - none, 1 - underline)
         overstrike - font strikeout (0 - none, 1 - strikeout)
         """
+    def setscale(self):
+        #this computer: (this doesn't pick up changes, so just doing it here)
+        root=tkinter.Tk() #just to get these values
+        h = self.program['screenh'] = root.winfo_screenheight()
+        w = self.program['screenw'] = root.winfo_screenwidth()
+        wmm = root.winfo_screenmmwidth()
+        hmm = root.winfo_screenmmheight()
+        root.destroy()
+        #this computer as a ratio of mine, 1080 (286mm) x 1920 (508mm):
+        hx=h/1080
+        wx=w/1920
+        hmmx=hmm/286
+        wmmx=wmm/508
+        log.info("screen height: {} ({}mm, ratio: {}/{})".format(h,hmm,hx,hmmx))
+        log.info("screen width: {} ({}mm, ratio: {}/{})".format(w,wmm,wx,wmmx))
+        xmin=min(hx,wx,hmmx,wmmx)
+        xmax=max(hx,wx,hmmx,wmmx)
+        if xmax-1 > 1-xmin:
+            self.program['scale']=xmax
+        else:
+            self.program['scale']=xmin
+        if self.program['scale'] < 1.02 and self.program['scale'] > 0.98:
+            log.info("Probably shouldn't scale in this case (scale: {})".format(
+                                                        self.program['scale']))
+            self.program['scale']=1
+        log.info("Largest variance from 1:1 ratio: {} (this will be used to scale "
+                "stuff.)".format(self.program['scale']))
     def __init__(self,program=None,name=None):
         self.program=program
         self.name=name
+        self.setscale()
         self.setthemes()
         self.setfonts()
         self.setimages()
@@ -383,6 +432,27 @@ class Renderer(ObectwArgs):
         draw.multiline_text((0+xpad//2, 0+ypad//4), text,font=font,fill=black,
                                                                 align=align)
         self.img = PIL.ImageTk.PhotoImage(img)
+class Exitable(object):
+    """This class provides the method and init to make things exit normally.
+    Hence, it applies to roots and windows, but not frames, etc."""
+    def on_quit(self):
+        """Do this when a window closes, so any window functions can know
+        to just stop, rather than trying to build graphic components and
+        throwing an error. This doesn't do anything but set the flag value
+        on exit, the logic to stop needs to be elsewhere, e.g.,
+        `if self.exitFlag.istrue(): return`"""
+        def killall():
+            self.destroy()
+            sys.exit()
+        if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
+            print("Setting window exit flag True!")
+            self.exitFlag.true()
+        if self.mainwindow: #exit afterwards if main window
+            killall()
+        else:
+            self.destroy() #do this for everything
+    def __init__(self):
+        self.protocol("WM_DELETE_WINDOW", self.on_quit)
 class Gridded(ObectwArgs):
     def dogrid(self):
         if self._grid:
@@ -456,8 +526,8 @@ class Childof(object):
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
             else:
-                log.info("parent doesn't have attr {}, skipping inheritance"
-                        "".format(attr))
+                log.info("parent {} (of {}) doesn't have attr {}, skipping inheritance"
+                        "".format(parent,type(self),attr))
     def __init__(self, parent): #because this is used everywhere.
         self.parent=parent
         self.inherit()
@@ -467,10 +537,12 @@ class UI(ObectwArgs):
         if hasattr(self,'ww') and self.ww.winfo_exists() == True:
             log.debug("There is already a wait window: {}".format(self.ww))
             return
+        self.withdraw()
         self.ww=Wait(self,msg)
     def waitdone(self):
         try:
             self.ww.close()
+            self.deiconify()
         except tkinter.TclError:
             pass
     def __init__(self): #because this is used everywhere.
@@ -493,13 +565,16 @@ class UI(ObectwArgs):
             #     log.info("TclError {}".format(e))
         # super(UI, self).__init__(*args, **kwargs)
 """below here has UI"""
-class Root(tkinter.Tk):
+class Root(Exitable,tkinter.Tk):
     """docstring for Root."""
     # def settheme(self,theme):
     #     self.theme=theme
     #     self['background']=self.theme.background
     #     self['bg']=self.theme.background
     def __init__(self, theme=None, program=None, *args, **kwargs):
+        """Some roots aren't THE root, e.g., contextmenu. Furthermore, I'm
+        currently not showing the root, so the user will never exit it."""
+        self.mainwindow=False
         self.exitFlag = ExitFlag()
         tkinter.Tk.__init__(self)
         if theme and not isinstance(theme,Theme) and type(theme) is str:
@@ -508,13 +583,16 @@ class Root(tkinter.Tk):
             self.theme=theme
         else:
             self.theme=Theme(program) #OK if program==None
+        self.renderings={}
+        Exitable.__init__(self)
         UI.__init__(self)
-        self.protocol("WM_DELETE_WINDOW", lambda s=self: Window.on_quit(s))
 """These have parent (Childof), but no grid"""
-class Toplevel(Childof,tkinter.Toplevel,UI): #NoParent
+class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
     def __init__(self, parent, *args, **kwargs):
+        self.mainwindow=False
         Childof.__init__(self,parent)
         tkinter.Toplevel.__init__(self)
+        Exitable.__init__(self)
         UI.__init__(self)
         self.protocol("WM_DELETE_WINDOW", lambda s=self: Window.on_quit(s))
 class Menu(Childof,tkinter.Menu): #not Text
@@ -798,8 +876,11 @@ class Window(Toplevel):
         if self.winfo_exists(): #If this has been destroyed, don't bother.
             if hasattr(self,'frame') and type(self.frame) is Frame:
                 self.frame.destroy()
+            for rc in [0,2]:
+                self.outsideframe.grid_rowconfigure(rc, weight=3)
+                self.outsideframe.grid_columnconfigure(rc, weight=3)
             self.frame=Frame(self.outsideframe,
-                            column=0,row=0,sticky='nsew'
+                            row=1, column=1, sticky='nsew'
                             )
     def removeverifymenu(self,event=None):
         #This removes menu from the verify window
@@ -808,24 +889,8 @@ class Window(Toplevel):
             self.parent.verifymenu=False
             self.setcontext(context='verifyT')
             return True #i.e., removed, to maybe replace later
-    def on_quit(self):
-        # Do this when a window closes, so any window functions can know
-        # to just stop, rather than trying and throwing an error. This doesn't
-        # do anything but set the flag value on exit, the logic to stop needs
-        # to be elsewhere, e.g., if `self.exitFlag.istrue(): return`
-        def killall():
-            self.destroy()
-            sys.exit()
-        if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
-            print("Setting window exit flag True!")
-            self.exitFlag.true()
-        if type(self) is tkinter.Tk: #exit afterwards if main window
-            killall()
-        else:
-            self.destroy() #do this for everything
     def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
                 choice=None, *args, **kwargs):
-        Childof.__init__(self,parent)
         # self.parent=parent
         # self.theme=parent.theme
         """Things requiring tkinter.Window below here"""
@@ -837,11 +902,12 @@ class Window(Toplevel):
         for rc in [0,2]:
             self.grid_rowconfigure(rc, weight=3)
             self.grid_columnconfigure(rc, weight=3)
-        self.outsideframe=Frame(self)
+        self.outsideframe=Frame(self,
+                                row=1, column=1,sticky='we',
+                                padx=(25,0),
+                                pady=(0,25)
+                                )
         """Give windows some margin"""
-        self.outsideframe['padx']=25
-        self.outsideframe['pady']=25
-        self.outsideframe.grid(row=1, column=1,sticky='we')
         self.iconphoto(False, self.theme.photo['icon']) #don't want this transparent
         self.title(title)
         self.resetframe()
@@ -850,7 +916,8 @@ class Window(Toplevel):
             e=(_("Exit")) #This should be the class, right?
             self.exitButton=Button(self.outsideframe, width=10, text=e,
                                 command=self.on_quit,
-                                font='small'
+                                font='small',
+                                padx=(0,25),
                                             )
             self.exitButton.grid(column=2,row=2)
         if backcmd is not False: #This one, too...
@@ -978,7 +1045,7 @@ class ButtonFrame(Frame):
                 optionlist = [({'code':optionlist[i][0],
                                 'description':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
-        if not 'name' in optionlist[0].keys(): #duplicate name from code.
+        if not 'name' in optionlist[0]: #duplicate name from code.
             for i in range(0, len(optionlist)):
                 optionlist[i]['name']=optionlist[i]['code']
         if gimmenull == True:
@@ -987,7 +1054,7 @@ class ButtonFrame(Frame):
             if choice['name'] == ["Null"]:
                 command=newvowel #come up with something better here..…
             if 'description' in choice:
-                print(choice['name'],str(choice['description']))
+                # print(choice['name'],str(choice['description']))
                 text=choice['name']+' ('+str(choice['description'])+')'
             else:
                 text=choice['name']
@@ -997,9 +1064,13 @@ class ButtonFrame(Frame):
             maintain a link to the variable itself, and give the last value it
             had to all the buttons... --not what we want!
             """
-            cmd=lambda x=choice['code'], w=window:command(x,window=w)
+            if window:
+                cmd=lambda x=choice['code'], w=window:command(x,window=w)
+                kwargs['window']=window
+            else:
+                cmd=lambda x=choice['code']:command(x)
             b=Button(self,text=text,choice=choice['code'],
-                    window=window,cmd=cmd,#width=self.width,
+                    cmd=cmd,#width=self.width,
                     row=i,
                     **kwargs
                     )
@@ -1478,6 +1549,3 @@ def nfd(x):
 if __name__ == '__main__':
     """To Test:"""
     # loglevel='Debug'
-    loglevel='INFO'
-    from logsetup import *
-    log=logsetup(loglevel)

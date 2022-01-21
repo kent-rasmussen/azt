@@ -4,36 +4,46 @@ import datetime
 import logging
 import lzma
 import re
-log = logging.getLogger(__name__)
-exceptiononload=False
-def logshutdown(): #Not sure I'll ever need this...
+import pathlib
+import os
+import sys
+"""
+DEBUG (10):    Detailed information, typically of interest only when
+                diagnosing problems.
+INFO (20):     Confirmation that things are working as expected.
+WARNING (30):  An indication that something unexpected happened,
+                or indicative of some problem in the near future (e.g.
+                ‘disk space low’). The software is still working as expected.
+ERROR (40):    Due to a more serious problem, the software has not been
+                  able to perform some function.
+CRITICAL (50): A serious error, indicating that the program itself
+                  may be unable to continue running.
+"""
+def shutdown():
     logging.shutdown()
-def logsetup(loglevel):
-    """This function needs to run before importing any of my modules, which
-    I'd like to have log stuff. So I put it here, so it won't clog up the
-    top of main.py"""
-    logfile='log_'+datetime.datetime.utcnow().isoformat()[:-16]+'.txt'
-    levels=['DEBUG','INFO','WARNING','ERROR','CRITICAL']
-    if (type(loglevel) is not int) and (loglevel.upper() not in levels):
-        print("Please select one of the following debug levels (that and above "
-            "will print):"
-            "\nDEBUG:    Detailed information, typically of interest only when "
-            "diagnosing problems."
-            "\nINFO:     Confirmation that things are working as expected."
-            "\nWARNING:  An indication that something unexpected happened, "
-            "or indicative of some problem in the near future (e.g. "
-            "‘disk space low’). The software is still working as expected."
-            "\nERROR:    Due to a more serious problem, the software has not been "
-            "able to perform some function."
-            "\nCRITICAL: A serious error, indicating that the program itself "
-            "may be unable to continue running.")
-        exit()
-    log = logging.getLogger()
-    log.filename=logfile
-    if type(loglevel) is int:
-        log.setLevel(loglevel)
+def getlog(name):
+    return logging.getLogger(name)
+def setlevel(loglevel,thislog=None):
+    if not thislog:
+        thislog=logging.root
+    thislog.setLevel(loglevel)
+    # log.info("Current {} logger level: {}".format(thislog,thislog.level))
+def getlogdir():
+    """Can't do this in file, which depends on this..."""
+    logdir=pathlib.Path.joinpath(pathlib.Path(__file__).parent,'userlogs')
+    if not os.path.exists(logdir):
+        log.debug("{} not there, making it!".format(logdir))
+        os.mkdir(logdir)
     else:
-        log.setLevel(getattr(logging, loglevel.upper()))
+        log.debug("Found {}".format(logdir))
+    return logdir
+def getlogfilename():
+    for h in [i for i in logging.root.handlers if isinstance(i,logging.FileHandler)]:
+        return h.baseFilename
+def dorootloghandlers(self):
+    logfile='log_'+datetime.datetime.utcnow().isoformat()[:-16]+'.txt'
+    logdir=getlogdir()
+    filename=pathlib.Path.joinpath(logdir,logfile)
     simpleformat = logging.Formatter('%(message)s')
     fullformat = logging.Formatter('%(asctime)s: %(name)s: %(levelname)s '
                                     '- %(message)s')
@@ -46,23 +56,22 @@ def logsetup(loglevel):
     console = logging.StreamHandler()
     console.setLevel(0) #Let the loglevel determine what to show
     console.setFormatter(simpleformat)
-    file = logging.FileHandler(logfile,mode='w', encoding='utf-8')
+    file = logging.FileHandler(filename,mode='w', encoding='utf-8')
     file.setLevel(0) #Let the loglevel determine what to show
     file.setFormatter(timelessformat)
-    log.addHandler(console)
-    log.addHandler(file)
-    def test(log):
-        log.debug("Debug!")
-        log.info("Info!")
-        log.warning("Warning!")
-        log.error("Error!")
-        log.exception("Exception!") #this expects exception info
-        log.critical("Critical!")
-    return log
-def logcontents(log,lastlines=0):
-    with open(log.filename,'r', encoding='utf-8') as d:
+    self.addHandler(console)
+    self.addHandler(file)
+def test(self):
+    self.debug("Debug!")
+    self.info("Info!")
+    self.warning("Warning!")
+    self.error("Error!")
+    self.exception("Exception!") #this expects exception info
+    self.critical("Critical!")
+def contents(self,lastlines=0):
+    with open(getlogfilename(),'r', encoding='utf-8') as d:
         return d.readlines()[-lastlines:]
-def logwritelzma(filename):
+def writelzma(filename=None):
     try:
         import lzma
         log.debug("LZMA imported fine.")
@@ -73,10 +82,14 @@ def logwritelzma(filename):
     """When this goes into production, change this:"""
     compressed='log_'+datetime.datetime.utcnow().isoformat()[:-7]+'Z'+'.xz'
     compressed=re.sub(':','-',compressed)
+    logdir=getlogdir()
+    compressedurl=pathlib.Path.joinpath(logdir,compressed)
+    if not filename:
+        filename=getlogfilename()
     with open(filename,'r', encoding='utf-8') as d:
         log.debug("Logfile {} opened.".format(filename))
-        with lzma.open(compressed, "wt", encoding='utf-8') as f:
-            log.debug("LZMA file {} opened.".format(compressed))
+        with lzma.open(compressedurl, "wt", encoding='utf-8') as f:
+            log.debug("LZMA file {} opened.".format(compressedurl))
             data=d.read()
             log.debug("Logfile {} read (this and following will not be written "
                     "to compressed log file).".format(filename))
@@ -87,20 +100,14 @@ def logwritelzma(filename):
             d.close()
             log.debug("Logfile {} closed (ready to return LZMA file).".format(
                                                                     filename))
-        with lzma.open(compressed) as ch:
+        with lzma.open(compressedurl) as ch:
             data2 = ch.read().decode("utf-8")
             log.debug("LZMA file {} decompressed.".format(compressed))
             ch.close()
         if data2 == data:
             log.debug("Data before compression the same as after "
                         "decompression.")
-        # else:
-        #     decompressed=compressed+'_decompressed'
-        #     log.error("Data before compression NOT the same as after "
-        #             "decompression; writing decompressed back to file {}!"
-        #             "".format(decompressed))
-        #     with open(decompressed,'w', encoding='utf-8') as chd:
-        #         chd.write(data2)
-        #         log.debug("Decompressed file {} written to disk."
-        #             "".format(decompressed))
-    return compressed
+    return compressedurl
+log = logging.getLogger() #this is the root; set level with setlevel
+setlevel('INFO') #If not set elsewhere
+dorootloghandlers(log)

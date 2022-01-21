@@ -1,8 +1,10 @@
 ## coding=UTF-8
 import re
 import time
-import logging
-log = logging.getLogger(__name__)
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
 """This is called from a number of places"""
 framerx=re.compile('__') #replace this w/data in frames.
 def urlok(x):
@@ -16,6 +18,21 @@ def urlok(x):
     for i in [d,p,l]:
         x=re.sub('['+i[0]+']',i[1],x)
     return x
+def split(delre,str):
+    return re.split(delre,str)
+def countxiny(x,y):
+    return re.subn(x, x, y)[1]
+def linebreakwords(x):
+    return re.sub(' ','\n',x)
+def pymoduleable(x):
+    return re.sub('\.','_', str(x))
+def delinebreak(x):
+    return re.sub('\n','',x)
+"""passthrough fns"""
+def sub(*args,**kwargs):
+    return re.sub(*args,**kwargs)
+def compile(x):
+    return re.compile(x)
 def id(x):
     x=x.replace('˥','4').replace('˦','3').replace('˧','2'
         ).replace('˨','1').replace('˩','0')
@@ -75,6 +92,29 @@ def makeprecomposed(x):
     for s in subs:
         x=re.sub(s,subs[s],x)
     return x
+def fixunicodeerrorsWindows(x):
+    errordict={
+                'É”': 'ɔ',
+                'É›': 'ɛ',
+                'É²': 'ɲ',
+                'Å‹': 'ŋ',
+                'Ã®': 'î',
+                'Ã´': 'ô',
+                'Ã¯': 'ï',
+                'Ã»': 'û',
+                'Ã ': 'à',
+                'â€˜': '',
+                'â€™': '',
+                'Å“': 'œ',
+                'Ã¢': 'â'
+                }
+    for e in errordict:
+        if e in x:
+            x=re.sub(e,errordict[e],x)
+    return x
+    # ls |grep 'É”\|É›\|É²\|Å‹\|Ã®\|Ã´\|Ã¯\|Ã»\|Ã \|â€˜\|â€™\|Å“\|Ã¢'
+    # mv `ls |grep 'É”\|É›\|É²\|Å‹\|Ã®\|Ã´\|Ã¯\|Ã»\|Ã \|â€˜\|â€™\|Å“\|Ã¢'` messedup/
+    # rename -n 's/É”/ɔ/g;s/É›/ɛ/g;s/É²/ɲ/g;s/Å‹/ŋ/g;s/Ã®/î/g;s/Ã´/ô/g;s/Ã¯/ï/g;s/Ã»/û/g;s/Ã /à/g;s/â€˜//g;s/â€™//g;s/Å“/œ/g;s/Ã¢/â/g' *
 def stripdiacritics(check,x):
     if 'd' in check.rx:
         return check.rx['d'].sub('',x)

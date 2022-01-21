@@ -4,10 +4,10 @@
 program={'name':'A→Z+T'}
 program['version']='0.8' #This is a string...
 import platform
-loglevel='DEBUG'
-from logsetup import *
-log=logsetup(loglevel)
-
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
 def main():
     log.infos("Running main function") #Don't translate yet!
     logshutdown()

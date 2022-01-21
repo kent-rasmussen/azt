@@ -12,11 +12,14 @@ import datetime
 import re #needed?
 import os
 import rx
-import logging
 import ast #For string list interpretation
 import copy
 import collections
-log = logging.getLogger(__name__)
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
+log.info("Importing lift.py")
 try: #Allow this module to be used without translation
     _
 except:
@@ -40,7 +43,7 @@ class BadParseError(Error):
 class Lift(object): #fns called outside of this class call self.nodes here.
     """The job of this class is to expose the LIFT XML as python object
     attributes. Nothing more, not thing else, should be done here."""
-    def __init__(self, filename,nsyls=None):
+    def __init__(self, filename):
         self.debug=False
         self.filename=filename #lift_file.liftstr()
         self.logfile=filename+".changes"
@@ -56,17 +59,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.backupfilename=''.join(backupbits)
         self.getguids() #sets: self.guids and self.nguids
         self.getsenseids() #sets: self.senseids and self.nsenseids
-        log.info("Working on {} with {} entries "
-                    "and {} senses".format(filename,self.nguids,self.nsenseids))
         """These three get all possible langs by type"""
-        self.glosslangs() #sets: self.glosslangs
-        self.analangs() #sets: self.analangs, self.audiolangs
+        self.getglosslangs() #sets: self.glosslangs
+        self.getanalangs() #sets: self.analangs, self.audiolangs
+        self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
+        self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
+        self.getfields() #sets self.fields (of entry)
+        self.getsensefields() #sets self.sensefields (fields of sense)
+        self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
+        "with citation data) "
+        log.info("Working on {} with {} entries, with lexeme data counts: {}, "
+        "citation data counts: {} and {} senses".format(filename,self.nguids,
+                                                    self.nentrieswlexemedata,
+                                                    self.nentrieswcitationdata,
+                                                    self.nsenseids))
         self.pss=self.pss() #log.info(self.pss)
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
         self.lcs=self.citations()
         self.lxs=self.lexemes()
-        self.locations=self.getlocations()
+        self.getlocations()
         self.defaults=[ #these are lift related defaults
                     'analang',
                     'glosslangs',
@@ -177,10 +189,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                 'id':(kwargs['form'][analang]+'_'+str(guid))
                                 })
         lexicalunit=ET.SubElement(entry, 'lexical-unit', attrib={})
-        form=ET.SubElement(lexicalunit, 'form',
-                                        attrib={'lang':analang})
-        text=ET.SubElement(form, 'text')
-        text.text=kwargs['form'][analang]
+        """Just adding citation, not lexeme forms, with this function,
+        though we need the lexeme field (above) to be there"""
+        # form=ET.SubElement(lexicalunit, 'form',
+        #                                 attrib={'lang':analang})
+        # text=ET.SubElement(form, 'text')
+        # text.text=kwargs['form'][analang]
         """At some point, I'll want to distinguish between these two"""
         citation=ET.SubElement(entry, 'citation', attrib={})
         form=ET.SubElement(citation, 'form', attrib={'lang':analang})
@@ -226,9 +240,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
          return 'py-'+analang
     def pylang(self,analang):
          return analang+'-x-py'
-    def modverificationnode(self,senseid,vtype,analang,add=None,rms=[],addifrmd=False):
+    def modverificationnode(self,senseid,vtype,analang,**kwargs):
         """this node stores a python symbolic representation, specific to an
         analysis language"""
+        showurl=kwargs.get('showurl',False)
+        write=kwargs.get('write',True)
+        add=kwargs.get('add',None)
+        rms=kwargs.get('rms',[])
+        addifrmd=kwargs.get('addifrmd',False)
         textnode, fieldnode, sensenode=self.addverificationnode(
                                             senseid,vtype=vtype,analang=analang)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
@@ -244,8 +263,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l.insert(i,add) #put where removed from, if done.
             changed=True
         textnode.text=str(l)
-        if changed == True:
-            self.updatemoddatetime(senseid=senseid)
+        if changed:
+            self.updatemoddatetime(senseid=senseid,write=write)
         log.log(2,"Empty node? {}; {}".format(textnode.text,l))
         if not l:
             log.debug("removing empty verification node from this sense")
@@ -336,6 +355,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             # Set values for any duplicates, too. Don't leave inconsisted data.
         tonevalue=kwargs.get('fieldvalue') #don't test for this above
         analang=kwargs.get('analang')
+        write=kwargs.get('write',False) #This an object with values
         framed=kwargs.get('framed',None) #This an object with values
         if framed:
             forms=framed.framed #because this should always be framed
@@ -359,7 +379,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "field? ({}-{})".format(senseid,location))
                 glossesnode=self.get("example/translation", senseid=senseid,
                             location=location, showurl=True).get('node')
-                for lang in glosslangs:
+                #If the glosslang data isn't all provided, ignore it.
+                for lang in [g for g in glosslangs if g in forms and forms[g]]:
                     glossvaluenode=self.get("form/text",
                                 node=glossesnode[0], senseid=senseid, glosslang=lang,
                                 location=location, showurl=True).get('node')
@@ -393,8 +414,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             exfieldvalue=p.makefieldnode(fieldtype,glosslangs[0],text=tonevalue,
                                                                 gimmetext=True)
             p.makefieldnode('location',glosslangs[0],text=location)
-        self.write()
-        self.updatemoddatetime(senseid=senseid)
+        if write:
+            self.write()
+        self.updatemoddatetime(senseid=senseid,write=write)
     def forminnode(self,node,value):
         """Returns True if `value` is in *any* text node child of any form child
         of node: [node/'form'/'text' = value] Is this needed?"""
@@ -552,37 +574,48 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "".format(uniq))
                         for example in examples[1:]:
                             sense.remove(example)
-        if dup:
-            self.write()
-        else:
+        #     self.write()
+        # else:
+        if not dup:
             log.info("No duplicate examples (same sense and location) were "
                     "found in the lexicon.")
     def addtoneUF(self,senseid,group,analang,guid=None,**kwargs):
         showurl=kwargs.get('showurl',False)
         write=kwargs.get('write',True)
-        node=self.get('sense',senseid=senseid).get() #give the sense.
+        node=self.get('sense',senseid=senseid,showurl=showurl).get()
         if node == []:
             log.info("Sorry, this didn't return a node: guid {}; senseid {}"
                                         "".format(guid,senseid))
             return
-        t=self.get('field/form/text',node=node[0],ftype='tone').get()
+        t=self.get('field/form/text',node=node[0],ftype='tone',
+                    showurl=showurl
+                    ).get()
         if t == []:
+            # log.info("No sense level tone field found, making")
             p=Node(node[0],'field',attrib={'type':'tone'})
             p.makeformnode(analang,text=group)
         else:
+            # log.info("Sense level tone field found ({}), using".format(
+            #                                                         t[0].text
+            #                                                         ))
             t[0].text=group
-        self.updatemoddatetime(guid=guid,senseid=senseid)
-        if write:
-            self.write()
+        # t=self.get('field/form/text',node=node[0],ftype='tone',
+        #             showurl=True
+        #             ).get()
+        # log.info("Sense level tone field now ‘{}’.".format(t[0].text))
+        # prettyprint(node[0])
+        self.updatemoddatetime(guid=guid,senseid=senseid,write=write)
         """<field type="tone">
         <form lang="en"><text>toneinfo for sense.</text></form>
         </field>"""
-    def addmediafields(self,node, url,lang, showurl=False):
+    def addmediafields(self, node, url, lang,**kwargs):
         """This fuction will add an XML node to the lift tree, like a new
         example field."""
         """The program should know before calling this, that there isn't
         already the relevant node --since it is agnostic of what is already
         there."""
+        showurl=kwargs.get('showurl',False)
+        write=kwargs.get('write',True)
         log.info("Adding {} value to {} location".format(url,node))
         possibles=node.findall("form[@lang='{lang}']/text".format(lang=lang))
         for possible in possibles:
@@ -594,9 +627,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     return
         form=Node(node,'form',attrib={'lang':lang})
         t=form.maketextnode(text=url)
-        prettyprint(node)
+        # prettyprint(node)
         """Can't really do this without knowing what entry or sense I'm in..."""
-        self.write()
+        if write:
+            self.write()
     def addmodcitationfields(self,entry,langform,lang):
         citation=entry.find('citation')
         if citation is None:
@@ -645,7 +679,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             <trait name="location" value="With Other Stuff" />
         </pronunciation>
         """
-    def updatemoddatetime(self,guid=None,senseid=None):
+    def updatemoddatetime(self,guid=None,senseid=None,write=True):
         """This updates the fieldvalue, ignorant of current value."""
         if senseid is not None:
             surl=self.get('sense',senseid=senseid) #url object
@@ -657,14 +691,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         elif guid is not None: #only if no senseid given
             for e in self.get('entry',guid=guid).get():
                 e.attrib['dateModified']=getnow()
-        self.write()
+        if write:
+            self.write()
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
+        log.info("Reading LIFT file.")
         self.tree=ET.parse(self.filename)
+        self.nodes=self.tree.getroot()
+        log.info("Done reading LIFT file.")
         """This returns the root node of an ElementTree tree (the entire
         tree as nodes), to edit the XML."""
-        self.nodes=self.tree.getroot()
     def writegzip(self,dir=None,filename=None):
         import gzip
         if filename is None:
@@ -707,12 +744,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if filename is None:
             filename=self.filename
         write=0
-        replace=0
-        remove=0
+        nodes=self.nodes
         xmlfns.indent(self.nodes)
-        self.tree=ET.ElementTree(self.nodes)
+        tree=ET.ElementTree(self.nodes)
         try:
-            self.tree.write(filename+'.part', encoding="UTF-8")
+            tree.write(filename+'.part', encoding="UTF-8")
             write=True
         except:
             log.error("There was a problem writing to partial file: {}"
@@ -725,7 +761,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 "directory. This is what's here: {}".format(
                     pathlib.Path(filename).name, pathlib.Path(filename).parent,
                     os.listdir(pathlib.Path(filename).parent)))
-    def analangs(self):
+    def getanalangs(self):
         """These are ordered by frequency in the database"""
         self.audiolangs=[]
         self.analangs=[]
@@ -752,28 +788,150 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.debug(_('No audio languages found in Database; creating one '
             'for each analysis language.'))
             for self.analang in self.analangs:
-                self.audiolangs+=[f'{self.analang}-Zxxx-x-audio']
+                self.audiolangs+=[self.makeaudiolangname()] #f'{self.analang}-Zxxx-x-audio']
         log.info('Audio languages: {}'.format(self.audiolangs))
         log.info('Analysis languages: {}'.format(self.analangs))
-    def glosslangs(self):
+    def makeaudiolangname(self):
+        return "{}-Zxxx-x-audio".format(self.analang)
+    def getglosslangs(self):
         """These are ordered by frequency in the database"""
         g=self.get('gloss').get('lang')
         d=self.get('definition/form').get('lang')
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {}".format(self.glosslangs)))
-    def fields(self,guid=None,lang=None): # all field types in a given entry
-        f=list(dict.fromkeys(self.get('field').get('type')))
-        return f
+    def getfields(self,guid=None,lang=None): # all field types in a given entry
+        self.fields=list(dict.fromkeys(self.get('entry/field',
+                                                showurl=True
+                                                ).get('type')))
+        log.info('Fields found in Entries: {}'.format(self.fields))
+    def getsensefields(self,guid=None,lang=None): # all field types in a given entry
+        self.sensefields=list(dict.fromkeys(self.get('entry/sense/field'
+                                                ,showurl=True
+                                                ).get('type')))
+        log.info('Fields found in Senses: {}'.format(self.sensefields))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
-        l=list(dict.fromkeys(self.get('example/locationfield').get('text')))
-        log.info('Locations found in Examples: {}'.format(l))
-        return l
+        self.locations=list(dict.fromkeys(self.get('example/locationfield').get('text')))
+        log.info('Locations found in Examples: {}'.format(self.locations))
     def getsenseids(self):
         self.senseids=self.get('sense').get('senseid')
         self.nsenseids=len(self.senseids)
+    def getentrieswcitationdata(self):
+        self.entrieswcitationdata={}
+        self.nentrieswcitationdata={}
+        for lang in self.analangs:
+            self.entrieswcitationdata[lang]=[
+                    i for i in self.nodes.findall('entry')
+                    if self.citationformnodeofentry(i,lang).text
+                            ]
+            self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
+    def getentrieswlexemedata(self):
+        self.entrieswlexemedata={}
+        self.nentrieswlexemedata={}
+        for lang in self.analangs:
+            self.entrieswlexemedata[lang]=[
+                    i for i in self.nodes.findall('entry')
+                    if self.lexemeformnodeofentry(i,lang).text
+                            ]
+            self.nentrieswlexemedata[lang]=len(self.entrieswlexemedata[lang])
+    def getfieldswsoundfiles(self):
+        """This is NOT sensitive to sense level fields, which is where we store
+        analysis and verification. This should just pick up entry form fields,
+        or CAWL numbers, etc, which shouldn't be coded for analang."""
+        fieldswsoundfiles={}
+        self.nfieldswsoundfiles={}
+        fields={}
+        self.nfields={}
+        fieldopts=['sense/example']+['field[@type="{}"]'.format(f)
+                                                        for f in self.fields]
+        for field in fieldopts:
+            fields[field]={}
+            fieldswsoundfiles[field]={}
+            self.nfields[field]={}
+            self.nfieldswsoundfiles[field]={}
+            for lang in self.analangs:
+                fields[field][lang]=[i for i in
+                    self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
+                                                                field,lang))
+                    if i.text
+                                    ]
+                self.nfields[field][lang]=len(fields[field][lang])
+            for lang in self.audiolangs:
+                fieldswsoundfiles[field][lang]=[i for i in
+                    self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
+                                                                field,lang))
+                    if i.text
+                                ]
+                self.nfieldswsoundfiles[field][lang]=len(fieldswsoundfiles[field][lang])
     def getguids(self):
         self.guids=self.get('entry').get('guid')
         self.nguids=len(self.guids)
+    def fillentryAwB(self,a,b):
+        """This is for filling in a database with SIL CAWL info; it doesn't
+        treat lexeme or citation, etc. info, just sense/gloss, CAWL, and
+        semantic domain fields."""
+        """Nothing (yet?) fancy for testing for each having a node, nor
+        combining them; only moves if A node is absent or empty."""
+        asense=a.find('sense')
+        agloss={}
+        """Start by getting info from node A to match against"""
+        for n in [i for i in asense if i.tag == 'gloss']:
+            lang=n.get('lang')
+            agloss[lang]=n.find('text')
+            if agloss[lang]:
+                agloss[lang]=agloss[lang].text
+        """For now, these two are either there or not."""
+        asilcawl=asense.find("field[@type='SILCAWL']")
+        if isinstance(asilcawl,ET.Element):
+            asilcawlt=asilcawl.find('form/text').text
+        else:
+            asilcawlt=EmptyTextNodePlaceholder()
+        asdn=asense.find("trait[@name='semantic-domain-ddp4']")
+        if isinstance(asdn,ET.Element):
+            asd=asdn.get('value')
+        else:
+            asd=None
+        """Then test if node B has the more info, and if so, add to A"""
+        bsense=b.find('sense')
+        for n in [i for i in bsense if i.tag == 'gloss']:
+            lang=n.get('lang')
+            if n.find('text') and (lang not in agloss or not agloss[lang]):
+                asense.append(n) #append the node wholesale, not values.
+        bsilcawl=bsense.find("field[@type='SILCAWL']")
+        bsilcawlt=bsilcawl.find('form/text').text
+        if isinstance(bsilcawl,ET.Element): #Should always be, but just to be sure
+            if not asilcawlt or bsilcawlt != asilcawlt:
+                asense.append(bsilcawl) #copy over if empty or not the same
+            #     log.info("yes,")
+            # try:
+            #     log.info("bsilcawl copied over to asense?: {}/{}".format(
+            #     asilcawl.find('form/text').text,
+            #     bsilcawl.find('form/text').text
+            #     ))
+            # except:
+            #     log.info("bsilcawl copied over to asense?: {}/{}".format(
+            #     asilcawl,
+            #     bsilcawl.find('form/text').text
+            #     ))
+        bsdn=bsense.find("trait[@name='semantic-domain-ddp4']")
+        bsd=bsdn.get('value')
+        if bsd: #Should always be, but just to be sure
+            if not asd or bsd != asd:
+                asense.append(bsdn) #copy over if empty or not the same
+            #     try:
+            #         log.info("bsdn copied over to asense: {}/{}".format(
+            #         asdn.get('value'),
+            #         bsdn.get('value')
+            #         ))
+            #     except:
+            #         log.info("bsdn copied over to asense: {}/{}".format(
+            #         asdn,
+            #         bsdn.get('value')
+            #         ))
+            # else:
+            #     log.info("bsdn not copied over to asense: {}/{}".format(
+            #     asdn.get('value'),
+            #     bsdn.get('value')
+            #     ))
     """Set up"""
     def nc(self):
         nounclasses="1 2 3 4 5 6 7 8 9 10 11 12 13 14"
@@ -903,28 +1061,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def slists(self):
         self.segmentsnotinregexes={}
         self.clist()
-    # def getformstosearch(self):
-    #     """This outputs a dictionary of form {analang: {guid:form}*}*, where
-    #     form is citation if available, or else lexeme. This is to be flexible
-    #     for entries in process of analysis, and to have a dictionary to check
-    #     with regexes for output."""
-    #     fts={}
-    #     for lang in self.analangs:
-    #         fts[lang]={} #This will erase all previous data!!
-    #         for ps in self.pss+[None]: #I need to break this up.
-    #             fts[lang][ps]={}
-    #             for s in self.get('sense',analang=lang,ps=ps).get('senseid'):
-    #                 f=self.citation(senseid=s,analang=lang)
-    #                 # if f == []:
-    #                 #     f=self.lexeme(senseid=s,analang=lang)
-    #                 for fi in f:
-    #                     if fi in fts[lang][ps]:
-    #                         fts[lang][ps][fi].append(s)
-    #                     else:
-    #                         fts[lang][ps][fi]=[s]
-    #     log.debug("Found the following forms to search: {}".format(
-    #                                                         fts))
-    #     return fts
     """Get stuff"""
     def gloss(self,**kwargs):
         return self.get('gloss/text', **kwargs).get('text')
@@ -982,6 +1118,29 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             output[lang]=self.citation(**kwargs) #.get('text')
         log.info("Found the following citation forms: {}".format(output))
         return output
+    def citationformnodeofentry(self,entry,analang):
+        nodes=entry.findall('citation')
+        for node in nodes:
+            formtexts=node.findall('form[@lang="{}"]/text'.format(analang))
+            if formtexts:
+                return formtexts[0]
+        if nodes:
+            return Node.makeformnode(nodes[0],analang,gimmetext=True)
+        else:
+            citationnode=Node(entry,'citation')
+            return citationnode.makeformnode(analang,gimmetext=True)
+    def lexemeformnodeofentry(self,entry,analang):
+        """This produces a list; specify senseid and analang as you like."""
+        nodes=entry.findall('lexical-unit') #always there, even if empty
+        if not nodes:
+            log.error("This entry doesn't seem to have a lexeme form field: {}"
+                    "".format(entry.get("guid")))
+        for node in nodes:
+            formtexts=node.findall('form[@lang="{}"]/text'.format(analang))
+            if formtexts:
+                return formtexts[0]
+            else:
+                return Node.makeformnode(node,analang,gimmetext=True)
     def lexeme(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
         output=self.get('lexeme/form/text',**kwargs).get('text')
@@ -1027,12 +1186,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def ps(self,**kwargs): #get POS values, limited as you like
         return self.get('ps',**kwargs).get('value')
     def pss(self): #get all POS values in the LIFT file
-        p=list(dict.fromkeys(self.ps()))
-        log.info("Found these ps values: {}".format(p))
-        return p
+        counted = collections.Counter(self.ps())
+        ordered = [value for value, count in counted.most_common()
+                    if value not in [None, '']]
+        log.info("Found these ps values, by frequency: {}".format(ordered))
+        return ordered
     def getmorphtypes(self): #get all morph-type values in the LIFT file
-        m=collections.Counter(self.get('morphtype',showurl=True).get('value')
-                                                                ).most_common()
+        m=collections.Counter(self.get('morphtype').get('value')).most_common()
         log.info("Found these morph-type values: {}".format(m))
         return m
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
@@ -1215,6 +1375,8 @@ class LiftURL():
     def gloss(self):
         self.baselevel()
         self.build("gloss","lang","glosslang")
+        if 'gloss' in self.kwargs and self.kwargs['gloss']:
+            self.text("gloss")
     def definition(self):
         self.baselevel()
         self.build("definition")
@@ -1264,6 +1426,19 @@ class LiftURL():
         if 'tonevalue' in self.kwargs:
             self.kwargs['formtext']='tonevalue'
             self.form("tonevalue",'glosslang')
+            self.kwargs['formtext']=None
+        else: #don't force a text node with no text value
+            self.kwargs['formtext']=None
+            self.form(lang='glosslang')
+    def cawlfield(self):
+        log.log(4,"Making CAWL field")
+        self.baselevel()
+        self.kwargs['ftype']='SILCAWL'
+        self.level['cawlfield']=self.level['cur']+1 #so this won't repeat
+        self.field()
+        if 'cawlvalue' in self.kwargs:
+            self.kwargs['formtext']='cawlvalue'
+            self.form("cawlvalue",'glosslang')
             self.kwargs['formtext']=None
         else: #don't force a text node with no text value
             self.kwargs['formtext']=None
@@ -1667,6 +1842,8 @@ class LiftURL():
         self.attrs['tonefield']=['tonevalue']
         self.attrs['toneUFfield']=['toneUFvalue']
         self.attrs['locationfield']=['location']
+        self.attrs['cawlfield']=['fvalue']
+        self.attrs['gloss']=['glosslang']
     def setchildren(self):
         """These are the kwargs that imply a field. field names also added to
         ensure that depenents get picked up.
@@ -1674,10 +1851,11 @@ class LiftURL():
         # use self.alias.get(tag,tag) where needed!
         self.children={}
         self.children['lift']=['entry']
-        self.children['entry']=['lexeme','pronunciation','sense',
+        self.children['entry']=['lexeme','pronunciation','sense','field',
                                             'citation','morphtype','trait']
         self.children['sense']=['ps','definition','gloss',
-                                            'example','toneUFfield','field']
+                                'example','toneUFfield','cawlfield','field'
+                                            ]
         self.children['example']=['form','translation','locationfield',
                                             'tonefield','field']
         self.children['field']=['form']
@@ -2252,10 +2430,6 @@ if __name__ == '__main__':
     #     return str(x)
     """To Test:"""
     # loglevel='Debug'
-    loglevel='INFO'
-    print('loglevel=',loglevel)
-    from logsetup import *
-    log=logsetup(loglevel)
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
@@ -2265,7 +2439,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
-    lift=Lift(filename,nsyls=2)
+    lift=Lift(filename)
     senseids=["begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
             'widen_fceb550d-fc99-40af-a288-0433add4f15',
             'flatten_9fb3d2b4-bc9e-4451-b475-36ee10316e40',
@@ -2311,6 +2485,36 @@ if __name__ == '__main__':
 
         return
     oldtonevalue=2
+    g='snore'
+    lang='en'
+    cawls=lift.get('cawlfield/form/text').get('text')
+    log.info("CAWL ({}): {}".format(len(cawls),cawls))
+    missing=[]
+    for i in range(1700):
+        if "{:04}".format(i+1) not in cawls:
+            missing.append(i+1)
+    log.info("CAWL entries missing ({}): {}".format(len(missing),missing))
+    exit()
+    e=lift.get('entry',gloss=g,glosslang=lang,
+                            #ftype='SILCAWL',
+                            # cawlvalue="{:04}".format(n+1),
+                            showurl=True
+                            ).get('node')
+    if e:
+        log.info(e)
+    else:
+        log.info("No entry! ({})".format(e))
+    exit()
+    for n in range(1705):
+        sense=lift.get('entry',path=['cawlfield'],#ftype='SILCAWL',
+                        cawlvalue="{:04}".format(n+1),
+                        showurl=True
+                        ).get('node')
+        if sense:
+            log.info("{} found!".format(n))
+        else:
+            log.info("{} not found!".format(n))
+    exit()
     for senseid in senseids:
         for location in locations:# b=lift.get('sense',fieldtype='tone',location=locations[0],
         #             tonevalue=subcheck,showurl=True).get('senseid')
