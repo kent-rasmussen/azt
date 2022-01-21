@@ -3248,7 +3248,7 @@ class TaskDressing(object):
             try:
                 self.runwindow.wait("Writing to LIFT")
                 w=self.runwindow
-            except KeyError:
+            except AttributeError:
                 self.wait("Writing to LIFT")
                 w=self
             self.db.write()
