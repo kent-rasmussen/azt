@@ -3561,6 +3561,10 @@ class TaskChooser(TaskDressing,ui.Window):
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
         w=ui.Window(self,title=title)
+        lexemesdone=list(self.db.nentrieswlexemedata.values())#[self.settings.analang]
+        citationsdone=list(self.db.nentrieswcitationdata.values())#[self.settings.analang]
+        nbtext1=_("You have {} entries with lexeme data, and only {} with "
+                "citation data.").format(lexemesdone,citationsdone)
         instructions=_("Typically, dictionary work starts by collecting "
                         "citation forms, and later moves to analyzing those "
                         "forms into lexemes (meaningful, but not necessarily "
@@ -3579,16 +3583,18 @@ class TaskChooser(TaskDressing,ui.Window):
                 "so it would be wise to back up your data.")
         lt=ui.Label(w.frame, text=title, font='title',
                     row=0, column=0, columnspan=2)
-        li=ui.Label(w.frame, text=instructions, font='instructions',
+        nb=ui.Label(w.frame, text=nbtext1, font='default',
                     row=1, column=0, columnspan=2)
-        lq=ui.Label(w.frame, text=Question, font='read',
+        li=ui.Label(w.frame, text=instructions, font='instructions',
                     row=2, column=0, columnspan=2)
+        lq=ui.Label(w.frame, text=Question, font='read',
+                    row=3, column=0, columnspan=2)
         bok=ui.Button(w.frame, text=oktext,
                         cmd=lambda w=w:self.convertlxtolc(w),
-                        row=3, column=0)
-        bnok=ui.Button(w.frame, text=noktext, cmd=w.destroy, row=3, column=1)
-        lnb=ui.Label(w.frame, text=nbtext, row=4, column=0, columnspan=2)
-        for l in [lt,li,lq,lnb]:
+                        row=4, column=0)
+        bnok=ui.Button(w.frame, text=noktext, cmd=w.destroy, row=4, column=1)
+        lnb=ui.Label(w.frame, text=nbtext, row=5, column=0, columnspan=2)
+        for l in [lt,li,nb,lq,lnb]:
             l.wrap()
         return w
     def getcawlmissing(self):
