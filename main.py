@@ -3620,7 +3620,7 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("lexemesdone by lang: {}".format(lexemesdone))
         log.info("citationsdone by lang: {}".format(citationsdone))
         for l in lexemesdone:
-            if l in citationsdone and citationsdone[l] < lexemesdone[l]:
+            if l not in citationsdone or citationsdone[l] < lexemesdone[l]:
                 w=self.asktoconvertlxtolc()
                 w.wait_window(w) # wait for this answer before moving on
                 break #just ask this once
