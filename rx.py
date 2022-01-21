@@ -28,6 +28,11 @@ def pymoduleable(x):
     return re.sub('\.','_', str(x))
 def delinebreak(x):
     return re.sub('\n','',x)
+def stripquotes(x):
+    try:
+        return x.strip('‘’')
+    except:
+        return x
 """passthrough fns"""
 def sub(*args,**kwargs):
     return re.sub(*args,**kwargs)
