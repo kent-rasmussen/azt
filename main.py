@@ -1676,9 +1676,13 @@ class Settings(object):
         for ps in self.db.pss:
             scount[ps]={}
             for s in self.rx:
-                scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
-                    for x in self.sextracted[ps][s]],key=lambda x:x[1],
+                try:
+                    scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
+                        for x in self.sextracted[ps][s]],key=lambda x:x[1],
                                                                 reverse=True)
+                except KeyError as e:
+                    log.info(_("{} KeyError reading {}-{} from sextracted"
+                                "").format(e,ps,s))
         self.slices.scount(scount) #send to object
     def notifyuserofextrasegments(self):
         if not hasattr(self,'analang'):
