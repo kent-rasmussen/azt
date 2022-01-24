@@ -3847,7 +3847,9 @@ class WordCollection(object):
         log.info("To do: ({}) {}".format(len(todo),todo))
         return todo
     def addCAWLentries(self):
-        log.info("Adding unfilled CAWL entries to established database.")
+        text=_("Adding CAWL entries to fill out, in established database.")
+        self.wait(msg=text)
+        log.info(text)
         self.file.loadCAWL()
         self.cawldb=self.file.cawldb
         added=[]
