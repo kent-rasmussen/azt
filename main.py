@@ -4011,13 +4011,30 @@ class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
     def taskicon(self):
         return program['theme'].photo['iconWord']
     def dobuttonkwargs(self):
-        return {'text':"Add a Word",
-                'fn':self.addmorpheme,
+        if self.taskchooser.cawlmissing:
+            fn=self.addCAWLentries
+            text="Add remaining CAWL entries"
+            tttext=_("This will add entries from the Comparative African "
+                    "Wordlist (CAWL) which aren't already in your database "
+                    "(you are missing {}). If the appropriate "
+                    "glosses are found in your database, CAWL tags will be "
+                    "merged with those entries."
+                    "\nDepending on the number of entries, this may take "
+                    "awhile.").format(len(self.taskchooser.cawlmissing))
+        else:
+            text=_("Add a Word")
+            fn=self.addmorpheme
+            tttext=_("This adds any word, but is best used after filling out a "
+                    "wordlist, if the word you want to add isn't there "
+                    "already.")
+        return {'text':text,
+                'fn':fn,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
                 'image':self.taskchooser.theme.photo['Word'],
-                'sticky':'ew'
+                'sticky':'ew',
+                'tttext':tttext
                 }
     def tasktitle(self):
         return _("Add Words") # for Citation Forms
