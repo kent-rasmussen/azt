@@ -94,6 +94,7 @@ class Theme(object):
                             ('iconTRep','images/T Report_icon.png'),
                             ('iconCVRep','images/ZA Report_icon.png'),
                             ('iconTRepcomp','images/T Report Comprehensive_icon.png'),
+                            ('iconCVRepcomp','images/ZA Report Comprehensive_icon.png'),
                             ('T','images/T alone clear6.png'),
                             ('C','images/Z alone clear6.png'),
                             ('V','images/A alone clear6.png'),
@@ -104,6 +105,7 @@ class Theme(object):
                             ('TRep','images/T Report.png'),
                             ('CVRep','images/ZA Report.png'),
                             ('TRepcomp','images/T Report Comprehensive.png'),
+                            ('CVRepcomp','images/ZA Report Comprehensive.png'),
                             ('backgrounded','images/AZT stacks6.png'),
                             #Set images for tasks
                             ('verifyT','images/Verify List.png'),
