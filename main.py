@@ -7551,14 +7551,14 @@ class ReportCitationBasic(Report,Segments,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Comprehensive Alphabet Report") # on Citation Forms
     def taskicon(self):
-        return program['theme'].photo['iconCV']
+        return program['theme'].photo['iconCVRepcomp']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['icon'],
+                'image':self.taskchooser.theme.photo['CVRepcomp'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
