@@ -3607,6 +3607,8 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("CAWL missing ({}): {}".format(len(self.cawlmissing),
                                                     self.cawlmissing))
     def whatsdone(self):
+        """I should probably have a roundtable with people to discuss these
+        numbers, to see that we agree the decision points are rational."""
         self.donew={}
         for task in ['collectionlc','parsedlx','collectionplimp',
                     'tonereport',
@@ -3671,12 +3673,15 @@ class TaskChooser(TaskDressing,ui.Window):
                             "for analang {}".format(self.db.audiolangs,l))
         log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
         for lang in self.file.db.nentrieswlexemedata:
-            if self.file.db.nentrieswlexemedata[lang] >=1700:
+            if self.file.db.nentrieswcitationdata[lang
+                ]-self.file.db.nentrieswlexemedata[lang] < 100:
                 self.donew['parsedlx']=True
+                break
         for lang in self.file.db.nentrieswcitationdata:
             # if self.file.db.nentrieswcitationdata[lang] >=1700:
-            if not self.cawlmissing:
+            if len(self.cawlmissing) < 205:#10:
                 self.donew['collectionlc']=True
+                break
         for f in self.db.sensefields:
             if 'verification' in f:
                 self.donew['analysis']=True
