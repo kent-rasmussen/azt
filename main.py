@@ -3438,6 +3438,10 @@ class TaskChooser(TaskDressing,ui.Window):
         """This function (and probably a few dependent functions, maybe
         another class) provides a list of functions with prerequisites
         that are minimally and/or optimally satisfied."""
+        """So far that distinction isn't being made. For instance, we should
+        not offer recordingT as default if all examples have sound files, yet
+        a user may well want to go back and look at those recordings, and maybe
+        rerecord some."""
         #if nothing to do??
         """Separate these into
         Data Collection: collect, sort
