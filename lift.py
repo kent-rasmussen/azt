@@ -485,7 +485,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         nodes[n]=[]
                     for example in examples:
                         for lang in self.analangs:
-                            log.info("looking for {} (analang) data".format(lang))
+                            # log.info("looking for {} (analang) data".format(lang))
                             l=example.findall("form[@lang='{}']/text"
                                                 "".format(lang))
                             """I actually don't want data from alternate analangs.
@@ -497,11 +497,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             #     l=[emptytextnode] #must distinguish empty/missing nodes
                             nodes['al-'+lang].extend(l)
                         for lang in self.glosslangs:
-                            log.info("looking for {} (glosslang) data".format(lang))
+                            # log.info("looking for {} (glosslang) data".format(lang))
                             g=example.findall("translation/form[@lang='{}']"
                                             "/text".format(lang))
                             if not g:
-                                log.info("No text node found for {}".format(lang))
+                                # log.info("No text node found for {}".format(lang))
                                 g=[emptytextnode]
                             for gi in g:
                                 # if gi.text and ('‘' in gi.text or '’' in gi.text):
