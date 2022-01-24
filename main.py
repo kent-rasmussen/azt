@@ -5000,7 +5000,7 @@ class Report(object):
             for example in examples:
                 framed=self.taskchooser.datadict.getframeddata(example,senseid)
                 # skip empty examples:
-                if not framed.forms or self.analang not in framed.forms:
+                if not hasattr(framed,'forms') or self.analang not in framed.forms:
                     continue
                 framed.gettonegroup() #wanted for id, not for display
                 for lang in [self.analang]+self.glosslangs:
