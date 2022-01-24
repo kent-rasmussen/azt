@@ -3880,9 +3880,13 @@ class WordCollection(object):
                 added.append(n)
         if added or modded:
             self.db.write()
-            text=_("Added {} entries from the SILCAWL: ({})"
-            "\nModded {} entries with new information from the SILCAWL: ({})"
-            "").format(len(added),added,len(modded),modded)
+            text=_("Added {} entries from the SILCAWL").format(len(added))
+            if len(added)<100:
+                text+=": ({})".format(added)
+            text+=_("\nModded {} entries with new information from the "
+                    "SILCAWL").format(len(modded))
+            if len(modded)<100:
+                text+=": ({})".format(modded)
             log.info(text)
             ErrorNotice(text,title="Entries Added!")
             self.getwords()
