@@ -3929,7 +3929,7 @@ class WordCollection(object):
         try:
             self.wordframe.destroy()
         except Exception as e:
-            log.info("Probably nothing: {}".format(e))
+            log.info("Probably nothing (wordframe not made yet): {}".format(e))
         self.wordframe=ui.Frame(self.frame,row=1,column=1,sticky='ew')
         if not self.entries:
             text=_("It looks like you're done collecting the Comparative "
