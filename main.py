@@ -553,11 +553,14 @@ class StatusFrame(ui.Frame):
                 )
     def button(self,text,fn,**kwargs): #=opts['labelcolumn']
         """cmd overrides the standard button command system."""
+        ttt=kwargs.pop('tttext',None)
         b=ui.Button(self.proseframe, choice=text, text=text, anchor='c',
                         cmd=fn, width=self.opts['width'],
                         column=0, row=self.opts['row'],
                         columnspan=self.opts['columnspan'],
                         **kwargs)
+        if ttt:
+            tt=ui.ToolTip(b,ttt)
     """These functions point to self.taskchooser functions, betcause we don't
     know who this frame's parent is"""
     def makeproseframe(self):
