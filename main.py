@@ -3454,7 +3454,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 # tasks.append(SortV)
                 # tasks.append(SortC)
                 tasks.append(SortCitationT)
-                if self.donew['torecordT']:
+                if self.donew['somesortT']:
                     tasks.append(RecordCitationT)
             # if self.donew['parsedlx']:
             #     tasks.append(SortRoots)
