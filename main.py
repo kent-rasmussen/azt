@@ -3892,7 +3892,9 @@ class WordCollection(object):
         self.storethisword()
         if self.index < len(self.entries)-1:
             self.index+=1
-            self.getword()
+            r=self.getword()
+            if r == 'noglosses':
+                self.nextword()
         else:
             oktext=_("Continue")
             t=_("Congratulations! \nIt looks like you got to the end of what "
@@ -3907,7 +3909,9 @@ class WordCollection(object):
             self.index=len(self.entries)-1
         else:
             self.index-=1
-        self.getword()
+        r=self.getword()
+        if r == 'noglosses':
+            self.backword()
     def storethisword(self):
         try:
             self.lxtextnode.text=self.lxvar.get()
@@ -3918,7 +3922,9 @@ class WordCollection(object):
         self.entries=self.getlisttodo()
         self.nentries=len(self.entries)
         self.index=0
-        self.getword()
+        r=self.getword()
+        if r == 'noglosses':
+            self.nextword()
     def getword(self):
         try:
             self.wordframe.destroy()
