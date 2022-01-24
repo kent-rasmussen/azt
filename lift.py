@@ -503,6 +503,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             if not g:
                                 log.info("No text node found for {}".format(lang))
                                 g=[emptytextnode]
+                            for gi in g:
+                                # if gi.text and ('‘' in gi.text or '’' in gi.text):
+                                    gi.text=rx.stripquotes(gi.text)
                             nodes['gl-'+lang].extend(g)
                         #This should ultimately have [@lang='{}'].analang
                         t=example.findall("field[@type='tone']/form/text")
@@ -511,8 +514,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             t=[emptytextnode]
                         nodes['value'].extend(t)
                     for n in nodes:
-                        uniq[n]=list(set([i.text for i in nodes[n]
-                                                            if i is not None]))
+                        """Collect all distinct values, not considering
+                        missing nodes (None) or values that differ only by
+                        initial or final quotes. Notably, i.text as None is
+                        allowed, as this is an important difference to track"""
+                        uniq[n]=list(set([rx.stripquotes(textornone(i))
+                                            for i in nodes[n]
+                                            if i is not None]))
                     if [n for n in uniq if len(uniq[n]) >1]: #any multiples
                         # if not [l for l in langs if len(uniq[l]) >1]: #nonlang
                         if not [l for l in uniq if len(uniq[l]) >1
