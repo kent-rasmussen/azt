@@ -3890,7 +3890,6 @@ class WordCollection(object):
             self.taskchooser.makedefaulttask()
             self.e.on_quit()
         self.storethisword()
-        self.maybewrite()
         if self.index < len(self.entries)-1:
             self.index+=1
             self.getword()
@@ -3904,14 +3903,17 @@ class WordCollection(object):
             b=ui.Button(self.e.frame,text=oktext, cmd=cont, row=1, column=1)
     def backword(self):
         self.storethisword()
-        self.maybewrite()
         if self.index == 0:
             self.index=len(self.entries)-1
         else:
             self.index-=1
         self.getword()
     def storethisword(self):
-        self.lxtextnode.text=self.lxvar.get()
+        try:
+            self.lxtextnode.text=self.lxvar.get()
+            self.maybewrite() #only if above is successful
+        except AttributeError as e:
+            log.info("Not storing word: {}".format(e))
     def getwords(self):
         self.entries=self.getlisttodo()
         self.nentries=len(self.entries)
@@ -3950,6 +3952,10 @@ class WordCollection(object):
                                     glosslang=g).get('text'))
         # glossframe=ui.Frame(self.wordframe, row=1, column=0)
         glossesthere=' — '.join([glosses[i] for i in glosses if i])
+        if not glossesthere:
+            log.info("entry {} doesn't have glosses; not showing."
+                    "".format(entry.get('id')))
+            return 'noglosses'
         l=ui.Label(self.wordframe, text=glossesthere, font='read',
                 row=1, column=0, columnspan=3, sticky='ew')
         l.wrap()
