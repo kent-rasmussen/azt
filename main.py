@@ -7018,11 +7018,11 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
                 'fn':self.makewindow,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['icon'], #self.cvt
+                'image':self.taskchooser.theme.photo['Transcribe'], #self.cvt
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program['theme'].photo['iconT']
+        return program['theme'].photo['iconTranscribe']
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self, parent)
         ui.Window.__init__(self, parent)
@@ -7349,11 +7349,11 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                 'fn':self.tonegroupsjoinrename,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['icon'], #self.cvt
+                'image':self.taskchooser.theme.photo['JoinUF'], #self.cvt
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program['theme'].photo['iconT']
+        return program['theme'].photo['iconJoinUF']
     def tonegroupsjoinrename(self,**kwargs):
         def clearerror(event=None):
             errorlabel['text'] = ''
