@@ -4032,7 +4032,7 @@ class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
             text="Add remaining CAWL entries"
             tttext=_("This will add entries from the Comparative African "
                     "Wordlist (CAWL) which aren't already in your database "
-                    "(you are missing {}). If the appropriate "
+                    "(you are missing {} CAWL tags). If the appropriate "
                     "glosses are found in your database, CAWL tags will be "
                     "merged with those entries."
                     "\nDepending on the number of entries, this may take "
