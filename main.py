@@ -4659,12 +4659,16 @@ class Sound(object):
                                 dictnow)
             return
         self.soundsettingswindow.resetframe()
+        self.soundsettingswindow.scroll=ui.ScrollingFrame(
+                                                    self.soundsettingswindow,
+                                                    row=0,column=0)
+        self.soundsettingswindow.content=self.soundsettingswindow.scroll.content
         row=0
-        ui.Label(self.soundsettingswindow.frame, font='title',
+        ui.Label(self.soundsettingswindow.content, font='title',
                 text="Current Sound Card Settings",
                 row=row,column=0)
         row+=1
-        ui.Label(self.soundsettingswindow.frame, #font='title',
+        ui.Label(self.soundsettingswindow.content, #font='title',
                 text="(click any to change)",
                 row=row,column=0)
         row+=1
@@ -4685,29 +4689,29 @@ class Sound(object):
                 l=_("Microphone: ‘{}’").format(l)
             if cmd == self.getsoundcardoutindex:
                 l=_("Speakers: ‘{}’").format(l)
-            l=ui.Label(self.soundsettingswindow.frame,text=l,
+            l=ui.Label(self.soundsettingswindow.content,text=l,
                     row=row,column=0)
             l.bind('<ButtonRelease>',cmd) #getattr(self,str(cmd)))
             row+=1
-        br=RecordButtonFrame(self.soundsettingswindow.frame,self,test=True)
+        br=RecordButtonFrame(self.soundsettingswindow.content,self,test=True)
         br.grid(row=row,column=0)
         row+=1
         l=_("You may need to change your microphone "
             "\nand/or speaker sound card to get the "
             "\nsampling and format you want.")
-        ui.Label(self.soundsettingswindow.frame,
+        ui.Label(self.soundsettingswindow.content,
                 text=l).grid(row=row,column=0)
         row+=1
         l=_("Make sure ‘record’ and ‘play’ work well here, "
             "\nbefore recording real data!")
-        caveat=ui.Label(self.soundsettingswindow.frame,
+        caveat=ui.Label(self.soundsettingswindow.content,
                 text=l,font='read',
                 row=row,column=0)
         caveat.wrap()
         row+=1
         l=_("See also note in documentation about verifying these "
             "recordings in an external application, such as Praat.")
-        caveat=ui.Label(self.soundsettingswindow.frame,
+        caveat=ui.Label(self.soundsettingswindow.content,
                 text=l,font='instructions',
                 row=row,column=0)
         caveat.wrap()
@@ -4715,19 +4719,19 @@ class Sound(object):
         play=_("Play")
         l=_("If Praat is installed in your OS path, right click on ‘{}’ above "
             "to open in Praat.".format(play))
-        caveat=ui.Label(self.soundsettingswindow.frame,
+        caveat=ui.Label(self.soundsettingswindow.content,
                 text=l,font='default',
                 row=row,column=0)
         caveat.wrap()
         row+=1
-        bd=ui.Button(self.soundsettingswindow.frame,
+        bd=ui.Button(self.soundsettingswindow.content,
                     text=_("Done"),
                     cmd=self.soundcheckrefreshdone,
                     # anchor='c',
                     row=row,column=0,
                     sticky=''
                     )
-        bd=ui.Button(self.soundsettingswindow.frame,
+        bd=ui.Button(self.soundsettingswindow.content,
                     text=_("Quit {}".format(program['name'])),
                     # cmd=program['root'].on_quit,
                     cmd=quitall,
