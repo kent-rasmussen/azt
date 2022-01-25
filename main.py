@@ -558,6 +558,7 @@ class StatusFrame(ui.Frame):
                         cmd=fn, width=self.opts['width'],
                         column=0, row=self.opts['row'],
                         columnspan=self.opts['columnspan'],
+                        wraplength=int(program['root'].wraplength/4),
                         **kwargs)
         if ttt:
             tt=ui.ToolTip(b,ttt)
