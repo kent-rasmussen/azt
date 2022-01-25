@@ -3889,6 +3889,9 @@ class WordCollection(object):
                     modded.append(n)
                     break
             if not entry: #i.e., no match for any self.glosslangs gloss
+                tnodes=e.findall('lexical-unit/form/text')
+                for tn in tnodes:
+                    tn.text=''
                 log.info("Gloss of SILCAWL line #{:04} ({}) not found; "
                         "copying over that entry.".format(n,g))
                 self.db.nodes.append(e)
