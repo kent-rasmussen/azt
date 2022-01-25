@@ -2179,10 +2179,13 @@ class Settings(object):
             if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
                 self.languagenames[xyz]=self.adnlangnames[xyz]
     def makeeverythingok(self):
-        self.status.makecvtok()
-        self.slices.makepsok()
-        self.slices.makeprofileok()
-        self.status.makecheckok() #this is intentionally broad: *any* check
+        try:
+            self.status.makecvtok()
+            self.slices.makepsok()
+            self.slices.makeprofileok()
+            self.status.makecheckok() #this is intentionally broad: *any* check
+        except AttributeError as e:
+            log.info(_("Maybe status/slices aren't set up yet."))
         # self.status.makegroupok(wsorted=True)
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
