@@ -9063,7 +9063,8 @@ class StatusDict(dict):
         cvt=self._checkparameters.cvt()
         ps=self._slicedict.ps()
         profile=self._slicedict.profile()
-        if (ps not in self[cvt] or
+        if (cvt not in self or
+                ps not in self[cvt] or
                 profile not in self[cvt][ps] or
                 check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
