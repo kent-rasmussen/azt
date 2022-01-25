@@ -3592,20 +3592,24 @@ class TaskChooser(TaskDressing,ui.Window):
         noktext=_("No thanks; I'll manage this myself")
         nbtext=_("N.B.: This is a fairly radical change to your database, "
                 "so it would be wise to back up your data.")
+        noktttext=_("You will need to do this yourself, either in FLEx, or "
+                    "with expert help.")
         lt=ui.Label(w.frame, text=title, font='title',
                     row=0, column=0, columnspan=2)
         nb=ui.Label(w.frame, text=nbtext1, font='default',
                     row=1, column=0, columnspan=2)
-        li=ui.Label(w.frame, text=instructions, font='instructions',
-                    row=2, column=0, columnspan=2)
+        # li=ui.Label(w.frame, text=instructions, font='instructions',
+        #             row=2, column=0, columnspan=2)
         lq=ui.Label(w.frame, text=Question, font='read',
                     row=3, column=0, columnspan=2)
         bok=ui.Button(w.frame, text=oktext,
                         cmd=lambda w=w:self.convertlxtolc(w),
                         row=4, column=0)
+        bok.tt=ui.ToolTip(bok,instructions)
         bnok=ui.Button(w.frame, text=noktext, cmd=w.destroy, row=4, column=1)
+        bnok.tt=ui.ToolTip(bnok, text=noktttext)
         lnb=ui.Label(w.frame, text=nbtext, row=5, column=0, columnspan=2)
-        for l in [lt,li,nb,lq,lnb]:
+        for l in [lt,nb,lq,lnb]:
             l.wrap()
         return w
     def getcawlmissing(self):
