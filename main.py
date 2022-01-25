@@ -3523,6 +3523,7 @@ class TaskChooser(TaskDressing,ui.Window):
                     tasktuples.append((task,str(task),task.taskicon(task)))
                 else:
                     tasktuples.append((task,str(task),None))
+        log.info("Tasks available ({}): {}".format(len(tasktuples),tasktuples))
         return tasktuples
         # [(Check,"Citation Form Sorting in Tone Frames"),
         #         (WordCollection,"Placeholder for future checks"),
@@ -3530,7 +3531,6 @@ class TaskChooser(TaskDressing,ui.Window):
         #         ]bum
     def convertlxtolc(self,window):
         window.destroy()
-        log.info("this is where we convert; to do.")
         backup=self.file.name+"_backupBeforeLx2LcConversion"
         self.db.write(backup)
         for e in self.db.nodes.findall('entry'):
