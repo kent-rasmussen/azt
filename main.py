@@ -4664,8 +4664,8 @@ class Sound(object):
             return
         self.soundsettingswindow.resetframe()
         self.soundsettingswindow.scroll=ui.ScrollingFrame(
-                                                    self.soundsettingswindow,
-                                                    row=0,column=0)
+                                                self.soundsettingswindow.frame,
+                                                row=0,column=0)
         self.soundsettingswindow.content=self.soundsettingswindow.scroll.content
         row=0
         ui.Label(self.soundsettingswindow.content, font='title',
