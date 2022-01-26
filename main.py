@@ -4715,18 +4715,18 @@ class Sound(object):
         row+=1
         l=_("See also note in documentation about verifying these "
             "recordings in an external application, such as Praat.")
-        caveat=ui.Label(self.soundsettingswindow.content,
+        caveat2=ui.Label(self.soundsettingswindow.content,
                 text=l,font='instructions',
                 row=row,column=0)
-        caveat.wrap()
+        caveat2.wrap()
         row+=1
         play=_("Play")
         l=_("If Praat is installed in your OS path, right click on ‘{}’ above "
             "to open in Praat.".format(play))
-        caveat=ui.Label(self.soundsettingswindow.content,
+        caveat3=ui.Label(self.soundsettingswindow.content,
                 text=l,font='default',
                 row=row,column=0)
-        caveat.wrap()
+        caveat3.wrap()
         row+=1
         bd=ui.Button(self.soundsettingswindow.content,
                     text=_("Done"),
