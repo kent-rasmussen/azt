@@ -4748,11 +4748,20 @@ class Sound(object):
             self.loadsoundsettings()
     def missingsoundattr(self):
         log.info(dir(self.soundsettings))
+        ss=self.soundsettings
         for s in ['fs', 'sample_format',
                     'audio_card_in',
                     'audio_card_out']:
-            if (not hasattr(self.soundsettings,s) or
-                            not getattr(self.soundsettings,s)):
+            if hasattr(self.soundsettings,s):
+                if s+'s' in ss.hypothetical and (getattr(self.soundsettings,s)
+                                                not in ss.hypothetical[s+'s']):
+                    log.info("Sound setting {} invalid; asking again".format(s))
+                    return True
+                elif 'audio_card' in s and (getattr(self.soundsettings,s)
+                                                    not in ss.cards['dict']):
+                    log.info("Sound setting {} invalid; asking again".format(s))
+                    return True
+            else:
                 log.info("Missing sound setting {}; asking again".format(s))
                 return True
         self.settings.soundsettingsok=True
