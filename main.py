@@ -2128,7 +2128,6 @@ class Settings(object):
     def setsoundcardoutindex(self,choice,window):
         self.soundsettings.audio_card_out=choice
         window.destroy()
-        self.soundcheckrefresh()
     def langnames(self):
         """This is for getting the prose name for a language from a code."""
         """It should ultimately use a xyz.ldml file, produced (at least)
