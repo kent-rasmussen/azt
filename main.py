@@ -6250,7 +6250,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 and check not in self.status.checks(toverify=True)
                 and check not in self.status.checks(tojoin=True)):
             exit=self.getcheck()
-            if exit and not self.exitFlag:
+            if exit and not self.exitFlag.istrue():
                 self.runcheck()
             return #if the user didn't supply a check
         self.settings.updatesortingstatus() # Not just tone anymore
@@ -6310,7 +6310,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         else:
             exit=False
         if exit:
-            if not self.exitFlag:
+            if not self.exitFlag.istrue():
                 self.notdonewarning()
             #This happens when the user exits the window
             log.debug("exiting joinT True")
