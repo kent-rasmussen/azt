@@ -8476,7 +8476,7 @@ class ToneGroupButtonFrame(ui.Frame):
         self.sortnext()
         # remove()
     def unsort(self):
-        self.task.removesenseidfromgroup(self._senseid,sorting=False)
+        self.check.removesenseidfromgroup(self._senseid,sorting=False)
         self.refresh()
     def setcanary(self,canary):
         if canary.winfo_exists():
@@ -8605,7 +8605,7 @@ class ToneGroupButtonFrame(ui.Frame):
         return bkwargs #only the kwargs appropriate for buttons
     def __init__(self, parent, check, exdict, group, **kwargs):
         self.exs=exdict
-        self.check=check
+        self.check=check #this is the task/check
         self.group=group
         # self,parent,group,row,column=0,label=False,canary=None,canary2=None,
         # alwaysrefreshable=False,playable=False,renew=False,unsortable=False,
