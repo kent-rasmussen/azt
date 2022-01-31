@@ -388,21 +388,9 @@ class Renderer(ObectwArgs):
             align="left"
         else:
             align="center" #also supports "right"
-        elif fname in ["Gentium","Gentium SIL"]:
-            if fonttype == 'B':
                 fonttype='R'
             if fonttype == 'BI':
                 fonttype='I'
-            file='Gentium-{}.ttf'.format(fonttype)
-            filenostaves='Gentium-tstv-{}.ttf'.format(fonttype)
-        elif fname in ["Gentium Basic","Gentium Basic SIL"]:
-            file='GenBas{}.ttf'.format(fonttype)
-            filenostaves='GenBas-tstv-{}.ttf'.format(fonttype)
-        elif fname in ["Gentium Book Basic","Gentium Book Basic SIL"]:
-            file='GenBkBas{}.ttf'.format(fonttype)
-            filenostaves='GenBkBas-tstv-{}.ttf'.format(fonttype)
-        elif fname in ["DejaVu Sans"]:
-            fonttype=fonttype.replace('B','Bold').replace('I','Oblique').replace('R','')
             if len(fonttype)>0:
                 fonttype='-'+fonttype
             file='DejaVuSans{}.ttf'.format(fonttype)
@@ -427,6 +415,21 @@ class Renderer(ObectwArgs):
                 files+=['CharisSIL-tstv-{}.ttf'.format(fonttype)]
                 files+=['CharisSIL-{}.ttf'.format(fonttypewords)]
                 files+=['CharisSIL-{}.ttf'.format(fonttype)]
+            elif fname in ["Gentium","Gentium SIL","Gentium Plus"]:
+                files=['GentiumPlus-tstv-{}.ttf'.format(fonttypewords)]
+                files+=['GentiumPlus-{}.ttf'.format(fonttypewords)]
+                if fonttype == 'B':
+                    fonttype='R'
+                if fonttype == 'BI':
+                    fonttype='I'
+                files+=['Gentium-{}.ttf'.format(fonttype)]
+                files+=['Gentium-tstv-{}.ttf'.format(fonttype)]
+            elif fname in ["Gentium Book Basic","Gentium Book Basic SIL",
+                                                "Gentium Book Plus"]:
+                files=['GentiumBookPlus-tstv-{}.ttf'.format(fonttypewords)]
+                files+=['GentiumBookPlus-{}.ttf'.format(fonttypewords)]
+                files+=['GenBkBas{}.ttf'.format(fonttype)]
+                files+=['GenBkBas-tstv-{}.ttf'.format(fonttype)]
                 try:
                     font = PIL.ImageFont.truetype(font=file, size=fsize)
                 except OSError as e:
