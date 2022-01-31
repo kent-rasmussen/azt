@@ -9813,6 +9813,25 @@ class Repository(object):
             return True
         else:
             log.info(_("URL {} is not already in repo {}:\n{}".format(url,self.url,self.files)))
+    def ignore(self,file):
+        if not hasattr(self,'hgignore') or file not in self.hgignore:
+            with open(self.hgignorefile,'a') as f:
+                f.write(file+'\n')
+            self.getignorecontents()
+    def ignorecheck(self):
+        self.hgignorefile=file.getdiredurl(self.url,'.hgignore')
+        if str(self.hgignorefile) in self.files or me:
+            log.info("Not creating .hgignore.")
+            return
+        """First time basic setup here"""
+        for x in ['pdf','xcf','XLingPaperPDFTemp','backupBeforeLx2LcConversion',
+                    '.txt', '.7z', '.zip']:
+            self.ignore(x)
+        self.add(self.hgignorefile)
+        self.commit(self.hgignorefile)
+    def getignorecontents(self):
+        with open(self.hgignorefile,'r') as f:
+            self.hgignore=f.readlines()
     def __init__(self, url):
         if not program['hg']:
             log.error("Mercurial isn't found on this computer; no repo object.")
@@ -9821,6 +9840,7 @@ class Repository(object):
         self.url = url
         self.files()
         self.choruscheck()
+        self.ignorecheck()
         log.info("Mercurial repository object initialized, with {} files."
                 "".format(len(self.files)))
 class ResultWindow(ui.Window):
