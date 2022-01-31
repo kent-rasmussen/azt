@@ -359,6 +359,9 @@ class Renderer(ObectwArgs):
             log.info("Seems like PIL is not installed; inactivating Renderer.")
             # self.img=None
             self.isactive=False
+        self.renderings={}
+        self.imagefonts={}
+    def render(self,**kwargs):
             return
         font=kwargs['font'].actual() #should always be there
         xpad=ypad=fspacing=font['size']
