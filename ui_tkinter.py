@@ -395,6 +395,16 @@ class Renderer(ObectwArgs):
                 fonttype='-'+fonttype
             file='DejaVuSans{}.ttf'.format(fonttype)
             filenostaves='DejaVuSans-tstv-{}.ttf'.format(fonttype)
+            """make room for GentiumPlus and GentiumBookPlus, with same
+            attributes:
+            'Gentium Plus' and 'Gentium Book Plus'
+            Bold
+            BoldItalic
+            Italic
+            Regular
+            """
+            """Each of these is in a list, in priority order (newer, then older,
+            hide staves, then don't), use the first found."""
             if fname in ["Andika","Andika SIL"]:
                 files=['Andika-tstv-{}.ttf'.format(fonttypewords)]
                 files+=['Andika-{}.ttf'.format(fonttypewords)]
