@@ -10161,7 +10161,16 @@ def praatversioncheck():
         log.info("Praat version less than {}".format(justpraatversion))
         return False
 def praatopen(file,newpraat=False,event=None):
-        praatargs=[program['sendpraat'], "praat", "Read from file... {}"
+    """sendpraat is now looked for only where praat version is before
+    'Praat 6.2.04 (December 18 2021)', when new functionality was added to
+    praat, to allow successive calls to go to the same window.
+    The same version also introduced the '--hide-picture' command line option,
+    so we only use that when praatversioncheck() passes.
+    """
+    if not newpraat and 'sendpraat' in program and program['sendpraat']:
+        """sendpraat sends the command to a running praat instance. If there
+        isn't one, just open praat."""
+        praatargs=[program['sendpraat'], "praat", "Read from file... '{}'"
                                                     "".format(file)]
         try:
             e=subprocess.check_output(praatargs,shell=False,
@@ -10174,7 +10183,7 @@ def praatopen(file,newpraat=False,event=None):
                 log.info("praatoutput: {}; {}".format(e,o))
     elif program['praat']:
         log.info(_("Trying to call Praat at {}...").format(program['praat']))
-        if justpraat:
+        if 'sendpraat' not in program: #don't care about exe, just version check
             praatargs=[program['praat'], "--hide-picture","--open", file]
         else:
             praatargs=[program['praat'], "--open", file]
