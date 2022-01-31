@@ -366,6 +366,7 @@ class Renderer(ObectwArgs):
             return
         self.img=None #clear past work
         font=kwargs['font'].actual() #should always be there
+        log.info("Font: {}".format(str(font)))
         xpad=ypad=fspacing=font['size']
         fname=font['family']
         fsize=int(font['size']*1.33)
