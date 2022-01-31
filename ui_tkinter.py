@@ -546,7 +546,7 @@ class Childof(object):
                     # 'debug',
                     'wraplength',
                     # 'photo', #in theme
-                    'renderings',
+                    'renderer',
                     'program','exitFlag']
         else:
             attrs=[attr]
@@ -611,7 +611,7 @@ class Root(Exitable,tkinter.Tk):
             self.theme=theme
         else:
             self.theme=Theme(program) #OK if program==None
-        self.renderings={}
+        self.renderer=Renderer()
         Exitable.__init__(self)
         UI.__init__(self)
 """These have parent (Childof), but no grid"""
@@ -663,11 +663,11 @@ class Text(Childof,ObectwArgs):
                 self.font['size'],self.font['weight'],
                 self.font['slant'],self.font['underline'],
                 self.font['overstrike'])
-        if style not in self.renderings:
-            self.renderings[style]={}
-        if kwargs['wraplength'] not in self.renderings[style]:
-            self.renderings[style][kwargs['wraplength']]={}
-        thisrenderings=self.renderings[style][kwargs['wraplength']]
+        if style not in self.renderer.renderings:
+            self.renderer.renderings[style]={}
+        if kwargs['wraplength'] not in self.renderer.renderings[style]:
+            self.renderer.renderings[style][kwargs['wraplength']]={}
+        thisrenderings=self.renderer.renderings[style][kwargs['wraplength']]
         if (self.text in thisrenderings and
                 thisrenderings[self.text] is not None):
             log.log(5,"text {} already rendered with {} wraplength, using."
@@ -680,12 +680,12 @@ class Text(Childof,ObectwArgs):
             return
         else:
             log.log(5,"Sticks found! (Generating image for label)")
-            i=Renderer(
+            self.renderer.render(
                         text=self.text,
                         font=self.font,
                         # wraplength=kwargs['wraplength'],
                         **kwargs)
-            self.tkimg=i.img
+            self.tkimg=self.renderer.img
             if self.tkimg is not None:
                 thisrenderings[self.text]=self.image=self.tkimg
                 self.text=''
@@ -1289,7 +1289,7 @@ class ScrollingFrame(Frame):
         self.canvas.parent = self.canvas.master
         """make the canvas inherit these values like a frame"""
         self.canvas['background']=parent['background']
-        for attr in ['fonts','theme','debug','wraplength','photo','renderings',
+        for attr in ['fonts','theme','debug','wraplength','photo','renderer',
                 'program','exitFlag']:
             if hasattr(self.canvas.parent,attr):
                 setattr(self.canvas,attr,getattr(self.canvas.parent,attr))
