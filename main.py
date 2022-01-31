@@ -10141,7 +10141,7 @@ def findexecutable(exe):
     except Exception as e:
         log.info(_("Search for {} on {} failed: {}").format(exe,os,e))
         return e
-def praatopen(file,newpraat=False,event=None):
+def praatversioncheck():
     praatvargs=[program['praat'], "--version"]
     versionraw=subprocess.check_output(praatvargs, shell=False)
     version=pkg_resources.parse_version(
@@ -10159,6 +10159,7 @@ def praatopen(file,newpraat=False,event=None):
         log.info("Praat version less than {}".format(justpraatversion))
         justpraat=False
     if (not justpraat or program['sendpraat']) and not newpraat:
+def praatopen(file,newpraat=False,event=None):
         praatargs=[program['sendpraat'], "praat", "Read from file... {}"
                                                     "".format(file)]
         try:
