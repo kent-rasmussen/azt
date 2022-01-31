@@ -391,10 +391,6 @@ class Renderer(ObectwArgs):
                 fonttype='R'
             if fonttype == 'BI':
                 fonttype='I'
-            if len(fonttype)>0:
-                fonttype='-'+fonttype
-            file='DejaVuSans{}.ttf'.format(fonttype)
-            filenostaves='DejaVuSans-tstv-{}.ttf'.format(fonttype)
             """make room for GentiumPlus and GentiumBookPlus, with same
             attributes:
             'Gentium Plus' and 'Gentium Book Plus'
@@ -433,6 +429,13 @@ class Renderer(ObectwArgs):
                 files+=['GentiumBookPlus-{}.ttf'.format(fonttypewords)]
                 files+=['GenBkBas{}.ttf'.format(fonttype)]
                 files+=['GenBkBas-tstv-{}.ttf'.format(fonttype)]
+            elif fname in ["DejaVu Sans"]:
+                fonttype=fonttype.replace('B','Bold').replace('I','Oblique'
+                                                    ).replace('R','')
+                if len(fonttype)>0:
+                    fonttype='-'+fonttype
+                files=['DejaVuSans-tstv-{}.ttf'.format(fonttype)]
+                files+=['DejaVuSans{}.ttf'.format(fonttype)]
             else:
                 log.error("Sorry, I have no info on font {}".format(fname))
                 return
