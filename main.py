@@ -10141,6 +10141,8 @@ def findexecutable(exe):
     except Exception as e:
         log.info(_("Search for {} on {} failed: {}").format(exe,os,e))
         return e
+    if exe == 'praat' and program[exe] and not praatversioncheck():
+        findexecutable('sendpraat') #only ask if it would be useful
 def praatversioncheck():
     praatvargs=[program['praat'], "--version"]
     versionraw=subprocess.check_output(praatvargs, shell=False)
@@ -10325,7 +10327,7 @@ if __name__ == "__main__":
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    for exe in ['praat','sendpraat','hg']:
+    for exe in ['praat','hg']: #'sendpraat' now in 'praat', if useful
         findexecutable(exe)
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
