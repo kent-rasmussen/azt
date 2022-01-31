@@ -10157,8 +10157,7 @@ def praatversioncheck():
         return True
     else:
         log.info("Praat version less than {}".format(justpraatversion))
-        justpraat=False
-    if (not justpraat or program['sendpraat']) and not newpraat:
+        return False
 def praatopen(file,newpraat=False,event=None):
         praatargs=[program['sendpraat'], "praat", "Read from file... {}"
                                                     "".format(file)]
