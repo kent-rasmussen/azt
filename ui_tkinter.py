@@ -18,6 +18,14 @@ try:
 except:
     def _(x):
         return x
+try:
+    import PIL.ImageFont
+    import PIL.ImageTk
+    import PIL.ImageDraw
+    import PIL.Image
+    pilisactive=True
+except:
+    pilisactive=False
 # import tkintermod
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
 """These classes have no dependencies"""
@@ -344,14 +352,13 @@ class ExitFlag(object):
         self.false()
 class Renderer(ObectwArgs):
     def __init__(self,test=False,**kwargs):
-        try:
-            import PIL.ImageFont
-            import PIL.ImageTk
-            import PIL.ImageDraw
-            import PIL.Image
-        except:
-            log.info("Seems like PIL is not installed; skipping Renderer init.")
-            self.img=None
+        global pilisactive
+        if pilisactive:
+            self.isactive=True
+        else:
+            log.info("Seems like PIL is not installed; inactivating Renderer.")
+            # self.img=None
+            self.isactive=False
             return
         font=kwargs['font'].actual() #should always be there
         xpad=ypad=fspacing=font['size']
