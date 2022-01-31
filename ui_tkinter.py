@@ -395,15 +395,6 @@ class Renderer(ObectwArgs):
                 fonttype='-'+fonttype
             file='DejaVuSans{}.ttf'.format(fonttype)
             filenostaves='DejaVuSans-tstv-{}.ttf'.format(fonttype)
-        else:
-            log.error("Sorry, I have no info on font {}".format(fname))
-            return
-        try:
-            font = PIL.ImageFont.truetype(font=filenostaves, size=fsize)
-            log.log(2,"Using No Staves font")
-        except OSError as e:
-            if e == 'cannot open resource':
-                log.debug("Couldn't find No Staves font, going without")
             if fname in ["Andika","Andika SIL"]:
                 files=['Andika-tstv-{}.ttf'.format(fonttypewords)]
                 files+=['Andika-{}.ttf'.format(fonttypewords)]
@@ -430,6 +421,9 @@ class Renderer(ObectwArgs):
                 files+=['GentiumBookPlus-{}.ttf'.format(fonttypewords)]
                 files+=['GenBkBas{}.ttf'.format(fonttype)]
                 files+=['GenBkBas-tstv-{}.ttf'.format(fonttype)]
+            else:
+                log.error("Sorry, I have no info on font {}".format(fname))
+                return
                 try:
                     font = PIL.ImageFont.truetype(font=file, size=fsize)
                 except OSError as e:
