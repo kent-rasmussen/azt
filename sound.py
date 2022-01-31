@@ -300,8 +300,9 @@ class SoundFilePlayer(object):
                         "rate={}, duration={}, format={}".format(
                         self.settings.audio_card_out,
                         channels,rate,duration,format))
-            if format not in self.settings.cards['out'][
-                                            self.settings.audio_card_out][rate]:
+            if (format not in self.settings.cards['out'][
+                                            self.settings.audio_card_out][rate]
+                    and format != 1): #play this format, for now.
                 log.debug("{} doesn't seem to be a supported format ({}); "
                 "giving up.".format(format,format not in self.settings.cards[
                                     'out'][self.settings.audio_card_out][rate]))
