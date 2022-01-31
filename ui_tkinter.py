@@ -364,6 +364,7 @@ class Renderer(ObectwArgs):
     def render(self,**kwargs):
         if not self.isactive:
             return
+        self.img=None #clear past work
         font=kwargs['font'].actual() #should always be there
         xpad=ypad=fspacing=font['size']
         fname=font['family']
