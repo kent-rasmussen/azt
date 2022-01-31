@@ -659,6 +659,8 @@ class Text(Childof,ObectwArgs):
         self.config(wraplength=wraplength)
         log.log(3,'self.maxwidth (Label class): {}'.format(self.maxwidth))
     def render(self, **kwargs):
+        if not self.renderer.isactive:
+            return
         style=(self.font['family'], # from kwargs['font'].actual()
                 self.font['size'],self.font['weight'],
                 self.font['slant'],self.font['underline'],
