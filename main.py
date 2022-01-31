@@ -10153,8 +10153,8 @@ def praatversioncheck():
                                             'Praat 6.2.04 (December 18 2021)')
     log.info("Found Praat version {} ({})".format(version, versionraw))
     if version>=justpraatversion:
-        log.info("Praat version greater than {}".format(justpraatversion))
-        justpraat=True
+        log.info("Praat version at or greater than {}".format(justpraatversion))
+        return True
     else:
         log.info("Praat version less than {}".format(justpraatversion))
         justpraat=False
