@@ -407,9 +407,14 @@ class Renderer(ObectwArgs):
         try:
             font = PIL.ImageFont.truetype(font=filenostaves, size=fsize)
             log.log(2,"Using No Staves font")
-        except:
-            log.debug("Couldn't find No Staves font, going without")
-            font = PIL.ImageFont.truetype(font=file, size=fsize)
+        except OSError as e:
+            if e == 'cannot open resource':
+                log.debug("Couldn't find No Staves font, going without")
+                try:
+                    font = PIL.ImageFont.truetype(font=file, size=fsize)
+                except OSError as e:
+                    if e == 'cannot open resource':
+                        log.error("Cannot find font file {}".format(file))
         img = PIL.Image.new("1", (10,10), 255)
         draw = PIL.ImageDraw.Draw(img)
         w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
