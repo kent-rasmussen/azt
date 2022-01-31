@@ -388,12 +388,6 @@ class Renderer(ObectwArgs):
             align="left"
         else:
             align="center" #also supports "right"
-        if fname in ["Andika","Andika SIL"]:
-            file='Andika-{}.ttf'.format('R') #There's only this one
-            filenostaves='Andika-tstv-{}.ttf'.format(fonttype)
-        elif fname in ["Charis","Charis SIL"]:
-            file='CharisSIL-{}.ttf'.format(fonttype)
-            filenostaves='CharisSIL-tstv-{}.ttf'.format(fonttype)
         elif fname in ["Gentium","Gentium SIL"]:
             if fonttype == 'B':
                 fonttype='R'
@@ -422,6 +416,17 @@ class Renderer(ObectwArgs):
         except OSError as e:
             if e == 'cannot open resource':
                 log.debug("Couldn't find No Staves font, going without")
+            if fname in ["Andika","Andika SIL"]:
+                files=['Andika-tstv-{}.ttf'.format(fonttypewords)]
+                files+=['Andika-{}.ttf'.format(fonttypewords)]
+                fonttype='R' #There's only this one for these
+                files+=['Andika-tstv-{}.ttf'.format(fonttype)]
+                files+=['Andika-{}.ttf'.format(fonttype)]
+            elif fname in ["Charis","Charis SIL"]:
+                files=['CharisSIL-tstv-{}.ttf'.format(fonttypewords)]
+                files+=['CharisSIL-tstv-{}.ttf'.format(fonttype)]
+                files+=['CharisSIL-{}.ttf'.format(fonttypewords)]
+                files+=['CharisSIL-{}.ttf'.format(fonttype)]
                 try:
                     font = PIL.ImageFont.truetype(font=file, size=fsize)
                 except OSError as e:
