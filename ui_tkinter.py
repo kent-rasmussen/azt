@@ -424,11 +424,15 @@ class Renderer(ObectwArgs):
             else:
                 log.error("Sorry, I have no info on font {}".format(fname))
                 return
+            for file in files:
                 try:
                     font = PIL.ImageFont.truetype(font=file, size=fsize)
+                    self.imagefonts[str(font)]=font
+                    log.info("Using font file {}".format(file))
+                    break
                 except OSError as e:
                     if e == 'cannot open resource':
-                        log.error("Cannot find font file {}".format(file))
+                        log.debug("no file {}, checking next".format(file))
         else: #i.e., if it was done before
             font=self.imagefonts[str(font)]
         if str(font) not in self.imagefonts: #i.e., neither before nor now
