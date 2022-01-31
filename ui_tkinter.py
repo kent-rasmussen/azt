@@ -429,6 +429,12 @@ class Renderer(ObectwArgs):
                 except OSError as e:
                     if e == 'cannot open resource':
                         log.error("Cannot find font file {}".format(file))
+        else: #i.e., if it was done before
+            font=self.imagefonts[str(font)]
+        if str(font) not in self.imagefonts: #i.e., neither before nor now
+            log.error("Cannot find font file for {}; giving up".format(fname))
+            self.img=None
+            return
         img = PIL.Image.new("1", (10,10), 255)
         draw = PIL.ImageDraw.Draw(img)
         w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
