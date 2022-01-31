@@ -362,6 +362,7 @@ class Renderer(ObectwArgs):
         self.renderings={}
         self.imagefonts={}
     def render(self,**kwargs):
+        if not self.isactive:
             return
         font=kwargs['font'].actual() #should always be there
         xpad=ypad=fspacing=font['size']
