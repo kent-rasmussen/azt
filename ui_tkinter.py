@@ -403,6 +403,8 @@ class Renderer(ObectwArgs):
             Italic
             Regular
             """
+            fonttypewords=fonttype.replace('B','Bold').replace('I','Italic'
+                            ).replace('R','Regular')
             """Each of these is in a list, in priority order (newer, then older,
             hide staves, then don't), use the first found."""
             if fname in ["Andika","Andika SIL"]:
