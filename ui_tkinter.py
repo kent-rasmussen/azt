@@ -370,13 +370,6 @@ class Renderer(ObectwArgs):
         fname=font['family']
         fsize=int(font['size']*1.33)
         fspacing=10
-        fonttype=''
-        if font['weight'] == 'bold':
-            fonttype+='B'
-        if font['slant'] == 'italic':
-            fonttype+='I'
-        if fonttype == '':
-            fonttype='R'
         text=kwargs['text'] #should always be there
         text=text.replace('\t','    ') #Not sure why, but tabs aren't working.
         wraplength=kwargs['wraplength'] #should always be there
@@ -388,9 +381,14 @@ class Renderer(ObectwArgs):
             align="left"
         else:
             align="center" #also supports "right"
+        if str(font) not in self.imagefonts:
+            fonttype=''
+            if font['weight'] == 'bold':
+                fonttype+='B'
+            if font['slant'] == 'italic':
+                fonttype+='I'
+            if fonttype == '':
                 fonttype='R'
-            if fonttype == 'BI':
-                fonttype='I'
             """make room for GentiumPlus and GentiumBookPlus, with same
             attributes:
             'Gentium Plus' and 'Gentium Book Plus'
