@@ -365,8 +365,7 @@ class Renderer(ObectwArgs):
         if not self.isactive:
             return
         self.img=None #clear past work
-        font=kwargs['font'].actual() #should always be there
-        log.info("Font: {}".format(str(font)))
+        fontkey=font=kwargs['font'].actual() #should always be there
         xpad=ypad=fspacing=font['size']
         fname=font['family']
         fsize=int(font['size']*1.33)
@@ -383,6 +382,7 @@ class Renderer(ObectwArgs):
         else:
             align="center" #also supports "right"
         if str(font) not in self.imagefonts:
+            log.info("Making image font: {}".format(str(fontkey)))
             fonttype=''
             if font['weight'] == 'bold':
                 fonttype+='B'
@@ -441,15 +441,16 @@ class Renderer(ObectwArgs):
             for file in files:
                 try:
                     font = PIL.ImageFont.truetype(font=file, size=fsize)
-                    self.imagefonts[str(font)]=font
+                    self.imagefonts[str(fontkey)]=font
                     log.info("Using font file {}".format(file))
                     break
                 except OSError as e:
                     if e == 'cannot open resource':
                         log.debug("no file {}, checking next".format(file))
         else: #i.e., if it was done before
-            font=self.imagefonts[str(font)]
-        if str(font) not in self.imagefonts: #i.e., neither before nor now
+            log.info("Using image font: {}".format(str(fontkey)))
+            font=self.imagefonts[str(fontkey)]
+        if str(fontkey) not in self.imagefonts: #i.e., neither before nor now
             log.error("Cannot find font file for {}; giving up".format(fname))
             self.img=None
             return
