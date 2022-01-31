@@ -1319,7 +1319,6 @@ class Settings(object):
             log.info(_("Looks like there's a problem with your directory... {}"
                     "\n{}".format(self.liftfilename,filemod)))
             exit()
-        self.repocheck()
         self.settingsfilecheck()
         self.imagesdir=file.getimagesdir(self.directory)
         self.audiodir=file.getaudiodir(self.directory)
