@@ -1,5 +1,15 @@
 # A→Z+T Changelog
 
+# Version 0.9
+Rendering works now with Charis 6.0 font name, and more efficiently
+fixed screen scaling
+added new icons to better distinguish tasks
+fixed soundcard bug, removed buggy parameter option
+scroll sound card options, remove from default tasks
+remove wordy messages, move to tooltips
+improve logic for empty or missing data nodes
+added hg ignore functionality, with some defaults
+
 # Version 0.8.9
 Complete rework of UI, now task oriented, with tasks divided by data collection and analysis functions.
 mercurial (if installed) now adds
