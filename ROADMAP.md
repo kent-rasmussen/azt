@@ -1,4 +1,8 @@
 #Roadmap
+-check for remove file URL if file not present (and not preferred filename)
+-look at lx nodes not being written to examples? (is there anything to this? How could this possibly happen, except with no lx data in database? In that case, provide a sensible result)
+-scrolling left to right
+
 background writes to disk
   -mark when happening, to not do a second at same time.
   -use last, and don't write more than once per 5 mins?
