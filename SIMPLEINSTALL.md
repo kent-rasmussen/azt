@@ -31,6 +31,9 @@ Before you can [Set up A→Z+T for normal use](#set-up-azt-for-normal-use), you 
 1. On your Desktop, right click select `Git-Bash` to get a terminal (black window).
 2. In the `Git-Bash` terminal, paste `git clone https://github.com/kent-rasmussen/azt.git` and hit enter. This will give you an `azt` folder on your desktop, where the A→Z+T program files will stay.
 
+## Fonts
+If you don't already have [Charis SIL](https://software.sil.org/charis/) on your system, download and install the most recent version from [here](https://software.sil.org/downloads/r/charis/CharisSIL-6.001.zip). 
+
 ## Set up A→Z+T for normal use
 Once you have completed everything under [Install Python](#install-python) and [Install Git and Download A→Z+T](#install-git-and-download-azt):
 1. Click to open the `azt` folder on your desktop
