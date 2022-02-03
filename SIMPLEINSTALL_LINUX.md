@@ -14,6 +14,15 @@ Run the following commands:
 2. `python3 -m pip install pyaudio tkinter lxml Pillow`
 3. `cd;git clone https://github.com/kent-rasmussen/azt.git;cd -`
 
+### Fonts
+Verify that you have [Charis SIL](https://software.sil.org/charis/) on your system by running the following command:
+`fc-list|grep Charis`
+
+If that doesn't return any results, run the following command:
+`sudo apt-get install fonts-sil-charis`
+
+If that throws an error, you may need to first install the [SIL packages repository](https://packages.sil.org/)
+
 ## Download A→Z+T
 Run this command: `cd;git clone https://github.com/kent-rasmussen/azt.git`.
 
