@@ -43,6 +43,9 @@ For some reason, I have had trouble getting pyaudio installed on Windows machine
         - to get optional dependencies, too: `pipwin install Pillow` and `pipwin install lxml` (one at a time)
     - On Linux (and Mac?), `pyaudio` may in turn have a dependency of `portaudio19-dev`, which you should install with your package manager (e.g., `sudo apt-get install portaudio19-dev`).
 
+### Fonts
+If you don't already have [Charis SIL](https://software.sil.org/charis/) on your system, download and install the most recent version from [here](https://software.sil.org/downloads/r/charis/CharisSIL-6.001.zip). 
+
 ### Optional dependency: patiencediff
 to keep your data up to date in your repository: `python -m pip install patiencediff`
 Patiencediff is not yet used as of Jan 2022, so if you get an error trying to install it, just skip it for now.

@@ -2,6 +2,7 @@
 A→Z+T is now organized into a series of discrete tasks, which are divided into the two groups below.
 
 There is a chooser to help you stay focused on one or the other of these, and with a button (upper right) to switch between them.
+A→Z+T does a brief analysis of your database on startup, which shows what tasks you have started, and to what degree you have completed them. With this information, A→Z+T presents you with tasks appropriate to where you are in your work. For instance, until you are (at least almost) finished with collecting the Comparative African Word List (CAWL), that is the only task you will see.
 
 ## [Data Collection Tasks](TASKSCOLLECTION.md)
 
