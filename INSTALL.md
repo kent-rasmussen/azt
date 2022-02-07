@@ -6,7 +6,7 @@ You need Python 3+ and _one_ dependency ([PyAudio](https://pypi.org/project/PyAu
 ## Error Tracking
 If you have *any* trouble with anything on this page, please copy all error messages and paste them into an Email to me and/or Google.
 
-If you click on an icon and get a flash and nothing more, you may need to run python from a command terminal (`⊞ win`+`R` then type 'cmd' in Windows) to see what errors are keeping it from running.
+If you click on an icon and get a flash and nothing more, check out [this page](FINDERRORLOGS.md) to find your logs to see what happened. That page also incldes [instructions in case you really can't find any logs](FINDERRORLOGS.md#i-really-have-no-logs).
 
 ## Download A→Z+T
 To get the program, either
