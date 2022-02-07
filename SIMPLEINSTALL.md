@@ -3,7 +3,7 @@ This document offers instructions with **exactly one set of options**; to explor
 
 For simple install instructions for Ubuntu Linux, see [SIMPLEINSTALL_LINUX](SIMPLEINSTALL_LINUX.md).
 
-If any of the following fails, please [write me](BUGS.md), copy/pasting all errors you find into the Email.
+If any of the following fails, please [write me](BUGS.md), including your logs and copy/pasting all errors you find into the Email ([this page](FINDERRORLOGS.md) can help you find your logs).
 
 Before you can [Set up A→Z+T for normal use](#set-up-azt-for-normal-use), you need to do two things:
 1. [Install Python](#install-python)
