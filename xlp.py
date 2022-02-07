@@ -10,6 +10,11 @@ log=logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG',log) #for this file
 import time
 import subprocess
+try:
+    _
+except:
+    def _(x):
+        return x
 class Report(object):
     def __init__(self,filename,report,langname):
         self.start_time=time.time()
