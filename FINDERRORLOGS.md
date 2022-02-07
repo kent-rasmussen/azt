@@ -16,3 +16,17 @@ If you launch python via clicking a link to main.py, the location of your logs m
 - Searching for the files by filename (e.g., "log_2021-"), using your operating system search tools.
 
   In any case, they should now all be found in a "userlogs" folder, so they don't clutter and are easier to find.
+
+## I Really Have no Logs
+If you think you really have no logs whatsoever, this indicates a very serious problem in starting up A→Z+T, where it crashes before the logs initialize. Most cases that cause this should already be avoided, but here is a proceedure to get some error messaging from A→Z+T without finding a log:
+  
+- Open a command terminal (`⊞ win+R`/search then type 'cmd' in Windows).
+- type your python executable name (e.g., python3, python, Python.exe, it may take some experimentation to figure this out), then
+- type `<space>` and the path to main.py in the azt folder (e.g., C:\Users\<Your Name>\Dekstop\azt\main.py), then
+- hit `<Enter>`.
+  
+This should run A→Z+T  with a terminal window that should stay open even after a crash.
+- Trigger the crash (e.g., wait, if it is crashing on startup)
+- copy all the text from the terminal 
+- paste the text into [an email to me](BUGS.md).
+
