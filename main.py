@@ -3958,22 +3958,23 @@ class WordCollection(object):
             log.info("Probably nothing (wordframe not made yet): {}".format(e))
         self.wordframe=ui.Frame(self.frame,row=1,column=1,sticky='ew')
         if not self.entries:
-            text=_("It looks like you're done collecting the Comparative "
-            "African Word List! Congratulations! You can still add words "
-            "through the 'Add a Word' button, to the left.")
+            text=_("It looks like you're done filling out the empty "
+            "entries in your database! Congratulations! You can still add words "
+            "through the button on the left.")
             l=ui.Label(self.wordframe, text=text, row=0, column=0,
                         wraplength=int(program['root'].wraplength*.6))
             l.wrap()
-            nope=_("No, I haven't done the CAWL yet; "
-                    "\nplease add it to my database, "
-                    "\nso I can fill it out.")
-            b=ui.Button(self.wordframe, text=nope, cmd=self.addCAWLentries,
-                        row=1, column=0, sticky='',
-                        wraplength=int(program['root'].wraplength*.6))
+            # nope=_("No, I haven't done the CAWL yet; "
+            #         "\nplease add it to my database, "
+            #         "\nso I can fill it out.")
+            # b=ui.Button(self.wordframe, text=nope, cmd=self.addCAWLentries,
+            #             row=1, column=0, sticky='',
+            #             wraplength=int(program['root'].wraplength*.6))
             return
         text=_("Type the word in your language that goes with these meanings."
                 "\nGive a single word (not a phrase) wherever possible."
-                "").format(self.nentries)
+                "\nJust type consonants and vowels; don't worry about tone "
+                "for now.").format(self.nentries)
         ui.Label(self.wordframe, text=text, row=0, column=0)
         progress="({}/{})".format(self.index+1,self.nentries)
         ui.Label(self.wordframe, text=progress, row=1, column=3, font='small')
