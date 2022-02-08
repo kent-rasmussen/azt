@@ -2968,13 +2968,16 @@ class TaskDressing(object):
             other=True
         title=_('Select Second Form Field for {}').format(ps)
         window=ui.Window(self.frame,title=title)
-        ui.Label(window.frame, text=_("What is the database field for second "
-                            "forms for {} words?".format(ps)),column=0, row=0)
         if optionslist:
             optionslist.remove(self.pluralname)
         if other:
+            text=_("What database field name do you want to use for second "
+                    "forms for {} words?".format(ps))
         else:
             optionslist=self.settings.impopts
+            text=_("What is the database field for second forms for ‘{}’ words?"
+            "".format(ps))
+        ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
         window.scroll=ui.Frame(window.frame)
         window.scroll.grid(column=0, row=2)
