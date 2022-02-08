@@ -2996,7 +2996,7 @@ class TaskDressing(object):
         window.scroll.grid(column=0, row=2)
         buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
                 optionlist=optionslist,
-                command=self.settings.setsecondformfieldV,
+                command=setcmd,
                 window=window,
                 column=0, row=0
                 )
