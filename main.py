@@ -2955,6 +2955,13 @@ class TaskDressing(object):
         log.info("Asking for secondformfield...")
         ps=self.settings.verbalps
         optionslist = self.db.fields
+        def getother():
+            window.destroy()
+            self.getsecondformfield(ps=ps,
+                                    opts=opts,
+                                    othername=othername,
+                                    setcmd=setcmd,
+                                    other=True)
         if not optionslist:
             ErrorNotice("I don't see any appropriate fields; I'll give you "
             "some commonly used ones to choose from.", wait=True)
@@ -2978,6 +2985,11 @@ class TaskDressing(object):
                 column=0, row=0
                 )
         if not other:
+            otherbutton=ui.Button(buttonFrame1.content,
+                            text=_("None of these; make a new field"),
+                            column=0, row=1,
+                            cmd=getother
+                            )
         window.wait_window(window)
     def getcheck(self,guess=False,event=None,**kwargs):
         def giveup():
