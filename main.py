@@ -2951,10 +2951,18 @@ class TaskDressing(object):
                 column=0, row=0
                 )
         window.wait_window(window)
+        opts=self.settings.plopts
+        othername=self.settings.imperativename
+        setcmd=self.settings.setsecondformfieldN
+        self.getsecondformfield(ps,opts,othername,setcmd)
     def getsecondformfieldV(self,event=None):
         log.info("Asking for secondformfield...")
         ps=self.settings.verbalps
         optionslist = self.db.fields
+        opts=self.settings.impopts
+        othername=self.settings.pluralname
+        setcmd=self.settings.setsecondformfieldV
+        self.getsecondformfield(ps,opts,othername,setcmd)
         def getother():
             window.destroy()
             self.getsecondformfield(ps=ps,
