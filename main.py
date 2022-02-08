@@ -2976,13 +2976,11 @@ class TaskDressing(object):
             other=True
         title=_('Select Second Form Field for {}').format(ps)
         window=ui.Window(self.frame,title=title)
-        if optionslist:
-            optionslist.remove(self.pluralname)
         if other:
             text=_("What database field name do you want to use for second "
                     "forms for {} words?".format(ps))
+            optionslist=opts
         else:
-            optionslist=self.settings.impopts
             text=_("What is the database field for second forms for ‘{}’ words?"
             "".format(ps))
             try:
