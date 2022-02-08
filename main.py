@@ -9829,7 +9829,7 @@ class Repository(object):
                     '.txt', '.7z', '.zip']:
             self.ignore(x)
         self.add(self.hgignorefile)
-        self.commit(self.hgignorefile)
+        self.commit()
     def getignorecontents(self):
         with open(self.hgignorefile,'r') as f:
             self.hgignore=f.readlines()
