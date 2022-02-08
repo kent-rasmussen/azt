@@ -18,7 +18,7 @@
   - save full version in repo
     - and smaller version, too? Would this be better than ad hoc scaling?
   - save link to LIFT
-  - use LIFT link to make button images (w/wo ad hoc scaling?) 
+  - use LIFT link to make button images (w/wo ad hoc scaling?)
 
 -look at lx nodes not being written to examples? (is there anything to this? How could this possibly happen, except with no lx data in database? In that case, provide a sensible result)
 -scrolling left to right
