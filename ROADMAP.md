@@ -1,13 +1,25 @@
 #Roadmap
--fix exit on asklift. Exit button shouldn't shut down AZT...
--look at what it would take to make two copies of each sound file. one in hires/, the other in lowres/. We could then make a link to whichever was appropriate.
+- fix exit on asklift. Exit button shouldn't shut down AZT...
+- look at what it would take to make two copies of each sound file. one in hires/, the other in lowres/. We could then make a link to whichever was appropriate.
   -Problem:
     -If we keep the same filename for each file (lowres and highres versions), then we run the risk of either overwriting the other, on a (user error) copy.
     -If we make different filenames (e.g., _hires.wav, _lowres.mp3), then the link to the filename would have to be updated as needed, or else each in their own link.
   -Rationale: one sample 96khz wav file was 2.5% as large as a 48khz mp3
     -This has drastic consequences on collaboration
     -This is not obviously an important difference for tone study
--check for remove file URL if file not present (and not preferred filename)
+- check for remove file URL if file not present (and not preferred filename)
+- get AOR working:
+  - /usr/share/SIL/ImageCollections/ArtOfReading/index.txt (search for gloss elements)
+  - make object for image repo, with location on disk as attribute
+  - find out how big a pic is
+  - scale (to ?200px wide/tall?) to present on screen in formatted data
+    - maybe larger for selection, smaller for buttons?
+  - store scaled image in memory
+  - save full version in repo
+    - and smaller version, too? Would this be better than ad hoc scaling?
+  - save link to LIFT
+  - use LIFT link to make button images (w/wo ad hoc scaling?) 
+
 -look at lx nodes not being written to examples? (is there anything to this? How could this possibly happen, except with no lx data in database? In that case, provide a sensible result)
 -scrolling left to right
 
