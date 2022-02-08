@@ -2963,6 +2963,7 @@ class TaskDressing(object):
         othername=self.settings.pluralname
         setcmd=self.settings.setsecondformfieldV
         self.getsecondformfield(ps,opts,othername,setcmd)
+    def getsecondformfield(self,ps,opts,othername,setcmd,other=False):
         def getother():
             window.destroy()
             self.getsecondformfield(ps=ps,
@@ -2970,6 +2971,8 @@ class TaskDressing(object):
                                     othername=othername,
                                     setcmd=setcmd,
                                     other=True)
+        log.info("Asking for ‘{}’ second form field...".format(ps))
+        optionslist = self.db.fields
         if not optionslist:
             ErrorNotice("I don't see any appropriate fields; I'll give you "
             "some commonly used ones to choose from.", wait=True)
