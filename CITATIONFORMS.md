@@ -1,6 +1,7 @@
 # Using Citation Forms
 You may stumble across a notice in A→Z+T with the title "Convert lexeme field data to citation form fields?" and wonder what is up, so I'll try to give some basic background here.
 
+## Fields and their usage
 The development of a dictionary can be seen as primarily involving two major pieces of data:
 - citation forms:
   - often the response to the question "What is this?"
@@ -10,14 +11,17 @@ The development of a dictionary can be seen as primarily involving two major pie
   - not necessarily pronounceable
 
 Typically, dictionary work starts by collecting *citation forms*, and gradually analyzes those forms into *lexeme forms*.
-Sometimes, people store those _citation forms_ in _lexeme_ fields in a database, though this is typically in error.
+Sometimes, people initially store those _citation forms_ in _lexeme_ fields in a database, though this is typically in error.
 
-Through the end of 2021, A→Z+T did not leverage this distinction, using lexeme fields when citation fields are not present. But as A→Z+T prepares to automate and facilitate word parsing, it will become more and more important to maintain this distinction. So it is important when working with A→Z+T that we keep fully pronounceable citation forms in the citation field, and analyzed word parts in the lexeme field.
+## A→Z+T usage
+Through the end of 2021, A→Z+T did not leverage this distinction, using lexeme fields when citation fields were not present. But as A→Z+T prepares to automate and facilitate word parsing, it will become more and more important to maintain this distinction. So it is important when working with A→Z+T that we keep fully pronounceable citation forms in the citation field, and analyzed word parts in the lexeme field.
 
+## How this impacts you and your database
 If your database contains a mixture of both
-- entries which have already been analyzed into a combination of lexeme and citation fields, and
-- entries which have only fully pronounceable (and unanalyzed) data in the lexeme field (i.e., no or empty citation field)
-The entries with only lexeme fields should have those lexeme fields converted to citation fields. Once this is done, your database will have only analyzed data in lexeme fields, and only pronounceable data in citation fields.
+- entries which have already been analyzed into distinct _lexeme_ and _citation_ fields, and
+- entries which have data only in the _lexeme_ field (i.e., no or empty _citation_ field)
+
+The entries with only lexeme fields should almost certainly have those _lexeme_ fields converted to _citation_ fields. Once this is done, your database will have only analyzed data in _lexeme_ fields, and only pronounceable data in _citation_ fields.
 
 If this is an issue for your database (specifically, if you have more filled lexeme fields than citation fields), A→Z+T will offer to move the data for you. If you see this window, *please consider the decision carefully*. If you click
 - "Move lexeme field data to citation fields":
