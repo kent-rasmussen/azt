@@ -975,6 +975,8 @@ class Window(Toplevel):
                                 padx=(0,25),
                                             )
             self.exitButton.grid(column=2,row=2)
+        else:
+            self.outsideframe['padx']=25
         if backcmd is not False: #This one, too...
             b=(_("Back"))
             cmd=lambda:backcmd(parent, window, check, entry, choice)
