@@ -1358,7 +1358,7 @@ class Settings(object):
                 self.secondformfield[self.nominalps]=self.pluralname=opt
         try:
             log.info(_('Plural field name: {}').format(self.pluralname))
-        except:
+        except AttributeError:
             log.info(_('Looks like there is no Plural field in the database'))
             self.pluralname=None
         for opt in self.impopts:
@@ -1366,7 +1366,7 @@ class Settings(object):
                 self.secondformfield[self.verbalps]=self.imperativename=opt
         try:
             log.info(_('Imperative field name: {}'.format(self.imperativename)))
-        except:
+        except AttributeError:
             log.info(_('Looks like there is no Imperative field in the database'))
             self.imperativename=None
     def askaboutpolygraphs(self):
