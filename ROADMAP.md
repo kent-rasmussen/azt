@@ -1,4 +1,12 @@
 #Roadmap
+-fix exit on asklift. Exit button shouldn't shut down AZT...
+-look at what it would take to make two copies of each sound file. one in hires/, the other in lowres/. We could then make a link to whichever was appropriate.
+  -Problem:
+    -If we keep the same filename for each file (lowres and highres versions), then we run the risk of either overwriting the other, on a (user error) copy.
+    -If we make different filenames (e.g., _hires.wav, _lowres.mp3), then the link to the filename would have to be updated as needed, or else each in their own link.
+  -Rationale: one sample 96khz wav file was 2.5% as large as a 48khz mp3
+    -This has drastic consequences on collaboration
+    -This is not obviously an important difference for tone study
 -check for remove file URL if file not present (and not preferred filename)
 -look at lx nodes not being written to examples? (is there anything to this? How could this possibly happen, except with no lx data in database? In that case, provide a sensible result)
 -scrolling left to right
