@@ -2927,38 +2927,13 @@ class TaskDressing(object):
                                     )
             window.wait_window(window)
     def getsecondformfieldN(self,event=None):
-        log.info("Asking for secondformfield...")
         ps=self.settings.nominalps
-        optionslist = self.db.fields #[(x,profilecounts[(x,ps)]) for x in profiles]
-        if not optionslist:
-            ErrorNotice("I don't see any appropriate fields; I'll give you "
-            "some commonly used ones to choose from.", wait=True)
-        title=_('Select Second Form Field for {}').format(ps)
-        window=ui.Window(self.frame,title=title)
-        ui.Label(window.frame, text=_("What is the database field for second "
-                            "forms for {} words?".format(ps)),column=0, row=0)
-        if optionslist:
-            optionslist.remove(self.imperativename)
-        else:
-            optionslist=self.settings.plopts
-        """What does this extra frame do?"""
-        window.scroll=ui.Frame(window.frame)
-        window.scroll.grid(column=0, row=2)
-        buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                optionlist=optionslist,
-                command=self.settings.setsecondformfieldN,
-                window=window,
-                column=0, row=0
-                )
-        window.wait_window(window)
         opts=self.settings.plopts
         othername=self.settings.imperativename
         setcmd=self.settings.setsecondformfieldN
         self.getsecondformfield(ps,opts,othername,setcmd)
     def getsecondformfieldV(self,event=None):
-        log.info("Asking for secondformfield...")
         ps=self.settings.verbalps
-        optionslist = self.db.fields
         opts=self.settings.impopts
         othername=self.settings.pluralname
         setcmd=self.settings.setsecondformfieldV
