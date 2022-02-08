@@ -2958,12 +2958,14 @@ class TaskDressing(object):
         if not optionslist:
             ErrorNotice("I don't see any appropriate fields; I'll give you "
             "some commonly used ones to choose from.", wait=True)
+            other=True
         title=_('Select Second Form Field for {}').format(ps)
         window=ui.Window(self.frame,title=title)
         ui.Label(window.frame, text=_("What is the database field for second "
                             "forms for {} words?".format(ps)),column=0, row=0)
         if optionslist:
             optionslist.remove(self.pluralname)
+        if other:
         else:
             optionslist=self.settings.impopts
         """What does this extra frame do?"""
@@ -2975,6 +2977,7 @@ class TaskDressing(object):
                 window=window,
                 column=0, row=0
                 )
+        if not other:
         window.wait_window(window)
     def getcheck(self,guess=False,event=None,**kwargs):
         def giveup():
