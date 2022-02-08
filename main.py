@@ -1936,6 +1936,8 @@ class Settings(object):
             self.attrschanged.remove('interfacelang')
         if 'glosslangs' in self.attrschanged:
             self.attrschanged.remove('glosslangs')
+        if 'secondformfield' in self.attrschanged:
+            self.attrschanged.remove('secondformfield')
         soundattrs=['fs',
                     'sample_format',
                     'audio_card_index',
@@ -2472,6 +2474,7 @@ class TaskDressing(object):
                 'ps':self.slices.ps(),
                 'profile':self.slices.profile(),
                 'group':self.status.group(),
+                'secondformfield':str(self.settings.secondformfield),
                 'tableiteration':self.tableiteration
                 }
         else:
@@ -2480,7 +2483,7 @@ class TaskDressing(object):
                     'analang':self.params.analang(),
                     'glang1':self.glosslangs.lang1(),
                     'glang2':self.glosslangs.lang2(),
-                    'secondfields':str(self.settings.secondformfield)
+                    'secondformfield':str(self.settings.secondformfield)
                     }
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
