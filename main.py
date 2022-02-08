@@ -2985,6 +2985,11 @@ class TaskDressing(object):
             optionslist=self.settings.impopts
             text=_("What is the database field for second forms for ‘{}’ words?"
             "".format(ps))
+            try:
+                optionslist.remove(othername)
+            except ValueError:
+                log.info("Imperative field ‘{}’ doesn't seem to be there: {}"
+                        "".format(othername,optionslist))
         ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
         window.scroll=ui.Frame(window.frame)
