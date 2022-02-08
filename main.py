@@ -3619,10 +3619,13 @@ class TaskChooser(TaskDressing,ui.Window):
         lq=ui.Label(w.frame, text=Question, font='read',
                     row=3, column=0, columnspan=2)
         bok=ui.Button(w.frame, text=oktext,
+                        font='instructions',
                         cmd=lambda w=w:self.convertlxtolc(w),
                         row=4, column=0)
         bok.tt=ui.ToolTip(bok,instructions)
-        bnok=ui.Button(w.frame, text=noktext, cmd=w.destroy, row=4, column=1)
+        bnok=ui.Button(w.frame, text=noktext,
+                        font='instructions',
+                        cmd=w.destroy, row=4, column=1)
         bnok.tt=ui.ToolTip(bnok, text=noktttext)
         lnb=ui.Label(w.frame, text=nbtext, row=5, column=0, columnspan=2)
         for l in [lt,nb,lq,lnb]:
