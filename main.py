@@ -3587,6 +3587,7 @@ class TaskChooser(TaskDressing,ui.Window):
         sys.exit()
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
+        url="https://github.com/kent-rasmussen/azt/blob/main/CITATIONFORMS.md"
         w=ui.Window(self,title=title,exit=False)
         lexemesdone=list(self.db.nentrieswlexemedata.values())#[self.settings.analang]
         citationsdone=list(self.db.nentrieswcitationdata.values())#[self.settings.analang]
@@ -3604,6 +3605,7 @@ class TaskChooser(TaskDressing,ui.Window):
         Question=_("Do you want {} to move data from your lexeme fields to "
                     "citation fields, for each entry with no citation field "
                     "data?".format(program['name']))
+        infot=_("See {} for more information.".format(url))
         oktext=_("Move lexeme field data to citation fields")
         noktext=_("No thanks; I'll manage this myself")
         nbtext=_("N.B.: This is a fairly radical change to your database, "
@@ -3628,6 +3630,10 @@ class TaskChooser(TaskDressing,ui.Window):
                         cmd=w.destroy, row=4, column=1)
         bnok.tt=ui.ToolTip(bnok, text=noktttext)
         lnb=ui.Label(w.frame, text=nbtext, row=5, column=0, columnspan=2)
+        info=ui.Label(w.frame, text=infot, font='default',
+                    row=7, column=0, columnspan=2)
+        info.tt=ui.ToolTip(info, text=_("go to {}").format(url))
+        info.bind("<Button-1>", lambda e: openweburl(url))
         for l in [lt,nb,lq,lnb]:
             l.wrap()
         return w
