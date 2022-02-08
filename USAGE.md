@@ -15,7 +15,7 @@ UPDATE: You can now start your database in A→Z+T, using the [Data Collection T
 
 [A→Z+T](https://github.com/kent-rasmussen/azt) requires a [LIFT](https://code.google.com/archive/p/lift-standard/) database to check. Fortunately these are not difficult to generate; [LIFT](https://code.google.com/archive/p/lift-standard/) is an open XML specification for storing lexical data. [LIFT](https://code.google.com/archive/p/lift-standard/) databases can be created by a number of routes:
 
-- Collect words in [WeSay](https://software.sil.org/wesay/) ([Download 1.6.10.0 here](https://software.sil.org/downloads/r/wesay/WeSayInstaller.1.6.10.0.msi)).
+- Collect words in [WeSay](https://software.sil.org/wesay/) ([Download 1.6.10.0 for Windows here](https://software.sil.org/downloads/r/wesay/WeSayInstaller.1.6.10.0.msi)).
     - [WeSay](https://software.sil.org/wesay/) uses [LIFT](https://code.google.com/archive/p/lift-standard/) natively, so the same repository can be used for [WeSay](https://software.sil.org/wesay/) and [A→Z+T](https://github.com/kent-rasmussen/azt) (though it is not recommended to use them both at the same time).
     - [WeSay](https://software.sil.org/wesay/) is [Chorus](https://software.sil.org/chorushub/) enabled, which allows easy tracking of changes and off-site archiving, including the changes to your database and reports made by [A→Z+T](https://github.com/kent-rasmussen/azt).
     - N.B.: I highly recommend the excellent library of images that works with WeSay, [the Art of Reading](https://bloomlibrary.org/artofreading)
@@ -29,14 +29,15 @@ UPDATE: You can now start your database in A→Z+T, using the [Data Collection T
 [LIFT](https://code.google.com/archive/p/lift-standard/) databases can be minimal or very complex. For the purposes of running A→Z+T, you just need the following:
 
 - `citation` (Not `lexeme`) forms (tagged with your language code, of course)
+    - See [this page](CITATIONFORMS.md) for why, and what to do if you've already organized your database differently.
     - forms with spaces or other non-wordforming characters are ignored.
 - `gloss`es (Not `definition`s) in at least one language (again coded for gloss language)
     - N.B.: Long definitions cause enough problems with the UI, that they are now truncated to the first three words. If you don't like this (I wouldn't!), set up proper gloss fields, and [A→Z+T](https://github.com/kent-rasmussen/azt) will use them.
 - `Grammatical Category`/`Part of Speech` (ps) indication:
     - stored in `sense/grammatical-info@[value]`
-    - whatever ps names (e.g., 'Noun', 'Nom', 'Njina', 'noun', 'n', etc) are in your database is what you will select from to study, so name them in a way that will help your work
+    - whatever ps names (e.g., 'Noun', 'Nom', 'Njina', 'noun', 'n', etc) are in your database is what you will select from to study, so name them in a way that will help your work (this word will be visible on most pages of the user interface, so a good choice will be one that works well in the interface language you will be using mostly for work in [A→Z+T](https://github.com/kent-rasmussen/azt).
     - entries with no ps value will be left out of the [A→Z+T](https://github.com/kent-rasmussen/azt) analysis
-- No markup. If you have data from another tool that added any kind of markup (formatting, references, etc), that will likely cause you problems with [A→Z+T](https://github.com/kent-rasmussen/azt). If you have and want to preserve markup inside any of the above fields, I would recommend copying it into another field before stripping it for use with [A→Z+T](https://github.com/kent-rasmussen/azt).
+- No markup or diacritics. If you have data in any of the above fields with any kind of nonsegmental data (markup formatting, references, tone marks etc), that will likely cause you problems with [A→Z+T](https://github.com/kent-rasmussen/azt). If you have and want to preserve nonsegmental data, I recommend copying it into another field before stripping it from these fields for use with [A→Z+T](https://github.com/kent-rasmussen/azt).
 
 ### Collaboration and Archival
 I **strongly** recommend using a version controlled repository (e.g., mercurial, git), as is normally done in [WeSay](https://software.sil.org/wesay/) and in recommended [FLEx](https://software.sil.org/fieldworks/) collaboration schemes. Even if you are the only one to ever see this data (why would that be?), the advantages in history and preservation of your data are already there. But if you will be sharing changes with others, you really **must** have an easy way to do this, or you will get bogged down in the logistics of sharing data changes. I  use [Language Depot](https://languagedepot.org), though there are certainly other ways to meet this need. In any case, setting this up early is always easier than trying to merge divergent data later.
