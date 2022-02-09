@@ -1,0 +1,49 @@
+<!-- a set of glossaryTerms
+       The label attribute is a way to have the title be something other than the default "glossary Terms" 
+       The version attribute is a way to document the set of glossaryTerms contained within this element. 
+       This is to facilitate reuse of sets of glossaryTerms.
+       This is a subcomponent of XLingPap
+       The usesmallcaps attribute is deprecated; use font-variant='small-caps' or, better, use a real small caps font-family
+       -->
+<!ELEMENT glossaryTerms (labelContentChoices?, comment?, glossaryTerm*, comment?)>
+<!ATTLIST glossaryTerms
+    label CDATA #IMPLIED
+    version CDATA #IMPLIED
+    %fontinfo;
+>
+<!-- a glossary term that might be used within a document.
+A given glossary term may be expressed in more than one language (e.g. English, Spanish, French, etc.).  Thus it has multiple glossaryTermInLang elements.
+It only shows if there is an instance of a referring glossaryTermRef element in the document;
+   the id attribute uniquely identifies this glossaryTerm so it can be referred to by glossaryTermRef elements
+-->
+<!ELEMENT glossaryTerm (glossaryTermInLang+)>
+<!ATTLIST glossaryTerm
+    id ID #REQUIRED
+    ignoreglossarytermsfontfamily (yes | no ) "no"
+>
+<!-- a glossaryTermInLang element has a term and a defintion, both of which are in the same language
+-->
+<!ELEMENT glossaryTermInLang (glossaryTermTerm, glossaryTermDefinition) >
+<!ATTLIST glossaryTermInLang
+    lang IDREF #IMPLIED
+    xml:lang CDATA #IMPLIED
+>
+<!ELEMENT glossaryTermTerm (#PCDATA | object)*>
+<!ELEMENT glossaryTermDefinition (#PCDATA | %embedded;)*>
+<!-- an glossaryTermRef element refers to an glossaryTerm element
+-->
+<!ELEMENT glossaryTermRef (#PCDATA) >
+<!ATTLIST glossaryTermRef
+   glossaryTerm IDREF #REQUIRED
+   capitalize (no | yes) "no"
+>
+<!-- a glossaryTermsShownHere element can be placed in a preface, in an appendix or in the backmatter.
+    The glossary terms will be shown at that location; that is, those glossary terms actually used in the document will be shown there.
+-->
+<!ELEMENT glossaryTermsShownHere EMPTY >
+<!ATTLIST glossaryTermsShownHere
+   glossaryTermWidth CDATA #IMPLIED
+   equalsWidth CDATA #IMPLIED
+   definitionWidth CDATA #IMPLIED
+>
+<!ELEMENT glossaryTermsShownHereAsDefinitionList EMPTY >
