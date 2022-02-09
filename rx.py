@@ -47,6 +47,8 @@ def tonerxs():
             re.compile(' ', re.UNICODE),
             re.compile(' ', re.UNICODE))
 def texmllike(x):
+    """This attempts to implement TeXMLLikeCharacterConversion.java from
+    XLingPaper"""
     repls={
         '\\': "\\textbackslash{}",
         '{': "\\{",
@@ -66,7 +68,10 @@ def texmllike(x):
         '%': "\\%",
         '|': "\\textbar{}",
         '<': "\\textless{}",
-        '>': "\\textgreater{}"
+        '>': "\\textgreater{}",
+        '.\u200b ': ".\\  ",
+        '\u200c ': ".\\ \\ ",
+        '\u200d ': ".~"
     }
     for y in repls:
         print("Replacing",y,"with",repls[y])
