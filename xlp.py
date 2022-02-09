@@ -114,12 +114,18 @@ class Report(object):
         with open(outfile+'c', 'wb') as f:
             f.write(newdom.encode('utf_8'))
         dom = lxml.etree.parse(outfile+'c')
-        newdom = transform[4](dom)
-        texfile=outfile.replace('.xml','.tex')
-        outdir=file.getfilenamedir(outfile)
-        log.info("writing to tex file {}".format(texfile))
-        with open(texfile, 'wb') as f:
-            f.write(newdom) #this isn't xml anymore!
+        try:
+            newdom = transform[4](dom)
+            texfile=outfile.replace('.xml','.tex')
+            outdir=file.getfilenamedir(outfile)
+            log.info("writing to tex file {}".format(texfile))
+            with open(texfile, 'wb') as f:
+                f.write(newdom) #this isn't xml anymore!
+        except:
+            for error in transform[4].error_log:
+                log.error("XSLT Error {}: {} ({})".format(error.message,
+                                                    error.line,
+                                                    error.filename))
         xetexargs=["xelatex", "--interaction=nonstopmode","-output-directory",
                     outdir, texfile]
         try:
