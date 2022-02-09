@@ -87,7 +87,9 @@ class Report(object):
                                             entry.type_name, entry.filename))
             transform[n] = lxml.etree.XSLT(trans)
             for error in transform[n].error_log:
-                log.error("XSLT Error {}: {}".format(error.message, error.line))
+                log.error("XSLT Error {}: {} ({})".format(error.message,
+                                                    error.line,
+                                                    error.filename))
         newdom = transform[1](dom)
         with open(outfile+'a', 'wb') as f:
             f.write(lxml.etree.tostring(newdom, pretty_print=True))
@@ -99,7 +101,9 @@ class Report(object):
                 f.write(lxml.etree.tostring(newdom, pretty_print=True))
         except:
             for error in transform[3].error_log:
-                log.error("XSLT Error {}: {}".format(error.message, error.line))
+                log.error("XSLT Error {}: {} ({})".format(error.message,
+                                                    error.line,
+                                                    error.filename))
         dom=newdom
         # Convert this to pure XeLaTeX form *here*, using converted java classes
         # A Java class that reads the input and changes certain sequences to
