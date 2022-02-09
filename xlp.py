@@ -45,8 +45,8 @@ class Report(object):
         m=int(t/60)
         s=t%60
         log.info("Finished in {} minutes, {} seconds.".format(m,s))
-        # if me:
-        #     self.compile() #This isn't working yet.
+        if me:
+            self.compile() #This isn't working yet.
     def write(self):
         """This writes changes to XML which can be read by XXE as XLP."""
         doctype=self.node.tag
@@ -132,7 +132,7 @@ class Report(object):
             subprocess.run(xetexargs,shell=False) # was call
             # subprocess.call(xetexargs,shell=False) #does twice help?
             exts=['out','aux','log']
-            exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
+            # exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
             for ext in exts:
                 file.remove(outfile.replace('.xml', '.'+ext))
         except Error as e:
