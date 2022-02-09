@@ -126,7 +126,11 @@ class Report(object):
                 log.error("XSLT Error {}: {} ({})".format(error.message,
                                                     error.line,
                                                     error.filename))
-        xetexargs=["xelatex", "--interaction=nonstopmode","-output-directory",
+        xetexargs=[
+                    # "/usr/texbinxlingpaper/xelatex",
+                    # "/usr/local/xlingpapertexbin/xelatex",
+                    "xelatex",
+                    "--interaction=nonstopmode","-output-directory",
                     outdir, texfile]
         try:
             subprocess.run(xetexargs,shell=False) # was call
