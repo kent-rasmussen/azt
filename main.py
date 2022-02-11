@@ -3778,6 +3778,11 @@ class TaskChooser(TaskDressing,ui.Window):
         """Do I want this? Rather give errors..."""
         splash.destroy()
 class WordCollection(object):
+class Segments(object):
+    """docstring for Segments."""
+    def __init__(self, parent):
+        if parent.params.cvt() == 'T':
+            parent.settings.setcvt('V')
     """This task collects words, from the SIL CAWL, or one by one."""
     def addmorpheme(self):
         def makewindow():
@@ -4094,11 +4099,6 @@ class Placeholder(ui.Window,TaskDressing):
             ui.Label(self.frame,
                     text="This is a check placeholder.",
                     row=r, column=0)
-class Segments(object):
-    """docstring for Segments."""
-    def __init__(self, parent):
-        if parent.params.cvt() == 'T':
-            parent.settings.setcvt('V')
 class Tone(object):
     """This keeps stuff used for Tone checks."""
     def makeanalysis(self,**kwargs):
