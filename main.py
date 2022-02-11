@@ -3777,12 +3777,12 @@ class TaskChooser(TaskDressing,ui.Window):
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
         splash.destroy()
-class WordCollection(object):
 class Segments(object):
     """docstring for Segments."""
     def __init__(self, parent):
         if parent.params.cvt() == 'T':
             parent.settings.setcvt('V')
+class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     def addmorpheme(self):
         def makewindow():
