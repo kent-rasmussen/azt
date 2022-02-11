@@ -906,7 +906,7 @@ class StatusFrame(ui.Frame):
         self.interfacelangline()
         self.analangline()
         self.glosslangline()
-        if isinstance(self.task,WordCollection):
+        if isinstance(self.task,Segments):
             self.fieldsline()
         if (isinstance(self.task,Sort) or
             (isinstance(self.task,Report) and
