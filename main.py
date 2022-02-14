@@ -3927,6 +3927,7 @@ class WordCollection(Segments):
                 added.append(n)
         if added or modded:
             self.db.write()
+            title="Entries Added!"
             text=_("Added {} entries from the SILCAWL").format(len(added))
             if len(added)<100:
                 text+=": ({})".format(added)
@@ -3934,9 +3935,13 @@ class WordCollection(Segments):
                     "SILCAWL").format(len(modded))
             if len(modded)<100:
                 text+=": ({})".format(modded)
-            log.info(text)
-            ErrorNotice(text,title="Entries Added!")
             self.getwords()
+            title=_("Error trying to add SILCAWL entries")
+            text=_("We seem to have not added or modded any entries, which "
+                    "shouldn't happen! (missing: {})"
+                    "".format(self.taskchooser.cawlmissing))
+        log.info(text)
+        ErrorNotice(text,title=title)
     def nextword(self,event=None):
         def cont():
             self.taskchooser.whatsdone()
