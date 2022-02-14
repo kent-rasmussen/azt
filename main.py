@@ -3436,6 +3436,11 @@ class TaskChooser(TaskDressing,ui.Window):
             self.maketask(optionlist[-1][0]) #last item, the code
     def maketask(self,taskclass): #,filename=None
         self.unsetmainwindow()
+        try:
+            self.task.waitdone()
+            self.task.on_quit() #destroy and set flag
+        except AttributeError:
+            log.info(_("No task, apparently; not destroying."))
         self.task=taskclass(self) #filename
         if not self.task.exitFlag.istrue():
             self.task.deiconify()
