@@ -3770,6 +3770,8 @@ class TaskChooser(TaskDressing,ui.Window):
         self.getfile()
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
+        """Can whatsdone be joined with makedefaulttask? they appear together
+        elsewhere."""
         self.whatsdone()
         if hasattr(self.file,'analang'): #i.e., new file
             self.analang=self.file.analang #I need to keep this alive until objects are done
