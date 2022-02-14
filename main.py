@@ -3935,11 +3935,14 @@ class WordCollection(Segments):
                     "SILCAWL").format(len(modded))
             if len(modded)<100:
                 text+=": ({})".format(modded)
-            self.getwords()
+            self.taskchooser.whatsdone()
+            self.taskchooser.makedefaulttask()
+        else:
             title=_("Error trying to add SILCAWL entries")
             text=_("We seem to have not added or modded any entries, which "
                     "shouldn't happen! (missing: {})"
                     "".format(self.taskchooser.cawlmissing))
+        self.waitdone()
         log.info(text)
         ErrorNotice(text,title=title)
     def nextword(self,event=None):
