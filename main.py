@@ -3422,6 +3422,10 @@ class TaskChooser(TaskDressing,ui.Window):
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
+        if self.taskchooser.donew['collectionlc']:
+            self.ifcollectionlc()
+        """The above is prerequisite to the below, so it is here. It could be
+        elsewhere, but that led to numerous repetitions."""
         optionlist=self.makeoptions()
         # task,title,icon
         optionlist=[i for i in optionlist if not issubclass(i[0],Sound)]
@@ -3771,8 +3775,6 @@ class TaskChooser(TaskDressing,ui.Window):
             self.analang=self.file.analang #I need to keep this alive until objects are done
         self.makesettings()
         TaskDressing.__init__(self,parent)
-        if self.taskchooser.donew['collectionlc']:
-            self.ifcollectionlc()
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
@@ -3936,7 +3938,6 @@ class WordCollection(Segments):
     def nextword(self,event=None):
         def cont():
             self.taskchooser.whatsdone()
-            self.taskchooser.ifcollectionlc()
             self.taskchooser.makedefaulttask()
             self.e.on_quit()
         self.storethisword()
