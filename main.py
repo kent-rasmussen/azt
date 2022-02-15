@@ -910,7 +910,7 @@ class StatusFrame(ui.Frame):
             self.fieldsline()
         if (isinstance(self.task,Sort) or
             (isinstance(self.task,Report) and
-                not isinstance(self.task,ReportCitationBasic)) or
+                not isinstance(self.task,Comprehensive)) or
             isinstance(self.task,Tone)
             ):
             self.cvt=self.settings.params.cvt()
@@ -5969,6 +5969,8 @@ class Report(object):
         self.distinguish=self.settings.distinguish
         self.profilesbysense=self.settings.profilesbysense
         self.s=self.settings.s
+class Comprehensive(object):
+    pass
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
@@ -7652,7 +7654,7 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
             i+=1
             return
         self.getresults()
-class ReportCitationBasic(Report,Segments,TaskDressing,ui.Window):
+class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Comprehensive Alphabet Report") # on Citation Forms
@@ -7741,7 +7743,7 @@ class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=True
-class ReportCitationBasicT(Report,Tone,TaskDressing,ui.Window):
+class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Comprehensive Tone Report")
