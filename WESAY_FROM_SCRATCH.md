@@ -17,7 +17,7 @@
   - If you want to collect words using **French**, remove English from the `Definition` field (at least until your word collection is done).
   - Select the box next to `Gloss`, and make sure the correct gloss language is selected.
 - In the `Interface Language` tab, set WeSay's language, if you don't want it to talk to you in English.
-- In the `option lists` tab, if you want non-English part of speech labels, set them here. A→Z+T will use whatever labels you have in your data.
+- In the `option lists` tab, if you want non-English lexical category labels, set them here. A→Z+T will use whatever labels you have in your data.
 - Click on `Open in WeSay`, in the upper right.
 
 ## Start Collecting Data In WeSay:
@@ -33,5 +33,5 @@
     - `<enter>` or <+>: give another word for the same prompt
     - `<PageDown>` or ->: go to next prompt.
 
-### Confirm Parts of Speech (Grammatical Categories)
-- We really should confirm part of speech here, though there isn't a great way to do that yet, except check each word one at a time. If you don't have good tests for your major grammatical categories (noun and verb), and if you used the CAWL as above, this can probably wait, without causing too much damage (the CAWL gives part of speech designations, though they should be confirmed).
+### Confirm Lexical Categories (Parts of Speech)
+- We really should confirm lexical category here, though there isn't a great way to do that yet, except check each word one at a time. If you don't have good tests for your major grammatical categories (noun and verb), and if you used the CAWL as above, this can probably wait, without causing too much damage (the CAWL gives lexical category designations, though they should be confirmed).

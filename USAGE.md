@@ -28,15 +28,15 @@ UPDATE: You can now start your database in A→Z+T, using the [Data Collection T
 ### [LIFT](https://code.google.com/archive/p/lift-standard/) Database Requirements
 [LIFT](https://code.google.com/archive/p/lift-standard/) databases can be minimal or very complex. For the purposes of running A→Z+T, you just need the following:
 
-- `citation` (Not `lexeme`) forms (tagged with your language code, of course)
+- `citation` forms (Not `lexeme` forms, and tagged with your language code, of course)
     - See [this page](CITATIONFORMS.md) for why, and what to do if you've already organized your database differently.
     - forms with spaces or other non-wordforming characters are ignored.
 - `gloss`es (Not `definition`s) in at least one language (again coded for gloss language)
     - N.B.: Long definitions cause enough problems with the UI, that they are now truncated to the first three words. If you don't like this (I wouldn't!), set up proper gloss fields, and [A→Z+T](https://github.com/kent-rasmussen/azt) will use them.
-- `Grammatical Category`/`Part of Speech` (ps) indication:
-    - stored in `sense/grammatical-info@[value]`
-    - whatever ps names (e.g., 'Noun', 'Nom', 'Njina', 'noun', 'n', etc) are in your database is what you will select from to study, so name them in a way that will help your work (this word will be visible on most pages of the user interface, so a good choice will be one that works well in the interface language you will be using mostly for work in [A→Z+T](https://github.com/kent-rasmussen/azt).
-    - entries with no ps value will be left out of the [A→Z+T](https://github.com/kent-rasmussen/azt) analysis
+- [`Lexical Category`](LEXICAL_CATEGORIES.md) indication:
+    - stored in `sense/grammatical-info/@value`
+    - whatever category names (e.g., 'Noun', 'Nom', 'Njina', 'noun', 'n', etc) are in your database is what you will select from to study, so name them in a way that will help your work (this word will be visible on most pages of the user interface, so a good choice will be one that works well in the interface language you will be using mostly for work in [A→Z+T](https://github.com/kent-rasmussen/azt).
+    - entries with no lexical category value will be left out of the [A→Z+T](https://github.com/kent-rasmussen/azt) analysis
 - No markup or diacritics. If you have data in any of the above fields with any kind of nonsegmental data (markup formatting, references, tone marks etc), that will likely cause you problems with [A→Z+T](https://github.com/kent-rasmussen/azt). If you have and want to preserve nonsegmental data, I recommend copying it into another field before stripping it from these fields for use with [A→Z+T](https://github.com/kent-rasmussen/azt).
 
 ### Collaboration and Archival
@@ -92,7 +92,7 @@ Each time you open [A→Z+T](https://github.com/kent-rasmussen/azt), it checks f
 Once you finish with this window, [A→Z+T](https://github.com/kent-rasmussen/azt) will store the settings, and use them on subsequent runs. You will only see this window again if you ask for it (in Advanced/Redo menu), or if your database shows (new) potential digraphs, for which a judgment has not already been made and stored.
 
 ### Syllable Profile Analysis
-If you open [A→Z+T](https://github.com/kent-rasmussen/azt) without a saved syllable profile analysis file (e.g., for the first time), it will open your database and go through the entries there, and sort them by syllable profile and part of speech (CVC v CVCV for each of Nouns and Verbs, for example). This can take a couple of minutes. If you are running [A→Z+T](https://github.com/kent-rasmussen/azt) in a terminal, you should see its progress.
+If you open [A→Z+T](https://github.com/kent-rasmussen/azt) without a saved syllable profile analysis file (e.g., for the first time), it will open your database and go through the entries there, and sort them by syllable profile and lexical category (CVC v CVCV for each of Nouns and Verbs, for example). This can take a couple of minutes. If you are running [A→Z+T](https://github.com/kent-rasmussen/azt) in a terminal, you should see its progress.
 
 If you use symbols that [A→Z+T](https://github.com/kent-rasmussen/azt) doesn't recognize as word-forming (including a space), entries using those symbols will be excluded from the syllable profile analysis, and thus from any work in [A→Z+T](https://github.com/kent-rasmussen/azt). For your convenience, a window appears on boot if this applies to you, including which characters are found, and how many entries they impact. If you feel entries are being excluded inappropriately (e.g., you have an orthographic symbol I haven't already accounted for), please write me with the details, and include a log.
 
@@ -118,7 +118,7 @@ On the upper left of the main window, each of these settings are indicated:
  - interface language
  - analysis language
  - gloss language(s) —first (and possibly second)
- - part of speech and syllable profile (with count)
+ - lexical category and syllable profile (with count)
  - type of check (i.e., C, V, or T) and current stage/frame
 
 There are by default **no menus**; if you see something you want to change (including the way the language name appears), click on it, and a menu will appear for you to change it.
@@ -146,7 +146,7 @@ If you absolutely regret a tone frame you have set up, all your frames are store
 ### Tone Frame Groups ![Tone Frame Groups](images/T%20alone%20clear6_icon.png "ToneFrameGroups")
 [A→Z+T](https://github.com/kent-rasmussen/azt) by default labels the groups into which you sort your data by frame with numbers. This is because, at least initially, the fact that it is its own thing (all one thing, and unlike the other groups) is more important than any description of the group, however objective it may be.
 That said, there may come a time where you want to give one or more of these groups a particular name, like `HL` or `[˦˦ ˨˨]`, perhaps because you want to remember how you thought of the surface form at the time, or because you don't want the group names in your database to be just numbers. To do this, right click on the verification window *while verifying the group you want to rename*, and click on `Show Menu`. This will provide a menu which will allow you to change the name.
-Regarding name changes, please be cognizant of the fact that these names are for a *part of speech* and *syllable profile*, **in a given frame**. These should describe the *surface* tone only; hypotheses regarding underlying tone come later (see [`Joining and Renaming Draft Tone Groups`](#joining-and-renaming-draft-tone-groups), below; see also the following process flow chart). ![AZT Process Flow Chart](docs/AZT%20Process%20Flow%20Chart.png "Flow Chart")
+Regarding name changes, please be cognizant of the fact that these names are for a *lexical category* and *syllable profile*, **in a given frame**. These should describe the *surface* tone only; hypotheses regarding underlying tone come later (see [`Joining and Renaming Draft Tone Groups`](#joining-and-renaming-draft-tone-groups), below; see also the following process flow chart). ![AZT Process Flow Chart](docs/AZT%20Process%20Flow%20Chart.png "Flow Chart")
 
 ### Recording ![Recording](images/Microphone%20alone_sm.png "microphone")
 The first time you try to record, you will be asked to tell [A→Z+T](https://github.com/kent-rasmussen/azt) what sound card parameters you want. You can set frequency, bit depth, and sound card number (to select between multiple cards, for your microphone and for your speakers. This window is designed with test `play` and `record` buttons, so you can set parameters and test them, before moving on. I suggest you budget some time to play with the settings there, until you are satisfied with them.
@@ -181,11 +181,11 @@ This tool will ultimately be able to help with the sorting and correction of con
 
 ## Subsequent Runs: Tone (Sort, and Follow Directions) ![Tone](images/T%20alone%20clear6_icon.png "Tone")
 ### Sorting progression: The Status Table
-Once you have done any sorting for the selected part of speech, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one part of speech and check type at a time). To see progress for another check type or part of speech, switch to that check type or part of speech.
+Once you have done any sorting for the selected lexical category, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one lexical category and check type at a time). To see progress for another check type or lexical category, switch to that check type or lexical category.
 
 The program is designed to step through the process relatively automatically; once things are set up, you should be able to just open the program, and click `Sort`. If you need a break, click `quit` on whatever window you're in, and your progress should be there when you return.
 
-You will, of course from time to time want to move to another part of speech or syllable profile, or check type. Click on any cell in the status table to select that combination of profile and check/frame (this can also be done on the main window menus) and the next time you click `Sort` or `Record`, the appropriate data will be selected, and those changes saved to the preferences file.
+You will, of course from time to time want to move to another lexical category or syllable profile, or check type. Click on any cell in the status table to select that combination of profile and check/frame (this can also be done on the main window menus) and the next time you click `Sort` or `Record`, the appropriate data will be selected, and those changes saved to the preferences file.
 
 At some point you will likely want to give your sorting groups (within a ps-profile-frame) more meaningful names than the default (numbers). Until then, the status table gives you a count of the names, plus a count of the verified groups (w/+, in parentheses). Once you name a group, all groups for that ps-profile-frame will be listed separately, in the appropriate cell. If you don't like that, there is a context menu to "Hide group names," which will go back to just showing counts. In any case, the status table also indicates the presence of unsorted data in a group, via a preceding '!'.
 
