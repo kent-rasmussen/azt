@@ -5343,8 +5343,14 @@ class Report(object):
                     output(window,r,text)
         sectitle=_('\nData Summary')
         s2=xlp.Section(xlpr,title=sectitle)
-        eps='{:.2}'.format(float(counts['examples']/counts['senses']))
-        audiopercent='{:.2%}'.format(float(counts['audio']/counts['examples']))
+        try:
+            eps='{:.2}'.format(float(counts['examples']/counts['senses']))
+        except ZeroDivisionError:
+            eps="Div/0"
+        try:
+            audiopercent='{:.2%}'.format(float(counts['audio']/counts['examples']))
+        except ZeroDivisionError:
+            audiopercent="Div/0%"
         ptext=_("This report contains {} senses, {} examples, and "
                 "{} sound files. That is an average of {} examples/sense, and "
                 "{} of examples with sound files."
