@@ -92,13 +92,19 @@ class Report(object):
                                                     error.filename))
         newdom = transform[1](dom)
         with open(outfile+'a', 'wb') as f:
-            f.write(lxml.etree.tostring(newdom, pretty_print=True))
+            f.write(lxml.etree.tostring(newdom,
+                                        encoding="utf-8",
+                                        xml_declaration=True,
+                                        pretty_print=True))
         # newdom2 = transform[2](newdom1) #not used; always using stylesheets!
         dom=newdom
         try:
             newdom = transform[3](dom)
             with open(outfile+'b', 'wb') as f:
-                f.write(lxml.etree.tostring(newdom, pretty_print=True))
+                f.write(lxml.etree.tostring(newdom,
+                                            encoding="utf-8",
+                                            xml_declaration=True,
+                                            pretty_print=True))
         except:
             for error in transform[3].error_log:
                 log.error("XSLT Error {}: {} ({})".format(error.message,
