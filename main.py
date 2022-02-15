@@ -10403,7 +10403,7 @@ if __name__ == "__main__":
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    for exe in ['praat','hg']: #'sendpraat' now in 'praat', if useful
+    for exe in ['praat','hg','ffmpeg']: #'sendpraat' now in 'praat', if useful
         findexecutable(exe)
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
