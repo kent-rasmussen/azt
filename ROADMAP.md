@@ -1,4 +1,7 @@
 #Roadmap
+- Figure out why next frame isn't changing to new frame when all are done
+  - check if using top or all profiles (autoadvance should just be top)
+- remove ps-profile line from comprehensive report (add how many to do?)
 - fix exit on asklift. Exit button shouldn't shut down AZT...
 - look at what it would take to make two copies of each sound file. one in hires/, the other in lowres/. We could then make a link to whichever was appropriate.
   -Problem:
