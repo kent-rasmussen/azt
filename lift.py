@@ -367,7 +367,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if framed: #if it's specified, that is...
                 formvaluenode=self.get("example/form/text", senseid=senseid,
                     analang=analang, location=location, showurl=True).get('node')
-                log.info(formvaluenode)
                 if formvaluenode:
                     formvaluenode=formvaluenode[0]
                     if forms[analang] != formvaluenode.text:
