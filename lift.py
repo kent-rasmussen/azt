@@ -376,7 +376,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         formvaluenode.text=forms[analang]
                 else:
                     log.error("Found example with tone value field, but no form "
-                            "field? ({}-{})".format(senseid,location))
+                            "field? ({}-{}); adding".format(senseid,location))
+                    example=self.get("example", senseid=senseid,
+                        location=location, showurl=True).get('node')
+                    Node.makeformnode(example[0],analang,forms[analang])
                 glossesnode=self.get("example/translation", senseid=senseid,
                             location=location, showurl=True).get('node')
                 #If the glosslang data isn't all provided, ignore it.
