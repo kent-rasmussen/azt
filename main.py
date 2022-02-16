@@ -6361,7 +6361,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             exit=False
         if exit:
             if not self.exitFlag.istrue():
-                self.notdonewarning()
+                notdonewarning()
             #This happens when the user exits the window
             log.debug("exiting joinT True")
             #Give an error window here
