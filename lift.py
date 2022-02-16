@@ -374,7 +374,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         log.debug("Form changed! ({}≠{})".format(forms[analang],
                                                         formvaluenode.text))
                         formvaluenode.text=forms[analang]
-                else:
+                elif analang in forms:
                     log.error("Found example with tone value field, but no form "
                             "field? ({}-{}); adding".format(senseid,location))
                     example=self.get("example", senseid=senseid,
