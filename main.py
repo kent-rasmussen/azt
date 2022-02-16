@@ -6627,6 +6627,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     "".format(group,done))
             w=self.getgroup(wsorted=True)
             w.wait_window(w)
+            group=self.status.group()
             if group == None:
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
