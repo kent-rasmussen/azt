@@ -6624,6 +6624,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         done=self.status.verified()
         if group not in done:
             self.getgroup(wsorted=True)
+            log.info("Group ({}) not in groups ({}); asking."
+                    "".format(group,done))
             if group == None:
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
