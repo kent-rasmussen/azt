@@ -3264,15 +3264,21 @@ class TaskDressing(object):
         log.info("about to return {}={}".format(check,group))
         return check+'='+group
     def maybewrite(self):
-        if self.timetowrite():
-            try:
-                self.runwindow.wait("Writing to LIFT")
-                w=self.runwindow
-            except AttributeError:
-                self.wait("Writing to LIFT")
-                w=self
-            self.db.write()
-            w.waitdone()
+        def schedule_check(t):
+            """Schedule `check_if_done()` function after five seconds."""
+            self.after(5000, check_if_done, t)
+        def check_if_done(t):
+            # If the thread has finished, allow another write.
+            if not t.is_alive():
+                self.taskchooser.writing=False
+            else:
+                # Otherwise check again later.
+                schedule_check(t)
+        if self.timetowrite() and not self.taskchooser.writing:
+            t = threading.Thread(target=self.db.write)
+            self.taskchooser.writing=True
+            t.start()
+            schedule_check(t)
     def timetowrite(self):
         """only write to file every self.writeeverynwrites times you might."""
         self.writeable+=1 #and tally here each time this is asked
