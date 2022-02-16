@@ -1,4 +1,4 @@
-The XSL transforms and DTDs in this folder are from https://github.com/sillsdev/XLingPap, retrieved on September 1, 2021. While that site was not accompanied by a license, it links to software.sil.org/xlingpaper/, which contains in its footer the text:
+The XSL transforms and DTDs in this folder are from https://github.com/sillsdev/XLingPap, retrieved on September 1, 2021 and since. While that site was not accompanied by a license, it links to software.sil.org/xlingpaper/, which contains in its footer the text:
 
 `This software is free to use, modify and redistribute according to the terms of the MIT License`
 
@@ -20,3 +20,23 @@ Modifications I have made so far are limited to implementing the exslt.org nodes
       - select="$childDoc/root/node()"
 to node sets like
       - select="exsl:node-set($childDoc)/root/node()"
+
+Search for (\$[^],/=") []+)([/[]+)
+replace with exsl:node-set(\1)\2
+inside normalize-space() is OK
+There were a few cases requiring more manual work… but mostly incorporated
+
+XLingPapPublisherStylesheetXeLaTeX.xsl
+XLingPapXeLaTeXCommon.xsl
+XLingPapPublisherStylesheetXeLaTeXContents.xsl
+XLingPapPublisherStylesheetCommon.xsl
+/home/kentr/IT/azt/repo_stable/xlptransforms/XLingPapXeLaTeX1.xsl
+/home/kentr/IT/azt/repo_stable/xlptransforms/XLingPapRemoveAnyContent.xsl
+/home/kentr/IT/azt/repo_stable/xlptransforms/XLingPapPublisherStylesheetCommonContents.xsl
+/home/kentr/IT/azt/repo_stable/xlptransforms/XLingPapCommon.xsl
+/home/kentr/IT/azt/repo_stable/xlptransforms/XLingPapCannedCommon.xsl
+/home/kentr/IT/azt/repo_stable/xlptransforms/XLingPapPublisherStylesheetXeLaTeXReferences.xsl
+/home/kentr/IT/azt/repo_stable/xlptransforms/XLingPapPublisherStylesheetXeLaTeXBookmarks.xsl
+
+
+

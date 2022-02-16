@@ -45,8 +45,8 @@ class Report(object):
         m=int(t/60)
         s=t%60
         log.info("Finished in {} minutes, {} seconds.".format(m,s))
-        # if me:
-        #     self.compile() #This isn't working yet.
+        if me:
+            self.compile() #This isn't working yet.
     def write(self):
         """This writes changes to XML which can be read by XXE as XLP."""
         doctype=self.node.tag
@@ -87,19 +87,29 @@ class Report(object):
                                             entry.type_name, entry.filename))
             transform[n] = lxml.etree.XSLT(trans)
             for error in transform[n].error_log:
-                log.error("XSLT Error {}: {}".format(error.message, error.line))
+                log.error("XSLT Error {}: {} ({})".format(error.message,
+                                                    error.line,
+                                                    error.filename))
         newdom = transform[1](dom)
         with open(outfile+'a', 'wb') as f:
-            f.write(lxml.etree.tostring(newdom, pretty_print=True))
+            f.write(lxml.etree.tostring(newdom,
+                                        encoding="utf-8",
+                                        xml_declaration=True,
+                                        pretty_print=True))
         # newdom2 = transform[2](newdom1) #not used; always using stylesheets!
         dom=newdom
         try:
             newdom = transform[3](dom)
             with open(outfile+'b', 'wb') as f:
-                f.write(lxml.etree.tostring(newdom, pretty_print=True))
+                f.write(lxml.etree.tostring(newdom,
+                                            encoding="utf-8",
+                                            xml_declaration=True,
+                                            pretty_print=True))
         except:
             for error in transform[3].error_log:
-                log.error("XSLT Error {}: {}".format(error.message, error.line))
+                log.error("XSLT Error {}: {} ({})".format(error.message,
+                                                    error.line,
+                                                    error.filename))
         dom=newdom
         # Convert this to pure XeLaTeX form *here*, using converted java classes
         # A Java class that reads the input and changes certain sequences to
@@ -110,19 +120,29 @@ class Report(object):
         with open(outfile+'c', 'wb') as f:
             f.write(newdom.encode('utf_8'))
         dom = lxml.etree.parse(outfile+'c')
-        newdom = transform[4](dom)
-        texfile=outfile.replace('.xml','.tex')
-        outdir=file.getfilenamedir(outfile)
-        log.info("writing to tex file {}".format(texfile))
-        with open(texfile, 'wb') as f:
-            f.write(newdom) #this isn't xml anymore!
-        xetexargs=["xelatex", "--interaction=nonstopmode","-output-directory",
+        try:
+            newdom = transform[4](dom)
+            texfile=outfile.replace('.xml','.tex')
+            outdir=file.getfilenamedir(outfile)
+            log.info("writing to tex file {}".format(texfile))
+            with open(texfile, 'wb') as f:
+                f.write(newdom) #this isn't xml anymore!
+        except:
+            for error in transform[4].error_log:
+                log.error("XSLT Error {}: {} ({})".format(error.message,
+                                                    error.line,
+                                                    error.filename))
+        xetexargs=[
+                    # "/usr/texbinxlingpaper/xelatex",
+                    # "/usr/local/xlingpapertexbin/xelatex",
+                    "xelatex",
+                    "--interaction=nonstopmode","-output-directory",
                     outdir, texfile]
         try:
             subprocess.run(xetexargs,shell=False) # was call
             # subprocess.call(xetexargs,shell=False) #does twice help?
             exts=['out','aux','log']
-            exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
+            # exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
             for ext in exts:
                 file.remove(outfile.replace('.xml', '.'+ext))
         except Error as e:

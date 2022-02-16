@@ -630,12 +630,16 @@ class Root(Exitable,tkinter.Tk):
         self.mainwindow=False
         self.exitFlag = ExitFlag()
         tkinter.Tk.__init__(self)
+        if program:
+            self.program=program
+        else:
+            self.program={}
         if theme and not isinstance(theme,Theme) and type(theme) is str:
-            self.theme=Theme(program,theme)
+            self.theme=Theme(self.program,theme)
         elif theme and isinstance(theme,Theme):
             self.theme=theme
         else:
-            self.theme=Theme(program) #OK if program==None
+            self.theme=Theme(self.program) #OK if program==None
         self.renderer=Renderer()
         Exitable.__init__(self)
         UI.__init__(self)

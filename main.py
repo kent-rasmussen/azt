@@ -910,7 +910,7 @@ class StatusFrame(ui.Frame):
             self.fieldsline()
         if (isinstance(self.task,Sort) or
             (isinstance(self.task,Report) and
-                not isinstance(self.task,ReportCitationBasic)) or
+                not isinstance(self.task,Comprehensive)) or
             isinstance(self.task,Tone)
             ):
             self.cvt=self.settings.params.cvt()
@@ -3264,19 +3264,25 @@ class TaskDressing(object):
         log.info("about to return {}={}".format(check,group))
         return check+'='+group
     def maybewrite(self):
-        if self.timetowrite():
-            try:
-                self.runwindow.wait("Writing to LIFT")
-                w=self.runwindow
-            except AttributeError:
-                self.wait("Writing to LIFT")
-                w=self
-            self.db.write()
-            w.waitdone()
+        def schedule_check(t):
+            """Schedule `check_if_done()` function after five seconds."""
+            self.after(5000, check_if_done, t)
+        def check_if_done(t):
+            # If the thread has finished, allow another write.
+            if not t.is_alive():
+                self.taskchooser.writing=False
+            else:
+                # Otherwise check again later.
+                schedule_check(t)
+        if self.timetowrite() and not self.taskchooser.writing:
+            t = threading.Thread(target=self.db.write)
+            self.taskchooser.writing=True
+            t.start()
+            schedule_check(t)
     def timetowrite(self):
         """only write to file every self.writeeverynwrites times you might."""
-        self.writeable+=1 #and tally here each time this is asked
-        return not self.writeable%self.writeeverynwrites
+        self.taskchooser.writeable+=1 #and tally here each time this is asked
+        return not self.taskchooser.writeable%self.settings.writeeverynwrites
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -3311,11 +3317,6 @@ class TaskDressing(object):
         self.makestatusframe()
         self._taskchooserbutton()
         self.correlatemenus()
-        if not self.settings.writeeverynwrites: #0/None are not sensible values
-            self.settings.writeeverynwrites=5
-            self.settings.storesettingsfile()
-        self.writeeverynwrites=self.settings.writeeverynwrites
-        self.writeable=0 #start the count
         # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=self.taskchooser)
         # self.setfontsdefault()
 class TaskChooser(TaskDressing,ui.Window):
@@ -3766,6 +3767,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def __init__(self,parent):
         # self.testdefault=Transcribe
         self.start_time=time.time() #this enables boot time evaluation
+        self.writing=False
         self.datacollection=True # everyone starts here?
         self.ifcollectionlcsettingsdone=False
         self.setiflang() #before Splash
@@ -3782,6 +3784,10 @@ class TaskChooser(TaskDressing,ui.Window):
             self.analang=self.file.analang #I need to keep this alive until objects are done
         self.makesettings()
         TaskDressing.__init__(self,parent)
+        if not self.settings.writeeverynwrites: #0/None are not sensible values
+            self.settings.writeeverynwrites=5
+            self.settings.storesettingsfile()
+        self.writeable=0 #start the count
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
@@ -5975,6 +5981,8 @@ class Report(object):
         self.distinguish=self.settings.distinguish
         self.profilesbysense=self.settings.profilesbysense
         self.s=self.settings.s
+class Comprehensive(object):
+    pass
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
@@ -7662,7 +7670,7 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
             i+=1
             return
         self.getresults()
-class ReportCitationBasic(Report,Segments,TaskDressing,ui.Window):
+class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Comprehensive Alphabet Report") # on Citation Forms
@@ -7751,7 +7759,7 @@ class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=True
-class ReportCitationBasicT(Report,Tone,TaskDressing,ui.Window):
+class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Comprehensive Tone Report")
@@ -10401,7 +10409,7 @@ if __name__ == "__main__":
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    for exe in ['praat','hg']: #'sendpraat' now in 'praat', if useful
+    for exe in ['praat','hg','ffmpeg','lame']: #'sendpraat' now in 'praat', if useful
         findexecutable(exe)
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
