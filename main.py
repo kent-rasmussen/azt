@@ -3281,8 +3281,8 @@ class TaskDressing(object):
             schedule_check(t)
     def timetowrite(self):
         """only write to file every self.writeeverynwrites times you might."""
-        self.writeable+=1 #and tally here each time this is asked
-        return not self.writeable%self.writeeverynwrites
+        self.taskchooser.writeable+=1 #and tally here each time this is asked
+        return not self.taskchooser.writeable%self.settings.writeeverynwrites
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -3317,11 +3317,6 @@ class TaskDressing(object):
         self.makestatusframe()
         self._taskchooserbutton()
         self.correlatemenus()
-        if not self.settings.writeeverynwrites: #0/None are not sensible values
-            self.settings.writeeverynwrites=5
-            self.settings.storesettingsfile()
-        self.writeeverynwrites=self.settings.writeeverynwrites
-        self.writeable=0 #start the count
         # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=self.taskchooser)
         # self.setfontsdefault()
 class TaskChooser(TaskDressing,ui.Window):
@@ -3772,6 +3767,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def __init__(self,parent):
         # self.testdefault=Transcribe
         self.start_time=time.time() #this enables boot time evaluation
+        self.writing=False
         self.datacollection=True # everyone starts here?
         self.ifcollectionlcsettingsdone=False
         self.setiflang() #before Splash
@@ -3788,6 +3784,10 @@ class TaskChooser(TaskDressing,ui.Window):
             self.analang=self.file.analang #I need to keep this alive until objects are done
         self.makesettings()
         TaskDressing.__init__(self,parent)
+        if not self.settings.writeeverynwrites: #0/None are not sensible values
+            self.settings.writeeverynwrites=5
+            self.settings.storesettingsfile()
+        self.writeable=0 #start the count
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
