@@ -6632,6 +6632,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
         done.remove(group)
+        self.settings.updatesortingstatus() # Not just tone anymore
         self.maybesort()
     def verifyT(self,menu=False):
         def updatestatus():
