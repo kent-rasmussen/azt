@@ -91,20 +91,12 @@ class Report(object):
                                                     error.line,
                                                     error.filename))
         newdom = transform[1](dom)
-        with open(outfile+'a', 'wb') as f:
-            f.write(lxml.etree.tostring(newdom,
-                                        encoding="utf-8",
-                                        xml_declaration=True,
-                                        pretty_print=True))
+        newdom.write_output(outfile+'a')
         # newdom2 = transform[2](newdom1) #not used; always using stylesheets!
         dom=newdom
         try:
             newdom = transform[3](dom)
-            with open(outfile+'b', 'wb') as f:
-                f.write(lxml.etree.tostring(newdom,
-                                            encoding="utf-8",
-                                            xml_declaration=True,
-                                            pretty_print=True))
+            newdom.write_output(outfile+'b')
         except:
             for error in transform[3].error_log:
                 log.error("XSLT Error {}: {} ({})".format(error.message,
@@ -117,16 +109,14 @@ class Report(object):
         # TeXMLLikeCharacterConversion (and it's in the file named
         # TeXMLLikeCharacterConversion.java).
         newdom=rx.texmllike(str(dom))
-        with open(outfile+'c', 'wb') as f:
-            f.write(newdom.encode('utf_8'))
-        dom = lxml.etree.parse(outfile+'c')
+        newdom.write_output(outfile+'c')
+        dom=newdom
         try:
             newdom = transform[4](dom)
             texfile=outfile.replace('.xml','.tex')
             outdir=file.getfilenamedir(outfile)
             log.info("writing to tex file {}".format(texfile))
-            with open(texfile, 'wb') as f:
-                f.write(newdom) #this isn't xml anymore!
+            newdom.write_output(texfile)
         except:
             for error in transform[4].error_log:
                 log.error("XSLT Error {}: {} ({})".format(error.message,
