@@ -129,9 +129,9 @@ class Report(object):
         newdom.write_output(outfile+'c')
         dom=newdom
         try:
-            newdom = transform[4](dom)
             texfile=outfile.replace('.xml','.tex')
             outdir=file.getfilenamedir(outfile)
+            newdom = transform[4](dom)
             log.info("writing to tex file {}".format(texfile))
             newdom.write_output(texfile)
         except:
