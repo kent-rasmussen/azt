@@ -750,7 +750,9 @@ class Text(Childof,ObectwArgs):
         self.image=kwargs.pop('image',None)
         d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
         sticks=set(['˥','˦','˧','˨','˩',' '])
-        if set(self.text) & (sticks|d) and not self.norender:
+        if (hasattr(self.text, '__iter__')
+                    and set(self.text) & (sticks|d) 
+                    and not self.norender):
             self.render(**kwargs)
             log.info("text and image: {} - {}".format(self.text,self.image))
         else:
