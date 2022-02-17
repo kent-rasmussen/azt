@@ -126,8 +126,9 @@ class Report(object):
         # TeXMLLikeCharacterConversion (and it's in the file named
         # TeXMLLikeCharacterConversion.java).
         newdom=rx.texmllike(str(dom))
-        newdom.write_output(outfile+'c')
-        dom=newdom
+        with open(outfile+'c', 'wb') as f:
+            f.write(newdom.encode('utf_8'))
+        dom = lxml.etree.parse(outfile+'c')
         try:
             texfile=outfile.replace('.xml','.tex')
             outdir=file.getfilenamedir(outfile)
