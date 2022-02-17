@@ -931,6 +931,8 @@ class StatusFrame(ui.Frame):
             if not isinstance(self.task,Report):
                 self.cvtline()
                 self.maybeboard()
+            elif isinstance(self.task,Segments):
+                self.cvtline()
         if isinstance(self.task,Comprehensive):
             self.maxes()
         if not isinstance(self.task,TaskChooser):
