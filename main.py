@@ -691,6 +691,15 @@ class StatusFrame(ui.Frame):
         t=(_("working on {}".format(self.settings.params.cvcheckname())))
         self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
         # self.opts['row']+=1
+    def maxes(self):
+        line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
+                        columnspan=3,sticky='w')
+        self.opts['row']+=1
+        t=(_("Max profiles: {}; ".format(self.settings.maxprofiles)))
+        self.proselabel(t,cmd=self.taskchooser.getmaxprofiles,parent=line)
+        self.opts['columnplus']=1
+        t=(_("Max lexical categories: {}".format(self.settings.maxpss)))
+        self.proselabel(t,cmd=self.taskchooser.getmaxpss,parent=line)
     def finalbuttons(self):
         # self.opts['row']+=6
         if hasattr(self.taskchooser.mainwindowis,'dobuttonkwargs'):
@@ -922,6 +931,8 @@ class StatusFrame(ui.Frame):
             if not isinstance(self.task,Report):
                 self.cvtline()
                 self.maybeboard()
+        if isinstance(self.task,Comprehensive):
+            self.maxes()
         if not isinstance(self.task,TaskChooser):
             self.finalbuttons()
 class Settings(object):
