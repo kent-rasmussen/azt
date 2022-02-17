@@ -2492,7 +2492,9 @@ class TaskDressing(object):
                 'profile':self.slices.profile(),
                 'group':self.status.group(),
                 'secondformfield':str(self.settings.secondformfield),
-                'tableiteration':self.tableiteration
+                'tableiteration':self.tableiteration,
+                'maxprofiles':self.settings.maxprofiles,
+                'maxpss':self.settings.maxpss
                 }
         else:
             dictnow={
@@ -2500,7 +2502,9 @@ class TaskDressing(object):
                     'analang':self.params.analang(),
                     'glang1':self.glosslangs.lang1(),
                     'glang2':self.glosslangs.lang2(),
-                    'secondformfield':str(self.settings.secondformfield)
+                    'secondformfield':str(self.settings.secondformfield),
+                    'maxprofiles':self.settings.maxprofiles,
+                    'maxpss':self.settings.maxpss
                     }
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
