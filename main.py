@@ -3551,6 +3551,9 @@ class TaskChooser(TaskDressing,ui.Window):
             if self.donew['collectionlc']:
                 """This currently takes way too much time. Until it gets
                 mutithreaded, it will not be an option"""
+                tasks.append(ReportCitationBasicV)
+                tasks.append(ReportCitationBasicC)
+                tasks.append(ReportCitationBasicCV)
                 tasks.append(ReportCitationBasic)
             if self.donew['somesortT']:
                 tasks.append(ReportCitationT)
@@ -7740,8 +7743,70 @@ class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.cvtstodo=['V','C','CV']
+class ReportCitationBasicV(Report,Comprehensive,Segments,TaskDressing,ui.Window):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Comprehensive Vowel Report") # on Citation Forms
+    def taskicon(self):
+        return program['theme'].photo['iconCVRepcomp']
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.basicreport,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['CVRepcomp'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+        self.cvtstodo=['V']
+class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Comprehensive Consonant Report") # on Citation Forms
+    def taskicon(self):
+        return program['theme'].photo['iconCVRepcomp']
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.basicreport,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['CVRepcomp'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+        self.cvtstodo=['C']
         # This is really hard on memory, with correspondences.
-        self.settings.maxprofiles=2
+class ReportCitationBasicCV(Report,Comprehensive,Segments,TaskDressing,ui.Window):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Comprehensive CxV Phonotactics Report") # on Citation Forms
+    def taskicon(self):
+        return program['theme'].photo['iconCVRepcomp']
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.basicreport,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['CVRepcomp'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+        self.cvtstodo=['CV']
 class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
