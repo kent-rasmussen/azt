@@ -2098,6 +2098,12 @@ class Settings(object):
         self.attrschanged.append('check')
         self.refreshattributechanges()
         window.destroy()
+    def setmaxprofiles(self,choice,window):
+        self.maxprofiles=choice
+        window.destroy()
+    def setmaxpss(self,choice,window):
+        self.maxpss=choice
+        window.destroy()
     def setglosslang(self,choice,window):
         self.glosslangs.lang1(choice)
         self.attrschanged.append('glosslangs')
@@ -2983,6 +2989,32 @@ class TaskDressing(object):
                             cmd=getother
                             )
         window.wait_window(window)
+    def getmaxpss(self,event=None):
+        title=_('Select Maximum Number of Lexical Categories')
+        window=ui.Window(self.frame, title=title)
+        text=_('How many lexical categories to report (2 = Noun and Verb) ?')
+        ui.Label(window.frame, text=text, column=0, row=0)
+        r=[x for x in range(1,10)]
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                optionlist=r,
+                                command=self.settings.setmaxpss,
+                                window=window,
+                                column=0, row=1
+                                )
+        buttonFrame1.wait_window(window)
+    def getmaxprofiles(self,event=None):
+        title=_('Select Maximum Number of Syllable Profiles')
+        window=ui.Window(self.frame, title=title)
+        text=_('How many syllable profiles to report?')
+        ui.Label(window.frame, text=text, column=0, row=0)
+        r=[x for x in range(1,10)]
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                optionlist=r,
+                                command=self.settings.setmaxprofiles,
+                                window=window,
+                                column=0, row=1
+                                )
+        buttonFrame1.wait_window(window)
     def getcheck(self,guess=False,event=None,**kwargs):
         def giveup():
             window.destroy()
