@@ -65,6 +65,23 @@ class Report(object):
         except:
             log.info(_("Couldn't find/import lxml, so not compiling report."))
             return
+        """from http://xmlsoft.org/XSLT/python.html:
+        This is a basic test of XSLT interfaces: loading a stylesheet and a document, transforming the document and saving the result.
+
+        import libxml2
+        import libxslt <===I can't get this to work (no longer maintained?)
+
+        styledoc = libxml2.parseFile("test.xsl")
+        style = libxslt.parseStylesheetDoc(styledoc)
+        doc = libxml2.parseFile("test.xml")
+        result = style.applyStylesheet(doc, None)
+        style.saveResultToFilename("foo", result, 0)
+        style.freeStylesheet()
+        doc.freeDoc()
+        result.freeDoc()
+
+        note the need to explicitely deallocate documents with freeDoc() except for the stylesheet document which is freed when its compiled form is garbage collected.
+        """
         self.transformsdir=file.gettransformsdir()
         dom = lxml.etree.parse(self.filename)
         log.info(self.filename)
