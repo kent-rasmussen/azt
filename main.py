@@ -6624,7 +6624,12 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     log.debug('Group selected: {} ({})'.format(group,
                                                                 groupselected))
                     """This needs to *not* operate on "exit" button."""
-                    self.addtonefieldex(senseid,framed,group=group,write=False)
+                    """thread here?"""
+                    # self.addtonefieldex(senseid,framed,group=group,write=False)
+                    t = threading.Thread(target=self.addtonefieldex,
+                                        args=(senseid,framed),
+                                        kwargs={'group':group,'write':False})
+                    t.start()
             else:
                 log.debug('No group selected: {}'.format(groupselected))
                 return 1 # this should only happen on Exit
@@ -6681,6 +6686,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             senseid,framed=presenttosort()
             if senseid == 1:
                 return 1
+            """thread here? No, this updates the UI, as well as writing data"""
             sortselected(senseid,framed)
         if self.runwindow.exitFlag.istrue():
             return 1
