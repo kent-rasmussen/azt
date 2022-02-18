@@ -5170,7 +5170,7 @@ class Report(object):
     def tonegroupreportthreaded(self,**kwargs):
         t = threading.Thread(target=self.tonegroupreport,kwargs=kwargs)
         t.start()
-    def tonegroupreport(self,**kwargs):
+    def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
         #default=True redoes the UF analysis (removing any joining/renaming)
@@ -5218,7 +5218,8 @@ class Report(object):
                 "".format(ps,profile,a,s,analysisOK))
         self.settings.storesettingsfile()
         waitmsg="{} {} Tone Report in Process".format(ps,profile)
-        resultswindow=ResultWindow(self.parent,msg=waitmsg)
+        if usegui:
+            resultswindow=ResultWindow(self.parent,msg=waitmsg)
         bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
         if not default:
             bits.append('mod')
@@ -5228,9 +5229,10 @@ class Report(object):
             error=_("Hey, sort some morphemes in at least one frame before "
                         "trying to make a tone report!")
             log.error(error)
-            resultswindow.waitdone()
-            resultswindow.destroy()
-            ErrorNotice(error)
+            if usegui:
+                resultswindow.waitdone()
+                resultswindow.destroy()
+                ErrorNotice(error)
             return
         start_time=time.time()
         counts={'senses':0,'examples':0, 'audio':0}
@@ -5256,10 +5258,13 @@ class Report(object):
         checks=analysis.orderedchecks
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
-        resultswindow.scroll=ui.ScrollingFrame(resultswindow.frame)
-        resultswindow.scroll.grid(row=0,column=0)
-        window=resultswindow.scroll.content
-        window.row=0
+        if usegui:
+            resultswindow.scroll=ui.ScrollingFrame(resultswindow.frame)
+            resultswindow.scroll.grid(row=0,column=0)
+            window=resultswindow.scroll.content
+            window.row=0
+        else:
+            window=None
         xlpr=self.xlpstart(reporttype='Tone',
                             ps=ps,
                             profile=profile,
@@ -5293,12 +5298,12 @@ class Report(object):
         p2=xlp.Paragraph(s1,text=text)
         def output(window,r,text):
             r.write(text+'\n')
-            if not silent:
+            if usegui:
                 ui.Label(window,text=text,
                         font=window.theme.fonts['report'],
                         row=window.row,column=0, sticky="w"
                         )
-            window.row+=1
+                window.row+=1
         t=_("Summary of Frames by Draft Underlying Melody")
         m=7 #only this many columns in a table
         # Don't bother with lanscape if we're splitting the table in any case.
@@ -5426,15 +5431,17 @@ class Report(object):
                 "").format(counts['senses'],counts['examples'],counts['audio'],
                             eps,audiopercent)
         ps2=xlp.Paragraph(s2,text=ptext)
-        resultswindow.waitdone()
         xlpr.close(me=me)
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
         output(window,r,text)
         text=_("(Report is also available at ("+self.tonereportfile+")")
         output(window,r,text)
         r.close()
-        if me:
-            resultswindow.destroy()
+        if usegui:
+            if me:
+                resultswindow.on_quit()
+            else:
+                resultswindow.waitdone()
         self.status.last('report',update=True)
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
