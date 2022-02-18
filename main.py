@@ -6615,7 +6615,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     (N.B.: This is only used for groups added during the current
                     run. At the beginning of a run, all used groups have buttons
                     created above.)"""
-                    self.addtonefieldex(senseid,framed,group=group,write=False) #button needs this
+                    """Can't thread this; the button needs to find data"""
+                    self.addtonefieldex(senseid,framed,group=group,write=False)
                     addgroupbutton(group)
                     #adjust window for new button
                     scroll.windowsize()
