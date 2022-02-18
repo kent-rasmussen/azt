@@ -5165,7 +5165,12 @@ class Report(object):
         log.info("Starting comprehensive reports for {}".format(d))
         for ps in pss:
             for profile in d[ps]:
-                self.tonegroupreport(ps=ps,profile=profile)
+                kwargs={'ps': ps, 'profile': profile}
+                self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
+                # self.tonegroupreportthreaded(**kwargs) #ps=ps,profile=profile)
+    def tonegroupreportthreaded(self,**kwargs):
+        t = threading.Thread(target=self.tonegroupreport,kwargs=kwargs)
+        t.start()
     def tonegroupreport(self,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
