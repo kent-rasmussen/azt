@@ -5191,9 +5191,9 @@ class Report(object):
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                         showgroups=showgroups)
                         break #do it on first present lang, and do next ex
-        a=self.status.last('analysis')
-        s=self.status.last('sort')
-        j=self.status.last('join')
+        a=self.status.last('analysis',**kwargs)
+        s=self.status.last('sort',**kwargs)
+        j=self.status.last('join',**kwargs)
         if a and s:
             analysisOK=a>s
         elif a:
@@ -5205,7 +5205,7 @@ class Report(object):
         default=kwargs.get('default',True)
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
-        checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
+        checks=self.status.checks(wsorted=True,**kwargs)
         if analysisOK and j and j > a:
             showgroups=True #show groups on all non-default reports
         else:
@@ -5224,7 +5224,7 @@ class Report(object):
         if not default:
             bits.append('mod')
         self.tonereportfile='_'.join(bits)+".txt"
-        checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
+        checks=self.status.checks(wsorted=True,**kwargs)
         if not checks:
             error=_("Hey, sort some morphemes in at least one frame before "
                         "trying to make a tone report!")
