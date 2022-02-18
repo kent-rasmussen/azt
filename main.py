@@ -9246,44 +9246,40 @@ class StatusDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
     """I should think about what 'do' means here: sort? verify? record?"""
-    def checktosort(self,check=None):
-        if check is None:
-            check=self._checkparameters.check()
-        cvt=self._checkparameters.cvt()
-        ps=self._slicedict.ps()
-        profile=self._slicedict.profile()
+    def checktosort(self,**kwargs):
+        check=kwargs.get('check',self._checkparameters.check())
+        cvt=kwargs.get('cvt',self._checkparameters.cvt())
+        ps=kwargs.get('ps',self._slicedict.ps())
+        profile=kwargs.get('profile',self._slicedict.profile())
         if (cvt not in self or
                 ps not in self[cvt] or
                 profile not in self[cvt][ps] or
                 check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
             return True
-    def checktojoin(self,check=None):
-        if check is None:
-            check=self._checkparameters.check()
-        cvt=self._checkparameters.cvt()
-        ps=self._slicedict.ps()
-        profile=self._slicedict.profile()
         if (check in self[cvt][ps][profile] and
                 'tojoin' not in self[cvt][ps][profile][check] or
                 self[cvt][ps][profile][check]['tojoin'] == True):
+    def checktojoin(self,**kwargs):
+        check=kwargs.get('check',self._checkparameters.check())
+        cvt=kwargs.get('cvt',self._checkparameters.cvt())
+        ps=kwargs.get('ps',self._slicedict.ps())
+        profile=kwargs.get('profile',self._slicedict.profile())
             return True
-    def profiletojoin(self,profile=None):
-        if profile is None:
-            profile=self._slicedict.profile()
-        cvt=self._checkparameters.cvt()
-        ps=self._slicedict.ps()
+    def profiletojoin(self,**kwargs):
+        profile=kwargs.get('profile',self._slicedict.profile())
+        cvt=kwargs.get('cvt',self._checkparameters.cvt())
+        ps=kwargs.get('ps',self._slicedict.ps())
         checks=self.checks()
         for check in checks: #any check
             if (profile in self[cvt][ps] and
                 check in self[cvt][ps][profile] and
                 self[cvt][ps][profile][check]['tojoin'] == True):
                 return True
-    def profiletosort(self,profile=None):
-        if profile is None:
-            profile=self._slicedict.profile()
-        cvt=self._checkparameters.cvt()
-        ps=self._slicedict.ps()
+    def profiletosort(self,**kwargs):
+        profile=kwargs.get('profile',self._slicedict.profile())
+        cvt=kwargs.get('cvt',self._checkparameters.cvt())
+        ps=kwargs.get('ps',self._slicedict.ps())
         checks=self.checks()
         for check in checks: #any check
             if (profile not in self[cvt][ps] or
@@ -9339,22 +9335,24 @@ class StatusDict(dict):
         kwargs=grouptype(**kwargs)
         profiles=self._slicedict.profiles() #already limited to current ps
         p=[]
-        for profile in profiles:
-            checks=self.checks(profile=profile,**kwargs)
+        for kwargs['profile'] in profiles:
+            checks=self.checks(**kwargs)
             if kwargs['wsorted'] and not checks:
                 log.log(4,"No Checks for this profile, returning.")
                 continue #you won't find any profiles to do, either...
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']) or
-                (kwargs['tosort'] and self.profiletosort(profile)) or
+                (kwargs['tosort'] and self.profiletosort(**kwargs)) or
                 (kwargs['wsorted'] and [i for j in
-                            [self.groups(profile=profile,check=check,**kwargs)
-                            for check in checks]
+                            # [self.groups(profile=profile,check=check,**kwargs)
+                            [self.groups(**kwargs)
+                            # for check in checks]
+                            for kwargs['check'] in checks]
                                         for i in j
                                         ]) or
-                kwargs['tojoin'] and self.profiletojoin(profile)
+                kwargs['tojoin'] and self.profiletojoin(**kwargs)
                 ):
-                p+=[profile]
+                p+=[kwargs['profile']]
         log.log(4,"Profiles with kwargs {}: {}".format(kwargs,p))
         return p
     def checks(self, **kwargs):
@@ -9364,16 +9362,16 @@ class StatusDict(dict):
         kwargs=grouptype(**kwargs)
         cs=[]
         checks=self.updatechecksbycvt(**kwargs)
-        for check in checks:
+        for kwargs['check'] in checks:
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']) or
                 # """These next two assume current ps-profile slice"""
-                kwargs['wsorted'] and self.groups(check=check,**kwargs) or
-                kwargs['tosort'] and self.checktosort(check) or
-                kwargs['toverify'] and self.groups(check=check,**kwargs) or
-                kwargs['tojoin'] and self.checktojoin(check)
+                kwargs['wsorted'] and self.groups(**kwargs) or
+                kwargs['tosort'] and self.checktosort(**kwargs) or
+                kwargs['toverify'] and self.groups(**kwargs) or
+                kwargs['tojoin'] and self.checktojoin(**kwargs)
                 ):
-                cs+=[check]
+                cs+=[kwargs['check']]
         log.log(4,"Checks with {}: {}".format(kwargs,cs))
         return cs
     def groups(self,g=None, **kwargs): #was groupstodo
