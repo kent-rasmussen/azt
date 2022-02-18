@@ -6400,7 +6400,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,ps,profile,check))
         tosortupdate()
         log.info("Maybe SortT (from maybesort)")
-        if self.status.checktosort(check):
+        if self.status.checktosort(): # w/o parameters, tests current check
             log.info("SortT (from maybesort)")
             quit=self.sortT()
             if quit == True:
