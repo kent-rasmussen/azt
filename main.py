@@ -919,8 +919,7 @@ class StatusFrame(ui.Frame):
             self.fieldsline()
         if (isinstance(self.task,Sort) or
             (isinstance(self.task,Report) and
-                not isinstance(self.task,Comprehensive)) or
-            isinstance(self.task,Tone)
+                not isinstance(self.task,Comprehensive))
             ):
             self.cvt=self.settings.params.cvt()
             self.ps=self.settings.slices.ps()
