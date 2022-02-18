@@ -7748,14 +7748,14 @@ class ReportCitationBasicV(Report,Comprehensive,Segments,TaskDressing,ui.Window)
     def tasktitle(self):
         return _("Comprehensive Vowel Report") # on Citation Forms
     def taskicon(self):
-        return program['theme'].photo['iconCVRepcomp']
+        return program['theme'].photo['iconVRepcomp']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['CVRepcomp'],
+                'image':self.taskchooser.theme.photo['VRepcomp'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
@@ -7769,14 +7769,14 @@ class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window)
     def tasktitle(self):
         return _("Comprehensive Consonant Report") # on Citation Forms
     def taskicon(self):
-        return program['theme'].photo['iconCVRepcomp']
+        return program['theme'].photo['iconCRepcomp']
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['CVRepcomp'],
+                'image':self.taskchooser.theme.photo['CRepcomp'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
