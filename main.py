@@ -9257,14 +9257,17 @@ class StatusDict(dict):
                 check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
             return True
-        if (check in self[cvt][ps][profile] and
-                'tojoin' not in self[cvt][ps][profile][check] or
-                self[cvt][ps][profile][check]['tojoin'] == True):
     def checktojoin(self,**kwargs):
         check=kwargs.get('check',self._checkparameters.check())
         cvt=kwargs.get('cvt',self._checkparameters.cvt())
         ps=kwargs.get('ps',self._slicedict.ps())
         profile=kwargs.get('profile',self._slicedict.profile())
+        if (cvt in self and
+                ps in self[cvt] and
+                profile in self[cvt][ps] and
+                check in self[cvt][ps][profile] and
+                ('tojoin' not in self[cvt][ps][profile][check] or #old schema
+                self[cvt][ps][profile][check]['tojoin'] == True)):
             return True
     def profiletojoin(self,**kwargs):
         profile=kwargs.get('profile',self._slicedict.profile())
@@ -9272,9 +9275,12 @@ class StatusDict(dict):
         ps=kwargs.get('ps',self._slicedict.ps())
         checks=self.checks()
         for check in checks: #any check
-            if (profile in self[cvt][ps] and
+            if (cvt in self and
+                ps in self[cvt] and
+                profile in self[cvt][ps] and
                 check in self[cvt][ps][profile] and
-                self[cvt][ps][profile][check]['tojoin'] == True):
+                ('tojoin' not in self[cvt][ps][profile][check] or #old schema
+                self[cvt][ps][profile][check]['tojoin'] == True)):
                 return True
     def profiletosort(self,**kwargs):
         profile=kwargs.get('profile',self._slicedict.profile())
@@ -9282,7 +9288,9 @@ class StatusDict(dict):
         ps=kwargs.get('ps',self._slicedict.ps())
         checks=self.checks()
         for check in checks: #any check
-            if (profile not in self[cvt][ps] or
+            if (cvt not in self or
+                ps not in self[cvt] or
+                profile not in self[cvt][ps] or
                 check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
                 return True
