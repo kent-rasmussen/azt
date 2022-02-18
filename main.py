@@ -42,6 +42,7 @@ except Exception as e:
     exceptiononload=True
 """Other people's stuff"""
 import threading
+import multiprocessing
 import itertools
 import importlib.util
 import collections
@@ -5165,10 +5166,12 @@ class Report(object):
         for ps in pss:
             for profile in d[ps]:
                 kwargs={'ps': ps, 'profile': profile}
-    def tonegroupreportthreaded(self,**kwargs):
-        t = threading.Thread(target=self.tonegroupreport,kwargs=kwargs)
                 # self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
                 self.tonegroupreportmulti(**kwargs) #ps=ps,profile=profile)
+    def tonegroupreportmulti(self,**kwargs):
+        # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
+        kwargs['usegui']=False
+        t=multiprocessing.Process(target=self.tonegroupreport,kwargs=kwargs)
         t.start()
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
@@ -7870,7 +7873,7 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
-        self.do=self.tonegroupreport
+        self.do=self.tonegroupreportmulti
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=False
@@ -7894,7 +7897,7 @@ class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
-        self.do=self.tonegroupreport
+        self.do=self.tonegroupreportmulti
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=True
