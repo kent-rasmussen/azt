@@ -5832,7 +5832,7 @@ class Report(object):
                                             self.groupcomparison))
                         self.wordsbypsprofilechecksubcheckp(parent,t,
                                         check=check, group=group,**kwargs)
-        else:
+        elif groups:
             for group in groups:
                 t=_("{} {} {}={}".format(ps,profile,check,group))
                 self.wordsbypsprofilechecksubcheckp(parent,t,
