@@ -5165,10 +5165,10 @@ class Report(object):
         for ps in pss:
             for profile in d[ps]:
                 kwargs={'ps': ps, 'profile': profile}
-                self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
-                # self.tonegroupreportthreaded(**kwargs) #ps=ps,profile=profile)
     def tonegroupreportthreaded(self,**kwargs):
         t = threading.Thread(target=self.tonegroupreport,kwargs=kwargs)
+                # self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
+                self.tonegroupreportmulti(**kwargs) #ps=ps,profile=profile)
         t.start()
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
