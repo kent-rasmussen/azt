@@ -9715,7 +9715,6 @@ class StatusDict(dict):
         log.log(4,"Returning checkslicetypecurrent kwargs {}".format(kwargs))
         return kwargs
     def last(self,task,update=False,**kwargs):
-        profile=kwargs.get('profile',self._slicedict.profile())
         sn=self.node(**kwargs)
         if 'last' not in sn:
             sn['last']={}
