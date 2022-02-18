@@ -5168,6 +5168,10 @@ class Report(object):
                 kwargs={'ps': ps, 'profile': profile}
                 # self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
                 self.tonegroupreportmulti(**kwargs) #ps=ps,profile=profile)
+            """Not working:"""
+            # with multiprocessing.Pool(processes=4) as pool:
+            #     pool.map(self.tonegroupreport,[
+            #             {'ps':ps,'profile':p,'usegui':False} for p in d[ps]])
     def tonegroupreportmulti(self,**kwargs):
         # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
         kwargs['usegui']=False
