@@ -2274,7 +2274,7 @@ class TaskDressing(object):
     def _taskchooserbutton(self):
         if len(self.taskchooser.makeoptions())<2:
             return
-        if isinstance(self,TaskChooser):
+        if isinstance(self,TaskChooser) and not self.showreports:
             if self.datacollection:
                 text=_("Analyze")
             else:
