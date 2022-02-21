@@ -3376,10 +3376,24 @@ class TaskChooser(TaskDressing,ui.Window):
     task on opening, and allows users to choose others (any with minimum
     prequisites satisfied)."""
     def tasktitle(self):
-        if self.datacollection:
+        if self.showreports:
+            return _("Run Reports")
+        elif self.datacollection:
             return _("Data Collection Tasks")
         else:
             return _("Analysis Tasks")
+    def dobuttonkwargs(self):
+        return {'text':_("Reports"),
+                'fn':self.choosereports,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['icon'],
+                'sticky':'ew'
+                }
+    def choosereports(self):
+        self.frame.status.bigbutton.destroy()
+        self.showreports=True
+        self.gettask()
     def getfile(self):
         # def getit(attr):
         #     if hasattr(self.file,attr):
