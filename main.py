@@ -5168,7 +5168,7 @@ class Report(object):
             for profile in d[ps]:
                 kwargs={'ps': ps, 'profile': profile}
                 # self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
-                self.tonegroupreportmulti(**kwargs) #ps=ps,profile=profile)
+                self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
             """Not working:"""
             # with multiprocessing.Pool(processes=4) as pool:
             #     pool.map(self.tonegroupreport,[
@@ -7878,7 +7878,7 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
-        self.do=self.tonegroupreportmulti
+        self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=False
@@ -7902,7 +7902,7 @@ class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
         ui.Window.__init__(self,parent)
-        self.do=self.tonegroupreportmulti
+        self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=True
