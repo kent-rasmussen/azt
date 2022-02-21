@@ -3451,12 +3451,18 @@ class TaskChooser(TaskDressing,ui.Window):
             self.optionsframe.destroy()
         self._taskchooserbutton()
         optionlist=self.makeoptions()
-        n=0
         bpr=3
         # compound='left', #image bottom, left, right, or top of text
         self.optionsframe=ui.Frame(self.frame,column=1, row=1, pady=(25,0))
-        for o in optionlist:
-            ui.Button(self.optionsframe,
+        optionlist_maxi=len(optionlist)-1
+        if optionlist_maxi == 3:
+            bpr=2
+        columnspan=1
+        for n,o in enumerate(optionlist):
+            if n is optionlist_maxi:
+                # log.info("bpr: {}, n%bpr: {}".format(bpr,n%bpr))
+                columnspan=bpr-n%bpr
+            b=ui.Button(self.optionsframe,
                         text=o[1],
                         command=lambda t=o[0]:self.maketask(t),
                         column=n%bpr,
@@ -3465,9 +3471,9 @@ class TaskChooser(TaskDressing,ui.Window):
                         image=o[2],
                         wraplength=int(program['root'].wraplength*.6/bpr),
                         anchor='n',
-                        sticky='nesw'
+                        sticky='nesw',
+                        columnspan=columnspan
                         )
-            n+=1
             try:
                 ui.ToolTip(b, o[0].tooltip(None))
             except AttributeError:
