@@ -3496,6 +3496,9 @@ class TaskChooser(TaskDressing,ui.Window):
         for c in range(bpr):
             self.optionsframe.grid_columnconfigure(c, weight=1, uniform='a')
         self.setmainwindow(self) #deiconify here
+        if self.showreports:
+            self.showreports=False #just do this once each button click
+            self.showingreports=True
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
