@@ -3851,6 +3851,8 @@ class TaskChooser(TaskDressing,ui.Window):
         self.start_time=time.time() #this enables boot time evaluation
         self.writing=False
         self.datacollection=True # everyone starts here?
+        self.showreports=False
+        self.showingreports=False
         self.ifcollectionlcsettingsdone=False
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
