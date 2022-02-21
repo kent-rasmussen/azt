@@ -563,6 +563,7 @@ class StatusFrame(ui.Frame):
                         **kwargs)
         if ttt:
             tt=ui.ToolTip(b,ttt)
+        return b
     """These functions point to self.taskchooser functions, betcause we don't
     know who this frame's parent is"""
     def makeproseframe(self):
@@ -704,7 +705,7 @@ class StatusFrame(ui.Frame):
     def finalbuttons(self):
         # self.opts['row']+=6
         if hasattr(self.taskchooser.mainwindowis,'dobuttonkwargs'):
-            self.button(**self.task.dobuttonkwargs())
+            self.bigbutton=self.button(**self.task.dobuttonkwargs())
         self.opts['row']+=1
     """Right side"""
     def maybeboard(self):
