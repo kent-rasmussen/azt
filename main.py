@@ -3472,6 +3472,8 @@ class TaskChooser(TaskDressing,ui.Window):
                 ui.ToolTip(b, o[0].tooltip(None))
             except AttributeError:
                 log.info("Task {} doesn't seem to have a tooltip.".format(o[0]))
+        for c in range(bpr):
+            self.optionsframe.grid_columnconfigure(c, weight=1, uniform='a')
         self.setmainwindow(self) #deiconify here
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
