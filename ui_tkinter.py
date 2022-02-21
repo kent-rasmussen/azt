@@ -104,7 +104,10 @@ class Theme(object):
                             ('iconTranscribe','images/Transcribe Tone_icon.png'),
                             ('iconJoinUF','images/Join Tone_icon.png'),
                             ('iconTRepcomp','images/T Report Comprehensive_icon.png'),
+                            ('iconVRepcomp','images/A Report Comprehensive_icon.png'),
+                            ('iconCRepcomp','images/Z Report Comprehensive_icon.png'),
                             ('iconCVRepcomp','images/ZA Report Comprehensive_icon.png'),
+                            ('iconVCCVRepcomp','images/AZZA Report Comprehensive_icon.png'),
                             ('T','images/T alone clear6.png'),
                             ('C','images/Z alone clear6.png'),
                             ('V','images/A alone clear6.png'),
@@ -117,7 +120,10 @@ class Theme(object):
                             ('Transcribe','images/Transcribe Tone.png'),
                             ('JoinUF','images/Join Tone.png'),
                             ('TRepcomp','images/T Report Comprehensive.png'),
+                            ('VRepcomp','images/A Report Comprehensive.png'),
+                            ('CRepcomp','images/Z Report Comprehensive.png'),
                             ('CVRepcomp','images/ZA Report Comprehensive.png'),
+                            ('VCCVRepcomp','images/AZZA Report Comprehensive.png'),
                             ('backgrounded','images/AZT stacks6.png'),
                             #Set images for tasks
                             ('verifyT','images/Verify List.png'),
@@ -750,7 +756,9 @@ class Text(Childof,ObectwArgs):
         self.image=kwargs.pop('image',None)
         d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
         sticks=set(['˥','˦','˧','˨','˩',' '])
-        if set(self.text) & (sticks|d) and not self.norender:
+        if (hasattr(self.text, '__iter__')
+                    and set(self.text) & (sticks|d)
+                    and not self.norender):
             self.render(**kwargs)
             log.info("text and image: {} - {}".format(self.text,self.image))
         else:

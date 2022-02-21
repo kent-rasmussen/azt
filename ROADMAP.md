@@ -1,4 +1,9 @@
 #Roadmap
+- Figure out why reports don't correctly write objects when running in parallel (verification status writing?)
+  - implement tonegroupreportmulti when it works correctly
+  - resultswindow?
+  - we may need a manager for any objects used in reports.
+- make maybewrite for verification and other settings files?
 - Figure out why next frame isn't changing to new frame when all are done
   - check if using top or all profiles (autoadvance should just be top)
 - remove ps-profile line from comprehensive report (add how many to do?)

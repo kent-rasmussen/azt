@@ -42,6 +42,7 @@ except Exception as e:
     exceptiononload=True
 """Other people's stuff"""
 import threading
+import multiprocessing
 import itertools
 import importlib.util
 import collections
@@ -691,6 +692,15 @@ class StatusFrame(ui.Frame):
         t=(_("working on {}".format(self.settings.params.cvcheckname())))
         self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
         # self.opts['row']+=1
+    def maxes(self):
+        line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
+                        columnspan=3,sticky='w')
+        self.opts['row']+=1
+        t=(_("Max profiles: {}; ".format(self.settings.maxprofiles)))
+        self.proselabel(t,cmd=self.taskchooser.getmaxprofiles,parent=line)
+        self.opts['columnplus']=1
+        t=(_("Max lexical categories: {}".format(self.settings.maxpss)))
+        self.proselabel(t,cmd=self.taskchooser.getmaxpss,parent=line)
     def finalbuttons(self):
         # self.opts['row']+=6
         if hasattr(self.taskchooser.mainwindowis,'dobuttonkwargs'):
@@ -910,8 +920,7 @@ class StatusFrame(ui.Frame):
             self.fieldsline()
         if (isinstance(self.task,Sort) or
             (isinstance(self.task,Report) and
-                not isinstance(self.task,Comprehensive)) or
-            isinstance(self.task,Tone)
+                not isinstance(self.task,Comprehensive))
             ):
             self.cvt=self.settings.params.cvt()
             self.ps=self.settings.slices.ps()
@@ -922,6 +931,10 @@ class StatusFrame(ui.Frame):
             if not isinstance(self.task,Report):
                 self.cvtline()
                 self.maybeboard()
+            elif isinstance(self.task,Segments):
+                self.cvtline()
+        if isinstance(self.task,Comprehensive):
+            self.maxes()
         if not isinstance(self.task,TaskChooser):
             self.finalbuttons()
 class Settings(object):
@@ -2098,6 +2111,12 @@ class Settings(object):
         self.attrschanged.append('check')
         self.refreshattributechanges()
         window.destroy()
+    def setmaxprofiles(self,choice,window):
+        self.maxprofiles=choice
+        window.destroy()
+    def setmaxpss(self,choice,window):
+        self.maxpss=choice
+        window.destroy()
     def setglosslang(self,choice,window):
         self.glosslangs.lang1(choice)
         self.attrschanged.append('glosslangs')
@@ -2475,7 +2494,9 @@ class TaskDressing(object):
                 'profile':self.slices.profile(),
                 'group':self.status.group(),
                 'secondformfield':str(self.settings.secondformfield),
-                'tableiteration':self.tableiteration
+                'tableiteration':self.tableiteration,
+                'maxprofiles':self.settings.maxprofiles,
+                'maxpss':self.settings.maxpss
                 }
         else:
             dictnow={
@@ -2483,7 +2504,9 @@ class TaskDressing(object):
                     'analang':self.params.analang(),
                     'glang1':self.glosslangs.lang1(),
                     'glang2':self.glosslangs.lang2(),
-                    'secondformfield':str(self.settings.secondformfield)
+                    'secondformfield':str(self.settings.secondformfield),
+                    'maxprofiles':self.settings.maxprofiles,
+                    'maxpss':self.settings.maxpss
                     }
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
@@ -2983,6 +3006,32 @@ class TaskDressing(object):
                             cmd=getother
                             )
         window.wait_window(window)
+    def getmaxpss(self,event=None):
+        title=_('Select Maximum Number of Lexical Categories')
+        window=ui.Window(self.frame, title=title)
+        text=_('How many lexical categories to report (2 = Noun and Verb) ?')
+        ui.Label(window.frame, text=text, column=0, row=0)
+        r=[x for x in range(1,10)]
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                optionlist=r,
+                                command=self.settings.setmaxpss,
+                                window=window,
+                                column=0, row=1
+                                )
+        buttonFrame1.wait_window(window)
+    def getmaxprofiles(self,event=None):
+        title=_('Select Maximum Number of Syllable Profiles')
+        window=ui.Window(self.frame, title=title)
+        text=_('How many syllable profiles to report?')
+        ui.Label(window.frame, text=text, column=0, row=0)
+        r=[x for x in range(1,10)]
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                optionlist=r,
+                                command=self.settings.setmaxprofiles,
+                                window=window,
+                                column=0, row=1
+                                )
+        buttonFrame1.wait_window(window)
     def getcheck(self,guess=False,event=None,**kwargs):
         def giveup():
             window.destroy()
@@ -3402,12 +3451,18 @@ class TaskChooser(TaskDressing,ui.Window):
             self.optionsframe.destroy()
         self._taskchooserbutton()
         optionlist=self.makeoptions()
-        n=0
         bpr=3
         # compound='left', #image bottom, left, right, or top of text
         self.optionsframe=ui.Frame(self.frame,column=1, row=1, pady=(25,0))
-        for o in optionlist:
-            ui.Button(self.optionsframe,
+        optionlist_maxi=len(optionlist)-1
+        if optionlist_maxi == 3:
+            bpr=2
+        columnspan=1
+        for n,o in enumerate(optionlist):
+            if n is optionlist_maxi:
+                # log.info("bpr: {}, n%bpr: {}".format(bpr,n%bpr))
+                columnspan=bpr-n%bpr
+            b=ui.Button(self.optionsframe,
                         text=o[1],
                         command=lambda t=o[0]:self.maketask(t),
                         column=n%bpr,
@@ -3416,9 +3471,15 @@ class TaskChooser(TaskDressing,ui.Window):
                         image=o[2],
                         wraplength=int(program['root'].wraplength*.6/bpr),
                         anchor='n',
-                        sticky='nesw'
+                        sticky='nesw',
+                        columnspan=columnspan
                         )
-            n+=1
+            try:
+                ui.ToolTip(b, o[0].tooltip(None))
+            except AttributeError:
+                log.info("Task {} doesn't seem to have a tooltip.".format(o[0]))
+        for c in range(bpr):
+            self.optionsframe.grid_columnconfigure(c, weight=1, uniform='a')
         self.setmainwindow(self) #deiconify here
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
@@ -3502,6 +3563,9 @@ class TaskChooser(TaskDressing,ui.Window):
             if self.donew['collectionlc']:
                 """This currently takes way too much time. Until it gets
                 mutithreaded, it will not be an option"""
+                tasks.append(ReportCitationBasicV)
+                tasks.append(ReportCitationBasicC)
+                tasks.append(ReportCitationBasicCV)
                 tasks.append(ReportCitationBasic)
             if self.donew['somesortT']:
                 tasks.append(ReportCitationT)
@@ -4074,6 +4138,8 @@ class WordCollectionLexeme(ui.Window,WordCollection,TaskDressing):
 class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
     def taskicon(self):
         return program['theme'].photo['iconWord']
+    def tooltip(self):
+        return _("This task helps you collect words in citation form.")
     def dobuttonkwargs(self):
         if self.taskchooser.cawlmissing:
             fn=self.addCAWLentries
@@ -4124,6 +4190,13 @@ class Placeholder(ui.Window,TaskDressing):
 class Tone(object):
     """This keeps stuff used for Tone checks."""
     def makeanalysis(self,**kwargs):
+        return Analysis(self.params,
+                                self.slices,
+                                self.status,
+                                self.db,
+                                **kwargs
+                                )
+        """was, now iterable, for multiple reports at a time:"""
         if not hasattr(self,'analysis'):
             self.analysis=Analysis(self.params,
                                     self.slices,
@@ -5036,9 +5109,9 @@ class Record(Sound):
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=100
             self.settings.storesettingsfile()
-        self.makeanalysis()
-        self.analysis.donoUFanalysis()
-        torecord=self.analysis.senseidsbygroup
+        analysis=self.makeanalysis()
+        analysis.donoUFanalysis()
+        torecord=analysis.senseidsbygroup
         ntorecord=len(torecord) #number of groups
         nexs=len([k for i in torecord for j in torecord[i] for k in j])
         nslice=self.slices.count()
@@ -5051,7 +5124,7 @@ class Record(Sound):
                             self.slices.profile(),
                             self.slices.ps()
                                                         ))
-            self.analysis.do()
+            analysis.do()
             self.showtonegroupexs()
             return
         batch={}
@@ -5104,10 +5177,22 @@ class Report(object):
         for ps in pss:
             d[ps]=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
         log.info("Starting comprehensive reports for {}".format(d))
+        kwargs['usegui']=False
         for ps in pss:
             for profile in d[ps]:
-                self.tonegroupreport(ps=ps,profile=profile)
-    def tonegroupreport(self,**kwargs):
+                kwargs={'ps': ps, 'profile': profile}
+                # self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
+                self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
+            """Not working:"""
+            # with multiprocessing.Pool(processes=4) as pool:
+            #     pool.map(self.tonegroupreport,[
+            #             {'ps':ps,'profile':p,'usegui':False} for p in d[ps]])
+    def tonegroupreportmulti(self,**kwargs):
+        # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
+        kwargs['usegui']=False
+        t=multiprocessing.Process(target=self.tonegroupreport,kwargs=kwargs)
+        t.start()
+    def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
         #default=True redoes the UF analysis (removing any joining/renaming)
@@ -5127,9 +5212,9 @@ class Report(object):
                         self.framedtoXLP(framed,parent=parent,listword=True,
                                                         showgroups=showgroups)
                         break #do it on first present lang, and do next ex
-        a=self.status.last('analysis')
-        s=self.status.last('sort')
-        j=self.status.last('join')
+        a=self.status.last('analysis',**kwargs)
+        s=self.status.last('sort',**kwargs)
+        j=self.status.last('join',**kwargs)
         if a and s:
             analysisOK=a>s
         elif a:
@@ -5141,7 +5226,7 @@ class Report(object):
         default=kwargs.get('default',True)
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
-        checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
+        checks=self.status.checks(wsorted=True,**kwargs)
         if analysisOK and j and j > a:
             showgroups=True #show groups on all non-default reports
         else:
@@ -5155,48 +5240,53 @@ class Report(object):
                 "".format(ps,profile,a,s,analysisOK))
         self.settings.storesettingsfile()
         waitmsg="{} {} Tone Report in Process".format(ps,profile)
-        resultswindow=ResultWindow(self.parent,msg=waitmsg)
+        if usegui:
+            resultswindow=ResultWindow(self.parent,msg=waitmsg)
         bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
         if not default:
             bits.append('mod')
         self.tonereportfile='_'.join(bits)+".txt"
-        checks=self.status.checks(ps=ps,profile=profile,wsorted=True)
+        checks=self.status.checks(wsorted=True,**kwargs)
         if not checks:
             error=_("Hey, sort some morphemes in at least one frame before "
                         "trying to make a tone report!")
             log.error(error)
-            resultswindow.waitdone()
-            resultswindow.destroy()
-            ErrorNotice(error)
+            if usegui:
+                resultswindow.waitdone()
+                resultswindow.destroy()
+                ErrorNotice(error)
             return
         start_time=time.time()
         counts={'senses':0,'examples':0, 'audio':0}
-        self.makeanalysis(ps=ps,profile=profile)
+        analysis=self.makeanalysis(**kwargs)
         if analysisOK:
-            self.analysis.donoUFanalysis() #based on (sense) UF fields
+            analysis.donoUFanalysis() #based on (sense) UF fields
         else:
-            self.analysis.do() #full analysis from scratch, output to UF fields
+            analysis.do() #full analysis from scratch, output to UF fields
         """These are from LIFT, ordered by similarity for the report."""
-        if not self.analysis.orderedchecks or not self.analysis.orderedUFs:
+        if not analysis.orderedchecks or not analysis.orderedUFs:
             log.error("Problem with checks: {} (in {} {})."
                     "".format(checks,ps,profile))
             log.error("valuesbygroupcheck: {}, valuesbycheckgroup: {}"
-                        "".format(self.analysis.valuesbygroupcheck,
-                                    self.analysis.valuesbycheckgroup))
+                        "".format(analysis.valuesbygroupcheck,
+                                    analysis.valuesbycheckgroup))
             log.error("Ordered checks is {}, ordered UFs: {}"
-                    "".format(self.analysis.orderedchecks,
-                            self.analysis.orderedUFs))
+                    "".format(analysis.orderedchecks,
+                            analysis.orderedUFs))
             log.error("comparisonUFs: {}, comparisonchecks: {}"
-                    "".format(self.analysis.comparisonUFs,
-                            self.analysis.comparisonchecks))
-        grouplist=self.analysis.orderedUFs
-        checks=self.analysis.orderedchecks
+                    "".format(analysis.comparisonUFs,
+                            analysis.comparisonchecks))
+        grouplist=analysis.orderedUFs
+        checks=analysis.orderedchecks
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
-        resultswindow.scroll=ui.ScrollingFrame(resultswindow.frame)
-        resultswindow.scroll.grid(row=0,column=0)
-        window=resultswindow.scroll.content
-        window.row=0
+        if usegui:
+            resultswindow.scroll=ui.ScrollingFrame(resultswindow.frame)
+            resultswindow.scroll.grid(row=0,column=0)
+            window=resultswindow.scroll.content
+            window.row=0
+        else:
+            window=None
         xlpr=self.xlpstart(reporttype='Tone',
                             ps=ps,
                             profile=profile,
@@ -5230,12 +5320,12 @@ class Report(object):
         p2=xlp.Paragraph(s1,text=text)
         def output(window,r,text):
             r.write(text+'\n')
-            if not silent:
+            if usegui:
                 ui.Label(window,text=text,
                         font=window.theme.fonts['report'],
                         row=window.row,column=0, sticky="w"
                         )
-            window.row+=1
+                window.row+=1
         t=_("Summary of Frames by Draft Underlying Melody")
         m=7 #only this many columns in a table
         # Don't bother with lanscape if we're splitting the table in any case.
@@ -5262,38 +5352,38 @@ class Report(object):
                 "And here are the structured similarity relationships for the "
                 "Frames: {}"
                 "".format(program['name'],
-                        str(self.analysis.comparisonUFs),
-                        str(self.analysis.comparisonchecks)))
+                        str(analysis.comparisonUFs),
+                        str(analysis.comparisonchecks)))
         else:
             ptext+=_("This is a non-default report, where a user has changed "
             "the default (hyper-split) groups created by {}.".format(
                                                         program['name']))
         p0=xlp.Paragraph(s1s,text=ptext)
-        self.analysis.orderedchecks=list(self.analysis.valuesbycheckgroup)
-        for slice in range(int(len(self.analysis.orderedchecks)/m)+1):
-            locslice=self.analysis.orderedchecks[slice*m:(slice+1)*m]
+        analysis.orderedchecks=list(analysis.valuesbycheckgroup)
+        for slice in range(int(len(analysis.orderedchecks)/m)+1):
+            locslice=analysis.orderedchecks[slice*m:(slice+1)*m]
             if len(locslice) >0:
                 self.buildXLPtable(s1s,caption+str(slice),
                         yterms=grouplist,
                         xterms=locslice,
                         values=lambda x,y:nn(unlist(
-                self.analysis.valuesbygroupcheck[y][x],ignore=[None, 'NA']
+                analysis.valuesbygroupcheck[y][x],ignore=[None, 'NA']
                                             )),
-                        ycounts=lambda x:len(self.analysis.senseidsbygroup[x]),
-                        xcounts=lambda y:len(self.analysis.valuesbycheck[y]))
+                        ycounts=lambda x:len(analysis.senseidsbygroup[x]),
+                        xcounts=lambda y:len(analysis.valuesbycheck[y]))
         #Can I break this for multithreading?
         for group in grouplist: #These already include ps-profile
             log.info("building report for {} ({}/{}, n={})".format(group,
                 grouplist.index(group)+1,len(grouplist),
-                len(self.analysis.senseidsbygroup[group])
+                len(analysis.senseidsbygroup[group])
                 ))
             sectitle=_('\n{}'.format(str(group)))
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
             l=list()
-            for x in self.analysis.valuesbygroupcheck[group]:
+            for x in analysis.valuesbygroupcheck[group]:
                 l.append("{}: {}".format(x,', '.join(
-                    [i for i in self.analysis.valuesbygroupcheck[group][x]
+                    [i for i in analysis.valuesbygroupcheck[group][x]
                                                             if i is not None]
                         )))
             if not l:
@@ -5305,15 +5395,15 @@ class Report(object):
             if self.bylocation:
                 textout=list()
                 #This is better than checks, just whats there for this group
-                for check in self.analysis.valuesbygroupcheck[group]:
+                for check in analysis.valuesbygroupcheck[group]:
                     id=rx.id('x'+sectitle+check)
                     headtext='{}: {}'.format(check,', '.join(
                             [i for i in
-                            self.analysis.valuesbygroupcheck[group][check]
+                            analysis.valuesbygroupcheck[group][check]
                             if i is not None]
                                             ))
                     e1=xlp.Example(s1,id,heading=headtext)
-                    for senseid in self.analysis.senseidsbygroup[group]:
+                    for senseid in analysis.senseidsbygroup[group]:
                         #This is for window/text output only, not in XLP file
                         framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
                         text=framed.formatted(noframe=True,showtonegroup=False)
@@ -5327,7 +5417,7 @@ class Report(object):
                     if not e1.node.find('listWord'):
                         s1.node.remove(e1.node) #Don't show examples w/o data
             else:
-                for senseid in self.analysis.senseidsbygroup[group]:
+                for senseid in analysis.senseidsbygroup[group]:
                     #This is for window/text output only, not in XLP file
                     framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
                     if not framed:
@@ -5363,15 +5453,17 @@ class Report(object):
                 "").format(counts['senses'],counts['examples'],counts['audio'],
                             eps,audiopercent)
         ps2=xlp.Paragraph(s2,text=ptext)
-        resultswindow.waitdone()
         xlpr.close(me=me)
         text=("Finished in "+str(time.time() - start_time)+" seconds.")
         output(window,r,text)
         text=_("(Report is also available at ("+self.tonereportfile+")")
         output(window,r,text)
         r.close()
-        if me:
-            resultswindow.destroy()
+        if usegui:
+            if me:
+                resultswindow.on_quit()
+            else:
+                resultswindow.waitdone()
         self.status.last('report',update=True)
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
@@ -5780,7 +5872,7 @@ class Report(object):
                                             self.groupcomparison))
                         self.wordsbypsprofilechecksubcheckp(parent,t,
                                         check=check, group=group,**kwargs)
-        else:
+        elif groups:
             for group in groups:
                 t=_("{} {} {}={}".format(ps,profile,check,group))
                 self.wordsbypsprofilechecksubcheckp(parent,t,
@@ -6264,6 +6356,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         return program['theme'].photo['iconT']
     def tasktitle(self):
         return _("Sort Tone") #Citation Form Sorting in Tone Frames
+    def tooltip(self):
+        return _("This task helps you sort words in citation form tone frames.")
     def dobuttonkwargs(self):
         return {'text':_("Sort!"),
                 'fn':self.runcheck,
@@ -6336,7 +6430,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,ps,profile,check))
         tosortupdate()
         log.info("Maybe SortT (from maybesort)")
-        if self.status.checktosort(check):
+        if self.status.checktosort(): # w/o parameters, tests current check
             log.info("SortT (from maybesort)")
             quit=self.sortT()
             if quit == True:
@@ -6545,7 +6639,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     (N.B.: This is only used for groups added during the current
                     run. At the beginning of a run, all used groups have buttons
                     created above.)"""
-                    self.addtonefieldex(senseid,framed,group=group,write=False) #button needs this
+                    """Can't thread this; the button needs to find data"""
+                    self.addtonefieldex(senseid,framed,group=group,write=False)
                     addgroupbutton(group)
                     #adjust window for new button
                     scroll.windowsize()
@@ -6560,7 +6655,12 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     log.debug('Group selected: {} ({})'.format(group,
                                                                 groupselected))
                     """This needs to *not* operate on "exit" button."""
-                    self.addtonefieldex(senseid,framed,group=group,write=False)
+                    """thread here?"""
+                    # self.addtonefieldex(senseid,framed,group=group,write=False)
+                    t = threading.Thread(target=self.addtonefieldex,
+                                        args=(senseid,framed),
+                                        kwargs={'group':group,'write':False})
+                    t.start()
             else:
                 log.debug('No group selected: {}'.format(groupselected))
                 return 1 # this should only happen on Exit
@@ -6617,6 +6717,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             senseid,framed=presenttosort()
             if senseid == 1:
                 return 1
+            """thread here? No, this updates the UI, as well as writing data"""
             sortselected(senseid,framed)
         if self.runwindow.exitFlag.istrue():
             return 1
@@ -7088,6 +7189,9 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
 class Transcribe(Tone,Sound,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Transcribe Tone")
+    def tooltip(self):
+        return _("This task helps you transcribe your surface groups, giving "
+                "them meaniningful names (e.g., [˥˥ ˨˨] instead of numbers.")
     def dobuttonkwargs(self):
         return {'text':_("Transcribe Surface Tone Groups"),
                 'fn':self.makewindow,
@@ -7419,6 +7523,9 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
         return _("Join Underlying Form Groups")
+    def tooltip(self):
+        return _("This task helps you join hypersplit UF groups, as well as "
+                "giving them meaniningful names (e.g., High or Low).")
     def dobuttonkwargs(self):
         return {'text':_("Join draft UF Groups"),
                 'fn':self.tonegroupsjoinrename,
@@ -7445,18 +7552,18 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                 groupsselected+=[group.get()] #value, name if selected, 0 if not
             groupsselected=[x for x in groupsselected if x != '']
             log.info("groupsselected:{}".format(groupsselected))
-            if uf in self.analysis.orderedUFs and uf not in groupsselected:
+            if uf in analysis.orderedUFs and uf not in groupsselected:
                 deja=_("That name is already there! (did you forget to include "
                         "the ‘{}’ group?)".format(uf))
                 log.debug(deja)
                 errorlabel['text'] = deja
                 return
             for group in groupsselected:
-                if group in self.analysis.senseidsbygroup: #selected ones only
+                if group in analysis.senseidsbygroup: #selected ones only
                     log.debug("Changing values from {} to {} for the following "
                             "senseids: {}".format(group,uf,
-                                        self.analysis.senseidsbygroup[group]))
-                    for senseid in self.analysis.senseidsbygroup[group]:
+                                        analysis.senseidsbygroup[group]))
+                    for senseid in analysis.senseidsbygroup[group]:
                         self.db.addtoneUF(senseid,uf,analang=self.analang,
                         write=False)
             self.db.write()
@@ -7465,7 +7572,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
             self.tonegroupsjoinrename() #call again, in case needed
         def redo():
             self.runwindow.wait(_("Redoing Tone Analysis"))
-            self.analysis.do()
+            analysis.do()
             # self.runwindow.waitdone()
             # self.runwindow.destroy()
             self.tonegroupsjoinrename() #call again, in case needed
@@ -7532,10 +7639,10 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         rwrow+=1
         scroll=ui.ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=rwrow,column=0,sticky='ew')
-        self.makeanalysis()
-        self.analysis.donoUFanalysis()
+        analysis=self.makeanalysis()
+        analysis.donoUFanalysis()
         nheaders=0
-        if not self.analysis.orderedUFs:
+        if not analysis.orderedUFs:
             self.runwindow.waitdone()
             self.runwindow.destroy()
             ErrorNotice(title="No draft UF groups found for {} words!"
@@ -7546,32 +7653,32 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                         )
             return
         # ufgroups= # order by structured groups? Store this somewhere?
-        for group in self.analysis.orderedUFs: #make a variable and button to select
-            idn=self.analysis.orderedUFs.index(group)
+        for group in analysis.orderedUFs: #make a variable and button to select
+            idn=analysis.orderedUFs.index(group)
             if idn % 5 == 0: #every five rows
                 col=1
-                for check in self.analysis.orderedchecks:
+                for check in analysis.orderedchecks:
                     col+=1
                     cbh=ui.Label(scroll.content, text=check, font='small')
                     cbh.grid(row=idn+nheaders,
                             column=col,sticky='ew')
                 nheaders+=1
             groupvars.append(tkinter.StringVar())
-            n=len(self.analysis.senseidsbygroup[group])
+            n=len(analysis.senseidsbygroup[group])
             buttontext=group+' ({})'.format(n)
             cb=ui.CheckButton(scroll.content, text = buttontext,
                                 variable = groupvars[idn],
                                 onvalue = group, offvalue = 0,
                                 )
             cb.grid(row=idn+nheaders,column=0,sticky='ew')
-            # self.analysis.valuesbygroupcheck[group]:
+            # analysis.valuesbygroupcheck[group]:
             col=1
-            for check in self.analysis.orderedchecks:
+            for check in analysis.orderedchecks:
                 col+=1
-                if check in self.analysis.valuesbygroupcheck[group]:
+                if check in analysis.valuesbygroupcheck[group]:
                     cbl=ui.Label(scroll.content,
                         text=unlist(
-                                self.analysis.valuesbygroupcheck[group][check]
+                                analysis.valuesbygroupcheck[group][check]
                                     )
                             )
                     cbl.grid(row=idn+nheaders,column=col,sticky='ew')
@@ -7583,6 +7690,9 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         TaskDressing.__init__(self, parent)
 class RecordCitation(Record,Segments,TaskDressing,ui.Window):
     """docstring for RecordCitation."""
+    def tooltip(self):
+        return _("This task helps you record words in citation form tone "
+                "frames.")
     def dobuttonkwargs(self):
         return {'text':_("Record Dictionary Words"),
                 'fn':self.showentryformstorecord,
@@ -7603,6 +7713,8 @@ class RecordCitation(Record,Segments,TaskDressing,ui.Window):
         # self.do=self.showentryformstorecord
 class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
     """docstring for RecordCitation."""
+    def tooltip(self):
+        return _("This task helps you record words in citation form.")
     def dobuttonkwargs(self):
         return {'text':_("Record Words in Tone Frames"),
                 'fn':self.showtonegroupexs,
@@ -7627,6 +7739,11 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
         return _("Alphabet Report") # on One Data Slice
     def taskicon(self):
         return program['theme'].photo['iconCVRep']
+    def tooltip(self):
+        return _("This report gives you reports for one lexical "
+                "category, in one syllable profile. It does "
+                "one of three sets of reports: Vowel, Consonant, or "
+                "Consonant-Vowel Correspondence")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.runcheck,
@@ -7675,7 +7792,88 @@ class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Comprehensive Alphabet Report") # on Citation Forms
     def taskicon(self):
+        return program['theme'].photo['iconVCCVRepcomp']
+    def tooltip(self):
+        return _("This report gives you reports across multiple lexical "
+                "categories, and across multiple syllable profiles. It does "
+                "this for three sets of reports: Vowel, Consonant, and "
+                "Consonant-Vowel Correspondence")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.basicreport,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['VCCVRepcomp'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+        self.cvtstodo=['V','C','CV']
+class ReportCitationBasicV(Report,Comprehensive,Segments,TaskDressing,ui.Window):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Comprehensive Vowel Report") # on Citation Forms
+    def taskicon(self):
+        return program['theme'].photo['iconVRepcomp']
+    def tooltip(self):
+        return _("This report gives you reports across multiple lexical "
+                "categories, and across multiple syllable profiles. It does "
+                "this just for vowel checks.")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.basicreport,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['VRepcomp'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+        self.cvtstodo=['V']
+class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Comprehensive Consonant Report") # on Citation Forms
+    def taskicon(self):
+        return program['theme'].photo['iconCRepcomp']
+    def tooltip(self):
+        return _("This report gives you reports across multiple lexical "
+                "categories, and across multiple syllable profiles. It does "
+                "this just for consonant checks.")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.basicreport,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['CRepcomp'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+        self.cvtstodo=['C']
+        # This is really hard on memory, with correspondences.
+class ReportCitationBasicCV(Report,Comprehensive,Segments,TaskDressing,ui.Window):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Comprehensive CxV Phonotactics Report") # on Citation Forms
+    def taskicon(self):
         return program['theme'].photo['iconCVRepcomp']
+    def tooltip(self):
+        return _("This report gives you reports across multiple lexical "
+                "categories, and across multiple syllable profiles. It does "
+                "this just for consonant-vowel correspondence checks.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
@@ -7690,13 +7888,15 @@ class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
-        self.cvtstodo=['V','C','CV']
-        # This is really hard on memory, with correspondences.
-        self.settings.maxprofiles=2
+        self.cvtstodo=['CV']
 class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Initialize Consultant Check")
+    def tooltip(self):
+        return _("This task automates work normally done before a consultant "
+                "check. It reloads status data, and runs comprehensive tone "
+                "reports, both by location and lexeme sense.")
     def dobuttonkwargs(self):
         return {'text':"Start!",
                 'fn':self.consultantcheck,
@@ -7719,6 +7919,10 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
         # return _("Report on one slice of Citation Forms (in Tone Frames)")
     def taskicon(self):
         return program['theme'].photo['iconTRep']
+    def tooltip(self):
+        return _("This report gives you report for one lexical "
+                "category, in one syllable profile. It does "
+                "this for all data sorted in tone frames, organized by word.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
@@ -7743,6 +7947,10 @@ class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
         # return _("Report on one slice of Citation Forms (in Tone Frames)")
     def taskicon(self):
         return program['theme'].photo['iconTRep']
+    def tooltip(self):
+        return _("This report gives you report for one lexical "
+                "category, in one syllable profile. It does "
+                "this for all data sorted in tone frames, organized by frame.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
@@ -7766,6 +7974,10 @@ class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
         # Report on several slices of Citation Forms (in Tone Frames)")
     def taskicon(self):
         return program['theme'].photo['iconTRepcomp']
+    def tooltip(self):
+        return _("This report gives you reports across multiple lexical "
+                "categories, and across multiple syllable profiles. It does "
+                "this for all data sorted in tone frames, organized by word.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
@@ -9120,47 +9332,51 @@ class StatusDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
     """I should think about what 'do' means here: sort? verify? record?"""
-    def checktosort(self,check=None):
-        if check is None:
-            check=self._checkparameters.check()
-        cvt=self._checkparameters.cvt()
-        ps=self._slicedict.ps()
-        profile=self._slicedict.profile()
+    def checktosort(self,**kwargs):
+        check=kwargs.get('check',self._checkparameters.check())
+        cvt=kwargs.get('cvt',self._checkparameters.cvt())
+        ps=kwargs.get('ps',self._slicedict.ps())
+        profile=kwargs.get('profile',self._slicedict.profile())
         if (cvt not in self or
                 ps not in self[cvt] or
                 profile not in self[cvt][ps] or
                 check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
             return True
-    def checktojoin(self,check=None):
-        if check is None:
-            check=self._checkparameters.check()
-        cvt=self._checkparameters.cvt()
-        ps=self._slicedict.ps()
-        profile=self._slicedict.profile()
-        if (check in self[cvt][ps][profile] and
-                'tojoin' not in self[cvt][ps][profile][check] or
-                self[cvt][ps][profile][check]['tojoin'] == True):
-            return True
-    def profiletojoin(self,profile=None):
-        if profile is None:
-            profile=self._slicedict.profile()
-        cvt=self._checkparameters.cvt()
-        ps=self._slicedict.ps()
-        checks=self.checks()
-        for check in checks: #any check
-            if (profile in self[cvt][ps] and
+    def checktojoin(self,**kwargs):
+        check=kwargs.get('check',self._checkparameters.check())
+        cvt=kwargs.get('cvt',self._checkparameters.cvt())
+        ps=kwargs.get('ps',self._slicedict.ps())
+        profile=kwargs.get('profile',self._slicedict.profile())
+        if (cvt in self and
+                ps in self[cvt] and
+                profile in self[cvt][ps] and
                 check in self[cvt][ps][profile] and
-                self[cvt][ps][profile][check]['tojoin'] == True):
-                return True
-    def profiletosort(self,profile=None):
-        if profile is None:
-            profile=self._slicedict.profile()
-        cvt=self._checkparameters.cvt()
-        ps=self._slicedict.ps()
+                ('tojoin' not in self[cvt][ps][profile][check] or #old schema
+                self[cvt][ps][profile][check]['tojoin'] == True)):
+            return True
+    def profiletojoin(self,**kwargs):
+        profile=kwargs.get('profile',self._slicedict.profile())
+        cvt=kwargs.get('cvt',self._checkparameters.cvt())
+        ps=kwargs.get('ps',self._slicedict.ps())
         checks=self.checks()
         for check in checks: #any check
-            if (profile not in self[cvt][ps] or
+            if (cvt in self and
+                ps in self[cvt] and
+                profile in self[cvt][ps] and
+                check in self[cvt][ps][profile] and
+                ('tojoin' not in self[cvt][ps][profile][check] or #old schema
+                self[cvt][ps][profile][check]['tojoin'] == True)):
+                return True
+    def profiletosort(self,**kwargs):
+        profile=kwargs.get('profile',self._slicedict.profile())
+        cvt=kwargs.get('cvt',self._checkparameters.cvt())
+        ps=kwargs.get('ps',self._slicedict.ps())
+        checks=self.checks()
+        for check in checks: #any check
+            if (cvt not in self or
+                ps not in self[cvt] or
+                profile not in self[cvt][ps] or
                 check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
                 return True
@@ -9213,22 +9429,24 @@ class StatusDict(dict):
         kwargs=grouptype(**kwargs)
         profiles=self._slicedict.profiles() #already limited to current ps
         p=[]
-        for profile in profiles:
-            checks=self.checks(profile=profile,**kwargs)
+        for kwargs['profile'] in profiles:
+            checks=self.checks(**kwargs)
             if kwargs['wsorted'] and not checks:
                 log.log(4,"No Checks for this profile, returning.")
                 continue #you won't find any profiles to do, either...
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']) or
-                (kwargs['tosort'] and self.profiletosort(profile)) or
+                (kwargs['tosort'] and self.profiletosort(**kwargs)) or
                 (kwargs['wsorted'] and [i for j in
-                            [self.groups(profile=profile,check=check,**kwargs)
-                            for check in checks]
+                            # [self.groups(profile=profile,check=check,**kwargs)
+                            [self.groups(**kwargs)
+                            # for check in checks]
+                            for kwargs['check'] in checks]
                                         for i in j
                                         ]) or
-                kwargs['tojoin'] and self.profiletojoin(profile)
+                kwargs['tojoin'] and self.profiletojoin(**kwargs)
                 ):
-                p+=[profile]
+                p+=[kwargs['profile']]
         log.log(4,"Profiles with kwargs {}: {}".format(kwargs,p))
         return p
     def checks(self, **kwargs):
@@ -9238,16 +9456,16 @@ class StatusDict(dict):
         kwargs=grouptype(**kwargs)
         cs=[]
         checks=self.updatechecksbycvt(**kwargs)
-        for check in checks:
+        for kwargs['check'] in checks:
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']) or
                 # """These next two assume current ps-profile slice"""
-                kwargs['wsorted'] and self.groups(check=check,**kwargs) or
-                kwargs['tosort'] and self.checktosort(check) or
-                kwargs['toverify'] and self.groups(check=check,**kwargs) or
-                kwargs['tojoin'] and self.checktojoin(check)
+                kwargs['wsorted'] and self.groups(**kwargs) or
+                kwargs['tosort'] and self.checktosort(**kwargs) or
+                kwargs['toverify'] and self.groups(**kwargs) or
+                kwargs['tojoin'] and self.checktojoin(**kwargs)
                 ):
-                cs+=[check]
+                cs+=[kwargs['check']]
         log.log(4,"Checks with {}: {}".format(kwargs,cs))
         return cs
     def groups(self,g=None, **kwargs): #was groupstodo
@@ -9601,7 +9819,6 @@ class StatusDict(dict):
         log.log(4,"Returning checkslicetypecurrent kwargs {}".format(kwargs))
         return kwargs
     def last(self,task,update=False,**kwargs):
-        profile=kwargs.get('profile',self._slicedict.profile())
         sn=self.node(**kwargs)
         if 'last' not in sn:
             sn['last']={}
