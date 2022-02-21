@@ -3559,7 +3559,22 @@ class TaskChooser(TaskDressing,ui.Window):
         Data Collection: collect, sort
         Analysis: report, transcribe, joinUF
         Maybe make a button to switch between the two?"""
-        if self.datacollection:
+        if self.showreports:
+            tasks=[
+                    ReportCitation,
+                    ]
+            if self.donew['collectionlc']:
+                """This currently takes way too much time. Until it gets
+                mutithreaded, it will not be an option"""
+                tasks.append(ReportCitationBasicV)
+                tasks.append(ReportCitationBasicC)
+                tasks.append(ReportCitationBasicCV)
+                tasks.append(ReportCitationBasic)
+            if self.donew['somesortT']:
+                tasks.append(ReportCitationT)
+                tasks.append(ReportCitationTlocation)
+                tasks.append(ReportCitationBasicT)
+        elif self.datacollection:
             tasks=[
                     WordCollectionCitation,
                     # WordCollectionLexeme
@@ -3575,20 +3590,8 @@ class TaskChooser(TaskDressing,ui.Window):
             # if self.donew['parsedlx']:
             #     tasks.append(SortRoots)
         else: #i.e., analysis tasks
-            tasks=[
-                    ReportCitation,
-                    ]
-            if self.donew['collectionlc']:
-                """This currently takes way too much time. Until it gets
-                mutithreaded, it will not be an option"""
-                tasks.append(ReportCitationBasicV)
-                tasks.append(ReportCitationBasicC)
-                tasks.append(ReportCitationBasicCV)
-                tasks.append(ReportCitationBasic)
+            tasks=[]
             if self.donew['somesortT']:
-                tasks.append(ReportCitationT)
-                tasks.append(ReportCitationTlocation)
-                tasks.append(ReportCitationBasicT)
                 if self.donew['somerecordingT']:
                     tasks.append(Transcribe)
                     if self.donew['analysis']:
