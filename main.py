@@ -936,7 +936,7 @@ class StatusFrame(ui.Frame):
                 self.cvtline()
         if isinstance(self.task,Comprehensive):
             self.maxes()
-        if not isinstance(self.task,TaskChooser):
+        if not self.taskchooser.showreports:
             self.finalbuttons()
 class Settings(object):
     """docstring for Settings."""
