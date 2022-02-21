@@ -107,7 +107,7 @@ class Theme(object):
                             ('iconVRepcomp','images/A Report Comprehensive_icon.png'),
                             ('iconCRepcomp','images/Z Report Comprehensive_icon.png'),
                             ('iconCVRepcomp','images/ZA Report Comprehensive_icon.png'),
-                            # ('VCCVRepcomp','images/AZZA Report Comprehensive.png'),
+                            ('iconVCCVRepcomp','images/AZZA Report Comprehensive_icon.png'),
                             ('T','images/T alone clear6.png'),
                             ('C','images/Z alone clear6.png'),
                             ('V','images/A alone clear6.png'),
@@ -123,7 +123,7 @@ class Theme(object):
                             ('VRepcomp','images/A Report Comprehensive.png'),
                             ('CRepcomp','images/Z Report Comprehensive.png'),
                             ('CVRepcomp','images/ZA Report Comprehensive.png'),
-                            # ('VCCVRepcomp','images/AZZA Report Comprehensive.png'),
+                            ('VCCVRepcomp','images/AZZA Report Comprehensive.png'),
                             ('backgrounded','images/AZT stacks6.png'),
                             #Set images for tasks
                             ('verifyT','images/Verify List.png'),
