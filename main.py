@@ -3454,12 +3454,18 @@ class TaskChooser(TaskDressing,ui.Window):
     def gettask(self,event=None):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
-        if self.mainwindow:
-            self.datacollection=not self.datacollection
-            self.maketitle() #b/c this changes
-        else:
+        # if self.reports:
+        self.frame.status.bigbutton.destroy()
+        if not self.showreports:
+            self.frame.status.finalbuttons()
+        if not self.mainwindow:
             self.correlatemenus() #only if moving to this window
             self.unsetmainwindow() #first, so the program stays alive
+        elif not self.showingreports and not self.showreports:
+            self.datacollection=not self.datacollection
+        if self.showingreports:
+            self.showingreports=False
+        self.maketitle() #b/c this changes
         if hasattr(self,'task') and self.task.winfo_exists():
             self.task.on_quit() #destroy and set flag
         if hasattr(self,'optionsframe'):
