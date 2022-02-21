@@ -5163,6 +5163,7 @@ class Report(object):
         for ps in pss:
             d[ps]=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
         log.info("Starting comprehensive reports for {}".format(d))
+        kwargs['usegui']=False
         for ps in pss:
             for profile in d[ps]:
                 kwargs={'ps': ps, 'profile': profile}
