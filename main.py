@@ -3468,6 +3468,10 @@ class TaskChooser(TaskDressing,ui.Window):
                         sticky='nesw'
                         )
             n+=1
+            try:
+                ui.ToolTip(b, o[0].tooltip(None))
+            except AttributeError:
+                log.info("Task {} doesn't seem to have a tooltip.".format(o[0]))
         self.setmainwindow(self) #deiconify here
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
