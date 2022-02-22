@@ -3387,7 +3387,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 'fn':self.choosereports,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['icon'],
+                'image':self.taskchooser.theme.photo['iconReportLogo'],
                 'sticky':'ew'
                 }
     def choosereports(self):
@@ -7767,19 +7767,19 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Alphabet Report") # on One Data Slice
     def taskicon(self):
-        return program['theme'].photo['iconCVRep']
+        return program['theme'].photo['iconReport']
     def tooltip(self):
         return _("This report gives you reports for one lexical "
-                "category, in one syllable profile. It does "
-                "one of three sets of reports: Vowel, Consonant, or "
-                "Consonant-Vowel Correspondence")
+                "category, in one syllable profile. \nIt does "
+                "one of three sets of reports: \n- Vowel, \n- Consonant, or "
+                "\n- Consonant-Vowel Correspondence")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.runcheck,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['CVRep'],
+                'image':self.taskchooser.theme.photo['Report'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
@@ -7922,6 +7922,8 @@ class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Initialize Consultant Check")
+    def taskicon(self):
+        return program['theme'].photo['icontall']
     def tooltip(self):
         return _("This task automates work normally done before a consultant "
                 "check. It reloads status data, and runs comprehensive tone "
@@ -7932,7 +7934,7 @@ class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['icon'],
+                'image':self.taskchooser.theme.photo['icontall'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None

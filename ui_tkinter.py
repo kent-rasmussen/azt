@@ -90,8 +90,10 @@ class Theme(object):
             else: #if close enough...
                 self.photo[name] = tkinter.PhotoImage(file = imgurl)
         for name,relurl in [ ('transparent','images/AZT stacks6.png'),
+                            ('tall','images/AZT clear stacks tall.png'),
                             ('small','images/AZT stacks6_sm.png'),
                             ('icon','images/AZT stacks6_icon.png'),
+                            ('icontall','images/AZT clear stacks tall_icon.png'),
                             ('iconT','images/T alone clear6_icon.png'),
                             ('iconC','images/Z alone clear6_icon.png'),
                             ('iconV','images/A alone clear6_icon.png'),
@@ -99,6 +101,8 @@ class Theme(object):
                             ('iconWord','images/ZAZA clear stacks6_icon.png'),
                             ('iconWordRec','images/ZAZA Rclear stacks6_icon.png'),
                             ('iconTRec','images/T Rclear stacks6_icon.png'),
+                            ('iconReport','images/Report_icon.png'),
+                            ('iconReportLogo','images/Generic AZT Reports_icon.png'),
                             ('iconTRep','images/T Report_icon.png'),
                             ('iconCVRep','images/ZA Report_icon.png'),
                             ('iconTranscribe','images/Transcribe Tone_icon.png'),
@@ -115,6 +119,8 @@ class Theme(object):
                             ('Word','images/ZAZA clear stacks6.png'),
                             ('WordRec','images/ZAZA Rclear stacks6.png'),
                             ('TRec','images/T Rclear stacks6.png'),
+                            ('Report','images/Report.png'),
+                            ('ReportLogo','images/Generic AZT Reports.png'),
                             ('TRep','images/T Report.png'),
                             ('CVRep','images/ZA Report.png'),
                             ('Transcribe','images/Transcribe Tone.png'),
