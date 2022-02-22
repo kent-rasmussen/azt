@@ -5,7 +5,7 @@ program={'name':'A→Z+T'}
 program['tkinter']=True
 program['production']=False #True for making screenshots (default theme)
 program['testing']=True #True eliminates Error screens and zipped logs
-program['version']='0.9' #This is a string...
+program['version']='0.9.1' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 exceptiononload=False
@@ -563,6 +563,7 @@ class StatusFrame(ui.Frame):
                         **kwargs)
         if ttt:
             tt=ui.ToolTip(b,ttt)
+        return b
     """These functions point to self.taskchooser functions, betcause we don't
     know who this frame's parent is"""
     def makeproseframe(self):
@@ -704,7 +705,7 @@ class StatusFrame(ui.Frame):
     def finalbuttons(self):
         # self.opts['row']+=6
         if hasattr(self.taskchooser.mainwindowis,'dobuttonkwargs'):
-            self.button(**self.task.dobuttonkwargs())
+            self.bigbutton=self.button(**self.task.dobuttonkwargs())
         self.opts['row']+=1
     """Right side"""
     def maybeboard(self):
@@ -935,7 +936,7 @@ class StatusFrame(ui.Frame):
                 self.cvtline()
         if isinstance(self.task,Comprehensive):
             self.maxes()
-        if not isinstance(self.task,TaskChooser):
+        if not self.taskchooser.showreports:
             self.finalbuttons()
 class Settings(object):
     """docstring for Settings."""
@@ -2273,7 +2274,7 @@ class TaskDressing(object):
     def _taskchooserbutton(self):
         if len(self.taskchooser.makeoptions())<2:
             return
-        if isinstance(self,TaskChooser):
+        if isinstance(self,TaskChooser) and not self.showreports:
             if self.datacollection:
                 text=_("Analyze")
             else:
@@ -3375,10 +3376,24 @@ class TaskChooser(TaskDressing,ui.Window):
     task on opening, and allows users to choose others (any with minimum
     prequisites satisfied)."""
     def tasktitle(self):
-        if self.datacollection:
+        if self.showreports:
+            return _("Run Reports")
+        elif self.datacollection:
             return _("Data Collection Tasks")
         else:
             return _("Analysis Tasks")
+    def dobuttonkwargs(self):
+        return {'text':_("Reports"),
+                'fn':self.choosereports,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['iconReportLogo'],
+                'sticky':'ew'
+                }
+    def choosereports(self):
+        self.frame.status.bigbutton.destroy()
+        self.showreports=True
+        self.gettask()
     def getfile(self):
         # def getit(attr):
         #     if hasattr(self.file,attr):
@@ -3439,12 +3454,18 @@ class TaskChooser(TaskDressing,ui.Window):
     def gettask(self,event=None):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
-        if self.mainwindow:
-            self.datacollection=not self.datacollection
-            self.maketitle() #b/c this changes
-        else:
+        # if self.reports:
+        self.frame.status.bigbutton.destroy()
+        if not self.showreports:
+            self.frame.status.finalbuttons()
+        if not self.mainwindow:
             self.correlatemenus() #only if moving to this window
             self.unsetmainwindow() #first, so the program stays alive
+        elif not self.showingreports and not self.showreports:
+            self.datacollection=not self.datacollection
+        if self.showingreports:
+            self.showingreports=False
+        self.maketitle() #b/c this changes
         if hasattr(self,'task') and self.task.winfo_exists():
             self.task.on_quit() #destroy and set flag
         if hasattr(self,'optionsframe'):
@@ -3481,6 +3502,9 @@ class TaskChooser(TaskDressing,ui.Window):
         for c in range(bpr):
             self.optionsframe.grid_columnconfigure(c, weight=1, uniform='a')
         self.setmainwindow(self) #deiconify here
+        if self.showreports:
+            self.showreports=False #just do this once each button click
+            self.showingreports=True
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
@@ -3541,7 +3565,22 @@ class TaskChooser(TaskDressing,ui.Window):
         Data Collection: collect, sort
         Analysis: report, transcribe, joinUF
         Maybe make a button to switch between the two?"""
-        if self.datacollection:
+        if self.showreports:
+            tasks=[
+                    ReportCitation,
+                    ]
+            if self.donew['collectionlc']:
+                """This currently takes way too much time. Until it gets
+                mutithreaded, it will not be an option"""
+                tasks.append(ReportCitationBasicV)
+                tasks.append(ReportCitationBasicC)
+                tasks.append(ReportCitationBasicCV)
+                tasks.append(ReportCitationBasic)
+            if self.donew['somesortT']:
+                tasks.append(ReportCitationT)
+                tasks.append(ReportCitationTlocation)
+                tasks.append(ReportCitationBasicT)
+        elif self.datacollection:
             tasks=[
                     WordCollectionCitation,
                     # WordCollectionLexeme
@@ -3557,20 +3596,8 @@ class TaskChooser(TaskDressing,ui.Window):
             # if self.donew['parsedlx']:
             #     tasks.append(SortRoots)
         else: #i.e., analysis tasks
-            tasks=[
-                    ReportCitation,
-                    ]
-            if self.donew['collectionlc']:
-                """This currently takes way too much time. Until it gets
-                mutithreaded, it will not be an option"""
-                tasks.append(ReportCitationBasicV)
-                tasks.append(ReportCitationBasicC)
-                tasks.append(ReportCitationBasicCV)
-                tasks.append(ReportCitationBasic)
+            tasks=[]
             if self.donew['somesortT']:
-                tasks.append(ReportCitationT)
-                tasks.append(ReportCitationTlocation)
-                tasks.append(ReportCitationBasicT)
                 if self.donew['somerecordingT']:
                     tasks.append(Transcribe)
                     if self.donew['analysis']:
@@ -3833,6 +3860,8 @@ class TaskChooser(TaskDressing,ui.Window):
         self.start_time=time.time() #this enables boot time evaluation
         self.writing=False
         self.datacollection=True # everyone starts here?
+        self.showreports=False
+        self.showingreports=False
         self.ifcollectionlcsettingsdone=False
         self.setiflang() #before Splash
         ui.Window.__init__(self,parent)
@@ -7191,7 +7220,7 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
         return _("Transcribe Tone")
     def tooltip(self):
         return _("This task helps you transcribe your surface groups, giving "
-                "them meaniningful names (e.g., [˥˥ ˨˨] instead of numbers.")
+                "them meaniningful names (e.g., [˥˥ ˨˨]) instead of numbers.")
     def dobuttonkwargs(self):
         return {'text':_("Transcribe Surface Tone Groups"),
                 'fn':self.makewindow,
@@ -7738,19 +7767,19 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Alphabet Report") # on One Data Slice
     def taskicon(self):
-        return program['theme'].photo['iconCVRep']
+        return program['theme'].photo['iconReport']
     def tooltip(self):
         return _("This report gives you reports for one lexical "
-                "category, in one syllable profile. It does "
-                "one of three sets of reports: Vowel, Consonant, or "
-                "Consonant-Vowel Correspondence")
+                "category, in one syllable profile. \nIt does "
+                "one of three sets of reports: \n- Vowel, \n- Consonant, or "
+                "\n- Consonant-Vowel Correspondence")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.runcheck,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['CVRep'],
+                'image':self.taskchooser.theme.photo['Report'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
@@ -7795,9 +7824,9 @@ class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
         return program['theme'].photo['iconVCCVRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. It does "
-                "this for three sets of reports: Vowel, Consonant, and "
-                "Consonant-Vowel Correspondence")
+                "categories, and across multiple syllable profiles. \nIt does "
+                "this for three sets of reports: \n- Vowel, \n- Consonant, and "
+                "\n- Consonant-Vowel Correspondence")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
@@ -7821,7 +7850,7 @@ class ReportCitationBasicV(Report,Comprehensive,Segments,TaskDressing,ui.Window)
         return program['theme'].photo['iconVRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. It does "
+                "categories, and across multiple syllable profiles. \nIt does "
                 "this just for vowel checks.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
@@ -7846,7 +7875,7 @@ class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window)
         return program['theme'].photo['iconCRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. It does "
+                "categories, and across multiple syllable profiles. \nIt does "
                 "this just for consonant checks.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
@@ -7872,7 +7901,7 @@ class ReportCitationBasicCV(Report,Comprehensive,Segments,TaskDressing,ui.Window
         return program['theme'].photo['iconCVRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. It does "
+                "categories, and across multiple syllable profiles. \nIt does "
                 "this just for consonant-vowel correspondence checks.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
@@ -7893,17 +7922,19 @@ class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Initialize Consultant Check")
+    def taskicon(self):
+        return program['theme'].photo['icontall']
     def tooltip(self):
         return _("This task automates work normally done before a consultant "
-                "check. It reloads status data, and runs comprehensive tone "
-                "reports, both by location and lexeme sense.")
+                "check: \n- reloads status data, and \n- runs comprehensive tone "
+                "reports, \n  - by location and \n  - by lexeme sense.")
     def dobuttonkwargs(self):
         return {'text':"Start!",
                 'fn':self.consultantcheck,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['icon'],
+                'image':self.taskchooser.theme.photo['icontall'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
@@ -7921,7 +7952,7 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
         return program['theme'].photo['iconTRep']
     def tooltip(self):
         return _("This report gives you report for one lexical "
-                "category, in one syllable profile. It does "
+                "category, in one syllable profile. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
@@ -7949,7 +7980,7 @@ class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
         return program['theme'].photo['iconTRep']
     def tooltip(self):
         return _("This report gives you report for one lexical "
-                "category, in one syllable profile. It does "
+                "category, in one syllable profile. \nIt does "
                 "this for all data sorted in tone frames, organized by frame.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
@@ -7976,7 +8007,7 @@ class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
         return program['theme'].photo['iconTRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. It does "
+                "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
