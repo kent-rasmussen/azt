@@ -7220,7 +7220,7 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
         return _("Transcribe Tone")
     def tooltip(self):
         return _("This task helps you transcribe your surface groups, giving "
-                "them meaniningful names (e.g., [˥˥ ˨˨] instead of numbers.")
+                "them meaniningful names (e.g., [˥˥ ˨˨]) instead of numbers.")
     def dobuttonkwargs(self):
         return {'text':_("Transcribe Surface Tone Groups"),
                 'fn':self.makewindow,
@@ -7824,9 +7824,9 @@ class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
         return program['theme'].photo['iconVCCVRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. It does "
-                "this for three sets of reports: Vowel, Consonant, and "
-                "Consonant-Vowel Correspondence")
+                "categories, and across multiple syllable profiles. \nIt does "
+                "this for three sets of reports: \n- Vowel, \n- Consonant, and "
+                "\n- Consonant-Vowel Correspondence")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
@@ -7850,7 +7850,7 @@ class ReportCitationBasicV(Report,Comprehensive,Segments,TaskDressing,ui.Window)
         return program['theme'].photo['iconVRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. It does "
+                "categories, and across multiple syllable profiles. \nIt does "
                 "this just for vowel checks.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
@@ -7875,7 +7875,7 @@ class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window)
         return program['theme'].photo['iconCRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. It does "
+                "categories, and across multiple syllable profiles. \nIt does "
                 "this just for consonant checks.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
@@ -7901,7 +7901,7 @@ class ReportCitationBasicCV(Report,Comprehensive,Segments,TaskDressing,ui.Window
         return program['theme'].photo['iconCVRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. It does "
+                "categories, and across multiple syllable profiles. \nIt does "
                 "this just for consonant-vowel correspondence checks.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
@@ -7926,8 +7926,8 @@ class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
         return program['theme'].photo['icontall']
     def tooltip(self):
         return _("This task automates work normally done before a consultant "
-                "check. It reloads status data, and runs comprehensive tone "
-                "reports, both by location and lexeme sense.")
+                "check: \n- reloads status data, and \n- runs comprehensive tone "
+                "reports, \n  - by location and \n  - by lexeme sense.")
     def dobuttonkwargs(self):
         return {'text':"Start!",
                 'fn':self.consultantcheck,
@@ -7952,7 +7952,7 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
         return program['theme'].photo['iconTRep']
     def tooltip(self):
         return _("This report gives you report for one lexical "
-                "category, in one syllable profile. It does "
+                "category, in one syllable profile. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
@@ -7980,7 +7980,7 @@ class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
         return program['theme'].photo['iconTRep']
     def tooltip(self):
         return _("This report gives you report for one lexical "
-                "category, in one syllable profile. It does "
+                "category, in one syllable profile. \nIt does "
                 "this for all data sorted in tone frames, organized by frame.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
@@ -8007,7 +8007,7 @@ class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
         return program['theme'].photo['iconTRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. It does "
+                "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
