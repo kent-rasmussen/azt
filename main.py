@@ -1024,7 +1024,7 @@ class Settings(object):
                                     'distinguish',
                                     'interpret',
                                     'polygraphs',
-                                    "profilecounts",
+                                    # "profilecounts",
                                     "scount",
                                     "sextracted",
                                     "profilesbysense",
@@ -9308,6 +9308,7 @@ class SliceDict(dict):
     def updateslices(self):
         """This iterates across self.profilesbysense to provide counts for each
         ps-profile combination (aggravated for profile='Invalid')
+        It sets this dictionary class with k:v of (profile,ps):count.
         it should only be called when creating/adding to self.profilesbysense"""
         profilecountInvalid=0
         wcounts=list()
