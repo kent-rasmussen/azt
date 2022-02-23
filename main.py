@@ -10759,7 +10759,11 @@ if __name__ == "__main__":
     try:
         with file.getdiredurl(program['aztdir'],'.git/HEAD').open(mode='r') as f:
             branchURL=file.getfile(f.read()) #f contains a git branch URL
+<<<<<<< HEAD
             branch=branchURL.name.strip()
+=======
+            branch=branchURL.name
+>>>>>>> add branch name to version, so I don't have to keep drack of dev version changes
             if branch != 'main':
                 program['version'] += " ({})".format(branch)
     except FileNotFoundError:
