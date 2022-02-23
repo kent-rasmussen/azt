@@ -1,4 +1,8 @@
 #Roadmap
+- set up basic parsing to lx field:
+  - copy all
+  - trim from each edge (later)
+  - others (much later)
 - Figure out why reports don't correctly write objects when running in parallel (verification status writing?)
   - implement tonegroupreportmulti when it works correctly
   - resultswindow?
