@@ -1404,7 +1404,7 @@ class Settings(object):
                 for pc in vars[lang]:
                     for pg in vars[lang][pc]:
                         self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
-            self.storesettingsfile(setting='profiledata')
+            # self.storesettingsfile(setting='profiledata') Done below!
             self.reloadprofiledata()
         def foundchanges():
             for lang in vars:
