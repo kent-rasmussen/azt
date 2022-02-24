@@ -4175,7 +4175,7 @@ class WordCollection(Segments):
         )
         # self.navigationframe.grid_columnconfigure(1,weight=1)
         self.frame.grid_columnconfigure(1,weight=1)
-class WordCollectionLexeme(ui.Window,WordCollection,TaskDressing):
+class WordCollectionLexeme(TaskDressing,ui.Window,WordCollection):
     def tasktitle(self):
         return _("Word Collection for Lexeme Forms")
     def __init__(self, parent): #frame, filename=None
@@ -4187,7 +4187,7 @@ class WordCollectionLexeme(ui.Window,WordCollection,TaskDressing):
         #Status frame is 0,0
         self.textnodefn=self.db.lexemeformnodeofentry
         self.getwords()
-class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
+class WordCollectionCitation(TaskDressing,ui.Window,WordCollection):
     def taskicon(self):
         return program['theme'].photo['iconWord']
     def tooltip(self):
