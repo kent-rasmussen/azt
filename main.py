@@ -4227,7 +4227,40 @@ class WordCollectionCitation(TaskDressing,ui.Window,WordCollection):
         #Status frame is 0,0
         self.textnodefn=self.db.citationformnodeofentry
         self.getwords()
-class Placeholder(ui.Window,TaskDressing):
+class Parse(TaskDressing,ui.Window,Segments):
+    """docstring for Parse."""
+    def taskicon(self):
+        return program['theme'].photo['iconWord']
+    def tooltip(self):
+        return _("This task will help you parse your citation forms.")
+    def dobuttonkwargs(self):
+        fn=self.doparse
+        text="Parse Citation Forms"
+        tttext=_("For now, this just lets you copy citation form info to "
+                "The lexeme field.")
+        return {'text':text,
+                'fn':fn,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['Word'],
+                'sticky':'ew',
+                'tttext':tttext
+                }
+    def tasktitle(self):
+        return _("Parse Citation Forms")
+    def doparse(self):
+        window=ui.Window(self,title=self.tasktitle())
+        ui.Label(window,text="Parsing!",row=0,column=0)
+        todo=self.getlisttodo(all=self.dodone)
+        ui.Label(window,text=todo[:50],wraplength=program['root'].wraplength, row=1,column=0)
+    def __init__(self, parent): #frame, filename=None
+        log.info("Initializing {}".format(self.tasktitle()))
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        self.textnodefn=self.db.lexemeformnodeofentry
+        self.dodone=False
+class Placeholder(TaskDressing,ui.Window):
     """Fake check, placeholder for now."""
     def taskicon(self):
         return program['theme'].photo['icon']
