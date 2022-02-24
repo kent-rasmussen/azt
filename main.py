@@ -1782,7 +1782,7 @@ class Settings(object):
         for ps in self.profilesbysense:
             for profile in self.profilesbysense[ps]:
                 for senseid in self.profilesbysense[ps][profile]:
-                    if profile is not 'Invalid':
+                    if profile != 'Invalid':
                         node=self.db.legacyverificationconvert(senseid,vtype=profile,
                                                             lang=self.analang)
                         if node is not None:
