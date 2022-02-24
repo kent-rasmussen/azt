@@ -3896,6 +3896,31 @@ class TaskChooser(TaskDressing,ui.Window):
         splash.destroy()
 class Segments(object):
     """docstring for Segments."""
+    def getlisttodo(self,all=False):
+        """Whichever field is being asked for (textnodefn), this fn returns
+        which are left to do."""
+        all=self.db.get('entry',
+                        showurl=True).get()
+        # done=self.db.get('entry',path=['lexeme'],analang=analang,
+        #                 showurl=True).get()
+        # for i in all[:10]:
+        #     log.info("textnodecontents: {}".format(self.textnodefn(i,analang).text))
+        done=[i for i in all
+                    if self.textnodefn(i,self.analang).text
+                    # self.db.get('lexeme/form/text', node=i, analang=analang,
+                    # showurl=True
+                    #                 ).get('text') != ''
+                    ]
+        todo=[x for x in all if x not in done]
+        log.info("To do: ({}) {}".format(len(todo),todo))
+        return todo
+    def getwords(self):
+        self.entries=self.getlisttodo()
+        self.nentries=len(self.entries)
+        self.index=0
+        r=self.getword()
+        if r == 'noglosses':
+            self.nextword()
     def __init__(self, parent):
         if parent.params.cvt() == 'T':
             parent.settings.setcvt('V')
@@ -3983,24 +4008,6 @@ class WordCollection(Segments):
             #     self.slices.updateslices()
             #     self.settings.getscounts()
             #     self.settings.storesettingsfile(setting='profiledata') #since we changed this.
-    def getlisttodo(self):
-        """Whichever field is being asked for (textnodefn), this fn returns
-        which are left to do."""
-        all=self.db.get('entry',
-                        showurl=True).get()
-        # done=self.db.get('entry',path=['lexeme'],analang=analang,
-        #                 showurl=True).get()
-        # for i in all[:10]:
-        #     log.info("textnodecontents: {}".format(self.textnodefn(i,analang).text))
-        done=[i for i in all
-                    if self.textnodefn(i,self.analang).text
-                    # self.db.get('lexeme/form/text', node=i, analang=analang,
-                    # showurl=True
-                    #                 ).get('text') != ''
-                    ]
-        todo=[x for x in all if x not in done]
-        log.info("To do: ({}) {}".format(len(todo),todo))
-        return todo
     def addCAWLentries(self):
         text=_("Adding CAWL entries to fill out, in established database.")
         self.wait(msg=text)
@@ -4106,13 +4113,6 @@ class WordCollection(Segments):
             self.maybewrite() #only if above is successful
         except AttributeError as e:
             log.info("Not storing word: {}".format(e))
-    def getwords(self):
-        self.entries=self.getlisttodo()
-        self.nentries=len(self.entries)
-        self.index=0
-        r=self.getword()
-        if r == 'noglosses':
-            self.nextword()
     def getword(self):
         try:
             self.wordframe.destroy()
