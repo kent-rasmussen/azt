@@ -2449,19 +2449,23 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
-    senseids=["begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
-            'widen_fceb550d-fc99-40af-a288-0433add4f15',
-            'flatten_9fb3d2b4-bc9e-4451-b475-36ee10316e40',
-            'swallow_af9c3f8f-71e6-4b9a-805c-f6a148dcab8c',
-            'frighten_ecffd944-2861-495f-ae38-e7e9cdad45db',
-            'prevent_929504ce-35bb-48fe-ae95-8674a97e625f']
+    senseids=[
+            # "begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
+            # 'widen_fceb550d-fc99-40af-a288-0433add4f15',
+            # 'flatten_9fb3d2b4-bc9e-4451-b475-36ee10316e40',
+            # 'swallow_af9c3f8f-71e6-4b9a-805c-f6a148dcab8c',
+            # 'frighten_ecffd944-2861-495f-ae38-e7e9cdad45db',
+            # 'prevent_929504ce-35bb-48fe-ae95-8674a97e625f'
+            'excrement, faeces_04c27ce8-5308-4f1b-945a-81807cd818da',
+            'blink_0e76e781-33e7-4e1d-b957-7d08bd18ade1'
+            ]
     guids=['dd3c93bb-0019-4dce-8d7d-21c1cb8a6d4d',
         '09926cec-8be1-4f66-964e-4fdd8fa75fdc',
         '2902d6b3-89be-4723-a0bb-97925a905e7f',
@@ -2505,11 +2509,25 @@ if __name__ == '__main__':
     lang='en'
     cawls=lift.get('cawlfield/form/text').get('text')
     log.info("CAWL ({}): {}".format(len(cawls),cawls))
-    missing=[]
-    for i in range(1700):
-        if "{:04}".format(i+1) not in cawls:
-            missing.append(i+1)
-    log.info("CAWL entries missing ({}): {}".format(len(missing),missing))
+    # for cv in [56,145,1234]:
+    for senseid in lift.senseids[:3]:
+        e=lift.get('entry', senseid=senseid,
+                            # cawlvalue="{:04}".format(cv),
+                            showurl=True
+                            ).get('node')[0] #certain to be there
+        log.info(e)
+            # for i in e:
+        eps=lift.get('sense/ps',node=e,showurl=True).get('node')[0]
+        log.info(eps)
+        cvalue=eps.get('value')
+        log.info(cvalue)
+        eps.set('value',cvalue+'_mod')
+        prettyprint(e)
+    # missing=[]
+    # for i in range(1700):
+    #     if "{:04}".format(i+1) not in cawls:
+    #         missing.append(i+1)
+    # log.info("CAWL entries missing ({}): {}".format(len(missing),missing))
     exit()
     e=lift.get('entry',gloss=g,glosslang=lang,
                             #ftype='SILCAWL',
