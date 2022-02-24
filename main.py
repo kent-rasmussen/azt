@@ -4213,12 +4213,35 @@ class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
         self.getwords()
 class Placeholder(ui.Window,TaskDressing):
     """Fake check, placeholder for now."""
+    def taskicon(self):
+        return program['theme'].photo['icon']
+    def tooltip(self):
+        return _("Tooltip here.")
+    def dobuttonkwargs(self):
+        fn=self.addCAWLentries
+        text="Add remaining CAWL entries"
+        tttext=_("This will add entries from the Comparative African "
+                "Wordlist (CAWL) which aren't already in your database "
+                "(you are missing {} CAWL tags). If the appropriate "
+                "glosses are found in your database, CAWL tags will be "
+                "merged with those entries."
+                "\nDepending on the number of entries, this may take "
+                "awhile.").format(len(self.taskchooser.cawlmissing))
+        return {'text':text,
+                'fn':fn,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['icon'],
+                'sticky':'ew',
+                'tttext':tttext
+                }
     def tasktitle(self):
         return _("Placeholder Check2")
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        log.info("Initializing Check2")
+        log.info("Initializing {}".format(self.tasktitle()))
         for r in range(5):
             ui.Label(self.frame,
                     text="This is a check placeholder.",
