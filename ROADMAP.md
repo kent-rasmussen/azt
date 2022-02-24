@@ -1,4 +1,6 @@
 #Roadmap
+SILCAWL must convert template ps to self.nominalps, self.verbalps values!
+recall that ps values are analysis, not data!
 - set up basic parsing to lx field:
   - copy all
   - trim from each edge (later)
