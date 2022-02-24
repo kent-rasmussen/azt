@@ -4021,6 +4021,20 @@ class WordCollection(Segments):
             e=self.cawldb.get('entry', path=['cawlfield'],
                                     cawlvalue="{:04}".format(n),
                                     ).get('node')[0] #certain to be there
+            try:
+                eps=self.cawldb.get('sense/ps',node=e,showurl=True).get('node')[0]
+                epsv=eps.get('value')
+            except IndexError:
+                log.info("line {} w/o lexical category; leaving.".format(n))
+                eps=epsv=None
+            if epsv == "Noun":
+                log.info("Found a noun, using {}".format(self.settings.nominalps))
+                eps.set('value',self.settings.nominalps)
+            elif epsv == "Verb":
+                log.info("Found a verb, using {}".format(self.settings.verbalps))
+                eps.set('value',self.settings.verbalps)
+            else:
+                log.error("Not sure what to do with ps {} ({})".format(epsv,eps))
             entry=None #in case no selected glosslangs in CAWL
             for lang in self.glosslangs:
                 g=e.findall("sense/gloss[@lang='{}']/text".format(lang))
