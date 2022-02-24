@@ -1322,6 +1322,7 @@ class Settings(object):
         for default in fields: #self.defaultstoclear[field]:
             setattr(self, default, None)
     def settingsinit(self):
+        log.info("Initializing settings.")
         # self.defaults is already there, from settingsfilecheck
         self.initdefaults() #provides self.defaultstoclear, needed?
         self.cleardefaults() #this resets all to none (to be set below)
@@ -1347,6 +1348,8 @@ class Settings(object):
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
     def pss(self):
+        log.info("checking these lexical category names for plausible noun "
+                "and verb names: {}".format(self.db.pss))
         for ps in self.db.pss[:2]:
             if ps in ['N','n','Noun','noun',
                     'Nom','nom',
@@ -1360,6 +1363,12 @@ class Settings(object):
                 self.verbalps=ps
             else:
                 log.error("Not sure what to do with top ps {}".format(ps))
+        try:
+            log.info("Using ‘{}’ for nouns, and ‘{}’ for verbs".format(self.nominalps,
+                self.verbalps))
+        except AttributeError:
+            log.info("Problem with finding a nominal and verbal lexical "
+            "category (looked in first two of [{}])".format(self.db.pss))
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
         fields=self.db.fields
