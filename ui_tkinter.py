@@ -4,8 +4,8 @@ import sys
 import platform
 import logsetup
 log=logsetup.getlog(__name__)
-# logsetup.setlevel('INFO',log) #for this file
-logsetup.setlevel('DEBUG',log) #for this file
+logsetup.setlevel('INFO',log) #for this file
+# logsetup.setlevel('DEBUG',log) #for this file
 log.info("Importing ui_tkinter.py")
 import unicodedata
 import tkinter #as gui
@@ -591,7 +591,7 @@ class Childof(object):
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
             else:
-                log.info("parent {} (of {}) doesn't have attr {}, skipping inheritance"
+                log.debug("parent {} (of {}) doesn't have attr {}, skipping inheritance"
                         "".format(parent,type(self),attr))
     def __init__(self, parent): #because this is used everywhere.
         self.parent=parent
