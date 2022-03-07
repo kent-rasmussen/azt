@@ -3872,7 +3872,7 @@ class TaskChooser(TaskDressing,ui.Window):
             self.maxpss=2 #don't automatically give more than two grammatical categories
             self.ifcollectionlcsettingsdone=True
     def __init__(self,parent):
-        # self.testdefault=Transcribe
+        self.testdefault=Parse
         self.start_time=time.time() #this enables boot time evaluation
         self.writing=False
         self.datacollection=True # everyone starts here?
