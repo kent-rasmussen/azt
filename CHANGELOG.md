@@ -1,5 +1,8 @@
 # A→Z+T Changelog
 
+# Version 0.9.1
+SILCAWL now converts template ps to local values
+
 # Version 0.9
 Rendering works now with Charis 6.0 font name, and more efficiently
 fixed screen scaling
