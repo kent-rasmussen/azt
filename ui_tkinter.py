@@ -140,7 +140,12 @@ class Theme(object):
                             ('checkedbox','images/checked.png'),
                             ('uncheckedbox','images/unchecked.png')
                         ]:
-            mkimg(name,relurl)
+            try:
+                mkimg(name,relurl)
+            except:
+                log.debug("Image {} at {} not compiled (is it there?)".format(
+                            name,relurl
+                            ))
     def settheme(self):
         if not self.name:
             defaulttheme='greygreen'
