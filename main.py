@@ -6542,19 +6542,21 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             ctoverify=self.status.checks(toverify=True)
             ptosort=self.status.profiles(tosort=True)
             ptoverify=self.status.profiles(toverify=True)
-            ui.Label(self.runwindow.frame,text=_("Continue to"),
+            ui.Label(self.runwindow.frame,text=_("Continue to sort"),
                     columnspan=2,row=row,column=0)
             row+=1
+            text1=_("same words")
+            text2=_("same frame")
             if ctosort or ctoverify:
                 b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=_("Next frame to sort"),
+                    text=text1+'\n('+_("next frame")+')',
                     command=nframe)
                 b1t=ui.ToolTip(b1,_("Automatically pick "
                                 "the next tone frame to sort for "
                                 "the ‘{}’ profile.".format(profile)))
             else:
                 b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=_("Define a new frame"),
+                    text=text1+'\n('+_("define a new frame")+')',
                     command=aframe)
                 b1t=ui.ToolTip(b1,_("You're done with tone frames already defined "
                                 "for the ‘{}’ profile. If you want to continue "
@@ -6563,7 +6565,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             b1.grid(row=row,column=0,sticky='e')
             if ptosort or ptoverify:
                 b2=ui.Button(self.runwindow.frame, anchor='c',
-                    text=_("Next syllable profile to sort"),
+                    text=text2+'\n('+_("next syllable profile")+')',
                     command=nprofile)
                 b2t=ui.ToolTip(b2,_("You're done with ‘{0}’ tone frames already "
                                 "defined for the ‘{1}’ profile. Click here to "
@@ -6571,7 +6573,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                                 "profile for ‘{0}’.".format(ps, profile)))
             else:
                 b2=ui.Button(self.runwindow.frame, anchor='c',
-                    text=_("Next Grammatical Category"),
+                    text=text2+'\n('+_("next lexical category")+')',
                     command=nps)
                 b2t=ui.ToolTip(b2,_("You're done with tone frames already "
                                 "defined for the top ‘{}’ syllable profiles. "
