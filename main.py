@@ -6427,9 +6427,12 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         profile=self.slices.profile()
         if not profile:
             self.getprofile()
-        if (check not in self.status.checks(tosort=True)
-                and check not in self.status.checks(toverify=True)
-                and check not in self.status.checks(tojoin=True)):
+        """further specify check check in maybesort, where you can send the user
+        on to the next setting"""
+        if (check not in self.status.checks() #tosort=True
+                # and check not in self.status.checks(toverify=True)
+                # and check not in self.status.checks(tojoin=True)
+                ):
             exit=self.getcheck()
             if exit and not self.exitFlag.istrue():
                 self.runcheck()
