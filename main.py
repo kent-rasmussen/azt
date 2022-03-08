@@ -9489,7 +9489,10 @@ class StatusDict(dict):
         checks=self.updatechecksbycvt(**kwargs)
         for kwargs['check'] in checks:
             if (
-                (not kwargs['wsorted'] and not kwargs['tosort']) or
+                (not kwargs['wsorted'] and not kwargs['tosort']
+                and not kwargs['toverify']
+                and not kwargs['tojoin']
+                ) or
                 # """These next two assume current ps-profile slice"""
                 kwargs['wsorted'] and self.groups(**kwargs) or
                 kwargs['tosort'] and self.checktosort(**kwargs) or
