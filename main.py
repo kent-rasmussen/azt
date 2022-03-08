@@ -6584,8 +6584,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                                         self.parent.winfo_screenwidth()/150))
             log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
                                     b1.winfo_reqwidth(),b2.winfo_reqwidth(),w))
-            b1.config(width=w)
-            b2.config(width=w)
+            for i in [b1,b2]:
+                i.config(width=w)
             self.runwindow.waitdone()
             return
     def sortT(self):
