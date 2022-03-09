@@ -9312,7 +9312,8 @@ class SliceDict(dict):
             self.updateadhoccounts()
         if not self._adhoccounts:
             return {}
-        return [x for x in self._adhoccounts if x[1] == ps]
+        # return [x for x in self._adhoccounts if x[1] == ps]
+        return self._adhoccounts #this should return a dictionary
     def updateadhoccounts(self):
         """This iterates across self.profilesbysense to provide counts for each
         ps-profile combination (aggravated for profile='Invalid')
