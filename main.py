@@ -2930,6 +2930,8 @@ class TaskDressing(object):
             profilecounts=self.slices.valid()
             profilecountsAdHoc=self.slices.adhoccounts()
             profiles=self.status.profiles(**kwargs)
+            profiles+=self.slices.adhoc()[ps].keys()
+            profiles=dict.fromkeys(profiles)
             if not profiles:
                 log.error("No profiles of {} type found!".format(kwargs))
             log.info("count types: {}, {}".format(type(profilecounts),
