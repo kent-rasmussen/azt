@@ -4598,7 +4598,8 @@ class Sort(object):
             #Add to dictionaries before updating them below
             log.debug("profile: {}".format(newprofile))
             """Fix this!"""
-            self.slices.adhoc(ids)#[ps][profile]=ids
+            self.slices.adhoc(ids,profile=newprofile)#[ps][profile]=ids
+            self.settings.storesettingsfile(setting='adhocgroups')#since we changed this.
             """Is this OK?!?"""
             self.slices.updateslices() #This pulls from profilesbysense
             # self.makecountssorted() #we need these to show up in the counts.
