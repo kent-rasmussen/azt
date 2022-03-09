@@ -9340,7 +9340,7 @@ class SliceDict(dict):
                 count=len(self._profilesbysense[ps][profile])
                 wcounts.append((count, profile, ps))
         for i in sorted(wcounts,reverse=True):
-            self[(i[1],i[2])]=i[0]
+            self[(i[1],i[2])]=i[0] #[(profile, ps)]=count
         log.info('Invalid entries found: {}'.format(profilecountInvalid))
     def __init__(self,checkparameters,adhoc,profilesbysense): #dict
         """The slice dictionary depends on check parameters (and not vice versa)
