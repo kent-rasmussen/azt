@@ -9281,10 +9281,11 @@ class SliceDict(dict):
                 self._senseidsbyps[ps]+=self._profilesbysense[ps][prof]
     def renewsenseids(self):
         self._senseids=list(self._profilesbysense[self._ps][self._profile])
-    def adhoc(self,ids=None):
+    def adhoc(self,ids=None, **kwargs):
         """If passed ids, add them. Otherwise, return dictionary."""
         if ids is not None:
-            ps=self.ps()
+            ps=kwargs.get('ps',self.ps())
+            profile=kwargs.get('profile',self.profile())
             if ps not in self._adhoc:
                  self._adhoc[ps]={}
             self._adhoc[ps][profile]=ids
