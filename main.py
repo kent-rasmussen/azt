@@ -9172,6 +9172,10 @@ class SliceDict(dict):
         if not hasattr(self,'_ps'):
             self.makepsok()
         profiles=self.profiles()
+        try:
+            profiles+=self.adhoc()[self._ps].keys()
+        except KeyError:
+            log.info("There seem to be no ad hoc {} groups.".format(self._ps))
         if (not hasattr(self,'_profile')
                 or self._profile not in profiles):
             self.profile(profiles[0])
