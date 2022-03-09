@@ -9204,7 +9204,7 @@ class SliceDict(dict):
             self._profile=profile
             self.renewsenseids()
         else:
-            self.makeprofileok()
+            # self.makeprofileok() #is this actually needed here? check elsewhere
             return self._profile
     def nextps(self):
         pss=self.pss()
