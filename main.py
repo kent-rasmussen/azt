@@ -4593,10 +4593,10 @@ class Sort(object):
                 log.log(2,"var {}: {}".format(vars.index(var),var.get()))
                 ids.append(var.get())
             log.log(2,"ids: {}".format(ids))
-            profile=profilevar.get()
-            self.settings.set('profile',profile,refresh=False)
+            newprofile=profilevar.get()
+            self.settings.set('profile',newprofile,refresh=False)
             #Add to dictionaries before updating them below
-            log.debug("profile: {}".format(profile))
+            log.debug("profile: {}".format(newprofile))
             """Fix this!"""
             self.slices.adhoc(ids)#[ps][profile]=ids
             """Is this OK?!?"""
