@@ -9316,7 +9316,7 @@ class SliceDict(dict):
         return self._adhoccounts #this should return a dictionary
     def updateadhoccounts(self):
         """This iterates across self.profilesbysense to provide counts for each
-        ps-profile combination (aggravated for profile='Invalid')
+        ps-profile combination (aggregated for profile='Invalid'??!?)
         it should only be called when creating/adding to self.profilesbysense"""
         profilecountInvalid=0
         wcounts=list()
