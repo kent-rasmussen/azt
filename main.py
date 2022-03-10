@@ -920,6 +920,8 @@ class StatusFrame(ui.Frame):
         if isinstance(self.task,Segments):
             self.fieldsline()
         if (isinstance(self.task,Sort) or
+            (isinstance(self.task,Tone) and
+                not isinstance(self.task,Report)) or
             (isinstance(self.task,Report) and
                 not isinstance(self.task,Comprehensive))
             ):
@@ -929,7 +931,10 @@ class StatusFrame(ui.Frame):
             self.check=self.settings.params.check()
             self.checks=self.settings.status.checks()
             self.sliceline()
-            if not isinstance(self.task,Report):
+            if not (isinstance(self.task,Report) or
+                    isinstance(self.task,Record) or
+                    isinstance(self.task,JoinUFgroups)
+                    ):
                 self.cvtline()
                 self.maybeboard()
             elif isinstance(self.task,Segments):
