@@ -1,4 +1,12 @@
 #Roadmap
+- I need to think through ad hoc groups. selection seems to be broken, as well as uptake from file. 
+- check that syllable profile analysis is more recent than last word addition, or do again.
+  - consequences? (ad hoc groups, other?)
+recall that ps values are analysis, not data!
+- set up basic parsing to lx field:
+  - copy all
+  - trim from each edge (later)
+  - others (much later)
 - Figure out why reports don't correctly write objects when running in parallel (verification status writing?)
   - implement tonegroupreportmulti when it works correctly
   - resultswindow?

@@ -16013,6 +16013,8 @@
 		</lexical-unit>
 		<sense
 			id="hunchback_eec5dde9-4928-414d-8740-50a294cc77c0">
+			<grammatical-info
+				value="Noun" />
 			<gloss
 				lang="en">
 				<text>hunchback</text>
@@ -19353,6 +19355,8 @@
 			value="stem" />
 		<sense
 			id="menstrual period_aeabe201-3742-495d-a6a7-f86e04ace724">
+			<grammatical-info
+				value="Noun" />
 			<gloss
 				lang="en">
 				<text>menstrual period</text>
@@ -26313,6 +26317,8 @@
 			value="stem" />
 		<sense
 			id="self_8b8e247e-2b4a-4cca-a37b-c4b7b89ea734">
+			<grammatical-info
+				value="Noun" />
 			<gloss
 				lang="en">
 				<text>self</text>

@@ -1029,7 +1029,7 @@ class Settings(object):
                                     'distinguish',
                                     'interpret',
                                     'polygraphs',
-                                    "profilecounts",
+                                    # "profilecounts",
                                     "scount",
                                     "sextracted",
                                     "profilesbysense",
@@ -1327,6 +1327,7 @@ class Settings(object):
         for default in fields: #self.defaultstoclear[field]:
             setattr(self, default, None)
     def settingsinit(self):
+        log.info("Initializing settings.")
         # self.defaults is already there, from settingsfilecheck
         self.initdefaults() #provides self.defaultstoclear, needed?
         self.cleardefaults() #this resets all to none (to be set below)
@@ -1352,6 +1353,8 @@ class Settings(object):
         log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
     def pss(self):
+        log.info("checking these lexical category names for plausible noun "
+                "and verb names: {}".format(self.db.pss))
         for ps in self.db.pss[:2]:
             if ps in ['N','n','Noun','noun',
                     'Nom','nom',
@@ -1365,6 +1368,12 @@ class Settings(object):
                 self.verbalps=ps
             else:
                 log.error("Not sure what to do with top ps {}".format(ps))
+        try:
+            log.info("Using ‘{}’ for nouns, and ‘{}’ for verbs".format(self.nominalps,
+                self.verbalps))
+        except AttributeError:
+            log.info("Problem with finding a nominal and verbal lexical "
+            "category (looked in first two of [{}])".format(self.db.pss))
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
         fields=self.db.fields
@@ -1409,7 +1418,7 @@ class Settings(object):
                 for pc in vars[lang]:
                     for pg in vars[lang][pc]:
                         self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
-            self.storesettingsfile(setting='profiledata')
+            # self.storesettingsfile(setting='profiledata') Done below!
             self.reloadprofiledata()
         def foundchanges():
             for lang in vars:
@@ -1773,7 +1782,7 @@ class Settings(object):
         for ps in self.profilesbysense:
             for profile in self.profilesbysense[ps]:
                 for senseid in self.profilesbysense[ps][profile]:
-                    if profile is not 'Invalid':
+                    if profile != 'Invalid':
                         node=self.db.legacyverificationconvert(senseid,vtype=profile,
                                                             lang=self.analang)
                         if node is not None:
@@ -1782,9 +1791,9 @@ class Settings(object):
         log.info("Found {} legacy verification nodes in {} seconds".format(n,
                                                 time.time()-start_time))
     def reloadprofiledata(self):
-        self.settings.storesettingsfile()
+        self.storesettingsfile() # why?
         self.profilesbysense={}
-        self.settings.storesettingsfile(setting='profiledata')
+        self.storesettingsfile(setting='profiledata')
         self.restart()
     def reloadstatusdata(self):
         # This fn is very inefficient, as it iterates over everything in
@@ -3863,7 +3872,7 @@ class TaskChooser(TaskDressing,ui.Window):
             self.maxpss=2 #don't automatically give more than two grammatical categories
             self.ifcollectionlcsettingsdone=True
     def __init__(self,parent):
-        # self.testdefault=Transcribe
+        # self.testdefault=Parse
         self.start_time=time.time() #this enables boot time evaluation
         self.writing=False
         self.datacollection=True # everyone starts here?
@@ -3894,6 +3903,31 @@ class TaskChooser(TaskDressing,ui.Window):
         splash.destroy()
 class Segments(object):
     """docstring for Segments."""
+    def getlisttodo(self,all=False):
+        """Whichever field is being asked for (textnodefn), this fn returns
+        which are left to do."""
+        all=self.db.get('entry',
+                        showurl=True).get()
+        # done=self.db.get('entry',path=['lexeme'],analang=analang,
+        #                 showurl=True).get()
+        # for i in all[:10]:
+        #     log.info("textnodecontents: {}".format(self.textnodefn(i,analang).text))
+        done=[i for i in all
+                    if self.textnodefn(i,self.analang).text
+                    # self.db.get('lexeme/form/text', node=i, analang=analang,
+                    # showurl=True
+                    #                 ).get('text') != ''
+                    ]
+        todo=[x for x in all if x not in done]
+        log.info("To do: ({}) {}".format(len(todo),todo))
+        return todo
+    def getwords(self):
+        self.entries=self.getlisttodo()
+        self.nentries=len(self.entries)
+        self.index=0
+        r=self.getword()
+        if r == 'noglosses':
+            self.nextword()
     def __init__(self, parent):
         if parent.params.cvt() == 'T':
             parent.settings.setcvt('V')
@@ -3981,24 +4015,6 @@ class WordCollection(Segments):
             #     self.slices.updateslices()
             #     self.settings.getscounts()
             #     self.settings.storesettingsfile(setting='profiledata') #since we changed this.
-    def getlisttodo(self):
-        """Whichever field is being asked for (textnodefn), this fn returns
-        which are left to do."""
-        all=self.db.get('entry',
-                        showurl=True).get()
-        # done=self.db.get('entry',path=['lexeme'],analang=analang,
-        #                 showurl=True).get()
-        # for i in all[:10]:
-        #     log.info("textnodecontents: {}".format(self.textnodefn(i,analang).text))
-        done=[i for i in all
-                    if self.textnodefn(i,self.analang).text
-                    # self.db.get('lexeme/form/text', node=i, analang=analang,
-                    # showurl=True
-                    #                 ).get('text') != ''
-                    ]
-        todo=[x for x in all if x not in done]
-        log.info("To do: ({}) {}".format(len(todo),todo))
-        return todo
     def addCAWLentries(self):
         text=_("Adding CAWL entries to fill out, in established database.")
         self.wait(msg=text)
@@ -4012,6 +4028,20 @@ class WordCollection(Segments):
             e=self.cawldb.get('entry', path=['cawlfield'],
                                     cawlvalue="{:04}".format(n),
                                     ).get('node')[0] #certain to be there
+            try:
+                eps=self.cawldb.get('sense/ps',node=e,showurl=True).get('node')[0]
+                epsv=eps.get('value')
+            except IndexError:
+                log.info("line {} w/o lexical category; leaving.".format(n))
+                eps=epsv=None
+            if epsv == "Noun":
+                log.info("Found a noun, using {}".format(self.settings.nominalps))
+                eps.set('value',self.settings.nominalps)
+            elif epsv == "Verb":
+                log.info("Found a verb, using {}".format(self.settings.verbalps))
+                eps.set('value',self.settings.verbalps)
+            else:
+                log.error("Not sure what to do with ps {} ({})".format(epsv,eps))
             entry=None #in case no selected glosslangs in CAWL
             for lang in self.glosslangs:
                 g=e.findall("sense/gloss[@lang='{}']/text".format(lang))
@@ -4090,13 +4120,6 @@ class WordCollection(Segments):
             self.maybewrite() #only if above is successful
         except AttributeError as e:
             log.info("Not storing word: {}".format(e))
-    def getwords(self):
-        self.entries=self.getlisttodo()
-        self.nentries=len(self.entries)
-        self.index=0
-        r=self.getword()
-        if r == 'noglosses':
-            self.nextword()
     def getword(self):
         try:
             self.wordframe.destroy()
@@ -4159,7 +4182,7 @@ class WordCollection(Segments):
         )
         # self.navigationframe.grid_columnconfigure(1,weight=1)
         self.frame.grid_columnconfigure(1,weight=1)
-class WordCollectionLexeme(ui.Window,WordCollection,TaskDressing):
+class WordCollectionLexeme(TaskDressing,ui.Window,WordCollection):
     def tasktitle(self):
         return _("Word Collection for Lexeme Forms")
     def __init__(self, parent): #frame, filename=None
@@ -4171,7 +4194,7 @@ class WordCollectionLexeme(ui.Window,WordCollection,TaskDressing):
         #Status frame is 0,0
         self.textnodefn=self.db.lexemeformnodeofentry
         self.getwords()
-class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
+class WordCollectionCitation(TaskDressing,ui.Window,WordCollection):
     def taskicon(self):
         return program['theme'].photo['iconWord']
     def tooltip(self):
@@ -4211,14 +4234,70 @@ class WordCollectionCitation(ui.Window,WordCollection,TaskDressing):
         #Status frame is 0,0
         self.textnodefn=self.db.citationformnodeofentry
         self.getwords()
-class Placeholder(ui.Window,TaskDressing):
+class Parse(TaskDressing,ui.Window,Segments):
+    """docstring for Parse."""
+    def taskicon(self):
+        return program['theme'].photo['iconWord']
+    def tooltip(self):
+        return _("This task will help you parse your citation forms.")
+    def dobuttonkwargs(self):
+        fn=self.doparse
+        text="Parse Citation Forms"
+        tttext=_("For now, this just lets you copy citation form info to "
+                "The lexeme field.")
+        return {'text':text,
+                'fn':fn,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['Word'],
+                'sticky':'ew',
+                'tttext':tttext
+                }
+    def tasktitle(self):
+        return _("Parse Citation Forms")
+    def doparse(self):
+        window=ui.Window(self,title=self.tasktitle())
+        ui.Label(window,text="Parsing!",row=0,column=0)
+        todo=self.getlisttodo(all=self.dodone)
+        ui.Label(window,text=todo[:50],wraplength=program['root'].wraplength, row=1,column=0)
+    def __init__(self, parent): #frame, filename=None
+        log.info("Initializing {}".format(self.tasktitle()))
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        self.textnodefn=self.db.lexemeformnodeofentry
+        self.dodone=False
+class Placeholder(TaskDressing,ui.Window):
     """Fake check, placeholder for now."""
+    def taskicon(self):
+        return program['theme'].photo['icon']
+    def tooltip(self):
+        return _("Tooltip here.")
+    def dobuttonkwargs(self):
+        fn=self.addCAWLentries
+        text="Add remaining CAWL entries"
+        tttext=_("This will add entries from the Comparative African "
+                "Wordlist (CAWL) which aren't already in your database "
+                "(you are missing {} CAWL tags). If the appropriate "
+                "glosses are found in your database, CAWL tags will be "
+                "merged with those entries."
+                "\nDepending on the number of entries, this may take "
+                "awhile.").format(len(self.taskchooser.cawlmissing))
+        return {'text':text,
+                'fn':fn,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['icon'],
+                'sticky':'ew',
+                'tttext':tttext
+                }
     def tasktitle(self):
         return _("Placeholder Check2")
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        log.info("Initializing Check2")
+        log.info("Initializing {}".format(self.tasktitle()))
         for r in range(5):
             ui.Label(self.frame,
                     text="This is a check placeholder.",
@@ -9335,6 +9414,7 @@ class SliceDict(dict):
     def updateslices(self):
         """This iterates across self.profilesbysense to provide counts for each
         ps-profile combination (aggravated for profile='Invalid')
+        It sets this dictionary class with k:v of (profile,ps):count.
         it should only be called when creating/adding to self.profilesbysense"""
         profilecountInvalid=0
         wcounts=list()
@@ -10676,6 +10756,14 @@ if __name__ == "__main__":
     else:
         program['aztdir'] = thisexe.parent
     mt=datetime.datetime.fromtimestamp(thisexe.stat().st_mtime)
+    try:
+        with file.getdiredurl(program['aztdir'],'.git/HEAD').open(mode='r') as f:
+            branchURL=file.getfile(f.read()) #f contains a git branch URL
+            branch=branchURL.name.strip()
+            if branch != 'main':
+                program['version'] += " ({})".format(branch)
+    except FileNotFoundError:
+        log.info(".git/HEAD File Not Found; assuming this is the main branch.")
     """Not translating yet"""
     log.info("Running {} v{} (main.py updated to {})".format(
                                     program['name'],program['version'],mt))
