@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-14 11:52+0100\n"
+"POT-Creation-Date: 2022-03-14 13:26+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -507,7 +507,7 @@ msgid ""
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:1846
-#: /home/kentr/bin/raspy/azt/main.py:10153
+#: /home/kentr/bin/raspy/azt/main.py:10157
 msgid "Error!"
 msgstr ""
 
@@ -563,6 +563,10 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:2207
 msgid "Fulfulde"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2209
+msgid "Chufie’"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:2224
@@ -1874,7 +1878,7 @@ msgid ""
 "Congratulations! \n"
 "All your {} with profile ‘{}’ are sorted into the groups exemplified below "
 "(in the ‘{}’ frame). Do any of these have the same tone melody? If so, click "
-"on two groups to join, then ‘{ok}’. If not, just click ‘{ok}’."
+"on two groups to join. If not, just click ‘{ok}’."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:7119
@@ -2388,70 +2392,70 @@ msgstr ""
 msgid "Third CV"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10172
+#: /home/kentr/bin/raspy/azt/main.py:10174
 msgid ""
 "You have the following files ( in {}) that need to be resolved from Chorus "
 "merges:\n"
 " {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10176
+#: /home/kentr/bin/raspy/azt/main.py:10178
 msgid "Chorus Rescue files found!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10220
+#: /home/kentr/bin/raspy/azt/main.py:10222
 msgid "Call to Mercurial ({}) failed: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10225
+#: /home/kentr/bin/raspy/azt/main.py:10227
 msgid "URL {} is already in repo {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10228
+#: /home/kentr/bin/raspy/azt/main.py:10230
 msgid ""
 "URL {} is not already in repo {}:\n"
 "{}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10265
+#: /home/kentr/bin/raspy/azt/main.py:10267
 msgid "Result Window"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10318
+#: /home/kentr/bin/raspy/azt/main.py:10320
 msgid "Translation seems to be working, using {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10465
+#: /home/kentr/bin/raspy/azt/main.py:10467
 msgid " and "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10574
+#: /home/kentr/bin/raspy/azt/main.py:10576
 msgid "Search for {} on {} failed: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10617
+#: /home/kentr/bin/raspy/azt/main.py:10619
 msgid "Trying to call Praat at {}..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10624
+#: /home/kentr/bin/raspy/azt/main.py:10626
 msgid "Looks like I couln't find Praat..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10688
+#: /home/kentr/bin/raspy/azt/main.py:10690
 msgid "Serious Problem!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10690
+#: /home/kentr/bin/raspy/azt/main.py:10692
 msgid "Hey! You found a problem! (details and solution below)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10697
+#: /home/kentr/bin/raspy/azt/main.py:10699
 msgid ""
 "\n"
 "Please see {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10712
+#: /home/kentr/bin/raspy/azt/main.py:10714
 msgid ""
 "\n"
 "\n"
@@ -2459,7 +2463,7 @@ msgid ""
 "Email me your log (to {})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10718
+#: /home/kentr/bin/raspy/azt/main.py:10720
 msgid "The end of {} / {} are below:"
 msgstr ""
 
