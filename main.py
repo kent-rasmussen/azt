@@ -7044,7 +7044,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
                 "sorted into the groups exemplified below (in the ‘{}’ frame). "
                 "Do any of these have the same tone melody? "
-                "If so, click on two groups to join, then ‘{ok}’. "
+                "If so, click on two groups to join. "
                 "If not, just click ‘{ok}’."
                 ).format(ps,profile,check,ok=oktext)
         log.debug(introtext)
