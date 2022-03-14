@@ -24,7 +24,8 @@ try:
     import PIL.ImageDraw
     import PIL.Image
     pilisactive=True
-except:
+except Exception as e:
+    log.error("Error loading PIL: {}".format(e))
     pilisactive=False
 # import tkintermod
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
