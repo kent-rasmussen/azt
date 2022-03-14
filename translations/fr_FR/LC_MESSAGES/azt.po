@@ -175,7 +175,7 @@ msgstr "Rapport Consonne de base (vers fichier)"
 #: /home/kentr/bin/raspy/azt/main.py:373
 #, fuzzy
 msgid "Basic report on Consonants and Vowels (to file)"
-msgstr "Rapport CV de base (vers fichier)"
+msgstr "Rapport de base des Consonnes et Voyelles (vers fichier)"
 
 #: /home/kentr/bin/raspy/azt/main.py:376 /home/kentr/bin/raspy/azt/main.py:3403
 msgid "Reports"
@@ -233,7 +233,7 @@ msgstr "Refaire le fichier statu"
 #: /home/kentr/bin/raspy/azt/main.py:418
 #, fuzzy
 msgid "Number of Examples to Record"
-msgstr "Selectionner le nombre d'examples par group pour enregistrer"
+msgstr "Le Nombre d'Examples à Enregistrer"
 
 #: /home/kentr/bin/raspy/azt/main.py:427
 msgid "Add/Modify Ad Hoc Sorting Group"
@@ -246,7 +246,7 @@ msgstr "Ajouter un Cadre des Tons"
 #: /home/kentr/bin/raspy/azt/main.py:431
 #, fuzzy
 msgid "Resort skipped data"
-msgstr "Données sauté avant"
+msgstr "Retrier données sauté avant"
 
 #: /home/kentr/bin/raspy/azt/main.py:432
 msgid "Reverify current framed group"
