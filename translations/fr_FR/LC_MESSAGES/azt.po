@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-14 11:52+0100\n"
-"PO-Revision-Date: 2022-03-14 14:18+0100\n"
+"POT-Creation-Date: 2022-03-14 13:26+0100\n"
+"PO-Revision-Date: 2022-03-15 08:52+0100\n"
 "Last-Translator: Kent Rasmussen <kent_rasmussen@sil.org>\n"
 "Language-Team: Just me\n"
 "Language: fr\n"
@@ -30,8 +30,7 @@ msgstr "Essayé enlever {}, mais je ne l'ai pas trouver."
 #: /home/kentr/bin/raspy/azt/file.py:177
 msgid "Select a new location for your LIFT Lexicon and other Files"
 msgstr ""
-"Sélectionnez un nouvel emplacement pour votre lexique LIFT et d'autres "
-"fichiers"
+"Sélectionnez un nouvel emplacement pour votre lexique LIFT et d'autres fichiers"
 
 #: /home/kentr/bin/raspy/azt/file.py:187
 msgid "Select LIFT Lexicon File"
@@ -53,8 +52,8 @@ msgstr "Langue Audio {} trouvé."
 msgid ""
 "No audio languages found in Database; creating one for each analysis language."
 msgstr ""
-"Pas de langues audios trouvé dans la base des données; on cree un pour "
-"chacque langue d'analyse."
+"Pas de langues audios trouvé dans la base des données; on cree un pour chacque "
+"langue d'analyse."
 
 #: /home/kentr/bin/raspy/azt/lift.py:811
 msgid "gloss languages found: {}"
@@ -62,8 +61,8 @@ msgstr "langage des gloses trouvé: {}"
 
 #: /home/kentr/bin/raspy/azt/lift.py:1189
 msgid ""
-"Your regular expressions look OK for {} (there are no segments in your {} "
-"data that are not in a regex). "
+"Your regular expressions look OK for {} (there are no segments in your {} data "
+"that are not in a regex). "
 msgstr ""
 "Vos expressions regulieres semble bon pour {} (il n'y a pas de segments dans "
 "les données {} qui ne sont pas dans un regex). "
@@ -134,7 +133,7 @@ msgstr "Profil de syllabe"
 
 #: /home/kentr/bin/raspy/azt/main.py:318
 msgid "Tone Frame"
-msgstr "Cadre de tonalité"
+msgstr "Cadre de ton"
 
 #: /home/kentr/bin/raspy/azt/main.py:349
 msgid "Location in word"
@@ -173,7 +172,6 @@ msgid "Basic Consonant report (to file)"
 msgstr "Rapport Consonne de base (vers fichier)"
 
 #: /home/kentr/bin/raspy/azt/main.py:373
-#, fuzzy
 msgid "Basic report on Consonants and Vowels (to file)"
 msgstr "Rapport de base des Consonnes et Voyelles (vers fichier)"
 
@@ -231,7 +229,6 @@ msgid "Remake Status file (several minutes)"
 msgstr "Refaire le fichier statu"
 
 #: /home/kentr/bin/raspy/azt/main.py:418
-#, fuzzy
 msgid "Number of Examples to Record"
 msgstr "Le Nombre d'Examples à Enregistrer"
 
@@ -244,7 +241,6 @@ msgid "Add Tone frame"
 msgstr "Ajouter un Cadre des Tons"
 
 #: /home/kentr/bin/raspy/azt/main.py:431
-#, fuzzy
 msgid "Resort skipped data"
 msgstr "Retrier données sauté avant"
 
@@ -261,9 +257,8 @@ msgid "Using {}"
 msgstr "Utiliser {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:581
-#, fuzzy
 msgid "Studying {}"
-msgstr "Utiliser {}"
+msgstr "Etudier {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:582 /home/kentr/bin/raspy/azt/main.py:2211
 #: /home/kentr/bin/raspy/azt/main.py:2826
@@ -271,19 +266,16 @@ msgid "Language with code [{}]"
 msgstr "Langue du code [{}]"
 
 #: /home/kentr/bin/raspy/azt/main.py:584
-#, fuzzy
 msgid "Set analysis language Name"
 msgstr "Sélectionner la Langue à Analyser"
 
 #: /home/kentr/bin/raspy/azt/main.py:587
-#, fuzzy
 msgid "Change analysis language"
-msgstr "Langage à Analyser"
+msgstr "Changer la Langue à Analyser"
 
 #: /home/kentr/bin/raspy/azt/main.py:591
-#, fuzzy
 msgid "Meanings in {}"
-msgstr "Signification en {} uniquement"
+msgstr "Signification en {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:599
 msgid "and {}"
@@ -298,19 +290,16 @@ msgid "Using second form field ‘{}’ ({})"
 msgstr "Utilisation du deuxième champ de formulaire '{}' ({})"
 
 #: /home/kentr/bin/raspy/azt/main.py:624
-#, fuzzy
 msgid "Looking at {}"
-msgstr "Travailler sur {}"
+msgstr "Regarder {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:627
-#, fuzzy
 msgid "{} words ({})"
-msgstr "En regarder {} {} mots ({})"
+msgstr "{} mots ({})"
 
 #: /home/kentr/bin/raspy/azt/main.py:634
-#, fuzzy
 msgid "Checking {},"
-msgstr "Vérifier {}, travailler {}"
+msgstr "Vérifier {},"
 
 #: /home/kentr/bin/raspy/azt/main.py:646
 msgid "no tone frames defined."
@@ -321,23 +310,20 @@ msgid "no tone frame selected."
 msgstr "aucun cadre de ton sélectionné."
 
 #: /home/kentr/bin/raspy/azt/main.py:652
-#, fuzzy
 msgid "working on ‘{}’ tone frame"
-msgstr "Vérifier {}, travailler la cadre de ton ‘{}’"
+msgstr "travailler la cadre de ton ‘{}’"
 
 #: /home/kentr/bin/raspy/azt/main.py:660
-#, fuzzy
 msgid "(no framed group)"
-msgstr "Renommer Groupe"
+msgstr "(pas de groupe encadré)"
 
 #: /home/kentr/bin/raspy/azt/main.py:662
 msgid "(framed group: ‘{}’)"
 msgstr "(groupe encadré : ‘{}’)"
 
 #: /home/kentr/bin/raspy/azt/main.py:693
-#, fuzzy
 msgid "working on {}"
-msgstr "Travailler sur {}"
+msgstr "travailler sur {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:700
 msgid "Max profiles: {}; "
@@ -348,19 +334,16 @@ msgid "Max lexical categories: {}"
 msgstr "Catégories lexicales max : {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:748
-#, fuzzy
 msgid "Progress for"
-msgstr "{} Progrès"
+msgstr "Progrès pour"
 
 #: /home/kentr/bin/raspy/azt/main.py:757
-#, fuzzy
 msgid "Change Check Type"
-msgstr "Sélectionner le Type de Vérification"
+msgstr "Changer le Type de Vérification"
 
 #: /home/kentr/bin/raspy/azt/main.py:758
-#, fuzzy
 msgid "Change Part of Speech"
-msgstr "Une partie du discours"
+msgstr "Changer la Categorie Grammaticale"
 
 #: /home/kentr/bin/raspy/azt/main.py:774
 msgid "Nothing to see here..."
@@ -391,12 +374,10 @@ msgstr ""
 "(pas de jeu de cadres)"
 
 #: /home/kentr/bin/raspy/azt/main.py:841
-#, fuzzy
 msgid "Go to the next syllable profile"
 msgstr "Continuer au prochain profil de la syllabe"
 
 #: /home/kentr/bin/raspy/azt/main.py:851
-#, fuzzy
 msgid "Go to the next tone frame"
 msgstr "Continuer à la prochaine cadre de tons"
 
@@ -439,8 +420,8 @@ msgstr ""
 "Vous semblez travailler sur un référentiel de données ({}), \n"
 "qui semble être suivi par mercurial (utilisé par Chorus et languagedepot."
 "org), \n"
-"mais vous ne semblez pas avoir l'exécutable Mercurial installé dans le PATH "
-"de votre ordinateur."
+"mais vous ne semblez pas avoir l'exécutable Mercurial installé dans le PATH de "
+"votre ordinateur."
 
 #: /home/kentr/bin/raspy/azt/main.py:970
 msgid "Please see {} for installation recommendations"
@@ -488,8 +469,7 @@ msgstr "Nom du champs Imperatif: {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:1398
 msgid "Looks like there is no Imperative field in the database"
-msgstr ""
-"Il me semble qu'il n'y a pas de champ Imperatif dans la bsae des données"
+msgstr "Il me semble qu'il n'y a pas de champ Imperatif dans la bsae des données"
 
 #: /home/kentr/bin/raspy/azt/main.py:1437 /home/kentr/bin/raspy/azt/main.py:4717
 #: /home/kentr/bin/raspy/azt/main.py:4760 /home/kentr/bin/raspy/azt/main.py:7755
@@ -501,10 +481,8 @@ msgid "Exit {} with no changes"
 msgstr "Quittez {} sans aucun changement"
 
 #: /home/kentr/bin/raspy/azt/main.py:1440
-#, fuzzy
-#| msgid "Digraph and Trigraph settings"
 msgid "A→Z+T Digraphs and Trigraphs"
-msgstr "Paramètres Digraphe et Trigraphe"
+msgstr "Paramètres A→Z+T Digraphe et Trigraphe"
 
 #: /home/kentr/bin/raspy/azt/main.py:1442
 msgid ""
@@ -525,8 +503,7 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:1463
 msgid ""
-"Clicking ‘{}’ will restart {} and trigger another syllable profile "
-"analysis. \n"
+"Clicking ‘{}’ will restart {} and trigger another syllable profile analysis. \n"
 "If you don't want that, click ‘{}’ ==>\n"
 "Either way, you won't get past this window until you answer This question."
 msgstr ""
@@ -571,8 +548,7 @@ msgstr ""
 "\n"
 "(deviner [{}] ; si ce n'est pas correct, quittez maintenant et corrigez-le !)"
 
-#: /home/kentr/bin/raspy/azt/main.py:1846
-#: /home/kentr/bin/raspy/azt/main.py:10153
+#: /home/kentr/bin/raspy/azt/main.py:1846 /home/kentr/bin/raspy/azt/main.py:10157
 msgid "Error!"
 msgstr "Erreur!"
 
@@ -629,6 +605,10 @@ msgstr "Zulgo"
 msgid "Fulfulde"
 msgstr "Fulfulde"
 
+#: /home/kentr/bin/raspy/azt/main.py:2209
+msgid "Chufie’"
+msgstr "Chufie’"
+
 #: /home/kentr/bin/raspy/azt/main.py:2224
 msgid "Maybe status/slices aren't set up yet."
 msgstr "Peut-être que le statut/les tranches ne sont pas encore configurés."
@@ -678,14 +658,12 @@ msgid "Show group names"
 msgstr "Afficher les noms de groupe"
 
 #: /home/kentr/bin/raspy/azt/main.py:2376
-#, fuzzy
 msgid "Hide group names"
-msgstr "Enregistrer des exemples de groupes de sons"
+msgstr "Cacher des noms des groupes"
 
 #: /home/kentr/bin/raspy/azt/main.py:2378
-#, fuzzy
 msgid "{} Dictionary and Orthography Checker: {}"
-msgstr "{} Vérificateur de Dictionnaire et d'Orthographe"
+msgstr "{} Vérificateur de Dictionnaire et d'Orthographe: {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2382
 msgid " ("
@@ -696,17 +674,11 @@ msgid "{} Dictionary and Orthography Checker"
 msgstr "{} Vérificateur de Dictionnaire et d'Orthographe"
 
 #: /home/kentr/bin/raspy/azt/main.py:2399
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "{0} has a new interface, starting mid January 2022. You should still be "
-#| "able to do everything you did before, though you will probably get to each "
-#| "function a bit differently —hopefully more intuitively.\n"
-#| "Tasks are organized into Data Collection and Analysis, and you can switch "
-#| "between them with the button in the upper right of the main {0} window."
+#, python-brace-format
 msgid ""
 "{0} has a new interface, starting mid January 2022. You should still be able "
-"to do everything you did before, though you will probably get to each "
-"function a bit differently —hopefully more intuitively.\n"
+"to do everything you did before, though you will probably get to each function "
+"a bit differently —hopefully more intuitively.\n"
 "Tasks are organized into Data Collection and Analysis, and you can switch "
 "between them with the button in the upper right of the main {0} window.\n"
 "Either window allows you to run reports."
@@ -717,7 +689,8 @@ msgstr ""
 "intuitive, espérons-le. \n"
 "Les tâches sont organisées en collecte et analyse de données, et vous pouvez "
 "passer de l'une à l'autre avec le bouton en haut à droite de la fenêtre "
-"principale {0}."
+"principale {0}.\n"
+"Chaque fenêtre fait des rapports."
 
 #: /home/kentr/bin/raspy/azt/main.py:2409
 msgid ""
@@ -736,7 +709,7 @@ msgid "version: {}"
 msgstr "vérsion: {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2433
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid ""
 "{name} is a computer program that accelerates community-based language "
 "development by facilitating the sorting of a beginning dictionary by vowels, "
@@ -749,29 +722,26 @@ msgid ""
 "aids the drafting of underlying categories by grouping words based on sorting "
 "across tone frames. \n"
 "{name} then allows the user to record a word in each of the frames where it "
-"has been sorted, storing the recorded audio file in a directory, with links "
-"to each file in the dictionary database. Recordings can be made up to "
+"has been sorted, storing the recorded audio file in a directory, with links to "
+"each file in the dictionary database. Recordings can be made up to "
 "192khz/32float, according to your recording equipment's capacity."
 msgstr ""
 "{name} est un programme informatique qui accélère le développement du langage "
 "à base communautaire en facilitant le tri d'un dictionnaire simple par "
 "voyelles, consonnes et ton. \n"
-"Il le fait en présentant aux utilisateurs des ensembles de mots provenant "
-"d'un base de données dictionnaire LIFT, une partie du  discours et profil des "
+"Il le fait en présentant aux utilisateurs des ensembles de mots provenant d'un "
+"base de données dictionnaire LIFT, une partie du  discours et profil des "
 "syllabes à la fois. Ces mots sont triés en groupes en fonction des consonnes, "
 "des voyelles et du ton. \n"
 "Les cadres de ton sont personnalisables et stockés dans la base de données "
 "pour chaque mot, ce qui permet un certain nombre d'approches pour collecter "
-"ces données. Un rapport de tonalité facilite la rédaction des catégories sous-"
-"jacentes en regroupant les mots en fonction du tri entre les images de "
-"tonalité. \n"
+"ces données. Un rapport de ton facilite la rédaction des catégories sous-"
+"jacentes en regroupant les mots en fonction du tri entre les cadres de ton. \n"
 "{name} permet ensuite à l'utilisateur d'enregistrer un mot dans chacune des "
 "images où il a été trié, en stockant le fichier audio enregistré dans un "
 "répertoire, avec des liens vers chaque fichier de la base de données du "
 "dictionnaire. Les enregistrements peuvent être réalisés jusqu'à 192 "
-"kHz/32float. \n"
-"Pour obtenir de l'aide avec cet outil, SVP lisez les documents à {url}, ou "
-"écrivez-moi à {Email}. "
+"kHz/32float."
 
 #: /home/kentr/bin/raspy/azt/main.py:2450
 #, python-brace-format
@@ -790,8 +760,8 @@ msgstr "Avis important!"
 
 #: /home/kentr/bin/raspy/azt/main.py:2559
 msgid ""
-"You are changing segment interpretation settings in a way that could cause "
-"you problems: "
+"You are changing segment interpretation settings in a way that could cause you "
+"problems: "
 msgstr ""
 "Vous modifiez les paramètres d'interprétation des segments d'une manière qui "
 "pourrait vous causer des problèmes : "
@@ -826,8 +796,8 @@ msgid ""
 "\n"
 "\n"
 "Anywhere you have sorted a group based on your old interpretation settings, "
-"you should sort/verify that data again, as there is a possiblity that you "
-"have mixed unrelated groups."
+"you should sort/verify that data again, as there is a possiblity that you have "
+"mixed unrelated groups."
 msgstr ""
 "\n"
 "\n"
@@ -861,31 +831,28 @@ msgstr ""
 "des segments {} (consonant and vowel glyphs/characters)"
 
 #: /home/kentr/bin/raspy/azt/main.py:2698
-#, fuzzy
 msgid ""
 "Do you want to distinguish initial and medial glottal stops (ʔ) \n"
 "from other (simple/single) consonants?"
 msgstr ""
-"Voulez vous distinguer tout les Nasales (N) des autres consonsonnes (simple/"
-"singuliere)?"
+"Voulez vous distinguer tout les plosives glottales (ʔ) initiales et mediales \n"
+"des autres consonsonnes (simple/singuliere)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2704
-#, fuzzy
 msgid ""
 "Do you want to distinguish Word Final glottal stops (ʔ#) \n"
 "from other word final consonants?"
 msgstr ""
-"Voulez-vous distinguer les Nasals du fins des mots (N#) des autres consonnes "
-"(simple/singulieres)?"
+"Voulez-vous distinguer les Nasals du fins des mots (N#) \n"
+"des autres consonnes (simple/singulieres)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2710
-#, fuzzy
 msgid ""
 "Do you want to distinguish initial and medial Nasals (N) \n"
 "from other (simple/single) consonants?"
 msgstr ""
-"Voulez vous distinguer tout les Nasales (N) des autres consonsonnes (simple/"
-"singuliere)?"
+"Voulez vous distinguer les Nasales (N) initiales et mediales \n"
+"des autres consonsonnes (simple/singuliere)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2716
 msgid ""
@@ -900,58 +867,56 @@ msgid "<none so far>"
 msgstr "<aucun jusqu'à présent>"
 
 #: /home/kentr/bin/raspy/azt/main.py:2726
-#, fuzzy
 msgid ""
 "Do you want to distinguish initial and medial likely depressor consonants "
 "(D={})\n"
 "from other (simple/single) consonants?"
 msgstr ""
-"Voulez vous distinguer tout les Sonorants qui sont ni nasales ni glides (S) "
+"Voulez vous distinguer tout les probables Depresseurs (D={}) initiales et "
+"mediales \n"
 "des autres consonsonnes (simple/singuliere)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2734
-#, fuzzy
 msgid ""
 "Do you want to distinguish Word Final likely depressor consonants (D={})\n"
 "from other (simple/single) consonants?"
 msgstr ""
-"Voulez vous distinguer tout les Sonorants qui sont ni nasales ni glides (S) "
+"Voulez vous distinguer tout les probables Depresseurs (D={}) à la fin des "
+"mots\n"
 "des autres consonsonnes (simple/singuliere)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2742
-#, fuzzy
 msgid ""
 "Do you want to distinguish initial and medial Glides (G) \n"
 "from other (simple/single) consonants?"
 msgstr ""
-"Voulez vous distinguer tout les Glides (G) des autres consonsonnes (simple/"
-"singuliere)?"
+"Voulez vous distinguer tout les Glides (G) initiales et mediales \n"
+"des autres consonsonnes (simple/singuliere)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2748
-#, fuzzy
 msgid ""
 "Do you want to distinguish Word Final Glides (G) \n"
 "from other (simple/single) consonants?"
 msgstr ""
-"Voulez vous distinguer tout les Glides (G) des autres consonsonnes (simple/"
-"singuliere)?"
+"Voulez vous distinguer tout les Glides (G) à la fin des mots\n"
+"des autres consonsonnes (simple/singuliere)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2754
-#, fuzzy
 msgid ""
 "Do you want to distinguish initial and medial Non-Nasal/Glide Sonorants (S) \n"
 "from other (simple/single) consonants?"
 msgstr ""
 "Voulez vous distinguer tout les Sonorants qui sont ni nasales ni glides (S) "
-"des autres consonsonnes (simple/singuliere)?"
+"initiales et mediales \n"
+" des autres consonsonnes (simple/singuliere)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2760
-#, fuzzy
 msgid ""
 "Do you want to distinguish Word Final Non-Nasal/Glide Sonorants (S) \n"
 "from other (simple/single) consonants?"
 msgstr ""
-"Voulez vous distinguer tout les Sonorants qui sont ni nasales ni glides (S) "
+"Voulez vous distinguer tout les Sonorants qui sont ni nasales ni glides (S) à "
+"la fin des mots\n"
 "des autres consonsonnes (simple/singuliere)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2766
@@ -990,19 +955,16 @@ msgid "What language do you want this program to address you in?"
 msgstr "Dans quelle langue voulez-vous que ce programme s'adresse à vous?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2824
-#, fuzzy
 msgid "Enter Analysis Language Name"
-msgstr "Sélectionner la Langue à Analyser"
+msgstr "Taper le nom de la Langue à Analyser"
 
 #: /home/kentr/bin/raspy/azt/main.py:2827
-#, fuzzy
 msgid "How do you want to display the name of {}"
-msgstr "Comment voulez-vous appeler le cadre de tons?"
+msgstr "Comment voulez-vous voir le nom de {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2829
-#, fuzzy
 msgid ", with ISO 639-3 code [{}]"
-msgstr "Langue du code [{}]"
+msgstr ", avec ISO 639-3 code [{}]"
 
 #: /home/kentr/bin/raspy/azt/main.py:2843
 msgid "Select Analysis Language"
@@ -1025,7 +987,6 @@ msgid "What other language do you want to use for glosses?"
 msgstr "Quelle autre langue souhaitez-vous utiliser pour les gloses?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2897
-#, fuzzy
 msgid "Asking for check cvt/type"
 msgstr "Demander du type de verification"
 
@@ -1044,8 +1005,7 @@ msgstr "Sélectionner une Catégorie Grammaticale"
 #: /home/kentr/bin/raspy/azt/main.py:2921
 msgid "What grammatical category do you want to work with (Part of speech)?"
 msgstr ""
-"Avec quelle catégorie grammaticale voulez-vous travailler (partie du "
-"discours)?"
+"Avec quelle catégorie grammaticale voulez-vous travailler (partie du discours)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2937
 msgid "Select Syllable Profile"
@@ -1073,10 +1033,11 @@ msgid "Select Second Form Field for {}"
 msgstr "Sélectionnez le Deuxième Champ de Formulaire pour {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2999
-#, fuzzy
 msgid ""
 "What database field name do you want to use for second forms for {} words?"
-msgstr "Quelle autre langue souhaitez-vous utiliser pour les gloses?"
+msgstr ""
+"Quelle nom du champs base de données souhaitez-vous utiliser pour les deuxieme "
+"forme pour des mots {}?"
 
 #: /home/kentr/bin/raspy/azt/main.py:3003
 msgid "What is the database field for second forms for ‘{}’ words?"
@@ -1089,18 +1050,16 @@ msgid "None of these; make a new field"
 msgstr "Aucun d'eux; créer un nouveau champ"
 
 #: /home/kentr/bin/raspy/azt/main.py:3028
-#, fuzzy
 msgid "Select Maximum Number of Lexical Categories"
-msgstr "Sélectionner une Catégorie Grammaticale"
+msgstr "Sélectionner le Meximum nombre des Catégorie Grammaticales a rechercher"
 
 #: /home/kentr/bin/raspy/azt/main.py:3030
 msgid "How many lexical categories to report (2 = Noun and Verb) ?"
 msgstr "Combien de catégories lexicales rapporter (2 = Nom et Verbe) ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:3041
-#, fuzzy
 msgid "Select Maximum Number of Syllable Profiles"
-msgstr "Sélectionner le Profil de la Syllabe"
+msgstr "Sélectionner Nombre maximum des Profils de Syllabe à Rechercher"
 
 #: /home/kentr/bin/raspy/azt/main.py:3043
 msgid "How many syllable profiles to report?"
@@ -1111,7 +1070,6 @@ msgid "Define a New Tone Frame"
 msgstr "Définir une nouvelle cadre de tons"
 
 #: /home/kentr/bin/raspy/azt/main.py:3065
-#, fuzzy
 msgid ""
 "You don't seem to have any tone frames set up.\n"
 "Click '{}' below to define a tone frame. \n"
@@ -1175,17 +1133,12 @@ msgstr ""
 "({})."
 
 #: /home/kentr/bin/raspy/azt/main.py:3142
-#, fuzzy
-#| msgid "What part of the sound system do you want to work with?"
 msgid "What {}-{} tone group in the ‘{}’ frame do you want to work with?"
-msgstr "Avec quelle partie du système audio voulez-vous travailler?"
+msgstr "Avec quelle group de ton {}-{} dans le cadre ‘{}’ voulez-vous commencer?"
 
 #: /home/kentr/bin/raspy/azt/main.py:3152
-#, fuzzy
-#| msgid "There don't seem to be any language forms in your database!"
 msgid "There don't seem to be any groups to compare with!"
-msgstr ""
-"Il ne semble pas y avoir de formes linguistiques dans votre base de données !"
+msgstr "Il ne semble pas y avoir de formes linguistiques pour y comparer !"
 
 #: /home/kentr/bin/raspy/azt/main.py:3198
 msgid "Error: please set Grammatical category first! "
@@ -1208,7 +1161,7 @@ msgid "Select Number of Examples per Group to Record"
 msgstr "Selectionner le nombre d'examples par group pour enregistrer"
 
 #: /home/kentr/bin/raspy/azt/main.py:3270
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid ""
 "The {0} tone report splits sorted data into draft underlying tone melody "
 "groups. Even before a linguist has been able to evaluate these groups, it may "
@@ -1224,22 +1177,22 @@ msgid ""
 "smaller number could mean data not getting recorded. Up to how many examples "
 "do you want to record for each group?"
 msgstr ""
-"Le rapport de tonalité {0} divise les données triées en groupes de mélodies "
-"de tons sous-jacents, avec des valeurs distinctes pour chacune de vos images "
-"de tons. Cela trouve de manière exhaustive les différences entre les groupes "
-"de sens lexicaux, mais manque souvent les similitudes entre les groupes, qui "
+"Le rapport de ton {0} divise les données triées en groupes de mélodies de tons "
+"sous-jacents, avec des valeurs distinctes pour chacune de vos images de tons. "
+"Cela trouve de manière exhaustive les différences entre les groupes de sens "
+"lexicaux, mais manque souvent les similitudes entre les groupes, qui "
 "pourraient être distinguées uniquement parce qu'un seul mot a été ignoré ou "
 "trié de manière incorrecte.\n"
 "\n"
 "Avant même qu'un linguiste n'ait pu évaluer ces groupes, il peut être utile "
-"d'enregistrer vos données triées. {0} peut vous donner une fenêtre pour "
-"chaque sens de lexique dans un groupe de tons, avec un bouton "
-"d'enregistrement pour chaque combinaison de trame sens triée.\n"
+"d'enregistrer vos données triées. {0} peut vous donner une fenêtre pour chaque "
+"sens de lexique dans un groupe de tons, avec un bouton d'enregistrement pour "
+"chaque combinaison de cadre sens triée.\n"
 "\n"
-"Ces fenêtres seront présentées à l'utilisateur d'un groupe de rapport de "
-"tonalité après l'autre, jusqu'à ce que tous les groupes aient une page "
-"présentée. Ensuite, {0} répétera ce processus, jusqu'à ce qu'il ait effectué "
-"un nombre de tours égal au nombre sélectionné ci-dessous.\n"
+"Ces fenêtres seront présentées à l'utilisateur d'un groupe de rapport de ton "
+"après l'autre, jusqu'à ce que tous les groupes aient une page présentée. "
+"Ensuite, {0} répétera ce processus, jusqu'à ce qu'il ait effectué un nombre de "
+"tours égal au nombre sélectionné ci-dessous.\n"
 "\n"
 "Si un groupe a moins d'exemples que ce nombre, ce groupe sera ignoré une fois "
 "terminé.\n"
@@ -1253,18 +1206,16 @@ msgid "Run Window"
 msgstr "Fenêtre d'Exécution"
 
 #: /home/kentr/bin/raspy/azt/main.py:3397
-#, fuzzy
 msgid "Run Reports"
-msgstr "Rapports"
+msgstr "Rapporter"
 
 #: /home/kentr/bin/raspy/azt/main.py:3399
 msgid "Data Collection Tasks"
 msgstr "Tâches de Collecte de Données"
 
 #: /home/kentr/bin/raspy/azt/main.py:3401
-#, fuzzy
 msgid "Analysis Tasks"
-msgstr "Langage à Analyser"
+msgstr "Tâches Analyse"
 
 #: /home/kentr/bin/raspy/azt/main.py:3546
 msgid "No task, apparently; not destroying."
@@ -1303,25 +1254,25 @@ msgid ""
 "Typically, dictionary work starts by collecting citation forms, and later "
 "moves to analyzing those forms into lexemes (meaningful, but not necessarily "
 "pronounceable, word parts). Sometimes, people store those citation forms in "
-"lexeme fields, though this is typically in error. {} can help you analyze "
-"your citation forms into lexeme forms, but they first need to be moved to the "
+"lexeme fields, though this is typically in error. {} can help you analyze your "
+"citation forms into lexeme forms, but they first need to be moved to the "
 "correct fields in your database."
 msgstr ""
 "En règle générale, le travail du dictionnaire commence par collecter des "
 "formes de citation, puis passe à l'analyse de ces formes en lexèmes (parties "
 "de mots significatives, mais pas nécessairement prononçables). Parfois, les "
 "gens stockent ces formulaires de citation dans des champs de lexème, bien que "
-"ce soit généralement une erreur. {} peut vous aider à analyser vos "
-"formulaires de citation en formulaires de lexème, mais ils doivent d'abord "
-"être déplacés vers les champs appropriés de votre base de données."
+"ce soit généralement une erreur. {} peut vous aider à analyser vos formulaires "
+"de citation en formulaires de lexème, mais ils doivent d'abord être déplacés "
+"vers les champs appropriés de votre base de données."
 
 #: /home/kentr/bin/raspy/azt/main.py:3723
 msgid ""
 "Do you want {} to move data from your lexeme fields to citation fields, for "
 "each entry with no citation field data?"
 msgstr ""
-"Voulez-vous que {} déplace les données de vos champs de lexème vers les "
-"champs de citation, pour chaque entrée sans données de champ de citation ?"
+"Voulez-vous que {} déplace les données de vos champs de lexème vers les champs "
+"de citation, pour chaque entrée sans données de champ de citation ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:3726
 msgid "See {} for more information."
@@ -1337,8 +1288,8 @@ msgstr "Non merci; Je vais gérer ça moi-même"
 
 #: /home/kentr/bin/raspy/azt/main.py:3729
 msgid ""
-"N.B.: This is a fairly radical change to your database, so it would be wise "
-"to back up your data."
+"N.B.: This is a fairly radical change to your database, so it would be wise to "
+"back up your data."
 msgstr ""
 "N.B. : Il s'agit d'un changement assez radical de votre base de données, il "
 "serait donc judicieux de sauvegarder vos données."
@@ -1355,29 +1306,28 @@ msgstr "aller à {}"
 #: /home/kentr/bin/raspy/azt/main.py:3855
 msgid "{} will now exit; restart to work with the new database."
 msgstr ""
-"{} va maintenant quitter ; redémarrez pour travailler avec la nouvelle base "
-"de données."
+"{} va maintenant quitter ; redémarrez pour travailler avec la nouvelle base de "
+"données."
 
 #: /home/kentr/bin/raspy/azt/main.py:3857
 msgid "Change Database"
 msgstr "Changer la Base de Données"
 
 #: /home/kentr/bin/raspy/azt/main.py:3949
-#, fuzzy
 msgid ""
 "What is the form of the new morpheme in {} \n"
 "(consonants and vowels only)?"
 msgstr ""
-"Quelle est la forme du nouveau morphème {} (consonnes et voyelles uniquement)?"
+"Quelle est la forme du nouveau morphème {} \n"
+"(consonnes et voyelles uniquement)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:3952
 msgid "Use this form"
 msgstr "Utilisez ce formulaire"
 
 #: /home/kentr/bin/raspy/azt/main.py:3954
-#, fuzzy
 msgid "What does ‘{}’ mean in {}?"
-msgstr "Que signifie {} ({}) dans {}?"
+msgstr "Que signifie ‘{}’ dans {}?"
 
 #: /home/kentr/bin/raspy/azt/main.py:3957
 msgid "Use this {} gloss for ‘{}’"
@@ -1392,9 +1342,8 @@ msgid "Add Morpheme to Dictionary"
 msgstr "Ajouter un morphème au dictionnaire"
 
 #: /home/kentr/bin/raspy/azt/main.py:3990
-#, fuzzy
 msgid "Add {} morpheme to the dictionary"
-msgstr "Ajouter un {} {} morphème au dictionnaire"
+msgstr "Ajouter {} morphème au dictionnaire"
 
 #: /home/kentr/bin/raspy/azt/main.py:4020
 msgid "Adding CAWL entries to fill out, in established database."
@@ -1445,10 +1394,8 @@ msgstr ""
 "ou appuyez sur '{}' pour passer à la tâche suivante."
 
 #: /home/kentr/bin/raspy/azt/main.py:4107
-#, fuzzy
-#| msgid "Done"
 msgid "Done!"
-msgstr "Terminé"
+msgstr "Terminé!"
 
 #: /home/kentr/bin/raspy/azt/main.py:4131
 msgid ""
@@ -1508,23 +1455,21 @@ msgstr ""
 "Selon le nombre d'entrées, cela peut prendre un certain temps."
 
 #: /home/kentr/bin/raspy/azt/main.py:4215
-#, fuzzy
 msgid "Add a Word"
-msgstr "Ajouter autre"
+msgstr "Ajouter un Mot"
 
 #: /home/kentr/bin/raspy/azt/main.py:4217
 msgid ""
-"This adds any word, but is best used after filling out a wordlist, if the "
-"word you want to add isn't there already."
+"This adds any word, but is best used after filling out a wordlist, if the word "
+"you want to add isn't there already."
 msgstr ""
 "Cela ajoute n'importe quel mot, mais il est préférable de l'utiliser après "
 "avoir rempli une liste de mots, si le mot que vous souhaitez ajouter n'y est "
 "pas déjà."
 
 #: /home/kentr/bin/raspy/azt/main.py:4230
-#, fuzzy
 msgid "Add Words"
-msgstr "Mots"
+msgstr "Ajouter des Mots"
 
 #: /home/kentr/bin/raspy/azt/main.py:4243
 msgid "This task will help you parse your citation forms."
@@ -1580,19 +1525,16 @@ msgstr ""
 "pour le distinguer des autres."
 
 #: /home/kentr/bin/raspy/azt/main.py:4479
-#, fuzzy
-#| msgid "Use {} tone frame"
 msgid "Examples for {} tone frame"
-msgstr "Ajouter {} cadre de tons"
+msgstr "Exemples pour cadre de tons {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:4510
 msgid "Use {} tone frame"
 msgstr "Ajouter {} cadre de tons"
 
 #: /home/kentr/bin/raspy/azt/main.py:4532
-#, fuzzy
 msgid "Define a New {} Tone Frame"
-msgstr "Définir une nouvelle cadre de tons"
+msgstr "Définir une nouvelle cadre de tons {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:4551
 msgid "Add {} Tone Frame"
@@ -1645,14 +1587,12 @@ msgid "See the tone frame around a word from the dictionary"
 msgstr "Voir le cadre de ton autour d'un mot du dictionnaire"
 
 #: /home/kentr/bin/raspy/azt/main.py:4700
-#, fuzzy
 msgid "New Ad Hoc Sort Group for {} Group"
-msgstr "Ajouter Ad Hoc groupe pour trier groupe {}"
+msgstr "Nouvelle Ad Hoc groupe pour trier groupe {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:4703
-#, fuzzy
 msgid "Modify Existing Ad Hoc Sort Group for {} Group"
-msgstr "Ajouter Ad Hoc groupe pour trier groupe {}"
+msgstr "Modifier Ad Hoc groupe pour trier groupe {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:4712
 msgid "This is a large group ({})! Are you in the right grammatical category?"
@@ -1661,10 +1601,10 @@ msgstr ""
 "grammaticale?"
 
 #: /home/kentr/bin/raspy/azt/main.py:4727
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid ""
-"This page will allow you to set up your own sets of dictionary senses to "
-"sort, within the '{0}' grammatical category. \n"
+"This page will allow you to set up your own sets of dictionary senses to sort, "
+"within the '{0}' grammatical category. \n"
 "You should only do this if the '{0}' grammatical category is so small that "
 "sorting them by syllable profile gives you unusably small slices of your "
 "database.\n"
@@ -1677,15 +1617,15 @@ msgstr ""
 "Cette page vous permettra de configurer vos propres ensembles de sens du "
 "dictionnaire à trier, dans la catégorie grammaticale «{0}».\n"
 "Vous ne devriez le faire que si la catégorie grammaticale «{0}» est si petite "
-"que les trier par profil de syllabe vous donne des tranches inhabituellement "
-"petites de votre base de données.\n"
+"que les trier par profil de syllabe vous donne des tranches de votre base de "
+"données trop petites.\n"
 "Si vous souhaitez comparer des mots qui sont actuellement dans différentes "
 "catégories grammaticales, placez-les d'abord dans la même catégorie "
-"grammaticale dans un autre outil (par exemple, FLEx ou WeSay), puis placez-"
-"les dans un groupe ad hoc ici.\n"
+"grammaticale dans un autre outil (par exemple, FLEx ou WeSay), puis placez-les "
+"dans un groupe ad hoc ici.\n"
 "Si vous regardez un groupe que vous avez créé précédemment et que vous "
 "souhaitez créer un nouveau groupe, quittez ici, passez à un groupe de tri "
-"normal et réessayez cette fenêtre. "
+"normal et réessayez cette fenêtre."
 
 #: /home/kentr/bin/raspy/azt/main.py:4746
 msgid "What do you want to call this group for sorting {} words?"
@@ -1698,24 +1638,20 @@ msgstr ""
 "cliquez sur ==>"
 
 #: /home/kentr/bin/raspy/azt/main.py:4802
-#, fuzzy
 msgid "Select Input Sound Card"
-msgstr "Sélectionner la carte son"
+msgstr "Sélectionner la Carte Son à Enregistrer"
 
 #: /home/kentr/bin/raspy/azt/main.py:4803
-#, fuzzy
 msgid "What sound card do you want to record sound with with?"
-msgstr "Avec quel carte de sons voulez-vous travailler?"
+msgstr "Avec quel carte de sons voulez-vous enregistrer?"
 
 #: /home/kentr/bin/raspy/azt/main.py:4818
-#, fuzzy
 msgid "Select Output Sound Card"
-msgstr "Sélectionner la carte son"
+msgstr "Sélectionner la Carte Son à Jouer"
 
 #: /home/kentr/bin/raspy/azt/main.py:4819
-#, fuzzy
 msgid "What sound card do you want to play sound with?"
-msgstr "Avec quel carte de sons voulez-vous travailler?"
+msgstr "Avec quel carte de sons voulez-vous jouer son?"
 
 #: /home/kentr/bin/raspy/azt/main.py:4834
 msgid "Select Audio Format"
@@ -1734,10 +1670,8 @@ msgid "What sampling frequency you want to work with?"
 msgstr "Avec quelle fréquence d'échantillonnage voulez-vous travailler?"
 
 #: /home/kentr/bin/raspy/azt/main.py:4903
-#, fuzzy
-#| msgid "Select Sound Card Settings"
 msgid "Current Sound Card Settings"
-msgstr "Sélectionner les paramètres de la carte son"
+msgstr "Paramètres de la Carte Son Actuelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:4907
 msgid "(click any to change)"
@@ -1771,8 +1705,8 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:4947
 msgid ""
-"See also note in documentation about verifying these recordings in an "
-"external application, such as Praat."
+"See also note in documentation about verifying these recordings in an external "
+"application, such as Praat."
 msgstr ""
 "Voir également la note dans la documentation sur la vérification de ces "
 "enregistrements dans une application externe, telle que Praat."
@@ -1842,15 +1776,13 @@ msgid ""
 "Have you run the tone report recently?\n"
 "Doing that for you now..."
 msgstr ""
-"Comment n'avons-nous pas obtenu de groupes de tonalité UR ? {}-{}\n"
-"Avez-vous exécuté le rapport de tonalité récemment ?\n"
+"Comment n'avons-nous pas obtenu de groupes de ton sous-jacentes ? {}-{}\n"
+"Avez-vous exécuté le rapport de ton récemment ?\n"
 "Je fais ça pour toi maintenant..."
 
 #: /home/kentr/bin/raspy/azt/main.py:5257
-#, fuzzy
 msgid "Giving user the number {} example from tone group {}"
-msgstr ""
-"Donner à l'utilisateur le {}e exemple de chaque groupe de sons ({}) avec index"
+msgstr "Le {}e exemple de chaque groupe de sons {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:5270
 msgid "All done! Sort some more words, and come back."
@@ -1861,9 +1793,8 @@ msgid "Continue to next syllable profile"
 msgstr "Continuer au prochain profil de la syllabe"
 
 #: /home/kentr/bin/raspy/azt/main.py:5359
-#, fuzzy
 msgid "{} {} Tone Report in Process"
-msgstr "Rapport des tons"
+msgstr "{} {} Rapport du Ton en Cours"
 
 #: /home/kentr/bin/raspy/azt/main.py:5368
 msgid ""
@@ -1871,7 +1802,7 @@ msgid ""
 "report!"
 msgstr ""
 "Hé, triez quelques morphèmes dans au moins un cadre avant d'essayer de faire "
-"un rapport de tonalité !"
+"un rapport de ton !"
 
 #: /home/kentr/bin/raspy/azt/main.py:5399 /home/kentr/bin/raspy/azt/main.py:8041
 msgid "Tone Report"
@@ -1879,49 +1810,49 @@ msgstr "Rapport des tons"
 
 #: /home/kentr/bin/raspy/azt/main.py:5414
 msgid ""
-"This report follows an analysis of sortings of {} morphemes (roots or "
-"affixes) across the following frames: {}. {} stores these sortings in lift "
-"examples, which are output here, with any glossing and sound file links found "
-"in each lift sense example. Each group in this report is distinct from the "
-"others, in terms of its grouping across the multiple frames used. Sound files "
-"should be available through links, if the audio directory with those files is "
-"in the same directory as this file."
+"This report follows an analysis of sortings of {} morphemes (roots or affixes) "
+"across the following frames: {}. {} stores these sortings in lift examples, "
+"which are output here, with any glossing and sound file links found in each "
+"lift sense example. Each group in this report is distinct from the others, in "
+"terms of its grouping across the multiple frames used. Sound files should be "
+"available through links, if the audio directory with those files is in the "
+"same directory as this file."
 msgstr ""
 "Ce rapport fait suite à une analyse de tri de {} morphèmes (racines ou "
 "affixes) dans les cadres suivants: {}. {} stocke ces tri dans des exemples "
 "LIFT, qui sont générés ici, avec tous les liens des gloses et des fichiers "
 "audio trouvés dans chaque exemple de détection d'ascenseur. Chaque groupe de "
 "ce rapport est distinct des autres, en termes de regroupement entre les "
-"multiples cadres utilisés. Les fichiers audio doivent être disponibles via "
-"des liens, si le répertoire audio avec ces fichiers se trouve dans le même "
+"multiples cadres utilisés. Les fichiers audio doivent être disponibles via des "
+"liens, si le répertoire audio avec ces fichiers se trouve dans le même "
 "répertoire que ce fichier."
 
 #: /home/kentr/bin/raspy/azt/main.py:5424
 msgid ""
 "As a warning to the analyst who may not understand the implications of this "
-"*automated analysis*, you may have too few groupings here, particularly if "
-"you have sorted on fewer frames than necessary to distinguish all your "
-"underlying tone melodies. On the other hand, if your team has been overly "
-"precise, or if your database contains bad information (sorting information "
-"which is arbitrary or otherwise inappropriate for the language), then you "
-"likely have more groups here than you have underlying tone melodies. However, "
-"if you have avoided each of these two errors, this report should contain a "
-"decent draft of your underlying tone melody groups. It does not pretend to "
-"tell you what the values of those groups are, nor how those groups interact "
-"with morphology in interesting ways (hopefully you can do each of these "
-"better than a computer could)."
+"*automated analysis*, you may have too few groupings here, particularly if you "
+"have sorted on fewer frames than necessary to distinguish all your underlying "
+"tone melodies. On the other hand, if your team has been overly precise, or if "
+"your database contains bad information (sorting information which is arbitrary "
+"or otherwise inappropriate for the language), then you likely have more groups "
+"here than you have underlying tone melodies. However, if you have avoided each "
+"of these two errors, this report should contain a decent draft of your "
+"underlying tone melody groups. It does not pretend to tell you what the values "
+"of those groups are, nor how those groups interact with morphology in "
+"interesting ways (hopefully you can do each of these better than a computer "
+"could)."
 msgstr ""
 "Pour avertir l'analyste qui peut ne pas comprendre les implications de cette "
 "*analyse automatisée*, vous pouvez avoir trop peu de regroupements ici, en "
 "particulier si vous avez trié sur moins de cadres que nécessaire pour "
-"distinguer toutes vos mélodies de ton sous-jacentes. D'un autre côté, si "
-"votre équipe a été trop précise ou si votre base de données contient de "
-"mauvaises informations (informations de tri arbitraires ou inappropriées pour "
-"la langue), vous avez probablement plus de groupes ici que de mélodies sous-"
+"distinguer toutes vos mélodies de ton sous-jacentes. D'un autre côté, si votre "
+"équipe a été trop précise ou si votre base de données contient de mauvaises "
+"informations (informations de tri arbitraires ou inappropriées pour la "
+"langue), vous avez probablement plus de groupes ici que de mélodies sous-"
 "jacentes. Cependant, si vous avez évité chacune de ces deux erreurs, ce "
 "rapport doit contenir un brouillon décent de vos groupes de mélodies sous-"
-"jacentes. Il ne prétend pas vous dire quelles sont les valeurs de ces "
-"groupes, ni comment ces groupes interagissent avec la morphologie de manière "
+"jacentes. Il ne prétend pas vous dire quelles sont les valeurs de ces groupes, "
+"ni comment ces groupes interagissent avec la morphologie de manière "
 "intéressante (j'espère que vous pouvez faire chacun de ces tâches mieux qu'un "
 "ordinateur)."
 
@@ -1931,10 +1862,10 @@ msgstr "Résumé des Images par Projet de Mélodie Sous-jacente"
 
 #: /home/kentr/bin/raspy/azt/main.py:5455
 msgid ""
-"The following table shows correspondences across sortings by tone frames, "
-"with a row for each unique pairing. "
+"The following table shows correspondences across sortings by tone frames, with "
+"a row for each unique pairing. "
 msgstr ""
-"Le tableau suivant montre les correspondances entre les tris par trames de "
+"Le tableau suivant montre les correspondances entre les tris par cadres de "
 "ton, avec une ligne pour chaque appariement unique. "
 
 #: /home/kentr/bin/raspy/azt/main.py:5458
@@ -1943,31 +1874,31 @@ msgid ""
 "can see wherever differences lie, even if those differences are likely "
 "meaningless (e.g., 'NA' means the user skipped sorting those words in that "
 "frame, but this will still distinguish one group from another). To help the "
-"qualified analyst navigate such a large selection of small slices of the "
-"data, the data is sorted (both here and in the section ordering) by "
-"similarity of groups. That similarity is structured, and it is provided here, "
-"so you can see the analysis of group relationships for yourself: {}. And here "
-"are the structured similarity relationships for the Frames: {}"
+"qualified analyst navigate such a large selection of small slices of the data, "
+"the data is sorted (both here and in the section ordering) by similarity of "
+"groups. That similarity is structured, and it is provided here, so you can see "
+"the analysis of group relationships for yourself: {}. And here are the "
+"structured similarity relationships for the Frames: {}"
 msgstr ""
 "Il s'agit d'un rapport par défaut, où {} divise intentionnellement ces "
 "groupes, afin que vous puissiez voir où se trouvent les différences, même si "
 "ces différences sont probablement dénuées de sens (par exemple, \"NA\" "
-"signifie que l'utilisateur n'a pas trié ces mots dans ce cadre, mais cela "
-"sera toujours distinguer un groupe d'un autre). Pour aider l'analyste "
-"qualifié à naviguer dans une si grande sélection de petites tranches de "
-"données, les données sont triées (à la fois ici et dans l'ordre des sections) "
-"par similarité de groupes. Cette similarité est structurée, et elle est "
-"fournie ici, afin que vous puissiez voir l'analyse des relations de groupe "
-"par vous-même : {}. Et voici les relations de similarité structurées pour les "
-"Frames : {}"
+"signifie que l'utilisateur n'a pas trié ces mots dans ce cadre, mais cela sera "
+"toujours distinguer un groupe d'un autre). Pour aider l'analyste qualifié à "
+"naviguer dans une si grande sélection de petites tranches de données, les "
+"données sont triées (à la fois ici et dans l'ordre des sections) par "
+"similarité de groupes. Cette similarité est structurée, et elle est fournie "
+"ici, afin que vous puissiez voir l'analyse des relations de groupe par vous-"
+"même : {}. Et voici les relations de similarité structurées pour les Frames : "
+"{}"
 
 #: /home/kentr/bin/raspy/azt/main.py:5475
 msgid ""
 "This is a non-default report, where a user has changed the default (hyper-"
 "split) groups created by {}."
 msgstr ""
-"Il s'agit d'un rapport non par défaut, où un utilisateur a modifié les "
-"groupes par défaut (hyper-split) créés par {}."
+"Il s'agit d'un rapport non par défaut, où un utilisateur a modifié les groupes "
+"par défaut (hyper-split) créés par {}."
 
 #: /home/kentr/bin/raspy/azt/main.py:5497
 msgid ""
@@ -2006,10 +1937,8 @@ msgid "Finished in {} seconds."
 msgstr "Terminé en {} secondes."
 
 #: /home/kentr/bin/raspy/azt/main.py:5576
-#, fuzzy
-#| msgid "(Report is also available at ("
 msgid "(Report is also available at ({})"
-msgstr "(Le rapport est également disponible sur ("
+msgstr "(Le rapport est également disponible sur ({})"
 
 #: /home/kentr/bin/raspy/azt/main.py:5610
 msgid "Getting results of Search request"
@@ -2020,9 +1949,8 @@ msgid "{} roots of form {} by {}"
 msgstr "{} racines de la forme {}, selon {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:5664
-#, fuzzy
 msgid "No results for {}/{} ({})!"
-msgstr "Aucun résultat pour"
+msgstr "Aucun résultat pour {}/{} ({})!"
 
 #: /home/kentr/bin/raspy/azt/main.py:5987
 msgid "{} {} {}={}-{}"
@@ -2047,38 +1975,34 @@ msgstr ""
 "ou V2). De plus, chaque mot n'apparaît qu'une fois par segment dans une "
 "position donnée, de sorte qu'un mot qui apparaît dans un environnement plus "
 "restrictif n'apparaîtra pas dans les environnements les moins restrictifs "
-"ultérieurs. Mais lorsque plusieurs exemples d'un type de segment se "
-"produisent avec des valeurs différentes, par exemple, V1 ≠ V2, ces mots "
-"apparaîtront plusieurs fois, par exemple, pour V1 = x et V2 = y."
+"ultérieurs. Mais lorsque plusieurs exemples d'un type de segment se produisent "
+"avec des valeurs différentes, par exemple, V1 ≠ V2, ces mots apparaîtront "
+"plusieurs fois, par exemple, pour V1 = x et V2 = y."
 
 #: /home/kentr/bin/raspy/azt/main.py:6081
-#, fuzzy
-#| msgid "Using {}"
 msgid "Running {}"
-msgstr "Utiliser {}"
+msgstr "Faire {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:6096
-#, fuzzy
 msgid ""
 "This report covers the following top two Grammatical categories, with the top "
-"{} syllable profiles in each. This is of course configurable, but I assume "
-"you don't want everything."
+"{} syllable profiles in each. This is of course configurable, but I assume you "
+"don't want everything."
 msgstr ""
-"Ce rapport couvre les {} principaux profils de syllabes suivants: {}. Ceci "
-"est bien sûr configurable, mais je suppose que vous ne voulez pas tout."
+"Ce rapport couvre les deux principaux categories lexicales, des {} profils de "
+"syllabes les plus nombreux. Ceci est bien sûr configurable, mais je suppose "
+"que vous ne voulez pas tout."
 
 #: /home/kentr/bin/raspy/azt/main.py:6105
 msgid "{} data: (profiles: {})"
 msgstr "{} données : (profils : {})"
 
 #: /home/kentr/bin/raspy/azt/main.py:6109
-#, fuzzy
 msgid ""
 "This section covers the following top syllable profiles which are found in {}"
 "s: {}"
 msgstr ""
-"Cette section couvre les suivants, les {} plus grandes profiles de syllabes "
-"trouvé en {}s: {}"
+"Cette section couvre les {} plus grandes profiles de syllabes trouvé en {}s: {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:6115
 msgid "{} {}s"
@@ -2149,9 +2073,8 @@ msgid "fixVs:Same Vowel, but wrong one! "
 msgstr "fixVs: Même voyelle, mais mauvaise! "
 
 #: /home/kentr/bin/raspy/azt/main.py:6437
-#, fuzzy
 msgid "Sort Vowels"
-msgstr "Voyelles"
+msgstr "Trier Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:6439 /home/kentr/bin/raspy/azt/main.py:6458
 #: /home/kentr/bin/raspy/azt/main.py:6479 /home/kentr/bin/raspy/azt/main.py:6535
@@ -2160,80 +2083,69 @@ msgid "Sort!"
 msgstr "Trier!"
 
 #: /home/kentr/bin/raspy/azt/main.py:6456
-#, fuzzy
 msgid "Sort Consonants"
-msgstr "Consonnes"
+msgstr "Trier Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:6475
-#, fuzzy
 msgid "Sort Tone"
-msgstr "Ton"
+msgstr "Trier Ton"
 
 #: /home/kentr/bin/raspy/azt/main.py:6477
 msgid "This task helps you sort words in citation form tone frames."
 msgstr ""
-"Cette tâche vous aide à trier les mots dans les cadres de tonalité du "
-"formulaire de citation."
+"Cette tâche vous aide à trier les mots dans les cadres de ton du formulaire de "
+"citation."
 
 #: /home/kentr/bin/raspy/azt/main.py:6536
-#, fuzzy
 msgid ""
 "Hey, you're not done with {} {} words in the {} frame!\n"
 "Come back when you have time; restart where you left off by pressing ‘{}’"
 msgstr ""
-"Translation types\n"
-"Hé, tu n'es pas fini!\n"
+"Hé, tu n'es pas fini avec {} {} mots dans le cadre «{}»!\n"
 "Revenez quand vous avez le temps; recommencez là où vous vous étiez arrêté en "
 "appuyant sur «{}»"
 
 #: /home/kentr/bin/raspy/azt/main.py:6617
-#, fuzzy
 msgid "All ‘{}’ tone groups in the ‘{}’ frame are verified and distinct!"
-msgstr "Tous les groupes de sons de {} ont été vérifiés!"
+msgstr "Tous les groupes de sons de ‘{}’ ont été vérifiés et distinct!"
 
 #: /home/kentr/bin/raspy/azt/main.py:6633
-#, fuzzy
 msgid "Continue to sort"
-msgstr "Continuer à la prochaine cadre de tons"
+msgstr "Continuer à trier"
 
 #: /home/kentr/bin/raspy/azt/main.py:6636
 msgid "same words"
 msgstr "mêmes mots"
 
 #: /home/kentr/bin/raspy/azt/main.py:6637
-#, fuzzy
 msgid "same frame"
-msgstr "Cadre de tonalité"
+msgstr "même cadre de ton"
 
 #: /home/kentr/bin/raspy/azt/main.py:6640
-#, fuzzy
 msgid "next frame"
-msgstr "Cadre de tonalité"
+msgstr "prochaine cadre de ton"
 
 #: /home/kentr/bin/raspy/azt/main.py:6642
 msgid "Automatically pick the next tone frame to sort for the ‘{}’ profile."
 msgstr ""
-"Choisissez automatiquement la trame de ton suivante à trier pour le profil "
+"Choisissez automatiquement le cadre de ton suivante à trier pour le profil "
 "'{}'."
 
 #: /home/kentr/bin/raspy/azt/main.py:6647
-#, fuzzy
 msgid "define a new frame"
-msgstr "Définir une nouvelle cadre de tons"
+msgstr "définir une nouvelle cadre de tons"
 
 #: /home/kentr/bin/raspy/azt/main.py:6649
 msgid ""
-"You're done with tone frames already defined for the ‘{}’ profile. If you "
-"want to continue with this profile, define a new frame here."
+"You're done with tone frames already defined for the ‘{}’ profile. If you want "
+"to continue with this profile, define a new frame here."
 msgstr ""
-"Vous avez terminé avec les trames de tonalité déjà définies pour le profil "
-"'{}'. Si vous souhaitez continuer avec ce profil, définissez ici un nouveau "
-"cadre."
+"Vous avez terminé avec les cadres de ton déjà définies pour le profil '{}'. Si "
+"vous souhaitez continuer avec ce profil, définissez ici un nouveau cadre."
 
 #: /home/kentr/bin/raspy/azt/main.py:6656 /home/kentr/bin/raspy/azt/main.py:7608
-#, fuzzy
 msgid "next syllable profile"
-msgstr "Profil de syllabe"
+msgstr "prochaine profil de syllabe"
 
 #: /home/kentr/bin/raspy/azt/main.py:6658
 #, python-brace-format
@@ -2241,21 +2153,20 @@ msgid ""
 "You're done with ‘{0}’ tone frames already defined for the ‘{1}’ profile. "
 "Click here to Automatically select the next syllable profile for ‘{0}’."
 msgstr ""
-"Vous avez terminé avec les trames de tonalité \"{0}\" déjà définies pour le "
-"profil \"{1}\". Cliquez ici pour sélectionner automatiquement le profil de "
-"syllabe suivant pour '{0}'."
+"Vous avez terminé avec les cadres de ton \"{0}\" déjà définies pour le profil "
+"\"{1}\". Cliquez ici pour sélectionner automatiquement le profil de syllabe "
+"suivant pour '{0}'."
 
 #: /home/kentr/bin/raspy/azt/main.py:6664
-#, fuzzy
 msgid "next lexical category"
-msgstr "Sélectionner une Catégorie Grammaticale"
+msgstr "prochaine catégorie lexicale"
 
 #: /home/kentr/bin/raspy/azt/main.py:6666
 msgid ""
 "You're done with tone frames already defined for the top ‘{}’ syllable "
 "profiles. Click here to automatically select the next grammatical category."
 msgstr ""
-"Vous en avez terminé avec les trames de ton déjà définies pour les profils de "
+"Vous en avez terminé avec les cadres de ton déjà définies pour les profils de "
 "syllabes \"{}\" du haut. Cliquez ici pour sélectionner automatiquement la "
 "catégorie grammaticale suivante."
 
@@ -2288,22 +2199,20 @@ msgid "These are all different"
 msgstr "Ce sont tous différents"
 
 #: /home/kentr/bin/raspy/azt/main.py:7044
-#, fuzzy
 msgid ""
 "Congratulations! \n"
-"All your {} with profile ‘{}’ are sorted into the groups exemplified below "
-"(in the ‘{}’ frame). Do any of these have the same tone melody? If so, click "
-"on two groups to join, then ‘{ok}’. If not, just click ‘{ok}’."
+"All your {} with profile ‘{}’ are sorted into the groups exemplified below (in "
+"the ‘{}’ frame). Do any of these have the same tone melody? If so, click on "
+"two groups to join. If not, just click ‘{ok}’."
 msgstr ""
-"Félicitations! Tous vos {} avec profil {} sont triés dans les groupes "
-"illustrés ci-dessous (dans le cadre ‘{}’). Est-ce que l'un d'entre eux a la "
-"même mélodie de ton? Si oui, cliquez sur les deux groupes. Sinon, cliquez sur "
-"‘{}’. "
+"Félicitations! \n"
+"Tous vos {} avec profil ‘{}’ sont triés dans les groupes illustrés ci-dessous "
+"(dans le cadre ‘{}’). Est-ce que l'un d'entre eux a la même mélodie de ton? Si "
+"oui, cliquez sur les deux groupes. Sinon, cliquez sur ‘{ok}’."
 
 #: /home/kentr/bin/raspy/azt/main.py:7119
 #, python-brace-format
-msgid ""
-"Now we're going to move group ‘{0}’ into ‘{1}’, marking ‘{1}’ unverified."
+msgid "Now we're going to move group ‘{0}’ into ‘{1}’, marking ‘{1}’ unverified."
 msgstr ""
 "Nous allons maintenant déplacer le groupe '{0}' dans '{1}', en marquant '{1}' "
 "non vérifié."
@@ -2314,7 +2223,7 @@ msgstr "Suppression du senseid {} de la sous-vérification {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:7247
 msgid "Not Trying Again; set a tone frame first!"
-msgstr "Ne Pas Réessayer; définissez d'abord un cadre de tonalité!"
+msgstr "Ne Pas Réessayer; définissez d'abord un cadre de ton!"
 
 #: /home/kentr/bin/raspy/azt/main.py:7286
 msgid "This word is OK in this frame"
@@ -2330,15 +2239,15 @@ msgstr "Ignorer ce mot/cette phrase"
 
 #: /home/kentr/bin/raspy/azt/main.py:7313
 msgid "Transcribe Tone"
-msgstr "Transcrire la tonalité"
+msgstr "Transcrire le ton"
 
 #: /home/kentr/bin/raspy/azt/main.py:7315
 msgid ""
 "This task helps you transcribe your surface groups, giving them meaniningful "
 "names (e.g., [˥˥ ˨˨]) instead of numbers."
 msgstr ""
-"Cette tâche vous aide à transcrire vos groupes de surface, en leur donnant "
-"des noms significatifs (par exemple, [˥˥ ˨˨]) au lieu de nombres."
+"Cette tâche vous aide à transcrire vos groupes de surface, en leur donnant des "
+"noms significatifs (par exemple, [˥˥ ˨˨]) au lieu de nombres."
 
 #: /home/kentr/bin/raspy/azt/main.py:7318
 msgid "Transcribe Surface Tone Groups"
@@ -2363,14 +2272,12 @@ msgid "Give a name for this tone melody!"
 msgstr "Donnez un nom à cette mélodie tonale !"
 
 #: /home/kentr/bin/raspy/azt/main.py:7388
-#, fuzzy
 msgid ""
 "Sorry, there is already a group with that label; If you want to join the "
 "groups, give it a different name now, and join it later"
 msgstr ""
 "Désolé, il existe déjà un groupe avec cette nom; Si vous souhaitez rejoindre "
-"les groupes, donnez-lui un nom différent maintenant et rejoignez-le une fois "
-"qu'ils ont tous deux été vérifiés ({} est déjà dans {})"
+"les groupes, donnez-lui un nom différent maintenant et rejoignez-le plus tard"
 
 #: /home/kentr/bin/raspy/azt/main.py:7455 /home/kentr/bin/raspy/azt/main.py:7633
 msgid "Compare with another group"
@@ -2385,20 +2292,17 @@ msgid "Rename {} {} tone group ‘{}’ in ‘{}’ frame"
 msgstr "Renommer {} {} Groupe de Ton ‘{}’ (dans le cadre ‘{}’)"
 
 #: /home/kentr/bin/raspy/azt/main.py:7516
-#, fuzzy
 msgid ""
 "What new name do you want to call this surface tone group? A label that "
-"describes the surface tone form in this context would be best, like "
-"‘[˥˥˥ ˨˨˨]’"
+"describes the surface tone form in this context would be best, like ‘[˥˥˥ ˨˨˨]’"
 msgstr ""
 "Quel est le nouveau nom que vous souhaitez appeler ce groupe de tons de "
-"surface? Une nom qui décrit la forme de ton de surface dans ce contexte "
-"serait préférable, comme «[˥˥˥ ˨˨˨]» "
+"surface? Une nom qui décrit la forme de ton de surface dans ce contexte serait "
+"préférable, comme «[˥˥˥ ˨˨˨]»"
 
 #: /home/kentr/bin/raspy/azt/main.py:7536
-#, fuzzy
 msgid "syllable break"
-msgstr "Profil de syllabe"
+msgstr "coupe de syllabe"
 
 #: /home/kentr/bin/raspy/azt/main.py:7541
 msgid "word break"
@@ -2417,14 +2321,12 @@ msgid "main screen"
 msgstr "écran principal"
 
 #: /home/kentr/bin/raspy/azt/main.py:7606
-#, fuzzy
 msgid "next group"
-msgstr "Prochaine Groupe"
+msgstr "prochaine proupe"
 
 #: /home/kentr/bin/raspy/azt/main.py:7607
-#, fuzzy
 msgid "next tone frame"
-msgstr "Ajouter {} cadre de tons"
+msgstr "prochaine cadre de tons"
 
 #: /home/kentr/bin/raspy/azt/main.py:7647
 msgid "Join Underlying Form Groups"
@@ -2439,13 +2341,12 @@ msgstr ""
 "donner des noms significatifs (par exemple, Haut ou Bas)."
 
 #: /home/kentr/bin/raspy/azt/main.py:7652
-#, fuzzy
 msgid "Join draft UF Groups"
-msgstr "Joindre des Groupes"
+msgstr "Joindre des Groupes Sous-jacentes"
 
 #: /home/kentr/bin/raspy/azt/main.py:7668
 msgid "Give a name for this UF tone group!"
-msgstr "Donnez un nom à ce groupe de tonalité UF !"
+msgstr "Donnez un nom à ce groupe de ton sous-jacente !"
 
 #: /home/kentr/bin/raspy/azt/main.py:7678
 msgid "That name is already there! (did you forget to include the ‘{}’ group?)"
@@ -2495,9 +2396,8 @@ msgstr ""
 "vous triiez davantage de données."
 
 #: /home/kentr/bin/raspy/azt/main.py:7737
-#, fuzzy
 msgid "What do you want to call this UF tone group for {}-{} words?"
-msgstr "Comment voulez-vous appeler ce groupe à trier des mots {}?"
+msgstr "Comment voulez-vous appeler ce groupe sous-jacentes pour des mots {}-{}?"
 
 #: /home/kentr/bin/raspy/azt/main.py:7750
 msgid "Select the groups below that you want in this {} group, then click ==>"
@@ -2516,11 +2416,11 @@ msgstr "Aucun brouillon de groupe UF trouvé pour {} mots !"
 #: /home/kentr/bin/raspy/azt/main.py:7772
 #, python-brace-format
 msgid ""
-"You don't seem to have any analyzed {0} groups to join/rename. Have you done "
-"a tone analyis for {0} words?"
+"You don't seem to have any analyzed {0} groups to join/rename. Have you done a "
+"tone analyis for {0} words?"
 msgstr ""
 "Vous ne semblez pas avoir de groupes {0} analysés à rejoindre/renommer. Avez-"
-"vous fait une analyse de tonalité pour {0} mots ?"
+"vous fait une analyse de ton pour {0} mots ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:7816
 msgid "This task helps you record words in citation form tone frames."
@@ -2533,28 +2433,24 @@ msgid "Record Dictionary Words"
 msgstr "Enregistrer des mots du dictionnaire"
 
 #: /home/kentr/bin/raspy/azt/main.py:7827
-#, fuzzy
 msgid "Record Words"
-msgstr "Enregistrer des mots du dictionnaire"
+msgstr "Enregistrer des Mots"
 
 #: /home/kentr/bin/raspy/azt/main.py:7839
 msgid "This task helps you record words in citation form."
 msgstr "Cette tâche vous aide à enregistrer des mots sous forme de citation."
 
 #: /home/kentr/bin/raspy/azt/main.py:7841
-#, fuzzy
 msgid "Record Words in Tone Frames"
-msgstr "Ajouter {} cadre de tons"
+msgstr "Enregistrer Mots dans des cadres de ton"
 
 #: /home/kentr/bin/raspy/azt/main.py:7851
-#, fuzzy
 msgid "Record Tone"
-msgstr "Enregistrer"
+msgstr "Enregistrer Ton"
 
 #: /home/kentr/bin/raspy/azt/main.py:7861
-#, fuzzy
 msgid "Alphabet Report"
-msgstr "Rapport des tons"
+msgstr "Rapport d'Alphabet"
 
 #: /home/kentr/bin/raspy/azt/main.py:7865
 msgid ""
@@ -2565,8 +2461,8 @@ msgid ""
 "- Consonant, or \n"
 "- Consonant-Vowel Correspondence"
 msgstr ""
-"Ce rapport vous donne des rapports pour une catégorie lexicale, dans un "
-"profil de syllabe.\n"
+"Ce rapport vous donne des rapports pour une catégorie lexicale, dans un profil "
+"de syllabe.\n"
 "Il effectue l'un des trois ensembles de rapports :\n"
 "- Voyelle,\n"
 "- Consonne, ou\n"
@@ -2581,9 +2477,8 @@ msgid "Pick Consonants, Vowels, or CV for this report."
 msgstr "Choisissez Consonnes, Voyelles ou CV pour ce rapport."
 
 #: /home/kentr/bin/raspy/azt/main.py:7906
-#, fuzzy
 msgid "Error: please set Ps-Profile first! ({}/{}/{})"
-msgstr "Erreur: veuillez d'abord définir le fichier Lift!"
+msgstr "Erreur: veuillez d'abord indiquer le CL-profile! ({}/{}/{})"
 
 #: /home/kentr/bin/raspy/azt/main.py:7915
 msgid "Comprehensive Alphabet Report"
@@ -2663,7 +2558,7 @@ msgstr ""
 "Cette tâche automatise le travail normalement effectué avant la vérification "
 "d'un consultant :\n"
 "- recharge les données d'état, et\n"
-"- exécute des rapports de tonalité complets,\n"
+"- exécute des rapports de ton complets,\n"
 "   - par lieu et\n"
 "   - par lexème sens."
 
@@ -2675,13 +2570,11 @@ msgid ""
 msgstr ""
 "Ce rapport vous donne un rapport pour une catégorie lexicale, dans un profil "
 "de syllabe.\n"
-"Il le fait pour toutes les données triées en trames de tons, organisées par "
-"mot."
+"Il le fait pour toutes les données triées en cadres de ton, organisées par mot."
 
 #: /home/kentr/bin/raspy/azt/main.py:8069
-#, fuzzy
 msgid "Tone Report (by frames)"
-msgstr "Rapport des tons"
+msgstr "Rapport des tons (selon cadres)"
 
 #: /home/kentr/bin/raspy/azt/main.py:8075
 msgid ""
@@ -2691,13 +2584,12 @@ msgid ""
 msgstr ""
 "Ce rapport vous donne un rapport pour une catégorie lexicale, dans un profil "
 "de syllabe.\n"
-"Il le fait pour toutes les données triées en trames de ton, organisées par "
-"trame."
+"Il le fait pour toutes les données triées en cadres de ton, organisées par "
+"cadre."
 
 #: /home/kentr/bin/raspy/azt/main.py:8097
-#, fuzzy
 msgid "Comprehensive Tone Report"
-msgstr "Rapport des tons"
+msgstr "Rapport du Ton Complète"
 
 #: /home/kentr/bin/raspy/azt/main.py:8102
 msgid ""
@@ -2707,14 +2599,11 @@ msgid ""
 msgstr ""
 "Ce rapport vous donne des rapports sur plusieurs catégories lexicales et sur "
 "plusieurs profils de syllabes.\n"
-"Il le fait pour toutes les données triées en trames de tons, organisées par "
-"mot."
+"Il le fait pour toutes les données triées en cadres de ton, organisées par mot."
 
 #: /home/kentr/bin/raspy/azt/main.py:8166
-#, fuzzy
-#| msgid "Another gloss language"
 msgid "Hey, you have no gloss languages set!"
-msgstr "Une autre langue des senses"
+msgstr "Hé, Vous n'avez pas de langue des senses!"
 
 #: /home/kentr/bin/raspy/azt/main.py:8748
 msgid "Record"
@@ -2741,15 +2630,13 @@ msgid "Set audio language to get record buttons!"
 msgstr "Définissez la langue audio pour obtenir les boutons d'enregistrement !"
 
 #: /home/kentr/bin/raspy/azt/main.py:8831
-#, fuzzy
 msgid ""
 "Set all sound card settings\n"
 "(Do|Recording|Sound Card Settings)\n"
 "and a record button will be here."
 msgstr ""
-"Désolé, vous devez définir le fs et le taux_échantillon! \\ N (Modifier les "
-"éléments | Enregistrement | Paramètres de la carte son) \n"
-"Définissez-les et réessayez, et \n"
+"Définissez toutes les paramètres son\n"
+"(Modifier les éléments | Enregistrement | Paramètres de la carte son) \n"
 "le bouton d'enregistrement sera ici."
 
 #: /home/kentr/bin/raspy/azt/main.py:8956
@@ -2783,8 +2670,8 @@ msgid ""
 msgstr ""
 "Votre base de données de dictionnaires est en cours de chargement ... \n"
 "\n"
-"{name} est un logiciel informatique qui accélère le développement du langage "
-"à base communautaire en facilitant le tri d'un dictionnaire de début par "
+"{name} est un logiciel informatique qui accélère le développement du langage à "
+"base communautaire en facilitant le tri d'un dictionnaire de début par "
 "voyelles, consonnes et ton. (Plus dans Aide: À propos)"
 
 #: /home/kentr/bin/raspy/azt/main.py:9188
@@ -2840,19 +2727,16 @@ msgid "Correspondence of First/only Two Vowels"
 msgstr "Correspondance des Premières/seulement Deux Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:10060
-#, fuzzy
-#| msgid "Select Vowel"
 msgid "Second Vowel"
-msgstr "Sélectionner une Voyelle"
+msgstr "Deuxième Voyelle"
 
 #: /home/kentr/bin/raspy/azt/main.py:10063
 msgid "Same First/only Three Vowels"
 msgstr "Même Première/seulement Trois Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:10064
-#, fuzzy
 msgid "Third Vowel"
-msgstr "Voyelles"
+msgstr "Troisième Voyelle"
 
 #: /home/kentr/bin/raspy/azt/main.py:10065
 msgid "Same Second Two Vowels"
@@ -2863,45 +2747,36 @@ msgid "Correspondence of Second Two Vowels"
 msgstr "Correspondance des Deux Secondes Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:10082
-#, fuzzy
 msgid "First/only Consonant"
-msgstr "Consonnes"
+msgstr "Première/Seule Consonne"
 
 #: /home/kentr/bin/raspy/azt/main.py:10084
-#, fuzzy
-#| msgid "Select Consonant"
 msgid "Second Consonant"
-msgstr "Sélectionner une Consonne"
+msgstr "Deuxième Consonne"
 
 #: /home/kentr/bin/raspy/azt/main.py:10085
-#, fuzzy
 msgid "Same First/only Two Consonants"
-msgstr "Consonnes"
+msgstr "Même Première/Seule Deux Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:10086
 msgid "Correspondence of First/only Two Consonants"
 msgstr "Correspondance des Premières/seulement Deux Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:10089
-#, fuzzy
-#| msgid "Select Consonant"
 msgid "Same Second Two Consonants"
-msgstr "Sélectionner une Consonne"
+msgstr "Même Deuxieme Deux Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:10090
 msgid "Correspondence of Second Two Consonants"
 msgstr "Correspondance des Deux Secondes Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:10091
-#, fuzzy
-#| msgid "Consonant"
 msgid "Third Consonant"
-msgstr "Consonne"
+msgstr "Troisième Consonne"
 
 #: /home/kentr/bin/raspy/azt/main.py:10092
-#, fuzzy
 msgid "Same First Three Consonants"
-msgstr "Consonnes"
+msgstr "Même Premières Trois Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:10110
 msgid "Correspondence of C1 and V1"
@@ -2923,7 +2798,7 @@ msgstr "Même Premier/seulement Trois CVs"
 msgid "Third CV"
 msgstr "Troisième CV"
 
-#: /home/kentr/bin/raspy/azt/main.py:10172
+#: /home/kentr/bin/raspy/azt/main.py:10174
 msgid ""
 "You have the following files ( in {}) that need to be resolved from Chorus "
 "merges:\n"
@@ -2933,19 +2808,19 @@ msgstr ""
 "des fusions Chorus :\n"
 " {}"
 
-#: /home/kentr/bin/raspy/azt/main.py:10176
+#: /home/kentr/bin/raspy/azt/main.py:10178
 msgid "Chorus Rescue files found!"
 msgstr "Fichiers Chorus Rescue trouvés !"
 
-#: /home/kentr/bin/raspy/azt/main.py:10220
+#: /home/kentr/bin/raspy/azt/main.py:10222
 msgid "Call to Mercurial ({}) failed: {}"
 msgstr "L'Appel à Mercurial ({}) a échoué : {}"
 
-#: /home/kentr/bin/raspy/azt/main.py:10225
+#: /home/kentr/bin/raspy/azt/main.py:10227
 msgid "URL {} is already in repo {}"
 msgstr "L'URL {} est déjà dans le dépôt {}"
 
-#: /home/kentr/bin/raspy/azt/main.py:10228
+#: /home/kentr/bin/raspy/azt/main.py:10230
 msgid ""
 "URL {} is not already in repo {}:\n"
 "{}"
@@ -2953,41 +2828,39 @@ msgstr ""
 "L'URL {} n'est pas déjà dans le dépôt {} :\n"
 "{}"
 
-#: /home/kentr/bin/raspy/azt/main.py:10265
-#, fuzzy
+#: /home/kentr/bin/raspy/azt/main.py:10267
 msgid "Result Window"
-msgstr "Fenêtre d'Exécution"
+msgstr "Fenêtre de Resultats"
 
-#: /home/kentr/bin/raspy/azt/main.py:10318
-#, fuzzy
+#: /home/kentr/bin/raspy/azt/main.py:10320
 msgid "Translation seems to be working, using {}"
-msgstr "La traduction semble fonctionner"
+msgstr "La traduction semble fonctionner, utiliser {}"
 
-#: /home/kentr/bin/raspy/azt/main.py:10465
+#: /home/kentr/bin/raspy/azt/main.py:10467
 msgid " and "
 msgstr " et "
 
-#: /home/kentr/bin/raspy/azt/main.py:10574
+#: /home/kentr/bin/raspy/azt/main.py:10576
 msgid "Search for {} on {} failed: {}"
 msgstr "Échec de la recherche de {} sur {}: {}"
 
-#: /home/kentr/bin/raspy/azt/main.py:10617
+#: /home/kentr/bin/raspy/azt/main.py:10619
 msgid "Trying to call Praat at {}..."
 msgstr "J'essaie d'appeler Praat au {}..."
 
-#: /home/kentr/bin/raspy/azt/main.py:10624
+#: /home/kentr/bin/raspy/azt/main.py:10626
 msgid "Looks like I couln't find Praat..."
 msgstr "On dirait que je n'ai pas trouvé Praat..."
 
-#: /home/kentr/bin/raspy/azt/main.py:10688
+#: /home/kentr/bin/raspy/azt/main.py:10690
 msgid "Serious Problem!"
 msgstr "Problème Sérieux!"
 
-#: /home/kentr/bin/raspy/azt/main.py:10690
+#: /home/kentr/bin/raspy/azt/main.py:10692
 msgid "Hey! You found a problem! (details and solution below)"
 msgstr "Hé! Vous avez trouvé un problème ! (détails et solution ci-dessous)"
 
-#: /home/kentr/bin/raspy/azt/main.py:10697
+#: /home/kentr/bin/raspy/azt/main.py:10699
 msgid ""
 "\n"
 "Please see {}"
@@ -2995,7 +2868,7 @@ msgstr ""
 "\n"
 "S'il te plait regarde {}"
 
-#: /home/kentr/bin/raspy/azt/main.py:10712
+#: /home/kentr/bin/raspy/azt/main.py:10714
 msgid ""
 "\n"
 "\n"
@@ -3007,7 +2880,7 @@ msgstr ""
 "Si ces informations ne vous aident pas à résoudre ce problème, veuillez "
 "cliquer sur ce texte pour m'envoyer votre journal par e-mail (à {})"
 
-#: /home/kentr/bin/raspy/azt/main.py:10718
+#: /home/kentr/bin/raspy/azt/main.py:10720
 msgid "The end of {} / {} are below:"
 msgstr "La fin de {} / {} est ci-dessous :"
 
