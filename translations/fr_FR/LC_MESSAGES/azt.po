@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-14 11:52+0100\n"
-"PO-Revision-Date: 2022-03-14 12:28+0100\n"
+"PO-Revision-Date: 2022-03-14 14:18+0100\n"
 "Last-Translator: Kent Rasmussen <kent_rasmussen@sil.org>\n"
 "Language-Team: Just me\n"
 "Language: fr\n"
@@ -70,11 +70,11 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:108
 msgid "Select LIFT Database"
-msgstr ""
+msgstr "Sélectionnez la Base de Données LIFT"
 
 #: /home/kentr/bin/raspy/azt/main.py:109
 msgid "What LIFT database do you want to work on?"
-msgstr ""
+msgstr "Sur quelle base de données LIFT souhaitez-vous travailler ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:111
 msgid "Start work on a new language"
@@ -90,7 +90,7 @@ msgstr "{} ne semble pas être en fichier LIFT bien formé; SVP reessayez."
 
 #: /home/kentr/bin/raspy/azt/main.py:158
 msgid "Start New LIFT Database"
-msgstr ""
+msgstr "Démarrer une Nouvelle Base de Données LIFT"
 
 #: /home/kentr/bin/raspy/azt/main.py:160
 msgid "What is the Ethnologue (ISO 639-3) code?"
@@ -426,7 +426,7 @@ msgstr "Vous avez plus de groupes validés qu'il y en a, dans {} cellules"
 
 #: /home/kentr/bin/raspy/azt/main.py:959
 msgid "Warning: Mercurial Repository without Executable"
-msgstr ""
+msgstr "Avertissement : Référentiel Mercurial sans Exécutable"
 
 #: /home/kentr/bin/raspy/azt/main.py:965
 msgid ""
@@ -444,11 +444,11 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:970
 msgid "Please see {} for installation recommendations"
-msgstr ""
+msgstr "Veuillez consulter {} pour les recommandations d'installation"
 
 #: /home/kentr/bin/raspy/azt/main.py:972
 msgid "(e.g., in Windows, install *this* file),"
-msgstr ""
+msgstr "(par exemple, sous Windows, installez *ce* fichier),"
 
 #: /home/kentr/bin/raspy/azt/main.py:973
 msgid "or see all your options at {}."
@@ -552,7 +552,7 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:1728
 msgid "More than Ten Invalid Characters Found!"
-msgstr ""
+msgstr "Plus de Dix Caractères Invalides Trouvés !"
 
 #: /home/kentr/bin/raspy/azt/main.py:1835
 msgid "Found {} analangs: {}"
@@ -574,7 +574,7 @@ msgstr ""
 #: /home/kentr/bin/raspy/azt/main.py:1846
 #: /home/kentr/bin/raspy/azt/main.py:10153
 msgid "Error!"
-msgstr ""
+msgstr "Erreur!"
 
 #: /home/kentr/bin/raspy/azt/main.py:1850
 msgid "Only one analang in file; using it: ({})"
@@ -591,43 +591,43 @@ msgstr "Pas de changement: {} == {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2189
 msgid "French"
-msgstr ""
+msgstr "Français"
 
 #: /home/kentr/bin/raspy/azt/main.py:2191
 msgid "English"
-msgstr ""
+msgstr "Anglais"
 
 #: /home/kentr/bin/raspy/azt/main.py:2193
 msgid "Spanish"
-msgstr ""
+msgstr "Espagnol"
 
 #: /home/kentr/bin/raspy/azt/main.py:2195
 msgid "Portuguese"
-msgstr ""
+msgstr "Portugais"
 
 #: /home/kentr/bin/raspy/azt/main.py:2197
 msgid "Bahasa Indonesian"
-msgstr ""
+msgstr "Bahasa indonésien"
 
 #: /home/kentr/bin/raspy/azt/main.py:2199
 msgid "Hausa"
-msgstr ""
+msgstr "Haoussa"
 
 #: /home/kentr/bin/raspy/azt/main.py:2201
 msgid "Congo Swahili"
-msgstr ""
+msgstr "Swahili Congolais"
 
 #: /home/kentr/bin/raspy/azt/main.py:2203
 msgid "Swahili"
-msgstr ""
+msgstr "Swahili"
 
 #: /home/kentr/bin/raspy/azt/main.py:2205
 msgid "Zulgo"
-msgstr ""
+msgstr "Zulgo"
 
 #: /home/kentr/bin/raspy/azt/main.py:2207
 msgid "Fulfulde"
-msgstr ""
+msgstr "Fulfulde"
 
 #: /home/kentr/bin/raspy/azt/main.py:2224
 msgid "Maybe status/slices aren't set up yet."
@@ -837,11 +837,11 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:2581
 msgid "Profiles to check: {}"
-msgstr ""
+msgstr "Profils à vérifier : {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2586
 msgid "OK, go ahead"
-msgstr ""
+msgstr "OK, Vas y"
 
 #: /home/kentr/bin/raspy/azt/main.py:2671
 msgid "Set Parameters for Segment Interpretation"
@@ -1065,6 +1065,8 @@ msgid ""
 "I don't see any appropriate fields; I'll give you some commonly used ones to "
 "choose from."
 msgstr ""
+"Je ne vois aucun champ approprié ; Je vais vous en donner quelques-uns "
+"couramment utilisés parmi lesquels choisir."
 
 #: /home/kentr/bin/raspy/azt/main.py:2996
 msgid "Select Second Form Field for {}"
@@ -1156,12 +1158,21 @@ msgid ""
 "Tone Frame (currently {})\n"
 "Before this function will do anything!"
 msgstr ""
+"Vous devez définir\n"
+"Type de vérification (comme Ton, actuellement {})\n"
+"Catégorie grammaticale (actuellement {})\n"
+"Profil de syllabe (actuellement {}), et\n"
+"Tone Frame (actuellement {})\n"
+"Avant cette fonction fera n'importe quoi !"
 
 #: /home/kentr/bin/raspy/azt/main.py:3134
 msgid ""
 "It looks like you don't have {}-{} lexemes grouped in the ‘{}’ frame yet \n"
 "({})."
 msgstr ""
+"Il semble que vous n'ayez pas encore de lexèmes {}-{} regroupés dans le cadre "
+"'{}'\n"
+"({})."
 
 #: /home/kentr/bin/raspy/azt/main.py:3142
 #, fuzzy
@@ -1267,6 +1278,10 @@ msgid ""
 "before opening {0} again. In case there are any issues, the log file is also "
 "saved in {3}"
 msgstr ""
+"La conversion est maintenant terminée, donc {0} va quitter. Vous voudrez peut-"
+"être inspecter votre fichier actuel ({1}) et la sauvegarde ({2}) pour "
+"confirmer que cela a fait ce que vous vouliez, avant d'ouvrir à nouveau {0}. "
+"En cas de problème, le fichier journal est également enregistré dans {3}"
 
 #: /home/kentr/bin/raspy/azt/main.py:3703
 msgid "Conversion Done!"
@@ -1387,7 +1402,7 @@ msgstr "Ajout d'entrées CAWL à remplir, dans la base de données établie."
 
 #: /home/kentr/bin/raspy/azt/main.py:4072
 msgid "Entries Added!"
-msgstr ""
+msgstr "Entrées Ajoutées !"
 
 #: /home/kentr/bin/raspy/azt/main.py:4073
 msgid "Added {} entries from the SILCAWL"
@@ -1476,7 +1491,7 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:4206 /home/kentr/bin/raspy/azt/main.py:4279
 msgid "Add remaining CAWL entries"
-msgstr ""
+msgstr "Ajouter les entrées CAWL restantes"
 
 #: /home/kentr/bin/raspy/azt/main.py:4207 /home/kentr/bin/raspy/azt/main.py:4280
 msgid ""
@@ -1527,7 +1542,7 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:4262
 msgid "Parsing!"
-msgstr ""
+msgstr "Analyse!"
 
 #: /home/kentr/bin/raspy/azt/main.py:4276
 msgid "Tooltip here."
@@ -1726,7 +1741,7 @@ msgstr "Sélectionner les paramètres de la carte son"
 
 #: /home/kentr/bin/raspy/azt/main.py:4907
 msgid "(click any to change)"
-msgstr ""
+msgstr "(cliquez sur n'importe lequel pour changer)"
 
 #: /home/kentr/bin/raspy/azt/main.py:4924
 msgid "Microphone: ‘{}’"
@@ -1788,7 +1803,7 @@ msgstr "Sélectionner les paramètres de la carte son"
 
 #: /home/kentr/bin/raspy/azt/main.py:5022
 msgid " (pl)"
-msgstr ""
+msgstr " (pl)"
 
 #: /home/kentr/bin/raspy/azt/main.py:5046
 msgid "Record {} {} Words: click ‘Record’, talk, and release ({} words)"
@@ -1988,7 +2003,7 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:5574
 msgid "Finished in {} seconds."
-msgstr ""
+msgstr "Terminé en {} secondes."
 
 #: /home/kentr/bin/raspy/azt/main.py:5576
 #, fuzzy
@@ -2331,7 +2346,7 @@ msgstr "Transcrire les Groupes de Tons de Surface"
 
 #: /home/kentr/bin/raspy/azt/main.py:7355
 msgid "No groups in that slice; try another!"
-msgstr ""
+msgstr "Aucun groupe dans cette tranche ; Essaie un autre!"
 
 #: /home/kentr/bin/raspy/azt/main.py:7371
 msgid ""
@@ -2496,7 +2511,7 @@ msgstr "Terminé — pas de changement"
 
 #: /home/kentr/bin/raspy/azt/main.py:7770
 msgid "No draft UF groups found for {} words!"
-msgstr ""
+msgstr "Aucun brouillon de groupe UF trouvé pour {} mots !"
 
 #: /home/kentr/bin/raspy/azt/main.py:7772
 #, python-brace-format
@@ -2504,6 +2519,8 @@ msgid ""
 "You don't seem to have any analyzed {0} groups to join/rename. Have you done "
 "a tone analyis for {0} words?"
 msgstr ""
+"Vous ne semblez pas avoir de groupes {0} analysés à rejoindre/renommer. Avez-"
+"vous fait une analyse de tonalité pour {0} mots ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:7816
 msgid "This task helps you record words in citation form tone frames."
@@ -2561,7 +2578,7 @@ msgstr "Exécuter la Vérification"
 
 #: /home/kentr/bin/raspy/azt/main.py:7895
 msgid "Pick Consonants, Vowels, or CV for this report."
-msgstr ""
+msgstr "Choisissez Consonnes, Voyelles ou CV pour ce rapport."
 
 #: /home/kentr/bin/raspy/azt/main.py:7906
 #, fuzzy
@@ -2717,7 +2734,7 @@ msgstr "Rétablir"
 
 #: /home/kentr/bin/raspy/azt/main.py:8814
 msgid "No framed value, nor testing; can't continue..."
-msgstr ""
+msgstr "Aucune valeur encadrée, ni test ; ne peut pas continuer..."
 
 #: /home/kentr/bin/raspy/azt/main.py:8822
 msgid "Set audio language to get record buttons!"
@@ -2812,15 +2829,15 @@ msgstr "Tons"
 
 #: /home/kentr/bin/raspy/azt/main.py:10056
 msgid "First/only Vowel"
-msgstr ""
+msgstr "Première/seule Voyelle"
 
 #: /home/kentr/bin/raspy/azt/main.py:10058
 msgid "Same First/only Two Vowels"
-msgstr ""
+msgstr "Même Première/seulement Deux Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:10059
 msgid "Correspondence of First/only Two Vowels"
-msgstr ""
+msgstr "Correspondance des Premières/seulement Deux Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:10060
 #, fuzzy
@@ -2830,7 +2847,7 @@ msgstr "Sélectionner une Voyelle"
 
 #: /home/kentr/bin/raspy/azt/main.py:10063
 msgid "Same First/only Three Vowels"
-msgstr ""
+msgstr "Même Première/seulement Trois Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:10064
 #, fuzzy
@@ -2839,11 +2856,11 @@ msgstr "Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:10065
 msgid "Same Second Two Vowels"
-msgstr ""
+msgstr "Même Seconde Deux Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:10066
 msgid "Correspondence of Second Two Vowels"
-msgstr ""
+msgstr "Correspondance des Deux Secondes Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:10082
 #, fuzzy
@@ -2863,7 +2880,7 @@ msgstr "Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:10086
 msgid "Correspondence of First/only Two Consonants"
-msgstr ""
+msgstr "Correspondance des Premières/seulement Deux Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:10089
 #, fuzzy
@@ -2873,7 +2890,7 @@ msgstr "Sélectionner une Consonne"
 
 #: /home/kentr/bin/raspy/azt/main.py:10090
 msgid "Correspondence of Second Two Consonants"
-msgstr ""
+msgstr "Correspondance des Deux Secondes Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:10091
 #, fuzzy
@@ -2888,23 +2905,23 @@ msgstr "Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:10110
 msgid "Correspondence of C1 and V1"
-msgstr ""
+msgstr "Correspondance de C1 et V1"
 
 #: /home/kentr/bin/raspy/azt/main.py:10115
 msgid "Correspondence of C2 and V2"
-msgstr ""
+msgstr "Correspondance de C2 et V2"
 
 #: /home/kentr/bin/raspy/azt/main.py:10116
 msgid "Same First/only Two CVs"
-msgstr ""
+msgstr "Même Premier/seulement Deux CV"
 
 #: /home/kentr/bin/raspy/azt/main.py:10120
 msgid "Same First/only Three CVs"
-msgstr ""
+msgstr "Même Premier/seulement Trois CVs"
 
 #: /home/kentr/bin/raspy/azt/main.py:10121
 msgid "Third CV"
-msgstr ""
+msgstr "Troisième CV"
 
 #: /home/kentr/bin/raspy/azt/main.py:10172
 msgid ""
@@ -2918,7 +2935,7 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:10176
 msgid "Chorus Rescue files found!"
-msgstr ""
+msgstr "Fichiers Chorus Rescue trouvés !"
 
 #: /home/kentr/bin/raspy/azt/main.py:10220
 msgid "Call to Mercurial ({}) failed: {}"
@@ -2964,17 +2981,19 @@ msgstr "On dirait que je n'ai pas trouvé Praat..."
 
 #: /home/kentr/bin/raspy/azt/main.py:10688
 msgid "Serious Problem!"
-msgstr ""
+msgstr "Problème Sérieux!"
 
 #: /home/kentr/bin/raspy/azt/main.py:10690
 msgid "Hey! You found a problem! (details and solution below)"
-msgstr ""
+msgstr "Hé! Vous avez trouvé un problème ! (détails et solution ci-dessous)"
 
 #: /home/kentr/bin/raspy/azt/main.py:10697
 msgid ""
 "\n"
 "Please see {}"
 msgstr ""
+"\n"
+"S'il te plait regarde {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:10712
 msgid ""
@@ -2983,10 +3002,14 @@ msgid ""
 "If this information doesn't help you fix this, please click on this text to "
 "Email me your log (to {})"
 msgstr ""
+"\n"
+"\n"
+"Si ces informations ne vous aident pas à résoudre ce problème, veuillez "
+"cliquer sur ce texte pour m'envoyer votre journal par e-mail (à {})"
 
 #: /home/kentr/bin/raspy/azt/main.py:10718
 msgid "The end of {} / {} are below:"
-msgstr ""
+msgstr "La fin de {} / {} est ci-dessous :"
 
 #: /home/kentr/bin/raspy/azt/rx.py:152
 msgid "telling rx.s which lang to use"
