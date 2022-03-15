@@ -105,7 +105,7 @@ class FileChooser(object):
                 file.writefilename(self.name)
                 window.destroy()
         self.name=None # in case of exit
-        window=ui.Window(program['root'],title="Select LIFT Database")
+        window=ui.Window(program['root'],title=_("Select LIFT Database"))
         text=_('What LIFT database do you want to work on?')
         ui.Label(window.frame, text=text).grid(column=0, row=0)
         optionlist=[('New',_("Start work on a new language"))]
@@ -155,7 +155,7 @@ class FileChooser(object):
     def startnewfile(self):
         def done(event=None):
             window.destroy()
-        window=ui.Window(program['root'],title="Start New LIFT Database")
+        window=ui.Window(program['root'],title=_("Start New LIFT Database"))
         ethnologueurl="https://www.ethnologue.com/"
         title=_("What is the Ethnologue (ISO 639-3) code?")#" of the language you "
                 # "want to study?")
@@ -956,7 +956,7 @@ class Settings(object):
         else:
             return interfacelang()
     def mercurialwarning(self,filedir):
-        title="Warning: Mercurial Repository without Executable"
+        title=_("Warning: Mercurial Repository without Executable")
         window=ui.Window(self.frame,title=title)
         hgurl="https://www.mercurial-scm.org/wiki/Download"
         hgfilename="Mercurial-6.0-x64.exe"
@@ -967,9 +967,9 @@ class Settings(object):
         "and languagedepot.org), "
         "\nbut you don't seem to have the Mercurial executable installed in "
         "your computer's PATH.").format(filedir)
-        clickable="Please see {} for installation recommendations".format(
+        clickable=_("Please see {} for installation recommendations").format(
                                                                 program['url'])
-        clickable1="(e.g., in Windows, install *this* file),".format(hgfile)
+        clickable1=_("(e.g., in Windows, install *this* file),").format(hgfile)
         clickable2=_("or see all your options at {}.").format(hgurl)
         l=ui.Label(window.frame, text=text)
         l.grid(column=0, row=0)
@@ -1437,7 +1437,7 @@ class Settings(object):
         oktext=_("OK")
         nochangetext=_("Exit {} with no changes".format(program['name']))
         log.info("Asking about Digraphs and Trigraphs!")
-        titlet="A→Z+T Digraphs and Trigraphs"
+        titlet=_("A→Z+T Digraphs and Trigraphs")
         pgw=ui.Window(self.taskchooser.frame,title=titlet)
         t=_("Select which of the following graph sequences found in your data "
                 "refer to a single sound (digraph or trigraph) in {}".format(
@@ -1725,7 +1725,7 @@ class Settings(object):
             text=_("Your {} database has the following symbols, which are "
                 "excluding {} words from being analyzed: \n{}"
                 "".format(self.analang,ninvalids,extras))
-            title="More than Ten Invalid Characters Found!"
+            title=_("More than Ten Invalid Characters Found!")
             self.warning=ErrorNotice(text,title=title)
             # l=ui.Label(self.warning, text=t)
             # l.grid(row=0, column=0)
@@ -1843,7 +1843,7 @@ class Settings(object):
                 errortext+=_("\n(guessing [{}]; if that's not correct, exit now "
                             "and fix it!)").format(self.analang)
             log.info(errortext)
-            e=ErrorNotice(errortext,title="Error!",wait=True)
+            e=ErrorNotice(errortext,title=_("Error!"),wait=True)
             # return
         elif nlangs == 1:
             self.analang=self.db.analangs[0]
@@ -2186,27 +2186,27 @@ class Settings(object):
                 self.languagenames[xyz]=node.get('value')
                 log.info(' '.join('found',self.languagenames[xyz]))
             elif xyz == 'fr':
-                self.languagenames[xyz]="Français"
+                self.languagenames[xyz]=_("French")
             elif xyz == 'en':
-                self.languagenames[xyz]="English"
+                self.languagenames[xyz]=_("English")
             elif xyz == 'es':
-                self.languagenames[xyz]="Español"
+                self.languagenames[xyz]=_("Spanish")
             elif xyz == 'pt':
-                self.languagenames[xyz]="Português"
+                self.languagenames[xyz]=_("Portuguese")
             elif xyz in ['id','ind']:
-                self.languagenames[xyz]="Bahasa Indonesia"
+                self.languagenames[xyz]=_("Bahasa Indonesian")
             elif xyz in ['ha','hau']:
-                self.languagenames[xyz]="Hausa"
+                self.languagenames[xyz]=_("Hausa")
             elif xyz == 'swc':
-                self.languagenames[xyz]="Congo Swahili"
+                self.languagenames[xyz]=_("Congo Swahili")
             elif xyz == 'swh':
-                self.languagenames[xyz]="Swahili"
+                self.languagenames[xyz]=_("Swahili")
             elif xyz == 'gnd':
-                self.languagenames[xyz]="Zulgo"
+                self.languagenames[xyz]=_("Zulgo")
             elif xyz == 'fub':
-                self.languagenames[xyz]="Fulfulde"
+                self.languagenames[xyz]=_("Fulfulde")
             elif xyz == 'bfj':
-                self.languagenames[xyz]="Chufie’"
+                self.languagenames[xyz]=_("Chufie’")
             else:
                 self.languagenames[xyz]=_("Language with code "
                                                         "[{}]").format(xyz)
@@ -2403,6 +2403,7 @@ class TaskDressing(object):
                 "\nTasks are organized into Data Collection and Analysis, "
                 "and you can switch between them with the button in the upper "
                 "right of the main {0} window."
+                "\nEither window allows you to run reports."
                 "").format(program['name'])
         url='https://github.com/kent-rasmussen/azt/blob/main/TASKS.md'
         webtext=_("For more information on {} tasks, please check out the "
@@ -2577,12 +2578,12 @@ class TaskDressing(object):
             for ps in pss:
                 i=[x for x in self.profilesbysense[ps].keys()
                                     if set(d).intersection(set(x))]
-                p="Profiles to check: {}".format(i)
+                p=_("Profiles to check: {}").format(i)
                 log.info(p)
                 ui.Label(w.frame,text=p).grid(row=2,column=0)
             ok=Object()
             ok.value=False
-            b=ui.Button(w.frame,text="OK, go ahead", command=confirm)
+            b=ui.Button(w.frame,text=_("OK, go ahead"), command=confirm)
             b.grid(row=1,column=1)
             w.wait_window(w)
             return ok.value
@@ -2989,8 +2990,8 @@ class TaskDressing(object):
         log.info("Asking for ‘{}’ second form field...".format(ps))
         optionslist = self.db.fields
         if not optionslist:
-            ErrorNotice("I don't see any appropriate fields; I'll give you "
-            "some commonly used ones to choose from.", wait=True)
+            ErrorNotice(_("I don't see any appropriate fields; I'll give you "
+            "some commonly used ones to choose from."), wait=True)
             other=True
         title=_('Select Second Form Field for {}').format(ps)
         window=ui.Window(self.frame,title=title)
@@ -3117,29 +3118,29 @@ class TaskDressing(object):
         if (None in [cvt, ps, profile, check]
                 or cvt != 'T'):
             ui.Label(window.frame,
-                          text="You need to set "
+                          text=_("You need to set "
                           "\nCheck type (as Tone, currently {}) "
                           "\nGrammatical category (currently {})"
                           "\nSyllable Profile (currently {}), and "
                           "\nTone Frame (currently {})"
                           "\nBefore this function will do anything!"
-                          "".format(self.params.cvtdict()[cvt]['sg'], ps,
+                          "").format(self.params.cvtdict()[cvt]['sg'], ps,
                           profile, check)).grid(column=0, row=0)
             return 1
         else:
             g=self.status.groups(**kwargs) #wsorted=True above
             if not g:
                 ui.Label(window.frame,
-                          text="It looks like you don't have {}-{} lexemes "
+                          text=_("It looks like you don't have {}-{} lexemes "
                           "grouped in the ‘{}’ frame yet \n({})."
-                          "".format(ps,profile,check,kwargs)
+                          "").format(ps,profile,check,kwargs)
                           ).grid(column=0, row=0)
             elif guess == True or (len(g) == 1 and not kwargs['comparison']):
                 self.settings.setgroup(g[0],window) #don't ask, just set
             else:
                 ui.Label(window.frame,
-                          text="What {}-{} tone group in the ‘{}’ frame do "
-                          "you want to work with?".format(ps,profile,
+                          text=_("What {}-{} tone group in the ‘{}’ frame do "
+                          "you want to work with?").format(ps,profile,
                           check)).grid(column=0, row=0)
                 window.scroll=ui.Frame(window.frame)
                 window.scroll.grid(column=0, row=1)
@@ -3148,8 +3149,8 @@ class TaskDressing(object):
                     g2.remove(self.status.group())
                     if not g2:
                         window.destroy()
-                        ErrorNotice(text="There don't seem to be any groups "
-                                    "to compare with!")
+                        ErrorNotice(text=_("There don't seem to be any groups "
+                                    "to compare with!"))
                         return
                     if len(g2) == 1:
                         self.settings.setgroup_comparison(g2[0],window)
@@ -3691,11 +3692,11 @@ class TaskChooser(TaskDressing,ui.Window):
         #             tmpdb.nodes.findall('entry/citation')):
         #     for f in n.findall('form'):
         #         n.remove(f)
-        ErrorNotice("The conversion is done now, so {0} will quit. You may "
+        ErrorNotice(_("The conversion is done now, so {0} will quit. You may "
                     "want to inspect your current file ({1}) and the backup "
                     "({2}) to confirm this did what you wanted, before "
                     "opening {0} again. In case there are any issues, the "
-                    "log file is also saved in {3}".format(program['name'],
+                    "log file is also saved in {3}").format(program['name'],
                                                 self.file.name,
                                                 backup,
                                                 conversionlogfile),
@@ -4068,7 +4069,7 @@ class WordCollection(Segments):
                 added.append(n)
         if added or modded:
             self.db.write()
-            title="Entries Added!"
+            title=_("Entries Added!")
             text=_("Added {} entries from the SILCAWL").format(len(added))
             if len(added)<100:
                 text+=": ({})".format(added)
@@ -4103,7 +4104,7 @@ class WordCollection(Segments):
             "was left to collect. "
             "\nYou can navigate through the words you just collected, "
             "\nor press ‘{}’ to go on to the next task.").format(oktext)
-            self.e=ErrorNotice(t,title="Done!")
+            self.e=ErrorNotice(t,title=_("Done!"))
             b=ui.Button(self.e.frame,text=oktext, cmd=cont, row=1, column=1)
     def backword(self):
         self.storethisword()
@@ -4202,7 +4203,7 @@ class WordCollectionCitation(TaskDressing,ui.Window,WordCollection):
     def dobuttonkwargs(self):
         if self.taskchooser.cawlmissing:
             fn=self.addCAWLentries
-            text="Add remaining CAWL entries"
+            text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
                     "Wordlist (CAWL) which aren't already in your database "
                     "(you are missing {} CAWL tags). If the appropriate "
@@ -4242,7 +4243,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         return _("This task will help you parse your citation forms.")
     def dobuttonkwargs(self):
         fn=self.doparse
-        text="Parse Citation Forms"
+        text=_("Parse Citation Forms")
         tttext=_("For now, this just lets you copy citation form info to "
                 "The lexeme field.")
         return {'text':text,
@@ -4258,7 +4259,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         return _("Parse Citation Forms")
     def doparse(self):
         window=ui.Window(self,title=self.tasktitle())
-        ui.Label(window,text="Parsing!",row=0,column=0)
+        ui.Label(window,text=_("Parsing!"),row=0,column=0)
         todo=self.getlisttodo(all=self.dodone)
         ui.Label(window,text=todo[:50],wraplength=program['root'].wraplength, row=1,column=0)
     def __init__(self, parent): #frame, filename=None
@@ -4275,7 +4276,7 @@ class Placeholder(TaskDressing,ui.Window):
         return _("Tooltip here.")
     def dobuttonkwargs(self):
         fn=self.addCAWLentries
-        text="Add remaining CAWL entries"
+        text=_("Add remaining CAWL entries")
         tttext=_("This will add entries from the Comparative African "
                 "Wordlist (CAWL) which aren't already in your database "
                 "(you are missing {} CAWL tags). If the appropriate "
@@ -4475,7 +4476,7 @@ class Tone(object):
             pady=10
             row=0
             lt=ui.Label(self.addwindow.framechk,
-                    text="Examples for {} tone frame".format(checktoadd),
+                    text=_("Examples for {} tone frame").format(checktoadd),
                     font='readbig',
                     justify=tkinter.LEFT,anchor='w')
             lt.grid(row=row,column=columnleft,sticky='w',columnspan=2,
@@ -4713,7 +4714,7 @@ class Sort(object):
             log.error(text)
             w=ui.Label(self.runwindow.frame,text=text)
             w.grid(row=1,column=0,sticky='ew')
-            b=ui.Button(self.runwindow.frame, text="OK", command=w.destroy, anchor='c')
+            b=ui.Button(self.runwindow.frame, text=_("OK"), command=w.destroy, anchor='c')
             b.grid(row=2,column=0,sticky='ew')
             self.runwindow.wait_window(w)
             w.destroy()
@@ -4899,11 +4900,11 @@ class Sound(object):
         self.soundsettingswindow.content=self.soundsettingswindow.scroll.content
         row=0
         ui.Label(self.soundsettingswindow.content, font='title',
-                text="Current Sound Card Settings",
+                text=_("Current Sound Card Settings"),
                 row=row,column=0)
         row+=1
         ui.Label(self.soundsettingswindow.content, #font='title',
-                text="(click any to change)",
+                text=_("(click any to change)"),
                 row=row,column=0)
         row+=1
         ss=self.soundsettings
@@ -5018,7 +5019,7 @@ class Sound(object):
                 t+='\t‘'+g
                 if ('plnode' in sense and
                         sense['nodetoshow'] is sense['plnode']):
-                    t+=" (pl)"
+                    t+=_(" (pl)")
                 if ('impnode' in sense and
                         sense['nodetoshow'] is sense['impnode']):
                     t+="!"
@@ -5355,7 +5356,7 @@ class Report(object):
         log.info("Starting report {} {} at {}; last sort at {} (since={})..."
                 "".format(ps,profile,a,s,analysisOK))
         self.settings.storesettingsfile()
-        waitmsg="{} {} Tone Report in Process".format(ps,profile)
+        waitmsg=_("{} {} Tone Report in Process").format(ps,profile)
         if usegui:
             resultswindow=ResultWindow(self.parent,msg=waitmsg)
         bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
@@ -5570,9 +5571,9 @@ class Report(object):
                             eps,audiopercent)
         ps2=xlp.Paragraph(s2,text=ptext)
         xlpr.close(me=me)
-        text=("Finished in "+str(time.time() - start_time)+" seconds.")
+        text=_("Finished in {} seconds.").format(str(time.time() -start_time))
         output(window,r,text)
-        text=_("(Report is also available at ("+self.tonereportfile+")")
+        text=_("(Report is also available at ({})").format(self.tonereportfile)
         output(window,r,text)
         r.close()
         if usegui:
@@ -6077,7 +6078,7 @@ class Report(object):
                 "examples of a segment type occur with different values, e.g., "
                 "V1≠V2, those words will appear multiple times, e.g., for "
                 "both V1=x and V2=y.")
-        self.wait(msg="Running {}".format(self.tasktitle()))
+        self.wait(msg=_("Running {}").format(self.tasktitle()))
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                         ,'_',''.join(sorted(self.cvtstodo)[:2])
                                         ,'_BasicReport.txt'])
@@ -7043,7 +7044,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
                 "sorted into the groups exemplified below (in the ‘{}’ frame). "
                 "Do any of these have the same tone melody? "
-                "If so, click on two groups to join, then ‘{ok}’. "
+                "If so, click on two groups to join. "
                 "If not, just click ‘{ok}’."
                 ).format(ps,profile,check,ok=oktext)
         log.debug(introtext)
@@ -7351,7 +7352,7 @@ class Transcribe(Tone,Sound,TaskDressing,ui.Window):
         self.group=self.status.group()
         log.info("group: {}, groups: {}".format(self.group,self.groups))
         if not self.groups:
-            ErrorNotice("No groups in that slice; try another!")
+            ErrorNotice(_("No groups in that slice; try another!"))
             return
         log.info("group: {}, groups: {}".format(self.group,self.groups))
         if not self.group or self.group not in self.groups:
@@ -7766,11 +7767,11 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         if not analysis.orderedUFs:
             self.runwindow.waitdone()
             self.runwindow.destroy()
-            ErrorNotice(title="No draft UF groups found for {} words!"
-                                "".format(ps),
-                        text="You don't seem to have any analyzed {0} groups "
+            ErrorNotice(title=_("No draft UF groups found for {} words!"
+                                "").format(ps),
+                        text=_("You don't seem to have any analyzed {0} groups "
                         "to join/rename. Have you done a tone analyis for {0} "
-                        "words?".format(ps)
+                        "words?").format(ps)
                         )
             return
         # ufgroups= # order by structured groups? Store this somewhere?
@@ -7891,7 +7892,7 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
             w.wait_window(w)
             cvt=self.params.cvt()
             if cvt == 'T':
-                ErrorNotice("Pick Consonants, Vowels, or CV for this report.")
+                ErrorNotice(_("Pick Consonants, Vowels, or CV for this report."))
                 return
         ps=self.slices.ps()
         if not ps:
@@ -8162,7 +8163,7 @@ class Glosslangs(DataList):
             self=self[:2]
             return
         if len(self) < 1:
-            ErrorNotice("Hey, you have no gloss languages set!")
+            ErrorNotice(_("Hey, you have no gloss languages set!"))
     def lang1(self,lang=None):
         if self and not lang:
             return self[0]
@@ -8810,7 +8811,7 @@ class RecordButtonFrame(ui.Frame):
                                         self.settings.fs, #soundsettings?
                                         self.settings.sample_format)
         else:
-            t="No framed value, nor testing; can't continue..."
+            t=_("No framed value, nor testing; can't continue...")
             log.error(t)
             ui.Label(self,text=t,borderwidth=1,font='default',
                     relief='raised').grid(row=0,column=0)
@@ -10052,17 +10053,17 @@ class CheckParameters(dict):
                 }
         self._Schecks={
             "V":{
-                1:[("V1", "First/only Vowel")],
+                1:[("V1", _("First/only Vowel"))],
                 2:[
-                    ("V1=V2", "Same First/only Two Vowels"),
-                    ("V1xV2", "Correspondence of First/only Two Vowels"),
-                    ("V2", "Second Vowel")
+                    ("V1=V2", _("Same First/only Two Vowels")),
+                    ("V1xV2", _("Correspondence of First/only Two Vowels")),
+                    ("V2", _("Second Vowel"))
                     ],
                 3:[
-                    ("V1=V2=V3", "Same First/only Three Vowels"),
-                    ("V3", "Third Vowel"),
-                    ("V2=V3", "Same Second Two Vowels"),
-                    ("V2xV3", "Correspondence of Second Two Vowels")
+                    ("V1=V2=V3", _("Same First/only Three Vowels")),
+                    ("V3", _("Third Vowel")),
+                    ("V2=V3", _("Same Second Two Vowels")),
+                    ("V2xV3", _("Correspondence of Second Two Vowels"))
                     ],
                 4:[
                     ("V1=V2=V3=V4", "Same First/only Four Vowels"),
@@ -10078,17 +10079,17 @@ class CheckParameters(dict):
                     ]
                 },
             "C":{
-                1:[("C1", "First/only Consonant")],
+                1:[("C1", _("First/only Consonant"))],
                 2:[
-                    ("C2", "Second Consonant"),
-                    ("C1=C2","Same First/only Two Consonants"),
-                    ("C1xC2", "Correspondence of First/only Two Consonants")
+                    ("C2", _("Second Consonant")),
+                    ("C1=C2",_("Same First/only Two Consonants")),
+                    ("C1xC2", _("Correspondence of First/only Two Consonants"))
                     ],
                 3:[
-                    ("C2=C3","Same Second Two Consonants"),
-                    ("C2xC3", "Correspondence of Second Two Consonants"),
-                    ("C3", "Third Consonant"),
-                    ("C1=C2=C3","Same First Three Consonants")
+                    ("C2=C3",_("Same Second Two Consonants")),
+                    ("C2xC3", _("Correspondence of Second Two Consonants")),
+                    ("C3", _("Third Consonant")),
+                    ("C1=C2=C3",_("Same First Three Consonants"))
                     ],
                 4:[
                     ("C4", "Fourth Consonant"),
@@ -10106,18 +10107,18 @@ class CheckParameters(dict):
             "CV":{
                 1:[
                     # ("#CV1", "Word-initial CV"),
-                    ("C1xV1", "Correspondence of C1 and V1"),
+                    ("C1xV1", _("Correspondence of C1 and V1")),
                     # ("CV1", "First/only CV")
                     ],
                 2:[
                     # ("CV2", "Second CV"),
-                    ("C2xV2", "Correspondence of C2 and V2"),
-                    ("CV1=CV2","Same First/only Two CVs"),
+                    ("C2xV2", _("Correspondence of C2 and V2")),
+                    ("CV1=CV2",_("Same First/only Two CVs")),
                     # ("CV2#", "Word-final CV")
                     ],
                 3:[
-                    ("CV1=CV2=CV3","Same First/only Three CVs"),
-                    ("CV3", "Third CV")
+                    ("CV1=CV2=CV3",_("Same First/only Three CVs")),
+                    ("CV3", _("Third CV"))
                     ],
                 4:[
                     ("CV1=CV2=CV3=CV4","Same First/only Four CVs"),
@@ -10152,6 +10153,8 @@ class ErrorNotice(ui.Window):
     def __init__(self, text, parent=None, title="Error!", wait=False):
         if not parent:
             parent=program['root']
+        if title == "Error!":
+            title=_("Error!")
         super(ErrorNotice, self).__init__(parent,title=title)
         self.title = title
         self.text = text
@@ -10172,7 +10175,7 @@ class Repository(object):
                     "resolved from Chorus merges:\n {}"
                     "").format(self.url,'\n'.join(rescues))
             log.error(error)
-            ErrorNotice(error,title="Chorus Rescue files found!")
+            ErrorNotice(error,title=_("Chorus Rescue files found!"))
             if me:
                 exit()
     def add(self,file):
@@ -10684,16 +10687,16 @@ def mainproblem():
         errorroot = ui.Root(program=program)
     errorroot.withdraw()
     errorw=ui.Window(errorroot)
-    errorw.title("Serious Problem!")
+    errorw.title(_("Serious Problem!"))
     errorw.mainwindow=True
-    l=ui.Label(errorw.frame,text="Hey! You found a problem! (details and "
-            "solution below)",justify='left',font='title',
+    l=ui.Label(errorw.frame,text=_("Hey! You found a problem! (details and "
+            "solution below)"),justify='left',font='title',
             row=0,column=0
             )
     if exceptiononload:
         durl=('https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md'
                 '#dependencies')
-        m=ui.Label(errorw.frame,text="\nPlease see {}".format(durl),
+        m=ui.Label(errorw.frame,text=_("\nPlease see {}").format(durl),
             justify='left', font='instructions',
             row=1,column=0
             )
@@ -10708,14 +10711,14 @@ def mainproblem():
             "session, please attach "
             "your compressed log file ({})".format(file))
     eurl+='%0d%0a--log info--%0d%0a{}'.format('%0d%0a'.join(lcontents))
-    n=ui.Label(errorw.frame,text="\n\nIf this information doesn't help "
+    n=ui.Label(errorw.frame,text=_("\n\nIf this information doesn't help "
         "you fix this, please click on this text to Email me your log (to {})"
-        "".format(addr),justify='left', font='default',
+        "").format(addr),justify='left', font='default',
         row=2,column=0
         )
     n.bind("<Button-1>", lambda e: openweburl(eurl))
-    o=ui.Label(errorw.frame,text="The end of {} / {} are below:"
-                                "".format(logsetup.getlogfilename(),file),
+    o=ui.Label(errorw.frame,text=_("The end of {} / {} are below:"
+                                "").format(logsetup.getlogfilename(),file),
                                 justify='left',
                                 font='report',
                                 row=3,column=0,
