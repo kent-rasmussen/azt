@@ -5,6 +5,7 @@ program={'name':'A→Z+T'}
 program['tkinter']=True
 program['production']=False #True for making screenshots (default theme)
 program['testing']=True #True eliminates Error screens and zipped logs
+program['demo']=True #True sets me=False, production=True, testing=False
 program['version']='0.9.1' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
@@ -22,7 +23,12 @@ Other levels:'WARNING','ERROR','CRITICAL'
 """
 if platform.uname().node == 'karlap':
     loglevel=6 #
-    me=True
+    if program['demo']:
+        me=False
+        program['production']=True #True for making screenshots (default theme)
+        program['testing']=False #True eliminates Error screens and zipped logs
+    else:
+        me=True
 else:
     loglevel='DEBUG'
     me=False
