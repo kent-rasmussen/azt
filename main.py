@@ -2944,14 +2944,16 @@ class TaskDressing(object):
             profilecounts=self.slices.valid()
             profilecountsAdHoc=self.slices.adhoccounts()
             profiles=self.status.profiles(**kwargs)
-            profiles+=self.slices.adhoc()[ps].keys()
+            if profilecountsAdHoc:
+                adhocdict=self.slices.adhoc()
+                profilecounts.update(profilecountsAdHoc)
+                if ps in adhocdict:
+                    profiles+=self.slices.adhoc()[ps].keys()
             profiles=dict.fromkeys(profiles)
             if not profiles:
                 log.error("No profiles of {} type found!".format(kwargs))
             log.info("count types: {}, {}".format(type(profilecounts),
                                                     type(profilecountsAdHoc)))
-            if profilecountsAdHoc:
-                profilecounts.update(profilecountsAdHoc)
             ui.Label(window.frame, text=_('What ({}) syllable profile do you '
                                     'want to work with?'.format(ps))
                                     ).grid(column=0, row=0)
