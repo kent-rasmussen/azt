@@ -4138,7 +4138,8 @@ class WordCollection(Segments):
         if not self.entries:
             text=_("It looks like you're done filling out the empty "
             "entries in your database! Congratulations! You can still add words "
-            "through the button on the left.")
+            "through the button on the left ({})."
+            "".format(self.dobuttonkwargs()['text']))
             l=ui.Label(self.wordframe, text=text, row=0, column=0,
                         wraplength=int(program['root'].wraplength*.6))
             l.wrap()
