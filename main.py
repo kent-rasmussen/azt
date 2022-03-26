@@ -1800,7 +1800,7 @@ class Settings(object):
         self.storesettingsfile() # why?
         self.profilesbysense={}
         self.storesettingsfile(setting='profiledata')
-        self.restart()
+        self.taskchooser.restart()
     def reloadstatusdata(self):
         # This fn is very inefficient, as it iterates over everything in
         # profilesbysense, creating status dictionaries for all of that, in
