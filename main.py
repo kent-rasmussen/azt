@@ -10800,6 +10800,8 @@ if __name__ == "__main__":
             p = pstats.Stats('userlogs/profile.tmp')
             p.sort_stats('cumulative').print_stats(10)
             # main()
+        except FileNotFoundError:
+            main()
         except SystemExit:
             log.info("Shutting down by user request")
         except KeyboardInterrupt:
