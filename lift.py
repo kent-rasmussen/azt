@@ -1846,14 +1846,18 @@ class LiftURL():
         log.log(4,"parents of {}: {}".format(nodenames,plist))
         return plist
     def setattrsofnodes(self):
-        self.attrs={} #These are atttributes we ask for, which require the field
+        """These are atttributes we ask for, which require the field. This
+        should not be used for an attribute that requires either of two fields
+        (like glosslang, which doesn't require both gloss *and* definition)"""
+        self.attrs={}
         self.attrs['entry']=['guid']
         self.attrs['sense']=['senseid']
         self.attrs['tonefield']=['tonevalue']
         self.attrs['toneUFfield']=['toneUFvalue']
         self.attrs['locationfield']=['location']
         self.attrs['cawlfield']=['fvalue']
-        self.attrs['gloss']=['glosslang']
+        # glosslang may be asking for a definition...
+        # self.attrs['gloss']=['glosslang'] #do I want this?
     def setchildren(self):
         """These are the kwargs that imply a field. field names also added to
         ensure that depenents get picked up.
