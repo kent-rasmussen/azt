@@ -1315,6 +1315,9 @@ class ScrollingFrame(Frame):
     def tobottom(self):
         self.update_idletasks()
         self.canvas.yview_moveto(1)
+    def totop(self):
+        self.update_idletasks()
+        self.canvas.yview_moveto(0)
     def __init__(self,parent,xscroll=False,**kwargs):
         # Gridded.__init__(self,**kwargs)
         # Childof.__init__(self,parent)
