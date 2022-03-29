@@ -2452,7 +2452,8 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
@@ -2466,8 +2467,8 @@ if __name__ == '__main__':
             # 'swallow_af9c3f8f-71e6-4b9a-805c-f6a148dcab8c',
             # 'frighten_ecffd944-2861-495f-ae38-e7e9cdad45db',
             # 'prevent_929504ce-35bb-48fe-ae95-8674a97e625f'
-            'excrement, faeces_04c27ce8-5308-4f1b-945a-81807cd818da',
-            'blink_0e76e781-33e7-4e1d-b957-7d08bd18ade1'
+            'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
+            # 'blink_0e76e781-33e7-4e1d-b957-7d08bd18ade1'
             ]
     guids=['dd3c93bb-0019-4dce-8d7d-21c1cb8a6d4d',
         '09926cec-8be1-4f66-964e-4fdd8fa75fdc',
@@ -2478,6 +2479,11 @@ if __name__ == '__main__':
     glosslang='en'
     pss=["Verb","Noun"]
     analang='bfj'
+    kwargs={'senseid':'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
+            'glosslang': 'en'}
+    f=lift.get('sense/definition/form/text', showurl=True, **kwargs).get('text')
+    print(f)
+    exit()
     def test():
         for fieldvalue in [2,2]:
             for location in locations:
