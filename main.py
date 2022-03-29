@@ -4521,8 +4521,9 @@ class Tone(object):
                       command = lambda x=checkdefntoadd,n=checktoadd: submit(x,n))
             sub_btn.grid(row=row,column=columnleft,sticky='w')
             log.info('sub_btn:{}'.format(stext))
-            self.addwindow.scroll.tobottom()
             self.addwindow.scroll.windowsize() #make sure scroll's big enough
+            self.addwindow.scroll.totop()
+            self.addwindow.scroll.tobottom()
         def unchk(event):
             #This is here to keep people from thinking they are approving what's
             #next to this button, in case any variable has been changed.
