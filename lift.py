@@ -2452,8 +2452,8 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
@@ -2479,9 +2479,11 @@ if __name__ == '__main__':
     glosslang='en'
     pss=["Verb","Noun"]
     analang='bfj'
-    kwargs={'senseid':'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
-            'glosslang': 'en'}
-    f=lift.get('sense/definition/form/text', showurl=True, **kwargs).get('text')
+    kwargs={'senseid':
+            "f5148917-d1f8-ce36-1289-a85a63cd8982",
+            # 'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
+            'glosslang': 'fr'}
+    f=lift.get('gloss/text', showurl=True, **kwargs).get('text')
     print(f)
     exit()
     def test():
