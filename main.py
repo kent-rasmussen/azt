@@ -8936,7 +8936,7 @@ class ToneGroupButtonFrame(ui.Frame):
     """buttons"""
     def labelbutton(self):
         b=ui.Label(self, text=self._text,
-                    column=1, row=0, sticky="ew", ipady=15,
+                    column=1, row=0, sticky="ew",
                     **self.buttonkwargs()
                     )
     def playbutton(self):
@@ -8948,7 +8948,6 @@ class ToneGroupButtonFrame(ui.Frame):
                     cmd=self.player.play,
                     column=1, row=0,
                     sticky="nesw",
-                    ipady=15,
                     **self.buttonkwargs())
         bttext=_("Click to hear this utterance")
         if program['praat']:
@@ -8963,7 +8962,7 @@ class ToneGroupButtonFrame(ui.Frame):
         else:
             cmd=self.selectnsortnext
         b=ui.Button(self, text=self._text, cmd=cmd,
-                    column=1, row=0, sticky="ew", ipady=15,
+                    column=1, row=0, sticky="ew",
                     **self.buttonkwargs())
         bt=ui.ToolTip(b,_("Pick this Group"))
     def refresh(self):
@@ -8986,7 +8985,6 @@ class ToneGroupButtonFrame(ui.Frame):
                         column=0,
                         row=0,
                         sticky="nsew",
-                        ipady=15,
                         **tinyfontkwargs)
         bct=ui.ToolTip(bc,_("Change example word"))
     def unsortbutton(self):
