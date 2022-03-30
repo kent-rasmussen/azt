@@ -2127,11 +2127,12 @@ class Settings(object):
             log.debug("group_comparison: {}".format(self.group_comparison))
         self.set('group_comparison',choice,window,refresh=False)
         log.debug("group_comparison: {}".format(self.group_comparison))
-    def setcheck(self,choice,window):
+    def setcheck(self,choice,window=None):
         self.params.check(choice)
         self.attrschanged.append('check')
         self.refreshattributechanges()
-        window.destroy()
+        if window:
+            window.destroy()
     def setmaxprofiles(self,choice,window):
         self.maxprofiles=choice
         window.destroy()
