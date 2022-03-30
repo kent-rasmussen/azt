@@ -9049,6 +9049,11 @@ class ToneGroupButtonFrame(ui.Frame):
             kwargs[arg]=kwargs.pop(arg,False)
         if kwargs['playable']:
             kwargs['wsoundfile']=True
+        #set this for buttons:
+        kwargs['ipady']=kwargs.pop('bipady',defaults.get('bipady',15))
+        kwargs['ipady']=kwargs.pop('bipadx',defaults.get('bipadx',15))
+        kwargs['pady']=kwargs.pop('bpady',defaults.get('bpady',0))
+        kwargs['pady']=kwargs.pop('bpadx',defaults.get('bpadx',0))
         self.kwargs=kwargs
         self._var=tkinter.BooleanVar()
         super(ToneGroupButtonFrame,self).__init__(parent, **frameargs)
