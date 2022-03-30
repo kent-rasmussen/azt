@@ -6725,7 +6725,9 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             text=framed.formatted()
             entryview=ui.Frame(self.runwindow.frame)
             self.sortitem=ui.Label(entryview, text=text,font='readbig',
-                                    column=0,row=0, sticky="w",pady=50)
+                                    column=0,row=0, sticky="w",
+                                    pady=scaledpady
+                                    )
             entryview.grid(column=1, row=1, sticky="new")
             self.sortitem.wrap()
             self.runwindow.waitdone()
@@ -6742,7 +6744,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             b=ToneGroupButtonFrame(groupbuttons, self, self.exs,
                                     group,
                                     showtonegroup=True,
-                                    alwaysrefreshable=True
+                                    alwaysrefreshable=True,
+                                    bpady=scaledpady
                                     )
             b.grid(row=groupbuttons.row, column=0, sticky='w')
             groupvars[group]=b.var()
@@ -6801,6 +6804,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             self.status.marksenseidsorted(senseid)
             self.maybewrite()
         log.info('Running sortT:')
+        scaledpady=int(50/program['scale'])
         self.getrunwindow()
         """sortingstatus() checks by ps,profile,check (frame),
         for the presence of a populated fieldtype='tone'. So any time any of
