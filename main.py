@@ -4539,6 +4539,7 @@ class Tone(object):
             self.status.renewchecks() #renew (not update), because of new frame
             self.settings.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
+            self.settings.setcheck(checktoadd) #assume we will use this now
         ps=kwargs.get('ps',self.slices.ps())
         wtitle=_("Define a New {} Tone Frame").format(ps)
         self.addwindow=ui.Window(self.frame, title=wtitle)
