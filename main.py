@@ -3112,6 +3112,15 @@ class TaskDressing(object):
                                     window=window,
                                     column=0, row=4
                                     )
+            count=len(buttonFrame1.bf.winfo_children())
+            if self.taskchooser is self:
+                task=self.mainwindowis
+            else:
+                task=self
+            newb=ui.Button(buttonFrame1.bf,
+                            text=_("New Frame"),
+                            cmd=lambda w=window: task.addframe(window=w),
+                            row=count+1)
             buttonFrame1.wait_window(window)
         """Make sure we got a value"""
         if self.params.check() not in checks:
