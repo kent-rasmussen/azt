@@ -5135,6 +5135,9 @@ class Record(Sound):
         if justone:
             self.showentryformstorecordpage()
         else:
+            #store for later
+            ps=self.slices.ps()
+            prifile=self.slices.profile()
             for psprofile in self.slices.valid(): #self.profilecountsValid:
                 if self.runwindow.exitFlag.istrue():
                     return 1
@@ -5144,6 +5147,9 @@ class Record(Sound):
                                         cmd=self.runwindow.resetframe) # .frame.destroy
                 nextb.grid(row=0,column=1,sticky='ne')
                 self.showentryformstorecordpage()
+            #return to initial
+            self.slices.ps(ps)
+            self.slices.profile(profile)
         self.donewpyaudio()
     def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
         def setskip(event):
