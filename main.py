@@ -9322,7 +9322,7 @@ class SliceDict(dict):
             log.error("You asked to change to ps {}, which isn't in the list "
                         "of pss: {}".format(ps,pss))
         else:
-            self.makepsok()
+            # self.makepsok()
             return self._ps
     def profiles(self,ps=None):
         """This returns profiles for either a specified ps or the current one"""
