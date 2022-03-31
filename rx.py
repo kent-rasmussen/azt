@@ -12,7 +12,8 @@ def urlok(x):
     # 1. a simple list of characters to strip,
     # 2. replacement
     d=("̀́̂̌̄̃᷉̋̄̏̌̂᷄᷅̌᷆᷇᷉̈","")
-    p=("][\. /?",'_')
+    # * . " / \ [ ] : ; | , # illegal in MS Windows
+    p=(r"][\. /?*\\:;\|,\"",'_')
     l=("əéèêɛ",'e')
     o=("ô",'o')
     for i in [d,p,l]:
