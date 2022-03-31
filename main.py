@@ -4549,6 +4549,8 @@ class Tone(object):
             self.settings.storesettingsfile(setting='toneframes')
             self.addwindow.destroy()
             self.settings.setcheck(checktoadd) #assume we will use this now
+            if 'window' in kwargs:
+                kwargs['window'].destroy()
         ps=kwargs.get('ps',self.slices.ps())
         wtitle=_("Define a New {} Tone Frame").format(ps)
         self.addwindow=ui.Window(self.frame, title=wtitle)
