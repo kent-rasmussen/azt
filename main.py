@@ -3857,7 +3857,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
-        self.parent.makecheck(filename)
+        # self.parent.makecheck(filename)
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
         self.file.askwhichlift(file.getfilenames())
