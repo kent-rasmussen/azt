@@ -5138,13 +5138,12 @@ class Record(Sound):
             for psprofile in self.slices.valid(): #self.profilecountsValid:
                 if self.runwindow.exitFlag.istrue():
                     return 1
-                ps=psprofile[1]
-                profile=psprofile[0]
-                log.info("Working on ps {} and profile {}".format(ps,profile))
+                self.slices.ps(psprofile[1])
+                self.slices.profile(psprofile[0])
                 nextb=ui.Button(self.runwindow,text=_("Next Group"),
                                         cmd=self.runwindow.resetframe) # .frame.destroy
                 nextb.grid(row=0,column=1,sticky='ne')
-                self.showentryformstorecordpage(ps=ps,profile=profile)
+                self.showentryformstorecordpage()
         self.donewpyaudio()
     def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
         def setskip(event):
