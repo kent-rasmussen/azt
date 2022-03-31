@@ -8554,6 +8554,13 @@ class FramedDataElement(FramedData):
             if file.exists(self.filenameURL):
                 log.info("Found linked audio file {}".format(self.filename))
                 return True
+            else:
+                n=self.node.findall(
+                                "form[@lang='{lang}'][text='{fn}']"
+                                "".format(lang=self.audiolang,fn=self.filename)
+                                )
+                if n:
+                    self.node.remove(n[0])
     def makeaudiofilename(self):
         self.audio()
         if self.audiofileisthere():
