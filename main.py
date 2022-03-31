@@ -5055,7 +5055,7 @@ class Sound(object):
         self.soundcheck()
 class Record(Sound):
     """This holds all the Sound methods specific for Recording."""
-    def showentryformstorecordpage(self,ps=None,profile=None):
+    def showentryformstorecordpage(self):
         #The info we're going for is stored above sense, hence guid.
         if self.runwindow.exitFlag.istrue():
             log.info('no runwindow; quitting!')
@@ -5065,6 +5065,8 @@ class Record(Sound):
             return
         self.runwindow.resetframe()
         self.runwindow.wait()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
         count=self.slices.count()
         text=_("Record {} {} Words: click ‘Record’, talk, "
                 "and release ({} words)".format(profile,ps,
