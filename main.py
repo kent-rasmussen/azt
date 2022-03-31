@@ -5071,6 +5071,7 @@ class Record(Sound):
         text=_("Record {} {} Words: click ‘Record’, talk, "
                 "and release ({} words)".format(profile,ps,
                                                 count))
+        log.info(text)
         instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w')
         buttonframes=ui.ScrollingFrame(self.runwindow.frame)
