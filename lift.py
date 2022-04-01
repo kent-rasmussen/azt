@@ -1386,8 +1386,10 @@ class LiftURL():
     def pssubclass(self):
         """<trait name='{ps}-infl-class' value='{pssubclass}'"""
         log.info("Kwargs: {}".format(self.kwargs))
-        attrs={'name':'{}-infl-class'.format(self.kwargs['ps']),
-                    'value': self.kwargs['pssubclass']}
+        self.kwargs['pssubclassname']='{}-infl-class'.format(self.kwargs['ps'])
+        self.kwargs['pssubclassvalue']='pssubclass'
+        attrs={'name': 'pssubclassname',
+                    'value': 'pssubclassvalue'}
         log.info("Attrs: {}".format(attrs))
         self.trait(attrs)
     def gloss(self):
@@ -1462,9 +1464,10 @@ class LiftURL():
             self.kwargs['formtext']=None
             self.form(lang='glosslang')
     def morphtype(self,attrs={}):
-        if 'morphtype' in self.kwargs:
-            attrs={'name':"morph-type",'value':self.kwargs['morphtype']}
-        self.trait(attrs) # <trait name="morph-type" value="stem" />
+        self.kwargs['morphtypename']='morph-type'
+        if 'morphtype' in self.kwargs: #This is needed
+            attrs={'name':"morphtypename",'value':'morphtype'}
+            self.trait(attrs) # <trait name="morph-type" value="stem" />
     def attrdonothing(self):
         pass
     def maybeshow(self,nodename,parent=None):
