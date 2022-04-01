@@ -1900,10 +1900,10 @@ class LiftURL():
         self.alias['locationfield']="field[@type='location']"
     def __init__(self, *args,**kwargs):
         self.base=kwargs['base']
+        self.kwargs=kwargs
         self.setaliases()
         basename=self.basename=self.getalias(self.base.tag)
         super(LiftURL, self).__init__()
-        self.kwargs=kwargs
         target=self.target=self.kwargs.pop('target','entry') # what do we want?
         self.setchildren()
         self.parsetargetlineage()
