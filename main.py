@@ -7068,7 +7068,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     row=0
             log.info("Next button at r:{}, c:{}".format(row,column))
         bf=ui.Frame(self.sframe.content)
-        bf.grid(row=max(row,self.buttoncolumns+1), column=0, sticky="ew") #Keep on own row
+        bf.grid(row=max(row+1,self.buttoncolumns+1), column=0, sticky="ew") #Keep on own row
         b=ui.Button(bf, text=oktext,
                         cmd=bf.destroy,
                         anchor="w",
