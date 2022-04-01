@@ -3782,6 +3782,21 @@ class TaskChooser(TaskDressing,ui.Window):
                 self.cawlmissing.append(i+1)
         log.info("CAWL missing ({}): {}".format(len(self.cawlmissing),
                                                     self.cawlmissing))
+    def whatsdoneenough(self):
+        self.doneenough={}
+        for task in ['collectionlc','parsedlx','collectionplimp',
+                    'tonereport',
+                    'torecord',
+                    'torecordT',
+                    'recording',
+                    'somesortT',
+                    'somesort',
+                    'sortlc',
+                    'somerecording',
+                    'somerecordingT',
+                    'analysis'
+                    ]:
+            self.doneenough[task]=False
     def whatsdone(self):
         """I should probably have a roundtable with people to discuss these
         numbers, to see that we agree the decision points are rational."""
