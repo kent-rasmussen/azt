@@ -1888,8 +1888,12 @@ class LiftURL():
     def setaliases(self):
         self.alias={}
         self.alias['lexeme']='lexical-unit'
-        self.alias['ps']='grammatical-info'
+        self.alias['morphtype']="trait[@name='morph-type']"
         self.alias['senseid']='id'
+        self.alias['ps']='grammatical-info'
+        if 'ps' in self.kwargs: #this isn't used without ps
+            self.alias['pssubclass']="trait[@name='{}-infl-class']".format(
+                                                            self.kwargs['ps'])
         self.alias['fieldtype']='ftype'
         self.alias['toneUFfield']="field[@type='tone']"
         self.alias['tonefield']="field[@type='tone']"
