@@ -1323,8 +1323,6 @@ class LiftURL():
             if (None not in [attr,attrs[attr]] and attrs[attr] in self.kwargs
                                 and self.kwargs[attrs[attr]] is not None):
                 b+="[@{}={}]".format(attr,self.escapeattr(self.kwargs[attrs[attr]]))
-            elif None not in [attr,attrs[attr]]: #use value given
-                b+="[@{}={}]".format(attr,self.escapeattr(attrs[attr]))
         if ((liftattr is None or (liftattr in self.kwargs #no lift attribute
                                 and self.kwargs[liftattr] is None))
                 and tag == 'text' and myattr in self.kwargs #text value to match
