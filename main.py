@@ -719,9 +719,9 @@ class StatusFrame(ui.Frame):
         self.proselabel(t,cmd=self.taskchooser.getmaxpss,parent=line)
     def finalbuttons(self):
         # self.opts['row']+=6
+        self.opts['row']+=1
         if hasattr(self.taskchooser.mainwindowis,'dobuttonkwargs'):
             self.bigbutton=self.button(**self.task.dobuttonkwargs())
-        self.opts['row']+=1
     """Right side"""
     def maybeboard(self):
         profileori=self.settings.slices.profile()
