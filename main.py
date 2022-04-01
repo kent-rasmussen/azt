@@ -3836,16 +3836,24 @@ class TaskChooser(TaskDressing,ui.Window):
                     if al not in sortsrecorded[f]:
                         sortsrecorded[f][al]=0
                     sortsnotrecorded[f][l]=sorts[f][l]-sortsrecorded[f][al]
-                    if sortsnotrecorded[f][l] >= 100:
-                        if f == 'sense/example':
-                            self.donew['torecordT']=True
-                        else:
-                            self.donew['torecord']=True
-                    if sortsrecorded[f][al] >= 100:
-                        if f == 'sense/example':
-                            self.donew['somerecordingT']=True
-                        else:
-                            self.donew['somerecording']=True
+                    if f == 'sense/example':
+                        if not sortsnotrecorded[f][l]:
+                            self.donew['recordedT']=True
+                        if sortsrecorded[f][al] >= 100:
+                            self.doneenough['recordedT']=True
+                        # Needed? Any time sorting is done, show recording
+                        # if not sortsrecorded[f][al]:
+                        #     self.donew['torecordT']=True
+                        if sortsnotrecorded[f][l] < 100:
+                            self.doneenough['torecordT']=True
+                    else:
+                        if not sortsnotrecorded[f][l]:
+                            self.donew['recorded']=True
+                        if sortsrecorded[f][al] >= 100:
+                            self.doneenough['recorded']=True
+                        #see above
+                        if sortsnotrecorded[f][l] < 100:
+                            self.doneenough['torecord']=True
                 else:
                     log.info("Couldn't find plausible audiolang (among {}) "
                             "for analang {}".format(self.db.audiolangs,l))
