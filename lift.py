@@ -1874,6 +1874,7 @@ class LiftURL():
         self.children['sense']=['ps','definition','gloss',
                                 'example','toneUFfield','cawlfield','field'
                                             ]
+        self.children['ps']=['pssubclass','trait']
         self.children['example']=['form','translation','locationfield',
                                             'tonefield','field']
         self.children['field']=['form']
