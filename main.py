@@ -7049,7 +7049,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                                     row=1,column=1,
                                     # columnspan=2,
                                     sticky='wsn')
-        row+=1
         """put entry buttons here."""
         for senseid in senseids:
             if senseid is None: #needed?
