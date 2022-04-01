@@ -1854,7 +1854,9 @@ class LiftURL():
         (like glosslang, which doesn't require both gloss *and* definition)"""
         self.attrs={}
         self.attrs['entry']=['guid']
+        self.attrs['morphtype']=['morphtype']
         self.attrs['sense']=['senseid']
+        self.attrs['pssubclass']=['pssubclass']
         self.attrs['tonefield']=['tonevalue']
         self.attrs['toneUFfield']=['toneUFvalue']
         self.attrs['locationfield']=['location']
