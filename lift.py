@@ -706,7 +706,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
-        log.info("Reading LIFT file.")
+        log.info("Reading LIFT file: {}".format(self.filename))
         self.tree=ET.parse(self.filename)
         self.nodes=self.tree.getroot()
         log.info("Done reading LIFT file.")
