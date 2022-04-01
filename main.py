@@ -3596,10 +3596,6 @@ class TaskChooser(TaskDressing,ui.Window):
         a user may well want to go back and look at those recordings, and maybe
         rerecord some."""
         #if nothing to do??
-        """Separate these into
-        Data Collection: collect, sort
-        Analysis: report, transcribe, joinUF
-        Maybe make a button to switch between the two?"""
         if self.showreports:
             tasks=[
                     ReportCitation,
