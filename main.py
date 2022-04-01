@@ -6918,6 +6918,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         scroll.content.anotherskip.grid(row=1,column=0)
         """Children of self.runwindow.frame.scroll.content.groups"""
         groupbuttons.row=0 #rows for this frame
+        groupbuttons.col=0 #columns for this frame
         groupvars={}
         groupbuttonlist=list()
         entryview=ui.Frame(self.runwindow.frame)
