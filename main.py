@@ -3819,13 +3819,15 @@ class TaskChooser(TaskDressing,ui.Window):
                 sortsrecorded[f]={}
             sortsnotrecorded[f]={}
             for l in sorts[f]:
-                if sorts[f][l] >=100: #what is a reasonable number here?
-                    """I don't think I can faithfully distinguish between
-                    sorting on lc v other fields here, at least not yet"""
-                    if f == 'sense/example':
-                        self.donew['somesortT']=True
-                    else:
-                        self.donew['somesort']=True
+                """I don't think I can faithfully distinguish between
+                sorting on lc v other fields here, at least not yet"""
+                if f == 'sense/example':
+                    #sorting is never done; mark when the top slices are done?
+                    if sorts[f][l] >=100: #what is a reasonable number here?
+                        self.doneenough['sortT']=True
+                else:
+                    if sorts[f][l] >=100: #what is a reasonable number here?
+                        self.doneenough['sort']=True
                 #This is a bit of a hack, but no analang nor audiolang yet.
                 maybeals=[i for i in self.db.audiolangs if l in i]
                 if maybeals:
