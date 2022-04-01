@@ -3785,14 +3785,15 @@ class TaskChooser(TaskDressing,ui.Window):
         self.doneenough={} # which options the user *can* see
         for task in ['collectionlc','parsedlx','collectionplimp',
                     'tonereport',
+                    # 'torecord',
+                    # 'torecordT',
+                    'recorded',
+                    'recordedT',
+                    'sortT',
+                    'sort',
+                    'sortlc',
                     'torecord',
                     'torecordT',
-                    'recording',
-                    'somesortT',
-                    'somesort',
-                    'sortlc',
-                    'somerecording',
-                    'somerecordingT',
                     'analysis'
                     ]:
             self.donew[task]=False
