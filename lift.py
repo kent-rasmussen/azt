@@ -1868,8 +1868,9 @@ class LiftURL():
         # use self.alias.get(tag,tag) where needed!
         self.children={}
         self.children['lift']=['entry']
-        self.children['entry']=['lexeme','pronunciation','sense','field',
-                                            'citation','morphtype','trait']
+        self.children['entry']=['lexeme','morphtype','pronunciation','sense',
+                                'field',
+                                'citation','trait']
         self.children['sense']=['ps','definition','gloss',
                                 'example','toneUFfield','cawlfield','field'
                                             ]
