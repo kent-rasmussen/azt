@@ -6828,7 +6828,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             log.info("Next button at r:{}, c:{}".format(groupbuttons.row,
                                                         groupbuttons.col))
             groupbuttonlist.append(b)
-            b.update_idletasks()
+            scroll._configure_canvas()
         def sortselected(senseid,framed):
             selectedgroups=selected(groupvars)
             log.info("selectedgroups: {}".format(selectedgroups))
