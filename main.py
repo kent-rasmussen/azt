@@ -7056,7 +7056,17 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             self.verifybutton(self.sframe.content,senseid,
                                 row, column,
                                 label=False)
-            row+=1
+            if not self.buttoncolumns or (self.buttoncolumns and
+                                            row+1<self.buttoncolumns):
+                row+=1
+            else:
+                column+=1
+                column%=self.buttoncolumns # from 0 to cols-1
+                if not column:
+                    row+=1
+                elif row+1 == self.buttoncolumns:
+                    row=0
+            log.info("Next button at r:{}, c:{}".format(row,column))
         bf=ui.Frame(self.sframe.content)
         bf.grid(row=row, column=0, sticky="ew")
         b=ui.Button(bf, text=oktext,
