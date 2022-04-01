@@ -7117,7 +7117,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     **kwargs
                     ).grid(column=column, row=0,
                             sticky="ew",
-                            ipady=15 #Inside the buttons...
+                            ipady=15*program['scale'] #Inside the buttons...
                             )
     def joinT(self):
         log.info("Running joinT!")
