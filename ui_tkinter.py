@@ -142,6 +142,7 @@ class Theme(object):
                             ('uncheckedbox','images/unchecked.png')
                         ]:
             try:
+                #hyperthread here!
                 mkimg(name,relurl)
             except:
                 log.debug("Image {} at {} not compiled (is it there?)".format(
