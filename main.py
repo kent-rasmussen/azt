@@ -3600,14 +3600,14 @@ class TaskChooser(TaskDressing,ui.Window):
             tasks=[
                     ReportCitation,
                     ]
-            if self.donew['collectionlc']:
+            if self.doneenough['collectionlc']:
                 """This currently takes way too much time. Until it gets
                 mutithreaded, it will not be an option"""
                 tasks.append(ReportCitationBasicV)
                 tasks.append(ReportCitationBasicC)
                 tasks.append(ReportCitationBasicCV)
                 tasks.append(ReportCitationBasic)
-            if self.donew['somesortT']:
+            if self.doneenough['sortT']:
                 tasks.append(ReportCitationT)
                 tasks.append(ReportCitationTlocation)
                 tasks.append(ReportCitationBasicT)
@@ -3616,22 +3616,22 @@ class TaskChooser(TaskDressing,ui.Window):
                     WordCollectionCitation,
                     # WordCollectionLexeme
                     ]
-            if self.donew['collectionlc']:
+            if self.doneenough['collectionlc']:
                 tasks.append(RecordCitation)
                 """Do these next"""
                 # tasks.append(SortV)
                 # tasks.append(SortC)
                 tasks.append(SortCitationT)
-                if self.donew['somesortT']:
+                if self.doneenough['sortT']:
                     tasks.append(RecordCitationT)
             # if self.donew['parsedlx']:
             #     tasks.append(SortRoots)
         else: #i.e., analysis tasks
             tasks=[]
-            if self.donew['somesortT']:
-                if self.donew['somerecordingT']:
+            if self.doneenough['sortT']:
+                if self.doneenough['recordedT']:
                     tasks.append(Transcribe)
-                    if self.donew['analysis']:
+                    if self.doneenough['analysis']:
                         tasks.append(JoinUFgroups)
             if me:
                 tasks.append(ReportConsultantCheck)
@@ -3781,7 +3781,8 @@ class TaskChooser(TaskDressing,ui.Window):
     def whatsdone(self):
         """I should probably have a roundtable with people to discuss these
         numbers, to see that we agree the decision points are rational."""
-        self.donew={}
+        self.donew={} # last is default to show user
+        self.doneenough={} # which options the user *can* see
         for task in ['collectionlc','parsedlx','collectionplimp',
                     'tonereport',
                     'torecord',
@@ -3795,6 +3796,7 @@ class TaskChooser(TaskDressing,ui.Window):
                     'analysis'
                     ]:
             self.donew[task]=False
+            self.doneenough[task]=False
         lexemesdone=self.db.nentrieswlexemedata
         citationsdone=self.db.nentrieswcitationdata
         log.info("lexemesdone by lang: {}".format(lexemesdone))
