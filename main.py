@@ -3868,8 +3868,10 @@ class TaskChooser(TaskDressing,ui.Window):
                 break
         for lang in self.file.db.nentrieswcitationdata:
             # if self.file.db.nentrieswcitationdata[lang] >=1700:
-            if len(self.cawlmissing) < 705:#too wide a margin, but include 1k
+            if not len(self.cawlmissing):
                 self.donew['collectionlc']=True
+            if len(self.cawlmissing) < 705:#too wide a margin, but include 1k
+                self.doneenough['collectionlc']=True
                 break
         for f in self.db.sensefields:
             if 'verification' in f:
