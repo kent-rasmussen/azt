@@ -7201,9 +7201,10 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             bok=ui.Button(self.sortitem, text=oktext,
                     cmd=self.sortitem.destroy,
                     anchor="c",
-                    font='instructions'
-                    )
-            bok.grid(column=0, row=row, sticky="ew")
+                    font='instructions',
+                    column=0,
+                    row=max(row+1,self.buttoncolumns+1),
+                    sticky="ew")
             for group in b:
                 b[group].setcanary(bok) #this must be done after bok exists
             log.info("making button!")
