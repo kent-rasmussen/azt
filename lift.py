@@ -1458,7 +1458,7 @@ class LiftURL():
             self.form(lang='glosslang')
     def morphtype(self,attrs={}):
         if 'morphtype' in self.kwargs:
-            attrs={'name':"morph-type",'value':self.kwargs[morphtype]}
+            attrs={'name':"morph-type",'value':self.kwargs['morphtype']}
         self.trait(attrs) # <trait name="morph-type" value="stem" />
     def attrdonothing(self):
         pass
