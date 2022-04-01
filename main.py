@@ -7102,7 +7102,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                             ipady=15)
         else:
             bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
-            bf.grid(column=0, row=row, sticky='ew')
+            bf.grid(column=column, row=row, sticky='ew')
             b=ui.Button(bf, text=text, pady='0',
                     cmd=notok,
                     **kwargs
