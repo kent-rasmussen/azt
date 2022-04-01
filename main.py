@@ -951,6 +951,7 @@ class StatusFrame(ui.Frame):
                     isinstance(self.task,JoinUFgroups)
                     ):
                 self.cvtline()
+                self.buttoncolumnsline()
                 self.maybeboard()
             elif isinstance(self.task,Segments):
                 self.cvtline()
