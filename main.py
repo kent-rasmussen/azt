@@ -7173,6 +7173,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         self.sframe=ui.ScrollingFrame(self.runwindow.frame,
                                         row=1,column=1,sticky='w')
         self.sortitem=self.sframe.content
+        row=column=0
         groupvars={}
         b={}
         for group in groups:
