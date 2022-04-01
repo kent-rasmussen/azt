@@ -1037,6 +1037,7 @@ class Settings(object):
                                 'fontthemesmall',
                                 'secondformfield',
                                 'soundsettingsok',
+                                'buttoncolumns',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -2143,6 +2144,10 @@ class Settings(object):
         self.refreshattributechanges()
         if window:
             window.destroy()
+    def setbuttoncolumns(self,choice,window=None):
+        self.buttoncolumns=self.taskchooser.mainwindowis.buttoncolumns=choice
+        if window:
+            window.destroy()
     def setmaxprofiles(self,choice,window):
         self.maxprofiles=choice
         window.destroy()
@@ -2498,6 +2503,7 @@ class TaskDressing(object):
                     'settings',
                     # 'menu',
                     'mainrelief','fontthemesmall',
+                    'buttoncolumns',
                     'hidegroupnames'
                     # 'glosslangs',
                     # 'analang',
@@ -2508,6 +2514,7 @@ class TaskDressing(object):
                 setattr(self,attr,getattr(self.parent,attr))
         # Make these directly available:
         for attr in ['params','slices','status','toneframes','glosslangs',
+                    'buttoncolumns',
                     'soundsettings'
                     ]:
             if hasattr(self.settings,attr):
@@ -3042,6 +3049,20 @@ class TaskDressing(object):
                             column=0, row=1,
                             cmd=getother
                             )
+        window.wait_window(window)
+    def getbuttoncolumns(self,event=None):
+        log.info("Asking for number of button columns...")
+        window=ui.Window(self.frame,title=_('Select Button Columns'))
+        ui.Label(window.frame, text=_('How many columns do you want to use for '
+                                        'the sort buttons?')
+                                        ).grid(column=0, row=0)
+        optionslist = list(range(1,4))
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                optionlist=optionslist,
+                                command=self.settings.setbuttoncolumns,
+                                window=window,
+                                column=0, row=1
+                                )
         window.wait_window(window)
     def getmaxpss(self,event=None):
         title=_('Select Maximum Number of Lexical Categories')
