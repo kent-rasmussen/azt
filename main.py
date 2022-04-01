@@ -3802,6 +3802,7 @@ class TaskChooser(TaskDressing,ui.Window):
         citationsdone=self.db.nentrieswcitationdata
         log.info("lexemesdone by lang: {}".format(lexemesdone))
         log.info("citationsdone by lang: {}".format(citationsdone))
+        #There should never be more lexemes than citation forms.
         for l in lexemesdone:
             if l not in citationsdone or citationsdone[l] < lexemesdone[l]:
                 w=self.asktoconvertlxtolc()
