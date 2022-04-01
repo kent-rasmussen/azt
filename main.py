@@ -3876,7 +3876,7 @@ class TaskChooser(TaskDressing,ui.Window):
         #I need to think through this
         for f in self.db.sensefields:
             if 'verification' in f:
-                self.donew['analysis']=True
+                self.doneenough['analysis']=True
                 break
         log.info("Analysis of what you're done with: {}".format(self.donew))
     def restart(self,filename=None):
