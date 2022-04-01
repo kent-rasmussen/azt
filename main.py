@@ -3873,6 +3873,7 @@ class TaskChooser(TaskDressing,ui.Window):
             if len(self.cawlmissing) < 705:#too wide a margin, but include 1k
                 self.doneenough['collectionlc']=True
                 break
+        #I need to think through this
         for f in self.db.sensefields:
             if 'verification' in f:
                 self.donew['analysis']=True
