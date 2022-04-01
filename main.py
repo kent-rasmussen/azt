@@ -6813,9 +6813,20 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                                     alwaysrefreshable=True,
                                     bpady=scaledpady
                                     )
-            b.grid(row=groupbuttons.row, column=0, sticky='w')
+            b.grid(row=groupbuttons.row, column=groupbuttons.col, sticky='w')
             groupvars[group]=b.var()
-            groupbuttons.row+=1
+            if not self.buttoncolumns or (self.buttoncolumns and
+                                        groupbuttons.row+1<self.buttoncolumns):
+                groupbuttons.row+=1
+            else:
+                groupbuttons.col+=1
+                groupbuttons.col%=self.buttoncolumns # from 0 to cols-1
+                if not groupbuttons.col:
+                    groupbuttons.row+=1
+                elif groupbuttons.row+1 == self.buttoncolumns:
+                    groupbuttons.row=0
+            log.info("Next button at r:{}, c:{}".format(groupbuttons.row,
+                                                        groupbuttons.col))
             groupbuttonlist.append(b)
             b.update_idletasks()
         def sortselected(senseid,framed):
