@@ -7181,7 +7181,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                                     showtonegroup=True,
                                     labelizeonselect=True
                                     )
-            b[group].grid(column=0, row=row, sticky='ew')
+            b[group].grid(column=column, row=row, sticky='ew')
             groupvars[group]=b[group].var()
             row+=1
         """If all is good, destroy this frame."""
