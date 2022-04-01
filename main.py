@@ -7183,7 +7183,17 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                                     )
             b[group].grid(column=column, row=row, sticky='ew')
             groupvars[group]=b[group].var()
-            row+=1
+            if not self.buttoncolumns or (self.buttoncolumns and
+                                            row+1<self.buttoncolumns):
+                row+=1
+            else:
+                column+=1
+                column%=self.buttoncolumns # from 0 to cols-1
+                if not column:
+                    row+=1
+                elif row+1 == self.buttoncolumns:
+                    row=0
+            log.info("Next button at r:{}, c:{}".format(row,column))
         """If all is good, destroy this frame."""
         self.runwindow.waitdone()
         ngroupstojoin=0
