@@ -3859,9 +3859,12 @@ class TaskChooser(TaskDressing,ui.Window):
                             "for analang {}".format(self.db.audiolangs,l))
         log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
         for lang in self.file.db.nentrieswlexemedata:
-            if self.file.db.nentrieswcitationdata[lang
-                ]-self.file.db.nentrieswlexemedata[lang] < 100:
+            remaining=self.file.db.nentrieswcitationdata[lang
+                                        ]-self.file.db.nentrieswlexemedata[lang]
+            if not remaining:
                 self.donew['parsedlx']=True
+            if remaining < 100:
+                self.doneenough['parsedlx']=True
                 break
         for lang in self.file.db.nentrieswcitationdata:
             # if self.file.db.nentrieswcitationdata[lang] >=1700:
