@@ -2491,9 +2491,13 @@ if __name__ == '__main__':
     kwargs={'senseid':
             "f5148917-d1f8-ce36-1289-a85a63cd8982",
             # 'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
-            'glosslang': 'fr'}
-    f=lift.get('gloss/text', showurl=True, **kwargs).get('text')
-    print(f)
+            # 'glosslang': 'fr'
+            }
+    for ps in pss:
+        f=lift.get('gloss/text', ps=ps, pssubclass="1/2", showurl=True, **kwargs).get('text')
+        print(f)
+        f=lift.get('gloss/text', ps=ps, morphtype="1/2", showurl=True, **kwargs).get('text')
+        print(f)
     exit()
     def test():
         for fieldvalue in [2,2]:
