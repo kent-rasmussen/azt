@@ -2,6 +2,8 @@
 
 # Version 0.9.1
 SILCAWL now converts template ps to local values
+Set up ps sublcass to use '{}-infl-class'.format(self.kwargs['ps'] trait
+uses button column variable to give up to three columns for sorting
 
 # Version 0.9
 Rendering works now with Charis 6.0 font name, and more efficiently
