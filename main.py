@@ -699,6 +699,15 @@ class StatusFrame(ui.Frame):
         t=(_("working on {}".format(self.settings.params.cvcheckname())))
         self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
         # self.opts['row']+=1
+    def buttoncolumnsline(self):
+        self.opts['row']+=1
+        if self.settings.buttoncolumns:
+            t=(_("Using {} button columns").format(self.settings.buttoncolumns))
+        else:
+            t=(_("Not using multiple button columns").format(self.check))
+        log.info(t)
+        tt=_("Click here to change the number of columns used for sort buttons")
+        self.proselabel(t,cmd=self.taskchooser.getbuttoncolumns,tt=tt)
     def maxes(self):
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w')
