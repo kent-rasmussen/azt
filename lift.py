@@ -1384,6 +1384,7 @@ class LiftURL():
     def ps(self):
         self.baselevel()
         self.build("grammatical-info","value","ps")
+        self.bearchildrenof("ps")
     def gloss(self):
         self.baselevel()
         self.build("gloss","lang","glosslang")
