@@ -1385,6 +1385,13 @@ class LiftURL():
         self.baselevel()
         self.build("grammatical-info","value","ps")
         self.bearchildrenof("ps")
+    def pssubclass(self):
+        """<trait name='{ps}-infl-class' value='{pssubclass}'"""
+        log.info("Kwargs: {}".format(self.kwargs))
+        attrs={'name':'{}-infl-class'.format(self.kwargs['ps']),
+                    'value': self.kwargs['pssubclass']}
+        log.info("Attrs: {}".format(attrs))
+        self.trait(attrs)
     def gloss(self):
         self.baselevel()
         self.build("gloss","lang","glosslang")
