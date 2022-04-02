@@ -2511,9 +2511,9 @@ if __name__ == '__main__':
             # 'glosslang': 'fr'
             }
     for ps in pss:
-        f=lift.get('gloss/text', ps=ps, pssubclass="1/2", showurl=True, **kwargs).get('text')
+        f=lift.get('entry', annotationname="C1", showurl=True, **kwargs).get('text')
         print(f)
-        f=lift.get('gloss/text', ps=ps, morphtype="1/2", showurl=True, **kwargs).get('text')
+        f=lift.get('entry', annotationname="C1", showurl=True, **kwargs).get('text')
         print(f)
     exit()
     def test():
