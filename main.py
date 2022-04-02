@@ -3960,7 +3960,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.makesettings()
         TaskDressing.__init__(self,parent)
         if not self.settings.writeeverynwrites: #0/None are not sensible values
-            self.settings.writeeverynwrites=5
+            self.settings.writeeverynwrites=1
             self.settings.storesettingsfile()
         self.writeable=0 #start the count
         self.makedefaulttask() #normal default
