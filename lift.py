@@ -405,7 +405,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if sensenode is None:
                 log.info("Sorry, this didn't return a node: {}".format(senseid))
                 return
-            p=Node(sensenode, tag='example')
+            attrib={'source': 'AZT sort on {}'.format(getnow())}
+            p=Node(sensenode, tag='example', attrib=attrib)
             p.makeformnode(analang,forms[analang])
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
