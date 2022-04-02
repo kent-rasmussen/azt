@@ -3910,6 +3910,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 self.doneenough['analysis']=True
                 break
         log.info("Analysis of what you're done with: {}".format(self.donew))
+        log.info("You're done enough with: {}".format(self.doneenough))
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
