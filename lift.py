@@ -1875,6 +1875,7 @@ class LiftURL():
         self.attrs['toneUFfield']=['toneUFvalue']
         self.attrs['locationfield']=['location']
         self.attrs['cawlfield']=['fvalue']
+        self.attrs['annotation']=['annotationname']
         # glosslang may be asking for a definition...
         # self.attrs['gloss']=['glosslang'] #do I want this?
     def setchildren(self):
@@ -1897,7 +1898,7 @@ class LiftURL():
         self.children['lexeme']=['form']
         self.children['definition']=['form']
         self.children['citation']=['form']
-        self.children['form']=['text']
+        self.children['form']=['text','annotation']
         self.children['gloss']=['text']
         self.children['pronunciation']=['field','trait','form']
         self.children['translation']=['form']
