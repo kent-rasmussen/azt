@@ -7400,7 +7400,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         row=0
         firstOK=_("This word is OK in this frame")
         newgroup=_("Different")
-        skiptext=_("Skip this word/phrase")
+        skiptext=_("Skip this item")
         """This should just add a button, not reload the frame"""
         row+=10
         bf=ui.Frame(parent)
