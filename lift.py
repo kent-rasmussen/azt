@@ -1823,7 +1823,9 @@ class LiftURL():
         log.log(4,"looking for attr(s) of {} in {}".format([node]+children,
                                                                     self.attrs))
         for n in [node]+children:
-            if n in self.attrs:
+            if n in self.path or n in self.target:
+                log.info("found {} in path or target; skipping kwarg check.".format(n))
+            elif n in self.attrs:
                 log.log(4,"looking for attr(s) of {} in {}".format(n,self.attrs))
                 common=set(self.attrs[n])&set(list(self.kwargs)+[self.what])
                 if common != set():
