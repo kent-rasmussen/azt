@@ -1395,9 +1395,10 @@ class LiftURL():
         """<trait name='{ps}-infl-class' value='{pssubclass}'"""
         log.info("Kwargs: {}".format(self.kwargs))
         self.kwargs['pssubclassname']='{}-infl-class'.format(self.kwargs['ps'])
-        self.kwargs['pssubclassvalue']='pssubclass'
-        attrs={'name': 'pssubclassname',
-                    'value': 'pssubclassvalue'}
+        attrs={'name': 'pssubclassname'}
+        if 'pssubclass' in self.kwargs:
+            self.kwargs['pssubclassvalue']='pssubclass'
+            attrs['value']='pssubclassvalue'
         log.info("Attrs: {}".format(attrs))
         self.trait(attrs)
     def gloss(self):
