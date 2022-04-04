@@ -3898,9 +3898,8 @@ class TaskChooser(TaskDressing,ui.Window):
             # if self.file.db.nentrieswcitationdata[lang] >=1700:
             if not len(self.cawlmissing):
                 self.donew['collectionlc']=True
-            if len(self.cawlmissing) < 705:#too wide a margin, but include 1k
-                self.doneenough['collectionlc']=True
-                break
+            # if me or len(self.cawlmissing) < 705:#too wide a margin, but include 1k
+        self.doneenough['collectionlc']=True
         #I need to think through this
         for f in self.db.sensefields:
             if 'verification' in f:
