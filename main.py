@@ -1385,6 +1385,10 @@ class Settings(object):
                 self.verbalps=ps
             else:
                 log.error("Not sure what to do with top ps {}".format(ps))
+        if not hasattr(self,'nominalps'):
+                self.nominalps='Noun'
+        if not hasattr(self,'verbalps'):
+                self.verbalps='Verb'
         try:
             log.info("Using ‘{}’ for nouns, and ‘{}’ for verbs".format(self.nominalps,
                 self.verbalps))
