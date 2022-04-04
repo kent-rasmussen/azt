@@ -7216,6 +7216,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     "".format(oktext,ngroupstojoin))
             #this avoids asking the user about it again, until more sorting:
             self.status.tojoin(False)
+            self.runwindow.destroy()
             return 0
         elif ngroupstojoin > 2:
             log.info("User selected ‘{}’ with {} groups selected, This is "
