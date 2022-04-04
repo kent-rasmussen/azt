@@ -1358,6 +1358,7 @@ class LiftURL():
         self.build("form","lang",lang) #OK if lang is None
         if value is not None:
             self.text("value")
+        self.bearchildrenof("form")
     def annotation(self,attrs={}):
         self.baselevel()
         attrs={'name': 'annotationname',
