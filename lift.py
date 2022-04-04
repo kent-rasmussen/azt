@@ -1880,7 +1880,7 @@ class LiftURL():
         self.attrs['toneUFfield']=['toneUFvalue']
         self.attrs['locationfield']=['location']
         self.attrs['cawlfield']=['fvalue']
-        self.attrs['annotation']=['annotationname']
+        self.attrs['annotation']=['annotationname','annotationvalue']
         # glosslang may be asking for a definition...
         # self.attrs['gloss']=['glosslang'] #do I want this?
     def setchildren(self):
