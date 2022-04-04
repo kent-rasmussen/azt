@@ -6595,8 +6595,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 ):
             exit=self.getcheck()
             if exit and not self.exitFlag.istrue():
-                self.runcheck()
-            return #if the user didn't supply a check
+                return #if the user didn't supply a check
         self.settings.updatesortingstatus() # Not just tone anymore
         self.maybesort()
     def maybesort(self):
