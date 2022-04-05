@@ -4863,6 +4863,42 @@ class Sort(object):
         scroll.grid(row=3,column=0,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
+    def removesenseidfromgroup(self,senseid,**kwargs):
+        check=kwargs.get('check',self.params.check())
+        group=kwargs.get('group',self.status.group())
+        write=kwargs.get('write',True)
+        sorting=kwargs.get('sorting',True) #Default to verify button
+        log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
+        #This should only *mod* if already there
+        self.db.addmodexamplefields(senseid=senseid,
+                                analang=self.analang,
+                                fieldtype='tone',location=check,
+                                fieldvalue='',  #this value only change
+                                showurl=True,
+                                write=False)
+        log.info("Checking that removal worked")
+        tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
+                            location=check).get('text')
+        if tgroups in [[],'',['']]:
+            log.info("Field removal succeeded! LIFT says '{}', = []."
+                                                            "".format(tgroups))
+        elif len(tgroups) == 1:
+            tgroup=tgroups[0]
+            log.error("Field removal failed! LIFT says '{}', != []."
+                                                            "".format(tgroup))
+        elif len(tgroups) > 1:
+            log.error("Found {} tone values: {}; Fix this!"
+                                            "".format(len(tgroups),tgroups))
+            return
+        rm=self.verifictioncode(check=check,group=group)
+        profile=kwargs.get('profile',self.slices.profile())
+        self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
+                                                        rms=[rm],write=False)
+        self.status.last('sort',update=True)
+        if write:
+            self.db.write()
+        if sorting:
+            self.status.marksenseidtosort(senseid)
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
     def donewpyaudio(self):
@@ -7315,42 +7351,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                                     fieldvalue=self.groupselected,
                                     ps=None
                                     )
-    def removesenseidfromgroup(self,senseid,**kwargs):
-        check=kwargs.get('check',self.params.check())
-        group=kwargs.get('group',self.status.group())
-        write=kwargs.get('write',True)
-        sorting=kwargs.get('sorting',True) #Default to verify button
-        log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
-        #This should only *mod* if already there
-        self.db.addmodexamplefields(senseid=senseid,
-                                analang=self.analang,
-                                fieldtype='tone',location=check,
-                                fieldvalue='',  #this value only change
-                                showurl=True,
-                                write=False)
-        log.info("Checking that removal worked")
-        tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
-                            location=check).get('text')
-        if tgroups in [[],'',['']]:
-            log.info("Field removal succeeded! LIFT says '{}', = []."
-                                                            "".format(tgroups))
-        elif len(tgroups) == 1:
-            tgroup=tgroups[0]
-            log.error("Field removal failed! LIFT says '{}', != []."
-                                                            "".format(tgroup))
-        elif len(tgroups) > 1:
-            log.error("Found {} tone values: {}; Fix this!"
-                                            "".format(len(tgroups),tgroups))
-            return
-        rm=self.verifictioncode(check=check,group=group)
-        profile=kwargs.get('profile',self.slices.profile())
-        self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
-                                                        rms=[rm],write=False)
-        self.status.last('sort',update=True)
-        if write:
-            self.db.write()
-        if sorting:
-            self.status.marksenseidtosort(senseid)
     def marksortedguid(self,guid):
         """I think these are only valuable during a check, so we don't have to
         constantly refresh sortingstatus() from the lift file."""
@@ -7433,7 +7433,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                         )
         skipb.grid(column=0, row=1, sticky="ew")
     """Doing stuff"""
-class Transcribe(Tone,Sound,TaskDressing,ui.Window):
+class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Transcribe Tone")
     def tooltip(self):
