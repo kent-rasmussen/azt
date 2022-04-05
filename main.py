@@ -2042,11 +2042,22 @@ class Settings(object):
         self.status.renewsenseidstosort([],[]) #will repopulate
         groups=[]
         for senseid in senseids:
-            v=firstoflist(self.db.get("example/tonefield/form/text",
+            if cvt == 'T':
+                v=firstoflist(self.db.get("example/tonefield/form/text",
                                 senseid=senseid,
                                 location=check
                                 ).get('text'),
                         othersOK=True) #Don't complain if more than one found.
+            else:
+                v=firstoflist(self.db.get("citation/form/annotation",
+                                lang=self.analang,
+                                annotationname=check,
+                                # annotationvalue=
+                                # senseid=senseid,
+                                # location=check
+                                ).get('value'),
+                        othersOK=True) #Don't complain if more than one found.
+
             # if v:
             #     log.debug("Found tone value (updatesortingstatus): {} ({})"
             #             "".format(v, type(v)))
@@ -5434,7 +5445,10 @@ class Report(object):
         waitmsg=_("{} {} Tone Report in Process").format(ps,profile)
         if usegui:
             resultswindow=ResultWindow(self.parent,msg=waitmsg)
-        bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
+        bits=[str(self.reportbasefilename),
+                rx.urlok(ps),
+                rx.urlok(profile),
+                "ToneReport"]
         if not default:
             bits.append('mod')
         self.tonereportfile='_'.join(bits)+".txt"
@@ -6607,7 +6621,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         def notdonewarning(): #Use this!!
             self.getrunwindow(nowait=True)
             buttontxt=_("Sort!")
-            text=_("Hey, you're not done with {} {} words in the {} frame!"
+            text=_("Hey, you're not done with {} {} words by {}!"
                     "\nCome back when you have time; restart where you left "
                     "off by pressing ‘{}’".format(ps,profile,check,buttontxt))
             ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)

@@ -405,7 +405,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             if sensenode is None:
                 log.info("Sorry, this didn't return a node: {}".format(senseid))
                 return
-            p=Node(sensenode, tag='example')
+            attrib={'source': 'AZT sort on {}'.format(getnow())}
+            p=Node(sensenode, tag='example', attrib=attrib)
             p.makeformnode(analang,forms[analang])
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
@@ -1357,6 +1358,13 @@ class LiftURL():
         self.build("form","lang",lang) #OK if lang is None
         if value is not None:
             self.text("value")
+        self.bearchildrenof("form")
+    def annotation(self,attrs={}):
+        self.baselevel()
+        attrs={'name': 'annotationname'}
+        if 'annotationvalue' in self.kwargs:
+            attrs['value']='annotationvalue'
+        self.build("annotation",attrs=attrs)
     def citation(self):
         self.baselevel()
         self.build("citation")
@@ -1387,9 +1395,10 @@ class LiftURL():
         """<trait name='{ps}-infl-class' value='{pssubclass}'"""
         log.info("Kwargs: {}".format(self.kwargs))
         self.kwargs['pssubclassname']='{}-infl-class'.format(self.kwargs['ps'])
-        self.kwargs['pssubclassvalue']='pssubclass'
-        attrs={'name': 'pssubclassname',
-                    'value': 'pssubclassvalue'}
+        attrs={'name': 'pssubclassname'}
+        if 'pssubclass' in self.kwargs:
+            self.kwargs['pssubclassvalue']='pssubclass'
+            attrs['value']='pssubclassvalue'
         log.info("Attrs: {}".format(attrs))
         self.trait(attrs)
     def gloss(self):
@@ -1814,7 +1823,9 @@ class LiftURL():
         log.log(4,"looking for attr(s) of {} in {}".format([node]+children,
                                                                     self.attrs))
         for n in [node]+children:
-            if n in self.attrs:
+            if n in self.path or n in self.target:
+                log.info("found {} in path or target; skipping kwarg check.".format(n))
+            elif n in self.attrs:
                 log.log(4,"looking for attr(s) of {} in {}".format(n,self.attrs))
                 common=set(self.attrs[n])&set(list(self.kwargs)+[self.what])
                 if common != set():
@@ -1825,10 +1836,13 @@ class LiftURL():
         return False
     def kwargsneeds(self,node,children):
         if node in self.kwargs:
-            log.log(4,"Parent ({}) in kwargs: {}".format(node,self.kwargs))
-            return True
-        if children != []:
-            log.log(4,"Looking for descendants of {} ({}) in kwargs: {}".format(
+            log.info("Parent ({}) in kwargs: {}".format(node,self.kwargs))
+        elif children != []:
+            for child in children:
+                if child in self.path or child in self.target:
+                    log.info("found {} in path or target; skipping kwarg check.".format(child))
+                    return
+            log.info("Looking for descendants of {} ({}) in kwargs: {}".format(
                                                 node,children,self.kwargs))
             childreninkwargs=set(children) & set(self.kwargs)
             if childreninkwargs != set():
@@ -1869,6 +1883,7 @@ class LiftURL():
         self.attrs['toneUFfield']=['toneUFvalue']
         self.attrs['locationfield']=['location']
         self.attrs['cawlfield']=['fvalue']
+        self.attrs['annotation']=['annotationname','annotationvalue']
         # glosslang may be asking for a definition...
         # self.attrs['gloss']=['glosslang'] #do I want this?
     def setchildren(self):
@@ -1891,7 +1906,7 @@ class LiftURL():
         self.children['lexeme']=['form']
         self.children['definition']=['form']
         self.children['citation']=['form']
-        self.children['form']=['text']
+        self.children['form']=['text','annotation']
         self.children['gloss']=['text']
         self.children['pronunciation']=['field','trait','form']
         self.children['translation']=['form']
@@ -2504,10 +2519,11 @@ if __name__ == '__main__':
             # 'glosslang': 'fr'
             }
     for ps in pss:
-        f=lift.get('gloss/text', ps=ps, pssubclass="1/2", showurl=True, **kwargs).get('text')
+        # f=lift.get('citation/form/text', annotationname="C1", annotationvalue='1', showurl=True, **kwargs).get('text')
+        f=lift.citation(path=['annotation'], annotationname="C1", annotationvalue='1', showurl=True, **kwargs)
         print(f)
-        f=lift.get('gloss/text', ps=ps, morphtype="1/2", showurl=True, **kwargs).get('text')
-        print(f)
+        # f=lift.get('citation/form/text', path=['annotation'], annotationname="C1", showurl=True, **kwargs).get('text')
+        # print(f)
     exit()
     def test():
         for fieldvalue in [2,2]:
