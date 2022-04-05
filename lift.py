@@ -2519,10 +2519,11 @@ if __name__ == '__main__':
             # 'glosslang': 'fr'
             }
     for ps in pss:
-        f=lift.get('entry', annotationname="C1", showurl=True, **kwargs).get('text')
+        # f=lift.get('citation/form/text', annotationname="C1", annotationvalue='1', showurl=True, **kwargs).get('text')
+        f=lift.citation(path=['annotation'], annotationname="C1", annotationvalue='1', showurl=True, **kwargs)
         print(f)
-        f=lift.get('entry', annotationname="C1", showurl=True, **kwargs).get('text')
-        print(f)
+        # f=lift.get('citation/form/text', path=['annotation'], annotationname="C1", showurl=True, **kwargs).get('text')
+        # print(f)
     exit()
     def test():
         for fieldvalue in [2,2]:
