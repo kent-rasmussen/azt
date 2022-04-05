@@ -5445,10 +5445,13 @@ class Report(object):
         waitmsg=_("{} {} Tone Report in Process").format(ps,profile)
         if usegui:
             resultswindow=ResultWindow(self.parent,msg=waitmsg)
-        bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
+        bits=[str(self.reportbasefilename),
+                rx.urlok(ps),
+                rx.urlok(profile),
+                "ToneReport"]
         if not default:
             bits.append('mod')
-        self.tonereportfile=rx.urlok('_'.join(bits)+".txt")
+        self.tonereportfile='_'.join(bits)+".txt"
         checks=self.status.checks(wsorted=True,**kwargs)
         if not checks:
             error=_("Hey, sort some morphemes in at least one frame before "
