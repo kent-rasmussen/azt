@@ -1836,10 +1836,13 @@ class LiftURL():
         return False
     def kwargsneeds(self,node,children):
         if node in self.kwargs:
-            log.log(4,"Parent ({}) in kwargs: {}".format(node,self.kwargs))
-            return True
-        if children != []:
-            log.log(4,"Looking for descendants of {} ({}) in kwargs: {}".format(
+            log.info("Parent ({}) in kwargs: {}".format(node,self.kwargs))
+        elif children != []:
+            for child in children:
+                if child in self.path or child in self.target:
+                    log.info("found {} in path or target; skipping kwarg check.".format(child))
+                    return
+            log.info("Looking for descendants of {} ({}) in kwargs: {}".format(
                                                 node,children,self.kwargs))
             childreninkwargs=set(children) & set(self.kwargs)
             if childreninkwargs != set():
