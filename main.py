@@ -5448,7 +5448,7 @@ class Report(object):
         bits=[str(self.reportbasefilename),ps,profile,"ToneReport"]
         if not default:
             bits.append('mod')
-        self.tonereportfile='_'.join(bits)+".txt"
+        self.tonereportfile=rx.urlok('_'.join(bits)+".txt")
         checks=self.status.checks(wsorted=True,**kwargs)
         if not checks:
             error=_("Hey, sort some morphemes in at least one frame before "
