@@ -502,7 +502,8 @@ class Menus(ui.Menu):
         """help"""
     def help(self):
         self.cascade(self,_("Help"),'helpmenu')
-        for m in [("About", self.parent.helpabout),
+        for m in [(_("About"), self.parent.helpabout),
+                    (_("Update A→Z+T"), self.parent.updateazt),
                     ("What's with the New Interface?", self.parent.helpnewinterface)
                     ]:
             self.command(self.helpmenu,
