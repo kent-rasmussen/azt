@@ -2345,6 +2345,8 @@ class Settings(object):
         self.makeglosslangs()
         self.checkglosslangs() #if stated aren't in db, guess
         self.makeparameters() #depends on nothing but self.analang
+        if not self.buttoncolumns:
+            self.setbuttoncolumns(1)
         """The following might be OK here, but need to be OK later, too."""
         # """The following should only be done after word collection"""
         # if self.taskchooser.donew['collectionlc']:
@@ -5918,7 +5920,8 @@ class Report(object):
         and outputs a list/dictionary of senseid/{senseid:form} form."""
         ps=kwargs.get('ps',self.slices.ps())
         output=[] #This is just a list of senseids now: (Do we need the dict?)
-        for form in self.settings.formstosearch[ps]:
+        for form in [i for i in self.settings.formstosearch[ps] if i]:
+            log.info("Looking for form {}".format(form))
             if regex.search(form):
                 output+=self.settings.formstosearch[ps][form]
         return output
