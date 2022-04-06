@@ -502,7 +502,8 @@ class Menus(ui.Menu):
         """help"""
     def help(self):
         self.cascade(self,_("Help"),'helpmenu')
-        for m in [("About", self.parent.helpabout),
+        for m in [(_("About"), self.parent.helpabout),
+                    (_("Update A→Z+T"), self.parent.updateazt),
                     ("What's with the New Interface?", self.parent.helpnewinterface)
                     ]:
             self.command(self.helpmenu,
@@ -3442,6 +3443,16 @@ class TaskDressing(object):
         """only write to file every self.writeeverynwrites times you might."""
         self.taskchooser.writeable+=1 #and tally here each time this is asked
         return not self.taskchooser.writeable%self.settings.writeeverynwrites
+    def updateazt(self):
+        if 'git' in program:
+            gitargs=[program['git'], "pull"]
+            try:
+                e=subprocess.check_output(gitargs,shell=False,
+                                            stderr=subprocess.STDOUT)
+                log.info("git output: {}".format(e))
+            except subprocess.CalledProcessError as e:
+                o=e.output.decode("utf-8").strip()
+                log.info("git output: {}; {}".format(e,o))
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -10992,7 +11003,7 @@ if __name__ == "__main__":
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    for exe in ['praat','hg','ffmpeg','lame']: #'sendpraat' now in 'praat', if useful
+    for exe in ['praat','hg','ffmpeg','lame','git']: #'sendpraat' now in 'praat', if useful
         findexecutable(exe)
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
