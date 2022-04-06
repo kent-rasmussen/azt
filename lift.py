@@ -1393,13 +1393,13 @@ class LiftURL():
         self.bearchildrenof("ps")
     def pssubclass(self):
         """<trait name='{ps}-infl-class' value='{pssubclass}'"""
-        log.info("Kwargs: {}".format(self.kwargs))
+        log.log(4,"Kwargs: {}".format(self.kwargs))
         self.kwargs['pssubclassname']='{}-infl-class'.format(self.kwargs['ps'])
         attrs={'name': 'pssubclassname'}
         if 'pssubclass' in self.kwargs:
             self.kwargs['pssubclassvalue']='pssubclass'
             attrs['value']='pssubclassvalue'
-        log.info("Attrs: {}".format(attrs))
+        log.log(4,"Attrs: {}".format(attrs))
         self.trait(attrs)
     def gloss(self):
         self.baselevel()
@@ -1824,7 +1824,7 @@ class LiftURL():
                                                                     self.attrs))
         for n in [node]+children:
             if n in self.path or n in self.target:
-                log.info("found {} in path or target; skipping kwarg check.".format(n))
+                log.log(4,"found {} in path or target; skipping kwarg check.".format(n))
             elif n in self.attrs:
                 log.log(4,"looking for attr(s) of {} in {}".format(n,self.attrs))
                 common=set(self.attrs[n])&set(list(self.kwargs)+[self.what])
@@ -1836,13 +1836,13 @@ class LiftURL():
         return False
     def kwargsneeds(self,node,children):
         if node in self.kwargs:
-            log.info("Parent ({}) in kwargs: {}".format(node,self.kwargs))
+            log.log(4,"Parent ({}) in kwargs: {}".format(node,self.kwargs))
         elif children != []:
             for child in children:
                 if child in self.path or child in self.target:
-                    log.info("found {} in path or target; skipping kwarg check.".format(child))
+                    log.log(4,"found {} in path or target; skipping kwarg check.".format(child))
                     return
-            log.info("Looking for descendants of {} ({}) in kwargs: {}".format(
+            log.log(4,"Looking for descendants of {} ({}) in kwargs: {}".format(
                                                 node,children,self.kwargs))
             childreninkwargs=set(children) & set(self.kwargs)
             if childreninkwargs != set():
