@@ -11,6 +11,7 @@ log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
 import sys
+import math        #?import needed modules
 
 class AudioInterface(pyaudio.PyAudio):
     def stop(self):
@@ -484,7 +485,112 @@ class SoundFileRecorder(object):
         self.pa=pyaudio
         self.settings=settings
         self.filenameURL=filenameURL
+class BeepGenerator(object):
+    def play(self):
+        # self.compile(pitches=str(pitches))
+        self.stream.write(self.wavdata)
+    def pause(self):
+        self.stream.write(chr(0)*self.framespersyl)
+    def done(self):
+        self.stream.stop_stream()
+        self.stream.close()
+        self.p.stop()
+    def bitratecheck(self):
+        if self.hz > self.bitrate:
+            self.bitrate = self.hz+100
+    def longer(self):
+        self.secpersyl*=1.1
+        self.setparameters()
+    def shorter(self):
+        self.secpersyl/=1.1
+        self.setparameters()
+    def higher(self):
+        self.hz*=1.05
+        self.setparameters()
+    def lower(self):
+        self.hz/=1.05
+        self.setparameters()
+    def wider(self):
+        self.deltaHL*=1.3
+        self.setparameters()
+    def narrower(self):
+        self.deltaHL/=1.3
+        self.setparameters()
+    def setparameters(self):
+        self.bitratecheck()
+        self.framespersyl=int(self.secpersyl*self.bitrate)
+        self.pitchdict={
+        '˥':self.hz+self.deltaHL*2,
+        '˦':self.hz+self.deltaHL,
+        '˧':self.hz,
+        '˨':self.hz-self.deltaHL,
+        '˩':self.hz-self.deltaHL*2,
+        ' ':0,
+        ' ':0
+        }
+    def compile(self,pitches='˩˩ ˥˥ ˦˧˨ ˩˩'):#' ˦˧˨˩'):
+        self.wavdata=''
+        words=str(pitches).split(' ')
+        # log.info("words: {}".format(words))
+        for w in words:
+            syllables=w.split(' ')
+            # log.info("syllables: {}".format(syllables))
+            for syl in syllables:
+                syl=list(set(syl)&set(['˥','˦','˧','˨','˩']))
+                for n,c in enumerate(syl):
+                    # log.info("character: {}".format(c))
+                    fromhz=self.pitchdict[c]
+                    if n+1 < len(syl) and c != syl[n+1]: #not last, not next
+                        tohz=self.pitchdict[syl[n+1]]
+                    else:
+                        tohz=self.pitchdict[c]
+                    hz=fromhz
+                    step=1
+                    for f in range(self.framespersyl//len(syl)):
+                        if not f%step:
+                            hz+=((tohz-fromhz)*step/self.framespersyl)
+                        # log.info("hz: {} ({}-{})".format(hz,fromhz,tohz))
+                        if hz: # if c in self.pitchdict and self.pitchdict[c]:
+                            self.wavdata+=chr(int(math.sin(f/((
+                                                    self.bitrate/hz
+                                                        )/math.pi))*127+128))
+                        else: #don't div/0
+                            self.wavdata+=chr(0)
+                for i in range(self.framespersyl//self.bitrate):
+                    self.wavdata+=chr(128)
+                for f in range(int(self.secpersylbreak*self.bitrate)):
+                    self.wavdata+=chr(0)
+            for f in range(int(self.secperwordbreak*self.bitrate)):
+                self.wavdata+=chr(0)
+        for f in range(int(self.secperwordbreak*self.bitrate*2)):
+            self.wavdata+=chr(0)
+    def __init__(self,pyaudio=None,settings=None):
+        if not pyaudio:
+            self.p = AudioInterface()     #initialize pyaudio
+        else:
+            self.p = pyaudio
+        if not settings:
+            self.settings=SoundSettings(self.p)
+        else:
+            self.settings=settings
+        #See https://en.wikipedia.org/wiki/Bit_rate#Audio
+        self.bitrate = 32000     #number of frames per second/frameset.
+        self.hz = 500     #Hz, waves per second, 261.63=C4-note.
+        self.secpersyl = .2     #seconds to play sound
+        self.secpersylbreak = .05
+        self.secperwordbreak = .10
+        self.deltaHL = 50 #difference between high and low, in hz
+        self.stream = self.p.open(format = self.p.get_format_from_width(1),
+                        channels = 1,
+                        rate = self.bitrate,
+                        output = True)
+        self.setparameters()
+        # self.play()
 if __name__ == "__main__":
+    b=BeepGenerator()
+    b.compile()
+    b.play()
+    exit()
     def handle_exception(exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
