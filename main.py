@@ -3414,7 +3414,8 @@ class TaskDressing(object):
             try:
                 e=subprocess.check_output(gitargs,shell=False,
                                             stderr=subprocess.STDOUT)
-                log.info("git output: {}".format(e))
+                o=e.output.decode("utf-8").strip()
+                log.info("git output: {}; {}".format(e,o))
             except subprocess.CalledProcessError as e:
                 o=e.output.decode("utf-8").strip()
                 log.info("git output: {}; {}".format(e,o))
