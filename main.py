@@ -2344,6 +2344,8 @@ class Settings(object):
         self.makeglosslangs()
         self.checkglosslangs() #if stated aren't in db, guess
         self.makeparameters() #depends on nothing but self.analang
+        if not self.buttoncolumns:
+            self.setbuttoncolumns(1)
         """The following might be OK here, but need to be OK later, too."""
         # """The following should only be done after word collection"""
         # if self.taskchooser.donew['collectionlc']:
