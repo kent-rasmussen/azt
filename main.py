@@ -1854,6 +1854,17 @@ class Settings(object):
         """if there's only one analysis language, use it."""
         nlangs=len(self.db.analangs)
         log.debug(_("Found {} analangs: {}".format(nlangs,self.db.analangs)))
+        lxwdata=self.db.nentrieswlexemedata
+        lcwdata=self.db.nentrieswcitationdata
+        lxwdatamax=lcwdatamax=None
+        for lang in [l for l in lxwdata if lxwdata[l] > 0]:
+            if not lxwdatamax or lxwdata[lxwdatamax] < lxwdata[lang]:
+                lxwdatamax=lang
+        for lang in [l for l in lcwdata if lcwdata[l] > 0]:
+            if not lcwdatamax or lcwdata[lcwdatamax] < lcwdata[lang]:
+                lcwdatamax=lang
+        log.info("Most citation data in [{}] ({})".format(lcwdatamax,lcwdata))
+        log.info("Most lexeme data in [{}] ({})".format(lxwdatamax,lxwdata))
         if not nlangs:
             errortext=_("There don't seem to be any language forms in your "
             "database!")
@@ -1874,31 +1885,55 @@ class Settings(object):
             of the first two is three letters long, and the other isn't"""
         elif nlangs == 2:
             if ((len(self.db.analangs[0]) == 3) and
+                (lcwdatamax == self.db.analangs[0] or
+                    lxwdatamax == self.db.analangs[0]) and
                 (len(self.db.analangs[1]) != 3)):
-                log.debug(_('Looks like I found an iso code for analang! '
-                                        '({})'.format(self.db.analangs[0])))
+                log.debug(_('Looks like I found an iso code with data for '
+                                'analang! ({})'.format(self.db.analangs[0])))
                 self.analang=self.db.analangs[0] #assume this is the iso code
                 self.analangdefault=self.db.analangs[0] #In case it gets changed.
             elif ((len(self.db.analangs[1]) == 3) and
+                (lcwdatamax == self.db.analangs[1] or
+                    lxwdatamax == self.db.analangs[1]) and
                     (len(self.db.analangs[0]) != 3)):
-                log.debug(_('Looks like I found an iso code for analang! '
-                                            '({})'.format(self.db.analangs[1])))
+                log.debug(_('Looks like I found an iso code with data for '
+                                'analang! ({})'.format(self.db.analangs[1])))
                 self.analang=self.db.analangs[1] #assume this is the iso code
                 self.analangdefault=self.db.analangs[1] #In case it gets changed.
+            elif lcwdatamax in self.db.analangs:
+                self.analang=lcwdatamax
+                log.debug('Neither analang looks like an iso code, taking the '
+                'one with most citation data: {}'.format(self.db.analangs))
+            elif lxwdatamax in self.db.analangs:
+                self.analang=lxwdatamax
+                log.debug('Neither analang looks like an iso code, taking the '
+                'one with most lexeme data: {}'.format(self.db.analangs))
             else:
                 self.analang=self.db.analangs[0]
-                log.debug('Neither analang looks like an iso code, taking the '
-                'first one: {}'.format(self.db.analangs))
+                log.debug('Neither analang looks like an iso code, nor has much'
+                'data; taking the first one: {}'.format(self.db.analangs))
         else: #for three or more analangs, take the first plausible iso code
-            for n in range(nlangs):
-                if len(self.db.analangs[n]) == 3:
-                    self.analang=self.db.analangs[n]
-                    log.debug(_('Looks like I found an iso code for analang! '
-                                            '({})'.format(self.db.analangs[n])))
-                    break
-            log.debug('None of more than three analangs look like an iso code, '
-            'taking the first one: {}'.format(self.db.analangs))
-            self.analang=self.db.analangs[0]
+            if lcwdatamax in self.db.analangs and len(lcwdatamax) == 3:
+                self.analang=lcwdatamax
+                log.debug('The language with the most citation data looks like '
+                'an iso code; using: {}'.format(self.db.analangs))
+            elif lcwdatamax == lxwdatamax and lxwdatamax in self.db.analangs:
+                self.analang=lxwdatamax
+                log.debug('The language with the most citation data is also '
+                    'the language with the most lexeme data; using: {}'.format(
+                                                            self.db.analangs))
+            elif lxwdatamax in self.db.analangs and len(lxwdatamax) == 3:
+                self.analang=lxwdatamax
+                log.debug('The language with the most lexeme data looks like '
+                'an iso code; using: {}'.format(self.db.analangs))
+            else:
+                for n in range(1,nlangs+1): # end with first
+                    self.analang=self.db.analangs[-n]
+                    log.debug(_('trying {}').format(self.analang))
+                    if len(self.db.analangs[-n]) == 3:
+                        log.debug(_('Looks like I found an iso code for '
+                                'analang! ({})'.format(self.db.analangs[n-1])))
+                        break #stop iterating, and keep this one.
         log.info("analang guessed: {} (If you don't like this, change it in "
                     "the menus)".format(self.analang))
     def guessaudiolang(self):
