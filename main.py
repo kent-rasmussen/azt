@@ -502,7 +502,8 @@ class Menus(ui.Menu):
         """help"""
     def help(self):
         self.cascade(self,_("Help"),'helpmenu')
-        for m in [("About", self.parent.helpabout),
+        for m in [(_("About"), self.parent.helpabout),
+                    (_("Update A→Z+T"), self.parent.updateazt),
                     ("What's with the New Interface?", self.parent.helpnewinterface)
                     ]:
             self.command(self.helpmenu,
@@ -3444,6 +3445,16 @@ class TaskDressing(object):
         """only write to file every self.writeeverynwrites times you might."""
         self.taskchooser.writeable+=1 #and tally here each time this is asked
         return not self.taskchooser.writeable%self.settings.writeeverynwrites
+    def updateazt(self):
+        if 'git' in program:
+            gitargs=[program['git'], "pull"]
+            try:
+                e=subprocess.check_output(gitargs,shell=False,
+                                            stderr=subprocess.STDOUT)
+                log.info("git output: {}".format(e))
+            except subprocess.CalledProcessError as e:
+                o=e.output.decode("utf-8").strip()
+                log.info("git output: {}; {}".format(e,o))
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -7492,6 +7503,8 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
         ui.Window.__init__(self, parent)
         TaskDressing.__init__(self, parent)
         Sound.__init__(self)
+        self.beeps=sound.BeepGenerator(pyaudio=self.pyaudio,
+                                        settings=self.soundsettings)
     def updatelabels(self,event=None):
         self.errorlabel['text'] = ''
         a=self.newname.get()
@@ -7503,6 +7516,44 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
             y=self.hash_sp.sub('#',x)
             z=self.hash_nbsp.sub('.',y)
             self.namehash.set(z)
+        self.labelcompiled=False
+    def playbeeps(self,pitches):
+        if not self.labelcompiled:
+            self.beeps.compile(pitches)
+        self.beeps.play()
+    def configurebeeps(self,event=None):
+        def higher():
+            self.beeps.higher()
+            self.labelcompiled=False
+        def lower():
+            self.beeps.lower()
+            self.labelcompiled=False
+        def wider():
+            self.beeps.wider()
+            self.labelcompiled=False
+        def narrower():
+            self.beeps.narrower()
+            self.labelcompiled=False
+        def shorter():
+            self.beeps.shorter()
+            self.labelcompiled=False
+        def longer():
+            self.beeps.longer()
+            self.labelcompiled=False
+        w=ui.Window(self, title=_("Configure Tone Beeps"))
+        w.attributes("-topmost", True)
+        ui.Button(w.frame,text=_("pitch up"),cmd=higher,
+                        row=0,column=0)
+        ui.Button(w.frame,text=_("pitch down"),cmd=lower,
+                        row=1,column=0)
+        ui.Button(w.frame,text=_("more H-L difference"),cmd=wider,
+                        row=0,column=1)
+        ui.Button(w.frame,text=_("less H-L difference"),cmd=narrower,
+                        row=1,column=1)
+        ui.Button(w.frame,text=_("slower"),cmd=longer,
+                        row=2,column=0)
+        ui.Button(w.frame,text=_("faster"),cmd=shorter,
+                        row=2,column=1)
     def updategroups(self):
         # cvt=self.params.cvt()
         # ps=self.slices.ps()
@@ -7740,6 +7791,10 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
                                     row=1,column=0,sticky='new',
                                     font='readbig')
         self.formfield.bind('<KeyRelease>', self.updatelabels) #apply function after key
+        self.formfieldplay= ui.Button(fieldframe,text=_('play'),
+                            cmd=lambda:self.playbeeps(self.newname.get()),
+                            row=1, column=2)
+        self.formfieldplay.bind('<Button-3>', self.configurebeeps)
         self.errorlabel=ui.Label(fieldframe,text='',
                             fg='red',
                             wraplength=int(self.frame.winfo_screenwidth()/3),
@@ -10951,7 +11006,7 @@ if __name__ == "__main__":
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    for exe in ['praat','hg','ffmpeg','lame']: #'sendpraat' now in 'praat', if useful
+    for exe in ['praat','hg','ffmpeg','lame','git']: #'sendpraat' now in 'praat', if useful
         findexecutable(exe)
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:

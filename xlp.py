@@ -198,9 +198,13 @@ class Report(object):
     def language(self, parent, id, name):
         XeLaTeXSpecial=("graphite font-feature='Hide tone contour staves=True' "
                                 "font-feature='Literacy alternates=True'")
+        if name.startwith('am-') or name == 'am':
+            ffam='Abyssinica SIL'
+        else:
+            ffam='Charis SIL'
         lg=ET.SubElement(parent, 'language',
             attrib={'id':id, 'name':name,
-                    'font-family':'Charis SIL',
+                    'font-family':ffam,
                     'XeLaTeXSpecial':XeLaTeXSpecial})
     def addlang(self, lang):
         if 'id' in lang and 'name' in lang:
