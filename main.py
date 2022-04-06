@@ -7489,6 +7489,8 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
         ui.Window.__init__(self, parent)
         TaskDressing.__init__(self, parent)
         Sound.__init__(self)
+        self.beeps=sound.BeepGenerator(pyaudio=self.pyaudio,
+                                        settings=self.soundsettings)
     def updatelabels(self,event=None):
         self.errorlabel['text'] = ''
         a=self.newname.get()
@@ -7500,6 +7502,44 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
             y=self.hash_sp.sub('#',x)
             z=self.hash_nbsp.sub('.',y)
             self.namehash.set(z)
+        self.labelcompiled=False
+    def playbeeps(self,pitches):
+        if not self.labelcompiled:
+            self.beeps.compile(pitches)
+        self.beeps.play()
+    def configurebeeps(self,event=None):
+        def higher():
+            self.beeps.higher()
+            self.labelcompiled=False
+        def lower():
+            self.beeps.lower()
+            self.labelcompiled=False
+        def wider():
+            self.beeps.wider()
+            self.labelcompiled=False
+        def narrower():
+            self.beeps.narrower()
+            self.labelcompiled=False
+        def shorter():
+            self.beeps.shorter()
+            self.labelcompiled=False
+        def longer():
+            self.beeps.longer()
+            self.labelcompiled=False
+        w=ui.Window(self, title=_("Configure Tone Beeps"))
+        w.attributes("-topmost", True)
+        ui.Button(w.frame,text=_("pitch up"),cmd=higher,
+                        row=0,column=0)
+        ui.Button(w.frame,text=_("pitch down"),cmd=lower,
+                        row=1,column=0)
+        ui.Button(w.frame,text=_("more H-L difference"),cmd=wider,
+                        row=0,column=1)
+        ui.Button(w.frame,text=_("less H-L difference"),cmd=narrower,
+                        row=1,column=1)
+        ui.Button(w.frame,text=_("slower"),cmd=longer,
+                        row=2,column=0)
+        ui.Button(w.frame,text=_("faster"),cmd=shorter,
+                        row=2,column=1)
     def updategroups(self):
         # cvt=self.params.cvt()
         # ps=self.slices.ps()
@@ -7737,6 +7777,10 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
                                     row=1,column=0,sticky='new',
                                     font='readbig')
         self.formfield.bind('<KeyRelease>', self.updatelabels) #apply function after key
+        self.formfieldplay= ui.Button(fieldframe,text=_('play'),
+                            cmd=lambda:self.playbeeps(self.newname.get()),
+                            row=1, column=2)
+        self.formfieldplay.bind('<Button-3>', self.configurebeeps)
         self.errorlabel=ui.Label(fieldframe,text='',
                             fg='red',
                             wraplength=int(self.frame.winfo_screenwidth()/3),
