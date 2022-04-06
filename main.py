@@ -3407,6 +3407,16 @@ class TaskDressing(object):
         """only write to file every self.writeeverynwrites times you might."""
         self.taskchooser.writeable+=1 #and tally here each time this is asked
         return not self.taskchooser.writeable%self.settings.writeeverynwrites
+    def updateazt(self):
+        if 'git' in program:
+            gitargs=[program['git'], "pull"]
+            try:
+                e=subprocess.check_output(gitargs,shell=False,
+                                            stderr=subprocess.STDOUT)
+                log.info("git output: {}".format(e))
+            except subprocess.CalledProcessError as e:
+                o=e.output.decode("utf-8").strip()
+                log.info("git output: {}; {}".format(e,o))
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
