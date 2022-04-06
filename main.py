@@ -5908,7 +5908,8 @@ class Report(object):
         and outputs a list/dictionary of senseid/{senseid:form} form."""
         ps=kwargs.get('ps',self.slices.ps())
         output=[] #This is just a list of senseids now: (Do we need the dict?)
-        for form in self.settings.formstosearch[ps]:
+        for form in [i for i in self.settings.formstosearch[ps] if i]:
+            log.info("Looking for form {}".format(form))
             if regex.search(form):
                 output+=self.settings.formstosearch[ps][form]
         return output
