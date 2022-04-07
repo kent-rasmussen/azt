@@ -179,6 +179,8 @@ For a more thorough report, use the Basic Report menu item. This will select you
 
 This tool will ultimately be able to help with the sorting and correction of consonants and vowels, but until those functions are implemented, these reports should be helpful.
 
+**Note on scripts and fonts**: Reports are run with Charis SIL; if this doesn't meet your needs (e.g., for Ethiopic scripts), please [write me](<mailto:kent_rasmussen@sil.org?subject=A→Z+T script request>) with the relevant language code(s) and the scripts needed, and I can add them. In any case, as these reports are editable, changes can also be made manually.
+
 ## Subsequent Runs: Tone (Sort, and Follow Directions) ![Tone](images/T%20alone%20clear6_icon.png "Tone")
 ### Sorting progression: The Status Table
 Once you have done any sorting for the selected lexical category, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one lexical category and check type at a time). To see progress for another check type or lexical category, switch to that check type or lexical category.
