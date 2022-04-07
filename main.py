@@ -5137,9 +5137,9 @@ class Sound(object):
                     sticky=''
                     )
         bd=ui.Button(self.soundsettingswindow.content,
-                    text=_("Quit {}".format(program['name'])),
+                    text=_("Quit Task"),
                     # cmd=program['root'].on_quit,
-                    cmd=quitall,
+                    cmd=quittask,
                     # anchor='c',
                     row=row,column=1
                     )
