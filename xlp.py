@@ -198,7 +198,7 @@ class Report(object):
     def language(self, parent, id, name):
         XeLaTeXSpecial=("graphite font-feature='Hide tone contour staves=True' "
                                 "font-feature='Literacy alternates=True'")
-        if name.startwith('am-') or name == 'am':
+        if name.startswith('am-') or name == 'am':
             ffam='Abyssinica SIL'
         else:
             ffam='Charis SIL'
