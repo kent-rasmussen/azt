@@ -1185,6 +1185,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         kwargs[kwargs['ftype']+'annotationvalue']=kwargs.pop('annotationvalue',None)
         output=self.get(kwargs['floc']+'/field',**kwargs).get('node')
         return output
+    def fieldtext(self,**kwargs):
+        t=[]
+        for node in self.fieldnode(**kwargs):
+            # log.info("Getting text from node {}".format(node))
+            t.extend(self.get('text',node=node).get('text'))
+        return t
+    def fieldvalue(self,**kwargs):
+        t=[]
+        for node in self.fieldnode(**kwargs):
+            t.extend(self.get('annotation',node=node,**kwargs).get('value'))
+        return t
     def extrasegments(self):
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
