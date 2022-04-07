@@ -1622,6 +1622,7 @@ class LiftURL():
     def baselevel(self):
         parents=self.parentsof(self.callerfn())
         for target in parents: #self.levelsokfor[self.callerfn()]: #targets: #targets should be ordered, with best first
+            target=target.split('/')[-1] #just the last level
             if target in self.level and self.level[target] == self.level['cur']:
                 return #if we're on an acceptable level, just stop
             elif target in self.level:
