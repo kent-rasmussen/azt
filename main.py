@@ -7512,8 +7512,9 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
         Sound.__init__(self)
         self.beeps=sound.BeepGenerator(pyaudio=self.pyaudio,
                                         settings=self.soundsettings)
-    def updatelabels(self,event=None):
+    def updateerror(self,event=None):
         self.errorlabel['text'] = ''
+    def updatelabels(self,event=None):
         a=self.newname.get()
         try:
             int(a) #Is this interpretable as an integer (default group)?
