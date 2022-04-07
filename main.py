@@ -502,10 +502,13 @@ class Menus(ui.Menu):
         """help"""
     def help(self):
         self.cascade(self,_("Help"),'helpmenu')
-        for m in [(_("About"), self.parent.helpabout),
-                    (_("Update A→Z+T"), self.parent.updateazt),
-                    ("What's with the New Interface?", self.parent.helpnewinterface)
-                    ]:
+        helpitems=[(_("About"), self.parent.helpabout)]
+        if program['git']:
+            helpitems+=[(_("Update A→Z+T"), self.parent.updateazt)]
+        helpitems+=[("What's with the New Interface?",
+                        self.parent.helpnewinterface)
+                    ]
+        for m in helpitems:
             self.command(self.helpmenu,
                         label=_(m[0]),
                         cmd=m[1]
@@ -3456,6 +3459,7 @@ class TaskDressing(object):
             except subprocess.CalledProcessError as e:
                 o=e.output.decode("utf-8").strip()
                 log.info("git output: {}; {}".format(e,o))
+            ErrorNotice(o,parent=self,title=_("Update (Git) output"))
             if o != 'Already up to date.' and "No route to host" not in o:
                 self.taskchooser.restart()
     def __init__(self,parent):
