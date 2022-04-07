@@ -7549,7 +7549,6 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
             return
         return 1
     def submitform(self):
-        self.updatelabels()
         newtonevalue=self.transcriber.formfield.get()
         self.updategroups()
         if newtonevalue == "":
