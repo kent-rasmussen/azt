@@ -15,7 +15,7 @@ To get the program, either
     - You may need to install Git (e.g. [here](https://git-scm.com/download/win) or [here](https://desktop.github.com/)) first, or
 - click on the green `code` button on the [main page](https://github.com/kent-rasmussen/azt.git) for download options.
 
-If you download an archive (e.g., zip file), extract it so you have a folder of files. Either way, put it somewhere sensible, so you can find it later. If you use `git clone`, you can update in the future with `git pull`, and just download the changes since you last updated.
+If you download an archive (e.g., zip file), extract it so you have a folder of files. Either way, put it somewhere sensible, so you can find it later. If you use `git clone`, you can update in the future with the `Help/Update A→Z+T` menu item (or with `git pull`), and just download the changes since you last updated.
 
 ## Python
 *If* you need to install [Python](https://python.org) (you may already have it), you can find it [here](https://python.org).
