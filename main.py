@@ -7490,31 +7490,13 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                         )
         skipb.grid(column=0, row=1, sticky="ew")
     """Doing stuff"""
-class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
-    def tasktitle(self):
-        return _("Transcribe Tone")
-    def tooltip(self):
-        return _("This task helps you transcribe your surface groups, giving "
-                "them meaniningful names (e.g., [˥˥ ˨˨]) instead of numbers.")
-    def dobuttonkwargs(self):
-        return {'text':_("Transcribe Surface Tone Groups"),
-                'fn':self.makewindow,
-                'font':'title',
-                'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['Transcribe'], #self.cvt
-                'sticky':'ew'
-                }
-    def taskicon(self):
-        return program['theme'].photo['iconTranscribe']
-    def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self, parent)
-        ui.Window.__init__(self, parent)
-        TaskDressing.__init__(self, parent)
-        Sound.__init__(self)
-        self.beeps=sound.BeepGenerator(pyaudio=self.pyaudio,
-                                        settings=self.soundsettings)
-    def updateerror(self,event=None):
-        self.errorlabel['text'] = ''
+class Transcriber(ui.Frame):
+    def addchar(self,x):
+        if x == '':
+            self.formfield.delete(0,tkinter.END)
+        else:
+            self.formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
+        self.updatelabels()
     def updatelabels(self,event=None):
         a=self.newname.get()
         try:
@@ -7563,6 +7545,93 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
                         row=2,column=0)
         ui.Button(w.frame,text=_("faster"),cmd=shorter,
                         row=2,column=1)
+    def __init__(self, parent, initval=None, soundsettings=None, **kwargs):
+        self.newname=tkinter.StringVar(value=initval)
+        self.namehash=tkinter.StringVar()
+        self.hash_t,self.hash_sp,self.hash_nbsp=rx.tonerxs()
+        self.pyaudio=sound.AudioInterface()
+        if soundsettings:
+            self.soundsettings=soundsettings
+        else:
+            self.soundsettings=sound.SoundSettings()
+        self.beeps=sound.BeepGenerator(pyaudio=self.pyaudio,
+                                            settings=self.soundsettings)
+        ui.Frame.__init__(self, parent, **kwargs)
+        buttonframe=ui.Frame(self,
+                            row=0,column=0,sticky='new'
+                            )
+        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
+        spaces=[' ',' ','']
+        for char in tonechars+spaces:
+            if char == ' ':
+                text=_('syllable break')
+                column=0
+                columnspan=int(len(tonechars)/2)+1
+                row=1
+            elif char == ' ':
+                text=_('word break')
+                columnspan=int(len(tonechars)/2)
+                column=columnspan+1
+                row=1
+            elif char == '':
+                text=_('clear entry')
+                column=0
+                columnspan=len(tonechars)
+                row=2
+            else:
+                column=tonechars.index(char)
+                text=char
+                columnspan=1
+                row=0
+            ui.Button(buttonframe,text = text,
+                        command = lambda x=char:self.addchar(x),
+                        anchor ='c',
+                        row=row,
+                        column=column,
+                        sticky='nsew',
+                        columnspan=columnspan
+                        )
+        fieldframe=ui.Frame(self,
+                            row=1,column=0,sticky='new'
+                            )
+        self.formfield = ui.EntryField(fieldframe,textvariable=self.newname,
+                                    row=1,column=0,sticky='new',
+                                    font='readbig')
+        self.formfield.bind('<KeyRelease>', self.updatelabels) #apply function after key
+        self.formfieldplay= ui.Button(fieldframe,text=_('play'),
+                            cmd=lambda:self.playbeeps(self.newname.get()),
+                            row=1, column=2)
+        self.formfieldplay.bind('<Button-3>', self.configurebeeps)
+        self.formhashlabel=ui.Label(fieldframe,
+                                textvariable=self.namehash,
+                                anchor ='c',
+                                row=2,column=0,sticky='new'
+                                )
+        fieldframe.grid_columnconfigure(0, weight=1)
+        self.updatelabels()
+class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
+    def tasktitle(self):
+        return _("Transcribe Tone")
+    def tooltip(self):
+        return _("This task helps you transcribe your surface groups, giving "
+                "them meaniningful names (e.g., [˥˥ ˨˨]) instead of numbers.")
+    def dobuttonkwargs(self):
+        return {'text':_("Transcribe Surface Tone Groups"),
+                'fn':self.makewindow,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['Transcribe'], #self.cvt
+                'sticky':'ew'
+                }
+    def taskicon(self):
+        return program['theme'].photo['iconTranscribe']
+    def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self, parent)
+        ui.Window.__init__(self, parent)
+        TaskDressing.__init__(self, parent)
+        Sound.__init__(self)
+    def updateerror(self,event=None):
+        self.errorlabel['text'] = ''
     def updategroups(self):
         # cvt=self.params.cvt()
         # ps=self.slices.ps()
@@ -7599,7 +7668,7 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
         return 1
     def submitform(self):
         self.updatelabels()
-        newtonevalue=self.formfield.get()
+        newtonevalue=self.transcriber.formfield.get()
         self.updategroups()
         if newtonevalue == "":
             noname=_("Give a name for this tone melody!")
@@ -7625,12 +7694,6 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
             delattr(self,'group_comparison') # in either case
         self.runwindow.destroy()
         return
-    def addchar(self,x):
-        if x == '':
-            self.formfield.delete(0,tkinter.END)
-        else:
-            self.formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
-        self.updatelabels()
     def done(self):
         self.submitform()
         self.donewpyaudio()
@@ -7725,9 +7788,6 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
         if not groupsok:
             log.error("Problem with log; check earlier message.")
             return
-        self.newname=tkinter.StringVar(value=self.group)
-        self.namehash=tkinter.StringVar()
-        self.hash_t,self.hash_sp,self.hash_nbsp=rx.tonerxs()
         padx=50
         pady=10
         title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
@@ -7750,61 +7810,11 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
                             row=2,column=0,sticky=''
                             )
         """extract from here"""
-        inputframe=ui.Frame(inputfeedbackframe,
-                            row=0,column=0,sticky=''
-                            )
-        buttonframe=ui.Frame(inputframe,
-                            row=0,column=0,sticky='new'
-                            )
-        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
-        spaces=[' ',' ','']
-        for char in tonechars+spaces:
-            if char == ' ':
-                text=_('syllable break')
-                column=0
-                columnspan=int(len(tonechars)/2)+1
-                row=1
-            elif char == ' ':
-                text=_('word break')
-                columnspan=int(len(tonechars)/2)
-                column=columnspan+1
-                row=1
-            elif char == '':
-                text=_('clear entry')
-                column=0
-                columnspan=len(tonechars)
-                row=2
-            else:
-                column=tonechars.index(char)
-                text=char
-                columnspan=1
-                row=0
-            ui.Button(buttonframe,text = text,
-                        command = lambda x=char:self.addchar(x),
-                        anchor ='c',
-                        row=row,
-                        column=column,
-                        sticky='nsew',
-                        columnspan=columnspan
-                        )
-        fieldframe=ui.Frame(inputframe,
-                            row=1,column=0,sticky='new'
-                            )
-        self.formfield = ui.EntryField(fieldframe,textvariable=self.newname,
-                                    row=1,column=0,sticky='new',
-                                    font='readbig')
-        self.formfield.bind('<KeyRelease>', self.updatelabels) #apply function after key
-        self.formfieldplay= ui.Button(fieldframe,text=_('play'),
-                            cmd=lambda:self.playbeeps(self.newname.get()),
-                            row=1, column=2)
-        self.formfieldplay.bind('<Button-3>', self.configurebeeps)
-        self.formhashlabel=ui.Label(fieldframe,
-                                textvariable=self.namehash,
-                                anchor ='c',
-                                row=2,column=0,sticky='new'
+        self.transcriber=Transcriber(inputfeedbackframe, initval=self.group,
+                                soundsettings=self.soundsettings,
+                                row=0,column=0,sticky=''
                                 )
-        fieldframe.grid_columnconfigure(0, weight=1)
-        self.updatelabels()
+        self.transcriber.formfield.bind('<KeyRelease>', self.updateerror) #apply function after key
         """to here"""
         infoframe=ui.Frame(inputfeedbackframe,
                             row=0,column=1,sticky=''
