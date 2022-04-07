@@ -1429,11 +1429,23 @@ class LiftURL():
     def citation(self):
         self.baselevel()
         self.build("citation")
-        self.form("lcform","analang")
+        if set(['lcannotationname','lcannotationvalue']) & set(self.kwargs):
+            attrs={'name': 'lcannotationname'}
+            if 'lcannotationvalue' in self.kwargs:
+                attrs['value']='lcannotationvalue'
+        else:
+            attrs={}
+        self.form("lcform","analang",annodict=attrs)
     def lexeme(self):
         self.baselevel()
         self.build("lexical-unit")
-        self.form("lxform","analang")
+        if set(['lxannotationname','lxannotationvalue']) & set(self.kwargs):
+            attrs={'name': 'lxannotationname'}
+            if 'lxannotationvalue' in self.kwargs:
+                attrs['value']='lxannotationvalue'
+        else:
+            attrs={}
+        self.form("lxform","analang",annodict=attrs)
     def pronunciation(self):
         self.baselevel()
         self.build("pronunciation")
