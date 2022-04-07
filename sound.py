@@ -536,7 +536,10 @@ class BeepGenerator(object):
             syllables=w.split(' ')
             # log.info("syllables: {}".format(syllables))
             for syl in syllables:
-                syl=list(set(syl)&set(['˥','˦','˧','˨','˩']))
+                badchars=set(syl)-set(['˥','˦','˧','˨','˩'])
+                for c in badchars:
+                    # log.info("replacing {}".format(c))
+                    syl=syl.replace(c,'')
                 for n,c in enumerate(syl):
                     # log.info("character: {}".format(c))
                     fromhz=self.pitchdict[c]
