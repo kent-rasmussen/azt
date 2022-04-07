@@ -1196,6 +1196,29 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for node in self.fieldnode(**kwargs):
             t.extend(self.get('annotation',node=node,**kwargs).get('value'))
         return t
+    def annotateform(self,**kwargs):
+        if not ('name' in kwargs and 'value' in kwargs and 'node' in kwargs):
+            log.error("To annotate, I need a node, @name and @value.")
+            return
+        if not 'lang' in kwargs: #for get(form), below
+            log.error("Attention! form annotation without @lang specification "
+            "will annotate *all* language forms, which is almost certainly not "
+            "what you want! continuing anyway...")
+        anndict={ #don't let these pass through as is
+                'name': kwargs.pop('name'),
+                'value': kwargs.pop('value')
+                }
+        kwargs['annotationname']=anndict['name'] #look for value in fieldnode()
+        node=kwargs.pop('node') #because base node changes
+        # log.info("Looking w/{}".format(kwargs))
+        for form in self.get('form',node=node,**kwargs).get('node'):
+            # log.info("Looking in form {} w/{}".format(form,kwargs))
+            ann=self.get('annotation', node=form, **kwargs).get('node') #name!
+            # log.info("Found {}".format(ann))
+            for a in ann:
+                a.set('value',anndict['value'])
+            if not ann:
+                a=Node(form, 'annotation', anndict)
     def extrasegments(self):
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
