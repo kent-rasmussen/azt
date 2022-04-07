@@ -2017,6 +2017,7 @@ class LiftURL():
         self.base=kwargs['base']
         self.kwargs=kwargs
         self.setaliases()
+        # log.info("init kwargs: {}".format(self.kwargs))
         basename=self.basename=self.getalias(self.base.tag)
         super(LiftURL, self).__init__()
         target=self.target=self.kwargs.pop('target','entry') # what do we want?
