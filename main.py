@@ -46,6 +46,7 @@ try:
 except Exception as e:
     log.exception("Problem importing Sound/pyaudio. Is it installed? %s",e)
     exceptiononload=True
+import transcriber
 """Other people's stuff"""
 import threading
 import multiprocessing
@@ -176,7 +177,7 @@ class FileChooser(object):
         l.bind("<Button-1>", lambda e: openweburl(ethnologueurl))
         l.wrap()
         entryframe=ui.Frame(window.frame,row=2,column=0,sticky='nsew')
-        analang=tkinter.StringVar()
+        analang=ui.StringVar()
         e=ui.EntryField(entryframe, textvariable=analang, font='readbig',
                         width=5, row=0,column=0,sticky='w')
         e.bind('<Return>',done)
@@ -1524,7 +1525,7 @@ class Settings(object):
                     header.grid(column=0, row=row)
                 col=1
                 for pg in self.db.s[lang][sclass]:
-                    vars[lang][pclass][pg] = tkinter.BooleanVar()
+                    vars[lang][pclass][pg] = ui.BooleanVar()
                     vars[lang][pclass][pg].set(
                                     self.polygraphs[lang][pclass].get(pg,False))
                     cb=ui.CheckButton(scroll.content, text = pg, #.content
@@ -2721,7 +2722,7 @@ class TaskDressing(object):
             f.grid(row=options.get('r'),
                         column=options.get('c'),
                         sticky='ew', padx=options.padx, pady=options.pady)
-            bffl=ui.Label(f,text=options.text,justify=tkinter.LEFT,
+            bffl=ui.Label(f,text=options.text,justify=ui.LEFT,
                                                                 anchor='c')
             bffl.grid(row=1,column=options.column,
                             sticky='ew',
@@ -2742,10 +2743,10 @@ class TaskDressing(object):
         analang=self.params.analang()
         options=Options(r=0,padx=50,pady=10,c=0,vars={},frames={})
         for s in self.settings.distinguish: #Should be already set.
-            options.vars[s] = tkinter.BooleanVar()
+            options.vars[s] = ui.BooleanVar()
             options.vars[s].set(self.settings.distinguish[s])
         for s in self.settings.interpret: #This should already be set, even by default
-            options.vars[s] = tkinter.StringVar()
+            options.vars[s] = ui.StringVar()
             options.vars[s].set(self.settings.interpret[s])
         """Page title and instructions"""
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
@@ -2753,14 +2754,14 @@ class TaskDressing(object):
         title=_("Interpret {} Segments"
                 ).format(self.settings.languagenames[analang])
         titl=ui.Label(mwframe,text=title,font='title',
-                justify=tkinter.LEFT,anchor='c')
+                justify=ui.LEFT,anchor='c')
         titl.grid(row=options.get('r'), column=options.get('c'), #self.runwindow.options['column'],
                     sticky='ew', padx=options.padx, pady=10)
         options.next('r')
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
                 ).format(program['name'],self.settings.languagenames[analang])
-        instr=ui.Label(mwframe,text=text,justify=tkinter.LEFT,anchor='c')
+        instr=ui.Label(mwframe,text=text,justify=ui.LEFT,anchor='c')
         instr.grid(row=options.get('r'), column=options.get('c'),
                     sticky='ew', padx=options.padx, pady=options.pady)
         """The rest of the page"""
@@ -4089,7 +4090,7 @@ class WordCollection(Segments):
             getform=ui.Label(self.runwindow.frame2,text=text,
                                                 font='read')
             getform.grid(row=0,column=0,padx=padx,pady=pady)
-            form[lang]=tkinter.StringVar()
+            form[lang]=ui.StringVar()
             eff=ui.Frame(self.runwindow.frame2) #field rendering is better this way
             eff.grid(row=1,column=0)
             formfield = ui.EntryField(eff, render=True, textvariable=form[lang])
@@ -4118,7 +4119,7 @@ class WordCollection(Segments):
         title=_("Add {} morpheme to the dictionary").format(
                             self.settings.languagenames[self.analang])
         ui.Label(self.runwindow.frame,text=title,font='title',
-                justify=tkinter.LEFT,anchor='c'
+                justify=ui.LEFT,anchor='c'
                 ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
         # Run the above script (makewindow) for each language, analang first.
         # The user has a chance to enter a gloss for any gloss language
@@ -4293,10 +4294,10 @@ class WordCollection(Segments):
         l.wrap()
         self.lxtextnode=self.textnodefn(entry,self.analang)
         # log.info("lxtextnode: {}".format(self.lxtextnode))
-        self.lxvar=tkinter.StringVar(value=self.lxtextnode.text)
+        self.lxvar=ui.StringVar(value=self.lxtextnode.text)
         # get('entry',path=['lexeme'],analang=self.analang,
         #                 showurl=True).get()
-        # lxvar=tkinter.StringVar()
+        # lxvar=ui.StringVar()
         lxenter=ui.EntryField(self.wordframe,textvariable=self.lxvar,
                                 row=2,column=0,columnspan=3)
         lxenter.focus_set()
@@ -4550,7 +4551,7 @@ class Tone(object):
                 l1=ui.Label(self.addwindow.framechk,
                         text=text,
                         font='read',
-                        justify=tkinter.LEFT,anchor='w')
+                        justify=ui.LEFT,anchor='w')
                 l1.grid(row=0,column=columnleft,sticky='w')
                 return
             # """Define the new frame"""
@@ -4574,7 +4575,7 @@ class Tone(object):
                 lt=ui.Label(self.addwindow.framechk,
                         text=senseid,
                         font='read',
-                        justify=tkinter.LEFT,anchor='w')
+                        justify=ui.LEFT,anchor='w')
                 lt.grid(row=0,column=0,#row=row,column=columnleft,
                         sticky='w',columnspan=2)
                 return
@@ -4607,7 +4608,7 @@ class Tone(object):
             lt=ui.Label(self.addwindow.framechk,
                     text=_("Examples for {} tone frame").format(checktoadd),
                     font='readbig',
-                    justify=tkinter.LEFT,anchor='w')
+                    justify=ui.LEFT,anchor='w')
             lt.grid(row=row,column=columnleft,sticky='w',columnspan=2,
                     padx=padx,pady=pady)
             for lang in langs:
@@ -4617,13 +4618,13 @@ class Tone(object):
                 l1=ui.Label(self.addwindow.framechk,
                         text=tf[lang],
                         font='read',
-                        justify=tkinter.LEFT,anchor='w')
+                        justify=ui.LEFT,anchor='w')
                 l1.grid(row=row,column=columnleft,sticky='w',padx=padx,
                                                                 pady=pady)
                 l2=ui.Label(self.addwindow.framechk,
                         text=tfd[lang],
                         font='read',
-                        justify=tkinter.LEFT,anchor='w')
+                        justify=ui.LEFT,anchor='w')
                 l2.grid(row=row,column=columnleft+1,sticky='w',padx=padx,
                                                                 pady=pady)
                 log.info('langlabel:{}-{}'.format(tf[lang],tfd[lang]))
@@ -4672,7 +4673,7 @@ class Tone(object):
         columnleft=0
         columnword=1
         columnright=2
-        namevar=tkinter.StringVar()
+        namevar=ui.StringVar()
         """Text and fields, before and after, dictionaries by language"""
         db={}
         langs=[self.analang]+self.glosslangs
@@ -4680,7 +4681,7 @@ class Tone(object):
             db[context]={}
             for lang in langs:
                 db[context][lang]={}
-                db[context][lang]['text']=tkinter.StringVar()
+                db[context][lang]['text']=ui.StringVar()
         t=(_("Add {} Tone Frame").format(ps))
         ui.Label(self.addwindow.frame1,text=t+'\n',font='title'
                 ).grid(row=row,column=columnleft,columnspan=3)
@@ -4884,7 +4885,7 @@ class Sort(object):
             default=None
         else:
             default=profile
-        profilevar=tkinter.StringVar(value=default)
+        profilevar=ui.StringVar(value=default)
         namefield = ui.EntryField(qframe,textvariable=profilevar)
         namefield.grid(row=0,column=1)
         text=_("Select the {} words below that you want in this group, then "
@@ -4900,7 +4901,7 @@ class Sort(object):
             log.debug("id: {}; index: {}; row: {}".format(id,
                                                     allpssensids.index(id),row))
             idn=allpssensids.index(id)
-            vars.append(tkinter.StringVar())
+            vars.append(ui.StringVar())
             adhocslices=self.slices.adhoc()
             if (ps in adhocslices and profile in adhocslices[ps] and
                                                 id in adhocslices[ps][profile]):
@@ -5042,10 +5043,11 @@ class Sound(object):
     def soundcheckrefreshdone(self):
         self.settings.storesettingsfile(setting='soundsettings')
         self.soundsettingswindow.destroy()
+    def quittask(self):
+        self.soundsettingswindow.destroy()
+        self.taskchooser.gettask()
+        self.on_quit()
     def soundcheckrefresh(self,dict=None):
-        def quitall():
-            self.soundsettingswindow.destroy()
-            self.on_quit()
         dictnow={
                 'audio_card_in':self.soundsettings.audio_card_in,
                 'fs':self.soundsettings.fs,
@@ -5100,26 +5102,26 @@ class Sound(object):
         br=RecordButtonFrame(self.soundsettingswindow.content,self,test=True)
         br.grid(row=row,column=0)
         row+=1
-        l=_("You may need to change your microphone "
-            "\nand/or speaker sound card to get the "
-            "\nsampling and format you want.")
-        ui.Label(self.soundsettingswindow.content,
-                text=l).grid(row=row,column=0)
-        row+=1
-        l=_("Make sure ‘record’ and ‘play’ work well here, "
-            "\nbefore recording real data!")
+        # l=_("You may need to change your microphone "
+        #     "\nand/or speaker sound card to get the "
+        #     "\nsampling and format you want.")
+        # ui.Label(self.soundsettingswindow.content,
+        #         text=l).grid(row=row,column=0)
+        # row+=1
+        l=_("Plug in your microphone, and make sure ‘record’ and ‘play’ work "
+            "well here, before recording real data!")
         caveat=ui.Label(self.soundsettingswindow.content,
                 text=l,font='read',
                 row=row,column=0)
         caveat.wrap()
         row+=1
-        l=_("See also note in documentation about verifying these "
-            "recordings in an external application, such as Praat.")
-        caveat2=ui.Label(self.soundsettingswindow.content,
-                text=l,font='instructions',
-                row=row,column=0)
-        caveat2.wrap()
-        row+=1
+        # l=_("See also note in documentation about verifying these "
+        #     "recordings in an external application, such as Praat.")
+        # caveat2=ui.Label(self.soundsettingswindow.content,
+        #         text=l,font='instructions',
+        #         row=row,column=0)
+        # caveat2.wrap()
+        # row+=1
         play=_("Play")
         l=_("If Praat is installed in your OS path, right click on ‘{}’ above "
             "to open in Praat.".format(play))
@@ -5136,9 +5138,9 @@ class Sound(object):
                     sticky=''
                     )
         bd=ui.Button(self.soundsettingswindow.content,
-                    text=_("Quit {}".format(program['name'])),
+                    text=_("Quit Task"),
                     # cmd=program['root'].on_quit,
-                    cmd=quitall,
+                    cmd=self.quittask,
                     # anchor='c',
                     row=row,column=1
                     )
@@ -5170,8 +5172,9 @@ class Sound(object):
         self.pyaudiocheck()
         self.soundsettingscheck()
         self.soundsettings=self.settings.soundsettings
-        self.soundsettingswindow=ui.Window(self.frame,
+        self.soundsettingswindow=ui.Window(self.frame, exit=False,
                                 title=_('Select Sound Card Settings'))
+        self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.soundsettingswindow)
         if not self.exitFlag.istrue() and self.missingsoundattr():
@@ -5786,7 +5789,7 @@ class Report(object):
         self.results.grid(column=0,
                         row=self.runwindow.frame.grid_info()['row']+1,
                         columnspan=5,
-                        sticky=(tkinter.N, tkinter.S, tkinter.E, tkinter.W))
+                        sticky=(ui.N, ui.S, ui.E, ui.W))
         print(_("Getting results of Search request"))
         c1 = "Any"
         c2 = "Any"
@@ -6427,13 +6430,13 @@ class SortCV(Sort,Segments,TaskDressing,ui.Window):
         straightforward and completely unconfusing."""
         window.title=(_("TITLE!"))
         ui.Label(window.frame, text=entry.citation+' - '+entry.gloss,
-                        anchor=tkinter.W).grid(column=0, row=0, columnspan=2)
+                        anchor=ui.W).grid(column=0, row=0, columnspan=2)
         q1=_("It looks like the vowels are the same, but not the correct vowel;"
             " let's fix that.")
-        ui.Label(window.frame, text=q1,anchor=tkinter.W).grid(column=0, row=2,
+        ui.Label(window.frame, text=q1,anchor=ui.W).grid(column=0, row=2,
                                                                 columnspan=2)
         q2=_("What are the two vowels?")
-        ui.Label(window.frame, text=q2,anchor=tkinter.W).grid(column=0, row=3,
+        ui.Label(window.frame, text=q2,anchor=ui.W).grid(column=0, row=3,
                                                                 columnspan=1)
         ButtonFrame1=ui.ButtonFrame(window.frame,
                                 window=window,
@@ -6449,11 +6452,11 @@ class SortCV(Sort,Segments,TaskDressing,ui.Window):
         #window=ui.Window(self.frame,, title=t, entry=entry, backcmd=fixdiff)
         window.resetframe()
         t2=(_("It looks like the vowels aren't the same; let's fix that."))
-        ui.Label(window.frame, text=t2, justify=tkinter.LEFT).grid(column=0,
+        ui.Label(window.frame, text=t2, justify=ui.LEFT).grid(column=0,
                                                                     row=0,
                                                                 columnspan=2)
         t3=(_("What is the first vowel? (C_CV)"))
-        ui.Label(window.frame, text=t3, anchor=tkinter.W).grid(column=0,
+        ui.Label(window.frame, text=t3, anchor=ui.W).grid(column=0,
                                                                 row=1,
                                                                 columnspan=1)
         ButtonFrame1=ui.ButtonFrame(window.frame,
@@ -6466,7 +6469,7 @@ class SortCV(Sort,Segments,TaskDressing,ui.Window):
         check.fix='V2'
         t=(_('fixV2:Different data to be fixed! '))+entry.lexeme+': '+entry.guid
         t=(_("What is the second vowel?"))
-        ui.Label(window.frame, text=t,justify=tkinter.LEFT).grid(column=0, row=1, columnspan=1)
+        ui.Label(window.frame, text=t,justify=ui.LEFT).grid(column=0, row=1, columnspan=1)
         ButtonFrame1=ui.ButtonFrame(window.frame,
                                     window=window,
                                     optionlist=check.db.vowels(),
@@ -7456,7 +7459,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         def sortnext():
             self.sortitem.destroy()
         def differentbutton():
-            vardict['NONEOFTHEABOVE']=tkinter.BooleanVar()
+            vardict['NONEOFTHEABOVE']=ui.BooleanVar()
             difb=ui.Button(bf, text=newgroup,
                         cmd=different,
                         anchor="w",
@@ -7472,7 +7475,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         bf=ui.Frame(parent)
         bf.grid(column=0, row=row, sticky="w")
         if not self.status.groups(wsorted=True):
-            vardict['ok']=tkinter.BooleanVar()
+            vardict['ok']=ui.BooleanVar()
             okb=ui.Button(bf, text=firstOK,
                             cmd=firstok,
                             anchor="w",
@@ -7481,7 +7484,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             okb.grid(column=0, row=0, sticky="ew")
         else:
             differentbutton()
-        vardict['skip']=tkinter.BooleanVar()
+        vardict['skip']=ui.BooleanVar()
         skipb=ui.Button(bf, text=skiptext,
                         cmd=skip,
                         anchor="w",
@@ -7510,57 +7513,8 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
         ui.Window.__init__(self, parent)
         TaskDressing.__init__(self, parent)
         Sound.__init__(self)
-        self.beeps=sound.BeepGenerator(pyaudio=self.pyaudio,
-                                        settings=self.soundsettings)
-    def updatelabels(self,event=None):
+    def updateerror(self,event=None):
         self.errorlabel['text'] = ''
-        a=self.newname.get()
-        try:
-            int(a) #Is this interpretable as an integer (default group)?
-            self.namehash.set('')
-        except ValueError:
-            x=self.hash_t.sub('T',self.newname.get())
-            y=self.hash_sp.sub('#',x)
-            z=self.hash_nbsp.sub('.',y)
-            self.namehash.set(z)
-        self.labelcompiled=False
-    def playbeeps(self,pitches):
-        if not self.labelcompiled:
-            self.beeps.compile(pitches)
-        self.beeps.play()
-    def configurebeeps(self,event=None):
-        def higher():
-            self.beeps.higher()
-            self.labelcompiled=False
-        def lower():
-            self.beeps.lower()
-            self.labelcompiled=False
-        def wider():
-            self.beeps.wider()
-            self.labelcompiled=False
-        def narrower():
-            self.beeps.narrower()
-            self.labelcompiled=False
-        def shorter():
-            self.beeps.shorter()
-            self.labelcompiled=False
-        def longer():
-            self.beeps.longer()
-            self.labelcompiled=False
-        w=ui.Window(self, title=_("Configure Tone Beeps"))
-        w.attributes("-topmost", True)
-        ui.Button(w.frame,text=_("pitch up"),cmd=higher,
-                        row=0,column=0)
-        ui.Button(w.frame,text=_("pitch down"),cmd=lower,
-                        row=1,column=0)
-        ui.Button(w.frame,text=_("more H-L difference"),cmd=wider,
-                        row=0,column=1)
-        ui.Button(w.frame,text=_("less H-L difference"),cmd=narrower,
-                        row=1,column=1)
-        ui.Button(w.frame,text=_("slower"),cmd=longer,
-                        row=2,column=0)
-        ui.Button(w.frame,text=_("faster"),cmd=shorter,
-                        row=2,column=1)
     def updategroups(self):
         # cvt=self.params.cvt()
         # ps=self.slices.ps()
@@ -7596,8 +7550,7 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
             return
         return 1
     def submitform(self):
-        self.updatelabels()
-        newtonevalue=self.formfield.get()
+        newtonevalue=self.transcriber.formfield.get()
         self.updategroups()
         if newtonevalue == "":
             noname=_("Give a name for this tone melody!")
@@ -7623,12 +7576,6 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
             delattr(self,'group_comparison') # in either case
         self.runwindow.destroy()
         return
-    def addchar(self,x):
-        if x == '':
-            self.formfield.delete(0,tkinter.END)
-        else:
-            self.formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
-        self.updatelabels()
     def done(self):
         self.submitform()
         self.donewpyaudio()
@@ -7723,9 +7670,6 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
         if not groupsok:
             log.error("Problem with log; check earlier message.")
             return
-        self.newname=tkinter.StringVar(value=self.group)
-        self.namehash=tkinter.StringVar()
-        self.hash_t,self.hash_sp,self.hash_nbsp=rx.tonerxs()
         padx=50
         pady=10
         title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
@@ -7744,82 +7688,41 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
                         row=1,column=0,sticky='ew',padx=padx,pady=pady
                         )
         getform.wrap()
-        inputframe=ui.Frame(self.runwindow.frame,
+        inputfeedbackframe=ui.Frame(self.runwindow.frame,
                             row=2,column=0,sticky=''
                             )
-        buttonframe=ui.Frame(inputframe,
-                            row=0,column=0,sticky='new'
+        """extract from here"""
+        self.transcriber=transcriber.Transcriber(inputfeedbackframe,
+                                initval=self.group,
+                                soundsettings=self.soundsettings,
+                                row=0,column=0,sticky=''
+                                )
+        self.transcriber.formfield.bind('<KeyRelease>', self.updateerror) #apply function after key
+        """to here"""
+        infoframe=ui.Frame(inputfeedbackframe,
+                            row=0,column=1,sticky=''
                             )
-        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
-        spaces=[' ',' ','']
-        for char in tonechars+spaces:
-            if char == ' ':
-                text=_('syllable break')
-                column=0
-                columnspan=int(len(tonechars)/2)+1
-                row=1
-            elif char == ' ':
-                text=_('word break')
-                columnspan=int(len(tonechars)/2)
-                column=columnspan+1
-                row=1
-            elif char == '':
-                text=_('clear entry')
-                column=0
-                columnspan=len(tonechars)
-                row=2
-            else:
-                column=tonechars.index(char)
-                text=char
-                columnspan=1
-                row=0
-            ui.Button(buttonframe,text = text,
-                        command = lambda x=char:self.addchar(x),
-                        anchor ='c',
-                        row=row,
-                        column=column,
-                        sticky='nsew',
-                        columnspan=columnspan
-                        )
         g=nn(self.othergroups,twoperline=True)
         log.info("There: {}, NTG: {}; g:{}".format(self.groups,
                                                     self.othergroups,g))
-        groupslabel=ui.Label(inputframe,
+        groupslabel=ui.Label(infoframe,
                             text='Other Groups:\n{}'.format(g),
                             row=0,column=1,
                             sticky='new',
                             padx=padx,
                             rowspan=2
                             )
-        fieldframe=ui.Frame(inputframe,
-                            row=1,column=0,sticky='new'
-                            )
-        self.formfield = ui.EntryField(fieldframe,textvariable=self.newname,
-                                    row=1,column=0,sticky='new',
-                                    font='readbig')
-        self.formfield.bind('<KeyRelease>', self.updatelabels) #apply function after key
-        self.formfieldplay= ui.Button(fieldframe,text=_('play'),
-                            cmd=lambda:self.playbeeps(self.newname.get()),
-                            row=1, column=2)
-        self.formfieldplay.bind('<Button-3>', self.configurebeeps)
-        self.errorlabel=ui.Label(fieldframe,text='',
+        self.errorlabel=ui.Label(infoframe,text='',
                             fg='red',
                             wraplength=int(self.frame.winfo_screenwidth()/3),
-                            row=1,column=1,sticky='nsew'
+                            row=2,column=1,sticky='nsew'
                             )
-        self.formhashlabel=ui.Label(fieldframe,
-                                textvariable=self.namehash,
-                                anchor ='c',
-                                row=2,column=0,sticky='new'
-                                )
-        fieldframe.grid_columnconfigure(0, weight=1)
-        self.updatelabels()
         responseframe=ui.Frame(self.runwindow.frame,
                                 row=3,
                                 column=0,
                                 sticky='',
                                 padx=padx,
-                                pady=pady
+                                pady=pady,
                                 )
         self.oktext=_('Use this name and go to:')
         column=0
@@ -7966,7 +7869,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                     row=qrow,column=0,sticky='ew',pady=20
                     )
         q.wrap()
-        named=tkinter.StringVar() #store the new name here
+        named=ui.StringVar() #store the new name here
         namefield = ui.EntryField(qframe,textvariable=named)
         namefield.grid(row=qrow,column=1)
         namefield.bind('<Key>', clearerror)
@@ -8010,7 +7913,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                     cbh.grid(row=idn+nheaders,
                             column=col,sticky='ew')
                 nheaders+=1
-            groupvars.append(tkinter.StringVar())
+            groupvars.append(ui.StringVar())
             n=len(analysis.senseidsbygroup[group])
             buttontext=group+' ({})'.format(n)
             cb=ui.CheckButton(scroll.content, text = buttontext,
@@ -8905,7 +8808,7 @@ class MainApplication(ui.Window):
             self.parent.grid_columnconfigure(rc, weight=3)
     def __init__(self,parent,exit=0):
         start_time=time.time() #this enables boot time evaluation
-        """Things that belong to a tkinter.Frame go after this:"""
+        """Things that belong to a ui.Frame go after this:"""
         super(MainApplication,self).__init__(parent,
                 exit=False
                 )
@@ -9273,7 +9176,7 @@ class ToneGroupButtonFrame(ui.Frame):
         kwargs['pady']=kwargs.pop('bpady',defaults.get('bpady',0))
         kwargs['pady']=kwargs.pop('bpadx',defaults.get('bpadx',0))
         self.kwargs=kwargs
-        self._var=tkinter.BooleanVar()
+        self._var=ui.BooleanVar()
         super(ToneGroupButtonFrame,self).__init__(parent, **frameargs)
         if self.getexample(**kwargs):
             self.makebuttons()
@@ -10878,7 +10781,7 @@ def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    root = program['root']=ui.Root(program=program) #tkinter.Tk()
+    root = program['root']=ui.Root(program=program)
     program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
     root.program=program
@@ -10915,7 +10818,7 @@ def mainproblem():
     try: #Make this work whether root has run/still runs or not.
         program['root'].winfo_exists()
         log.info("Root there!")
-        errorroot = program['root'] #tkinter.Toplevel(program['root'])
+        errorroot = program['root']
         for w in errorroot.winfo_children():
             w.destroy()
     except:
