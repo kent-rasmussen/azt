@@ -1417,7 +1417,8 @@ class LiftURL():
         self.bearchildrenof("form")
     def annotation(self,attrs={}):
         self.baselevel()
-        attrs={'name': 'annotationname'}
+        if not attrs: #probably should never depend on this
+            attrs={'name': 'annotationname'}
         if 'annotationvalue' in self.kwargs:
             attrs['value']='annotationvalue'
         self.build("annotation",attrs=attrs)
