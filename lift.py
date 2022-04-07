@@ -1122,6 +1122,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This produces a list; specify senseid and analang as you like."""
         output=self.get('citation/form/text',**kwargs).get('text')
         return output
+    def citationnode(self,**kwargs):
+        """This produces a list; specify senseid and analang as you like."""
+        output=self.get('citation',**kwargs).get('node')
+        return output
     def citations(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language
         for lang in self.analangs:
@@ -1155,6 +1159,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def lexeme(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
         output=self.get('lexeme/form/text',**kwargs).get('text')
+        return output
+    def lexemenode(self,**kwargs):
+        """This produces a list; specify senseid and analang as you like."""
+        output=self.get('lexeme',**kwargs).get('node')
         return output
     def lexemes(self,**kwargs):
         output={} # This produces a dictionary, of forms for each language.
