@@ -56,5 +56,6 @@ Download and install [this file](https://www.mercurial-scm.org/release/windows/M
 2. ask someone to help you install the XMLmind XML Editor (XXE) (see [INSTALL](INSTALL.md)).
 
 ### Update A→Z+T (to be sure you're using the most recent version)
+**Update: You can now update A→Z+T from the help menu, if you have followed these instructions.**
 1. In the folder where you put A→Z+T (see above), right click select `Git-Bash` to get a terminal (black window).
 2. In the `Git-Bash` terminal, paste `git pull` and hit enter.
