@@ -32,6 +32,12 @@ except Exception as e:
 """Variables for use without tkinter"""
 END=tkinter.END
 INSERT=tkinter.INSERT
+N=tkinter.N
+S=tkinter.S
+E=tkinter.E
+W=tkinter.W
+RIGHT=tkinter.RIGHT
+LEFT=tkinter.LEFT
 """These classes have no dependencies"""
 class ObectwArgs(object):
     """ObectwArgs just allows us to throw away unused args and kwargs."""
@@ -644,6 +650,9 @@ class UI(ObectwArgs):
 class StringVar(tkinter.StringVar):
     def __init__(self, *args, **kwargs):
         super(tkinter.StringVar, self).__init__(*args, **kwargs)
+class BooleanVar(tkinter.BooleanVar):
+    def __init__(self, *args, **kwargs):
+        super(tkinter.BooleanVar, self).__init__(*args, **kwargs)
 """below here has UI"""
 class Root(Exitable,tkinter.Tk):
     """docstring for Root."""
