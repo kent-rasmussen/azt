@@ -3450,7 +3450,7 @@ class TaskDressing(object):
         return not self.taskchooser.writeable%self.settings.writeeverynwrites
     def updateazt(self):
         if 'git' in program:
-            gitargs=[program['git'], "-C", program['aztdir'], "pull"]
+            gitargs=[str(program['git']), "-C", str(program['aztdir']), "pull"]
             try:
                 e=subprocess.check_output(gitargs,shell=False,
                                             stderr=subprocess.STDOUT)
