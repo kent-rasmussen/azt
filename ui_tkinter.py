@@ -29,6 +29,9 @@ except Exception as e:
     pilisactive=False
 # import tkintermod
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
+"""Variables for use without tkinter"""
+END=tkinter.END
+INSERT=tkinter.INSERT
 """These classes have no dependencies"""
 class ObectwArgs(object):
     """ObectwArgs just allows us to throw away unused args and kwargs."""
@@ -636,6 +639,9 @@ class UI(ObectwArgs):
             # except tkinter.TclError as e:
             #     log.info("TclError {}".format(e))
         # super(UI, self).__init__(*args, **kwargs)
+class StringVar(tkinter.StringVar):
+    def __init__(self, *args, **kwargs):
+        super(tkinter.StringVar, self).__init__(*args, **kwargs)
 """below here has UI"""
 class Root(Exitable,tkinter.Tk):
     """docstring for Root."""
