@@ -1972,6 +1972,8 @@ class LiftURL():
         self.attrs['locationfield']=['location']
         self.attrs['cawlfield']=['fvalue']
         self.attrs['annotation']=['annotationname','annotationvalue']
+        self.attrs['citation']=['lcannotationname','lcannotationvalue']
+        self.attrs['lexeme']=['lxannotationname','lxannotationvalue']
         # glosslang may be asking for a definition...
         # self.attrs['gloss']=['glosslang'] #do I want this?
     def setchildren(self):
