@@ -46,6 +46,7 @@ try:
 except Exception as e:
     log.exception("Problem importing Sound/pyaudio. Is it installed? %s",e)
     exceptiononload=True
+import transcriber
 """Other people's stuff"""
 import threading
 import multiprocessing
@@ -7490,125 +7491,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                         )
         skipb.grid(column=0, row=1, sticky="ew")
     """Doing stuff"""
-class Transcriber(ui.Frame):
-    def addchar(self,x):
-        if x == '':
-            self.formfield.delete(0,tkinter.END)
-        else:
-            self.formfield.insert(tkinter.INSERT,x) #could also do tkinter.END
-        self.updatelabels()
-    def updatelabels(self,event=None):
-        a=self.newname.get()
-        try:
-            int(a) #Is this interpretable as an integer (default group)?
-            self.namehash.set('')
-        except ValueError:
-            x=self.hash_t.sub('T',self.newname.get())
-            y=self.hash_sp.sub('#',x)
-            z=self.hash_nbsp.sub('.',y)
-            self.namehash.set(z)
-        self.labelcompiled=False
-    def playbeeps(self,pitches):
-        if not self.labelcompiled:
-            self.beeps.compile(pitches)
-        self.beeps.play()
-    def configurebeeps(self,event=None):
-        def higher():
-            self.beeps.higher()
-            self.labelcompiled=False
-        def lower():
-            self.beeps.lower()
-            self.labelcompiled=False
-        def wider():
-            self.beeps.wider()
-            self.labelcompiled=False
-        def narrower():
-            self.beeps.narrower()
-            self.labelcompiled=False
-        def shorter():
-            self.beeps.shorter()
-            self.labelcompiled=False
-        def longer():
-            self.beeps.longer()
-            self.labelcompiled=False
-        w=ui.Window(self, title=_("Configure Tone Beeps"))
-        w.attributes("-topmost", True)
-        ui.Button(w.frame,text=_("pitch up"),cmd=higher,
-                        row=0,column=0)
-        ui.Button(w.frame,text=_("pitch down"),cmd=lower,
-                        row=1,column=0)
-        ui.Button(w.frame,text=_("more H-L difference"),cmd=wider,
-                        row=0,column=1)
-        ui.Button(w.frame,text=_("less H-L difference"),cmd=narrower,
-                        row=1,column=1)
-        ui.Button(w.frame,text=_("slower"),cmd=longer,
-                        row=2,column=0)
-        ui.Button(w.frame,text=_("faster"),cmd=shorter,
-                        row=2,column=1)
-    def __init__(self, parent, initval=None, soundsettings=None, **kwargs):
-        self.newname=tkinter.StringVar(value=initval)
-        self.namehash=tkinter.StringVar()
-        self.hash_t,self.hash_sp,self.hash_nbsp=rx.tonerxs()
-        self.pyaudio=sound.AudioInterface()
-        if soundsettings:
-            self.soundsettings=soundsettings
-        else:
-            self.soundsettings=sound.SoundSettings()
-        self.beeps=sound.BeepGenerator(pyaudio=self.pyaudio,
-                                            settings=self.soundsettings)
-        ui.Frame.__init__(self, parent, **kwargs)
-        buttonframe=ui.Frame(self,
-                            row=0,column=0,sticky='new'
-                            )
-        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
-        spaces=[' ',' ','']
-        for char in tonechars+spaces:
-            if char == ' ':
-                text=_('syllable break')
-                column=0
-                columnspan=int(len(tonechars)/2)+1
-                row=1
-            elif char == ' ':
-                text=_('word break')
-                columnspan=int(len(tonechars)/2)
-                column=columnspan+1
-                row=1
-            elif char == '':
-                text=_('clear entry')
-                column=0
-                columnspan=len(tonechars)
-                row=2
-            else:
-                column=tonechars.index(char)
-                text=char
-                columnspan=1
-                row=0
-            ui.Button(buttonframe,text = text,
-                        command = lambda x=char:self.addchar(x),
-                        anchor ='c',
-                        row=row,
-                        column=column,
-                        sticky='nsew',
-                        columnspan=columnspan
-                        )
-        fieldframe=ui.Frame(self,
-                            row=1,column=0,sticky='new'
-                            )
-        self.formfield = ui.EntryField(fieldframe,textvariable=self.newname,
-                                    row=1,column=0,sticky='new',
-                                    font='readbig')
-        self.formfield.bind('<KeyRelease>', self.updatelabels) #apply function after key
-        self.formfieldplay= ui.Button(fieldframe,text=_('play'),
-                            cmd=lambda:self.playbeeps(self.newname.get()),
-                            row=1, column=2)
-        self.formfieldplay.bind('<Button-3>', self.configurebeeps)
-        self.formhashlabel=ui.Label(fieldframe,
-                                textvariable=self.namehash,
-                                anchor ='c',
-                                row=2,column=0,sticky='new'
-                                )
-        fieldframe.grid_columnconfigure(0, weight=1)
-        self.updatelabels()
 class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Transcribe Tone")
@@ -7810,7 +7692,8 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
                             row=2,column=0,sticky=''
                             )
         """extract from here"""
-        self.transcriber=Transcriber(inputfeedbackframe, initval=self.group,
+        self.transcriber=transcriber.Transcriber(inputfeedbackframe,
+                                initval=self.group,
                                 soundsettings=self.soundsettings,
                                 row=0,column=0,sticky=''
                                 )
