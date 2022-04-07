@@ -1407,14 +1407,18 @@ class LiftURL():
     def text(self,value=None):
         self.baselevel()
         self.build("text",myattr=value)
-    def form(self,value=None,lang=None):
+    def form(self,value=None,lang=None,annodict={}):
         self.baselevel()
         self.kwargs['value']=self.kwargs.get(value,None) #location and tonevalue
-        log.log(4,"form kwargs: {}".format(self.kwargs))
+        if not lang and 'lang' in self.kwargs: #in case not called by parent
+            lang='lang' #this is the kwargs key to use
+        # log.info("form kwargs: {}, lang={}".format(self.kwargs,lang))
         self.build("form","lang",lang) #OK if lang is None
-        if value is not None:
+        if annodict:
+            self.annotation(annodict)
+        if self.kwargs['value']:
             self.text("value")
-        self.bearchildrenof("form")
+        # self.bearchildrenof("form")
     def annotation(self,attrs={}):
         self.baselevel()
         if not attrs: #probably should never depend on this
