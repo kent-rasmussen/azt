@@ -7745,8 +7745,12 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
                         row=1,column=0,sticky='ew',padx=padx,pady=pady
                         )
         getform.wrap()
-        inputframe=ui.Frame(self.runwindow.frame,
+        inputfeedbackframe=ui.Frame(self.runwindow.frame,
                             row=2,column=0,sticky=''
+                            )
+        """extract from here"""
+        inputframe=ui.Frame(inputfeedbackframe,
+                            row=0,column=0,sticky=''
                             )
         buttonframe=ui.Frame(inputframe,
                             row=0,column=0,sticky='new'
@@ -7782,16 +7786,6 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
                         sticky='nsew',
                         columnspan=columnspan
                         )
-        g=nn(self.othergroups,twoperline=True)
-        log.info("There: {}, NTG: {}; g:{}".format(self.groups,
-                                                    self.othergroups,g))
-        groupslabel=ui.Label(inputframe,
-                            text='Other Groups:\n{}'.format(g),
-                            row=0,column=1,
-                            sticky='new',
-                            padx=padx,
-                            rowspan=2
-                            )
         fieldframe=ui.Frame(inputframe,
                             row=1,column=0,sticky='new'
                             )
@@ -7803,11 +7797,6 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
                             cmd=lambda:self.playbeeps(self.newname.get()),
                             row=1, column=2)
         self.formfieldplay.bind('<Button-3>', self.configurebeeps)
-        self.errorlabel=ui.Label(fieldframe,text='',
-                            fg='red',
-                            wraplength=int(self.frame.winfo_screenwidth()/3),
-                            row=1,column=1,sticky='nsew'
-                            )
         self.formhashlabel=ui.Label(fieldframe,
                                 textvariable=self.namehash,
                                 anchor ='c',
@@ -7815,12 +7804,31 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
                                 )
         fieldframe.grid_columnconfigure(0, weight=1)
         self.updatelabels()
+        """to here"""
+        infoframe=ui.Frame(inputfeedbackframe,
+                            row=0,column=1,sticky=''
+                            )
+        g=nn(self.othergroups,twoperline=True)
+        log.info("There: {}, NTG: {}; g:{}".format(self.groups,
+                                                    self.othergroups,g))
+        groupslabel=ui.Label(infoframe,
+                            text='Other Groups:\n{}'.format(g),
+                            row=0,column=1,
+                            sticky='new',
+                            padx=padx,
+                            rowspan=2
+                            )
+        self.errorlabel=ui.Label(infoframe,text='',
+                            fg='red',
+                            wraplength=int(self.frame.winfo_screenwidth()/3),
+                            row=2,column=1,sticky='nsew'
+                            )
         responseframe=ui.Frame(self.runwindow.frame,
                                 row=3,
                                 column=0,
                                 sticky='',
                                 padx=padx,
-                                pady=pady
+                                pady=pady,
                                 )
         self.oktext=_('Use this name and go to:')
         column=0
