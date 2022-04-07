@@ -1499,6 +1499,20 @@ class LiftURL():
     def field(self):
         self.baselevel()
         self.build("field","type","ftype")
+        # log.info("kwargs: {}".format(self.kwargs))
+        if 'ftype' in self.kwargs:
+            ftype=self.kwargs['ftype']
+            if set([ftype+'annotationname',ftype+'annotationvalue']) & set(self.kwargs):
+                attrs={'name': ftype+'annotationname'}
+                if ftype+'annotationvalue' in self.kwargs:
+                    attrs['value']=ftype+'annotationvalue'
+            else:
+                attrs={}
+        else:
+            log.error("You asked for a field, without specifying ftype; not "
+                        "adding form fields.")
+            return
+        self.form(ftype+"form","analang",annodict=attrs)
     def locationfield(self):
         self.baselevel()
         self.kwargs['ftype']='location'
