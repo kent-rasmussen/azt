@@ -5043,8 +5043,9 @@ class Sound(object):
         self.settings.storesettingsfile(setting='soundsettings')
         self.soundsettingswindow.destroy()
     def soundcheckrefresh(self,dict=None):
-        def quitall():
+        def quittask():
             self.soundsettingswindow.destroy()
+            self.taskchooser.gettask()
             self.on_quit()
         dictnow={
                 'audio_card_in':self.soundsettings.audio_card_in,
