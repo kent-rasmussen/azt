@@ -5172,7 +5172,7 @@ class Sound(object):
         self.pyaudiocheck()
         self.soundsettingscheck()
         self.soundsettings=self.settings.soundsettings
-        self.soundsettingswindow=ui.Window(self.frame,
+        self.soundsettingswindow=ui.Window(self.frame, exit=False,
                                 title=_('Select Sound Card Settings'))
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.soundsettingswindow)
