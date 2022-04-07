@@ -5140,7 +5140,7 @@ class Sound(object):
         bd=ui.Button(self.soundsettingswindow.content,
                     text=_("Quit Task"),
                     # cmd=program['root'].on_quit,
-                    cmd=quittask,
+                    cmd=self.quittask,
                     # anchor='c',
                     row=row,column=1
                     )
@@ -5174,6 +5174,7 @@ class Sound(object):
         self.soundsettings=self.settings.soundsettings
         self.soundsettingswindow=ui.Window(self.frame, exit=False,
                                 title=_('Select Sound Card Settings'))
+        self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.soundsettingswindow)
         if not self.exitFlag.istrue() and self.missingsoundattr():
