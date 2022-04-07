@@ -297,6 +297,7 @@ class Theme(object):
         normal=int(default*4/3)
         default=int(default)
         small=int(default*2/3)
+        tiny=int(default*1/2)
         log.info("Using default font size: {}".format(default))
         andika="Andika"# not "Andika SIL"
         charis="Charis SIL"
@@ -313,6 +314,7 @@ class Theme(object):
                 'readbig':tkinter.font.Font(family=charis, size=bigger,
                                             weight='bold'),
                 'small':tkinter.font.Font(family=charis, size=small),
+                'tiny':tkinter.font.Font(family=charis, size=tiny),
                 'default':tkinter.font.Font(family=charis, size=default),
                 'fixed':tkinter.font.Font(family='TkFixedFont', size=small)
                     }
