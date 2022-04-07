@@ -1171,6 +1171,20 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             output[lang]=self.lexeme(**kwargs)
         log.info("Found the following lexemes: {}".format(output))
         return output
+    def fieldnode(self,**kwargs):
+        """This produces a list; specify senseid and analang as you like."""
+        if 'ftype' not in kwargs:
+            log.error("I don't know what field you want: {}".format(kwargs))
+            return
+        if 'floc' not in kwargs:
+            log.error("I don't know where the field should be (floc should be "
+                "either 'sense' or 'entry'; assuming 'entry'): {}"
+                "".format(kwargs))
+            kwargs['floc']='entry'
+        kwargs[kwargs['ftype']+'annotationname']=kwargs.pop('annotationname',None)
+        kwargs[kwargs['ftype']+'annotationvalue']=kwargs.pop('annotationvalue',None)
+        output=self.get(kwargs['floc']+'/field',**kwargs).get('node')
+        return output
     def extrasegments(self):
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
