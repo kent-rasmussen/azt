@@ -7110,22 +7110,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         instructions=_("Select the one with the same tone melody as")
         ui.Label(titles, text=instructions, font='instructions',
                 anchor='c').grid(column=0, row=1, sticky="ew")
-        """Children of self.runwindow.frame.scroll.content"""
-        groupbuttons=scroll.content.groups=ui.Frame(scroll.content)
-        groupbuttons.grid(row=0,column=0,sticky="ew")
-        scroll.content.anotherskip=ui.Frame(scroll.content)
-        scroll.content.anotherskip.grid(row=1,column=0)
-        """Children of self.runwindow.frame.scroll.content.groups"""
-        groupbuttons.row=0 #rows for this frame
-        groupbuttons.col=0 #columns for this frame
-        groupvars={}
-        groupbuttonlist=list()
-        entryview=ui.Frame(self.runwindow.frame)
-        for group in groups:
-            addgroupbutton(group)
-        """Children of self.runwindow.frame.scroll.content.anotherskip"""
-        self.getanotherskip(scroll.content.anotherskip,groupvars)
-        log.info("getanotherskip vardict (1): {}".format(groupvars))
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
         while self.status.tosort(): # and not self.runwindow.exitFlag.istrue():
@@ -7528,60 +7512,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                             oldfieldvalue='NA', showurl=True #if this
                             )
         self.runcheck()
-    def getanotherskip(self,parent,vardict):
-        """This function presents a group of buttons for the user to choose
-        from, one for each tone group in that location/ps/profile in the
-        database, plus one for the user to indicate that the word doesn't
-        belong in any of those (new group), plus one to for the user to
-        indicate that the word/frame combo doesn't work (skip)."""
-        def firstok():
-            vardict['ok'].set(True)
-            remove(okb) #use this button exactly once
-            differentbutton()
-            sortnext()
-        def different():
-            vardict['NONEOFTHEABOVE'].set(True)
-            sortnext()
-        def skip():
-            vardict['skip'].set(True)
-            sortnext()
-        def remove(x):
-            x.destroy()
-        def sortnext():
-            self.sortitem.destroy()
-        def differentbutton():
-            vardict['NONEOFTHEABOVE']=ui.BooleanVar()
-            difb=ui.Button(bf, text=newgroup,
-                        cmd=different,
-                        anchor="w",
-                        font='instructions'
-                        )
-            difb.grid(column=0, row=0, sticky="ew")
-        row=0
-        firstOK=_("This word is OK in this frame")
-        newgroup=_("Different")
-        skiptext=_("Skip this item")
-        """This should just add a button, not reload the frame"""
-        row+=10
-        bf=ui.Frame(parent)
-        bf.grid(column=0, row=row, sticky="w")
-        if not self.status.groups(wsorted=True):
-            vardict['ok']=ui.BooleanVar()
-            okb=ui.Button(bf, text=firstOK,
-                            cmd=firstok,
-                            anchor="w",
-                            font='instructions'
-                            )
-            okb.grid(column=0, row=0, sticky="ew")
-        else:
-            differentbutton()
-        vardict['skip']=ui.BooleanVar()
-        skipb=ui.Button(bf, text=skiptext,
-                        cmd=skip,
-                        anchor="w",
-                        font='instructions'
-                        )
-        skipb.grid(column=0, row=1, sticky="ew")
     """Doing stuff"""
 class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
