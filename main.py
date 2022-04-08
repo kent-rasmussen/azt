@@ -4773,6 +4773,11 @@ class Tone(object):
         """This is currently called before sorting. This is a waste, if you're
         not going to sort afterwards –unless you need the groups."""
         self.settings.updatesortingstatus() #this gets groups, too
+    def aframe(self):
+        self.runwindow.destroy()
+        self.addframe()
+        self.addwindow.wait_window(self.addwindow)
+        self.runcheck()
     def __init__(self,parent):
         parent.params.cvt('T')
 class Sort(object):
@@ -4969,6 +4974,25 @@ class Sort(object):
             self.db.write()
         if sorting:
             self.status.marksenseidtosort(senseid)
+    def ncheck(self):
+        r=self.status.nextcheck(tosort=True)
+        if not r:
+            self.status.nextcheck(toverify=True)
+        self.runwindow.destroy()
+        self.runcheck()
+    def nprofile(self):
+        r=self.status.nextprofile(tosort=True)
+        if not r:
+            self.status.nextprofile(toverify=True)
+        self.runwindow.destroy()
+        self.runcheck()
+    def nps(self):
+        self.slices.nextps()
+        r=self.status.nextprofile(tosort=True)
+        if not r:
+            self.status.nextprofile(toverify=True)
+        self.runwindow.destroy()
+        self.runcheck()
     def runcheck(self):
         self.settings.storesettingsfile()
         # t=(_('Run Check'))
@@ -4998,6 +5022,133 @@ class Sort(object):
                 return #if the user didn't supply a check
         self.settings.updatesortingstatus() # Not just tone anymore
         self.maybesort()
+    def maybesort(self):
+        """This should look for one group to verify at a time, with sorting
+        in between, then join and repeat"""
+        def notdonewarning(): #Use this!!
+            self.getrunwindow(nowait=True)
+            buttontxt=_("Sort!")
+            text=_("Hey, you're not done with {} {} words by {}!"
+                    "\nCome back when you have time; restart where you left "
+                    "off by pressing ‘{}’".format(ps,profile,check,buttontxt))
+            ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+        def tosortupdate():
+            log.info("maybesort tosortbool:{}; tosort:{}; sorted:{}".format(
+                                self.status.tosort(),
+                                self.status.senseidstosort(),
+                                self.status.senseidssorted()
+                                ))
+        cvt=self.params.cvt()
+        check=self.params.check()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,ps,profile,check))
+        tosortupdate()
+        log.info("Maybe SortT (from maybesort)")
+        if self.status.checktosort(): # w/o parameters, tests current check
+            log.info("SortT (from maybesort)")
+            quit=self.sortT()
+            if quit == True:
+                if not self.exitFlag.istrue():
+                    notdonewarning()
+                return
+        tosortupdate()
+        log.info("Going to verify the first of these groups now: {}".format(
+                                    self.status.groups(toverify=True)))
+        log.info("Maybe verifyT (from maybesort)")
+        groupstoverify=self.status.groups(toverify=True)
+        if groupstoverify:
+            self.status.group(groupstoverify[0]) #just pick the first now
+            log.info("verifyT (from maybesort)")
+            exitv=self.verifyT()
+            if exitv == True: #fix this!
+                if not self.exitFlag.istrue():
+                    notdonewarning()
+                return
+            self.maybesort()
+            return
+        # Offer to join in any case:
+        if self.status.tojoin():
+            log.info("joinT (from maybesort)")
+            exit=self.joinT()
+            log.debug("exit: {}".format(exit))
+        else:
+            exit=False
+        if exit:
+            if not self.exitFlag.istrue():
+                notdonewarning()
+            #This happens when the user exits the window
+            log.debug("exiting joinT True")
+            #Give an error window here
+            return
+        elif not exit:
+            self.getrunwindow()
+            done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
+                    "distinct!".format(profile,check,self.checktypename[cvt]))
+            row=0
+            if self.exitFlag.istrue():
+                return
+            ui.Label(self.runwindow.frame, text=done,
+                    row=row,column=0,columnspan=2)
+            row+=1
+            ui.Label(self.runwindow.frame, text='',
+                        image=self.frame.theme.photo[cvt],
+                        row=row,column=0,columnspan=2)
+            row+=1
+            ctosort=self.status.checks(tosort=True)
+            ctoverify=self.status.checks(toverify=True)
+            ptosort=self.status.profiles(tosort=True)
+            ptoverify=self.status.profiles(toverify=True)
+            ui.Label(self.runwindow.frame,text=_("Continue to sort"),
+                    columnspan=2,row=row,column=0)
+            row+=1
+            text1=_("same words")
+            text2=_("same frame")
+            if ctosort or ctoverify:
+                b1=ui.Button(self.runwindow.frame, anchor='c',
+                    text=text1+'\n('+_("next {}").format(checktypename[cvt])+')',
+                    command=self.ncheck)
+                b1t=ui.ToolTip(b1,_("Automatically pick "
+                                "the next {} to sort for the ‘{}’ profile."
+                                "".format(profile,checktypename[cvt])))
+            elif cvt == 'T':
+                b1=ui.Button(self.runwindow.frame, anchor='c',
+                    text=text1+'\n('+_("define a new frame")+')',
+                    command=self.aframe)
+                b1t=ui.ToolTip(b1,_("You're done with tone frames already defined "
+                                "for the ‘{}’ profile. If you want to continue "
+                                "with this profile, define a new frame here."
+                                "".format(profile)))
+            b1.grid(row=row,column=0,sticky='e')
+            if ptosort or ptoverify:
+                b2=ui.Button(self.runwindow.frame, anchor='c',
+                    text=text2+'\n('+_("next syllable profile")+')',
+                    command=self.nprofile)
+                b2t=ui.ToolTip(b2,_("You're done with ‘{0}’ {2} "
+                                "defined for the ‘{1}’ profile. Click here to "
+                                "Automatically select the next syllable "
+                                "profile for ‘{0}’."
+                                "".format(ps, profile, checktypename[cvt])))
+            else:
+                b2=ui.Button(self.runwindow.frame, anchor='c',
+                    text=text2+'\n('+_("next lexical category")+')',
+                    command=self.nps)
+                b2t=ui.ToolTip(b2,_("You're done with {} "
+                                "defined for the top ‘{}’ syllable profiles. "
+                                "Click here to automatically select the next "
+                                "grammatical category."
+                                "".format(ps,checktypename[cvt])))
+            b2.grid(row=row,column=1,sticky='w')
+            if self.parent.exitFlag.istrue():
+                return
+            w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
+                                        self.parent.winfo_screenwidth()/150))
+            log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
+                                    b1.winfo_reqwidth(),b2.winfo_reqwidth(),w))
+            for i in [b1,b2]:
+                i.config(width=w)
+            self.runwindow.waitdone()
+            return
     def __init__(self):
         self.checktypename={'T':'frame',
                         'C':'check',
@@ -6730,157 +6881,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         """Are we OK without these?"""
         log.info("Done initializing check.")
         """Testing Zone"""
-    def maybesort(self):
-        """This should look for one group to verify at a time, with sorting
-        in between, then join and repeat"""
-        def notdonewarning(): #Use this!!
-            self.getrunwindow(nowait=True)
-            buttontxt=_("Sort!")
-            text=_("Hey, you're not done with {} {} words by {}!"
-                    "\nCome back when you have time; restart where you left "
-                    "off by pressing ‘{}’".format(ps,profile,check,buttontxt))
-            ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
-        def tosortupdate():
-            log.info("maybesort tosortbool:{}; tosort:{}; sorted:{}".format(
-                                self.status.tosort(),
-                                self.status.senseidstosort(),
-                                self.status.senseidssorted()
-                                ))
-        cvt=self.params.cvt()
-        check=self.params.check()
-        ps=self.slices.ps()
-        profile=self.slices.profile()
-        log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,ps,profile,check))
-        tosortupdate()
-        log.info("Maybe SortT (from maybesort)")
-        if self.status.checktosort(): # w/o parameters, tests current check
-            log.info("SortT (from maybesort)")
-            quit=self.sortT()
-            if quit == True:
-                if not self.exitFlag.istrue():
-                    notdonewarning()
-                return
-        tosortupdate()
-        log.info("Going to verify the first of these groups now: {}".format(
-                                    self.status.groups(toverify=True)))
-        log.info("Maybe verifyT (from maybesort)")
-        groupstoverify=self.status.groups(toverify=True)
-        if groupstoverify:
-            self.status.group(groupstoverify[0]) #just pick the first now
-            log.info("verifyT (from maybesort)")
-            exitv=self.verifyT()
-            if exitv == True: #fix this!
-                if not self.exitFlag.istrue():
-                    notdonewarning()
-                return
-            self.maybesort()
-            return
-        # Offer to join in any case:
-        if self.status.tojoin():
-            log.info("joinT (from maybesort)")
-            exit=self.joinT()
-            log.debug("exit: {}".format(exit))
-        else:
-            exit=False
-        if exit:
-            if not self.exitFlag.istrue():
-                notdonewarning()
-            #This happens when the user exits the window
-            log.debug("exiting joinT True")
-            #Give an error window here
-            return
-        elif not exit:
-            def nframe():
-                r=self.status.nextcheck(tosort=True)
-                if not r:
-                    self.status.nextcheck(toverify=True)
-                self.runwindow.destroy()
-                self.runcheck()
-            def aframe():
-                self.runwindow.destroy()
-                self.addframe()
-                self.addwindow.wait_window(self.addwindow)
-                self.runcheck()
-            def nprofile():
-                r=self.status.nextprofile(tosort=True)
-                if not r:
-                    self.status.nextprofile(toverify=True)
-                self.runwindow.destroy()
-                self.runcheck()
-            def nps():
-                self.slices.nextps()
-                r=self.status.nextprofile(tosort=True)
-                if not r:
-                    self.status.nextprofile(toverify=True)
-                self.runwindow.destroy()
-                self.runcheck()
-            self.getrunwindow()
-            done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
-                    "distinct!".format(profile,check,self.checktypename[cvt]))
-            row=0
-            if self.exitFlag.istrue():
-                return
-            ui.Label(self.runwindow.frame, text=done,
-                    row=row,column=0,columnspan=2)
-            row+=1
-            ui.Label(self.runwindow.frame, text='',
-                        image=self.frame.theme.photo[cvt],
-                        row=row,column=0,columnspan=2)
-            row+=1
-            ctosort=self.status.checks(tosort=True)
-            ctoverify=self.status.checks(toverify=True)
-            ptosort=self.status.profiles(tosort=True)
-            ptoverify=self.status.profiles(toverify=True)
-            ui.Label(self.runwindow.frame,text=_("Continue to sort"),
-                    columnspan=2,row=row,column=0)
-            row+=1
-            text1=_("same words")
-            text2=_("same frame")
-            if ctosort or ctoverify:
-                b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text1+'\n('+_("next {}").format(checktypename[cvt])+')',
-                    command=nframe)
-                b1t=ui.ToolTip(b1,_("Automatically pick "
-                                "the next {} to sort for the ‘{}’ profile."
-                                "".format(profile,checktypename[cvt])))
-            elif cvt == 'T':
-                b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text1+'\n('+_("define a new frame")+')',
-                    command=aframe)
-                b1t=ui.ToolTip(b1,_("You're done with tone frames already defined "
-                                "for the ‘{}’ profile. If you want to continue "
-                                "with this profile, define a new frame here."
-                                "".format(profile)))
-            b1.grid(row=row,column=0,sticky='e')
-            if ptosort or ptoverify:
-                b2=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text2+'\n('+_("next syllable profile")+')',
-                    command=nprofile)
-                b2t=ui.ToolTip(b2,_("You're done with ‘{0}’ {2} "
-                                "defined for the ‘{1}’ profile. Click here to "
-                                "Automatically select the next syllable "
-                                "profile for ‘{0}’."
-                                "".format(ps, profile, checktypename[cvt])))
-            else:
-                b2=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text2+'\n('+_("next lexical category")+')',
-                    command=nps)
-                b2t=ui.ToolTip(b2,_("You're done with {} "
-                                "defined for the top ‘{}’ syllable profiles. "
-                                "Click here to automatically select the next "
-                                "grammatical category."
-                                "".format(ps,checktypename[cvt])))
-            b2.grid(row=row,column=1,sticky='w')
-            if self.parent.exitFlag.istrue():
-                return
-            w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
-                                        self.parent.winfo_screenwidth()/150))
-            log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
-                                    b1.winfo_reqwidth(),b2.winfo_reqwidth(),w))
-            for i in [b1,b2]:
-                i.config(width=w)
-            self.runwindow.waitdone()
-            return
     def sortT(self):
         # This window/frame/function shows one entry at a time (with pic?)
         # for the user to select a tone group based on buttons defined below.
