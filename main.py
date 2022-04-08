@@ -5167,7 +5167,7 @@ class Sort(object):
                                 )
         self.sortitem.wrap()
         self.runwindow.waitdone()
-        for b in groupbuttonlist:
+        for b in self.buttonframe.groupbuttonlist:
             b.setcanary(self.sortitem)
         self.runwindow.wait_window(window=self.sortitem)
         if self.runwindow.exitFlag.istrue():
@@ -5230,7 +5230,7 @@ class Sort(object):
             if senseid == 1:
                 return 1
             """thread here? No, this updates the UI, as well as writing data"""
-            sortselected(senseid,framed)
+            self.buttonframe.sortselected(senseid,framed)
         if self.runwindow.exitFlag.istrue():
             return 1
         self.runwindow.resetframe()
