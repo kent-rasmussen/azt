@@ -10851,6 +10851,11 @@ def mainproblem():
             w.destroy()
     except:
         errorroot = ui.Root(program=program)
+        try:
+            _
+        except:
+            def _(x):
+                return x
     errorroot.withdraw()
     errorw=ui.Window(errorroot)
     errorw.title(_("Serious Problem!"))
