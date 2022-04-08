@@ -540,6 +540,7 @@ class BeepGenerator(object):
                 for c in badchars:
                     # log.info("replacing {}".format(c))
                     syl=syl.replace(c,'')
+                contour=False
                 for n,c in enumerate(syl):
                     # log.info("character: {}".format(c))
                     fromhz=self.pitchdict[c]
