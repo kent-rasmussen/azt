@@ -10896,8 +10896,9 @@ def mainproblem():
                                 row=3,column=0,
                                 sticky='w')
     scroll=ui.ScrollingFrame(errorw.frame,row=4,column=0)
-    o=ui.Label(scroll.content,text=''.join(lcontents),
-                justify='left',
+    """Norender here keeps this from dying on complex characters in the log."""
+    o=ui.Label(scroll.content,text=''.join(lcontents), norender=True,
+                justify=ui.LEFT,
                 font='report',
                 row=0,column=0)
     if not me:
