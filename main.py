@@ -10846,7 +10846,8 @@ def main():
 def mainproblem():
     log.info("Starting up help line...")
     if program['testing'] and me:
-        return
+        sys.exit()
+        exit()
     file=logsetup.writelzma()
     try: #Make this work whether root has run/still runs or not.
         program['root'].winfo_exists()
