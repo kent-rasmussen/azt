@@ -5205,7 +5205,6 @@ class Sort(object):
         self.thissort=self.status.senseidstosort()[:] #current list
         log.info("Going to sort these senseids: {}".format(self.status.senseidstosort()))
         groups=self.status.groups(wsorted=True)
-        self.check=self.params.check()
         """Children of runwindow.frame"""
         if self.exitFlag.istrue():
             return
