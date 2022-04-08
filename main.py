@@ -7119,7 +7119,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
         while self.status.tosort(): # and not self.runwindow.exitFlag.istrue():
-            senseid,framed=presenttosort()
+            senseid,framed=self.presenttosort()
             if senseid == 1:
                 return 1
             """thread here? No, this updates the UI, as well as writing data"""
