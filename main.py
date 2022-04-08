@@ -7113,9 +7113,8 @@ class SortButtonFrame(ui.ScrollingFrame):
         for group in groups:
             self.addgroupbutton(group)
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
-        self.getanotherskip(self.content.anotherskip,groupvars)
-        log.info("getanotherskip vardict (1): {}".format(groupvars))
-
+        self.getanotherskip(self.content.anotherskip,self.groupvars)
+        log.info("getanotherskip vardict (1): {}".format(self.groupvars))
 class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconT']
