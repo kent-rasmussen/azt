@@ -7028,6 +7028,19 @@ class SortButtonFrame(ui.ScrollingFrame):
         #                                             groupbuttons.col))
         self.groupbuttonlist.append(b)
         self._configure_canvas()
+    def addtonegroup(self):
+        log.info("Adding a tone group!")
+        values=[0,] #always have something here
+        groups=self.status.groups(wsorted=True)
+        for i in groups:
+            try:
+                values+=[int(i)]
+            except:
+                log.info('Tone group {} cannot be interpreted as an integer!'
+                        ''.format(i))
+        newgroup=max(values)+1
+        groups.append(str(newgroup))
+        return str(newgroup)
     def __init__(self, parent, task, groups, *args, **kwargs):
         super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
         """Children of self.runwindow.frame.scroll.content"""
@@ -7385,19 +7398,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
-    def addtonegroup(self):
-        log.info("Adding a tone group!")
-        values=[0,] #always have something here
-        groups=self.status.groups(wsorted=True)
-        for i in groups:
-            try:
-                values+=[int(i)]
-            except:
-                log.info('Tone group {} cannot be interpreted as an integer!'
-                        ''.format(i))
-        newgroup=max(values)+1
-        groups.append(str(newgroup))
-        return str(newgroup)
     def addtonefieldex(self,senseid,framed,**kwargs):
         group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
