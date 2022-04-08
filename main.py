@@ -5021,7 +5021,8 @@ class Sort(object):
         buttontxt=_("Sort!")
         text=_("Hey, you're not done with {} {} words by {}!"
                 "\nCome back when you have time; restart where you left "
-                "off by pressing ‘{}’".format(self.ps,profile,check,buttontxt))
+                "off by pressing ‘{}’".format(self.ps,self.profile,self.check,
+                                                buttontxt))
         ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
     def maybesort(self):
         """This should look for one group to verify at a time, with sorting
@@ -5033,10 +5034,11 @@ class Sort(object):
                                 self.status.senseidssorted()
                                 ))
         cvt=self.params.cvt()
-        check=self.params.check()
+        self.check=self.params.check()
         self.ps=self.slices.ps()
-        profile=self.slices.profile()
-        log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,self.ps,profile,check))
+        self.profile=self.slices.profile()
+        log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,self.ps,
+                                                    self.profile,self.check))
         tosortupdate()
         log.info("Maybe SortT (from maybesort)")
         if self.status.checktosort(): # w/o parameters, tests current check
@@ -5078,7 +5080,8 @@ class Sort(object):
         elif not exit:
             self.getrunwindow()
             done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
-                    "distinct!".format(profile,check,self.checktypename[cvt]))
+                    "distinct!".format(self.profile,self.check,
+                                                self.checktypename[cvt]))
             row=0
             if self.exitFlag.istrue():
                 return
@@ -5104,7 +5107,7 @@ class Sort(object):
                     command=self.ncheck)
                 b1t=ui.ToolTip(b1,_("Automatically pick "
                                 "the next {} to sort for the ‘{}’ profile."
-                                "".format(profile,self.checktypename[cvt])))
+                                "".format(self.profile,self.checktypename[cvt])))
             elif cvt == 'T':
                 b1=ui.Button(self.runwindow.frame, anchor='c',
                     text=text1+'\n('+_("define a new frame")+')',
@@ -5112,7 +5115,7 @@ class Sort(object):
                 b1t=ui.ToolTip(b1,_("You're done with tone frames already defined "
                                 "for the ‘{}’ profile. If you want to continue "
                                 "with this profile, define a new frame here."
-                                "".format(profile)))
+                                "".format(self.profile)))
             b1.grid(row=row,column=0,sticky='e')
             if ptosort or ptoverify:
                 b2=ui.Button(self.runwindow.frame, anchor='c',
@@ -5122,7 +5125,8 @@ class Sort(object):
                                 "defined for the ‘{1}’ profile. Click here to "
                                 "Automatically select the next syllable "
                                 "profile for ‘{0}’."
-                                "".format(self.ps,profile,self.checktypename[cvt])))
+                                "".format(self.ps,self.profile,
+                                self.checktypename[cvt])))
             else:
                 b2=ui.Button(self.runwindow.frame, anchor='c',
                     text=text2+'\n('+_("next lexical category")+')',
