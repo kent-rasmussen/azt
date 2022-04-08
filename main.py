@@ -3460,8 +3460,14 @@ class TaskDressing(object):
             except subprocess.CalledProcessError as e:
                 o=e.output.decode("utf-8").strip()
                 log.info("git output: {}; {}".format(e,o))
-            ErrorNotice(o,parent=self,title=_("Update (Git) output"))
             if o != 'Already up to date.' and "No route to host" not in o:
+                o+=_('\n({} will now close)').format(program['name'])
+                restart=True
+            else:
+                restart=False
+            e=ErrorNotice(o,parent=self,title=_("Update (Git) output"))
+            e.wait_window(e)
+            if restart:
                 self.taskchooser.restart()
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
@@ -3978,6 +3984,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
+        sys.exit()
         # self.parent.makecheck(filename)
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
