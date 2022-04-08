@@ -7040,9 +7040,12 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.groupvars={}
         self.groupbuttonlist=list()
         # entryview=ui.Frame(self.runwindow.frame)
+        """We need a few things from the task"""
         self.buttoncolumns=task.buttoncolumns
         self.exs=task.exs
         self.status=task.status
+        self.addtonefieldex=task.addtonefieldex
+        self.maybewrite=task.maybewrite
         for group in groups:
             self.addgroupbutton(group)
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
