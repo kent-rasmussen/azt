@@ -5149,6 +5149,37 @@ class Sort(object):
                 i.config(width=w)
             self.runwindow.waitdone()
             return
+    def presenttosort(self):
+        scaledpady=int(50*program['scale'])
+        groupselected=None
+        """these just pull the current lists from the object"""
+        senseids=self.status.senseidstosort()
+        sorted=self.status.senseidssorted()
+        senseid=senseids[0]
+        progress=(str(thissort.index(senseid)+1)+'/'+str(len(thissort)))
+        framed=self.taskchooser.datadict.getframeddata(senseid)
+        framed.setframe(check)
+        """After the first entry, sort by groups."""
+        log.debug('groups: {}'.format(self.status.groups(wsorted=True)))
+        if self.runwindow.exitFlag.istrue():
+            return 1,1
+        ui.Label(titles, text=progress, font='report', anchor='w'
+                                        ).grid(column=1, row=0, sticky="ew")
+        text=framed.formatted()
+        entryview=ui.Frame(self.runwindow.frame, column=1, row=1, sticky="new")
+        self.sortitem=ui.Label(entryview, text=text,font='readbig',
+                                column=0,row=0, sticky="w",
+                                pady=scaledpady
+                                )
+        self.sortitem.wrap()
+        self.runwindow.waitdone()
+        for b in groupbuttonlist:
+            b.setcanary(self.sortitem)
+        self.runwindow.wait_window(window=self.sortitem)
+        if self.runwindow.exitFlag.istrue():
+            return 1,1
+        else:
+            return senseid,framed
     def __init__(self):
         self.checktypename={'T':'frame',
                         'C':'check',
@@ -7003,37 +7034,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         # groups are by frame (surface distinctions), rather than by lexeme
         # (underlying distinctions) in any case.
         #This function should exit 1 on a window close, or finish with None
-        def presenttosort():
-            groupselected=None
-            """these just pull the current lists from the object"""
-            senseids=self.status.senseidstosort()
-            sorted=self.status.senseidssorted()
-            senseid=senseids[0]
-            progress=(str(thissort.index(senseid)+1)+'/'+str(len(thissort)))
-            framed=self.taskchooser.datadict.getframeddata(senseid)
-            framed.setframe(check)
-            """After the first entry, sort by groups."""
-            log.debug('tonegroups: {}'.format(self.status.groups(wsorted=True)))
-            if self.runwindow.exitFlag.istrue():
-                return 1,1
-            ui.Label(titles, text=progress, font='report', anchor='w'
-                                            ).grid(column=1, row=0, sticky="ew")
-            text=framed.formatted()
-            entryview=ui.Frame(self.runwindow.frame)
-            self.sortitem=ui.Label(entryview, text=text,font='readbig',
-                                    column=0,row=0, sticky="w",
-                                    pady=scaledpady
-                                    )
-            entryview.grid(column=1, row=1, sticky="new")
-            self.sortitem.wrap()
-            self.runwindow.waitdone()
-            for b in groupbuttonlist:
-                b.setcanary(self.sortitem)
-            self.runwindow.wait_window(window=self.sortitem)
-            if self.runwindow.exitFlag.istrue():
-                return 1,1
-            else:
-                return senseid,framed
         def addgroupbutton(group):
             if self.runwindow.exitFlag.istrue():
                 return #just don't die
