@@ -7028,31 +7028,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         # groups are by frame (surface distinctions), rather than by lexeme
         # (underlying distinctions) in any case.
         #This function should exit 1 on a window close, or finish with None
-        def addgroupbutton(group):
-            if self.runwindow.exitFlag.istrue():
-                return #just don't die
-            b=ToneGroupButtonFrame(groupbuttons, self, self.exs,
-                                    group,
-                                    showtonegroup=True,
-                                    alwaysrefreshable=True,
-                                    bpady=scaledpady
-                                    )
-            b.grid(row=groupbuttons.row, column=groupbuttons.col, sticky='w')
-            groupvars[group]=b.var()
-            if not self.buttoncolumns or (self.buttoncolumns and
-                                        groupbuttons.row+1<self.buttoncolumns):
-                groupbuttons.row+=1
-            else:
-                groupbuttons.col+=1
-                groupbuttons.col%=self.buttoncolumns # from 0 to cols-1
-                if not groupbuttons.col:
-                    groupbuttons.row+=1
-                elif groupbuttons.row+1 == self.buttoncolumns:
-                    groupbuttons.row=0
-            # log.info("Next button at r:{}, c:{}".format(groupbuttons.row,
-            #                                             groupbuttons.col))
-            groupbuttonlist.append(b)
-            scroll._configure_canvas()
         def sortselected(senseid,framed):
             selectedgroups=selected(groupvars)
             log.info("selectedgroups: {}".format(selectedgroups))
@@ -7079,7 +7054,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     created above.)"""
                     """Can't thread this; the button needs to find data"""
                     self.addtonefieldex(senseid,framed,group=group,write=False)
-                    addgroupbutton(group)
+                    self.addgroupbutton(group)
                     #adjust window for new button
                     scroll.windowsize()
                     log.debug('Group added: {}'.format(groupselected))
