@@ -7041,7 +7041,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         newgroup=max(values)+1
         groups.append(str(newgroup))
         return str(newgroup)
-    def sortselected(senseid,framed):
+    def sortselected(self,senseid,framed):
         selectedgroups=selected(self.groupvars)
         log.info("selectedgroups: {}".format(selectedgroups))
         for k in self.groupvars:
