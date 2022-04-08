@@ -545,13 +545,16 @@ class BeepGenerator(object):
                     fromhz=self.pitchdict[c]
                     if n+1 < len(syl) and c != syl[n+1]: #not last, not next
                         tohz=self.pitchdict[syl[n+1]]
+                        contour=True
+                    elif n+1 == len(syl) and c != syl[n-1]: #last of contour
+                        break
                     else:
                         tohz=self.pitchdict[c]
                     hz=fromhz
                     step=1
-                    for f in range(self.framespersyl//len(syl)):
+                    for f in range(self.framespersyl//len(syl)-contour):
                         if not f%step:
-                            hz+=((tohz-fromhz)*step/self.framespersyl)
+                            hz+=((tohz-fromhz)*step/(self.framespersyl//len(syl)-contour))
                         # log.info("hz: {} ({}-{})".format(hz,fromhz,tohz))
                         if hz: # if c in self.pitchdict and self.pitchdict[c]:
                             self.wavdata+=chr(int(math.sin(f/((
