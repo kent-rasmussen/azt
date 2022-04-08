@@ -6950,8 +6950,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     groupbuttons.row+=1
                 elif groupbuttons.row+1 == self.buttoncolumns:
                     groupbuttons.row=0
-            log.info("Next button at r:{}, c:{}".format(groupbuttons.row,
-                                                        groupbuttons.col))
+            # log.info("Next button at r:{}, c:{}".format(groupbuttons.row,
+            #                                             groupbuttons.col))
             groupbuttonlist.append(b)
             scroll._configure_canvas()
         def sortselected(senseid,framed):
@@ -7188,7 +7188,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     row+=1
                 elif row+1 == self.buttoncolumns:
                     row=0
-            log.info("Next button at r:{}, c:{}".format(row,column))
+            # log.info("Next button at r:{}, c:{}".format(row,column))
         bf=ui.Frame(self.sframe.content)
         bf.grid(row=max(row+1,self.buttoncolumns+1), column=0, sticky="ew") #Keep on own row
         b=ui.Button(bf, text=oktext,
@@ -7315,7 +7315,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                     row+=1
                 elif row+1 == self.buttoncolumns:
                     row=0
-            log.info("Next button at r:{}, c:{}".format(row,column))
+            # log.info("Next button at r:{}, c:{}".format(row,column))
         """If all is good, destroy this frame."""
         self.runwindow.waitdone()
         ngroupstojoin=0
