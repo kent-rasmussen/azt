@@ -5100,11 +5100,11 @@ class Sort(object):
             text2=_("same frame")
             if ctosort or ctoverify:
                 b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text1+'\n('+_("next {}").format(checktypename[cvt])+')',
+                    text=text1+'\n('+_("next {}").format(self.checktypename[cvt])+')',
                     command=self.ncheck)
                 b1t=ui.ToolTip(b1,_("Automatically pick "
                                 "the next {} to sort for the ‘{}’ profile."
-                                "".format(profile,checktypename[cvt])))
+                                "".format(profile,self.checktypename[cvt])))
             elif cvt == 'T':
                 b1=ui.Button(self.runwindow.frame, anchor='c',
                     text=text1+'\n('+_("define a new frame")+')',
@@ -5122,7 +5122,7 @@ class Sort(object):
                                 "defined for the ‘{1}’ profile. Click here to "
                                 "Automatically select the next syllable "
                                 "profile for ‘{0}’."
-                                "".format(ps, profile, checktypename[cvt])))
+                                "".format(ps,profile,self.checktypename[cvt])))
             else:
                 b2=ui.Button(self.runwindow.frame, anchor='c',
                     text=text2+'\n('+_("next lexical category")+')',
@@ -5131,7 +5131,7 @@ class Sort(object):
                                 "defined for the top ‘{}’ syllable profiles. "
                                 "Click here to automatically select the next "
                                 "grammatical category."
-                                "".format(ps,checktypename[cvt])))
+                                "".format(ps, self.checktypename[cvt])))
             b2.grid(row=row,column=1,sticky='w')
             if self.parent.exitFlag.istrue():
                 return
@@ -6575,7 +6575,7 @@ class SortCV(Sort,Segments,TaskDressing,ui.Window):
     def __init__(self, parent):
         Segments.__init__(self,parent)
         super(SortCV, parent).__init__()
-        # Sort.__init__(self)
+        Sort.__init__(self)
     def picked(self,choice,**kwargs):
         return
         entry.addresult(check, result='OK') #let's not translate this...
@@ -6826,7 +6826,7 @@ class SortV(Sort,Segments,TaskDressing,ui.Window):
         Segments.__init__(self,parent)
         super(SortCV, parent).__init__()
         self.params.cvt('V')
-        # Sort.__init__(self)
+        Sort.__init__(self)
 class SortC(Sort,Segments,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconC']
@@ -6845,7 +6845,7 @@ class SortC(Sort,Segments,TaskDressing,ui.Window):
         Segments.__init__(self,parent)
         super(SortCV, parent).__init__()
         self.params.cvt('V')
-        # Sort.__init__(self)
+        Sort.__init__(self)
 class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconT']
@@ -6867,7 +6867,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         parent.settings.makeeverythingok()
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        # Sort.__init__(self)
+        Sort.__init__(self)
         log.info("status: {}".format(type(self.status)))
         self.analang=self.settings.params.analang()
         # Not sure what this was for (XML?):
