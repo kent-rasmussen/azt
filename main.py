@@ -5027,7 +5027,7 @@ class Sort(object):
         buttontxt=_("Sort!")
         text=_("Hey, you're not done with {} {} words by {}!"
                 "\nCome back when you have time; restart where you left "
-                "off by pressing ‘{}’".format(ps,profile,check,buttontxt))
+                "off by pressing ‘{}’".format(self.ps,profile,check,buttontxt))
         ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
     def maybesort(self):
         """This should look for one group to verify at a time, with sorting
@@ -5040,9 +5040,9 @@ class Sort(object):
                                 ))
         cvt=self.params.cvt()
         check=self.params.check()
-        ps=self.slices.ps()
+        self.ps=self.slices.ps()
         profile=self.slices.profile()
-        log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,ps,profile,check))
+        log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,self.ps,profile,check))
         tosortupdate()
         log.info("Maybe SortT (from maybesort)")
         if self.status.checktosort(): # w/o parameters, tests current check
@@ -5128,7 +5128,7 @@ class Sort(object):
                                 "defined for the ‘{1}’ profile. Click here to "
                                 "Automatically select the next syllable "
                                 "profile for ‘{0}’."
-                                "".format(ps,profile,self.checktypename[cvt])))
+                                "".format(self.ps,profile,self.checktypename[cvt])))
             else:
                 b2=ui.Button(self.runwindow.frame, anchor='c',
                     text=text2+'\n('+_("next lexical category")+')',
@@ -5137,7 +5137,7 @@ class Sort(object):
                                 "defined for the top ‘{}’ syllable profiles. "
                                 "Click here to automatically select the next "
                                 "grammatical category."
-                                "".format(ps, self.checktypename[cvt])))
+                                "".format(self.ps, self.checktypename[cvt])))
             b2.grid(row=row,column=1,sticky='w')
             if self.parent.exitFlag.istrue():
                 return
