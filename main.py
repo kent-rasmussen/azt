@@ -3909,6 +3909,7 @@ class TaskChooser(TaskDressing,ui.Window):
         sortsrecorded=self.db.nfieldswsoundfiles
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
+        enough=50
         for f in sorts:
             if f not in sortsrecorded:
                 sortsrecorded[f]={}
@@ -3918,10 +3919,10 @@ class TaskChooser(TaskDressing,ui.Window):
                 sorting on lc v other fields here, at least not yet"""
                 if f == 'sense/example':
                     #sorting is never done; mark when the top slices are done?
-                    if sorts[f][l] >=100: #what is a reasonable number here?
+                    if sorts[f][l] >= enough: #what is a reasonable number here?
                         self.doneenough['sortT']=True
                 else:
-                    if sorts[f][l] >=100: #what is a reasonable number here?
+                    if sorts[f][l] >= enough: #what is a reasonable number here?
                         self.doneenough['sort']=True
                 #This is a bit of a hack, but no analang nor audiolang yet.
                 maybeals=[i for i in self.db.audiolangs if l in i]
@@ -3934,20 +3935,20 @@ class TaskChooser(TaskDressing,ui.Window):
                     if f == 'sense/example':
                         if not sortsnotrecorded[f][l]:
                             self.donew['recordedT']=True
-                        if sortsrecorded[f][al] >= 100:
+                        if sortsrecorded[f][al] >= enough:
                             self.doneenough['recordedT']=True
                         # Needed? Any time sorting is done, show recording
                         # if not sortsrecorded[f][al]:
                         #     self.donew['torecordT']=True
-                        if sortsnotrecorded[f][l] < 100:
+                        if sortsnotrecorded[f][l] < enough:
                             self.doneenough['torecordT']=True
                     else:
                         if not sortsnotrecorded[f][l]:
                             self.donew['recorded']=True
-                        if sortsrecorded[f][al] >= 100:
+                        if sortsrecorded[f][al] >= enough:
                             self.doneenough['recorded']=True
                         #see above
-                        if sortsnotrecorded[f][l] < 100:
+                        if sortsnotrecorded[f][l] < enough:
                             self.doneenough['torecord']=True
                 else:
                     log.info("Couldn't find plausible audiolang (among {}) "
