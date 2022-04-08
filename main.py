@@ -7086,7 +7086,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             self.status.marksenseidsorted(senseid)
             self.maybewrite()
         log.info('Running sortT:')
-        scaledpady=int(50*program['scale'])
         self.getrunwindow()
         """sortingstatus() checks by ps,profile,check (frame),
         for the presence of a populated fieldtype='tone'. So any time any of
