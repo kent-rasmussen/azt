@@ -10850,6 +10850,7 @@ def mainproblem():
         exit()
     file=logsetup.writelzma()
     try: #Make this work whether root has run/still runs or not.
+        newtk=False
         program['root'].winfo_exists()
         log.info("Root there!")
         errorroot = program['root']
@@ -10857,6 +10858,7 @@ def mainproblem():
             w.destroy()
     except:
         errorroot = ui.Root(program=program)
+        newtk=True
         try:
             _
         except:
@@ -10909,8 +10911,9 @@ def mainproblem():
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
-    errorroot.mainloop()
-    # errorroot.wait_window(errorroot)
+    if newtk: #likely never work/needed?
+        errorroot.mainloop()
+    errorw.wait_window(errorw)
     sys.exit()
     exit()
 """functions which are not (no longer?) used"""
