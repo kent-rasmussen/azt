@@ -7539,7 +7539,7 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
             return
         log.info("group: {}, groups: {}".format(self.group,self.groups))
         if not self.group or self.group not in self.groups:
-            w=self.getgroup(wsorted=True) #guess=True,
+            w=self.getgroup(wsorted=True, guess=True)
             if w.winfo_exists():
                 w.wait_window(w)
             self.group=self.status.group()
