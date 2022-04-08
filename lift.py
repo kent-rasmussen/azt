@@ -1885,10 +1885,10 @@ class LiftURL():
             node=[node]
         for i in node:
             log.log(4,"running kwargshaschildrenof.gen on '{}'".format(i))
-            if i is not '':
+            if i != '':
                 ii=self.children.get(i,'')
                 log.log(4,"Found '{}' this time!".format(ii))
-                if ii is not '':
+                if ii != '':
                     x+=ii
                     self.getfamilyof(ii,x)
         return x
