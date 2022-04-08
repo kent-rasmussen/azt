@@ -4992,6 +4992,12 @@ class Sort(object):
                 return #if the user didn't supply a check
         self.settings.updatesortingstatus() # Not just tone anymore
         self.maybesort()
+    def __init__(self):
+        self.checktypename={'T':'frame',
+                        'C':'check',
+                        'V':'check',
+                        'CV':'check',
+                        }
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
     def donewpyaudio(self):
@@ -6803,8 +6809,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 self.runwindow.destroy()
                 self.runcheck()
             self.getrunwindow()
-            done=_("All ‘{}’ tone groups in the ‘{}’ frame are verified and "
-                    "distinct!".format(profile,check))
+            done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
+                    "distinct!".format(profile,check,self.checktypename[cvt]))
             row=0
             if self.exitFlag.istrue():
                 return
@@ -6826,12 +6832,12 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             text2=_("same frame")
             if ctosort or ctoverify:
                 b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text1+'\n('+_("next frame")+')',
+                    text=text1+'\n('+_("next {}").format(checktypename[cvt])+')',
                     command=nframe)
                 b1t=ui.ToolTip(b1,_("Automatically pick "
-                                "the next tone frame to sort for "
-                                "the ‘{}’ profile.".format(profile)))
-            else:
+                                "the next {} to sort for the ‘{}’ profile."
+                                "".format(profile,checktypename[cvt])))
+            elif cvt == 'T':
                 b1=ui.Button(self.runwindow.frame, anchor='c',
                     text=text1+'\n('+_("define a new frame")+')',
                     command=aframe)
@@ -6844,18 +6850,20 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 b2=ui.Button(self.runwindow.frame, anchor='c',
                     text=text2+'\n('+_("next syllable profile")+')',
                     command=nprofile)
-                b2t=ui.ToolTip(b2,_("You're done with ‘{0}’ tone frames already "
+                b2t=ui.ToolTip(b2,_("You're done with ‘{0}’ {2} "
                                 "defined for the ‘{1}’ profile. Click here to "
                                 "Automatically select the next syllable "
-                                "profile for ‘{0}’.".format(ps, profile)))
+                                "profile for ‘{0}’."
+                                "".format(ps, profile, checktypename[cvt])))
             else:
                 b2=ui.Button(self.runwindow.frame, anchor='c',
                     text=text2+'\n('+_("next lexical category")+')',
                     command=nps)
-                b2t=ui.ToolTip(b2,_("You're done with tone frames already "
+                b2t=ui.ToolTip(b2,_("You're done with {} "
                                 "defined for the top ‘{}’ syllable profiles. "
                                 "Click here to automatically select the next "
-                                "grammatical category.".format(ps)))
+                                "grammatical category."
+                                "".format(ps,checktypename[cvt])))
             b2.grid(row=row,column=1,sticky='w')
             if self.parent.exitFlag.istrue():
                 return
