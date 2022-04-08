@@ -5016,16 +5016,16 @@ class Sort(object):
                 return #if the user didn't supply a check
         self.settings.updatesortingstatus() # Not just tone anymore
         self.maybesort()
+    def notdonewarning(self):
+        self.getrunwindow(nowait=True)
+        buttontxt=_("Sort!")
+        text=_("Hey, you're not done with {} {} words by {}!"
+                "\nCome back when you have time; restart where you left "
+                "off by pressing ‘{}’".format(ps,profile,check,buttontxt))
+        ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
     def maybesort(self):
         """This should look for one group to verify at a time, with sorting
         in between, then join and repeat"""
-        def notdonewarning(): #Use this!!
-            self.getrunwindow(nowait=True)
-            buttontxt=_("Sort!")
-            text=_("Hey, you're not done with {} {} words by {}!"
-                    "\nCome back when you have time; restart where you left "
-                    "off by pressing ‘{}’".format(ps,profile,check,buttontxt))
-            ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
         def tosortupdate():
             log.info("maybesort tosortbool:{}; tosort:{}; sorted:{}".format(
                                 self.status.tosort(),
@@ -5044,7 +5044,7 @@ class Sort(object):
             quit=self.sortT()
             if quit == True:
                 if not self.exitFlag.istrue():
-                    notdonewarning()
+                    self.notdonewarning()
                 return
         tosortupdate()
         log.info("Going to verify the first of these groups now: {}".format(
@@ -5057,7 +5057,7 @@ class Sort(object):
             exitv=self.verifyT()
             if exitv == True: #fix this!
                 if not self.exitFlag.istrue():
-                    notdonewarning()
+                    self.notdonewarning()
                 return
             self.maybesort()
             return
@@ -5070,7 +5070,7 @@ class Sort(object):
             exit=False
         if exit:
             if not self.exitFlag.istrue():
-                notdonewarning()
+                self.notdonewarning()
             #This happens when the user exits the window
             log.debug("exiting joinT True")
             #Give an error window here
