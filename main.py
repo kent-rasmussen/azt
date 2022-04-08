@@ -7035,6 +7035,57 @@ class SortButtonFrame(ui.ScrollingFrame):
         newgroup=max(values)+1
         groups.append(str(newgroup))
         return str(newgroup)
+    def sortselected(senseid,framed):
+        selectedgroups=selected(self.groupvars)
+        log.info("selectedgroups: {}".format(selectedgroups))
+        for k in self.groupvars:
+            log.info("{} value: {}".format(k,self.groupvars[k].get()))
+        if len(selectedgroups)>1:
+            log.error("More than one group selected: {}".format(
+                                                            selectedgroups))
+            return 2
+        groupselected=unlist(selectedgroups)
+        if groupselected in self.groupvars:
+            self.groupvars[groupselected].set(False)
+        else:
+            log.error("selected {}; not in {}".format(groupselected,self.groupvars))
+            return
+        if groupselected:
+            if groupselected in ["NONEOFTHEABOVE",'ok']:
+                """If there are no groups yet, or if the user asks for
+                another group, make a new group."""
+                group=self.addtonegroup()
+                """And give the user a button for it, for future words
+                (N.B.: This is only used for groups added during the current
+                run. At the beginning of a run, all used groups have buttons
+                created above.)"""
+                """Can't thread this; the button needs to find data"""
+                self.addtonefieldex(senseid,framed,group=group,write=False)
+                self.addgroupbutton(group)
+                #adjust window for new button
+                scroll.windowsize()
+                log.debug('Group added: {}'.format(groupselected))
+                """group with the above?"""
+                """Group these last two?"""
+            else:
+                if groupselected == 'skip':
+                    group='NA'
+                else:
+                    group=groupselected
+                log.debug('Group selected: {} ({})'.format(group,
+                                                            groupselected))
+                """This needs to *not* operate on "exit" button."""
+                """thread here?"""
+                # self.addtonefieldex(senseid,framed,group=group,write=False)
+                t = threading.Thread(target=self.addtonefieldex,
+                                    args=(senseid,framed),
+                                    kwargs={'group':group,'write':False})
+                t.start()
+        else:
+            log.debug('No group selected: {}'.format(groupselected))
+            return 1 # this should only happen on Exit
+        self.status.marksenseidsorted(senseid)
+        self.maybewrite()
     def __init__(self, parent, task, groups, *args, **kwargs):
         super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
         """Children of self.runwindow.frame.scroll.content"""
