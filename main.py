@@ -5150,14 +5150,14 @@ class Sort(object):
         senseids=self.status.senseidstosort()
         sorted=self.status.senseidssorted()
         senseid=senseids[0]
-        progress=(str(thissort.index(senseid)+1)+'/'+str(len(thissort)))
+        progress=(str(self.thissort.index(senseid)+1)+'/'+str(len(self.thissort)))
         framed=self.taskchooser.datadict.getframeddata(senseid)
-        framed.setframe(check)
+        framed.setframe(self.check)
         """After the first entry, sort by groups."""
         log.debug('groups: {}'.format(self.status.groups(wsorted=True)))
         if self.runwindow.exitFlag.istrue():
             return 1,1
-        ui.Label(titles, text=progress, font='report', anchor='w'
+        ui.Label(self.titles, text=progress, font='report', anchor='w'
                                         ).grid(column=1, row=0, sticky="ew")
         text=framed.formatted()
         entryview=ui.Frame(self.runwindow.frame, column=1, row=1, sticky="new")
