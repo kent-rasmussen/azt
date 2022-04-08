@@ -6757,8 +6757,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             self.status.group(groupstoverify[0]) #just pick the first now
             log.info("verifyT (from maybesort)")
             exitv=self.verifyT()
-            """This menu should be gone altogether, from this window"""
-            self.runwindow.removeverifymenu() #remove verification windows here, if made
             if exitv == True: #fix this!
                 if not self.exitFlag.istrue():
                     notdonewarning()
@@ -7098,9 +7096,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         group=self.status.group()
         # The title for this page changes by group, below.
         self.getrunwindow(msg="preparing to verify group: {}".format(group))
-        # if menu == True:
-        #     self.runwindow.doverifymenu()
-        # ContextMenu(self.runwindow, context='verifyT') #once for all
         oktext='These all have the same tone'
         instructions=_("Read down this list to verify they all have the same "
             "tone melody. Select any word with a different tone melody to "
