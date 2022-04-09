@@ -11013,7 +11013,9 @@ if __name__ == "__main__":
     #'sendpraat' now in 'praat', if useful
     for exe in ['praat','hg','ffmpeg','lame','git','python','python3']:
         findexecutable(exe)
-    if program['python3'] and 'Microsoft/WindowsApps' not in program['python3']:
+    if program['python3'] and not (
+        'Microsoft' in program['python3'] and
+        'WindowsApps' in program['python3']):
         program['python']=program.pop('python3')
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
