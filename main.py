@@ -4962,6 +4962,35 @@ class Sort(object):
             self.db.write()
         if sorting:
             self.status.marksenseidtosort(senseid)
+    def runcheck(self):
+        self.settings.storesettingsfile()
+        # t=(_('Run Check'))
+        log.info("Running check...")
+        # i=0
+        # ps=self.slices.ps()
+        # if not ps:
+        #     self.getps()
+        # group=self.status.group()
+        # analang=self.params.analang()
+        # if None in [analang, ps, group]:
+        #     log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
+        #                                 self.analang, ps, group))
+        cvt=self.params.cvt()
+        check=self.params.check()
+        profile=self.slices.profile()
+        if not profile:
+            self.getprofile()
+        """further specify check check in maybesort, where you can send the user
+        on to the next setting"""
+        if (check not in self.status.checks() #tosort=True
+                # and check not in self.status.checks(toverify=True)
+                # and check not in self.status.checks(tojoin=True)
+                ):
+            exit=self.getcheck()
+            if exit and not self.exitFlag.istrue():
+                return #if the user didn't supply a check
+        self.settings.updatesortingstatus() # Not just tone anymore
+        self.maybesort()
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
     def donewpyaudio(self):
@@ -6688,35 +6717,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         """Are we OK without these?"""
         log.info("Done initializing check.")
         """Testing Zone"""
-    def runcheck(self):
-        self.settings.storesettingsfile()
-        # t=(_('Run Check'))
-        log.info("Running check...")
-        # i=0
-        # ps=self.slices.ps()
-        # if not ps:
-        #     self.getps()
-        # group=self.status.group()
-        # analang=self.params.analang()
-        # if None in [analang, ps, group]:
-        #     log.debug(_("'Null' value (what does this mean?): {} {} {}").format(
-        #                                 self.analang, ps, group))
-        cvt=self.params.cvt()
-        check=self.params.check()
-        profile=self.slices.profile()
-        if not profile:
-            self.getprofile()
-        """further specify check check in maybesort, where you can send the user
-        on to the next setting"""
-        if (check not in self.status.checks() #tosort=True
-                # and check not in self.status.checks(toverify=True)
-                # and check not in self.status.checks(tojoin=True)
-                ):
-            exit=self.getcheck()
-            if exit and not self.exitFlag.istrue():
-                return #if the user didn't supply a check
-        self.settings.updatesortingstatus() # Not just tone anymore
-        self.maybesort()
     def maybesort(self):
         """This should look for one group to verify at a time, with sorting
         in between, then join and repeat"""
@@ -7538,7 +7538,7 @@ class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
             return
         log.info("group: {}, groups: {}".format(self.group,self.groups))
         if not self.group or self.group not in self.groups:
-            w=self.getgroup(wsorted=True) #guess=True,
+            w=self.getgroup(wsorted=True, guess=True)
             if w.winfo_exists():
                 w.wait_window(w)
             self.group=self.status.group()
