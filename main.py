@@ -10792,7 +10792,7 @@ def pythonmodules():
     for install in installs:
         pyargs=[program['python'], '-m', 'pip', 'install']
         pyargs.extend(install)
-        # log.info(pyargs)
+        log.info("Running `{}`".format(' '.join(pyargs)))
         try:
             o=subprocess.check_output(pyargs,shell=False,
                                         stderr=subprocess.STDOUT)
