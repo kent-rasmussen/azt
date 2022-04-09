@@ -5252,6 +5252,17 @@ class Sort(object):
         self.runwindow.resetframe()
         return
     def __init__(self):
+        """I need some way to control for ftype"""
+        """I need to think through when I would work with one ftype, and not
+        another, or when I would want to work with one, then modify the other
+        (e.g., lx)"""
+        """sorting on individual whole forms (e.g., lc, pl, imp) should happen
+        in tone, but maybe not for C, V, and CV. Or is there a context where we
+        would expect (or find anyway) that the analyzable (!) plural/imp form
+        doesn't have the same vowels/consonants as the citation form? Maybe we should
+        plan for this, and have a 'Yes, this is OK, change them both' button
+        Maybe make that button a user option, so it doesn't have to be there if
+        not desired."""
         self.checktypename={'T':'frame',
                         'C':'check',
                         'V':'check',
