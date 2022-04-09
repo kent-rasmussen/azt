@@ -3899,6 +3899,7 @@ class TaskChooser(TaskDressing,ui.Window):
                     ]:
             self.donew[task]=False
             self.doneenough[task]=False
+        nentries=self.db.nguids
         lexemesdone=self.db.nentrieswlexemedata
         citationsdone=self.db.nentrieswcitationdata
         log.info("lexemesdone by lang: {}".format(lexemesdone))
@@ -3968,13 +3969,11 @@ class TaskChooser(TaskDressing,ui.Window):
             if remaining < 100:
                 self.doneenough['parsedlx']=True
                 break
-        for lang in self.file.db.nentrieswcitationdata:
-            # if self.file.db.nentrieswcitationdata[lang] >=1700:
-            if not len(self.cawlmissing):
+        for lang in citationsdone:
+            if nentries-citationsdone[lang] < 50 not len(self.cawlmissing):
                 self.donew['collectionlc']=True
-            # if me or len(self.cawlmissing) < 705:#too wide a margin, but include 1k
-        self.doneenough['collectionlc']=True
-        #I need to think through this
+            if me or citationsdone[lang] > 200: #was 705
+                self.doneenough['collectionlc']=True#I need to think through this
         for f in self.db.sensefields:
             if 'verification' in f:
                 self.doneenough['analysis']=True
