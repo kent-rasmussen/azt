@@ -3982,14 +3982,17 @@ class TaskChooser(TaskDressing,ui.Window):
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
+        # pyargs=[program['python'],file.getfile(__file__)]
+        # subprocess.run(pyargs)
+        os.execv(sys.argv[0], sys.argv)
         sys.exit()
         # self.parent.makecheck(filename)
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
         self.file.askwhichlift(file.getfilenames())
-        text=_("{} will now exit; restart to work with the new database."
-                "".format(program['name']))
-        ErrorNotice(text,title=_("Change Database"),wait=True)
+        # text=_("{} will now exit; restart to work with the new database."
+        #         "".format(program['name']))
+        # ErrorNotice(text,title=_("Change Database"),wait=True)
         # program['root'].destroy()
         # subprocess.call?
         # __name__
