@@ -7055,6 +7055,56 @@ class SortButtonFrame(ui.ScrollingFrame):
         newgroup=max(values)+1
         groups.append(str(newgroup))
         return str(newgroup)
+    def marksortgroup(self,senseid,framed,**kwargs):
+        group=kwargs.get('group',self.status.group())
+        write=kwargs.get('write',True)
+        guid=None
+        if group is None or group == '':
+            log.error("groupselected: {}; this should never happen"
+                        "".format(group))
+            exit()
+        check=self.params.check()
+        log.debug("Adding {} value to {} location in 'tone' fieldtype, "
+                "senseid: {} guid: {} (in main_lift.py)".format(
+                    group,
+                    check,
+                    senseid,
+                    guid))
+        if cvt == 'T':
+            self.db.addmodexamplefields( #This should only mod if already there
+                                    senseid=senseid,
+                                    analang=self.analang,
+                                    fieldtype='tone',location=check,
+                                    framed=framed,
+                                    fieldvalue=group,
+                                    write=False
+                                    )
+            newgroup=unlist(self.db.get("example/tonefield/form/text",
+                        senseid=senseid, location=check).get('text'))
+        else:
+            self.db.annotatefield(
+                                senseid=senseid,
+                                analang=self.analang,
+                                name=check,
+                                ftype=self.ftype,
+                                write=False
+                                )
+            self.db.fieldvalue(
+                                senseid=senseid,
+                                analang=self.analang,
+                                name=check,
+                                )
+        if newgroup != group:
+            log.error("Field addition failed! LIFT says {}, not {}.".format(
+                                                newgroup,group))
+        else:
+            log.info("Field addition succeeded! LIFT says {}, which is {}."
+                                        "".format(newgroup,group))
+        self.status.last('sort',update=True)
+        self.status.tojoin(True) # will need to be distinguished again
+        self.updatestatus(group=group,write=write) # marks the group unverified.
+        if write:
+            self.db.write() #This is never iterated over; just one entry at a time.
     def sortselected(self,senseid,framed):
         selectedgroups=selected(self.groupvars)
         log.info("selectedgroups: {}".format(selectedgroups))
@@ -7080,7 +7130,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
                 """Can't thread this; the button needs to find data"""
-                self.addtonefieldex(senseid,framed,group=group,write=False)
+                self.marksortgroup(senseid,framed,group=group,write=False)
                 self.addgroupbutton(group)
                 #adjust window for new button
                 self.windowsize()
@@ -7096,8 +7146,8 @@ class SortButtonFrame(ui.ScrollingFrame):
                                                             groupselected))
                 """This needs to *not* operate on "exit" button."""
                 """thread here?"""
-                # self.addtonefieldex(senseid,framed,group=group,write=False)
-                t = threading.Thread(target=self.addtonefieldex,
+                # self.marksortgroup(senseid,framed,group=group,write=False)
+                t = threading.Thread(target=self.marksortgroup,
                                     args=(senseid,framed),
                                     kwargs={'group':group,'write':False})
                 t.start()
@@ -7122,7 +7172,8 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.buttoncolumns=task.buttoncolumns
         self.exs=task.exs
         self.status=task.status
-        self.addtonefieldex=task.addtonefieldex
+        self.marksortgroup=task.marksortgroup
+        self.db=task.db
         self.maybewrite=task.maybewrite
         for group in groups:
             self.addgroupbutton(group)
@@ -7462,42 +7513,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
-    def addtonefieldex(self,senseid,framed,**kwargs):
-        group=kwargs.get('group',self.status.group())
-        write=kwargs.get('write',True)
-        guid=None
-        if group is None or group == '':
-            log.error("groupselected: {}; this should never happen"
-                        "".format(group))
-            exit()
-        check=self.params.check()
-        log.debug("Adding {} value to {} location in 'tone' fieldtype, "
-                "senseid: {} guid: {} (in main_lift.py)".format(
-                    group,
-                    check,
-                    senseid,
-                    guid))
-        self.db.addmodexamplefields( #This should only mod if already there
-                                    senseid=senseid,
-                                    analang=self.analang,
-                                    fieldtype='tone',location=check,
-                                    framed=framed,
-                                    fieldvalue=group,
-                                    write=False
-                                    )
-        tonegroup=unlist(self.db.get("example/tonefield/form/text",
-                        senseid=senseid, location=check).get('text'))
-        if tonegroup != group:
-            log.error("Field addition failed! LIFT says {}, not {}.".format(
-                                                tonegroup,group))
-        else:
-            log.info("Field addition succeeded! LIFT says {}, which is {}."
-                                        "".format(tonegroup,group))
-        self.status.last('sort',update=True)
-        self.status.tojoin(True) # will need to be distinguished again
-        self.updatestatus(group=group,write=write) # marks the group unverified.
-        if write:
-            self.db.write() #This is never iterated over; just one entry at a time.
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
         self.db.addpronunciationfields(
