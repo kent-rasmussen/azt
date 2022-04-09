@@ -10769,6 +10769,27 @@ def praatversioncheck():
     else:
         log.info("Praat version less than {}".format(justpraatversion))
         return False
+def pythonmodules():
+    log.info("Installing python dependencies")
+    if not program['python']:
+        log.error("Can't find python; how am I doing this? Put it in your PATH")
+        sys.exit()
+    installs=[
+            ['--upgrade', 'pip', 'setuptools', 'wheel'],
+            ['pyaudio'],
+            ['Pillow', 'lxml'],
+            ['patiencediff']
+            ]
+    for install in installs:
+        pyargs=[program['python'], '-m', 'pip', 'install']
+        pyargs.extend(install)
+        # log.info(pyargs)
+        try:
+            o=subprocess.check_output(pyargs,shell=False,
+                                        stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            o=e.output
+        log.info(o.decode("utf-8").strip())
 def praatopen(file,newpraat=False,event=None):
     """sendpraat is now looked for only where praat version is before
     'Praat 6.2.04 (December 18 2021)', when new functionality was added to
@@ -10815,6 +10836,7 @@ def ofromstr(x):
         # log.debug("Assuming ‘{}’ is a string ({})".format(x,e))
         return x
 def main():
+    pythonmodules()
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
@@ -10886,6 +10908,13 @@ def mainproblem():
             row=1,column=0
             )
         m.bind("<Button-1>", lambda e: openweburl(durl))
+        m2=ui.Label(errorw.frame,
+            text=_("I will try to install this for you, but you will need to "
+                    "restart."),
+            justify='left', font='instructions',
+            row=2,column=0
+            )
+        pythonmodules()
     lcontents=logsetup.contents(50)
     addr=program['Email']
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
@@ -10899,7 +10928,7 @@ def mainproblem():
     n=ui.Label(errorw.frame,text=_("\n\nIf this information doesn't help "
         "you fix this, please click on this text to Email me your log (to {})"
         "").format(addr),justify='left', font='default',
-        row=2,column=0
+        row=3,column=0
         )
     n.bind("<Button-1>", lambda e: openweburl(eurl))
     o=ui.Label(errorw.frame,text=_("The end of {} / {} are below:"
@@ -10965,8 +10994,11 @@ if __name__ == "__main__":
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    for exe in ['praat','hg','ffmpeg','lame','git']: #'sendpraat' now in 'praat', if useful
+    #'sendpraat' now in 'praat', if useful
+    for exe in ['praat','hg','ffmpeg','lame','git','python','python3']:
         findexecutable(exe)
+    if program['python3']:
+        program['python']=program.pop('python3')
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         mainproblem()
