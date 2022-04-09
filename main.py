@@ -3970,7 +3970,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 self.doneenough['parsedlx']=True
                 break
         for lang in citationsdone:
-            if nentries-citationsdone[lang] < 50 not len(self.cawlmissing):
+            if nentries-citationsdone[lang] < 50 and not len(self.cawlmissing):
                 self.donew['collectionlc']=True
             if me or citationsdone[lang] > 200: #was 705
                 self.doneenough['collectionlc']=True#I need to think through this
