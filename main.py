@@ -3459,10 +3459,10 @@ class TaskDressing(object):
             try:
                 e=subprocess.check_output(gitargs,shell=False,
                                             stderr=subprocess.STDOUT)
-                o=e.decode("utf-8").strip()
+                o=e.decode(sys.stdout.encoding).strip()
                 log.info("git output: {}".format(o))
             except subprocess.CalledProcessError as e:
-                o=e.output.decode("utf-8").strip()
+                o=e.output.decode(sys.stdout.encoding).strip()
                 log.info("git output: {}; {}".format(e,o))
             if o != 'Already up to date.' and "No route to host" not in o:
                 o+=_('\n(Restart {} to use this update)').format(program['name'])
@@ -10394,7 +10394,7 @@ class Repository(object):
         except Exception as e:
             log.info(_("Call to Mercurial ({}) failed: {}").format(args,e))
             return e
-        return output.decode("utf-8").strip()
+        return output.decode(sys.stdout.encoding).strip()
     def alreadythere(self,url):
         if str(file.getreldir(self.url,url)) in self.files:
             log.info(_("URL {} is already in repo {}".format(url,self.url)))
@@ -10741,7 +10741,7 @@ def findexecutable(exe):
     program[exe]=None
     try:
         exeURL=subprocess.check_output([which,exeOS], shell=False)
-        program[exe]=exeURL.decode("utf-8").strip()
+        program[exe]=exeURL.decode(sys.stdout.encoding).strip()
         log.info("Executable {} found at {}".format(exe,program[exe]))
     except subprocess.CalledProcessError as e:
         log.info("Executable {} search output: {}".format(exe,e.output))
@@ -10754,7 +10754,7 @@ def praatversioncheck():
     praatvargs=[program['praat'], "--version"]
     versionraw=subprocess.check_output(praatvargs, shell=False)
     version=pkg_resources.parse_version(
-                versionraw.decode("utf-8").strip()
+                versionraw.decode(sys.stdout.encoding).strip()
                                         )
     # This is the version at which we don't need sendpraat anymore
     # and where "--hide-picture" becomes available.
@@ -10787,7 +10787,7 @@ def pythonmodules():
                                         stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             o=e.output
-        log.info(o.decode("utf-8").strip())
+        log.info(o.decode(sys.stdout.encoding).strip())
 def praatopen(file,newpraat=False,event=None):
     """sendpraat is now looked for only where praat version is before
     'Praat 6.2.04 (December 18 2021)', when new functionality was added to
@@ -10804,7 +10804,7 @@ def praatopen(file,newpraat=False,event=None):
             e=subprocess.check_output(praatargs,shell=False,
                                         stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
-            o=e.output.decode("utf-8").strip()
+            o=e.output.decode(sys.stdout.encoding).strip()
             if o == "sendpraat: Program praat not running.":
                 praatopen(file,newpraat=True)
             else:
