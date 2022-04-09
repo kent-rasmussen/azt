@@ -276,7 +276,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         vf=nodes[0] #this is a text node
         # sensenode=nodes[1]
         l=self.evaluatenode(vf) #this is the python evaluation of vf.text
-        log.info("text: {}; vf: {}".format(l,vf.text))
+        # log.info("text: {}; vf: {}".format(l,vf.text))
         values=[]
         if l is not None:
             for field in l:
@@ -1885,10 +1885,10 @@ class LiftURL():
             node=[node]
         for i in node:
             log.log(4,"running kwargshaschildrenof.gen on '{}'".format(i))
-            if i is not '':
+            if i != '':
                 ii=self.children.get(i,'')
                 log.log(4,"Found '{}' this time!".format(ii))
-                if ii is not '':
+                if ii != '':
                     x+=ii
                     self.getfamilyof(ii,x)
         return x

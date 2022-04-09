@@ -979,13 +979,6 @@ class Window(Toplevel):
             self.frame=Frame(self.outsideframe,
                             row=1, column=1, sticky='nsew'
                             )
-    def removeverifymenu(self,event=None):
-        #This removes menu from the verify window
-        if hasattr(self,'menubar'):
-            self.menubar.destroy()
-            self.parent.verifymenu=False
-            self.setcontext(context='verifyT')
-            return True #i.e., removed, to maybe replace later
     def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
                 choice=None, *args, **kwargs):
         # self.parent=parent
