@@ -220,11 +220,7 @@ class FileChooser(object):
                     "try again.").format(self.name)
             log.info("'lift_url.py' removed.")
             ErrorNotice(text,title='LIFT parse error',wait=True)
-            # window=ui.Window(self)
-            # ui.Label(window,text=text).grid(row=0,column=0)
             file.writefilename() #just clear the default
-            # file.remove('lift_url.py') #whatever the problem was, remove it.
-            # window.wait_window(window) #Let the user see the error
             raise #Then force a quit and retry
     def dailybackup(self):
         if not file.exists(self.db.backupfilename):
