@@ -4000,14 +4000,21 @@ class TaskChooser(TaskDressing,ui.Window):
     def ifcollectionlc(self):
         log.info("Considering finishing setup for post-collection projects")
         if not self.ifcollectionlcsettingsdone: #only do this once
-            log.info("Finishing setup for post-collection projects")
-            self.settings.ifcollectionlc()
-            self.inherittaskattrs()
-            self.makedatadict()
-            self.makeexampledict() #needed for makestatus, needs params,slices,data
-            self.maxprofiles=5 # how many profiles to check before moving on to another ps
-            self.maxpss=2 #don't automatically give more than two grammatical categories
-            self.ifcollectionlcsettingsdone=True
+            try:
+                log.info("Finishing setup for post-collection projects")
+                self.settings.ifcollectionlc()
+                self.inherittaskattrs()
+                self.makedatadict()
+                self.makeexampledict() #needed for makestatus, needs params,slices,data
+                self.maxprofiles=5 # how many profiles to check before moving on to another ps
+                self.maxpss=2 #don't automatically give more than two grammatical categories
+                self.ifcollectionlcsettingsdone=True
+            except Exception as e:
+                log.error(_("There seems to be a problem loading your "
+                "database with post-word collection settings; I will remove "
+                "it as default so you can open another"))
+                file.writefilename()
+                raise
     def __init__(self,parent):
         # self.testdefault=Parse
         self.start_time=time.time() #this enables boot time evaluation
