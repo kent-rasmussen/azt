@@ -3817,7 +3817,7 @@ class TaskChooser(TaskDressing,ui.Window):
                                                 conversionlogfile),
                     title=_("Conversion Done!"),
                     wait=True)
-        sys.exit()
+        self.restart()
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
         url="https://github.com/kent-rasmussen/azt/blob/main/CITATIONFORMS.md"
@@ -3995,7 +3995,7 @@ class TaskChooser(TaskDressing,ui.Window):
         # subprocess.call?
         # __name__
         # main()
-        sys.exit()
+        self.restart()
         # self.restart(self.filename)
     def ifcollectionlc(self):
         log.info("Considering finishing setup for post-collection projects")
