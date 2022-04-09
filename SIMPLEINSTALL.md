@@ -16,6 +16,10 @@ Before you can [Set up A→Z+T for normal use](#set-up-azt-for-normal-use), you 
 
 **Be sure to check "add to PATH"** during the install process. **If you don't do this**, you will likely need to ask your local IT support for help adding Python to your path. While you are waiting for the download, you can start on [Install Git and Download A→Z+T](#install-git-and-download-azt) below
 
+**Be sure to click on "remove path limitation"** after the above, to avoid certain problems with longer filenames.
+
+I hope the following will be obsolete soon (A→Z+T should download these for you on your first run):
+
 2. Open a terminal (hit the Windows key then type `cmd` in the search box), and paste each of these (and hit enter):
     - `python -m pip install --upgrade pip setuptools wheel`
     - `python -m pip install pyaudio`
@@ -49,13 +53,9 @@ Once you have completed everything under [Install Python](#install-python) and [
 Download and install [this file](https://www.mercurial-scm.org/release/windows/Mercurial-6.0-x64.exe).
 
 ### Praat
-- If you use Praat, make sure the Praat executable is in your operating system's path. You may need to ask your IT support for help, if you don't know how to do this.
+- If you use Praat, make sure the Praat executable is in your operating system's path. You may need to ask your IT support for help, if you don't know how to do this (Basically, put it in your `Programs (?x86)` directory).
 
 ### Be ready to make and edit reports
-1. ask someone to help you install XeLaTeX (see [INSTALL](INSTALL.md)).
-2. ask someone to help you install the XMLmind XML Editor (XXE) (see [INSTALL](INSTALL.md)).
+Install the full XLingPaper package from [here](https://software.sil.org/downloads/r/xlingpaper/XLingPaper3-10-1XXEPersonalEditionFullSetup.exe).
 
-### Update A→Z+T (to be sure you're using the most recent version)
-**Update: You can now `Ùpdate A→Z+T` from the Help menu, if you have followed these instructions.**
-1. In the folder where you put A→Z+T (see above), right click select `Git-Bash` to get a terminal (black window).
-2. In the `Git-Bash` terminal, paste `git pull` and hit enter.
+### Update A→Z+T from the Help menu, assuming you have followed these instructions.
