@@ -8654,6 +8654,7 @@ class FramedDataSense(FramedData):
         self.forms.update(db.glossesordefns(senseid=senseid))
         for f in self.forms:
             self.forms[f]=unlist(self.forms[f])
+        self.group=self.db.fieldvalue(senseid=senseid, name=check)
     def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
