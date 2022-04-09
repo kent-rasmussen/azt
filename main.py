@@ -10848,7 +10848,13 @@ def main():
     myapp.mainloop()
     logsetup.shutdown()
 def mainproblem():
-    log.info("Starting up help line...")
+    try:
+        log.info(_("Starting up help line..."))
+        # _
+    except:
+        def _(x):
+            return x
+        log.info(_("Starting up help line..."))
     if program['testing'] and me:
         sys.exit()
         exit()
@@ -10863,11 +10869,7 @@ def mainproblem():
     except:
         errorroot = ui.Root(program=program)
         newtk=True
-        try:
-            _
-        except:
-            def _(x):
-                return x
+        log.info(_("Starting with new root"))
     errorroot.withdraw()
     errorw=ui.Window(errorroot)
     errorw.title(_("Serious Problem!"))
