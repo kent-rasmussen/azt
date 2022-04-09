@@ -5263,6 +5263,7 @@ class Sort(object):
         plan for this, and have a 'Yes, this is OK, change them both' button
         Maybe make that button a user option, so it doesn't have to be there if
         not desired."""
+        self.invariablesegmentalroots=True #otherwise, ask, or else just check each
         self.checktypename={'T':'frame',
                         'C':'check',
                         'V':'check',
