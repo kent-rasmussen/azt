@@ -3457,16 +3457,20 @@ class TaskDressing(object):
         if 'git' in program:
             gitargs=[str(program['git']), "-C", str(program['aztdir']), "pull"]
             try:
-                e=subprocess.check_output(gitargs,shell=False,
+                o=subprocess.check_output(gitargs,shell=False,
                                             stderr=subprocess.STDOUT)
-                o=e.decode(sys.stdout.encoding).strip()
-                log.info("git output: {}".format(o))
+                # o=e.decode(sys.stdout.encoding).strip()
+                # log.info("git output: {}".format(o))
             except subprocess.CalledProcessError as e:
-                o=e.output.decode(sys.stdout.encoding).strip()
-                log.info("git output: {}; {}".format(e,o))
-            if o != 'Already up to date.' and "No route to host" not in o:
-                o+=_('\n(Restart {} to use this update)').format(program['name'])
-            e=ErrorNotice(o,parent=self,title=_("Update (Git) output"))
+                o=e.output
+            try:
+                t=o.decode(sys.stdout.encoding).strip()
+            except:
+                t=o
+            log.info("git output: {}".format(t))
+            if t != 'Already up to date.' and "No route to host" not in o:
+                t+=_('\n(Restart {} to use this update)').format(program['name'])
+            e=ErrorNotice(t,parent=self,title=_("Update (Git) output"))
             e.wait_window(e)
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
@@ -10394,7 +10398,11 @@ class Repository(object):
         except Exception as e:
             log.info(_("Call to Mercurial ({}) failed: {}").format(args,e))
             return e
-        return output.decode(sys.stdout.encoding).strip()
+        try:
+            t=output.decode(sys.stdout.encoding).strip()
+        except:
+            t=output
+        return t
     def alreadythere(self,url):
         if str(file.getreldir(self.url,url)) in self.files:
             log.info(_("URL {} is already in repo {}".format(url,self.url)))
@@ -10753,14 +10761,17 @@ def findexecutable(exe):
 def praatversioncheck():
     praatvargs=[program['praat'], "--version"]
     versionraw=subprocess.check_output(praatvargs, shell=False)
-    version=pkg_resources.parse_version(
+    try:
+        version=pkg_resources.parse_version(
                 versionraw.decode(sys.stdout.encoding).strip()
                                         )
+    except:
+        version=versionraw
     # This is the version at which we don't need sendpraat anymore
     # and where "--hide-picture" becomes available.
     justpraatversion=pkg_resources.parse_version(
                                             'Praat 6.2.04 (December 18 2021)')
-    log.info("Found Praat version {} ({})".format(version, versionraw))
+    log.info("Found Praat version {}".format(version))
     if version>=justpraatversion:
         log.info("Praat version at or greater than {}".format(justpraatversion))
         return True
@@ -10787,7 +10798,10 @@ def pythonmodules():
                                         stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             o=e.output
-        log.info(o.decode(sys.stdout.encoding).strip())
+        try:
+            log.info(o.decode(sys.stdout.encoding).strip())
+        except:
+            log.info(o) #just give bytes, if encoding isn't correct
 def praatopen(file,newpraat=False,event=None):
     """sendpraat is now looked for only where praat version is before
     'Praat 6.2.04 (December 18 2021)', when new functionality was added to
@@ -10801,14 +10815,18 @@ def praatopen(file,newpraat=False,event=None):
         praatargs=[program['sendpraat'], "praat", "Read from file... '{}'"
                                                     "".format(file)]
         try:
-            e=subprocess.check_output(praatargs,shell=False,
+            o=subprocess.check_output(praatargs,shell=False,
                                         stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
-            o=e.output.decode(sys.stdout.encoding).strip()
-            if o == "sendpraat: Program praat not running.":
-                praatopen(file,newpraat=True)
-            else:
-                log.info("praatoutput: {}; {}".format(e,o))
+            o=e.output
+        try:
+            t=o.decode(sys.stdout.encoding).strip()
+        except:
+            t=o
+        if t == "sendpraat: Program praat not running.":
+            praatopen(file,newpraat=True)
+        else:
+            log.info("praatoutput: {}".format(t))
     elif program['praat']:
         log.info(_("Trying to call Praat at {}...").format(program['praat']))
         if 'sendpraat' not in program: #don't care about exe, just version check
@@ -10995,7 +11013,7 @@ if __name__ == "__main__":
     #'sendpraat' now in 'praat', if useful
     for exe in ['praat','hg','ffmpeg','lame','git','python','python3']:
         findexecutable(exe)
-    if program['python3']:
+    if program['python3'] and 'Microsoft/WindowsApps' not in program['python3']:
         program['python']=program.pop('python3')
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
