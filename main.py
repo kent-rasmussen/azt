@@ -222,6 +222,12 @@ class FileChooser(object):
             ErrorNotice(text,title='LIFT parse error',wait=True)
             file.writefilename() #just clear the default
             raise #Then force a quit and retry
+        except Exception as e:
+            log.error(_("There seems to be a (non-XML) problem loading your "
+            "database ({}); I will remove it as default so you can open "
+            "another"))
+            file.writefilename()
+            raise
     def dailybackup(self):
         if not file.exists(self.db.backupfilename):
             self.db.write(self.db.backupfilename)
