@@ -7078,7 +7078,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 self.addtonefieldex(senseid,framed,group=group,write=False)
                 self.addgroupbutton(group)
                 #adjust window for new button
-                scroll.windowsize()
+                self.windowsize()
                 log.debug('Group added: {}'.format(groupselected))
                 """group with the above?"""
                 """Group these last two?"""
