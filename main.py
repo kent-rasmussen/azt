@@ -6972,7 +6972,6 @@ class SortC(Sort,Segments,TaskDressing,ui.Window):
         Sort.__init__(self)
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
-
     def getanotherskip(self,parent,vardict):
         """This function presents a group of buttons for the user to choose
         from, after one for each tone group in that location/ps/profile in the
