@@ -1,5 +1,5 @@
 #Roadmap
-- I need to think through ad hoc groups. selection seems to be broken, as well as uptake from file. 
+- I need to think through ad hoc groups. selection seems to be broken, as well as uptake from file.
 - check that syllable profile analysis is more recent than last word addition, or do again.
   - consequences? (ad hoc groups, other?)
 recall that ps values are analysis, not data!
@@ -67,6 +67,7 @@ Move things into the correct fields (def > gloss)
 <!-- updatecounts() is replaced by getscounts(), to be run after profile data is added -->
 <!-- analang=kwargs.get('analang',self.params.analang()) # ever use kwargs for analang? -->
 analang=self.params.analang()
+ftype=kwargs.get('ftype',self.params.ftype())
 cvt=kwargs.get('cvt',self.params.cvt())
 ps=kwargs.get('ps',self.slices.ps())
 profile=kwargs.get('profile',self.slices.profile())
