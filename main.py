@@ -10856,9 +10856,9 @@ def tryrun(cmd):
     try:
         cmd()
     except Exception as e:
-        text=_("{} error: {}").format(cmd,e)
+        text=_("{} command error: {}\n({})").format(cmd.__name__,e,cmd)
         log.error(text)
-        ErrorNotice(text,title=_("{} error!").format(cmd))
+        ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
 def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
