@@ -8928,7 +8928,7 @@ class RecordButtonFrame(ui.Frame):
         log.debug("Asking PA to play now")
         self.player=sound.SoundFilePlayer(self.filenameURL,self.pa,
                                                                 self.settings)
-        self.player.play()
+        tryrun(self.player.play)
     def makeplaybutton(self):
         self.p=ui.Button(self,text=_('Play'),command=self._play)
         #Not using these for now
