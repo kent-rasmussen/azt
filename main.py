@@ -7081,7 +7081,9 @@ class SortButtonFrame(ui.ScrollingFrame):
             self.db.addmodexamplefields( #This should only mod if already there
                                     senseid=senseid,
                                     analang=self.analang,
-                                    fieldtype='tone',location=self.check,
+                                    fieldtype='tone',
+                                    #frames should be ftype specific
+                                    location=self.check,
                                     framed=framed,
                                     fieldvalue=group,
                                     write=False
