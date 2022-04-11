@@ -5177,7 +5177,8 @@ class Sort(object):
                                         ).grid(column=1, row=0, sticky="ew")
         text=framed.formatted()
         entryview=ui.Frame(self.runwindow.frame, column=1, row=1, sticky="new")
-        self.sortitem=ui.Label(entryview, text=text,font='readbig',
+        self.sortitem=self.buttonframe.sortitem=ui.Label(entryview,
+                                text=text,font='readbig',
                                 column=0,row=0, sticky="w",
                                 pady=scaledpady
                                 )
