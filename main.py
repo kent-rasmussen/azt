@@ -8976,7 +8976,7 @@ class RecordButtonFrame(ui.Frame):
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
         self.test=kwargs.pop('test',None)
-        if framed is not None:
+        if framed and framed.framed != 'NA':
             self.audiolang=framed.audiolang
             self.filename=framed.filename
             self.filenameURL=framed.filenameURL
