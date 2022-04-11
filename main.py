@@ -10852,6 +10852,13 @@ def ofromstr(x):
     except (SyntaxError,ValueError) as e:
         # log.debug("Assuming ‘{}’ is a string ({})".format(x,e))
         return x
+def tryrun(cmd):
+    try:
+        cmd()
+    except Exception as e:
+        text=_("{} error: {}").format(cmd,e)
+        log.error(text)
+        ErrorNotice(text,title=_("{} error!").format(cmd))
 def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
