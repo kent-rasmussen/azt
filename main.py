@@ -10245,7 +10245,7 @@ class CheckParameters(dict):
                 for tup in self._Schecks[t][s]:
                     self._cvchecknames[tup[0]]=tup[1]
     def analang(self,analang=None):
-        if analang is not None:
+        if analang:
             self._analang=analang
         elif not hasattr(self,'_analang'):
             self._analang=None
