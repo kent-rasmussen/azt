@@ -10747,7 +10747,6 @@ def findexecutable(exe):
     else:
         log.error("Sorry, I don't know this OS: {}".format(os))
     # log.info("Looking for {} on {}...".format(exe,os))
-    program[exe]=None
     try:
         exeURL=subprocess.check_output([which,exeOS], shell=False)
         program[exe]=exeURL.decode(sys.stdout.encoding).strip()
@@ -10757,6 +10756,10 @@ def findexecutable(exe):
     except Exception as e:
         log.info(_("Search for {} on {} failed: {}").format(exe,os,e))
         return e
+    if (exe not in program or
+            #don't allow 'I could find this online for you' values
+            ('Microsoft' in program[exe] and 'WindowsApps' in program[exe])):
+        program[exe]=None
     if exe == 'praat' and program[exe] and not praatversioncheck():
         findexecutable('sendpraat') #only ask if it would be useful
 def praatversioncheck():
