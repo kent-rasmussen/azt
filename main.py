@@ -7071,36 +7071,35 @@ class SortButtonFrame(ui.ScrollingFrame):
             log.error("groupselected: {}; this should never happen"
                         "".format(group))
             exit()
-        check=self.params.check()
         log.debug("Adding {} value to {} location in 'tone' fieldtype, "
                 "senseid: {} guid: {} (in main_lift.py)".format(
                     group,
-                    check,
+                    self.check,
                     senseid,
                     guid))
-        if cvt == 'T':
+        if self.cvt == 'T':
             self.db.addmodexamplefields( #This should only mod if already there
                                     senseid=senseid,
                                     analang=self.analang,
-                                    fieldtype='tone',location=check,
+                                    fieldtype='tone',location=self.check,
                                     framed=framed,
                                     fieldvalue=group,
                                     write=False
                                     )
             newgroup=unlist(self.db.get("example/tonefield/form/text",
-                        senseid=senseid, location=check).get('text'))
+                        senseid=senseid, location=self.check).get('text'))
         else:
             self.db.annotatefield(
                                 senseid=senseid,
                                 analang=self.analang,
-                                name=check,
+                                name=self.check,
                                 ftype=self.ftype,
                                 write=False
                                 )
             self.db.fieldvalue(
                                 senseid=senseid,
                                 analang=self.analang,
-                                name=check,
+                                name=self.check,
                                 )
         if newgroup != group:
             log.error("Field addition failed! LIFT says {}, not {}.".format(
@@ -7180,9 +7179,12 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.buttoncolumns=task.buttoncolumns
         self.exs=task.exs
         self.status=task.status
-        self.marksortgroup=task.marksortgroup
+        self.check=task.params.check()
+        self.cvt=task.params.cvt()
+        self.analang=task.analang
         self.db=task.db
         self.maybewrite=task.maybewrite
+        self.updatestatus=task.updatestatus
         for group in groups:
             self.addgroupbutton(group)
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
