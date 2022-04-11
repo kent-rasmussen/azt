@@ -7106,6 +7106,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                                 senseid=senseid,
                                 analang=self.analang,
                                 name=self.check,
+                                ftype=self.ftype,
                                 )
         if newgroup != group:
             log.error("Field addition failed! LIFT says {}, not {}.".format(
