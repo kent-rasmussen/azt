@@ -8675,7 +8675,7 @@ class FramedDataSense(FramedData):
             self.applynoframe() #enforce the docstring above
         self.tonegroups=self.db.get('example/tonefield/form/text',
                     senseid=self.senseid, location=frame).get('text')
-    def parsesense(self,db,senseid):
+    def parsesense(self,db,senseid,check,ftype):
         self.senseid=senseid #store for later
         self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
         self.forms[self.analang]=db.citationorlexeme(senseid=senseid,
@@ -8683,17 +8683,18 @@ class FramedDataSense(FramedData):
         self.forms.update(db.glossesordefns(senseid=senseid))
         for f in self.forms:
             self.forms[f]=unlist(self.forms[f])
-        self.group=self.db.fieldvalue(senseid=senseid, name=check)
+        self.group=self.db.fieldvalue(senseid=senseid, name=check, ftype=ftype)
     def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
         self.frames=parent.frames #needed for set frame
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
+        ftype=kwargs.get('ftype','lc')
         if not self.db.get('sense', senseid=senseid).get():
             log.error("You should pass a senseid from your database {} "
                         "({}) to FramedDataSense!".format(source,type(source)))
             return
-        self.parsesense(self.db,senseid)
+        self.parsesense(self.db,senseid,check,ftype)
         self.setframe(check)
         # log.info("FramedDataSense initalization done, with forms {}"
         #             "".format(self.forms))
