@@ -10852,7 +10852,6 @@ def ofromstr(x):
         # log.debug("Assuming ‘{}’ is a string ({})".format(x,e))
         return x
 def main():
-    pythonmodules()
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
