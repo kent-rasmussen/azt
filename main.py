@@ -10254,6 +10254,12 @@ class CheckParameters(dict):
         elif not hasattr(self,'_analang'):
             self._analang=None
         return self._analang
+    def ftype(self,ftype=None):
+        if ftype:
+            self._ftype=ftype
+        elif not hasattr(self,'_ftype'):
+            self._ftype='lc'
+        return self._ftype
     def __init__(self,analang): # had, do I need check? to write?
         """replaces setnamesall"""
         """replaces self.checknamesall"""
