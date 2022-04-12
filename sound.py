@@ -573,9 +573,11 @@ class BeepGenerator(object):
             self.wavdata+=chr(0)
     def __init__(self,pyaudio=None,settings=None):
         if not pyaudio:
+    def __init__(self,pyAudio=None,settings=None):
+        if not pyAudio:
             self.p = AudioInterface()     #initialize pyaudio
         else:
-            self.p = pyaudio
+            self.p = pyAudio
         if not settings:
             self.settings=SoundSettings(self.p)
         else:
