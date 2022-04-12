@@ -581,14 +581,15 @@ class BeepGenerator(object):
         else:
             self.settings=settings
         #See https://en.wikipedia.org/wiki/Bit_rate#Audio
-        self.bitrate = 32000     #number of frames per second/frameset.
-        self.hz = 500     #Hz, waves per second, 261.63=C4-note.
-        self.secpersyl = .2     #seconds to play sound
+        self.format=pyaudio.paFloat32
+        self.bitrate = 64000     #number of frames per second/frameset.
+        self.hz = 350     #Hz, waves per second, 261.63=C4-note.
+        self.secpersyl = .4     #seconds to play sound
         self.secpersylbreak = .05
-        self.secperwordbreak = .10
-        self.deltaHL = 50 #difference between high and low, in hz
-        self.stream = self.p.open(format = self.p.get_format_from_width(1),
-                        channels = 1,
+        self.secperwordbreak = .15
+        self.deltaHL = 40 #difference between high and low, in hz
+        self.stream = self.p.open(format = self.format,
+                        channels = 2,
                         rate = self.bitrate,
                         output = True)
         self.setparameters()
