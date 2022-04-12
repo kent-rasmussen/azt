@@ -71,7 +71,7 @@ class Transcriber(ui.Frame):
             self.soundsettings=soundsettings
         else:
             self.soundsettings=sound.SoundSettings(self.pyaudio)
-        self.beeps=sound.BeepGenerator(pyaudio=self.pyaudio,
+        self.beeps=sound.BeepGenerator(pyAudio=self.pyaudio,
                                             settings=self.soundsettings)
         ui.Frame.__init__(self, parent, **kwargs)
         buttonframe=ui.Frame(self,
