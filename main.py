@@ -5264,6 +5264,12 @@ class Sort(object):
         Maybe make that button a user option, so it doesn't have to be there if
         not desired."""
         self.invariablesegmentalroots=True #otherwise, ask, or else just check each
+        self.params.ftype('lc') #current default
+        #for testing only!!
+        # if self.settings.pluralname:
+        #     self.params.ftype(self.settings.pluralname)
+        # if self.settings.imperativename:
+        # self.params.ftype(self.imperativename)
         self.checktypename={'T':'frame',
                         'C':'check',
                         'V':'check',
