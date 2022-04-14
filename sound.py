@@ -12,6 +12,7 @@ log=logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG',log) #for this file
 import sys
 import math        #?import needed modules
+import numpy
 
 class AudioInterface(pyaudio.PyAudio):
     def stop(self):
@@ -528,8 +529,8 @@ class BeepGenerator(object):
         ' ':0,
         ' ':0
         }
-    def compile(self,pitches='˩˩ ˥˥ ˦˧˨ ˩˩'):#' ˦˧˨˩'):
-        self.wavdata=''
+    def compile(self,pitches='˦˧˨ ˩˩ ˥˥˥'):#' ˦˧˨˩'):
+        self.wavdata=numpy.zeros(int(self.secpersylbreak*self.bitrate))
         words=str(pitches).split(' ')
         # log.info("words: {}".format(words))
         for w in words:
@@ -540,55 +541,65 @@ class BeepGenerator(object):
                 for c in badchars:
                     # log.info("replacing {}".format(c))
                     syl=syl.replace(c,'')
-                contour=False
+                contour=done=0
                 for n,c in enumerate(syl):
-                    # log.info("character: {}".format(c))
-                    fromhz=self.pitchdict[c]
+                    log.info("character: {} ({})".format(c,n))
+                    tohz=fromhz=self.pitchdict[c]
                     if n+1 < len(syl) and c != syl[n+1]: #not last, not next
                         tohz=self.pitchdict[syl[n+1]]
-                        contour=True
+                        contour=1
                     elif n+1 == len(syl) and c != syl[n-1]: #last of contour
-                        break
-                    else:
-                        tohz=self.pitchdict[c]
+                        done=1
+                    nframes=self.framespersyl//(len(syl)-contour)
                     hz=fromhz
+                    if fromhz != tohz:
+                        dhz=tohz-fromhz
+                        hz=numpy.arange(fromhz,tohz-dhz/2,(tohz-fromhz)/nframes/2,
+                                        dtype=numpy.float32)
+                        print(hz)
+                        # print(numpy.arange(nframes,dtype=numpy.float32).dtype)
                     step=1
-                    for f in range(self.framespersyl//len(syl)-contour):
-                        if not f%step:
-                            hz+=((tohz-fromhz)*step/(self.framespersyl//len(syl)-contour))
-                        # log.info("hz: {} ({}-{})".format(hz,fromhz,tohz))
-                        if hz: # if c in self.pitchdict and self.pitchdict[c]:
-                            self.wavdata+=chr(int(math.sin(f/((
-                                                    self.bitrate/hz
-                                                        )/math.pi))*127+128))
-                        else: #don't div/0
-                            self.wavdata+=chr(0)
-                for i in range(self.framespersyl//self.bitrate):
-                    self.wavdata+=chr(128)
-                for f in range(int(self.secpersylbreak*self.bitrate)):
-                    self.wavdata+=chr(0)
-            for f in range(int(self.secperwordbreak*self.bitrate)):
-                self.wavdata+=chr(0)
-        for f in range(int(self.secperwordbreak*self.bitrate*2)):
-            self.wavdata+=chr(0)
-    def __init__(self,pyaudio=None,settings=None):
-        if not pyaudio:
+                    # log.info("hz: {}-{} (len: {},{}-{})".format(
+                    #             fromhz,tohz,len(syl)-contour,nframes,done))
+                    if not done:
+                        self.wavdata=numpy.append(self.wavdata,numpy.sin(
+                                2*numpy.pi*(numpy.arange(#0,100,
+                                                    nframes,dtype=numpy.float32
+                                                        )*hz)/self.bitrate #/(len(syl)-contour))
+                                            )
+                                    ).astype(numpy.float32)
+            self.wavdata=numpy.append(self.wavdata,numpy.zeros(int(self.secperwordbreak*self.bitrate),dtype=numpy.float32))
+        with wave.open(__name__+'.wav','wb') as f:
+            f.setnchannels(self.settings.channels)
+            # log.info(self.p.get_sample_size(self.format))
+            f.setsampwidth(self.p.get_sample_size(self.format))
+            f.setframerate(self.bitrate)
+            f.writeframes(
+                            # bytes(
+                            self.wavdata#,'utf-8'
+                            # )
+                        )
+            f.close()
+        self.wavdata = self.wavdata.astype(numpy.float32).tostring()
+    def __init__(self,pyAudio=None,settings=None):
+        if not pyAudio:
             self.p = AudioInterface()     #initialize pyaudio
         else:
-            self.p = pyaudio
+            self.p = pyAudio
         if not settings:
             self.settings=SoundSettings(self.p)
         else:
             self.settings=settings
         #See https://en.wikipedia.org/wiki/Bit_rate#Audio
-        self.bitrate = 32000     #number of frames per second/frameset.
-        self.hz = 500     #Hz, waves per second, 261.63=C4-note.
-        self.secpersyl = .2     #seconds to play sound
+        self.format=pyaudio.paFloat32
+        self.bitrate = 64000     #number of frames per second/frameset.
+        self.hz = 350     #Hz, waves per second, 261.63=C4-note.
+        self.secpersyl = .4     #seconds to play sound
         self.secpersylbreak = .05
-        self.secperwordbreak = .10
-        self.deltaHL = 50 #difference between high and low, in hz
-        self.stream = self.p.open(format = self.p.get_format_from_width(1),
-                        channels = 1,
+        self.secperwordbreak = .15
+        self.deltaHL = 40 #difference between high and low, in hz
+        self.stream = self.p.open(format = self.format,
+                        channels = 2,
                         rate = self.bitrate,
                         output = True)
         self.setparameters()

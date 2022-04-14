@@ -5252,6 +5252,24 @@ class Sort(object):
         self.runwindow.resetframe()
         return
     def __init__(self):
+        """I need some way to control for ftype"""
+        """I need to think through when I would work with one ftype, and not
+        another, or when I would want to work with one, then modify the other
+        (e.g., lx)"""
+        """sorting on individual whole forms (e.g., lc, pl, imp) should happen
+        in tone, but maybe not for C, V, and CV. Or is there a context where we
+        would expect (or find anyway) that the analyzable (!) plural/imp form
+        doesn't have the same vowels/consonants as the citation form? Maybe we should
+        plan for this, and have a 'Yes, this is OK, change them both' button
+        Maybe make that button a user option, so it doesn't have to be there if
+        not desired."""
+        self.invariablesegmentalroots=True #otherwise, ask, or else just check each
+        self.params.ftype('lc') #current default
+        #for testing only!!
+        # if self.settings.pluralname:
+        #     self.params.ftype(self.settings.pluralname)
+        # if self.settings.imperativename:
+        # self.params.ftype(self.imperativename)
         self.checktypename={'T':'frame',
                         'C':'check',
                         'V':'check',
@@ -5799,6 +5817,7 @@ class Report(object):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
         #default=True redoes the UF analysis (removing any joining/renaming)
+        ftype=kwargs.get('ftype',self.params.ftype())
         def examplestoXLP(examples,parent,senseid):
             counts['senses']+=1
             for example in examples:
@@ -5812,7 +5831,8 @@ class Report(object):
                         counts['examples']+=1
                         if self.settings.audiolang in framed.forms:
                             counts['audio']+=1
-                        self.framedtoXLP(framed,parent=parent,listword=True,
+                        self.framedtoXLP(framed,parent=parent,ftype=ftype,
+                                                        listword=True,
                                                         showgroups=showgroups)
                         break #do it on first present lang, and do next ex
         a=self.status.last('analysis',**kwargs)
@@ -6041,7 +6061,8 @@ class Report(object):
                                 "{}: {}".format(len(examples),senseid,examples))
                         examplestoXLP(examples,e1,senseid)
                     else:
-                        self.framedtoXLP(framed,parent=s1,showgroups=showgroups)
+                        self.framedtoXLP(framed,parent=s1,ftype=ftype,
+                                                        showgroups=showgroups)
                     output(window,r,text)
         sectitle=_('\nData Summary')
         s2=xlp.Section(xlpr,title=sectitle)
@@ -6311,6 +6332,7 @@ class Report(object):
         profile=kwargs.get('profile',self.slices.profile())
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
+        ftype=kwargs.get('ftype',self.params.ftype())
         xlp.Paragraph(parent,t)
         print(t)
         log.debug(t)
@@ -6413,15 +6435,19 @@ class Report(object):
                         except KeyError:
                             self.basicreported[ncvt]=set([senseid])
                 framed=self.taskchooser.datadict.getframeddata(senseid)
-                self.framedtoXLP(framed,parent=ex,listword=True) #showgroups?
+                self.framedtoXLP(framed,parent=ex,ftype=ftype,listword=True) #showgroups?
                 if hasattr(self,'results'): #i.e., showing results in window
                     self.results.row+=1
                     col=0
                     for lang in [self.analang]+self.glosslangs:
                         col+=1
                         if lang in framed.forms and framed.forms[lang]:
+                            if type(framed.forms[lang]) is dict:
+                                t=framed.forms[lang][ftype]
+                            else:
+                                t=framed.forms[lang]
                             ui.Label(self.results.scroll.content,
-                                    text=framed.forms[lang], font='read',
+                                    text=t, font='read',
                                     anchor='w',padx=10, row=self.results.row,
                                     column=col,
                                     sticky='w')
@@ -6502,7 +6528,7 @@ class Report(object):
             if x is not None:
                 id+=x
         return rx.id(id) #for either example or listword
-    def framedtoXLP(self,framed,parent,listword=False,showgroups=True):
+    def framedtoXLP(self,framed,parent,ftype,listword=False,showgroups=True):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
@@ -6514,12 +6540,12 @@ class Report(object):
             exx=xlp.Example(parent,id) #the id goes here...
             ex=xlp.Word(exx) #This doesn't have an id
         if self.settings.audiolang in framed.forms:
-            url=file.getdiredrelURL(self.reporttoaudiorelURL,
-                                                framed.forms[self.settings.audiolang])
-            el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang],
+            url=file.getdiredrelURLposix(self.reporttoaudiorelURL,
+                                framed.forms[self.settings.audiolang][ftype])
+            el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang][ftype],
                                                                     str(url))
         else:
-            el=xlp.LangData(ex,self.analang,framed.forms[self.analang])
+            el=xlp.LangData(ex,self.analang,framed.forms[self.analang][ftype])
         if hasattr(framed,'tonegroup') and showgroups: #joined groups show each
             elt=xlp.LangData(ex,self.analang,framed.tonegroup)
         for lang in self.glosslangs:
@@ -6960,7 +6986,6 @@ class SortC(Sort,Segments,TaskDressing,ui.Window):
         Sort.__init__(self)
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
-
     def getanotherskip(self,parent,vardict):
         """This function presents a group of buttons for the user to choose
         from, after one for each tone group in that location/ps/profile in the
@@ -7055,6 +7080,60 @@ class SortButtonFrame(ui.ScrollingFrame):
         newgroup=max(values)+1
         groups.append(str(newgroup))
         return str(newgroup)
+    def marksortgroup(self,senseid,framed,**kwargs):
+        group=kwargs.get('group',self.status.group())
+        write=kwargs.get('write',True)
+        guid=None
+        if group is None or group == '':
+            log.error("groupselected: {}; this should never happen"
+                        "".format(group))
+            exit()
+        log.debug("Adding {} value to {} location in 'tone' fieldtype, "
+                "senseid: {} guid: {} (in main_lift.py)".format(
+                    group,
+                    self.check,
+                    senseid,
+                    guid))
+        if self.cvt == 'T':
+            ftype=self.toneframes[self.check]['field'] #this must match check!
+            self.db.addmodexamplefields( #This should only mod if already there
+                                    senseid=senseid,
+                                    analang=self.analang,
+                                    fieldtype='tone',
+                                    #frames should be ftype specific
+                                    location=self.check,
+                                    ftype=ftype, #needed to get correct form
+                                    framed=framed,
+                                    fieldvalue=group,
+                                    write=False
+                                    )
+            newgroup=unlist(self.db.get("example/tonefield/form/text",
+                        senseid=senseid, location=self.check).get('text'))
+        else:
+            self.db.annotatefield(
+                                senseid=senseid,
+                                analang=self.analang,
+                                name=self.check,
+                                ftype=self.ftype,
+                                write=False
+                                )
+            self.db.fieldvalue(
+                                senseid=senseid,
+                                analang=self.analang,
+                                name=self.check,
+                                ftype=self.ftype,
+                                )
+        if newgroup != group:
+            log.error("Field addition failed! LIFT says {}, not {}.".format(
+                                                newgroup,group))
+        else:
+            log.info("Field addition succeeded! LIFT says {}, which is {}."
+                                        "".format(newgroup,group))
+        self.status.last('sort',update=True)
+        self.status.tojoin(True) # will need to be distinguished again
+        self.updatestatus(group=group,write=write) # marks the group unverified.
+        if write:
+            self.db.write() #This is never iterated over; just one entry at a time.
     def sortselected(self,senseid,framed):
         selectedgroups=selected(self.groupvars)
         log.info("selectedgroups: {}".format(selectedgroups))
@@ -7080,7 +7159,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
                 """Can't thread this; the button needs to find data"""
-                self.addtonefieldex(senseid,framed,group=group,write=False)
+                self.marksortgroup(senseid,framed,group=group,write=False)
                 self.addgroupbutton(group)
                 #adjust window for new button
                 self.windowsize()
@@ -7096,8 +7175,8 @@ class SortButtonFrame(ui.ScrollingFrame):
                                                             groupselected))
                 """This needs to *not* operate on "exit" button."""
                 """thread here?"""
-                # self.addtonefieldex(senseid,framed,group=group,write=False)
-                t = threading.Thread(target=self.addtonefieldex,
+                # self.marksortgroup(senseid,framed,group=group,write=False)
+                t = threading.Thread(target=self.marksortgroup,
                                     args=(senseid,framed),
                                     kwargs={'group':group,'write':False})
                 t.start()
@@ -7122,8 +7201,13 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.buttoncolumns=task.buttoncolumns
         self.exs=task.exs
         self.status=task.status
-        self.addtonefieldex=task.addtonefieldex
+        self.check=task.params.check()
+        self.cvt=task.params.cvt()
+        self.analang=task.analang
+        self.db=task.db
         self.maybewrite=task.maybewrite
+        self.updatestatus=task.updatestatus
+        self.toneframes=task.settings.toneframes
         for group in groups:
             self.addgroupbutton(group)
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
@@ -7462,42 +7546,6 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
-    def addtonefieldex(self,senseid,framed,**kwargs):
-        group=kwargs.get('group',self.status.group())
-        write=kwargs.get('write',True)
-        guid=None
-        if group is None or group == '':
-            log.error("groupselected: {}; this should never happen"
-                        "".format(group))
-            exit()
-        check=self.params.check()
-        log.debug("Adding {} value to {} location in 'tone' fieldtype, "
-                "senseid: {} guid: {} (in main_lift.py)".format(
-                    group,
-                    check,
-                    senseid,
-                    guid))
-        self.db.addmodexamplefields( #This should only mod if already there
-                                    senseid=senseid,
-                                    analang=self.analang,
-                                    fieldtype='tone',location=check,
-                                    framed=framed,
-                                    fieldvalue=group,
-                                    write=False
-                                    )
-        tonegroup=unlist(self.db.get("example/tonefield/form/text",
-                        senseid=senseid, location=check).get('text'))
-        if tonegroup != group:
-            log.error("Field addition failed! LIFT says {}, not {}.".format(
-                                                tonegroup,group))
-        else:
-            log.info("Field addition succeeded! LIFT says {}, which is {}."
-                                        "".format(tonegroup,group))
-        self.status.last('sort',update=True)
-        self.status.tojoin(True) # will need to be distinguished again
-        self.updatestatus(group=group,write=write) # marks the group unverified.
-        if write:
-            self.db.write() #This is never iterated over; just one entry at a time.
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
         self.db.addpronunciationfields(
@@ -7521,6 +7569,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         check=self.params.check()
         if check in self.status.checks():
             senseids=self.slices.senseids()
+            ftype=self.toneframes[check]['field'] #this must match check!
         else:
             #Give an error window here
             log.error("Not Trying again; set a tone frame first!")
@@ -7531,7 +7580,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             return
         for senseid in senseids: #this is a ps-profile slice
             self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
-                            location=check,fieldvalue='', #just clear this
+                            location=check,ftype=ftype,
+                            fieldvalue='', #just clear this
                             oldfieldvalue='NA', showurl=True #if this
                             )
         self.runcheck()
@@ -8314,13 +8364,30 @@ class Entry(lift.Entry): #Not in use
         log.info("Don't forget to write these changes to a file somewhere...")
 class DataList(list):
     """docstring for DataList."""
-    def appendformsbylang(self,forms,langs,quote=False):
+    def appendformsbylang(self,forms,langs,ftype=None,quote=False):
         for l in [f for f in forms if f in langs]:
-            if forms[l]:
-                if quote:
-                    self.append("‘"+forms[l]+"’")
-                else:
-                    self.append(forms[l])
+            # log.info("forms[l]: {}; formstype: {}; ftype: {}"
+            #         "".format(forms[l],type(forms[l]),ftype))
+            # log.info("typecheck: {}"
+            #         "".format(type(forms[l]) is dict))
+            # if ftype:
+            #     log.info("ftypecheck: {}"
+            #         "".format(ftype in forms[l]))
+            if forms[l] and type(forms[l]) is not dict:
+                f=forms[l]
+            elif (type(forms[l]) is dict and
+                    ftype and
+                    ftype in forms[l] and
+                    forms[l][ftype]):
+                f=forms[l][ftype]
+            else:
+                continue
+            if quote:
+                self.append("‘"+f+"’")
+                if ftype:
+                    self.append("("+ftype+")")
+            else:
+                self.append(f)
     def __init__(self, *args):
         super(DataList, self).__init__()
         self.extend(args)
@@ -8398,12 +8465,19 @@ class DictbyLang(dict):
     def frame(self,framedict,langs): #langs can/should be ordered
         """the frame only applies if there is a language value; I hope that's
         what we want..."""
-        # log.info("Applying frame {} in these langs: {}".format(framedict,langs))
-        # log.info("Using regex {}".format(rx.framerx))
+        log.info("Applying frame {} in these langs: {}".format(framedict,langs))
+        log.info("Using regex {}".format(rx.framerx))
+        ftype=framedict['field']
         for l in [i for i in langs if i in framedict if i in self and self[i] != []]:
             # log.info("Using lang {}".format(l))
-            if self[l] is not None:
-                self.framed[l]=rx.framerx.sub(self[l],framedict[l])
+            if ftype in self[l]:
+                # log.info("Subbing {} into {}".format(self[l][ftype],framedict[l]))
+                t=self[l][ftype]
+            else:
+                # log.info("Subbing {} into {}".format(self[l],framedict[l]))
+                t=self[l]
+            if self[l]:
+                self.framed[l]=rx.framerx.sub(t,framedict[l])
             else:
                 self.framed[l]=None
         log.info("Applied frame: {}".format(self.framed))
@@ -8576,6 +8650,8 @@ class FramedDataDict(dict):
         self.frames=taskchooser.settings.toneframes #[ps][name]
         self.db=taskchooser.db
         self.taskchooser=taskchooser
+        self.pluralname=taskchooser.settings.pluralname
+        self.imperativename=taskchooser.settings.imperativename
 class FramedData(object):
     """This is a superclass to store methods, etc. common to both
     FramedDataSense and FramedDataElement, making the information gathered by
@@ -8591,6 +8667,10 @@ class FramedData(object):
             self.tonegroup=unlist(self.tonegroups)
             return True
     def formatted(self,showtonegroup=False,noframe=False):
+        ftype=self.parent.taskchooser.params.ftype()
+        # if ftype != 'lc': #testing
+        #     log.error("ftype is {}; why would that be?".format(ftype))
+        #     raise
         tg=None
         if showtonegroup and self.gettonegroup():
             try:
@@ -8599,7 +8679,8 @@ class FramedData(object):
                 tg=self.tonegroup
         toformat=DataList(tg)
         if noframe:
-            toformat.appendformsbylang(self.forms,self.analang,quote=False)
+            toformat.appendformsbylang(self.forms,self.analang,
+                                            ftype=ftype, quote=False)
             toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
         else:
             """setframe is a FramedDataSense method, so should only apply there,
@@ -8607,7 +8688,8 @@ class FramedData(object):
             in its init."""
             if not hasattr(self,'framed') and isinstance(self,FramedDataSense):
                 self.setframe() #self.noframe() #Assume no frame if not explicitly applied
-            toformat.appendformsbylang(self.framed,self.analang,quote=False)
+            toformat.appendformsbylang(self.framed,self.analang,
+                                            ftype=ftype, quote=False)
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join([x for x in toformat if x is not None]) #put it all together
     def glosses(self):
@@ -8628,6 +8710,8 @@ class FramedData(object):
         """Evaluate what is actually needed"""
         super(FramedData, self).__init__()
         self.parent=parent
+        self.frames=parent.frames #needed for setframe, parseelement
+        self.ps=self.parent.taskchooser.slices.ps()
         self.updatelangs()
         self.forms=DictbyLang()
 class FramedDataSense(FramedData):
@@ -8639,7 +8723,8 @@ class FramedDataSense(FramedData):
         """This should never be done on an example, which should
         already be framed. Also, self.ps won't be defined, so you'll get
         a key error."""
-        if hasattr(self, 'ps') and frame is not None:
+        if frame is not None and (self.ps in self.frames and
+                                    frame in self.frames[self.ps]):
             self.frame=self.frames[self.ps][frame]
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
@@ -8650,24 +8735,43 @@ class FramedDataSense(FramedData):
             self.applynoframe() #enforce the docstring above
         self.tonegroups=self.db.get('example/tonefield/form/text',
                     senseid=self.senseid, location=frame).get('text')
-    def parsesense(self,db,senseid):
+    def parsesense(self,db,senseid,check,ftype):
         self.senseid=senseid #store for later
-        self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
-        self.forms[self.analang]=db.citationorlexeme(senseid=senseid,
-                                                    analang=self.analang)
-        self.forms.update(db.glossesordefns(senseid=senseid))
-        for f in self.forms:
+        # self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
+        # log.info("check: {}".format(check))
+        # log.info("field: {}; ftype: {}".format(check['field'],ftype))
+        if check and 'field' in check and check['field'] != ftype:
+            log.error("Check ‘{}’ is for field ‘{}’, but you are looking for "
+                        "field ‘{}’".format(check,check['field'],ftype))
+        # log.info("self.forms: {}".format(self.forms))
+        dictlangs=[self.analang, self.audiolang]
+        for lang in dictlangs:
+            self.forms[lang]={}
+            for ftype in ['lx','lc',self.parent.pluralname,
+                                    self.parent.imperativename]:
+                self.forms[lang][ftype]=unlist(db.fieldtext(senseid=senseid,
+                                                        ftype=ftype,
+                                                        lang=lang
+                                                            ))
+        glosses=db.glossesordefns(senseid=senseid)
+        self.forms.update({k:glosses[k] for k in glosses if k != self.analang})
+        #Concatenate lists, not dicts
+        for f in [i for i in self.forms if i not in dictlangs]:
             self.forms[f]=unlist(self.forms[f])
+        #This should maybe be a dict of values? Will need to support that on read
+        self.group=self.db.fieldvalue(senseid=senseid, name=check, ftype=ftype,
+                                        lang=self.analang
+                                        )
     def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
-        self.frames=parent.frames #needed for set frame
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
+        ftype=kwargs.get('ftype',self.parent.taskchooser.params.ftype())
         if not self.db.get('sense', senseid=senseid).get():
             log.error("You should pass a senseid from your database {} "
                         "({}) to FramedDataSense!".format(source,type(source)))
             return
-        self.parsesense(self.db,senseid)
+        self.parsesense(self.db,senseid,check,ftype)
         self.setframe(check)
         # log.info("FramedDataSense initalization done, with forms {}"
         #             "".format(self.forms))
@@ -8680,7 +8784,7 @@ class FramedDataElement(FramedData):
     recording into the form[@audiolang] node of that node."""
     def audio(self):
         if self.audiolang in self.forms:
-            self.filename=self.forms[self.audiolang]
+            self.filename=self.forms[self.audiolang][self.ftype]
             log.info("Found link to audio file {}".format(self.filename))
             return self.filename
     def audiofileisthere(self):
@@ -8775,7 +8879,7 @@ class FramedDataElement(FramedData):
                             log.error("No {} analang in {} ".format(
                                                 self.analang,self.senseid))
                             return
-                        args+=[self.forms[self.analang]]
+                        args+=[self.forms[self.analang][self.ftype]]
                         if self.gloss: #could be None still, if no senseid given
                             args+=[
                                     self.gloss
@@ -8810,6 +8914,15 @@ class FramedDataElement(FramedData):
                 self.check=unlist([j.text for j in i.findall('form/text')])
             elif ((i.tag == 'field') and (i.get('type') == 'tone')):
                 self.tonegroups=[j.text for j in i.findall('form/text')]
+        if self.ps in self.frames and (self.check in self.frames[self.ps] and
+                                'field' in self.frames[self.ps][self.check]):
+            self.ftype=self.frames[self.ps][self.check]['field']
+            for lang in [self.analang, self.audiolang]:
+                if lang in self.forms:
+                    try:
+                        self.forms[lang][self.ftype]=self.forms[lang]
+                    except TypeError:
+                        self.forms[lang]={self.ftype:self.forms[lang]}
     def __init__(self, parent, node, senseid=None, **kwargs):
         if not isinstance(node,lift.ET.Element):
             log.error("You should pass an element ({}) to FramedDataExample!"
@@ -8955,7 +9068,8 @@ class RecordButtonFrame(ui.Frame):
         if self.test:
             return
         self.db.addmediafields(self.node,self.filename,self.audiolang,
-                                                                    write=False)
+                                ftype=ftype,
+                                write=False)
         self.task.maybewrite()
         self.task.status.last('recording',update=True)
     def __init__(self,parent,task,framed=None,**kwargs): #filenames
@@ -10216,11 +10330,17 @@ class CheckParameters(dict):
                 for tup in self._Schecks[t][s]:
                     self._cvchecknames[tup[0]]=tup[1]
     def analang(self,analang=None):
-        if analang is not None:
+        if analang:
             self._analang=analang
         elif not hasattr(self,'_analang'):
             self._analang=None
         return self._analang
+    def ftype(self,ftype=None):
+        if ftype:
+            self._ftype=ftype
+        elif not hasattr(self,'_ftype'):
+            self._ftype='lc'
+        return self._ftype
     def __init__(self,analang): # had, do I need check? to write?
         """replaces setnamesall"""
         """replaces self.checknamesall"""
