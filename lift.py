@@ -339,12 +339,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if x:
             return x[0]
     def addmodexamplefields(self,**kwargs):
+        """framed now contains a dictionary for analang, to store different
+        forms for lx, lc, pl and imp. So we need to find that (only) by
+        framed.framed[analang][ftype] glosses are still by
+        framed.framed[analang], as those fields are not typically glossed
+        independently
+        """
         log.info(_("Adding values (in lift.py) : {}").format(kwargs))
         #These should always be there:
         senseid=kwargs.get('senseid')
         location=kwargs.get('location')
         fieldtype=kwargs.get('fieldtype','tone') # needed? ever not 'tone'?
         oldtonevalue=kwargs.get('oldfieldvalue',None)
+        ftype=kwargs.get('ftype')
         if not oldtonevalue:
             exfieldvalue=self.get("example/tonefield/form/text",
                     senseid=senseid, location=location).get('node')
@@ -369,23 +376,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     analang=analang, location=location, showurl=True).get('node')
                 if formvaluenode:
                     formvaluenode=formvaluenode[0]
-                    if forms[analang] != formvaluenode.text:
-                        log.debug("Form changed! ({}≠{})".format(forms[analang],
+                    if forms[analang][ftype] != formvaluenode.text:
+                        log.debug("Form changed! ({}≠{})".format(
+                                                        forms[analang][ftype],
                                                         formvaluenode.text))
-                        formvaluenode.text=forms[analang]
+                        formvaluenode.text=forms[analang][ftype]
                 elif analang in forms:
                     log.error("Found example with tone value field, but no form "
                             "field? ({}-{}); adding".format(senseid,location))
                     example=self.get("example", senseid=senseid,
                         location=location, showurl=True).get('node')
-                    Node.makeformnode(example[0],analang,forms[analang])
+                    Node.makeformnode(example[0],analang,forms[analang][ftype])
                 glossesnode=self.get("example/translation", senseid=senseid,
                             location=location, showurl=True).get('node')
                 #If the glosslang data isn't all provided, ignore it.
                 for lang in [g for g in glosslangs if g in forms and forms[g]]:
                     glossvaluenode=self.get("form/text",
-                                node=glossesnode[0], senseid=senseid, glosslang=lang,
-                                location=location, showurl=True).get('node')
+                                node=glossesnode[0], senseid=senseid,
+                                glosslang=lang,
+                                location=location,
+                                showurl=True).get('node')
                     log.debug("glossvaluenode: {}".format(glossvaluenode))
                     if glossvaluenode:
                         glossvaluenode=glossvaluenode[0]
@@ -407,7 +417,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 return
             attrib={'source': 'AZT sort on {}'.format(getnow())}
             p=Node(sensenode, tag='example', attrib=attrib)
-            p.makeformnode(analang,forms[analang])
+            p.makeformnode(analang,forms[analang][ftype])
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
             fieldgloss=Node(p,'translation',attrib={'type':'Frame translation'})
@@ -1176,49 +1186,61 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if 'ftype' not in kwargs:
             log.error("I don't know what field you want: {}".format(kwargs))
             return
+        elif kwargs['ftype'] == 'lc':
+            return self.citationnode(**kwargs)
+        elif kwargs['ftype'] == 'lx':
+            return self.lexemenode(**kwargs)
         if 'floc' not in kwargs:
             log.error("I don't know where the field should be (floc should be "
                 "either 'sense' or 'entry'; assuming 'entry'): {}"
                 "".format(kwargs))
             kwargs['floc']='entry'
-        kwargs[kwargs['ftype']+'annotationname']=kwargs.pop('annotationname',None)
-        kwargs[kwargs['ftype']+'annotationvalue']=kwargs.pop('annotationvalue',None)
+        if 'annotationname' in kwargs:
+            kwargs[kwargs['ftype']+'annotationname']=kwargs.pop('annotationname')
+        if 'annotationvalue' in kwargs:
+            kwargs[kwargs['ftype']+'annotationvalue']=kwargs.pop('annotationvalue')
         output=self.get(kwargs['floc']+'/field',**kwargs).get('node')
         return output
     def fieldtext(self,**kwargs):
+        """This should take @lang to limit forms by lang, not @analang."""
         t=[]
         for node in self.fieldnode(**kwargs):
             # log.info("Getting text from node {}".format(node))
-            t.extend(self.get('text',node=node).get('text'))
+            t.extend(self.get('text',node=node,**kwargs).get('text'))
         return t
     def fieldvalue(self,**kwargs):
         t=[]
         for node in self.fieldnode(**kwargs):
             t.extend(self.get('annotation',node=node,**kwargs).get('value'))
         return t
-    def annotateform(self,**kwargs):
-        if not ('name' in kwargs and 'value' in kwargs and 'node' in kwargs):
-            log.error("To annotate, I need a node, @name and @value.")
+    def annotatefield(self,**kwargs):
+        if not ('name' in kwargs and 'value' in kwargs):
+            log.error("To annotate, I need @name and @value.")
             return
-        if not 'lang' in kwargs: #for get(form), below
-            log.error("Attention! form annotation without @lang specification "
+        if not 'analang' in kwargs: #for get(form), below
+            log.error("Attention! form annotation without @analang specification "
             "will annotate *all* language forms, which is almost certainly not "
             "what you want! continuing anyway...")
         anndict={ #don't let these pass through as is
                 'name': kwargs.pop('name'),
                 'value': kwargs.pop('value')
                 }
-        kwargs['annotationname']=anndict['name'] #look for value in fieldnode()
-        node=kwargs.pop('node') #because base node changes
+        # kwargs['annotationname']=anndict['name'] #look for value in fieldnode()
+        # node=kwargs.pop('node') #because base node changes
         # log.info("Looking w/{}".format(kwargs))
-        for form in self.get('form',node=node,**kwargs).get('node'):
-            # log.info("Looking in form {} w/{}".format(form,kwargs))
-            ann=self.get('annotation', node=form, **kwargs).get('node') #name!
-            # log.info("Found {}".format(ann))
-            for a in ann:
-                a.set('value',anndict['value'])
-            if not ann:
-                a=Node(form, 'annotation', anndict)
+        for node in self.fieldnode(**kwargs): #these take any annotationname
+            for form in self.get('form',node=node,
+                                lang=kwargs['analang'],
+                                **kwargs).get('node'):
+                # log.info("Looking in form {} w/{}".format(form,kwargs))
+                ann=self.get('annotation', node=form,
+                            annotationname=anndict['name'], #only use this here
+                            **kwargs).get('node') #name!
+                # log.info("Found {}".format(ann))
+                for a in ann:
+                    a.set('value',anndict['value'])
+                if not ann:
+                    a=Node(form, 'annotation', anndict)
     def extrasegments(self):
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]=list()
@@ -2604,54 +2626,32 @@ if __name__ == '__main__':
     glosslang='en'
     pss=["Verb"]#,"Noun"]
     analang='bfj'
+    analang='en'
+    audiolang='en-Zxxx-x-audio'
     kwargs={
-            # 'senseid':
+            'senseid':
+            "machete, cutlass_fb520766-e591-457b-8c70-a172088afc08"
             # "sickle_db1c9e16-7fd7-46fa-a21c-27981588cf41",
             # 'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
             # 'glosslang': 'fr'
             }
     ftype='Plural'
     for ps in pss:
-        # f=lift.get('citation/form/text', annotationname="C1", annotationvalue='1', showurl=True, **kwargs).get('text')
-        # f=lift.citation(lcannotationname="C1", lcannotationvalue='1', showurl=True, **kwargs)
-        # print(f)
-        # f=lift.citation(lxannotationname="C1", lxannotationvalue='1', showurl=True, **kwargs)
-        # print(f)
-        # f=lift.get('citation/form/annotation', lcannotationname="C1", showurl=True, **kwargs).get('node')
-        # print(f)
-        # f=lift.get('field', ftype=ftype, Pluralannotationname="C1", showurl=True, **kwargs).get('node')
-        # print(f)
-        # f=lift.fieldtext(ftype='Imp', annotationname="V1", annotationvalue='i', showurl=True, **kwargs)
-        # print('text:',f)
-        # f=lift.fieldnode(ftype='Imp', annotationname="V1", annotationvalue='i', showurl=True, **kwargs)
-        # print('node:',f)
-        # f=lift.fieldvalue(ftype='Imp', annotationname="V1", annotationvalue='i', showurl=True, **kwargs)
-        # print('value:',f)
-        # f=lift.fieldtext(ftype='Imp', annotationname="V1", annotationvalue='j', showurl=True, **kwargs)
-        # print('text:',f)
-        # f=lift.fieldnode(ftype='Imp', annotationname="V1", annotationvalue='j', showurl=True, **kwargs)
-        # print('node:',f)
-        # f=lift.fieldvalue(ftype='Imp', annotationname="V1", annotationvalue='j', showurl=True, **kwargs)
-        # print('value:',f)
-        f=lift.fieldtext(ftype='Imp', annotationname="V1", showurl=True, **kwargs)
-        print('text:',f)
-        f=lift.fieldnode(ftype='Imp', showurl=True, **kwargs)
-        print('node:',f)
-        # f=lift.citationnode(showurl=True, **kwargs)
-        # print('node:',f)
-        for i in f:
-            lift.annotateform(node=i,name='C2',value='s',lang='en',showurl=True)
-            lift.annotateform(node=i,name='C3',value='s',lang='en',showurl=True)
-            prettyprint(i)
-        g=lift.fieldnode(ftype='Imp',
-                        senseid='sickle_db1c9e16-7fd7-46fa-a21c-27981588cf41',
-                        showurl=True, **kwargs)
-        for i in g:
-            prettyprint(i)
-            lift.annotateform(node=i,name='C2',value='z',lang='en',showurl=True)
-            prettyprint(i)
-        for i in f:
-            prettyprint(i)
+        ft=lift.fieldtext(#senseid=senseid,
+                        ftype=ftype,
+                        lang=analang,
+                        # analang=analang,
+                        # lang=audiolang,
+                        **kwargs
+                        )
+        print(ft)
+        # for n,v in [('C1','b'),('C2','g'),('V1','i'),]:
+        #     lift.annotatefield(ftype='lc', #senseid=senseid,
+        #                         name=n, value=v, analang='fr',showurl=True,
+        #                         **kwargs)
+        # prettyprint(lift.fieldnode(ftype='lc',**kwargs))
+        # for i in f:
+        #     prettyprint(i)
         # f=lift.fieldvalue(ftype='Imp', annotationname="V1", showurl=True, **kwargs)
         # print('value:',f)
     exit()

@@ -18,9 +18,7 @@ Before you can [Set up A→Z+T for normal use](#set-up-azt-for-normal-use), you 
 
 **Be sure to click on "remove path limitation"** after the above, to avoid certain problems with longer filenames.
 
-I hope the following will be obsolete soon (A→Z+T should download these for you on your first run):
-
-2. Open a terminal (hit the Windows key then type `cmd` in the search box), and paste each of these (and hit enter):
+2. **This should be obsolete; skip unless you have problems later**: Open a terminal (hit the Windows key then type `cmd` in the search box), and paste each of these (and hit enter):
     - `python -m pip install --upgrade pip setuptools wheel`
     - `python -m pip install pyaudio`
     - `python -m pip install Pillow lxml` (not required; if you get an error here, just skip it)

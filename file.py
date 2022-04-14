@@ -108,6 +108,9 @@ def getdiredurl(dir,filename):
     return pathlib.Path.joinpath(dir,filename)
 def getdiredrelURL(reldir,filename):
     return pathlib.Path(reldir).joinpath(filename)
+def getdiredrelURLposix(reldir,filename):
+    return pathlib.Path(reldir).joinpath(filename).as_posix()
+    # return pathlib.PurePath(reldir).joinpath(filename)
 def getlangnamepaths(filename, langs):
     output={}
     wsdir=pathlib.Path.joinpath(pathlib.Path(filename).parent, 'WritingSystems')

@@ -71,7 +71,7 @@ class Transcriber(ui.Frame):
             self.soundsettings=soundsettings
         else:
             self.soundsettings=sound.SoundSettings(self.pyaudio)
-        self.beeps=sound.BeepGenerator(pyaudio=self.pyaudio,
+        self.beeps=sound.BeepGenerator(pyAudio=self.pyaudio,
                                             settings=self.soundsettings)
         ui.Frame.__init__(self, parent, **kwargs)
         buttonframe=ui.Frame(self,
@@ -122,7 +122,7 @@ class Transcriber(ui.Frame):
                             row=0, column=1)
         self.formfieldplay.bind('<Button-3>', self.configurebeeps)
         tt=_("Left click to play, \nRight click to configure")
-        ui.ToolTip(self.formfieldplay, text=tt) 
+        ui.ToolTip(self.formfieldplay, text=tt)
         self.formhashlabel=ui.Label(fieldframe,
                                 textvariable=self.namehash,
                                 anchor ='c',
