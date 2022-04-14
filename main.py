@@ -8517,8 +8517,14 @@ class ExampleDict(dict):
     in a given tone frame (from check); thus, only sorted data."""
     def senseidsinslicegroup(self,group,check):
         #This returns all the senseids with a given tone value
-        senseids=self.db.get("sense", location=check, path=['tonefield'],
+        if self.params.cvt() == 'T':
+            senseids=self.db.get("sense", location=check, path=['tonefield'],
                             tonevalue=group
+                            ).get('senseid')
+        else:
+            senseids=self.db.get("sense", ftype=self.params.ftype()
+                            name=check,
+                            value=group
                             ).get('senseid')
         if not senseids:
             log.error("There don't seem to be any sensids in this check tone "
