@@ -43,10 +43,10 @@ import setdefaults
 import xlp
 try:
     import sound
+    import transcriber
 except Exception as e:
     log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
     exceptiononload=True
-import transcriber
 """Other people's stuff"""
 import threading
 import multiprocessing
