@@ -5817,6 +5817,7 @@ class Report(object):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
         #default=True redoes the UF analysis (removing any joining/renaming)
+        ftype=kwargs.get('ftype',self.params.ftype())
         def examplestoXLP(examples,parent,senseid):
             counts['senses']+=1
             for example in examples:
@@ -5830,7 +5831,8 @@ class Report(object):
                         counts['examples']+=1
                         if self.settings.audiolang in framed.forms:
                             counts['audio']+=1
-                        self.framedtoXLP(framed,parent=parent,listword=True,
+                        self.framedtoXLP(framed,parent=parent,ftype=ftype,
+                                                        listword=True,
                                                         showgroups=showgroups)
                         break #do it on first present lang, and do next ex
         a=self.status.last('analysis',**kwargs)
@@ -6059,7 +6061,8 @@ class Report(object):
                                 "{}: {}".format(len(examples),senseid,examples))
                         examplestoXLP(examples,e1,senseid)
                     else:
-                        self.framedtoXLP(framed,parent=s1,showgroups=showgroups)
+                        self.framedtoXLP(framed,parent=s1,ftype=ftype,
+                                                        showgroups=showgroups)
                     output(window,r,text)
         sectitle=_('\nData Summary')
         s2=xlp.Section(xlpr,title=sectitle)
