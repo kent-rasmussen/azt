@@ -10883,8 +10883,8 @@ def findexecutable(exe):
     """This needs to be able to handle two answers in series; is this a list of
     two items, or just a long string, maybe with \n?"""
     if exe in program:
-        log.info("program: {}".format(program[exe]))
-        log.info("program type: {}".format(type(program[exe])))
+        # log.info("program: {}".format(program[exe]))
+        # log.info("program type: {}".format(type(program[exe])))
         program[exe]=program[exe].split('\n') #this will make a list, either way
         for e in program[exe][:]: #Make a copy, to iterate through changes
             #don't allow 'I could find this online for you' values
