@@ -7107,8 +7107,8 @@ class SortButtonFrame(ui.ScrollingFrame):
         newgroup=max(values)+1
         groups.append(str(newgroup))
         return str(newgroup)
-    def marksortgroup(self,senseid,framed,**kwargs):
-        group=kwargs.get('group',self.status.group())
+    def marksortgroup(self,senseid,framed,group,**kwargs):
+        # group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
         guid=None
         if group is None or group == '':
@@ -7186,7 +7186,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
                 """Can't thread this; the button needs to find data"""
-                self.marksortgroup(senseid,framed,group=group,write=False)
+                self.marksortgroup(senseid,framed,group,write=False)
                 self.addgroupbutton(group)
                 #adjust window for new button
                 self.windowsize()
@@ -7204,8 +7204,8 @@ class SortButtonFrame(ui.ScrollingFrame):
                 """thread here?"""
                 # self.marksortgroup(senseid,framed,group=group,write=False)
                 t = threading.Thread(target=self.marksortgroup,
-                                    args=(senseid,framed),
-                                    kwargs={'group':group,'write':False})
+                                    args=(senseid,framed,group),
+                                    kwargs={'write':False})
                 t.start()
         else:
             log.debug('No group selected: {}'.format(groupselected))
