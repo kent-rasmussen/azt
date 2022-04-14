@@ -1202,10 +1202,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         output=self.get(kwargs['floc']+'/field',**kwargs).get('node')
         return output
     def fieldtext(self,**kwargs):
+        """This should take @lang to limit forms by lang, not @analang."""
         t=[]
         for node in self.fieldnode(**kwargs):
             # log.info("Getting text from node {}".format(node))
-            t.extend(self.get('text',node=node).get('text'))
+            t.extend(self.get('text',node=node,**kwargs).get('text'))
         return t
     def fieldvalue(self,**kwargs):
         t=[]
