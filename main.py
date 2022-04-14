@@ -3467,10 +3467,15 @@ class TaskDressing(object):
                 t=o.decode(sys.stdout.encoding).strip()
             except:
                 t=o
-            log.info("git output: {}".format(t))
-            if type(t) != str or (t != 'Already up to date.' and
-                                        "No route to host" not in o):
-                t+=_('\n(Restart {} to use this update)').format(program['name'])
+            log.info("git output: {} ({})".format(t,type(t)))
+            if (type(t) is str and
+                        t != "Already up to date." and
+                        "No route to host" not in t) or (
+                type(t) is not str and
+                            t != b"Already up to date." and
+                            b"No route to host" not in t):
+                t=str(t)+_('\n(Restart {} to use this update)').format(
+                                                                program['name'])
             e=ErrorNotice(t,parent=self,title=_("Update (Git) output"))
             e.wait_window(e)
     def __init__(self,parent):
