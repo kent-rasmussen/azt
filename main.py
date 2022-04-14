@@ -2094,7 +2094,7 @@ class Settings(object):
                         othersOK=True) #Don't complain if more than one found.
             else:
                 v=firstoflist(self.db.get("citation/form/annotation",
-                                lang=self.analang,
+                                lang=self.params.analang(),
                                 annotationname=check,
                                 # annotationvalue=
                                 # senseid=senseid,
