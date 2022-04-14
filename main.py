@@ -8522,7 +8522,7 @@ class ExampleDict(dict):
                             tonevalue=group
                             ).get('senseid')
         else:
-            senseids=self.db.get("sense", ftype=self.params.ftype()
+            senseids=self.db.get("sense", ftype=self.params.ftype(),
                             name=check,
                             value=group
                             ).get('senseid')
