@@ -10914,6 +10914,7 @@ def pythonmodules():
         sys.exit()
     installs=[
             ['--upgrade', 'pip', 'setuptools', 'wheel'],
+            ['numpy'],
             ['pyaudio'],
             ['Pillow', 'lxml'],
             ['patiencediff']
