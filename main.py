@@ -5694,9 +5694,13 @@ class Record(Sound):
                     continue
                 """These should already be framed!"""
                 framed=self.taskchooser.datadict.getframeddata(example,senseid=senseid)
-                if not framed:
-                    exit()
-                if framed.forms[self.analang] is None: # when?
+                if (not framed or
+                        framed.framed == 'NA' or
+                        not framed.forms[self.analang]):
+                    #Don't show the whole dictionary of frames here:
+                    log.info("Not showing example with framed {}".format(
+                            {i:framed.__dict__[i] for i in framed.__dict__
+                                                        if i!='parent'}))
                     continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
