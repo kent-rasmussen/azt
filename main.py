@@ -10893,6 +10893,8 @@ def findexecutable(exe):
                 program[exe].remove(e)
     if exe not in program or program[exe] == []:
         program[exe]=None
+    else:
+        program[exe]=unlist(program[exe])
     if exe == 'praat' and program[exe] and not praatversioncheck():
         findexecutable('sendpraat') #only ask if it would be useful
 def praatversioncheck():
