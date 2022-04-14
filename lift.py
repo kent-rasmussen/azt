@@ -2626,55 +2626,30 @@ if __name__ == '__main__':
     glosslang='en'
     pss=["Verb"]#,"Noun"]
     analang='bfj'
+    analang='en'
+    audiolang='en-Zxxx-x-audio'
     kwargs={
             'senseid':
-            "big hoe_d86d0b41-ed31-4fde-b6ca-54d0e22e926c"
+            "machete, cutlass_fb520766-e591-457b-8c70-a172088afc08"
             # "sickle_db1c9e16-7fd7-46fa-a21c-27981588cf41",
             # 'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
             # 'glosslang': 'fr'
             }
     ftype='Plural'
     for ps in pss:
-        # f=lift.get('citation/form/text', annotationname="C1", annotationvalue='1', showurl=True, **kwargs).get('text')
-        # f=lift.citation(lcannotationname="C1", lcannotationvalue='1', showurl=True, **kwargs)
-        # print(f)
-        # f=lift.citation(lxannotationname="C1", lxannotationvalue='1', showurl=True, **kwargs)
-        # print(f)
-        # f=lift.get('citation/form/annotation', lcannotationname="C1", showurl=True, **kwargs).get('node')
-        # print(f)
-        # f=lift.get('field', ftype=ftype, Pluralannotationname="C1", showurl=True, **kwargs).get('node')
-        # print(f)
-        # f=lift.fieldtext(ftype='Imp', annotationname="V1", annotationvalue='i', showurl=True, **kwargs)
-        # print('text:',f)
-        # f=lift.fieldnode(ftype='Imp', annotationname="V1", annotationvalue='i', showurl=True, **kwargs)
-        # print('node:',f)
-        # f=lift.fieldvalue(ftype='Imp', annotationname="V1", annotationvalue='i', showurl=True, **kwargs)
-        # print('value:',f)
-        # f=lift.fieldtext(ftype='Imp', annotationname="V1", annotationvalue='j', showurl=True, **kwargs)
-        # print('text:',f)
-        # f=lift.fieldnode(ftype='Imp', annotationname="V1", annotationvalue='j', showurl=True, **kwargs)
-        # print('node:',f)
-        # f=lift.fieldvalue(ftype='Imp', annotationname="V1", annotationvalue='j', showurl=True, **kwargs)
-        # print('value:',f)
-        # f=lift.fieldtext(ftype='Imp', annotationname="V1", showurl=True, **kwargs)
-        # print('text:',f)
-        # f=lift.fieldnode(ftype='Imp', showurl=True, **kwargs)
-        # print('node:',f)
-        # f=lift.citationnode(showurl=True, **kwargs)
-        # print('node:',f)
-        # lift.annotatefield(ftype='Imp',name='C2',value='s',analang='en',showurl=True)
-        # lift.annotatefield(ftype='Imp',name='C3',value='s',analang='en',showurl=True)
-        # prettyprint(lift.fieldnode(ftype='Imp'))
-        # g=lift.fieldnode(ftype='Imp',
-        #                 # senseid='sickle_db1c9e16-7fd7-46fa-a21c-27981588cf41',
-        #                 showurl=True, **kwargs)
-        # for i in g:
-        # prettyprint(i)
-        for n,v in [('C1','b'),('C2','g'),('V1','i'),]:
-            lift.annotatefield(ftype='lc', #senseid=senseid,
-                                name=n, value=v, analang='fr',showurl=True,
-                                **kwargs)
-        prettyprint(lift.fieldnode(ftype='lc',**kwargs))
+        ft=lift.fieldtext(#senseid=senseid,
+                        ftype=ftype,
+                        lang=analang,
+                        # analang=analang,
+                        # lang=audiolang,
+                        **kwargs
+                        )
+        print(ft)
+        # for n,v in [('C1','b'),('C2','g'),('V1','i'),]:
+        #     lift.annotatefield(ftype='lc', #senseid=senseid,
+        #                         name=n, value=v, analang='fr',showurl=True,
+        #                         **kwargs)
+        # prettyprint(lift.fieldnode(ftype='lc',**kwargs))
         # for i in f:
         #     prettyprint(i)
         # f=lift.fieldvalue(ftype='Imp', annotationname="V1", showurl=True, **kwargs)
