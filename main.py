@@ -8465,12 +8465,19 @@ class DictbyLang(dict):
     def frame(self,framedict,langs): #langs can/should be ordered
         """the frame only applies if there is a language value; I hope that's
         what we want..."""
-        # log.info("Applying frame {} in these langs: {}".format(framedict,langs))
-        # log.info("Using regex {}".format(rx.framerx))
+        log.info("Applying frame {} in these langs: {}".format(framedict,langs))
+        log.info("Using regex {}".format(rx.framerx))
+        ftype=framedict['field']
         for l in [i for i in langs if i in framedict if i in self and self[i] != []]:
             # log.info("Using lang {}".format(l))
-            if self[l] is not None:
-                self.framed[l]=rx.framerx.sub(self[l],framedict[l])
+            if ftype in self[l]:
+                # log.info("Subbing {} into {}".format(self[l][ftype],framedict[l]))
+                t=self[l][ftype]
+            else:
+                # log.info("Subbing {} into {}".format(self[l],framedict[l]))
+                t=self[l]
+            if self[l]:
+                self.framed[l]=rx.framerx.sub(t,framedict[l])
             else:
                 self.framed[l]=None
         log.info("Applied frame: {}".format(self.framed))
