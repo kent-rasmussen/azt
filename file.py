@@ -60,6 +60,7 @@ def getreportdir(dirname):
     return dir
 def getreldir(origin,dest):
     return os.path.relpath(dest,origin)
+    # return getfile(dest).relative_to(getfile(origin))
 def getstylesheetdir(filename):
     dir=pathlib.Path.joinpath(getfilenamedir(filename),'xlpstylesheets')
     log.debug("Looking for {}".format(dir))
