@@ -10881,6 +10881,10 @@ def findexecutable(exe):
     except Exception as e:
         log.info(_("Search for {} on {} failed: {}").format(exe,os,e))
         return e
+    """This needs to be able to handle two answers in series; is this a list of
+    two items, or just a long string, maybe with \n?"""
+    log.info("program: {}".format(program[exe]))
+    log.info("program type: {}".format(type(program[exe])))
     if (exe not in program or
             #don't allow 'I could find this online for you' values
             ('Microsoft' in program[exe] and 'WindowsApps' in program[exe])):
