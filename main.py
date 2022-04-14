@@ -8765,9 +8765,8 @@ class FramedDataSense(FramedData):
     def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
-        self.frames=parent.frames #needed for set frame
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
-        ftype=kwargs.get('ftype','lc')
+        ftype=kwargs.get('ftype',self.parent.taskchooser.params.ftype())
         if not self.db.get('sense', senseid=senseid).get():
             log.error("You should pass a senseid from your database {} "
                         "({}) to FramedDataSense!".format(source,type(source)))
