@@ -8753,7 +8753,7 @@ class FramedDataSense(FramedData):
                                     self.parent.imperativename]:
                 self.forms[lang][ftype]=unlist(db.fieldtext(senseid=senseid,
                                                         ftype=ftype,
-                                                        lang=lang
+                                                        analang=lang
                                                             ))
         glosses=db.glossesordefns(senseid=senseid)
         self.forms.update({k:glosses[k] for k in glosses if k != self.analang})
