@@ -7095,12 +7095,14 @@ class SortButtonFrame(ui.ScrollingFrame):
                     senseid,
                     guid))
         if self.cvt == 'T':
+            ftype=self.toneframes[self.check]['field'] #this must match check!
             self.db.addmodexamplefields( #This should only mod if already there
                                     senseid=senseid,
                                     analang=self.analang,
                                     fieldtype='tone',
                                     #frames should be ftype specific
                                     location=self.check,
+                                    ftype=ftype, #needed to get correct form
                                     framed=framed,
                                     fieldvalue=group,
                                     write=False
@@ -7205,6 +7207,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.db=task.db
         self.maybewrite=task.maybewrite
         self.updatestatus=task.updatestatus
+        self.toneframes=task.settings.toneframes
         for group in groups:
             self.addgroupbutton(group)
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
