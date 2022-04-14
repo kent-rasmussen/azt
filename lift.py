@@ -1203,6 +1203,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return output
     def fieldtext(self,**kwargs):
         """This should take @lang to limit forms by lang, not @analang."""
+        """Actually, for now, lx and lc take analang, the secondary forms take
+        lang. I should fix this, after preparing. I'm ready to make the change
+        in LiftURL, but it will impact other things that are currently working
+        """
         t=[]
         for node in self.fieldnode(**kwargs):
             # log.info("Getting text from node {}".format(node))
@@ -1457,6 +1461,7 @@ class LiftURL():
                 attrs['value']='lcannotationvalue'
         else:
             attrs={}
+        # self.form("lcform","lang",annodict=attrs)
         self.form("lcform","analang",annodict=attrs)
     def lexeme(self):
         self.baselevel()
@@ -1467,6 +1472,7 @@ class LiftURL():
                 attrs['value']='lxannotationvalue'
         else:
             attrs={}
+        # self.form("lxform","lang",annodict=attrs)
         self.form("lxform","analang",annodict=attrs)
     def pronunciation(self):
         self.baselevel()
@@ -2636,11 +2642,12 @@ if __name__ == '__main__':
             # 'glosslang': 'fr'
             }
     ftype='Plural'
+    ftype='lx'
     for ps in pss:
         ft=lift.fieldtext(#senseid=senseid,
                         ftype=ftype,
-                        lang=analang,
-                        # analang=analang,
+                        # lang=analang,
+                        analang=analang,
                         # lang=audiolang,
                         **kwargs
                         )

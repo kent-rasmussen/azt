@@ -2094,7 +2094,7 @@ class Settings(object):
                         othersOK=True) #Don't complain if more than one found.
             else:
                 v=firstoflist(self.db.get("citation/form/annotation",
-                                lang=self.analang,
+                                lang=self.params.analang(),
                                 annotationname=check,
                                 # annotationvalue=
                                 # senseid=senseid,
@@ -3729,6 +3729,8 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(SortCitationT)
                 if self.doneenough['sortT']:
                     tasks.append(RecordCitationT)
+            if hasattr(self,'testdefault'):
+                tasks.append(self.testdefault)
             # if self.donew['parsedlx']:
             #     tasks.append(SortRoots)
         else: #i.e., analysis tasks
@@ -3888,7 +3890,7 @@ class TaskChooser(TaskDressing,ui.Window):
         numbers, to see that we agree the decision points are rational."""
         self.donew={} # last is default to show user
         self.doneenough={} # which options the user *can* see
-        for task in ['collectionlc','parsedlx','collectionplimp',
+        for taskreq in ['collectionlc','parsedlx','collectionplimp',
                     'tonereport',
                     # 'torecord',
                     # 'torecordT',
@@ -3901,8 +3903,8 @@ class TaskChooser(TaskDressing,ui.Window):
                     'torecordT',
                     'analysis'
                     ]:
-            self.donew[task]=False
-            self.doneenough[task]=False
+            self.donew[taskreq]=False
+            self.doneenough[taskreq]=False
         nentries=self.db.nguids
         lexemesdone=self.db.nentrieswlexemedata
         citationsdone=self.db.nentrieswcitationdata
@@ -4024,6 +4026,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 raise
     def __init__(self,parent):
         # self.testdefault=Parse
+        self.testdefault=SortV
         self.start_time=time.time() #this enables boot time evaluation
         self.writing=False
         self.datacollection=True # everyone starts here?
@@ -5053,10 +5056,10 @@ class Sort(object):
         log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,self.ps,
                                                     self.profile,self.check))
         tosortupdate()
-        log.info("Maybe SortT (from maybesort)")
+        log.info("Maybe Sort (from maybesort)")
         if self.status.checktosort(): # w/o parameters, tests current check
-            log.info("SortT (from maybesort)")
-            quit=self.sortT()
+            log.info("Sort (from maybesort)")
+            quit=self.sort()
             if quit == True:
                 if not self.exitFlag.istrue():
                     self.notdonewarning()
@@ -5192,7 +5195,7 @@ class Sort(object):
             return 1,1
         else:
             return senseid,framed
-    def sortT(self):
+    def sort(self):
         # This window/frame/function shows one entry at a time (with pic?)
         # for the user to select a tone group based on buttons defined below.
         # We work only with one ps and profile at a time (of course).
@@ -5209,7 +5212,7 @@ class Sort(object):
         # groups are by frame (surface distinctions), rather than by lexeme
         # (underlying distinctions) in any case.
         #This function should exit 1 on a window close, or finish with None
-        log.info('Running sortT:')
+        log.info('Running sort:')
         self.getrunwindow()
         """sortingstatus() checks by ps,profile,check (frame),
         for the presence of a populated fieldtype='tone'. So any time any of
@@ -5224,7 +5227,7 @@ class Sort(object):
             return
         self.titles=ui.Frame(self.runwindow.frame, row=0, column=0,
                                                     sticky="ew", columnspan=2)
-        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['sortT'],
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['sort'],
                         text='',
                         ).grid(row=1,column=0,rowspan=3,sticky='nw')
         # scroll=self.runwindow.frame.scroll=ui.ScrollingFrame(self.runwindow.frame)
@@ -5232,12 +5235,18 @@ class Sort(object):
         self.buttonframe=SortButtonFrame(self.runwindow.frame, self, groups,
                                 row=2, column=1, sticky="new")
         """Titles"""
-        title=_("Sort {} Tone (in ‘{}’ frame)").format(
+        if self.cvt == 'T':
+            context='tone melody'
+            descripttext=("in ‘{}’ frame").format(self.check)
+        else:
+            context=self.params.cvcheckname(self.check)
+            descripttext=("by {}").format(self.check)
+        title=_("Sort {} Tone ({})").format(
                                         self.settings.languagenames[self.analang],
-                                        self.check)
+                                        descripttext)
         ui.Label(self.titles, text=title,font='title',anchor='c',
                                             column=0, row=0, sticky="ew")
-        instructions=_("Select the one with the same tone melody as")
+        instructions=_("Select the one with the same {} as").format(context)
         ui.Label(self.titles, text=instructions, font='instructions',
                 anchor='c', column=0, row=1, sticky="ew")
         """Stuff that changes by lexical entry
@@ -5252,7 +5261,8 @@ class Sort(object):
             return 1
         self.runwindow.resetframe()
         return
-    def __init__(self):
+    def __init__(self, parent):
+        parent.settings.makeeverythingok()
         """I need some way to control for ftype"""
         """I need to think through when I would work with one ftype, and not
         another, or when I would want to work with one, then modify the other
@@ -5266,6 +5276,7 @@ class Sort(object):
         not desired."""
         self.invariablesegmentalroots=True #otherwise, ask, or else just check each
         self.params.ftype('lc') #current default
+        self.cvt=self.params.cvt()
         #for testing only!!
         # if self.settings.pluralname:
         #     self.params.ftype(self.settings.pluralname)
@@ -5276,6 +5287,7 @@ class Sort(object):
                         'V':'check',
                         'CV':'check',
                         }
+        self.analang=self.settings.params.analang()
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
     def donewpyaudio(self):
@@ -6712,9 +6724,12 @@ class Comprehensive(object):
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Sort.__init__(self, parent)
         Segments.__init__(self,parent)
-        super(SortCV, parent).__init__()
-        Sort.__init__(self)
+        # super(SortCV, parent).__init__()
+        # Sort.__init__(self)
     def picked(self,choice,**kwargs):
         return
         entry.addresult(check, result='OK') #let's not translate this...
@@ -6962,10 +6977,13 @@ class SortV(Sort,Segments,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent):
-        Segments.__init__(self,parent)
-        super(SortCV, parent).__init__()
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
         self.params.cvt('V')
-        Sort.__init__(self)
+        Sort.__init__(self, parent)
+        Segments.__init__(self,parent)
+        # super(SortV, self).__init__()
+        # Sort.__init__(self)
 class SortC(Sort,Segments,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconC']
@@ -6981,10 +6999,13 @@ class SortC(Sort,Segments,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent):
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        self.params.cvt('C')
+        Sort.__init__(self, parent)
         Segments.__init__(self,parent)
-        super(SortCV, parent).__init__()
-        self.params.cvt('V')
-        Sort.__init__(self)
+        # super(SortC, parent).__init__()
+        # Sort.__init__(self)
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
     def getanotherskip(self,parent,vardict):
@@ -7118,7 +7139,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                                 ftype=self.ftype,
                                 write=False
                                 )
-            self.db.fieldvalue(
+            newgroup=self.db.fieldvalue(
                                 senseid=senseid,
                                 analang=self.analang,
                                 name=self.check,
@@ -7204,6 +7225,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.status=task.status
         self.check=task.params.check()
         self.cvt=task.params.cvt()
+        self.ftype=task.params.ftype()
         self.analang=task.analang
         self.db=task.db
         self.maybewrite=task.maybewrite
@@ -7232,12 +7254,11 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 }
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
-        parent.settings.makeeverythingok()
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        Sort.__init__(self)
+        self.params.cvt('T')
+        Sort.__init__(self, parent)
         log.info("status: {}".format(type(self.status)))
-        self.analang=self.settings.params.analang()
         # Not sure what this was for (XML?):
         self.pp=pprint.PrettyPrinter()
         """Are we OK without these?"""
@@ -7330,7 +7351,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         titles=ui.Frame(self.runwindow.frame,
                         column=0, row=0, columnspan=2, sticky="w")
         ui.Label(titles, text=title, font='title', column=0, row=0, sticky="w")
-        """Move this to bool vars, like for sortT"""
+        """Move this to bool vars, like for sort"""
         if hasattr(self,'groupselected'): #so it doesn't get in way later.
             delattr(self,'groupselected')
         row=0
@@ -8752,13 +8773,16 @@ class FramedDataSense(FramedData):
                                     self.parent.imperativename]:
                 self.forms[lang][ftype]=unlist(db.fieldtext(senseid=senseid,
                                                         ftype=ftype,
-                                                        lang=lang
+                                                        analang=lang
                                                             ))
+                # log.info("forms: {}".format(self.forms))
+            # log.info("forms: {}".format(self.forms))
         glosses=db.glossesordefns(senseid=senseid)
         self.forms.update({k:glosses[k] for k in glosses if k != self.analang})
         #Concatenate lists, not dicts
         for f in [i for i in self.forms if i not in dictlangs]:
             self.forms[f]=unlist(self.forms[f])
+        # log.info("forms: {}".format(self.forms))
         #This should maybe be a dict of values? Will need to support that on read
         self.group=self.db.fieldvalue(senseid=senseid, name=check, ftype=ftype,
                                         lang=self.analang
