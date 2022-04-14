@@ -107,7 +107,7 @@ def getnewlifturl(dir,xyz):
 def getdiredurl(dir,filename):
     return pathlib.Path.joinpath(dir,filename)
 def getdiredrelURL(reldir,filename):
-    return pathlib.PurePath(reldir).joinpath(filename)
+    return pathlib.Path(reldir).joinpath(filename)
 def getlangnamepaths(filename, langs):
     output={}
     wsdir=pathlib.Path.joinpath(pathlib.Path(filename).parent, 'WritingSystems')
