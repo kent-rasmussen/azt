@@ -12,8 +12,11 @@ log=logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG',log) #for this file
 import sys
 import math        #?import needed modules
-import numpy
-
+try:
+    import numpy
+except ModuleNotFoundError:
+    log.error("This isn't going to work, but you can hopefully reboot after"
+            "installing Numpy.")
 class AudioInterface(pyaudio.PyAudio):
     def stop(self):
         self.terminate()
