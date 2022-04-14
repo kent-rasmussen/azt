@@ -1183,9 +1183,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return output
     def fieldnode(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
-        if 'ftype' not in kwargs:
+        if 'ftype' not in kwargs or not kwargs['ftype']:
             log.error("I don't know what field you want: {}".format(kwargs))
-            return
+            return []
         elif kwargs['ftype'] == 'lc':
             return self.citationnode(**kwargs)
         elif kwargs['ftype'] == 'lx':
