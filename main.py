@@ -3888,7 +3888,7 @@ class TaskChooser(TaskDressing,ui.Window):
         numbers, to see that we agree the decision points are rational."""
         self.donew={} # last is default to show user
         self.doneenough={} # which options the user *can* see
-        for task in ['collectionlc','parsedlx','collectionplimp',
+        for taskreq in ['collectionlc','parsedlx','collectionplimp',
                     'tonereport',
                     # 'torecord',
                     # 'torecordT',
@@ -3901,8 +3901,8 @@ class TaskChooser(TaskDressing,ui.Window):
                     'torecordT',
                     'analysis'
                     ]:
-            self.donew[task]=False
-            self.doneenough[task]=False
+            self.donew[taskreq]=False
+            self.doneenough[taskreq]=False
         nentries=self.db.nguids
         lexemesdone=self.db.nentrieswlexemedata
         citationsdone=self.db.nentrieswcitationdata
@@ -5053,10 +5053,10 @@ class Sort(object):
         log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,self.ps,
                                                     self.profile,self.check))
         tosortupdate()
-        log.info("Maybe SortT (from maybesort)")
+        log.info("Maybe Sort (from maybesort)")
         if self.status.checktosort(): # w/o parameters, tests current check
-            log.info("SortT (from maybesort)")
-            quit=self.sortT()
+            log.info("Sort (from maybesort)")
+            quit=self.sort()
             if quit == True:
                 if not self.exitFlag.istrue():
                     self.notdonewarning()
@@ -5192,7 +5192,7 @@ class Sort(object):
             return 1,1
         else:
             return senseid,framed
-    def sortT(self):
+    def sort(self):
         # This window/frame/function shows one entry at a time (with pic?)
         # for the user to select a tone group based on buttons defined below.
         # We work only with one ps and profile at a time (of course).
@@ -5209,7 +5209,7 @@ class Sort(object):
         # groups are by frame (surface distinctions), rather than by lexeme
         # (underlying distinctions) in any case.
         #This function should exit 1 on a window close, or finish with None
-        log.info('Running sortT:')
+        log.info('Running sort:')
         self.getrunwindow()
         """sortingstatus() checks by ps,profile,check (frame),
         for the presence of a populated fieldtype='tone'. So any time any of
@@ -5224,7 +5224,7 @@ class Sort(object):
             return
         self.titles=ui.Frame(self.runwindow.frame, row=0, column=0,
                                                     sticky="ew", columnspan=2)
-        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['sortT'],
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['sort'],
                         text='',
                         ).grid(row=1,column=0,rowspan=3,sticky='nw')
         # scroll=self.runwindow.frame.scroll=ui.ScrollingFrame(self.runwindow.frame)
@@ -7330,7 +7330,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         titles=ui.Frame(self.runwindow.frame,
                         column=0, row=0, columnspan=2, sticky="w")
         ui.Label(titles, text=title, font='title', column=0, row=0, sticky="w")
-        """Move this to bool vars, like for sortT"""
+        """Move this to bool vars, like for sort"""
         if hasattr(self,'groupselected'): #so it doesn't get in way later.
             delattr(self,'groupselected')
         row=0

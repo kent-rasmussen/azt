@@ -143,7 +143,7 @@ class Theme(object):
                             ('backgrounded','images/AZT stacks6.png'),
                             #Set images for tasks
                             ('verifyT','images/Verify List.png'),
-                            ('sortT','images/Sort List.png'),
+                            ('sort','images/Sort List.png'),
                             ('joinT','images/Join List.png'),
                             ('record','images/Microphone alone_sm.png'),
                             ('change','images/Change Circle_sm.png'),
