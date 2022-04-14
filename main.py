@@ -8723,7 +8723,8 @@ class FramedDataSense(FramedData):
         """This should never be done on an example, which should
         already be framed. Also, self.ps won't be defined, so you'll get
         a key error."""
-        if hasattr(self, 'ps') and frame is not None:
+        if frame is not None and (self.ps in self.frames and
+                                    frame in self.frames[self.ps]):
             self.frame=self.frames[self.ps][frame]
             self.forms.frame(self.frame,[self.analang]+self.glosslangs)
             self.framed=self.forms.framed
