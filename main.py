@@ -7138,7 +7138,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                                 ftype=self.ftype,
                                 write=False
                                 )
-            self.db.fieldvalue(
+            newgroup=self.db.fieldvalue(
                                 senseid=senseid,
                                 analang=self.analang,
                                 name=self.check,
