@@ -6541,7 +6541,7 @@ class Report(object):
             ex=xlp.Word(exx) #This doesn't have an id
         if self.settings.audiolang in framed.forms:
             url=file.getdiredrelURLposix(self.reporttoaudiorelURL,
-                                                framed.forms[self.settings.audiolang])
+                                framed.forms[self.settings.audiolang][ftype])
             el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang][ftype],
                                                                     str(url))
         else:
