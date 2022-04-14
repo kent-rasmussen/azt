@@ -10875,7 +10875,6 @@ def findexecutable(exe):
     try:
         exeURL=subprocess.check_output([which,exeOS], shell=False)
         program[exe]=exeURL.decode(sys.stdout.encoding).strip()
-        log.info("Executable {} found at {}".format(exe,program[exe]))
     except subprocess.CalledProcessError as e:
         log.info("Executable {} search output: {}".format(exe,e.output))
     except Exception as e:
@@ -10895,6 +10894,7 @@ def findexecutable(exe):
         program[exe]=None
     else:
         program[exe]=unlist(program[exe])
+        log.info("Executable {} found at {}".format(exe,program[exe]))
     if exe == 'praat' and program[exe] and not praatversioncheck():
         findexecutable('sendpraat') #only ask if it would be useful
 def praatversioncheck():
