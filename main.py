@@ -3469,10 +3469,10 @@ class TaskDressing(object):
                 t=o
             log.info("git output: {} ({})".format(t,type(t)))
             if (type(t) is str and
-                        t != "Already up to date." and
+                        "Already up to date." not in t and
                         "No route to host" not in t) or (
                 type(t) is not str and
-                            t != b"Already up to date." and
+                            b"Already up to date." not in t and
                             b"No route to host" not in t):
                 t=str(t)+_('\n(Restart {} to use this update)').format(
                                                                 program['name'])
