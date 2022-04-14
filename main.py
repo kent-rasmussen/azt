@@ -5234,12 +5234,18 @@ class Sort(object):
         self.buttonframe=SortButtonFrame(self.runwindow.frame, self, groups,
                                 row=2, column=1, sticky="new")
         """Titles"""
-        title=_("Sort {} Tone (in ‘{}’ frame)").format(
+        if self.cvt == 'T':
+            context='tone melody'
+            descripttext=("in ‘{}’ frame").format(self.check)
+        else:
+            context=self.params.cvcheckname(self.check)
+            descripttext=("by {}").format(self.check)
+        title=_("Sort {} Tone ({})").format(
                                         self.settings.languagenames[self.analang],
-                                        self.check)
+                                        descripttext)
         ui.Label(self.titles, text=title,font='title',anchor='c',
                                             column=0, row=0, sticky="ew")
-        instructions=_("Select the one with the same tone melody as")
+        instructions=_("Select the one with the same {} as").format(context)
         ui.Label(self.titles, text=instructions, font='instructions',
                 anchor='c', column=0, row=1, sticky="ew")
         """Stuff that changes by lexical entry
