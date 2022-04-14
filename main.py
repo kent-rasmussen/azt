@@ -7145,12 +7145,12 @@ class SortButtonFrame(ui.ScrollingFrame):
                                 value=group,
                                 write=False
                                 )
-            newgroup=self.db.fieldvalue(
+            newgroup=unlist(self.db.fieldvalue(
                                 senseid=senseid,
                                 analang=self.analang,
                                 name=self.check,
                                 ftype=self.ftype,
-                                )
+                                ))
         if newgroup != group:
             log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                 newgroup,group))
