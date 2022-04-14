@@ -7569,6 +7569,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
         check=self.params.check()
         if check in self.status.checks():
             senseids=self.slices.senseids()
+            ftype=self.toneframes[check]['field'] #this must match check!
         else:
             #Give an error window here
             log.error("Not Trying again; set a tone frame first!")
@@ -7579,7 +7580,8 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
             return
         for senseid in senseids: #this is a ps-profile slice
             self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
-                            location=check,fieldvalue='', #just clear this
+                            location=check,ftype=ftype,
+                            fieldvalue='', #just clear this
                             oldfieldvalue='NA', showurl=True #if this
                             )
         self.runcheck()
