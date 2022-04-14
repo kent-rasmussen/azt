@@ -6332,6 +6332,7 @@ class Report(object):
         profile=kwargs.get('profile',self.slices.profile())
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
+        ftype=kwargs.get('ftype',self.params.ftype())
         xlp.Paragraph(parent,t)
         print(t)
         log.debug(t)
@@ -6434,15 +6435,19 @@ class Report(object):
                         except KeyError:
                             self.basicreported[ncvt]=set([senseid])
                 framed=self.taskchooser.datadict.getframeddata(senseid)
-                self.framedtoXLP(framed,parent=ex,listword=True) #showgroups?
+                self.framedtoXLP(framed,parent=ex,ftype=ftype,listword=True) #showgroups?
                 if hasattr(self,'results'): #i.e., showing results in window
                     self.results.row+=1
                     col=0
                     for lang in [self.analang]+self.glosslangs:
                         col+=1
                         if lang in framed.forms and framed.forms[lang]:
+                            if type(framed.forms[lang]) is dict:
+                                t=framed.forms[lang][ftype]
+                            else:
+                                t=framed.forms[lang]
                             ui.Label(self.results.scroll.content,
-                                    text=framed.forms[lang], font='read',
+                                    text=t, font='read',
                                     anchor='w',padx=10, row=self.results.row,
                                     column=col,
                                     sticky='w')
@@ -6523,7 +6528,7 @@ class Report(object):
             if x is not None:
                 id+=x
         return rx.id(id) #for either example or listword
-    def framedtoXLP(self,framed,parent,listword=False,showgroups=True):
+    def framedtoXLP(self,framed,parent,ftype,listword=False,showgroups=True):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
         the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
@@ -6535,12 +6540,12 @@ class Report(object):
             exx=xlp.Example(parent,id) #the id goes here...
             ex=xlp.Word(exx) #This doesn't have an id
         if self.settings.audiolang in framed.forms:
-            url=file.getdiredrelURL(self.reporttoaudiorelURL,
+            url=file.getdiredrelURLposix(self.reporttoaudiorelURL,
                                                 framed.forms[self.settings.audiolang])
-            el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang],
+            el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang][ftype],
                                                                     str(url))
         else:
-            el=xlp.LangData(ex,self.analang,framed.forms[self.analang])
+            el=xlp.LangData(ex,self.analang,framed.forms[self.analang][ftype])
         if hasattr(framed,'tonegroup') and showgroups: #joined groups show each
             elt=xlp.LangData(ex,self.analang,framed.tonegroup)
         for lang in self.glosslangs:
