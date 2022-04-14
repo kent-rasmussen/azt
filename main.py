@@ -4024,6 +4024,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 raise
     def __init__(self,parent):
         # self.testdefault=Parse
+        self.testdefault=SortV
         self.start_time=time.time() #this enables boot time evaluation
         self.writing=False
         self.datacollection=True # everyone starts here?
@@ -6963,7 +6964,7 @@ class SortV(Sort,Segments,TaskDressing,ui.Window):
                 }
     def __init__(self, parent):
         Segments.__init__(self,parent)
-        super(SortCV, parent).__init__()
+        super(SortV, parent).__init__()
         self.params.cvt('V')
         Sort.__init__(self)
 class SortC(Sort,Segments,TaskDressing,ui.Window):
@@ -6982,8 +6983,8 @@ class SortC(Sort,Segments,TaskDressing,ui.Window):
                 }
     def __init__(self, parent):
         Segments.__init__(self,parent)
-        super(SortCV, parent).__init__()
-        self.params.cvt('V')
+        super(SortC, parent).__init__()
+        self.params.cvt('C')
         Sort.__init__(self)
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
