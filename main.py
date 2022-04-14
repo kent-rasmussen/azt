@@ -10886,9 +10886,12 @@ def findexecutable(exe):
     if exe in program:
         log.info("program: {}".format(program[exe]))
         log.info("program type: {}".format(type(program[exe])))
-    if (exe not in program or
+        program[exe]=program[exe].split('\n') #this will make a list, either way
+        for e in program[exe][:]: #Make a copy, to iterate through changes
             #don't allow 'I could find this online for you' values
-            ('Microsoft' in program[exe] and 'WindowsApps' in program[exe])):
+            if 'Microsoft' in e and 'WindowsApps' in e:
+                program[exe].remove(e)
+    if exe not in program or program[exe] == []:
         program[exe]=None
     if exe == 'praat' and program[exe] and not praatversioncheck():
         findexecutable('sendpraat') #only ask if it would be useful
