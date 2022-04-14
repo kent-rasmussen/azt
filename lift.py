@@ -339,12 +339,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if x:
             return x[0]
     def addmodexamplefields(self,**kwargs):
+        """framed now contains a dictionary for analang, to store different
+        forms for lx, lc, pl and imp. So we need to find that (only) by
+        framed.framed[analang][ftype] glosses are still by
+        framed.framed[analang], as those fields are not typically glossed
+        independently
+        """
         log.info(_("Adding values (in lift.py) : {}").format(kwargs))
         #These should always be there:
         senseid=kwargs.get('senseid')
         location=kwargs.get('location')
         fieldtype=kwargs.get('fieldtype','tone') # needed? ever not 'tone'?
         oldtonevalue=kwargs.get('oldfieldvalue',None)
+        ftype=kwargs.get('ftype')
         if not oldtonevalue:
             exfieldvalue=self.get("example/tonefield/form/text",
                     senseid=senseid, location=location).get('node')
@@ -369,23 +376,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     analang=analang, location=location, showurl=True).get('node')
                 if formvaluenode:
                     formvaluenode=formvaluenode[0]
-                    if forms[analang] != formvaluenode.text:
-                        log.debug("Form changed! ({}≠{})".format(forms[analang],
+                    if forms[analang][ftype] != formvaluenode.text:
+                        log.debug("Form changed! ({}≠{})".format(
+                                                        forms[analang][ftype],
                                                         formvaluenode.text))
-                        formvaluenode.text=forms[analang]
+                        formvaluenode.text=forms[analang][ftype]
                 elif analang in forms:
                     log.error("Found example with tone value field, but no form "
                             "field? ({}-{}); adding".format(senseid,location))
                     example=self.get("example", senseid=senseid,
                         location=location, showurl=True).get('node')
-                    Node.makeformnode(example[0],analang,forms[analang])
+                    Node.makeformnode(example[0],analang,forms[analang][ftype])
                 glossesnode=self.get("example/translation", senseid=senseid,
                             location=location, showurl=True).get('node')
                 #If the glosslang data isn't all provided, ignore it.
                 for lang in [g for g in glosslangs if g in forms and forms[g]]:
                     glossvaluenode=self.get("form/text",
-                                node=glossesnode[0], senseid=senseid, glosslang=lang,
-                                location=location, showurl=True).get('node')
+                                node=glossesnode[0], senseid=senseid,
+                                glosslang=lang,
+                                location=location,
+                                showurl=True).get('node')
                     log.debug("glossvaluenode: {}".format(glossvaluenode))
                     if glossvaluenode:
                         glossvaluenode=glossvaluenode[0]
@@ -407,7 +417,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 return
             attrib={'source': 'AZT sort on {}'.format(getnow())}
             p=Node(sensenode, tag='example', attrib=attrib)
-            p.makeformnode(analang,forms[analang])
+            p.makeformnode(analang,forms[analang][ftype])
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
             fieldgloss=Node(p,'translation',attrib={'type':'Frame translation'})
