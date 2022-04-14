@@ -17,6 +17,7 @@ try:
 except ModuleNotFoundError:
     log.error("This isn't going to work, but you can hopefully reboot after"
             "installing Numpy.")
+    raise
 class AudioInterface(pyaudio.PyAudio):
     def stop(self):
         self.terminate()
