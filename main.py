@@ -8775,11 +8775,14 @@ class FramedDataSense(FramedData):
                                                         ftype=ftype,
                                                         analang=lang
                                                             ))
+                # log.info("forms: {}".format(self.forms))
+            # log.info("forms: {}".format(self.forms))
         glosses=db.glossesordefns(senseid=senseid)
         self.forms.update({k:glosses[k] for k in glosses if k != self.analang})
         #Concatenate lists, not dicts
         for f in [i for i in self.forms if i not in dictlangs]:
             self.forms[f]=unlist(self.forms[f])
+        # log.info("forms: {}".format(self.forms))
         #This should maybe be a dict of values? Will need to support that on read
         self.group=self.db.fieldvalue(senseid=senseid, name=check, ftype=ftype,
                                         lang=self.analang
