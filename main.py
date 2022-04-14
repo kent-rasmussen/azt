@@ -8650,6 +8650,8 @@ class FramedDataDict(dict):
         self.frames=taskchooser.settings.toneframes #[ps][name]
         self.db=taskchooser.db
         self.taskchooser=taskchooser
+        self.pluralname=taskchooser.settings.pluralname
+        self.imperativename=taskchooser.settings.imperativename
 class FramedData(object):
     """This is a superclass to store methods, etc. common to both
     FramedDataSense and FramedDataElement, making the information gathered by
