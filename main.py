@@ -5252,7 +5252,8 @@ class Sort(object):
             return 1
         self.runwindow.resetframe()
         return
-    def __init__(self):
+    def __init__(self, parent):
+        parent.settings.makeeverythingok()
         """I need some way to control for ftype"""
         """I need to think through when I would work with one ftype, and not
         another, or when I would want to work with one, then modify the other
@@ -5266,6 +5267,7 @@ class Sort(object):
         not desired."""
         self.invariablesegmentalroots=True #otherwise, ask, or else just check each
         self.params.ftype('lc') #current default
+        self.cvt=self.params.cvt()
         #for testing only!!
         # if self.settings.pluralname:
         #     self.params.ftype(self.settings.pluralname)
@@ -5276,6 +5278,7 @@ class Sort(object):
                         'V':'check',
                         'CV':'check',
                         }
+        self.analang=self.settings.params.analang()
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
     def donewpyaudio(self):
@@ -6712,9 +6715,12 @@ class Comprehensive(object):
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Sort.__init__(self, parent)
         Segments.__init__(self,parent)
-        super(SortCV, parent).__init__()
-        Sort.__init__(self)
+        # super(SortCV, parent).__init__()
+        # Sort.__init__(self)
     def picked(self,choice,**kwargs):
         return
         entry.addresult(check, result='OK') #let's not translate this...
@@ -6962,10 +6968,13 @@ class SortV(Sort,Segments,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent):
-        Segments.__init__(self,parent)
-        super(SortV, parent).__init__()
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
         self.params.cvt('V')
-        Sort.__init__(self)
+        Sort.__init__(self, parent)
+        Segments.__init__(self,parent)
+        # super(SortV, self).__init__()
+        # Sort.__init__(self)
 class SortC(Sort,Segments,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconC']
@@ -6981,10 +6990,13 @@ class SortC(Sort,Segments,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent):
-        Segments.__init__(self,parent)
-        super(SortC, parent).__init__()
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
         self.params.cvt('C')
-        Sort.__init__(self)
+        Sort.__init__(self, parent)
+        Segments.__init__(self,parent)
+        # super(SortC, parent).__init__()
+        # Sort.__init__(self)
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
     def getanotherskip(self,parent,vardict):
@@ -7204,6 +7216,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.status=task.status
         self.check=task.params.check()
         self.cvt=task.params.cvt()
+        self.ftype=task.params.ftype()
         self.analang=task.analang
         self.db=task.db
         self.maybewrite=task.maybewrite
@@ -7232,12 +7245,11 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 }
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self,parent)
-        parent.settings.makeeverythingok()
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        Sort.__init__(self)
+        self.params.cvt('T')
+        Sort.__init__(self, parent)
         log.info("status: {}".format(type(self.status)))
-        self.analang=self.settings.params.analang()
         # Not sure what this was for (XML?):
         self.pp=pprint.PrettyPrinter()
         """Are we OK without these?"""
