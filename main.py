@@ -8784,7 +8784,7 @@ class FramedDataElement(FramedData):
     recording into the form[@audiolang] node of that node."""
     def audio(self):
         if self.audiolang in self.forms:
-            self.filename=self.forms[self.audiolang]
+            self.filename=self.forms[self.audiolang][self.ftype]
             log.info("Found link to audio file {}".format(self.filename))
             return self.filename
     def audiofileisthere(self):
@@ -9068,7 +9068,8 @@ class RecordButtonFrame(ui.Frame):
         if self.test:
             return
         self.db.addmediafields(self.node,self.filename,self.audiolang,
-                                                                    write=False)
+                                ftype=ftype,
+                                write=False)
         self.task.maybewrite()
         self.task.status.last('recording',update=True)
     def __init__(self,parent,task,framed=None,**kwargs): #filenames
