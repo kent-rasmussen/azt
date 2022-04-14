@@ -3729,6 +3729,8 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(SortCitationT)
                 if self.doneenough['sortT']:
                     tasks.append(RecordCitationT)
+            if hasattr(self,'testdefault'):
+                tasks.append(self.testdefault)
             # if self.donew['parsedlx']:
             #     tasks.append(SortRoots)
         else: #i.e., analysis tasks
