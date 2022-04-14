@@ -44,7 +44,7 @@ import xlp
 try:
     import sound
 except Exception as e:
-    log.exception("Problem importing Sound/pyaudio. Is it installed? %s",e)
+    log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
     exceptiononload=True
 import transcriber
 """Other people's stuff"""
