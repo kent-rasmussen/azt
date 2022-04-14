@@ -8667,6 +8667,10 @@ class FramedData(object):
             self.tonegroup=unlist(self.tonegroups)
             return True
     def formatted(self,showtonegroup=False,noframe=False):
+        ftype=self.parent.taskchooser.params.ftype()
+        # if ftype != 'lc': #testing
+        #     log.error("ftype is {}; why would that be?".format(ftype))
+        #     raise
         tg=None
         if showtonegroup and self.gettonegroup():
             try:
@@ -8675,7 +8679,8 @@ class FramedData(object):
                 tg=self.tonegroup
         toformat=DataList(tg)
         if noframe:
-            toformat.appendformsbylang(self.forms,self.analang,quote=False)
+            toformat.appendformsbylang(self.forms,self.analang,
+                                            ftype=ftype, quote=False)
             toformat.appendformsbylang(self.forms,self.glosslangs,quote=True)
         else:
             """setframe is a FramedDataSense method, so should only apply there,
@@ -8683,7 +8688,8 @@ class FramedData(object):
             in its init."""
             if not hasattr(self,'framed') and isinstance(self,FramedDataSense):
                 self.setframe() #self.noframe() #Assume no frame if not explicitly applied
-            toformat.appendformsbylang(self.framed,self.analang,quote=False)
+            toformat.appendformsbylang(self.framed,self.analang,
+                                            ftype=ftype, quote=False)
             toformat.appendformsbylang(self.framed,self.glosslangs,quote=True)
         return ' '.join([x for x in toformat if x is not None]) #put it all together
     def glosses(self):
@@ -8704,6 +8710,8 @@ class FramedData(object):
         """Evaluate what is actually needed"""
         super(FramedData, self).__init__()
         self.parent=parent
+        self.frames=parent.frames #needed for setframe, parseelement
+        self.ps=self.parent.taskchooser.slices.ps()
         self.updatelangs()
         self.forms=DictbyLang()
 class FramedDataSense(FramedData):
