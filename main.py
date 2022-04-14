@@ -8737,13 +8737,31 @@ class FramedDataSense(FramedData):
                     senseid=self.senseid, location=frame).get('text')
     def parsesense(self,db,senseid,check,ftype):
         self.senseid=senseid #store for later
-        self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
-        self.forms[self.analang]=db.citationorlexeme(senseid=senseid,
-                                                    analang=self.analang)
-        self.forms.update(db.glossesordefns(senseid=senseid))
-        for f in self.forms:
+        # self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
+        # log.info("check: {}".format(check))
+        # log.info("field: {}; ftype: {}".format(check['field'],ftype))
+        if check and 'field' in check and check['field'] != ftype:
+            log.error("Check ‘{}’ is for field ‘{}’, but you are looking for "
+                        "field ‘{}’".format(check,check['field'],ftype))
+        # log.info("self.forms: {}".format(self.forms))
+        dictlangs=[self.analang, self.audiolang]
+        for lang in dictlangs:
+            self.forms[lang]={}
+            for ftype in ['lx','lc',self.parent.pluralname,
+                                    self.parent.imperativename]:
+                self.forms[lang][ftype]=unlist(db.fieldtext(senseid=senseid,
+                                                        ftype=ftype,
+                                                        lang=lang
+                                                            ))
+        glosses=db.glossesordefns(senseid=senseid)
+        self.forms.update({k:glosses[k] for k in glosses if k != self.analang})
+        #Concatenate lists, not dicts
+        for f in [i for i in self.forms if i not in dictlangs]:
             self.forms[f]=unlist(self.forms[f])
-        self.group=self.db.fieldvalue(senseid=senseid, name=check, ftype=ftype)
+        #This should maybe be a dict of values? Will need to support that on read
+        self.group=self.db.fieldvalue(senseid=senseid, name=check, ftype=ftype,
+                                        lang=self.analang
+                                        )
     def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
