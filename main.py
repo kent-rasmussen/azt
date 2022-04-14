@@ -8879,7 +8879,7 @@ class FramedDataElement(FramedData):
                             log.error("No {} analang in {} ".format(
                                                 self.analang,self.senseid))
                             return
-                        args+=[self.forms[self.analang]]
+                        args+=[self.forms[self.analang][self.ftype]]
                         if self.gloss: #could be None still, if no senseid given
                             args+=[
                                     self.gloss
@@ -8914,6 +8914,15 @@ class FramedDataElement(FramedData):
                 self.check=unlist([j.text for j in i.findall('form/text')])
             elif ((i.tag == 'field') and (i.get('type') == 'tone')):
                 self.tonegroups=[j.text for j in i.findall('form/text')]
+        if self.ps in self.frames and (self.check in self.frames[self.ps] and
+                                'field' in self.frames[self.ps][self.check]):
+            self.ftype=self.frames[self.ps][self.check]['field']
+            for lang in [self.analang, self.audiolang]:
+                if lang in self.forms:
+                    try:
+                        self.forms[lang][self.ftype]=self.forms[lang]
+                    except TypeError:
+                        self.forms[lang]={self.ftype:self.forms[lang]}
     def __init__(self, parent, node, senseid=None, **kwargs):
         if not isinstance(node,lift.ET.Element):
             log.error("You should pass an element ({}) to FramedDataExample!"
