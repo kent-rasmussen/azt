@@ -8364,13 +8364,30 @@ class Entry(lift.Entry): #Not in use
         log.info("Don't forget to write these changes to a file somewhere...")
 class DataList(list):
     """docstring for DataList."""
-    def appendformsbylang(self,forms,langs,quote=False):
+    def appendformsbylang(self,forms,langs,ftype=None,quote=False):
         for l in [f for f in forms if f in langs]:
-            if forms[l]:
-                if quote:
-                    self.append("‘"+forms[l]+"’")
-                else:
-                    self.append(forms[l])
+            # log.info("forms[l]: {}; formstype: {}; ftype: {}"
+            #         "".format(forms[l],type(forms[l]),ftype))
+            # log.info("typecheck: {}"
+            #         "".format(type(forms[l]) is dict))
+            # if ftype:
+            #     log.info("ftypecheck: {}"
+            #         "".format(ftype in forms[l]))
+            if forms[l] and type(forms[l]) is not dict:
+                f=forms[l]
+            elif (type(forms[l]) is dict and
+                    ftype and
+                    ftype in forms[l] and
+                    forms[l][ftype]):
+                f=forms[l][ftype]
+            else:
+                continue
+            if quote:
+                self.append("‘"+f+"’")
+                if ftype:
+                    self.append("("+ftype+")")
+            else:
+                self.append(f)
     def __init__(self, *args):
         super(DataList, self).__init__()
         self.extend(args)
