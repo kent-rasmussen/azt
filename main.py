@@ -11066,7 +11066,6 @@ def mainproblem():
             justify='left', font='instructions',
             row=2,column=0
             )
-        pythonmodules()
     lcontents=logsetup.contents(50)
     addr=program['Email']
     eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
@@ -11153,6 +11152,7 @@ if __name__ == "__main__":
         program['python']=program.pop('python3')
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
+        pythonmodules()
         mainproblem()
     else:
         try:
