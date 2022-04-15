@@ -2093,12 +2093,17 @@ class Settings(object):
                                 ).get('text'),
                         othersOK=True) #Don't complain if more than one found.
             else:
+                ftype=self.params.ftype()
+                kwargs={ftype+'annotationname':check,
+                        # ftype+'annotationvalue':group
+                        }
                 v=firstoflist(self.db.get("citation/form/annotation",
                                 lang=self.params.analang(),
-                                annotationname=check,
+                                # annotationname=check,
                                 # annotationvalue=
-                                # senseid=senseid,
+                                senseid=senseid,
                                 # location=check
+                                **kwargs
                                 ).get('value'),
                         othersOK=True) #Don't complain if more than one found.
 
@@ -2106,19 +2111,19 @@ class Settings(object):
             #     log.debug("Found tone value (updatesortingstatus): {} ({})"
             #             "".format(v, type(v)))
             if v in ['','None',None]: #unlist() returns strings
-                log.log(4,"Marking senseid {} tosort (v: {})".format(senseid,v))
+                log.info("Marking senseid {} tosort (v: {})".format(senseid,v))
                 self.status.marksenseidtosort(senseid)
             else:
-                log.log(4,"Marking senseid {} sorted (v: {})".format(senseid,v))
+                log.info("Marking senseid {} sorted (v: {})".format(senseid,v))
                 self.status.marksenseidsorted(senseid)
                 if v not in ['NA','ALLOK']:
                     groups.append(v)
         """update 'tosort' status"""
         if self.status.senseidstosort():
-            log.log(4,"updatesortingstatus shows senseidstosort remaining")
+            log.info("updatesortingstatus shows senseidstosort remaining")
             vts=True
         else:
-            log.log(4,"updatesortingstatus shows no senseidstosort remaining")
+            log.info("updatesortingstatus shows no senseidstosort remaining")
             vts=False
         self.status.tosort(vts,**kwargs)
         """update status groups"""
@@ -7107,8 +7112,8 @@ class SortButtonFrame(ui.ScrollingFrame):
         newgroup=max(values)+1
         groups.append(str(newgroup))
         return str(newgroup)
-    def marksortgroup(self,senseid,framed,**kwargs):
-        group=kwargs.get('group',self.status.group())
+    def marksortgroup(self,senseid,framed,group,**kwargs):
+        # group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
         guid=None
         if group is None or group == '':
@@ -7122,7 +7127,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                     senseid,
                     guid))
         if self.cvt == 'T':
-            ftype=self.toneframes[self.check]['field'] #this must match check!
+            ftype=self.toneframes[self.ps][self.check]['field'] #this must match check!
             self.db.addmodexamplefields( #This should only mod if already there
                                     senseid=senseid,
                                     analang=self.analang,
@@ -7142,14 +7147,15 @@ class SortButtonFrame(ui.ScrollingFrame):
                                 analang=self.analang,
                                 name=self.check,
                                 ftype=self.ftype,
+                                value=group,
                                 write=False
                                 )
-            newgroup=self.db.fieldvalue(
+            newgroup=unlist(self.db.fieldvalue(
                                 senseid=senseid,
                                 analang=self.analang,
                                 name=self.check,
                                 ftype=self.ftype,
-                                )
+                                ))
         if newgroup != group:
             log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                 newgroup,group))
@@ -7186,7 +7192,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
                 """Can't thread this; the button needs to find data"""
-                self.marksortgroup(senseid,framed,group=group,write=False)
+                self.marksortgroup(senseid,framed,group,write=False)
                 self.addgroupbutton(group)
                 #adjust window for new button
                 self.windowsize()
@@ -7204,8 +7210,8 @@ class SortButtonFrame(ui.ScrollingFrame):
                 """thread here?"""
                 # self.marksortgroup(senseid,framed,group=group,write=False)
                 t = threading.Thread(target=self.marksortgroup,
-                                    args=(senseid,framed),
-                                    kwargs={'group':group,'write':False})
+                                    args=(senseid,framed,group),
+                                    kwargs={'write':False})
                 t.start()
         else:
             log.debug('No group selected: {}'.format(groupselected))
@@ -7231,6 +7237,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.check=task.params.check()
         self.cvt=task.params.cvt()
         self.ftype=task.params.ftype()
+        self.ps=task.slices.ps()
         self.analang=task.analang
         self.db=task.db
         self.maybewrite=task.maybewrite
@@ -8495,7 +8502,7 @@ class DictbyLang(dict):
         log.info("Applying frame {} in these langs: {}".format(framedict,langs))
         log.info("Using regex {}".format(rx.framerx))
         ftype=framedict['field']
-        for l in [i for i in langs if i in framedict if i in self and self[i] != []]:
+        for l in [i for i in langs if i in framedict if i in self and self[i]]:
             # log.info("Using lang {}".format(l))
             if ftype in self[l]:
                 # log.info("Subbing {} into {}".format(self[l][ftype],framedict[l]))
@@ -8516,9 +8523,18 @@ class ExampleDict(dict):
     in a given tone frame (from check); thus, only sorted data."""
     def senseidsinslicegroup(self,group,check):
         #This returns all the senseids with a given tone value
-        senseids=self.db.get("sense", location=check, path=['tonefield'],
+        if self.params.cvt() == 'T':
+            senseids=self.db.get("sense", location=check, path=['tonefield'],
                             tonevalue=group
                             ).get('senseid')
+        else:
+            ftype=self.params.ftype()
+            kwargs={ftype+'annotationname':check,
+                    ftype+'annotationvalue':group}
+            senseids=self.db.get("sense",
+                                    showurl=True,
+                                    **kwargs
+                                    ).get('senseid')
         if not senseids:
             log.error("There don't seem to be any sensids in this check tone "
                 "group, so I can't get you an example. ({} {})"
@@ -8550,6 +8566,7 @@ class ExampleDict(dict):
             return
         framed=self.datadict.getframeddata(senseid=senseid,check=check)
         if framed is None:
+            log.info("exampletypeok didn't result in a frame!")
             return
         # log.info("exampletypeok framed: {}".format(framed))
         if kwargs['wglosses'] and not self.hasglosses(framed):
@@ -8652,7 +8669,7 @@ class FramedDataDict(dict):
             if isinstance(source,lift.ET.Element):
                 element=True
             # log.info("sense: {}, element: {}".format(sense,element))
-        elif senseid and check:
+        elif senseid and check and self.taskchooser.params.cvt() == 'T':
             """If neither or None is given, try to build it from kwargs"""
             """If these aren't there, these will correctly fail w/KeyError."""
             source=firstoflist(self.db.get('example',
@@ -8661,6 +8678,9 @@ class FramedDataDict(dict):
                                             location=check
                                             ).get('node'))
             element=True
+        elif senseid and check:
+            senseid=source
+            sense=True
         # log.info("sense: {}, element: {} (after build)".format(sense,element))
         d=self.isthere(source)
         if source and not d:
@@ -8774,10 +8794,10 @@ class FramedDataSense(FramedData):
         dictlangs=[self.analang, self.audiolang]
         for lang in dictlangs:
             self.forms[lang]={}
-            for ftype in ['lx','lc',self.parent.pluralname,
+            for ft in ['lx','lc',self.parent.pluralname,
                                     self.parent.imperativename]:
-                self.forms[lang][ftype]=unlist(db.fieldtext(senseid=senseid,
-                                                        ftype=ftype,
+                self.forms[lang][ft]=unlist(db.fieldtext(senseid=senseid,
+                                                        ftype=ft,
                                                         analang=lang
                                                             ))
                 # log.info("forms: {}".format(self.forms))
@@ -8789,14 +8809,23 @@ class FramedDataSense(FramedData):
             self.forms[f]=unlist(self.forms[f])
         # log.info("forms: {}".format(self.forms))
         #This should maybe be a dict of values? Will need to support that on read
+        #For now, this should use the parameter as given, not as iterated
+        log.info("parsesense ftype: {}".format(ftype))
         self.group=self.db.fieldvalue(senseid=senseid, name=check, ftype=ftype,
-                                        lang=self.analang
+                                        lang=self.analang,
+                                        showurl=True
                                         )
+        log.info("self.group of parsesense: {}".format(self.group))
     def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
         ftype=kwargs.get('ftype',self.parent.taskchooser.params.ftype())
+        if not ftype:
+            log.error("ftype: {}!".format(ftype))
+            return
+        else:
+            log.info("ftype: {}".format(ftype))
         if not self.db.get('sense', senseid=senseid).get():
             log.error("You should pass a senseid from your database {} "
                         "({}) to FramedDataSense!".format(source,type(source)))

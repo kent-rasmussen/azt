@@ -339,7 +339,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if x:
             return x[0]
     def addmodexamplefields(self,**kwargs):
-        """framed now contains a dictionary for analang, to store different
+        """WRONG: framed now contains a dictionary for analang, to store different
         forms for lx, lc, pl and imp. So we need to find that (only) by
         framed.framed[analang][ftype] glosses are still by
         framed.framed[analang], as those fields are not typically glossed
@@ -351,7 +351,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         location=kwargs.get('location')
         fieldtype=kwargs.get('fieldtype','tone') # needed? ever not 'tone'?
         oldtonevalue=kwargs.get('oldfieldvalue',None)
-        ftype=kwargs.get('ftype')
+        # ftype=kwargs.get('ftype')
         if not oldtonevalue:
             exfieldvalue=self.get("example/tonefield/form/text",
                     senseid=senseid, location=location).get('node')
@@ -365,7 +365,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         write=kwargs.get('write',False)
         framed=kwargs.get('framed',None)
         if framed:
-            forms=framed.framed #because this should always be framed
+            forms=framed.framed #because this should always be framed, with correct form
             glosslangs=framed.glosslangs
         if exfieldvalue:
             for e in exfieldvalue:
@@ -376,17 +376,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     analang=analang, location=location, showurl=True).get('node')
                 if formvaluenode:
                     formvaluenode=formvaluenode[0]
-                    if forms[analang][ftype] != formvaluenode.text:
+                    if forms[analang] != formvaluenode.text:
                         log.debug("Form changed! ({}≠{})".format(
-                                                        forms[analang][ftype],
+                                                        forms[analang],
                                                         formvaluenode.text))
-                        formvaluenode.text=forms[analang][ftype]
+                        formvaluenode.text=forms[analang]
                 elif analang in forms:
                     log.error("Found example with tone value field, but no form "
                             "field? ({}-{}); adding".format(senseid,location))
                     example=self.get("example", senseid=senseid,
                         location=location, showurl=True).get('node')
-                    Node.makeformnode(example[0],analang,forms[analang][ftype])
+                    Node.makeformnode(example[0],analang,forms[analang])
                 glossesnode=self.get("example/translation", senseid=senseid,
                             location=location, showurl=True).get('node')
                 #If the glosslang data isn't all provided, ignore it.
@@ -417,7 +417,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 return
             attrib={'source': 'AZT sort on {}'.format(getnow())}
             p=Node(sensenode, tag='example', attrib=attrib)
-            p.makeformnode(analang,forms[analang][ftype])
+            p.makeformnode(analang,forms[analang])
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
             fieldgloss=Node(p,'translation',attrib={'type':'Frame translation'})
@@ -2606,12 +2606,12 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
     senseids=[
             # "begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
@@ -2644,14 +2644,20 @@ if __name__ == '__main__':
     ftype='Plural'
     ftype='lx'
     for ps in pss:
-        ft=lift.fieldtext(#senseid=senseid,
-                        ftype=ftype,
-                        # lang=analang,
-                        analang=analang,
-                        # lang=audiolang,
-                        **kwargs
-                        )
-        print(ft)
+        senseids=lift.get("sense", #path=['field'],
+                        # ftype='lc',
+                        lcannotationname='V1',
+                        lcannotationvalue=1,
+                        showurl=True
+                        ).get('senseid')
+        # ft=lift.fieldtext(#senseid=senseid,
+        #                 ftype=ftype,
+        #                 # lang=analang,
+        #                 analang=analang,
+        #                 # lang=audiolang,
+        #                 **kwargs
+        #                 )
+        print(senseids)
         # for n,v in [('C1','b'),('C2','g'),('V1','i'),]:
         #     lift.annotatefield(ftype='lc', #senseid=senseid,
         #                         name=n, value=v, analang='fr',showurl=True,
