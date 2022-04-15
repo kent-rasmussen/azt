@@ -2606,12 +2606,12 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
     senseids=[
             # "begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
@@ -2644,14 +2644,20 @@ if __name__ == '__main__':
     ftype='Plural'
     ftype='lx'
     for ps in pss:
-        ft=lift.fieldtext(#senseid=senseid,
-                        ftype=ftype,
-                        # lang=analang,
-                        analang=analang,
-                        # lang=audiolang,
-                        **kwargs
-                        )
-        print(ft)
+        senseids=lift.get("sense", #path=['field'],
+                        # ftype='lc',
+                        lcannotationname='V1',
+                        lcannotationvalue=1,
+                        showurl=True
+                        ).get('senseid')
+        # ft=lift.fieldtext(#senseid=senseid,
+        #                 ftype=ftype,
+        #                 # lang=analang,
+        #                 analang=analang,
+        #                 # lang=audiolang,
+        #                 **kwargs
+        #                 )
+        print(senseids)
         # for n,v in [('C1','b'),('C2','g'),('V1','i'),]:
         #     lift.annotatefield(ftype='lc', #senseid=senseid,
         #                         name=n, value=v, analang='fr',showurl=True,
