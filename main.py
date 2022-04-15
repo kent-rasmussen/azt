@@ -8803,8 +8803,10 @@ class FramedDataSense(FramedData):
         #For now, this should use the parameter as given, not as iterated
         log.info("parsesense ftype: {}".format(ftype))
         self.group=self.db.fieldvalue(senseid=senseid, name=check, ftype=ftype,
-                                        lang=self.analang
+                                        lang=self.analang,
+                                        showurl=True
                                         )
+        log.info("self.group of parsesense: {}".format(self.group))
     def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
