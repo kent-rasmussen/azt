@@ -8660,7 +8660,7 @@ class FramedDataDict(dict):
             if isinstance(source,lift.ET.Element):
                 element=True
             # log.info("sense: {}, element: {}".format(sense,element))
-        elif senseid and check:
+        elif senseid and check and self.taskchooser.params.cvt() == 'T':
             """If neither or None is given, try to build it from kwargs"""
             """If these aren't there, these will correctly fail w/KeyError."""
             source=firstoflist(self.db.get('example',
@@ -8669,6 +8669,9 @@ class FramedDataDict(dict):
                                             location=check
                                             ).get('node'))
             element=True
+        elif senseid and check:
+            senseid=source
+            sense=True
         # log.info("sense: {}, element: {} (after build)".format(sense,element))
         d=self.isthere(source)
         if source and not d:
