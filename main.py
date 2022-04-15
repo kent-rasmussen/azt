@@ -10914,7 +10914,7 @@ def findexecutable(exe):
     if exe in program:
         # log.info("program: {}".format(program[exe]))
         # log.info("program type: {}".format(type(program[exe])))
-        program[exe]=program[exe].replace('\r'.'').split('\n') #this will make a list, either way
+        program[exe]=program[exe].replace('\r','').split('\n') #this will make a list, either way
         for e in program[exe][:]: #Make a copy, to iterate through changes
             #don't allow 'I could find this online for you' values
             if 'Microsoft' in e and 'WindowsApps' in e:
