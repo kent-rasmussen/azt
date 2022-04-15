@@ -1,5 +1,5 @@
 ## [I want to start using A→Z+T, and get consultant help](HELP_PREREQUISITES.md)
-## To automate as much as possible, download and run [this file](RunMetoInstall.bat?raw=true)
+## To automate as much as possible on MS Windows, download and run [this file](RunMetoInstall.bat?raw=true)
 ## or see [this file](SIMPLEINSTALL.md) for simple install instructions
 
 # A→Z+T ![CV](images/AZT%20stacks6_icon.png "AZT")
