@@ -3661,7 +3661,7 @@ class TaskChooser(TaskDressing,ui.Window):
         # task,title,icon
         optionlist=[i for i in optionlist if not issubclass(i[0],Sound)]
         log.info("getting default from option list {}".format(optionlist))
-        if hasattr(self,'testdefault'):
+        if program['testing'] and hasattr(self,'testdefault'):
             self.maketask(self.testdefault)
         else:
             self.maketask(optionlist[-1][0]) #last item, the code
@@ -3734,7 +3734,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(SortCitationT)
                 if self.doneenough['sortT']:
                     tasks.append(RecordCitationT)
-            if hasattr(self,'testdefault'):
+            if program['testing'] and hasattr(self,'testdefault'):
                 tasks.append(self.testdefault)
             # if self.donew['parsedlx']:
             #     tasks.append(SortRoots)
