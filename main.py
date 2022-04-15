@@ -10919,11 +10919,14 @@ def findexecutable(exe):
             #don't allow 'I could find this online for you' values
             if 'Microsoft' in e and 'WindowsApps' in e:
                 program[exe].remove(e)
+    program[exe]=[i for i in program[exe] if i is not None]
     if exe not in program or program[exe] == []:
         program[exe]=None
-    else:
+    elif len(program[exe]) == 1:
         program[exe]=unlist(program[exe])
         log.info("Executable {} found at {}".format(exe,program[exe]))
+    else:
+        log.info("Executable {} found multiple items: {}".format(exe,program[exe]))
     if exe == 'praat' and program[exe] and not praatversioncheck():
         findexecutable('sendpraat') #only ask if it would be useful
 def praatversioncheck():
