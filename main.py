@@ -8502,7 +8502,7 @@ class DictbyLang(dict):
         log.info("Applying frame {} in these langs: {}".format(framedict,langs))
         log.info("Using regex {}".format(rx.framerx))
         ftype=framedict['field']
-        for l in [i for i in langs if i in framedict if i in self and self[i] != []]:
+        for l in [i for i in langs if i in framedict if i in self and self[i]]:
             # log.info("Using lang {}".format(l))
             if ftype in self[l]:
                 # log.info("Subbing {} into {}".format(self[l][ftype],framedict[l]))
