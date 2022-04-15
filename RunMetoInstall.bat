@@ -29,3 +29,20 @@ mklink AZT azt/main.py
 mklink Transcriber azt/transcriber.py
 
 ECHO Install done! (hopefully!)
+
+ECHO I'll pause now; cancel now to be finished, or press any key to continue
+ECHO to install XLingPapper and Praat, to get the most out of A→Z+T.
+pause
+
+ECHO Downloading XLingPaper 3.10...
+If exist XLingPaper3-10-1XXEPersonalEditionFullSetup.exe (ECHO XLingPaper3-10-1XXEPersonalEditionFullSetup.exe is there!) ELSE (Invoke-WebRequest 'https://software.sil.org/downloads/r/xlingpaper/XLingPaper3-10-1XXEPersonalEditionFullSetup.exe' -OutFile 'XLingPaper3-10-1XXEPersonalEditionFullSetup.exe')
+
+ECHO Installing XLingPaper 3.10
+start XLingPaper3-10-1XXEPersonalEditionFullSetup.exe
+
+ECHO Downloading Praat 6211...
+If exist praat6211_win64.zip (ECHO praat6211_win64.zip is there!) ELSE (Invoke-WebRequest 'https://www.fon.hum.uva.nl/praat/praat6211_win64.zip' -OutFile 'praat6211_win64.zip')
+tar -xvf praat6211_win64.zip -C %ProgramFiles%
+setx path "%path%;%ProgramFiles%"
+
+#powershell.exe -nologo -noprofile -command "& { $shell = New-Object -COM Shell.Application; $target = $shell.NameSpace('C:\extractToThisDirectory'); $zip = $shell.NameSpace('C:\extractThis.zip'); $target.CopyHere($zip.Items(), 16); }"
