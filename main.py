@@ -7127,7 +7127,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                     senseid,
                     guid))
         if self.cvt == 'T':
-            ftype=self.toneframes[self.check]['field'] #this must match check!
+            ftype=self.toneframes[self.ps][self.check]['field'] #this must match check!
             self.db.addmodexamplefields( #This should only mod if already there
                                     senseid=senseid,
                                     analang=self.analang,
@@ -7237,6 +7237,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.check=task.params.check()
         self.cvt=task.params.cvt()
         self.ftype=task.params.ftype()
+        self.ps=task.slices.ps()
         self.analang=task.analang
         self.db=task.db
         self.maybewrite=task.maybewrite
