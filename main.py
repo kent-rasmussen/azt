@@ -2093,12 +2093,17 @@ class Settings(object):
                                 ).get('text'),
                         othersOK=True) #Don't complain if more than one found.
             else:
+                ftype=self.params.ftype()
+                kwargs={ftype+'annotationname':check,
+                        # ftype+'annotationvalue':group
+                        }
                 v=firstoflist(self.db.get("citation/form/annotation",
                                 lang=self.params.analang(),
-                                annotationname=check,
+                                # annotationname=check,
                                 # annotationvalue=
-                                # senseid=senseid,
+                                senseid=senseid,
                                 # location=check
+                                **kwargs
                                 ).get('value'),
                         othersOK=True) #Don't complain if more than one found.
 
