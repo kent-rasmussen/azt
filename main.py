@@ -8531,7 +8531,7 @@ class ExampleDict(dict):
             kwargs={ftype+'annotationname':check,
                     ftype+'annotationvalue':group}
             senseids=self.db.get("sense",
-                                    # showurl=True,
+                                    showurl=True,
                                     **kwargs
                                     ).get('senseid')
         if not senseids:
