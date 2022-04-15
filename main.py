@@ -2106,19 +2106,19 @@ class Settings(object):
             #     log.debug("Found tone value (updatesortingstatus): {} ({})"
             #             "".format(v, type(v)))
             if v in ['','None',None]: #unlist() returns strings
-                log.log(4,"Marking senseid {} tosort (v: {})".format(senseid,v))
+                log.info("Marking senseid {} tosort (v: {})".format(senseid,v))
                 self.status.marksenseidtosort(senseid)
             else:
-                log.log(4,"Marking senseid {} sorted (v: {})".format(senseid,v))
+                log.info("Marking senseid {} sorted (v: {})".format(senseid,v))
                 self.status.marksenseidsorted(senseid)
                 if v not in ['NA','ALLOK']:
                     groups.append(v)
         """update 'tosort' status"""
         if self.status.senseidstosort():
-            log.log(4,"updatesortingstatus shows senseidstosort remaining")
+            log.info("updatesortingstatus shows senseidstosort remaining")
             vts=True
         else:
-            log.log(4,"updatesortingstatus shows no senseidstosort remaining")
+            log.info("updatesortingstatus shows no senseidstosort remaining")
             vts=False
         self.status.tosort(vts,**kwargs)
         """update status groups"""
