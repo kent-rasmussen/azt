@@ -8522,10 +8522,13 @@ class ExampleDict(dict):
                             tonevalue=group
                             ).get('senseid')
         else:
-            senseids=self.db.get("sense", ftype=self.params.ftype(),
-                            name=check,
-                            value=group
-                            ).get('senseid')
+            ftype=self.params.ftype()
+            kwargs={ftype+'annotationname':check,
+                    ftype+'annotationvalue':group}
+            senseids=self.db.get("sense",
+                                    showurl=True,
+                                    **kwargs
+                                    ).get('senseid')
         if not senseids:
             log.error("There don't seem to be any sensids in this check tone "
                 "group, so I can't get you an example. ({} {})"
