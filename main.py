@@ -8808,6 +8808,11 @@ class FramedDataSense(FramedData):
         super(FramedDataSense, self).__init__(parent)
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
         ftype=kwargs.get('ftype',self.parent.taskchooser.params.ftype())
+        if not ftype:
+            log.error("ftype: {}!".format(ftype))
+            return
+        else:
+            log.info("ftype: {}".format(ftype))
         if not self.db.get('sense', senseid=senseid).get():
             log.error("You should pass a senseid from your database {} "
                         "({}) to FramedDataSense!".format(source,type(source)))
