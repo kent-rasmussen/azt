@@ -10919,7 +10919,7 @@ def findexecutable(exe):
             #don't allow 'I could find this online for you' values
             if 'Microsoft' in e and 'WindowsApps' in e:
                 program[exe].remove(e)
-    program[exe]=[i for i in program[exe] if i is not None]
+        program[exe]=[i for i in program[exe] if i is not None]
     if exe not in program or program[exe] == []:
         program[exe]=None
     elif len(program[exe]) == 1:
