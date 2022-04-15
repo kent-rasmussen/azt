@@ -16,7 +16,7 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
     - If you ~~followed the `WeSay from Scratch` directions~~ started your project in A→Z+T as above, you should be OK.
 
 ## Install A→Z+T
-- Simple instructions are [here](SIMPLEINSTALL.md); please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please [Email me](<mailto:kent_rasmussen@sil.org?subject=Please help with A→Z+T Installation>) with specific questions or problems.
+- Run [this file](RunMetoInstall.bat?raw=true) (or use the simple instructions [here](SIMPLEINSTALL.md)). If you have any problems with the batch file, please let me know, and consider moving to the [simple instructions](SIMPLEINSTALL.md). If you use the simple instructions, please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please [Email me](<mailto:kent_rasmussen@sil.org?subject=Please help with A→Z+T Installation>) with specific questions or problems.
 
 ## Field Work: Develop draft tone frames
 - See [Tone Frame Design](USAGE.md#tone-frame-design) for a description of this task.
