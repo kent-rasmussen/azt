@@ -11,12 +11,12 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
 
 ## Prepare your LIFT database
   - If **you have a database but not in LIFT** (i.e., in FLEx, or a spreadsheet, or an electronic or paper document), then you must get help converting it. Some conversions are easier than other (e.g., from FLEx); others are very difficult (e.g., typing from a handwritten notebook).
-  - If **you don't already have a database**, and don't already use FLEx, download WeSay and follow [the WeSay from Scratch directions](WESAY_FROM_SCRATCH.md) to set up your project in WeSay set up your project there.
+  - If **you don't already have a database**, and don't already use FLEx, ~~download WeSay and follow [the WeSay from Scratch directions](WESAY_FROM_SCRATCH.md) to set up your project in WeSay set up your project there.~~ start a new project in A→Z+T (you will need your language's ISO code)
   - Take a look at the [practical prerequisites](USAGE.md#practical-prerequisites) for your database, and see that yours has what it needs.
-    - If you followed the `WeSay from Scratch` directions above, you should be OK.
+    - If you ~~followed the `WeSay from Scratch` directions~~ started your project in A→Z+T as above, you should be OK.
 
 ## Install A→Z+T
-- Simple instructions are [here](SIMPLEINSTALL.md); please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please [Email me](<mailto:kent_rasmussen@sil.org?subject=Please help with A→Z+T Installation>) with specific questions or problems.
+- Run [this file](RunMetoInstall.bat?raw=true) (or use the simple instructions [here](SIMPLEINSTALL.md)). If you have any problems with the batch file, please let me know, and consider moving to the [simple instructions](SIMPLEINSTALL.md). If you use the simple instructions, please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please [Email me](<mailto:kent_rasmussen@sil.org?subject=Please help with A→Z+T Installation>) with specific questions or problems.
 
 ## Field Work: Develop draft tone frames
 - See [Tone Frame Design](USAGE.md#tone-frame-design) for a description of this task.
