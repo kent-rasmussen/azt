@@ -8785,10 +8785,10 @@ class FramedDataSense(FramedData):
         dictlangs=[self.analang, self.audiolang]
         for lang in dictlangs:
             self.forms[lang]={}
-            for ftype in ['lx','lc',self.parent.pluralname,
+            for ft in ['lx','lc',self.parent.pluralname,
                                     self.parent.imperativename]:
-                self.forms[lang][ftype]=unlist(db.fieldtext(senseid=senseid,
-                                                        ftype=ftype,
+                self.forms[lang][ft]=unlist(db.fieldtext(senseid=senseid,
+                                                        ftype=ft,
                                                         analang=lang
                                                             ))
                 # log.info("forms: {}".format(self.forms))
@@ -8800,6 +8800,8 @@ class FramedDataSense(FramedData):
             self.forms[f]=unlist(self.forms[f])
         # log.info("forms: {}".format(self.forms))
         #This should maybe be a dict of values? Will need to support that on read
+        #For now, this should use the parameter as given, not as iterated
+        log.info("parsesense ftype: {}".format(ftype))
         self.group=self.db.fieldvalue(senseid=senseid, name=check, ftype=ftype,
                                         lang=self.analang
                                         )
