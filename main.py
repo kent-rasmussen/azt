@@ -5056,6 +5056,10 @@ class Sort(object):
         self.updatesortingstatus() # Not just tone anymore
         self.maybesort()
     def presort(self,senseids,check,group):
+        if self.status.presorted():
+            log.info(_("Presorting for this check/slice already done! ({}; {})"
+                        "").format(check,senseids[0]))
+            return
         if self.cvt == 'T':
             log.error("This function isn't used for tone!")
             return
@@ -10202,6 +10206,11 @@ class StatusDict(dict):
                 log.log(4,"Adding tosort key to {}-{} status dict".format(
                                         key,kwargs['profile'],kwargs['check']))
                 base['tosort']=True
+                changed=True
+            if 'presorted' not in base:
+                log.log(4,"Adding presorted key to {}-{} status dict".format(
+                                        key,kwargs['profile'],kwargs['check']))
+                base['presorted']=False
                 changed=True
         if changed == True:
             self.store()
