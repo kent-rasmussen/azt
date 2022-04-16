@@ -8742,6 +8742,9 @@ class FramedData(object):
                     n=self.db.fieldformnode(senseid=senseid,lang=self.audiolang)
                 if n:
                     self.node.remove(n[0])
+    def reallangs(self):
+        if None in self.forms:
+            del self.forms[None]
     def updatelangs(self):
         self.analang=self.parent.analang
         self.audiolang=self.parent.audiolang
@@ -8871,6 +8874,7 @@ class FramedDataSense(FramedData):
                         "({}) to FramedDataSense!".format(source,type(source)))
             return
         self.parsesense(self.db,senseid,check,ftype)
+        self.reallangs()
         self.setframe(check)
         # log.info("FramedDataSense initalization done, with forms {}"
         #             "".format(self.forms))
@@ -9029,6 +9033,7 @@ class FramedDataElement(FramedData):
         self.senseid=senseid
         super(FramedDataElement, self).__init__(parent)
         self.parseelement(node) #example element, not sense or entry:
+        self.reallangs()
         if not self.forms:
             log.error("Sorry, somehow {} didn't result in forms: {}; {}/{}"
                     "".format(senseid,self.forms,node,type(node)))
