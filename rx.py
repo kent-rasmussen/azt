@@ -146,14 +146,14 @@ def inxyz(db, lang, segmentlist): #This calls the above script for each characte
             actuals.append(s)
     log.log(2,'{} {}'.format(time.time()-start_time, segmentlist)) # with this
     return list(dict.fromkeys(actuals))
-def s(check,stype,lang=None):
+def s(settings,stype,lang=None):
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
-    segments=check.settings.s
-    if (lang == None) and (hasattr(check,'analang')):
+    segments=settings.s
+    if (lang == None) and (hasattr(settings,'analang')):
         log.log(2,_('telling rx.s which lang to use'))
-        lang=check.analang
-        log.log(2,_("Using analang: {}".format(check.analang)))
+        lang=settings.analang
+        log.log(2,_("Using analang: {}".format(settings.analang)))
     if stype == "C-ʔ":
         if 'ʔ' in segments[lang]:
             list=set(segments[lang]['C'])-set(segments[lang]['ʔ'])
