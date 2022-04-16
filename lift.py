@@ -1217,6 +1217,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for node in self.fieldnode(**kwargs):
             t.extend(self.get('annotation',node=node,**kwargs).get('value'))
         return t
+    def fieldformnode(self,**kwargs):
+        t=[]
+        for node in self.fieldnode(**kwargs):
+            t.extend(self.get('form',node=node,**kwargs).get())
+        return t
     def annotatefield(self,**kwargs):
         if not ('name' in kwargs and 'value' in kwargs):
             log.error("To annotate, I need @name and @value.")
