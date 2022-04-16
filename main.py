@@ -829,8 +829,8 @@ class StatusFrame(ui.Frame):
         profiles=self.settings.slices.profiles()
         curprofile=self.settings.slices.profile()
         curcheck=self.settings.params.check()
-        profiles=['colheader']+profiles+['next']
         frames=list(self.settings.toneframes[ps].keys())
+        profiles=['colheader']+profiles+['next']
         ungroups=0
         tv=_("verified")
         tu=_("unsorted data")
