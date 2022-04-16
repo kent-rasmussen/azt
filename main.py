@@ -5446,6 +5446,183 @@ class Sort(object):
             return 1
         self.runwindow.resetframe()
         return
+    def reverify(self):
+        group=self.status.group()
+        check=self.params.check()
+        log.info("Reverifying a framed tone group, at user request: {}-{}"
+                    "".format(check,group))
+        if check not in self.status.checks(wsorted=True):
+            self.getcheck() #guess=True
+        done=self.status.verified()
+        if group not in done:
+            log.info("Group ({}) not in groups ({}); asking."
+                    "".format(group,done))
+            w=self.getgroup(wsorted=True)
+            w.wait_window(w)
+            group=self.status.group()
+            if group not in done: #i.e., still
+                log.info("I asked for a framed tone group, but didn't get one.")
+                return
+        done.remove(group)
+        self.updatesortingstatus() # Not just tone anymore
+        self.maybesort()
+    def verify(self,menu=False):
+        def updatestatus():
+            log.info("Updating status with {}, {}, {}".format(check,group,verified))
+            self.updatestatus(verified=verified,write=False)
+            self.maybewrite()
+        log.info("Running verify!")
+        """Show entries each in a row, users mark those that are different, and we
+        remove that group designation from the entry (so the entry will show up on
+        the next sorting). After all entries have been verified as "the same",
+        click a button at the bottom of the screen for "verify", or "these are
+        all the same", or some such. register with addresults (or elsewhere?).
+        To show this window for a given tone group, we need to look through the
+        tone group for any entries that aren't marked for verified (or will we
+        just mark it one place, and that we're marking faithfully?)
+        If we mark toneframes[lang][ps][name][melody]=None (v 'verified'), that
+        could be enough, if we're storing that info somewhere --writing xml?
+        on clicking 'verify', we take the user back to sort (to resort anything
+        that got pulled from the group), then on to the next largest unverified
+        pile.
+        """
+        #This function should exit 1 on a window close, 0/None on all ok.
+        check=self.params.check()
+        groups=self.status.groups(toverify=True) #needed for progress
+        group=self.status.group()
+        # The title for this page changes by group, below.
+        self.getrunwindow(msg="preparing to verify group: {}".format(group))
+        oktext='These all have the same tone'
+        instructions=_("Read down this list to verify they all have the same "
+            "tone melody. Select any word with a different tone melody to "
+            "remove it from the list.")
+        """group is set here, but probably OK"""
+        self.status.build()
+        last=False
+        if self.runwindow.exitFlag.istrue():
+            return 1
+        if group in self.status.verified():
+            log.info("‘{}’ already verified, continuing.".format(group))
+            return
+        senseids=self.exs.senseidsinslicegroup(group,check)
+        if not senseids:
+            groups=self.status.groups() #from which to remove, put back
+            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            verified=False
+            log.info("Group ‘{}’ has no examples; continuing.".format(group))
+            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            updatestatus()
+            log.info("Group-groups: {}-{}".format(group,groups))
+            if groups:
+                groups.remove(group)
+            log.info("Group-groups: {}-{}".format(group,groups))
+            self.status.groups(groups,wsorted=True)
+            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            return
+        elif len(senseids) == 1:
+            verified=True
+            log.info("Group ‘{}’ only has {} example; marking verified and "
+                    "continuing.".format(group,len(senseids)))
+            updatestatus()
+            return
+        title=_("Verify {} Group ‘{}’ (for ‘{}’ check)").format(
+                                    self.settings.languagenames[self.analang],
+                                    group,
+                                    check
+                                    )
+        titles=ui.Frame(self.runwindow.frame,
+                        column=0, row=0, columnspan=2, sticky="w")
+        ui.Label(titles, text=title, font='title', column=0, row=0, sticky="w")
+        """Move this to bool vars, like for sort"""
+        if hasattr(self,'groupselected'): #so it doesn't get in way later.
+            delattr(self,'groupselected')
+        row=0
+        column=0
+        if group in groups:
+            progress=('('+str(groups.index(group)+1)+'/'+str(len(
+                                                            groups))+')')
+            ui.Label(titles,text=progress,anchor='w',row=0,column=1,sticky="ew")
+        ui.Label(titles, text=instructions,
+                row=1, column=0, columnspan=2, sticky="wns")
+        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['verify'],
+                        text='', row=1,column=0,
+                        # rowspan=3,
+                        sticky='nws')
+        """Scroll after instructions"""
+        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
+                                    row=1,column=1,
+                                    # columnspan=2,
+                                    sticky='wsn')
+        """put entry buttons here."""
+        for senseid in senseids:
+            if senseid is None: #needed?
+                continue
+            self.verifybutton(self.sframe.content,senseid,
+                                row, column,
+                                label=False)
+            if not self.buttoncolumns or (self.buttoncolumns and
+                                            row+1<self.buttoncolumns):
+                row+=1
+            else:
+                column+=1
+                column%=self.buttoncolumns # from 0 to cols-1
+                if not column:
+                    row+=1
+                elif row+1 == self.buttoncolumns:
+                    row=0
+            # log.info("Next button at r:{}, c:{}".format(row,column))
+        bf=ui.Frame(self.sframe.content)
+        bf.grid(row=max(row+1,self.buttoncolumns+1), column=0, sticky="ew") #Keep on own row
+        b=ui.Button(bf, text=oktext,
+                        cmd=bf.destroy,
+                        anchor="w",
+                        font='instructions'
+                        )
+        b.grid(column=0, row=0, sticky="ew")
+        if self.runwindow.exitFlag.istrue():
+            return 1
+        self.sframe.windowsize()
+        self.runwindow.waitdone()
+        b.wait_window(bf)
+        if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
+            return 1
+        log.debug("User selected ‘{}’, moving on.".format(oktext))
+        self.status.last('verify',update=True)
+        verified=True
+        updatestatus()
+    def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
+        # This must run one subcheck at a time. If the subcheck changes,
+        # it will fail.
+        # should move to specify location and fieldvalue in button lambda
+        def notok():
+            self.removesenseidfromgroup(senseid,sorting=True,write=False)
+            self.maybewrite()
+            bf.destroy()
+        if 'font' not in kwargs:
+            kwargs['font']='read'
+        if 'anchor' not in kwargs:
+            kwargs['anchor']='w'
+        #This should be pulling from the example, as it is there already
+        framed=self.taskchooser.datadict.getframeddata(senseid)
+        check=self.params.check()
+        framed.setframe(check)
+        text=framed.formatted(showtonegroup=False)
+        if label==True:
+            b=ui.Label(parent, text=text,
+                    **kwargs
+                    ).grid(column=column, row=row,
+                            sticky="ew",
+                            ipady=15)
+        else:
+            bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
+            bf.grid(column=column, row=row, sticky='ew')
+            b=ui.Button(bf, text=text, pady='0',
+                    cmd=notok,
+                    **kwargs
+                    ).grid(column=column, row=0,
+                            sticky="ew",
+                            ipady=15*program['scale'] #Inside the buttons...
+                            )
     def __init__(self, parent):
         parent.settings.makeeverythingok()
         """I need some way to control for ftype"""
@@ -7149,183 +7326,6 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
         """Are we OK without these?"""
         log.info("Done initializing check.")
         """Testing Zone"""
-    def reverify(self):
-        group=self.status.group()
-        check=self.params.check()
-        log.info("Reverifying a framed tone group, at user request: {}-{}"
-                    "".format(check,group))
-        if check not in self.status.checks(wsorted=True):
-            self.getcheck() #guess=True
-        done=self.status.verified()
-        if group not in done:
-            log.info("Group ({}) not in groups ({}); asking."
-                    "".format(group,done))
-            w=self.getgroup(wsorted=True)
-            w.wait_window(w)
-            group=self.status.group()
-            if group not in done: #i.e., still
-                log.info("I asked for a framed tone group, but didn't get one.")
-                return
-        done.remove(group)
-        self.updatesortingstatus() # Not just tone anymore
-        self.maybesort()
-    def verifyT(self,menu=False):
-        def updatestatus():
-            log.info("Updating status with {}, {}, {}".format(check,group,verified))
-            self.updatestatus(verified=verified,write=False)
-            self.maybewrite()
-        log.info("Running verifyT!")
-        """Show entries each in a row, users mark those that are different, and we
-        remove that group designation from the entry (so the entry will show up on
-        the next sorting). After all entries have been verified as "the same",
-        click a button at the bottom of the screen for "verify", or "these are
-        all the same", or some such. register with addresults (or elsewhere?).
-        To show this window for a given tone group, we need to look through the
-        tone group for any entries that aren't marked for verified (or will we
-        just mark it one place, and that we're marking faithfully?)
-        If we mark toneframes[lang][ps][name][melody]=None (v 'verified'), that
-        could be enough, if we're storing that info somewhere --writing xml?
-        on clicking 'verify', we take the user back to sort (to resort anything
-        that got pulled from the group), then on to the next largest unverified
-        pile.
-        """
-        #This function should exit 1 on a window close, 0/None on all ok.
-        check=self.params.check()
-        groups=self.status.groups(toverify=True) #needed for progress
-        group=self.status.group()
-        # The title for this page changes by group, below.
-        self.getrunwindow(msg="preparing to verify group: {}".format(group))
-        oktext='These all have the same tone'
-        instructions=_("Read down this list to verify they all have the same "
-            "tone melody. Select any word with a different tone melody to "
-            "remove it from the list.")
-        """group is set here, but probably OK"""
-        self.status.build()
-        last=False
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        if group in self.status.verified():
-            log.info("‘{}’ already verified, continuing.".format(group))
-            return
-        senseids=self.exs.senseidsinslicegroup(group,check)
-        if not senseids:
-            groups=self.status.groups() #from which to remove, put back
-            log.info("Groups: {}".format(self.status.groups(toverify=True)))
-            verified=False
-            log.info("Group ‘{}’ has no examples; continuing.".format(group))
-            log.info("Groups: {}".format(self.status.groups(toverify=True)))
-            updatestatus()
-            log.info("Group-groups: {}-{}".format(group,groups))
-            if groups:
-                groups.remove(group)
-            log.info("Group-groups: {}-{}".format(group,groups))
-            self.status.groups(groups,wsorted=True)
-            log.info("Groups: {}".format(self.status.groups(toverify=True)))
-            return
-        elif len(senseids) == 1:
-            verified=True
-            log.info("Group ‘{}’ only has {} example; marking verified and "
-                    "continuing.".format(group,len(senseids)))
-            updatestatus()
-            return
-        title=_("Verify {} Tone Group ‘{}’ (in ‘{}’ frame)").format(
-                                    self.settings.languagenames[self.analang],
-                                    group,
-                                    check
-                                    )
-        titles=ui.Frame(self.runwindow.frame,
-                        column=0, row=0, columnspan=2, sticky="w")
-        ui.Label(titles, text=title, font='title', column=0, row=0, sticky="w")
-        """Move this to bool vars, like for sort"""
-        if hasattr(self,'groupselected'): #so it doesn't get in way later.
-            delattr(self,'groupselected')
-        row=0
-        column=0
-        if group in groups:
-            progress=('('+str(groups.index(group)+1)+'/'+str(len(
-                                                            groups))+')')
-            ui.Label(titles,text=progress,anchor='w',row=0,column=1,sticky="ew")
-        ui.Label(titles, text=instructions,
-                row=1, column=0, columnspan=2, sticky="wns")
-        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['verifyT'],
-                        text='', row=1,column=0,
-                        # rowspan=3,
-                        sticky='nws')
-        """Scroll after instructions"""
-        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
-                                    row=1,column=1,
-                                    # columnspan=2,
-                                    sticky='wsn')
-        """put entry buttons here."""
-        for senseid in senseids:
-            if senseid is None: #needed?
-                continue
-            self.verifybutton(self.sframe.content,senseid,
-                                row, column,
-                                label=False)
-            if not self.buttoncolumns or (self.buttoncolumns and
-                                            row+1<self.buttoncolumns):
-                row+=1
-            else:
-                column+=1
-                column%=self.buttoncolumns # from 0 to cols-1
-                if not column:
-                    row+=1
-                elif row+1 == self.buttoncolumns:
-                    row=0
-            # log.info("Next button at r:{}, c:{}".format(row,column))
-        bf=ui.Frame(self.sframe.content)
-        bf.grid(row=max(row+1,self.buttoncolumns+1), column=0, sticky="ew") #Keep on own row
-        b=ui.Button(bf, text=oktext,
-                        cmd=bf.destroy,
-                        anchor="w",
-                        font='instructions'
-                        )
-        b.grid(column=0, row=0, sticky="ew")
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        self.sframe.windowsize()
-        self.runwindow.waitdone()
-        b.wait_window(bf)
-        if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
-            return 1
-        log.debug("User selected ‘{}’, moving on.".format(oktext))
-        self.status.last('verify',update=True)
-        verified=True
-        updatestatus()
-    def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
-        # This must run one subcheck at a time. If the subcheck changes,
-        # it will fail.
-        # should move to specify location and fieldvalue in button lambda
-        def notok():
-            self.removesenseidfromgroup(senseid,sorting=True,write=False)
-            self.maybewrite()
-            bf.destroy()
-        if 'font' not in kwargs:
-            kwargs['font']='read'
-        if 'anchor' not in kwargs:
-            kwargs['anchor']='w'
-        #This should be pulling from the example, as it is there already
-        framed=self.taskchooser.datadict.getframeddata(senseid)
-        check=self.params.check()
-        framed.setframe(check)
-        text=framed.formatted(showtonegroup=False)
-        if label==True:
-            b=ui.Label(parent, text=text,
-                    **kwargs
-                    ).grid(column=column, row=row,
-                            sticky="ew",
-                            ipady=15)
-        else:
-            bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
-            bf.grid(column=column, row=row, sticky='ew')
-            b=ui.Button(bf, text=text, pady='0',
-                    cmd=notok,
-                    **kwargs
-                    ).grid(column=column, row=0,
-                            sticky="ew",
-                            ipady=15*program['scale'] #Inside the buttons...
-                            )
     def joinT(self):
         log.info("Running joinT!")
         """This window shows up after sorting, or maybe after verification, to
