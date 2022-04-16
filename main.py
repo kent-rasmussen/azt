@@ -9127,7 +9127,7 @@ class RecordButtonFrame(ui.Frame):
         if self.test:
             return
         self.db.addmediafields(self.node,self.filename,self.audiolang,
-                                ftype=ftype,
+                                # ftype=ftype,
                                 write=False)
         self.task.maybewrite()
         self.task.status.last('recording',update=True)
