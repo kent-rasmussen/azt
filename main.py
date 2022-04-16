@@ -4984,15 +4984,18 @@ class Sort(object):
         sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
         #This should only *mod* if already there
-        self.db.addmodexamplefields(senseid=senseid,
+        if cvt == 'T':
+            self.db.addmodexamplefields(senseid=senseid,
                                 analang=self.analang,
                                 fieldtype='tone',location=check,
                                 fieldvalue='',  #this value only change
                                 showurl=True,
                                 write=False)
-        log.info("Checking that removal worked")
-        tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
+            tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
                             location=check).get('text')
+        else:
+            tgroups=self.marksortgroup(senseid,None,group='')
+        log.info("Checking that removal worked")
         if tgroups in [[],'',['']]:
             log.info("Field removal succeeded! LIFT says '{}', = []."
                                                             "".format(tgroups))
