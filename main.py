@@ -400,7 +400,7 @@ class Menus(ui.Menu):
                         command=lambda x=check:Check.showsenseswithexamplestorecord(x))
         domenu.add_cascade(label=_("Recording"), menu=recordmenu)
         domenu.add_command(label=_("Join Groups"),
-                        command=lambda x=check:Check.joinT(x))
+                        command=lambda x=check:Check.join(x))
         """Advanced"""
     def advanced(self):
         self.cascade(self,_("Advanced"),'advancedmenu')
@@ -5293,8 +5293,8 @@ class Sort(object):
             return
         # Offer to join in any case:
         if self.status.tojoin():
-            log.info("joinT (from maybesort)")
-            exit=self.joinT()
+            log.info("join (from maybesort)")
+            exit=self.join()
             log.debug("exit: {}".format(exit))
         else:
             exit=False
@@ -5302,7 +5302,7 @@ class Sort(object):
             if not self.exitFlag.istrue():
                 self.notdonewarning()
             #This happens when the user exits the window
-            log.debug("exiting joinT True")
+            log.debug("exiting join True")
             #Give an error window here
             return
         elif not exit:

@@ -144,7 +144,7 @@ class Theme(object):
                             #Set images for tasks
                             ('verify','images/Verify List.png'),
                             ('sort','images/Sort List.png'),
-                            ('joinT','images/Join List.png'),
+                            ('join','images/Join List.png'),
                             ('record','images/Microphone alone_sm.png'),
                             ('change','images/Change Circle_sm.png'),
                             ('checkedbox','images/checked.png'),
