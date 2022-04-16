@@ -4021,6 +4021,81 @@ class Segments(object):
         r=self.getword()
         if r == 'noglosses':
             self.nextword()
+    def buildregex(self,**kwargs):
+        """include profile (of those available for ps and check),
+        and subcheck (e.g., a: CaC\2)."""
+        """Provides self.regexCV and self.regex"""
+        cvt=kwargs.get('cvt',self.params.cvt())
+        # ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        group=kwargs.get('group',self.status.group())
+        maxcount=rx.countxiny(cvt, profile)
+        # re.subn(cvt, cvt, profile)[1]
+        if profile is None:
+            print("It doesn't look like you've picked a syllable profile yet.")
+            return
+        """Don't need this; only doing count=1 at a time. Let's start with
+        the easier ones, with the first occurrance changed."""
+        # log.info("self.regexCV: {}".format(self.regexCV))
+        self.regexCV=str(profile) #Let's set this before changing it.
+        # log.info("self.regexCV: {}".format(self.regexCV))
+        """One pass for all regexes, S3, then S2, then S1, as needed."""
+        cvts=['V','C']
+        # log.info("maxcount: {}".format(maxcount))
+        # log.info("check: {}".format(check))
+        # log.info("group: {}".format(group))
+        # log.info("self.groupcomparison: {}".format(self.groupcomparison))
+        if 'x' in check:
+            if self.groupcomparison in self.status.groups(cvt='C'):
+                # self.s[self.analang]['V']:
+                cvts=['C','V'] #comparison needs to be done first
+        compared=False #don't reset this for each cvt
+        for t in cvts:
+            if t not in cvt:
+                continue
+            S=str(t) #should this ever be cvt? Do I ever want CV1xCV2,CV1=CV2?
+            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
+            # log.info("regexS: {}".format(regexS))
+            for occurrence in reversed(range(maxcount)):
+                occurrence+=1
+                # log.info("S+str(occurrence): {}".format(S+str(occurrence)))
+                # if re.search(S+str(occurrence),check) is not None:
+                if S+str(occurrence) in check:
+                    """Get the (n=occurrence) S, regardless of intervening
+                    non S..."""
+                    # log.info("regexS: {}".format(regexS))
+                    regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
+                    # log.info("regS: {}".format(regS))
+                    # log.info("regexS: {}".format(regexS))
+                    if 'x' in check:
+                        if compared == False: #occurrence == 2:
+                            replS='\\1'+self.groupcomparison
+                            compared=True
+                        else: #if occurrence == 1:
+                            replS='\\1'+group
+                    else:
+                        # log.info("Not comparing: {}".format(check))
+                        replS='\\1'+group
+                    # log.info("regS: {}".format(regS))
+                    # log.info("replS: {}".format(replS))
+                    # log.info("self.regexCV: {}".format(self.regexCV))
+                    self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
+                    # log.info("self.regexCV: {}".format(self.regexCV))
+        # log.info("self.regexCV: {}".format(self.regexCV))
+        """Final step: convert the CVx code to regex, and store in self."""
+        self.regex=rx.fromCV(self,lang=self.analang,
+                            word=True, compile=True)
+    def senseidformsbyregex(self,regex,**kwargs):
+        """This function takes in a compiled regex,
+        and outputs a list/dictionary of senseid/{senseid:form} form."""
+        ps=kwargs.get('ps',self.slices.ps())
+        output=[] #This is just a list of senseids now: (Do we need the dict?)
+        for form in [i for i in self.settings.formstosearch[ps] if i]:
+            log.info("Looking for form {}".format(form))
+            if regex.search(form):
+                output+=self.settings.formstosearch[ps][form]
+        return output
     def __init__(self, parent):
         if parent.params.cvt() == 'T':
             parent.settings.setcvt('V')
@@ -6339,81 +6414,6 @@ class Report(object):
         for lang in set([self.analang]+self.glosslangs)-set([None]):
             xlpreport.addlang({'id':lang,'name': self.settings.languagenames[lang]})
         return xlpreport
-    def senseidformsbyregex(self,regex,**kwargs):
-        """This function takes in a compiled regex,
-        and outputs a list/dictionary of senseid/{senseid:form} form."""
-        ps=kwargs.get('ps',self.slices.ps())
-        output=[] #This is just a list of senseids now: (Do we need the dict?)
-        for form in [i for i in self.settings.formstosearch[ps] if i]:
-            log.info("Looking for form {}".format(form))
-            if regex.search(form):
-                output+=self.settings.formstosearch[ps][form]
-        return output
-    def buildregex(self,**kwargs):
-        """include profile (of those available for ps and check),
-        and subcheck (e.g., a: CaC\2)."""
-        """Provides self.regexCV and self.regex"""
-        cvt=kwargs.get('cvt',self.params.cvt())
-        # ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
-        group=kwargs.get('group',self.status.group())
-        maxcount=rx.countxiny(cvt, profile)
-        # re.subn(cvt, cvt, profile)[1]
-        if profile is None:
-            print("It doesn't look like you've picked a syllable profile yet.")
-            return
-        """Don't need this; only doing count=1 at a time. Let's start with
-        the easier ones, with the first occurrance changed."""
-        # log.info("self.regexCV: {}".format(self.regexCV))
-        self.regexCV=str(profile) #Let's set this before changing it.
-        # log.info("self.regexCV: {}".format(self.regexCV))
-        """One pass for all regexes, S3, then S2, then S1, as needed."""
-        cvts=['V','C']
-        # log.info("maxcount: {}".format(maxcount))
-        # log.info("check: {}".format(check))
-        # log.info("group: {}".format(group))
-        # log.info("self.groupcomparison: {}".format(self.groupcomparison))
-        if 'x' in check:
-            if self.groupcomparison in self.status.groups(cvt='C'):
-                # self.s[self.analang]['V']:
-                cvts=['C','V'] #comparison needs to be done first
-        compared=False #don't reset this for each cvt
-        for t in cvts:
-            if t not in cvt:
-                continue
-            S=str(t) #should this ever be cvt? Do I ever want CV1xCV2,CV1=CV2?
-            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
-            # log.info("regexS: {}".format(regexS))
-            for occurrence in reversed(range(maxcount)):
-                occurrence+=1
-                # log.info("S+str(occurrence): {}".format(S+str(occurrence)))
-                # if re.search(S+str(occurrence),check) is not None:
-                if S+str(occurrence) in check:
-                    """Get the (n=occurrence) S, regardless of intervening
-                    non S..."""
-                    # log.info("regexS: {}".format(regexS))
-                    regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
-                    # log.info("regS: {}".format(regS))
-                    # log.info("regexS: {}".format(regexS))
-                    if 'x' in check:
-                        if compared == False: #occurrence == 2:
-                            replS='\\1'+self.groupcomparison
-                            compared=True
-                        else: #if occurrence == 1:
-                            replS='\\1'+group
-                    else:
-                        # log.info("Not comparing: {}".format(check))
-                        replS='\\1'+group
-                    # log.info("regS: {}".format(regS))
-                    # log.info("replS: {}".format(replS))
-                    # log.info("self.regexCV: {}".format(self.regexCV))
-                    self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
-                    # log.info("self.regexCV: {}".format(self.regexCV))
-        # log.info("self.regexCV: {}".format(self.regexCV))
-        """Final step: convert the CVx code to regex, and store in self."""
-        self.regex=rx.fromCV(self,lang=self.analang,
-                            word=True, compile=True)
     def wordsbypsprofilechecksubcheckp(self,parent,t="NoText!",**kwargs):
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
