@@ -5184,7 +5184,6 @@ class Sort(object):
                                 **kwargs
                                 ).get('value'),
                         othersOK=True) #Don't complain if more than one found.
-
             # if v:
             #     log.debug("Found tone value (updatesortingstatus): {} ({})"
             #             "".format(v, type(v)))
