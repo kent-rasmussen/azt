@@ -745,14 +745,14 @@ class StatusFrame(ui.Frame):
                     self.noboard.destroy()
                 if self.cvt == 'T':
                     if self.ps in self.settings.toneframes:
-                        self.maketoneprogresstable()
+                        self.makeprogresstable()
                         return
                     else:
                         log.info("Ps {} not in toneframes ({})".format(self.ps,
                                 self.settings.toneframes))
                 else:
                     log.info("Found CV verifications")
-                    self.makeCVprogresstable()
+                    self.makeprogresstable()
                     return
         else:
             log.info("cvt {} not in status {}".format(self.cvt,
@@ -798,7 +798,7 @@ class StatusFrame(ui.Frame):
         notext=_("Nothing to see here...")
         ui.Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
         # self.frame.update()
-    def maketoneprogresstable(self):
+    def makeprogresstable(self):
         def groupfn(x):
             for i in x:
                 try:
