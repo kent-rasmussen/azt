@@ -9095,7 +9095,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
                 """Can't thread this; the button needs to find data"""
-                self.task.marksortgroup(senseid,framed,group,write=False)
+                self.marksortgroup(senseid,framed,group,write=False)
                 self.addgroupbutton(group)
                 #adjust window for new button
                 self.windowsize()
@@ -9112,7 +9112,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 """This needs to *not* operate on "exit" button."""
                 """thread here?"""
                 # self.marksortgroup(senseid,framed,group=group,write=False)
-                t = threading.Thread(target=self.task.marksortgroup,
+                t = threading.Thread(target=self.marksortgroup,
                                     args=(senseid,framed,group),
                                     kwargs={'write':False})
                 t.start()
@@ -9137,6 +9137,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.buttoncolumns=task.buttoncolumns
         self.exs=task.exs
         self.status=task.status
+        self.marksortgroup=task.marksortgroup
         # self.check=task.params.check()
         # self.cvt=task.params.cvt()
         # self.ftype=task.params.ftype()
