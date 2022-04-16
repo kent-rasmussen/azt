@@ -10118,8 +10118,12 @@ class StatusDict(dict):
         kwargs=self.checkslicetypecurrent(**kwargs)
         try:
             """Build this explicitly to avoid recursion group-check-node"""
-            t=self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][
-                                                kwargs['check']]['groups']
+            """presorted is the most recently added key"""
+            t=self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][kwargs['check']]
+            s=t['groups']
+            s=t['done']
+            s=t['recorded']
+            s=t['tosort']
         except (KeyError,TypeError):
             self.build(**kwargs)
     def build(self,**kwargs):
@@ -10178,7 +10182,9 @@ class StatusDict(dict):
                                                         kwargs['check']]={}
                 base['groups']=groups
                 base['done']=[]
+                base['recorded']=[]
                 base['tosort']=True
+                base['presorted']=False
                 changed=True
             for key in ['groups','done','recorded']:
                 if key not in base:
