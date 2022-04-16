@@ -4822,6 +4822,22 @@ class Tone(object):
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
+    def getsenseidsincheckgroup(self,**kwargs):
+        cvt=kwargs.get('cvt',self.params.cvt())
+        check=kwargs.get('check',self.params.check())
+        group=kwargs.get('group',self.status.group())
+        if cvt == 'T':
+            senseids=self.db.get("sense", location=check, tonevalue=group,
+                            path=['tonefield']).get('senseid')
+        else:
+            ftype=self.params.ftype()
+            fkwargs={ftype+'annotationname':check,
+                    ftype+'annotationvalue':group
+                    }
+            senseids=self.db.get("sense", **fkwargs #location=check, tonevalue=group,
+                            # path=['tonefield']
+                                ).get('senseid')
+        return senseids
     def updatestatuslift(self,verified=False,**kwargs):
         """This should be called only by update status, when there is an actual
         change in status to write to file."""
