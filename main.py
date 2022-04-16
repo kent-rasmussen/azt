@@ -4981,6 +4981,7 @@ class Sort(object):
         """Generalize for segments?"""
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
+        cvt=kwargs.get('cvt',self.params.cvt())
         write=kwargs.get('write',True)
         sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
@@ -5143,6 +5144,7 @@ class Sort(object):
             self.updatestatus(group=group,write=write) # marks the group unverified.
         if write:
             self.db.write() #This is never iterated over; just one entry at a time.
+        return newgroup
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses, as well as sorted (but not verified) groups.
