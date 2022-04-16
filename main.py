@@ -3231,18 +3231,20 @@ class TaskDressing(object):
                           +str(ps)+')'
                           ).grid(column=0, row=0)
         else:
+            kwargs['cvt']='V'
             g=self.status.groups(**kwargs)
             ui.Label(window.frame,
                           text='What Vowel do you want to work with?'
                           ).grid(column=0, row=0)
-            window.scroll=ui.ScrollingFrame(window.frame)
-            window.scroll.grid(column=0, row=1)
-            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+            # window.scroll=ui.ScrollingFrame(window.frame)
+            # window.scroll.grid(column=0, row=1)
+            buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                      optionlist=g,
-                                     command=self.setsubcheck,
+                                     command=self.settings.setgroup,
                                      window=window,
                                      column=0, row=4
                                      )
+        log.info("Done making buttonframe")
     def getC(self,window,event=None, **kwargs):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
@@ -3256,15 +3258,16 @@ class TaskDressing(object):
         else:
             # ui.Label(window.frame,
             #               ).grid(column=0, row=0)
+            kwargs['cvt']='C'
             g=self.status.groups(**kwargs)
             ui.Label(window.frame,
                           text='What consonant do you want to work with?'
                           ).grid(column=0, row=0,sticky='nw')
-            window.scroll=Frame(window.frame)
-            window.scroll.grid(column=0, row=1)
-            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+            # window.scroll=Frame(window.frame)
+            # window.scroll.grid(column=0, row=1)
+            buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                     optionlist=g,
-                                    command=self.setsubcheck,
+                                    command=self.settings.setgroup,
                                     window=window,
                                     column=0, row=0
                                     )
