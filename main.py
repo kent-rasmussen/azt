@@ -8690,10 +8690,15 @@ class FramedDataDict(dict):
             """certain limited cases have sense w/o check (like page titles)
             or element without senseid (like when not recording)"""
             if sense:
+                log.info("getting framed data from sense")
                 d=self[source]=FramedDataSense(self,source,check,**kwargs)
             if element:
+                log.info("getting framed data from element")
                 d=self[source]=FramedDataElement(self,source,senseid,**kwargs)
-            log.debug("FramedData {} made with forms {}".format(source,d.forms))
+            log.info("FramedData {} made with forms {}".format(source,d.forms))
+        else:
+            log.info("FramedData used from ealier ({},with forms {})".format(
+                                                                source,d.forms))
         return d #self[source]
     def __init__(self, taskchooser, **kwargs):
         super(FramedDataDict, self).__init__()
