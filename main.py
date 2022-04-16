@@ -5070,6 +5070,9 @@ class Sort(object):
                     senseid,
                     guid))
         if self.cvt == 'T':
+            if not framed:
+                log.error("How did we get no frame? (presort on T?)")
+                return
             ftype=self.toneframes[self.ps][self.check]['field'] #this must match check!
             self.db.addmodexamplefields( #This should only mod if already there
                                     senseid=senseid,
