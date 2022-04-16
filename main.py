@@ -10993,7 +10993,7 @@ def praatversioncheck():
     # and where "--hide-picture" becomes available.
     justpraatversion=pkg_resources.parse_version(
                                             'Praat 6.2.04 (December 18 2021)')
-    log.info("Found Praat version {}".format(version))
+    log.info("Found Praat version {}".format(str(version)))
     if version>=justpraatversion:
         log.info("Praat version at or greater than {}".format(justpraatversion))
         return True
