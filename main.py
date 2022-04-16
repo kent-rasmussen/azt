@@ -10296,7 +10296,7 @@ class StatusDict(dict):
                             "that, please let me know.".format(i+1,profile))
                     continue
                 """This is a list of (code, name) tuples"""
-                syltuples=self._checkparameters._Schecks[cvt][i+1] #range+1 = syl
+                syltuples=self._checkparameters._checknames[cvt][i+1] #range+1 = syl
                 self._checksdict[cvt][profile].extend(
                                                     [t[0] for t in syltuples])
                 # log.info("Check codes to date: {}".format(
@@ -10486,8 +10486,7 @@ class CheckParameters(dict):
         return self._check
     def cvcheckname(self,code=None):
         if self.cvt() == 'T':
-            log.error("Asking for a CV check name, but checking tone!")
-            return
+            code='T'
         if not code:
             code=self.check()
         return self._cvchecknames[code]
@@ -10495,9 +10494,9 @@ class CheckParameters(dict):
         """I reconstruct this here so I can look up names intuitively, having
         built the named checks by type and number of syllables."""
         self._cvchecknames={}
-        for t in self._Schecks:
-            for s in self._Schecks[t]:
-                for tup in self._Schecks[t][s]:
+        for t in self._checknames:
+            for s in self._checknames[t]:
+                for tup in self._checknames[t][s]:
                     self._cvchecknames[tup[0]]=tup[1]
     def analang(self,analang=None):
         if analang:
@@ -10523,7 +10522,9 @@ class CheckParameters(dict):
                         'pl':_('Consonant-Vowel combinations')},
                 'T':{'sg':_('Tone'),'pl':_('Tones')},
                 }
-        self._Schecks={
+        self._checknames={
+            "T":{
+                1:[("T", _("Tone melody"))]},
             "V":{
                 1:[("V1", _("First/only Vowel"))],
                 2:[
