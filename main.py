@@ -8712,6 +8712,29 @@ class FramedData(object):
     """This is a superclass to store methods, etc. common to both
     FramedDataSense and FramedDataElement, making the information gathered by
     either formatted uniformly in either case."""
+    def audio(self):
+        if self.audiolang in self.forms:
+            self.filename=self.forms[self.audiolang][self.ftype]
+            log.info("Found link to audio file {}".format(self.filename))
+            return self.filename
+    def audiofileisthere(self):
+        """This tests the presence of the sound file, which is referred to
+        in the LIFT node, assuming there is one."""
+        if hasattr(self,'filename'):
+            self.filenameURL=str(file.getdiredurl(self.audiodir,self.filename))
+            if file.exists(self.filenameURL):
+                log.info("Found linked audio file {}".format(self.filename))
+                return True
+            else:
+                if isinstance(self,FramedDataElement):
+                    n=self.node.findall(
+                                "form[@lang='{lang}'][text='{fn}']"
+                                "".format(lang=self.audiolang,fn=self.filename)
+                                )
+                else:
+                    n=self.db.fieldformnode(senseid=senseid,lang=self.audiolang)
+                if n:
+                    self.node.remove(n[0])
     def updatelangs(self):
         self.analang=self.parent.analang
         self.audiolang=self.parent.audiolang
@@ -8850,26 +8873,6 @@ class FramedDataElement(FramedData):
     will only have form info. The rest should be added elsewhere
     (e.g., at the top of page/line). This is the class that allows for
     recording into the form[@audiolang] node of that node."""
-    def audio(self):
-        if self.audiolang in self.forms:
-            self.filename=self.forms[self.audiolang][self.ftype]
-            log.info("Found link to audio file {}".format(self.filename))
-            return self.filename
-    def audiofileisthere(self):
-        """This tests the presence of the sound file, which is referred to
-        in the LIFT node, assuming there is one."""
-        if hasattr(self,'filename'):
-            self.filenameURL=str(file.getdiredurl(self.audiodir,self.filename))
-            if file.exists(self.filenameURL):
-                log.info("Found linked audio file {}".format(self.filename))
-                return True
-            else:
-                n=self.node.findall(
-                                "form[@lang='{lang}'][text='{fn}']"
-                                "".format(lang=self.audiolang,fn=self.filename)
-                                )
-                if n:
-                    self.node.remove(n[0])
     def makeaudiofilename(self):
         self.audio()
         if self.audiofileisthere():
