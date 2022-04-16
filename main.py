@@ -5085,10 +5085,10 @@ class Sort(object):
         ftype=kwargs.get('ftype',self.params.ftype())
         nocheck=kwargs.get('nocheck',False)
         guid=None
-        if group is None or group == '':
-            log.error("groupselected: {}; this should never happen"
-                        "".format(group))
-            exit()
+        # if group is None or group == '':
+        #     log.error("groupselected: {}; this should never happen"
+        #                 "".format(group))
+        #     exit()
         log.debug("Adding {} value for {} check, "
                 "senseid: {} guid: {} (in main_lift.py)".format(
                     group,
