@@ -7121,183 +7121,6 @@ class SortC(Sort,Segments,TaskDressing,ui.Window):
         Segments.__init__(self,parent)
         # super(SortC, parent).__init__()
         # Sort.__init__(self)
-class SortButtonFrame(ui.ScrollingFrame):
-    """This is the frame of sort group buttons."""
-    def getanotherskip(self,parent,vardict):
-        """This function presents a group of buttons for the user to choose
-        from, after one for each tone group in that location/ps/profile in the
-        database. It provides one for the user to indicate that the word doesn't
-        belong in any of those (new group), and one to for the user to
-        indicate that the word/frame combo doesn't work (skip)."""
-        def firstok():
-            vardict['ok'].set(True)
-            remove(okb) #use this button exactly once
-            differentbutton()
-            sortnext()
-        def different():
-            vardict['NONEOFTHEABOVE'].set(True)
-            sortnext()
-        def skip():
-            vardict['skip'].set(True)
-            sortnext()
-        def remove(x):
-            x.destroy()
-        def sortnext():
-            self.sortitem.destroy()
-        def differentbutton():
-            vardict['NONEOFTHEABOVE']=ui.BooleanVar()
-            difb=ui.Button(bf, text=newgroup,
-                        cmd=different,
-                        anchor="w",
-                        font='instructions'
-                        )
-            difb.grid(column=0, row=0, sticky="ew")
-        row=0
-        firstOK=_("This word is OK in this frame")
-        newgroup=_("Different")
-        skiptext=_("Skip this item")
-        """This should just add a button, not reload the frame"""
-        row+=10
-        bf=ui.Frame(parent)
-        bf.grid(column=0, row=row, sticky="w")
-        if not self.status.groups(wsorted=True):
-            vardict['ok']=ui.BooleanVar()
-            okb=ui.Button(bf, text=firstOK,
-                            cmd=firstok,
-                            anchor="w",
-                            font='instructions'
-                            )
-            okb.grid(column=0, row=0, sticky="ew")
-        else:
-            differentbutton()
-        vardict['skip']=ui.BooleanVar()
-        skipb=ui.Button(bf, text=skiptext,
-                        cmd=skip,
-                        anchor="w",
-                        font='instructions'
-                        )
-        skipb.grid(column=0, row=1, sticky="ew")
-    def addgroupbutton(self,group):
-        if self.exitFlag.istrue():
-            return #just don't die
-        scaledpady=int(50*program['scale'])
-        b=ToneGroupButtonFrame(self.groupbuttons, self, self.exs,
-                                group,
-                                showtonegroup=True,
-                                alwaysrefreshable=True,
-                                bpady=scaledpady,
-                                row=self.groupbuttons.row,
-                                column=self.groupbuttons.col,
-                                sticky='w')
-        self.groupvars[group]=b.var()
-        if not self.buttoncolumns or (self.buttoncolumns and
-                                    self.groupbuttons.row+1<self.buttoncolumns):
-            self.groupbuttons.row+=1
-        else:
-            self.groupbuttons.col+=1
-            self.groupbuttons.col%=self.buttoncolumns # from 0 to cols-1
-            if not self.groupbuttons.col:
-                self.groupbuttons.row+=1
-            elif self.groupbuttons.row+1 == self.buttoncolumns:
-                self.groupbuttons.row=0
-        # log.info("Next button at r:{}, c:{}".format(groupbuttons.row,
-        #                                             groupbuttons.col))
-        self.groupbuttonlist.append(b)
-        self._configure_canvas()
-    def addtonegroup(self):
-        log.info("Adding a tone group!")
-        values=[0,] #always have something here
-        groups=self.status.groups(wsorted=True)
-        for i in groups:
-            try:
-                values+=[int(i)]
-            except:
-                log.info('Tone group {} cannot be interpreted as an integer!'
-                        ''.format(i))
-        newgroup=max(values)+1
-        groups.append(str(newgroup))
-        return str(newgroup)
-    def sortselected(self,senseid,framed):
-        selectedgroups=selected(self.groupvars)
-        log.info("selectedgroups: {}".format(selectedgroups))
-        for k in self.groupvars:
-            log.info("{} value: {}".format(k,self.groupvars[k].get()))
-        if len(selectedgroups)>1:
-            log.error("More than one group selected: {}".format(
-                                                            selectedgroups))
-            return 2
-        groupselected=unlist(selectedgroups)
-        if groupselected in self.groupvars:
-            self.groupvars[groupselected].set(False)
-        else:
-            log.error("selected {}; not in {}".format(groupselected,self.groupvars))
-            return
-        if groupselected:
-            if groupselected in ["NONEOFTHEABOVE",'ok']:
-                """If there are no groups yet, or if the user asks for
-                another group, make a new group."""
-                group=self.addtonegroup()
-                """And give the user a button for it, for future words
-                (N.B.: This is only used for groups added during the current
-                run. At the beginning of a run, all used groups have buttons
-                created above.)"""
-                """Can't thread this; the button needs to find data"""
-                self.task.marksortgroup(senseid,framed,group,write=False)
-                self.addgroupbutton(group)
-                #adjust window for new button
-                self.windowsize()
-                log.debug('Group added: {}'.format(groupselected))
-                """group with the above?"""
-                """Group these last two?"""
-            else:
-                if groupselected == 'skip':
-                    group='NA'
-                else:
-                    group=groupselected
-                log.debug('Group selected: {} ({})'.format(group,
-                                                            groupselected))
-                """This needs to *not* operate on "exit" button."""
-                """thread here?"""
-                # self.marksortgroup(senseid,framed,group=group,write=False)
-                t = threading.Thread(target=self.task.marksortgroup,
-                                    args=(senseid,framed,group),
-                                    kwargs={'write':False})
-                t.start()
-        else:
-            log.debug('No group selected: {}'.format(groupselected))
-            return 1 # this should only happen on Exit
-        self.status.marksenseidsorted(senseid)
-        self.maybewrite()
-    def __init__(self, parent, task, groups, *args, **kwargs):
-        super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
-        """Children of self.runwindow.frame.scroll.content"""
-        self.groupbuttons=self.content.groups=ui.Frame(self.content,
-                                                row=0,column=0,sticky="ew")
-        self.content.anotherskip=ui.Frame(self.content, row=1,column=0)
-        """Children of self.runwindow.frame.scroll.content.groups"""
-        self.groupbuttons.row=0 #rows for this frame
-        self.groupbuttons.col=0 #columns for this frame
-        self.groupvars={}
-        self.groupbuttonlist=list()
-        # entryview=ui.Frame(self.runwindow.frame)
-        """We need a few things from the task (which are needed still?)"""
-        self.buttoncolumns=task.buttoncolumns
-        self.exs=task.exs
-        self.status=task.status
-        # self.check=task.params.check()
-        # self.cvt=task.params.cvt()
-        # self.ftype=task.params.ftype()
-        # self.ps=task.slices.ps()
-        # self.analang=task.analang
-        # self.db=task.db
-        self.maybewrite=task.maybewrite
-        # self.updatestatus=task.updatestatus
-        # self.toneframes=task.settings.toneframes
-        for group in groups:
-            self.addgroupbutton(group)
-        """Children of self.runwindow.frame.scroll.content.anotherskip"""
-        self.getanotherskip(self.content.anotherskip,self.groupvars)
-        log.info("getanotherskip vardict (1): {}".format(self.groupvars))
 class SortT(Sort,Tone,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconT']
@@ -9150,6 +8973,183 @@ class MainApplication(ui.Window):
                                                                     "seconds.")
         """finished loading so destroy splash"""
         """Don't show window again until check is done"""
+class SortButtonFrame(ui.ScrollingFrame):
+    """This is the frame of sort group buttons."""
+    def getanotherskip(self,parent,vardict):
+        """This function presents a group of buttons for the user to choose
+        from, after one for each tone group in that location/ps/profile in the
+        database. It provides one for the user to indicate that the word doesn't
+        belong in any of those (new group), and one to for the user to
+        indicate that the word/frame combo doesn't work (skip)."""
+        def firstok():
+            vardict['ok'].set(True)
+            remove(okb) #use this button exactly once
+            differentbutton()
+            sortnext()
+        def different():
+            vardict['NONEOFTHEABOVE'].set(True)
+            sortnext()
+        def skip():
+            vardict['skip'].set(True)
+            sortnext()
+        def remove(x):
+            x.destroy()
+        def sortnext():
+            self.sortitem.destroy()
+        def differentbutton():
+            vardict['NONEOFTHEABOVE']=ui.BooleanVar()
+            difb=ui.Button(bf, text=newgroup,
+                        cmd=different,
+                        anchor="w",
+                        font='instructions'
+                        )
+            difb.grid(column=0, row=0, sticky="ew")
+        row=0
+        firstOK=_("This word is OK in this frame")
+        newgroup=_("Different")
+        skiptext=_("Skip this item")
+        """This should just add a button, not reload the frame"""
+        row+=10
+        bf=ui.Frame(parent)
+        bf.grid(column=0, row=row, sticky="w")
+        if not self.status.groups(wsorted=True):
+            vardict['ok']=ui.BooleanVar()
+            okb=ui.Button(bf, text=firstOK,
+                            cmd=firstok,
+                            anchor="w",
+                            font='instructions'
+                            )
+            okb.grid(column=0, row=0, sticky="ew")
+        else:
+            differentbutton()
+        vardict['skip']=ui.BooleanVar()
+        skipb=ui.Button(bf, text=skiptext,
+                        cmd=skip,
+                        anchor="w",
+                        font='instructions'
+                        )
+        skipb.grid(column=0, row=1, sticky="ew")
+    def addgroupbutton(self,group):
+        if self.exitFlag.istrue():
+            return #just don't die
+        scaledpady=int(50*program['scale'])
+        b=ToneGroupButtonFrame(self.groupbuttons, self, self.exs,
+                                group,
+                                showtonegroup=True,
+                                alwaysrefreshable=True,
+                                bpady=scaledpady,
+                                row=self.groupbuttons.row,
+                                column=self.groupbuttons.col,
+                                sticky='w')
+        self.groupvars[group]=b.var()
+        if not self.buttoncolumns or (self.buttoncolumns and
+                                    self.groupbuttons.row+1<self.buttoncolumns):
+            self.groupbuttons.row+=1
+        else:
+            self.groupbuttons.col+=1
+            self.groupbuttons.col%=self.buttoncolumns # from 0 to cols-1
+            if not self.groupbuttons.col:
+                self.groupbuttons.row+=1
+            elif self.groupbuttons.row+1 == self.buttoncolumns:
+                self.groupbuttons.row=0
+        # log.info("Next button at r:{}, c:{}".format(groupbuttons.row,
+        #                                             groupbuttons.col))
+        self.groupbuttonlist.append(b)
+        self._configure_canvas()
+    def addtonegroup(self):
+        log.info("Adding a tone group!")
+        values=[0,] #always have something here
+        groups=self.status.groups(wsorted=True)
+        for i in groups:
+            try:
+                values+=[int(i)]
+            except:
+                log.info('Tone group {} cannot be interpreted as an integer!'
+                        ''.format(i))
+        newgroup=max(values)+1
+        groups.append(str(newgroup))
+        return str(newgroup)
+    def sortselected(self,senseid,framed):
+        selectedgroups=selected(self.groupvars)
+        log.info("selectedgroups: {}".format(selectedgroups))
+        for k in self.groupvars:
+            log.info("{} value: {}".format(k,self.groupvars[k].get()))
+        if len(selectedgroups)>1:
+            log.error("More than one group selected: {}".format(
+                                                            selectedgroups))
+            return 2
+        groupselected=unlist(selectedgroups)
+        if groupselected in self.groupvars:
+            self.groupvars[groupselected].set(False)
+        else:
+            log.error("selected {}; not in {}".format(groupselected,self.groupvars))
+            return
+        if groupselected:
+            if groupselected in ["NONEOFTHEABOVE",'ok']:
+                """If there are no groups yet, or if the user asks for
+                another group, make a new group."""
+                group=self.addtonegroup()
+                """And give the user a button for it, for future words
+                (N.B.: This is only used for groups added during the current
+                run. At the beginning of a run, all used groups have buttons
+                created above.)"""
+                """Can't thread this; the button needs to find data"""
+                self.task.marksortgroup(senseid,framed,group,write=False)
+                self.addgroupbutton(group)
+                #adjust window for new button
+                self.windowsize()
+                log.debug('Group added: {}'.format(groupselected))
+                """group with the above?"""
+                """Group these last two?"""
+            else:
+                if groupselected == 'skip':
+                    group='NA'
+                else:
+                    group=groupselected
+                log.debug('Group selected: {} ({})'.format(group,
+                                                            groupselected))
+                """This needs to *not* operate on "exit" button."""
+                """thread here?"""
+                # self.marksortgroup(senseid,framed,group=group,write=False)
+                t = threading.Thread(target=self.task.marksortgroup,
+                                    args=(senseid,framed,group),
+                                    kwargs={'write':False})
+                t.start()
+        else:
+            log.debug('No group selected: {}'.format(groupselected))
+            return 1 # this should only happen on Exit
+        self.status.marksenseidsorted(senseid)
+        self.maybewrite()
+    def __init__(self, parent, task, groups, *args, **kwargs):
+        super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
+        """Children of self.runwindow.frame.scroll.content"""
+        self.groupbuttons=self.content.groups=ui.Frame(self.content,
+                                                row=0,column=0,sticky="ew")
+        self.content.anotherskip=ui.Frame(self.content, row=1,column=0)
+        """Children of self.runwindow.frame.scroll.content.groups"""
+        self.groupbuttons.row=0 #rows for this frame
+        self.groupbuttons.col=0 #columns for this frame
+        self.groupvars={}
+        self.groupbuttonlist=list()
+        # entryview=ui.Frame(self.runwindow.frame)
+        """We need a few things from the task (which are needed still?)"""
+        self.buttoncolumns=task.buttoncolumns
+        self.exs=task.exs
+        self.status=task.status
+        # self.check=task.params.check()
+        # self.cvt=task.params.cvt()
+        # self.ftype=task.params.ftype()
+        # self.ps=task.slices.ps()
+        # self.analang=task.analang
+        # self.db=task.db
+        self.maybewrite=task.maybewrite
+        # self.updatestatus=task.updatestatus
+        # self.toneframes=task.settings.toneframes
+        for group in groups:
+            self.addgroupbutton(group)
+        """Children of self.runwindow.frame.scroll.content.anotherskip"""
+        self.getanotherskip(self.content.anotherskip,self.groupvars)
+        log.info("getanotherskip vardict (1): {}".format(self.groupvars))
 class RecordButtonFrame(ui.Frame):
     def _start(self, event):
         log.log(3,"Asking PA to record now")
