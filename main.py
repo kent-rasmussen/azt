@@ -438,17 +438,17 @@ class Menus(ui.Menu):
         options=[(_("Add/Modify Ad Hoc Sorting Group"),
                                                 self.parent.addmodadhocsort),]
         if isinstance(self.parent,SortT):
-            options.extend([(_("Add Tone frame"), self.parent.addframe),
-                            (_("Resort skipped data"), self.parent.tryNAgain),
-                            (_("Reverify current framed group"),
+            options.extend([(_("Add Tone frame"), self.parent.addframe)])
+        options.extend([(_("Resort skipped data"), self.parent.tryNAgain),
+                        (_("Reverify current framed group"),
                                                         self.parent.reverify),
-                            (_("Join Groups"), self.parent.joinT)
-                            ])
-            for m in options:
-                self.command(self.advancedmenu,
-                        label=_(m[0]),
-                        cmd=m[1]
-                        )
+                        (_("Join Groups"), self.parent.join)
+                        ])
+        for m in options:
+            self.command(self.advancedmenu,
+                    label=_(m[0]),
+                    cmd=m[1]
+                    )
         # advancedmenu = ui.Menu(self.menubar, tearoff=0)
         # self.menubar.add_cascade(label=_("Advanced"), menu=advancedmenu)
         # filemenu = ui.Menu(self.menubar, tearoff=0)
