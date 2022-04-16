@@ -4846,8 +4846,7 @@ class Sort(object):
         #     check=self.params.check()
         profile=kwargs.get('profile',self.slices.profile())
         # profile=self.slices.profile()
-        senseids=self.db.get("sense", location=check, tonevalue=group,
-                            path=['tonefield']).get('senseid')
+        senseids=self.getsenseidsincheckgroup()
         value=self.verifictioncode(check=check,group=group)
         if verified == True:
             add=value
