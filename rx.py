@@ -224,7 +224,7 @@ def fromCV(check, lang, word=False, compile=False):
         log.log(3,'CVs: {}'.format(CVs))
     CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs)
     log.log(5,'CVs: {}'.format(CVs))
-    return make(CVs,word=word, compile=compile)
+    return make(CVs, word=word, compile=compile)
 if __name__ == '__main__':
     x='ne [pas] plaire, ne pas agréer, ne pas'
     print(id(x))
