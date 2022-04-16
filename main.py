@@ -5652,6 +5652,155 @@ class Sort(object):
                             sticky="ew",
                             ipady=15*program['scale'] #Inside the buttons...
                             )
+    def join(self):
+        log.info("Running join!")
+        """This window shows up after sorting, or maybe after verification, to
+        allow the user to join groups that look the same. I think before
+        verification, as this would require the new pile to be verified again.
+        also, the joining would provide for one less group to match against
+        (hopefully semi automatically).
+        """
+        #This function should exit 1 on a window close, 0/None on all ok.
+        self.getrunwindow()
+        cvt=self.params.cvt()
+        check=self.params.check()
+        ps=self.slices.ps()
+        profile=self.slices.profile()
+        groups=self.status.groups(wsorted=True) #these should be verified, too.
+        if len(groups) <2:
+            log.debug("No tone groups to distinguish!")
+            if not self.exitFlag.istrue():
+                self.runwindow.waitdone()
+            return 0
+        title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
+                                        self.settings.languagenames[self.analang],
+                                        check
+                                        )
+        oktext=_('These are all different')
+        introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
+                "sorted into the groups exemplified below (in the ‘{}’ frame). "
+                "Do any of these have the same tone melody? "
+                "If so, click on two groups to join. "
+                "If not, just click ‘{ok}’."
+                ).format(ps,profile,check,ok=oktext)
+        log.debug(introtext)
+        self.runwindow.resetframe()
+        self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
+                                            column=0, row=0,
+                                            columnspan=2, sticky="ew"
+                                            )
+        ltitle=ui.Label(self.runwindow.frame.titles, text=title,
+                font='title',
+                column=0, row=0, sticky="ew",
+                )
+        i=ui.Label(self.runwindow.frame.titles,
+                    text=introtext,
+                    row=1,column=0, sticky="w",
+                    )
+        i.wrap()
+        ui.Label(self.runwindow.frame,
+                image=self.frame.theme.photo['join'],
+                text='',
+                row=1,column=0,rowspan=2,sticky='nw'
+                )
+        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
+                                        row=1,column=1,sticky='w')
+        self.sortitem=self.sframe.content
+        row=column=0
+        groupvars={}
+        b={}
+        for group in groups:
+            b[group]=ToneGroupButtonFrame(self.sortitem, self, self.exs, group,
+                                    showtonegroup=True,
+                                    labelizeonselect=True
+                                    )
+            b[group].grid(column=column, row=row, sticky='ew')
+            groupvars[group]=b[group].var()
+            if not self.buttoncolumns or (self.buttoncolumns and
+                                            row+1<self.buttoncolumns):
+                row+=1
+            else:
+                column+=1
+                column%=self.buttoncolumns # from 0 to cols-1
+                if not column:
+                    row+=1
+                elif row+1 == self.buttoncolumns:
+                    row=0
+            # log.info("Next button at r:{}, c:{}".format(row,column))
+        """If all is good, destroy this frame."""
+        self.runwindow.waitdone()
+        ngroupstojoin=0
+        while ngroupstojoin < 2:
+            bok=ui.Button(self.sortitem, text=oktext,
+                    cmd=self.sortitem.destroy,
+                    anchor="c",
+                    font='instructions',
+                    column=0,
+                    row=max(row+1,self.buttoncolumns+1),
+                    sticky="ew")
+            for group in b:
+                b[group].setcanary(bok) #this must be done after bok exists
+            log.info("making button!")
+            self.runwindow.frame.wait_window(bok)
+            groupstojoin=selected(groupvars)
+            ngroupstojoin=len(groupstojoin)
+            if ngroupstojoin == 2 or not self.sortitem.winfo_exists():
+                break
+        if self.runwindow.exitFlag.istrue():
+            return 1
+        if ngroupstojoin < 2:
+            log.info("User selected ‘{}’ with {} groups selected, moving on."
+                    "".format(oktext,ngroupstojoin))
+            #this avoids asking the user about it again, until more sorting:
+            self.status.tojoin(False)
+            self.runwindow.destroy()
+            return 0
+        elif ngroupstojoin > 2:
+            log.info("User selected ‘{}’ with {} groups selected, This is "
+                    "probably a mistake ({} selected)."
+                    "".format(oktext,ngroupstojoin,groupstojoin))
+            return self.join() #try again
+        else:
+            log.info("User selected ‘{}’ with {} groups selected, joining "
+                    "them. ({} selected)."
+                    "".format(oktext,ngroupstojoin,groupstojoin))
+            msg=_("Now we're going to move group ‘{0}’ into "
+                "‘{1}’, marking ‘{1}’ unverified.".format(*groupstojoin))
+            self.runwindow.wait(msg=msg)
+            log.debug(msg)
+            """All the senses we're looking at, by ps/profile"""
+            self.updatebygroupsenseid(*groupstojoin)
+            groups.remove(groupstojoin[0])
+            write=False
+            for group in groupstojoin: #not verified=True --since joined
+                self.updatestatus(group=group,write=write)
+                write=True #For second group
+            self.maybesort() #go back to verify, etc.
+        """'These are all different' doesn't need to be saved anywhere, as this
+        can happen at any time. Just move on to verification, where each group's
+        sameness will be verified and recorded."""
+    def tryNAgain(self):
+        check=self.params.check()
+        if check in self.status.checks():
+            senseids=self.getsenseidsincheckgroup(group='NA')
+            # self.slices.senseids()
+            # ftype=self.toneframes[check]['field'] #this must match check!
+        else:
+            #Give an error window here
+            log.error("Not Trying again; set a check first!")
+            self.getrunwindow(nowait=True)
+            buttontxt=_("Sort!")
+            text=_("Not Trying Again; set a tone frame first!")
+            ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+            return
+        for senseid in senseids: #this is a ps-profile slice
+            self.removesenseidfromgroup(senseid)
+            # self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
+            #                 location=check,#ftype=ftype,
+            #                 fieldvalue='', #just clear this
+            #                 oldfieldvalue='NA', showurl=True #if this
+            #                 )
+        self.runcheck()
     def __init__(self, parent):
         parent.settings.makeeverythingok()
         """I need some way to control for ftype"""
@@ -7355,133 +7504,6 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
         """Are we OK without these?"""
         log.info("Done initializing check.")
         """Testing Zone"""
-    def joinT(self):
-        log.info("Running joinT!")
-        """This window shows up after sorting, or maybe after verification, to
-        allow the user to join groups that look the same. I think before
-        verification, as this would require the new pile to be verified again.
-        also, the joining would provide for one less group to match against
-        (hopefully semi automatically).
-        """
-        #This function should exit 1 on a window close, 0/None on all ok.
-        self.getrunwindow()
-        cvt=self.params.cvt()
-        check=self.params.check()
-        ps=self.slices.ps()
-        profile=self.slices.profile()
-        groups=self.status.groups(wsorted=True) #these should be verified, too.
-        if len(groups) <2:
-            log.debug("No tone groups to distinguish!")
-            if not self.exitFlag.istrue():
-                self.runwindow.waitdone()
-            return 0
-        title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
-                                        self.settings.languagenames[self.analang],
-                                        check
-                                        )
-        oktext=_('These are all different')
-        introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
-                "sorted into the groups exemplified below (in the ‘{}’ frame). "
-                "Do any of these have the same tone melody? "
-                "If so, click on two groups to join. "
-                "If not, just click ‘{ok}’."
-                ).format(ps,profile,check,ok=oktext)
-        log.debug(introtext)
-        self.runwindow.resetframe()
-        self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
-                                            column=0, row=0,
-                                            columnspan=2, sticky="ew"
-                                            )
-        ltitle=ui.Label(self.runwindow.frame.titles, text=title,
-                font='title',
-                column=0, row=0, sticky="ew",
-                )
-        i=ui.Label(self.runwindow.frame.titles,
-                    text=introtext,
-                    row=1,column=0, sticky="w",
-                    )
-        i.wrap()
-        ui.Label(self.runwindow.frame,
-                image=self.frame.theme.photo['joinT'],
-                text='',
-                row=1,column=0,rowspan=2,sticky='nw'
-                )
-        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
-                                        row=1,column=1,sticky='w')
-        self.sortitem=self.sframe.content
-        row=column=0
-        groupvars={}
-        b={}
-        for group in groups:
-            b[group]=ToneGroupButtonFrame(self.sortitem, self, self.exs, group,
-                                    showtonegroup=True,
-                                    labelizeonselect=True
-                                    )
-            b[group].grid(column=column, row=row, sticky='ew')
-            groupvars[group]=b[group].var()
-            if not self.buttoncolumns or (self.buttoncolumns and
-                                            row+1<self.buttoncolumns):
-                row+=1
-            else:
-                column+=1
-                column%=self.buttoncolumns # from 0 to cols-1
-                if not column:
-                    row+=1
-                elif row+1 == self.buttoncolumns:
-                    row=0
-            # log.info("Next button at r:{}, c:{}".format(row,column))
-        """If all is good, destroy this frame."""
-        self.runwindow.waitdone()
-        ngroupstojoin=0
-        while ngroupstojoin < 2:
-            bok=ui.Button(self.sortitem, text=oktext,
-                    cmd=self.sortitem.destroy,
-                    anchor="c",
-                    font='instructions',
-                    column=0,
-                    row=max(row+1,self.buttoncolumns+1),
-                    sticky="ew")
-            for group in b:
-                b[group].setcanary(bok) #this must be done after bok exists
-            log.info("making button!")
-            self.runwindow.frame.wait_window(bok)
-            groupstojoin=selected(groupvars)
-            ngroupstojoin=len(groupstojoin)
-            if ngroupstojoin == 2 or not self.sortitem.winfo_exists():
-                break
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        if ngroupstojoin < 2:
-            log.info("User selected ‘{}’ with {} groups selected, moving on."
-                    "".format(oktext,ngroupstojoin))
-            #this avoids asking the user about it again, until more sorting:
-            self.status.tojoin(False)
-            self.runwindow.destroy()
-            return 0
-        elif ngroupstojoin > 2:
-            log.info("User selected ‘{}’ with {} groups selected, This is "
-                    "probably a mistake ({} selected)."
-                    "".format(oktext,ngroupstojoin,groupstojoin))
-            return self.joinT() #try again
-        else:
-            log.info("User selected ‘{}’ with {} groups selected, joining "
-                    "them. ({} selected)."
-                    "".format(oktext,ngroupstojoin,groupstojoin))
-            msg=_("Now we're going to move group ‘{0}’ into "
-                "‘{1}’, marking ‘{1}’ unverified.".format(*groupstojoin))
-            self.runwindow.wait(msg=msg)
-            log.debug(msg)
-            """All the senses we're looking at, by ps/profile"""
-            self.updatebygroupsenseid(*groupstojoin)
-            groups.remove(groupstojoin[0])
-            write=False
-            for group in groupstojoin: #not verified=True --since joined
-                self.updatestatus(group=group,write=write)
-                write=True #For second group
-            self.maybesort() #go back to verify, etc.
-        """'These are all different' doesn't need to be saved anywhere, as this
-        can happen at any time. Just move on to verification, where each group's
-        sameness will be verified and recorded."""
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         senseid=None
         self.db.addpronunciationfields(
@@ -7501,26 +7523,6 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
     def marktosortguid(self,guid):
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
-    def tryNAgain(self):
-        check=self.params.check()
-        if check in self.status.checks():
-            senseids=self.slices.senseids()
-            ftype=self.toneframes[check]['field'] #this must match check!
-        else:
-            #Give an error window here
-            log.error("Not Trying again; set a tone frame first!")
-            self.getrunwindow(nowait=True)
-            buttontxt=_("Sort!")
-            text=_("Not Trying Again; set a tone frame first!")
-            ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
-            return
-        for senseid in senseids: #this is a ps-profile slice
-            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
-                            location=check,ftype=ftype,
-                            fieldvalue='', #just clear this
-                            oldfieldvalue='NA', showurl=True #if this
-                            )
-        self.runcheck()
     """Doing stuff"""
 class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
