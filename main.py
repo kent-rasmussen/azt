@@ -7946,8 +7946,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
 class RecordCitation(Record,Segments,TaskDressing,ui.Window):
     """docstring for RecordCitation."""
     def tooltip(self):
-        return _("This task helps you record words in citation form tone "
-                "frames.")
+        return _("This task helps you record words in isolation forms.")
     def dobuttonkwargs(self):
         return {'text':_("Record Dictionary Words"),
                 'fn':self.showentryformstorecord,
@@ -7969,7 +7968,7 @@ class RecordCitation(Record,Segments,TaskDressing,ui.Window):
 class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
     """docstring for RecordCitation."""
     def tooltip(self):
-        return _("This task helps you record words in citation form.")
+        return _("This task helps you record words in tone frames, in citation form.")
     def dobuttonkwargs(self):
         return {'text':_("Record Words in Tone Frames"),
                 'fn':self.showtonegroupexs,
