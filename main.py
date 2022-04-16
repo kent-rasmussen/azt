@@ -5527,6 +5527,7 @@ class Sound(object):
         if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
             self.soundsettingswindow.destroy()
     def makelabelsnrecordingbuttons(self,parent,sense):
+        log.info("Making buttons for {} (in {})".format(sense['nodetoshow'],sense))
         framed=self.taskchooser.datadict.getframeddata(sense['nodetoshow'])
         t=framed.formatted(noframe=True)
         for g in sense['glosses']:
@@ -8927,6 +8928,7 @@ class FramedDataElement(FramedData):
         If there is a link to a real sound file, that is covered above.
         If there is no sound file, then the below will result in the default
         (current) schema."""
+        # log.info("forms at this point: {}".format(self.forms))
         for pslocopt in pslocopts:
             for fieldlocopt in fieldlocopts: #for older name schema
                 for legacy in ['_', None]:
