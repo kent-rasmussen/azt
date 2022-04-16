@@ -4963,6 +4963,7 @@ class Sort(object):
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def removesenseidfromgroup(self,senseid,**kwargs):
+        """Generalize for segments?"""
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
