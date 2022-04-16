@@ -1830,7 +1830,7 @@ class Settings(object):
         # profilesbysense, creating status dictionaries for all of that, in
         # order to populate it if found —before removing empty entires.
         # This also has no access to verification information, which comes only
-        # from verifyT()
+        # from verify()
         start_time=time.time()
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
@@ -5252,12 +5252,12 @@ class Sort(object):
         tosortupdate()
         log.info("Going to verify the first of these groups now: {}".format(
                                     self.status.groups(toverify=True)))
-        log.info("Maybe verifyT (from maybesort)")
+        log.info("Maybe verify (from maybesort)")
         groupstoverify=self.status.groups(toverify=True)
         if groupstoverify:
             self.status.group(groupstoverify[0]) #just pick the first now
-            log.info("verifyT (from maybesort)")
-            exitv=self.verifyT()
+            log.info("verify (from maybesort)")
+            exitv=self.verify()
             if exitv == True: #fix this!
                 if not self.exitFlag.istrue():
                     self.notdonewarning()
