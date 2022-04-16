@@ -3269,6 +3269,8 @@ class TaskDressing(object):
                                     column=0, row=0
                                     )
     def getgroup(self,guess=False,event=None,**kwargs):
+        """I need to think though how to get this to wait appropriately
+        both for single C/V selection, and for CxV selection"""
         log.info("this sets the group")
         kwargs=grouptype(**kwargs) #if any should be True, set in wrappers above
         log.info("getgroup kwargs: {}".format(kwargs))
@@ -3277,18 +3279,19 @@ class TaskDressing(object):
         if cvt == "V":
             w=ui.Window(self.frame,title=_('Select Vowel'))
             self.getV(window=w,**kwargs)
-            w.wait_window(window=w)
+            # w.wait_window(window=w)
         elif cvt == "C":
             w=ui.Window(self.frame,title=_('Select Consonant'))
             self.getC(w,**kwargs)
-            self.frame.wait_window(window=w)
+            # self.frame.wait_window(window=w)
         elif cvt == "CV":
+            w=ui.Window(self.frame,title=_('Select Consonant/Vowel'))
             CV=''
-            for cvt in ['C','V']:
+            for kwargs['cvt'] in ['C','V']:
                 self.getgroup(**kwargs)
-                CV+=group
-            group=CV
-            cvt = "CV"
+                CV+=self.status.group()
+            self.status.group(CV)
+            # cvt = "CV"
         elif cvt == "T":
             w=ui.Window(self.frame,title=_('Select Framed Tone Group'))
             self.getframedtonegroup(window=w,guess=guess,**kwargs)
