@@ -655,6 +655,7 @@ class StatusFrame(ui.Frame):
             self.tonegroup(line)
         else:
             self.cvcheck(line)
+            self.cvgroup(line)
     def toneframe(self,line):
         self.opts['columnplus']=1
         if not self.checks:
@@ -707,6 +708,12 @@ class StatusFrame(ui.Frame):
         self.opts['columnplus']=1
         t=(_("working on {}".format(self.settings.params.cvcheckname())))
         self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
+        # self.opts['row']+=1
+    def cvgroup(self,line):
+        if self.settings.status.group():
+            self.opts['columnplus']=2
+            t=(_("= {}".format(self.settings.status.group())))
+            self.proselabel(t,cmd=self.taskchooser.getgroup,parent=line)
         # self.opts['row']+=1
     def buttoncolumnsline(self):
         self.opts['row']+=1
