@@ -5142,12 +5142,18 @@ class Sort(object):
         if cvt == 'T':
             senseids=self.slices.senseids(ps=ps,profile=profile)
         else:
+            groups=self.status.groups(wsorted=True)
             for group in self.status.groups(cvt=cvt):
                 self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
-                log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
-                                                            self.regexCV))
-                senseids=set(self.senseidformsbyregex(self.regex,ps=ps))
-                self.presort(senseids,check,group)
+                # log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
+                #                                             self.regexCV))
+                s=set(self.senseidformsbyregex(self.regex,ps=ps))
+                if s: #senseids just for this group
+                    if group not in groups:
+                        groups.append(group)
+                    self.presort(s,check,group)
+                    senseids+=s
+            self.status.presorted(True)
         self.status.renewsenseidstosort([],[]) #will repopulate
         groups=[]
         for senseid in senseids:
