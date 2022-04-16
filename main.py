@@ -10030,7 +10030,7 @@ class StatusDict(dict):
                 return None
             """This is organized class:(segment,count)"""
             thispsdict=self._slicedict.scount()[kwargs['ps']]
-            if kwargs['cvt'] == 'V': #There is so far only on V grouping
+            if kwargs['cvt'] == 'V': #There is so far only one V grouping
                 todo=[i[0] for i in thispsdict['V']] #that's all that's there, for now.
             elif kwargs['cvt'] == 'C':
                 todo=list() #because there are multiple C groupings
