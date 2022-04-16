@@ -2647,14 +2647,20 @@ if __name__ == '__main__':
             # 'glosslang': 'fr'
             }
     ftype='Plural'
-    ftype='lx'
+    ftype='lc'
     for ps in pss:
-        senseids=lift.get("sense", #path=['field'],
-                        # ftype='lc',
-                        lcannotationname='V1',
-                        lcannotationvalue=1,
-                        showurl=True
-                        ).get('senseid')
+        kwargs={ftype+'annotationname':'V1',
+                ftype+'annotationvalue':'a'
+                }
+        senseids=lift.get("sense", **kwargs, showurl=True #location=check, tonevalue=group,
+                        # path=['tonefield']
+                            ).get('senseid')
+        # senseids=lift.get("sense", #path=['field'],
+        #                 # ftype='lc',
+        #                 lcannotationname='V1',
+        #                 lcannotationvalue=1,
+        #                 showurl=True
+        #                 ).get('senseid')
         # ft=lift.fieldtext(#senseid=senseid,
         #                 ftype=ftype,
         #                 # lang=analang,
