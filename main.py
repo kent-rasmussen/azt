@@ -5103,7 +5103,7 @@ class Sort(object):
                                 senseid=senseid,
                                 analang=self.analang,
                                 name=check,
-                                ftype=self.ftype,
+                                ftype=ftype,
                                 value=group,
                                 write=False
                                 )
@@ -5111,7 +5111,7 @@ class Sort(object):
                                 senseid=senseid,
                                 analang=self.analang,
                                 name=check,
-                                ftype=self.ftype,
+                                ftype=ftype,
                                 ))
         if newgroup != group:
             log.error("Field addition failed! LIFT says {}, not {}.".format(
