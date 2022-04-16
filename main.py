@@ -5059,15 +5059,17 @@ class Sort(object):
     def marksortgroup(self,senseid,framed,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
+        check=kwargs.get('check',self.params.check())
+        ftype=kwargs.get('ftype',self.params.ftype())
         guid=None
         if group is None or group == '':
             log.error("groupselected: {}; this should never happen"
                         "".format(group))
             exit()
-        log.debug("Adding {} value to {} location in 'tone' fieldtype, "
+        log.debug("Adding {} value for {} check, "
                 "senseid: {} guid: {} (in main_lift.py)".format(
                     group,
-                    self.check,
+                    check,
                     senseid,
                     guid))
         if self.cvt == 'T':
@@ -5080,7 +5082,7 @@ class Sort(object):
                                     analang=self.analang,
                                     fieldtype='tone',
                                     #frames should be ftype specific
-                                    location=self.check,
+                                    location=check,
                                     ftype=ftype, #needed to get correct form
                                     framed=framed,
                                     fieldvalue=group,
@@ -5092,7 +5094,7 @@ class Sort(object):
             self.db.annotatefield(
                                 senseid=senseid,
                                 analang=self.analang,
-                                name=self.check,
+                                name=check,
                                 ftype=self.ftype,
                                 value=group,
                                 write=False
@@ -5100,7 +5102,7 @@ class Sort(object):
             newgroup=unlist(self.db.fieldvalue(
                                 senseid=senseid,
                                 analang=self.analang,
-                                name=self.check,
+                                name=check,
                                 ftype=self.ftype,
                                 ))
         if newgroup != group:
