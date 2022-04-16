@@ -4721,7 +4721,7 @@ class Tone(object):
     def settonevariables(self):
         """This is currently called before sorting. This is a waste, if you're
         not going to sort afterwards –unless you need the groups."""
-        self.settings.updatesortingstatus() #this gets groups, too
+        self.updatesortingstatus() #this gets groups, too
     def aframe(self):
         self.runwindow.destroy()
         self.addframe()
@@ -7240,19 +7240,19 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.groupvars={}
         self.groupbuttonlist=list()
         # entryview=ui.Frame(self.runwindow.frame)
-        """We need a few things from the task"""
+        """We need a few things from the task (which are needed still?)"""
         self.buttoncolumns=task.buttoncolumns
         self.exs=task.exs
         self.status=task.status
-        self.check=task.params.check()
-        self.cvt=task.params.cvt()
-        self.ftype=task.params.ftype()
-        self.ps=task.slices.ps()
-        self.analang=task.analang
-        self.db=task.db
+        # self.check=task.params.check()
+        # self.cvt=task.params.cvt()
+        # self.ftype=task.params.ftype()
+        # self.ps=task.slices.ps()
+        # self.analang=task.analang
+        # self.db=task.db
         self.maybewrite=task.maybewrite
-        self.updatestatus=task.updatestatus
-        self.toneframes=task.settings.toneframes
+        # self.updatestatus=task.updatestatus
+        # self.toneframes=task.settings.toneframes
         for group in groups:
             self.addgroupbutton(group)
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
@@ -7304,7 +7304,7 @@ class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
         done.remove(group)
-        self.settings.updatesortingstatus() # Not just tone anymore
+        self.updatesortingstatus() # Not just tone anymore
         self.maybesort()
     def verifyT(self,menu=False):
         def updatestatus():
