@@ -5147,6 +5147,7 @@ class Sort(object):
         if cvt == 'T':
             senseids=self.slices.senseids(ps=ps,profile=profile)
         else:
+            senseids=[]
             groups=self.status.groups(wsorted=True)
             for group in self.status.groups(cvt=cvt):
                 self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
@@ -5157,7 +5158,7 @@ class Sort(object):
                     if group not in groups:
                         groups.append(group)
                     self.presort(s,check,group)
-                    senseids+=s
+                    senseids+=list(s)
             self.status.presorted(True)
         self.status.renewsenseidstosort([],[]) #will repopulate
         groups=[]
