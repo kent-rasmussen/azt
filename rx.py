@@ -195,7 +195,8 @@ def fromCV(check, lang, word=False, compile=False):
     whole word word=True)."""
     """lang should be check.analang"""
     CVs=check.regexCV
-    distinguish=check.settings.distinguish
+    settings=check.settings
+    distinguish=settings.distinguish
     log.log(5,'CVs: {}'.format(CVs))
     if type(CVs) is not str:
         log.error("regexCV is not string! ({})".format(check.regexCV))
@@ -204,17 +205,17 @@ def fromCV(check, lang, word=False, compile=False):
     references=range(1,5)
     # Replace word final C first, to get it out of the way:
     if distinguish['ʔwd'] and not distinguish['ʔ']:
-        rxthis=s(check,'C-ʔ',lang) #Pull out C# first;exclude N# if appropriate.
+        rxthis=s(settings,'C-ʔ',lang) #Pull out C# first;exclude N# if appropriate.
         CVs=re.sub('C$',rxthis,CVs)
     if distinguish['Nwd'] and not distinguish['N']:
-        rxthis=s(check,'C-N',lang) #Pull out C# first;exclude N# if appropriate.
+        rxthis=s(settings,'C-N',lang) #Pull out C# first;exclude N# if appropriate.
         CVs=re.sub('C$',rxthis,CVs)
         log.log(2,'CVs: {}'.format(CVs))
     # if C includes [N,?], find C first; if it doesn't, move on to [N,?].
     # if we distinguish [N,?]# (only), C# is already gone, so other C's here.
-    for x in check.s[lang]: #["V","C","N","ʔ","G","S"]:
+    for x in settings.s[lang]: #["V","C","N","ʔ","G","S"]:
         # if x in check.s[lang]: #just pull out big ones first
-        rxthis=s(check,x,lang) #this should have parens for each S
+        rxthis=s(settings,x,lang) #this should have parens for each S
         CVs=re.sub(x,rxthis,CVs)
         log.log(2,'CVs: {}'.format(CVs))
     for x in references: #get capture group expressions
