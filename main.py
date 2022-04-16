@@ -8935,8 +8935,8 @@ class FramedDataElement(FramedData):
                             if self.node.tag == 'field':
                                 args+=[self.node.get("type")]
                         if not self.analang in self.forms:
-                            log.error("No {} analang in {} ".format(
-                                                self.analang,self.senseid))
+                            log.error("No {} analang in {} (forms: {})".format(
+                                        self.analang,self.senseid,self.forms))
                             return
                         args+=[self.forms[self.analang][self.ftype]]
                         if self.gloss: #could be None still, if no senseid given
