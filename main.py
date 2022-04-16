@@ -5164,7 +5164,7 @@ class Sort(object):
                 if s: #senseids just for this group
                     if group not in groups:
                         groups.append(group)
-                    self.presort(s,check,group)
+                    self.presort(list(s),check,group)
                     senseids+=list(s)
             self.status.presorted(True)
         self.status.renewsenseidstosort([],[]) #will repopulate
