@@ -8973,9 +8973,27 @@ class FramedDataElement(FramedData):
                 self.check=unlist([j.text for j in i.findall('form/text')])
             elif ((i.tag == 'field') and (i.get('type') == 'tone')):
                 self.tonegroups=[j.text for j in i.findall('form/text')]
-        if self.ps in self.frames and (self.check in self.frames[self.ps] and
+        if node.tag == 'citation':
+            self.ftype='lc'
+        elif node.tag == 'lexeme': #used?
+            self.ftype='lx'
+        elif node.tag == 'field':
+            self.ftype=node.get('type')
+        elif self.ps in self.frames and (self.check in self.frames[self.ps] and
                                 'field' in self.frames[self.ps][self.check]):
             self.ftype=self.frames[self.ps][self.check]['field']
+        else:
+            log.error("Couldn't get filed type. Frames: {}".format(self.frames))
+            log.error("Node tag:{}; type: {}; ps: {}; check: {}; analang: {}; audiolang: {}"
+                    "".format(
+                            node.tag,
+                            node.get('type'),
+                            getattr(self,'ps',"AttrNotFound"),
+                            getattr(self,'check',"AttrNotFound"),
+                            getattr(self,'analang',"AttrNotFound"),
+                            getattr(self,'audiolang',"AttrNotFound")
+                                )
+                    )
         for lang in [self.analang, self.audiolang]:
             if lang in self.forms:
                 try:
