@@ -861,7 +861,7 @@ class StatusFrame(ui.Frame):
                     h.grid(row=row,column=column,sticky='e')
                     if profile == curprofile and curcheck is None:
                         h.config(background=h.theme['activebackground']) #highlight
-                        tip=_("Current profile \n(no frame set)")
+                        tip=_("Current profile \n(no check set)")
                         ttb=ui.ToolTip(h,tip)
                 elif profile == 'next': # end of row headers
                     brh=ui.Button(self.leaderboardtable,text=profile,
@@ -913,18 +913,18 @@ class StatusFrame(ui.Frame):
                                 bd=0, #border
                                 text=donenum,
                                 cmd=lambda p=profile,
-                                f=frame:updateprofilencheck(profile=p, check=f),
+                                f=check:updateprofilencheck(profile=p, check=f),
                                 anchor='c',
                                 padx=0,pady=0
                                 )
                         if profile == curprofile and check == curcheck:
                             tb.configure(background=tb['activebackground'])
                             tb.configure(command=donothing)
-                            tip=_("Current settings \nprofile: ‘{}’; \nframe: ‘{}’"
-                                "".format(profile,frame))
+                            tip=_("Current settings \nprofile: ‘{}’; \ncheck: ‘{}’"
+                                "".format(profile,check))
                         else:
-                            tip=_("Change to \nprofile: ‘{}’; \nframe: ‘{}’"
-                                "".format(profile,frame))
+                            tip=_("Change to \nprofile: ‘{}’; \ncheck: ‘{}’"
+                                "".format(profile,check))
                         tb.grid(row=row,column=column,ipadx=0,ipady=0,
                                                                 sticky='nesw')
                         ttb=ui.ToolTip(tb,tip)
@@ -5498,10 +5498,10 @@ class Sort(object):
         group=self.status.group()
         # The title for this page changes by group, below.
         self.getrunwindow(msg="preparing to verify group: {}".format(group))
-        oktext='These all have the same tone'
+        oktext='These all have the same {}'.format(self.params.cvcheckname())
         instructions=_("Read down this list to verify they all have the same "
-            "tone melody. Select any word with a different tone melody to "
-            "remove it from the list.")
+            "{}. Select any word with a different tone melody to "
+            "remove it from the list.").format(self.params.cvcheckname())
         """group is set here, but probably OK"""
         self.status.build()
         last=False
@@ -5531,10 +5531,11 @@ class Sort(object):
                     "continuing.".format(group,len(senseids)))
             updatestatus()
             return
-        title=_("Verify {} Group ‘{}’ (for ‘{}’ check)").format(
+        title=_("Verify {} Group ‘{}’ for ‘{}’ ({})").format(
                                     self.settings.languagenames[self.analang],
                                     group,
-                                    check
+                                    check,
+                                    self.params.cvcheckname()
                                     )
         titles=ui.Frame(self.runwindow.frame,
                         column=0, row=0, columnspan=2, sticky="w")
