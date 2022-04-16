@@ -8683,7 +8683,7 @@ class FramedDataDict(dict):
                                             ).get('node'))
             element=True
         elif senseid and check:
-            senseid=source
+            source=senseid
             sense=True
         # log.info("sense: {}, element: {} (after build)".format(sense,element))
         d=self.isthere(source)
