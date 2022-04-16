@@ -142,7 +142,7 @@ class Theme(object):
                             ('VCCVRepcomp','images/AZZA Report Comprehensive.png'),
                             ('backgrounded','images/AZT stacks6.png'),
                             #Set images for tasks
-                            ('verifyT','images/Verify List.png'),
+                            ('verify','images/Verify List.png'),
                             ('sort','images/Sort List.png'),
                             ('joinT','images/Join List.png'),
                             ('record','images/Microphone alone_sm.png'),
