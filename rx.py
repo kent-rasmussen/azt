@@ -149,22 +149,23 @@ def inxyz(db, lang, segmentlist): #This calls the above script for each characte
 def s(check,stype,lang=None):
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
+    segments=check.settings.s
     if (lang == None) and (hasattr(check,'analang')):
         log.log(2,_('telling rx.s which lang to use'))
         lang=check.analang
         log.log(2,_("Using analang: {}".format(check.analang)))
     if stype == "C-ʔ":
-        if 'ʔ' in check.s[lang]:
-            list=set(check.s[lang]['C'])-set(check.s[lang]['ʔ'])
+        if 'ʔ' in segments[lang]:
+            list=set(segments[lang]['C'])-set(segments[lang]['ʔ'])
         else:
-            list=set(check.s[lang]['C'])
+            list=set(segments[lang]['C'])
     elif stype == "C-N":
-        if 'N' in check.s[lang]:
-            list=set(check.s[lang]['C'])-set(check.s[lang]['N'])
+        if 'N' in segments[lang]:
+            list=set(segments[lang]['C'])-set(segments[lang]['N'])
         else:
-            list=set(check.s[lang]['C'])
-    elif stype in check.s[lang]:
-        list=check.s[lang][stype]
+            list=set(segments[lang]['C'])
+    elif stype in segments[lang]:
+        list=segments[lang][stype]
     else:
         log.error("Dunno why, but this isn't in lists: {}".format(stype))
         return
@@ -194,6 +195,7 @@ def fromCV(check, lang, word=False, compile=False):
     whole word word=True)."""
     """lang should be check.analang"""
     CVs=check.regexCV
+    distinguish=check.settings.distinguish
     log.log(5,'CVs: {}'.format(CVs))
     if type(CVs) is not str:
         log.error("regexCV is not string! ({})".format(check.regexCV))
@@ -201,10 +203,10 @@ def fromCV(check, lang, word=False, compile=False):
     references=('\1','\2','\3','\4')
     references=range(1,5)
     # Replace word final C first, to get it out of the way:
-    if check.distinguish['ʔwd'] and not check.distinguish['ʔ']:
+    if distinguish['ʔwd'] and not distinguish['ʔ']:
         rxthis=s(check,'C-ʔ',lang) #Pull out C# first;exclude N# if appropriate.
         CVs=re.sub('C$',rxthis,CVs)
-    if check.distinguish['Nwd'] and not check.distinguish['N']:
+    if distinguish['Nwd'] and not distinguish['N']:
         rxthis=s(check,'C-N',lang) #Pull out C# first;exclude N# if appropriate.
         CVs=re.sub('C$',rxthis,CVs)
         log.log(2,'CVs: {}'.format(CVs))
