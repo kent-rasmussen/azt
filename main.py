@@ -5598,14 +5598,14 @@ class Record(Sound):
                                                 ),othersOK=True))
             if self.settings.pluralname is not None:
                 sense['plnode']=firstoflist(self.db.get('field',
-                                        guid=sense['guid'],
-                                        lang=self.analang,
-                                        fieldtype=self.db.pluralname).get())
+                                guid=sense['guid'],
+                                lang=self.analang,
+                                fieldtype=self.settings.pluralname).get())
             if self.settings.imperativename is not None:
                 sense['impnode']=firstoflist(self.db.get('field',
-                                        guid=sense['guid'],
-                                        lang=self.analang,
-                                        fieldtype=self.db.imperativename).get())
+                                guid=sense['guid'],
+                                lang=self.analang,
+                                fieldtype=self.settings.imperativename).get())
             if sense['lcnode'] is not None:
                 sense['nodetoshow']=sense['lcnode']
             else:
