@@ -8790,6 +8790,7 @@ class FramedData(object):
         self.parent=parent
         self.frames=parent.frames #needed for setframe, parseelement
         self.ps=self.parent.taskchooser.slices.ps()
+        # self.cvt=self.parent.taskchooser.params.cvt()
         self.updatelangs()
         self.forms=DictbyLang()
 class FramedDataSense(FramedData):
