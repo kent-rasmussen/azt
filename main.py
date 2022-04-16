@@ -5061,12 +5061,14 @@ class Sort(object):
         else:
             framed=None
         for senseid in senseids:
-            self.marksortgroup(senseid,framed,group,check=check)
+            self.marksortgroup(senseid,framed,group,check=check,nocheck=True)
+        self.updatestatus(group=group,write=write) # marks the group unverified.
     def marksortgroup(self,senseid,framed,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
         check=kwargs.get('check',self.params.check())
         ftype=kwargs.get('ftype',self.params.ftype())
+        nocheck=kwargs.get('nocheck',False)
         guid=None
         if group is None or group == '':
             log.error("groupselected: {}; this should never happen"
@@ -5094,7 +5096,8 @@ class Sort(object):
                                     fieldvalue=group,
                                     write=False
                                     )
-            newgroup=unlist(self.db.get("example/tonefield/form/text",
+            if not nocheck:
+                newgroup=unlist(self.db.get("example/tonefield/form/text",
                         senseid=senseid, location=self.check).get('text'))
         else:
             self.db.annotatefield(
@@ -5105,21 +5108,24 @@ class Sort(object):
                                 value=group,
                                 write=False
                                 )
-            newgroup=unlist(self.db.fieldvalue(
+            if not nocheck:
+                newgroup=unlist(self.db.fieldvalue(
                                 senseid=senseid,
                                 analang=self.analang,
                                 name=check,
                                 ftype=ftype,
                                 ))
-        if newgroup != group:
-            log.error("Field addition failed! LIFT says {}, not {}.".format(
-                                                newgroup,group))
-        else:
-            log.info("Field addition succeeded! LIFT says {}, which is {}."
+        if not nocheck:
+            if newgroup != group:
+                log.error("Field addition failed! LIFT says {}, not {}.".format(
+                                                    newgroup,group))
+            else:
+                log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(newgroup,group))
         self.status.last('sort',update=True)
         self.status.tojoin(True) # will need to be distinguished again
-        self.updatestatus(group=group,write=write) # marks the group unverified.
+        if not nocheck:
+            self.updatestatus(group=group,write=write) # marks the group unverified.
         if write:
             self.db.write() #This is never iterated over; just one entry at a time.
     def updatesortingstatus(self, store=True, **kwargs):
