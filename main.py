@@ -10307,6 +10307,16 @@ class StatusDict(dict):
         if v is not None:
             self._tojoinbool=sn['tojoin']=v
         return self._tojoinbool
+    def presorted(self,v=None,**kwargs):
+        kwargs=self.checkslicetypecurrent(**kwargs) # current value defaults
+        sn=self.node(**kwargs)
+        ok=[None,True,False]
+        if v not in ok:
+            log.error("presorted value ({}) invalid: OK values: {}".format(v,ok))
+        self._presortedbool=sn['presorted']
+        if v is not None:
+            self._presortedbool=sn['presorted']=v
+        return self._presortedbool
     def tosort(self,v=None,**kwargs):
         kwargs=self.checkslicetypecurrent(**kwargs) # current value defaults
         sn=self.node(**kwargs)
