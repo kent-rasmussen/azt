@@ -437,7 +437,7 @@ class Menus(ui.Menu):
         self.advancedmenu.add_separator()
         options=[(_("Add/Modify Ad Hoc Sorting Group"),
                                                 self.parent.addmodadhocsort),]
-        if isinstance(self.parent,SortCitationT):
+        if isinstance(self.parent,SortT):
             options.extend([(_("Add Tone frame"), self.parent.addframe),
                             (_("Resort skipped data"), self.parent.tryNAgain),
                             (_("Reverify current framed group"),
@@ -3666,7 +3666,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 """Do these next"""
                 # tasks.append(SortV)
                 # tasks.append(SortC)
-                tasks.append(SortCitationT)
+                tasks.append(SortT)
                 if self.doneenough['sortT']:
                     tasks.append(RecordCitationT)
             if program['testing'] and hasattr(self,'testdefault'):
@@ -7261,7 +7261,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
         self.getanotherskip(self.content.anotherskip,self.groupvars)
         log.info("getanotherskip vardict (1): {}".format(self.groupvars))
-class SortCitationT(Sort,Tone,TaskDressing,ui.Window):
+class SortT(Sort,Tone,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconT']
     def tasktitle(self):
