@@ -3973,7 +3973,6 @@ class TaskChooser(TaskDressing,ui.Window):
                 raise
     def __init__(self,parent):
         # self.testdefault=Parse
-        self.testdefault=SortV
         self.start_time=time.time() #this enables boot time evaluation
         self.writing=False
         self.datacollection=True # everyone starts here?
