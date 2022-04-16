@@ -867,25 +867,25 @@ class StatusFrame(ui.Frame):
                             relief='flat',cmd=self.settings.status.nextprofile)
                     brh.grid(row=row,column=column,sticky='e')
                     brht=ui.ToolTip(brh,_("Go to the next syllable profile"))
-                for frame in frames+['next']:
+                for check in allchecks+['next']:
                     column+=1
                     if profile == 'colheader':
-                        if frame == 'next': # end of column headers
-                            bch=ui.Button(self.leaderboardtable,text=frame,
+                        if check == 'next': # end of column headers
+                            bch=ui.Button(self.leaderboardtable,text=check,
                                         relief='flat',
                                         cmd=self.settings.status.nextcheck,
                                         font='reportheader',
                                         row=row,column=column,sticky='s')
-                            bcht=ui.ToolTip(bch,_("Go to the next tone frame"))
+                            bcht=ui.ToolTip(bch,_("Go to the next check"))
                         else:
                             ui.Label(self.leaderboardtable,
-                                    text=rx.linebreakwords(frame),
+                                    text=rx.linebreakwords(check),
                                     font='reportheader',
                                     row=row,column=column,sticky='s',ipadx=5)
                     elif profile == 'next':
                         continue
-                    elif frame in self.settings.status[cvt][ps][profile]:
-                        node=self.settings.status[cvt][ps][profile][frame]
+                    elif check in self.settings.status[cvt][ps][profile]:
+                        node=self.settings.status[cvt][ps][profile][check]
                         if len(node['done']) > len(node['groups']):
                             ungroups+=1
                         #At this point, these should be there
@@ -916,7 +916,7 @@ class StatusFrame(ui.Frame):
                                 anchor='c',
                                 padx=0,pady=0
                                 )
-                        if profile == curprofile and frame == curcheck:
+                        if profile == curprofile and check == curcheck:
                             tb.configure(background=tb['activebackground'])
                             tb.configure(command=donothing)
                             tip=_("Current settings \nprofile: ‘{}’; \nframe: ‘{}’"
