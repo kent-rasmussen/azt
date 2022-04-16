@@ -22,11 +22,11 @@ ECHO You should be fine with all default options
 start Git-2.33.0.2-64-bit.exe
 
 ECHO Cloning A→Z+T source to azt directory on your desktop
-cd /d %userprofile%/desktop
-git clone https://github.com/kent-rasmussen/azt.git
+cd /d "%userprofile%/desktop"
+git clone "https://github.com/kent-rasmussen/azt.git"
 ECHO making links to AZT and Transcriber tool...
-mklink AZT azt/main.py
-mklink Transcriber azt/transcriber.py
+mklink AZT "azt/main.py"
+mklink Transcriber "azt/transcriber.py"
 
 ECHO Install done! (hopefully!)
 
@@ -42,7 +42,8 @@ start XLingPaper3-10-1XXEPersonalEditionFullSetup.exe
 
 ECHO Downloading Praat 6211...
 If exist praat6211_win64.zip (ECHO praat6211_win64.zip is there!) ELSE (powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.fon.hum.uva.nl/praat/praat6211_win64.zip' -OutFile 'praat6211_win64.zip'")
-tar -xvf praat6211_win64.zip -C %ProgramFiles%
+tar -xvf praat6211_win64.zip -C "%ProgramFiles%"
 setx path "%path%;%ProgramFiles%"
 
-#powershell.exe -nologo -noprofile -command "& { $shell = New-Object -COM Shell.Application; $target = $shell.NameSpace('C:\extractToThisDirectory'); $zip = $shell.NameSpace('C:\extractThis.zip'); $target.CopyHere($zip.Items(), 16); }"
+echo Stopping here just in case you need to read anything above; we're done!
+Pause
