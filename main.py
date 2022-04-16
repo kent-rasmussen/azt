@@ -2120,6 +2120,7 @@ class Settings(object):
             ErrorNotice(text)
         elif isinstance(self.taskchooser.task,Sort):
             newtaskclass=getattr(sys.modules[__name__],'Sort'+choice)
+            self.status.makecheckok() #this is intentionally broad: *any* check
             self.taskchooser.maketask(newtaskclass)
         if window:
             window.destroy()
