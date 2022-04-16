@@ -830,6 +830,10 @@ class StatusFrame(ui.Frame):
         curprofile=self.settings.slices.profile()
         curcheck=self.settings.params.check()
         frames=list(self.settings.toneframes[ps].keys())
+        allchecks=[]
+        for profile in profiles:
+            allchecks+=self.settings.status[cvt][ps][profile].keys()
+        allchecks=list(dict.fromkeys(allchecks))
         profiles=['colheader']+profiles+['next']
         ungroups=0
         tv=_("verified")
