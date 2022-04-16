@@ -5056,6 +5056,14 @@ class Sort(object):
                 return #if the user didn't supply a check
         self.updatesortingstatus() # Not just tone anymore
         self.maybesort()
+    def presort(self,senseids,check,group):
+        if self.cvt == 'T':
+            log.error("This function isn't used for tone!")
+            return
+        else:
+            framed=None
+        for senseid in senseids:
+            self.marksortgroup(senseid,framed,group,check=check)
     def marksortgroup(self,senseid,framed,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
