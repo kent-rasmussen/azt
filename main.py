@@ -5068,7 +5068,7 @@ class Sort(object):
             framed=None
         for senseid in senseids:
             self.marksortgroup(senseid,framed,group,check=check,nocheck=True)
-        self.updatestatus(group=group,write=write) # marks the group unverified.
+        self.updatestatus(group=group,write=True) # marks the group unverified.
     def marksortgroup(self,senseid,framed,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
