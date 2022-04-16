@@ -17,6 +17,9 @@ start python-3.6.8-amd64.exe
 ECHO Downloading Git 2.33.0.2...
 If exist Git-2.33.0.2-64-bit.exe (ECHO Git-2.33.0.2-64-bit.exe is there!) ELSE (powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'")
 
+ECHO waiting for you to finish installing Python 3.6.8
+pause
+
 ECHO Installing Git 2.33.0.2
 ECHO You should be fine with all default options
 start Git-2.33.0.2-64-bit.exe
@@ -31,7 +34,7 @@ mklink Transcriber "azt/transcriber.py"
 ECHO Install done! (hopefully!)
 
 ECHO I'll pause now; cancel now to be finished, or press any key to continue
-ECHO to install XLingPapper and Praat, to get the most out of A→Z+T.
+ECHO to install XLingPaper and Praat, to get the most out of A→Z+T.
 pause
 
 ECHO Downloading XLingPaper 3.10...
