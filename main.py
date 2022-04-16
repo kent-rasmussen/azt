@@ -4971,6 +4971,61 @@ class Sort(object):
                 return #if the user didn't supply a check
         self.settings.updatesortingstatus() # Not just tone anymore
         self.maybesort()
+    def marksortgroup(self,senseid,framed,group,**kwargs):
+        # group=kwargs.get('group',self.status.group())
+        write=kwargs.get('write',True)
+        guid=None
+        if group is None or group == '':
+            log.error("groupselected: {}; this should never happen"
+                        "".format(group))
+            exit()
+        log.debug("Adding {} value to {} location in 'tone' fieldtype, "
+                "senseid: {} guid: {} (in main_lift.py)".format(
+                    group,
+                    self.check,
+                    senseid,
+                    guid))
+        if self.cvt == 'T':
+            ftype=self.toneframes[self.ps][self.check]['field'] #this must match check!
+            self.db.addmodexamplefields( #This should only mod if already there
+                                    senseid=senseid,
+                                    analang=self.analang,
+                                    fieldtype='tone',
+                                    #frames should be ftype specific
+                                    location=self.check,
+                                    ftype=ftype, #needed to get correct form
+                                    framed=framed,
+                                    fieldvalue=group,
+                                    write=False
+                                    )
+            newgroup=unlist(self.db.get("example/tonefield/form/text",
+                        senseid=senseid, location=self.check).get('text'))
+        else:
+            self.db.annotatefield(
+                                senseid=senseid,
+                                analang=self.analang,
+                                name=self.check,
+                                ftype=self.ftype,
+                                value=group,
+                                write=False
+                                )
+            newgroup=unlist(self.db.fieldvalue(
+                                senseid=senseid,
+                                analang=self.analang,
+                                name=self.check,
+                                ftype=self.ftype,
+                                ))
+        if newgroup != group:
+            log.error("Field addition failed! LIFT says {}, not {}.".format(
+                                                newgroup,group))
+        else:
+            log.info("Field addition succeeded! LIFT says {}, which is {}."
+                                        "".format(newgroup,group))
+        self.status.last('sort',update=True)
+        self.status.tojoin(True) # will need to be distinguished again
+        self.updatestatus(group=group,write=write) # marks the group unverified.
+        if write:
+            self.db.write() #This is never iterated over; just one entry at a time.
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses, as well as sorted (but not verified) groups.
@@ -7122,61 +7177,6 @@ class SortButtonFrame(ui.ScrollingFrame):
         newgroup=max(values)+1
         groups.append(str(newgroup))
         return str(newgroup)
-    def marksortgroup(self,senseid,framed,group,**kwargs):
-        # group=kwargs.get('group',self.status.group())
-        write=kwargs.get('write',True)
-        guid=None
-        if group is None or group == '':
-            log.error("groupselected: {}; this should never happen"
-                        "".format(group))
-            exit()
-        log.debug("Adding {} value to {} location in 'tone' fieldtype, "
-                "senseid: {} guid: {} (in main_lift.py)".format(
-                    group,
-                    self.check,
-                    senseid,
-                    guid))
-        if self.cvt == 'T':
-            ftype=self.toneframes[self.ps][self.check]['field'] #this must match check!
-            self.db.addmodexamplefields( #This should only mod if already there
-                                    senseid=senseid,
-                                    analang=self.analang,
-                                    fieldtype='tone',
-                                    #frames should be ftype specific
-                                    location=self.check,
-                                    ftype=ftype, #needed to get correct form
-                                    framed=framed,
-                                    fieldvalue=group,
-                                    write=False
-                                    )
-            newgroup=unlist(self.db.get("example/tonefield/form/text",
-                        senseid=senseid, location=self.check).get('text'))
-        else:
-            self.db.annotatefield(
-                                senseid=senseid,
-                                analang=self.analang,
-                                name=self.check,
-                                ftype=self.ftype,
-                                value=group,
-                                write=False
-                                )
-            newgroup=unlist(self.db.fieldvalue(
-                                senseid=senseid,
-                                analang=self.analang,
-                                name=self.check,
-                                ftype=self.ftype,
-                                ))
-        if newgroup != group:
-            log.error("Field addition failed! LIFT says {}, not {}.".format(
-                                                newgroup,group))
-        else:
-            log.info("Field addition succeeded! LIFT says {}, which is {}."
-                                        "".format(newgroup,group))
-        self.status.last('sort',update=True)
-        self.status.tojoin(True) # will need to be distinguished again
-        self.updatestatus(group=group,write=write) # marks the group unverified.
-        if write:
-            self.db.write() #This is never iterated over; just one entry at a time.
     def sortselected(self,senseid,framed):
         selectedgroups=selected(self.groupvars)
         log.info("selectedgroups: {}".format(selectedgroups))
@@ -7202,7 +7202,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
                 """Can't thread this; the button needs to find data"""
-                self.marksortgroup(senseid,framed,group,write=False)
+                self.task.marksortgroup(senseid,framed,group,write=False)
                 self.addgroupbutton(group)
                 #adjust window for new button
                 self.windowsize()
@@ -7219,7 +7219,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 """This needs to *not* operate on "exit" button."""
                 """thread here?"""
                 # self.marksortgroup(senseid,framed,group=group,write=False)
-                t = threading.Thread(target=self.marksortgroup,
+                t = threading.Thread(target=self.task.marksortgroup,
                                     args=(senseid,framed,group),
                                     kwargs={'write':False})
                 t.start()
