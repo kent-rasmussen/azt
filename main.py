@@ -4970,7 +4970,7 @@ class Sort(object):
             exit=self.getcheck()
             if exit and not self.exitFlag.istrue():
                 return #if the user didn't supply a check
-        self.settings.updatesortingstatus() # Not just tone anymore
+        self.updatesortingstatus() # Not just tone anymore
         self.maybesort()
     def marksortgroup(self,senseid,framed,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
@@ -5867,7 +5867,7 @@ class Record(Sound):
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
     def record(self):
-        self.settings.updatesortingstatus() #is this needed? This is the first fn on button click
+        self.updatesortingstatus() #is this needed? This is the first fn on button click
         if self.params.cvt() == 'T':
             self.showtonegroupexs()
         else:
