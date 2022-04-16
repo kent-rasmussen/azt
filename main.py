@@ -4555,34 +4555,6 @@ class Tone(object):
                 break
         self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
         self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
-    def updatebygroupsenseid(self,oldtonevalue,newtonevalue,verified=False):
-        # This function updates the field value and verification status (which
-        # contains the field value) in the lift file.
-        # This is all the words in the database with the given
-        # location:value correspondence (any ps/profile)
-        check=self.params.check()
-        lst2=self.db.get('sense',location=check,tonevalue=oldtonevalue
-                                                                ).get('senseid')
-        # We are agnostic of verification status of any given entry, so just
-        # use this to change names, not to mark verification status (do that
-        # with self.updatestatuslift())
-        rm=self.verifictioncode(check=check,group=oldtonevalue)
-        add=self.verifictioncode(check=check,group=newtonevalue)
-        """The above doesn't test for profile, so we restrict that next"""
-        profile=self.slices.profile()
-        senseids=self.slices.inslice(lst2)
-        for senseid in senseids:
-            """This updates the fieldvalue from 'fieldvalue' to
-            'newfieldvalue'."""
-            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
-                                location=check,#fieldvalue=oldtonevalue,
-                                fieldvalue=newtonevalue,write=False)
-            self.db.modverificationnode(senseid=senseid,
-                            vtype=profile,
-                            analang=self.analang,
-                            add=add,rms=[rm],
-                            addifrmd=True,write=False)
-        self.db.write() #once done iterating over senseids
     def addframe(self,**kwargs):
         log.info('Tone frame to add!')
         """I should add gloss2 option here, likely just with each language.
@@ -5800,6 +5772,35 @@ class Sort(object):
             #                 oldfieldvalue='NA', showurl=True #if this
             #                 )
         self.runcheck()
+    def updatebygroupsenseid(self,oldtonevalue,newtonevalue,verified=False):
+        """Generalize this for segments"""
+        # This function updates the field value and verification status (which
+        # contains the field value) in the lift file.
+        # This is all the words in the database with the given
+        # location:value correspondence (any ps/profile)
+        check=self.params.check()
+        lst2=self.db.get('sense',location=check,tonevalue=oldtonevalue
+                                                                ).get('senseid')
+        # We are agnostic of verification status of any given entry, so just
+        # use this to change names, not to mark verification status (do that
+        # with self.updatestatuslift())
+        rm=self.verifictioncode(check=check,group=oldtonevalue)
+        add=self.verifictioncode(check=check,group=newtonevalue)
+        """The above doesn't test for profile, so we restrict that next"""
+        profile=self.slices.profile()
+        senseids=self.slices.inslice(lst2)
+        for senseid in senseids:
+            """This updates the fieldvalue from 'fieldvalue' to
+            'newfieldvalue'."""
+            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
+                                location=check,#fieldvalue=oldtonevalue,
+                                fieldvalue=newtonevalue,write=False)
+            self.db.modverificationnode(senseid=senseid,
+                            vtype=profile,
+                            analang=self.analang,
+                            add=add,rms=[rm],
+                            addifrmd=True,write=False)
+        self.db.write() #once done iterating over senseids
     def __init__(self, parent):
         parent.settings.makeeverythingok()
         """I need some way to control for ftype"""
