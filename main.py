@@ -832,7 +832,8 @@ class StatusFrame(ui.Frame):
         frames=list(self.settings.toneframes[ps].keys())
         allchecks=[]
         for profile in profiles:
-            allchecks+=self.settings.status[cvt][ps][profile].keys()
+            if profile in self.settings.status[cvt][ps]:
+                allchecks+=self.settings.status[cvt][ps][profile].keys()
         allchecks=list(dict.fromkeys(allchecks))
         profiles=['colheader']+profiles+['next']
         ungroups=0
