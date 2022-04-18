@@ -943,7 +943,7 @@ class StatusFrame(ui.Frame):
         self.glosslangline()
         if isinstance(self.task,Segments):
             self.fieldsline()
-        if (isinstance(self.task,Sort) or
+        if hasattr(self.settings,'slices') and (isinstance(self.task,Sort) or
             (isinstance(self.task,Tone) and
                 not isinstance(self.task,Report)) or
             (isinstance(self.task,Report) and
