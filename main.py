@@ -11157,8 +11157,13 @@ def mainproblem():
             )
         m.bind("<Button-1>", lambda e: openweburl(durl))
         m2=ui.Label(errorw.frame,
-            text=_("I will try to install this for you, but you will need to "
-                    "restart."),
+            text=_("I have tried to install some Python dependencies for you. "
+                    "If everything but ‘patiencediff’ installed "
+                    "(see log below), just close this window and {0} "
+                    "will restart. "
+                    "\nIf you see connectivity errors, check your internet "
+                    "connection before running {0} again; we need to "
+                    "download some stuff for this.").format(program['name']),
             justify='left', font='instructions',
             wraplength=errorroot.wraplength,
             row=2,column=0
