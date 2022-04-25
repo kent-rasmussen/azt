@@ -11137,6 +11137,7 @@ def mainproblem():
             w.destroy()
     except:
         errorroot = ui.Root(program=program)
+        errorroot.wraplength=int(errorroot.winfo_screenwidth()*.7) #exit button
         newtk=True
         log.info(_("Starting with new root"))
     errorroot.withdraw()
