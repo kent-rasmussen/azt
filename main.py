@@ -11195,8 +11195,10 @@ def mainproblem():
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
+    ui.Button(errorw.outsideframe,text=_("Restart {}").format(program['name']),
+                cmd=sysrestart,
+                row=1,column=2)
     errorw.wait_window(errorw)
-    sysrestart()
     if newtk: #likely never work/needed?
         errorroot.mainloop() #This has to be the last thing
 """functions which are not (no longer?) used"""
