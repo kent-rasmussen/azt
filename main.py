@@ -11160,6 +11160,7 @@ def mainproblem():
             text=_("I will try to install this for you, but you will need to "
                     "restart."),
             justify='left', font='instructions',
+            wraplength=errorroot.wraplength,
             row=2,column=0
             )
     lcontents=logsetup.contents(50)
