@@ -11195,11 +11195,10 @@ def mainproblem():
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
-    if newtk: #likely never work/needed?
-        errorroot.mainloop()
     errorw.wait_window(errorw)
-    sys.exit()
-    exit()
+    sysrestart()
+    if newtk: #likely never work/needed?
+        errorroot.mainloop() #This has to be the last thing
 """functions which are not (no longer?) used"""
 def name(x):
     try:
