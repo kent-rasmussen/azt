@@ -11191,6 +11191,7 @@ def mainproblem():
                 justify=ui.LEFT,
                 font='report',
                 row=0,column=0)
+    o.wrap()
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
