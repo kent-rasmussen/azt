@@ -4001,8 +4001,7 @@ class TaskChooser(TaskDressing,ui.Window):
             self.warning.destroy()
         # pyargs=[program['python'],file.getfile(__file__)]
         # subprocess.run(pyargs)
-        os.execv(sys.argv[0], sys.argv)
-        sys.exit()
+        sysrestart()
         # self.parent.makecheck(filename)
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
@@ -11081,6 +11080,9 @@ def tryrun(cmd):
         text=_("{} command error: {}\n({})").format(cmd.__name__,e,cmd)
         log.error(text)
         ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
+def sysrestart():
+    os.execv(sys.argv[0], sys.argv)
+    sys.exit()
 def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
