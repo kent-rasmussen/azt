@@ -330,6 +330,9 @@ class Link(ET.Element):
             ph=XLPobject(self,'tPhonetic',text)
         else:
             self.node.text=text
+        """<mediaObject src="../audio/Nouncitationbackdos.wav"></mediaObject>
+        <lingPaper includemediaobjects='yes' />
+        """
 class Linebreak(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'br')
