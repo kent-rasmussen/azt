@@ -4123,6 +4123,13 @@ class Segments(object):
             if regex.search(form):
                 output+=self.settings.formstosearch[ps][form]
         return output
+    def getsenseidsingroup(self,check,group):
+        ftype=self.params.ftype()
+        fkwargs={
+                ftype+'annotationname':check,
+                ftype+'annotationvalue':group
+                }
+        return self.db.get("sense", **fkwargs).get('senseid')
     def __init__(self, parent):
         if parent.params.cvt() == 'T':
             parent.settings.setcvt('V')
@@ -4801,6 +4808,9 @@ class Tone(object):
         self.addframe()
         self.addwindow.wait_window(self.addwindow)
         self.runcheck()
+    def getsenseidsingroup(self,check,group):
+        return self.db.get('sense',location=check,tonevalue=group
+                                                                ).get('senseid')
     def __init__(self,parent):
         parent.params.cvt('T')
 class Sort(object):
