@@ -5665,10 +5665,10 @@ class Sort(object):
         oktext=_('These are all different')
         introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
                 "sorted into the groups exemplified below (in the ‘{}’ frame). "
-                "Do any of these have the same tone melody? "
+                "Do any of these have the same {}? "
                 "If so, click on two groups to join. "
                 "If not, just click ‘{ok}’."
-                ).format(ps,profile,check,ok=oktext)
+                ).format(ps,profile,check,self.params.cvcheckname(),ok=oktext)
         log.debug(introtext)
         self.runwindow.resetframe()
         self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
