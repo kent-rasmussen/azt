@@ -5075,9 +5075,11 @@ class Sort(object):
             return
         else:
             framed=None
+        w=self.getrunwindow(msg=_("Presorting words by {}={}").format(check,group))
         for senseid in senseids:
             self.marksortgroup(senseid,framed,group,check=check,nocheck=True)
         self.updatestatus(group=group,write=True) # marks the group unverified.
+        self.runwindow.waitdone()
     def marksortgroup(self,senseid,framed,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
