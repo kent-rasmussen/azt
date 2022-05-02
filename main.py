@@ -5868,7 +5868,7 @@ class Sound(object):
                                     command=self.settings.setsoundcardindex,
                                     window=window,
                                     column=0, row=1
-                                    ) 
+                                    )
     def getsoundcardoutindex(self,event=None):
         log.info("Asking for output sound card...")
         window=ui.Window(self.frame, title=_('Select Output Sound Card'))
