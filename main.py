@@ -4820,18 +4820,7 @@ class Sort(object):
         cvt=kwargs.get('cvt',self.params.cvt())
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
-        if cvt == 'T':
-            senseids=self.db.get("sense", location=check, tonevalue=group,
-                            path=['tonefield']).get('senseid')
-        else:
-            ftype=self.params.ftype()
-            fkwargs={ftype+'annotationname':check,
-                    ftype+'annotationvalue':group
-                    }
-            senseids=self.db.get("sense", **fkwargs #location=check, tonevalue=group,
-                            # path=['tonefield']
-                                ).get('senseid')
-        return senseids
+        return self.getsenseidsingroup(check, group)
     def updatestatuslift(self,verified=False,**kwargs):
         """This should be called only by update status, when there is an actual
         change in status to write to file."""
@@ -5804,8 +5793,7 @@ class Sort(object):
         # This is all the words in the database with the given
         # location:value correspondence (any ps/profile)
         check=self.params.check()
-        lst2=self.db.get('sense',location=check,tonevalue=oldtonevalue
-                                                                ).get('senseid')
+        lst2=self.getsenseidsingroup()
         # We are agnostic of verification status of any given entry, so just
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
@@ -8451,18 +8439,7 @@ class ExampleDict(dict):
     in a given tone frame (from check); thus, only sorted data."""
     def senseidsinslicegroup(self,group,check):
         #This returns all the senseids with a given tone value
-        if self.params.cvt() == 'T':
-            senseids=self.db.get("sense", location=check, path=['tonefield'],
-                            tonevalue=group
-                            ).get('senseid')
-        else:
-            ftype=self.params.ftype()
-            kwargs={ftype+'annotationname':check,
-                    ftype+'annotationvalue':group}
-            senseids=self.db.get("sense",
-                                    showurl=True,
-                                    **kwargs
-                                    ).get('senseid')
+        senseids=self.getsenseidsingroup(check,group)
         if not senseids:
             log.error("There don't seem to be any sensids in this check tone "
                 "group, so I can't get you an example. ({} {})"
