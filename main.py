@@ -5143,7 +5143,8 @@ class Sort(object):
             self.updatestatus(group=group,write=write) # marks the group unverified.
         if write:
             self.db.write() #This is never iterated over; just one entry at a time.
-        return newgroup
+        if not nocheck:
+            return newgroup
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses, as well as sorted (but not verified) groups.
