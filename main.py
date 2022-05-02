@@ -5507,7 +5507,7 @@ class Sort(object):
         self.getrunwindow(msg="preparing to verify group: {}".format(group))
         oktext='These all have the same {}'.format(self.params.cvcheckname())
         instructions=_("Read down this list to verify they all have the same "
-            "{}. Select any word with a different tone melody to "
+            "{0} sound. Select any word with a different {0} sound to "
             "remove it from the list.").format(self.params.cvcheckname())
         """group is set here, but probably OK"""
         self.status.build()
