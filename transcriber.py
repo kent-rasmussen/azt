@@ -76,9 +76,15 @@ class Transcriber(ui.Frame):
             self.soundsettings=sound.SoundSettings(self.pyaudio)
         self.beeps=sound.BeepGenerator(pyAudio=self.pyaudio,
                                             settings=self.soundsettings)
+        else:
+            chars=kwargs.pop('chars',None) #in case it is None/0/False, etc.
+            tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
+            spaces=[' ',' ']
+            chars=tonechars+spaces
+            ncols=7
+            nrows=1
+        clear=['']
         ui.Frame.__init__(self, parent, **kwargs)
-        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
-        spaces=[' ',' ','']
         buttonframe=ui.Frame(self, row=0, column=0, sticky='new')
         log.info("Transcriber using {} rows, {} columns".format(nrows,ncols))
         for char in chars+clear:
