@@ -103,6 +103,8 @@ class Transcriber(ui.Frame):
                 text=char
                 columnspan=1
                 row=0
+            # if char in chars:
+            #     log.info("Making Button {} at row={}, column={}".format(chars.index(char),row, column))
             ui.Button(buttonframe,text = text,
                         command = lambda x=char:self.addchar(x),
                         anchor ='c',
