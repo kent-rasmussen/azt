@@ -78,6 +78,10 @@ class Transcriber(ui.Frame):
                                             settings=self.soundsettings)
         if 'chars' in kwargs and kwargs['chars'] and type(kwargs['chars']) is list:
             chars=kwargs.pop('chars')
+            if len(chars) >25:
+                root=int(len(chars)**(1/2))+2
+            else:
+                root=7 #at least this many columns
         else:
             chars=kwargs.pop('chars',None) #in case it is None/0/False, etc.
             tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
