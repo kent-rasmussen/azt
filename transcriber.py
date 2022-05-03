@@ -77,6 +77,7 @@ class Transcriber(ui.Frame):
         self.beeps=sound.BeepGenerator(pyAudio=self.pyaudio,
                                             settings=self.soundsettings)
         if 'chars' in kwargs and kwargs['chars'] and type(kwargs['chars']) is list:
+            chars=kwargs.pop('chars')
         else:
             chars=kwargs.pop('chars',None) #in case it is None/0/False, etc.
             tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
