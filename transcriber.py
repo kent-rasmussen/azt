@@ -81,6 +81,7 @@ class Transcriber(ui.Frame):
         spaces=[' ',' ','']
         for char in tonechars+spaces:
         buttonframe=ui.Frame(self, row=0, column=0, sticky='new')
+        log.info("Transcriber using {} rows, {} columns".format(nrows,ncols))
             if char == ' ':
                 text=_('syllable break')
                 column=0
