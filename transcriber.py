@@ -77,12 +77,10 @@ class Transcriber(ui.Frame):
         self.beeps=sound.BeepGenerator(pyAudio=self.pyaudio,
                                             settings=self.soundsettings)
         ui.Frame.__init__(self, parent, **kwargs)
-        buttonframe=ui.Frame(self,
-                            row=0,column=0,sticky='new'
-                            )
         tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
         spaces=[' ',' ','']
         for char in tonechars+spaces:
+        buttonframe=ui.Frame(self, row=0, column=0, sticky='new')
             if char == ' ':
                 text=_('syllable break')
                 column=0
