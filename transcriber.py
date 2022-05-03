@@ -82,6 +82,14 @@ class Transcriber(ui.Frame):
                 root=int(len(chars)**(1/2))+2
             else:
                 root=7 #at least this many columns
+            if len(chars)%root:
+                # log.info("{} indivisible by {}!".format(len(chars),root))
+                nrows=len(chars)//root+1
+                ncols=len(chars)//nrows+1
+            else:
+                # log.info("{} divisible by {}!".format(len(chars),root))
+                ncols=root
+                nrows=len(chars)//root
         else:
             chars=kwargs.pop('chars',None) #in case it is None/0/False, etc.
             tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
