@@ -79,9 +79,9 @@ class Transcriber(ui.Frame):
         ui.Frame.__init__(self, parent, **kwargs)
         tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
         spaces=[' ',' ','']
-        for char in tonechars+spaces:
         buttonframe=ui.Frame(self, row=0, column=0, sticky='new')
         log.info("Transcriber using {} rows, {} columns".format(nrows,ncols))
+        for char in chars+clear:
             if char == ' ':
                 text=_('syllable break')
                 column=0
