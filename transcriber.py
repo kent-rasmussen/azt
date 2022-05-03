@@ -86,20 +86,20 @@ class Transcriber(ui.Frame):
             if char == ' ':
                 text=_('syllable break')
                 column=0
-                columnspan=int(len(tonechars)/2)+1
+                columnspan=int(ncols/2)+1
                 row=1
             elif char == ' ':
                 text=_('word break')
-                columnspan=int(len(tonechars)/2)
+                columnspan=int(ncols/2)
                 column=columnspan+1
                 row=1
             elif char == '':
                 text=_('clear entry')
                 column=0
-                columnspan=len(tonechars)
+                columnspan=ncols
                 row=nrows+1
             else:
-                column=tonechars.index(char)
+                column=chars.index(char)%ncols
                 text=char
                 columnspan=1
                 row=chars.index(char)//ncols
