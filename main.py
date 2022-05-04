@@ -2126,14 +2126,20 @@ class Settings(object):
         self.attrschanged.append('cvt')
         self.refreshattributechanges()
         if isinstance(self.taskchooser.task,Transcribe):
-            text=_("You just changed what set of contrasts you're working on,"
-                    "while working on transcription; I trust you know what you "
-                    "are doing!")
-            ErrorNotice(text)
+            # log.info("Switching Transcribe tasks")
+            newtaskclass=getattr(sys.modules[__name__],'Transcribe'+choice)
+            self.status.makecheckok() #this is intentionally broad: *any* check
+            self.taskchooser.maketask(newtaskclass)
         elif isinstance(self.taskchooser.task,Sort):
+            # log.info("Switching Sort tasks")
             newtaskclass=getattr(sys.modules[__name__],'Sort'+choice)
             self.status.makecheckok() #this is intentionally broad: *any* check
             self.taskchooser.maketask(newtaskclass)
+        else:
+            text=_("You just changed what set of contrasts you're working on,"
+            "while working on transcription; I trust you know what you "
+            "are doing!")
+            ErrorNotice(text)
         if window:
             window.destroy()
     def setanalang(self,choice,window):
