@@ -5142,21 +5142,6 @@ class Sort(object):
                 return #if the user didn't supply a check
         self.updatesortingstatus() # Not just tone anymore
         self.maybesort()
-    def presort(self,senseids,check,group):
-        if self.status.presorted():
-            log.info(_("Presorting for this check/slice already done! ({}; {})"
-                        "").format(check,senseids[0]))
-            return
-        if self.cvt == 'T':
-            log.error("This function isn't used for tone!")
-            return
-        else:
-            framed=None
-        w=self.getrunwindow(msg=_("Presorting words by {}={}").format(check,group))
-        for senseid in senseids:
-            self.marksortgroup(senseid,framed,group,check=check,nocheck=True)
-        self.updatestatus(group=group,write=True) # marks the group unverified.
-        self.runwindow.waitdone()
     def marksortgroup(self,senseid,framed,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
