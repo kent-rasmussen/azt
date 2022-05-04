@@ -988,7 +988,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['a'][3]=['chk']
         c['a'][2]=['ts','tʃ']
         c['lfvd']={}
-        c['lfvd'][2]=['zl','zl']
+        c['lfvd'][2]=['zl']
         c['lfvd'][1]=['ɮ']
         c['lf']={}
         c['lf'][2]=['sl']
