@@ -2125,8 +2125,11 @@ class Settings(object):
         self.params.cvt(choice)
         self.attrschanged.append('cvt')
         self.refreshattributechanges()
-        if isinstance(self.taskchooser.task,Transcribe):
-            # log.info("Switching Transcribe tasks")
+        if (not hasattr(self.taskchooser,'task') or
+                not self.taskchooser.task.mainwindow):
+            log.info("No task, apparently, so not worried about changing cvt")
+        elif isinstance(self.taskchooser.task,Transcribe):
+            log.info("Switching Transcribe tasks")
             newtaskclass=getattr(sys.modules[__name__],'Transcribe'+choice)
             self.status.makecheckok() #this is intentionally broad: *any* check
             self.taskchooser.maketask(newtaskclass)
@@ -2136,10 +2139,7 @@ class Settings(object):
             self.status.makecheckok() #this is intentionally broad: *any* check
             self.taskchooser.maketask(newtaskclass)
         else:
-            text=_("You just changed what set of contrasts you're working on,"
-            "while working on transcription; I trust you know what you "
-            "are doing!")
-            ErrorNotice(text)
+            log.info("Not Sorting or Transcribing; chilling with cvt change.")
         if window:
             window.destroy()
     def setanalang(self,choice,window):
