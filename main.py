@@ -4134,6 +4134,25 @@ class Segments(object):
             if regex.search(form):
                 output+=self.settings.formstosearch[ps][form]
         return output
+    def presort(self,senseids,check,group):
+        if self.status.presorted():
+            log.info(_("Presorting for this check/slice already done! ({}; {})"
+                        "").format(check,senseids[0]))
+            return
+        w=self.getrunwindow(msg=_("Presorting words by {}={}").format(check,group))
+        ftype=self.params.ftype()
+        for senseid in senseids:
+            t = threading.Thread(target=self.marksortgroup,
+                            args=(senseid,group),
+                            kwargs={'check':check,
+                                    'ftype':ftype,
+                                    # 'framed':framed,
+                                    'nocheck':True,
+                                    'write':False})
+            t.start()
+        t.join()
+        self.updatestatus(group=group,write=True) # marks the group unverified.
+        self.runwindow.waitdone()
     def getsenseidsingroup(self,check,group):
         ftype=self.params.ftype()
         fkwargs={
