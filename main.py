@@ -5829,7 +5829,7 @@ class Sort(object):
         # This is all the words in the database with the given
         # location:value correspondence (any ps/profile)
         check=self.params.check()
-        lst2=self.getsenseidsingroup()
+        lst2=self.getsenseidsingroup(check,oldtonevalue)
         # We are agnostic of verification status of any given entry, so just
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
