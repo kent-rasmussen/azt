@@ -2948,6 +2948,9 @@ class TaskDressing(object):
         x=0
         tdict=self.params.cvtdict()
         for cvt in tdict:
+            if cvt == 'CV' and (isinstance(self.task,Sort) or
+                                isinstance(self.task,Transcribe)):
+                continue
             cvts.append({})
             cvts[x]['name']=tdict[cvt]['pl']
             cvts[x]['code']=cvt
