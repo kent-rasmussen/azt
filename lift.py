@@ -2648,14 +2648,24 @@ if __name__ == '__main__':
             }
     ftype='Plural'
     ftype='lc'
+    check='V1'
+    group=1
     for ps in pss:
         kwargs={ftype+'annotationname':'V1',
                 ftype+'annotationvalue':'a'
                 }
-        senseids=lift.get("sense", **kwargs, showurl=True #location=check, tonevalue=group,
-                        # path=['tonefield']
+        senseids=lift.get("sense", location=check, path=['tonefield'],
+                            tonevalue=group,showurl=True
                             ).get('senseid')
-        # senseids=lift.get("sense", #path=['field'],
+        print(senseids)
+        senseids=lift.get("sense", location=check, #path=['tonefield'],
+                            tonevalue=group,showurl=True
+                            ).get('senseid')
+        print(senseids)
+        # senseids=lift.get("sense", **kwargs, showurl=True #location=check, tonevalue=group,
+        #                 # path=['tonefield']
+        #                     ).get('senseid')
+        # # senseids=lift.get("sense", #path=['field'],
         #                 # ftype='lc',
         #                 lcannotationname='V1',
         #                 lcannotationvalue=1,
