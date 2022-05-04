@@ -5351,7 +5351,12 @@ class Sort(object):
                                 "for the ‘{}’ profile. If you want to continue "
                                 "with this profile, define a new frame here."
                                 "".format(self.profile)))
-            b1.grid(row=row,column=0,sticky='e')
+            try:
+                b1.grid(row=row,column=0,sticky='e')
+                nob1=False
+            except:
+                log.info("Apparently we're done, but not working on tone.")
+                nob1=True
             if ptosort or ptoverify:
                 b2=ui.Button(self.runwindow.frame, anchor='c',
                     text=text2+'\n('+_("next syllable profile")+')',
@@ -5374,12 +5379,13 @@ class Sort(object):
             b2.grid(row=row,column=1,sticky='w')
             if self.parent.exitFlag.istrue():
                 return
-            w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
+            if not nob1:
+                w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
                                         self.parent.winfo_screenwidth()/150))
-            log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
+                log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
                                     b1.winfo_reqwidth(),b2.winfo_reqwidth(),w))
-            for i in [b1,b2]:
-                i.config(width=w)
+                for i in [b1,b2]:
+                    i.config(width=w)
             self.runwindow.waitdone()
             return
     def presenttosort(self):
