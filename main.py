@@ -5063,16 +5063,11 @@ class Sort(object):
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
         #This should only *mod* if already there
         if cvt == 'T':
-            self.db.addmodexamplefields(senseid=senseid,
-                                analang=self.analang,
-                                fieldtype='tone',location=check,
-                                fieldvalue='',  #this value only change
-                                showurl=True,
-                                write=False)
             tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
                             location=check).get('text')
         else:
             tgroups=self.marksortgroup(senseid,None,group='')
+        self.setsenseidgroup(senseid,check,'',write=False,**kwargs)
         log.info("Checking that removal worked")
         if tgroups in [[],'',['']]:
             log.info("Field removal succeeded! LIFT says '{}', = []."
@@ -5164,29 +5159,10 @@ class Sort(object):
                 log.error("How did we get no frame? (presort on T?)")
                 return
             ftype=self.toneframes[self.ps][self.check]['field'] #this must match check!
-            self.db.addmodexamplefields( #This should only mod if already there
-                                    senseid=senseid,
-                                    analang=self.analang,
-                                    fieldtype='tone',
-                                    #frames should be ftype specific
-                                    location=check,
-                                    ftype=ftype, #needed to get correct form
-                                    framed=framed,
-                                    fieldvalue=group,
-                                    write=False
-                                    )
             if not nocheck:
                 newgroup=unlist(self.db.get("example/tonefield/form/text",
                         senseid=senseid, location=self.check).get('text'))
         else:
-            self.db.annotatefield(
-                                senseid=senseid,
-                                analang=self.analang,
-                                name=check,
-                                ftype=ftype,
-                                value=group,
-                                write=False
-                                )
             if not nocheck:
                 newgroup=unlist(self.db.fieldvalue(
                                 senseid=senseid,
@@ -5194,6 +5170,7 @@ class Sort(object):
                                 name=check,
                                 ftype=ftype,
                                 ))
+        self.setsenseidgroup(senseid,check,group,framed=framed)
         if not nocheck:
             if newgroup != group:
                 log.error("Field addition failed! LIFT says {}, not {}.".format(
@@ -5869,9 +5846,7 @@ class Sort(object):
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
-            self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
-                                location=check,#fieldvalue=oldtonevalue,
-                                fieldvalue=newtonevalue,write=False)
+            self.setsenseidgroup(senseid,check,newtonevalue,write=False)
             self.db.modverificationnode(senseid=senseid,
                             vtype=profile,
                             analang=self.analang,
