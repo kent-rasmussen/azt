@@ -4169,6 +4169,13 @@ class Segments(object):
                 ftype+'annotationvalue':group
                 }
         return self.db.get("sense", **fkwargs).get('senseid')
+    def getgroupofsenseid(self,senseid,check):
+        return self.db.fieldvalue(
+                        senseid=senseid,
+                        analang=self.analang,
+                        name=check,
+                        ftype=self.params.ftype(),
+                        )
     def __init__(self, parent):
         if parent.params.cvt() == 'T':
             parent.settings.setcvt('V')
@@ -4869,6 +4876,9 @@ class Tone(object):
     def getsenseidsingroup(self,check,group):
         return self.db.get('sense',location=check,tonevalue=group
                                                                 ).get('senseid')
+    def getgroupofsenseid(self,senseid,check):
+        return self.db.get("example/tonefield/form/text",
+                senseid=senseid, location=check).get('text')
     def __init__(self,parent):
         parent.params.cvt('T')
 class Sort(object):
