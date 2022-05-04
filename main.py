@@ -4854,6 +4854,16 @@ class Tone(object):
         self.addframe()
         self.addwindow.wait_window(self.addwindow)
         self.runcheck()
+    def verifyframeftype(self,check):
+        ftype=self.toneframes[self.ps][check]['field'] #this must match check!
+        curftype=self.params.ftype()
+        if ftype != curftype:
+            log.error("HEY! This is a problem. We're looking at {} check, "
+            "which is set for a field type {}, but our current field type is "
+            "{}. This should be fixed, and will cause problems!"
+            "".format(check,ftype,curftype))
+            return
+        return ftype
     def setsenseidgroup(self,senseid,check,group,**kwargs):
         """here kwargs should include framed, if you want this to update the
         form information in the example"""
