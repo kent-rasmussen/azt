@@ -1806,6 +1806,8 @@ class Settings(object):
                     self.s[self.analang]['C']+=self.s[self.analang][sclass]
                     continue
                 self.rx[sclass]=rx.s(self.s[self.analang],sclass,compile=True)
+                for n in range(7):
+                    self.rx[sclass+str(n)]=rx.nX(self.s[self.analang][sclass],n)
         #Compile preferred regexs here
         for cc in ['CG','CS','NC','VN','VV']:
             ccc=cc.replace('C','[CSGDʔN]{1}')

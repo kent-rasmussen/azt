@@ -191,6 +191,11 @@ def make(regex, word=False, compile=False):
             log.error('Regex problem!')
     return regex
 def fromCV(check, lang, word=False, compile=False):
+def nX(segmentlist,n):
+    s=slisttoalternations(segmentlist)
+    oneS='[^'+s+']*'+s #This will be a problem if S=NC or CG...
+    nS='^('+oneS*(n-1)+'[^'+s+']*)('+s+')'
+    return make(nS, compile=True)
     """ this inputs regex variable (regexCV), a tuple of two parts:
     1. abbreviations with 'C' and 'V' in it, and/or variables for actual
     segments or back reference, e.g., 1 for \1 or 2 for \2, and 'c' or 'v'.
