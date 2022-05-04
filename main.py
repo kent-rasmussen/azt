@@ -5991,7 +5991,7 @@ class Sound(object):
         self.soundsettingswindow.content=self.soundsettingswindow.scroll.content
         row=0
         ui.Label(self.soundsettingswindow.content, font='title',
-                text=_("Current Sound Card Settings"),
+                text=_("Confirm Sound Card Settings"),
                 row=row,column=0)
         row+=1
         ui.Label(self.soundsettingswindow.content, #font='title',
