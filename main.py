@@ -3483,9 +3483,6 @@ class TaskDressing(object):
                     'mainrelief','fontthemesmall',
                     'hidegroupnames']:
             if not hasattr(self,k):
-                if hasattr(parent,k):
-                    setattr(self,k,getattr(parent,k))
-                else:
                     setattr(self,k,False)
         self.makecvtok()
         ui.ContextMenu(self)
