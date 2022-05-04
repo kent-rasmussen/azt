@@ -8692,7 +8692,7 @@ class ExampleDict(dict):
             self[group]=senseid #save for next time
             return self._outdict
     def __init__(self,params,slices,db,datadict):
-        self.params=params
+        self.params=params #needed?
         self.slices=slices
         self.db=db
         self.datadict=datadict
