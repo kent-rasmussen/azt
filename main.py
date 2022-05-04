@@ -3701,8 +3701,8 @@ class TaskChooser(TaskDressing,ui.Window):
             if self.doneenough['collectionlc']:
                 tasks.append(RecordCitation)
                 """Do these next"""
-                # tasks.append(SortV)
-                # tasks.append(SortC)
+                tasks.append(SortV)
+                tasks.append(SortC)
                 tasks.append(SortT)
                 if self.doneenough['sortT']:
                     tasks.append(RecordCitationT)
@@ -3713,8 +3713,10 @@ class TaskChooser(TaskDressing,ui.Window):
         else: #i.e., analysis tasks
             tasks=[]
             if self.doneenough['sortT']:
+                tasks.append(TranscribeV)
+                tasks.append(TranscribeC)
                 if self.doneenough['recordedT']:
-                    tasks.append(Transcribe)
+                    tasks.append(TranscribeT)
                     if self.doneenough['analysis']:
                         tasks.append(JoinUFgroups)
             if me:
