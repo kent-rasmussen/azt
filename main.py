@@ -7739,14 +7739,18 @@ class Transcribe(Sound,Sort):
             return
         padx=50
         pady=10
-        title=_("Rename {} {} tone group ‘{}’ in ‘{}’ frame"
-                        ).format(ps,profile,self.group,check)
+        title=_("Rename {} {} {} group ‘{}’ in ‘{}’ frame"
+                        ).format(ps,profile,
+                        self.params.cvtdict()[cvt]['sg'],
+                        self.group,check)
         self.getrunwindow(title=title)
         titlel=ui.Label(self.runwindow.frame,text=title,font='title',
                         row=0,column=0,sticky='ew',padx=padx,pady=pady
                         )
-        getformtext=_("What new name do you want to call this surface tone "
-                        "group? A label that describes the surface tone form "
+        getformtext=_("What new name do you want to call this {} "
+                        "group?").format(self.params.cvtdict()[cvt]['sg'])
+        if cvt == 'T':
+            getformtext+=_("\nA label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
         getform=ui.Label(self.runwindow.frame,
                         text=getformtext,
@@ -7762,6 +7766,7 @@ class Transcribe(Sound,Sort):
         self.transcriber=transcriber.Transcriber(inputfeedbackframe,
                                 initval=self.group,
                                 soundsettings=self.soundsettings,
+                                chars=self.glyphspossible,
                                 row=0,column=0,sticky=''
                                 )
         self.transcriber.formfield.bind('<KeyRelease>', self.updateerror) #apply function after key
