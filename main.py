@@ -4125,16 +4125,23 @@ class Segments(object):
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self,lang=self.analang,
                             word=True, compile=True)
+    def ifregexadd(self,regex,form,id):
+        # This fn is just to make this threadable
+        if regex.search(form):
+            self.output+=id
     def senseidformsbyregex(self,regex,**kwargs):
         """This function takes in a compiled regex,
         and outputs a list/dictionary of senseid/{senseid:form} form."""
         ps=kwargs.get('ps',self.slices.ps())
-        output=[] #This is just a list of senseids now: (Do we need the dict?)
-        for form in [i for i in self.settings.formstosearch[ps] if i]:
-            log.info("Looking for form {}".format(form))
-            if regex.search(form):
-                output+=self.settings.formstosearch[ps][form]
-        return output
+        self.output=[] #This is just a list of senseids now: (Do we need the dict?)
+        dicttosearch=self.settings.formstosearch[ps]
+        for form,id in [i for i in dicttosearch.items() if i[0]]:
+            # log.info("Looking for form {}, with id {}".format(form,id))
+            t = threading.Thread(target=self.ifregexadd,
+                                args=(regex,form,id))
+            t.start()
+        t.join()
+        return self.output
     def presort(self,senseids,check,group):
         if self.status.presorted():
             log.info(_("Presorting for this check/slice already done! ({}; {})"
