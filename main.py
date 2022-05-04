@@ -5198,6 +5198,7 @@ class Sort(object):
         else:
             senseids=[]
             groups=self.status.groups(wsorted=True)
+            #multiprocess from here?
             for group in self.status.groups(cvt=cvt):
                 self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
                 # log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
@@ -7719,6 +7720,7 @@ class Transcribe(Sound,Sort):
                         "comparisonbuttons)")
         self.sub_c['text']=t
     def makewindow(self):
+        # log.info("Making transcribe window")
         cvt=self.params.cvt()
         ps=self.slices.ps()
         profile=self.slices.profile()
