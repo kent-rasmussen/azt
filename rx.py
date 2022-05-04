@@ -146,30 +146,36 @@ def inxyz(db, lang, segmentlist): #This calls the above script for each characte
             actuals.append(s)
     log.log(2,'{} {}'.format(time.time()-start_time, segmentlist)) # with this
     return list(dict.fromkeys(actuals))
-def s(settings,stype,lang=None):
+def slisttoalternations(graphemeset):
+    # This provides the form to go in [^ ] lists or alone, with a one grouping
+    # around the list, but with longer graphemes first (trigraphs, then
+    # digraphs and decomposed characters)
+    return "("+'|'.join(sorted(graphemeset,key=len,reverse=True))+")"
+def s(sdict, stype, word=False, compile=False): #settings lang=None
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
-    segments=settings.s
-    if (lang == None) and (hasattr(settings,'analang')):
-        log.log(2,_('telling rx.s which lang to use'))
-        lang=settings.analang
-        log.log(2,_("Using analang: {}".format(settings.analang)))
-    if stype == "C-ʔ":
-        if 'ʔ' in segments[lang]:
-            list=set(segments[lang]['C'])-set(segments[lang]['ʔ'])
-        else:
-            list=set(segments[lang]['C'])
+    """sdict should be a dictionary value keyed by check/settings.s[analang]"""
+    lessdict=set()
+    if stype == "C-ʔ-N":
+        if 'ʔ' in sdict:
+            lessdict+=set(sdict['ʔ'])
+        if 'N' in sdict:
+            lessdict+=set(sdict['N'])
+    elif stype == "C-ʔ":
+        if 'ʔ' in sdict:
+            lessdict+=set(sdict['ʔ'])
     elif stype == "C-N":
-        if 'N' in segments[lang]:
-            list=set(segments[lang]['C'])-set(segments[lang]['N'])
-        else:
-            list=set(segments[lang]['C'])
-    elif stype in segments[lang]:
-        list=segments[lang][stype]
-    else:
+        if 'N' in sdict:
+            lessdict+=set(sdict['N'])
+    elif stype not in sdict:
         log.error("Dunno why, but this isn't in lists: {}".format(stype))
         return
-    return "("+'|'.join(sorted(list,key=len,reverse=True))+")"
+    graphemeset=set(sdict[stype])-lessdict
+    output=slisttoalternations(graphemeset)
+    if compile:
+        return make(output, word=word, compile=compile)
+    else:
+        return output
 def make(regex, word=False, compile=False):
     if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
         log.error('Regex problem! (need parentheses around segments!):',regex)

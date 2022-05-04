@@ -1805,7 +1805,7 @@ class Settings(object):
                 if sclass in ['G','N','S','D'] and not self.distinguish[sclass]:
                     self.s[self.analang]['C']+=self.s[self.analang][sclass]
                     continue
-                self.rx[sclass]=rx.make(rx.s(self,sclass),compile=True)
+                self.rx[sclass]=rx.s(self.s[self.analang],sclass,compile=True)
         #Compile preferred regexs here
         for cc in ['CG','CS','NC','VN','VV']:
             ccc=cc.replace('C','[CSGDʔN]{1}')
