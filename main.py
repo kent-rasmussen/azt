@@ -7841,6 +7841,127 @@ class Transcribe(Sound,Sort):
         self.sub_c.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
+    def __init__(self): #frame, filename=None
+        Sound.__init__(self)
+class TranscribeV(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
+    def tasktitle(self):
+        return _("Vowel Letters")
+    def tooltip(self):
+        return _("This task helps you decide on your vowel letters.")
+    def dobuttonkwargs(self):
+        return {'text':_("Transcribe Vowel Groups"),
+                'fn':self.makewindow,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['Transcribe'], #self.cvt
+                'sticky':'ew'
+                }
+    def taskicon(self):
+        return program['theme'].photo['iconTranscribe']
+    def __init__(self, parent): #frame, filename=None
+        # Tone.__init__(self, parent)
+        ui.Window.__init__(self, parent)
+        TaskDressing.__init__(self, parent)
+        self.glyphspossible=[ #'a','e','i','o','u','ɛ','ɔ','ɨ','ʉ']
+        #tilde (decomposed):
+        'ã', 'ẽ', 'ɛ̃', 'ə̃', 'ɪ̃', 'ĩ', 'õ', 'ɔ̃', 'ũ', 'ʊ̃',
+        #Combining Greek Perispomeni (decomposed):
+        'a͂', 'i͂', 'o͂', 'u͂',
+        #single code point vowels:
+        'a', 'e', 'i', 'ə', 'o', 'u',
+        # 'A', 'E', 'I', 'Ə', 'O', 'U',
+        'ɑ', 'ɛ', 'ɨ', 'ɔ', 'ʉ', 'ɩ',
+        'æ', 'ʌ', 'ɪ', 'ï', 'ö', 'ʊ',
+        #for those using precomposed letters:
+        # 'à', 'è', 'ì', 'ò', 'ù',
+        # # 'À', 'È', 'Ì', 'Ò', 'Ù',
+        # 'á', 'é', 'í', 'ó', 'ú',
+        # # 'Á', 'É', 'Í', 'Ó', 'Ú',
+        # 'â', 'ê', 'î', 'ô', 'û',
+        # # 'Â', 'Ê', 'Î', 'Ô', 'Û',
+        # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
+        ]
+        self.params.cvt('V')
+        Transcribe.__init__(self)
+class TranscribeC(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
+    def tasktitle(self):
+        return _("Consonant Letters")
+    def tooltip(self):
+        return _("This task helps you decide on your consonant letters.")
+    def dobuttonkwargs(self):
+        return {'text':_("Transcribe Consonant Groups"),
+                'fn':self.makewindow,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['Transcribe'], #self.cvt
+                'sticky':'ew'
+                }
+    def taskicon(self):
+        return program['theme'].photo['iconTranscribe']
+    def __init__(self, parent): #frame, filename=None
+        ui.Window.__init__(self, parent)
+        TaskDressing.__init__(self, parent)
+        self.glyphspossible=[#'p','b','k','g','d','t',]
+        'bh','dh','gh','gb',
+        'b',#'B',
+        'd','g','ɡ', #,'G' messes with profiles
+        'kk','kp',
+        'p',#'P',
+        'ɓ',#'Ɓ',
+        't','ɗ','ɖ','c','k','q',
+        'vh','zh',
+        'j',#'J',
+        'v','z',#'Z',
+        'ʒ','ð','ɣ',
+        'ch','ph','sh','hh','pf','bv',
+        # 'F',
+        'f','s','ʃ','θ','x','h', #not 'S'
+        'dj','dz','dʒ',
+        'chk',
+        'ts','tʃ',
+        'zl',
+        'ɮ',
+        'sl',
+        'ɬ',
+        'ʔ',
+                "ꞌ", #Latin Small Letter Saltillo
+                "'", #Tag Apostrophe
+                'ʼ', #modifier letter apostrophe
+        'ẅ','y',#'Y',
+        'w',#'W',
+        'm',#'M',
+        'n','ŋ','ɲ','ɱ', #'N', messed with profiles
+        'mm','ŋŋ','ny',
+        "ng'",
+        # """Non-Nasal/Glide Sonorants"""
+        'l','r',
+        'rh','wh',
+        ]
+        self.params.cvt('C')
+        Transcribe.__init__(self)
+class TranscribeT(Transcribe,Tone,Sound,Sort,TaskDressing,ui.Window):
+    def tasktitle(self):
+        return _("Transcribe Tone")
+    def tooltip(self):
+        return _("This task helps you transcribe your surface groups, giving "
+                "them meaniningful names (e.g., [˥˥ ˨˨]) instead of numbers.")
+    def dobuttonkwargs(self):
+        return {'text':_("Transcribe Surface Tone Groups"),
+                'fn':self.makewindow,
+                'font':'title',
+                'compound':'top', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['Transcribe'], #self.cvt
+                'sticky':'ew'
+                }
+    def taskicon(self):
+        return program['theme'].photo['iconTranscribe']
+    def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self, parent)
+        ui.Window.__init__(self, parent)
+        TaskDressing.__init__(self, parent)
+        self.glyphspossible=None
+        self.params.cvt('T')
+        Transcribe.__init__(self)
 class JoinUFgroups(Tone,TaskDressing,ui.Window):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
