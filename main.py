@@ -7620,7 +7620,7 @@ class Transcribe(Sound,Sort):
         newtonevalue=self.transcriber.formfield.get()
         self.updategroups()
         if newtonevalue == "":
-            noname=_("Give a name for this tone melody!")
+            noname=_("Give a name for this group!")
             log.debug(noname)
             self.errorlabel['text'] = noname
             return 1
