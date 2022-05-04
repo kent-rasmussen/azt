@@ -8591,7 +8591,7 @@ class ExampleDict(dict):
     in a given tone frame (from check); thus, only sorted data."""
     def senseidsinslicegroup(self,group,check):
         #This returns all the senseids with a given tone value
-        senseids=self.getsenseidsingroup(check,group)
+        senseids=self.datadict.taskchooser.task.getsenseidsingroup(check,group)
         if not senseids:
             log.error("There don't seem to be any sensids in this check tone "
                 "group, so I can't get you an example. ({} {})"
