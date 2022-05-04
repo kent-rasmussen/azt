@@ -2545,6 +2545,13 @@ class TaskDressing(object):
                 setattr(self,attr,getattr(self.settings,attr))
             else:
                 log.info("Didn't find {} in {}".format(attr,self.settings))
+    def makecvtok(self):
+        log.info("cvt: {}".format(self.settings.params.cvt()))
+        if isinstance(self,Tone) and not self.settings.params.cvt() == 'T':
+            self.settings.setcvt('T')
+        if isinstance(self,Segments) and (self.settings.params.cvt()
+                                                    not in ['V','C','CV']):
+            self.settings.setcvt('V')
     def makestatusframe(self,dict=None):
         if hasattr(self,'slices'):
             dictnow={
@@ -3480,6 +3487,7 @@ class TaskDressing(object):
                     setattr(self,k,getattr(parent,k))
                 else:
                     setattr(self,k,False)
+        self.makecvtok()
         ui.ContextMenu(self)
         self.tableiteration=0
         self.makestatusframe()
@@ -4192,8 +4200,7 @@ class Segments(object):
                         ftype=self.params.ftype(),
                         )
     def __init__(self, parent):
-        if parent.params.cvt() == 'T':
-            parent.settings.setcvt('V')
+        pass
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     def addmorpheme(self):
@@ -4905,7 +4912,7 @@ class Tone(object):
         return self.db.get("example/tonefield/form/text",
                 senseid=senseid, location=check).get('text')
     def __init__(self,parent):
-        parent.params.cvt('T')
+        pass
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
