@@ -5132,9 +5132,10 @@ class Sort(object):
                 return #if the user didn't supply a check
         self.updatesortingstatus() # Not just tone anymore
         self.maybesort()
-    def marksortgroup(self,senseid,framed,group,**kwargs):
+    def marksortgroup(self,senseid,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
         write=kwargs.get('write',True)
+        framed=kwargs.get('framed',None)
         check=kwargs.get('check',self.params.check())
         ftype=kwargs.get('ftype',self.params.ftype())
         nocheck=kwargs.get('nocheck',False)
@@ -9145,7 +9146,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
                 """Can't thread this; the button needs to find data"""
-                self.marksortgroup(senseid,framed,group,write=False)
+                self.marksortgroup(senseid,group,framed=framed,write=False)
                 self.addgroupbutton(group)
                 #adjust window for new button
                 self.windowsize()
@@ -9163,8 +9164,9 @@ class SortButtonFrame(ui.ScrollingFrame):
                 """thread here?"""
                 # self.marksortgroup(senseid,framed,group=group,write=False)
                 t = threading.Thread(target=self.marksortgroup,
-                                    args=(senseid,framed,group),
-                                    kwargs={'write':False})
+                                    args=(senseid,group),
+                                    kwargs={'framed':framed,
+                                            'write':False})
                 t.start()
         else:
             log.debug('No group selected: {}'.format(groupselected))
