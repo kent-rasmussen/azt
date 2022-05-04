@@ -5061,12 +5061,8 @@ class Sort(object):
         sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
         #This should only *mod* if already there
-        if cvt == 'T':
-            tgroups=self.db.get("example/tonefield/form/text", senseid=senseid,
-                            location=check).get('text')
-        else:
-            tgroups=self.marksortgroup(senseid,None,group='')
         self.setsenseidgroup(senseid,check,'',write=False,**kwargs)
+        tgroups=self.getgroupofsenseid(senseid,check)
         log.info("Checking that removal worked")
         if tgroups in [[],'',['']]:
             log.info("Field removal succeeded! LIFT says '{}', = []."
@@ -5153,23 +5149,8 @@ class Sort(object):
                     check,
                     senseid,
                     guid))
-        if self.cvt == 'T':
-            if not framed:
-                log.error("How did we get no frame? (presort on T?)")
-                return
-            ftype=self.toneframes[self.ps][self.check]['field'] #this must match check!
-            if not nocheck:
-                newgroup=unlist(self.db.get("example/tonefield/form/text",
-                        senseid=senseid, location=self.check).get('text'))
-        else:
-            if not nocheck:
-                newgroup=unlist(self.db.fieldvalue(
-                                senseid=senseid,
-                                analang=self.analang,
-                                name=check,
-                                ftype=ftype,
-                                ))
         self.setsenseidgroup(senseid,check,group,framed=framed)
+        newgroup=unlist(self.getgroupofsenseid(senseid,check))
         if not nocheck:
             if newgroup != group:
                 log.error("Field addition failed! LIFT says {}, not {}.".format(
