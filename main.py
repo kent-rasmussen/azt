@@ -7579,27 +7579,7 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
     """Doing stuff"""
-class Transcribe(Tone,Sound,Sort,TaskDressing,ui.Window):
-    def tasktitle(self):
-        return _("Transcribe Tone")
-    def tooltip(self):
-        return _("This task helps you transcribe your surface groups, giving "
-                "them meaniningful names (e.g., [˥˥ ˨˨]) instead of numbers.")
-    def dobuttonkwargs(self):
-        return {'text':_("Transcribe Surface Tone Groups"),
-                'fn':self.makewindow,
-                'font':'title',
-                'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['Transcribe'], #self.cvt
-                'sticky':'ew'
-                }
-    def taskicon(self):
-        return program['theme'].photo['iconTranscribe']
-    def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self, parent)
-        ui.Window.__init__(self, parent)
-        TaskDressing.__init__(self, parent)
-        Sound.__init__(self)
+class Transcribe(Sound,Sort):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
     def updategroups(self):
