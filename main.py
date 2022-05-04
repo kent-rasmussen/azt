@@ -3168,7 +3168,8 @@ class TaskDressing(object):
                 task=self.mainwindowis
             else:
                 task=self
-            newb=ui.Button(buttonFrame1.bf,
+            if self.params.cvt() == 'T':
+                newb=ui.Button(buttonFrame1.bf,
                             text=_("New Frame"),
                             cmd=lambda w=window: task.addframe(window=w),
                             row=count+1)
