@@ -4153,6 +4153,15 @@ class Segments(object):
         t.join()
         self.updatestatus(group=group,write=True) # marks the group unverified.
         self.runwindow.waitdone()
+    def setsenseidgroup(self,senseid,check,group,**kwargs):
+        self.db.annotatefield(
+                            senseid=senseid,
+                            analang=self.analang,
+                            name=check,
+                            ftype=self.params.ftype(),
+                            value=group,
+                            write=False
+                            )
     def getsenseidsingroup(self,check,group):
         ftype=self.params.ftype()
         fkwargs={
@@ -4838,6 +4847,25 @@ class Tone(object):
         self.addframe()
         self.addwindow.wait_window(self.addwindow)
         self.runcheck()
+    def setsenseidgroup(self,senseid,check,group,**kwargs):
+        """here kwargs should include framed, if you want this to update the
+        form information in the example"""
+        ftype=self.verifyframeftype(check)
+        if not ftype:
+            log.error("No field type! see above errors!")
+            return
+        self.db.addmodexamplefields( #This should only mod if already there
+                                senseid=senseid,
+                                analang=self.analang,
+                                fieldtype='tone',
+                                #frames should be ftype specific
+                                location=check,
+                                ftype=ftype, #needed to get correct form
+                                # framed=kwargs['framed'],
+                                fieldvalue=group,
+                                write=False,
+                                **kwargs #should only include framed, if desired
+                                )
     def getsenseidsingroup(self,check,group):
         return self.db.get('sense',location=check,tonevalue=group
                                                                 ).get('senseid')
