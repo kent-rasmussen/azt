@@ -4130,7 +4130,8 @@ class Segments(object):
                     # log.info("self.regexCV: {}".format(self.regexCV))
         # log.info("self.regexCV: {}".format(self.regexCV))
         """Final step: convert the CVx code to regex, and store in self."""
-        self.regex=rx.fromCV(self,lang=self.analang,
+        self.regex=rx.fromCV(self.regexCV, self.s[self.analang],
+                            self.distinguish,
                             word=True, compile=True)
     def ifregexadd(self,regex,form,id):
         # This fn is just to make this threadable

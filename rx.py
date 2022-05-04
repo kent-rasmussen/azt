@@ -190,12 +190,12 @@ def make(regex, word=False, compile=False):
         except:
             log.error('Regex problem!')
     return regex
-def fromCV(check, lang, word=False, compile=False):
 def nX(segmentlist,n):
     s=slisttoalternations(segmentlist)
     oneS='[^'+s+']*'+s #This will be a problem if S=NC or CG...
     nS='^('+oneS*(n-1)+'[^'+s+']*)('+s+')'
     return make(nS, compile=True)
+def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
     """ this inputs regex variable (regexCV), a tuple of two parts:
     1. abbreviations with 'C' and 'V' in it, and/or variables for actual
     segments or back reference, e.g., 1 for \1 or 2 for \2, and 'c' or 'v'.
@@ -205,36 +205,36 @@ def nX(segmentlist,n):
     It outputs language specific regex (compiled if compile=True,
     whole word word=True)."""
     """lang should be check.analang"""
-    CVs=check.regexCV
-    settings=check.settings
-    distinguish=settings.distinguish
-    log.log(5,'CVs: {}'.format(CVs))
     if type(CVs) is not str:
-        log.error("regexCV is not string! ({})".format(check.regexCV))
+        log.error("regexCV is not string! ({})".format(CVs))
     regex=list()
     references=('\1','\2','\3','\4')
     references=range(1,5)
     # Replace word final C first, to get it out of the way:
-    if distinguish['ʔwd'] and not distinguish['ʔ']:
-        rxthis=s(settings,'C-ʔ',lang) #Pull out C# first;exclude N# if appropriate.
+    if (distinguish['ʔwd'] and not distinguish['ʔ']) and (distinguish['Nwd']
+                                                    and not distinguish['N']):
+        rxthis=s(sdict,'C-ʔ-N') #Pull out C# first, set to find only relevant Cs
+    elif distinguish['ʔwd'] and not distinguish['ʔ']:
+        rxthis=s(sdict,'C-ʔ') #Pull out C# first; set to find only relevant Cs
         CVs=re.sub('C$',rxthis,CVs)
-    if distinguish['Nwd'] and not distinguish['N']:
         rxthis=s(settings,'C-N',lang) #Pull out C# first;exclude N# if appropriate.
+    elif distinguish['Nwd'] and not distinguish['N']:
+        rxthis=s(sdict,'C-N') #Pull out C# first; set to find only relevant Cs
         CVs=re.sub('C$',rxthis,CVs)
-        log.log(2,'CVs: {}'.format(CVs))
+        # log.info('CVs: {}'.format(CVs))
     # if C includes [N,?], find C first; if it doesn't, move on to [N,?].
     # if we distinguish [N,?]# (only), C# is already gone, so other C's here.
-    for x in settings.s[lang]: #["V","C","N","ʔ","G","S"]:
+    for x in sdict: #["V","C","N","ʔ","G","S"]:
         # if x in check.s[lang]: #just pull out big ones first
-        rxthis=s(settings,x,lang) #this should have parens for each S
+        rxthis=s(sdict,x) #this should have parens for each S
         CVs=re.sub(x,rxthis,CVs)
-        log.log(2,'CVs: {}'.format(CVs))
+        # log.info('CVs: {}'.format(CVs))
     for x in references: #get capture group expressions
         CVrepl='\\\\{}'.format(str(x)) #this needs to be escaped to survive...
-        log.log(3,'x: {}; repl: {}'.format(x,CVrepl))
-        log.log(3,'CVs: {}'.format(CVs))
-    CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs)
-    log.log(5,'CVs: {}'.format(CVs))
+        # log.info('x: {}; repl: {}'.format(x,CVrepl))
+        # log.info('CVs: {}'.format(CVs))
+    CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs) #?
+    # log.info('CVs: {}'.format(CVs))
     return make(CVs, word=word, compile=compile)
 if __name__ == '__main__':
     x='ne [pas] plaire, ne pas agréer, ne pas'
