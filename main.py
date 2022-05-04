@@ -7776,6 +7776,8 @@ class Transcribe(Sound,Sort):
         infoframe=ui.Frame(inputfeedbackframe,
                             row=0,column=1,sticky=''
                             )
+        """Make this a pad of buttons, rather than a label, so users can
+        go directly where they want to be"""
         g=nn(self.othergroups,twoperline=True)
         log.info("There: {}, NTG: {}; g:{}".format(self.groups,
                                                     self.othergroups,g))
