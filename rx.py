@@ -214,10 +214,10 @@ def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
     if (distinguish['ʔwd'] and not distinguish['ʔ']) and (distinguish['Nwd']
                                                     and not distinguish['N']):
         rxthis=s(sdict,'C-ʔ-N') #Pull out C# first, set to find only relevant Cs
+        CVs=re.sub('C$',rxthis,CVs)
     elif distinguish['ʔwd'] and not distinguish['ʔ']:
         rxthis=s(sdict,'C-ʔ') #Pull out C# first; set to find only relevant Cs
         CVs=re.sub('C$',rxthis,CVs)
-        rxthis=s(settings,'C-N',lang) #Pull out C# first;exclude N# if appropriate.
     elif distinguish['Nwd'] and not distinguish['N']:
         rxthis=s(sdict,'C-N') #Pull out C# first; set to find only relevant Cs
         CVs=re.sub('C$',rxthis,CVs)
