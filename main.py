@@ -8888,6 +8888,7 @@ class FramedDataSense(FramedData):
                                     self.parent.imperativename]:
                 self.forms[lang][ft]=unlist(db.fieldtext(senseid=senseid,
                                                         ftype=ft,
+                                                        floc='entry',
                                                         analang=lang
                                                             ))
                 # log.info("forms: {}".format(self.forms))
