@@ -5054,11 +5054,10 @@ class Sort(object):
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def removesenseidfromgroup(self,senseid,**kwargs):
-        """Generalize for segments?"""
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
-        cvt=kwargs.get('cvt',self.params.cvt())
-        write=kwargs.get('write',True)
+        # cvt=kwargs.get('cvt',self.params.cvt())
+        write=kwargs.pop('write',True) #avoid duplicate
         sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
         #This should only *mod* if already there
