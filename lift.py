@@ -971,21 +971,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # will get picked up again during the analysis
         c={}
         c['pvd']={}
-        c['pvd'][2]=['bh','dh','gh','gb']
+        c['pvd'][2]=['bh','dh','gh','gb'
+                    'bb','dd','gg' #French
+                    ]
         c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
         c['p']={}
-        c['p'][2]=['kk','kp']
+        c['p'][2]=['kk','kp','cc','pp','pt','tt']
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q']
         c['fvd']={}
         c['fvd'][2]=['bh','vh','zh']
-        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ']
+        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ','x'] #problems w x?
         c['f']={}
-        c['f'][2]=['ch','ph','sh','hh','pf','bv']
+        c['f'][3]=['sch']
+        c['f'][2]=['ch','ph','sh','hh','pf','bv','ff','sc','ss','th']
         c['f'][1]=['F','f','s','ʃ','θ','x','h'] #not 'S'
         c['avd']={}
         c['avd'][2]=['dj','dz','dʒ']
         c['a']={}
-        c['a'][3]=['chk']
+        c['a'][3]=['chk','tch']
         c['a'][2]=['ts','tʃ']
         c['lfvd']={}
         c['lfvd'][2]=['zl']
@@ -1023,11 +1026,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ]
         x['G']=['ẅ','y','Y','w','W']
         x['N']=['m','M','n','ŋ','ɲ','ɱ'] #'N', messed with profiles
-        x['Ndg']=['mm','ŋŋ','ny']
+        x['Ndg']=['mm','ŋŋ','ny','gn','nn']
         x['Ntg']=["ng'"]
         """Non-Nasal/Glide Sonorants"""
         x['S']=['l','r']
-        x['Sdg']=['rh','wh']
+        x['Sdg']=['rh','wh','ll','rr']
         x['V']=[
                 #decomposed first:
                 #tilde (decomposed):
@@ -1051,8 +1054,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         x['Vdg']=['ou','ei','ɨʉ','ai', #requested by bfj
                 'óu','éi','ɨ́ʉ','ái',
                 'òu','èi','ɨ̀ʉ','ài',
-                'yi','yu','yɨ','yʉ'] #requested by Jane
-        x['Vtg']=[]
+                'yi','yu','yɨ','yʉ', #requested by Jane
+                'ai','ea','ou','ay', #For English
+                'ee','ei','ey','ie',
+                'oa','oo','ow','ue',
+                'ai','ei','oe','ae', # for French
+                'au','ée','ea','oi',
+                'eu','ie','ou',
+                ]
+        x['Vtg']=['aie','eau']
 
         x["̀"]=["̀","́","̂","̌","̄","̃"
                 , "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉" #from IPA keyboard
