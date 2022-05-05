@@ -4169,7 +4169,7 @@ class Segments(object):
         t.join()
         self.updatestatus(group=group,write=True) # marks the group unverified.
         self.runwindow.waitdone()
-    def updateformtoannotations(self,senseid,ftype,check):
+    def updateformtoannotations(self,senseid,ftype,check=None,write=False):
         """This should take a sense and ftype (and maybe check, not sure)
         and update that form on the basis of the annotations made to date.
         This should be something that can be done for just one check, or all,
