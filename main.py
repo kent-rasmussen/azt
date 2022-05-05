@@ -9226,6 +9226,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         bf=ui.Frame(parent)
         bf.grid(column=0, row=row, sticky="w")
         if not self.status.groups(wsorted=True):
+            # log.info("Making None sorted yet button")
             vardict['ok']=ui.BooleanVar()
             okb=ui.Button(bf, text=firstOK,
                             cmd=firstok,
@@ -9234,8 +9235,10 @@ class SortButtonFrame(ui.ScrollingFrame):
                             )
             okb.grid(column=0, row=0, sticky="ew")
         else:
+            # log.info("Making different button")
             differentbutton()
         vardict['skip']=ui.BooleanVar()
+        # log.info("Making skip button")
         skipb=ui.Button(bf, text=skiptext,
                         cmd=skip,
                         anchor="w",
