@@ -5862,26 +5862,28 @@ class Sort(object):
             #                 oldfieldvalue='NA', showurl=True #if this
             #                 )
         self.runcheck()
-    def updatebygroupsenseid(self,oldtonevalue,newtonevalue,verified=False):
+    def updatebygroupsenseid(self,oldvalue,newvalue,updateforms=False):
         """Generalize this for segments"""
         # This function updates the field value and verification status (which
         # contains the field value) in the lift file.
         # This is all the words in the database with the given
         # location:value correspondence (any ps/profile)
         check=self.params.check()
-        lst2=self.getsenseidsingroup(check,oldtonevalue)
+        lst2=self.getsenseidsingroup(check,oldvalue)
         # We are agnostic of verification status of any given entry, so just
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
-        rm=self.verifictioncode(check=check,group=oldtonevalue)
-        add=self.verifictioncode(check=check,group=newtonevalue)
+        rm=self.verifictioncode(check=check,group=oldvalue)
+        add=self.verifictioncode(check=check,group=newvalue)
         """The above doesn't test for profile, so we restrict that next"""
         profile=self.slices.profile()
         senseids=self.slices.inslice(lst2)
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
-            self.setsenseidgroup(senseid,check,newtonevalue,write=False)
+            self.setsenseidgroup(senseid,check,newvalue,
+                                updateforms=True,
+                                write=False)
             self.db.modverificationnode(senseid=senseid,
                             vtype=profile,
                             analang=self.analang,
