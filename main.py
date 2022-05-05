@@ -7649,24 +7649,24 @@ class Transcribe(Sound,Sort):
             return
         return 1
     def submitform(self):
-        newtonevalue=self.transcriber.formfield.get()
+        newvalue=self.transcriber.formfield.get()
         self.updategroups()
-        if newtonevalue == "":
+        if newvalue == "":
             noname=_("Give a name for this group!")
             log.debug(noname)
             self.errorlabel['text'] = noname
             return 1
-        if newtonevalue != self.group: #only make changes!
-            if newtonevalue in self.groups :
+        if newvalue != self.group: #only make changes!
+            if newvalue in self.groups :
                 deja=_("Sorry, there is already a group with "
                                 "that label; If you want to join the "
                                 "groups, give it a different name now, "
-                                "and join it later".format(newtonevalue))
+                                "and join it later".format(newvalue))
                 log.debug(deja)
                 self.errorlabel['text'] = deja
                 return 1
-            self.updatebygroupsenseid(self.group,newtonevalue)
-            self.status.renamegroup(self.group,newtonevalue)
+            self.updatebygroupsenseid(self.group,newvalue)
+            self.status.renamegroup(self.group,newvalue)
             self.settings.storesettingsfile(setting='status')
         else: #move on, but notify in logs
             log.info("User selected ‘{}’, but with no change.".format(
