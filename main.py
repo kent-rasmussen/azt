@@ -1715,11 +1715,10 @@ class Settings(object):
         """Look for word boundaries, N and G before C (though this doesn't
         work, since CG is captured by C first...)"""
         # self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b']
-        log.log(4,"Searching {} in this order: {}".format(form,self.profilelegit
-                        ))
-        log.log(4,"Searching with these regexes: {}".format(self.rx))
+        # log.info("Searching {} ordered as: {}".format(form,self.profilelegit))
+        # log.info("Searching with these regexes: {}".format(self.rx))
         for s in set(self.profilelegit) & set(self.rx.keys()):
-            log.log(3,'s: {}; rx: {}'.format(s, self.rx[s]))
+            # log.info('s: {}; rx: {}'.format(s, self.rx[s]))
             for i in self.rx[s].findall(form):
                 if i not in self.sextracted[ps][s]:
                     self.sextracted[ps][s][i]=0
