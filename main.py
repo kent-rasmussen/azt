@@ -4168,6 +4168,30 @@ class Segments(object):
         and iterated across a few or many senseids.
         This might be best iterating across ftypes, to catch them all...
         that would likely need more smarts for affix and root distinction."""
+        fnode=firstoflist(self.db.fieldformnode(senseid=senseid,ftype=ftype,
+                                                analang=self.analang))
+        if fnode:
+            t=fnode.find('text')
+        else:
+            log.info("updateformtoannotations didn't return a node for "
+            "senseid={},ftype={},analang={}".format(senseid,ftype,self.analang))
+            return
+        # log.info("fnode: {}; text: {}".format(fnode,t.text))
+        if check: #just update to this annotation
+            value=firstoflist(self.db.fieldvalue(node=fnode,
+                                                annotationname=check))
+            if value:
+                self.updateformtextnodebycheck(t,check,value)
+            else:
+                write=False #in case it isn't already
+        else: #update to all annotations
+            annodict={i.get('name'):i.get('value') for i in fnode
+                                                if i.tag == 'annotation'}
+            # log.info("annodict: {}".format(annodict))
+            for check,value in annodict.items():
+                self.updateformtextnodebycheck(t,check,value)
+        if write:
+            self.maybewrite()
     def setsenseidgroup(self,senseid,check,group,**kwargs):
         self.db.annotatefield(
                             senseid=senseid,
