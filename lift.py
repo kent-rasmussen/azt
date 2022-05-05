@@ -1183,6 +1183,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return output
     def fieldnode(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
+        if 'node' in kwargs:
+            return [kwargs['node']]
         if 'ftype' not in kwargs or not kwargs['ftype']:
             log.error("I don't know what field you want: {}".format(kwargs))
             return []
@@ -1208,19 +1210,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         in LiftURL, but it will impact other things that are currently working
         """
         t=[]
-        for node in self.fieldnode(**kwargs):
+        for kwargs['node'] in self.fieldnode(**kwargs):
             # log.info("Getting text from node {}".format(node))
-            t.extend(self.get('text',node=node,**kwargs).get('text'))
+            t.extend(self.get('text',**kwargs).get('text'))
         return t
     def fieldvalue(self,**kwargs):
         t=[]
-        for node in self.fieldnode(**kwargs):
-            t.extend(self.get('annotation',node=node,**kwargs).get('value'))
+        for kwargs['node'] in self.fieldnode(**kwargs):
+            t.extend(self.get('annotation',**kwargs).get('value'))
         return t
     def fieldformnode(self,**kwargs):
         t=[]
-        for node in self.fieldnode(**kwargs):
-            t.extend(self.get('form',node=node,**kwargs).get())
+        for kwargs['node'] in self.fieldnode(**kwargs):
+            t.extend(self.get('form',**kwargs).get())
         return t
     def annotatefield(self,**kwargs):
         if not ('name' in kwargs and 'value' in kwargs):
@@ -1237,11 +1239,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # kwargs['annotationname']=anndict['name'] #look for value in fieldnode()
         # node=kwargs.pop('node') #because base node changes
         # log.info("Looking w/{}".format(kwargs))
-        for node in self.fieldnode(**kwargs): #these take any annotationname
-            for form in self.get('form',node=node,
+        for kwargs['node'] in self.fieldnode(**kwargs): #these take any annotationname
+            for form in self.get('form',
                                 lang=kwargs['analang'],
                                 **kwargs).get('node'):
                 # log.info("Looking in form {} w/{}".format(form,kwargs))
+                kwargs.pop('node') #avoid duplication conflict, reset on next iteration
                 ann=self.get('annotation', node=form,
                             annotationname=anndict['name'], #only use this here
                             **kwargs).get('node') #name!
