@@ -1682,9 +1682,12 @@ class Settings(object):
                 for a in self.adhocgroups[ps]:
                     log.debug("Adding {} to {} ps-profile: {}".format(a,ps,
                                                 self.adhocgroups[ps][a]))
-                    self.addpstoprofileswdata(ps=ps) #in case the ps isn't already there
                     #copy over stored values:
-                    self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
+                    try:
+                        self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
+                    except KeyError: #in case the ps isn't already there
+                        self.profilesbysense[ps]={}
+                        self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
                     log.debug("resulting profilesbysense: {}".format(
                                             self.profilesbysense[ps][a]))
     def profileofformpreferred(self,form):
