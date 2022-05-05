@@ -10127,6 +10127,11 @@ class StatusDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
     """I should think about what 'do' means here: sort? verify? record?"""
+    def task(self,task=None):
+        if task:
+            self._task=task
+        else:
+            return self._task
     def checktosort(self,**kwargs):
         check=kwargs.get('check',self._checkparameters.check())
         cvt=kwargs.get('cvt',self._checkparameters.cvt())
