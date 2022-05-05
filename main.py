@@ -5833,7 +5833,7 @@ class Sort(object):
             # log.info("Join about to run updatebygroupsenseid(*groupstojoin)")
             self.updatebygroupsenseid(*groupstojoin)
             groups.remove(groupstojoin[0])
-            write=False
+            write=False #for the first
             for group in groupstojoin: #not verified=True --since joined
                 self.updatestatus(group=group,write=write)
                 write=True #For second group
