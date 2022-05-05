@@ -1615,30 +1615,19 @@ class Settings(object):
             self.storesettingsfile(setting='profiledata')
             e=time.time()-self.taskchooser.start_time
             log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
-    def addpstoprofileswdata(self,ps=None):
-        if ps is None:
-            ps=self.slices.ps()
-        if ps not in self.profilesbysense:
-            self.profilesbysense[ps]={}
-    def addprofiletoprofileswdata(self,ps=None,profile=None):
-        if ps is None:
-            ps=self.slices.ps()
-        if profile is None:
-            profile=self.slices.profile()
-        if profile not in self.profilesbysense[ps]:
-            self.profilesbysense[ps][profile]=[]
-    def addtoprofilesbysense(self,senseid,ps=None,profile=None):
-        if ps is None:
-            if hasattr(self,'slices'):
-                ps=self.slices.ps()
-            else:
-                log.error("You didn't specifiy ps, but don't have slices yet!")
-                return
-        self.addpstoprofileswdata(ps=ps)
-        if profile is None:
-            profile=self.slices.profile()
-        self.addprofiletoprofileswdata(ps=ps,profile=profile)
-        self.profilesbysense[ps][profile]+=[senseid]
+    def addtoprofilesbysense(self,senseid,**kwargs): #ps=None,profile=None
+        # log.info("kwargs: {}".format(kwargs))
+        # This will die if ps and profile aren't in kwargs:
+        ps=kwargs.get('ps') #,self.slices.ps()
+        profile=kwargs.get('profile') #,self.slices.profile()
+        try:
+            self.profilesbysense[ps][profile]+=[senseid]
+        except KeyError:
+            try:
+                self.profilesbysense[ps][profile]=[senseid]
+            except KeyError:
+                self.profilesbysense[ps]={}#[profile]=[senseid]
+                self.profilesbysense[ps][profile]=[senseid]
     def getprofileofsense(self,senseid):
         #Convert to iterate over local variables
         ps=unlist(self.db.ps(senseid=senseid))
