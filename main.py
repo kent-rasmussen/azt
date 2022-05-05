@@ -9366,6 +9366,7 @@ class SortButtonFrame(ui.ScrollingFrame):
             self.addgroupbutton(group)
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
         self.getanotherskip(self.content.anotherskip,self.groupvars)
+        self._configure_canvas()
         log.info("getanotherskip vardict (1): {}".format(self.groupvars))
 class RecordButtonFrame(ui.Frame):
     def _start(self, event):
