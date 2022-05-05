@@ -4975,7 +4975,7 @@ class Sort(object):
                                         add=add,rms=rmlist,
                                         write=False)
         if write == True:
-            self.db.write() #for when not iterated over, or on last repeat
+            self.maybewrite() #for when not iterated over, or on last repeat
     def updatestatus(self,verified=False,**kwargs):
         #This function updates the status variable, not the lift file.
         group=kwargs.get('group',self.status.group())
@@ -5128,7 +5128,7 @@ class Sort(object):
                                                         rms=[rm],write=False)
         self.status.last('sort',update=True)
         if write:
-            self.db.write()
+            self.maybewrite()
         if sorting:
             self.status.marksenseidtosort(senseid)
     def ncheck(self):
@@ -5211,7 +5211,7 @@ class Sort(object):
         if not nocheck:
             self.updatestatus(group=group,write=write) # marks the group unverified.
         if write:
-            self.db.write() #This is never iterated over; just one entry at a time.
+            self.maybewrite() #This is never iterated over; just one entry at a time.
         if not nocheck:
             return newgroup
     def updatesortingstatus(self, store=True, **kwargs):
@@ -5890,7 +5890,7 @@ class Sort(object):
                             analang=self.analang,
                             add=add,rms=[rm],
                             addifrmd=True,write=False)
-        self.db.write() #once done iterating over senseids
+        self.maybewrite() #once done iterating over senseids
     def __init__(self, parent):
         parent.settings.makeeverythingok()
         """I need some way to control for ftype"""
