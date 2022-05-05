@@ -7662,7 +7662,7 @@ class Transcribe(Sound,Sort):
                 log.debug(deja)
                 self.errorlabel['text'] = deja
                 return 1
-            self.updatebygroupsenseid(self.group,newvalue)
+            self.updatebygroupsenseid(self.group,newvalue,updateforms=True)
             self.status.renamegroup(self.group,newvalue)
             self.settings.storesettingsfile(setting='status')
         else: #move on, but notify in logs
