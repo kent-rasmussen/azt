@@ -4089,7 +4089,8 @@ class Segments(object):
         # log.info("group: {}".format(group))
         # log.info("self.groupcomparison: {}".format(self.groupcomparison))
         if 'x' in check:
-            if self.groupcomparison in self.status.groups(cvt='C'):
+            if hasattr(self,'groupcomparison') and (self.groupcomparison
+                                                in self.status.groups(cvt='C')):
                 # self.s[self.analang]['V']:
                 cvts=['C','V'] #comparison needs to be done first
         compared=False #don't reset this for each cvt
