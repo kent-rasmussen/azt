@@ -9254,6 +9254,8 @@ class SortButtonFrame(ui.ScrollingFrame):
                                 row=self.groupbuttons.row,
                                 column=self.groupbuttons.col,
                                 sticky='w')
+        if not b.hasexample:
+            return
         self.groupvars[group]=b.var()
         if not self.buttoncolumns or (self.buttoncolumns and
                                     self.groupbuttons.row+1<self.buttoncolumns):
@@ -9528,6 +9530,7 @@ class ToneGroupButtonFrame(ui.Frame):
     def getexample(self,**kwargs):
         kwargs=exampletype(**kwargs)
         example=self.exs.getexample(self.group,**kwargs)
+        self.hasexample=False
         if not example or 'senseid' not in example:
             if kwargs['wsoundfile']:
                 log.error("self.exs.getexample didn't return an example "
@@ -9543,6 +9546,7 @@ class ToneGroupButtonFrame(ui.Frame):
                         "(without needing a sound file); returning ({})"
                         "".format(example))
                 return
+        self.hasexample=True
         self._n=example['n']
         framed=example['framed']
         if framed is None:
