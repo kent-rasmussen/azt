@@ -3182,7 +3182,7 @@ class TaskDressing(object):
         """Make sure we got a value"""
         if self.params.check() not in checks:
             return 1
-    def getframedtonegroup(self,window,event=None,guess=False,**kwargs):
+    def getframedtonegroup(self,window,event=None,**kwargs):
         """Window is called in getgroup"""
         log.info("getframedtonegroup kwargs: {}".format(kwargs))
         kwargs=grouptype(**kwargs)
@@ -3210,7 +3210,7 @@ class TaskDressing(object):
                           "grouped in the ‘{}’ frame yet \n({})."
                           "").format(ps,profile,check,kwargs)
                           ).grid(column=0, row=0)
-            elif guess == True or (len(g) == 1 and not kwargs['comparison']):
+            elif kwargs.get('guess') or (len(g) == 1 and not kwargs.get('comparison')):
                 self.settings.setgroup(g[0],window) #don't ask, just set
             else:
                 ui.Label(window.frame,
@@ -3219,7 +3219,7 @@ class TaskDressing(object):
                           check)).grid(column=0, row=0)
                 window.scroll=ui.Frame(window.frame)
                 window.scroll.grid(column=0, row=1)
-                if kwargs['comparison']:
+                if kwargs.get('comparison'):
                     g2=g[:]
                     g2.remove(self.status.group())
                     if not g2:
@@ -3252,6 +3252,16 @@ class TaskDressing(object):
                           text='Error: please set Grammatical category first! ('
                           +str(ps)+')'
                           ).grid(column=0, row=0)
+        elif kwargs.get('guess') and kwargs.get('intfirst'):
+            l=[int(i) for i in self.status.groups(**kwargs) if str(i).isdigit()]
+            if l:
+                self.settings.setgroup(str(min(l)),window)
+            else:
+                self.settings.status.nextgroup()
+                window.destroy()
+        elif kwargs.get('guess'):
+            self.settings.status.nextgroup()
+            window.destroy()
         else:
             kwargs['cvt']='V'
             g=self.status.groups(**kwargs)
@@ -3277,6 +3287,16 @@ class TaskDressing(object):
             ui.Label(window.frame,
                           text=text
                           ).grid(column=0, row=0)
+        elif kwargs.get('guess') and kwargs.get('intfirst'):
+            l=[int(i) for i in self.status.groups(**kwargs) if str(i).isdigit()]
+            if l:
+                self.settings.setgroup(str(min(l)),window)
+            else:
+                self.settings.status.nextgroup()
+                window.destroy()
+        elif kwargs.get('guess'):
+            self.settings.status.nextgroup()
+            window.destroy()
         else:
             # ui.Label(window.frame,
             #               ).grid(column=0, row=0)
@@ -3293,7 +3313,7 @@ class TaskDressing(object):
                                     window=window,
                                     column=0, row=0
                                     )
-    def getgroup(self,guess=False,event=None,**kwargs):
+    def getgroup(self,event=None,**kwargs): #guess=False,
         """I need to think though how to get this to wait appropriately
         both for single C/V selection, and for CxV selection"""
         log.info("this sets the group")
@@ -3319,7 +3339,7 @@ class TaskDressing(object):
             # cvt = "CV"
         elif cvt == "T":
             w=ui.Window(self.frame,title=_('Select Framed Tone Group'))
-            self.getframedtonegroup(window=w,guess=guess,**kwargs)
+            self.getframedtonegroup(window=w,**kwargs) #guess=guess,
             # windowT.wait_window(window=windowT) #?!?
         return w #so others can wait for this
     def getgroupwsorted(self,event=None,**kwargs):
@@ -7627,7 +7647,7 @@ class Transcribe(Sound,Sort):
             return
         # log.info("group: {}, groups: {}".format(self.group,self.groups))
         if not self.group or self.group not in self.groups:
-            w=self.getgroup(wsorted=True, guess=True)
+            w=self.getgroup(wsorted=True, guess=True, intfirst=True)
             if w.winfo_exists():
                 w.wait_window(w)
             self.group=self.status.group()
