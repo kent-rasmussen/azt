@@ -7617,20 +7617,14 @@ class Transcribe(Sound,Sort):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
     def updategroups(self):
-        # cvt=self.params.cvt()
-        # ps=self.slices.ps()
-        # profile=self.slices.profile()
-        # check=self.params.check()
         self.groups=self.status.groups(wsorted=True)
-        # self.status[cvt][ps][profile][check]['groups']
-        # self.status[cvt][ps][profile][check]['done']
         self.groupsdone=self.status.verified()
         self.group=self.status.group()
-        log.info("group: {}, groups: {}".format(self.group,self.groups))
+        # log.info("group: {}, groups: {}".format(self.group,self.groups))
         if not self.groups:
             ErrorNotice(_("No groups in that slice; try another!"))
             return
-        log.info("group: {}, groups: {}".format(self.group,self.groups))
+        # log.info("group: {}, groups: {}".format(self.group,self.groups))
         if not self.group or self.group not in self.groups:
             w=self.getgroup(wsorted=True, guess=True)
             if w.winfo_exists():
@@ -7639,7 +7633,7 @@ class Transcribe(Sound,Sort):
             if not self.group:
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
-        log.info("group: {}, groups: {}".format(self.group,self.groups))
+        # log.info("group: {}, groups: {}".format(self.group,self.groups))
         self.othergroups=self.groups[:]
         try:
             self.othergroups.remove(self.group)
