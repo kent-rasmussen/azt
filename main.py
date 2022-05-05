@@ -10257,6 +10257,8 @@ class StatusDict(dict):
         kwargs=grouptype(**kwargs)
         cs=[]
         checks=self.updatechecksbycvt(**kwargs)
+        if isinstance(self.task(),Sort) or isinstance(self.task(),Transcribe):
+            checks=[i for i in checks if 'x' not in i]
         for kwargs['check'] in checks:
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']
