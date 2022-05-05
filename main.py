@@ -1670,10 +1670,15 @@ class Settings(object):
         x=0
         for senseid in self.db.senseids:
             x+=1
-            form,profile=self.getprofileofsense(senseid)
-            if x % 10 == 0:
+            if x%100:
+                t = threading.Thread(target=self.getprofileofsense,
+                                    args=(senseid,))
+                t.start()
+            else:
+                form,profile=self.getprofileofsense(senseid)
                 log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
                                             profile))
+        t.join()
         #Convert to iterate over local variables
         """Do I want this? better to keep the adhoc groups separate"""
         """We will *never* have slices set up by this time; read from file."""
