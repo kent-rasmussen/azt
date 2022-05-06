@@ -4316,7 +4316,7 @@ class Segments(object):
         return self.db.fieldvalue(
                         senseid=senseid,
                         analang=self.analang,
-                        annotationname=check,
+                        name=check,
                         ftype=self.params.ftype(),
                         )
     def __init__(self, parent):
