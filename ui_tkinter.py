@@ -1520,7 +1520,7 @@ class ToolTip(object):
 class Wait(Window): #tkinter.Toplevel?
     def close(self):
         self.update_idletasks()
-        self.parent.deiconify()
+        self.parent.deiconify() #this will show a root window, if Root is parent
         self.destroy()
     def __init__(self, parent, msg=None):
         global program
