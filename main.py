@@ -1857,7 +1857,7 @@ class Settings(object):
                 profiles=self.slices.profiles(ps=ps) #This depends on ps only
                 for p in profiles:
                     log.info("Working on {}".format(p))
-                    checks=self.status.checks(ps=ps,profile=p)
+                    checks=self.status.checks(cvt=t, ps=ps,profile=p)
                     for c in checks:
                         log.info("Working on {}".format(c))
                         self.status.build(cvt=t, ps=ps, profile=p, check=c)
