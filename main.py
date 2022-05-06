@@ -1845,7 +1845,9 @@ class Settings(object):
         start_time=time.time()
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
-        cvts=[i for i in self.params.cvts() if i in self.status]
+        #This limits reload to what is there (i.e., only V, if only V has been done)
+        # cvts=[i for i in self.params.cvts() if i in self.status]
+        cvts=self.params.cvts()
         if not cvts:
             cvts=[i for i in self.params.cvts()]
         for t in cvts: #this depends on nothing
