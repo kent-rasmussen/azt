@@ -1874,7 +1874,7 @@ class Settings(object):
         self.status.store()
         log.info("Status settings refreshed from LIFT in {}s".format(
                                                         time.time()-start_time))
-        w.close()
+        w.destroy()
     def categorizebygrouping(self,fn,senseid,**kwargs):
         #Don't complain if more than one found:
         check=kwargs.get('check',self.params.check())
