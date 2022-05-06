@@ -4177,6 +4177,22 @@ class Segments(object):
             log.info(_("Presorting for this check/slice already done! ({})"
                         "").format(kwargs))
             return
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        senseids=[]
+        groups=self.status.groups(wsorted=True,**kwargs)
+        #multiprocess from here?
+        for group in self.status.groups(cvt=cvt):
+            self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
+            # log.info("self.regex: {}; self.regexCV: {}".format(self.regex,
+            #                                             self.regexCV))
+            s=set(self.senseidformsbyregex(self.regex,ps=ps))
+            if s: #senseids just for this group
+                self.presort(list(s),check,group)
+        self.status.presorted(True)
+        self.status.store() #after all the above
     def presort(self,senseids,check,group):
         w=self.getrunwindow(msg=_("Presorting words by {}={}").format(check,group))
         ftype=self.params.ftype()
