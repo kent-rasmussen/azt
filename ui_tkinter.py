@@ -1522,15 +1522,18 @@ class Wait(Window): #tkinter.Toplevel?
         self.update_idletasks()
         self.parent.deiconify()
         self.destroy()
-    def __init__(self, parent=None,msg=None):
+    def __init__(self, parent, msg=None):
         global program
         super(Wait, self).__init__(parent,exit=False)
-        self.parent.withdraw()
         self.withdraw() #don't show until we're done making it
-        self.attributes("-topmost", True)
+        parent.withdraw()
         self['background']=parent['background']
-        title=(_("Please Wait! {name} Dictionary and Orthography Checker "
+        self.attributes("-topmost", True)
+        if hasattr(self,'program'):
+            title=(_("Please Wait! {name} Dictionary and Orthography Checker "
                         "in Process").format(name=self.program['name']))
+        else:
+            title=(_("Please Wait!"))
         self.title(title)
         text=_("Please Wait...")
         self.l=Label(self.outsideframe, text=text,
