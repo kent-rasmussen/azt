@@ -1841,6 +1841,7 @@ class Settings(object):
         # order to populate it if found —before removing empty entires.
         # This also has no access to verification information, which comes only
         # from verify()
+        w=ui.Wait(parent=program['root'],msg=_("Reloading stats data"))
         start_time=time.time()
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
@@ -1868,6 +1869,7 @@ class Settings(object):
         self.storesettingsfile(setting='status')
         log.info("Status settings refreshed from LIFT in {}s".format(
                                                         time.time()-start_time))
+        w.close()
     def guessanalang(self):
         #have this call set()?
         """if there's only one analysis language, use it."""
