@@ -4210,7 +4210,8 @@ class Segments(object):
         self.runwindow.waitdone()
     def updateformtextnodebycheck(self,t,check,value):
         log.info("subbing {} for {}, using {}".format(value,check,self.settings.rx[check]))
-        t.text=self.settings.rx[check].sub('\\g<1>'+value,t.text)
+        for c in reversed(check.split('=')):
+            t.text=self.settings.rx[c].sub('\\g<1>'+value,t.text)
     def updateformtoannotations(self,senseid,ftype,check=None,write=False):
         """This should take a sense and ftype (and maybe check, not sure)
         and update that form on the basis of the annotations made to date.
