@@ -4202,11 +4202,10 @@ class Segments(object):
                             kwargs={'check':check,
                                     'ftype':ftype,
                                     # 'framed':framed,
-                                    'nocheck':True,
-                                    'write':False})
+                                    'nocheck':True})
             t.start()
         t.join()
-        self.updatestatus(group=group,write=True) # marks the group unverified.
+        self.updatestatus(group=group) # marks the group unverified.
         self.runwindow.waitdone()
     def updateformtextnodebycheck(self,t,check,value):
         log.info("subbing {} for {}, using {}".format(value,check,self.settings.rx[check]))
@@ -4250,7 +4249,7 @@ class Segments(object):
                             name=check,
                             ftype=self.params.ftype(),
                             value=group,
-                            write=False
+                            write=kwargs.get('write')
                             )
     def getsenseidsingroup(self,check,group):
         ftype=self.params.ftype()
@@ -4969,7 +4968,7 @@ class Tone(object):
                                 ftype=ftype, #needed to get correct form
                                 # framed=kwargs['framed'],
                                 fieldvalue=group,
-                                write=False,
+                                write=kwargs.get('write'),
                                 **kwargs #should only include framed, if desired
                                 )
     def getsenseidsingroup(self,check,group):
@@ -4991,7 +4990,6 @@ class Sort(object):
     def updatestatuslift(self,verified=False,**kwargs):
         """This should be called only by update status, when there is an actual
         change in status to write to file."""
-        write=kwargs.get('write',True)
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
         #     check=self.params.check()
@@ -5016,12 +5014,12 @@ class Sort(object):
                                         analang=self.analang,
                                         add=add,rms=rmlist,
                                         write=False)
-        if write == True:
+        if kwargs.get('write'):
             self.maybewrite() #for when not iterated over, or on last repeat
     def updatestatus(self,verified=False,**kwargs):
         #This function updates the status variable, not the lift file.
         group=kwargs.get('group',self.status.group())
-        write=kwargs.get('write',True)
+        write=kwargs.get('write')
         r=self.status.update(group=group,verified=verified,write=write)
         if r: #only do this if there is a change in status
             self.updatestatuslift(group=group,verified=verified,write=write)
@@ -5150,7 +5148,7 @@ class Sort(object):
         sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
         #This should only *mod* if already there
-        self.setsenseidgroup(senseid,check,'',write=False,**kwargs)
+        self.setsenseidgroup(senseid,ftype,check,'',**kwargs)
         tgroups=self.getgroupofsenseid(senseid,check)
         log.info("Checking that removal worked")
         if tgroups in [[],'',['']]:
@@ -5167,7 +5165,7 @@ class Sort(object):
         rm=self.verifictioncode(check=check,group=group)
         profile=kwargs.get('profile',self.slices.profile())
         self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
-                                                        rms=[rm],write=False)
+                                                        rms=[rm])
         self.status.last('sort',update=True)
         if write:
             self.maybewrite()
@@ -5223,7 +5221,6 @@ class Sort(object):
         self.maybesort()
     def marksortgroup(self,senseid,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
-        write=kwargs.get('write',True)
         framed=kwargs.get('framed',None)
         check=kwargs.get('check',self.params.check())
         ftype=kwargs.get('ftype',self.params.ftype())
@@ -5251,8 +5248,8 @@ class Sort(object):
         self.status.last('sort',update=True)
         self.status.tojoin(True) # will need to be distinguished again
         if not nocheck:
-            self.updatestatus(group=group,write=write) # marks the group unverified.
-        if write:
+            self.updatestatus(group=group,write=kwargs.get('write')) # marks the group unverified.
+        if kwargs.get('write'):
             self.maybewrite() #This is never iterated over; just one entry at a time.
         if not nocheck:
             return newgroup
@@ -5599,7 +5596,7 @@ class Sort(object):
     def verify(self,menu=False):
         def updatestatus():
             log.info("Updating status with {}, {}, {}".format(check,group,verified))
-            self.updatestatus(verified=verified,write=False)
+            self.updatestatus(verified=verified)
             self.maybewrite()
         log.info("Running verify!")
         """Show entries each in a row, users mark those that are different, and we
@@ -9374,7 +9371,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
                 """Can't thread this; the button needs to find data"""
-                self.marksortgroup(senseid,group,framed=framed,write=False)
+                self.marksortgroup(senseid,group,framed=framed)
                 self.addgroupbutton(group)
                 #adjust window for new button
                 self.windowsize()
@@ -9393,8 +9390,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 # self.marksortgroup(senseid,framed,group=group,write=False)
                 t = threading.Thread(target=self.marksortgroup,
                                     args=(senseid,group),
-                                    kwargs={'framed':framed,
-                                            'write':False})
+                                    kwargs={'framed':framed})
                 t.start()
         else:
             log.debug('No group selected: {}'.format(groupselected))
