@@ -10371,20 +10371,20 @@ class StatusDict(dict):
         self._idssorted.extend(done)
         self._idstosort.clear()
         self._idstosort.extend(todo)
-    def marksenseidsorted(self,senseid):
+    def marksenseidsorted(self,senseid,**kwargs):
         self._idssorted.append(senseid)
         if senseid in self._idstosort:
             self._idstosort.remove(senseid)
         if not self._idstosort:
-            self.tosort(False)
-            log.log(4,"Tosort now {} (marksenseidsorted)".format(self.tosort()))
-    def marksenseidtosort(self,senseid):
-        if not hasattr(self,'_idstosort') or not self._idstosort:
-            self.tosort(True)
+            self.tosort(False,**kwargs) #this marks current, unless specified
+            # log.info("Tosort now {} (marksenseidsorted)".format(self.tosort()))
+    def marksenseidtosort(self,senseid,**kwargs):
+        # if not hasattr(self,'_idstosort') or not self._idstosort:
         self._idstosort.append(senseid)
-        log.log(4,"Tosort now {} (marksenseidtosort)".format(self.tosort()))
         if senseid in self._idssorted:
             self._idssorted.remove(senseid)
+        self.tosort(True,**kwargs) #this marks current, unless specified
+        # log.info("Tosort now {} (marksenseidtosort)".format(self.tosort()))
     def store(self):
         """This will just store to file; reading will come from check."""
         log.log(4,"Saving status dict to file")
