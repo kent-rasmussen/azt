@@ -243,8 +243,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def modverificationnode(self,senseid,vtype,analang,**kwargs):
         """this node stores a python symbolic representation, specific to an
         analysis language"""
-        showurl=kwargs.get('showurl',False)
-        write=kwargs.get('write',True)
+        showurl=kwargs.get('showurl')
         add=kwargs.get('add',None)
         rms=kwargs.get('rms',[])
         addifrmd=kwargs.get('addifrmd',False)
@@ -264,7 +263,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             changed=True
         textnode.text=str(l)
         if changed:
-            self.updatemoddatetime(senseid=senseid,write=write)
+            self.updatemoddatetime(senseid=senseid,write=kwargs.get('write'))
         log.log(2,"Empty node? {}; {}".format(textnode.text,l))
         if not l:
             log.debug("removing empty verification node from this sense")
