@@ -5632,8 +5632,8 @@ class Sort(object):
             log.info("‘{}’ already verified, continuing.".format(group))
             return
         senseids=self.exs.senseidsinslicegroup(group,check)
-        if not senseids:
-            groups=self.status.groups() #from which to remove, put back
+        if not senseids: #then remove the group
+            groups=self.status.groups(wsorted=True) #from which to remove, put back
             # log.info("Groups: {}".format(self.status.groups(toverify=True)))
             verified=False
             log.info("Group ‘{}’ has no examples; continuing.".format(group))
