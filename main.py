@@ -5915,6 +5915,11 @@ class Sort(object):
                 i.start()
             # self.setsenseidgroup(senseid,ftype,check,newvalue)
             # self.updateformtoannotations(senseid,ftype,check)
+            # self.db.modverificationnode(senseid=senseid,
+            #                 vtype=profile,
+            #                 analang=self.analang,
+            #                 add=add,rms=[rm],
+            #                 addifrmd=True)
         for i in [t,u,v]:
             i.join()
         self.maybewrite() #once done iterating over senseids
