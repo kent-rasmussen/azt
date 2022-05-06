@@ -892,8 +892,11 @@ class StatusFrame(ui.Frame):
                                     row=row,column=column,sticky='s',ipadx=5)
                     elif profile == 'next':
                         continue
-                    elif check in self.settings.status[cvt][ps][profile]:
-                        node=self.settings.status[cvt][ps][profile][check]
+                    elif check in self.settings.status.checks(cvt=cvt,ps=ps,
+                                                            profile=profile):
+                        node=self.settings.status.node(cvt=cvt,ps=ps,
+                                                        profile=profile,
+                                                        check=check)
                         if len(node['done']) > len(node['groups']):
                             ungroups+=1
                         #At this point, these should be there
