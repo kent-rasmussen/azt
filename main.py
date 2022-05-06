@@ -4277,12 +4277,12 @@ class Segments(object):
                 self.updateformtextnodebycheck(t,check,value)
         if write:
             self.maybewrite()
-    def setsenseidgroup(self,senseid,check,group,**kwargs):
+    def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
         self.db.annotatefield(
                             senseid=senseid,
                             analang=self.analang,
                             name=check,
-                            ftype=self.params.ftype(),
+                            ftype=ftype,
                             value=group,
                             write=kwargs.get('write')
                             )
@@ -4981,16 +4981,20 @@ class Tone(object):
         ftype=self.toneframes[self.ps][check]['field'] #this must match check!
         curftype=self.params.ftype()
         if ftype != curftype:
+    def verifyframeftype(self,ftype,check):
+        checkftype=self.toneframes[self.ps][check]['field'] #this must match check!
+        # curftype=self.params.ftype()
+        if ftype != checkftype:
             log.error("HEY! This is a problem. We're looking at {} check, "
             "which is set for a field type {}, but our current field type is "
             "{}. This should be fixed, and will cause problems!"
-            "".format(check,ftype,curftype))
+            "".format(check,checkftype,ftype))
             return
         return ftype
-    def setsenseidgroup(self,senseid,check,group,**kwargs):
+    def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
         """here kwargs should include framed, if you want this to update the
         form information in the example"""
-        ftype=self.verifyframeftype(check)
+        ftype=self.verifyframeftype(ftype,check)
         if not ftype:
             log.error("No field type! see above errors!")
             return
@@ -5179,6 +5183,7 @@ class Sort(object):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
         # cvt=kwargs.get('cvt',self.params.cvt())
+        ftype=kwargs.get('ftype',self.params.ftype())
         write=kwargs.pop('write',True) #avoid duplicate
         sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
@@ -5271,7 +5276,7 @@ class Sort(object):
                     check,
                     senseid,
                     guid))
-        self.setsenseidgroup(senseid,check,group,framed=framed)
+        self.setsenseidgroup(senseid,ftype,check,group,framed=framed)
         newgroup=unlist(self.getgroupofsenseid(senseid,check))
         if not nocheck:
             if newgroup != group:
