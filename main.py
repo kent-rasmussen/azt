@@ -5910,7 +5910,7 @@ class Sort(object):
                                         'analang':self.analang,
                                         'add':add,
                                         'rms':[rm],
-                                        'addifrmd':True)
+                                        'addifrmd':True})
             for i in [t,u,v]:
                 i.start()
             # self.setsenseidgroup(senseid,ftype,check,newvalue)
