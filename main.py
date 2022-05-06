@@ -1872,6 +1872,21 @@ class Settings(object):
         log.info("Status settings refreshed from LIFT in {}s".format(
                                                         time.time()-start_time))
         w.close()
+    def categorizebygrouping(self,fn,senseid,**kwargs):
+        #Don't complain if more than one found:
+        check=kwargs.get('check',self.params.check())
+        v=firstoflist(fn(self.status.task(),senseid,check),othersOK=True)
+        if v in ['','None',None]: #unlist() returns strings
+            # log.info("Marking senseid {} tosort (v: {})".format(senseid,v))
+            if not kwargs.get('cvt'): #default, not on iteration
+                self.status.marksenseidtosort(senseid)
+            tosort=True
+        else:
+            # log.info("Marking senseid {} sorted (v: {})".format(senseid,v))
+            if not kwargs.get('cvt'): #default, not on iteration
+                self.status.marksenseidsorted(senseid)
+            if v not in ['NA','ALLOK']:
+                self._groups.append(v)
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses, as well as sorted (but not verified) groups.
