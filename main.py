@@ -5640,7 +5640,7 @@ class Sort(object):
             # log.info("Groups: {}".format(self.status.groups(toverify=True)))
             updatestatus()
             log.info("Group-groups: {}-{}".format(group,groups))
-            if groups:
+            if group in groups:
                 groups.remove(group)
             # log.info("Group-groups: {}-{}".format(group,groups))
             self.status.groups(groups,wsorted=True)
