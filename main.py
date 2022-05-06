@@ -1896,6 +1896,7 @@ class Settings(object):
                             kwargs=kwargs)
             t.start()
         t.join()
+        """update 'tosort' status"""
         """update status groups"""
         sorted=set(self._groups)
         self.status.groups(list(sorted),**kwargs)
