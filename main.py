@@ -4316,6 +4316,7 @@ class Segments(object):
         return self.db.fieldvalue(
                         senseid=senseid,
                         analang=self.analang,
+                        # annotation
                         name=check,
                         ftype=self.params.ftype(),
                         )
