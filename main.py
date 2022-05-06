@@ -4977,10 +4977,6 @@ class Tone(object):
         self.addframe()
         self.addwindow.wait_window(self.addwindow)
         self.runcheck()
-    def verifyframeftype(self,check):
-        ftype=self.toneframes[self.ps][check]['field'] #this must match check!
-        curftype=self.params.ftype()
-        if ftype != curftype:
     def presortgroups(self):
         #simpler than calling and uncalling..…
         pass
