@@ -4984,6 +4984,9 @@ class Tone(object):
     def presortgroups(self):
         #simpler than calling and uncalling..…
         pass
+    def updateformtoannotations(self,*args,**kwargs):
+        #simpler than calling and uncalling..…
+        pass
     def verifyframeftype(self,ftype,check):
         checkftype=self.toneframes[self.ps][check]['field'] #this must match check!
         # curftype=self.params.ftype()
