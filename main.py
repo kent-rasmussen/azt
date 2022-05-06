@@ -1872,6 +1872,41 @@ class Settings(object):
         log.info("Status settings refreshed from LIFT in {}s".format(
                                                         time.time()-start_time))
         w.close()
+    def updatesortingstatus(self, store=True, **kwargs):
+        """This reads LIFT to create lists for sorting, populating lists of
+        sorted and unsorted senses, as well as sorted (but not verified) groups.
+        So don't iterate over it. Instead, use checkforsenseidstosort to just
+        confirm tosort status"""
+        """To get this from the object, use status.tosort(), todo() or done()"""
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        kwargs['wsorted']=True #ever not?
+        senseids=self.slices.senseids(ps=ps,profile=profile)
+        self.status.renewsenseidstosort([],[]) #will repopulate
+        self._groups=[]
+        if cvt == 'T': #we need to be able to iterate over cvt, to rebuild
+            fn=Tone.getgroupofsenseid
+        else:
+            fn=Segments.getgroupofsenseid
+        for senseid in senseids:
+            t = threading.Thread(target=self.categorizebygrouping,
+                            args=(fn,senseid),
+                            kwargs=kwargs)
+            t.start()
+        t.join()
+        """update status groups"""
+        sorted=set(self._groups)
+        self.status.groups(list(sorted),**kwargs)
+        verified=set(self.status.verified(**kwargs)) #read
+        """This should pull verification status from LIFT, someday"""
+        self.status.verified(list(verified&sorted),**kwargs) #set
+        log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
+                "tosort: {}".format(kwargs.values(),sorted,verified,
+                                    self.status.tosort(**kwargs)))
+        if store:
+            self.storesettingsfile(setting='status')
     def guessanalang(self):
         #have this call set()?
         """if there's only one analysis language, use it."""
@@ -5217,7 +5252,7 @@ class Sort(object):
             exit=self.getcheck()
             if exit and not self.exitFlag.istrue():
                 return #if the user didn't supply a check
-        self.updatesortingstatus() # Not just tone anymore
+        self.settings.updatesortingstatus() # Not just tone anymore
         self.maybesort()
     def marksortgroup(self,senseid,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
@@ -5253,91 +5288,6 @@ class Sort(object):
             self.maybewrite() #This is never iterated over; just one entry at a time.
         if not nocheck:
             return newgroup
-    def updatesortingstatus(self, store=True, **kwargs):
-        """This reads LIFT to create lists for sorting, populating lists of
-        sorted and unsorted senses, as well as sorted (but not verified) groups.
-        So don't iterate over it. Instead, use checkforsenseidstosort to just
-        confirm tosort status"""
-        """To get this from the object, use status.tosort(), todo() or done()"""
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
-        kwargs['wsorted']=True #ever not?
-        if cvt == 'T':
-            senseids=self.slices.senseids(ps=ps,profile=profile)
-        else:
-            senseids=[]
-            groups=self.status.groups(wsorted=True)
-            #multiprocess from here?
-            for group in self.status.groups(cvt=cvt):
-                self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
-                # log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
-                #                                             self.regexCV))
-                s=set(self.senseidformsbyregex(self.regex,ps=ps))
-                if s: #senseids just for this group
-                    if group not in groups:
-                        groups.append(group)
-                    self.presort(list(s),check,group)
-                    senseids+=list(s)
-            self.status.presorted(True)
-        self.status.renewsenseidstosort([],[]) #will repopulate
-        groups=[]
-        for senseid in senseids:
-            if cvt == 'T':
-                v=firstoflist(self.db.get("example/tonefield/form/text",
-                                senseid=senseid,
-                                location=check
-                                ).get('text'),
-                        othersOK=True) #Don't complain if more than one found.
-            else:
-                ftype=self.params.ftype()
-                kwargs={ftype+'annotationname':check,
-                        # ftype+'annotationvalue':group
-                        }
-                v=firstoflist(self.db.get("citation/form/annotation",
-                                lang=self.params.analang(),
-                                # annotationname=check,
-                                # annotationvalue=
-                                senseid=senseid,
-                                # location=check
-                                **kwargs
-                                ).get('value'),
-                        othersOK=True) #Don't complain if more than one found.
-            # if v:
-            #     log.debug("Found tone value (updatesortingstatus): {} ({})"
-            #             "".format(v, type(v)))
-            if v in ['','None',None]: #unlist() returns strings
-                log.info("Marking senseid {} tosort (v: {})".format(senseid,v))
-                self.status.marksenseidtosort(senseid)
-            else:
-                log.info("Marking senseid {} sorted (v: {})".format(senseid,v))
-                self.status.marksenseidsorted(senseid)
-                if v not in ['NA','ALLOK']:
-                    groups.append(v)
-        """update 'tosort' status"""
-        if self.status.senseidstosort():
-            log.info("updatesortingstatus shows senseidstosort remaining")
-            vts=True
-        else:
-            log.info("updatesortingstatus shows no senseidstosort remaining")
-            vts=False
-        self.status.tosort(vts,**kwargs)
-        """update status groups"""
-        sorted=list(dict.fromkeys(groups))
-        self.status.groups(sorted,**kwargs)
-        verified=self.status.verified(**kwargs) #read
-        """This should pull verification status from LIFT, someday"""
-        for v in verified:
-            if v not in sorted:
-                log.error("Removing verified group {} not in actual groups: {}!"
-                            "".format(v, sorted))
-                verified.remove(v)
-        self.status.verified(verified,**kwargs) #set
-        log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
-                "tosort: {}".format(kwargs.values(),sorted,verified,vts))
-        if store:
-            self.settings.storesettingsfile(setting='status')
     def notdonewarning(self):
         self.getrunwindow(nowait=True)
         buttontxt=_("Sort!")
@@ -5591,7 +5541,7 @@ class Sort(object):
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
         done.remove(group)
-        self.updatesortingstatus() # Not just tone anymore
+        self.settings.updatesortingstatus() # Not just tone anymore
         self.maybesort()
     def verify(self,menu=False):
         def updatestatus():
@@ -5936,6 +5886,8 @@ class Sort(object):
                                         'addifrmd':True)
             for i in [t,u,v]:
                 i.start()
+            # self.setsenseidgroup(senseid,ftype,check,newvalue)
+            # self.updateformtoannotations(senseid,ftype,check)
         for i in [t,u,v]:
             i.join()
         self.maybewrite() #once done iterating over senseids
