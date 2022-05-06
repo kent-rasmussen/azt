@@ -4172,11 +4172,12 @@ class Segments(object):
             t.start()
         t.join()
         return self.output
-    def presort(self,senseids,check,group):
-        if self.status.presorted():
-            log.info(_("Presorting for this check/slice already done! ({}; {})"
-                        "").format(check,senseids[0]))
+    def presortgroups(self,**kwargs):
+        if self.status.presorted(**kwargs):
+            log.info(_("Presorting for this check/slice already done! ({})"
+                        "").format(kwargs))
             return
+    def presort(self,senseids,check,group):
         w=self.getrunwindow(msg=_("Presorting words by {}={}").format(check,group))
         ftype=self.params.ftype()
         for senseid in senseids:
