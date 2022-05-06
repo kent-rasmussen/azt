@@ -5921,14 +5921,22 @@ class Sort(object):
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
-            self.setsenseidgroup(senseid,check,newvalue,
-                                updateforms=True,
-                                write=False)
-            self.db.modverificationnode(senseid=senseid,
-                            vtype=profile,
-                            analang=self.analang,
-                            add=add,rms=[rm],
-                            addifrmd=True,write=False)
+            t = threading.Thread(target=self.setsenseidgroup,
+                                args=(senseid,ftype,check,newvalue))
+            u = threading.Thread(target=self.marksortgroup,
+                                args=(senseid,ftype,check))
+            v = threading.Thread(target=self.db.modverificationnode,
+                                # args=(senseid,group),
+                                kwargs={'senseid':senseid,
+                                        'vtype':profile,
+                                        'analang':self.analang,
+                                        'add':add,
+                                        'rms':[rm],
+                                        'addifrmd':True)
+            for i in [t,u,v]:
+                i.start()
+        for i in [t,u,v]:
+            i.join()
         self.maybewrite() #once done iterating over senseids
     def __init__(self, parent):
         parent.settings.makeeverythingok()
