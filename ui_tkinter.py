@@ -681,6 +681,8 @@ class Root(Exitable,tkinter.Tk):
         UI.__init__(self)
 """These have parent (Childof), but no grid"""
 class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
+    """This and all Childof classes should have a parent, to inherit a common
+    theme. Otherwise, colors, fonts, and icons will be incongruous."""
     def __init__(self, parent, *args, **kwargs):
         self.mainwindow=False
         Childof.__init__(self,parent)
