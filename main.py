@@ -4981,6 +4981,9 @@ class Tone(object):
         ftype=self.toneframes[self.ps][check]['field'] #this must match check!
         curftype=self.params.ftype()
         if ftype != curftype:
+    def presortgroups(self):
+        #simpler than calling and uncalling..…
+        pass
     def verifyframeftype(self,ftype,check):
         checkftype=self.toneframes[self.ps][check]['field'] #this must match check!
         # curftype=self.params.ftype()
@@ -5257,6 +5260,7 @@ class Sort(object):
             exit=self.getcheck()
             if exit and not self.exitFlag.istrue():
                 return #if the user didn't supply a check
+        self.presortgroups()
         self.settings.updatesortingstatus() # Not just tone anymore
         self.maybesort()
     def marksortgroup(self,senseid,group,**kwargs):
