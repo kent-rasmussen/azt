@@ -5918,6 +5918,7 @@ class Sort(object):
         """The above doesn't test for profile, so we restrict that next"""
         profile=self.slices.profile()
         senseids=self.slices.inslice(lst2)
+        ftype=self.params.ftype()
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
