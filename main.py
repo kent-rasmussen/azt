@@ -1871,7 +1871,7 @@ class Settings(object):
         self.status.cull()
         if None in self.status: #This should never be there
             del self.status[None]
-        self.storesettingsfile(setting='status')
+        self.status.store()
         log.info("Status settings refreshed from LIFT in {}s".format(
                                                         time.time()-start_time))
         w.close()
