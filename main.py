@@ -5634,15 +5634,15 @@ class Sort(object):
         senseids=self.exs.senseidsinslicegroup(group,check)
         if not senseids:
             groups=self.status.groups() #from which to remove, put back
-            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            # log.info("Groups: {}".format(self.status.groups(toverify=True)))
             verified=False
             log.info("Group ‘{}’ has no examples; continuing.".format(group))
-            log.info("Groups: {}".format(self.status.groups(toverify=True)))
+            # log.info("Groups: {}".format(self.status.groups(toverify=True)))
             updatestatus()
             log.info("Group-groups: {}-{}".format(group,groups))
             if groups:
                 groups.remove(group)
-            log.info("Group-groups: {}-{}".format(group,groups))
+            # log.info("Group-groups: {}-{}".format(group,groups))
             self.status.groups(groups,wsorted=True)
             log.info("Groups: {}".format(self.status.groups(toverify=True)))
             return
