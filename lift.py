@@ -1917,10 +1917,13 @@ class LiftURL():
         elif node == self.targethead: #do this later
             return False
         elif self.attrneeds(node,c):
+            # log.info("attrneeds {}; {}".format(node,c))
             return True
         elif self.kwargsneeds(node,c):
+            # log.info("kwargsneeds {}; {}".format(node,c))
             return True
         elif self.pathneeds(node,c):
+            # log.info("pathneeds {}; {}".format(node,c))
             return True
         else:
             return False
@@ -1939,33 +1942,34 @@ class LiftURL():
         return x
     def pathneeds(self,node,children):
         path=self.path
-        log.log(4,"Path: {}; children: {}".format(path,children))
+        # log.info("Path: {}; children: {}".format(path,children))
         if node in path and node not in self.level:
-            log.log(4,"Parent ({}) in path: {}".format(node,path))
+            # log.info("Parent ({}) in path: {}".format(node,path))
             return True
         if children != []:
             childreninpath=set(children) & set(path)
             if childreninpath != set():
                 pathnotdone=childreninpath-set(self.level)
                 if pathnotdone != set():
-                    log.log(4,"Found descendant of {} in path, which isn't "
-                        "already there: {}".format(node, pathnotdone))
+                    # log.info("Found descendant of {} in path, which isn't "
+                    #     "already there: {}".format(node, pathnotdone))
                     return True
         return False
     def attrneeds(self,node,children):
-        log.log(4,"looking for attr(s) of {} in {}".format([node]+children,
-                                                                    self.attrs))
         for n in [node]+children:
             if n in self.path or n in self.target:
-                log.log(4,"found {} in path or target; skipping kwarg check.".format(n))
             elif n in self.attrs:
-                log.log(4,"looking for attr(s) of {} in {}".format(n,self.attrs))
+        # log.info("looking for attr(s) of {} in {}".format(nodes,self.attrs))
+        # log.info("Building on url {}".format(self.drafturl()))
+                # log.info("looking for attr(s) of {} in {}".format(n,self.attrs))
                 common=set(self.attrs[n])&set(list(self.kwargs)+[self.what])
                 if common != set():
-                    log.log(4,"Found attr(s) {} requiring {}".format(common,n))
+                    # log.info("Found attr(s) {} requiring {}".format(common,n))
                     return True
-            else:
-                log.log(4,"{} not found in {}".format(n,self.attrs.keys()))
+            # elif n in self.path or n in self.target:
+            #     log.info("found {} in path or target; skipping kwarg check.".format(n))
+            # else:
+            #     log.info("{} not found in {}".format(n,self.attrs.keys()))
         return False
     def kwargsneeds(self,node,children):
         if node in self.kwargs:
