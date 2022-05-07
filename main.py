@@ -8982,7 +8982,9 @@ class FramedDataSense(FramedData):
         #This should maybe be a dict of values? Will need to support that on read
         #For now, this should use the parameter as given, not as iterated
         log.info("parsesense ftype: {}".format(ftype))
-        self.group=self.db.fieldvalue(senseid=senseid, name=check, ftype=ftype,
+        self.group=self.db.fieldvalue(senseid=senseid,
+                                        annotationname=check,
+                                        ftype=ftype,
                                         lang=self.analang,
                                         showurl=True
                                         )
