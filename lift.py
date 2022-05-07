@@ -1956,11 +1956,11 @@ class LiftURL():
                     return True
         return False
     def attrneeds(self,node,children):
-        for n in [node]+children:
-            if n in self.path or n in self.target:
-            elif n in self.attrs:
+        nodes=[node]+children
         # log.info("looking for attr(s) of {} in {}".format(nodes,self.attrs))
         # log.info("Building on url {}".format(self.drafturl()))
+        for n in nodes:
+            if n in self.attrs and not (n in self.path or n in self.target):
                 # log.info("looking for attr(s) of {} in {}".format(n,self.attrs))
                 common=set(self.attrs[n])&set(list(self.kwargs)+[self.what])
                 if common != set():
