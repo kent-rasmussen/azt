@@ -1457,6 +1457,8 @@ class LiftURL():
             lang='lang' #this is the kwargs key to use
         # log.info("form kwargs: {}, lang={}".format(self.kwargs,lang))
         self.build("form","lang",lang) #OK if lang is None
+        if self.kwargs.get('annodict') and not annodict:
+            annodict=self.kwargs.pop('annodict')
         if annodict:
             self.annotation(annodict)
         if self.kwargs['value']:
