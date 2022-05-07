@@ -1951,6 +1951,10 @@ class LiftURL():
             if childreninpath != set():
                 pathnotdone=childreninpath-set(self.level)
                 if pathnotdone != set():
+                    if not pathnotdone-set(['annotation']) and ( #only anno...
+                                    node not in ['form','annotation']
+                                                         ):
+                        return #otherwise this brings in way too much
                     # log.info("Found descendant of {} in path, which isn't "
                     #     "already there: {}".format(node, pathnotdone))
                     return True
@@ -1962,6 +1966,8 @@ class LiftURL():
         for n in nodes:
             if n in self.attrs and not (n in self.path or n in self.target):
                 # log.info("looking for attr(s) of {} in {}".format(n,self.attrs))
+                if n == 'annotation' and node not in ['form','annotation']:
+                    return #otherwise this brings in way too much
                 common=set(self.attrs[n])&set(list(self.kwargs)+[self.what])
                 if common != set():
                     # log.info("Found attr(s) {} requiring {}".format(common,n))
