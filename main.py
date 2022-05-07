@@ -10564,7 +10564,7 @@ class StatusDict(dict):
             """This depends on profile only"""
             profile=kwargs.get('profile',self._slicedict.profile())
             n=profile.count(cvt)
-            log.debug('Found {} instances of {} in {}'.format(n,cvt,profile))
+            # log.debug('Found {} instances of {} in {}'.format(n,cvt,profile))
             self._checksdict[cvt][profile]=list()
             for i in range(n): # get max checks and lesser
                 if i+1 >6:
@@ -10581,9 +10581,9 @@ class StatusDict(dict):
                 #                                         ))
             self._checksdict[cvt][profile].sort(
                                             key=lambda x:len(x[0]),reverse=True)
-            log.info("Check codes found: {}".format(
-                                                self._checksdict[cvt][profile]
-                                                    ))
+            # log.info("Check codes found: {}".format(
+            #                                     self._checksdict[cvt][profile]
+            #                                         ))
     def node(self,**kwargs):
         """This will fail if fed None values"""
         kwargs=self.checkslicetypecurrent(**kwargs)
