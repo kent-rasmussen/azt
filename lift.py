@@ -1880,7 +1880,9 @@ class LiftURL():
                 log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
                 if (len(afterbp) <=1 #nothing after parent
                         or self.unalias(b) not in afterbp[-1] #this item not after parent
-                        or self.level[b]!=self.level[bp]+1): #this not child of parent
+                        or (b in self.level and
+                            bp in self.level and
+                            self.level[b]!=self.level[bp]+1)): #this not child of parent
                     log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
                     self.levelup(bp)
                     self.show(b,parent=bp)
