@@ -2663,17 +2663,33 @@ if __name__ == '__main__':
     analang='bfj'
     analang='en'
     audiolang='en-Zxxx-x-audio'
+    check='V1'
     kwargs={
             'senseid':
-            "machete, cutlass_fb520766-e591-457b-8c70-a172088afc08"
+            "lip_39e4b942-0bf6-4494-aa9b-7f5163feb2bc",
             # "sickle_db1c9e16-7fd7-46fa-a21c-27981588cf41",
             # 'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
             # 'glosslang': 'fr'
-            }
+            'annotationname':check,
+            'ftype':'lc',
+            'showurl':True}
     ftype='Plural'
     ftype='lc'
-    check='V1'
     group=1
+    t=[]
+    # pr=lift.get('pronunciation',path=['annotation'],**kwargs).get('value')
+    # print(pr)
+    # for kwargs['node'] in lift.fieldnode(**kwargs):
+    #     t.extend(lift.get('annotation',**kwargs).get('value'))
+    # print(t)
+    fv=lift.fieldvalue(senseid=kwargs["senseid"],
+                        analang=analang,
+                        # annodict={'name':'name'},
+                        annotationname=check,
+                        ftype=ftype,
+                        showurl=True)
+    print(fv)
+    exit()
     for ps in pss:
         kwargs={ftype+'annotationname':'V1',
                 ftype+'annotationvalue':'a'
