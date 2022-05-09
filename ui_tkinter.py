@@ -478,7 +478,7 @@ class Renderer(ObectwArgs):
                     if e == 'cannot open resource':
                         log.debug("no file {}, checking next".format(file))
         else: #i.e., if it was done before
-            log.info("Using image font: {}".format(str(fontkey)))
+            # log.info("Using image font: {}".format(str(fontkey)))
             font=self.imagefonts[str(fontkey)]
         if str(fontkey) not in self.imagefonts: #i.e., neither before nor now
             log.error("Cannot find font file for {}; giving up".format(fname))
@@ -792,7 +792,7 @@ class Text(Childof,ObectwArgs):
                     and set(self.text) & (sticks|d)
                     and not self.norender):
             self.render(**kwargs)
-            log.info("text and image: {} - {}".format(self.text,self.image))
+            # log.info("text and image: {} - {}".format(self.text,self.image))
         else:
             self.text=nfc(self.text)
         # log.info(getattr(self,'wraplength',0))
