@@ -12,9 +12,9 @@ logsetup.setlevel('INFO',log) #for this file
 
 class Transcriber(ui.Frame):
     def addchar(self,x):
-        if x == '':
+        if x in ['','∅'] or self.formfield.get() == '∅':
             self.formfield.delete(0,ui.END)
-        else:
+        if x:
             self.formfield.insert(ui.INSERT,x) #could also do tkinter.END
         self.updatelabels()
     def updatelabels(self,event=None):
