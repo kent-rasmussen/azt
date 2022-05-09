@@ -1844,7 +1844,7 @@ class Settings(object):
         # order to populate it if found —before removing empty entires.
         # This also has no access to verification information, which comes only
         # from verify()
-        w=ui.Wait(parent=program['root'],msg=_("Reloading stats data"))
+        w=ui.Wait(parent=program['root'],msg=_("Reloading status data"))
         start_time=time.time()
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
