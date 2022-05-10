@@ -1811,6 +1811,8 @@ class Settings(object):
     def compileCVrxforsclass(self,sclass):
         """This does sorting by length to make longest first"""
         self.rx[sclass]=rx.s(self.s[self.analang],sclass,compile=True)
+        for n in range(7):
+            self.rx[sclass+str(n)]=rx.nX(self.s[self.analang][sclass],n)
     def setupCVrxs(self):
         self.rx={}
         for sclass in list(self.s[self.analang])+['C']: #be sure to do C last
@@ -1819,8 +1821,6 @@ class Settings(object):
                     self.s[self.analang]['C']+=self.s[self.analang][sclass]
                     continue
                 self.compileCVrxforsclass(sclass)
-                for n in range(7):
-                    self.rx[sclass+str(n)]=rx.nX(self.s[self.analang][sclass],n)
         #Compile preferred regexs here
         for cc in ['CG','CS','NC','VN','VV']:
             ccc=cc.replace('C','[CSGDʔN]{1}')
