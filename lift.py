@@ -1264,7 +1264,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     a=Node(form, 'annotation', anndict)
     def extrasegments(self):
         for lang in self.analangs:
-            self.segmentsnotinregexes[lang]=list()
+            self.segmentsnotinregexes[lang]={}
             """This is not a particularly sophisticated test. I should be
             also looking for consonant glyphs that occur between vowels,
             and vice versa. Later."""
