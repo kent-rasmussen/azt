@@ -7766,7 +7766,7 @@ class Transcribe(Sound,Sort):
         profile=self.slices.profile()
         check=self.params.check()
         self.buttonframew=int(program['screenw']/3.5)
-        if check == None:
+        if not check:
             self.getcheck(guess=True)
             if check == None:
                 log.info("I asked for a check name, but didn't get one.")
