@@ -7640,6 +7640,8 @@ class Transcribe(Sound,Sort):
             log.debug(noname)
             self.errorlabel['text'] = noname
             return 1
+        if newvalue == "∅": #proxy for no segments
+            newvalue=''
         if newvalue != self.group: #only make changes!
             if newvalue in self.groups :
                 deja=_("Sorry, there is already a group with "
