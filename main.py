@@ -250,7 +250,9 @@ class FileChooser(object):
             if senseid not in self.senseidsinvalid:
                 self.senseidsvalid+=[senseid]
         print(len(self.senseidsvalid),'senses with valid data remaining.')
-        self.senseidswanyps=self.db.get('sense',path=['ps'],showurl=True).get('senseid') #any ps value works here.
+        self.senseidswanyps=self.db.get('sense',path=['ps'],
+                                        # showurl=True
+                                        ).get('senseid') #any ps value works here.
         print(len(self.senseidswanyps),'senses with ps data found.')
         self.senseidsvalidwops=[]
         self.senseidsvalidwps=[]
@@ -721,7 +723,7 @@ class StatusFrame(ui.Frame):
             t=(_("Using {} button columns").format(self.settings.buttoncolumns))
         else:
             t=(_("Not using multiple button columns").format(self.check))
-        log.info(t)
+        # log.info(t)
         tt=_("Click here to change the number of columns used for sort buttons")
         self.proselabel(t,cmd=self.taskchooser.getbuttoncolumns,tt=tt)
     def maxes(self):
@@ -1234,9 +1236,9 @@ class Settings(object):
                 # log.info("Trying to dict {} attr".format(s))
                 try:
                     d[s]=self.fndict[s]()
-                    log.info("Value {}={} found in object".format(s,d[s]))
+                    # log.info("Value {}={} found in object".format(s,d[s]))
                 except:
-                    log.log(4,"Value of {} not found in object".format(s))
+                    log.error("Value of {} not found in object".format(s))
             elif hasattr(o,s) and getattr(o,s):
                 d[s]=getattr(o,s)
                 # log.log(4,"Trying to dict self.{} with value {}, type {}"
@@ -3304,6 +3306,7 @@ class TaskDressing(object):
     def getV(self,window,event=None, **kwargs):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
+        log.info("_getgroup kwargs: {}".format(kwargs))
         ps=kwargs.get('ps',self.slices.ps())
         if ps is None:
             ui.Label(window.frame,
@@ -4121,7 +4124,8 @@ class Segments(object):
         """Whichever field is being asked for (textnodefn), this fn returns
         which are left to do."""
         all=self.db.get('entry',
-                        showurl=True).get()
+                        # showurl=True
+                        ).get()
         # done=self.db.get('entry',path=['lexeme'],analang=analang,
         #                 showurl=True).get()
         # for i in all[:10]:
@@ -4262,8 +4266,8 @@ class Segments(object):
         self.updatestatus(group=group) # marks the group unverified.
         self.runwindow.waitdone()
     def updateformtextnodebycheck(self,t,check,value):
-        log.info("subbing {} for {}, using {}".format(value,check,self.settings.rx[check]))
         for c in reversed(check.split('=')):
+            log.info("subbing {} for {}, using {}".format(value,c,self.settings.rx[c]))
             t.text=self.settings.rx[c].sub('\\g<1>'+value,t.text)
     def updateformtoannotations(self,senseid,ftype,check=None,write=False):
         """This should take a sense and ftype (and maybe check, not sure)
@@ -4419,7 +4423,9 @@ class WordCollection(Segments):
                                     cawlvalue="{:04}".format(n),
                                     ).get('node')[0] #certain to be there
             try:
-                eps=self.cawldb.get('sense/ps',node=e,showurl=True).get('node')[0]
+                eps=self.cawldb.get('sense/ps',node=e,
+                                    # showurl=True
+                                    ).get('node')[0]
                 epsv=eps.get('value')
             except IndexError:
                 log.info("line {} w/o lexical category; leaving.".format(n))
@@ -4725,8 +4731,10 @@ class Tone(object):
         while '' in gloss.values():
             senseid=self.gimmesenseid(ps=ps)
             for lang in self.glosslangs:
-                gloss[lang]=self.db.glossordefn(senseid=senseid,glosslang=lang,
-                                                showurl=True)[0]
+                gloss[lang]=self.db.glossordefn(senseid=senseid,
+                                                glosslang=lang,
+                                                # showurl=True
+                                                )[0]
             tried+=1
             if tried> self.db.nsenseids*1.5:
                 errortext=_("I've tried (randomly) {} times, and not found one "
@@ -5463,7 +5471,7 @@ class Sort(object):
         framed=self.taskchooser.datadict.getframeddata(senseid)
         framed.setframe(self.check)
         """After the first entry, sort by groups."""
-        log.debug('groups: {}'.format(self.status.groups(wsorted=True)))
+        # log.debug('groups: {}'.format(self.status.groups(wsorted=True)))
         if self.runwindow.exitFlag.istrue():
             return 1,1
         ui.Label(self.titles, text=progress, font='report', anchor='w'
@@ -7651,6 +7659,7 @@ class Transcribe(Sound,Sort):
         self.errorlabel['text'] = ''
     def updategroups(self):
         self.groups=self.status.groups(wsorted=True)
+        log.info("self.groups: {}".format(self.groups))
         self.groupsdone=self.status.verified()
         self.group=self.status.group()
         # log.info("group: {}, groups: {}".format(self.group,self.groups))
@@ -7754,7 +7763,12 @@ class Transcribe(Sound,Sort):
     def setgroup_comparison(self):
         w=self.getgroup(comparison=True,wsorted=True) #this returns its window
         if w and w.winfo_exists(): #This window may be already gone
+            log.info("Waiting for {}".format(w))
             w.wait_window(w)
+        log.info("Groups: {} (of {}); {}?".format(self.group,
+                                            self.groups,
+                                            # self.group_comparison,
+                                            self.settings.group_comparison))
         if hasattr(self.settings,'group_comparison'):
             self.group_comparison=self.settings.group_comparison
         self.comparisonbuttons()
@@ -8811,7 +8825,7 @@ class FramedDataDict(dict):
             """If neither or None is given, try to build it from kwargs"""
             """If these aren't there, these will correctly fail w/KeyError."""
             source=firstoflist(self.db.get('example',
-                                            showurl=True,
+                                            # showurl=True,
                                             senseid=senseid,
                                             location=check
                                             ).get('node'))
@@ -8828,9 +8842,10 @@ class FramedDataDict(dict):
                 log.info("getting framed data from sense")
                 d=self[source]=FramedDataSense(self,source,check,**kwargs)
             if element:
-                log.info("getting framed data from element")
+                # log.info("getting framed data from element")
                 d=self[source]=FramedDataElement(self,source,senseid,**kwargs)
-            log.info("FramedData {} made with forms {}".format(source,d.forms))
+            log.info("FramedData from {} made with forms {}".format(source,
+                                                                    d.forms))
         else:
             log.info("FramedData used from ealier ({},with forms {})".format(
                                                                 source,d.forms))
@@ -8981,14 +8996,14 @@ class FramedDataSense(FramedData):
         # log.info("forms: {}".format(self.forms))
         #This should maybe be a dict of values? Will need to support that on read
         #For now, this should use the parameter as given, not as iterated
-        log.info("parsesense ftype: {}".format(ftype))
+        # log.info("parsesense ftype: {}".format(ftype))
         self.group=self.db.fieldvalue(senseid=senseid,
                                         annotationname=check,
                                         ftype=ftype,
                                         lang=self.analang,
-                                        showurl=True
+                                        # showurl=True
                                         )
-        log.info("self.group of parsesense: {}".format(self.group))
+        # log.info("self.group of parsesense: {}".format(self.group))
     def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
@@ -8997,8 +9012,8 @@ class FramedDataSense(FramedData):
         if not ftype:
             log.error("ftype: {}!".format(ftype))
             return
-        else:
-            log.info("ftype: {}".format(ftype))
+        # else:
+        #     log.info("ftype: {}".format(ftype))
         if not self.db.get('sense', senseid=senseid).get():
             log.error("You should pass a senseid from your database {} "
                         "({}) to FramedDataSense!".format(source,type(source)))
@@ -9343,9 +9358,9 @@ class SortButtonFrame(ui.ScrollingFrame):
         return str(newgroup)
     def sortselected(self,senseid,framed):
         selectedgroups=selected(self.groupvars)
-        log.info("selectedgroups: {}".format(selectedgroups))
-        for k in self.groupvars:
-            log.info("{} value: {}".format(k,self.groupvars[k].get()))
+        # log.info("selectedgroups: {}".format(selectedgroups))
+        # for k in self.groupvars:
+        #     log.info("{} value: {}".format(k,self.groupvars[k].get()))
         if len(selectedgroups)>1:
             log.error("More than one group selected: {}".format(
                                                             selectedgroups))
@@ -10637,8 +10652,8 @@ class StatusDict(dict):
         changed=False
         if group is None:
             group=self.group()
-        log.info("Verification before update (verifying {} as {}): {}".format(
-                                                group,verified,self.verified()))
+        # log.info("Verification before update (verifying {} as {}): {}".format(
+        #                                         group,verified,self.verified()))
         self.build()
         n=self.node()
         if verified == True:
@@ -10651,7 +10666,7 @@ class StatusDict(dict):
                 changed=True
         if write and changed:
             self.store()
-        log.info("Verification after update: {}".format(self.verified()))
+        # log.info("Verification after update: {}".format(self.verified()))
         return changed
     def group(self,group=None):
         """This maintains the group we are actually on, pulled from data
@@ -11197,7 +11212,7 @@ def checkslicetype(**kwargs):
 def grouptype(**kwargs):
     for arg in ['wsorted','tosort','toverify','tojoin','torecord','comparison']:
         kwargs[arg]=kwargs.get(arg,False)
-    log.log(4,"Returning grouptype kwargs {}".format(kwargs))
+    # log.info("Returning grouptype kwargs {}".format(kwargs))
     return kwargs
 def unlist(l,ignore=[None]):
     if l and isinstance(l[0],lift.ET.Element):
