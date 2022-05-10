@@ -9370,7 +9370,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.exs=task.exs
         self.status=task.status
         self.marksortgroup=task.marksortgroup
-        # self.check=task.params.check()
+        self.check=task.params.check()
         # self.cvt=task.params.cvt()
         # self.ftype=task.params.ftype()
         # self.ps=task.slices.ps()
