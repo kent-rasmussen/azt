@@ -5315,6 +5315,8 @@ class Sort(object):
             else:
                 log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(newgroup,group))
+        if kwargs.get('updateforms'):
+            self.updateformtoannotations(senseid,ftype,check=check)
         self.status.last('sort',update=True)
         self.status.tojoin(True) # will need to be distinguished again
         if not nocheck:
