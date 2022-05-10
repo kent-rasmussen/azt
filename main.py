@@ -9236,6 +9236,8 @@ class SortButtonFrame(ui.ScrollingFrame):
         firstOK=_("This word is OK in this frame")
         newgroup=_("Different")
         skiptext=_("Skip this item")
+        if '=' in self.check:
+            skiptext+=" ({})".format(self.check.replace('=','≠'))
         """This should just add a button, not reload the frame"""
         row+=10
         bf=ui.Frame(parent)
