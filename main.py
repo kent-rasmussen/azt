@@ -1807,7 +1807,9 @@ class Settings(object):
         cvt=self.params.cvt()
         if cvt in ['C', 'V']:
             self.s[self.analang][cvt]+=[s]
+            # log.info("Compiling rx list: {}".format(self.s[self.analang][cvt]))
             self.compileCVrxforsclass(cvt)
+            # log.info("Compiled rx list: {}".format(self.rx[cvt]))
     def compileCVrxforsclass(self,sclass):
         """This does sorting by length to make longest first"""
         self.rx[sclass]=rx.s(self.s[self.analang],sclass,compile=True)
