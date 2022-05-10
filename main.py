@@ -5264,8 +5264,8 @@ class Sort(object):
                     senseid,
                     guid))
         self.setsenseidgroup(senseid,ftype,check,group,framed=framed)
-        newgroup=unlist(self.getgroupofsenseid(senseid,check))
         if not nocheck:
+            newgroup=unlist(self.getgroupofsenseid(senseid,check))
             if newgroup != group:
                 log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                     newgroup,group))
