@@ -1277,12 +1277,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     if ((x not in invalid) and
                             (x not in [item for sublist in self.s[lang].values()
                                 for item in sublist])):
-                        self.segmentsnotinregexes[lang].append(x)
-                        log.debug('Missing {} from {} {}'.format(x,lang,form))
+                        try:
+                            self.segmentsnotinregexes[lang][x]+=[form]
+                        except KeyError:
+                            self.segmentsnotinregexes[lang][x]=[form]
+                        # log.debug('Missing {} from {} {}'.format(x,lang,form))
             if len(self.segmentsnotinregexes[lang]) > 0:
                 log.info("The following segments are not in your {} "
-                "regex's: {}".format(lang,
-                list(dict.fromkeys(self.segmentsnotinregexes[lang]).keys())))
+                "regex's: {}".format(lang, self.segmentsnotinregexes[lang]))
             else:
                 print("No problems!")
                 log.info(_("Your regular expressions look OK for {} (there are "
