@@ -3308,31 +3308,67 @@ class TaskDressing(object):
         """Window is called in getgroup"""
         log.info("_getgroup kwargs: {}".format(kwargs))
         ps=kwargs.get('ps',self.slices.ps())
-        if ps is None:
-            ui.Label(window.frame,
-                          text='Error: please set Grammatical category first! ('
-                          +str(ps)+')'
-                          ).grid(column=0, row=0)
-        elif kwargs.get('guess') and kwargs.get('intfirst'):
-            l=[int(i) for i in self.status.groups(**kwargs) if str(i).isdigit()]
+        cvt=kwargs.get('cvt',self.params.cvt())
+        profile=kwargs.get('profile',self.slices.profile())
+        check=kwargs.get('check',self.params.check())
+        if (cvt == 'T' and None in [cvt, ps, profile, check]):
+            ErrorNotice(parent=window.frame,
+                          msg=_("You need to set "
+                          "\nCheck type (as Tone, currently {}) "
+                          "\nGrammatical category (currently {})"
+                          "\nSyllable Profile (currently {}), and "
+                          "\nTone Frame (currently {})"
+                          "\nBefore choosing a sort group!"
+                          "").format(self.params.cvtdict()[cvt]['sg'], ps,
+                          profile, check)).grid(column=0, row=0)
+            return 1
+        kwargs=grouptype(**kwargs) #this just fills in False
+        groups=self.status.groups(cvt=cvt,**kwargs)
+        if not groups:
+                ErrorNotice(parent=window.frame,
+                          msg=_("It looks like you don't have {}-{} lexemes "
+                          "grouped in the ‘{}’ check yet \n({})."
+                          "").format(ps,profile,check,kwargs, column=0, row=0))
+        if kwargs.get('intfirst') and kwargs.get('guess'):
+            l=[int(i) for i in self.status.groups(cvt=cvt,**kwargs)
+                                    if str(i).isdigit()]
             if l:
                 self.settings.setgroup(str(min(l)),window)
             else:
-                self.settings.status.nextgroup()
+                self.settings.status.nextgroup(cvt=cvt,**kwargs)
                 window.destroy()
-        elif kwargs.get('guess'):
-            self.settings.status.nextgroup()
+            return
+        elif kwargs.get('guess') or (len(groups) == 1
+                                        and not kwargs.get('comparison')):
+            self.settings.status.nextgroup(cvt=cvt,**kwargs)
             window.destroy()
+            return
+        if kwargs.get('comparison'):
+            g2=groups[:]
+            g2.remove(self.status.group()) #group() is not cvt aware
+            if not g2:
+                window.destroy()
+                ErrorNotice(text=_("There don't seem to be any groups "
+                            "to compare with!"))
+                return
+            if len(g2) == 1:
+                self.settings.setgroup_comparison(g2[0],window)
+                return
+            buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                            optionlist=g2,
+                            command=self.settings.setgroup_comparison,
+                            window=window,
+                            column=0, row=4
+                            )
         else:
-            kwargs['cvt']='V'
-            g=self.status.groups(**kwargs)
             ui.Label(window.frame,
-                          text='What Vowel do you want to work with?'
-                          ).grid(column=0, row=0)
+                      text=_("What {} do you want to work with?").format(
+                                              self.params.cvtdict()[cvt]['sg']),
+                      column=0, row=0)
             # window.scroll=ui.ScrollingFrame(window.frame)
             # window.scroll.grid(column=0, row=1)
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                     optionlist=g,
+                                     optionlist=groups,
                                      command=self.settings.setgroup,
                                      window=window,
                                      column=0, row=4
