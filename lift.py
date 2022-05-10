@@ -246,7 +246,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         showurl=kwargs.get('showurl')
         add=kwargs.get('add',None)
         rms=kwargs.get('rms',[])
-        addifrmd=kwargs.get('addifrmd',False)
+        addifrmd=kwargs.get('addifrmd',False) #not using this anywhere; point?
         textnode, fieldnode, sensenode=self.addverificationnode(
                                             senseid,vtype=vtype,analang=analang)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
