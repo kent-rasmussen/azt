@@ -7752,7 +7752,7 @@ class Transcribe(Sound,Sort):
         elif self.group_comparison not in self.groups:
             log.info("Comparison ({}) not in group list ({})"
                         "".format(self.group_comparison,self.groups))
-        elif self.group_comparison == group:
+        elif self.group_comparison == self.group:
             log.info("Comparison ({}) same as subgroup ({}); not showing."
                         "".format(self.group_comparison,self.group))
         else:
