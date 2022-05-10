@@ -3303,7 +3303,7 @@ class TaskDressing(object):
                                                 window=window,
                                                 column=0, row=4
                                                 )
-    def getV(self,window,event=None, **kwargs):
+    def _getgroup(self,window,event=None, **kwargs):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
         log.info("_getgroup kwargs: {}".format(kwargs))
@@ -3338,42 +3338,6 @@ class TaskDressing(object):
                                      column=0, row=4
                                      )
         log.info("Done making buttonframe")
-    def getC(self,window,event=None, **kwargs):
-        # fn=inspect.currentframe().f_code.co_name
-        """Window is called in getgroup"""
-        ps=kwargs.get('ps',self.slices.ps())
-        if ps is None:
-            text=_('Error: please set Grammatical category first! ')+'('
-            +str(ps)+')'
-            ui.Label(window.frame,
-                          text=text
-                          ).grid(column=0, row=0)
-        elif kwargs.get('guess') and kwargs.get('intfirst'):
-            l=[int(i) for i in self.status.groups(**kwargs) if str(i).isdigit()]
-            if l:
-                self.settings.setgroup(str(min(l)),window)
-            else:
-                self.settings.status.nextgroup()
-                window.destroy()
-        elif kwargs.get('guess'):
-            self.settings.status.nextgroup()
-            window.destroy()
-        else:
-            # ui.Label(window.frame,
-            #               ).grid(column=0, row=0)
-            kwargs['cvt']='C'
-            g=self.status.groups(**kwargs)
-            ui.Label(window.frame,
-                          text='What consonant do you want to work with?'
-                          ).grid(column=0, row=0,sticky='nw')
-            # window.scroll=Frame(window.frame)
-            # window.scroll.grid(column=0, row=1)
-            buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                    optionlist=g,
-                                    command=self.settings.setgroup,
-                                    window=window,
-                                    column=0, row=0
-                                    )
     def getgroup(self,event=None,**kwargs): #guess=False,
         """I need to think though how to get this to wait appropriately
         both for single C/V selection, and for CxV selection"""
