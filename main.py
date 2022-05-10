@@ -1802,6 +1802,8 @@ class Settings(object):
     def addtoCVrxs(self,s):
         """This method is just to add a new grapheme while running, so we
         don't have to restart between C/V changes."""
+        if not hasattr(self,'analang'): #in case running after startup
+            self.analang=self.params.analang()
         cvt=self.params.cvt()
         if cvt in ['C', 'V']:
             self.s[self.analang][cvt]+=[s]
