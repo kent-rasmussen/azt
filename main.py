@@ -4223,6 +4223,8 @@ class Segments(object):
         for c in reversed(check.split('=')):
             log.info("subbing {} for {}, using {}".format(value,c,self.settings.rx[c]))
             t.text=self.settings.rx[c].sub('\\g<1>'+value,t.text)
+        #now that we've potentially added a grapheme, see that it will be found.
+        self.settings.addtoCVrxs(value)
     def updateformtoannotations(self,senseid,ftype,check=None,write=False):
         """This should take a sense and ftype (and maybe check, not sure)
         and update that form on the basis of the annotations made to date.
