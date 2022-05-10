@@ -5313,7 +5313,6 @@ class Sort(object):
                 if not self.exitFlag.istrue():
                     self.notdonewarning()
                 return
-        tosortupdate()
         log.info("Going to verify the first of these groups now: {}".format(
                                     self.status.groups(toverify=True)))
         log.info("Maybe verify (from maybesort)")
