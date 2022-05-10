@@ -4204,8 +4204,8 @@ class Segments(object):
                 self.presort(list(s),check,group)
         self.status.presorted(True)
         self.status.store() #after all the above
+        self.runwindow.waitdone()
     def presort(self,senseids,check,group):
-        w=self.getrunwindow(msg=_("Presorting words by {}={}").format(check,group))
         ftype=self.params.ftype()
         for senseid in senseids:
             t = threading.Thread(target=self.marksortgroup,
@@ -4217,7 +4217,6 @@ class Segments(object):
             t.start()
         t.join()
         self.updatestatus(group=group) # marks the group unverified.
-        self.runwindow.waitdone()
     def updateformtextnodebycheck(self,t,check,value):
         for c in reversed(check.split('=')):
             log.info("subbing {} for {}, using {}".format(value,c,self.settings.rx[c]))
