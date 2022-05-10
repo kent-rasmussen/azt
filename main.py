@@ -7897,11 +7897,11 @@ class TranscribeV(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
                 'fn':self.makewindow,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['Transcribe'], #self.cvt
+                'image':self.taskchooser.theme.photo['TranscribeV'], #self.cvt
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program['theme'].photo['iconTranscribe']
+        return program['theme'].photo['iconTranscribeV']
     def __init__(self, parent): #frame, filename=None
         # Tone.__init__(self, parent)
         ui.Window.__init__(self, parent)
@@ -7937,11 +7937,11 @@ class TranscribeC(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
                 'fn':self.makewindow,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['Transcribe'], #self.cvt
+                'image':self.taskchooser.theme.photo['TranscribeC'], #self.cvt
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program['theme'].photo['iconTranscribe']
+        return program['theme'].photo['iconTranscribeC']
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self, parent)
         TaskDressing.__init__(self, parent)
