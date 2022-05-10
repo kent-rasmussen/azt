@@ -1264,12 +1264,12 @@ class Settings(object):
         for s in dict:
             v=d[s]
             if hasattr(self,'fndict') and s in self.fndict:
-                log.debug("Trying to read {} to object with value {} and fn "
-                            "{}".format(s,v,self.fndict[s]))
+                # log.debug("Trying to read {} to object with value {} and fn "
+                #             "{}".format(s,v,self.fndict[s]))
                 self.fndict[s](v)
             else:
-                log.debug("Trying to read {} to {} with value {}, type {}"
-                            "".format(s,o,v,type(v)))
+                # log.debug("Trying to read {} to {} with value {}, type {}"
+                #             "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return d
     def storesettingsfile(self,setting='defaults',noobjects=False):
