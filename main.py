@@ -5848,10 +5848,12 @@ class Sort(object):
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
-            t = threading.Thread(target=self.setsenseidgroup,
-                                args=(senseid,ftype,check,newvalue))
             u = threading.Thread(target=self.marksortgroup,
-                                args=(senseid,ftype,check))
+                                args=(senseid,newvalue),
+                                kwargs={'check':check,
+                                        'ftype':ftype,
+                                        'nocheck': True, #don't verify from lift
+                                        'updateforms':updateforms})
             # if updateforms:
             #     # self.updateformtoannotations(senseid,ftype,check)
             #     t = threading.Thread(target=self.updateformtoannotations,
@@ -5865,7 +5867,7 @@ class Sort(object):
                                         'add':add,
                                         'rms':[rm],
                                         'addifrmd':True})
-            for i in [t,u,v]:
+            for i in [u,v]:
                 i.start()
             # self.setsenseidgroup(senseid,ftype,check,newvalue)
             # self.updateformtoannotations(senseid,ftype,check)
@@ -5874,7 +5876,7 @@ class Sort(object):
             #                 analang=self.analang,
             #                 add=add,rms=[rm],
             #                 addifrmd=True)
-        for i in [t,u,v]:
+        for i in [u,v]:
             i.join()
         self.maybewrite() #once done iterating over senseids
     def __init__(self, parent):
