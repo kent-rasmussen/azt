@@ -5852,6 +5852,11 @@ class Sort(object):
                                 args=(senseid,ftype,check,newvalue))
             u = threading.Thread(target=self.marksortgroup,
                                 args=(senseid,ftype,check))
+            # if updateforms:
+            #     # self.updateformtoannotations(senseid,ftype,check)
+            #     t = threading.Thread(target=self.updateformtoannotations,
+            #                     args=(senseid,ftype),
+            #                     kwargs={'check':check})
             v = threading.Thread(target=self.db.modverificationnode,
                                 # args=(senseid,group),
                                 kwargs={'senseid':senseid,
