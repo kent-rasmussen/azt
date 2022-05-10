@@ -5276,8 +5276,7 @@ class Sort(object):
             self.updateformtoannotations(senseid,ftype,check=check)
         self.status.last('sort',update=True)
         self.status.tojoin(True) # will need to be distinguished again
-        if not nocheck:
-            self.updatestatus(group=group,write=kwargs.get('write')) # marks the group unverified.
+        self.updatestatus(group=group,write=kwargs.get('write')) # marks the group unverified.
         if kwargs.get('write'):
             self.maybewrite() #This is never iterated over; just one entry at a time.
         if not nocheck:
