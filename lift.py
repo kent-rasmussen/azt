@@ -1149,8 +1149,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         output={} # This produces a dictionary, of forms for each language
         for lang in self.analangs:
             kwargs['analang']=lang
-            output[lang]=self.citation(**kwargs) #.get('text')
-        log.info("Found the following citation forms: {}".format(output))
+            output[lang]=[i for i in self.citation(**kwargs) if i] #.get('text')
+        # log.info("Found the following citation forms: {}".format(output))
         return output
     def citationformnodeofentry(self,entry,analang):
         nodes=entry.findall('citation')
