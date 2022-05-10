@@ -5845,6 +5845,9 @@ class Sort(object):
         profile=self.slices.profile()
         senseids=self.slices.inslice(lst2)
         ftype=self.params.ftype()
+        if not senseids:
+            log.info("No senseids for {}={}".format(check,oldvalue))
+            return
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
