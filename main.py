@@ -7649,29 +7649,40 @@ class Transcribe(Sound,Sort):
                 log.debug(deja)
                 self.errorlabel['text'] = deja
                 return 1
-            elif len(newvalue) > len(self.group): #longer name!
-                diff="longer"
-            elif len(newvalue) < len(self.group): #shorter name!
-                diff="shorter"
-            else:
-                diff=None
-            warning=_("Your new name (‘{}’) is {} than your new "
-                        "one (‘{}’). Assuming you want this, you should "
-                        "do a new syllable profile analysis, as it will "
-                        "certainly change. \nWhen you do this, pay attention "
-                        "to the digraph and trigraph settings, as those might "
-                        "need to change, as well."
-                        "\nIf this isn't what you wanted, close the {}"
-                        "window NOW (before closing this warning window)."
-                        "".format(newvalue,diff,self.group,self.tasktitle))
-            title=_("Syllable profile change?")
-            if diff:
-                ErrorNotice(warning,parent=self,title=title,wait=True)
-            if self.exitFlag:
-                return
+            if self.params.cvt() != 'T': #This impacts only segmental changes
+                if len(newvalue) > len(self.group): #longer name!
+                    diff="longer"
+                elif len(newvalue) < len(self.group): #shorter name!
+                    diff="shorter"
+                else:
+                    diff=None
+                warning=_("Your new name (‘{}’) is {} than your old "
+                            "one (‘{}’). Assuming you want this, you should "
+                            "do a new syllable profile analysis, as it will "
+                            "certainly change ({} may do this for you when you "
+                            "next start it up). \nWhen you do this, pay "
+                            "attention to the digraph and trigraph settings, "
+                            "as those might need to change, as well."
+                            "\n\n**If this isn't what you wanted, close the {} "
+                            "window NOW (before closing this warning window).**"
+                            "".format(newvalue,diff,self.group,program['name'],
+                                        self.tasktitle()))
+                title=_("Syllable profile change?")
+                if diff:
+                    ErrorNotice(warning,parent=self,title=title,wait=True)
+                if self.runwindow.exitFlag.istrue():
+                    # log.info("Exited, not making changes: ({})".format(diff))
+                    return
+                # log.info("Done with diff (without exit): {}".format(diff))
+            # log.info("Doing updatebygroupsenseid: {}>{}".format(self.group,newvalue))
             self.updatebygroupsenseid(self.group,newvalue,updateforms=True)
+            # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
             self.status.renamegroup(self.group,newvalue)
+            # log.info("Doing updategroups")
+            self.updategroups()
             self.settings.storesettingsfile(setting='status')
+            # log.info("Done with changes: {}".format(diff))
+            """Update regular expressions here!!"""
         else: #move on, but notify in logs
             log.info("User selected ‘{}’, but with no change.".format(
                                                                 self.oktext))
