@@ -3242,67 +3242,6 @@ class TaskDressing(object):
         """Make sure we got a value"""
         if self.params.check() not in checks:
             return 1
-    def getframedtonegroup(self,window,event=None,**kwargs):
-        """Window is called in getgroup"""
-        log.info("getframedtonegroup kwargs: {}".format(kwargs))
-        kwargs=grouptype(**kwargs)
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
-        if (None in [cvt, ps, profile, check]
-                or cvt != 'T'):
-            ui.Label(window.frame,
-                          text=_("You need to set "
-                          "\nCheck type (as Tone, currently {}) "
-                          "\nGrammatical category (currently {})"
-                          "\nSyllable Profile (currently {}), and "
-                          "\nTone Frame (currently {})"
-                          "\nBefore this function will do anything!"
-                          "").format(self.params.cvtdict()[cvt]['sg'], ps,
-                          profile, check)).grid(column=0, row=0)
-            return 1
-        else:
-            g=self.status.groups(**kwargs) #wsorted=True above
-            if not g:
-                ui.Label(window.frame,
-                          text=_("It looks like you don't have {}-{} lexemes "
-                          "grouped in the ‘{}’ frame yet \n({})."
-                          "").format(ps,profile,check,kwargs)
-                          ).grid(column=0, row=0)
-            elif kwargs.get('guess') or (len(g) == 1 and not kwargs.get('comparison')):
-                self.settings.setgroup(g[0],window) #don't ask, just set
-            else:
-                ui.Label(window.frame,
-                          text=_("What {}-{} tone group in the ‘{}’ frame do "
-                          "you want to work with?").format(ps,profile,
-                          check)).grid(column=0, row=0)
-                window.scroll=ui.Frame(window.frame)
-                window.scroll.grid(column=0, row=1)
-                if kwargs.get('comparison'):
-                    g2=g[:]
-                    g2.remove(self.status.group())
-                    if not g2:
-                        window.destroy()
-                        ErrorNotice(text=_("There don't seem to be any groups "
-                                    "to compare with!"))
-                        return
-                    if len(g2) == 1:
-                        self.settings.setgroup_comparison(g2[0],window)
-                        return
-                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                    optionlist=g2,
-                                    command=self.settings.setgroup_comparison,
-                                    window=window,
-                                    column=0, row=4
-                                    )
-                else:
-                    buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                                optionlist=g,
-                                                command=self.settings.setgroup,
-                                                window=window,
-                                                column=0, row=4
-                                                )
     def _getgroup(self,window,event=None, **kwargs):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
