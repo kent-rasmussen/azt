@@ -5021,6 +5021,7 @@ class Sort(object):
         # profile=self.slices.profile()
         senseids=self.getsenseidsincheckgroup()
         value=self.verifictioncode(check=check,group=group)
+        # The above gives a check=group string, which should be escaped later
         if verified == True:
             add=value
             rms=[]
