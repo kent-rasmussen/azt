@@ -7634,7 +7634,6 @@ class Transcribe(Sound,Sort):
         return 1
     def submitform(self):
         newvalue=self.transcriber.formfield.get()
-        self.updategroups()
         if newvalue == "":
             noname=_("Give a name for this group!")
             log.debug(noname)
