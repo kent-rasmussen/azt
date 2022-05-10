@@ -1799,6 +1799,13 @@ class Settings(object):
         self.invalidregex='( |\.|,|\)|\()+'
         # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
         self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
+    def addtoCVrxs(self,s):
+        """This method is just to add a new grapheme while running, so we
+        don't have to restart between C/V changes."""
+        cvt=self.params.cvt()
+        if cvt in ['C', 'V']:
+            self.s[self.analang][cvt]+=[s]
+            self.compileCVrxforsclass(cvt)
     def compileCVrxforsclass(self,sclass):
         """This does sorting by length to make longest first"""
         self.rx[sclass]=rx.s(self.s[self.analang],sclass,compile=True)
