@@ -1083,10 +1083,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 self.s[lang]={}
             for stype in x:
                 self.s[lang][stype]=rx.inxyz(self,lang,x[stype])
-                log.debug('hypotheticals[{}][{}]: {}'.format(lang,stype,
-                                                    str(x[stype])))
-                log.debug('Actual Segments found [{}][{}]: {}'.format(lang,stype,
-                                                str(self.s[lang][stype])))
+                # log.debug('hypotheticals[{}][{}]: {}'.format(lang,stype,
+                #                                     str(x[stype])))
+                # log.debug('Actual Segments found [{}][{}]: {}'.format(lang,stype,
+                #                                 str(self.s[lang][stype])))
         log.info('Actual Segments found: {}'.format(self.s))
     def slists(self):
         self.segmentsnotinregexes={}
