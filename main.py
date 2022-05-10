@@ -8785,7 +8785,7 @@ class FramedDataDict(dict):
             """certain limited cases have sense w/o check (like page titles)
             or element without senseid (like when not recording)"""
             if sense:
-                log.info("getting framed data from sense")
+                # log.info("getting framed data from sense")
                 d=self[source]=FramedDataSense(self,source,check,**kwargs)
             if element:
                 # log.info("getting framed data from element")
