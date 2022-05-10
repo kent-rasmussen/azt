@@ -4192,8 +4192,10 @@ class Segments(object):
         check=kwargs.get('check',self.params.check())
         senseids=[]
         groups=self.status.groups(wsorted=True,**kwargs)
+        groups=self.status.groups(cvt=cvt)
         #multiprocess from here?
-        for group in self.status.groups(cvt=cvt):
+        w=self.getrunwindow(msg=_("Presorting ({}={})").format(check,groups))
+        for group in groups:
             self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
             # log.info("self.regex: {}; self.regexCV: {}".format(self.regex,
             #                                             self.regexCV))
