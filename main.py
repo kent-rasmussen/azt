@@ -3323,23 +3323,23 @@ class TaskDressing(object):
         cvt=kwargs.get('cvt',self.params.cvt())
         if cvt == "V":
             w=ui.Window(self.frame,title=_('Select Vowel'))
-            self.getV(window=w,**kwargs)
+            self._getgroup(window=w,**kwargs)
             # w.wait_window(window=w)
         elif cvt == "C":
             w=ui.Window(self.frame,title=_('Select Consonant'))
-            self.getC(w,**kwargs)
+            self._getgroup(w,**kwargs)
             # self.frame.wait_window(window=w)
         elif cvt == "CV":
             w=ui.Window(self.frame,title=_('Select Consonant/Vowel'))
             CV=''
             for kwargs['cvt'] in ['C','V']:
-                self.getgroup(**kwargs)
+                self._getgroup(**kwargs)
                 CV+=self.status.group()
             self.status.group(CV)
             # cvt = "CV"
         elif cvt == "T":
             w=ui.Window(self.frame,title=_('Select Framed Tone Group'))
-            self.getframedtonegroup(window=w,**kwargs) #guess=guess,
+            self._getgroup(window=w,**kwargs) #guess=guess,
             # windowT.wait_window(window=windowT) #?!?
         return w #so others can wait for this
     def getgroupwsorted(self,event=None,**kwargs):
