@@ -9346,7 +9346,8 @@ class SortButtonFrame(ui.ScrollingFrame):
                 # self.marksortgroup(senseid,framed,group=group,write=False)
                 t = threading.Thread(target=self.marksortgroup,
                                     args=(senseid,group),
-                                    kwargs={'framed':framed})
+                                    kwargs={'framed':framed,
+                                            'nocheck':True})
                 t.start()
         else:
             log.debug('No group selected: {}'.format(groupselected))
