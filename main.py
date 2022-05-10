@@ -1855,7 +1855,7 @@ class Settings(object):
         cvts=self.params.cvts()
         if not cvts:
             cvts=[i for i in self.params.cvts()]
-        for t in cvts: #this depends on nothing
+        for t in [i for i in cvts if i != 'CV']: #this depends on nothing
             # log.info("Working on {}".format(t))
             for ps in pss:
                 # log.info("Working on {}".format(ps))
