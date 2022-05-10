@@ -5463,8 +5463,8 @@ class Sort(object):
         """Children of runwindow.frame"""
         if self.exitFlag.istrue():
             return
-        self.titles=ui.Frame(self.runwindow.frame, row=0, column=0,
-                                                    sticky="ew", columnspan=2)
+        self.titles=ui.Frame(self.runwindow.frame, row=0, column=1,
+                                                    sticky="ew", columnspan=1)
         ui.Label(self.runwindow.frame, image=self.frame.theme.photo['sort'],
                         text='',
                         ).grid(row=1,column=0,rowspan=3,sticky='nw')
@@ -5585,7 +5585,7 @@ class Sort(object):
                                     self.params.cvcheckname()
                                     )
         titles=ui.Frame(self.runwindow.frame,
-                        column=0, row=0, columnspan=2, sticky="w")
+                        column=1, row=0, columnspan=1, sticky="w")
         ui.Label(titles, text=title, font='title', column=0, row=0, sticky="w")
         """Move this to bool vars, like for sort"""
         if hasattr(self,'groupselected'): #so it doesn't get in way later.
@@ -5596,8 +5596,9 @@ class Sort(object):
             progress=('('+str(groups.index(group)+1)+'/'+str(len(
                                                             groups))+')')
             ui.Label(titles,text=progress,anchor='w',row=0,column=1,sticky="ew")
-        ui.Label(titles, text=instructions,
+        i=ui.Label(titles, text=instructions,
                 row=1, column=0, columnspan=2, sticky="wns")
+        i.wrap()
         ui.Label(self.runwindow.frame, image=self.frame.theme.photo['verify'],
                         text='', row=1,column=0,
                         # rowspan=3,
@@ -5712,8 +5713,8 @@ class Sort(object):
         log.debug(introtext)
         self.runwindow.resetframe()
         self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
-                                            column=0, row=0,
-                                            columnspan=2, sticky="ew"
+                                            column=1, row=0,
+                                            columnspan=1, sticky="ew"
                                             )
         ltitle=ui.Label(self.runwindow.frame.titles, text=title,
                 font='title',
