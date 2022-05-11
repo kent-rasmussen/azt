@@ -1545,8 +1545,8 @@ class Wait(Window): #tkinter.Toplevel?
         self.l.grid(row=0,column=0,sticky='we')
         if msg is not None:
             self.l1=Label(self.outsideframe, text=msg,
-                font='default',anchor='c')
-            self.l1.grid(row=1,column=0,sticky='we')
+                font='default',anchor='c',row=1,column=0,sticky='we')
+            self.l1.wrap()
         self.l2=Label(self.outsideframe,
                         image=self.theme.photo['small'],
                         text='',
