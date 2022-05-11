@@ -3445,7 +3445,7 @@ class TaskDressing(object):
         group=kwargs.get('group',self.status.group())
         # log.info("about to return {}={}".format(check,group))
         return check+'='+group
-    def maybewrite(self):
+    def maybewrite(self,definitely=False):
         def schedule_check(t):
             """Schedule `check_if_done()` function after five seconds."""
             self.after(5000, check_if_done, t)
@@ -3457,12 +3457,18 @@ class TaskDressing(object):
             else:
                 # Otherwise check again later.
                 schedule_check(t)
-        if self.timetowrite() and not self.taskchooser.writing:
+        write=self.timetowrite() #just call this once!
+        if (write and not self.taskchooser.writing) or definitely:
+            self.taskchooser.towrite=False
             t = threading.Thread(target=self.db.write)
             self.taskchooser.writing=True
             log.info("Writing to lift...")
             t.start()
             schedule_check(t)
+        elif write:
+            log.info("Already writing to lift; I trust this new mod will "
+                    "get picked up later...")
+            self.taskchooser.towrite=True
     def timetowrite(self):
         """only write to file every self.writeeverynwrites times you might."""
         self.taskchooser.writeable+=1 #and tally here each time this is asked
