@@ -1806,7 +1806,7 @@ class Settings(object):
         if not hasattr(self,'analang'): #in case running after startup
             self.analang=self.params.analang()
         cvt=self.params.cvt()
-        if cvt in ['C', 'V']:
+        if cvt in ['C', 'V'] and s not in self.s[self.analang][cvt]:
             self.s[self.analang][cvt]+=[s]
             # log.info("Compiling rx list: {}".format(self.s[self.analang][cvt]))
             self.compileCVrxforsclass(cvt)
