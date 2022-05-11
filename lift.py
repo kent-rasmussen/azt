@@ -1187,8 +1187,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         output={} # This produces a dictionary, of forms for each language.
         for lang in self.analangs:
             kwargs['analang']=lang
-            output[lang]=self.lexeme(**kwargs)
-        log.info("Found the following lexemes: {}".format(output))
+            output[lang]=[i for i in self.lexeme(**kwargs) if i]
+        # log.info("Found the following lexemes: {}".format(output))
         return output
     def fieldnode(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
