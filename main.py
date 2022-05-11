@@ -7727,6 +7727,24 @@ class Transcribe(Sound,Sort):
         else: #move on, but notify in logs
             log.info("User selected ‘{}’, but with no change.".format(
                                                                 self.oktext))
+            # update forms, even if group doesn't change. I should have a test
+            # for when this is needed..…
+            group=self.status.group()
+            if not str(group).isdigit():
+                ftype=self.params.ftype()
+                check=self.params.check()
+                log.info("updating for type {} check {}, group {}"
+                        "".format(ftype,check,group))
+                senseids=self.getsenseidsincheckgroup()
+                for senseid in senseids:
+                    u = threading.Thread(target=self.updateformtoannotations,
+                                        args=(senseid,ftype),
+                                        kwargs={'check':check})
+                    # self.updateformtoannotations(senseid,ftype,check=check)
+                    u.start()
+                if senseids:
+                    u.join()
+                self.maybewrite()
         if hasattr(self,'group_comparison'):
             delattr(self,'group_comparison') # in either case
         self.runwindow.destroy()
