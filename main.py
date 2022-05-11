@@ -1698,8 +1698,8 @@ class Settings(object):
                     except KeyError: #in case the ps isn't already there
                         self.profilesbysense[ps]={}
                         self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
-                    log.debug("resulting profilesbysense: {}".format(
-                                            self.profilesbysense[ps][a]))
+                    # log.debug("resulting profilesbysense: {}".format(
+                    #                         self.profilesbysense[ps][a]))
     def profileofformpreferred(self,form):
         """Simplify combinations where desired"""
         for c in ['N','S','G','ʔ','D']:
@@ -2146,7 +2146,7 @@ class Settings(object):
     def makestatus(self):
         if not hasattr(self,'status'):
             self.status={}
-        log.info("Making status object with value {}".format(self.status))
+        # log.info("Making status object with value {}".format(self.status))
         self.status=StatusDict(self.params,
                                 self.slices,
                                 # self.exs,
@@ -2154,7 +2154,7 @@ class Settings(object):
                                 self.settingsfile('status'),
                                 self.status
                                 )
-        log.info("Made status object with value {}".format(self.status))
+        # log.info("Made status object with value {}".format(self.status))
     def set(self,attribute,choice,window=None,refresh=True):
         #Normally, pass the attribute through the button frame,
         #otherwise, don't set window (which would be destroyed)
@@ -8722,7 +8722,7 @@ class ExampleDict(dict):
         tries=0
         senseid=None #do this once, anyway...
         """hasglosses sets the framed and senseid keys"""
-        log.debug("ExampleDict getexample kwargs: {}".format(kwargs))
+        # log.debug("ExampleDict getexample kwargs: {}".format(kwargs))
         while not self.exampletypeok(senseid,check,**kwargs) and tries<n*2:
             # (self.hasglosses(senseid) or noglossesok or tries>n*2):
             tries+=1
