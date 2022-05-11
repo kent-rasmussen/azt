@@ -1460,6 +1460,7 @@ class LiftURL():
         self.build("text",myattr=value)
     def form(self,value=None,lang=None,annodict={}):
         self.baselevel()
+        #This holds the name of the kwarg key that holds the text value
         self.kwargs['value']=self.kwargs.get(value,None) #location and tonevalue
         if not lang and 'lang' in self.kwargs: #in case not called by parent
             lang='lang' #this is the kwargs key to use
