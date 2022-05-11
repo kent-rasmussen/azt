@@ -11603,6 +11603,9 @@ def name(x):
 if __name__ == "__main__":
     """These things need to be done outside of a function, as we need global
     variables."""
+    # log.info("TaskChooser MRO: {}".format(TaskChooser.mro()))
+    # log.info("ui.Window MRO: {}".format(ui.Window.mro()))
+    # log.info("ui.Exitable MRO: {}".format(ui.Exitable.mro()))
     try:
         import ctypes
         log.debug("Scale factor: {}".format(
