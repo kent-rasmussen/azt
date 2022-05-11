@@ -3765,13 +3765,13 @@ class TaskChooser(TaskDressing,ui.Window):
             #     tasks.append(SortRoots)
         else: #i.e., analysis tasks
             tasks=[]
-            if self.doneenough['sortT']:
+            if self.doneenough['sort']:
                 tasks.append(TranscribeV)
                 tasks.append(TranscribeC)
-                if self.doneenough['recordedT']:
-                    tasks.append(TranscribeT)
-                    if self.doneenough['analysis']:
-                        tasks.append(JoinUFgroups)
+            if self.doneenough['recordedT']:
+                tasks.append(TranscribeT)
+                if self.doneenough['analysis']:
+                    tasks.append(JoinUFgroups)
             if me:
                 tasks.append(ReportConsultantCheck)
         # tasks.append(WordCollectionCitation),
