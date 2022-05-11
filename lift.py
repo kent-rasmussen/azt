@@ -868,8 +868,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nfieldswsoundfiles={}
         fields={}
         self.nfields={}
-        fieldopts=['sense/example']+['field[@type="{}"]'.format(f)
-                                                        for f in self.fields]
+        fieldopts=['sense/example',
+                    'citation',
+                    'lexical-unit']
+        fieldopts+=['field[@type="{}"]'.format(f) for f in self.fields]
         for field in fieldopts:
             fields[field]={}
             fieldswsoundfiles[field]={}
