@@ -4256,6 +4256,7 @@ class Segments(object):
             # log.info("annodict: {}".format(annodict))
             for check,value in annodict.items():
                 self.updateformtextnodebycheck(t,check,value)
+        self.taskchooser.datadict.clearsense(senseid) #so this will refresh
         if write:
             self.maybewrite()
     def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
