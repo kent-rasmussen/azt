@@ -522,20 +522,20 @@ class Renderer(ObectwArgs):
 class Exitable(object):
     """This class provides the method and init to make things exit normally.
     Hence, it applies to roots and windows, but not frames, etc."""
+    def killall(self):
+        self.destroy()
+        sys.exit()
     def on_quit(self):
         """Do this when a window closes, so any window functions can know
         to just stop, rather than trying to build graphic components and
         throwing an error. This doesn't do anything but set the flag value
         on exit, the logic to stop needs to be elsewhere, e.g.,
         `if self.exitFlag.istrue(): return`"""
-        def killall():
-            self.destroy()
-            sys.exit()
         if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
             print("Setting window exit flag True!")
             self.exitFlag.true()
         if self.mainwindow: #exit afterwards if main window
-            killall()
+            self.killall()
         else:
             self.destroy() #do this for everything
     def __init__(self):
