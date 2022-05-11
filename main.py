@@ -6446,12 +6446,6 @@ class Record(Sound):
                     text=_("Continue to next syllable profile"),
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
-    def record(self):
-        self.updatesortingstatus() #is this needed? This is the first fn on button click
-        if self.params.cvt() == 'T':
-            self.showtonegroupexs()
-        else:
-            self.showentryformstorecord()
     def __init__(self):
         Sound.__init__(self)
 class Report(object):
