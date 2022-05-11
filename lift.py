@@ -1568,13 +1568,15 @@ class LiftURL():
             log.error("You asked for a field, without specifying ftype; not "
                         "adding form fields.")
             return
-        self.form(ftype+"form","analang",annodict=attrs)
+        #This was causing duplicate form nodes for locationfield
+        # self.form(ftype+"form","analang",annodict=attrs)
     def locationfield(self):
         self.baselevel()
         self.kwargs['ftype']='location'
         self.kwargs['formtext']='location'
         self.field()
-        self.form("location",'glosslang')
+        #This was causing duplicate form nodes
+        # self.form("location",'glosslang')
     def toneUFfield(self):
         self.baselevel()
         self.kwargs['ftype']='tone'
