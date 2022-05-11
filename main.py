@@ -5541,9 +5541,9 @@ class Sort(object):
         self.settings.updatesortingstatus() # Not just tone anymore
         self.maybesort()
     def verify(self,menu=False):
-        def updatestatus():
-            log.info("Updating status with {}, {}, {}".format(check,group,verified))
-            self.updatestatus(verified=verified)
+        def updatestatus(v):
+            log.info("Updating status with {}, {}, {}".format(check,group,v))
+            self.updatestatus(verified=v)
             self.maybewrite()
         log.info("Running verify!")
         """Show entries each in a row, users mark those that are different, and we
@@ -5585,7 +5585,7 @@ class Sort(object):
             verified=False
             log.info("Group ‘{}’ has no examples; continuing.".format(group))
             # log.info("Groups: {}".format(self.status.groups(toverify=True)))
-            updatestatus()
+            updatestatus(False)
             log.info("Group-groups: {}-{}".format(group,groups))
             if group in groups:
                 groups.remove(group)
@@ -5594,10 +5594,9 @@ class Sort(object):
             log.info("Groups: {}".format(self.status.groups(toverify=True)))
             return
         elif len(senseids) == 1:
-            verified=True
             log.info("Group ‘{}’ only has {} example; marking verified and "
                     "continuing.".format(group,len(senseids)))
-            updatestatus()
+            updatestatus(True)
             return
         title=_("Verify {} Group ‘{}’ for ‘{}’ ({})").format(
                                     self.settings.languagenames[self.analang],
@@ -5665,8 +5664,7 @@ class Sort(object):
             return 1
         log.debug("User selected ‘{}’, moving on.".format(oktext))
         self.status.last('verify',update=True)
-        verified=True
-        updatestatus()
+        updatestatus(True)
     def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
