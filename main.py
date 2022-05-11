@@ -8780,6 +8780,11 @@ class FramedDataDict(dict):
         self.audiodir=self.taskchooser.settings.audiodir
         self.glosslangs=self.taskchooser.settings.glosslangs
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
+    def clearsense(self,senseid):
+        try:
+            del self[senseid]
+        except KeyError:
+            log.error("senseid {} wasn't in FramedDataDict!".format(senseid))
     def isthere(self,source):
         if source in self:
             self[source].updatelangs() #maybe it has been awhile...
