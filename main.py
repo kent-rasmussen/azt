@@ -10038,7 +10038,7 @@ class SliceDict(dict):
         try:
             s=self._slicepriority=[x for x in self._valid.items()]
             s.sort(key=lambda x: int(x[1]),reverse=True)
-            log.debug("self._valid: {}".format(self._valid))
+            # log.debug("self._valid: {}".format(self._valid))
             for ps in dict.fromkeys([x[1] for x in self._valid]):
                 s=self._sliceprioritybyps[ps]=[x for x in self._valid.items()
                                                             if x[0][1] == ps]
@@ -10072,8 +10072,8 @@ class SliceDict(dict):
             self._valid[k]=self[k]
         for ps in dict.fromkeys([x[1] for x in self._valid]):
             self._validbyps[ps]=[x for x in self._valid if x[1] == ps]
-        log.info("valid: {}".format(self._valid))
-        log.info("validbyps: {}".format(self._validbyps))
+        # log.info("valid: {}".format(self._valid))
+        # log.info("validbyps: {}".format(self._validbyps))
     def inslice(self,senseids):
         senseidstochange=set(self._senseids).intersection(senseids)
         return senseidstochange
