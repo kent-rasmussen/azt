@@ -1619,7 +1619,8 @@ class Settings(object):
                 log.debug("{}: {}".format(var,getattr(self,var)))
             self.storesettingsfile(setting='profiledata')
             e=time.time()-self.taskchooser.start_time
-            log.info("Finished profile analysis at {} ({}s)".format(e,e-t))
+            log.info("Finished profile analysis at {} ({:1.0f}m, {:2.3f}s)"
+                    "".format(e,*divmod(e-t,60)))
     def addtoprofilesbysense(self,senseid,**kwargs): #ps=None,profile=None
         # log.info("kwargs: {}".format(kwargs))
         # This will die if ps and profile aren't in kwargs:
@@ -1888,8 +1889,8 @@ class Settings(object):
         if None in self.status: #This should never be there
             del self.status[None]
         self.status.store()
-        log.info("Status settings refreshed from LIFT in {}s".format(
-                                                        time.time()-start_time))
+        log.info("Status settings refreshed from LIFT in {:1.0f}m, {:2.3f}s"
+                    "".format(*divmod(time.time()-start_time,60)))
         w.destroy()
     def categorizebygrouping(self,fn,senseid,**kwargs):
         #Don't complain if more than one found:
