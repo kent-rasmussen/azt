@@ -866,6 +866,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         or CAWL numbers, etc, which shouldn't be coded for analang."""
         fieldswsoundfiles={}
         self.nfieldswsoundfiles={}
+        self.nfieldswannotations={}
         fields={}
         self.nfields={}
         fieldopts=['sense/example',
@@ -877,6 +878,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             fieldswsoundfiles[field]={}
             self.nfields[field]={}
             self.nfieldswsoundfiles[field]={}
+            self.nfieldswannotations[field]={}
             for lang in self.analangs:
                 fields[field][lang]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
@@ -884,6 +886,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     if i.text
                                     ]
                 self.nfields[field][lang]=len(fields[field][lang])
+                fields[field][lang]=[i for i in
+                    self.nodes.findall('entry/{}/form[@lang="{}"]/annotation'.format(
+                                                                field,lang))
+                    if i.get('value')
+                                    ]
+                self.nfieldswannotations[field][lang]=len(fields[field][lang])
             for lang in self.audiolangs:
                 fieldswsoundfiles[field][lang]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
