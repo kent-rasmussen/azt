@@ -3443,7 +3443,7 @@ class TaskDressing(object):
     def verifictioncode(self,**kwargs):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
-        log.info("about to return {}={}".format(check,group))
+        # log.info("about to return {}={}".format(check,group))
         return check+'='+group
     def maybewrite(self):
         def schedule_check(t):
