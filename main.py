@@ -4241,9 +4241,11 @@ class Segments(object):
         t.join()
         self.updatestatus(group=group) # marks the group unverified.
     def updateformtextnodebycheck(self,t,check,value):
+        tori=t.text[:]
         for c in reversed(check.split('=')):
             log.info("subbing {} for {}, using {}".format(value,c,self.settings.rx[c]))
             t.text=self.settings.rx[c].sub('\\g<1>'+value,t.text)
+        log.info("updated {} > {}".format(tori,t.text))
         #now that we've potentially added a grapheme, see that it will be found.
         self.settings.addtoCVrxs(value)
     def updateformtoannotations(self,senseid,ftype,check=None,write=False):
