@@ -3452,6 +3452,7 @@ class TaskDressing(object):
         def check_if_done(t):
             # If the thread has finished, allow another write.
             if not t.is_alive():
+                log.info("Done writing to lift.")
                 self.taskchooser.writing=False
             else:
                 # Otherwise check again later.
@@ -3459,6 +3460,7 @@ class TaskDressing(object):
         if self.timetowrite() and not self.taskchooser.writing:
             t = threading.Thread(target=self.db.write)
             self.taskchooser.writing=True
+            log.info("Writing to lift...")
             t.start()
             schedule_check(t)
     def timetowrite(self):
@@ -5028,6 +5030,8 @@ class Sort(object):
         else:
             add=None
             rms=[value]
+        log.info("Modding {} verification add {}, remove {}".format(profile,
+                                                                    add,rms))
         """The above doesn't test for profile, so we restrict that next"""
         for senseid in self.slices.inslice(senseids): #only for this ps-profile
             rmlist=rms[:]+self.db.getverificationnodevaluebyframe(
