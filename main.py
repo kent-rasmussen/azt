@@ -3830,11 +3830,12 @@ class TaskChooser(TaskDressing,ui.Window):
                         ]: #only forms with text info
                     lxfl=lxf.get('lang')
                     lxft=lxf.find('text')
-                    log.info("Moving {} from lang {}".format(lxft.text,lxfl))
+                    # log.info("Moving {} from lang {}".format(lxft.text,lxfl))
                     # lc=e.findall('citation')
                     """This finds or creates, by lang:"""
                     lc=self.db.citationformnodeofentry(e,lxfl)
-                    log.info("Moving to citation winfo {} from lang {}".format(lc.text,lxfl))
+                    log.info("Moving lexeme {} to citation (was {}) for lang {}"
+                            "".format(lxft.text,lc.text,lxfl))
                     if not lc.text: #don't overwrite info
                         lc.text=lxft.text
                         lxft.text='' #clear only on move
