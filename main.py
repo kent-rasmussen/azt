@@ -3950,7 +3950,12 @@ class TaskChooser(TaskDressing,ui.Window):
                 w.wait_window(w) # wait for this answer before moving on
                 break #just ask this once
         self.getcawlmissing()
-        sorts=self.db.nfields
+        log.info("nfields in db: {}".format(self.db.nfields))
+        log.info("wannotations in db: {}".format(self.db.nfieldswannotations))
+        sorts={k:v for (k,v) in self.db.nfields.items()
+                                            if k == 'sense/example'}
+        sorts.update({k:v for (k,v) in self.db.nfieldswannotations.items()
+                                            if k != 'sense/example'})
         log.info("nfields by lang: {}".format(sorts))
         sortsrecorded=self.db.nfieldswsoundfiles
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
