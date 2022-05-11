@@ -830,7 +830,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                 ).get('type')))
         log.info('Fields found in Senses: {}'.format(self.sensefields))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
-        self.locations=list(dict.fromkeys(self.get('example/locationfield').get('text')))
+        self.locations=list(dict.fromkeys(self.get('example/locationfield',
+                                                    what='text',
+                                                    # showurl=True
+                                                    ).get('text')))
         log.info('Locations found in Examples: {}'.format(self.locations))
     def getsenseids(self):
         self.senseids=self.get('sense').get('senseid')
