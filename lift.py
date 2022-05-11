@@ -2104,15 +2104,18 @@ def textornone(x):
 def prettyprint(node):
     # This fn is for seeing the Element contents before writing them (in case of
     # ElementTree errors that aren't otherwise understandable).
+    if not isinstance(node,ET.Element):
+        log.info("didn't prettyprint {}".format(node))
+        return
     t=0
     def do(node,t):
-        for child in node:
-            log.info("{}{} {}: {}".format('\t'*t,child.tag,child.attrib,
-                "" if child.text is None
-                    or set(['\n','\t',' ']).issuperset(child.text)
-                    else child.text))
+            log.info("{}{} {}: {}".format('\t'*t,node.tag,node.attrib,
+                "" if node.text is None
+                    or set(['\n','\t',' ']).issuperset(node.text)
+                    else node.text))
             t=t+1
-            do(child,t)
+            for child in node:
+                do(child,t)
             t=t-1
     do(node,t)
 def atleastoneexamplehaslangformmissing(examples,lang):
