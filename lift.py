@@ -1465,6 +1465,7 @@ class LiftURL():
             annodict=self.kwargs.pop('annodict')
         if annodict:
             self.annotation(annodict)
+        # log.info("Looking for {}".format(self.what))
         if self.kwargs['value'] or self.what == 'text':
             self.text("value")
         # self.bearchildrenof("form")
