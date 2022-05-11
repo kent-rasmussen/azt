@@ -2648,6 +2648,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
+    # prettyprint(lift.nodes)
     senseids=[
             # "begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
             # 'widen_fceb550d-fc99-40af-a288-0433add4f15',
@@ -2694,7 +2695,10 @@ if __name__ == '__main__':
                         annotationname=check,
                         ftype=ftype,
                         showurl=True)
-    print(fv)
+    prettyprint(fv)
+    cawls=lift.get('cawlfield/form/text').get('node')
+    for c in cawls:
+        prettyprint(c)
     exit()
     for ps in pss:
         kwargs={ftype+'annotationname':'V1',
@@ -2767,7 +2771,9 @@ if __name__ == '__main__':
     oldtonevalue=2
     g='snore'
     lang='en'
-    cawls=lift.get('cawlfield/form/text').get('text')
+    cawls=lift.get('cawlfield/form/text').get('node')
+    prettyprint(cawls)
+    exit()
     log.info("CAWL ({}): {}".format(len(cawls),cawls))
     # for cv in [56,145,1234]:
     for senseid in lift.senseids[:3]:
