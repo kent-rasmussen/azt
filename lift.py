@@ -2689,16 +2689,11 @@ if __name__ == '__main__':
     # for kwargs['node'] in lift.fieldnode(**kwargs):
     #     t.extend(lift.get('annotation',**kwargs).get('value'))
     # print(t)
-    fv=lift.fieldvalue(senseid=kwargs["senseid"],
-                        analang=analang,
-                        # annodict={'name':'name'},
-                        annotationname=check,
-                        ftype=ftype,
-                        showurl=True)
-    prettyprint(fv)
-    cawls=lift.get('cawlfield/form/text').get('node')
-    for c in cawls:
-        prettyprint(c)
+    lf=lift.get('example/locationfield/',
+            what='text',
+            showurl=True
+            ).get('text')
+    print(lf)
     exit()
     for ps in pss:
         kwargs={ftype+'annotationname':'V1',
