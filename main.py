@@ -5809,9 +5809,9 @@ class Sort(object):
                     "".format(oktext,ngroupstojoin,groupstojoin))
             return self.join() #try again
         else:
-            log.info("User selected ‘{}’ with {} groups selected, joining "
+            log.info("User selected {} groups selected, joining "
                     "them. ({} selected)."
-                    "".format(oktext,ngroupstojoin,groupstojoin))
+                    "".format(ngroupstojoin,groupstojoin))
             msg=_("Now we're going to move group ‘{0}’ into "
                 "‘{1}’, marking ‘{1}’ unverified.".format(*groupstojoin))
             self.runwindow.wait(msg=msg)
