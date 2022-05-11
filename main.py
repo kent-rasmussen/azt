@@ -3498,6 +3498,11 @@ class TaskDressing(object):
                                                                 program['name'])
             e=ErrorNotice(t,parent=self,title=_("Update (Git) output"))
             e.wait_window(e)
+    def killall(self):
+        log.info("Shutting down Task")
+        if self.taskchooser.towrite:
+            self.maybewrite(definitely=True)
+        ui.Window.killall(self) #Exitable
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -4052,6 +4057,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def __init__(self,parent):
         # self.testdefault=Parse
         self.start_time=time.time() #this enables boot time evaluation
+        self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
         self.showreports=False
