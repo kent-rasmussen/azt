@@ -8998,6 +8998,8 @@ class FramedDataSense(FramedData):
                         "field ‘{}’".format(check,check['field'],ftype))
         # log.info("self.forms: {}".format(self.forms))
         dictlangs=[self.analang, self.audiolang]
+        ftypes=['lx', 'lc', self.parent.pluralname, self.parent.imperativename]
+        ftypes=[i for i in ftypes if i]
         for lang in dictlangs:
             self.forms[lang]={}
             for ft in ['lx','lc',self.parent.pluralname,
