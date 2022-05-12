@@ -8824,7 +8824,7 @@ class FramedDataDict(dict):
     def isthere(self,source):
         if source in self:
             self[source].updatelangs() #maybe it has been awhile...
-            log.debug("source {} already there, using with forms {}"
+            # log.debug("source {} already there, using with forms {}"
             "".format(source,self[source].forms))
             return self[source]
     def getframeddata(self, source=None, senseid=None, check=None, **kwargs):
