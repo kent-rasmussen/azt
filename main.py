@@ -6935,8 +6935,7 @@ class Report(object):
         log.debug(t)
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
-        log.log(2,"self.regex: {}; self.regexCV: {}".format(self.regex,
-                                                        self.regexCV))
+        # log.info("regex: {}; regexCV: {}".format(self.regex,self.regexCV))
         matches=set(self.senseidformsbyregex(self.regex,ps=ps))
         if 'x' not in check and '=' not in check: #only pull from simple reports
             for ncvt in self.ncvts: #for basic reports
@@ -6950,7 +6949,7 @@ class Report(object):
                     log.info("Not removing ncvt {} ids from basic reported; "
                         "hope that's appropriate."
                         "".format(ncvt))
-        log.log(2,"{} matches found!: {}".format(len(matches),matches))
+        # log.info("{} matches found!: {}".format(len(matches),matches))
         if 'x' not in check:
             try:
                 n=self.checkcounts[ps][profile][check][group]=len(matches)
@@ -8825,7 +8824,7 @@ class FramedDataDict(dict):
         if source in self:
             self[source].updatelangs() #maybe it has been awhile...
             # log.debug("source {} already there, using with forms {}"
-            "".format(source,self[source].forms))
+            # "".format(source,self[source].forms))
             return self[source]
     def getframeddata(self, source=None, senseid=None, check=None, **kwargs):
         """Check here is the name of the specific check being run, e.g., V1=V2,
