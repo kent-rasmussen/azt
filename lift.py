@@ -27,11 +27,6 @@ import rx
 import ast #For string list interpretation
 import copy
 import collections
-import logsetup
-log=logsetup.getlog(__name__)
-# logsetup.setlevel('INFO',log) #for this file
-logsetup.setlevel('DEBUG',log) #for this file
-log.info("Importing lift.py")
 try: #Allow this module to be used without translation
     _
 except:
