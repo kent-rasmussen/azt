@@ -2,6 +2,18 @@
 # coding=UTF-8
 """This module controls manipulation of LIFT files and objects"""
 """"(Lexical Interchange FormaT), both for reading and writing"""
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
+log.info("Importing lift.py")
+# try:
+#     from lxml import etree as ET
+#     log.info("using lxml to parse XML")
+#     lxml=True
+# except:
+log.info("using xml.etree to parse XML")
+lxml=False
 from xml.etree import ElementTree as ET
 import xmlfns
 import sys
