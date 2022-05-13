@@ -1003,10 +1003,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q']
         c['fvd']={}
         c['fvd'][2]=['bh','vh','zh']
-        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ','x'] #problems w x?
+        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ'] #problems w x?
         c['f']={}
         c['f'][3]=['sch']
         c['f'][2]=['ch','ph','sh','hh','pf','bv','ff','sc','ss','th']
+        #Assuming x is voiceless, per IPA and most useage...
         c['f'][1]=['F','f','s','ʃ','θ','x','h'] #not 'S'
         c['avd']={}
         c['avd'][2]=['dj','dz','dʒ']
