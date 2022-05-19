@@ -9,6 +9,9 @@
 ## Check Out the [Ordered Task List](TASKS.md)
 [These tasks](TASKS.md) should simplify a lot of the organization of your project.
 
+## Check Out the [User Interface Guide](UI_GUIDE.md)
+[This guide](UI_GUIDE.md) should answer most questions about how to get around in [A→Z+T](https://github.com/kent-rasmussen/azt). In short, if you want to change a setting, click on where it is displayed on the main screen.
+
 ## Practical Prerequisites
 ### [LIFT](https://code.google.com/archive/p/lift-standard/) Database to Check
 UPDATE: You can now start your database in A→Z+T, using the [Data Collection Tasks](TASKSCOLLECTION.md). If you do this, you can skip down to [Collaboration and Archival](USAGE.md#collaboration-and-archival), below.
