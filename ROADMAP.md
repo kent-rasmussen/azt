@@ -1,5 +1,7 @@
 #Roadmap
 
+I need some check that columns of sort buttons aren't being pushed off the screen (and if so, auto-reduce the number)
+  - maybe take button width, and have screenwidth/max button as the largest acceptable button columns value.
 Consider removing CVT distinct features from task manager.
   - Sort and Transcribe switch automatically between cvt values automatically, so these buttons are somewhat redundant —we could just have 'Sort'.
   - Same with Comprehensive reports.
@@ -8,6 +10,13 @@ Consider making context menu adjustments:
   - visuals (with all current, after show menus)
   - advanced (below the line only)
   - help
+
+Fill out tool tips for status frame lines
+
+Consider culling visible logic at the end of maybesort. Just do, maybe leave an ErrorNotice window, but keep going with the next sort (make a reasonable choice, and the user can go back and change, if desired.)
+- I don't think I want to move automatically between lexical categories. Someone should be able to ask for that, and if done when not desired (e.g., after top 3 profiles), then there will be a lot of going back on that decision manually.
+- I think adding frames doesn't need to be in the sorting logic. "Next" (DOENS'T, but should) provide that, as does selecting "New Frame".
+
 ## current errors:
 clean up words whose forms didn't get set.
 load and restore formsto search in object
