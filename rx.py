@@ -147,13 +147,16 @@ def inxyz(db, lang, segmentlist): #This calls the above script for each characte
             actuals.append(s)
     log.log(2,'{} {}'.format(time.time()-start_time, segmentlist)) # with this
     return list(dict.fromkeys(actuals))
-def slisttoalternations(graphemeset):
+def slisttoalternations(graphemeset,group=False):
     # This '|' delimited list should never go inside of [^ ], as it will be
     # misinterpreted!!
     # This provides the form to go in [^ ] lists or alone, with a one grouping
     # around the list, but with longer graphemes first (trigraphs, then
     # digraphs and decomposed characters)
-    return "("+'|'.join(sorted(graphemeset,key=len,reverse=True))+")"
+    output='|'.join(sorted(graphemeset,key=len,reverse=True))
+    if group:
+        output='('+output+')'
+    return output
 def s(sdict, stype, word=False, compile=False): #settings lang=None
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
@@ -174,7 +177,7 @@ def s(sdict, stype, word=False, compile=False): #settings lang=None
         log.error("Dunno why, but this isn't in lists: {}".format(stype))
         return
     graphemeset=set(sdict[stype])-lessdict
-    output=slisttoalternations(graphemeset)
+    output=slisttoalternations(graphemeset,group=True)
     if compile:
         return make(output, word=word, compile=compile)
     else:
