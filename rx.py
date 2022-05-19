@@ -183,9 +183,9 @@ def s(sdict, stype, word=False, compile=False): #settings lang=None
     else:
         return output
 def make(regex, word=False, compile=False):
-    if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
-        log.error('Regex problem! (need parentheses around segments!):',regex)
-        exit()
+    # if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
+    #     log.error('Regex problem! (need parentheses around segments!):',regex)
+    #     exit()
     if word == True:
         """To make alternations and references work correctly, this should
         already have parentheses () around each S."""
