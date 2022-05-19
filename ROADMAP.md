@@ -1,8 +1,16 @@
 #Roadmap
+
+Consider removing CVT distinct features from task manager.
+  - Sort and Transcribe switch automatically between cvt values automatically, so these buttons are somewhat redundant —we could just have 'Sort'.
+  - Same with Comprehensive reports.
+
+Consider making context menu adjustments:
+  - visuals (with all current, after show menus)
+  - advanced (below the line only)
+  - help
 ## current errors:
 clean up words whose forms didn't get set.
- don't know what field you want:
-Transcriber: only hash on relevant transcriptions
+load and restore formsto search in object
 comprehensive vowel should indicate which profiles and ps will be done
 
 make lift-status update take in verification info, too.

@@ -1,4 +1,4 @@
-# User Interface Guide
+# [A→Z+T](https://github.com/kent-rasmussen/azt) User Interface Guide
 [A→Z+T](https://github.com/kent-rasmussen/azt) aims to address a wide range of users, including people with no experience whatsoever in using a computer. In doing so, I have made some decisions that might be confusing or unintuitive to people who are more familiar with other computer programs. Hopefully this page will help with that.
 
 ## Guess and check
@@ -17,7 +17,7 @@ There are no menus by default in [A→Z+T](https://github.com/kent-rasmussen/azt
     - If it shows a second gloss language, click on that to change or remove it (by selecting "just use \<first gloss language\>")
   - the current syllable profile: click on the syllable profile in the line that says "Looking at \<syllable profile\> \<lexical category\> words (\<count\>)" (the count is calculated, not a setting you can change…)
   - the current lexical category: click on the lexical category in the above line.
-    - you can also click on the lexical category in the title "\<\> progress for \<lexical category\>, on the right.
+    - you can also click on the lexical category in the title "\<\> progress for \<lexical category\>", on the right.
 
 ### You can have buttons, if you really want them
 Some people have expressed concern with the above, because they want to know exactly what is clickable before clicking on it. Pretty much everything is clickable. But if you _really_ want buttons, you can have them by right-clicking on the main window (almost anywhere), and selecting "Show Buttons."
@@ -30,9 +30,9 @@ Both axes on this table also have "Next" buttons, to allow quick navigation to a
 ### Some advanced functions are in a menu
 I have deliberately hidden the menu, to keep people from being distracted by it, but also to keep advanced functions for advanced users. Some of the functions there are needed, but not by most people, and certainly not most of the time.
 
-The Advanced menu items should all be recoverable (Even "Change to another database"), but it might not be obvious how to do that, especially if a user has already selected one of these menu items in error.
-
 Right click almost anywhere on the main screen to get a context menu, and select "Show Menus", and they will appear.
+
+The Advanced menu items should all be recoverable (Even "Change to another database"), but it might not be obvious how to do that, especially if a user has already selected one of these menu items in error.
 
 The menu items above the line impact how [A→Z+T](https://github.com/kent-rasmussen/azt) looks at your database:
   - which database it is analyzing (this should only be needed if you work on more than one database)
