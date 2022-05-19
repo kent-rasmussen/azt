@@ -19,14 +19,13 @@ class Transcriber(ui.Frame):
         self.updatelabels()
     def updatelabels(self,event=None):
         a=self.newname.get()
-        try:
-            int(a) #Is this interpretable as an integer (default group)?
-            self.namehash.set('')
-        except ValueError:
+        if set(['˥','˦','˧','˨','˩']) & set(a):
             x=self.hash_t.sub('T',self.newname.get())
             y=self.hash_sp.sub('#',x)
             z=self.hash_nbsp.sub('.',y)
             self.namehash.set(z)
+        else:
+            self.namehash.set('')
         self.labelcompiled=False
     def playbeeps(self,pitches):
         if not self.labelcompiled:
