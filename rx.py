@@ -39,7 +39,7 @@ def stripquotes(x):
 def sub(*args,**kwargs):
     return re.sub(*args,**kwargs)
 def compile(x):
-    return re.compile(x)
+    return re.compile(x, re.UNICODE)
 def id(x):
     x=x.replace('˥','4').replace('˦','3').replace('˧','2'
         ).replace('˨','1').replace('˩','0')
