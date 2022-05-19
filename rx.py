@@ -148,6 +148,8 @@ def inxyz(db, lang, segmentlist): #This calls the above script for each characte
     log.log(2,'{} {}'.format(time.time()-start_time, segmentlist)) # with this
     return list(dict.fromkeys(actuals))
 def slisttoalternations(graphemeset):
+    # This '|' delimited list should never go inside of [^ ], as it will be
+    # misinterpreted!!
     # This provides the form to go in [^ ] lists or alone, with a one grouping
     # around the list, but with longer graphemes first (trigraphs, then
     # digraphs and decomposed characters)
