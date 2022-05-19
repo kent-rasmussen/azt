@@ -1126,8 +1126,15 @@ class ButtonFrame(Frame):
         elif (type(optionlist[0]) is str) or (type(optionlist[0]) is int):
             """when optionlist is a list of strings/codes/integers"""
             print("looks like options are just a list of codes; making dict.")
-            optionlist = [({'code':optionlist[i], 'name':optionlist[i]}
-                            ) for i in range(0, len(optionlist))]
+            if None in optionlist:
+                log.error(_("Having None as a list is fine, but you need to "
+                "put it in a tuple, with a second argument to display, so "
+                "users know what it means when they select it."))
+                return
+            optionlist = [({'code':optionlist[i][0], 'name':optionlist[i][1]}
+                            if type(optionlist[i]) is tuple
+                            else {'code':optionlist[i], 'name':optionlist[i]}
+                                ) for i in range(0, len(optionlist))]
         elif type(optionlist[0]) is tuple:
             if type(optionlist[0][1]) is str:
                 """when optionlist is a list of binary tuples (codes,names)"""
