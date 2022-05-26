@@ -6162,22 +6162,24 @@ class Sound(object):
                 log.info("Missing sound setting {}; asking again".format(s))
                 return True
         self.settings.soundsettingsok=True
-    def soundcheck(self):
-        #Set the parameters of what could be
+    def mikecheck(self):
+        #move this to Record, after confirming that can be safely done.
         self.pyaudiocheck()
-        self.soundsettingscheck()
-        self.soundsettings=self.settings.soundsettings
         self.soundsettingswindow=ui.Window(self.frame, exit=False,
                                 title=_('Select Sound Card Settings'))
         self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
         self.soundcheckrefresh()
         self.soundsettingswindow.wait_window(self.soundsettingswindow)
-        if not self.exitFlag.istrue() and self.missingsoundattr():
-            self.soundcheck()
-            return
         self.donewpyaudio()
         if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
             self.soundsettingswindow.destroy()
+    def soundcheck(self):
+        #just make sure settings are there
+        self.soundsettingscheck()
+        self.soundsettings=self.settings.soundsettings
+        if not self.exitFlag.istrue() and self.missingsoundattr():
+            self.mikecheck() #if not, get them
+            return
     def makelabelsnrecordingbuttons(self,parent,sense):
         log.info("Making buttons for {} (in {})".format(sense['nodetoshow'],sense))
         framed=self.taskchooser.datadict.getframeddata(sense['nodetoshow'])
