@@ -6459,6 +6459,7 @@ class Record(Sound):
         self.donewpyaudio()
     def __init__(self):
         Sound.__init__(self)
+        self.mikecheck() #only ask for settings check if recording
 class Report(object):
     def consultantcheck(self):
         self.settings.reloadstatusdata()
