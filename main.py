@@ -713,11 +713,11 @@ class StatusFrame(ui.Frame):
         # self.opts['row']+=1
     def cvgroup(self,line):
         if self.settings.status.group():
-            self.opts['columnplus']=2
             t=(_("= {}".format(self.settings.status.group())))
-            self.proselabel(t,cmd=self.taskchooser.getgroup,parent=line)
         else:
             t=(_("(All groups)"))
+        self.opts['columnplus']=2
+        self.proselabel(t,cmd=self.taskchooser.getgroup,parent=line)
         # self.opts['row']+=1
     def buttoncolumnsline(self):
         self.opts['row']+=1
