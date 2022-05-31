@@ -716,6 +716,8 @@ class StatusFrame(ui.Frame):
             self.opts['columnplus']=2
             t=(_("= {}".format(self.settings.status.group())))
             self.proselabel(t,cmd=self.taskchooser.getgroup,parent=line)
+        else:
+            t=(_("(All groups)"))
         # self.opts['row']+=1
     def buttoncolumnsline(self):
         self.opts['row']+=1
