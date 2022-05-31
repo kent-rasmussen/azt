@@ -197,6 +197,7 @@ def make(regex, word=False, compile=False):
             log.error('Regex problem!')
     return regex
 def nX(segmentsin,segmentsout,n):
+    #Start by being clear which graphs count, and which don't.
     # these should mutually exclude each other.
     overlap=set(segmentsin) & set(segmentsout)
     if overlap:
@@ -207,14 +208,18 @@ def nX(segmentsin,segmentsout,n):
                 for n in range(1,len(max(segmentsin,key=len))+1)}
     soutdict={n:[i for i in segmentsout if len(i) == n]
                 for n in range(1,len(max(segmentsout,key=len))+1)}
+    # Convert those value lists to a string of alternations, for each key
     sin={k:slisttoalternations(sindict[k]) for k in sindict}
     sin.update({'all':slisttoalternations([i for j in sindict.values()
                                             for i in j])})
     sout={k:slisttoalternations(soutdict[k]) for k in soutdict}
     sout.update({'all':slisttoalternations([i for j in soutdict.values()
                                             for i in j])})
+    # Make a list, longest first
+    # this probably doesn't need the isdigit test
     strlist=[sout[i] for i in range(max(j for j in sout.keys()
                                                 if str(j).isdigit()),0,-1)]
+    #join list of alternations to one long alternation
     notS='|'.join(strlist)
     strlist+=['('+sin['all']+')'] #look for, capture this
     #This needs to multiply as a unit, while getting each subpart separately:
@@ -225,6 +230,8 @@ def nX(segmentsin,segmentsout,n):
     else:
         priors=''
     nS='('+priors+'('+notS+')*)('+sin['all']+')'
+    # for n,i in enumerate([sin,sout,oneS,notS,nS]):
+    #     print(n,i)
     return make(nS, compile=True)
 def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
     """ this inputs regex variable (regexCV), a tuple of two parts:
