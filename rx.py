@@ -196,7 +196,6 @@ def make(regex, word=False, compile=False):
         except:
             log.error('Regex problem!')
     return regex
-    oneS='[^'+s+']*'+s #This will be a problem if S=NC or CG...
     nS='^('+oneS*(n-1)+'[^'+s+']*)('+s+')'
 def nX(segmentsin,segmentsout,n):
     # these should mutually exclude each other.
@@ -207,6 +206,8 @@ def nX(segmentsin,segmentsout,n):
     sout={k:slisttoalternations(soutdict[k]) for k in soutdict}
     sout.update({'all':slisttoalternations([i for j in soutdict.values()
                                             for i in j])})
+    #This needs to multiply as a unit, while getting each subpart separately:
+    oneS='(('+notS+')*('+sin['all']+'))'#.join(strlist)
     return make(nS, compile=True)
 def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
     """ this inputs regex variable (regexCV), a tuple of two parts:
