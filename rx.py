@@ -196,10 +196,12 @@ def make(regex, word=False, compile=False):
         except:
             log.error('Regex problem!')
     return regex
-def nX(segmentlist,n):
     s=slisttoalternations(segmentlist)
     oneS='[^'+s+']*'+s #This will be a problem if S=NC or CG...
     nS='^('+oneS*(n-1)+'[^'+s+']*)('+s+')'
+def nX(segmentsin,segmentsout,n):
+    # these should mutually exclude each other.
+    overlap=set(segmentsin) & set(segmentsout)
     return make(nS, compile=True)
 def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
     """ this inputs regex variable (regexCV), a tuple of two parts:
