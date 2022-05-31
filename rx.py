@@ -201,6 +201,12 @@ def nX(segmentsin,segmentsout,n):
     overlap=set(segmentsin) & set(segmentsout)
     if overlap:
         log.error("Your in/out segment lists overlap: {}".format(overlap))
+    # for each of in/out, make a dict keyed by length, with value listing glyphs
+    # with that length (automatically separate trigraphs, digraphs, etc)
+    sindict={n:[i for i in segmentsin if len(i) == n]
+                for n in range(1,len(max(segmentsin,key=len))+1)}
+    soutdict={n:[i for i in segmentsout if len(i) == n]
+                for n in range(1,len(max(segmentsout,key=len))+1)}
     sin={k:slisttoalternations(sindict[k]) for k in sindict}
     sin.update({'all':slisttoalternations([i for j in sindict.values()
                                             for i in j])})
