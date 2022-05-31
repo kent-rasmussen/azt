@@ -212,6 +212,7 @@ class Report(object):
                     'font-family':ffam,
                     'XeLaTeXSpecial':XeLaTeXSpecial})
     def addlang(self, lang):
+        #This is called by the report; should it be generated?
         if 'id' in lang and 'name' in lang:
             self.langlist+=[lang]
         else:
@@ -240,6 +241,57 @@ class Report(object):
         sp.append(self.node)
         sp.append(stylesheet)
         self.node=self.styled
+        #This should add overrides for each language listed under languages:
+        # <langDataLayout
+        # language="gnd-orth"
+        # ><langDataInExampleLayout
+        # textafter="&gt;"
+        # textbefore="&lt;"
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInExampleLayout
+        # ><langDataInTableLayout
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInTableLayout
+        # ><langDataInProseLayout
+        # textafter="&gt;"
+        # textbefore="&lt;"
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInProseLayout
+        # ></langDataLayout
+        # ><langDataLayout
+        # language="gnd-em"
+        # ><langDataInExampleLayout
+        # textafter="/"
+        # textbefore="/"
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInExampleLayout
+        # ><langDataInTableLayout
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInTableLayout
+        # ><langDataInProseLayout
+        # textafter="/"
+        # textbefore="/"
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInProseLayout
+        # ></langDataLayout
+        # ><langDataLayout
+        # language="gnd-et"
+        # ><langDataInExampleLayout
+        # textafter="]"
+        # textbefore="["
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInExampleLayout
+        # ><langDataInTableLayout
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInTableLayout
+        # ><langDataInProseLayout
+        # textafter="]"
+        # textbefore="["
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInProseLayout
+        # ></langDataLayout
+        # >
+
 class Section(ET.Element):
     def __init__(self,parent,title="No Section Title!",level=1,landscape=False):
         id=rx.id(title)
