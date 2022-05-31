@@ -213,6 +213,10 @@ def nX(segmentsin,segmentsout,n):
     sout={k:slisttoalternations(soutdict[k]) for k in soutdict}
     sout.update({'all':slisttoalternations([i for j in soutdict.values()
                                             for i in j])})
+    strlist=[sout[i] for i in range(max(j for j in sout.keys()
+                                                if str(j).isdigit()),0,-1)]
+    notS='|'.join(strlist)
+    strlist+=['('+sin['all']+')'] #look for, capture this
     #This needs to multiply as a unit, while getting each subpart separately:
     oneS='(('+notS+')*('+sin['all']+'))'#.join(strlist)
     #We need to keep each alternation set a unit, and keep all but last in \1
