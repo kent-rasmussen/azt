@@ -196,7 +196,6 @@ def make(regex, word=False, compile=False):
         except:
             log.error('Regex problem!')
     return regex
-    nS='^('+oneS*(n-1)+'[^'+s+']*)('+s+')'
 def nX(segmentsin,segmentsout,n):
     # these should mutually exclude each other.
     overlap=set(segmentsin) & set(segmentsout)
@@ -208,6 +207,12 @@ def nX(segmentsin,segmentsout,n):
                                             for i in j])})
     #This needs to multiply as a unit, while getting each subpart separately:
     oneS='(('+notS+')*('+sin['all']+'))'#.join(strlist)
+    #We need to keep each alternation set a unit, and keep all but last in \1
+    if n-1:
+        priors='('+oneS*(n-1)+')'
+    else:
+        priors=''
+    nS='('+priors+'('+notS+')*)('+sin['all']+')'
     return make(nS, compile=True)
 def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
     """ this inputs regex variable (regexCV), a tuple of two parts:
