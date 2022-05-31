@@ -199,6 +199,8 @@ def make(regex, word=False, compile=False):
 def nX(segmentsin,segmentsout,n):
     # these should mutually exclude each other.
     overlap=set(segmentsin) & set(segmentsout)
+    if overlap:
+        log.error("Your in/out segment lists overlap: {}".format(overlap))
     sin={k:slisttoalternations(sindict[k]) for k in sindict}
     sin.update({'all':slisttoalternations([i for j in sindict.values()
                                             for i in j])})
