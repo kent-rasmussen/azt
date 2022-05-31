@@ -193,8 +193,13 @@ class Report(object):
         ref=ET.SubElement(bm, 'references')
     def languages(self):
         lgs=ET.SubElement(self.node, 'languages')
+        options=[('',''),
+                ('-et',' (phonetic)'),
+                ('-em',' (phonemic)'),
+                ('-orth',' (orthographic)')]
         for lang in self.langlist:
-            self.language(lgs,lang['id'], lang['name'])
+            for code,name in options:
+                self.language(lgs,lang['id']+code, lang['name']+name)
     def language(self, parent, id, name):
         XeLaTeXSpecial=("graphite font-feature='Hide tone contour staves=True' "
                                 "font-feature='Literacy alternates=True'")
