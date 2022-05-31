@@ -253,7 +253,7 @@ def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
         # log.info('x: {}; repl: {}'.format(x,CVrepl))
         # log.info('CVs: {}'.format(CVs))
     CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs) #?
-    # log.info('CVs: {}'.format(CVs))
+    log.info('Going to compile regex with CVs: {}'.format(CVs))
     return make(CVs, word=word, compile=compile)
 if __name__ == '__main__':
     x='ne [pas] plaire, ne pas agréer, ne pas'
