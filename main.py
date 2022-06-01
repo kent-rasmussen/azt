@@ -4293,6 +4293,7 @@ class Segments(object):
         self.taskchooser.datadict.clearsense(senseid) #so this will refresh
         if write:
             self.maybewrite()
+            self.storesettingsfile(setting='profiledata') #objectify this!
     def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
         self.db.annotatefield(
                             senseid=senseid,
