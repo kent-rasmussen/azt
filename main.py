@@ -4209,13 +4209,17 @@ class Segments(object):
         and outputs a list/dictionary of senseid/{senseid:form} form."""
         ps=kwargs.get('ps',self.slices.ps())
         self.output=[] #This is just a list of senseids now: (Do we need the dict?)
+        # self.outputs=[] #This is just a list of senseids now: (Do we need the dict?)
         dicttosearch=self.settings.formstosearch[ps]
+        log.info("Looking for senses by regex {}".format(regex))
         for form,id in [i for i in dicttosearch.items() if i[0]]:
             # log.info("Looking for form {}, with id {}".format(form,id))
             t = threading.Thread(target=self.ifregexadd,
                                 args=(regex,form,id))
             t.start()
         t.join()
+        # log.info("Found sensess: {}".format(self.outputs))
+        # log.info("Found senses: {}".format(self.output))
         return self.output
     def presortgroups(self,**kwargs):
         if self.status.presorted(**kwargs):
