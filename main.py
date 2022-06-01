@@ -10281,6 +10281,8 @@ class ToneFrames(dict):
         super(ToneFrames, self).__init__()
         for k in dict:
             self[k]=dict[k]
+            if 'field' not in self[k]:
+                self[k]['field']='lc'
 class StatusDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
