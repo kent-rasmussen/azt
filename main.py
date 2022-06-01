@@ -8926,9 +8926,12 @@ class FramedDataDict(dict):
                 d=self[source]=FramedDataElement(self,source,senseid,**kwargs)
             log.info("FramedData from {} made with forms {}".format(source,
                                                                     d.forms))
-        else:
+        elif d:
             log.info("FramedData used from ealier ({},with forms {})".format(
                                                                 source,d.forms))
+        else:
+            log.error("FramedData confused: ({}, with d={})".format(
+                                                                source,d))
         return d #self[source]
     def __init__(self, taskchooser, **kwargs):
         super(FramedDataDict, self).__init__()
