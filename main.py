@@ -7758,9 +7758,10 @@ class Transcribe(Sound,Sort):
             if not str(group).isdigit():
                 ftype=self.params.ftype()
                 check=self.params.check()
-                log.info("updating for type {} check {}, group {}"
+                log.info("updating for type {} check {}, group ‘{}’"
                         "".format(ftype,check,group))
                 senseids=self.getsenseidsincheckgroup()
+                log.info("modding senseids {}".format(senseids))
                 for senseid in senseids:
                     u = threading.Thread(target=self.updateformtoannotations,
                                         args=(senseid,ftype),
