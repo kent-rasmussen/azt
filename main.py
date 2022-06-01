@@ -10368,21 +10368,36 @@ class StatusDict(dict):
         we'll need to rethink it, when working on CV checks, which depend on
         profile, and not ps."""
         kwargs=grouptype(**kwargs)
+        tosortkwargs=kwargs.copy()
+        tosortkwargs['tosort']=True
+        toverifykwargs=kwargs.copy()
+        toverifykwargs['toverify']=True
+        tojoinkwargs=kwargs.copy()
+        tojoinkwargs['tojoin']=True
         cs=[]
         checks=self.updatechecksbycvt(**kwargs)
         if isinstance(self.task(),Sort) or isinstance(self.task(),Transcribe):
             checks=[i for i in checks if 'x' not in i]
         for kwargs['check'] in checks:
+            tosortkwargs['check']=toverifykwargs['check']=tojoinkwargs['check']=kwargs['check']# log.info("{} tosort: {}".format(kwargs['check'],self.checktosort(**tosortkwargs)))
+            # log.info("{} tosort: {}".format(kwargs['check'],self.groups(**toverifykwargs)))
+            # log.info("{} tosort: {}".format(kwargs['check'],self.checktojoin(**tojoinkwargs)))
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']
                 and not kwargs['toverify']
                 and not kwargs['tojoin']
+                and not kwargs['todo']
                 ) or
                 # """These next two assume current ps-profile slice"""
                 kwargs['wsorted'] and self.groups(**kwargs) or
                 kwargs['tosort'] and self.checktosort(**kwargs) or
                 kwargs['toverify'] and self.groups(**kwargs) or
-                kwargs['tojoin'] and self.checktojoin(**kwargs)
+                kwargs['tojoin'] and self.checktojoin(**kwargs) or
+                    (kwargs['todo'] and (self.checktosort(**tosortkwargs) or
+                                        self.groups(**toverifykwargs) or
+                                        self.checktojoin(**tojoinkwargs)
+                                        )
+                    )
                 ):
                 cs+=[kwargs['check']]
         log.info("Checks with {}: {}".format(kwargs,cs))
