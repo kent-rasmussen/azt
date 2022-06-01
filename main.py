@@ -3330,6 +3330,7 @@ class TaskDressing(object):
                       column=0, row=0)
             # window.scroll=ui.ScrollingFrame(window.frame)
             # window.scroll.grid(column=0, row=1)
+            groups+=[(None,'All')] #put this first, some day (now confuses ui)
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                      optionlist=groups,
                                      command=self.settings.setgroup,
