@@ -883,9 +883,19 @@ class StatusFrame(ui.Frame):
                     column+=1
                     if profile == 'colheader':
                         if check == 'next': # end of column headers
+                            # log.info("todo: {}".format(self.settings.status.checks(todo=True)))
+                            # log.info("tosort: {}".format(self.settings.status.checks(tosort=True)))
+                            # log.info("toverify: {}".format(self.settings.status.checks(toverify=True)))
+                            # log.info("tojoin: {}".format(self.settings.status.checks(tojoin=True)))
+                            if cvt == 'T' and not (
+                                    self.settings.status.checks(todo=True)
+                                                    ):
+                                cmd=self.task.addframe
+                            else:
+                                cmd=lambda todo=True:self.settings.status.nextcheck(todo)
                             bch=ui.Button(self.leaderboardtable,text=check,
                                         relief='flat',
-                                        cmd=self.settings.status.nextcheck,
+                                        cmd=cmd,
                                         font='reportheader',
                                         row=row,column=column,sticky='s')
                             bcht=ui.ToolTip(bch,_("Go to the next check"))
@@ -1636,6 +1646,27 @@ class Settings(object):
             except KeyError:
                 self.profilesbysense[ps]={}#[profile]=[senseid]
                 self.profilesbysense[ps][profile]=[senseid]
+    def addtoformstosearch(self,senseid,form,oldform=None,ps=None):
+        if not ps:
+            ps=self.slices.ps()
+        try:
+            if senseid not in self.formstosearch[ps][form]: #don't duplicate
+                self.formstosearch[ps][form].append(senseid)
+        except KeyError: # either ps or form is missing, nothing to append to
+            try: #if it's just form
+                self.formstosearch[ps][form]=[senseid]
+            except KeyError: #ps is missing, build from scratch
+                self.formstosearch[ps]={form:[senseid,]}
+        log.info("Added {} id={}".format(form,self.formstosearch[ps][form]))
+        if oldform:
+            try:
+                self.formstosearch[ps][oldform].remove(senseid)
+                log.info("Removed {} ({})".format(form,self.formstosearch[ps][form]))
+            except ValueError:
+                log.error(_("Apparently {} isn't under {}?".format(senseid,form)))
+            if not self.formstosearch[ps][oldform]:
+                del self.formstosearch[ps][oldform] #don't leave form wo senseid
+                log.info("Deleted key of empty list")
     def getprofileofsense(self,senseid):
         #Convert to iterate over local variables
         ps=unlist(self.db.ps(senseid=senseid))
@@ -1655,12 +1686,7 @@ class Settings(object):
             if not set(self.profilelegit).issuperset(profile):
                 profile='Invalid'
             self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
-            if ps not in self.formstosearch:
-                self.formstosearch[ps]={}
-            if form in self.formstosearch[ps]:
-                self.formstosearch[ps][form].append(senseid)
-            else:
-                self.formstosearch[ps][form]=[senseid]
+            self.addtoformstosearch(senseid, form, ps=ps)
         return firstoflist(forms),profile
     def getprofiles(self):
         self.profileswdatabyentry={}
@@ -1837,7 +1863,7 @@ class Settings(object):
         for cc in ['CG','CS','NC','VN','VV']:
             ccc=cc.replace('C','[CSGDʔN]{1}')
             self.rx[cc]=rx.compile(ccc)
-        for c in ['N','S','G','ʔ','D']:
+        for c in slcassesC:
             if c == 'N': #i.e., before C
                 self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))') #{1}|
             elif c in ['ʔ','D']:
@@ -3276,7 +3302,7 @@ class TaskDressing(object):
         check=kwargs.get('check',self.params.check())
         if (cvt == 'T' and None in [cvt, ps, profile, check]):
             ErrorNotice(parent=window.frame,
-                          msg=_("You need to set "
+                          text=_("You need to set "
                           "\nCheck type (as Tone, currently {}) "
                           "\nGrammatical category (currently {})"
                           "\nSyllable Profile (currently {}), and "
@@ -3288,10 +3314,11 @@ class TaskDressing(object):
         kwargs=grouptype(**kwargs) #this just fills in False
         groups=self.status.groups(cvt=cvt,**kwargs)
         if not groups:
-                ErrorNotice(parent=window.frame,
-                          msg=_("It looks like you don't have {}-{} lexemes "
+            ErrorNotice(parent=window.frame,
+                          text=_("It looks like you don't have {}-{} lexemes "
                           "grouped in the ‘{}’ check yet \n({})."
                           "").format(ps,profile,check,kwargs, column=0, row=0))
+            return
         if kwargs.get('intfirst') and kwargs.get('guess'):
             l=[int(i) for i in self.status.groups(cvt=cvt,**kwargs)
                                     if str(i).isdigit()]
@@ -3330,6 +3357,7 @@ class TaskDressing(object):
                       column=0, row=0)
             # window.scroll=ui.ScrollingFrame(window.frame)
             # window.scroll.grid(column=0, row=1)
+            groups+=[(None,'All')] #put this first, some day (now confuses ui)
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                      optionlist=groups,
                                      command=self.settings.setgroup,
@@ -3659,7 +3687,7 @@ class TaskChooser(TaskDressing,ui.Window):
             bpr=2
         columnspan=1
         for n,o in enumerate(optionlist):
-            if n is optionlist_maxi:
+            if n is optionlist_maxi and int(n/bpr):
                 # log.info("bpr: {}, n%bpr: {}".format(bpr,n%bpr))
                 columnspan=bpr-n%bpr
             b=ui.Button(self.optionsframe,
@@ -3848,7 +3876,7 @@ class TaskChooser(TaskDressing,ui.Window):
                     # lc=e.findall('citation')
                     """This finds or creates, by lang:"""
                     lc=self.db.citationformnodeofentry(e,lxfl)
-                    log.info("Moving lexeme {} to citation (was {}) for lang {}"
+                    log.info("Moving lexeme ‘{}’ to citation (was {}) for lang {}"
                             "".format(lxft.text,lc.text,lxfl))
                     if not lc.text: #don't overwrite info
                         lc.text=lxft.text
@@ -4032,9 +4060,16 @@ class TaskChooser(TaskDressing,ui.Window):
             if me or citationsdone[lang] > 200: #was 705
                 self.doneenough['collectionlc']=True#I need to think through this
         for f in self.db.sensefields:
+            # log.info("checking '{}'".format(f))
             if 'verification' in f:
+                # log.info("Found ‘verification’ in ‘{}’".format(f))
+                #I need to tweak this, it should follow tone (only) reports:
+                #maybe read this from status?
+                #This ideally follows transcription
+                #This should maybe be relevant by slice (analyzed or not yet)
                 self.doneenough['analysis']=True
                 break
+            # log.info("‘verification’ not in ‘{}’".format(f))
         log.info("Analysis of what you're done with: {}".format(self.donew))
         log.info("You're done enough with: {}".format(self.doneenough))
     def restart(self,filename=None):
@@ -4209,13 +4244,17 @@ class Segments(object):
         and outputs a list/dictionary of senseid/{senseid:form} form."""
         ps=kwargs.get('ps',self.slices.ps())
         self.output=[] #This is just a list of senseids now: (Do we need the dict?)
+        # self.outputs=[] #This is just a list of senseids now: (Do we need the dict?)
         dicttosearch=self.settings.formstosearch[ps]
+        log.info("Looking for senses by regex {}".format(regex))
         for form,id in [i for i in dicttosearch.items() if i[0]]:
             # log.info("Looking for form {}, with id {}".format(form,id))
             t = threading.Thread(target=self.ifregexadd,
                                 args=(regex,form,id))
             t.start()
         t.join()
+        # log.info("Found sensess: {}".format(self.outputs))
+        # log.info("Found senses: {}".format(self.output))
         return self.output
     def presortgroups(self,**kwargs):
         if self.status.presorted(**kwargs):
@@ -4255,12 +4294,27 @@ class Segments(object):
         self.updatestatus(group=group) # marks the group unverified.
     def updateformtextnodebycheck(self,t,check,value):
         tori=t.text[:]
+        matches=[]
         for c in reversed(check.split('=')):
-            log.info("subbing {} for {}, using {}".format(value,c,self.settings.rx[c]))
-            t.text=self.settings.rx[c].sub('\\g<1>'+value,t.text)
+            log.info("subbing {} for {} in {}, using {}".format(value,c,tori,
+                                                        self.settings.rx[c]))
+            log.info("found {}".format(self.settings.rx[c].search(t.text)))
+            match=self.settings.rx[c].search(t.text)
+            if match:
+                matches.append(match.groups()[-1])
+                t.text=match.expand('\\g<1>'+value)+t.text[match.end():]
+            # t.text=self.settings.rx[c].sub('\\g<1>'+value,t.text)
         log.info("updated {} > {}".format(tori,t.text))
         #now that we've potentially added a grapheme, see that it will be found.
         self.settings.addtoCVrxs(value)
+        #this should update polygraphs; if so, trigger reanalysis (instead of above)
+        for match in matches:
+            if len(match)>1:
+                log.info(_("NOTICE: we just matched (to remove) a set of "
+                "symbols representing one sound ({}). Until you are done "
+                "with it, we will leave it there, so both forms will be "
+                "found. Once you are done with it, remove it from the "
+                "polygraph settings.").format(match))
     def updateformtoannotations(self,senseid,ftype,check=None,write=False):
         """This should take a sense and ftype (and maybe check, not sure)
         and update that form on the basis of the annotations made to date.
@@ -4280,8 +4334,17 @@ class Segments(object):
         if check: #just update to this annotation
             value=firstoflist(self.db.fieldvalue(node=fnode,
                                                 annotationname=check))
-            if value:
+            if value is not None:
+                tori=t.text[:]
                 self.updateformtextnodebycheck(t,check,value)
+                log.info("Done with updateformtextnodebycheck")
+                #This should update formstosearch:
+                if tori != t.text:
+                    self.settings.addtoformstosearch(senseid,t.text,tori)
+                    log.info("Done with addtoformstosearch")
+                if len(value)>1:
+                    sc=self.params.cvt()
+                    self.settings.polygraphs[self.analang][sc][value]=True
             else:
                 write=False #in case it isn't already
         else: #update to all annotations
@@ -4293,6 +4356,7 @@ class Segments(object):
         self.taskchooser.datadict.clearsense(senseid) #so this will refresh
         if write:
             self.maybewrite()
+            self.storesettingsfile(setting='profiledata') #objectify this!
     def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
         self.db.annotatefield(
                             senseid=senseid,
@@ -4764,6 +4828,13 @@ class Tone(object):
         self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
         self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
     def addframe(self,**kwargs):
+        # model this after WordCollection.addmorpheme, to ask for one thing at
+        # a time, in one language at a time. Store values for defaults on
+        # subsequent runs, but only display them in non-editable form on the
+        # main window. This needs to be fairly easy to fix problems, without
+        # breaking the principle of having only one field at a time.
+        # Perhaps the display fields could be clickable, to give the relevant
+        # input field?
         log.info('Tone frame to add!')
         """I should add gloss2 option here, likely just with each language.
         This is not a problem for LFIT translation fields, and it would help to
@@ -5240,7 +5311,11 @@ class Sort(object):
         r=self.status.nextcheck(tosort=True)
         if not r:
             self.status.nextcheck(toverify=True)
-        self.runwindow.destroy()
+        #if neither, this should call nprofile
+        try:
+            self.runwindow.destroy()
+        except AttributeError:
+            log.info("Looks like we wanted to kill a non-existent runwindow.")
         self.runcheck()
     def nprofile(self):
         r=self.status.nextprofile(tosort=True)
@@ -5388,80 +5463,25 @@ class Sort(object):
             #Give an error window here
             return
         elif not exit:
-            self.getrunwindow()
-            done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
-                    "distinct!".format(self.profile,self.check,
-                                                self.checktypename[cvt]))
-            row=0
-            if self.exitFlag.istrue():
-                return
-            ui.Label(self.runwindow.frame, text=done,
-                    row=row,column=0,columnspan=2)
-            row+=1
-            ui.Label(self.runwindow.frame, text='',
-                        image=self.frame.theme.photo[cvt],
-                        row=row,column=0,columnspan=2)
-            row+=1
             ctosort=self.status.checks(tosort=True)
             ctoverify=self.status.checks(toverify=True)
             ptosort=self.status.profiles(tosort=True)
             ptoverify=self.status.profiles(toverify=True)
-            ui.Label(self.runwindow.frame,text=_("Continue to sort"),
-                    columnspan=2,row=row,column=0)
-            row+=1
-            text1=_("same words")
-            text2=_("same frame")
             if ctosort or ctoverify:
-                b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text1+'\n('+_("next {}").format(self.checktypename[cvt])+')',
-                    command=self.ncheck)
-                b1t=ui.ToolTip(b1,_("Automatically pick "
-                                "the next {} to sort for the ‘{}’ profile."
-                                "".format(self.profile,self.checktypename[cvt])))
-            elif cvt == 'T':
-                b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text1+'\n('+_("define a new frame")+')',
-                    command=self.aframe)
-                b1t=ui.ToolTip(b1,_("You're done with tone frames already defined "
-                                "for the ‘{}’ profile. If you want to continue "
-                                "with this profile, define a new frame here."
-                                "".format(self.profile)))
-            try:
-                b1.grid(row=row,column=0,sticky='e')
-                nob1=False
-            except:
-                log.info("Apparently we're done, but not working on tone.")
-                nob1=True
-            if ptosort or ptoverify:
-                b2=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text2+'\n('+_("next syllable profile")+')',
-                    command=self.nprofile)
-                b2t=ui.ToolTip(b2,_("You're done with ‘{0}’ {2} "
-                                "defined for the ‘{1}’ profile. Click here to "
-                                "Automatically select the next syllable "
-                                "profile for ‘{0}’."
-                                "".format(self.ps,self.profile,
-                                self.checktypename[cvt])))
-            else:
-                b2=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text2+'\n('+_("next lexical category")+')',
-                    command=self.nps)
-                b2t=ui.ToolTip(b2,_("You're done with {} "
-                                "defined for the top ‘{}’ syllable profiles. "
-                                "Click here to automatically select the next "
-                                "grammatical category."
-                                "".format(self.ps, self.checktypename[cvt])))
-            b2.grid(row=row,column=1,sticky='w')
+                next=_("check")
+                fn=self.ncheck
+            elif ptosort or ptoverify:
+                next=_("profile")
+                fn=self.nprofile
+            done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
+                    "distinct! Moving on to the next {}!".format(
+                                                self.profile,self.check,
+                                                self.checktypename[cvt],
+                                                next))
+            ErrorNotice(text=done,title=_("Done!"))
+            fn()
             if self.parent.exitFlag.istrue():
                 return
-            if not nob1:
-                w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
-                                        self.parent.winfo_screenwidth()/150))
-                log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
-                                    b1.winfo_reqwidth(),b2.winfo_reqwidth(),w))
-                for i in [b1,b2]:
-                    i.config(width=w)
-            self.runwindow.waitdone()
             return
     def presenttosort(self):
         scaledpady=int(50*program['scale'])
@@ -6482,6 +6502,7 @@ class Record(Sound):
         self.mikecheck() #only ask for settings check if recording
 class Report(object):
     def consultantcheck(self):
+        # self.settings.reloadprofiledata()
         self.settings.reloadstatusdata()
         self.bylocation=False
         self.tonegroupreportcomprehensive()
@@ -6961,7 +6982,7 @@ class Report(object):
         log.debug(t)
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
-        # log.info("regex: {}; regexCV: {}".format(self.regex,self.regexCV))
+        log.info("regexCV: {}; \nregex: {}".format(self.regexCV,self.regex))
         matches=set(self.senseidformsbyregex(self.regex,ps=ps))
         if 'x' not in check and '=' not in check: #only pull from simple reports
             for ncvt in self.ncvts: #for basic reports
@@ -7052,8 +7073,9 @@ class Report(object):
                         try:
                             self.basicreported[ncvt].add(senseid)
                         except AttributeError:
-                            log.info("Not adding ids to basic reported because "
-                                "it isn't there.")
+                            pass
+                            # log.info("Not adding ids to basic reported because "
+                            #     "it isn't there.")
                         except KeyError:
                             self.basicreported[ncvt]=set([senseid])
                 framed=self.taskchooser.datadict.getframeddata(senseid)
@@ -7108,6 +7130,7 @@ class Report(object):
         profile=kwargs.get('profile',self.slices.profile())
         check=kwargs.pop('check',self.params.check()) #don't pass this twice!
         groups=self.status.groups(cvt=cvt)
+        group=self.status.group()
         self.ncvts=rx.split('[=x]',check)
         if 'x' in check:
             log.debug('Hey, I cound a correspondence number!')
@@ -7119,6 +7142,8 @@ class Report(object):
             else:
                 log.error("Sorry, I don't know how to compare cvt: {}"
                                                     "".format(cvt))
+            log.info("Going to run report for groups {}".format(groups))
+            log.info("With comparison groups {}".format(self.groupcomparison))
             for group in groups:
                 for self.groupcomparison in groupcomparisons:
                     if group != self.groupcomparison:
@@ -7127,7 +7152,13 @@ class Report(object):
                                             self.groupcomparison))
                         self.wordsbypsprofilechecksubcheckp(parent,t,
                                         check=check, group=group,**kwargs)
+        elif group:
+            log.info("Going to run report just for group {}".format(group))
+            t=_("{} {} {}={}".format(ps,profile,check,group))
+            self.wordsbypsprofilechecksubcheckp(parent,t,
+                                        check=check, group=group,**kwargs)
         elif groups:
+            log.info("Going to run report for groups {}".format(groups))
             for group in groups:
                 t=_("{} {} {}={}".format(ps,profile,check,group))
                 self.wordsbypsprofilechecksubcheckp(parent,t,
@@ -7678,7 +7709,7 @@ class Transcribe(Sound,Sort):
             ErrorNotice(_("No groups in that slice; try another!"))
             return
         # log.info("group: {}, groups: {}".format(self.group,self.groups))
-        if not self.group or self.group not in self.groups:
+        if self.group is None or self.group not in self.groups:
             w=self.getgroup(wsorted=True, guess=True, intfirst=True)
             if w.winfo_exists():
                 w.wait_window(w)
@@ -7758,9 +7789,10 @@ class Transcribe(Sound,Sort):
             if not str(group).isdigit():
                 ftype=self.params.ftype()
                 check=self.params.check()
-                log.info("updating for type {} check {}, group {}"
+                log.info("updating for type {} check {}, group ‘{}’"
                         "".format(ftype,check,group))
                 senseids=self.getsenseidsincheckgroup()
+                log.info("modding senseids {}".format(senseids))
                 for senseid in senseids:
                     u = threading.Thread(target=self.updateformtoannotations,
                                         args=(senseid,ftype),
