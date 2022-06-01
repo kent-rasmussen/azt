@@ -4335,7 +4335,11 @@ class Segments(object):
             value=firstoflist(self.db.fieldvalue(node=fnode,
                                                 annotationname=check))
             if value is not None:
+                tori=t.text[:]
                 self.updateformtextnodebycheck(t,check,value)
+                if tori != t.text:
+                    self.settings.addtoformstosearch(senseid,t.text,tori)
+                    log.info("Done with addtoformstosearch")
                 if len(value)>1:
                     sc=self.params.cvt()
                     self.settings.polygraphs[self.analang][sc][value]=True
