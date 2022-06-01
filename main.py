@@ -8470,7 +8470,7 @@ class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
                 "check: \n- reloads status data, and \n- runs comprehensive tone "
                 "reports, \n  - by location and \n  - by lexeme sense.")
     def dobuttonkwargs(self):
-        return {'text':"Start!",
+        return {'text':"Start!\nProfiles first!",
                 'fn':self.consultantcheck,
                 # column=0,
                 'font':'title',
