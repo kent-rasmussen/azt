@@ -4336,6 +4336,9 @@ class Segments(object):
                                                 annotationname=check))
             if value is not None:
                 self.updateformtextnodebycheck(t,check,value)
+                if len(value)>1:
+                    sc=self.params.cvt()
+                    self.settings.polygraphs[self.analang][sc][value]=True
             else:
                 write=False #in case it isn't already
         else: #update to all annotations
