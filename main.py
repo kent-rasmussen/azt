@@ -4294,9 +4294,16 @@ class Segments(object):
         self.updatestatus(group=group) # marks the group unverified.
     def updateformtextnodebycheck(self,t,check,value):
         tori=t.text[:]
+        matches=[]
         for c in reversed(check.split('=')):
-            log.info("subbing {} for {}, using {}".format(value,c,self.settings.rx[c]))
-            t.text=self.settings.rx[c].sub('\\g<1>'+value,t.text)
+            log.info("subbing {} for {} in {}, using {}".format(value,c,tori,
+                                                        self.settings.rx[c]))
+            log.info("found {}".format(self.settings.rx[c].search(t.text)))
+            match=self.settings.rx[c].search(t.text)
+            if match:
+                matches.append(match.groups()[-1])
+                t.text=match.expand('\\g<1>'+value)+t.text[match.end():]
+            # t.text=self.settings.rx[c].sub('\\g<1>'+value,t.text)
         log.info("updated {} > {}".format(tori,t.text))
         #now that we've potentially added a grapheme, see that it will be found.
         self.settings.addtoCVrxs(value)
