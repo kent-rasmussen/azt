@@ -883,9 +883,15 @@ class StatusFrame(ui.Frame):
                     column+=1
                     if profile == 'colheader':
                         if check == 'next': # end of column headers
+                            if cvt == 'T' and not (
+                                    self.settings.status.checks(todo=True)
+                                                    ):
+                                cmd=self.task.addframe
+                            else:
+                                cmd=lambda todo=True:self.settings.status.nextcheck(todo)
                             bch=ui.Button(self.leaderboardtable,text=check,
                                         relief='flat',
-                                        cmd=self.settings.status.nextcheck,
+                                        cmd=cmd,
                                         font='reportheader',
                                         row=row,column=column,sticky='s')
                             bcht=ui.ToolTip(bch,_("Go to the next check"))
