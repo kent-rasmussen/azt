@@ -883,6 +883,10 @@ class StatusFrame(ui.Frame):
                     column+=1
                     if profile == 'colheader':
                         if check == 'next': # end of column headers
+                            # log.info("todo: {}".format(self.settings.status.checks(todo=True)))
+                            # log.info("tosort: {}".format(self.settings.status.checks(tosort=True)))
+                            # log.info("toverify: {}".format(self.settings.status.checks(toverify=True)))
+                            # log.info("tojoin: {}".format(self.settings.status.checks(tojoin=True)))
                             if cvt == 'T' and not (
                                     self.settings.status.checks(todo=True)
                                                     ):
