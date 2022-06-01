@@ -1686,12 +1686,7 @@ class Settings(object):
             if not set(self.profilelegit).issuperset(profile):
                 profile='Invalid'
             self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
-            if ps not in self.formstosearch:
-                self.formstosearch[ps]={}
-            if form in self.formstosearch[ps]:
-                self.formstosearch[ps][form].append(senseid)
-            else:
-                self.formstosearch[ps][form]=[senseid]
+            self.addtoformstosearch(senseid, form, ps=ps)
         return firstoflist(forms),profile
     def getprofiles(self):
         self.profileswdatabyentry={}
