@@ -3660,7 +3660,7 @@ class TaskChooser(TaskDressing,ui.Window):
             bpr=2
         columnspan=1
         for n,o in enumerate(optionlist):
-            if n is optionlist_maxi:
+            if n is optionlist_maxi and int(n/bpr):
                 # log.info("bpr: {}, n%bpr: {}".format(bpr,n%bpr))
                 columnspan=bpr-n%bpr
             b=ui.Button(self.optionsframe,
