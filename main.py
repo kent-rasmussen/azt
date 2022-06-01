@@ -10385,7 +10385,7 @@ class StatusDict(dict):
                 kwargs['tojoin'] and self.checktojoin(**kwargs)
                 ):
                 cs+=[kwargs['check']]
-        log.log(4,"Checks with {}: {}".format(kwargs,cs))
+        log.info("Checks with {}: {}".format(kwargs,cs))
         return cs
     def groups(self,g=None, **kwargs): #was groupstodo
         log.log(4,"groups kwargs: {}".format(kwargs))
