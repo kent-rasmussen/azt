@@ -5242,7 +5242,10 @@ class Sort(object):
         r=self.status.nextprofile(tosort=True)
         if not r:
             self.status.nextprofile(toverify=True)
-        self.runwindow.destroy()
+        try:
+            self.runwindow.destroy()
+        except AttributeError:
+            log.info("Looks like we wanted to kill a non-existent runwindow.")
         self.runcheck()
     def runcheck(self):
         self.settings.storesettingsfile()
