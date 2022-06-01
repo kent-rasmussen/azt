@@ -193,8 +193,13 @@ class Report(object):
         ref=ET.SubElement(bm, 'references')
     def languages(self):
         lgs=ET.SubElement(self.node, 'languages')
+        options=[('',''),
+                ('-et',' (phonetic)'),
+                ('-em',' (phonemic)'),
+                ('-orth',' (orthographic)')]
         for lang in self.langlist:
-            self.language(lgs,lang['id'], lang['name'])
+            for code,name in options:
+                self.language(lgs,lang['id']+code, lang['name']+name)
     def language(self, parent, id, name):
         XeLaTeXSpecial=("graphite font-feature='Hide tone contour staves=True' "
                                 "font-feature='Literacy alternates=True'")
@@ -207,6 +212,7 @@ class Report(object):
                     'font-family':ffam,
                     'XeLaTeXSpecial':XeLaTeXSpecial})
     def addlang(self, lang):
+        #This is called by the report; should it be generated?
         if 'id' in lang and 'name' in lang:
             self.langlist+=[lang]
         else:
@@ -235,6 +241,57 @@ class Report(object):
         sp.append(self.node)
         sp.append(stylesheet)
         self.node=self.styled
+        #This should add overrides for each language listed under languages:
+        # <langDataLayout
+        # language="gnd-orth"
+        # ><langDataInExampleLayout
+        # textafter="&gt;"
+        # textbefore="&lt;"
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInExampleLayout
+        # ><langDataInTableLayout
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInTableLayout
+        # ><langDataInProseLayout
+        # textafter="&gt;"
+        # textbefore="&lt;"
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInProseLayout
+        # ></langDataLayout
+        # ><langDataLayout
+        # language="gnd-em"
+        # ><langDataInExampleLayout
+        # textafter="/"
+        # textbefore="/"
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInExampleLayout
+        # ><langDataInTableLayout
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInTableLayout
+        # ><langDataInProseLayout
+        # textafter="/"
+        # textbefore="/"
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInProseLayout
+        # ></langDataLayout
+        # ><langDataLayout
+        # language="gnd-et"
+        # ><langDataInExampleLayout
+        # textafter="]"
+        # textbefore="["
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInExampleLayout
+        # ><langDataInTableLayout
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInTableLayout
+        # ><langDataInProseLayout
+        # textafter="]"
+        # textbefore="["
+        # textbeforeafterusesfontinfo="no"
+        # ></langDataInProseLayout
+        # ></langDataLayout
+        # >
+
 class Section(ET.Element):
     def __init__(self,parent,title="No Section Title!",level=1,landscape=False):
         id=rx.id(title)

@@ -116,6 +116,8 @@ class Theme(object):
                             ('iconTRep','images/T Report_icon.png'),
                             ('iconCVRep','images/ZA Report_icon.png'),
                             ('iconTranscribe','images/Transcribe Tone_icon.png'),
+                            ('iconTranscribeC','images/Consonant Choice_icon.png'),
+                            ('iconTranscribeV','images/Vowel Choice_icon.png'),
                             ('iconJoinUF','images/Join Tone_icon.png'),
                             ('iconTRepcomp','images/T Report Comprehensive_icon.png'),
                             ('iconVRepcomp','images/A Report Comprehensive_icon.png'),
@@ -134,6 +136,8 @@ class Theme(object):
                             ('TRep','images/T Report.png'),
                             ('CVRep','images/ZA Report.png'),
                             ('Transcribe','images/Transcribe Tone.png'),
+                            ('TranscribeC','images/Consonant Choice.png'),
+                            ('TranscribeV','images/Vowel Choice.png'),
                             ('JoinUF','images/Join Tone.png'),
                             ('TRepcomp','images/T Report Comprehensive.png'),
                             ('VRepcomp','images/A Report Comprehensive.png'),
@@ -142,9 +146,9 @@ class Theme(object):
                             ('VCCVRepcomp','images/AZZA Report Comprehensive.png'),
                             ('backgrounded','images/AZT stacks6.png'),
                             #Set images for tasks
-                            ('verifyT','images/Verify List.png'),
+                            ('verify','images/Verify List.png'),
                             ('sort','images/Sort List.png'),
-                            ('joinT','images/Join List.png'),
+                            ('join','images/Join List.png'),
                             ('record','images/Microphone alone_sm.png'),
                             ('change','images/Change Circle_sm.png'),
                             ('checkedbox','images/checked.png'),
@@ -478,7 +482,7 @@ class Renderer(ObectwArgs):
                     if e == 'cannot open resource':
                         log.debug("no file {}, checking next".format(file))
         else: #i.e., if it was done before
-            log.info("Using image font: {}".format(str(fontkey)))
+            # log.info("Using image font: {}".format(str(fontkey)))
             font=self.imagefonts[str(fontkey)]
         if str(fontkey) not in self.imagefonts: #i.e., neither before nor now
             log.error("Cannot find font file for {}; giving up".format(fname))
@@ -518,20 +522,20 @@ class Renderer(ObectwArgs):
 class Exitable(object):
     """This class provides the method and init to make things exit normally.
     Hence, it applies to roots and windows, but not frames, etc."""
+    def killall(self):
+        self.destroy()
+        sys.exit()
     def on_quit(self):
         """Do this when a window closes, so any window functions can know
         to just stop, rather than trying to build graphic components and
         throwing an error. This doesn't do anything but set the flag value
         on exit, the logic to stop needs to be elsewhere, e.g.,
         `if self.exitFlag.istrue(): return`"""
-        def killall():
-            self.destroy()
-            sys.exit()
         if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
             print("Setting window exit flag True!")
             self.exitFlag.true()
         if self.mainwindow: #exit afterwards if main window
-            killall()
+            self.killall()
         else:
             self.destroy() #do this for everything
     def __init__(self):
@@ -681,6 +685,8 @@ class Root(Exitable,tkinter.Tk):
         UI.__init__(self)
 """These have parent (Childof), but no grid"""
 class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
+    """This and all Childof classes should have a parent, to inherit a common
+    theme. Otherwise, colors, fonts, and icons will be incongruous."""
     def __init__(self, parent, *args, **kwargs):
         self.mainwindow=False
         Childof.__init__(self,parent)
@@ -790,7 +796,7 @@ class Text(Childof,ObectwArgs):
                     and set(self.text) & (sticks|d)
                     and not self.norender):
             self.render(**kwargs)
-            log.info("text and image: {} - {}".format(self.text,self.image))
+            # log.info("text and image: {} - {}".format(self.text,self.image))
         else:
             self.text=nfc(self.text)
         # log.info(getattr(self,'wraplength',0))
@@ -1120,8 +1126,15 @@ class ButtonFrame(Frame):
         elif (type(optionlist[0]) is str) or (type(optionlist[0]) is int):
             """when optionlist is a list of strings/codes/integers"""
             print("looks like options are just a list of codes; making dict.")
-            optionlist = [({'code':optionlist[i], 'name':optionlist[i]}
-                            ) for i in range(0, len(optionlist))]
+            if None in optionlist:
+                log.error(_("Having None as a list is fine, but you need to "
+                "put it in a tuple, with a second argument to display, so "
+                "users know what it means when they select it."))
+                return
+            optionlist = [({'code':optionlist[i][0], 'name':optionlist[i][1]}
+                            if type(optionlist[i]) is tuple
+                            else {'code':optionlist[i], 'name':optionlist[i]}
+                                ) for i in range(0, len(optionlist))]
         elif type(optionlist[0]) is tuple:
             if type(optionlist[0][1]) is str:
                 """when optionlist is a list of binary tuples (codes,names)"""
@@ -1518,17 +1531,20 @@ class ToolTip(object):
 class Wait(Window): #tkinter.Toplevel?
     def close(self):
         self.update_idletasks()
-        self.parent.deiconify()
+        self.parent.deiconify() #this will show a root window, if Root is parent
         self.destroy()
-    def __init__(self, parent=None,msg=None):
+    def __init__(self, parent, msg=None):
         global program
         super(Wait, self).__init__(parent,exit=False)
-        self.parent.withdraw()
         self.withdraw() #don't show until we're done making it
-        self.attributes("-topmost", True)
+        parent.withdraw()
         self['background']=parent['background']
-        title=(_("Please Wait! {name} Dictionary and Orthography Checker "
+        self.attributes("-topmost", True)
+        if hasattr(self,'program'):
+            title=(_("Please Wait! {name} Dictionary and Orthography Checker "
                         "in Process").format(name=self.program['name']))
+        else:
+            title=(_("Please Wait!"))
         self.title(title)
         text=_("Please Wait...")
         self.l=Label(self.outsideframe, text=text,
@@ -1536,8 +1552,8 @@ class Wait(Window): #tkinter.Toplevel?
         self.l.grid(row=0,column=0,sticky='we')
         if msg is not None:
             self.l1=Label(self.outsideframe, text=msg,
-                font='default',anchor='c')
-            self.l1.grid(row=1,column=0,sticky='we')
+                font='default',anchor='c',row=1,column=0,sticky='we')
+            self.l1.wrap()
         self.l2=Label(self.outsideframe,
                         image=self.theme.photo['small'],
                         text='',

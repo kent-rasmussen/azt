@@ -9,6 +9,9 @@
 ## Check Out the [Ordered Task List](TASKS.md)
 [These tasks](TASKS.md) should simplify a lot of the organization of your project.
 
+## Check Out the [User Interface Guide](UI_GUIDE.md)
+[This guide](UI_GUIDE.md) should answer most questions about how to get around in [A→Z+T](https://github.com/kent-rasmussen/azt). In short, if you want to change a setting, click on where it is displayed on the main screen.
+
 ## Practical Prerequisites
 ### [LIFT](https://code.google.com/archive/p/lift-standard/) Database to Check
 UPDATE: You can now start your database in A→Z+T, using the [Data Collection Tasks](TASKSCOLLECTION.md). If you do this, you can skip down to [Collaboration and Archival](USAGE.md#collaboration-and-archival), below.
@@ -44,6 +47,8 @@ I **strongly** recommend using a version controlled repository (e.g., mercurial,
 
 ### Tone Frame Design
 In order to sort tone data in [A→Z+T](https://github.com/kent-rasmussen/azt), you have to have tone frames defined. There is a tool in [A→Z+T](https://github.com/kent-rasmussen/azt) to help you **define** your tone frames, but help **designing** your tone frames is beyond the scope of [A→Z+T](https://github.com/kent-rasmussen/azt). How to design good tone frames is covered in a field methods course in some graduate linguistics programs, and you have find further help in Keith Snider's Tone Analysis for Field Linguists (2018). I have also made two short videos that show good frames [here](../../releases/download/v0.8.6.1/NounToneFrames.bvm.mp4) and [here](../../releases/download/v0.8.6.1/VerbToneFrames.bvm.mp4). If this is not enough for you, you should get help from a linguist that can do this with you. It involves syntactic analysis for each of the grammatical categories that you will study.
+
+If you must work in the absence of someone to help you design your tone frames, you can always define a frame and use it, and see what you get. If you do this, please understand that you may be doing more work than you need to —though this may be preferable to having to wait for a trained linguist to get started (see my further recommendations [here](HELP_PREREQUISITES.md#field-work-develop-draft-tone-frames)).
 
 Once you **design** frames you want to use, see [below](https://github.com/kent-rasmussen/azt/blob/main/USAGE.md#tone-frames) for technical notes on how to **define** the frame in [A→Z+T](https://github.com/kent-rasmussen/azt).
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ## coding=UTF-8
 import re
 import time
@@ -38,7 +39,7 @@ def stripquotes(x):
 def sub(*args,**kwargs):
     return re.sub(*args,**kwargs)
 def compile(x):
-    return re.compile(x)
+    return re.compile(x, re.UNICODE)
 def id(x):
     x=x.replace('˥','4').replace('˦','3').replace('˧','2'
         ).replace('˨','1').replace('˩','0')
@@ -146,33 +147,45 @@ def inxyz(db, lang, segmentlist): #This calls the above script for each characte
             actuals.append(s)
     log.log(2,'{} {}'.format(time.time()-start_time, segmentlist)) # with this
     return list(dict.fromkeys(actuals))
-def s(check,stype,lang=None):
+def slisttoalternations(graphemeset,group=False):
+    # This '|' delimited list should never go inside of [^ ], as it will be
+    # misinterpreted!!
+    # This provides the form to go in [^ ] lists or alone, with a one grouping
+    # around the list, but with longer graphemes first (trigraphs, then
+    # digraphs and decomposed characters)
+    output='|'.join(sorted(graphemeset,key=len,reverse=True))
+    if group:
+        output='('+output+')'
+    return output
+def s(sdict, stype, word=False, compile=False): #settings lang=None
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
-    if (lang == None) and (hasattr(check,'analang')):
-        log.log(2,_('telling rx.s which lang to use'))
-        lang=check.analang
-        log.log(2,_("Using analang: {}".format(check.analang)))
-    if stype == "C-ʔ":
-        if 'ʔ' in check.s[lang]:
-            list=set(check.s[lang]['C'])-set(check.s[lang]['ʔ'])
-        else:
-            list=set(check.s[lang]['C'])
+    """sdict should be a dictionary value keyed by check/settings.s[analang]"""
+    lessdict=set()
+    if stype == "C-ʔ-N":
+        if 'ʔ' in sdict:
+            lessdict+=set(sdict['ʔ'])
+        if 'N' in sdict:
+            lessdict+=set(sdict['N'])
+    elif stype == "C-ʔ":
+        if 'ʔ' in sdict:
+            lessdict+=set(sdict['ʔ'])
     elif stype == "C-N":
-        if 'N' in check.s[lang]:
-            list=set(check.s[lang]['C'])-set(check.s[lang]['N'])
-        else:
-            list=set(check.s[lang]['C'])
-    elif stype in check.s[lang]:
-        list=check.s[lang][stype]
-    else:
+        if 'N' in sdict:
+            lessdict+=set(sdict['N'])
+    elif stype not in sdict:
         log.error("Dunno why, but this isn't in lists: {}".format(stype))
         return
-    return "("+'|'.join(sorted(list,key=len,reverse=True))+")"
+    graphemeset=set(sdict[stype])-lessdict
+    output=slisttoalternations(graphemeset,group=True)
+    if compile:
+        return make(output, word=word, compile=compile)
+    else:
+        return output
 def make(regex, word=False, compile=False):
-    if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
-        log.error('Regex problem! (need parentheses around segments!):',regex)
-        exit()
+    # if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
+    #     log.error('Regex problem! (need parentheses around segments!):',regex)
+    #     exit()
     if word == True:
         """To make alternations and references work correctly, this should
         already have parentheses () around each S."""
@@ -183,7 +196,44 @@ def make(regex, word=False, compile=False):
         except:
             log.error('Regex problem!')
     return regex
-def fromCV(check, lang, word=False, compile=False):
+def nX(segmentsin,segmentsout,n):
+    #Start by being clear which graphs count, and which don't.
+    # these should mutually exclude each other.
+    overlap=set(segmentsin) & set(segmentsout)
+    if overlap:
+        log.error("Your in/out segment lists overlap: {}".format(overlap))
+    # for each of in/out, make a dict keyed by length, with value listing glyphs
+    # with that length (automatically separate trigraphs, digraphs, etc)
+    sindict={n:[i for i in segmentsin if len(i) == n]
+                for n in range(1,len(max(segmentsin,key=len))+1)}
+    soutdict={n:[i for i in segmentsout if len(i) == n]
+                for n in range(1,len(max(segmentsout,key=len))+1)}
+    # Convert those value lists to a string of alternations, for each key
+    sin={k:slisttoalternations(sindict[k]) for k in sindict}
+    sin.update({'all':slisttoalternations([i for j in sindict.values()
+                                            for i in j])})
+    sout={k:slisttoalternations(soutdict[k]) for k in soutdict}
+    sout.update({'all':slisttoalternations([i for j in soutdict.values()
+                                            for i in j])})
+    # Make a list, longest first
+    # this probably doesn't need the isdigit test
+    strlist=[sout[i] for i in range(max(j for j in sout.keys()
+                                                if str(j).isdigit()),0,-1)]
+    #join list of alternations to one long alternation
+    notS='|'.join(strlist)
+    strlist+=['('+sin['all']+')'] #look for, capture this
+    #This needs to multiply as a unit, while getting each subpart separately:
+    oneS='(('+notS+')*('+sin['all']+'))'#.join(strlist)
+    #We need to keep each alternation set a unit, and keep all but last in \1
+    if n-1:
+        priors='('+oneS*(n-1)+')'
+    else:
+        priors=''
+    nS='('+priors+'('+notS+')*)('+sin['all']+')'
+    # for n,i in enumerate([sin,sout,oneS,notS,nS]):
+    #     print(n,i)
+    return make(nS, compile=True)
+def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
     """ this inputs regex variable (regexCV), a tuple of two parts:
     1. abbreviations with 'C' and 'V' in it, and/or variables for actual
     segments or back reference, e.g., 1 for \1 or 2 for \2, and 'c' or 'v'.
@@ -193,35 +243,37 @@ def fromCV(check, lang, word=False, compile=False):
     It outputs language specific regex (compiled if compile=True,
     whole word word=True)."""
     """lang should be check.analang"""
-    CVs=check.regexCV
-    log.log(5,'CVs: {}'.format(CVs))
     if type(CVs) is not str:
-        log.error("regexCV is not string! ({})".format(check.regexCV))
+        log.error("regexCV is not string! ({})".format(CVs))
     regex=list()
     references=('\1','\2','\3','\4')
     references=range(1,5)
     # Replace word final C first, to get it out of the way:
-    if check.distinguish['ʔwd'] and not check.distinguish['ʔ']:
-        rxthis=s(check,'C-ʔ',lang) #Pull out C# first;exclude N# if appropriate.
+    if (distinguish['ʔwd'] and not distinguish['ʔ']) and (distinguish['Nwd']
+                                                    and not distinguish['N']):
+        rxthis=s(sdict,'C-ʔ-N') #Pull out C# first, set to find only relevant Cs
         CVs=re.sub('C$',rxthis,CVs)
-    if check.distinguish['Nwd'] and not check.distinguish['N']:
-        rxthis=s(check,'C-N',lang) #Pull out C# first;exclude N# if appropriate.
+    elif distinguish['ʔwd'] and not distinguish['ʔ']:
+        rxthis=s(sdict,'C-ʔ') #Pull out C# first; set to find only relevant Cs
         CVs=re.sub('C$',rxthis,CVs)
-        log.log(2,'CVs: {}'.format(CVs))
+    elif distinguish['Nwd'] and not distinguish['N']:
+        rxthis=s(sdict,'C-N') #Pull out C# first; set to find only relevant Cs
+        CVs=re.sub('C$',rxthis,CVs)
+        # log.info('CVs: {}'.format(CVs))
     # if C includes [N,?], find C first; if it doesn't, move on to [N,?].
     # if we distinguish [N,?]# (only), C# is already gone, so other C's here.
-    for x in check.s[lang]: #["V","C","N","ʔ","G","S"]:
+    for x in sdict: #["V","C","N","ʔ","G","S"]:
         # if x in check.s[lang]: #just pull out big ones first
-        rxthis=s(check,x,lang) #this should have parens for each S
+        rxthis=s(sdict,x) #this should have parens for each S
         CVs=re.sub(x,rxthis,CVs)
-        log.log(2,'CVs: {}'.format(CVs))
+        # log.info('CVs: {}'.format(CVs))
     for x in references: #get capture group expressions
         CVrepl='\\\\{}'.format(str(x)) #this needs to be escaped to survive...
-        log.log(3,'x: {}; repl: {}'.format(x,CVrepl))
-        log.log(3,'CVs: {}'.format(CVs))
-    CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs)
-    log.log(5,'CVs: {}'.format(CVs))
-    return make(CVs,word=word, compile=compile)
+        # log.info('x: {}; repl: {}'.format(x,CVrepl))
+        # log.info('CVs: {}'.format(CVs))
+    CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs) #?
+    log.info('Going to compile regex with CVs: {}'.format(CVs))
+    return make(CVs, word=word, compile=compile)
 if __name__ == '__main__':
     x='ne [pas] plaire, ne pas agréer, ne pas'
     print(id(x))
