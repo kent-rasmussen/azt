@@ -9016,8 +9016,7 @@ class FramedDataSense(FramedData):
         ftypes=[i for i in ftypes if i]
         for lang in dictlangs:
             self.forms[lang]={}
-            for ft in ['lx','lc',self.parent.pluralname,
-                                    self.parent.imperativename]:
+            for ft in ftypes:
                 self.forms[lang][ft]=unlist(db.fieldtext(senseid=senseid,
                                                         ftype=ft,
                                                         floc='entry',
