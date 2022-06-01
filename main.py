@@ -11250,7 +11250,9 @@ def checkslicetype(**kwargs):
     log.log(4,"Returning checkslicetype kwargs {}".format(kwargs))
     return kwargs
 def grouptype(**kwargs):
-    for arg in ['wsorted','tosort','toverify','tojoin','torecord','comparison']:
+    for arg in ['wsorted','tosort','toverify','tojoin','torecord','comparison',
+                'todo'
+                ]:
         kwargs[arg]=kwargs.get(arg,False)
     # log.info("Returning grouptype kwargs {}".format(kwargs))
     return kwargs
