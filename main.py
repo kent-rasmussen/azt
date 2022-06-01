@@ -4446,14 +4446,17 @@ class WordCollection(Segments):
         self.runwindow.form={}
         self.runwindow.glosslangs=list()
         form={}
-        padx=50
-        pady=10
+        self.runwindow.padx=50
+        self.runwindow.pady=10
         self.runwindow.title(_("Add Morpheme to Dictionary"))
         title=_("Add {} morpheme to the dictionary").format(
                             self.settings.languagenames[self.analang])
         ui.Label(self.runwindow.frame,text=title,font='title',
-                justify=ui.LEFT,anchor='c'
-                ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
+                justify=ui.LEFT,
+                anchor='c',sticky='ew',
+                row=0,column=0,
+                padx=self.runwindow.padx,
+                pady=self.runwindow.pady)
         # Run the above script (makewindow) for each language, analang first.
         # The user has a chance to enter a gloss for any gloss language
         # already in the datbase, and to skip any as needed/desired.
