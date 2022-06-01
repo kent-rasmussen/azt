@@ -5235,7 +5235,11 @@ class Sort(object):
         r=self.status.nextprofile(tosort=True)
         if not r:
             self.status.nextprofile(toverify=True)
-        self.runwindow.destroy()
+        #if neither, this should give up with a congrats and comment to pick another ps
+        try:
+            self.runwindow.destroy()
+        except AttributeError:
+            log.info("Looks like we wanted to kill a non-existent runwindow.")
         self.runcheck()
     def nps(self):
         self.slices.nextps()
