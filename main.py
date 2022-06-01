@@ -3780,8 +3780,8 @@ class TaskChooser(TaskDressing,ui.Window):
             #this maybe should depend on recordedT:
             if self.doneenough['sortT']:
                 tasks.append(TranscribeT)
-                if self.doneenough['analysis']:
-                    tasks.append(JoinUFgroups)
+            if self.doneenough['analysis']:
+                tasks.append(JoinUFgroups)
             if me:
                 tasks.append(ReportConsultantCheck)
         # tasks.append(WordCollectionCitation),
