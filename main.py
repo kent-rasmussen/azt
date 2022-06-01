@@ -6961,7 +6961,7 @@ class Report(object):
         log.debug(t)
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
-        # log.info("regex: {}; regexCV: {}".format(self.regex,self.regexCV))
+        log.info("regexCV: {}; \nregex: {}".format(self.regexCV,self.regex))
         matches=set(self.senseidformsbyregex(self.regex,ps=ps))
         if 'x' not in check and '=' not in check: #only pull from simple reports
             for ncvt in self.ncvts: #for basic reports
@@ -7052,8 +7052,9 @@ class Report(object):
                         try:
                             self.basicreported[ncvt].add(senseid)
                         except AttributeError:
-                            log.info("Not adding ids to basic reported because "
-                                "it isn't there.")
+                            pass
+                            # log.info("Not adding ids to basic reported because "
+                            #     "it isn't there.")
                         except KeyError:
                             self.basicreported[ncvt]=set([senseid])
                 framed=self.taskchooser.datadict.getframeddata(senseid)
@@ -7136,6 +7137,7 @@ class Report(object):
             self.wordsbypsprofilechecksubcheckp(parent,t,
                                         check=check, group=group,**kwargs)
         elif groups:
+            log.info("Going to run report for groups {}".format(groups))
             for group in groups:
                 t=_("{} {} {}={}".format(ps,profile,check,group))
                 self.wordsbypsprofilechecksubcheckp(parent,t,
