@@ -1837,7 +1837,7 @@ class Settings(object):
         for cc in ['CG','CS','NC','VN','VV']:
             ccc=cc.replace('C','[CSGDʔN]{1}')
             self.rx[cc]=rx.compile(ccc)
-        for c in ['N','S','G','ʔ','D']:
+        for c in slcassesC:
             if c == 'N': #i.e., before C
                 self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))') #{1}|
             elif c in ['ʔ','D']:
