@@ -4384,52 +4384,64 @@ class Segments(object):
         pass
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
+    def promptstrings(self,lang):
+        if lang == self.analang:
+            text=_("What is the form of the new "
+                    "morpheme in {} \n(consonants and vowels only)?"
+                    "".format(self.settings.languagenames[lang]))
+            ok=_('Use this form')
+            skip=None
+        else:
+            text=_("What does ‘{}’ mean in {}?".format(
+                            self.runwindow.form[self.analang],
+                            self.settings.languagenames[lang]))
+            ok=_('Use this {} gloss for ‘{}’'.format(
+                            self.settings.languagenames[lang],
+                            self.runwindow.form[self.analang]))
+            self.runwindow.glosslangs.append(lang)
+            skip = _('Skip {} gloss').format(self.settings.languagenames[lang])
+        return {'lang':lang, 'prompt':text, 'ok':ok, 'skip':skip}
+    def promptwindow(self,lang):
+        def submitform(event=None):
+            self.runwindow.form[lang]=self.runwindow.form[lang].get()
+            self.runwindow.frame2.destroy()
+        def skipform(event=None):
+            del self.runwindow.form[lang]
+            self.runwindow.frame2.destroy() #Just move on.
+        strings=self.promptstrings(lang)
+        self.runwindow.frame2=ui.Frame(self.runwindow.frame,
+                                        row=1,column=0,
+                                        sticky='ew',
+                                        padx=25,pady=25)
+        getform=ui.Label(self.runwindow.frame2,text=strings['prompt'],
+                        font='read',row=0,column=0,
+                        padx=self.runwindow.padx,
+                        pady=self.runwindow.pady)
+        #field rendering is better in another frame:
+        eff=ui.Frame(self.runwindow.frame2,row=1,column=0,
+                    highlightbackground='black',
+                    highlightthickness=1)
+        #variable and field for entry:
+        l=ui.Label(eff,text='labeltext',row=0,column=0,sticky='e')
+        self.runwindow.form[lang]=ui.StringVar()
+        formfield = ui.EntryField(eff, render=True,
+                                    textvariable=self.runwindow.form[lang],
+                                    row=1,column=0,
+                                    sticky='')
+        formfield.focus_set()
+        formfield.bind('<Return>',submitform)
+        formfield.rendered.grid(row=2,column=0,sticky='new')
+        sub_btn=ui.Button(self.runwindow.frame2,text = strings['ok'],
+                            command = submitform,
+                            anchor ='c',row=2,column=0,sticky='')
+        if strings['skip']:
+            sub_btnNo=ui.Button(self.runwindow.frame2,
+                                text = strings['skip'],
+                                command = skipform,
+                                row=1,column=1,sticky='')
+        self.runwindow.waitdone()
+        sub_btn.wait_window(self.runwindow.frame2) #then move to next step
     def addmorpheme(self):
-        def makewindow():
-            def submitform(event=None):
-                self.runwindow.form[lang]=form[lang].get()
-                self.runwindow.frame2.destroy()
-            def skipform(event=None):
-                self.runwindow.frame2.destroy() #Just move on.
-            self.runwindow.frame2=ui.Frame(self.runwindow.frame,
-                                            row=1,column=0,
-                                            sticky='ew',
-                                            padx=25,pady=25)
-            if lang == self.analang:
-                text=_("What is the form of the new "
-                        "morpheme in {} \n(consonants and vowels only)?".format(
-                                    self.settings.languagenames[lang]))
-                ok=_('Use this form')
-            else:
-                text=_("What does ‘{}’ mean in {}?".format(
-                                            self.runwindow.form[self.analang],
-                                            self.settings.languagenames[lang]))
-                ok=_('Use this {} gloss for ‘{}’'.format(
-                                            self.settings.languagenames[lang],
-                                            self.runwindow.form[self.analang]))
-                self.runwindow.glosslangs.append(lang)
-            getform=ui.Label(self.runwindow.frame2,text=text,
-                                                font='read')
-            getform.grid(row=0,column=0,padx=padx,pady=pady)
-            form[lang]=ui.StringVar()
-            eff=ui.Frame(self.runwindow.frame2) #field rendering is better this way
-            eff.grid(row=1,column=0)
-            formfield = ui.EntryField(eff, render=True, textvariable=form[lang])
-            formfield.grid(row=1,column=0)
-            formfield.focus_set()
-            formfield.bind('<Return>',submitform)
-            formfield.rendered.grid(row=2,column=0,sticky='new')
-            sub_btn=ui.Button(self.runwindow.frame2,text = ok,
-                      command = submitform,anchor ='c')
-            sub_btn.grid(row=2,column=0,sticky='')
-            if lang != self.analang:
-                sub_btnNo=ui.Button(self.runwindow.frame2,
-                    text = _('Skip {} gloss').format(
-                                        self.settings.languagenames[lang]),
-                    command = skipform)
-                sub_btnNo.grid(row=1,column=1,sticky='')
-            self.runwindow.waitdone()
-            sub_btn.wait_window(self.runwindow.frame2) #then move to next step
         self.getrunwindow()
         self.runwindow.form={}
         self.runwindow.glosslangs=list()
