@@ -8333,6 +8333,8 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
         self.settings.storesettingsfile()
         t=(_('Run Check'))
         log.info("Running report...")
+        log.info("Using these regexs: {}".format(self.settings.rx))
+        # exit() #for testing
         i=0
         cvt=self.params.cvt()
         if cvt == 'T':
