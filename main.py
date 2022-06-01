@@ -4334,7 +4334,7 @@ class Segments(object):
         if check: #just update to this annotation
             value=firstoflist(self.db.fieldvalue(node=fnode,
                                                 annotationname=check))
-            if value:
+            if value is not None:
                 self.updateformtextnodebycheck(t,check,value)
             else:
                 write=False #in case it isn't already
