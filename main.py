@@ -1646,6 +1646,27 @@ class Settings(object):
             except KeyError:
                 self.profilesbysense[ps]={}#[profile]=[senseid]
                 self.profilesbysense[ps][profile]=[senseid]
+    def addtoformstosearch(self,senseid,form,oldform=None,ps=None):
+        if not ps:
+            ps=self.slices.ps()
+        try:
+            if senseid not in self.formstosearch[ps][form]: #don't duplicate
+                self.formstosearch[ps][form].append(senseid)
+        except KeyError: # either ps or form is missing, nothing to append to
+            try: #if it's just form
+                self.formstosearch[ps][form]=[senseid]
+            except KeyError: #ps is missing, build from scratch
+                self.formstosearch[ps]={form:[senseid,]}
+        log.info("Added {} id={}".format(form,self.formstosearch[ps][form]))
+        if oldform:
+            try:
+                self.formstosearch[ps][oldform].remove(senseid)
+                log.info("Removed {} ({})".format(form,self.formstosearch[ps][form]))
+            except ValueError:
+                log.error(_("Apparently {} isn't under {}?".format(senseid,form)))
+            if not self.formstosearch[ps][oldform]:
+                del self.formstosearch[ps][oldform] #don't leave form wo senseid
+                log.info("Deleted key of empty list")
     def getprofileofsense(self,senseid):
         #Convert to iterate over local variables
         ps=unlist(self.db.ps(senseid=senseid))
