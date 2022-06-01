@@ -7108,6 +7108,7 @@ class Report(object):
         profile=kwargs.get('profile',self.slices.profile())
         check=kwargs.pop('check',self.params.check()) #don't pass this twice!
         groups=self.status.groups(cvt=cvt)
+        group=self.status.group()
         self.ncvts=rx.split('[=x]',check)
         if 'x' in check:
             log.debug('Hey, I cound a correspondence number!')
@@ -7119,6 +7120,8 @@ class Report(object):
             else:
                 log.error("Sorry, I don't know how to compare cvt: {}"
                                                     "".format(cvt))
+            log.info("Going to run report for groups {}".format(groups))
+            log.info("With comparison groups {}".format(self.groupcomparison))
             for group in groups:
                 for self.groupcomparison in groupcomparisons:
                     if group != self.groupcomparison:
@@ -7126,6 +7129,11 @@ class Report(object):
                                             check,group,
                                             self.groupcomparison))
                         self.wordsbypsprofilechecksubcheckp(parent,t,
+                                        check=check, group=group,**kwargs)
+        elif group:
+            log.info("Going to run report just for group {}".format(group))
+            t=_("{} {} {}={}".format(ps,profile,check,group))
+            self.wordsbypsprofilechecksubcheckp(parent,t,
                                         check=check, group=group,**kwargs)
         elif groups:
             for group in groups:
@@ -7678,7 +7686,7 @@ class Transcribe(Sound,Sort):
             ErrorNotice(_("No groups in that slice; try another!"))
             return
         # log.info("group: {}, groups: {}".format(self.group,self.groups))
-        if not self.group or self.group not in self.groups:
+        if self.group is None or self.group not in self.groups:
             w=self.getgroup(wsorted=True, guess=True, intfirst=True)
             if w.winfo_exists():
                 w.wait_window(w)
