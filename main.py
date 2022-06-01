@@ -3848,7 +3848,7 @@ class TaskChooser(TaskDressing,ui.Window):
                     # lc=e.findall('citation')
                     """This finds or creates, by lang:"""
                     lc=self.db.citationformnodeofentry(e,lxfl)
-                    log.info("Moving lexeme {} to citation (was {}) for lang {}"
+                    log.info("Moving lexeme ‘{}’ to citation (was {}) for lang {}"
                             "".format(lxft.text,lc.text,lxfl))
                     if not lc.text: #don't overwrite info
                         lc.text=lxft.text
@@ -4032,9 +4032,16 @@ class TaskChooser(TaskDressing,ui.Window):
             if me or citationsdone[lang] > 200: #was 705
                 self.doneenough['collectionlc']=True#I need to think through this
         for f in self.db.sensefields:
+            # log.info("checking '{}'".format(f))
             if 'verification' in f:
+                # log.info("Found ‘verification’ in ‘{}’".format(f))
+                #I need to tweak this, it should follow tone (only) reports:
+                #maybe read this from status?
+                #This ideally follows transcription
+                #This should maybe be relevant by slice (analyzed or not yet)
                 self.doneenough['analysis']=True
                 break
+            # log.info("‘verification’ not in ‘{}’".format(f))
         log.info("Analysis of what you're done with: {}".format(self.donew))
         log.info("You're done enough with: {}".format(self.doneenough))
     def restart(self,filename=None):
