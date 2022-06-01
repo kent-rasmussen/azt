@@ -5240,7 +5240,11 @@ class Sort(object):
         r=self.status.nextcheck(tosort=True)
         if not r:
             self.status.nextcheck(toverify=True)
-        self.runwindow.destroy()
+        #if neither, this should call nprofile
+        try:
+            self.runwindow.destroy()
+        except AttributeError:
+            log.info("Looks like we wanted to kill a non-existent runwindow.")
         self.runcheck()
     def nprofile(self):
         r=self.status.nextprofile(tosort=True)
