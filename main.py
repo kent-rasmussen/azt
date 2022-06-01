@@ -3777,7 +3777,8 @@ class TaskChooser(TaskDressing,ui.Window):
             if self.doneenough['sort']:
                 tasks.append(TranscribeV)
                 tasks.append(TranscribeC)
-            if self.doneenough['recordedT']:
+            #this maybe should depend on recordedT:
+            if self.doneenough['sortT']:
                 tasks.append(TranscribeT)
                 if self.doneenough['analysis']:
                     tasks.append(JoinUFgroups)
