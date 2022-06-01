@@ -3739,6 +3739,9 @@ class TaskChooser(TaskDressing,ui.Window):
         not offer recordingT as default if all examples have sound files, yet
         a user may well want to go back and look at those recordings, and maybe
         rerecord some."""
+        # start=time.time()
+        self.whatsdone()
+        # log.info("checked whatsdone in {}s".format(time.time()-start))
         #if nothing to do??
         if self.showreports:
             tasks=[
