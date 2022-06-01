@@ -10330,6 +10330,7 @@ class StatusDict(dict):
         kwargs=grouptype(**kwargs)
         group=self.group()
         groups=self.groups(**kwargs)
+        log.info("At {} of ({}) groups.".format(group,groups))
         if not groups:
             log.error("There are no such groups! kwargs: {}".format(kwargs))
             return
@@ -10339,6 +10340,8 @@ class StatusDict(dict):
             if idx != len(groups)-1: # i.e., not already last
                 nextgroup=groups[idx+1] #overwrite default in this one case
         self.group(nextgroup)
+        group=self.group()
+        log.info("At {} of ({}) groups.".format(group,groups))
     def profiles(self, **kwargs):
         kwargs=grouptype(**kwargs)
         profiles=self._slicedict.profiles() #already limited to current ps
