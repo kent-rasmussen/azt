@@ -6482,6 +6482,7 @@ class Record(Sound):
         self.mikecheck() #only ask for settings check if recording
 class Report(object):
     def consultantcheck(self):
+        # self.settings.reloadprofiledata()
         self.settings.reloadstatusdata()
         self.bylocation=False
         self.tonegroupreportcomprehensive()
