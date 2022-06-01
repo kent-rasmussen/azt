@@ -5388,80 +5388,25 @@ class Sort(object):
             #Give an error window here
             return
         elif not exit:
-            self.getrunwindow()
-            done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
-                    "distinct!".format(self.profile,self.check,
-                                                self.checktypename[cvt]))
-            row=0
-            if self.exitFlag.istrue():
-                return
-            ui.Label(self.runwindow.frame, text=done,
-                    row=row,column=0,columnspan=2)
-            row+=1
-            ui.Label(self.runwindow.frame, text='',
-                        image=self.frame.theme.photo[cvt],
-                        row=row,column=0,columnspan=2)
-            row+=1
             ctosort=self.status.checks(tosort=True)
             ctoverify=self.status.checks(toverify=True)
             ptosort=self.status.profiles(tosort=True)
             ptoverify=self.status.profiles(toverify=True)
-            ui.Label(self.runwindow.frame,text=_("Continue to sort"),
-                    columnspan=2,row=row,column=0)
-            row+=1
-            text1=_("same words")
-            text2=_("same frame")
             if ctosort or ctoverify:
-                b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text1+'\n('+_("next {}").format(self.checktypename[cvt])+')',
-                    command=self.ncheck)
-                b1t=ui.ToolTip(b1,_("Automatically pick "
-                                "the next {} to sort for the ‘{}’ profile."
-                                "".format(self.profile,self.checktypename[cvt])))
-            elif cvt == 'T':
-                b1=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text1+'\n('+_("define a new frame")+')',
-                    command=self.aframe)
-                b1t=ui.ToolTip(b1,_("You're done with tone frames already defined "
-                                "for the ‘{}’ profile. If you want to continue "
-                                "with this profile, define a new frame here."
-                                "".format(self.profile)))
-            try:
-                b1.grid(row=row,column=0,sticky='e')
-                nob1=False
-            except:
-                log.info("Apparently we're done, but not working on tone.")
-                nob1=True
-            if ptosort or ptoverify:
-                b2=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text2+'\n('+_("next syllable profile")+')',
-                    command=self.nprofile)
-                b2t=ui.ToolTip(b2,_("You're done with ‘{0}’ {2} "
-                                "defined for the ‘{1}’ profile. Click here to "
-                                "Automatically select the next syllable "
-                                "profile for ‘{0}’."
-                                "".format(self.ps,self.profile,
-                                self.checktypename[cvt])))
-            else:
-                b2=ui.Button(self.runwindow.frame, anchor='c',
-                    text=text2+'\n('+_("next lexical category")+')',
-                    command=self.nps)
-                b2t=ui.ToolTip(b2,_("You're done with {} "
-                                "defined for the top ‘{}’ syllable profiles. "
-                                "Click here to automatically select the next "
-                                "grammatical category."
-                                "".format(self.ps, self.checktypename[cvt])))
-            b2.grid(row=row,column=1,sticky='w')
+                next=_("check")
+                fn=self.ncheck
+            elif ptosort or ptoverify:
+                next=_("profile")
+                fn=self.nprofile
+            done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
+                    "distinct! Moving on to the next {}!".format(
+                                                self.profile,self.check,
+                                                self.checktypename[cvt],
+                                                next))
+            ErrorNotice(text=done,title=_("Done!"))
+            fn()
             if self.parent.exitFlag.istrue():
                 return
-            if not nob1:
-                w=int(max(b1.winfo_reqwidth(),b2.winfo_reqwidth())/(
-                                        self.parent.winfo_screenwidth()/150))
-                log.log(2,"b1w:{}; b2w: {}; maxb1b2w: {}".format(
-                                    b1.winfo_reqwidth(),b2.winfo_reqwidth(),w))
-                for i in [b1,b2]:
-                    i.config(width=w)
-            self.runwindow.waitdone()
             return
     def presenttosort(self):
         scaledpady=int(50*program['scale'])
