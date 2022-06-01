@@ -10708,13 +10708,13 @@ class StatusDict(dict):
             self.store()
         # log.info("Verification after update: {}".format(self.verified()))
         return changed
-    def group(self,group=None):
+    def group(self,group='<unspecified>'):
         """This maintains the group we are actually on, pulled from data
         located by current slice and parameters"""
-        if group is not None:
+        if group != '<unspecified>': #this needs to be able to be specified None
             self._group=group
         else:
-            return str(getattr(self,'_group',None))
+            return getattr(self,'_group',None)# this needs to be booleanable
     def renamegroup(self,j,k,**kwargs):
         sn=self.node(**kwargs)
         if j in sn['done']:
@@ -10821,7 +10821,10 @@ class CheckParameters(dict):
             code='T'
         if not code:
             code=self.check()
-        return self._cvchecknames[code]
+        try:
+            return self._cvchecknames[code]
+        except KeyError:
+            return None
     def cvchecknamesdict(self):
         """I reconstruct this here so I can look up names intuitively, having
         built the named checks by type and number of syllables."""
