@@ -4307,6 +4307,14 @@ class Segments(object):
         log.info("updated {} > {}".format(tori,t.text))
         #now that we've potentially added a grapheme, see that it will be found.
         self.settings.addtoCVrxs(value)
+        #this should update polygraphs; if so, trigger reanalysis (instead of above)
+        for match in matches:
+            if len(match)>1:
+                log.info(_("NOTICE: we just matched (to remove) a set of "
+                "symbols representing one sound ({}). Until you are done "
+                "with it, we will leave it there, so both forms will be "
+                "found. Once you are done with it, remove it from the "
+                "polygraph settings.").format(match))
     def updateformtoannotations(self,senseid,ftype,check=None,write=False):
         """This should take a sense and ftype (and maybe check, not sure)
         and update that form on the basis of the annotations made to date.
