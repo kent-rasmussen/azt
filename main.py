@@ -4464,7 +4464,7 @@ class WordCollection(Segments):
             if lang in self.runwindow.form:
                 continue #Someday: how to do monolingual form/gloss here
             if not self.runwindow.exitFlag.istrue():
-                x=makewindow()
+                x=self.promptwindow(lang)
                 if x:
                     return
         """get the new senseid back from this function, which generates it"""
