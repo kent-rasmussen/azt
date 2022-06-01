@@ -10277,13 +10277,18 @@ class ToneFrames(dict):
             if not ps in self:
                 self[ps]={}
             self[ps][name]=defn
+    #def write
     def __init__(self, dict):
         super(ToneFrames, self).__init__()
+        updated=False
         for k in dict:
             self[k]=dict[k]
             for name in self[k]:
                 if 'field' not in self[k][name]:
+                    updated=True
                     self[k][name]['field']='lc'
+        if updated:
+            log.info("updated toneframes for field; you should save it!")
 class StatusDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
