@@ -1825,10 +1825,11 @@ class Settings(object):
         for n in range(1,7):
             self.rx[sclass+str(n)]=rx.nX(sin,sout,n)
     def setupCVrxs(self):
+        slcassesC=['N','S','G','ʔ','D']
         self.rx={}
         for sclass in list(self.s[self.analang])+['C']: #be sure to do C last
             if self.s[self.analang][sclass] != []: #don't make if empty
-                if sclass in ['G','N','S','D'] and not self.distinguish[sclass]:
+                if sclass in slcassesC and not self.distinguish[sclass]:
                     self.s[self.analang]['C']+=self.s[self.analang][sclass]
                     continue
                 self.compileCVrxforsclass(sclass)
