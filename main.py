@@ -4764,6 +4764,13 @@ class Tone(object):
         self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
         self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
     def addframe(self,**kwargs):
+        # model this after WordCollection.addmorpheme, to ask for one thing at
+        # a time, in one language at a time. Store values for defaults on
+        # subsequent runs, but only display them in non-editable form on the
+        # main window. This needs to be fairly easy to fix problems, without
+        # breaking the principle of having only one field at a time.
+        # Perhaps the display fields could be clickable, to give the relevant
+        # input field?
         log.info('Tone frame to add!')
         """I should add gloss2 option here, likely just with each language.
         This is not a problem for LFIT translation fields, and it would help to
