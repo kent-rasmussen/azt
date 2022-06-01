@@ -4469,6 +4469,7 @@ class WordCollection(Segments):
                     return
         """get the new senseid back from this function, which generates it"""
         if not self.runwindow.exitFlag.istrue(): #don't do this if exited
+            self.runwindow.withdraw() #or wait?
             senseid=self.db.addentry(ps='',analang=self.analang,
                             glosslangs=self.runwindow.glosslangs,
                             form=self.runwindow.form)
