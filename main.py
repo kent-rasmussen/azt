@@ -4337,6 +4337,8 @@ class Segments(object):
             if value is not None:
                 tori=t.text[:]
                 self.updateformtextnodebycheck(t,check,value)
+                log.info("Done with updateformtextnodebycheck")
+                #This should update formstosearch:
                 if tori != t.text:
                     self.settings.addtoformstosearch(senseid,t.text,tori)
                     log.info("Done with addtoformstosearch")
