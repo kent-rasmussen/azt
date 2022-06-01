@@ -10312,7 +10312,7 @@ class StatusDict(dict):
                 nextprofile=profiles[idx+1]
         self._slicedict.profile(nextprofile)
         return True
-    def nextcheck(self, **kwargs):
+    def nextcheck(self, event=None, **kwargs):
         kwargs=grouptype(**kwargs)
         check=self._checkparameters.check()
         checks=self.checks(**kwargs)
