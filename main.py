@@ -3276,7 +3276,7 @@ class TaskDressing(object):
         check=kwargs.get('check',self.params.check())
         if (cvt == 'T' and None in [cvt, ps, profile, check]):
             ErrorNotice(parent=window.frame,
-                          msg=_("You need to set "
+                          text=_("You need to set "
                           "\nCheck type (as Tone, currently {}) "
                           "\nGrammatical category (currently {})"
                           "\nSyllable Profile (currently {}), and "
@@ -3288,10 +3288,11 @@ class TaskDressing(object):
         kwargs=grouptype(**kwargs) #this just fills in False
         groups=self.status.groups(cvt=cvt,**kwargs)
         if not groups:
-                ErrorNotice(parent=window.frame,
-                          msg=_("It looks like you don't have {}-{} lexemes "
+            ErrorNotice(parent=window.frame,
+                          text=_("It looks like you don't have {}-{} lexemes "
                           "grouped in the ‘{}’ check yet \n({})."
                           "").format(ps,profile,check,kwargs, column=0, row=0))
+            return
         if kwargs.get('intfirst') and kwargs.get('guess'):
             l=[int(i) for i in self.status.groups(cvt=cvt,**kwargs)
                                     if str(i).isdigit()]
