@@ -6772,12 +6772,18 @@ class Report(object):
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
             self.results = ui.Frame(self.runwindow.frame,width=800)
-            self.results.grid(row=0, column=0)
+            self.results.grid(column=0,
+                            row=self.runwindow.frame.grid_info()['row']+1,
+                            columnspan=5,
+                            sticky=(ui.N, ui.S, ui.E, ui.W))
+            self.results.scroll=ui.ScrollingFrame(self.results)
+            self.results.scroll.grid(column=0, row=1)
+            self.results.row=0
         else:
             log.error("Tried to get a results frame without a runwindow!")
     def getresults(self,**kwargs):
         self.getrunwindow()
-        self.makeresultsframe()
+        # self.makeresultsframe() #not for now, causing problems
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
@@ -6790,22 +6796,16 @@ class Report(object):
         self.checkcounts={}
         xlpr=self.xlpstart()
         """"Do I need this?"""
-        self.results.grid(column=0,
-                        row=self.runwindow.frame.grid_info()['row']+1,
-                        columnspan=5,
-                        sticky=(ui.N, ui.S, ui.E, ui.W))
         print(_("Getting results of Search request"))
         c1 = "Any"
         c2 = "Any"
-        self.results.row=0
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
         text=(_("{} roots of form {} by {}".format(ps,profile,check)))
-        ui.Label(self.results, text=text).grid(column=0, row=self.results.row)
+        if hasattr(self,'results'): #i.e., showing results in window
+            ui.Label(self.results, text=text).grid(column=0, row=self.results.row)
         self.runwindow.wait()
         si=xlp.Section(xlpr,text)
-        self.results.scroll=ui.ScrollingFrame(self.results)
-        self.results.scroll.grid(column=0, row=1)
         if 'x' in check and cvt != 'CV': #CV has no C=V...
             self.docheckreport(si,check=rx.sub('x','=',check, count=1))
         self.docheckreport(si) #this needs parent
@@ -6825,6 +6825,8 @@ class Report(object):
         # log.info("senseidsnotsearchable: {}".format(senseidsnotsearchable))
         xlpr.close(me=me)
         self.runwindow.waitdone()
+        if not hasattr(self,'results'): #i.e., showing results in window
+            self.runwindow.on_quit()
         # Report on testing blocks above
         # log.info("senseids remaining (rx): ({}) {}".format(
         #                                                 len(rxsenseidsinslice),
@@ -6850,7 +6852,8 @@ class Report(object):
         if not n: #i.e., nothing was found above
             text=_("No results for {}/{} ({})!").format(profile,check,ps)
             log.info(text)
-            ui.Label(self.results, text=text, column=0, row=self.results.row+1)
+            if hasattr(self,'results'): #i.e., showing results in window
+                ui.Label(self.results, text=text, column=0, row=self.results.row+1)
             return
     def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None,xcounts=None):
         #values should be a (lambda?) function that depends on x and y terms
