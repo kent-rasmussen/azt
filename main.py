@@ -10293,7 +10293,7 @@ class StatusDict(dict):
                 check not in self[cvt][ps][profile] or
                 self[cvt][ps][profile][check]['tosort'] == True):
                 return True
-    def nextprofile(self, **kwargs):
+    def nextprofile(self, event=None, **kwargs):
         """This function is here (not in slices) in order for it to be sensitive
         to different kinds of profiles, via **kwargs"""
         kwargs=grouptype(**kwargs)
