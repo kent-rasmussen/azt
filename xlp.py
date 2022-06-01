@@ -42,9 +42,9 @@ class Report(object):
         self.stylesheet()
         self.write()
         t=time.time()-self.start_time
-        m=int(t/60)
-        s=t%60
-        log.info("Finished in {} minutes, {} seconds.".format(m,s))
+        # m=int(t/60)
+        # s=t%60
+        log.info("Finished in {:1.0f} minutes, {:2.3f} seconds.".format(*divmod(t)))
         if me:
             self.compile() #This isn't working yet.
     def write(self):
