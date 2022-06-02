@@ -1595,7 +1595,8 @@ class LiftURL():
         self.kwargs['formtext']='location'
         self.field()
         #This was causing duplicate form nodes
-        # self.form("location",'glosslang')
+        #But not a needed one for 'example'
+        self.form("location",'glosslang')
     def toneUFfield(self):
         self.baselevel()
         self.kwargs['ftype']='tone'
