@@ -361,14 +361,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         location=kwargs.get('location')
         fieldtype=kwargs.get('fieldtype','tone') # needed? ever not 'tone'?
         oldtonevalue=kwargs.get('oldfieldvalue',None)
+        showurl=kwargs.get('showurl',False)
         # ftype=kwargs.get('ftype')
         if not oldtonevalue:
             exfieldvalue=self.get("example/tonefield/form/text",
-                    senseid=senseid, location=location).get('node')
+                                senseid=senseid,
+                                location=location,
+                                showurl=showurl
+                                ).get('node')
         else:
             exfieldvalue=self.get("example/tonefield/form/text",
-                senseid=senseid, tonevalue=oldtonevalue, #to clear just "NA" values
-                location=location).get('node')
+                            senseid=senseid,
+                            tonevalue=oldtonevalue, #to clear just "NA" values
+                            showurl=showurl,
+                            location=location
+                                ).get('node')
             # Set values for any duplicates, too. Don't leave inconsisted data.
         tonevalue=kwargs.get('fieldvalue') #don't test for this above
         analang=kwargs.get('analang')
@@ -397,15 +404,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     example=self.get("example", senseid=senseid,
                         location=location, showurl=True).get('node')
                     Node.makeformnode(example[0],analang,forms[analang])
-                glossesnode=self.get("example/translation", senseid=senseid,
-                            location=location, showurl=True).get('node')
+                glossesnode=self.get("example/translation",
+                                    senseid=senseid,
+                                    location=location,
+                                    showurl=showurl
+                                    ).get('node')
                 #If the glosslang data isn't all provided, ignore it.
                 for lang in [g for g in glosslangs if g in forms and forms[g]]:
                     glossvaluenode=self.get("form/text",
                                 node=glossesnode[0], senseid=senseid,
                                 glosslang=lang,
                                 location=location,
-                                showurl=True).get('node')
+                                showurl=showurl
+                                ).get('node')
                     log.debug("glossvaluenode: {}".format(glossvaluenode))
                     if glossvaluenode:
                         glossvaluenode=glossvaluenode[0]
