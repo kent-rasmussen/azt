@@ -422,10 +422,23 @@ class Menus(ui.Menu):
                         label=_(m[0]),
                         cmd=m[1]
                         )
-        if isinstance(self.parent,Record):
-            self.record()
+        if isinstance(self.parent,Sound):
+            self.sound()
         if isinstance(self.parent,Sort):
             self.sort()
+    def sound(self):
+        self.advancedmenu.add_separator()
+        options=[(_("Sound Settings"),
+                self.parent.taskchooser.mikecheck),]
+        if isinstance(self.parent,Record):
+            options+=[(_("Number of Examples to Record"),
+                    self.parent.taskchooser.getexamplespergrouptorecord),]
+            # self.record()
+        for m in options:
+            self.command(self.advancedmenu,
+                    label=_(m[0]),
+                    cmd=m[1]
+                    )
     def record(self):
         self.advancedmenu.add_separator()
         options=[(_("Number of Examples to Record"),
