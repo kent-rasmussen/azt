@@ -5088,7 +5088,11 @@ class Tone(object):
         #simpler than calling and uncalling..…
         pass
     def verifyframeftype(self,ftype,check):
-        checkftype=self.toneframes[self.ps][check]['field'] #this must match check!
+        # log.info("Checking frame type!")
+        try:
+            checkftype=self.status.toneframedefn()['field'] #this must match check!
+        except Exception as e:
+            log.error("Exception in verifyframeftype: {}".format(e))
         # curftype=self.params.ftype()
         if ftype != checkftype:
             log.error("HEY! This is a problem. We're looking at {} check, "
@@ -5096,10 +5100,12 @@ class Tone(object):
             "{}. This should be fixed, and will cause problems!"
             "".format(check,checkftype,ftype))
             return
+        # log.info("Frame type looks OK {} = {}".format(checkftype,ftype))
         return ftype
     def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
         """here kwargs should include framed, if you want this to update the
         form information in the example"""
+        # log.info("Setting tone sort group")
         ftype=self.verifyframeftype(ftype,check)
         if not ftype:
             log.error("No field type! see above errors!")
@@ -5116,6 +5122,7 @@ class Tone(object):
                                 write=kwargs.get('write'),
                                 **kwargs #should only include framed, if desired
                                 )
+        # log.info("Done setting tone sort group")
     def getsenseidsingroup(self,check,group):
         return self.db.get('sense',location=check,tonevalue=group
                                                                 ).get('senseid')
