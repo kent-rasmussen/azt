@@ -896,7 +896,9 @@ class EntryField(Gridded,Text,UI,tkinter.Entry):
             grid=True
             self.rendered.destroy()
         self.rendered=Label(self.parent,text=v)
-        d=["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"]
+        d=["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉",
+            "˥", "˦", "˧", "˨", "˩",
+            ]
         if set(d) & set(v):
             if grid:
                 self.rendered.grid(**mygrid)
