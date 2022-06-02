@@ -10832,6 +10832,9 @@ class StatusDict(dict):
                 self._checkparameters.check(unset=True)
     def toneframes(self):
         return self._toneframes
+    def toneframedefn(self):
+        d=self._toneframes[self._slicedict.ps()][self._checkparameters.check()]
+        return d
     def checkslicetypecurrent(self,**kwargs):
         """This fills in current values; it shouldn't leave None anywhere."""
         i=kwargs.copy()
