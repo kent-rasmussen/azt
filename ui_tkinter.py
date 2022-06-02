@@ -904,7 +904,8 @@ class EntryField(Gridded,Text,UI,tkinter.Entry):
                 self.rendered.grid(**self.rendergrid)
             else:
                 log.error("Help! I have no idea what happened!")
-            delattr(self,'rendergrid')
+            if hasattr(self,'rendergrid'):
+                delattr(self,'rendergrid')
         elif grid:
                 self.rendergrid=mygrid
     def __init__(self, parent, render=False, **kwargs):
