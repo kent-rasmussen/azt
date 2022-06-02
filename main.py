@@ -4418,11 +4418,8 @@ class WordCollection(Segments):
                         padx=self.runwindow.padx,
                         pady=self.runwindow.pady)
         #field rendering is better in another frame:
-        eff=ui.Frame(self.runwindow.frame2,row=1,column=0,
-                    highlightbackground='black',
-                    highlightthickness=1)
+        eff=ui.Frame(self.runwindow.frame2,row=1,column=0)
         #variable and field for entry:
-        l=ui.Label(eff,text='labeltext',row=0,column=0,sticky='e')
         self.runwindow.form[lang]=ui.StringVar()
         formfield = ui.EntryField(eff, render=True,
                                     textvariable=self.runwindow.form[lang],
