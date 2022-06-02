@@ -4371,12 +4371,14 @@ class Segments(object):
             self.maybewrite()
             self.storesettingsfile(setting='profiledata') #objectify this!
     def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
+        # log.info("Setting segment sort group")
         self.db.annotatefield(
                             senseid=senseid,
                             analang=self.analang,
                             name=check,
                             ftype=ftype,
                             value=group,
+                            # showurl=True,
                             write=kwargs.get('write')
                             )
     def getsenseidsingroup(self,check,group):
