@@ -422,10 +422,23 @@ class Menus(ui.Menu):
                         label=_(m[0]),
                         cmd=m[1]
                         )
-        if isinstance(self.parent,Record):
-            self.record()
+        if isinstance(self.parent,Sound):
+            self.sound()
         if isinstance(self.parent,Sort):
             self.sort()
+    def sound(self):
+        self.advancedmenu.add_separator()
+        options=[(_("Sound Settings"),
+                self.parent.taskchooser.mikecheck),]
+        if isinstance(self.parent,Record):
+            options+=[(_("Number of Examples to Record"),
+                    self.parent.taskchooser.getexamplespergrouptorecord),]
+            # self.record()
+        for m in options:
+            self.command(self.advancedmenu,
+                    label=_(m[0]),
+                    cmd=m[1]
+                    )
     def record(self):
         self.advancedmenu.add_separator()
         options=[(_("Number of Examples to Record"),
@@ -4358,12 +4371,14 @@ class Segments(object):
             self.maybewrite()
             self.storesettingsfile(setting='profiledata') #objectify this!
     def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
+        # log.info("Setting segment sort group")
         self.db.annotatefield(
                             senseid=senseid,
                             analang=self.analang,
                             name=check,
                             ftype=ftype,
                             value=group,
+                            # showurl=True,
                             write=kwargs.get('write')
                             )
     def getsenseidsingroup(self,check,group):
@@ -5075,7 +5090,11 @@ class Tone(object):
         #simpler than calling and uncalling..…
         pass
     def verifyframeftype(self,ftype,check):
-        checkftype=self.toneframes[self.ps][check]['field'] #this must match check!
+        # log.info("Checking frame type!")
+        try:
+            checkftype=self.status.toneframedefn()['field'] #this must match check!
+        except Exception as e:
+            log.error("Exception in verifyframeftype: {}".format(e))
         # curftype=self.params.ftype()
         if ftype != checkftype:
             log.error("HEY! This is a problem. We're looking at {} check, "
@@ -5083,10 +5102,12 @@ class Tone(object):
             "{}. This should be fixed, and will cause problems!"
             "".format(check,checkftype,ftype))
             return
+        # log.info("Frame type looks OK {} = {}".format(checkftype,ftype))
         return ftype
     def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
         """here kwargs should include framed, if you want this to update the
         form information in the example"""
+        # log.info("Setting tone sort group")
         ftype=self.verifyframeftype(ftype,check)
         if not ftype:
             log.error("No field type! see above errors!")
@@ -5103,6 +5124,7 @@ class Tone(object):
                                 write=kwargs.get('write'),
                                 **kwargs #should only include framed, if desired
                                 )
+        # log.info("Done setting tone sort group")
     def getsenseidsingroup(self,check,group):
         return self.db.get('sense',location=check,tonevalue=group
                                                                 ).get('senseid')
@@ -10819,6 +10841,9 @@ class StatusDict(dict):
                 self._checkparameters.check(unset=True)
     def toneframes(self):
         return self._toneframes
+    def toneframedefn(self):
+        d=self._toneframes[self._slicedict.ps()][self._checkparameters.check()]
+        return d
     def checkslicetypecurrent(self,**kwargs):
         """This fills in current values; it shouldn't leave None anywhere."""
         i=kwargs.copy()
