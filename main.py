@@ -2979,8 +2979,8 @@ class TaskDressing(object):
             if (not hasattr(self.taskchooser,'adnlangnames') or
                     not self.taskchooser.adnlangnames):
                 self.taskchooser.adnlangnames={}
-            if "Language with code [" not in name.get():
-                self.settings.adnlangnames[self.analang]=name.get()
+            if "Language with code [" not in namevar.get():
+                self.taskchooser.adnlangnames[self.analang]=namevar.get()
                 # if self.analang in self.adnlangnames:
             self.settings.storesettingsfile()
             window.destroy()
@@ -2992,8 +2992,10 @@ class TaskDressing(object):
             t+=_(", with ISO 639-3 code [{}]").format(self.analang)
         t+='?' # _("Language with code [{}]").format(xyz)
         ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
-        name = ui.EntryField(window.frame)
-        name.grid(row=1,column=0,sticky='e')
+        namevar=ui.StringVar()
+        name = ui.EntryField(window.frame,textvariable=namevar,
+                            row=1,column=0,
+                            sticky='e')
         name.focus_set()
         name.bind('<Return>',submit)
         ui.Button(window.frame,text='OK',cmd=submit,row=1,column=1,sticky='w')
