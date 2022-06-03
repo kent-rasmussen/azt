@@ -557,7 +557,7 @@ class StatusFrame(ui.Frame):
         l.grid(column=column, row=row, columnspan=columnspan,
                 ipadx=ipadx, sticky='w')
         if cmd is not None:
-            l.bind('<ButtonRelease>',cmd)
+            l.bind('<ButtonRelease-1>',cmd)
         if tt is not None:
             ttl=ui.ToolTip(l,tt)
     def labels(self,parent,label,value): #not used!
@@ -791,8 +791,8 @@ class StatusFrame(ui.Frame):
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttt=ui.ToolTip(lt,_("Change Check Type"))
         ttps=ui.ToolTip(lps,_("Change Part of Speech"))
-        lt.bind('<ButtonRelease>',self.taskchooser.getcvt)
-        lps.bind('<ButtonRelease>',self.taskchooser.getps)
+        lt.bind('<ButtonRelease-1>',self.taskchooser.getcvt)
+        lps.bind('<ButtonRelease-1>',self.taskchooser.getps)
     def makenoboard(self):
         log.info("No Progress board")
         self.boardtitle()
@@ -853,7 +853,7 @@ class StatusFrame(ui.Frame):
         t="+ = {} \n! = {}".format(tv,tu)
         h=ui.Label(self.leaderboardtable,text=t,font="small")
         h.grid(row=row,column=0,sticky='e')
-        h.bind('<ButtonRelease>', refresh)
+        h.bind('<ButtonRelease-1>', refresh)
         htip=_("Refresh table, \nsave settings")
         th=ui.ToolTip(h,htip)
         r=list(self.settings.status[cvt][ps])
@@ -6145,7 +6145,7 @@ class Sound(object):
                 l=_("Speakers: ‘{}’").format(l)
             l=ui.Label(self.soundsettingswindow.content,text=l,
                     row=row,column=0)
-            l.bind('<ButtonRelease>',cmd) #getattr(self,str(cmd)))
+            l.bind('<ButtonRelease-1>',cmd) #getattr(self,str(cmd)))
             row+=1
         br=RecordButtonFrame(self.soundsettingswindow.content,self,test=True)
         br.grid(row=row,column=0)
@@ -6380,7 +6380,7 @@ class Record(Sound):
                         cmd=skipf.destroy)
             skipf.grid(row=1,column=1,sticky='w')
             skipb.grid(row=0,column=0,sticky='w')
-            skipb.bind('<ButtonRelease>', setskip)
+            skipb.bind('<ButtonRelease-1>', setskip)
         if senses is None:
             senses=self.settings.entriestoshow
         for senseid in senses:
@@ -9568,8 +9568,8 @@ class RecordButtonFrame(ui.Frame):
     def makerecordbutton(self):
         self.b=ui.Button(self,text=_('Record'),command=self.function)
         self.b.grid(row=0, column=0,sticky='w')
-        self.b.bind('<ButtonPress>', self._start)
-        self.b.bind('<ButtonRelease>', self._stop)
+        self.b.bind('<ButtonPress-1>', self._start)
+        self.b.bind('<ButtonRelease-1>', self._stop)
     def _play(self,event=None):
         log.debug("Asking PA to play now")
         self.player=sound.SoundFilePlayer(self.filenameURL,self.pa,
@@ -9589,7 +9589,7 @@ class RecordButtonFrame(ui.Frame):
     def makedeletebutton(self):
         self.r=ui.Button(self,text=_('Redo'),command=self.function)
         self.r.grid(row=0, column=2,sticky='w')
-        self.r.bind('<ButtonRelease>', self._redo)
+        self.r.bind('<ButtonRelease-1>', self._redo)
         self.r.update_idletasks()
     def function(self):
         pass
