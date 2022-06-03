@@ -264,9 +264,12 @@ class SoundFilePlayer(object):
                 self.settings.audio_card_out=None
             return
     def streamclose(self):
-        if hasattr(self,'stream'):
+        # if hasattr(self,'stream'):
+        try:
             self.stream.stop_stream()
             self.stream.close()
+        except Exception as e:
+            log.info("Stream didn't stop and close; was it open? {}".format(e))
     def getformat(self):
         format=self.pa.get_format_from_width(self.wf.getsampwidth())
         return format
