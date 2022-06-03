@@ -2975,7 +2975,7 @@ class TaskDressing(object):
     def getanalangname(self,event=None):
         log.info("this sets the language name")
         def submit(event=None):
-            self.settings.languagenames[self.analang]=name.get()
+            self.settings.languagenames[self.analang]=namevar.get()
             if (not hasattr(self.taskchooser,'adnlangnames') or
                     not self.taskchooser.adnlangnames):
                 self.taskchooser.adnlangnames={}
