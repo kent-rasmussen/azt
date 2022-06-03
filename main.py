@@ -5234,6 +5234,8 @@ class Tone(object):
         """This is currently called before sorting. This is a waste, if you're
         not going to sort afterwards –unless you need the groups."""
         self.updatesortingstatus() #this gets groups, too
+    def addframe(self,**kwargs):
+        ToneFrameDrafter(self)
     def aframe(self):
         self.runwindow.destroy()
         self.addframe()
