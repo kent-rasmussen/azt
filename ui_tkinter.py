@@ -1471,7 +1471,7 @@ class ToolTip(object):
     www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
     Modified to include a delay time by Victor Zaccardo, 25mar16
     """
-    def __init__(self, widget, text='widget info'):
+    def __init__(self, widget, text=_("change this")):
         self.waittime = 500     #miliseconds
         self.wraplength = 180   #pixels
         self.dispx = 25
