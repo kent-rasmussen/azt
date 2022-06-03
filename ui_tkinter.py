@@ -896,7 +896,9 @@ class EntryField(Gridded,Text,UI,tkinter.Entry):
             grid=True
             self.rendered.destroy()
         self.rendered=Label(self.parent,text=v)
-        d=["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"]
+        d=["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉",
+            "˥", "˦", "˧", "˨", "˩",
+            ]
         if set(d) & set(v):
             if grid:
                 self.rendered.grid(**mygrid)
@@ -904,7 +906,8 @@ class EntryField(Gridded,Text,UI,tkinter.Entry):
                 self.rendered.grid(**self.rendergrid)
             else:
                 log.error("Help! I have no idea what happened!")
-            delattr(self,'rendergrid')
+            if hasattr(self,'rendergrid'):
+                delattr(self,'rendergrid')
         elif grid:
                 self.rendergrid=mygrid
     def __init__(self, parent, render=False, **kwargs):
@@ -1468,7 +1471,7 @@ class ToolTip(object):
     www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
     Modified to include a delay time by Victor Zaccardo, 25mar16
     """
-    def __init__(self, widget, text='widget info'):
+    def __init__(self, widget, text=_("change this")):
         self.waittime = 500     #miliseconds
         self.wraplength = 180   #pixels
         self.dispx = 25

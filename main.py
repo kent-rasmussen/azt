@@ -570,7 +570,7 @@ class StatusFrame(ui.Frame):
         l.grid(column=column, row=row, columnspan=columnspan,
                 ipadx=ipadx, sticky='w')
         if cmd is not None:
-            l.bind('<ButtonRelease>',cmd)
+            l.bind('<ButtonRelease-1>',cmd)
         if tt is not None:
             ttl=ui.ToolTip(l,tt)
     def labels(self,parent,label,value): #not used!
@@ -804,8 +804,8 @@ class StatusFrame(ui.Frame):
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttt=ui.ToolTip(lt,_("Change Check Type"))
         ttps=ui.ToolTip(lps,_("Change Part of Speech"))
-        lt.bind('<ButtonRelease>',self.taskchooser.getcvt)
-        lps.bind('<ButtonRelease>',self.taskchooser.getps)
+        lt.bind('<ButtonRelease-1>',self.taskchooser.getcvt)
+        lps.bind('<ButtonRelease-1>',self.taskchooser.getps)
     def makenoboard(self):
         log.info("No Progress board")
         self.boardtitle()
@@ -866,7 +866,7 @@ class StatusFrame(ui.Frame):
         t="+ = {} \n! = {}".format(tv,tu)
         h=ui.Label(self.leaderboardtable,text=t,font="small")
         h.grid(row=row,column=0,sticky='e')
-        h.bind('<ButtonRelease>', refresh)
+        h.bind('<ButtonRelease-1>', refresh)
         htip=_("Refresh table, \nsave settings")
         th=ui.ToolTip(h,htip)
         r=list(self.settings.status[cvt][ps])
@@ -2988,12 +2988,12 @@ class TaskDressing(object):
     def getanalangname(self,event=None):
         log.info("this sets the language name")
         def submit(event=None):
-            self.settings.languagenames[self.analang]=name.get()
+            self.settings.languagenames[self.analang]=namevar.get()
             if (not hasattr(self.taskchooser,'adnlangnames') or
                     not self.taskchooser.adnlangnames):
                 self.taskchooser.adnlangnames={}
-            if "Language with code [" not in name.get():
-                self.settings.adnlangnames[self.analang]=name.get()
+            if "Language with code [" not in namevar.get():
+                self.taskchooser.adnlangnames[self.analang]=namevar.get()
                 # if self.analang in self.adnlangnames:
             self.settings.storesettingsfile()
             window.destroy()
@@ -3005,8 +3005,10 @@ class TaskDressing(object):
             t+=_(", with ISO 639-3 code [{}]").format(self.analang)
         t+='?' # _("Language with code [{}]").format(xyz)
         ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
-        name = ui.EntryField(window.frame)
-        name.grid(row=1,column=0,sticky='e')
+        namevar=ui.StringVar()
+        name = ui.EntryField(window.frame,textvariable=namevar,
+                            row=1,column=0,
+                            sticky='e')
         name.focus_set()
         name.bind('<Return>',submit)
         ui.Button(window.frame,text='OK',cmd=submit,row=1,column=1,sticky='w')
@@ -4399,64 +4401,76 @@ class Segments(object):
         pass
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
+    def promptstrings(self,lang):
+        if lang == self.analang:
+            text=_("What is the form of the new "
+                    "morpheme in {} \n(consonants and vowels only)?"
+                    "".format(self.settings.languagenames[lang]))
+            ok=_('Use this form')
+            skip=None
+        else:
+            text=_("What does ‘{}’ mean in {}?".format(
+                            self.runwindow.form[self.analang],
+                            self.settings.languagenames[lang]))
+            ok=_('Use this {} gloss for ‘{}’'.format(
+                            self.settings.languagenames[lang],
+                            self.runwindow.form[self.analang]))
+            self.runwindow.glosslangs.append(lang)
+            skip = _('Skip {} gloss').format(self.settings.languagenames[lang])
+        return {'lang':lang, 'prompt':text, 'ok':ok, 'skip':skip}
+    def promptwindow(self,lang):
+        def submitform(event=None):
+            self.runwindow.form[lang]=self.runwindow.form[lang].get()
+            self.runwindow.frame2.destroy()
+        def skipform(event=None):
+            del self.runwindow.form[lang]
+            self.runwindow.frame2.destroy() #Just move on.
+        strings=self.promptstrings(lang)
+        self.runwindow.frame2=ui.Frame(self.runwindow.frame,
+                                        row=1,column=0,
+                                        sticky='ew',
+                                        padx=25,pady=25)
+        getform=ui.Label(self.runwindow.frame2,text=strings['prompt'],
+                        font='read',row=0,column=0,
+                        padx=self.runwindow.padx,
+                        pady=self.runwindow.pady)
+        #field rendering is better in another frame:
+        eff=ui.Frame(self.runwindow.frame2,row=1,column=0)
+        #variable and field for entry:
+        self.runwindow.form[lang]=ui.StringVar()
+        formfield = ui.EntryField(eff, render=True,
+                                    textvariable=self.runwindow.form[lang],
+                                    row=1,column=0,
+                                    sticky='')
+        formfield.focus_set()
+        formfield.bind('<Return>',submitform)
+        formfield.rendered.grid(row=2,column=0,sticky='new')
+        sub_btn=ui.Button(self.runwindow.frame2,text = strings['ok'],
+                            command = submitform,
+                            anchor ='c',row=2,column=0,sticky='')
+        if strings['skip']:
+            sub_btnNo=ui.Button(self.runwindow.frame2,
+                                text = strings['skip'],
+                                command = skipform,
+                                row=1,column=1,sticky='')
+        self.runwindow.waitdone()
+        sub_btn.wait_window(self.runwindow.frame2) #then move to next step
     def addmorpheme(self):
-        def makewindow():
-            def submitform(event=None):
-                self.runwindow.form[lang]=form[lang].get()
-                self.runwindow.frame2.destroy()
-            def skipform(event=None):
-                self.runwindow.frame2.destroy() #Just move on.
-            self.runwindow.frame2=ui.Frame(self.runwindow.frame,
-                                            row=1,column=0,
-                                            sticky='ew',
-                                            padx=25,pady=25)
-            if lang == self.analang:
-                text=_("What is the form of the new "
-                        "morpheme in {} \n(consonants and vowels only)?".format(
-                                    self.settings.languagenames[lang]))
-                ok=_('Use this form')
-            else:
-                text=_("What does ‘{}’ mean in {}?".format(
-                                            self.runwindow.form[self.analang],
-                                            self.settings.languagenames[lang]))
-                ok=_('Use this {} gloss for ‘{}’'.format(
-                                            self.settings.languagenames[lang],
-                                            self.runwindow.form[self.analang]))
-                self.runwindow.glosslangs.append(lang)
-            getform=ui.Label(self.runwindow.frame2,text=text,
-                                                font='read')
-            getform.grid(row=0,column=0,padx=padx,pady=pady)
-            form[lang]=ui.StringVar()
-            eff=ui.Frame(self.runwindow.frame2) #field rendering is better this way
-            eff.grid(row=1,column=0)
-            formfield = ui.EntryField(eff, render=True, textvariable=form[lang])
-            formfield.grid(row=1,column=0)
-            formfield.focus_set()
-            formfield.bind('<Return>',submitform)
-            formfield.rendered.grid(row=2,column=0,sticky='new')
-            sub_btn=ui.Button(self.runwindow.frame2,text = ok,
-                      command = submitform,anchor ='c')
-            sub_btn.grid(row=2,column=0,sticky='')
-            if lang != self.analang:
-                sub_btnNo=ui.Button(self.runwindow.frame2,
-                    text = _('Skip {} gloss').format(
-                                        self.settings.languagenames[lang]),
-                    command = skipform)
-                sub_btnNo.grid(row=1,column=1,sticky='')
-            self.runwindow.waitdone()
-            sub_btn.wait_window(self.runwindow.frame2) #then move to next step
         self.getrunwindow()
         self.runwindow.form={}
         self.runwindow.glosslangs=list()
         form={}
-        padx=50
-        pady=10
+        self.runwindow.padx=50
+        self.runwindow.pady=10
         self.runwindow.title(_("Add Morpheme to Dictionary"))
         title=_("Add {} morpheme to the dictionary").format(
                             self.settings.languagenames[self.analang])
         ui.Label(self.runwindow.frame,text=title,font='title',
-                justify=ui.LEFT,anchor='c'
-                ).grid(row=0,column=0,sticky='ew',padx=padx,pady=pady)
+                justify=ui.LEFT,
+                anchor='c',sticky='ew',
+                row=0,column=0,
+                padx=self.runwindow.padx,
+                pady=self.runwindow.pady)
         # Run the above script (makewindow) for each language, analang first.
         # The user has a chance to enter a gloss for any gloss language
         # already in the datbase, and to skip any as needed/desired.
@@ -4464,11 +4478,12 @@ class WordCollection(Segments):
             if lang in self.runwindow.form:
                 continue #Someday: how to do monolingual form/gloss here
             if not self.runwindow.exitFlag.istrue():
-                x=makewindow()
+                x=self.promptwindow(lang)
                 if x:
                     return
         """get the new senseid back from this function, which generates it"""
         if not self.runwindow.exitFlag.istrue(): #don't do this if exited
+            self.runwindow.withdraw() #or wait?
             senseid=self.db.addentry(ps='',analang=self.analang,
                             glosslangs=self.runwindow.glosslangs,
                             form=self.runwindow.form)
@@ -4771,6 +4786,419 @@ class Placeholder(TaskDressing,ui.Window):
             ui.Label(self.frame,
                     text="This is a check placeholder.",
                     row=r, column=0)
+class ToneFrameDrafter(ui.Window):
+    def status(self):
+        if self.exitFlag.istrue():
+            return
+        try:
+            self.fds.destroy()
+            self.exf.destroy()
+        except AttributeError:
+            log.info("Probably the first time running status.")
+        self.fds=ui.Frame(self.frame,row=1,column=0)
+        if 'field' not in self.forms:
+            d=self.task.params.ftype()
+            log.info("Didn't find field type; setting current ({}).".format(d))
+            self.forms['field']=d
+        if 'name' not in self.forms:
+            log.info("Didn't find a name; prompting.")
+            self.promptwindow()
+            if isinstance(self.forms['name'],ui.StringVar):
+                log.info("StringVar found, form not entered. Exiting.")
+                self.destroy()
+            # log.info(self.forms)
+            # log.info(self.exitFlag.istrue())
+            return
+        # log.info("Found name")
+        # log.info("Starting status with self.form: {}".format(self.forms))
+        text=self.forms['name']
+        if text == '':
+            text=_("Give a frame name!")
+        nametext=_("Frame name: \n(used in status table and reports)"
+                    ).format(text)
+        log.info(nametext)
+        relief='raised' #flat, raised, sunken, groove, and ridge
+        nameframe=ui.Frame(self.fds,column=0,row=0,padx=50)
+        namelabel=ui.Label(nameframe,text=nametext,column=0,row=0)
+        namebutton=ui.Button(nameframe, relief=relief,
+                            cmd=self.promptwindow,
+                            text=text,column=1,row=0)
+        ui.ToolTip(namebutton)
+        fieldname=_("Field to frame:")
+        ftypeframe=ui.Frame(self.fds,column=1,row=0)
+        ftypelabel=ui.Label(ftypeframe,text=fieldname,column=0,row=0)
+        ftypebutton=ui.Button(ftypeframe,text=self.fieldtypename(),
+                            cmd=self.getfieldtype,
+                            relief=relief,
+                            column=1,row=0)
+        ui.ToolTip(ftypelabel)
+        langs=[i for i in self.forms if self.forms[i]
+                                            and 'before' in self.forms[i]
+                                            and 'after' in self.forms[i]]
+        langsbeforeonly=[i for i in self.forms if self.forms[i]
+                                            and 'before' in self.forms[i]
+                                            and 'after' not in self.forms[i]]
+        langstodo=[i for i in self.langs if i not in langs+langsbeforeonly]
+        log.info("Langs done: {}".format(langs))
+        log.info("Langs in process: {}".format(langsbeforeonly))
+        log.info("Langs langstodo: {}".format(langstodo))
+        nothing='______'#"<"+_("nothing")+">"
+        for n,l in enumerate(self.langs):
+            tintro=_("Frame in {0}:").format(self.settings.languagenames[l])
+            ui.Label(self.fds,text=tintro,column=0,row=n+1)
+            lineframe=ui.Frame(self.fds,column=1,row=n+1)
+            tword=_("<{0} word>").format(self.settings.languagenames[l])
+            try:
+                text=self.forms[l]['before']
+                if text == '':
+                    text=nothing
+            except KeyError:
+                try:
+                    self.forms[l]={'before':''}
+                    text=nothing
+                except:
+                    text="<"+_("No {} frame info").format(
+                            self.settings.languagenames[l])+">"
+            button=ui.Button(lineframe,text=text,
+                            relief=relief,
+                            cmd=lambda l=l, context='before':
+                                    self.promptwindow(l,context),
+                            column=1,row=0,padx=0,ipadx=0)
+            ui.ToolTip(button)
+            if l not in self.forms:
+                continue
+            ui.Label(lineframe,text=tword,column=2,row=0,padx=0,ipadx=0)
+            try:
+                text=self.forms[l]['after']
+                if text == '':
+                    text=nothing
+            except KeyError:
+                if 'before' in self.forms[l]:
+                    self.forms[l]['after'] == '' #in case it got deleted
+                text=nothing
+            button=ui.Button(lineframe,text=text,
+                            relief=relief,
+                            cmd=lambda l=l, context='after':
+                                    self.promptwindow(l,context),
+                            column=3,row=0,padx=0,ipadx=0)
+            ui.ToolTip(button)
+        text=_("Get Example")
+        exemplify=ui.Button(self.fds,text=text,cmd=self.exemplified,
+                            column=0,row=n+2)
+    def setfieldtype(self,choice,window):
+        self.forms['field']=choice
+        window.on_quit()
+        self.status()
+    def fieldtypename(self):
+        return [i[1] for i in self.fieldtypes()
+                    if i[0] == self.forms['field']][0]
+    def fieldtypes(self):
+        # try:
+        #     log.info("{}".format(self.settings.pluralname))
+        #     log.info("{}".format(self.settings.imperativename))
+        #     log.info("{}".format(self.settings.secondformfield[self.settings.verbalps]))
+        #     log.info("{}".format(self.settings.secondformfield[self.settings.nominalps]))
+        # except Exception as e:
+        #     log.error("Exception in ps-land:{}".format(e))
+        opts=[
+                ('lc', _("Citation form")),
+                ('lx', _("Lexeme form")),
+                (self.settings.pluralname, _("Plural form")),
+                (self.settings.imperativename, _("Infinitive form")),
+        ]
+        return [(i,j) for (i,j) in opts if i]
+    def getfieldtype(self,event=None):
+        w=ui.Window(self.frame,
+                        row=1,column=0,
+                        sticky='ew',
+                        padx=25,pady=25)
+        w.title(_("Select which field to frame"))
+        ui.ButtonFrame(w.frame,optionlist=self.fieldtypes(),
+                        command=self.setfieldtype,
+                        window=w,
+                        row=0,column=0)
+    def exemplified(self,event=None):
+        log.info("Giving example now")
+        checktoadd=self.forms['name']
+        if hasattr(self,'exf'):
+            self.exf.destroy()
+        self.exf=ui.Frame(self.frame,row=2,column=0,sticky='w')
+        if checktoadd in ['', None]:
+            text=_('Sorry, empty name! \nPlease provide at least \na frame '
+                'name, to distinguish it \nfrom other frames.')
+            log.error(rx.delinebreak(text))
+            l1=ui.Label(self.exf,
+                        text=text,
+                        font='read',
+                        justify=ui.LEFT,anchor='w',
+                        row=0,column=0,
+                        sticky='w')
+            return
+        senseid=self.gimmesenseidwgloss() #don't give exs w/o all glosses
+        # log.info('gimmesenseid result: {}'.format(senseid))
+        """This will need to be updated to slices!"""
+        if senseid not in self.slices.senseids(ps=self.ps):
+            log.info('bad senseid; showing error')
+            lt=ui.Label(self.exf,
+                    text=senseid,
+                    font='read',
+                    justify=ui.LEFT,anchor='w',
+                    row=0,column=0,
+                    sticky='w',
+                    )
+            return
+        """Define the new frame"""
+        checkdefntoadd={'field':self.forms['field']}
+        log.info("Ready to add frame with this form info: {}".format(self.forms))
+        for lang in self.lookingfor: #just the defined languages
+            before=self.forms[lang]['before']
+            after=self.forms[lang]['after']
+            checkdefntoadd[lang]=str(before+'__'+after)
+        self.task.toneframes.addframe(self.ps,checktoadd,checkdefntoadd)
+        framed=self.task.datadict.getframeddata(senseid)
+        framed.setframe(checktoadd)
+        #At this point, remove this frame (in case we don't submit it)
+        del self.task.toneframes[self.ps][checktoadd]
+        """Display framed data"""
+        # tf={}
+        # tfd={}
+        padx=50
+        pady=10
+        row=0
+        text=_("Examples for {} {} tone frame").format(checktoadd,
+                                                        self.fieldtypename())
+        lt=ui.Label(self.exf,
+                text=text,
+                font='readbig',
+                justify=ui.LEFT,anchor='w',
+                row=row,column=0,
+                sticky='w',#columnspan=2,
+                padx=padx,pady=pady)
+        for lang in framed.forms.framed:#[self.analang]+self.lookingfor
+            row+=1
+            text=('[{}]: {}'.format(lang,framed.forms.framed[lang]))
+            l1=ui.Label(self.exf,
+                    text=text,
+                    font='read',
+                    justify=ui.LEFT,anchor='w',
+                    row=row,column=0,
+                    sticky='w',
+                    padx=padx,pady=pady)
+            log.info('langlabel:{}'.format(text))
+        """toneframes={'Nom':
+                        {'name/location (e.g.,"By itself")':
+                            {'analang.xyz': '__',
+                            'glosslang.xyz': 'a __'},
+                            'glosslang2.xyz': 'un __'},
+                    }   }
+        """
+        row+=1
+        stext=_('Use {} tone frame'.format(checktoadd))
+        subframe=ui.Frame(self.exf,row=row,column=0,sticky='w')
+        sub_btn=ui.Button(subframe,text = stext,
+                          command = lambda x=checkdefntoadd,
+                                            n=checktoadd: self.submit(x,n),
+                          row=0,column=0,
+                          )
+        ui.Label(subframe, text=_("<= No changes after this; please check that "
+                                "the above looks good on several examples!"),
+                row=0,column=1)
+        log.info('sub_btn:{}'.format(stext))
+    def promptstrings(self,lang=None,context=None):
+        #None of this changes in editing. Is that what we want?
+        if lang:
+            text=_("Fill in the {} frame forms below.\n(include a "
+                "space to separate word forms)"
+                ).format(self.settings.languagenames[lang])
+            if lang == self.analang:
+                kind=_('form')
+                ok=_('Use this form')
+                skip=None
+            else:
+                kind=_('gloss')
+                ok=_('Use this {} form {} the dictionary gloss'.format(
+                                self.settings.languagenames[lang],
+                                _(context)))
+                self.glosslangs.append(lang)
+                skip = _('Skip {} gloss').format(self.settings.languagenames[lang])
+            if context == 'before':
+                text+='\n'+_("What text goes *before* \n<==the {} word *{}* "
+                        "\nin the frame?"
+                        ).format(self.settings.languagenames[lang],kind)
+            elif context == 'after':
+                text+='\n'+_("What text goes *after* \nthe {} word *{}*==> "
+                        "\nin the frame?"
+                        ).format(self.settings.languagenames[lang],kind)
+        else:
+            text=_("What do you want to call this new {} tone frame for {}?"
+                    ).format(
+                            self.ps,
+                            self.settings.languagenames[self.analang]
+                            )
+            ok=_("Use this name")
+            skip=None
+        return {'lang':lang, 'prompt':text, 'ok':ok, 'skip':skip}
+    def promptwindow(self,lang=None,context=None,event=None):
+        def submitform(event=None):
+            log.info("context: {}; lang: {}".format(context,lang))
+            log.info("Form: {}".format(self.forms))
+            clearNull()
+            if lang and context:
+                log.info("Form.get: {}".format(v.get()))
+                log.info("type: {}".format(type(v)))
+                log.info("value: {}".format(v.__dict__))
+                self.forms[lang][context]=v.get()
+            else:
+                log.info("name.get: {}".format(v.get()))
+                self.forms['name']=v.get()
+            log.info("Forms: {}".format(self.forms))
+            self.w.on_quit()
+            self.status()
+        def clearNull(event=None):
+            if v.get() == null:
+                v.set('')
+        def setNull(event=None):
+            if v.get() == '':
+                v.set(null)
+        def skipform(event=None):
+            del self.forms[lang]
+            self.w.on_quit() #Just move on.
+            self.status()
+        log.info("context: {}; lang: {}".format(context,lang))
+        strings=self.promptstrings(lang,context)
+        self.w=ui.Window(self.frame,
+                        row=1,column=0,
+                        sticky='ew',
+                        padx=25,pady=25)
+        if lang and context:
+            self.w.title("{} {}".format(context,lang))
+        else:
+            self.w.title("New {} Tone frame for {}: Name the Frame".format(
+                        self.ps,self.settings.languagenames[self.analang]))
+        self.withdraw() #Don't show status when asking for a value
+        getform=ui.Label(self.w.frame,text=strings['prompt'],
+                        font='read',row=0,column=0,
+                        wraplength=program['root'].wraplength/2,
+                        padx=self.padx,
+                        pady=self.pady)
+        #field rendering is better in another frame, with no sticky!:
+        eff=ui.Frame(self.w.frame,row=1,column=0,sticky='')
+        null=initval='<no content>'
+        if lang and context:
+            try:
+                initval=self.forms[lang][context]
+                v=ui.StringVar(self,initval)
+            except KeyError:
+                v=ui.StringVar(self,initval)
+                try:
+                    self.forms[lang][context]=v
+                except KeyError:
+                    self.forms[lang]={context:v} #because this isn't there yet
+        else:
+            try:
+                initval=self.forms['name']
+                v=ui.StringVar(self,initval)
+            except KeyError:
+                v=self.forms['name']=ui.StringVar(self,initval)
+        formfield = ui.EntryField(eff, render=True,
+                                textvariable=v,
+                                row=1,column=0,
+                                sticky='')
+        formfield.focus_set()
+        formfield.bind('<Return>',submitform)
+        formfield.bind('<FocusIn>',clearNull)
+        formfield.bind('<FocusOut>',setNull)
+        formfield.rendered.grid(row=2,column=0,sticky='new')
+        sub_btn=ui.Button(self.w.frame,text = strings['ok'],
+                            command = submitform,
+                            anchor ='c',row=2,column=0,sticky='')
+        if strings['skip']:
+            sub_btnNo=ui.Button(self.w.frame,
+                                text = strings['skip'],
+                                command = skipform,
+                                row=1,column=1,sticky='')
+        sub_btn.wait_window(formfield) #then move to next step
+        if not self.exitFlag.istrue():
+            self.deiconify()
+    def submit(self,checkdefntoadd,checktoadd,event=None):
+        log.info("Submitting {} frame with these values: {}".format(
+                                                checktoadd,checkdefntoadd
+                                                ))
+        # Having made and unset these, we now reset and write them to file.
+        self.task.toneframes.addframe(self.ps,checktoadd,checkdefntoadd)
+        self.task.status.renewchecks() #renew (not update), because of new frame
+        self.settings.storesettingsfile(setting='toneframes')
+        self.settings.setcheck(checktoadd) #assume we will use this now
+        self.destroy()
+    def gimmesenseid(self,**kwargs):
+        idsbyps=self.slices.senseids(ps=self.ps)
+        return idsbyps[randint(0, len(idsbyps)-1)]
+    def gimmesenseidwgloss(self,**kwargs):
+        tried=0
+        f={}
+        self.lookingfor=[i for i in self.forms if i not in ['name','field']]
+        for lang in self.lookingfor:
+            f[lang]=''
+        log.info("checking for these langs: {}".format(self.db.glosslangs))
+        log.info("Starting with these forms: {}".format(f))
+        while '' in f.values():
+            senseid=self.gimmesenseid()
+            try:
+                f[self.analang]=self.db.fieldtext(senseid=senseid,
+                                                    lang=self.analang,
+                                                    ftype=self.forms['field'],
+                                                    )[0]
+            except IndexError:
+                log.info("Looks like we didn't find a form.")
+            log.info(f[self.analang])
+            if not f[self.analang]:
+                f[self.analang]=''
+            for lang in self.db.glosslangs:
+                try:
+                    f[lang]=self.db.glossordefn(senseid=senseid,
+                                                glosslang=lang,
+                                                # showurl=True
+                                                )[0]
+                    log.info("Found forms: {}".format(f))
+                except IndexError:
+                    log.info("Looks like we didn't find enough forms.")
+            tried+=1
+            if tried> self.db.nsenseids*1.5:
+                errortext=_("I've tried (randomly) {} times, and not found one "
+                "of your {} senses with data in each of these languages: "
+                "{}. \nAre you asking for gloss "
+                "languages which actually have data in your database? \nOr, are "
+                "you missing gloss fields (i.e., you have only 'definition' "
+                "fields)?").format(tried,self.db.nsenseids,self.lookingfor)
+                log.error(errortext)
+                return errortext
+        log.debug("Found entry {} with glosses {}".format(senseid,f))
+        return senseid
+    def __init__(self,parent):
+        ui.Window.__init__(self,parent)
+        self.task=parent #this should always be called by a window task
+        self.settings=parent.settings
+        self.analang=parent.analang
+        self.slices=parent.slices
+        self.db=parent.db
+        self.ps=parent.slices.ps()
+        self.forms={}
+        # we want to start this net wide, to cover future usage
+        self.langs=[self.analang]+self.db.glosslangs
+        for l in self.langs: #assume there, remove later if not wanted
+            self.forms[l]={'after':''}
+            self.forms[l]['before']=''
+        self.glosslangs=list()
+        self.padx=50
+        self.pady=10
+        title=_("Define a New {} Tone Frame for {}").format(self.ps,
+                        self.settings.languagenames[self.analang])
+        self.title(title)
+        t=(_("Add {} Tone Frame for {}").format(self.ps,
+                        self.settings.languagenames[self.analang]))#+'\n'?
+        ui.Label(self.frame,text=t,font='title',row=0,column=0)
+        log.info("drafting a tone frame for these langs: {}".format(self.langs))
+        self.status()
 class Tone(object):
     """This keeps stuff used for Tone checks."""
     def makeanalysis(self,**kwargs):
@@ -4790,35 +5218,6 @@ class Tone(object):
                                     )
         else:
             self.analysis.setslice(**kwargs)
-    def gimmesenseid(self,**kwargs):
-        ps=kwargs.get('ps',self.slices.ps())
-        idsbyps=self.slices.senseids(ps=ps)
-        return idsbyps[randint(0, len(idsbyps)-1)]
-    def gimmesenseidwgloss(self,**kwargs):
-        tried=0
-        gloss={}
-        ps=kwargs.get('ps',self.slices.ps())
-        for lang in self.glosslangs:
-            gloss[lang]=''
-        while '' in gloss.values():
-            senseid=self.gimmesenseid(ps=ps)
-            for lang in self.glosslangs:
-                gloss[lang]=self.db.glossordefn(senseid=senseid,
-                                                glosslang=lang,
-                                                # showurl=True
-                                                )[0]
-            tried+=1
-            if tried> self.db.nsenseids*1.5:
-                errortext=_("I've tried (randomly) {} times, and not found one "
-                "of your {} senses with a gloss in each of these languages: "
-                "{}. \nAre you asking for gloss "
-                "languages which actually have data in your database? \nOr, are "
-                "you missing gloss fields (i.e., you have only 'definition' "
-                "fields)?").format(tried,self.db.nsenseids,langs)
-                log.error(errortext)
-                return errortext
-        log.debug("Found entry {} with glosses {}".format(senseid,gloss))
-        return senseid
     def checkforsenseidstosort(self,cvt=None,ps=None,profile=None,check=None):
         """This method just asks if any senseid in the given slice is unsorted.
         It stops when it finds the first one."""
@@ -4842,234 +5241,6 @@ class Tone(object):
                 break
         self.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
         self.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
-    def addframe(self,**kwargs):
-        # model this after WordCollection.addmorpheme, to ask for one thing at
-        # a time, in one language at a time. Store values for defaults on
-        # subsequent runs, but only display them in non-editable form on the
-        # main window. This needs to be fairly easy to fix problems, without
-        # breaking the principle of having only one field at a time.
-        # Perhaps the display fields could be clickable, to give the relevant
-        # input field?
-        log.info('Tone frame to add!')
-        """I should add gloss2 option here, likely just with each language.
-        This is not a problem for LFIT translation fields, and it would help to
-        have language specification (not gloss/gloss2), in case check languages
-        change, or switch --so french is always chosen for french glosses,
-        whether french is gloss or gloss2."""
-        """self.toneframes should not use 'form' or 'gloss' anymore."""
-        def chk():
-            checktoadd=str(name.get())
-            if checktoadd in ['', None]:
-                text=_('Sorry, empty name! \nPlease provide at least \na frame '
-                    'name, to distinguish it \nfrom other frames.')
-                log.error(rx.delinebreak(text))
-                if hasattr(self.addwindow,'framechk'):
-                    self.addwindow.framechk.destroy()
-                self.addwindow.framechk=ui.Frame(self.addwindow.scroll.content)
-                self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
-                l1=ui.Label(self.addwindow.framechk,
-                        text=text,
-                        font='read',
-                        justify=ui.LEFT,anchor='w')
-                l1.grid(row=0,column=columnleft,sticky='w')
-                return
-            # """Define the new frame"""
-            # checkdefntoadd={}
-            # checkdefntoadd['field']='lc' #update this with radio!
-            # for lang in langs:
-            #     db['before'][lang]['text']=db['before'][lang][
-            #                                                 'entryfield'].get()
-            #     db['after'][lang]['text']=db['after'][lang][
-            #                                                 'entryfield'].get()
-            #     frame[lang]=str(
-            #         db['before'][lang]['text']+'__'+db['after'][lang]['text'])
-            log.info('gimmesenseid::')
-            senseid=self.gimmesenseidwgloss(ps=ps) #don't give exs w/o all glosses
-            log.info('gimmesenseid result: {}'.format(senseid))
-            """This will need to be updated to slices!"""
-            if senseid not in self.slices.senseids(ps=ps):
-                log.info('bad senseid; showing error')
-                self.addwindow.framechk=ui.Frame(self.addwindow.scroll.content)
-                self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
-                lt=ui.Label(self.addwindow.framechk,
-                        text=senseid,
-                        font='read',
-                        justify=ui.LEFT,anchor='w')
-                lt.grid(row=0,column=0,#row=row,column=columnleft,
-                        sticky='w',columnspan=2)
-                return
-            """Define the new frame"""
-            checkdefntoadd={}
-            checkdefntoadd['field']='lc' #update this with radio!
-            for lang in langs:
-                before=db['before'][lang]['entryfield'].get()
-                after=db['after'][lang]['entryfield'].get()
-                checkdefntoadd[lang]=str(
-                    before+'__'+after)
-            self.toneframes.addframe(ps,checktoadd,checkdefntoadd)
-            # senseid=self.gimmesenseidwgloss() #don't give exs w/o all glosses
-            # senseid=self.gimmesenseid()
-            # This needs self.toneframes
-            framed=self.taskchooser.datadict.getframeddata(senseid)
-            framed.setframe(checktoadd)
-            #At this point, remove this frame (in case we don't submit it)
-            del self.toneframes[ps][checktoadd]
-            """Display framed data"""
-            if hasattr(self.addwindow,'framechk'):
-                self.addwindow.framechk.destroy()
-            self.addwindow.framechk=ui.Frame(self.addwindow.scroll.content)
-            self.addwindow.framechk.grid(row=1,column=0,columnspan=3,sticky='w')
-            tf={}
-            tfd={}
-            padx=50
-            pady=10
-            row=0
-            lt=ui.Label(self.addwindow.framechk,
-                    text=_("Examples for {} tone frame").format(checktoadd),
-                    font='readbig',
-                    justify=ui.LEFT,anchor='w')
-            lt.grid(row=row,column=columnleft,sticky='w',columnspan=2,
-                    padx=padx,pady=pady)
-            for lang in langs:
-                row+=1
-                tf[lang]=('form[{}]: {}'.format(lang,checkdefntoadd[lang]))
-                tfd[lang]=('(ex: '+framed.forms.framed[lang]+')')
-                l1=ui.Label(self.addwindow.framechk,
-                        text=tf[lang],
-                        font='read',
-                        justify=ui.LEFT,anchor='w')
-                l1.grid(row=row,column=columnleft,sticky='w',padx=padx,
-                                                                pady=pady)
-                l2=ui.Label(self.addwindow.framechk,
-                        text=tfd[lang],
-                        font='read',
-                        justify=ui.LEFT,anchor='w')
-                l2.grid(row=row,column=columnleft+1,sticky='w',padx=padx,
-                                                                pady=pady)
-                log.info('langlabel:{}-{}'.format(tf[lang],tfd[lang]))
-
-            """toneframes={'Nom':
-                            {'name/location (e.g.,"By itself")':
-                                {'analang.xyz': '__',
-                                'glosslang.xyz': 'a __'},
-                                'glosslang2.xyz': 'un __'},
-                        }   }
-            """
-            row+=1
-            stext=_('Use {} tone frame'.format(checktoadd))
-            sub_btn=ui.Button(self.addwindow.framechk,text = stext,
-                      command = lambda x=checkdefntoadd,n=checktoadd: submit(x,n))
-            sub_btn.grid(row=row,column=columnleft,sticky='w')
-            log.info('sub_btn:{}'.format(stext))
-            self.addwindow.scroll.windowsize() #make sure scroll's big enough
-            self.addwindow.scroll.totop()
-            self.addwindow.scroll.tobottom()
-        def unchk(event):
-            #This is here to keep people from thinking they are approving what's
-            #next to this button, in case any variable has been changed.
-            if hasattr(self.addwindow,'framechk'):
-                self.addwindow.framechk.destroy()
-        def submit(checkdefntoadd,checktoadd):
-            log.info("Submitting {} frame with these values: {}".format(
-                                                    checktoadd,checkdefntoadd
-                                                    ))
-            # Having made and unset these, we now reset and write them to file.
-            self.toneframes.addframe(ps,checktoadd,checkdefntoadd)
-            self.status.renewchecks() #renew (not update), because of new frame
-            self.settings.storesettingsfile(setting='toneframes')
-            self.addwindow.destroy()
-            self.settings.setcheck(checktoadd) #assume we will use this now
-            if 'window' in kwargs:
-                kwargs['window'].destroy()
-        ps=kwargs.get('ps',self.slices.ps())
-        wtitle=_("Define a New {} Tone Frame").format(ps)
-        self.addwindow=ui.Window(self.frame, title=wtitle)
-        self.addwindow.scroll=ui.ScrollingFrame(self.addwindow)
-        self.addwindow.scroll.grid(row=0,column=0)
-        self.addwindow.frame1=ui.Frame(self.addwindow.scroll.content)
-        self.addwindow.frame1.grid(row=0,column=0)
-        row=0
-        columnleft=0
-        columnword=1
-        columnright=2
-        namevar=ui.StringVar()
-        """Text and fields, before and after, dictionaries by language"""
-        db={}
-        langs=[self.analang]+self.glosslangs
-        for context in ['before','after']:
-            db[context]={}
-            for lang in langs:
-                db[context][lang]={}
-                db[context][lang]['text']=ui.StringVar()
-        t=(_("Add {} Tone Frame").format(ps))
-        ui.Label(self.addwindow.frame1,text=t+'\n',font='title'
-                ).grid(row=row,column=columnleft,columnspan=3)
-        row+=1
-        t=_("What do you want to call the tone frame ?")
-        finst=ui.Frame(self.addwindow.frame1)
-        finst.grid(row=row,column=0)
-        ui.Label(finst,text=t).grid(row=0,column=columnleft,sticky='e')
-        name = ui.EntryField(finst)
-        name.grid(row=0,column=columnright,sticky='w')
-        name.bind('<Key>', unchk)
-        row+=1
-        row+=1
-        ti={} # text instructions
-        tb={} # text before
-        ta={} # text after
-        f={} #frames for each lang
-        """Set all the label texts"""
-        for lang in langs:
-            if lang == self.analang:
-                ti[lang]=_("Fill in the {} frame forms below.\n(include a "
-                "space to separate word forms)".format(
-                                        self.settings.languagenames[lang]))
-                kind='form'
-            else:
-                ti[lang]=(_("Fill in the {} glossing "
-                    "here \nas appropriate for the morphosyntactic context.\n("
-                    "include a space to separate word glosses)"
-                                ).format(self.settings.languagenames[lang]))
-                kind='gloss'
-            tb[lang]=_("What text goes *before* \n<==the {} word *{}* "
-                        "\nin the frame?"
-                                ).format(self.settings.languagenames[lang],kind)
-            ta[lang]=_("What text goes *after* \nthe {} word *{}*==> "
-                        "\nin the frame?"
-                                ).format(self.settings.languagenames[lang],kind)
-        """Place the labels"""
-        for lang in langs:
-            f[lang]=ui.Frame(self.addwindow.frame1)
-            f[lang].grid(row=row,column=0)
-            langrow=0
-            ui.Label(f[lang],text='\n'+ti[lang]+'\n').grid(
-                                                row=langrow,column=columnleft,
-                                                columnspan=3)
-            langrow+=1
-            ui.Label(f[lang],text=tb[lang]).grid(row=langrow,
-                                        column=columnright,sticky='w')
-            ui.Label(f[lang],text='word',padx=0,pady=0).grid(row=langrow,
-                                                        column=columnword)
-            db['before'][lang]['entryfield'] = ui.EntryField(f[lang],
-                                justify='right')
-            db['before'][lang]['entryfield'].grid(row=langrow,
-                                        column=columnleft,sticky='e')
-            langrow+=1
-            ui.Label(f[lang],text=ta[lang]).grid(row=langrow,
-                    column=columnleft,sticky='e')
-            ui.Label(f[lang],text='word',padx=0,pady=0).grid(row=langrow,
-                    column=columnword)
-            db['after'][lang]['entryfield'] = ui.EntryField(f[lang],
-                    justify='left')
-            db['after'][lang]['entryfield'].grid(row=langrow,
-                    column=columnright,sticky='w')
-            for w in ['before','after']:
-                db[w][lang]['entryfield'].bind('<Key>', unchk)
-            row+=1
-        row+=1
-        text=_('See the tone frame around a word from the dictionary')
-        chk_btn=ui.Button(self.addwindow.frame1,text = text, command = chk)
-        chk_btn.grid(row=row+1,column=columnleft,pady=100)
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
         """This is currently called in iteration, but doesn't refresh groups,
         so it probably isn't useful anymore."""
@@ -5078,6 +5249,8 @@ class Tone(object):
         """This is currently called before sorting. This is a waste, if you're
         not going to sort afterwards –unless you need the groups."""
         self.updatesortingstatus() #this gets groups, too
+    def addframe(self,**kwargs):
+        ToneFrameDrafter(self)
     def aframe(self):
         self.runwindow.destroy()
         self.addframe()
@@ -6154,7 +6327,7 @@ class Sound(object):
                 l=_("Speakers: ‘{}’").format(l)
             l=ui.Label(self.soundsettingswindow.content,text=l,
                     row=row,column=0)
-            l.bind('<ButtonRelease>',cmd) #getattr(self,str(cmd)))
+            l.bind('<ButtonRelease-1>',cmd) #getattr(self,str(cmd)))
             row+=1
         br=RecordButtonFrame(self.soundsettingswindow.content,self,test=True)
         br.grid(row=row,column=0)
@@ -6389,7 +6562,7 @@ class Record(Sound):
                         cmd=skipf.destroy)
             skipf.grid(row=1,column=1,sticky='w')
             skipb.grid(row=0,column=0,sticky='w')
-            skipb.bind('<ButtonRelease>', setskip)
+            skipb.bind('<ButtonRelease-1>', setskip)
         if senses is None:
             senses=self.settings.entriestoshow
         for senseid in senses:
@@ -9580,8 +9753,8 @@ class RecordButtonFrame(ui.Frame):
     def makerecordbutton(self):
         self.b=ui.Button(self,text=_('Record'),command=self.function)
         self.b.grid(row=0, column=0,sticky='w')
-        self.b.bind('<ButtonPress>', self._start)
-        self.b.bind('<ButtonRelease>', self._stop)
+        self.b.bind('<ButtonPress-1>', self._start)
+        self.b.bind('<ButtonRelease-1>', self._stop)
     def _play(self,event=None):
         log.debug("Asking PA to play now")
         self.player=sound.SoundFilePlayer(self.filenameURL,self.pa,
@@ -9601,7 +9774,7 @@ class RecordButtonFrame(ui.Frame):
     def makedeletebutton(self):
         self.r=ui.Button(self,text=_('Redo'),command=self.function)
         self.r.grid(row=0, column=2,sticky='w')
-        self.r.bind('<ButtonRelease>', self._redo)
+        self.r.bind('<ButtonRelease-1>', self._redo)
         self.r.update_idletasks()
     def function(self):
         pass
