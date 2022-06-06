@@ -2989,11 +2989,11 @@ class TaskDressing(object):
         log.info("this sets the language name")
         def submit(event=None):
             self.settings.languagenames[self.analang]=namevar.get()
-            if (not hasattr(self.taskchooser,'adnlangnames') or
-                    not self.taskchooser.adnlangnames):
-                self.taskchooser.adnlangnames={}
+            if (not hasattr(self.settings,'adnlangnames') or
+                    not self.settings.adnlangnames):
+                self.settings.adnlangnames={}
             if "Language with code [" not in namevar.get():
-                self.taskchooser.adnlangnames[self.analang]=namevar.get()
+                self.settings.adnlangnames[self.analang]=namevar.get()
                 # if self.analang in self.adnlangnames:
             self.settings.storesettingsfile()
             window.destroy()
