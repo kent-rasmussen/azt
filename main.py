@@ -2976,8 +2976,8 @@ class TaskDressing(object):
     def getinterfacelang(self,event=None):
         log.info("Asking for interface language...")
         window=ui.Window(self.frame, title=_('Select Interface Language'))
-        ui.Label(window.frame, text=_('What language do you want this program '
-                                'to address you in?')
+        ui.Label(window.frame, text=_('What language do you want {} '
+                                'to address you in?').format(program['name'])
                 ).grid(column=0, row=0)
         buttonFrame1=ui.ButtonFrame(window.frame,
                                 optionlist=self.taskchooser.interfacelangs,
