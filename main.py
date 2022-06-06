@@ -3098,8 +3098,8 @@ class TaskDressing(object):
     def getps(self,event=None):
         log.info("Asking for ps...")
         # self.refreshattributechanges()
-        window=ui.Window(self.frame, title=_('Select Grammatical Category'))
-        ui.Label(window.frame, text=_('What grammatical category do you '
+        window=ui.Window(self.frame, title=_('Select Lexical Category'))
+        ui.Label(window.frame, text=_('What lexical category do you '
                                     'want to work with (Part of speech)?')
                 ).grid(column=0, row=0)
         if hasattr(self,'additionalps') and self.settings.additionalps is not None:
@@ -5395,7 +5395,7 @@ class Sort(object):
         if len(allpssensids)>70:
             self.runwindow.waitdone()
             text=_("This is a large group ({})! Are you in the right "
-                    "grammatical category?".format(len(allpssensids)))
+                    "lexical category?".format(len(allpssensids)))
             log.error(text)
             w=ui.Label(self.runwindow.frame,text=text)
             w.grid(row=1,column=0,sticky='ew')
@@ -5410,13 +5410,13 @@ class Sort(object):
         ui.Label(self.runwindow.frame,text=title,font='title',
                 ).grid(row=0,column=0,sticky='ew')
         text=_("This page will allow you to set up your own sets of dictionary "
-                "senses to sort, within the '{0}' grammatical category. \nYou "
-                "should only do this if the '{0}' grammatical category is so "
+                "senses to sort, within the '{0}' lexical category. \nYou "
+                "should only do this if the '{0}' lexical category is so "
                 "small that sorting them by syllable profile gives you "
                 "unusably small slices of your database."
                 "\nIf you want to compare words that are currently in "
                 "different grammatical categories, put them first into the "
-                "same grammatical category in another tool (e.g., FLEx or "
+                "same lexical category in another tool (e.g., FLEx or "
                 "WeSay), then put them in an Ad Hoc group here."
                 # "\nIf you're looking at a group you created earlier, and "
                 "\nIf you want to create a new group, exit here, select a "
@@ -7403,7 +7403,7 @@ class Report(object):
                 xlp.Gloss(ex,lang,framed.forms[lang])
     def printcountssorted(self):
         #This is only used in the basic report
-        log.info("Ranked and numbered syllable profiles, by grammatical category:")
+        log.info("Ranked and numbered syllable profiles, by lexical category:")
         nTotal=0
         nTotals={}
         for line in self.slices: #profilecounts:
@@ -7426,7 +7426,7 @@ class Report(object):
             print(ps,"(total):",nTotals[ps])
     def printprofilesbyps(self):
         #This is only used in the basic report
-        log.info("Syllable profiles actually in senses, by grammatical category:")
+        log.info("Syllable profiles actually in senses, by lexical category:")
         for ps in self.profilesbysense:
             if ps == 'Invalid':
                 continue
