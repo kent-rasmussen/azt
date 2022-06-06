@@ -1,6 +1,5 @@
 #Roadmap
 
-Fix multiple field problem in tone frame design page.
 I need some check that columns of sort buttons aren't being pushed off the screen (and if so, auto-reduce the number)
   - maybe take button width, and have screenwidth/max button as the largest acceptable button columns value.
 Consider removing CVT distinct features from task manager.
