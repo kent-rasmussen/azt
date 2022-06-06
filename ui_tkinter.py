@@ -1158,6 +1158,8 @@ class ButtonFrame(Frame):
                 optionlist[i]['name']=optionlist[i]['code']
         if gimmenull == True:
             optionlist.append(({code:"Null",name:"None of These"}))
+        # log.info("These are the options going to the set of buttons: {}".format(
+        #                                                             optionlist))
         for choice in optionlist:
             if choice['name'] == ["Null"]:
                 command=newvowel #come up with something better here..…
