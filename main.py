@@ -1254,6 +1254,7 @@ class Settings(object):
             o=self
         for s in self.settings[setting]['attributes']:
             # log.info("Looking for {} attr".format(s))
+            # log.info("{} attr value: {}".format(s,getattr(self,s,'Not Found!')))
             """This dictionary of functions isn't made until after the objects,
             at the end of settings init. So this block is not used in
             conversion, only in later saves."""
@@ -1304,6 +1305,7 @@ class Settings(object):
         d=self.makesettingsdict(setting=setting)
         for s in [i for i in d if i not in [None,'None']]:
             v=d[s]
+            # log.info("Ready to store {} type data: {}".format(type(v),v))
             if isinstance(v, dict):
                 config[s]=v
             else:
