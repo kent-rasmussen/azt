@@ -10447,8 +10447,9 @@ class SliceDict(dict):
             for profile in self._profilesbysense[ps]:
                 if profile == 'Invalid':
                     profilecountInvalid+=len(self._profilesbysense[ps][profile])
-                count=len(self._profilesbysense[ps][profile])
-                wcounts.append((count, profile, ps))
+                else:
+                    count=len(self._profilesbysense[ps][profile])
+                    wcounts.append((count, profile, ps))
         for i in sorted(wcounts,reverse=True):
             self[(i[1],i[2])]=i[0] #[(profile, ps)]=count
         log.info('Invalid entries found: {}'.format(profilecountInvalid))
