@@ -69,6 +69,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """These three get all possible langs by type"""
         self.getglosslangs() #sets: self.glosslangs
         self.getanalangs() #sets: self.analangs, self.audiolangs
+        self.legacylangconvert()
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
         self.getfields() #sets self.fields (of entry)
@@ -245,8 +246,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     """Make this a class!!!"""
     def pylanglegacy(self,analang):
          return 'py-'+analang
+    def pylanglegacy2(self,analang):
+         return analang+'-py'
     def pylang(self,analang):
          return analang+'-x-py'
+    def legacylangconvert(self):
+        formnodes=self.nodes.findall(".//form")
+        formlangs=set([i.get('lang') for i in formnodes])
+        langs=self.analangs+self.glosslangs
+        log.info("looking to convert pylangs for {}".format(langs))
+        for lang in langs:
+            for flang in self.pylanglegacy(lang),self.pylanglegacy2(lang):
+                if flang in formlangs:
+                    log.info("Found {}; converting to {}".format(flang,
+                                                        self.pylang(lang)))
+                    for n in self.nodes.findall(".//form[@lang='{}']"
+                                                "".format(flang)):
+                        # log.info("{}; {}".format(n.tag,n.attrib))
+                        n.set('lang',self.pylang(lang))
     def modverificationnode(self,senseid,vtype,analang,**kwargs):
         """this node stores a python symbolic representation, specific to an
         analysis language"""
