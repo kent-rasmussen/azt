@@ -1424,8 +1424,9 @@ class Settings(object):
         # setdefaults.langs(self.db) #This will be done again, on resets
     def pss(self):
         log.info("checking these lexical category names for plausible noun "
-                "and verb names: {}".format(self.db.pss))
-        for ps in self.db.pss[:2]:
+                "and verb names: {}".format(self.db.pss[self.analang]))
+        topn=2
+        for ps in self.db.pss[self.analang][:topn]:
             if ps in ['N','n','Noun','noun',
                     'Nom','nom',
                     'S','s','Sustantivo','sustantivo'
@@ -1437,17 +1438,20 @@ class Settings(object):
                     ]:
                 self.verbalps=ps
             else:
-                log.error("Not sure what to do with top ps {}".format(ps))
+                log.error("Not sure what to do with top {} ps {}".format(
+                                                                    topn,ps))
         if not hasattr(self,'nominalps'):
                 self.nominalps='Noun'
         if not hasattr(self,'verbalps'):
                 self.verbalps='Verb'
         try:
-            log.info("Using ‘{}’ for nouns, and ‘{}’ for verbs".format(self.nominalps,
+            log.info("Using ‘{}’ for nouns, and ‘{}’ for verbs".format(
+                self.nominalps,
                 self.verbalps))
         except AttributeError:
             log.info("Problem with finding a nominal and verbal lexical "
-            "category (looked in first two of [{}])".format(self.db.pss))
+            "category (looked in first two of [{}])"
+            "".format(self.db.pss[self.analang]))
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
         fields=self.db.fields
@@ -1711,7 +1715,7 @@ class Settings(object):
         self.profiledsenseids=[]
         self.formstosearch={}
         self.sextracted={} #Will store matching segments here
-        for ps in self.db.pss:
+        for ps in self.db.pss[self.analang]:
             self.sextracted[ps]={}
             for s in self.rx:
                 self.sextracted[ps][s]={}
@@ -1789,7 +1793,7 @@ class Settings(object):
         """This depends on self.sextracted, from getprofiles, so should only
         run when that changes."""
         scount={}
-        for ps in self.db.pss:
+        for ps in self.db.pss[self.analang]:
             scount[ps]={}
             for s in self.rx:
                 try:
@@ -3105,9 +3109,9 @@ class TaskDressing(object):
                                     'want to work with (Part of speech)?')
                 ).grid(column=0, row=0)
         if hasattr(self,'additionalps') and self.settings.additionalps is not None:
-            pss=self.db.pss+self.settings.additionalps #these should be lists
+            pss=self.db.pss[self.analang]+self.settings.additionalps #these should be lists
         else:
-            pss=self.db.pss
+            pss=self.db.pss[self.analang]
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                             optionlist=pss,
                                             command=self.settings.setps,
@@ -3673,7 +3677,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def guidtriagebyps(self):
         log.info("Doing guid triage by ps... This also takes awhile?...")
         self.guidsvalidbyps={}
-        for ps in self.db.pss:
+        for ps in self.db.pss[self.analang]:
             self.guidsvalidbyps[ps]=self.db.get('guidbyps',ps=ps)
     def gettask(self,event=None):
         """This function allows the user to select from any of tasks whose
