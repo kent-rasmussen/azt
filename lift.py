@@ -1611,9 +1611,11 @@ class LiftURL():
                     attrs['value']=ftype+'annotationvalue'
             else:
                 attrs={}
+        elif 'lang' in self.kwargs:
+                self.form(lang='lang')
         else:
-            log.error("You asked for a field, without specifying ftype; not "
-                        "adding form fields.")
+            log.error("You asked for a field, without specifying ftype or "
+                        "lang; not adding form fields.")
             return
         #This was causing duplicate form nodes for locationfield
         # self.form(ftype+"form","analang",annodict=attrs)
