@@ -2721,7 +2721,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
