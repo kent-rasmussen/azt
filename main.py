@@ -3187,7 +3187,7 @@ class TaskDressing(object):
                                     setcmd=setcmd,
                                     other=True)
         log.info("Asking for ‘{}’ second form field...".format(ps))
-        optionslist = self.db.fields
+        optionslist = self.db.fields[self.analang]
         if not optionslist:
             ErrorNotice(_("I don't see any appropriate fields; I'll give you "
             "some commonly used ones to choose from."), wait=True)
