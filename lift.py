@@ -859,14 +859,32 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {}".format(self.glosslangs)))
     def getfields(self,guid=None,lang=None): # all field types in a given entry
-        self.fields=list(dict.fromkeys(self.get('entry/field',
-                                                showurl=True
+        self.fields={}
+        langs=set(self.get('entry/field/form',
+                # lang=lang,
+                # showurl=True
+                ).get('lang'))
+        # log.info("Found these entry field languages: {}".format(langs))
+        for lang in langs:
+            # log.info("Looking for entry fields coded by lang [{}]".format(lang))
+            self.fields[lang]=list(dict.fromkeys(self.get('entry/field',
+                                                lang=lang,
+                                                # showurl=True
                                                 ).get('type')))
         log.info('Fields found in Entries: {}'.format(self.fields))
     def getsensefields(self,guid=None,lang=None): # all field types in a given entry
-        self.sensefields=list(dict.fromkeys(self.get('entry/sense/field'
-                                                ,showurl=True
-                                                ).get('type')))
+        self.sensefields={}
+        langs=set(self.get('entry/sense/field/form',
+                # lang=lang,
+                # showurl=True
+                ).get('lang'))
+        # log.info("Found these sense field languages: {}".format(langs))
+        for lang in langs:
+            self.sensefields[lang]=list(dict.fromkeys(
+                    self.get('entry/sense/field',
+                            lang=lang,
+                            # showurl=True
+                            ).get('type')))
         log.info('Fields found in Senses: {}'.format(self.sensefields))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
         self.locations=list(dict.fromkeys(self.get('example/locationfield/form/text',
