@@ -1452,7 +1452,11 @@ class Settings(object):
             "".format(self.db.pss[self.analang]))
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
-        fields=self.db.fields
+        log.info(self.db.fields)
+        try:
+            fields=self.db.fields[self.analang]
+        except KeyError:
+            fields=[]
         self.secondformfield={}
         log.info(_("Fields found in lexicon: {}".format(str(fields))))
         self.plopts=['Plural', 'plural', 'pl', 'Pluriel', 'pluriel']
