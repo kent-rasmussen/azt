@@ -1401,8 +1401,6 @@ class Settings(object):
         # self.defaults is already there, from settingsfilecheck
         self.initdefaults() #provides self.defaultstoclear, needed?
         self.cleardefaults() #this resets all to none (to be set below)
-        self.pss() #sets self.nominalps and self.verbalps
-        self.fields() #sets self.pluralname and self.imperativename
     def getdirectories(self):
         self.directory=file.getfilenamedir(self.liftfilename)
         if not file.exists(self.directory):
@@ -2436,6 +2434,9 @@ class Settings(object):
         if not self.analang:
             log.error("No analysis language; exiting.")
             return
+        #set the field names used in this db:
+        self.pss() #sets self.nominalps and self.verbalps
+        self.fields() #sets self.pluralname and self.imperativename
         self.langnames()
         self.guessaudiolang()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
