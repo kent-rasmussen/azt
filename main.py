@@ -1640,7 +1640,11 @@ class Settings(object):
             self.interpret['VV']='VV'
         log.log(2,"self.distinguish: {}".format(self.distinguish))
     def checkforprofileanalysis(self):
-        if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
+        if (not hasattr(self,'profilesbysense') or
+                self.profilesbysense == {} or
+                'analang' not in self.profilesbysense or #old schema
+                self.profilesbysense['analang'] != self.analang
+                ):
             t=time.time()-self.taskchooser.start_time
             log.info("Starting profile analysis at {}".format(t))
             self.getprofiles() #creates self.profilesbysense nested dicts
@@ -1709,6 +1713,7 @@ class Settings(object):
         self.profileswdatabyentry={}
         self.profilesbysense={}
         self.profilesbysense['Invalid']=[]
+        self.profilesbysense['analang']=self.analang
         self.profiledguids=[]
         self.profiledsenseids=[]
         self.formstosearch={}
