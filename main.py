@@ -10452,7 +10452,16 @@ class SliceDict(dict):
                     wcounts.append((count, profile, ps))
         for i in sorted(wcounts,reverse=True):
             self[(i[1],i[2])]=i[0] #[(profile, ps)]=count
-        log.info('Invalid entries found: {}'.format(profilecountInvalid))
+        e="Found {} valid data slices: {}".format(len(wcounts),self.keys())
+        e+='\n'+"Invalid entries found: {}/{}".format(profilecountInvalid,
+                                                        sum(self.values(),
+                                                        profilecountInvalid))
+        if not len(wcounts):
+            e+='\n'+"This may be a problem with your analysis language: {}".format(
+            self.checkparameters.analang())
+            e+='\n'+"Or a problem with your database."
+            ErrorNotice(e,title="Data Problem!",wait=True)
+        log.info(e)
     def __init__(self,checkparameters,adhoc,profilesbysense): #dict
         """The slice dictionary depends on check parameters (and not vice versa)
         because changes in slice options (ps or profile) change check options,
