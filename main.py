@@ -1674,7 +1674,7 @@ class Settings(object):
                 self.formstosearch[ps][form]=[senseid]
             except KeyError: #ps is missing, build from scratch
                 self.formstosearch[ps]={form:[senseid,]}
-        log.info("Added {} id={}".format(form,self.formstosearch[ps][form]))
+        # log.info("Added {} id={}".format(form,senseid))
         if oldform:
             try:
                 self.formstosearch[ps][oldform].remove(senseid)
