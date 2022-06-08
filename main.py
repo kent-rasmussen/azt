@@ -429,7 +429,7 @@ class Menus(ui.Menu):
     def sound(self):
         self.advancedmenu.add_separator()
         options=[(_("Sound Settings"),
-                self.parent.taskchooser.mikecheck),]
+                self.parent.mikecheck),]
         if isinstance(self.parent,Record):
             options+=[(_("Number of Examples to Record"),
                     self.parent.taskchooser.getexamplespergrouptorecord),]
