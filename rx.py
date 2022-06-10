@@ -20,6 +20,12 @@ def urlok(x):
     for i in [d,p,l]:
         x=re.sub('['+i[0]+']',i[1],x)
     return x
+def escapeattr(x):
+    x=str(x)
+    if "'" in x:
+        return '\"'+x+'\"'
+    else:
+        return "'"+x+"'"    #b+="[@{}=\"{}\"]".format(attr,self.kwargs[attrs[attr]])
 def split(delre,str):
     return re.split(delre,str)
 def countxiny(x,y):
