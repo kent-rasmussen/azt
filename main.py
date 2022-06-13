@@ -429,7 +429,7 @@ class Menus(ui.Menu):
     def sound(self):
         self.advancedmenu.add_separator()
         options=[(_("Sound Settings"),
-                self.parent.taskchooser.mikecheck),]
+                self.parent.mikecheck),]
         if isinstance(self.parent,Record):
             options+=[(_("Number of Examples to Record"),
                     self.parent.taskchooser.getexamplespergrouptorecord),]
@@ -1254,6 +1254,7 @@ class Settings(object):
             o=self
         for s in self.settings[setting]['attributes']:
             # log.info("Looking for {} attr".format(s))
+            # log.info("{} attr value: {}".format(s,getattr(self,s,'Not Found!')))
             """This dictionary of functions isn't made until after the objects,
             at the end of settings init. So this block is not used in
             conversion, only in later saves."""
@@ -1304,6 +1305,7 @@ class Settings(object):
         d=self.makesettingsdict(setting=setting)
         for s in [i for i in d if i not in [None,'None']]:
             v=d[s]
+            # log.info("Ready to store {} type data: {}".format(type(v),v))
             if isinstance(v, dict):
                 config[s]=v
             else:
@@ -1399,8 +1401,6 @@ class Settings(object):
         # self.defaults is already there, from settingsfilecheck
         self.initdefaults() #provides self.defaultstoclear, needed?
         self.cleardefaults() #this resets all to none (to be set below)
-        self.pss() #sets self.nominalps and self.verbalps
-        self.fields() #sets self.pluralname and self.imperativename
     def getdirectories(self):
         self.directory=file.getfilenamedir(self.liftfilename)
         if not file.exists(self.directory):
@@ -1422,8 +1422,9 @@ class Settings(object):
         # setdefaults.langs(self.db) #This will be done again, on resets
     def pss(self):
         log.info("checking these lexical category names for plausible noun "
-                "and verb names: {}".format(self.db.pss))
-        for ps in self.db.pss[:2]:
+                "and verb names: {}".format(self.db.pss[self.analang]))
+        topn=2
+        for ps in self.db.pss[self.analang][:topn]:
             if ps in ['N','n','Noun','noun',
                     'Nom','nom',
                     'S','s','Sustantivo','sustantivo'
@@ -1435,20 +1436,27 @@ class Settings(object):
                     ]:
                 self.verbalps=ps
             else:
-                log.error("Not sure what to do with top ps {}".format(ps))
+                log.error("Not sure what to do with top {} ps {}".format(
+                                                                    topn,ps))
         if not hasattr(self,'nominalps'):
                 self.nominalps='Noun'
         if not hasattr(self,'verbalps'):
                 self.verbalps='Verb'
         try:
-            log.info("Using ‘{}’ for nouns, and ‘{}’ for verbs".format(self.nominalps,
+            log.info("Using ‘{}’ for nouns, and ‘{}’ for verbs".format(
+                self.nominalps,
                 self.verbalps))
         except AttributeError:
             log.info("Problem with finding a nominal and verbal lexical "
-            "category (looked in first two of [{}])".format(self.db.pss))
+            "category (looked in first two of [{}])"
+            "".format(self.db.pss[self.analang]))
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
-        fields=self.db.fields
+        log.info(self.db.fields)
+        try:
+            fields=self.db.fields[self.analang]
+        except KeyError:
+            fields=[]
         self.secondformfield={}
         log.info(_("Fields found in lexicon: {}".format(str(fields))))
         self.plopts=['Plural', 'plural', 'pl', 'Pluriel', 'pluriel']
@@ -1636,7 +1644,11 @@ class Settings(object):
             self.interpret['VV']='VV'
         log.log(2,"self.distinguish: {}".format(self.distinguish))
     def checkforprofileanalysis(self):
-        if not hasattr(self,'profilesbysense') or self.profilesbysense == {}:
+        if (not hasattr(self,'profilesbysense') or
+                self.profilesbysense == {} or
+                'analang' not in self.profilesbysense or #old schema
+                self.profilesbysense['analang'] != self.analang
+                ):
             t=time.time()-self.taskchooser.start_time
             log.info("Starting profile analysis at {}".format(t))
             self.getprofiles() #creates self.profilesbysense nested dicts
@@ -1670,7 +1682,7 @@ class Settings(object):
                 self.formstosearch[ps][form]=[senseid]
             except KeyError: #ps is missing, build from scratch
                 self.formstosearch[ps]={form:[senseid,]}
-        log.info("Added {} id={}".format(form,self.formstosearch[ps][form]))
+        # log.info("Added {} id={}".format(form,senseid))
         if oldform:
             try:
                 self.formstosearch[ps][oldform].remove(senseid)
@@ -1705,11 +1717,12 @@ class Settings(object):
         self.profileswdatabyentry={}
         self.profilesbysense={}
         self.profilesbysense['Invalid']=[]
+        self.profilesbysense['analang']=self.analang
         self.profiledguids=[]
         self.profiledsenseids=[]
         self.formstosearch={}
         self.sextracted={} #Will store matching segments here
-        for ps in self.db.pss:
+        for ps in self.db.pss[self.analang]:
             self.sextracted[ps]={}
             for s in self.rx:
                 self.sextracted[ps][s]={}
@@ -1787,7 +1800,7 @@ class Settings(object):
         """This depends on self.sextracted, from getprofiles, so should only
         run when that changes."""
         scount={}
-        for ps in self.db.pss:
+        for ps in self.db.pss[self.analang]:
             scount[ps]={}
             for s in self.rx:
                 try:
@@ -2430,6 +2443,9 @@ class Settings(object):
         if not self.analang:
             log.error("No analysis language; exiting.")
             return
+        #set the field names used in this db:
+        self.pss() #sets self.nominalps and self.verbalps
+        self.fields() #sets self.pluralname and self.imperativename
         self.langnames()
         self.guessaudiolang()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
@@ -2452,8 +2468,6 @@ class TaskDressing(object):
         return _("Unnamed {} Task ({})".format(program['name'],
                                                 type(self).__name__))
     def _taskchooserbutton(self):
-        if len(self.taskchooser.makeoptions())<2:
-            return
         if isinstance(self,TaskChooser) and not self.showreports:
             if self.datacollection:
                 text=_("Analyze")
@@ -2976,8 +2990,8 @@ class TaskDressing(object):
     def getinterfacelang(self,event=None):
         log.info("Asking for interface language...")
         window=ui.Window(self.frame, title=_('Select Interface Language'))
-        ui.Label(window.frame, text=_('What language do you want this program '
-                                'to address you in?')
+        ui.Label(window.frame, text=_('What language do you want {} '
+                                'to address you in?').format(program['name'])
                 ).grid(column=0, row=0)
         buttonFrame1=ui.ButtonFrame(window.frame,
                                 optionlist=self.taskchooser.interfacelangs,
@@ -2989,11 +3003,11 @@ class TaskDressing(object):
         log.info("this sets the language name")
         def submit(event=None):
             self.settings.languagenames[self.analang]=namevar.get()
-            if (not hasattr(self.taskchooser,'adnlangnames') or
-                    not self.taskchooser.adnlangnames):
-                self.taskchooser.adnlangnames={}
+            if (not hasattr(self.settings,'adnlangnames') or
+                    not self.settings.adnlangnames):
+                self.settings.adnlangnames={}
             if "Language with code [" not in namevar.get():
-                self.taskchooser.adnlangnames[self.analang]=namevar.get()
+                self.settings.adnlangnames[self.analang]=namevar.get()
                 # if self.analang in self.adnlangnames:
             self.settings.storesettingsfile()
             window.destroy()
@@ -3103,9 +3117,9 @@ class TaskDressing(object):
                                     'want to work with (Part of speech)?')
                 ).grid(column=0, row=0)
         if hasattr(self,'additionalps') and self.settings.additionalps is not None:
-            pss=self.db.pss+self.settings.additionalps #these should be lists
+            pss=self.db.pss[self.analang]+self.settings.additionalps #these should be lists
         else:
-            pss=self.db.pss
+            pss=self.db.pss[self.analang]
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                             optionlist=pss,
                                             command=self.settings.setps,
@@ -3171,7 +3185,7 @@ class TaskDressing(object):
                                     setcmd=setcmd,
                                     other=True)
         log.info("Asking for ‘{}’ second form field...".format(ps))
-        optionslist = self.db.fields
+        optionslist = self.db.fields[self.analang]
         if not optionslist:
             ErrorNotice(_("I don't see any appropriate fields; I'll give you "
             "some commonly used ones to choose from."), wait=True)
@@ -3671,7 +3685,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def guidtriagebyps(self):
         log.info("Doing guid triage by ps... This also takes awhile?...")
         self.guidsvalidbyps={}
-        for ps in self.db.pss:
+        for ps in self.db.pss[self.analang]:
             self.guidsvalidbyps[ps]=self.db.get('guidbyps',ps=ps)
     def gettask(self,event=None):
         """This function allows the user to select from any of tasks whose
@@ -7428,7 +7442,7 @@ class Report(object):
         #This is only used in the basic report
         log.info("Syllable profiles actually in senses, by lexical category:")
         for ps in self.profilesbysense:
-            if ps == 'Invalid':
+            if ps in ['Invalid','analang']:
                 continue
             print(ps, self.profilesbysense[ps])
     def basicreport(self):
@@ -10436,11 +10450,21 @@ class SliceDict(dict):
             for profile in self._profilesbysense[ps]:
                 if profile == 'Invalid':
                     profilecountInvalid+=len(self._profilesbysense[ps][profile])
-                count=len(self._profilesbysense[ps][profile])
-                wcounts.append((count, profile, ps))
+                else:
+                    count=len(self._profilesbysense[ps][profile])
+                    wcounts.append((count, profile, ps))
         for i in sorted(wcounts,reverse=True):
             self[(i[1],i[2])]=i[0] #[(profile, ps)]=count
-        log.info('Invalid entries found: {}'.format(profilecountInvalid))
+        e="Found {} valid data slices: {}".format(len(wcounts),self.keys())
+        e+='\n'+"Invalid entries found: {}/{}".format(profilecountInvalid,
+                                                        sum(self.values(),
+                                                        profilecountInvalid))
+        if not len(wcounts):
+            e+='\n'+"This may be a problem with your analysis language: {}".format(
+            self.checkparameters.analang())
+            e+='\n'+"Or a problem with your database."
+            ErrorNotice(e,title="Data Problem!",wait=True)
+        log.info(e)
     def __init__(self,checkparameters,adhoc,profilesbysense): #dict
         """The slice dictionary depends on check parameters (and not vice versa)
         because changes in slice options (ps or profile) change check options,
@@ -10453,7 +10477,9 @@ class SliceDict(dict):
         self.maxprofiles=None
         self.maxpss=None
         self._adhoc=adhoc
-        self._profilesbysense=profilesbysense #[ps][profile]
+        self.analang=profilesbysense['analang']
+        self._profilesbysense={k:v for k,v in profilesbysense.items()
+                                                if k != 'analang'}
         self.updateslices() #any time we add to self._profilesbysense
         """These two are only done here, as the only change with new data"""
         self.slicepriority()

@@ -69,6 +69,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """These three get all possible langs by type"""
         self.getglosslangs() #sets: self.glosslangs
         self.getanalangs() #sets: self.analangs, self.audiolangs
+        self.legacylangconvert()
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
         self.getfields() #sets self.fields (of entry)
@@ -245,8 +246,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     """Make this a class!!!"""
     def pylanglegacy(self,analang):
          return 'py-'+analang
+    def pylanglegacy2(self,analang):
+         return analang+'-py'
     def pylang(self,analang):
          return analang+'-x-py'
+    def legacylangconvert(self):
+        formnodes=self.nodes.findall(".//form")
+        formlangs=set([i.get('lang') for i in formnodes])
+        langs=self.analangs+self.glosslangs
+        log.info("looking to convert pylangs for {}".format(langs))
+        for lang in langs:
+            for flang in self.pylanglegacy(lang),self.pylanglegacy2(lang):
+                if flang in formlangs:
+                    log.info("Found {}; converting to {}".format(flang,
+                                                        self.pylang(lang)))
+                    for n in self.nodes.findall(".//form[@lang='{}']"
+                                                "".format(flang)):
+                        # log.info("{}; {}".format(n.tag,n.attrib))
+                        n.set('lang',self.pylang(lang))
     def modverificationnode(self,senseid,vtype,analang,**kwargs):
         """this node stores a python symbolic representation, specific to an
         analysis language"""
@@ -842,14 +859,32 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {}".format(self.glosslangs)))
     def getfields(self,guid=None,lang=None): # all field types in a given entry
-        self.fields=list(dict.fromkeys(self.get('entry/field',
-                                                showurl=True
+        self.fields={}
+        langs=set(self.get('entry/field/form',
+                # lang=lang,
+                # showurl=True
+                ).get('lang'))
+        # log.info("Found these entry field languages: {}".format(langs))
+        for lang in langs:
+            # log.info("Looking for entry fields coded by lang [{}]".format(lang))
+            self.fields[lang]=list(dict.fromkeys(self.get('entry/field',
+                                                lang=lang,
+                                                # showurl=True
                                                 ).get('type')))
         log.info('Fields found in Entries: {}'.format(self.fields))
     def getsensefields(self,guid=None,lang=None): # all field types in a given entry
-        self.sensefields=list(dict.fromkeys(self.get('entry/sense/field'
-                                                ,showurl=True
-                                                ).get('type')))
+        self.sensefields={}
+        langs=set(self.get('entry/sense/field/form',
+                # lang=lang,
+                # showurl=True
+                ).get('lang'))
+        # log.info("Found these sense field languages: {}".format(langs))
+        for lang in langs:
+            self.sensefields[lang]=list(dict.fromkeys(
+                    self.get('entry/sense/field',
+                            lang=lang,
+                            # showurl=True
+                            ).get('type')))
         log.info('Fields found in Senses: {}'.format(self.sensefields))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
         self.locations=list(dict.fromkeys(self.get('example/locationfield/form/text',
@@ -1333,9 +1368,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def ps(self,**kwargs): #get POS values, limited as you like
         return self.get('ps',**kwargs).get('value')
     def pss(self): #get all POS values in the LIFT file
-        counted = collections.Counter(self.ps())
-        ordered = [value for value, count in counted.most_common()
-                    if value not in [None, '']]
+        ordered={}
+        for lang in self.analangs:
+            counted = collections.Counter(self.ps(lang=lang))
+            ordered[lang] = [value for value, count in counted.most_common()]
         log.info("Found these ps values, by frequency: {}".format(ordered))
         return ordered
     def getmorphtypes(self): #get all morph-type values in the LIFT file
@@ -1588,9 +1624,11 @@ class LiftURL():
                     attrs['value']=ftype+'annotationvalue'
             else:
                 attrs={}
+        elif 'lang' in self.kwargs:
+                self.form(lang='lang')
         else:
-            log.error("You asked for a field, without specifying ftype; not "
-                        "adding form fields.")
+            log.error("You asked for a field, without specifying ftype or "
+                        "lang; not adding form fields.")
             return
         #This was causing duplicate form nodes for locationfield
         # self.form(ftype+"form","analang",annodict=attrs)
@@ -2677,7 +2715,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
