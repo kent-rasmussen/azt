@@ -7908,6 +7908,18 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
 class Transcribe(Sound,Sort):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
+    def switchgroups(self):
+        if not (hasattr(self,'group') and hasattr(self,'group_comparison')):
+            log.error("Missing either group or comparison; can't switch them.")
+            return
+        g=self.group
+        gc=self.group_comparison
+        self.status.group(gc)
+        self.settings.set('group_comparison',g)
+        # self.settings.setgroup(gc)
+        self.runwindow.destroy()
+        # self.maybeswitchmenu.destroy()
+        self.makewindow()
     def updategroups(self):
         self.groups=self.status.groups(wsorted=True)
         log.info("self.groups: {}".format(self.groups))
