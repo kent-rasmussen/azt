@@ -9986,7 +9986,7 @@ class ToneGroupButtonFrame(ui.Frame):
                         **tinyfontkwargs)
         bct=ui.ToolTip(bc,_("Change example word"))
     def unsortbutton(self):
-        t=_("<= remove *this* *word* from \nthe group (sort into another, later)")
+        t=_("<= resort *this* *word*")
         usbkwargs=self.buttonkwargs()
         usbkwargs['wraplength']=usbkwargs['wraplength']*2/3
         b_unsort=ui.Button(self,text = t,
