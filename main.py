@@ -8095,6 +8095,9 @@ class Transcribe(Sound,Sort):
                                     wraplength=self.buttonframew
                                     )
             self.compframe.bf2.grid(row=0, column=0, sticky='w')
+            self.maybeswitchmenu=ui.ContextMenu(self.compframe)
+            self.maybeswitchmenu.menuitem(_("Switch to this group"),
+                                            self.switchgroups)
         elif not hasattr(self, 'group_comparison'):
             log.info("No comparison found !")
         elif self.group_comparison not in self.groups:
