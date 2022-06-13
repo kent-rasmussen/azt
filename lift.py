@@ -2,6 +2,18 @@
 # coding=UTF-8
 """This module controls manipulation of LIFT files and objects"""
 """"(Lexical Interchange FormaT), both for reading and writing"""
+import logsetup
+log=logsetup.getlog(__name__)
+# logsetup.setlevel('INFO',log) #for this file
+logsetup.setlevel('DEBUG',log) #for this file
+log.info("Importing lift.py")
+# try:
+#     from lxml import etree as ET
+#     log.info("using lxml to parse XML")
+#     lxml=True
+# except:
+log.info("using xml.etree to parse XML")
+lxml=False
 from xml.etree import ElementTree as ET
 import xmlfns
 import sys
@@ -15,11 +27,6 @@ import rx
 import ast #For string list interpretation
 import copy
 import collections
-import logsetup
-log=logsetup.getlog(__name__)
-# logsetup.setlevel('INFO',log) #for this file
-logsetup.setlevel('DEBUG',log) #for this file
-log.info("Importing lift.py")
 try: #Allow this module to be used without translation
     _
 except:
@@ -62,6 +69,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """These three get all possible langs by type"""
         self.getglosslangs() #sets: self.glosslangs
         self.getanalangs() #sets: self.analangs, self.audiolangs
+        self.legacylangconvert()
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
         self.getfields() #sets self.fields (of entry)
@@ -238,19 +246,36 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     """Make this a class!!!"""
     def pylanglegacy(self,analang):
          return 'py-'+analang
+    def pylanglegacy2(self,analang):
+         return analang+'-py'
     def pylang(self,analang):
          return analang+'-x-py'
+    def legacylangconvert(self):
+        formnodes=self.nodes.findall(".//form")
+        formlangs=set([i.get('lang') for i in formnodes])
+        langs=self.analangs+self.glosslangs
+        log.info("looking to convert pylangs for {}".format(langs))
+        for lang in langs:
+            for flang in self.pylanglegacy(lang),self.pylanglegacy2(lang):
+                if flang in formlangs:
+                    log.info("Found {}; converting to {}".format(flang,
+                                                        self.pylang(lang)))
+                    for n in self.nodes.findall(".//form[@lang='{}']"
+                                                "".format(flang)):
+                        # log.info("{}; {}".format(n.tag,n.attrib))
+                        n.set('lang',self.pylang(lang))
     def modverificationnode(self,senseid,vtype,analang,**kwargs):
         """this node stores a python symbolic representation, specific to an
         analysis language"""
-        showurl=kwargs.get('showurl',False)
-        write=kwargs.get('write',True)
+        showurl=kwargs.get('showurl')
         add=kwargs.get('add',None)
         rms=kwargs.get('rms',[])
-        addifrmd=kwargs.get('addifrmd',False)
+        addifrmd=kwargs.get('addifrmd',False) #not using this anywhere; point?
         textnode, fieldnode, sensenode=self.addverificationnode(
                                             senseid,vtype=vtype,analang=analang)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
+        # log.info("l (before): {}>".format(l))
+        # prettyprint(textnode)
         changed=False
         i=len(l)
         for rm in rms:
@@ -263,8 +288,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l.insert(i,add) #put where removed from, if done.
             changed=True
         textnode.text=str(l)
+        # log.info("l (after): {}> (changed: {})".format(l,changed))
+        # prettyprint(textnode)
         if changed:
-            self.updatemoddatetime(senseid=senseid,write=write)
+            self.updatemoddatetime(senseid=senseid,write=kwargs.get('write'))
         log.log(2,"Empty node? {}; {}".format(textnode.text,l))
         if not l:
             log.debug("removing empty verification node from this sense")
@@ -351,14 +378,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         location=kwargs.get('location')
         fieldtype=kwargs.get('fieldtype','tone') # needed? ever not 'tone'?
         oldtonevalue=kwargs.get('oldfieldvalue',None)
+        showurl=kwargs.get('showurl',False)
         # ftype=kwargs.get('ftype')
         if not oldtonevalue:
             exfieldvalue=self.get("example/tonefield/form/text",
-                    senseid=senseid, location=location).get('node')
+                                senseid=senseid,
+                                location=location,
+                                showurl=showurl
+                                ).get('node')
         else:
             exfieldvalue=self.get("example/tonefield/form/text",
-                senseid=senseid, tonevalue=oldtonevalue, #to clear just "NA" values
-                location=location).get('node')
+                            senseid=senseid,
+                            tonevalue=oldtonevalue, #to clear just "NA" values
+                            showurl=showurl,
+                            location=location
+                                ).get('node')
             # Set values for any duplicates, too. Don't leave inconsisted data.
         tonevalue=kwargs.get('fieldvalue') #don't test for this above
         analang=kwargs.get('analang')
@@ -387,15 +421,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     example=self.get("example", senseid=senseid,
                         location=location, showurl=True).get('node')
                     Node.makeformnode(example[0],analang,forms[analang])
-                glossesnode=self.get("example/translation", senseid=senseid,
-                            location=location, showurl=True).get('node')
+                glossesnode=self.get("example/translation",
+                                    senseid=senseid,
+                                    location=location,
+                                    showurl=showurl
+                                    ).get('node')
                 #If the glosslang data isn't all provided, ignore it.
                 for lang in [g for g in glosslangs if g in forms and forms[g]]:
                     glossvaluenode=self.get("form/text",
                                 node=glossesnode[0], senseid=senseid,
                                 glosslang=lang,
                                 location=location,
-                                showurl=True).get('node')
+                                showurl=showurl
+                                ).get('node')
                     log.debug("glossvaluenode: {}".format(glossvaluenode))
                     if glossvaluenode:
                         glossvaluenode=glossvaluenode[0]
@@ -821,17 +859,38 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {}".format(self.glosslangs)))
     def getfields(self,guid=None,lang=None): # all field types in a given entry
-        self.fields=list(dict.fromkeys(self.get('entry/field',
-                                                showurl=True
+        self.fields={}
+        langs=set(self.get('entry/field/form',
+                # lang=lang,
+                # showurl=True
+                ).get('lang'))
+        # log.info("Found these entry field languages: {}".format(langs))
+        for lang in langs:
+            # log.info("Looking for entry fields coded by lang [{}]".format(lang))
+            self.fields[lang]=list(dict.fromkeys(self.get('entry/field',
+                                                lang=lang,
+                                                # showurl=True
                                                 ).get('type')))
         log.info('Fields found in Entries: {}'.format(self.fields))
     def getsensefields(self,guid=None,lang=None): # all field types in a given entry
-        self.sensefields=list(dict.fromkeys(self.get('entry/sense/field'
-                                                ,showurl=True
-                                                ).get('type')))
+        self.sensefields={}
+        langs=set(self.get('entry/sense/field/form',
+                # lang=lang,
+                # showurl=True
+                ).get('lang'))
+        # log.info("Found these sense field languages: {}".format(langs))
+        for lang in langs:
+            self.sensefields[lang]=list(dict.fromkeys(
+                    self.get('entry/sense/field',
+                            lang=lang,
+                            # showurl=True
+                            ).get('type')))
         log.info('Fields found in Senses: {}'.format(self.sensefields))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
-        self.locations=list(dict.fromkeys(self.get('example/locationfield').get('text')))
+        self.locations=list(dict.fromkeys(self.get('example/locationfield/form/text',
+                                                    what='text',
+                                                    # showurl=True
+                                                    ).get('text')))
         log.info('Locations found in Examples: {}'.format(self.locations))
     def getsenseids(self):
         self.senseids=self.get('sense').get('senseid')
@@ -860,15 +919,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         or CAWL numbers, etc, which shouldn't be coded for analang."""
         fieldswsoundfiles={}
         self.nfieldswsoundfiles={}
+        self.nfieldswannotations={}
         fields={}
         self.nfields={}
-        fieldopts=['sense/example']+['field[@type="{}"]'.format(f)
-                                                        for f in self.fields]
+        fieldopts=['sense/example',
+                    'citation',
+                    'lexical-unit']
+        fieldopts+=['field[@type="{}"]'.format(f) for f in self.fields]
         for field in fieldopts:
             fields[field]={}
             fieldswsoundfiles[field]={}
             self.nfields[field]={}
             self.nfieldswsoundfiles[field]={}
+            self.nfieldswannotations[field]={}
             for lang in self.analangs:
                 fields[field][lang]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
@@ -876,6 +939,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     if i.text
                                     ]
                 self.nfields[field][lang]=len(fields[field][lang])
+                fields[field][lang]=[i for i in
+                    self.nodes.findall('entry/{}/form[@lang="{}"]/annotation'.format(
+                                                                field,lang))
+                    if i.get('value')
+                                    ]
+                self.nfieldswannotations[field][lang]=len(fields[field][lang])
             for lang in self.audiolangs:
                 fieldswsoundfiles[field][lang]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
@@ -971,24 +1040,28 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # will get picked up again during the analysis
         c={}
         c['pvd']={}
-        c['pvd'][2]=['bh','dh','gh','gb']
+        c['pvd'][2]=['bh','dh','gh','gb'
+                    'bb','dd','gg' #French
+                    ]
         c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
         c['p']={}
-        c['p'][2]=['kk','kp']
+        c['p'][2]=['kk','kp','cc','pp','pt','tt','ck']
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q']
         c['fvd']={}
         c['fvd'][2]=['bh','vh','zh']
-        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ']
+        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ'] #problems w x?
         c['f']={}
-        c['f'][2]=['ch','ph','sh','hh','pf','bv']
+        c['f'][3]=['sch']
+        c['f'][2]=['ch','ph','sh','hh','pf','bv','ff','sc','ss','th']
+        #Assuming x is voiceless, per IPA and most useage...
         c['f'][1]=['F','f','s','ʃ','θ','x','h'] #not 'S'
         c['avd']={}
         c['avd'][2]=['dj','dz','dʒ']
         c['a']={}
-        c['a'][3]=['chk']
+        c['a'][3]=['chk','tch']
         c['a'][2]=['ts','tʃ']
         c['lfvd']={}
-        c['lfvd'][2]=['zl','zl']
+        c['lfvd'][2]=['zl']
         c['lfvd'][1]=['ɮ']
         c['lf']={}
         c['lf'][2]=['sl']
@@ -1023,11 +1096,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ]
         x['G']=['ẅ','y','Y','w','W']
         x['N']=['m','M','n','ŋ','ɲ','ɱ'] #'N', messed with profiles
-        x['Ndg']=['mm','ŋŋ','ny']
+        x['Ndg']=['mm','ŋŋ','ny','gn','nn']
         x['Ntg']=["ng'"]
         """Non-Nasal/Glide Sonorants"""
         x['S']=['l','r']
-        x['Sdg']=['rh','wh']
+        x['Sdg']=['rh','wh','ll','rr']
         x['V']=[
                 #decomposed first:
                 #tilde (decomposed):
@@ -1051,8 +1124,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         x['Vdg']=['ou','ei','ɨʉ','ai', #requested by bfj
                 'óu','éi','ɨ́ʉ','ái',
                 'òu','èi','ɨ̀ʉ','ài',
-                'yi','yu','yɨ','yʉ'] #requested by Jane
-        x['Vtg']=[]
+                'yi','yu','yɨ','yʉ', #requested by Jane
+                'ai','ea','ou','ay', #For English
+                'ee','ei','ey','ie',
+                'oa','oo','ow','ue',
+                'ai','ei','oe','ae', # for French
+                'au','ée','ea','oi',
+                'eu','ie','ou',
+                ]
+        x['Vtg']=['aie','eau']
 
         x["̀"]=["̀","́","̂","̌","̄","̃"
                 , "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉" #from IPA keyboard
@@ -1074,10 +1154,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 self.s[lang]={}
             for stype in x:
                 self.s[lang][stype]=rx.inxyz(self,lang,x[stype])
-                log.debug('hypotheticals[{}][{}]: {}'.format(lang,stype,
-                                                    str(x[stype])))
-                log.debug('Actual Segments found [{}][{}]: {}'.format(lang,stype,
-                                                str(self.s[lang][stype])))
+                # log.debug('hypotheticals[{}][{}]: {}'.format(lang,stype,
+                #                                     str(x[stype])))
+                # log.debug('Actual Segments found [{}][{}]: {}'.format(lang,stype,
+                #                                 str(self.s[lang][stype])))
         log.info('Actual Segments found: {}'.format(self.s))
     def slists(self):
         self.segmentsnotinregexes={}
@@ -1140,8 +1220,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         output={} # This produces a dictionary, of forms for each language
         for lang in self.analangs:
             kwargs['analang']=lang
-            output[lang]=self.citation(**kwargs) #.get('text')
-        log.info("Found the following citation forms: {}".format(output))
+            output[lang]=[i for i in self.citation(**kwargs) if i] #.get('text')
+        # log.info("Found the following citation forms: {}".format(output))
         return output
     def citationformnodeofentry(self,entry,analang):
         nodes=entry.findall('citation')
@@ -1178,11 +1258,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         output={} # This produces a dictionary, of forms for each language.
         for lang in self.analangs:
             kwargs['analang']=lang
-            output[lang]=self.lexeme(**kwargs)
-        log.info("Found the following lexemes: {}".format(output))
+            output[lang]=[i for i in self.lexeme(**kwargs) if i]
+        # log.info("Found the following lexemes: {}".format(output))
         return output
     def fieldnode(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
+        if 'node' in kwargs:
+            return [kwargs['node']]
         if 'ftype' not in kwargs or not kwargs['ftype']:
             log.error("I don't know what field you want: {}".format(kwargs))
             return []
@@ -1208,14 +1290,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         in LiftURL, but it will impact other things that are currently working
         """
         t=[]
-        for node in self.fieldnode(**kwargs):
+        for kwargs['node'] in self.fieldnode(**kwargs):
             # log.info("Getting text from node {}".format(node))
-            t.extend(self.get('text',node=node,**kwargs).get('text'))
+            t.extend(self.get('text',**kwargs).get('text'))
         return t
     def fieldvalue(self,**kwargs):
         t=[]
-        for node in self.fieldnode(**kwargs):
-            t.extend(self.get('annotation',node=node,**kwargs).get('value'))
+        for kwargs['node'] in self.fieldnode(**kwargs):
+            t.extend(self.get('annotation',**kwargs).get('value'))
+        return t
+    def fieldformnode(self,**kwargs):
+        t=[]
+        for kwargs['node'] in self.fieldnode(**kwargs):
+            t.extend(self.get('form',**kwargs).get())
         return t
     def annotatefield(self,**kwargs):
         if not ('name' in kwargs and 'value' in kwargs):
@@ -1232,11 +1319,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # kwargs['annotationname']=anndict['name'] #look for value in fieldnode()
         # node=kwargs.pop('node') #because base node changes
         # log.info("Looking w/{}".format(kwargs))
-        for node in self.fieldnode(**kwargs): #these take any annotationname
-            for form in self.get('form',node=node,
+        for kwargs['node'] in self.fieldnode(**kwargs): #these take any annotationname
+            for form in self.get('form',
                                 lang=kwargs['analang'],
                                 **kwargs).get('node'):
                 # log.info("Looking in form {} w/{}".format(form,kwargs))
+                kwargs.pop('node') #avoid duplication conflict, reset on next iteration
                 ann=self.get('annotation', node=form,
                             annotationname=anndict['name'], #only use this here
                             **kwargs).get('node') #name!
@@ -1247,8 +1335,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     a=Node(form, 'annotation', anndict)
     def extrasegments(self):
         for lang in self.analangs:
-            self.segmentsnotinregexes[lang]=list()
-            extras=list()
+            self.segmentsnotinregexes[lang]={}
             """This is not a particularly sophisticated test. I should be
             also looking for consonant glyphs that occur between vowels,
             and vice versa. Later."""
@@ -1261,12 +1348,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     if ((x not in invalid) and
                             (x not in [item for sublist in self.s[lang].values()
                                 for item in sublist])):
-                        self.segmentsnotinregexes[lang].append(x)
-                        log.debug('Missing {} from {} {}'.format(x,lang,form))
+                        try:
+                            self.segmentsnotinregexes[lang][x]+=[form]
+                        except KeyError:
+                            self.segmentsnotinregexes[lang][x]=[form]
+                        # log.debug('Missing {} from {} {}'.format(x,lang,form))
             if len(self.segmentsnotinregexes[lang]) > 0:
                 log.info("The following segments are not in your {} "
-                "regex's: {}".format(lang,
-                list(dict.fromkeys(self.segmentsnotinregexes[lang]).keys())))
+                "regex's: {}".format(lang, self.segmentsnotinregexes[lang]))
             else:
                 print("No problems!")
                 log.info(_("Your regular expressions look OK for {} (there are "
@@ -1279,9 +1368,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def ps(self,**kwargs): #get POS values, limited as you like
         return self.get('ps',**kwargs).get('value')
     def pss(self): #get all POS values in the LIFT file
-        counted = collections.Counter(self.ps())
-        ordered = [value for value, count in counted.most_common()
-                    if value not in [None, '']]
+        ordered={}
+        for lang in self.analangs:
+            counted = collections.Counter(self.ps(lang=lang))
+            ordered[lang] = [value for value, count in counted.most_common()]
         log.info("Found these ps values, by frequency: {}".format(ordered))
         return ordered
     def getmorphtypes(self): #get all morph-type values in the LIFT file
@@ -1388,12 +1478,6 @@ class LiftURL():
             r=[i.get(what) for i in n]
             log.log(4,r)
             return r
-    def escapeattr(self,x):
-        x=str(x)
-        if "'" in x:
-            return '\"'+x+'\"'
-        else:
-            return "'"+x+"'"    #b+="[@{}=\"{}\"]".format(attr,self.kwargs[attrs[attr]])
     def build(self,tag,liftattr=None,myattr=None,attrs=None):
         buildanother=False
         noseparator=False
@@ -1405,12 +1489,12 @@ class LiftURL():
         for attr in attrs:
             if (None not in [attr,attrs[attr]] and attrs[attr] in self.kwargs
                                 and self.kwargs[attrs[attr]] is not None):
-                b+="[@{}={}]".format(attr,self.escapeattr(self.kwargs[attrs[attr]]))
+                b+="[@{}={}]".format(attr,rx.escapeattr(self.kwargs[attrs[attr]]))
         if ((liftattr is None or (liftattr in self.kwargs #no lift attribute
                                 and self.kwargs[liftattr] is None))
                 and tag == 'text' and myattr in self.kwargs #text value to match
                                         and self.kwargs[myattr] is not None):
-            b="[{}={}]".format(tag,self.escapeattr(self.kwargs[myattr]))
+            b="[{}={}]".format(tag,rx.escapeattr(self.kwargs[myattr]))
             noseparator=True
             if tag == 'text' and tag in self.targettail:
                 buildanother=True #the only way to get text node w/o value
@@ -1435,14 +1519,18 @@ class LiftURL():
         self.build("text",myattr=value)
     def form(self,value=None,lang=None,annodict={}):
         self.baselevel()
+        #This holds the name of the kwarg key that holds the text value
         self.kwargs['value']=self.kwargs.get(value,None) #location and tonevalue
         if not lang and 'lang' in self.kwargs: #in case not called by parent
             lang='lang' #this is the kwargs key to use
         # log.info("form kwargs: {}, lang={}".format(self.kwargs,lang))
         self.build("form","lang",lang) #OK if lang is None
+        if self.kwargs.get('annodict') and not annodict:
+            annodict=self.kwargs.pop('annodict')
         if annodict:
             self.annotation(annodict)
-        if self.kwargs['value']:
+        # log.info("Looking for {}".format(self.what))
+        if self.kwargs['value'] or self.what == 'text':
             self.text("value")
         # self.bearchildrenof("form")
     def annotation(self,attrs={}):
@@ -1536,16 +1624,21 @@ class LiftURL():
                     attrs['value']=ftype+'annotationvalue'
             else:
                 attrs={}
+        elif 'lang' in self.kwargs:
+                self.form(lang='lang')
         else:
-            log.error("You asked for a field, without specifying ftype; not "
-                        "adding form fields.")
+            log.error("You asked for a field, without specifying ftype or "
+                        "lang; not adding form fields.")
             return
-        self.form(ftype+"form","analang",annodict=attrs)
+        #This was causing duplicate form nodes for locationfield
+        # self.form(ftype+"form","analang",annodict=attrs)
     def locationfield(self):
         self.baselevel()
         self.kwargs['ftype']='location'
         self.kwargs['formtext']='location'
         self.field()
+        #This was causing duplicate form nodes
+        #But not a needed one for 'example'
         self.form("location",'glosslang')
     def toneUFfield(self):
         self.baselevel()
@@ -1861,7 +1954,9 @@ class LiftURL():
                 log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
                 if (len(afterbp) <=1 #nothing after parent
                         or self.unalias(b) not in afterbp[-1] #this item not after parent
-                        or self.level[b]!=self.level[bp]+1): #this not child of parent
+                        or (b in self.level and
+                            bp in self.level and
+                            self.level[b]!=self.level[bp]+1)): #this not child of parent
                     log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
                     self.levelup(bp)
                     self.show(b,parent=bp)
@@ -1900,10 +1995,13 @@ class LiftURL():
         elif node == self.targethead: #do this later
             return False
         elif self.attrneeds(node,c):
+            # log.info("attrneeds {}; {}".format(node,c))
             return True
         elif self.kwargsneeds(node,c):
+            # log.info("kwargsneeds {}; {}".format(node,c))
             return True
         elif self.pathneeds(node,c):
+            # log.info("pathneeds {}; {}".format(node,c))
             return True
         else:
             return False
@@ -1922,33 +2020,40 @@ class LiftURL():
         return x
     def pathneeds(self,node,children):
         path=self.path
-        log.log(4,"Path: {}; children: {}".format(path,children))
+        # log.info("Path: {}; children: {}".format(path,children))
         if node in path and node not in self.level:
-            log.log(4,"Parent ({}) in path: {}".format(node,path))
+            # log.info("Parent ({}) in path: {}".format(node,path))
             return True
         if children != []:
             childreninpath=set(children) & set(path)
             if childreninpath != set():
                 pathnotdone=childreninpath-set(self.level)
                 if pathnotdone != set():
-                    log.log(4,"Found descendant of {} in path, which isn't "
-                        "already there: {}".format(node, pathnotdone))
+                    if not pathnotdone-set(['annotation']) and ( #only anno...
+                                    node not in ['form','annotation']
+                                                         ):
+                        return #otherwise this brings in way too much
+                    # log.info("Found descendant of {} in path, which isn't "
+                    #     "already there: {}".format(node, pathnotdone))
                     return True
         return False
     def attrneeds(self,node,children):
-        log.log(4,"looking for attr(s) of {} in {}".format([node]+children,
-                                                                    self.attrs))
-        for n in [node]+children:
-            if n in self.path or n in self.target:
-                log.log(4,"found {} in path or target; skipping kwarg check.".format(n))
-            elif n in self.attrs:
-                log.log(4,"looking for attr(s) of {} in {}".format(n,self.attrs))
+        nodes=[node]+children
+        # log.info("looking for attr(s) of {} in {}".format(nodes,self.attrs))
+        # log.info("Building on url {}".format(self.drafturl()))
+        for n in nodes:
+            if n in self.attrs and not (n in self.path or n in self.target):
+                # log.info("looking for attr(s) of {} in {}".format(n,self.attrs))
+                if n == 'annotation' and node not in ['form','annotation']:
+                    return #otherwise this brings in way too much
                 common=set(self.attrs[n])&set(list(self.kwargs)+[self.what])
                 if common != set():
-                    log.log(4,"Found attr(s) {} requiring {}".format(common,n))
+                    # log.info("Found attr(s) {} requiring {}".format(common,n))
                     return True
-            else:
-                log.log(4,"{} not found in {}".format(n,self.attrs.keys()))
+            # elif n in self.path or n in self.target:
+            #     log.info("found {} in path or target; skipping kwarg check.".format(n))
+            # else:
+            #     log.info("{} not found in {}".format(n,self.attrs.keys()))
         return False
     def kwargsneeds(self,node,children):
         if node in self.kwargs:
@@ -2072,15 +2177,18 @@ def textornone(x):
 def prettyprint(node):
     # This fn is for seeing the Element contents before writing them (in case of
     # ElementTree errors that aren't otherwise understandable).
+    if not isinstance(node,ET.Element):
+        log.info("didn't prettyprint {}".format(node))
+        return
     t=0
     def do(node,t):
-        for child in node:
-            log.info("{}{} {}: {}".format('\t'*t,child.tag,child.attrib,
-                "" if child.text is None
-                    or set(['\n','\t',' ']).issuperset(child.text)
-                    else child.text))
+            log.info("{}{} {}: {}".format('\t'*t,node.tag,node.attrib,
+                "" if node.text is None
+                    or set(['\n','\t',' ']).issuperset(node.text)
+                    else node.text))
             t=t+1
-            do(child,t)
+            for child in node:
+                do(child,t)
             t=t-1
     do(node,t)
 def atleastoneexamplehaslangformmissing(examples,lang):
@@ -2606,13 +2714,14 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
+    # prettyprint(lift.nodes)
     senseids=[
             # "begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
             # 'widen_fceb550d-fc99-40af-a288-0433add4f15',
@@ -2634,22 +2743,52 @@ if __name__ == '__main__':
     analang='bfj'
     analang='en'
     audiolang='en-Zxxx-x-audio'
+    check='V1'
     kwargs={
             'senseid':
-            "machete, cutlass_fb520766-e591-457b-8c70-a172088afc08"
+            "lip_39e4b942-0bf6-4494-aa9b-7f5163feb2bc",
             # "sickle_db1c9e16-7fd7-46fa-a21c-27981588cf41",
             # 'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
             # 'glosslang': 'fr'
-            }
+            'annotationname':check,
+            'ftype':'lc',
+            'showurl':True}
     ftype='Plural'
-    ftype='lx'
+    ftype='lc'
+    group=1
+    t=[]
+    # pr=lift.get('pronunciation',path=['annotation'],**kwargs).get('value')
+    # print(pr)
+    # for kwargs['node'] in lift.fieldnode(**kwargs):
+    #     t.extend(lift.get('annotation',**kwargs).get('value'))
+    # print(t)
+    lf=lift.get('example/locationfield/',
+            what='text',
+            showurl=True
+            ).get('text')
+    print(lf)
+    exit()
     for ps in pss:
-        senseids=lift.get("sense", #path=['field'],
-                        # ftype='lc',
-                        lcannotationname='V1',
-                        lcannotationvalue=1,
-                        showurl=True
-                        ).get('senseid')
+        kwargs={ftype+'annotationname':'V1',
+                ftype+'annotationvalue':'a'
+                }
+        senseids=lift.get("sense", location=check, path=['tonefield'],
+                            tonevalue=group,showurl=True
+                            ).get('senseid')
+        print(senseids)
+        senseids=lift.get("sense", location=check, #path=['tonefield'],
+                            tonevalue=group,showurl=True
+                            ).get('senseid')
+        print(senseids)
+        # senseids=lift.get("sense", **kwargs, showurl=True #location=check, tonevalue=group,
+        #                 # path=['tonefield']
+        #                     ).get('senseid')
+        # # senseids=lift.get("sense", #path=['field'],
+        #                 # ftype='lc',
+        #                 lcannotationname='V1',
+        #                 lcannotationvalue=1,
+        #                 showurl=True
+        #                 ).get('senseid')
         # ft=lift.fieldtext(#senseid=senseid,
         #                 ftype=ftype,
         #                 # lang=analang,
@@ -2700,7 +2839,9 @@ if __name__ == '__main__':
     oldtonevalue=2
     g='snore'
     lang='en'
-    cawls=lift.get('cawlfield/form/text').get('text')
+    cawls=lift.get('cawlfield/form/text').get('node')
+    prettyprint(cawls)
+    exit()
     log.info("CAWL ({}): {}".format(len(cawls),cawls))
     # for cv in [56,145,1234]:
     for senseid in lift.senseids[:3]:

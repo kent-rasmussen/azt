@@ -12,21 +12,20 @@ logsetup.setlevel('INFO',log) #for this file
 
 class Transcriber(ui.Frame):
     def addchar(self,x):
-        if x == '':
+        if x in ['','∅'] or self.formfield.get() == '∅':
             self.formfield.delete(0,ui.END)
-        else:
+        if x:
             self.formfield.insert(ui.INSERT,x) #could also do tkinter.END
         self.updatelabels()
     def updatelabels(self,event=None):
         a=self.newname.get()
-        try:
-            int(a) #Is this interpretable as an integer (default group)?
-            self.namehash.set('')
-        except ValueError:
+        if set(['˥','˦','˧','˨','˩']) & set(a):
             x=self.hash_t.sub('T',self.newname.get())
             y=self.hash_sp.sub('#',x)
             z=self.hash_nbsp.sub('.',y)
             self.namehash.set(z)
+        else:
+            self.namehash.set('')
         self.labelcompiled=False
     def playbeeps(self,pitches):
         if not self.labelcompiled:
@@ -76,33 +75,60 @@ class Transcriber(ui.Frame):
             self.soundsettings=sound.SoundSettings(self.pyaudio)
         self.beeps=sound.BeepGenerator(pyAudio=self.pyaudio,
                                             settings=self.soundsettings)
+        if 'chars' in kwargs and kwargs['chars'] and type(kwargs['chars']) is list:
+            chars=kwargs.pop('chars')
+            if len(chars) >25:
+                root=int(len(chars)**(1/2))+2
+            else:
+                root=7 #at least this many columns
+            if len(chars)%root:
+                # log.info("{} indivisible by {}!".format(len(chars),root))
+                nrows=len(chars)//root+1
+                ncols=len(chars)//nrows+1
+            else:
+                # log.info("{} divisible by {}!".format(len(chars),root))
+                ncols=root
+                nrows=len(chars)//root
+            chars+=['∅']
+        else:
+            chars=kwargs.pop('chars',None) #in case it is None/0/False, etc.
+            tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
+            spaces=[' ',' ']
+            chars=tonechars+spaces
+            ncols=7
+            nrows=1
+        clear=['']
         ui.Frame.__init__(self, parent, **kwargs)
-        buttonframe=ui.Frame(self,
-                            row=0,column=0,sticky='new'
-                            )
-        tonechars=['[', '˥', '˦', '˧', '˨', '˩', ']']
-        spaces=[' ',' ','']
-        for char in tonechars+spaces:
+        buttonframe=ui.Frame(self, row=0, column=0, sticky='new')
+        log.info("Transcriber using {} rows, {} columns".format(nrows,ncols))
+        for char in chars+clear:
             if char == ' ':
                 text=_('syllable break')
                 column=0
-                columnspan=int(len(tonechars)/2)+1
+                columnspan=int(ncols/2)+1
                 row=1
             elif char == ' ':
                 text=_('word break')
-                columnspan=int(len(tonechars)/2)
+                columnspan=int(ncols/2)
                 column=columnspan+1
                 row=1
+            elif char == '∅':
+                text=_('no segments')
+                columnspan=ncols
+                column=0
+                row=nrows+2
             elif char == '':
                 text=_('clear entry')
                 column=0
-                columnspan=len(tonechars)
-                row=2
+                columnspan=ncols
+                row=nrows+1
             else:
-                column=tonechars.index(char)
+                column=chars.index(char)%ncols
                 text=char
                 columnspan=1
-                row=0
+                row=chars.index(char)//ncols
+            # if char in chars:
+            #     log.info("Making Button {} at row={}, column={}".format(chars.index(char),row, column))
             ui.Button(buttonframe,text = text,
                         command = lambda x=char:self.addchar(x),
                         anchor ='c',

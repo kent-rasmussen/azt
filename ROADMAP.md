@@ -1,12 +1,84 @@
 #Roadmap
-- I need to think through ad hoc groups. selection seems to be broken, as well as uptake from file.
-- check that syllable profile analysis is more recent than last word addition, or do again.
-  - consequences? (ad hoc groups, other?)
-recall that ps values are analysis, not data!
+
+I need some check that columns of sort buttons aren't being pushed off the screen (and if so, auto-reduce the number)
+  - maybe take button width, and have screenwidth/max button as the largest acceptable button columns value.
+Consider removing CVT distinct features from task manager.
+  - Sort and Transcribe switch automatically between cvt values automatically, so these buttons are somewhat redundant —we could just have 'Sort'.
+  - Same with Comprehensive reports.
+
+Consider making context menu adjustments:
+  - visuals (with all current, after show menus)
+  - advanced (below the line only)
+  - help
+
+Fill out tool tips for status frame lines
+
+Consider culling visible logic at the end of maybesort. Just do, maybe leave an ErrorNotice window, but keep going with the next sort (make a reasonable choice, and the user can go back and change, if desired.)
+- I don't think I want to move automatically between lexical categories. Someone should be able to ask for that, and if done when not desired (e.g., after top 3 profiles), then there will be a lot of going back on that decision manually.
+- I think adding frames doesn't need to be in the sorting logic. "Next" (DOENS'T, but should) provide that, as does selecting "New Frame".
+
+## current errors:
+clean up words whose forms didn't get set.
+load and restore formsto search in object
+comprehensive vowel should indicate which profiles and ps will be done
+
+make lift-status update take in verification info, too.
+
+## release stoppers
+- put image creation after splash creation?
+- check out why tooltips aren't working before first refresh
+
+## Documentation
+- Steps to use AZT in a workshop, from start to finish (not absolutes, but recommendations)
+
+## Parsing
 - set up basic parsing to lx field:
   - copy all
   - trim from each edge (later)
   - others (much later)
+
+## Sound files
+  - Why do bad sound files play OK? #this is temporaritly worked around by not allowing buggy setting. Longer term fix is
+    - migrate sound.py from wave to soundfile (or scipy.io.wavfile)
+  - look at what it would take to make two copies of each sound file. one in hires/, the other in lowres/. We could then make a link to whichever was appropriate.
+  -Problem:
+  -If we keep the same filename for each file (lowres and highres versions), then we run the risk of either overwriting the other, on a (user error) copy.
+  -If we make different filenames (e.g., _hires.wav, _lowres.mp3), then the link to the filename would have to be updated as needed, or else each in their own link.
+  -Rationale: one sample 96khz wav file was 2.5% as large as a 48khz mp3
+  -This has drastic consequences on collaboration
+  -This is not obviously an important difference for tone study
+
+## Images
+  - get AOR working:
+    - /usr/share/SIL/ImageCollections/ArtOfReading/index.txt (search for gloss elements)
+    - make object for image repo, with location on disk as attribute
+    - find out how big a pic is
+    - scale (to ?200px wide/tall?) to present on screen in formatted data
+      - maybe larger for selection, smaller for buttons?
+    - store scaled image in memory
+    - save full version in repo
+      - and smaller version, too? Would this be better than ad hoc scaling?
+    - save link to LIFT
+    - use LIFT link to make button images (w/wo ad hoc scaling?)
+
+## Efficiency and bugs
+Move things into the correct fields (def > gloss)
+- gloss, copy over from definitions (truncate, all langs)
+- remove references to definition, lexeme?
+menus
+- method of speeding up image scaling:
+    - CPU detection, set y in xy/y function according to processing speed.
+    - multithreading (can't, for anything requiring UI)
+Make CV basic report less resource intensive
+-set report for different forms separately (e.g., making images for screen may not be useful for some, yet takes time)
+- Do I want to ultimately be modifying lexeme form?
+- find ways to speed up tone reports:
+    - multithreading?  !(CPU limited)
+- make font changes more general, tied to <ctrl>+/-
+- I need to think through ad hoc groups. selection seems to be broken, as well as uptake from file.
+recall that ps values are analysis, not data!
+- check that syllable profile analysis is more recent than last word addition, or do again.
+- consequences? (ad hoc groups, other?)
 - Figure out why reports don't correctly write objects when running in parallel (verification status writing?)
   - implement tonegroupreportmulti when it works correctly
   - resultswindow?
@@ -16,54 +88,19 @@ recall that ps values are analysis, not data!
   - check if using top or all profiles (autoadvance should just be top)
 - remove ps-profile line from comprehensive report (add how many to do?)
 - fix exit on asklift. Exit button shouldn't shut down AZT...
-- look at what it would take to make two copies of each sound file. one in hires/, the other in lowres/. We could then make a link to whichever was appropriate.
-  -Problem:
-    -If we keep the same filename for each file (lowres and highres versions), then we run the risk of either overwriting the other, on a (user error) copy.
-    -If we make different filenames (e.g., _hires.wav, _lowres.mp3), then the link to the filename would have to be updated as needed, or else each in their own link.
-  -Rationale: one sample 96khz wav file was 2.5% as large as a 48khz mp3
-    -This has drastic consequences on collaboration
-    -This is not obviously an important difference for tone study
 - check for remove file URL if file not present (and not preferred filename)
-- get AOR working:
-  - /usr/share/SIL/ImageCollections/ArtOfReading/index.txt (search for gloss elements)
-  - make object for image repo, with location on disk as attribute
-  - find out how big a pic is
-  - scale (to ?200px wide/tall?) to present on screen in formatted data
-    - maybe larger for selection, smaller for buttons?
-  - store scaled image in memory
-  - save full version in repo
-    - and smaller version, too? Would this be better than ad hoc scaling?
-  - save link to LIFT
-  - use LIFT link to make button images (w/wo ad hoc scaling?)
-
--look at lx nodes not being written to examples? (is there anything to this? How could this possibly happen, except with no lx data in database? In that case, provide a sensible result)
--scrolling left to right
-
-background writes to disk
-  -mark when happening, to not do a second at same time.
-  -use last, and don't write more than once per 5 mins?
-
 make ad hoc profiles usable (not sure if just unselectable, or if unselected by frame check, too)!
   Hidegroup names (usage?)
-
-migrate sound.py from wave to soundfile (or scipy.io.wavfile)
-menus
-Make CV basic report less resource intensive
-
 select which profiles to include in a given tone report
 
-make lift-status update take in verification info, too.
-
-use last time in logic store somewhere?
+## For some day
+-scrolling left to right
+add python3 -m pip install mercurial to docs
+maybe make tone report work off of examples present, rather than tone frames?
+think through commits to hg, including merge with paitence, and which files should be added automatically.
 
 At this point, this is just a bunch of random notes on stuff I need to follow up on:
-add python3 -m pip install mercurial to docs
-  include toneframes and syllable profile settings.
-  maybe make tone report work off of examples present, rather than tone frames?
-Fix logic problem in maybesort: (endless cycling, with or without verification page:
-  marking verified and continuing.)
-think through commits to hg, including merge with paitence, and which files should be added automatically.
-Move things into the correct fields (def > gloss)
+
 <!-- updatecounts() is replaced by getscounts(), to be run after profile data is added -->
 <!-- analang=kwargs.get('analang',self.params.analang()) # ever use kwargs for analang? -->
 analang=self.params.analang()
@@ -81,87 +118,12 @@ profilecounts > slices.slicepriority
 self.subchecksprioritized > status.groupstodo
 getframestodo > status.checkstodo
 status.renewchecks has to run after adding tone frames
-to do:
-make wordsbypsprofilechecksubcheckp,updatestatus iterable
-need to run self.status.checks() any time a ps or profile that would change check options.
-self.profilestodo() should be replaced by slices.profilepriority()
-is loadsettingsfile ever called outside of check.init()?
-senseids=self.slices.senseids() #self.getidstosort()
-makestatusdict > self.status.build(type=type,ps=ps,profile=profile,check=check)
-addtonegroup
-addtonefieldex
-tonegroupbuttonframe
-profilecounts
-tonegroupsbysenseidlocation
-Make iterable:
-  addtoprofilesbysense
-  profileofform
-where is settonevariablesbypsprofile used? sort, some iteration?
-is anyone using self.profilecounts but the class? could source on profilesbysense instead, and renew from within the class as needed.
-  - change self.profilesbysense to self.status, calculate profilecounts
-def (settonevariablesbypsprofile|makeadhocgroupsdict|sortingstatus|gettonegroups|updatestatus)|makeadhocgroupsdict|updatestatuslift|senseidstosort|makeadhocgroupsdict|addtoprofilesbysense
-makecountssorted|updatecounts|getscounts|self.profilecounts|profilecountsValidwAdHoc|getprofilestodo
-Think through where to use gettonegroups(renew=True), to update status groups from LIFT.
-  gettonegroups should only be called when we need to confirm groups from LIFT
-  otherwise use self.status.groups(ps=ps,profile=profile,check=check)
-self.subcheckcomparison?
-self.subcheck_comparison?
-
-bring statusdict into an Class
-remove references to makestatusdict{type,ps,profile}
-derive and manipulate ps and profile from SliceDict (rename? How do I want to use this?)
-
-standarize fns of exit buttons from config changing screens (exit should make changes or not...)
-maybe add backwards epsilon to vowels?
-## release stoppers
-- put image creation after splash creation?
-- check out why tooltips aren't working before first refresh
-
-## Documentation
-- Steps to use AZT in a workshop, from start to finish (not absolutes, but recommendations)
-
-## Things to Test
-- check that changes to S regexs don't break too much.
-- Why do bad sound files play OK?
-- figure out why mainloop is still running on window closure
-- method of speeding up image scaling:
-    - CPU detection, set y in xy/y function according to processing speed.
-    - multithreading
-- make font changes more general, tied to <ctrl>+/-
-
-## Simplify (non-OOP related)
-- Set means for user to check verification stage again. This will require invalidating all the data to be redone (not currently implimented).
-    - Once done, there is currently no AZT way to redo it.
-- on import, check for entries without:
-  - citation, copy over from lexical-unit (all langs)
-  - gloss, copy over from definitions (truncate, all langs)
-- remove references to definition, lexeme?
-- Do I want to ultimately be modifying lexeme form?
-- check how many of the urls in lift.py I'm actually using, consider moving them to a method for each —
-  - maybe call get with a url parameter?
-  - kwarg for node or not, text or not, attr?
-- find ways to speed up tone reports:
-    - multithreading?  !(CPU limited)
-- make dictionary of images created with PIL, so they aren't continually remade (source if already there)
-- distinguish between users and their functions:
-    - language:
-        - sort, etc.
-        - record
-        - make reports
-    - linguistics
-        - transcribe (but not sort, etc)
 
 ## Migrate further toward OOP
-- distinguish between frames to do for sorting (with unsorted data) and frames to do for other tasks...
-- make 'next' go to next frame, if done sorting, or not, as appropriate
-- make tone analysis one thing, and tone report another thing, and call analysis if not done since data was last added/modified (store this info somewhere, clear after analysis completes)
-    -set report for different forms separately (e.g., making images for screen may not be useful for some, yet takes time)
 - Consider making the following objects?
     - fn to process kwargs w/default (currently hardcoded in buttons/labels,etc.)
-    - ErrorWindow class (tryNAgain, maybesort ...)
     - tables (base on buildXLPtable(self,parent,caption,yterms,xterms...))
     - languages
-    - ps-profile slices
     - check name - frame
     - sense (create these objects in threads)
     - group
