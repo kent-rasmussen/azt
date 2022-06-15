@@ -6173,6 +6173,7 @@ class Sort(object):
                                 kwargs={'check':check,
                                         'ftype':ftype,
                                         'nocheck': True, #don't verify from lift
+                                        'updateverification':True,
                                         'updateforms':updateforms})
             # if updateforms:
             #     # self.updateformtoannotations(senseid,ftype,check)
