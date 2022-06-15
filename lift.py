@@ -342,12 +342,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         vft=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text"
                             "".format(vtype,"verification",pylang))
         t=None #this default will give no text node value
-        if vft is None:
+        if vft is None: #then look for legacy fields; needed still?
             field=sensenode.find("field[@type='{} {}']".format(vtype,"verification"))
             if field:
                 form=field.find("form")
                 if field.text and not form:
-                    t=field.text
+                    t=field.text #pull text from a legacy field
                 else:
                     l=form.get('lang')
                     if l and analang in l:
