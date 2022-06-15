@@ -5509,8 +5509,10 @@ class Sort(object):
             return
         rm=self.verifictioncode(check=check,group=group)
         profile=kwargs.get('profile',self.slices.profile())
-        self.db.modverificationnode(senseid,vtype=profile,analang=self.analang,
-                                                        rms=[rm])
+        self.db.modverificationnode(senseid,
+                                    vtype=profile,
+                                    analang=self.analang,
+                                    rms=[rm])
         self.status.last('sort',update=True)
         if write:
             self.maybewrite()
