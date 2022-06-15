@@ -7995,7 +7995,6 @@ class Transcribe(Sound,Sort):
             # log.info("Doing updatebygroupsenseid: {}>{}".format(self.group,newvalue))
             self.updatebygroupsenseid(self.group,newvalue,updateforms=True)
             # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
-            self.status.renamegroup(self.group,newvalue)
             self.status.renamegroup(self.group,newvalue) #status file, not LIFT
             # log.info("Doing updategroups")
             self.updategroups()
