@@ -7955,7 +7955,7 @@ class Transcribe(Sound,Sort):
                 log.debug(deja)
                 self.errorlabel['text'] = deja
                 return 1
-            if self.params.cvt() != 'T': #This impacts only segmental changes
+            if self.params.cvt() != 'T': #Warning only on segmental changes
                 if len(newvalue) > len(self.group): #longer name!
                     diff="longer"
                 elif len(newvalue) < len(self.group): #shorter name!
