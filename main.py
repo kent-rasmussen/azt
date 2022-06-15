@@ -5589,6 +5589,14 @@ class Sort(object):
         #     log.error("groupselected: {}; this should never happen"
         #                 "".format(group))
         #     exit()
+                self.db.modverificationnode(
+                                            senseid=senseid,
+                                            vtype=profile,
+                                            analang=self.analang,
+                                            add=add,
+                                            rms=[rm],
+                                            addifrmd=True
+                                            )
         log.debug("Adding {} value for {} check, "
                 "senseid: {} guid: {} (in main_lift.py)".format(
                     group,
@@ -6154,14 +6162,6 @@ class Sort(object):
             #     t = threading.Thread(target=self.updateformtoannotations,
             #                     args=(senseid,ftype),
             #                     kwargs={'check':check})
-            v = threading.Thread(target=self.db.modverificationnode,
-                                # args=(senseid,group),
-                                kwargs={'senseid':senseid,
-                                        'vtype':profile,
-                                        'analang':self.analang,
-                                        'add':add,
-                                        'rms':[rm],
-                                        'addifrmd':True})
             for i in [u,v]:
                 i.start()
             # self.setsenseidgroup(senseid,ftype,check,newvalue)
