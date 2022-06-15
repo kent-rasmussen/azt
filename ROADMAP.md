@@ -1,6 +1,7 @@
 #Roadmap
 Verification nodes don't seem to be updated with change in sort group name. Is this a threading problem?
 add ftype to verification fields!
+check that marksortgroup has updateverification=True kwarg as needed
 
 I need some check that columns of sort buttons aren't being pushed off the screen (and if so, auto-reduce the number)
   - maybe take button width, and have screenwidth/max button as the largest acceptable button columns value.
