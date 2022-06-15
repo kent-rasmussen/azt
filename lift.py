@@ -299,10 +299,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         else:
             log.log(2,"Not removing empty node")
     def getverificationnodevaluebyframe(self,senseid,vtype,analang,frame):
-        nodes=self.addverificationnode(senseid,vtype=vtype,analang=analang)
-        vf=nodes[0] #this is a text node
+        nodes=self.getverificationnode(senseid,vtype=vtype,analang=analang)
+        vft=nodes[0] #this is a text node
         # sensenode=nodes[1]
-        l=self.evaluatenode(vf) #this is the python evaluation of vf.text
+        l=self.evaluatenode(vft) #this is the python evaluation of vf.text
         # log.info("text: {}; vf: {}".format(l,vf.text))
         values=[]
         if l is not None:
