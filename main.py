@@ -6162,8 +6162,17 @@ class Sort(object):
             #     t = threading.Thread(target=self.updateformtoannotations,
             #                     args=(senseid,ftype),
             #                     kwargs={'check':check})
-            for i in [u,v]:
-                i.start()
+            # v = threading.Thread(target=self.db.modverificationnode,
+            #                     # args=(senseid,group),
+            #                     kwargs={'senseid':senseid,
+            #                             'vtype':profile,
+            #                             'analang':self.analang,
+            #                             'add':add,
+            #                             'rms':[rm],
+            #                             'addifrmd':True})
+            # for i in [u,v]:
+            #     i.start()
+            u.start()
             # self.setsenseidgroup(senseid,ftype,check,newvalue)
             # self.updateformtoannotations(senseid,ftype,check)
             # self.db.modverificationnode(senseid=senseid,
@@ -6171,8 +6180,9 @@ class Sort(object):
             #                 analang=self.analang,
             #                 add=add,rms=[rm],
             #                 addifrmd=True)
-        for i in [u,v]:
-            i.join()
+        # for i in [u,v]:
+        #     i.join()
+        u.join()
         self.maybewrite() #once done iterating over senseids
     def __init__(self, parent):
         parent.settings.makeeverythingok()
