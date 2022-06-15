@@ -331,7 +331,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             n=Node.makeformnode(vf,lang=lang,text=t,gimmetext=True)
             log.info(n)
             return n
-    def addverificationnode(self,senseid,vtype,analang):
+    def getverificationnode(self,senseid,vtype,analang):
         sensenode=node=self.getsensenode(senseid=senseid)
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
@@ -341,6 +341,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "".format(vtype,"verification",pylang))
         vft=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text"
                             "".format(vtype,"verification",pylang))
+        return (vft,vf,sensenode)
+    def addverificationnode(self,senseid,vtype,analang):
+        vft,vf,sensenode=self.getverificationnode(senseid,vtype,analang)
         t=None #this default will give no text node value
         if vft is None: #then look for legacy fields; needed still?
             field=sensenode.find("field[@type='{} {}']".format(vtype,"verification"))
