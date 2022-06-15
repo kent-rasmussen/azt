@@ -5589,6 +5589,18 @@ class Sort(object):
         #     log.error("groupselected: {}; this should never happen"
         #                 "".format(group))
         #     exit()
+        if kwargs.get('updateverification'):
+            oldgroup=unlist(self.getgroupofsenseid(senseid,check))
+            curvervalue=self.db.getverificationnodevaluebyframe(senseid,
+                                                                vtype,
+                                                                analang,
+                                                                frame)
+            if not curvervalue:
+                log.info("Not updating verification to {}, as current value is"
+                        "{}.".format(group,curvervalue))
+            elif curvervalue == oldgroup: #only update if starting the same
+                rm=self.verifictioncode(check=check,group=oldgroup)
+                add=self.verifictioncode(check=check,group=group)
                 self.db.modverificationnode(
                                             senseid=senseid,
                                             vtype=profile,
@@ -5597,6 +5609,11 @@ class Sort(object):
                                             rms=[rm],
                                             addifrmd=True
                                             )
+            else: #not sure what to do here; maybe should throw bigger error?
+                log.error("Problem updating verification to {}; current value "
+                            "({}) is there, but not the same as current sort "
+                            "group ({})."
+                            "".format(group,curvervalue, oldgroup))
         log.debug("Adding {} value for {} check, "
                 "senseid: {} guid: {} (in main_lift.py)".format(
                     group,
