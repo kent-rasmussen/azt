@@ -12011,6 +12011,7 @@ if __name__ == "__main__":
                                     program['name'],program['version'],mt))
     log.info("Working directory is {} on {} ".format(program['aztdir'],
                                                     platform.uname().node))
+    program['start_time'] = time.time()
     log.info("Loglevel is {}; starting at {}".format(loglevel,
                                     datetime.datetime.utcnow().isoformat()))
     transdir=file.gettranslationdirin(program['aztdir'])
