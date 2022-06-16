@@ -83,6 +83,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     self.nentrieswcitationdata,
                                                     self.nsenseids))
         self.pss=self.getpssbylang() #dict keyed by lang
+        self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
         self.lcs=self.citations()
@@ -900,6 +901,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     # showurl=True
                                                     ).get('text')))
         log.info('Locations found in Examples: {}'.format(self.locations))
+    def getsenseidsbyps(self,ps=None):
+        if ps:
+            d=self.get('sense',ps=ps).get('senseid')
+            try:
+                self.senseidsbyps[ps]=d
+            except AttributeError:
+                self.senseidsbyps={ps:d}
+            nd=len(self.senseidsbyps[ps])
+            try:
+                self.nsenseidsbyps[ps]=nd
+            except AttributeError:
+                self.nsenseidsbyps={ps:nd}
+            log.info("Found {} senses with lexical category {}".format(
+                                                    self.nsenseidsbyps[ps],ps))
+        else:
+            pssanylang=setlistsofanykey(self.pss)
+            for ps in pssanylang:
+                self.getsenseidsbyps(ps)
     def getsenseids(self):
         self.senseids=self.get('sense').get('senseid')
         self.nsenseids=len(self.senseids)
