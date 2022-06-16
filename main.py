@@ -1692,11 +1692,8 @@ class Settings(object):
             if not self.formstosearch[ps][oldform]:
                 del self.formstosearch[ps][oldform] #don't leave form wo senseid
                 log.info("Deleted key of empty list")
-    def getprofileofsense(self,senseid):
+    def getprofileofsense(self,senseid,ps):
         #Convert to iterate over local variables
-        ps=unlist(self.db.ps(senseid=senseid))
-        if ps in [None,'None','']:
-            return None,'NoPS'
         forms=self.db.citationorlexeme(senseid=senseid,
             analang=self.params.analang())
         for form in forms:
