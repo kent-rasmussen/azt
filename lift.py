@@ -316,7 +316,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def legacyverificationconvert(self):
         # This is used only on boot, to categorically convert any fields where
         # text was kept in the field, rather than in a form node
-        start_time=time.time()
+        # start_time=time.time() testing only
         nfixed=0
         # This is used in cases where form@lang wasn't specified, so now we make
         # it up, and trust the user can fix if this is guessed wrong
