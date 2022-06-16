@@ -294,12 +294,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # prettyprint(textnode)
         if changed:
             self.updatemoddatetime(senseid=senseid,write=kwargs.get('write'))
-        log.log(2,"Empty node? {}; {}".format(textnode.text,l))
+        # log.info("Empty node? {}; {}".format(textnode.text,l))
         if not l:
             log.debug("removing empty verification node from this sense")
             sensenode.remove(fieldnode)
         else:
-            log.log(2,"Not removing empty node")
+            # log.info("Not removing empty node")
     def getverificationnodevaluebyframe(self,senseid,vtype,ftype,analang,frame):
         nodes=self.getverificationnode(senseid,vtype,ftype,analang)
         vft=nodes[0] #this is a text node
