@@ -2042,11 +2042,11 @@ class LiftURL():
         if type(node) is str:
             node=[node]
         for i in node:
-            if i != '':
-                ii=self.children.get(i,'')
-                if ii != '':
+            if i not in x:
                 # log.info("running kwargshaschildrenof.gen on '{}'".format(i))
+                ii=self.children.get(i)
                 # log.info("Found '{}' this time!".format(ii))
+                if ii and ii not in x:
                     x=self.getfamilyof(ii,x)
                     x+=ii
         return x
