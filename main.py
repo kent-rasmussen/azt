@@ -1658,11 +1658,10 @@ class Settings(object):
             e=time.time()-self.taskchooser.start_time
             log.info("Finished profile analysis at {} ({:1.0f}m, {:2.3f}s)"
                     "".format(e,*divmod(e-t,60)))
-    def addtoprofilesbysense(self,senseid,**kwargs): #ps=None,profile=None
+            logfinished(t)
+    def addtoprofilesbysense(self,senseid,ps,profile):
         # log.info("kwargs: {}".format(kwargs))
         # This will die if ps and profile aren't in kwargs:
-        ps=kwargs.get('ps') #,self.slices.ps()
-        profile=kwargs.get('profile') #,self.slices.profile()
         try:
             self.profilesbysense[ps][profile]+=[senseid]
         except KeyError:
