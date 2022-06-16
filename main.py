@@ -1699,12 +1699,6 @@ class Settings(object):
             return None,'NoPS'
         forms=self.db.citationorlexeme(senseid=senseid,
             analang=self.params.analang())
-        if forms == []:
-            profile='Invalid'
-            self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
-            return None, profile
-        if forms is None:
-            return None,'Invalid'
         for form in forms:
             """This adds to self.sextracted, too"""
             profile=self.profileofform(form,ps=ps)
