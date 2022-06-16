@@ -1713,6 +1713,24 @@ class Settings(object):
             self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
             self.addtoformstosearch(senseid, form, ps=ps)
         return firstoflist(forms),profile
+    def getprofilesbyps(self,ps):
+        start_time=nowruntime()
+        log.info("Processesing {} syllable profiles".format(ps))
+        todo=len(self.db.senseidsbyps[ps])
+        x=0
+        for senseid in self.db.senseidsbyps[ps]:
+            x+=1
+            if x%100:
+                t = threading.Thread(target=self.getprofileofsense,
+                                    args=(senseid,ps))
+                t.start()
+            else:
+                form,profile=self.getprofileofsense(senseid,ps)
+                log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
+                                            profile))
+        t.join()
+        log.info("Processed {} forms to syllable profile".format(x))
+        logfinished(start_time)
     def getprofiles(self):
         self.profileswdatabyentry={}
         self.profilesbysense={}
@@ -1726,19 +1744,7 @@ class Settings(object):
             self.sextracted[ps]={}
             for s in self.rx:
                 self.sextracted[ps][s]={}
-        todo=len(self.db.senseids)
-        x=0
-        for senseid in self.db.senseids:
-            x+=1
-            if x%100:
-                t = threading.Thread(target=self.getprofileofsense,
-                                    args=(senseid,))
-                t.start()
-            else:
-                form,profile=self.getprofileofsense(senseid)
-                log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
-                                            profile))
-        t.join()
+            self.getprofilesbyps(ps)
         #Convert to iterate over local variables
         """Do I want this? better to keep the adhoc groups separate"""
         """We will *never* have slices set up by this time; read from file."""
