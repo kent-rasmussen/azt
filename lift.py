@@ -303,7 +303,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def getverificationnodevaluebyframe(self,senseid,vtype,ftype,analang,frame):
         nodes=self.getverificationnode(senseid,vtype,ftype,analang)
         vft=nodes[0] #this is a text node
-        # sensenode=nodes[1]
         l=self.evaluatenode(vft) #this is the python evaluation of vf.text
         # log.info("text: {}; vf: {}".format(l,vf.text))
         values=[]
