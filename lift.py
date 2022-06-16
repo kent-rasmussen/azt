@@ -312,6 +312,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     values.append(field)
         return values
     def legacyverificationconvert(self,senseid,vtype,ftype,lang):
+        # This is used only on boot, to categorically convert any fields where
+        # text was kept in the field, rather than in a form node
         if 'py-' not in lang:
             lang=self.pylang(lang)
         node=self.getsensenode(senseid=senseid)
