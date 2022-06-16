@@ -5331,6 +5331,7 @@ class Sort(object):
         group=kwargs.get('group',self.status.group())
         #     check=self.params.check()
         profile=kwargs.get('profile',self.slices.profile())
+        ftype=kwargs.get('ftype',self.params.ftype())
         # profile=self.slices.profile()
         senseids=self.getsenseidsincheckgroup()
         value=self.verifictioncode(check=check,group=group)
@@ -5347,10 +5348,12 @@ class Sort(object):
         for senseid in self.slices.inslice(senseids): #only for this ps-profile
             rmlist=rms[:]+self.db.getverificationnodevaluebyframe(
                                         senseid,vtype=profile,
+                                        ftype=ftype,
                                         analang=self.analang,
                                         frame=check)
             log.info("Removing {}".format(rmlist))
             self.db.modverificationnode(senseid,vtype=profile,
+                                        ftype=ftype,
                                         analang=self.analang,
                                         add=add,rms=rmlist,
                                         write=False)
@@ -5507,6 +5510,7 @@ class Sort(object):
         profile=kwargs.get('profile',self.slices.profile())
         self.db.modverificationnode(senseid,
                                     vtype=profile,
+                                    ftype=ftype,
                                     analang=self.analang,
                                     rms=[rm])
         self.status.last('sort',update=True)
@@ -5589,6 +5593,7 @@ class Sort(object):
             oldgroup=unlist(self.getgroupofsenseid(senseid,check))
             curvervalue=self.db.getverificationnodevaluebyframe(senseid,
                                                                 vtype,
+                                                                ftype,
                                                                 analang,
                                                                 frame)
             if not curvervalue:
@@ -5600,6 +5605,7 @@ class Sort(object):
                 self.db.modverificationnode(
                                             senseid=senseid,
                                             vtype=profile,
+                                            ftype=ftype,
                                             analang=self.analang,
                                             add=add,
                                             rms=[rm],
