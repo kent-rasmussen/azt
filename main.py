@@ -1649,15 +1649,12 @@ class Settings(object):
                 'analang' not in self.profilesbysense or #old schema
                 self.profilesbysense['analang'] != self.analang
                 ):
-            t=time.time()-self.taskchooser.start_time
+            t=nowruntime()
             log.info("Starting profile analysis at {}".format(t))
             self.getprofiles() #creates self.profilesbysense nested dicts
             for var in ['rx','profilesbysense']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
             self.storesettingsfile(setting='profiledata')
-            e=time.time()-self.taskchooser.start_time
-            log.info("Finished profile analysis at {} ({:1.0f}m, {:2.3f}s)"
-                    "".format(e,*divmod(e-t,60)))
             logfinished(t)
     def addtoprofilesbysense(self,senseid,ps,profile):
         # log.info("kwargs: {}".format(kwargs))
