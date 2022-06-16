@@ -352,23 +352,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "/text".format(vtype,ftype,pylang))
         return (vft,vf,sensenode)
     def addverificationnode(self,senseid,vtype,ftype,analang):
+        # This no longer accounts for legacy fields, as those should be
+        # converted at boot.
         vft,vf,sensenode=self.getverificationnode(senseid,vtype,ftype,analang)
         t=None #this default will give no text node value
-        if vft is None: #then look for legacy fields; needed still?
-            field=sensenode.find("field[@type='{} {} verification']"
-                                "".format(vtype,ftype))
-            if field:
-                form=field.find("form")
-                if field.text and not form:
-                    t=field.text #pull text from a legacy field
-                else:
-                    l=form.get('lang')
-                    if l and analang in l:#in because code might be in legacy
-                        log.info("Found other node with analang in it, using.")
-                        textnode=form.find('text')
-                        t=textnode.text
-                sensenode.remove(field) #either way, we won't want the old one.
-            vf=Node(node, 'field',
+        if not vft: #only then add fields
+            vf=Node(sensenode, 'field',
                             attrib={'type':"{} {} verification".format(vtype,
                                                                         ftype)})
             vft=vf.makeformnode(lang=pylang,text=t,gimmetext=True)
