@@ -887,6 +887,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                 ).get('type')))
         log.info('Fields found in Entries: {}'.format(self.fields))
     def getsensefields(self,guid=None,lang=None): # all field types in a given entry
+        #This presumes there is a form@lang!
         self.sensefields={}
         langs=set(self.get('entry/sense/field/form',
                 # lang=lang,
