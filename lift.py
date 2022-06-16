@@ -337,9 +337,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     Node.makeformnode(f,lang=lang,text=t)
                     log.info("Converted to:")
                     prettyprint(f)
-        log.info("Found {} legacy verification nodes in {} seconds".format(
+        # log.info("Found {} legacy verification nodes in {} seconds".format(
+        log.info("Found {} legacy verification nodes".format(
                                                     nfixed,
-                                                    time.time()-start_time))
+                                                    # time.time()-start_time)
+                                                    ))
     def getverificationnode(self,senseid,vtype,ftype,analang):
         sensenode=node=self.getsensenode(senseid=senseid)
         if node is None:
