@@ -1791,9 +1791,10 @@ class Settings(object):
         for s in set(self.profilelegit) & set(self.rx.keys()):
             # log.info('s: {}; rx: {}'.format(s, self.rx[s]))
             for i in self.rx[s].findall(form):
-                if i not in self.sextracted[ps][s]:
-                    self.sextracted[ps][s][i]=0
-                self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
+                try:
+                    self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
+                except KeyError:
+                    self.sextracted[ps][s][i]=1
             form=self.rx[s].sub(s,form) #replace with profile variable
         """We could consider combining NC to C (or not), and CG to C (or not)
         here, after the 'splitter' profiles are formed..."""
