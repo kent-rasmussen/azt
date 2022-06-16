@@ -2089,6 +2089,7 @@ class LiftURL():
     def kwargsneeds(self,node,children):
         if node in self.kwargs:
             # log.info("Parent ({}) in kwargs: {}".format(node,self.kwargs))
+            return True
         elif children != []:
             for child in children:
                 if child in self.path or child in self.target:
