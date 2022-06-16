@@ -2026,6 +2026,7 @@ class LiftURL():
         elif node == self.targethead: #do this later
             return False
         c=self.getfamilyof(node,x=[])
+        if self.attrneeds(node,c):
             # log.info("attrneeds {}; {}".format(node,c))
             return True
         elif self.kwargsneeds(node,c):
