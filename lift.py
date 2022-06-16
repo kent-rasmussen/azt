@@ -354,7 +354,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     t=field.text #pull text from a legacy field
                 else:
                     l=form.get('lang')
-                    if l and analang in l:
+                    if l and analang in l:#in because code might be in legacy
                         log.info("Found other node with analang in it, using.")
                         textnode=form.find('text')
                         t=textnode.text
