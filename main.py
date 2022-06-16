@@ -1732,6 +1732,7 @@ class Settings(object):
         log.info("Processed {} forms to syllable profile".format(x))
         logfinished(start_time)
     def getprofiles(self):
+        #This is for analysis from scratch
         self.profileswdatabyentry={}
         self.profilesbysense={}
         self.profilesbysense['Invalid']=[]
