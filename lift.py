@@ -75,6 +75,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
         self.getfields() #sets self.fields (of entry)
         self.getsensefields() #sets self.sensefields (fields of sense)
+        self.legacyverificationconvert() #data to form nodes (no name changes)
         self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
         "with citation data) "
         log.info("Working on {} with {} entries, with lexeme data counts: {}, "
