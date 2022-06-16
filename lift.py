@@ -313,28 +313,33 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if frame in field:
                     values.append(field)
         return values
-    def legacyverificationconvert(self,senseid,vtype,ftype,lang):
+    def legacyverificationconvert(self):
         # This is used only on boot, to categorically convert any fields where
         # text was kept in the field, rather than in a form node
-        if 'py-' not in lang:
-            lang=self.pylang(lang)
-        node=self.getsensenode(senseid=senseid)
-        if not node:
-            log.error("No sense node was found for senseid: {}"
-                        "\nThis should never happen!".format(senseid))
-            return
-        vf=node.find("field[@type='{} {} verification']".format(vtype,ftype))
-        if vf is not None:
-            for child in vf:
-                if child.tag == 'form':
-                    return #because this isn't a legacy node
-            log.info("Found legacy verification node: {}, {}, {}".format(
-                                                    senseid,vtype,ftype,lang))
-            t=vf.text
-            vf.text=None
-            n=Node.makeformnode(vf,lang=lang,text=t,gimmetext=True)
-            log.info(n)
-            return n
+        start_time=time.time()
+        nfixed=0
+        # This is used in cases where form@lang wasn't specified, so now we make
+        # it up, and trust the user can fix if this is guessed wrong
+        lang=self.pylang(self.analang)
+        #any verification field, anywhere:
+        allfieldnames=[i.get('type') for i in self.nodes.findall(".//field")]
+        fieldnames=[i for i in set(allfieldnames) if i and 'verification' in i]
+        for fieldname in fieldnames:
+            vf=self.nodes.findall(".//field[@type='{}']".format(fieldname))
+            for f in vf:
+                if not nodehasform(f):
+                    nfixed+=1
+                    log.info("Found legacy verification node ({}):"
+                                "".format(fieldname))
+                    prettyprint(f)
+                    t=f.text
+                    f.text=None
+                    Node.makeformnode(f,lang=lang,text=t)
+                    log.info("Converted to:")
+                    prettyprint(f)
+        log.info("Found {} legacy verification nodes in {} seconds".format(
+                                                    nfixed,
+                                                    time.time()-start_time))
     def getverificationnode(self,senseid,vtype,ftype,analang):
         sensenode=node=self.getsensenode(senseid=senseid)
         if node is None:
