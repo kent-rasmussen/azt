@@ -2756,9 +2756,10 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift_2021-12-06.txt"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
     # prettyprint(lift.nodes)
     senseids=[
@@ -2805,7 +2806,14 @@ if __name__ == '__main__':
             what='text',
             showurl=True
             ).get('text')
-    print(lf)
+    # print(lf)
+    # allfieldnames=[i.get('type') for i in lift.nodes.findall(".//field")]
+    # # log.info(allfieldnames)
+    # fieldnames=[i for i in set(allfieldnames) if i and 'verification' in i]
+    # for fieldname in fieldnames:
+    #     vf=lift.nodes.findall(".//field[@type='{}']".format(fieldname))
+    #     for f in vf:
+    #         prettyprint(f)
     exit()
     for ps in pss:
         kwargs={ftype+'annotationname':'V1',
