@@ -69,7 +69,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """These three get all possible langs by type"""
         self.getglosslangs() #sets: self.glosslangs
         self.getanalangs() #sets: self.analangs, self.audiolangs
-        self.legacylangconvert()
+        self.legacylangconvert() #update from any old language forms to xyz-x-py
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
         self.getfields() #sets self.fields (of entry)
