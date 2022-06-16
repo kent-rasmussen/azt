@@ -2013,15 +2013,15 @@ class LiftURL():
         else:
             return False
     def getfamilyof(self,node,x):
-        log.log(4,"running kwargshaschildrenof.gen on '{}'".format(node))
+        # log.info("running kwargshaschildrenof.gen on '{}'".format(node))
         if type(node) is str:
             node=[node]
         for i in node:
-            log.log(4,"running kwargshaschildrenof.gen on '{}'".format(i))
             if i != '':
                 ii=self.children.get(i,'')
-                log.log(4,"Found '{}' this time!".format(ii))
                 if ii != '':
+                # log.info("running kwargshaschildrenof.gen on '{}'".format(i))
+                # log.info("Found '{}' this time!".format(ii))
                     x+=ii
                     self.getfamilyof(ii,x)
         return x
@@ -2064,30 +2064,31 @@ class LiftURL():
         return False
     def kwargsneeds(self,node,children):
         if node in self.kwargs:
-            log.log(4,"Parent ({}) in kwargs: {}".format(node,self.kwargs))
+            # log.info("Parent ({}) in kwargs: {}".format(node,self.kwargs))
         elif children != []:
             for child in children:
                 if child in self.path or child in self.target:
-                    log.log(4,"found {} in path or target; skipping kwarg check.".format(child))
+                    # log.info("found {} in path or target; skipping kwarg check.".format(child))
                     return
-            log.log(4,"Looking for descendants of {} ({}) in kwargs: {}".format(
-                                                node,children,self.kwargs))
+            # log.info("Looking for descendants of {} ({}) in kwargs: {}".format(
+            #                                     node,children,self.kwargs))
             childreninkwargs=set(children) & set(self.kwargs)
             if childreninkwargs != set():
-                log.log(4,"Found descendants of {} in kwargs: {}".format(node,
-                                                            childreninkwargs))
+                # log.info("Found descendants of {} in kwargs: {}".format(node,
+                #                                             childreninkwargs))
                 pathnotdone=childreninkwargs-set(self.level)
                 if pathnotdone != set():
-                    log.log(4,"Found descendants of {} in kwargs, which aren't "
-                                    "already there: ".format(node,pathnotdone))
+                    # log.info("Found descendants of {} in kwargs, which aren't "
+                    #                 "already there: ".format(node,pathnotdone))
                     return True
         return False
     def callerfn(self):
         return sys._getframe(2).f_code.co_name #2 gens since this is a fn, too
     def parentsof(self,nodenames):
-        log.log(4,"children: {}".format(self.children.items()))
-        log.log(4,"key pair: {}".format(
-                ' '.join([str(x) for x in self.children.items() if nodenames in x[1]])))
+        # log.info("children: {}".format(self.children.items()))
+        # log.info("key pair: {}".format(
+        #         ' '.join([str(x) for x in self.children.items()
+        #                             if nodenames in x[1]])))
         p=[]
         if type(nodenames) != list:
             nodenames=[nodenames]
@@ -2096,7 +2097,7 @@ class LiftURL():
             i.reverse()
             p+=i
         plist=list(dict.fromkeys(p))
-        log.log(4,"parents of {}: {}".format(nodenames,plist))
+        # log.info("parents of {}: {}".format(nodenames,plist))
         return plist
     def setattrsofnodes(self):
         """These are atttributes we ask for, which require the field. This
