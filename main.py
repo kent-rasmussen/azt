@@ -1671,9 +1671,7 @@ class Settings(object):
             except KeyError:
                 self.profilesbysense[ps]={}#[profile]=[senseid]
                 self.profilesbysense[ps][profile]=[senseid]
-    def addtoformstosearch(self,senseid,form,oldform=None,ps=None):
-        if not ps:
-            ps=self.slices.ps()
+    def addtoformstosearch(self,senseid,form,ps,oldform=None):
         try:
             if senseid not in self.formstosearch[ps][form]: #don't duplicate
                 self.formstosearch[ps][form].append(senseid)
