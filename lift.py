@@ -350,7 +350,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "/text/../..".format(vtype,ftype,pylang))
         vft=sensenode.find("field[@type='{} {} verification']/form[@lang='{}']"
                             "/text".format(vtype,ftype,pylang))
-        return (vft,vf,sensenode)
+        return (vft,vf,sensenode) #textnode, fieldnode, sensenode
     def addverificationnode(self,senseid,vtype,ftype,analang):
         # This no longer accounts for legacy fields, as those should be
         # converted at boot.
