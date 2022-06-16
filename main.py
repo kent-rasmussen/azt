@@ -11443,6 +11443,14 @@ class Object:
 def now():
     # datetime.datetime.utcnow().isoformat()[:-7]+'Z'
     return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
+def nowruntime():
+    # calibration=program['start_time']
+    return time.time()-program['start_time']
+def logfinished(start):
+    calibration=program['start_time']
+    run_time=nowruntime()
+    log.info("Finished at {} ({:1.0f}m, {:2.3f}s)"
+            "".format(run_time,*divmod(run_time-start,60)))
 def interfacelang(lang=None,magic=False):
     global i18n
     global _
