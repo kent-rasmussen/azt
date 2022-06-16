@@ -2046,8 +2046,8 @@ class LiftURL():
                 if ii != '':
                 # log.info("running kwargshaschildrenof.gen on '{}'".format(i))
                 # log.info("Found '{}' this time!".format(ii))
+                    x=self.getfamilyof(ii,x)
                     x+=ii
-                    self.getfamilyof(ii,x)
         return x
     def pathneeds(self,node,children):
         path=self.path
