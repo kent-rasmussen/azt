@@ -1763,16 +1763,19 @@ class Settings(object):
                     #                         self.profilesbysense[ps][a]))
     def profileofformpreferred(self,form):
         """Simplify combinations where desired"""
-        for c in ['N','S','G','ʔ','D']:
-            if self.distinguish[c] is False:
-                form=self.rx[c+'_'].sub('C',form)
-            if self.distinguish[c+'wd'] is False:
+        c=['N','S','G','ʔ','D']
+        o=["̀",'<','=','ː']
+        cc=['CG','CS','NC','VN','VV']
+        for g in [i for i in c+o if i in form]:
+            if not self.distinguish[g]:
+                if g in o:# and o in self.rx:?
+                    form=self.rx[g].sub('',form)
+                else:
+                    form=self.rx[g+'_'].sub('C',form)
+            if 'wd' in g and not self.distinguish[c+'wd']:
                 form=self.rx[c+'wd'].sub('C',form)
                 # log.debug("{}wd regex result: {}".format(c,form))
-        for o in ["̀",'<','=','ː']:
-            if self.distinguish[o] is False and o in self.rx:
-                form=self.rx[o].sub('',form)
-        for cc in ['CG','CS','NC','VN','VV']:
+        for cc in [i for i in cc if i in form]:
             form=self.rx[cc].sub(self.interpret[cc],form)
         return form
     def profileofform(self,form,ps):
