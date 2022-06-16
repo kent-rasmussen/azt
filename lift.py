@@ -1995,13 +1995,12 @@ class LiftURL():
                 ""
                 )
     def shouldshow(self,node):
-        c=self.getfamilyof(node,x=[])
         # This fn is not called by showtargetinhighestgeneration or maketarget
         if node in self.level:
             return False
         elif node == self.targethead: #do this later
             return False
-        elif self.attrneeds(node,c):
+        c=self.getfamilyof(node,x=[])
             # log.info("attrneeds {}; {}".format(node,c))
             return True
         elif self.kwargsneeds(node,c):
