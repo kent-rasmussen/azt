@@ -65,6 +65,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     '.txt']
         self.backupfilename=''.join(backupbits)
         self.getguids() #sets: self.guids and self.nguids
+        #the following should probably replaced by getsenseidsbyps everywhere
         self.getsenseids() #sets: self.senseids and self.nsenseids
         """These three get all possible langs by type"""
         self.getglosslangs() #sets: self.glosslangs
