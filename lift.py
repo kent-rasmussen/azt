@@ -2198,6 +2198,13 @@ def prettyprint(node):
                 do(child,t)
             t=t-1
     do(node,t)
+def setlistsofanykey(dict):
+    #This reduces a dictionary with lists as values to one list, without dups
+    return set([i for l in dict for i in dict[l]])
+def nodehasform(node):
+    for child in node:
+        if child.tag == 'form':
+            return True
 def atleastoneexamplehaslangformmissing(examples,lang):
     for example in examples:
         if examplehaslangform(example,lang) == False:
