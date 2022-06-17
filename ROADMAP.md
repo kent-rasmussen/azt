@@ -1,6 +1,6 @@
 #Roadmap
 Verification nodes don't seem to be updated with change in sort group name. Is this a threading problem?
-add ftype to verification fields!
+rethink framed data process; only get what's needed. Maybe don't save in dict.
 
 I need some check that columns of sort buttons aren't being pushed off the screen (and if so, auto-reduce the number)
   - maybe take button width, and have screenwidth/max button as the largest acceptable button columns value.
