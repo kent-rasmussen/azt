@@ -9779,7 +9779,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         # self.ps=task.slices.ps()
         # self.analang=task.analang
         # self.db=task.db
-        self.maybewrite=task.maybewrite
+        self.maybewrite=task.taskchooser.maybewrite
         # self.updatestatus=task.updatestatus
         # self.toneframes=task.settings.toneframes
         for group in groups:
