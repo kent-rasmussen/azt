@@ -369,8 +369,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def getentrynode(self,senseid,showurl=False):
         return self.get('entry',senseid=senseid).get()
     def getsensenode(self,senseid,showurl=False):
-        x=self.get('sense',senseid=senseid).get()
         # log.info("senseid: {}".format(senseid))
+        x=self.get('sense',senseid=senseid,
+                    # showurl=True
+                    ).get()
         # log.info("x: {}".format(x))
         if x:
             return x[0]
