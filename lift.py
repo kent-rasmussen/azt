@@ -302,6 +302,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # else:
         #     log.info("Not removing empty node")
     def getverificationnodevaluebyframe(self,senseid,vtype,ftype,analang,frame):
+        # log.info("{}; {}; {}; {}; {}".format(senseid,vtype,ftype,analang,frame))
         nodes=self.getverificationnode(senseid,vtype,ftype,analang)
         vft=nodes[0] #this is a text node
         l=self.evaluatenode(vft) #this is the python evaluation of vf.text
@@ -357,6 +358,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # This no longer accounts for legacy fields, as those should be
         # converted at boot.
         vft,vf,sensenode=self.getverificationnode(senseid,vtype,ftype,analang)
+        # log.info("vft: {}, vf: {}, sensenode: {}".format(vft,vf,sensenode))
         t=None #this default will give no text node value
         if not vft: #only then add fields
             vf=Node(sensenode, 'field',
@@ -368,6 +370,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return self.get('entry',senseid=senseid).get()
     def getsensenode(self,senseid,showurl=False):
         x=self.get('sense',senseid=senseid).get()
+        # log.info("senseid: {}".format(senseid))
+        # log.info("x: {}".format(x))
         if x:
             return x[0]
     def addmodexamplefields(self,**kwargs):
