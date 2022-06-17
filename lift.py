@@ -1679,7 +1679,7 @@ class LiftURL():
             self.kwargs['formtext']=None
             self.form(lang='glosslang')
     def tonefield(self):
-        log.log(4,"Making tone field")
+        # log.info("Making tone field")
         self.baselevel()
         self.kwargs['ftype']='tone'
         self.level['tonefield']=self.level['cur']+1 #so this won't repeat
@@ -1756,10 +1756,10 @@ class LiftURL():
                 "happen; exiting!")
         exit()
     def bearchildrenof(self,parent):
-        log.log(4,"bearing children of {} ({})".format(parent,
-                                                        self.children[parent]))
+        # log.info("bearing children of {} ({})".format(parent,
+        #                                                 self.children[parent]))
         for i in self.children[parent]:
-            log.log(4,"bearchildrenof i: {}".format(i))
+            # log.info("bearchildrenof i: {}".format(i))
             self.maybeshow(i,parent)
     def levelup(self,target):
         while self.level.get(target,self.level['cur']+1) < self.level['cur']:
