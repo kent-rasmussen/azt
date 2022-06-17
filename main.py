@@ -6032,6 +6032,7 @@ class Sort(object):
             log.debug("No tone groups to distinguish!")
             if not self.exitFlag.istrue():
                 self.runwindow.waitdone()
+            self.status.tojoin(False)
             return 0
         title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
                                         self.settings.languagenames[self.analang],
