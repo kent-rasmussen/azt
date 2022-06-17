@@ -5598,10 +5598,6 @@ class Sort(object):
         ftype=kwargs.get('ftype',self.params.ftype())
         nocheck=kwargs.get('nocheck',False)
         guid=None
-        # if group is None or group == '':
-        #     log.error("groupselected: {}; this should never happen"
-        #                 "".format(group))
-        #     exit()
         if kwargs.get('updateverification'):
             oldgroup=unlist(self.getgroupofsenseid(senseid,check))
             curvervaluecodes=self.db.getverificationnodevaluebyframe(
@@ -5630,7 +5626,7 @@ class Sort(object):
                 log.error("Problem updating verification to {}; current value "
                             "({}) is there, but not the same as current sort "
                             "group ({})."
-                            "".format(group,curvervalue, oldgroup))
+                            "".format(group, curvervalue, oldgroup))
         log.debug("Adding {} value for {} check, "
                 "senseid: {} guid: {} (in main_lift.py)".format(
                     group,
