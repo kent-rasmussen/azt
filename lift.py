@@ -276,6 +276,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         addifrmd=kwargs.get('addifrmd',False) #not using this anywhere; point?
         textnode, fieldnode, sensenode=self.addverificationnode(
                                             senseid,vtype,ftype,analang)
+        # prettyprint(textnode)
+        # prettyprint(fieldnode)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
         # log.info("l (before): {}>".format(l))
         # prettyprint(textnode)
@@ -359,8 +361,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # converted at boot.
         vft,vf,sensenode=self.getverificationnode(senseid,vtype,ftype,analang)
         # log.info("vft: {}, vf: {}, sensenode: {}".format(vft,vf,sensenode))
+        # prettyprint(vft)
+        # prettyprint(vf)
         t=None #this default will give no text node value
         if not isinstance(vft,ET.Element): #only then add fields
+            # log.info("Empty vft; adding verification field")
             vf=Node(sensenode, 'field',
                             attrib={'type':"{} {} verification".format(vtype,
                                                                         ftype)})
