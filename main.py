@@ -5718,27 +5718,26 @@ class Sort(object):
             # exitstatuses()
             warnorcontinue()
             return
-        elif not exit:
-            ctosort=self.status.checks(tosort=True)
-            ctoverify=self.status.checks(toverify=True)
-            ptosort=self.status.profiles(tosort=True)
-            ptoverify=self.status.profiles(toverify=True)
-            if ctosort or ctoverify:
-                next=_("check")
-                fn=self.ncheck
-            elif ptosort or ptoverify:
-                next=_("profile")
-                fn=self.nprofile
-            done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
-                    "distinct! Moving on to the next {}!".format(
-                                                self.profile,self.check,
-                                                self.checktypename[cvt],
-                                                next))
-            ErrorNotice(text=done,title=_("Done!"))
-            fn()
-            if self.parent.exitFlag.istrue():
-                return
-            return
+        # exitstatuses()
+        # At this point, there should be nothing to sort, verify or join, so we
+        # move on to the next group.
+        ctosort=self.status.checks(tosort=True)
+        ctoverify=self.status.checks(toverify=True)
+        ptosort=self.status.profiles(tosort=True)
+        ptoverify=self.status.profiles(toverify=True)
+        if ctosort or ctoverify:
+            next=_("check")
+            fn=self.ncheck
+        elif ptosort or ptoverify:
+            next=_("profile")
+            fn=self.nprofile
+        done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
+                "distinct! Moving on to the next {}!".format(
+                                            self.profile,self.check,
+                                            self.checktypename[cvt],
+                                            next))
+        ErrorNotice(text=done,title=_("Done!"))
+        fn()
     def presenttosort(self):
         scaledpady=int(50*program['scale'])
         groupselected=None
