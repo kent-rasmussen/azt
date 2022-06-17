@@ -5669,6 +5669,14 @@ class Sort(object):
                                 self.status.senseidstosort(),
                                 self.status.senseidssorted()
                                 ))
+        def exitstatuses():
+            try:
+                log.info("Self exit status: {}".format(self.exitFlag.istrue()))
+                log.info("Parent exit status: {}".format(self.parent.exitFlag.istrue()))
+                log.info("Runwindow exit status: {}".format(self.runwindow.exitFlag.istrue()))
+                log.info("Taskchooser exit status: {}".format(self.taskchooser.exitFlag.istrue()))
+            except Exception as e:
+                log.info("Exception: {}".format(e))
         def warnorcontinue(): #mostly for testing
             if self.exitFlag.istrue():
                 pass #just return, below, if the task is exited
@@ -5676,6 +5684,7 @@ class Sort(object):
                 self.notdonewarning() #warn if runwindow exited, but not task
             else:
                 self.maybesort() #if neither exited, continue
+        # exitstatuses()
         cvt=self.params.cvt()
         self.check=self.params.check()
         self.ps=self.slices.ps()
@@ -5691,6 +5700,7 @@ class Sort(object):
                 if not self.exitFlag.istrue():
                     self.notdonewarning()
                 return
+            # exitstatuses()
             warnorcontinue()
         log.info("Going to verify the first of these groups now: {}".format(
                                     self.status.groups(toverify=True)))
@@ -5705,6 +5715,7 @@ class Sort(object):
                     self.notdonewarning()
                 return
             self.maybesort()
+            # exitstatuses()
             warnorcontinue()
             return
         # Offer to join in any case:
@@ -5720,6 +5731,7 @@ class Sort(object):
             #This happens when the user exits the window
             log.debug("exiting join True")
             #Give an error window here
+            # exitstatuses()
             warnorcontinue()
             return
         elif not exit:
