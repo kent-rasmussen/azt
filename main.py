@@ -3570,7 +3570,10 @@ class TaskDressing(object):
     def killall(self):
         log.info("Shutting down Task")
         if self.taskchooser.towrite:
+            log.info("Final write to lift")
             self.maybewrite(definitely=True)
+        else:
+            log.info("No final write to lift")
         ui.Window.killall(self) #Exitable
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
