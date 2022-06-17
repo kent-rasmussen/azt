@@ -5744,7 +5744,11 @@ class Sort(object):
         """these just pull the current lists from the object"""
         senseids=self.status.senseidstosort()
         sorted=self.status.senseidssorted()
-        senseid=senseids[0]
+        try:
+            senseid=senseids[0]
+        except IndexError:
+            log.info("maybe ran out of senseids?")
+            return
         progress=(str(self.thissort.index(senseid)+1)+'/'+str(len(self.thissort)))
         framed=self.taskchooser.datadict.getframeddata(senseid)
         framed.setframe(self.check)
