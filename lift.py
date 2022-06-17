@@ -360,7 +360,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         vft,vf,sensenode=self.getverificationnode(senseid,vtype,ftype,analang)
         # log.info("vft: {}, vf: {}, sensenode: {}".format(vft,vf,sensenode))
         t=None #this default will give no text node value
-        if not vft: #only then add fields
+        if not isinstance(vft,ET.Element): #only then add fields
             vf=Node(sensenode, 'field',
                             attrib={'type':"{} {} verification".format(vtype,
                                                                         ftype)})
