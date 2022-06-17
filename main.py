@@ -5712,19 +5712,9 @@ class Sort(object):
             # exitstatuses()
             warnorcontinue()
             return
-        # Offer to join in any case:
         if self.status.tojoin():
             log.info("join (from maybesort)")
-            exit=self.join()
-            log.debug("exit: {}".format(exit))
-        else:
-            exit=False
-        if exit:
-            if not self.exitFlag.istrue():
-                self.notdonewarning()
-            #This happens when the user exits the window
-            log.debug("exiting join True")
-            #Give an error window here
+            self.join()
             # exitstatuses()
             warnorcontinue()
             return
