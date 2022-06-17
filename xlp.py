@@ -44,7 +44,7 @@ class Report(object):
         t=time.time()-self.start_time
         # m=int(t/60)
         # s=t%60
-        log.info("Finished in {:1.0f} minutes, {:2.3f} seconds.".format(*divmod(t)))
+        log.info("Finished in {:1.0f} minutes, {:2.3f} seconds.".format(*divmod(t,60)))
         if me:
             self.compile() #This isn't working yet.
     def write(self):
