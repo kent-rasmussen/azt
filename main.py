@@ -10028,7 +10028,7 @@ class ToneGroupButtonFrame(ui.Frame):
         b=ui.Button(self, text=self._text, cmd=cmd,
                     column=1, row=0, sticky="ew",
                     **self.buttonkwargs())
-        bt=ui.ToolTip(b,_("Pick this Group"))
+        bt=ui.ToolTip(b,_("Pick this group ({})").format(self.group))
     def refresh(self):
         # if renew is True:
         log.info("Resetting tone group example ({}): {} of {} examples with "
