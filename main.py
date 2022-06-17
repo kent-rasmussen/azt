@@ -3482,6 +3482,14 @@ class TaskDressing(object):
                             column=0, row=4
                                 )
         buttonFrame1.wait_window(window)
+    def runwindowcleanup(self):
+        log.info("Shutting down runwindow")
+        if self.exitFlag.istrue() and self.taskchooser.towrite:
+            log.info("Final write to lift")
+            self.maybewrite(definitely=True)
+        else:
+            log.info("No final write to lift")
+        ui.Window.cleanup(self) #Exitable
     def getrunwindow(self,nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
@@ -3497,6 +3505,7 @@ class TaskDressing(object):
             self.runwindow=ui.Window(self.frame,title=title)
         self.runwindow.title(title)
         self.runwindow.lift()
+        self.runwindow.cleanup=self.runwindowcleanup
         if not nowait:
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
