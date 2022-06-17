@@ -4093,8 +4093,8 @@ class TaskChooser(TaskDressing,ui.Window):
                 self.donew['collectionlc']=True
             if me or citationsdone[lang] > 200: #was 705
                 self.doneenough['collectionlc']=True#I need to think through this
-        for f in self.db.sensefields:
             # log.info("checking '{}'".format(f))
+        for f in [i for j in self.db.sensefields.values() for i in j]:
             if 'verification' in f:
                 # log.info("Found ‘verification’ in ‘{}’".format(f))
                 #I need to tweak this, it should follow tone (only) reports:
