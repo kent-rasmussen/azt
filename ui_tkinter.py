@@ -525,6 +525,8 @@ class Exitable(object):
     def killall(self):
         self.destroy()
         sys.exit()
+    def cleanup(self):
+        pass
     def on_quit(self):
         """Do this when a window closes, so any window functions can know
         to just stop, rather than trying to build graphic components and
@@ -537,6 +539,7 @@ class Exitable(object):
         if self.mainwindow: #exit afterwards if main window
             self.killall()
         else:
+            self.cleanup()
             self.destroy() #do this for everything
     def __init__(self):
         self.protocol("WM_DELETE_WINDOW", self.on_quit)
