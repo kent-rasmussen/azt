@@ -7959,6 +7959,18 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
 class Transcribe(Sound,Sort):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
+    def switchgroups(self):
+        if not (hasattr(self,'group') and hasattr(self,'group_comparison')):
+            log.error("Missing either group or comparison; can't switch them.")
+            return
+        g=self.group
+        gc=self.group_comparison
+        self.status.group(gc)
+        self.settings.set('group_comparison',g)
+        # self.settings.setgroup(gc)
+        self.runwindow.destroy()
+        # self.maybeswitchmenu.destroy()
+        self.makewindow()
     def updategroups(self):
         self.groups=self.status.groups(wsorted=True)
         log.info("self.groups: {}".format(self.groups))
@@ -8134,6 +8146,9 @@ class Transcribe(Sound,Sort):
                                     wraplength=self.buttonframew
                                     )
             self.compframe.bf2.grid(row=0, column=0, sticky='w')
+            self.maybeswitchmenu=ui.ContextMenu(self.compframe)
+            self.maybeswitchmenu.menuitem(_("Switch to this group"),
+                                            self.switchgroups)
         elif not hasattr(self, 'group_comparison'):
             log.info("No comparison found !")
         elif self.group_comparison not in self.groups:

@@ -1062,7 +1062,11 @@ class ContextMenu(Childof):
         except:
             log.error("Problem initializing context menu")
     def menuitem(self,msg,cmd):
-        self.menu.add_command(label=msg,command=cmd)
+        try:
+            self.menu.add_command(label=msg,command=cmd)
+        except AttributeError:
+            self.menuinit()
+            self.menu.add_command(label=msg,command=cmd)
     def dosetcontext(self):
         try:
             log.log(3,"setcontext: {}".format(self.parent.setcontext))
@@ -1098,6 +1102,7 @@ class ContextMenu(Childof):
         super(ContextMenu,self).__init__(parent)
         self.parent.context=self
         self.context=context #where the menu is showing (e.g., verifyT)
+        # self.menuinit() #can't redo after context change
         # self.inherit()
         self.updatebindings()
         # UI.__init__(self)
