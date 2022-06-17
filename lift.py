@@ -2796,11 +2796,16 @@ if __name__ == '__main__':
     # for kwargs['node'] in lift.fieldnode(**kwargs):
     #     t.extend(lift.get('annotation',**kwargs).get('value'))
     # print(t)
-    lf=lift.get('example/locationfield/',
-            what='text',
-            showurl=True
-            ).get('text')
-    # print(lf)
+    lf=lift.get('sense',location=check,
+                        tonevalue=group,
+                        path=['example'],
+                        showurl=True
+                        ).get('senseid')
+    # lf=lift.get('example/locationfield/',
+    #         what='text',
+    #         showurl=True
+    #         ).get('text')
+    print(lf)
     # allfieldnames=[i.get('type') for i in lift.nodes.findall(".//field")]
     # # log.info(allfieldnames)
     # fieldnames=[i for i in set(allfieldnames) if i and 'verification' in i]
