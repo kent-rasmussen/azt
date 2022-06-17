@@ -414,8 +414,10 @@ class Menus(ui.Menu):
                             self.parent.setSdistinctions),
                 (_("Syllable Profile Analysis (Restart)"),
                             self.parent.settings.reloadprofiledata),
-                (_("Remake Status file (several minutes)"),
+                (_("Remake Status file (All: several minutes)"),
                             self.parent.settings.reloadstatusdata),
+                (_("Remake Status file (just this page)"),
+                            self.parent.settings.reloadstatusdatabycvtps),
                 ]
         for m in options:
             self.command(self.advancedmenu,
