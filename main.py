@@ -5697,13 +5697,10 @@ class Sort(object):
         log.info("Maybe Sort (from maybesort)")
         if self.status.checktosort(): # w/o parameters, tests current check
             log.info("Sort (from maybesort)")
-            quit=self.sort()
-            if quit == True:
-                if not self.exitFlag.istrue():
-                    self.notdonewarning()
-                return
+            self.sort()
             # exitstatuses()
             warnorcontinue()
+            return
         log.info("Going to verify the first of these groups now: {}".format(
                                     self.status.groups(toverify=True)))
         log.info("Maybe verify (from maybesort)")
