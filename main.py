@@ -5828,7 +5828,9 @@ class Sort(object):
                 anchor='c', column=0, row=1, sticky="ew")
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
-        while self.status.tosort() and not self.runwindow.exitFlag.istrue():
+        while (self.status.tosort() and
+                self.status.senseidstosort() and
+                not self.runwindow.exitFlag.istrue()):
             tosort=self.presenttosort()
             """thread here? No, this updates the UI, as well as writing data"""
             if not self.runwindow.exitFlag.istrue() and tosort:
