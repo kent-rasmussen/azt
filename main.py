@@ -5751,7 +5751,7 @@ class Sort(object):
         """After the first entry, sort by groups."""
         # log.debug('groups: {}'.format(self.status.groups(wsorted=True)))
         if self.runwindow.exitFlag.istrue():
-            return 1,1
+            return #1,1
         ui.Label(self.titles, text=progress, font='report', anchor='w'
                                         ).grid(column=1, row=0, sticky="ew")
         text=framed.formatted()
@@ -5766,9 +5766,7 @@ class Sort(object):
         for b in self.buttonframe.groupbuttonlist:
             b.setcanary(self.sortitem)
         self.runwindow.wait_window(window=self.sortitem)
-        if self.runwindow.exitFlag.istrue():
-            return 1,1
-        else:
+        if not self.runwindow.exitFlag.istrue():
             return senseid,framed
     def sort(self):
         # This window/frame/function shows one entry at a time (with pic?)
@@ -5826,16 +5824,13 @@ class Sort(object):
                 anchor='c', column=0, row=1, sticky="ew")
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
-        while self.status.tosort(): # and not self.runwindow.exitFlag.istrue():
-            senseid,framed=self.presenttosort()
-            if senseid == 1:
-                return 1
+        while self.status.tosort() and not self.runwindow.exitFlag.istrue():
+            tosort=self.presenttosort()
             """thread here? No, this updates the UI, as well as writing data"""
-            self.buttonframe.sortselected(senseid,framed)
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        self.runwindow.resetframe()
-        return
+            if not self.runwindow.exitFlag.istrue() and tosort:
+                self.buttonframe.sortselected(*tosort)
+        if not self.runwindow.exitFlag.istrue():
+            self.runwindow.resetframe()
     def reverify(self):
         group=self.status.group()
         check=self.params.check()
