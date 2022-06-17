@@ -5685,6 +5685,8 @@ class Sort(object):
             else:
                 self.maybesort() #if neither exited, continue
         # exitstatuses()
+        if self.exitFlag.istrue(): #if the task has been shut down, stop
+            return
         cvt=self.params.cvt()
         self.check=self.params.check()
         self.ps=self.slices.ps()
