@@ -1898,6 +1898,24 @@ class Settings(object):
         self.profilesbysense={}
         self.storesettingsfile(setting='profiledata')
         self.taskchooser.restart()
+    def reloadstatusdatabycvtps(self,**kwargs):
+        # This reloads the status info as relevant on a particular page (ps and
+        # cvt), so it needs to be iterated over, or done for each page switch,
+        # if desired.
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profiles=self.slices.profiles(ps=ps) #This depends on ps only
+        for p in profiles:
+            # log.info("Working on {}".format(p))
+            checks=self.status.checks(cvt=cvt, ps=ps, profile=p)
+            for c in checks:
+                # log.info("Working on {}".format(c))
+                self.status.build(cvt=cvt, ps=ps, profile=p, check=c)
+                """this just populates groups and the tosort boolean."""
+                self.updatesortingstatus(cvt=cvt,ps=ps,profile=p,check=c,
+                                        store=False) #do below
+        if kwargs.get('store',True):
+            self.storesettingsfile(setting='status')
     def reloadstatusdata(self):
         # This fn is very inefficient, as it iterates over everything in
         # profilesbysense, creating status dictionaries for all of that, in
@@ -1913,20 +1931,11 @@ class Settings(object):
         cvts=self.params.cvts()
         if not cvts:
             cvts=[i for i in self.params.cvts()]
-        for t in [i for i in cvts if i != 'CV']: #this depends on nothing
+        for cvt in [i for i in cvts if i != 'CV']: #this depends on nothing
             # log.info("Working on {}".format(t))
             for ps in pss:
                 # log.info("Working on {}".format(ps))
-                profiles=self.slices.profiles(ps=ps) #This depends on ps only
-                for p in profiles:
-                    # log.info("Working on {}".format(p))
-                    checks=self.status.checks(cvt=t, ps=ps, profile=p)
-                    for c in checks:
-                        # log.info("Working on {}".format(c))
-                        self.status.build(cvt=t, ps=ps, profile=p, check=c)
-                        """this just populates groups and the tosort boolean."""
-                        self.updatesortingstatus(cvt=t,ps=ps,profile=p,check=c,
-                                                store=False) #do below
+                self.reloadstatusdatabycvtps(cvt=cvt,ps=ps,store=False)
         """Now remove what didn't get data"""
         self.status.cull()
         if None in self.status: #This should never be there
