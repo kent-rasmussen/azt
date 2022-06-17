@@ -9073,6 +9073,9 @@ class ExampleDict(dict):
             log.error("There don't seem to be any sensids in this "
                     "check-tonegroup-slice, so I can't get you an example.")
             return
+        # else:
+        #     log.info("Found {} examples in the {} sort group for the {} check: "
+        #             "{}.".format(len(senseids),group,check,senseids))
         n=len(senseids)
         self._outdict={'n': n}
         tries=0
