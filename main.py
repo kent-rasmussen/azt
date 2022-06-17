@@ -5708,12 +5708,7 @@ class Sort(object):
         if groupstoverify:
             self.status.group(groupstoverify[0]) #just pick the first now
             log.info("verify (from maybesort)")
-            exitv=self.verify()
-            if exitv == True: #fix this!
-                if not self.exitFlag.istrue():
-                    self.notdonewarning()
-                return
-            self.maybesort()
+            self.verify()
             # exitstatuses()
             warnorcontinue()
             return
