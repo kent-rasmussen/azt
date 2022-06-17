@@ -5604,15 +5604,17 @@ class Sort(object):
         #     exit()
         if kwargs.get('updateverification'):
             oldgroup=unlist(self.getgroupofsenseid(senseid,check))
-            curvervalue=self.db.getverificationnodevaluebyframe(senseid,
-                                                                vtype,
-                                                                ftype,
-                                                                analang,
-                                                                frame)
-            if not curvervalue:
-                log.info("Not updating verification to {}, as current value is"
-                        "{}.".format(group,curvervalue))
-            elif curvervalue == oldgroup: #only update if starting the same
+            curvervaluecodes=self.db.getverificationnodevaluebyframe(
+                                                        senseid=senseid,
+                                                        vtype=profile,
+                                                        ftype=ftype,
+                                                        analang=self.analang,
+                                                        frame=check)
+            if len(set(curvervaluecodes)) >1:
+                log.error("Too many values for verification node! ({})"
+                            "".format(curvervaluecodes))
+            curvervalue=firstoflist(curvervaluecodes).split('=')[-1] #last, if multiple
+            if curvervalue == oldgroup: #only update if starting the same
                 rm=self.verifictioncode(check=check,group=oldgroup)
                 add=self.verifictioncode(check=check,group=group)
                 self.db.modverificationnode(
