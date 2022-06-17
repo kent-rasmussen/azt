@@ -5594,6 +5594,7 @@ class Sort(object):
         # group=kwargs.get('group',self.status.group())
         framed=kwargs.get('framed',None)
         check=kwargs.get('check',self.params.check())
+        profile=kwargs.get('profile',self.slices.profile())
         ftype=kwargs.get('ftype',self.params.ftype())
         nocheck=kwargs.get('nocheck',False)
         guid=None
