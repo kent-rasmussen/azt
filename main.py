@@ -5306,8 +5306,11 @@ class Tone(object):
                                 )
         # log.info("Done setting tone sort group")
     def getsenseidsingroup(self,check,group):
-        return self.db.get('sense',location=check,tonevalue=group
-                                                                ).get('senseid')
+        return self.db.get('sense',location=check,
+                                    tonevalue=group,
+                                    path=['example'],
+                                    showurl=True
+                            ).get('senseid')
     def getgroupofsenseid(self,senseid,check):
         return self.db.get("example/tonefield/form/text",
                 senseid=senseid, location=check).get('text')
