@@ -1,8 +1,8 @@
-# Orientation to A→Z+T for the Orinary Working Linguist
+# Orientation to A→Z+T for the Ordinary Working Linguist
 
 ## Or, how to think about A→Z+T, if you're used to FLEx (or WeSay).
 
-Perhaps the first and most important thing to realize is that **[A→Z+T](https://github.com/kent-rasmussen/azt) is not designed to replace FLEx**. It has a different audience, and different functions, and this is by design. So if [FLEx](https://software.sil.org/fieldworks/) does everything you want to do, then you will probably be happier just sticking with it.
+Perhaps the first and most important thing to realize is that **[A→Z+T](https://github.com/kent-rasmussen/azt) is not designed to replace FLEx**. It has a different audience and different functions, and this is by design. So if [FLEx](https://software.sil.org/fieldworks/) does everything you want to do, then you will probably be happier just sticking with it.
 
 Most of the same could be said of [WeSay](https://software.sil.org/wesay/), though the audiences would be more similar.
 
@@ -20,6 +20,6 @@ So, if you are a person who likes to check data word by word, you will probably 
 ### Field dependency, High/low Context
 Some people like to see things in context, in order to understand them better, and to know how to fix them. Others are happier with lots of abstract options to pick from at any given moment. Neither of these are better; this is a difference reflected across cultures and personalities.
 
-FLEx is designed for people who are comfortable with computers, and provides options to filter and sort data in almost any way you can imagine. If you like spreadsheets, you probably like FLEx.
+FLEx is designed for people who are comfortable with computers, and provides options to filter and sort data in almost any way you can imagine. **If you like spreadsheets, you probably like FLEx.**
 
-A→Z+T, on the other hand, is designed for people who want to do a specific set of things, perhaps in a specific order, without needing a lot of options. On most pages, the user clicks one button at a time. Or, if there is a field to fill in (like for the word list collection), there is one field presented at a time. A→Z+T specifically avoids offering a user the chance to put good data in the wrong place. So if you've ever been confused, frustrated or lost using a spreadsheet, you may enjoy using A→Z+T.
+A→Z+T, on the other hand, is designed for people who want to do a specific set of things, perhaps in a specific order, without needing a lot of options. On most pages, the user clicks one button at a time. Or, if there is a field to fill in (like for the word list collection), there is one field presented at a time. A→Z+T specifically avoids offering a user the chance to put good data in the wrong place. So **if you've ever been confused, frustrated or lost using a spreadsheet, you may enjoy using A→Z+T.**
