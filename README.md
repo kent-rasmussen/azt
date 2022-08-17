@@ -2,6 +2,9 @@
 ## To automate as much as possible on MS Windows, download and run [this file](RunMetoInstall.bat?raw=true) as administrator
 ## or see [this file](SIMPLEINSTALL.md) for simple install instructions
 
+## If you currently use FLEx, and want to understand what A→Z+T is, see [this file](OWL_GUIDE.md).
+
+
 # A→Z+T ![CV](images/AZT%20stacks6_icon.png "AZT")
 
 [A→Z+T](https://github.com/kent-rasmussen/azt) is designed to accelerate community-based language development, supplemented by (not as a replacement for) formal linguistic training. It does this by systematically checking a dictionary (and thus a writing system), with initial focus on data collection for tonal languages.
