@@ -1,4 +1,4 @@
-# Orientation to A→Z+T for the Ordinary Working Linguist
+# Guide to A→Z+T for the Ordinary Working Linguist
 
 ## Or, how to think about A→Z+T, if you're used to FLEx (or WeSay).
 
@@ -7,7 +7,7 @@ Perhaps the first and most important thing to realize is that **[A→Z+T](https:
 Most of the same could be said of [WeSay](https://software.sil.org/wesay/), though the audiences would be more similar.
 
 ## Orientation
-Perhaps the second most important thing to say is that A→Z+T is designed to facilitate a **participatory model of data collection**, not just help you collect data as you may have been taught in a field methods class.
+Perhaps the second most important thing to say is that A→Z+T is designed to facilitate a **participatory model of data collection**, not just give you another way to collect data as you may have been taught in a field methods class.
 
 So if you're sitting down in a field context with someone who doesn't have a high school degree, you aren't likely going to hand him the mouse and keyboard and ask him to make changes in FLEx. The tool just isn't designed to be used that way, but A→Z+T is.
 
