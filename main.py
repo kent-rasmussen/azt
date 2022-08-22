@@ -1900,6 +1900,19 @@ class Settings(object):
         self.profilesbysense={}
         self.storesettingsfile(setting='profiledata')
         self.taskchooser.restart()
+    def reloadstatusdatabycvtpsprofile(self,**kwargs):
+        # This reloads the status info only for current slice
+        # These are specified in iteration, pulled from object if called direct
+        cvt=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        checks=self.status.checks(cvt=cvt, ps=ps, profile=profile)
+        for c in checks:
+            # log.info("Working on {}".format(c))
+            self.status.build(cvt=cvt, ps=ps, profile=profile, check=c)
+            """this just populates groups and the tosort boolean."""
+            self.updatesortingstatus(cvt=cvt,ps=ps,profile=profile,check=c,
+                                    store=False) #do below
     def reloadstatusdatabycvtps(self,**kwargs):
         # This reloads the status info as relevant on a particular page (ps and
         # cvt), so it needs to be iterated over, or done for each page switch,
