@@ -2031,6 +2031,7 @@ class Settings(object):
                             "and fix it!)").format(self.analang)
             log.info(errortext)
             e=ErrorNotice(errortext,title=_("Error!"),wait=True)
+            self.db.pss=self.db.getpssbylang(self.analang) #redo this, specify
             # return
         elif nlangs == 1:
             self.analang=self.db.analangs[0]
