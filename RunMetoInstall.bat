@@ -30,7 +30,7 @@ ECHO Cloning A→Z+T source to azt directory on your desktop
 cd /d "%userprofile%/desktop"
 git clone "https://github.com/kent-rasmussen/azt.git"
 ECHO making links to AZT and Transcriber tool...
-mklink AZT "azt/main.py"
+mklink A→Z+T "azt/main.py"
 mklink Transcriber "azt/transcriber.py"
 
 ECHO Install done! (hopefully!)
