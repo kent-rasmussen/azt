@@ -3579,7 +3579,8 @@ class TaskDressing(object):
             self.taskchooser=self
         else:
             self.taskchooser=self.parent
-            parent.status.task(self)
+            if parent.ifcollectionlcsettingsdone:
+                parent.status.task(self)
         """Whenever this runs, it's the main window."""
         self.taskchooser.mainwindowis=self
         self.mainwindow=True
@@ -3598,7 +3599,8 @@ class TaskDressing(object):
                     'hidegroupnames']:
             if not hasattr(self,k):
                     setattr(self,k,False)
-        self.makecvtok()
+        if self.taskchooser.ifcollectionlcsettingsdone:
+            self.makecvtok()
         ui.ContextMenu(self)
         self.tableiteration=0
         self.makestatusframe()
