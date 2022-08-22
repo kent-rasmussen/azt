@@ -1,4 +1,8 @@
 ECHO OFF
+ECHO
+ECHO
+ECHO
+ECHO
 ECHO A→Z+T Install batch file
 ECHO Will download and install Python 3.6.8
 ECHO Will download and install Git 2.33.0.2
