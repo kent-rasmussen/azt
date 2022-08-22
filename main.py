@@ -1922,13 +1922,7 @@ class Settings(object):
         profiles=self.slices.profiles(ps=ps) #This depends on ps only
         for p in profiles:
             # log.info("Working on {}".format(p))
-            checks=self.status.checks(cvt=cvt, ps=ps, profile=p)
-            for c in checks:
-                # log.info("Working on {}".format(c))
-                self.status.build(cvt=cvt, ps=ps, profile=p, check=c)
-                """this just populates groups and the tosort boolean."""
-                self.updatesortingstatus(cvt=cvt,ps=ps,profile=p,check=c,
-                                        store=False) #do below
+            reloadstatusdatabycvtpsprofile(profile=p,**kwargs)
         if kwargs.get('store',True):
             self.storesettingsfile(setting='status')
     def reloadstatusdata(self):
