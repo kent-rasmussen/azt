@@ -81,7 +81,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     self.nentrieswlexemedata,
                                                     self.nentrieswcitationdata,
                                                     self.nsenseids))
-        self.pss=self.pss() #log.info(self.pss)
+        self.pss=self.getpssbylang() #dict keyed by lang
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
         self.lcs=self.citations()
@@ -1367,7 +1367,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 log.info("--those may not be covered by your regexes.")
     def ps(self,**kwargs): #get POS values, limited as you like
         return self.get('ps',**kwargs).get('value')
-    def pss(self): #get all POS values in the LIFT file
+    def getpssbylang(self,analang=None): #get all POS values in the LIFT file
         ordered={}
         if analang: #if one specified (after not initially found with data)
             analangs=self.analangs+[analang]
