@@ -6221,6 +6221,9 @@ class Sort(object):
         # for i in [u,v]:
         #     i.join()
         u.join()
+        if updateforms:
+            #NO: this should update formstosearch and profile data.
+            self.settings.reloadstatusdatabycvtpsprofile()?
         self.maybewrite() #once done iterating over senseids
     def __init__(self, parent):
         parent.settings.makeeverythingok()
@@ -7971,6 +7974,7 @@ class Transcribe(Sound,Sort):
         # self.maybeswitchmenu.destroy()
         self.makewindow()
     def updategroups(self):
+        # Update locals group, groups, and othergroups from objects
         self.groups=self.status.groups(wsorted=True)
         log.info("self.groups: {}".format(self.groups))
         self.groupsdone=self.status.verified()
@@ -8044,6 +8048,7 @@ class Transcribe(Sound,Sort):
                 # log.info("Done with diff (without exit): {}".format(diff))
             # log.info("Doing updatebygroupsenseid: {}>{}".format(self.group,newvalue))
             self.updatebygroupsenseid(self.group,newvalue,updateforms=True)
+            #NO: this should update formstosearch and profile data.
             # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
             self.status.renamegroup(self.group,newvalue) #status file, not LIFT
             # log.info("Doing updategroups")
@@ -8072,6 +8077,8 @@ class Transcribe(Sound,Sort):
                     u.start()
                 if senseids:
                     u.join()
+                #NO: this should update formstosearch and profile data.
+                # self.settings.reloadstatusdatabycvtpsprofile()
                 self.maybewrite()
         if hasattr(self,'group_comparison'):
             delattr(self,'group_comparison') # in either case
