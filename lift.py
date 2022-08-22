@@ -279,7 +279,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # prettyprint(textnode)
         # prettyprint(fieldnode)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
-        # log.info("l (before): {}>".format(l))
+        log.info("l (before): {}>".format(l))
         # prettyprint(textnode)
         changed=False
         i=len(l)
@@ -293,7 +293,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l.insert(i,add) #put where removed from, if done.
             changed=True
         textnode.text=str(l)
-        # log.info("l (after): {}> (changed: {})".format(l,changed))
+        log.info("l (after): {}> (changed: {})".format(l,changed))
         # prettyprint(textnode)
         if changed:
             self.updatemoddatetime(senseid=senseid,write=kwargs.get('write'))
