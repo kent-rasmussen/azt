@@ -5366,7 +5366,7 @@ class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
     def getsenseidsincheckgroup(self,**kwargs):
-        cvt=kwargs.get('cvt',self.params.cvt())
+        # cvt=kwargs.get('cvt',self.params.cvt())
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
         return self.getsenseidsingroup(check, group)
