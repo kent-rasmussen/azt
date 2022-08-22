@@ -84,6 +84,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     self.nentrieswcitationdata,
                                                     self.nsenseids))
         self.pss=self.getpssbylang() #dict keyed by lang
+        #This may be superfluous:
         self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
@@ -1402,9 +1403,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 log.info("--those may not be covered by your regexes.")
     def ps(self,**kwargs): #get POS values, limited as you like
         return self.get('ps',**kwargs).get('value')
-    def getpssbylang(self): #get all POS values in the LIFT file
+    def getpssbylang(self,analang=None): #get all POS values in the LIFT file
         ordered={}
-        for lang in self.analangs:
+        if analang: #if one specified (after not initially found with data)
+            analangs=self.analangs+[analang]
+        else:
+            analangs=self.analangs
+        for lang in analangs:
             counted = collections.Counter(self.ps(lang=lang))
             ordered[lang] = [value for value, count in counted.most_common()]
         log.info("Found these ps values, by frequency: {}".format(ordered))

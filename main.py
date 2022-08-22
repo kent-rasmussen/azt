@@ -2059,6 +2059,7 @@ class Settings(object):
                             "and fix it!)").format(self.analang)
             log.info(errortext)
             e=ErrorNotice(errortext,title=_("Error!"),wait=True)
+            self.db.pss=self.db.getpssbylang(self.analang) #redo this, specify
             # return
         elif nlangs == 1:
             self.analang=self.db.analangs[0]
@@ -3618,7 +3619,8 @@ class TaskDressing(object):
             self.taskchooser=self
         else:
             self.taskchooser=self.parent
-            parent.status.task(self)
+            if parent.ifcollectionlcsettingsdone:
+                parent.status.task(self)
         """Whenever this runs, it's the main window."""
         self.taskchooser.mainwindowis=self
         self.mainwindow=True
@@ -3637,7 +3639,8 @@ class TaskDressing(object):
                     'hidegroupnames']:
             if not hasattr(self,k):
                     setattr(self,k,False)
-        self.makecvtok()
+        if self.taskchooser.ifcollectionlcsettingsdone:
+            self.makecvtok()
         ui.ContextMenu(self)
         self.tableiteration=0
         self.makestatusframe()

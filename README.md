@@ -1,6 +1,9 @@
 ## [I want to start using A→Z+T, and get consultant help](HELP_PREREQUISITES.md)
 ## To automate as much as possible on MS Windows, download and run [this file](RunMetoInstall.bat?raw=true) as administrator
-## or see [this file](SIMPLEINSTALL.md) for simple install instructions
+## or see [this page](SIMPLEINSTALL.md) for simple install instructions
+
+## If you currently use FLEx, and want to understand what A→Z+T is, see [this page](OWL_GUIDE.md).
+
 
 # A→Z+T ![CV](images/AZT%20stacks6_icon.png "AZT")
 
