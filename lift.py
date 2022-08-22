@@ -1369,7 +1369,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         return self.get('ps',**kwargs).get('value')
     def pss(self): #get all POS values in the LIFT file
         ordered={}
-        for lang in self.analangs:
+        if analang: #if one specified (after not initially found with data)
+            analangs=self.analangs+[analang]
+        else:
+            analangs=self.analangs
+        for lang in analangs:
             counted = collections.Counter(self.ps(lang=lang))
             ordered[lang] = [value for value, count in counted.most_common()]
         log.info("Found these ps values, by frequency: {}".format(ordered))
