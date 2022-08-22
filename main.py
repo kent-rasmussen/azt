@@ -1703,21 +1703,27 @@ class Settings(object):
     def getprofilesbyps(self,ps):
         start_time=nowruntime()
         log.info("Processesing {} syllable profiles".format(ps))
-        todo=len(self.db.senseidsbyps[ps])
-        x=0
-        for senseid in self.db.senseidsbyps[ps]:
-            x+=1
-            if x%100:
+        senseids=self.db.senseidsbyps[ps]
+        n=self._getprofiles(senseids,ps)
+        log.info("Processed {} forms to syllable profile".format(x))
+        logfinished(start_time)
+    def getprofilesbysenseids(self,senseids,ps):
+        n=self._getprofiles(senseids,ps)
+    def _getprofiles(self,senseids,ps):
+        n=0
+        todo=len(senseids)
+        for senseid in senseids:
+            n+=1
+            if n%100:
                 t = threading.Thread(target=self.getprofileofsense,
                                     args=(senseid,ps))
                 t.start()
             else:
                 form,profile=self.getprofileofsense(senseid,ps)
-                log.debug("{}: {}; {}".format(str(x)+'/'+str(todo),form,
+                log.debug("{}: {}; {}".format(str(n)+'/'+str(todo),form,
                                             profile))
         t.join()
-        log.info("Processed {} forms to syllable profile".format(x))
-        logfinished(start_time)
+        return n
     def getprofiles(self):
         #This is for analysis from scratch
         self.profileswdatabyentry={}
