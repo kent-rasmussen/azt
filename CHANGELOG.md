@@ -1,44 +1,52 @@
 # A→Z+T Changelog
 
+# Version 0.9.2
+- Windows batch file now
+  - downloads and installs from USER/Downloads
+  - gives user indication of download size in advance
+  - makes unique names for repo and program link
+- Fixed bug where functions called for objects created after wordlist collection, when wordlist collection wasn't done yet.
+- If analang is guessed by filename, go back and tell lift object about it (at least for pss dict)
+- Guide for OWLs used to FLEx
+
 # Version 0.9.1
-SILCAWL now converts template ps to local values
-Set up ps sublcass to use '{}-infl-class'.format(self.kwargs['ps'] trait
-Set up morphtype trait URL
-Use button column variable to give up to three columns for sorting
-fixed bug leaving old sound file links
-removed MS Windows filename illegal characters from sound file names
-fixed scaling problem for smaller screens (had made big buttons)
+- SILCAWL now converts template ps to local values
+- Set up ps sublcass to use '{}-infl-class'.format(self.kwargs['ps'] trait
+- Set up morphtype trait URL
+- Use button column variable to give up to three columns for sorting
+- fixed bug leaving old sound file links
+- removed MS Windows filename illegal characters from sound file names
+- fixed scaling problem for smaller screens (had made big buttons)
 
 # Version 0.9
-Rendering works now with Charis 6.0 font name, and more efficiently
-fixed screen scaling
-added new icons to better distinguish tasks
-fixed soundcard bug, removed buggy parameter option
-scroll sound card options, remove from default tasks
-remove wordy messages, move to tooltips
-improve logic for empty or missing data nodes
-added hg ignore functionality, with some defaults
+- Rendering works now with Charis 6.0 font name, and more efficiently
+- fixed screen scaling
+- added new icons to better distinguish tasks
+- fixed soundcard bug, removed buggy parameter option
+- scroll sound card options, remove from default tasks
+- remove wordy messages, move to tooltips
+- improve logic for empty or missing data nodes
+- added hg ignore functionality, with some defaults
 
 # Version 0.8.9
-Complete rework of UI, now task oriented, with tasks divided by data collection and analysis functions.
-mercurial (if installed) now adds
-    ProfileData.dat
-    ToneFrames.dat
-    VerificationStatus.dat
-put UF fields in form/text nodes
-(non)-default report now more intuitive. If sort since last report, report runs again.
-User also has button to rerun analysis manually.
-Check for sound card now shows on every sound task beginning.
-
+- Complete rework of UI, now task oriented, with tasks divided by data collection and analysis functions.
+- mercurial (if installed) now adds
+  - ProfileData.dat
+  - ToneFrames.dat
+  - VerificationStatus.dat
+- put UF fields in form/text nodes
+- (non)-default report now more intuitive. If sort since last report, report runs again.
+- User also has button to rerun analysis manually.
+- Check for sound card now shows on every sound task beginning.
 
 # Version 0.8.7
-changed .py config files to .ini and .dat, with clearer and simpler syntax. This should automatically migrate, but please let me know if it doesn't.
-should put those files into hg repository
-sendpraat should now be working, if installed
-massive changes under the hood:
-ui.py extracted
-new objects for examples, parameters
-Hg should now track all .dat files (not .ini, per user)
+- changed .py config files to .ini and .dat, with clearer and simpler syntax. This should automatically migrate, but please let me know if it doesn't.
+- should put those files into hg repository
+- sendpraat should now be working, if installed
+- massive changes under the hood:
+  - ui.py extracted
+  - new objects for examples, parameters
+  - Hg should now track all .dat files (not .ini, per user)
 
 # Version 0.8.6
 - added referify data for current subgroup
