@@ -1700,6 +1700,27 @@ class Settings(object):
             self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
             self.addtoformstosearch(senseid, form, ps=ps)
         return firstoflist(forms),profile
+    def getprofilesbypsprofilecheckgroup(self,**kwargs):
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        group=kwargs.get('group',self.status.group())
+        start_time=nowruntime()
+        log.info("Processesing {} {} syllable profiles in {} sort group"
+                "".format(ps,profile,group))
+        senseids=(set(getsenseidsincheckgroup())&
+                    set(self.slices.senseids(ps=ps,profile=profile)))
+        n=self._getprofiles(senseids,ps)
+        log.info("Processed {} forms to syllable profile".format(x))
+        logfinished(start_time)
+    def getprofilesbypsprofile(self,**kwargs):
+        ps=kwargs.get('ps',self.slices.ps())
+        profile=kwargs.get('profile',self.slices.profile())
+        start_time=nowruntime()
+        log.info("Processesing {} {} syllable profiles".format(ps,profile))
+        senseids=self.slices.senseids(ps=ps,profile=profile)
+        n=self._getprofiles(senseids,ps)
+        log.info("Processed {} forms to syllable profile".format(x))
+        logfinished(start_time)
     def getprofilesbyps(self,ps):
         start_time=nowruntime()
         log.info("Processesing {} syllable profiles".format(ps))
