@@ -1944,6 +1944,7 @@ class Settings(object):
         # This reloads the status info as relevant on a particular page (ps and
         # cvt), so it needs to be iterated over, or done for each page switch,
         # if desired.
+        # These are specified in iteration, pulled from object if called by menu
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
         profiles=self.slices.profiles(ps=ps) #This depends on ps only
