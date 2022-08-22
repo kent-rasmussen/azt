@@ -1,6 +1,9 @@
 #Roadmap
+check out objects with .text attrs, vs returning text.
+
 form values don't seem to keep in step with the consonant and vowel transcriptions. Change one, then return to it, and the forms are not found.
-- make searchability work in real time, or else force refreshes. 
+- make searchability work in real time, or else force refreshes.
+
 Verification nodes don't seem to be updated with change in sort group name. Is this a threading problem? this might be fixed.
 rethink framed data process; only get what's needed. Maybe don't save in dict.
 
