@@ -6264,7 +6264,8 @@ class Sort(object):
         u.join()
         if updateforms:
             #NO: this should update formstosearch and profile data.
-            self.settings.reloadstatusdatabycvtpsprofile()?
+            #?
+            self.settings.reloadstatusdatabycvtpsprofile()
         self.maybewrite() #once done iterating over senseids
     def __init__(self, parent):
         parent.settings.makeeverythingok()
