@@ -1,5 +1,9 @@
 # A→Z+T Changelog
 
+# Version 0.9.3
+  - Consonant and vowel sorting and renaming done, **except for renames that change Syllable profiles**
+    - If you change syllable profiles (e.g., change o>ou, or iy>i), your results will not be predictable. I recommend if you do this, immediately restart A→Z+T, and redo a syllable profile analysis. I am working to account for this, but am not done yet.
+
 # Version 0.9.2
 - Windows batch file now
   - downloads and installs from USER/Downloads
