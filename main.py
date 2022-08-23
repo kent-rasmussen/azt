@@ -5,7 +5,8 @@ program={'name':'A→Z+T'}
 program['tkinter']=True
 program['production']=False #True for making screenshots (default theme)
 program['testing']=True #True eliminates Error screens and zipped logs
-program['demo']=True #True sets me=False, production=True, testing=False
+program['demo']=True #sets me=False, production=True, testing=False
+# program['demo']=False
 program['version']='0.9.3' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
