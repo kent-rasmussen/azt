@@ -5771,13 +5771,18 @@ class Sort(object):
         elif ptosort or ptoverify:
             next=_("profile")
             fn=self.nprofile
+        else:
+            fn=None
         done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
-                "distinct! Moving on to the next {}!".format(
-                                            self.profile,self.check,
-                                            self.checktypename[cvt],
-                                            next))
-        ErrorNotice(text=done,title=_("Done!"))
-        fn()
+                "distinct!").format(
+                                    self.profile,self.check,
+                                    self.checktypename[cvt])
+                #only on first two ifs:
+        if fn:
+            done+='\n'+_("Moving on to the next {}!".format(next))
+        ErrorNotice(text=done,title=_("Done!")) #all
+        if fn:
+            fn() #only on first two ifs
     def presenttosort(self):
         scaledpady=int(50*program['scale'])
         groupselected=None
