@@ -10757,6 +10757,13 @@ class StatusDict(dict):
                             for kwargs['check'] in checks]
                                         for i in j
                                         ]) or
+                (kwargs['toverify'] and [i for j in
+                            # [self.groups(profile=profile,check=check,**kwargs)
+                            [self.groups(**kwargs)
+                            # for check in checks]
+                            for kwargs['check'] in checks]
+                                        for i in j
+                                        ]) or
                 kwargs['tojoin'] and self.profiletojoin(**kwargs)
                 ):
                 p+=[kwargs['profile']]
