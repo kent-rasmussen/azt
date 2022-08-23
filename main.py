@@ -1729,7 +1729,7 @@ class Settings(object):
         log.info("Processesing {} syllable profiles".format(ps))
         senseids=self.db.senseidsbyps[ps]
         n=self._getprofiles(senseids,ps)
-        log.info("Processed {} forms to syllable profile".format(x))
+        log.info("Processed {} forms to syllable profile".format(n))
         logfinished(start_time)
     def getprofilesbysenseids(self,senseids,ps):
         n=self._getprofiles(senseids,ps)
