@@ -10748,7 +10748,9 @@ class StatusDict(dict):
                 log.log(4,"No Checks for this profile, returning.")
                 continue #you won't find any profiles to do, either...
             if (
-                (not kwargs['wsorted'] and not kwargs['tosort']) or
+                (not kwargs['wsorted'] and not kwargs['tosort']
+                and not kwargs['toverify'] and not kwargs['tojoin']
+                ) or
                 (kwargs['tosort'] and self.profiletosort(**kwargs)) or
                 (kwargs['wsorted'] and [i for j in
                             # [self.groups(profile=profile,check=check,**kwargs)
