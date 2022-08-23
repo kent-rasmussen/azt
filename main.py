@@ -5765,6 +5765,8 @@ class Sort(object):
         ctoverify=self.status.checks(toverify=True)
         ptosort=self.status.profiles(tosort=True)
         ptoverify=self.status.profiles(toverify=True)
+        # log.info("ctosort: {},ctoverify: {},ptosort: {},ptoverify: {}"
+        #         "".format(ctosort,ctoverify,ptosort,ptoverify))
         if ctosort or ctoverify:
             next=_("check")
             fn=self.ncheck
