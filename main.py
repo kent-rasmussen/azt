@@ -6211,7 +6211,7 @@ class Sort(object):
         # This function updates the field value and verification status (which
         # contains the field value) in the lift file.
         # This is all the words in the database with the given
-        # location:value correspondence (any ps/profile)
+        # location:value correspondence (for a given ps/profile)
         check=self.params.check()
         lst2=self.getsenseidsingroup(check,oldvalue) #by annotations, for C/V
         # We are agnostic of verification status of any given entry, so just
