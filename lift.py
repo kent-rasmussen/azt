@@ -324,7 +324,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         nfixed=0
         # This is used in cases where form@lang wasn't specified, so now we make
         # it up, and trust the user can fix if this is guessed wrong
-        lang=self.pylang(self.analang)
+        try:
+            lang=self.pylang(self.analang)
+        except AttributeError:
+            return #if there is no analang, there are no legacy fields either
         #any verification field, anywhere:
         allfieldnames=[i.get('type') for i in self.nodes.findall(".//field")]
         fieldnames=[i for i in set(allfieldnames) if i and 'verification' in i]
