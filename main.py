@@ -4076,7 +4076,10 @@ class TaskChooser(TaskDressing,ui.Window):
         sortsrecorded=self.db.nfieldswsoundfiles
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
-        enough=50
+        if me:
+            enough=20
+        else:
+            enough=50
         for f in sorts:
             if f not in sortsrecorded:
                 sortsrecorded[f]={}
