@@ -855,7 +855,10 @@ class StatusFrame(ui.Frame):
         profiles=self.settings.slices.profiles()
         curprofile=self.settings.slices.profile()
         curcheck=self.settings.params.check()
-        frames=list(self.settings.toneframes[ps].keys())
+        try:
+            frames=list(self.settings.toneframes[ps].keys())
+        except KeyError:
+            frames=list()
         allchecks=[]
         for profile in profiles:
             if profile in self.settings.status[cvt][ps]:
