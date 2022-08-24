@@ -527,7 +527,7 @@ class Menus(ui.Menu):
         self.cascade(self,_("Help"),'helpmenu')
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
-            helpitems+=[(_("Update A→Z+T"), self.parent.updateazt)]
+            helpitems+=[(_("Update A→Z+T"), updateazt)]
         helpitems+=[("What's with the New Interface?",
                         self.parent.helpnewinterface)
                     ]
@@ -3582,31 +3582,6 @@ class TaskDressing(object):
         """only write to file every self.writeeverynwrites times you might."""
         self.taskchooser.writeable+=1 #and tally here each time this is asked
         return not self.taskchooser.writeable%self.settings.writeeverynwrites
-    def updateazt(self):
-        if 'git' in program:
-            gitargs=[str(program['git']), "-C", str(program['aztdir']), "pull"]
-            try:
-                o=subprocess.check_output(gitargs,shell=False,
-                                            stderr=subprocess.STDOUT)
-                # o=e.decode(sys.stdout.encoding).strip()
-                # log.info("git output: {}".format(o))
-            except subprocess.CalledProcessError as e:
-                o=e.output
-            try:
-                t=o.decode(sys.stdout.encoding).strip()
-            except:
-                t=o
-            log.info("git output: {} ({})".format(t,type(t)))
-            if (type(t) is str and
-                        "Already up to date." not in t and
-                        "No route to host" not in t) or (
-                type(t) is not str and
-                            b"Already up to date." not in t and
-                            b"No route to host" not in t):
-                t=str(t)+_('\n(Restart {} to use this update)').format(
-                                                                program['name'])
-            e=ErrorNotice(t,parent=self,title=_("Update (Git) output"))
-            e.wait_window(e)
     def killall(self):
         log.info("Shutting down Task")
         if self.taskchooser.towrite:
@@ -11957,6 +11932,46 @@ def tryrun(cmd):
 def sysrestart():
     os.execv(sys.argv[0], sys.argv)
     sys.exit()
+def updateazt(**kwargs): #should only be parent, for errorroot
+    if 'git' in program:
+        gitargs=[str(program['git']), "-C", str(program['aztdir']), "pull"]
+        try:
+            o=subprocess.check_output(gitargs,shell=False,
+                                        stderr=subprocess.STDOUT)
+            # o=e.decode(sys.stdout.encoding).strip()
+            # log.info("git output: {}".format(o))
+        except subprocess.CalledProcessError as e:
+            o=e.output
+        try:
+            t=o.decode(sys.stdout.encoding).strip()
+        except:
+            t=o
+        log.info("git output: {} ({})".format(t,type(t)))
+        if (type(t) is str and
+                    "Already up to date." not in t and
+                    "No route to host" not in t) or (
+            type(t) is not str and
+                        b"Already up to date." not in t and
+                        b"No route to host" not in t):
+            t=str(t)+_('\n(Restart {} to use this update)').format(
+                                                            program['name'])
+        if set(['parent']).issuperset(set(kwargs.keys())):
+            # log.info("Making Error Window")
+            # log.info(t)
+            # log.info("parent: {}".format(kwargs['parent']))
+            # log.info(**kwargs)
+            try:
+                title=_("Update (Git) output")
+            except:
+                title="Update (Git) output"
+            e=ErrorNotice(t,title=title,**kwargs)
+            # except Exception as e:
+            #     log.info(e)
+            # log.info(e.__dir__)
+            e.wait_window(e)
+        else:
+            log.info(set(kwargs.keys()))
+            log.info(set(['parent']))
 def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
