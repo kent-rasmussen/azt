@@ -705,11 +705,11 @@ class Menu(Childof,tkinter.Menu): #not Text
             label=spaces+label+spaces
         return label
     def add_command(self,label,command):
-        log.log(4,"Menu opts: {}".format((self,label,command)))
+        # log.info("Menu opts: {}".format((self,label,command)))
         label=self.pad(label)
         tkinter.Menu.add_command(self,label=label,command=command)
     def add_cascade(self,label,menu):
-        log.log(4,"Cascade opts: {}".format((self,label,menu)))
+        # log.info("Cascade opts: {}".format((self,label,menu)))
         label=self.pad(label)
         tkinter.Menu.add_cascade(self,label=label,menu=menu)
     def __init__(self,parent,**kwargs):
