@@ -1560,15 +1560,15 @@ class Settings(object):
         vars={}
         row+=1
         scroll=ui.ScrollingFrame(pgw.frame, row=row, column=0)
-        row=0
+        srow=0
         ncols=4 # increase this for wider window
         for lang in self.db.analangs:
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
-            row+=1
+            srow+=1
             title=ui.Label(scroll.content,text=self.languagenames[lang],
                                                         font='read')
-            title.grid(column=0, row=row, columnspan=ncols)
+            title.grid(column=0, row=srow, columnspan=ncols)
             vars[lang]={}
             for sclass in [sc for sc in self.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
                                     if ('dg' in sc or 'tg' in sc)]:
@@ -1578,11 +1578,11 @@ class Settings(object):
                 if pclass not in vars[lang]:
                     vars[lang][pclass]={}
                 if len(self.db.s[lang][sclass])>0:
-                    row+=1
+                    srow+=1
                     header=ui.Label(scroll.content,
                     text=sclass.replace('dg',' (digraph)').replace('tg',
                                                             ' (trigraph)')+': ')
-                    header.grid(column=0, row=row)
+                    header.grid(column=0, row=srow)
                 col=1
                 for pg in self.db.s[lang][sclass]:
                     vars[lang][pclass][pg] = ui.BooleanVar()
@@ -1592,12 +1592,12 @@ class Settings(object):
                                         variable = vars[lang][pclass][pg],
                                         onvalue = True, offvalue = False,
                                         )
-                    cb.grid(column=col, row=row,sticky='nsew')
+                    cb.grid(column=col, row=srow,sticky='nsew')
                     if col<= ncols:
                         col+=1
                     else:
                         col=1 #not header
-                        row+=1
+                        srow+=1
         row+=1
         b=ui.Button(pgw.frame,text=oktext,command=makechanges, width=15,
                     column=0, row=row, sticky='e',padx=15)
