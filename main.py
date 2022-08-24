@@ -12092,6 +12092,15 @@ def mainproblem():
     ui.Button(errorw.outsideframe,text=_("Restart {}").format(program['name']),
                 cmd=sysrestart,
                 row=1,column=2)
+    if program['git']:
+        # log.info("Making update menu")
+        errormenu=ui.Menu(errorroot)
+        errormenu.add_command(
+                            label=_("Update A→Z+T"),
+                            command=lambda x=errorw:updateazt(parent=x)
+                            )
+        errorw.config(menu=errormenu)
+        # log.info(_("Done making update menu"))
     errorw.wait_window(errorw)
     if newtk: #likely never work/needed?
         errorroot.mainloop() #This has to be the last thing
