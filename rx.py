@@ -163,7 +163,7 @@ def slisttoalternations(graphemeset,group=False):
     if group:
         output='('+output+')'
     return output
-def s(sdict, stype, word=False, compile=False): #settings lang=None
+def s(sdict, stype, polyn=0, word=False, compile=False): #settings lang=None
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
     """sdict should be a dictionary value keyed by check/settings.s[analang]"""
@@ -183,6 +183,9 @@ def s(sdict, stype, word=False, compile=False): #settings lang=None
         log.error("Dunno why, but this isn't in lists: {}".format(stype))
         return
     graphemeset=set(sdict[stype])-lessdict
+    if polyn:
+        #make the above limited by len here
+        graphemeset=[i for i in graphemeset if len(i) == polyn]
     output=slisttoalternations(graphemeset,group=True)
     if compile:
         return make(output, word=word, compile=compile)
