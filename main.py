@@ -1788,14 +1788,14 @@ class Settings(object):
         for g in [i for i in c+o if i in form]:
             if not self.distinguish[g]:
                 if g in o:# and o in self.rx:?
-                    form=self.rx[g].sub('',form)
+                    form=self.rx[g].sub('',form) #no polygraphs here
                 else:
-                    form=self.rx[g+'_'].sub('C',form)
+                    form=self.rx[g+'_'].sub('C',form) #no polygraphs here
             if 'wd' in g and not self.distinguish[c+'wd']:
-                form=self.rx[c+'wd'].sub('C',form)
+                form=self.rx[c+'wd'].sub('C',form) #no polygraphs here
                 # log.debug("{}wd regex result: {}".format(c,form))
         for cc in [i for i in cc if i in form]:
-            form=self.rx[cc].sub(self.interpret[cc],form)
+            form=self.rx[cc].sub(self.interpret[cc],form) #no polygraphs here
         return form
     def profileofform(self,form,ps):
         if not form or not ps:
@@ -1907,8 +1907,8 @@ class Settings(object):
                      and (k in ['C','V'] or self.distinguish[k]))
                 for i in v
                 ]
-        for n in range(1,7):
-            self.rx[sclass+str(n)]=rx.nX(sin,sout,n)
+        for n in range(1,7): #just get the Nth C or V, don't worry about polygraphs
+            self.rx[sclass+str(n)]=rx.nX(sin,sout,n) #no polygraphs here
     def setupCVrxs(self):
         slcassesC=['N','S','G','ʔ','D']
         self.rx={}
@@ -1921,15 +1921,15 @@ class Settings(object):
         #Compile preferred regexs here
         for cc in ['CG','CS','NC','VN','VV']:
             ccc=cc.replace('C','[CSGDʔN]{1}')
-            self.rx[cc]=rx.compile(ccc)
+            self.rx[cc]=rx.compile(ccc) #no polygraphs here
         for c in slcassesC:
             if c == 'N': #i.e., before C
-                self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))') #{1}|
+                self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))') #no polygraphs here
             elif c in ['ʔ','D']:
-                self.rx[c+'_']=rx.compile(c+'(?!\Z)')
+                self.rx[c+'_']=rx.compile(c+'(?!\Z)') #no polygraphs here
             else:
-                self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c)
-            self.rx[c+'wd']=rx.compile(c+'(?=\Z)')
+                self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c) #no polygraphs here
+            self.rx[c+'wd']=rx.compile(c+'(?=\Z)') #no polygraphs here
     def reloadprofiledata(self):
         self.storesettingsfile() # why?
         self.profilesbysense={}
