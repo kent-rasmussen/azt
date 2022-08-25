@@ -1812,7 +1812,7 @@ class Settings(object):
         # log.info("Searching with these regexes: {}".format(self.rx))
         for s in set(self.profilelegit) & set(self.rx.keys()):
             # log.info('s: {}; rx: {}'.format(s, self.rx[s]))
-            for i in self.rx[s].findall(form):
+            for i in self.rx[s][0].findall(form): #find any polygraph
                 try:
                     self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
                 except KeyError:
