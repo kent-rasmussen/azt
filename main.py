@@ -11931,7 +11931,51 @@ def tryrun(cmd):
         log.error(text)
         ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
 def sysrestart():
-    os.execv(sys.argv[0], sys.argv)
+    osys=platform.system()
+    if osys == "Linux":
+        log.info("Trying argv[0] with args {}, {} and {}".format(sys.executable,
+                                                                sys.argv[0],
+                                                                sys.argv))
+        try:
+            log.info("Trying argv[0]")
+            os.execv(sys.argv[0], sys.argv)
+        except Exception as e:
+            log.info("Failed ({}); Trying executable".format(e))
+            os.execv(sys.executable, sys.argv)
+    elif osys == 'Windows':
+        log.info("Trying execv")
+        try:
+            os.execv(sys.executable, sys.argv)
+        except Exception as e:
+            log.info("Failed ({}); Trying execl".format(e))
+            try:
+                os.execl(sys.executable, sys.argv)
+            except Exception as e:
+                log.info("Failed ({}); Trying execvp".format(e))
+                try:
+                    os.execvp(sys.executable, sys.argv)
+                except Exception as e:
+                    log.info("Failed ({}); Trying execlp".format(e))
+                    try:
+                        os.execlp(sys.executable, sys.argv)
+                    except Exception as e:
+                        log.info("Failed ({}); Trying spawnv".format(e))
+                        try:
+                            os.spawnv(sys.executable, sys.argv)
+                        except Exception as e:
+                            log.info("Failed ({}); Trying spawnl".format(e))
+                            try:
+                                os.spawnl(sys.executable, sys.argv)
+                            except Exception as e:
+                                log.info("Failed ({}); Trying spawnvp".format(e))
+                                try:
+                                    os.spawnvp(sys.executable, sys.argv)
+                                except Exception as e:
+                                    log.info("Failed ({}); Trying spawnlp".format(e))
+                                    try:
+                                        os.spawnlp(sys.executable, sys.argv)
+                                    except:
+                                        log.info("Failed ({})")
     sys.exit()
 def updateazt(**kwargs): #should only be parent, for errorroot
     if 'git' in program:
