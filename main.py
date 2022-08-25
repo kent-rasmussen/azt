@@ -2471,6 +2471,7 @@ class Settings(object):
         """I think I need this before setting up regexs"""
         if hasattr(self.taskchooser,'analang'): #i.e., new file
             self.analang=self.taskchooser.analang #I need to keep this alive until objects are done
+            self.db.pss=self.db.getpssbylang(self.analang) #redo this, specify
         else:
             self.guessanalang() #needed for regexs
         if not self.analang:
