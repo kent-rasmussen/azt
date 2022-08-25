@@ -12187,6 +12187,8 @@ if __name__ == "__main__":
     """Not translating yet"""
     log.info("Running {} v{} (main.py updated to {})".format(
                                     program['name'],program['version'],mt))
+    log.info("Called with arguments ({}) {} / {}".format(sys.executable,
+                                                    sys.argv[0], sys.argv))
     log.info("Working directory is {} on {} ".format(program['aztdir'],
                                                     platform.uname().node))
     program['start_time'] = time.time()
