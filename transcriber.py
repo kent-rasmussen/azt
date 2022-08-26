@@ -16,6 +16,8 @@ class Transcriber(ui.Frame):
             self.formfield.delete(0,ui.END)
         if x:
             self.formfield.insert(ui.INSERT,x) #could also do tkinter.END
+        if x == '': #if cleared, be ready to type
+            self.formfield.focus_set()
         self.updatelabels()
     def updatelabels(self,event=None):
         a=self.newname.get()
