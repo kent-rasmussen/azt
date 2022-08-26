@@ -1570,6 +1570,7 @@ class Settings(object):
                                                         font='read')
             title.grid(column=0, row=srow, columnspan=ncols)
             vars[lang]={}
+            # log.info("sclasses: {}".format(self.db.s[lang]))
             for sclass in [sc for sc in self.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
                                     if ('dg' in sc or 'tg' in sc)]:
                 pclass=sclass.replace('dg','').replace('tg','')
@@ -1584,6 +1585,7 @@ class Settings(object):
                                                             ' (trigraph)')+': ')
                     header.grid(column=0, row=srow)
                 col=1
+                # log.info("pgs: {}".format(self.db.s[lang][sclass]))
                 for pg in self.db.s[lang][sclass]:
                     vars[lang][pclass][pg] = ui.BooleanVar()
                     vars[lang][pclass][pg].set(
