@@ -1817,7 +1817,7 @@ class Settings(object):
                     self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
                 except KeyError:
                     self.sextracted[ps][s][i]=1
-        for poly in range(3,0): #find and sub longer forms first
+        for polyn in range(3,0,-1): #find and sub longer forms first
             for s in set(self.profilelegit) & set(self.rx.keys()):
                 form=self.rx[s][polyn].sub(s,form) #replace with profile variable
         """We could consider combining NC to C (or not), and CG to C (or not)
@@ -1898,7 +1898,7 @@ class Settings(object):
             # log.info("Compiled rx list: {}".format(self.rx[cvt]))
     def compileCVrxforsclass(self,sclass):
         """This does sorting by length to make longest first"""
-        for pn in range(3,-1):
+        for pn in range(3,-1,-1):
             self.rx[sclass][pn]=rx.s(self.s[self.analang],sclass,polyn=pn,
                                                             compile=True)
         sin=self.s[self.analang][sclass]
