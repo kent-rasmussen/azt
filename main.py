@@ -8041,6 +8041,9 @@ class Transcribe(Sound,Sort):
                                                     self.group, self.groups)))
             return
         return 1
+    def unsubmit(self,event=None):
+        log.info("Undoing...")
+        self.mistake=True
     def submitform(self):
         newvalue=self.transcriber.formfield.get()
         if newvalue == "":
@@ -8051,6 +8054,7 @@ class Transcribe(Sound,Sort):
         if newvalue == "∅": #proxy for no segments
             newvalue=''
         if newvalue != self.group: #only make changes!
+            showpolygraphs=False
             if newvalue in self.groups :
                 deja=_("Sorry, there is already a group with "
                                 "that label; If you want to join the "
@@ -8066,21 +8070,26 @@ class Transcribe(Sound,Sort):
                     diff="shorter"
                 else:
                     diff=None
-                warning=_("Your new name (‘{}’) is {} than your old "
-                            "one (‘{}’). Assuming you want this, you should "
-                            "do a new syllable profile analysis, as it will "
-                            "certainly change ({} may do this for you when you "
-                            "next start it up). \nWhen you do this, pay "
-                            "attention to the digraph and trigraph settings, "
-                            "as those might need to change, as well."
-                            "\n\n**If this isn't what you wanted, close the {} "
-                            "window NOW (before closing this warning window).**"
-                            "".format(newvalue,diff,self.group,program['name'],
-                                        self.tasktitle()))
-                title=_("Syllable profile change?")
                 if diff:
-                    ErrorNotice(warning,parent=self,title=title,wait=True)
-                if self.runwindow.exitFlag.istrue():
+                    notext=_("Undo; I made a mistake!")
+                    warning=_("Your new name (‘{}’) is {} than your old "
+                            "one (‘{}’). \nAssuming you want this, {} will "
+                            "restart now and "
+                            "do a new syllable profile analysis (as it will "
+                            "certainly change)."
+                            "").format(newvalue,diff,self.group,program['name'])
+                    if diff == "shorter":
+                        warning+=_("\nIf you're done using ‘{}’, "
+                            "remove it from the digraph and trigraph settings "
+                            "(the next page; then {} will restart)."
+                            ).format(self.group,program['name'])
+                        showpolygraphs=True
+                    warning+=_("\n\n**If this isn't what you wanted, "
+                                "click ‘{}’ NOW.**").format(notext)
+                    title=_("Syllable profile change?")
+                    self.err=ErrorNotice(warning,parent=self,title=title,wait=True,
+                                button=(notext,self.unsubmit))
+                # log.info("Mistake: {}".format(self.mistake)) #Why isn't this setting true?
                 if self.runwindow.exitFlag.istrue() or self.mistake:
                     # log.info("Exited, not making changes: ({})".format(diff))
                     self.mistake=False #reset for next submit
