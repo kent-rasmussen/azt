@@ -1960,7 +1960,7 @@ class Settings(object):
         profiles=self.slices.profiles(ps=ps) #This depends on ps only
         for p in profiles:
             # log.info("Working on {}".format(p))
-            reloadstatusdatabycvtpsprofile(profile=p,**kwargs)
+            self.reloadstatusdatabycvtpsprofile(profile=p,**kwargs)
         if kwargs.get('store',True):
             self.storesettingsfile(setting='status')
     def reloadstatusdata(self):
