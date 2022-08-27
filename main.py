@@ -7659,7 +7659,10 @@ class Report(object):
         self.profilesbysense=self.settings.profilesbysense
         self.s=self.settings.s
 class Comprehensive(object):
-    pass
+    def __init__(self):
+        self.status.group(None)
+        log.info("doing basic report on {} with groups {}".format(self.cvtstodo,
+                                                        self.status.group()))
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
@@ -8744,6 +8747,7 @@ class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.cvtstodo=['V','C','CV']
+        Comprehensive.__init__(self)
 class ReportCitationBasicV(Report,Comprehensive,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
@@ -8769,6 +8773,7 @@ class ReportCitationBasicV(Report,Comprehensive,Segments,TaskDressing,ui.Window)
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.cvtstodo=['V']
+        Comprehensive.__init__(self)
 class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
@@ -8795,6 +8800,7 @@ class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window)
         Report.__init__(self)
         self.cvtstodo=['C']
         # This is really hard on memory, with correspondences.
+        Comprehensive.__init__(self)
 class ReportCitationBasicCV(Report,Comprehensive,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
@@ -8820,6 +8826,7 @@ class ReportCitationBasicCV(Report,Comprehensive,Segments,TaskDressing,ui.Window
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.cvtstodo=['CV']
+        Comprehensive.__init__(self)
 class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
