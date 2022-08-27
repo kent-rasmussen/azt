@@ -1701,6 +1701,7 @@ class Settings(object):
         for form in forms:
             """This adds to self.sextracted, too"""
             profile=self.profileofform(form,ps=ps)
+            # log.info("getprofileofsense Profile: {}".format(profile))
             if not set(self.profilelegit).issuperset(profile):
                 profile='Invalid'
             self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
@@ -1739,6 +1740,7 @@ class Settings(object):
     def _getprofiles(self,senseids,ps):
         n=0
         todo=len(senseids)
+        # log.info("RXs: {}".format(self.rx))
         for senseid in senseids:
             n+=1
             if n%100:
@@ -1801,6 +1803,7 @@ class Settings(object):
         return form
     def profileofform(self,form,ps):
         if not form or not ps:
+            # log.info("Either no form ({}) or no ps ({}); returning".format(form,ps))
             return "Invalid"
         # log.debug("profiling {}...".format(form))
         formori=form
