@@ -7440,7 +7440,7 @@ class Report(object):
                 log.error("Sorry, I don't know how to compare cvt: {}"
                                                     "".format(cvt))
             log.info("Going to run report for groups {}".format(groups))
-            log.info("With comparison groups {}".format(self.groupcomparison))
+            log.info("With comparison groups {}".format(groupcomparisons))
             for group in groups:
                 for self.groupcomparison in groupcomparisons:
                     if group != self.groupcomparison:
