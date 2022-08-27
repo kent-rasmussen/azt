@@ -10836,7 +10836,8 @@ class StatusDict(dict):
                 for s in thispsdict:
                     if s != 'V':
                         todo.extend([i[0] for i in thispsdict[s]])
-                        #list of tuples
+            todo=list(set(todo)|set(sn['groups'])) #either way, add current groups
+            # log.info("Returning groups: {}".format(todo))
             return todo
     def senseidstosort(self): #,ps=None,profile=None
         return self._idstosort
