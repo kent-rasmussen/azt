@@ -3378,7 +3378,7 @@ class TaskDressing(object):
                           "\nTone Frame (currently {})"
                           "\nBefore choosing a sort group!"
                           "").format(self.params.cvtdict()[cvt]['sg'], ps,
-                          profile, check)).grid(column=0, row=0)
+                          profile, check), column=0, row=0)
             return 1
         kwargs=grouptype(**kwargs) #this just fills in False
         groups=self.status.groups(cvt=cvt,**kwargs)
