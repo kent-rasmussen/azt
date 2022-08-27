@@ -8093,6 +8093,9 @@ class Transcribe(Sound,Sort):
             self.updategroups()
             self.settings.storesettingsfile(setting='status')
             # log.info("Done with changes: {}".format(diff))
+            #because people need to do a profile analysis here.
+            self.settings.reloadprofiledata(showpolygraphs=showpolygraphs)
+            # sysrestart()
             """Update regular expressions here!!"""
         else: #move on, but notify in logs
             log.info("User selected ‘{}’, but with no change.".format(
