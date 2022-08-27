@@ -8332,6 +8332,7 @@ class Transcribe(Sound,Sort):
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def __init__(self): #frame, filename=None
+        self.mistake=False #track when a user has made a mistake
         Sound.__init__(self)
 class TranscribeV(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
