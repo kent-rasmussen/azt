@@ -1903,6 +1903,7 @@ class Settings(object):
         for pn in range(3,-1,-1):
             self.rx[sclass][pn]=rx.s(self.s[self.analang],sclass,polyn=pn,
                                                             compile=True)
+        log.info("compileCVrxforsclass RXs: {}".format(self.rx))
         sin=self.s[self.analang][sclass]
         sout=[i for k,v in self.s[self.analang].items()
                 if (k not in [sclass,'<','='] # no affix boundary or punctuation
@@ -3429,6 +3430,7 @@ class TaskDressing(object):
             # window.scroll=ui.ScrollingFrame(window.frame)
             # window.scroll.grid(column=0, row=1)
             # groups+=[(None,'All')] #put this first, some day (now confuses ui)
+            # log.info("Groups: {}".format(groups))
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                      optionlist=groups+[(None,'All')],
                                      command=self.settings.setgroup,
