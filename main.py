@@ -11378,7 +11378,9 @@ class ConfigParser(configparser.ConfigParser):
 class ErrorNotice(ui.Window):
     """this is for things that I want the user to know, without having
     to find it in the logs."""
-    def __init__(self, text, parent=None, title="Error!", wait=False):
+    def destroy(self, event=None):
+        ui.Window.destroy(self)
+    def __init__(self, text, parent=None, title="Error!", wait=False, button=False):
         # log.info("Making ErrorNotice")
         if not parent:
             parent=program['root']
@@ -11389,6 +11391,12 @@ class ErrorNotice(ui.Window):
         self.text = text
         l=ui.Label(self.frame, text=text, row=0, column=0, ipadx=25)
         l.wrap()
+        if button and type(button) is tuple:
+            b=ui.Button(self.frame, text=button[0],
+                    cmd=None,
+                    row=1, column=0, sticky='e')
+            b.bind('<ButtonRelease>',button[1])
+            b.bind('<ButtonRelease>',self.destroy,add='+')
         self.attributes("-topmost", True)
         if wait:
             self.wait_window(self)
