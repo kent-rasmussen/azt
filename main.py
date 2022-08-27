@@ -4139,7 +4139,6 @@ class TaskChooser(TaskDressing,ui.Window):
         # pyargs=[program['python'],file.getfile(__file__)]
         # subprocess.run(pyargs)
         sysrestart()
-        # self.parent.makecheck(filename)
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
         self.file.askwhichlift(file.getfilenames())
