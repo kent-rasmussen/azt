@@ -1932,9 +1932,11 @@ class Settings(object):
             else:
                 self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c) #no polygraphs here
             self.rx[c+'wd']=rx.compile(c+'(?=\Z)') #no polygraphs here
-    def reloadprofiledata(self):
+    def reloadprofiledata(self,showpolygraphs=False):
         self.storesettingsfile() # why?
         self.profilesbysense={}
+        if showpolygraphs:
+            self.askaboutpolygraphs()
         self.storesettingsfile(setting='profiledata')
         self.taskchooser.restart()
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
