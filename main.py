@@ -1900,9 +1900,14 @@ class Settings(object):
             # log.info("Compiled rx list: {}".format(self.rx[cvt]))
     def compileCVrxforsclass(self,sclass):
         """This does sorting by length to make longest first"""
+        if sclass not in self.rx:
+            self.rx[sclass]={}
         for pn in range(3,-1,-1):
             self.rx[sclass][pn]=rx.s(self.s[self.analang],sclass,polyn=pn,
                                                             compile=True)
+            if self.rx[sclass][pn] == rx.compile('()'):
+                log.info("Empty Regex; removing.")
+                del self.rx[sclass][pn]
         log.info("compileCVrxforsclass RXs: {}".format(self.rx))
         sin=self.s[self.analang][sclass]
         sout=[i for k,v in self.s[self.analang].items()
