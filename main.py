@@ -4136,8 +4136,6 @@ class TaskChooser(TaskDressing,ui.Window):
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
-        # pyargs=[program['python'],file.getfile(__file__)]
-        # subprocess.run(pyargs)
         sysrestart()
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
