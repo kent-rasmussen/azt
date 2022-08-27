@@ -4136,6 +4136,22 @@ class TaskChooser(TaskDressing,ui.Window):
     def restart(self,filename=None):
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
+        # log.info("towrite: {}; writing: {}".format(self.towrite,self.writing))
+        if self.towrite: #Do even if not closed by user
+            log.info("Final write to lift")
+            self.maybewrite(definitely=True)
+        self.task.withdraw() #so users don't do stuff while waiting
+        try:
+            self.task.runwindow.withdraw() #so users don't do stuff while waiting
+        except AttributeError:
+            log.info("There doesn't seem to be a runwindow to hide; moving on.")
+        while self.taskchooser.writing:
+            # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
+            #     self.towrite,self.writing,self.taskchooser.writing))
+            log.info("Waiting to finish writing to lift")
+            time.sleep(1)
+            self.check_if_write_done() #because after() isn't working here...
+        # log.info("Not writing to lift")
         sysrestart()
     def changedatabase(self):
         log.debug("Removing database name, so user will be asked again.")
