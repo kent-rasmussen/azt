@@ -30,6 +30,8 @@ ECHO Installing Git 2.33.0.2
 ECHO You should be fine with all default options
 start Git-2.33.0.2-64-bit.exe
 
+pause
+
 ECHO Cloning A→Z+T source to azt directory on your desktop
 cd /d "%userprofile%/desktop"
 git clone "https://github.com/kent-rasmussen/azt.git"

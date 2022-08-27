@@ -42,9 +42,9 @@ class Report(object):
         self.stylesheet()
         self.write()
         t=time.time()-self.start_time
-        m=int(t/60)
-        s=t%60
-        log.info("Finished in {} minutes, {} seconds.".format(m,s))
+        # m=int(t/60)
+        # s=t%60
+        log.info("Finished in {:1.0f} minutes, {:2.3f} seconds.".format(*divmod(t,60)))
         if me:
             self.compile() #This isn't working yet.
     def write(self):
@@ -387,6 +387,9 @@ class Link(ET.Element):
             ph=XLPobject(self,'tPhonetic',text)
         else:
             self.node.text=text
+        """<mediaObject src="../audio/Nouncitationbackdos.wav"></mediaObject>
+        <lingPaper includemediaobjects='yes' />
+        """
 class Linebreak(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'br')

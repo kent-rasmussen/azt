@@ -525,6 +525,8 @@ class Exitable(object):
     def killall(self):
         self.destroy()
         sys.exit()
+    def cleanup(self):
+        pass
     def on_quit(self):
         """Do this when a window closes, so any window functions can know
         to just stop, rather than trying to build graphic components and
@@ -537,6 +539,7 @@ class Exitable(object):
         if self.mainwindow: #exit afterwards if main window
             self.killall()
         else:
+            self.cleanup()
             self.destroy() #do this for everything
     def __init__(self):
         self.protocol("WM_DELETE_WINDOW", self.on_quit)
@@ -702,11 +705,11 @@ class Menu(Childof,tkinter.Menu): #not Text
             label=spaces+label+spaces
         return label
     def add_command(self,label,command):
-        log.log(4,"Menu opts: {}".format((self,label,command)))
+        # log.info("Menu opts: {}".format((self,label,command)))
         label=self.pad(label)
         tkinter.Menu.add_command(self,label=label,command=command)
     def add_cascade(self,label,menu):
-        log.log(4,"Cascade opts: {}".format((self,label,menu)))
+        # log.info("Cascade opts: {}".format((self,label,menu)))
         label=self.pad(label)
         tkinter.Menu.add_cascade(self,label=label,menu=menu)
     def __init__(self,parent,**kwargs):
@@ -1059,7 +1062,11 @@ class ContextMenu(Childof):
         except:
             log.error("Problem initializing context menu")
     def menuitem(self,msg,cmd):
-        self.menu.add_command(label=msg,command=cmd)
+        try:
+            self.menu.add_command(label=msg,command=cmd)
+        except AttributeError:
+            self.menuinit()
+            self.menu.add_command(label=msg,command=cmd)
     def dosetcontext(self):
         try:
             log.log(3,"setcontext: {}".format(self.parent.setcontext))
@@ -1095,6 +1102,7 @@ class ContextMenu(Childof):
         super(ContextMenu,self).__init__(parent)
         self.parent.context=self
         self.context=context #where the menu is showing (e.g., verifyT)
+        # self.menuinit() #can't redo after context change
         # self.inherit()
         self.updatebindings()
         # UI.__init__(self)

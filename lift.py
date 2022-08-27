@@ -65,15 +65,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     '.txt']
         self.backupfilename=''.join(backupbits)
         self.getguids() #sets: self.guids and self.nguids
+        #the following should probably replaced by getsenseidsbyps everywhere
         self.getsenseids() #sets: self.senseids and self.nsenseids
         """These three get all possible langs by type"""
         self.getglosslangs() #sets: self.glosslangs
         self.getanalangs() #sets: self.analangs, self.audiolangs
-        self.legacylangconvert()
+        self.legacylangconvert() #update from any old language forms to xyz-x-py
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
         self.getfields() #sets self.fields (of entry)
         self.getsensefields() #sets self.sensefields (fields of sense)
+        self.legacyverificationconvert() #data to form nodes (no name changes)
         self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
         "with citation data) "
         log.info("Working on {} with {} entries, with lexeme data counts: {}, "
@@ -82,6 +84,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     self.nentrieswcitationdata,
                                                     self.nsenseids))
         self.pss=self.getpssbylang() #dict keyed by lang
+        #This may be superfluous:
+        self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
         self.lcs=self.citations()
@@ -264,7 +268,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                 "".format(flang)):
                         # log.info("{}; {}".format(n.tag,n.attrib))
                         n.set('lang',self.pylang(lang))
-    def modverificationnode(self,senseid,vtype,analang,**kwargs):
+    def modverificationnode(self,senseid,vtype,ftype,analang,**kwargs):
         """this node stores a python symbolic representation, specific to an
         analysis language"""
         showurl=kwargs.get('showurl')
@@ -272,9 +276,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         rms=kwargs.get('rms',[])
         addifrmd=kwargs.get('addifrmd',False) #not using this anywhere; point?
         textnode, fieldnode, sensenode=self.addverificationnode(
-                                            senseid,vtype=vtype,analang=analang)
+                                            senseid,vtype,ftype,analang)
+        # prettyprint(textnode)
+        # prettyprint(fieldnode)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
-        # log.info("l (before): {}>".format(l))
+        log.info("l (before): {}>".format(l))
         # prettyprint(textnode)
         changed=False
         i=len(l)
@@ -288,21 +294,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l.insert(i,add) #put where removed from, if done.
             changed=True
         textnode.text=str(l)
-        # log.info("l (after): {}> (changed: {})".format(l,changed))
+        log.info("l (after): {}> (changed: {})".format(l,changed))
         # prettyprint(textnode)
         if changed:
             self.updatemoddatetime(senseid=senseid,write=kwargs.get('write'))
-        log.log(2,"Empty node? {}; {}".format(textnode.text,l))
+        # log.info("Empty node? {}; {}".format(textnode.text,l))
         if not l:
             log.debug("removing empty verification node from this sense")
             sensenode.remove(fieldnode)
-        else:
-            log.log(2,"Not removing empty node")
-    def getverificationnodevaluebyframe(self,senseid,vtype,analang,frame):
-        nodes=self.addverificationnode(senseid,vtype=vtype,analang=analang)
-        vf=nodes[0] #this is a text node
-        # sensenode=nodes[1]
-        l=self.evaluatenode(vf) #this is the python evaluation of vf.text
+        # else:
+        #     log.info("Not removing empty node")
+    def getverificationnodevaluebyframe(self,senseid,vtype,ftype,analang,frame):
+        # log.info("{}; {}; {}; {}; {}".format(senseid,vtype,ftype,analang,frame))
+        nodes=self.getverificationnode(senseid,vtype,ftype,analang)
+        vft=nodes[0] #this is a text node
+        l=self.evaluatenode(vft) #this is the python evaluation of vf.text
         # log.info("text: {}; vf: {}".format(l,vf.text))
         values=[]
         if l is not None:
@@ -311,58 +317,72 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if frame in field:
                     values.append(field)
         return values
-    def legacyverificationconvert(self,senseid,vtype,lang):
-        if 'py-' not in lang:
-            lang=self.pylang(lang)
-        node=self.getsensenode(senseid=senseid)
-        if not node:
-            log.error("No sense node was found for senseid: {}"
-                        "\nThis should never happen!".format(senseid))
-            return
-        vf=node.find("field[@type='{} {}']".format(vtype,"verification"))
-        if vf is not None:
-            for child in vf:
-                if child.tag == 'form':
-                    return #because this isn't a legacy node
-            log.info("Found legacy verification node: {}, {}, {}".format(
-                                                            senseid,vtype,lang))
-            t=vf.text
-            vf.text=None
-            n=Node.makeformnode(vf,lang=lang,text=t,gimmetext=True)
-            log.info(n)
-            return n
-    def addverificationnode(self,senseid,vtype,analang):
+    def legacyverificationconvert(self):
+        # This is used only on boot, to categorically convert any fields where
+        # text was kept in the field, rather than in a form node
+        # start_time=time.time() testing only
+        nfixed=0
+        # This is used in cases where form@lang wasn't specified, so now we make
+        # it up, and trust the user can fix if this is guessed wrong
+        try:
+            lang=self.pylang(self.analang)
+        except AttributeError:
+            return #if there is no analang, there are no legacy fields either
+        #any verification field, anywhere:
+        allfieldnames=[i.get('type') for i in self.nodes.findall(".//field")]
+        fieldnames=[i for i in set(allfieldnames) if i and 'verification' in i]
+        for fieldname in fieldnames:
+            vf=self.nodes.findall(".//field[@type='{}']".format(fieldname))
+            for f in vf:
+                if not nodehasform(f):
+                    nfixed+=1
+                    log.info("Found legacy verification node ({}):"
+                                "".format(fieldname))
+                    prettyprint(f)
+                    t=f.text
+                    f.text=None
+                    Node.makeformnode(f,lang=lang,text=t)
+                    log.info("Converted to:")
+                    prettyprint(f)
+        # log.info("Found {} legacy verification nodes in {} seconds".format(
+        log.info("Found {} legacy verification nodes".format(
+                                                    nfixed,
+                                                    # time.time()-start_time)
+                                                    ))
+    def getverificationnode(self,senseid,vtype,ftype,analang):
         sensenode=node=self.getsensenode(senseid=senseid)
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
         pylang=self.pylang(analang)
-        vf=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text/../.."
-                            "".format(vtype,"verification",pylang))
-        vft=sensenode.find("field[@type='{} {}']/form[@lang='{}']/text"
-                            "".format(vtype,"verification",pylang))
+        vf=sensenode.find("field[@type='{} {} verification']/form[@lang='{}']"
+                            "/text/../..".format(vtype,ftype,pylang))
+        vft=sensenode.find("field[@type='{} {} verification']/form[@lang='{}']"
+                            "/text".format(vtype,ftype,pylang))
+        return vft,vf,sensenode #textnode, fieldnode, sensenode
+    def addverificationnode(self,senseid,vtype,ftype,analang):
+        # This no longer accounts for legacy fields, as those should be
+        # converted at boot.
+        vft,vf,sensenode=self.getverificationnode(senseid,vtype,ftype,analang)
+        # log.info("vft: {}, vf: {}, sensenode: {}".format(vft,vf,sensenode))
+        # prettyprint(vft)
+        # prettyprint(vf)
         t=None #this default will give no text node value
-        if vft is None:
-            field=sensenode.find("field[@type='{} {}']".format(vtype,"verification"))
-            if field:
-                form=field.find("form")
-                if field.text and not form:
-                    t=field.text
-                else:
-                    l=form.get('lang')
-                    if l and analang in l:
-                        log.info("Found other node with analang in it, using.")
-                        textnode=form.find('text')
-                        t=textnode.text
-                sensenode.remove(field) #either way, we won't want the old one.
-            vf=Node(node, 'field',
-                            attrib={'type':"{} verification".format(vtype)})
-            vft=vf.makeformnode(lang=pylang,text=t,gimmetext=True)
-        return (vft,vf,sensenode)
+        if not isinstance(vft,ET.Element): #only then add fields
+            # log.info("Empty vft; adding verification field")
+            vf=Node(sensenode, 'field',
+                            attrib={'type':"{} {} verification".format(vtype,
+                                                                        ftype)})
+            vft=vf.makeformnode(lang=self.pylang(analang),text=t,gimmetext=True)
+        return vft,vf,sensenode #textnode, fieldnode, sensenode
     def getentrynode(self,senseid,showurl=False):
         return self.get('entry',senseid=senseid).get()
     def getsensenode(self,senseid,showurl=False):
-        x=self.get('sense',senseid=senseid).get()
+        # log.info("senseid: {}".format(senseid))
+        x=self.get('sense',senseid=senseid,
+                    # showurl=True
+                    ).get()
+        # log.info("x: {}".format(x))
         if x:
             return x[0]
     def addmodexamplefields(self,**kwargs):
@@ -873,6 +893,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                 ).get('type')))
         log.info('Fields found in Entries: {}'.format(self.fields))
     def getsensefields(self,guid=None,lang=None): # all field types in a given entry
+        #This presumes there is a form@lang!
         self.sensefields={}
         langs=set(self.get('entry/sense/field/form',
                 # lang=lang,
@@ -892,6 +913,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     # showurl=True
                                                     ).get('text')))
         log.info('Locations found in Examples: {}'.format(self.locations))
+    def getsenseidsbyps(self,ps=None):
+        if ps:
+            d=self.get('sense',ps=ps).get('senseid')
+            try:
+                self.senseidsbyps[ps]=d
+            except AttributeError:
+                self.senseidsbyps={ps:d}
+            nd=len(self.senseidsbyps[ps])
+            try:
+                self.nsenseidsbyps[ps]=nd
+            except AttributeError:
+                self.nsenseidsbyps={ps:nd}
+            log.info("Found {} senses with lexical category {}".format(
+                                                    self.nsenseidsbyps[ps],ps))
+        else:
+            pssanylang=setlistsofanykey(self.pss)
+            for ps in pssanylang:
+                self.getsenseidsbyps(ps)
     def getsenseids(self):
         self.senseids=self.get('sense').get('senseid')
         self.nsenseids=len(self.senseids)
@@ -1659,7 +1698,7 @@ class LiftURL():
             self.kwargs['formtext']=None
             self.form(lang='glosslang')
     def tonefield(self):
-        log.log(4,"Making tone field")
+        # log.info("Making tone field")
         self.baselevel()
         self.kwargs['ftype']='tone'
         self.level['tonefield']=self.level['cur']+1 #so this won't repeat
@@ -1736,10 +1775,10 @@ class LiftURL():
                 "happen; exiting!")
         exit()
     def bearchildrenof(self,parent):
-        log.log(4,"bearing children of {} ({})".format(parent,
-                                                        self.children[parent]))
+        # log.info("bearing children of {} ({})".format(parent,
+        #                                                 self.children[parent]))
         for i in self.children[parent]:
-            log.log(4,"bearchildrenof i: {}".format(i))
+            # log.info("bearchildrenof i: {}".format(i))
             self.maybeshow(i,parent)
     def levelup(self,target):
         while self.level.get(target,self.level['cur']+1) < self.level['cur']:
@@ -1992,13 +2031,13 @@ class LiftURL():
                 ""
                 )
     def shouldshow(self,node):
-        c=self.getfamilyof(node,x=[])
         # This fn is not called by showtargetinhighestgeneration or maketarget
         if node in self.level:
             return False
         elif node == self.targethead: #do this later
             return False
-        elif self.attrneeds(node,c):
+        c=self.getfamilyof(node,x=[])
+        if self.attrneeds(node,c):
             # log.info("attrneeds {}; {}".format(node,c))
             return True
         elif self.kwargsneeds(node,c):
@@ -2010,17 +2049,17 @@ class LiftURL():
         else:
             return False
     def getfamilyof(self,node,x):
-        log.log(4,"running kwargshaschildrenof.gen on '{}'".format(node))
+        # log.info("running kwargshaschildrenof.gen on '{}'".format(node))
         if type(node) is str:
             node=[node]
         for i in node:
-            log.log(4,"running kwargshaschildrenof.gen on '{}'".format(i))
-            if i != '':
-                ii=self.children.get(i,'')
-                log.log(4,"Found '{}' this time!".format(ii))
-                if ii != '':
+            if i not in x:
+                # log.info("running kwargshaschildrenof.gen on '{}'".format(i))
+                ii=self.children.get(i)
+                # log.info("Found '{}' this time!".format(ii))
+                if ii and ii not in x:
+                    x=self.getfamilyof(ii,x)
                     x+=ii
-                    self.getfamilyof(ii,x)
         return x
     def pathneeds(self,node,children):
         path=self.path
@@ -2061,30 +2100,32 @@ class LiftURL():
         return False
     def kwargsneeds(self,node,children):
         if node in self.kwargs:
-            log.log(4,"Parent ({}) in kwargs: {}".format(node,self.kwargs))
+            # log.info("Parent ({}) in kwargs: {}".format(node,self.kwargs))
+            return True
         elif children != []:
             for child in children:
                 if child in self.path or child in self.target:
-                    log.log(4,"found {} in path or target; skipping kwarg check.".format(child))
+                    # log.info("found {} in path or target; skipping kwarg check.".format(child))
                     return
-            log.log(4,"Looking for descendants of {} ({}) in kwargs: {}".format(
-                                                node,children,self.kwargs))
+            # log.info("Looking for descendants of {} ({}) in kwargs: {}".format(
+            #                                     node,children,self.kwargs))
             childreninkwargs=set(children) & set(self.kwargs)
             if childreninkwargs != set():
-                log.log(4,"Found descendants of {} in kwargs: {}".format(node,
-                                                            childreninkwargs))
+                # log.info("Found descendants of {} in kwargs: {}".format(node,
+                #                                             childreninkwargs))
                 pathnotdone=childreninkwargs-set(self.level)
                 if pathnotdone != set():
-                    log.log(4,"Found descendants of {} in kwargs, which aren't "
-                                    "already there: ".format(node,pathnotdone))
+                    # log.info("Found descendants of {} in kwargs, which aren't "
+                    #                 "already there: ".format(node,pathnotdone))
                     return True
         return False
     def callerfn(self):
         return sys._getframe(2).f_code.co_name #2 gens since this is a fn, too
     def parentsof(self,nodenames):
-        log.log(4,"children: {}".format(self.children.items()))
-        log.log(4,"key pair: {}".format(
-                ' '.join([str(x) for x in self.children.items() if nodenames in x[1]])))
+        # log.info("children: {}".format(self.children.items()))
+        # log.info("key pair: {}".format(
+        #         ' '.join([str(x) for x in self.children.items()
+        #                             if nodenames in x[1]])))
         p=[]
         if type(nodenames) != list:
             nodenames=[nodenames]
@@ -2093,7 +2134,7 @@ class LiftURL():
             i.reverse()
             p+=i
         plist=list(dict.fromkeys(p))
-        log.log(4,"parents of {}: {}".format(nodenames,plist))
+        # log.info("parents of {}: {}".format(nodenames,plist))
         return plist
     def setattrsofnodes(self):
         """These are atttributes we ask for, which require the field. This
@@ -2195,6 +2236,13 @@ def prettyprint(node):
                 do(child,t)
             t=t-1
     do(node,t)
+def setlistsofanykey(dict):
+    #This reduces a dictionary with lists as values to one list, without dups
+    return set([i for l in dict for i in dict[l]])
+def nodehasform(node):
+    for child in node:
+        if child.tag == 'form':
+            return True
 def atleastoneexamplehaslangformmissing(examples,lang):
     for example in examples:
         if examplehaslangform(example,lang) == False:
@@ -2721,9 +2769,10 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift_2021-12-06.txt"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
     # prettyprint(lift.nodes)
     senseids=[
@@ -2766,11 +2815,23 @@ if __name__ == '__main__':
     # for kwargs['node'] in lift.fieldnode(**kwargs):
     #     t.extend(lift.get('annotation',**kwargs).get('value'))
     # print(t)
-    lf=lift.get('example/locationfield/',
-            what='text',
-            showurl=True
-            ).get('text')
+    lf=lift.get('sense',location=check,
+                        tonevalue=group,
+                        path=['example'],
+                        showurl=True
+                        ).get('senseid')
+    # lf=lift.get('example/locationfield/',
+    #         what='text',
+    #         showurl=True
+    #         ).get('text')
     print(lf)
+    # allfieldnames=[i.get('type') for i in lift.nodes.findall(".//field")]
+    # # log.info(allfieldnames)
+    # fieldnames=[i for i in set(allfieldnames) if i and 'verification' in i]
+    # for fieldname in fieldnames:
+    #     vf=lift.nodes.findall(".//field[@type='{}']".format(fieldname))
+    #     for f in vf:
+    #         prettyprint(f)
     exit()
     for ps in pss:
         kwargs={ftype+'annotationname':'V1',
