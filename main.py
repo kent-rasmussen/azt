@@ -7312,12 +7312,16 @@ class Report(object):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
         ftype=kwargs.get('ftype',self.params.ftype())
+        skipthisone=False
         if isinteger(group) or (hasattr(self,'groupcomparison') and
                                 isinteger(self.groupcomparison)):
             t=_("Skipping check")+' '+t+' '+_("because it would break the regex")
+            skipthisone=True
         xlp.Paragraph(parent,t)
         print(t)
         log.debug(t)
+        if skipthisone:
+            return
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
         log.info("regexCV: {}; \nregex: {}".format(self.regexCV,self.regex))
