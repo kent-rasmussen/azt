@@ -7312,7 +7312,7 @@ class Report(object):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
         ftype=kwargs.get('ftype',self.params.ftype())
-        if isinteger(group) or (hasattribute(self,'groupcomparison') and
+        if isinteger(group) or (hasattr(self,'groupcomparison') and
                                 isinteger(self.groupcomparison)):
             t=_("Skipping check")+' '+t+' '+_("because it would break the regex")
         xlp.Paragraph(parent,t)
