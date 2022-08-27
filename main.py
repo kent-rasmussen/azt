@@ -7312,6 +7312,8 @@ class Report(object):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
         ftype=kwargs.get('ftype',self.params.ftype())
+        if isinteger(group) or isinteger(self.groupcomparison):
+            t=_("Skipping check")+' '+t+' '+_("because it would break the regex")
         xlp.Paragraph(parent,t)
         print(t)
         log.debug(t)
@@ -11768,6 +11770,12 @@ def grouptype(**kwargs):
         kwargs[arg]=kwargs.get(arg,False)
     # log.info("Returning grouptype kwargs {}".format(kwargs))
     return kwargs
+def isinteger(x):
+    try:
+        int(x)
+        return True
+    except ValueError:
+        return False
 def unlist(l,ignore=[None]):
     if l and isinstance(l[0],lift.ET.Element):
          log.error("unlist should only be used on text (not node) lists ({})"
