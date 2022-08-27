@@ -10805,7 +10805,7 @@ class StatusDict(dict):
         # log.info("Checks with {}: {}".format(kwargs,cs))
         return cs
     def groups(self,g=None, **kwargs): #was groupstodo
-        log.log(4,"groups kwargs: {}".format(kwargs))
+        # log.info("groups kwargs: {}".format(kwargs))
         kwargs=grouptype(**kwargs)
         kwargs=self.checkslicetypecurrent(**kwargs)
         """Without a kwarg, this returns prioritization in advance of sorting,
