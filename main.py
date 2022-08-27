@@ -3561,18 +3561,30 @@ class TaskDressing(object):
         group=kwargs.get('group',self.status.group())
         # log.info("about to return {}={}".format(check,group))
         return check+'='+group
+    def schedule_write_check(self):
+        """Schedule `check_if_write_done()` function after five seconds."""
+        log.info("Scheduling check")
+        program['root'].after(2000, self.check_if_write_done)
+        # log.info("Scheduled check")
+        # self.taskchooser.after(5000, self.check_if_write_done, t)
+    def check_if_write_done(self):
+        # If the thread has finished, allow another write.
+        log.info("Checking if writing done to lift.")
+        try:
+            done=not self.writethread.is_alive()
+        except AttributeError:
+            done=True
+        except Exception as e:
+            log.info("Exception: {}".format(e))
+            log.info("writethread: {}".format(hasattr(self,'writethread')))
+        if done:
+            log.info("Done writing to lift.")
+            self.taskchooser.writing=False
+        else:
+            # Otherwise check again later.
+            log.info("schedule_write_check writing to lift.")
+            self.schedule_write_check()
     def maybewrite(self,definitely=False):
-        def schedule_check(t):
-            """Schedule `check_if_done()` function after five seconds."""
-            self.after(5000, check_if_done, t)
-        def check_if_done(t):
-            # If the thread has finished, allow another write.
-            if not t.is_alive():
-                log.info("Done writing to lift.")
-                self.taskchooser.writing=False
-            else:
-                # Otherwise check again later.
-                schedule_check(t)
         write=self.timetowrite() #just call this once!
         if (write and not self.taskchooser.writing) or definitely:
             self.taskchooser.towrite=False
