@@ -1821,7 +1821,8 @@ class Settings(object):
                     self.sextracted[ps][s][i]=1
         for polyn in range(3,0,-1): #find and sub longer forms first
             for s in set(self.profilelegit) & set(self.rx.keys()):
-                form=self.rx[s][polyn].sub(s,form) #replace with profile variable
+                if polyn in self.rx[s]:
+                    form=self.rx[s][polyn].sub(s,form) #replace with profile variable
         """We could consider combining NC to C (or not), and CG to C (or not)
         here, after the 'splitter' profiles are formed..."""
         # log.debug("{}: {}".format(formori,form))
