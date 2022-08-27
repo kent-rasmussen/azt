@@ -8100,6 +8100,7 @@ class Transcribe(Sound,Sort):
             newvalue=''
         if newvalue != self.group: #only make changes!
             showpolygraphs=False
+            diff=False
             if newvalue in self.groups :
                 deja=_("Sorry, there is already a group with "
                                 "that label; If you want to join the "
@@ -8113,8 +8114,6 @@ class Transcribe(Sound,Sort):
                     diff="longer"
                 elif len(newvalue) < len(self.group): #shorter name!
                     diff="shorter"
-                else:
-                    diff=None
                 if diff:
                     notext=_("Undo; I made a mistake!")
                     warning=_("Your new name (‘{}’) is {} than your old "
@@ -8151,7 +8150,8 @@ class Transcribe(Sound,Sort):
             self.settings.storesettingsfile(setting='status')
             # log.info("Done with changes: {}".format(diff))
             #because people need to do a profile analysis here.
-            self.settings.reloadprofiledata(showpolygraphs=showpolygraphs)
+            if diff:
+                self.settings.reloadprofiledata(showpolygraphs=showpolygraphs)
             # sysrestart()
             """Update regular expressions here!!"""
         else: #move on, but notify in logs
