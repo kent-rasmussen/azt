@@ -8081,6 +8081,7 @@ class Transcribe(Sound,Sort):
                 if diff:
                     ErrorNotice(warning,parent=self,title=title,wait=True)
                 if self.runwindow.exitFlag.istrue():
+                if self.runwindow.exitFlag.istrue() or self.mistake:
                     # log.info("Exited, not making changes: ({})".format(diff))
                     self.mistake=False #reset for next submit
                     return
