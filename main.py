@@ -8207,6 +8207,15 @@ class Transcribe(Sound,Sort):
         self.sub_c['text']=t
     def makewindow(self):
         # log.info("Making transcribe window")
+        def changegroupnow(event=None):
+            log.info("changing group now")
+            w=self.taskchooser.getgroup()
+            self.runwindow.wait_window(w)
+            if not w.exitFlag.istrue(): #Not sure why this works; may break later.
+            #     log.info("w ExitFlag is true!")
+            # else:
+                self.runwindow.on_quit()
+                self.makewindow()
         cvt=self.params.cvt()
         ps=self.slices.ps()
         profile=self.slices.profile()
@@ -8274,6 +8283,7 @@ class Transcribe(Sound,Sort):
                             padx=padx,
                             rowspan=2
                             )
+        groupslabel.bind('<ButtonRelease-1>',changegroupnow)
         self.errorlabel=ui.Label(infoframe,text='',
                             fg='red',
                             wraplength=int(self.frame.winfo_screenwidth()/3),
