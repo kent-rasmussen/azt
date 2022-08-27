@@ -3576,11 +3576,11 @@ class TaskDressing(object):
         write=self.timetowrite() #just call this once!
         if (write and not self.taskchooser.writing) or definitely:
             self.taskchooser.towrite=False
-            t = threading.Thread(target=self.db.write)
+            self.writethread = threading.Thread(target=self.db.write)
             self.taskchooser.writing=True
             log.info("Writing to lift...")
-            t.start()
-            schedule_check(t)
+            self.writethread.start()
+            self.schedule_write_check()
         elif write:
             log.info("Already writing to lift; I trust this new mod will "
                     "get picked up later...")
