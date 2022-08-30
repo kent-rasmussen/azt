@@ -4090,7 +4090,7 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
         if me:
-            enough=20
+            enough=0
         else:
             enough=25
         for f in sorts:
