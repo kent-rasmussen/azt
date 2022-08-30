@@ -1030,7 +1030,7 @@ class Settings(object):
             return interfacelang()
     def mercurialwarning(self,filedir):
         title=_("Warning: Mercurial Repository without Executable")
-        window=ui.Window(self.frame,title=title)
+        window=ui.Window(self.taskchooser.frame,title=title)
         hgurl="https://www.mercurial-scm.org/wiki/Download"
         hgfilename="Mercurial-6.0-x64.exe"
         hgfile=("https://www.mercurial-scm.org/release/windows/{}".format(
@@ -4090,7 +4090,7 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
         if me:
-            enough=20
+            enough=0
         else:
             enough=25
         for f in sorts:
@@ -7551,6 +7551,9 @@ class Report(object):
                                                                     str(url))
         else:
             el=xlp.LangData(ex,self.analang,framed.forms[self.analang][ftype])
+        if self.analang in ['gnd'] and ('ph' in framed.forms[self.analang] and
+                                            framed.forms[self.analang]['ph']):
+            elph=xlp.LangData(ex,self.analang,framed.forms[self.analang]['ph'])
         if hasattr(framed,'tonegroup') and showgroups: #joined groups show each
             elt=xlp.LangData(ex,self.analang,framed.tonegroup)
         for lang in self.glosslangs:
@@ -8369,12 +8372,15 @@ class Transcribe(Sound,Sort):
         sub_lbl=ui.Label(responseframe,text = self.oktext, font='read',
                         row=0,column=column,sticky='ns'
                         )
-        for button in [
-                        (_('main screen'), self.done),
-                        (_('next group'), self.next),
-                        (_('next tone frame'), self.nextcheck),
-                        (_('next syllable profile'), self.nextprofile),
-                        ]:
+        buttons=[
+                (_('main screen'), self.done),
+                (_('next group'), self.next)]
+        if cvt == 'T':
+            buttons+=[(_('next tone frame'), self.nextcheck)]
+        else:
+            buttons+=[(_('next check'), self.nextcheck)]
+        buttons+=[(_('next syllable profile'), self.nextprofile)]
+        for button in buttons:
             column+=1
             ui.Button(responseframe,text = button[0], command = button[1],
                                 anchor ='c',
@@ -9469,7 +9475,8 @@ class FramedDataSense(FramedData):
                         "field ‘{}’".format(check,check['field'],ftype))
         # log.info("self.forms: {}".format(self.forms))
         dictlangs=[self.analang, self.audiolang]
-        ftypes=['lx', 'lc', self.parent.pluralname, self.parent.imperativename]
+        ftypes=['lx', 'lc', self.parent.pluralname, self.parent.imperativename,
+                'ph']
         ftypes=[i for i in ftypes if i]
         for lang in dictlangs:
             self.forms[lang]={}
@@ -12065,8 +12072,8 @@ def sysrestart():
         # try:
         #     os.execl(sys.executable, sys.argv)
         # except Exception as e:
-        log.info("Trying sys.argv[0]")
         try:
+            log.info("Trying os.execv sys.argv[0]")
             os.execv(sys.argv[0], sys.argv)
             # os.execvp(sys.executable, sys.argv)
         except Exception as e:
