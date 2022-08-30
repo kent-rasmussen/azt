@@ -1030,7 +1030,7 @@ class Settings(object):
             return interfacelang()
     def mercurialwarning(self,filedir):
         title=_("Warning: Mercurial Repository without Executable")
-        window=ui.Window(self.frame,title=title)
+        window=ui.Window(self.taskchooser.frame,title=title)
         hgurl="https://www.mercurial-scm.org/wiki/Download"
         hgfilename="Mercurial-6.0-x64.exe"
         hgfile=("https://www.mercurial-scm.org/release/windows/{}".format(
