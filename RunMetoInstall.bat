@@ -46,7 +46,7 @@ mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcribe
 ECHO Install done! (hopefully!)
 
 ECHO I'll pause now; cancel now to be finished, or press any key to continue
-ECHO to install XLingPaper and Praat, to get the most out of A→Z+T.
+ECHO to install XLingPaper, Praat and Mercurial, to get the most out of A→Z+T.
 pause
 
 ECHO Downloading XLingPaper 3.10...
@@ -59,6 +59,12 @@ ECHO Downloading Praat 6211...
 If exist praat6211_win64.zip (ECHO praat6211_win64.zip is there!) ELSE (powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.fon.hum.uva.nl/praat/praat6211_win64.zip' -OutFile 'praat6211_win64.zip'")
 tar -xvf praat6211_win64.zip -C "%ProgramFiles%"
 setx path "%path%;%ProgramFiles%"
+
+ECHO Downloading Mercurial 6.0...
+If exist Mercurial-6.0-x64.exe (ECHO Mercurial-6.0-x64.exe is there!) ELSE (powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.mercurial-scm.org/release/windows/Mercurial-6.0-x64.exe' -OutFile 'Mercurial-6.0-x64.exe'")
+
+ECHO Installing Mercurial 6.0
+start Mercurial-6.0-x64.exe
 
 echo Stopping here just in case you need to read anything above; we're done!
 Pause
