@@ -7551,6 +7551,9 @@ class Report(object):
                                                                     str(url))
         else:
             el=xlp.LangData(ex,self.analang,framed.forms[self.analang][ftype])
+        if self.analang in ['gnd'] and ('ph' in framed.forms[self.analang] and
+                                            framed.forms[self.analang]['ph']):
+            elph=xlp.LangData(ex,self.analang,framed.forms[self.analang]['ph'])
         if hasattr(framed,'tonegroup') and showgroups: #joined groups show each
             elt=xlp.LangData(ex,self.analang,framed.tonegroup)
         for lang in self.glosslangs:
