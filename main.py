@@ -10298,6 +10298,12 @@ class Splash(ui.Window):
         x=int(self.master.winfo_screenwidth()/2-(self.w/2))
         self.h = self.winfo_reqheight()
         y=int(self.master.winfo_screenheight()/2 -(self.h/2))
+        menu=ui.Menu(self)
+        menu.add_command(
+                            label=_("Update A→Z+T"),
+                            command=lambda x=self:updateazt(parent=x)
+                            )
+        self.config(menu=menu)
         self.geometry('+%d+%d' % (x, y))
         self.deiconify() #show after placement
         self.update()
