@@ -1085,7 +1085,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     'mb','nd','ŋg'
                     ]
         c['pvd'][3]=[
-                    'ndz', 'ndw', 'ŋgw' #gnd
+                    'ndw', 'ŋgw' #gnd
                     ]
         c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
         c['p']={}
@@ -1105,6 +1105,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['f'][1]=['F','f','s','ʃ','θ','x','h'] #not 'S'
         c['avd']={}
         c['avd'][2]=['dj','dz','dʒ']
+        c['avd'][3]=['ndz','dzw'] #gnd
+        c['avd'][4]=['ndzw'] #gnd
         c['a']={}
         c['a'][3]=['chk','tch']
         c['a'][2]=['ts','tʃ']
@@ -1121,8 +1123,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
                     'ⁿj','ⁿs','ⁿz']
         x={} #dict to put all hypothetical segements in, by category
-        for nglyphs in [3,2,1]:
-            if nglyphs == 3:
+        for nglyphs in [4,3,2,1]:
+            if nglyphs == 4:
+                consvar='Cqg'
+                dconsvar='Dqg'
+            elif nglyphs == 3:
                 consvar='Ctg'
                 dconsvar='Dtg'
             elif nglyphs == 2:

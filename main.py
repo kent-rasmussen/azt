@@ -1575,8 +1575,8 @@ class Settings(object):
             vars[lang]={}
             # log.info("sclasses: {}".format(self.db.s[lang]))
             for sclass in [sc for sc in self.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
-                                    if ('dg' in sc or 'tg' in sc)]:
-                pclass=sclass.replace('dg','').replace('tg','')
+                                if ('dg' in sc or 'tg' in sc or 'qg' in sc)]:
+                pclass=sclass.replace('dg','').replace('tg','').replace('qg','')
                 if pclass not in self.polygraphs[lang]:
                     self.polygraphs[lang][pclass]={}
                 if pclass not in vars[lang]:
@@ -1584,8 +1584,9 @@ class Settings(object):
                 if len(self.db.s[lang][sclass])>0:
                     srow+=1
                     header=ui.Label(scroll.content,
-                    text=sclass.replace('dg',' (digraph)').replace('tg',
-                                                            ' (trigraph)')+': ')
+                    text=sclass.replace('dg',' (digraph)').replace(
+                                        'tg',' (trigraph)').replace(
+                                        'qg',' (quatregraph)')+': ')
                     header.grid(column=0, row=srow)
                 col=1
                 # log.info("pgs: {}".format(self.db.s[lang][sclass]))
@@ -1617,8 +1618,8 @@ class Settings(object):
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
             for sclass in [sc for sc in self.db.s[lang]
-                                    if ('dg' in sc or 'tg' in sc)]:
-                pclass=sclass.replace('dg','').replace('tg','')
+                                    if ('dg' in sc or 'tg' in sc or 'qg' in sc)]:
+                pclass=sclass.replace('dg','').replace('tg','').replace('qg','')
                 if pclass not in self.polygraphs[lang]:
                     self.polygraphs[lang][pclass]={}
                 for pg in self.db.s[lang][sclass]:
