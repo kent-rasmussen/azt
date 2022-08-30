@@ -12,6 +12,8 @@ ECHO Will create a shortcut to run AZT
 cd /d "%userprofile%/Downloads"
 
 ECHO Downloading Python 3.6.8 (31830944; 30M)...
+ECHO Check that your internet is on and
+pause
 If exist python-3.6.8-amd64.exe (ECHO python-3.6.8-amd64.exe is there!) ELSE (powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe' -OutFile 'python-3.6.8-amd64.exe'")
 
 ECHO Installing Python 3.6.8
@@ -21,6 +23,8 @@ ECHO At the end of the install, be sure to click on "remove path limitation"
 start python-3.6.8-amd64.exe
 
 ECHO Downloading Git 2.33.0.2 (50101024; 48M)...
+ECHO Check that your internet is on and
+pause
 If exist Git-2.33.0.2-64-bit.exe (ECHO Git-2.33.0.2-64-bit.exe is there!) ELSE (powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'")
 
 ECHO waiting for you to finish installing Python 3.6.8
