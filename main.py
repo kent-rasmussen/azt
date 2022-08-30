@@ -1170,7 +1170,10 @@ class Settings(object):
             for lang in ['glosslang','glosslang2']:
                 if hasattr(module,lang):
                     self.glosslangs.append(getattr(module,lang))
-                    delattr(self,lang) #because this would be made above
+                    try:
+                        delattr(self,lang) #because this would be made above
+                    except AttributeError:
+                        log.info("attribute {} doesn't seem to be there".format(lang))
         dict1=self.makesettingsdict(setting=setting)
         self.storesettingsfile(setting=setting) #do last
         self.loadsettingsfile(setting=setting) #verify write and read
