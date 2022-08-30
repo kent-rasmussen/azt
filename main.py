@@ -12065,8 +12065,8 @@ def sysrestart():
         # try:
         #     os.execl(sys.executable, sys.argv)
         # except Exception as e:
-        log.info("Trying sys.argv[0]")
         try:
+            log.info("Trying os.execv sys.argv[0]")
             os.execv(sys.argv[0], sys.argv)
             # os.execvp(sys.executable, sys.argv)
         except Exception as e:
