@@ -1920,7 +1920,8 @@ class Settings(object):
         sin=self.s[self.analang][sclass]
         sout=[i for k,v in self.s[self.analang].items()
                 if (k not in [sclass,'<','='] # no affix boundary or punctuation
-                     and (k in ['C','V'] or self.distinguish[k]))
+                     and (k in ['C','V'] or (k in self.distinguish and
+                                                self.distinguish[k])))
                 for i in v
                 ]
         for n in range(1,7): #just get the Nth C or V, don't worry about polygraphs
