@@ -1826,7 +1826,7 @@ class Settings(object):
                     self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
                 except KeyError:
                     self.sextracted[ps][s][i]=1
-        for polyn in range(3,0,-1): #find and sub longer forms first
+        for polyn in range(4,0,-1): #find and sub longer forms first
             for s in set(self.profilelegit) & set(self.rx.keys()):
                 if polyn in self.rx[s]:
                     form=self.rx[s][polyn].sub(s,form) #replace with profile variable
@@ -1910,7 +1910,7 @@ class Settings(object):
         """This does sorting by length to make longest first"""
         if sclass not in self.rx:
             self.rx[sclass]={}
-        for pn in range(3,-1,-1):
+        for pn in range(4,-1,-1):
             self.rx[sclass][pn]=rx.s(self.s[self.analang],sclass,polyn=pn,
                                                             compile=True)
             if self.rx[sclass][pn] == rx.compile('()'):
