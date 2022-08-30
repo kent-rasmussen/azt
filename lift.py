@@ -1079,21 +1079,28 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # will get picked up again during the analysis
         c={}
         c['pvd']={}
-        c['pvd'][2]=['bh','dh','gh','gb'
+        c['pvd'][2]=['bh','dh','gh','gb',
                     'bb','dd','gg', #French
-                    'gw' #gnd
+                    'gw','dw', 'ɗw', #gnd
+                    'mb','nd','ŋg'
+                    ]
+        c['pvd'][2]=[
+                    'ndz' #gnd
                     ]
         c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
         c['p']={}
         c['p'][2]=['kk','kp','cc','pp','pt','tt','ck',
-        'kw'] #gnd
+                    'kw','tw'
+                    ] #gnd
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q']
         c['fvd']={}
         c['fvd'][2]=['bh','vh','zh']
         c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ'] #problems w x?
         c['f']={}
         c['f'][3]=['sch']
-        c['f'][2]=['ch','ph','sh','hh','pf','bv','ff','sc','ss','th']
+        c['f'][2]=['ch','ph','sh','hh','pf','bv','ff','sc','ss','th',
+                    'hw' #gnd
+                    ]
         #Assuming x is voiceless, per IPA and most useage...
         c['f'][1]=['F','f','s','ʃ','θ','x','h'] #not 'S'
         c['avd']={}
@@ -1141,7 +1148,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         x['Ntg']=["ng'"]
         """Non-Nasal/Glide Sonorants"""
         x['S']=['l','r']
-        x['Sdg']=['rh','wh','ll','rr']
+        x['Sdg']=['rh','wh','ll','rr',
+                    'rw','lw' #gnd
+                    ]
         x['V']=[
                 #decomposed first:
                 #tilde (decomposed):
