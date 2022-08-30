@@ -12064,9 +12064,10 @@ def sysrestart():
         # try:
         #     os.execl(sys.executable, sys.argv)
         # except Exception as e:
-        log.info("Failed ({}); Trying execvp".format(e))
+        log.info("Trying sys.argv[0]")
         try:
-            os.execvp(sys.executable, sys.argv)
+            os.execv(sys.argv[0], sys.argv)
+            # os.execvp(sys.executable, sys.argv)
         except Exception as e:
             log.info("Failed ({}); Trying execlp".format(e))
             try:
