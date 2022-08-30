@@ -4168,7 +4168,10 @@ class TaskChooser(TaskDressing,ui.Window):
         if self.towrite: #Do even if not closed by user
             log.info("Final write to lift")
             self.maybewrite(definitely=True)
-        self.task.withdraw() #so users don't do stuff while waiting
+        try:
+            self.task.withdraw() #so users don't do stuff while waiting
+        except AttributeError:
+            log.info("There doesn't seem to be a task to hide; moving on.")
         try:
             self.task.runwindow.withdraw() #so users don't do stuff while waiting
         except AttributeError:
