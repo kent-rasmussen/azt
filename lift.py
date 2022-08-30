@@ -1084,8 +1084,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     'gw','dw', 'ɗw', #gnd
                     'mb','nd','ŋg'
                     ]
-        c['pvd'][2]=[
-                    'ndz' #gnd
+        c['pvd'][3]=[
+                    'ndz', 'ndw', 'ŋgw' #gnd
                     ]
         c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
         c['p']={}
@@ -1109,9 +1109,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['a'][3]=['chk','tch']
         c['a'][2]=['ts','tʃ']
         c['lfvd']={}
+        c['lfvd'][3]=['zlw']
         c['lfvd'][2]=['zl']
         c['lfvd'][1]=['ɮ']
         c['lf']={}
+        c['lf'][3]=['slw']
         c['lf'][2]=['sl']
         c['lf'][1]=['ɬ']
         c['pn']={}
