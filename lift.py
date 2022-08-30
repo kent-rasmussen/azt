@@ -1318,6 +1318,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             output[lang]=[i for i in self.lexeme(**kwargs) if i]
         # log.info("Found the following lexemes: {}".format(output))
         return output
+    def pronunciationnode(self,**kwargs):
+        """This produces a list; specify senseid and analang as you like."""
+        output=self.get('pronunciation',**kwargs).get('node')
+        return output
     def fieldnode(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
         if 'node' in kwargs:
@@ -1329,6 +1333,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             return self.citationnode(**kwargs)
         elif kwargs['ftype'] == 'lx':
             return self.lexemenode(**kwargs)
+        elif kwargs['ftype'] == 'ph':
+            return self.pronunciationnode(**kwargs)
         if 'floc' not in kwargs:
             log.error("I don't know where the field should be (floc should be "
                 "either 'sense' or 'entry'; assuming 'entry'): {}"
