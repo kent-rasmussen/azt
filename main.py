@@ -4092,7 +4092,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if me:
             enough=20
         else:
-            enough=50
+            enough=25
         for f in sorts:
             if f not in sortsrecorded:
                 sortsrecorded[f]={}
