@@ -7,7 +7,7 @@ program['production']=False #True for making screenshots (default theme)
 program['testing']=True #True eliminates Error screens and zipped logs
 program['demo']=True #sets me=False, production=True, testing=False
 # program['demo']=False
-program['version']='0.9.3' #This is a string...
+program['version']='0.9.4' #This is a string...
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 exceptiononload=False
@@ -1170,7 +1170,10 @@ class Settings(object):
             for lang in ['glosslang','glosslang2']:
                 if hasattr(module,lang):
                     self.glosslangs.append(getattr(module,lang))
-                    delattr(self,lang) #because this would be made above
+                    try:
+                        delattr(self,lang) #because this would be made above
+                    except AttributeError:
+                        log.info("attribute {} doesn't seem to be there".format(lang))
         dict1=self.makesettingsdict(setting=setting)
         self.storesettingsfile(setting=setting) #do last
         self.loadsettingsfile(setting=setting) #verify write and read
@@ -12044,38 +12047,38 @@ def sysrestart():
             os.execv(sys.executable, sys.argv)
     elif osys == 'Windows':
         log.info("Trying execv")
+        # try:
+        #     os.execv(sys.executable, sys.argv)
+        # except Exception as e:
+        log.info("Failed ({}); Trying execl".format(e))
         try:
-            os.execv(sys.executable, sys.argv)
+            os.execl(sys.executable, sys.argv)
         except Exception as e:
-            log.info("Failed ({}); Trying execl".format(e))
+            log.info("Failed ({}); Trying execvp".format(e))
             try:
-                os.execl(sys.executable, sys.argv)
+                os.execvp(sys.executable, sys.argv)
             except Exception as e:
-                log.info("Failed ({}); Trying execvp".format(e))
+                log.info("Failed ({}); Trying execlp".format(e))
                 try:
-                    os.execvp(sys.executable, sys.argv)
+                    os.execlp(sys.executable, sys.argv)
                 except Exception as e:
-                    log.info("Failed ({}); Trying execlp".format(e))
+                    log.info("Failed ({}); Trying spawnv".format(e))
                     try:
-                        os.execlp(sys.executable, sys.argv)
+                        os.spawnv(sys.executable, sys.argv)
                     except Exception as e:
-                        log.info("Failed ({}); Trying spawnv".format(e))
+                        log.info("Failed ({}); Trying spawnl".format(e))
                         try:
-                            os.spawnv(sys.executable, sys.argv)
+                            os.spawnl(sys.executable, sys.argv)
                         except Exception as e:
-                            log.info("Failed ({}); Trying spawnl".format(e))
+                            log.info("Failed ({}); Trying spawnvp".format(e))
                             try:
-                                os.spawnl(sys.executable, sys.argv)
+                                os.spawnvp(sys.executable, sys.argv)
                             except Exception as e:
-                                log.info("Failed ({}); Trying spawnvp".format(e))
+                                log.info("Failed ({}); Trying spawnlp".format(e))
                                 try:
-                                    os.spawnvp(sys.executable, sys.argv)
-                                except Exception as e:
-                                    log.info("Failed ({}); Trying spawnlp".format(e))
-                                    try:
-                                        os.spawnlp(sys.executable, sys.argv)
-                                    except:
-                                        log.info("Failed ({})")
+                                    os.spawnlp(sys.executable, sys.argv)
+                                except:
+                                    log.info("Failed ({})")
     sys.exit()
 def updateazt(**kwargs): #should only be parent, for errorroot
     if 'git' in program:
