@@ -8369,12 +8369,15 @@ class Transcribe(Sound,Sort):
         sub_lbl=ui.Label(responseframe,text = self.oktext, font='read',
                         row=0,column=column,sticky='ns'
                         )
-        for button in [
-                        (_('main screen'), self.done),
-                        (_('next group'), self.next),
-                        (_('next tone frame'), self.nextcheck),
-                        (_('next syllable profile'), self.nextprofile),
-                        ]:
+        buttons=[
+                (_('main screen'), self.done),
+                (_('next group'), self.next)]
+        if cvt == 'T':
+            buttons+=[(_('next tone frame'), self.nextcheck)]
+        else:
+            buttons+=[(_('next check'), self.nextcheck)]
+        buttons+=[(_('next syllable profile'), self.nextprofile)]
+        for button in buttons:
             column+=1
             ui.Button(responseframe,text = button[0], command = button[1],
                                 anchor ='c',
