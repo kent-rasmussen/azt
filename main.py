@@ -8282,7 +8282,7 @@ class Transcribe(Sound,Sort):
         # log.info("Making transcribe window")
         def changegroupnow(event=None):
             log.info("changing group now")
-            w=self.taskchooser.getgroup()
+            w=self.taskchooser.getgroup(wsorted=True)
             self.runwindow.wait_window(w)
             if not w.exitFlag.istrue(): #Not sure why this works; may break later.
             #     log.info("w ExitFlag is true!")
