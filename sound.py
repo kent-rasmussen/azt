@@ -324,13 +324,15 @@ class SoundFilePlayer(object):
                 except:
                     log.exception("Other exception trying to play "
                                 "sound! %s {}".format(sys.exc_info()[0]))
-                    raise
+                    log.info("The above may indicate a systemic problem!")
+                    # raise
                 try:
                     self.data = self.wf.readframes(self.chunk)
                 except:
                     log.exception("Unexpected exception trying to read "
                                 "frames %s {}".format(sys.exc_info()[0]))
-                    raise
+                    log.info("The above may indicate a systemic problem!")
+                    # raise
             log.debug("apparently we're out of data")
             self.streamclose()
         def callback(): #This just isn't working faithfully, for some reason.
