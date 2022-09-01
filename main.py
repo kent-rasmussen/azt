@@ -12317,8 +12317,9 @@ if __name__ == "__main__":
                                     program['name'],program['version'],mt))
     log.info("Called with arguments ({}) {} / {}".format(sys.executable,
                                                     sys.argv[0], sys.argv))
+    program['hostname']=platform.uname().node
     log.info("Working directory is {} on {} ".format(program['aztdir'],
-                                                    platform.uname().node))
+                                                    program['hostname']))
     program['start_time'] = time.time()
     log.info("Loglevel is {}; starting at {}".format(loglevel,
                                     datetime.datetime.utcnow().isoformat()))
