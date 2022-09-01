@@ -12081,27 +12081,27 @@ def sysrestart():
         except Exception as e:
             try:
                 log.info("Trying execl")
-                os.execl(sys.executable, sys.argv)
+                os.execl(sys.executable, *sys.argv)
             except Exception as e:
                 log.info("Failed ({}); Trying execlp".format(e))
                 try:
-                    os.execlp(sys.executable, sys.argv)
+                    os.execlp(sys.executable, *sys.argv)
                 except Exception as e:
                     log.info("Failed ({}); Trying spawnv".format(e))
                     try:
-                        os.spawnv(sys.executable, sys.argv)
+                        os.spawnv(os.P_NOWAIT, sys.executable, sys.argv)
                     except Exception as e:
                         log.info("Failed ({}); Trying spawnl".format(e))
                         try:
-                            os.spawnl(sys.executable, sys.argv)
+                            os.spawnl(os.P_NOWAIT, sys.executable, sys.argv)
                         except Exception as e:
                             log.info("Failed ({}); Trying spawnvp".format(e))
                             try:
-                                os.spawnvp(sys.executable, sys.argv)
+                                os.spawnvp(os.P_NOWAIT, sys.executable, sys.argv)
                             except Exception as e:
                                 log.info("Failed ({}); Trying spawnlp".format(e))
                                 try:
-                                    os.spawnlp(sys.executable, sys.argv)
+                                    os.spawnlp(os.P_NOWAIT, sys.executable, sys.argv)
                                 except:
                                     log.info("Failed ({})")
     sys.exit()
