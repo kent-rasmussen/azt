@@ -5663,6 +5663,7 @@ class Sort(object):
                 return #if the user didn't supply a check
         self.presortgroups()
         self.settings.updatesortingstatus() # Not just tone anymore
+        self.resetsortbutton() #track what is done since each button press.
         self.maybesort()
     def marksortgroup(self,senseid,group,**kwargs):
         # group=kwargs.get('group',self.status.group())
@@ -5733,6 +5734,16 @@ class Sort(object):
                 "off by pressing ‘{}’".format(self.ps,self.profile,self.check,
                                                 buttontxt))
         ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+    def resetsortbutton(self):
+        # This attribute/fn is used to track whether something has been done
+        # since the user last asked for a sort. We don't want the user in an
+        # endless line of work (especially if the task at hand is to do a number
+        # of tasks in one profile), but on the other hand, if the selected
+        # profile is already done when the sort button is pressed, assume the
+        # user wants the next profile.
+        self.did={'sort':False,
+                    'verify': False,
+                    'join': False}
     def maybesort(self):
         """This should look for one group to verify at a time, with sorting
         in between, then join and repeat"""
@@ -5771,6 +5782,7 @@ class Sort(object):
         if self.status.checktosort(): # w/o parameters, tests current check
             log.info("Sort (from maybesort)")
             self.sort()
+            self.did['sort']=True
             # exitstatuses()
             warnorcontinue()
             return
@@ -5782,12 +5794,14 @@ class Sort(object):
             self.status.group(groupstoverify[0]) #just pick the first now
             log.info("verify (from maybesort)")
             self.verify()
+            self.did['verify']=True
             # exitstatuses()
             warnorcontinue()
             return
         if self.status.tojoin():
             log.info("join (from maybesort)")
             self.join()
+            self.did['join']=True
             # exitstatuses()
             warnorcontinue()
             return
@@ -5803,7 +5817,9 @@ class Sort(object):
         if ctosort or ctoverify:
             next=_("check")
             fn=self.ncheck
-        elif ptosort or ptoverify:
+        elif (ptosort or ptoverify) and True not in self.did.values():
+            # If there is a profile to do, but you havent done anything since
+            # the last 'sort!' button press, then move on to the next profile.
             next=_("profile")
             fn=self.nprofile
         else:
