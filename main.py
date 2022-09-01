@@ -11550,8 +11550,21 @@ class Repository(object):
     def files(self):
         args=["files"]
         self.files=self.do(args).split('\n')
+    def getusernameargs(self):
+        r=self.do(['config', 'ui.username'])
+        if r:
+            log.info("Using Mercurial username '{}'".format(r))
+            return []
+        else:
+            r=program['name']+'-'+program['hostname']
+            log.info("No config Mercurial username found; using '{}'".format(r))
+            return ['--config','ui.username={}'.format(r)]
     def do(self,args):
         cmd=[program['hg'],'--cwd',str(self.url)] #-R
+        try:
+            args+=self.usernameargs
+        except AttributeError:
+            log.info("usernameargs not found; OK if initializing the repo")
         cmd.extend(args)
         try:
             output=subprocess.check_output(cmd, shell=False)
@@ -11596,6 +11609,7 @@ class Repository(object):
             return
         super(Repository, self).__init__()
         self.url = url
+        self.usernameargs=self.getusernameargs()
         self.files()
         self.choruscheck()
         self.ignorecheck()
