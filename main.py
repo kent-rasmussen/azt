@@ -9478,7 +9478,7 @@ class FramedDataSense(FramedData):
         # log.info("field: {}; ftype: {}".format(check['field'],ftype))
         if check and 'field' in check and check['field'] != self.ftype:
             log.error("Check ‘{}’ is for field ‘{}’, but you are looking for "
-                        "field ‘{}’".format(check,check['field'],ftype))
+                        "field ‘{}’".format(check,check['field'],self.ftype))
         # log.info("self.forms: {}".format(self.forms))
         dictlangs=[self.analang, self.audiolang]
         ftypes=['lx', 'lc', self.parent.pluralname, self.parent.imperativename,
