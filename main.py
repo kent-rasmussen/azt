@@ -1095,6 +1095,7 @@ class Settings(object):
                                 'secondformfield',
                                 'soundsettingsok',
                                 'buttoncolumns',
+                                'showoriginalorthographyinreports',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -7551,8 +7552,9 @@ class Report(object):
                                                                     str(url))
         else:
             el=xlp.LangData(ex,self.analang,framed.forms[self.analang][ftype])
-        if self.analang in ['gnd'] and ('ph' in framed.forms[self.analang] and
-                                            framed.forms[self.analang]['ph']):
+        if self.settings.showoriginalorthographyinreports and (
+                    'ph' in framed.forms[self.analang] and
+                    framed.forms[self.analang]['ph']):
             elph=xlp.LangData(ex,self.analang,framed.forms[self.analang]['ph'])
         if hasattr(framed,'tonegroup') and showgroups: #joined groups show each
             elt=xlp.LangData(ex,self.analang,framed.tonegroup)
@@ -8280,7 +8282,7 @@ class Transcribe(Sound,Sort):
         # log.info("Making transcribe window")
         def changegroupnow(event=None):
             log.info("changing group now")
-            w=self.taskchooser.getgroup()
+            w=self.taskchooser.getgroup(wsorted=True)
             self.runwindow.wait_window(w)
             if not w.exitFlag.istrue(): #Not sure why this works; may break later.
             #     log.info("w ExitFlag is true!")
@@ -9435,12 +9437,16 @@ class FramedData(object):
             return g
     def applynoframe(self):
         self.framed=self.forms
-    def __init__(self, parent,  **kwargs): #source,
+    def __init__(self, parent, **kwargs): #source,
         """Evaluate what is actually needed"""
         super(FramedData, self).__init__()
         self.parent=parent
         self.frames=parent.frames #needed for setframe, parseelement
         self.ps=self.parent.taskchooser.slices.ps()
+        self.ftype=kwargs.get('ftype',self.parent.taskchooser.params.ftype())
+        if not self.ftype:
+            log.error("ftype: {}!".format(self.ftype))
+            return
         # self.cvt=self.parent.taskchooser.params.cvt()
         self.updatelangs()
         self.forms=DictbyLang()
@@ -9465,14 +9471,14 @@ class FramedDataSense(FramedData):
             self.applynoframe() #enforce the docstring above
         self.tonegroups=self.db.get('example/tonefield/form/text',
                     senseid=self.senseid, location=frame).get('text')
-    def parsesense(self,db,senseid,check,ftype):
+    def parsesense(self,db,senseid,check):
         self.senseid=senseid #store for later
         # self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
         # log.info("check: {}".format(check))
         # log.info("field: {}; ftype: {}".format(check['field'],ftype))
-        if check and 'field' in check and check['field'] != ftype:
+        if check and 'field' in check and check['field'] != self.ftype:
             log.error("Check ‘{}’ is for field ‘{}’, but you are looking for "
-                        "field ‘{}’".format(check,check['field'],ftype))
+                        "field ‘{}’".format(check,check['field'],self.ftype))
         # log.info("self.forms: {}".format(self.forms))
         dictlangs=[self.analang, self.audiolang]
         ftypes=['lx', 'lc', self.parent.pluralname, self.parent.imperativename,
@@ -9499,7 +9505,7 @@ class FramedDataSense(FramedData):
         # log.info("parsesense ftype: {}".format(ftype))
         self.group=self.db.fieldvalue(senseid=senseid,
                                         annotationname=check,
-                                        ftype=ftype,
+                                        ftype=self.ftype,
                                         lang=self.analang,
                                         # showurl=True
                                         )
@@ -9508,17 +9514,13 @@ class FramedDataSense(FramedData):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
-        ftype=kwargs.get('ftype',self.parent.taskchooser.params.ftype())
-        if not ftype:
-            log.error("ftype: {}!".format(ftype))
-            return
         # else:
         #     log.info("ftype: {}".format(ftype))
         if not self.db.get('sense', senseid=senseid).get():
             log.error("You should pass a senseid from your database {} "
                         "({}) to FramedDataSense!".format(source,type(source)))
             return
-        self.parsesense(self.db,senseid,check,ftype)
+        self.parsesense(self.db,senseid,check)
         self.reallangs()
         self.setframe(check)
         # log.info("FramedDataSense initalization done, with forms {}"
@@ -12079,27 +12081,27 @@ def sysrestart():
         except Exception as e:
             try:
                 log.info("Trying execl")
-                os.execl(sys.executable, sys.argv)
+                os.execl(sys.executable, *sys.argv)
             except Exception as e:
                 log.info("Failed ({}); Trying execlp".format(e))
                 try:
-                    os.execlp(sys.executable, sys.argv)
+                    os.execlp(sys.executable, *sys.argv)
                 except Exception as e:
                     log.info("Failed ({}); Trying spawnv".format(e))
                     try:
-                        os.spawnv(sys.executable, sys.argv)
+                        os.spawnv(os.P_NOWAIT, sys.executable, sys.argv)
                     except Exception as e:
                         log.info("Failed ({}); Trying spawnl".format(e))
                         try:
-                            os.spawnl(sys.executable, sys.argv)
+                            os.spawnl(os.P_NOWAIT, sys.executable, sys.argv)
                         except Exception as e:
                             log.info("Failed ({}); Trying spawnvp".format(e))
                             try:
-                                os.spawnvp(sys.executable, sys.argv)
+                                os.spawnvp(os.P_NOWAIT, sys.executable, sys.argv)
                             except Exception as e:
                                 log.info("Failed ({}); Trying spawnlp".format(e))
                                 try:
-                                    os.spawnlp(sys.executable, sys.argv)
+                                    os.spawnlp(os.P_NOWAIT, sys.executable, sys.argv)
                                 except:
                                     log.info("Failed ({})")
     sys.exit()
