@@ -9443,6 +9443,10 @@ class FramedData(object):
         self.parent=parent
         self.frames=parent.frames #needed for setframe, parseelement
         self.ps=self.parent.taskchooser.slices.ps()
+        self.ftype=kwargs.get('ftype',self.parent.taskchooser.params.ftype())
+        if not self.ftype:
+            log.error("ftype: {}!".format(self.ftype))
+            return
         # self.cvt=self.parent.taskchooser.params.cvt()
         self.updatelangs()
         self.forms=DictbyLang()
@@ -9467,12 +9471,12 @@ class FramedDataSense(FramedData):
             self.applynoframe() #enforce the docstring above
         self.tonegroups=self.db.get('example/tonefield/form/text',
                     senseid=self.senseid, location=frame).get('text')
-    def parsesense(self,db,senseid,check,ftype):
+    def parsesense(self,db,senseid,check):
         self.senseid=senseid #store for later
         # self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
         # log.info("check: {}".format(check))
         # log.info("field: {}; ftype: {}".format(check['field'],ftype))
-        if check and 'field' in check and check['field'] != ftype:
+        if check and 'field' in check and check['field'] != self.ftype:
             log.error("Check ‘{}’ is for field ‘{}’, but you are looking for "
                         "field ‘{}’".format(check,check['field'],ftype))
         # log.info("self.forms: {}".format(self.forms))
@@ -9501,7 +9505,7 @@ class FramedDataSense(FramedData):
         # log.info("parsesense ftype: {}".format(ftype))
         self.group=self.db.fieldvalue(senseid=senseid,
                                         annotationname=check,
-                                        ftype=ftype,
+                                        ftype=self.ftype,
                                         lang=self.analang,
                                         # showurl=True
                                         )
@@ -9510,17 +9514,13 @@ class FramedDataSense(FramedData):
         """Evaluate what is actually needed"""
         super(FramedDataSense, self).__init__(parent)
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
-        ftype=kwargs.get('ftype',self.parent.taskchooser.params.ftype())
-        if not ftype:
-            log.error("ftype: {}!".format(ftype))
-            return
         # else:
         #     log.info("ftype: {}".format(ftype))
         if not self.db.get('sense', senseid=senseid).get():
             log.error("You should pass a senseid from your database {} "
                         "({}) to FramedDataSense!".format(source,type(source)))
             return
-        self.parsesense(self.db,senseid,check,ftype)
+        self.parsesense(self.db,senseid,check)
         self.reallangs()
         self.setframe(check)
         # log.info("FramedDataSense initalization done, with forms {}"
