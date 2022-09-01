@@ -9437,7 +9437,7 @@ class FramedData(object):
             return g
     def applynoframe(self):
         self.framed=self.forms
-    def __init__(self, parent,  **kwargs): #source,
+    def __init__(self, parent, **kwargs): #source,
         """Evaluate what is actually needed"""
         super(FramedData, self).__init__()
         self.parent=parent
