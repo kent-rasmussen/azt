@@ -6913,7 +6913,7 @@ class Report(object):
                         break #do it on first present lang, and do next ex
         a=self.status.last('analysis',**kwargs)
         s=self.status.last('sort',**kwargs)
-        j=self.status.last('join',**kwargs)
+        j=self.status.last('joinUF',**kwargs)
         if a and s:
             analysisOK=a>s
         elif a:
@@ -8604,7 +8604,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                         write=False)
             self.db.write()
             self.runwindow.destroy()
-            self.status.last('join',update=True)
+            self.status.last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
         def redo():
             self.runwindow.wait(_("Redoing Tone Analysis"))
