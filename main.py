@@ -6935,8 +6935,13 @@ class Report(object):
                 log.error("{} {} came up with no checks.".format(ps,profile))
                 return
             self.getprofile(wsorted=True)
-        log.info("Starting report {} {} at {}; last sort at {} (since={})..."
-                "".format(ps,profile,a,s,analysisOK))
+        redonotice=("Starting report {} {} with last analysis at {}; "
+                    "last join at {}, "
+                    "last sort at {} (analysisOK={})..."
+                    "".format(ps,profile,a,j,s,analysisOK))
+        log.info(redonotice)
+        if me or not analysisOK:
+            ErrorNotice(redonotice)
         self.settings.storesettingsfile()
         waitmsg=_("{} {} Tone Report in Process").format(ps,profile)
         if usegui:
