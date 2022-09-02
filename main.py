@@ -8619,6 +8619,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
             self.tonegroupsjoinrename() #call again, in case needed
         def redo():
             self.runwindow.wait(_("Redoing Tone Analysis"))
+        analysis=self.makeanalysis()
             analysis.do()
             # self.runwindow.waitdone()
             # self.runwindow.destroy()
@@ -8686,7 +8687,6 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         rwrow+=1
         scroll=ui.ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=rwrow,column=0,sticky='ew')
-        analysis=self.makeanalysis()
         analysis.donoUFanalysis()
         nheaders=0
         if not analysis.orderedUFs:
