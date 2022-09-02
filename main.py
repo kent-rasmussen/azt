@@ -12089,7 +12089,7 @@ def tryrun(cmd):
         text=_("{} command error: {}\n({})").format(cmd.__name__,e,cmd)
         log.error(text)
         ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
-def sysrestart():
+def sysrestart(event=None):
     osys=platform.system()
     if osys == "Linux":
         log.info("Trying argv[0] with args {}, {} and {}".format(sys.executable,
