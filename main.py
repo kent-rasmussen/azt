@@ -11535,7 +11535,8 @@ class ErrorNotice(ui.Window):
             b=ui.Button(self.frame, text=button[0],
                     cmd=None,
                     row=1, column=0, sticky='e')
-            b.bind('<ButtonRelease>',button[1])
+            b.bind('<ButtonRelease>',self.withdraw)
+            b.bind('<ButtonRelease>',button[1],add='+')
             b.bind('<ButtonRelease>',self.destroy,add='+')
         self.attributes("-topmost", True)
         if wait:
