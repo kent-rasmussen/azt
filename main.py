@@ -12161,6 +12161,8 @@ def sysrestart(event=None):
                                     log.info("Failed ({})".format(e))
     sys.exit()
 def updateazt(**kwargs): #should only be parent, for errorroot
+    def tryagain(event=None):
+        updateazt()
     if 'git' in program:
         gitargs=[str(program['git']), "-C", str(program['aztdir']), "pull"]
         try:
