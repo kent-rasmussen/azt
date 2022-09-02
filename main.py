@@ -12175,17 +12175,21 @@ def updateazt(**kwargs): #should only be parent, for errorroot
         except:
             t=o
         log.info("git output: {} ({})".format(t,type(t)))
-        if (type(t) is str and
-                    "Already up to date." not in t and
-                    "No route to host" not in t) or (
-            type(t) is not str and
-                        b"Already up to date." not in t and
-                        b"No route to host" not in t):
+        if (type(t) is str and "Already up to date." in t) or (
+            type(t) is not str and b"Already up to date." in t):
+            button=False
+        elif type(t) is str and ("No route to host" in t or
+                                    "unable to access" in t or
+                                    "Could not resolve host:" in t) or (
+            type(t) is not str and (b"No route to host" in t or
+                                        b"unable to access" in t or
+                                        b"Could not resolve host:" in t)):
+            t=str(t)+_('\n(Check your internet connection and try again)')
+            button=(_("Try Again"),tryagain)
+        else:
             t=str(t)+_('\n(Restart {} to use this update)').format(
                                                             program['name'])
             button=(_("Restart Now"),sysrestart)
-        else:
-            button=False
         if set(['parent']).issuperset(set(kwargs.keys())):
             # log.info("Making Error Window")
             # log.info(t)
