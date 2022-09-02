@@ -12164,6 +12164,9 @@ def updateazt(**kwargs): #should only be parent, for errorroot
                         b"No route to host" not in t):
             t=str(t)+_('\n(Restart {} to use this update)').format(
                                                             program['name'])
+            button=(_("Restart Now"),sysrestart)
+        else:
+            button=False
         if set(['parent']).issuperset(set(kwargs.keys())):
             # log.info("Making Error Window")
             # log.info(t)
@@ -12173,7 +12176,7 @@ def updateazt(**kwargs): #should only be parent, for errorroot
                 title=_("Update (Git) output")
             except:
                 title="Update (Git) output"
-            e=ErrorNotice(t,title=title,**kwargs)
+            e=ErrorNotice(t,title=title,button=button,**kwargs)
             # except Exception as e:
             #     log.info(e)
             # log.info(e.__dir__)
