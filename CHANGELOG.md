@@ -2,6 +2,7 @@
 
 # Version 0.9.4
 Zulgo workshop tweaks
+lots of issues surrounding weird interface on their computer. For instance, the square consonant pushes everything off their screen, becausae of large space in buttons... 
 
 # Version 0.9.3
   - Consonant and vowel sorting and renaming done, **except for renames that change Syllable profiles**
