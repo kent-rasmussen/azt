@@ -8368,7 +8368,7 @@ class Transcribe(Sound,Sort):
                             )
         """Make this a pad of buttons, rather than a label, so users can
         go directly where they want to be"""
-        g=nn(self.othergroups,twoperline=True)
+        g=nn(self.othergroups,perline=len(self.othergroups)//6)
         log.info("There: {}, NTG: {}; g:{}".format(self.groups,
                                                     self.othergroups,g))
         groupslabel=ui.Label(infoframe,
