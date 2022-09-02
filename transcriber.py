@@ -85,14 +85,19 @@ class Transcriber(ui.Frame):
                 root=int(len(chars)**(1/2))+2 #make it square
             else:
                 root=7 #at least this many columns
-            if len(chars)%root:
+            if root and len(chars)%root:
                 # log.info("{} indivisible by {}!".format(len(chars),root))
                 nrows=len(chars)//root+1
                 ncols=len(chars)//nrows+1
-            else:
+            elif root:
                 # log.info("{} divisible by {}!".format(len(chars),root))
                 ncols=root
                 nrows=len(chars)//root
+            else: #this isn't the right math, but close enough for now
+                x=5
+                y=3
+                ncols=int((len(chars)*x/y)**(1/2))+1
+                nrows=len(chars)//ncols
             chars+=['∅']
         else:
             chars=kwargs.pop('chars',None) #in case it is None/0/False, etc.
