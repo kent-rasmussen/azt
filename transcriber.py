@@ -79,8 +79,10 @@ class Transcriber(ui.Frame):
                                             settings=self.soundsettings)
         if 'chars' in kwargs and kwargs['chars'] and type(kwargs['chars']) is list:
             chars=kwargs.pop('chars')
-            if len(chars) >25:
-                root=int(len(chars)**(1/2))+2
+            if len(chars)> 50:
+                root=False #don't make it square, but 4:3
+            elif len(chars) >25:
+                root=int(len(chars)**(1/2))+2 #make it square
             else:
                 root=7 #at least this many columns
             if len(chars)%root:
