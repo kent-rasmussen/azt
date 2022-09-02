@@ -11887,13 +11887,16 @@ def nonspace(x):
         return x
     else:
         return " "
-def nn(x,oneperline=False,twoperline=False):
+def nn(x,perline=False,oneperline=False,twoperline=False):
     """Don't print "None" in the UI..."""
     if type(x) is list or type(x) is tuple:
         output=[]
         for y in x:
             output+=[nonspace(y)]
-        if twoperline: #join every other with ', ', then all with '\n'
+        if perline: #join every other with ', ', then all with '\n'
+            return '\n'.join([', '.join([str(v) for v in output[i*perline:i*perline + perline]])
+                        for i in range(int(len(output)/perline)+1)])
+        elif twoperline: #join every other with ', ', then all with '\n'
             return '\n'.join([', '.join([str(v) for v in output[i*2:i*2 + 2]])
                         for i in range(int(len(output)/2)+1)])
         elif oneperline:
