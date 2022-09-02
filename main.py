@@ -11519,6 +11519,8 @@ class ErrorNotice(ui.Window):
     def destroy(self, event=None):
         ui.Window.destroy(self)
     def __init__(self, text, parent=None, title="Error!", wait=False, button=False):
+    def withdraw(self, event=None):
+        ui.Window.withdraw(self)
         # log.info("Making ErrorNotice")
         if not parent:
             parent=program['root']
