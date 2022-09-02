@@ -1096,6 +1096,7 @@ class Settings(object):
                                 'soundsettingsok',
                                 'buttoncolumns',
                                 'showoriginalorthographyinreports',
+                                'lowverticalspace',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -8330,7 +8331,11 @@ class Transcribe(Sound,Sort):
             log.error("Problem with log; check earlier message.")
             return
         padx=50
-        pady=10
+        if self.settings.lowverticalspace:
+            log.info("Using low vertical space setting")
+            pady=0
+        else:
+            pady=10
         title=_("Rename {} {} {} group ‘{}’ in ‘{}’ frame"
                         ).format(ps,profile,
                         self.params.cvtdict()[cvt]['sg'],
@@ -9843,12 +9848,16 @@ class SortButtonFrame(ui.ScrollingFrame):
     def addgroupbutton(self,group):
         if self.exitFlag.istrue():
             return #just don't die
-        scaledpady=int(50*program['scale'])
+        if self.task.settings.lowverticalspace:
+            scaledpady=0
+        else:
+            scaledpady=int(40*program['scale'])
         b=ToneGroupButtonFrame(self.groupbuttons, self, self.exs,
                                 group,
                                 showtonegroup=True,
                                 alwaysrefreshable=True,
-                                bpady=scaledpady,
+                                bpady=0,
+                                bipady=scaledpady,
                                 row=self.groupbuttons.row,
                                 column=self.groupbuttons.col,
                                 sticky='w')
@@ -9947,6 +9956,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.groupbuttonlist=list()
         # entryview=ui.Frame(self.runwindow.frame)
         """We need a few things from the task (which are needed still?)"""
+        self.task=task
         self.buttoncolumns=task.buttoncolumns
         self.exs=task.exs
         self.status=task.status
@@ -10246,7 +10256,7 @@ class ToneGroupButtonFrame(ui.Frame):
         return bkwargs #only the kwargs appropriate for buttons
     def __init__(self, parent, check, exdict, group, **kwargs):
         self.exs=exdict
-        self.check=check #this is the task/check
+        self.check=check #the task/check OR the scrollingframe! use self.check.task
         self.group=group
         # self,parent,group,row,column=0,label=False,canary=None,canary2=None,
         # alwaysrefreshable=False,playable=False,renew=False,unsortable=False,
@@ -10290,10 +10300,14 @@ class ToneGroupButtonFrame(ui.Frame):
         if kwargs['playable']:
             kwargs['wsoundfile']=True
         #set this for buttons:
-        kwargs['ipady']=kwargs.pop('bipady',defaults.get('bipady',15))
-        kwargs['ipady']=kwargs.pop('bipadx',defaults.get('bipadx',15))
+        if self.check.task.settings.lowverticalspace:
+            maxpad=0
+        else:
+            maxpad=15
+        kwargs['ipady']=kwargs.pop('bipady',defaults.get('bipady',maxpad))
+        kwargs['ipadx']=kwargs.pop('bipadx',defaults.get('bipadx',maxpad))
         kwargs['pady']=kwargs.pop('bpady',defaults.get('bpady',0))
-        kwargs['pady']=kwargs.pop('bpadx',defaults.get('bpadx',0))
+        kwargs['padx']=kwargs.pop('bpadx',defaults.get('bpadx',0))
         self.kwargs=kwargs
         self._var=ui.BooleanVar()
         super(ToneGroupButtonFrame,self).__init__(parent, **frameargs)
@@ -12191,9 +12205,19 @@ def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    root = program['root']=ui.Root(program=program)
+    # program['theme']=ui.Theme(program,ipady=0)
+    root = program['root']=ui.Root(program=program,
+                                    ipady=0,
+                                    ipadx=10,
+                                    pady=20,
+                                    padx=30,
+                                    )
     program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
+    # log.info("Theme ipady: {}".format(program['theme'].ipady))
+    # log.info("Theme ipadx: {}".format(program['theme'].ipadx))
+    # log.info("Theme pady: {}".format(program['theme'].pady))
+    # log.info("Theme padx: {}".format(program['theme'].padx))
     root.program=program
     root.wraplength=root.winfo_screenwidth()-300 #exit button
     root.wraplength=int(root.winfo_screenwidth()*.7) #exit button
