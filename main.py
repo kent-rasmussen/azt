@@ -3636,6 +3636,7 @@ class TaskDressing(object):
         if isinstance(self,TaskChooser):
             self.taskchooser=self
         else:
+            self.task=self
             self.taskchooser=self.parent
             if parent.ifcollectionlcsettingsdone:
                 parent.status.task(self)
