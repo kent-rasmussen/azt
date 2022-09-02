@@ -10245,7 +10245,7 @@ class ToneGroupButtonFrame(ui.Frame):
         usbkwargs['wraplength']=usbkwargs['wraplength']*2/3
         b_unsort=ui.Button(self,text = t,
                             cmd=self.unsort,
-                            column=2,row=0,padx=50,
+                            column=2,row=0,#padx=50,
                             **usbkwargs
                             )
     def buttonkwargs(self):
