@@ -12119,28 +12119,28 @@ def sysrestart(event=None):
             # os.execvp(sys.executable, sys.argv)
         except Exception as e:
             try:
-                log.info("Trying execl")
-                os.execl(sys.executable, *sys.argv)
+                log.info("Failed ({}); Trying execl")
+                os.execl(sys.argv[0], *sys.argv)
             except Exception as e:
                 log.info("Failed ({}); Trying execlp".format(e))
                 try:
-                    os.execlp(sys.executable, *sys.argv)
+                    os.execlp(sys.argv[0], *sys.argv)
                 except Exception as e:
                     log.info("Failed ({}); Trying spawnv".format(e))
                     try:
-                        os.spawnv(os.P_NOWAIT, sys.executable, sys.argv)
+                        os.spawnv(os.P_NOWAIT, sys.argv[0], sys.argv)
                     except Exception as e:
                         log.info("Failed ({}); Trying spawnl".format(e))
                         try:
-                            os.spawnl(os.P_NOWAIT, sys.executable, sys.argv)
+                            os.spawnl(os.P_NOWAIT, sys.argv[0], sys.argv)
                         except Exception as e:
                             log.info("Failed ({}); Trying spawnvp".format(e))
                             try:
-                                os.spawnvp(os.P_NOWAIT, sys.executable, sys.argv)
+                                os.spawnvp(os.P_NOWAIT, sys.argv[0], sys.argv)
                             except Exception as e:
                                 log.info("Failed ({}); Trying spawnlp".format(e))
                                 try:
-                                    os.spawnlp(os.P_NOWAIT, sys.executable, sys.argv)
+                                    os.spawnlp(os.P_NOWAIT, sys.argv[0], sys.argv)
                                 except:
                                     log.info("Failed ({})")
     sys.exit()
