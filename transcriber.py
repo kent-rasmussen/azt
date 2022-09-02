@@ -98,6 +98,8 @@ class Transcriber(ui.Frame):
                 y=3
                 ncols=int((len(chars)*x/y)**(1/2))+1
                 nrows=len(chars)//ncols
+                log.info("chars: {}; ncols: {}; nrows: {}; x:y={}"
+                        "".format(len(chars),ncols,nrows,ncols/nrows))
             chars+=['∅']
         else:
             chars=kwargs.pop('chars',None) #in case it is None/0/False, etc.
@@ -260,7 +262,9 @@ if __name__ == "__main__":
     'ⁿj','ⁿs','ⁿz',
                 # ]
     # x={} #dict to put all hypothetical segements in, by category
-    # x['G']=['ẅ','y','Y','w','W']
+    # x['G']=[
+    'ẅ','y','Y','w','W',
+    # ]
     # x['N']=['m','M','n','ŋ','ɲ','ɱ'] #'N', messed with profiles
     # x['Ndg']=['mm','ŋŋ','ny','gn','nn']
     # x['Ntg']=["ng'"]

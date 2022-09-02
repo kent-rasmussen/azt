@@ -2,7 +2,9 @@
 
 # Version 0.9.4
 - Zulgo workshop tweaks
- -lots of issues surrounding weird interface on their computer. For instance, the square consonant pushes everything off their screen, becausae of large space in buttons... 
+-lots of issues surrounding weird interface on their computer. For instance, the square consonant pushes everything off their screen, becausae of large space in buttons... 
+- A number of additions to make the update process smoother (now you can restart or retry, as appropriate, from the notification window) 
+- Multiple attempts to fix auto-reboot on Windows —sorry, nothing working yet.
 
 # Version 0.9.3
   - Consonant and vowel sorting and renaming done, **except for renames that change Syllable profiles**

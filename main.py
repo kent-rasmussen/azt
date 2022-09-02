@@ -1096,6 +1096,7 @@ class Settings(object):
                                 'soundsettingsok',
                                 'buttoncolumns',
                                 'showoriginalorthographyinreports',
+                                'lowverticalspace',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -3635,6 +3636,7 @@ class TaskDressing(object):
         if isinstance(self,TaskChooser):
             self.taskchooser=self
         else:
+            self.task=self
             self.taskchooser=self.parent
             if parent.ifcollectionlcsettingsdone:
                 parent.status.task(self)
@@ -6912,15 +6914,7 @@ class Report(object):
                                                         listword=True,
                                                         showgroups=showgroups)
                         break #do it on first present lang, and do next ex
-        a=self.status.last('analysis',**kwargs)
-        s=self.status.last('sort',**kwargs)
-        j=self.status.last('joinUF',**kwargs)
-        if a and s:
-            analysisOK=a>s
-        elif a:
-            analysisOK=True # b/c analysis would be more recent than last sorting
-        else:
-            analysisOK=False # w/o info, trigger reanalysis
+        analysisOK,timestamps=self.status.isanalysisOK(**kwargs)
         self.datadict.refresh() #get the most recent data
         silent=kwargs.get('silent',False)
         default=kwargs.get('default',True)
@@ -6936,15 +6930,11 @@ class Report(object):
                 log.error("{} {} came up with no checks.".format(ps,profile))
                 return
             self.getprofile(wsorted=True)
-        redonotice=("Starting report {} {} with last analysis at {}; "
-                    "last join at {}, "
-                    "last sort at {} (analysisOK={})..."
-                    "".format(ps,profile,a,j,s,analysisOK))
-        log.info(redonotice)
-        if me or not analysisOK:
-            ErrorNotice(redonotice)
+        startnotice=("Starting report {} {}".format(ps,profile))
+        log.info(startnotice)
         self.settings.storesettingsfile()
-        waitmsg=_("{} {} Tone Report in Process").format(ps,profile)
+        waitmsg=_("{} {} Tone Report in Process\n({})").format(ps,profile,
+                                                                timestamps)
         if usegui:
             resultswindow=ResultWindow(self.parent,msg=waitmsg)
         bits=[str(self.reportbasefilename),
@@ -8330,7 +8320,11 @@ class Transcribe(Sound,Sort):
             log.error("Problem with log; check earlier message.")
             return
         padx=50
-        pady=10
+        if self.settings.lowverticalspace:
+            log.info("Using low vertical space setting")
+            pady=0
+        else:
+            pady=10
         title=_("Rename {} {} {} group ‘{}’ in ‘{}’ frame"
                         ).format(ps,profile,
                         self.params.cvtdict()[cvt]['sg'],
@@ -8368,7 +8362,7 @@ class Transcribe(Sound,Sort):
                             )
         """Make this a pad of buttons, rather than a label, so users can
         go directly where they want to be"""
-        g=nn(self.othergroups,perline=len(self.othergroups)//6)
+        g=nn(self.othergroups,perline=len(self.othergroups)//5)
         log.info("There: {}, NTG: {}; g:{}".format(self.groups,
                                                     self.othergroups,g))
         groupslabel=ui.Label(infoframe,
@@ -8439,8 +8433,10 @@ class Transcribe(Sound,Sort):
         self.sub_c.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
-    def __init__(self): #frame, filename=None
+    def __init__(self,parent): #frame, filename=None
+        parent.settings.makeeverythingok()
         self.mistake=False #track when a user has made a mistake
+        self.status.makecheckok()
         Sound.__init__(self)
 class TranscribeV(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
@@ -8481,7 +8477,7 @@ class TranscribeV(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
         # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
         ]
         self.params.cvt('V')
-        Transcribe.__init__(self)
+        Transcribe.__init__(self,parent)
 class TranscribeC(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Consonant Letters")
@@ -8537,7 +8533,7 @@ class TranscribeC(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
         'rh','wh',
         ]
         self.params.cvt('C')
-        Transcribe.__init__(self)
+        Transcribe.__init__(self,parent)
 class TranscribeT(Transcribe,Tone,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Transcribe Tone")
@@ -8560,7 +8556,7 @@ class TranscribeT(Transcribe,Tone,Sound,Sort,TaskDressing,ui.Window):
         TaskDressing.__init__(self, parent)
         self.glyphspossible=None
         self.params.cvt('T')
-        Transcribe.__init__(self)
+        Transcribe.__init__(self,parent)
 class JoinUFgroups(Tone,TaskDressing,ui.Window):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
@@ -8612,17 +8608,23 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
             self.runwindow.destroy()
             self.status.last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
-        def redo():
-            self.runwindow.wait(_("Redoing Tone Analysis"))
+        analysis=self.makeanalysis()
+        def redo(timestamps):
+            self.wait(_("Redoing Tone Analysis")+'\n'+timestamps)
             analysis.do()
-            # self.runwindow.waitdone()
+            self.waitdone()
             # self.runwindow.destroy()
             self.tonegroupsjoinrename() #call again, in case needed
         def done():
             self.runwindow.destroy()
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
-        self.getrunwindow()
+        analysisOK,timestamps=self.status.isanalysisOK(**kwargs) #Should specify which lasts...
+        if not analysisOK:
+            redo(timestamps) #otherwise, the user will almost certainly be upset to have to do it later
+            return
+        self.getrunwindow(msg=_("Preparing to join draft underlying form groups"
+                                "")+'\n'+timestamps)
         title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
                                                         ps,profile))
         self.runwindow.title(title)
@@ -8681,7 +8683,6 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         rwrow+=1
         scroll=ui.ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=rwrow,column=0,sticky='ew')
-        analysis=self.makeanalysis()
         analysis.donoUFanalysis()
         nheaders=0
         if not analysis.orderedUFs:
@@ -9843,12 +9844,16 @@ class SortButtonFrame(ui.ScrollingFrame):
     def addgroupbutton(self,group):
         if self.exitFlag.istrue():
             return #just don't die
-        scaledpady=int(50*program['scale'])
+        if self.task.settings.lowverticalspace:
+            scaledpady=0
+        else:
+            scaledpady=int(40*program['scale'])
         b=ToneGroupButtonFrame(self.groupbuttons, self, self.exs,
                                 group,
                                 showtonegroup=True,
                                 alwaysrefreshable=True,
-                                bpady=scaledpady,
+                                bpady=0,
+                                bipady=scaledpady,
                                 row=self.groupbuttons.row,
                                 column=self.groupbuttons.col,
                                 sticky='w')
@@ -9947,6 +9952,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.groupbuttonlist=list()
         # entryview=ui.Frame(self.runwindow.frame)
         """We need a few things from the task (which are needed still?)"""
+        self.task=task
         self.buttoncolumns=task.buttoncolumns
         self.exs=task.exs
         self.status=task.status
@@ -10235,7 +10241,7 @@ class ToneGroupButtonFrame(ui.Frame):
         usbkwargs['wraplength']=usbkwargs['wraplength']*2/3
         b_unsort=ui.Button(self,text = t,
                             cmd=self.unsort,
-                            column=2,row=0,padx=50,
+                            column=2,row=0,#padx=50,
                             **usbkwargs
                             )
     def buttonkwargs(self):
@@ -10246,7 +10252,7 @@ class ToneGroupButtonFrame(ui.Frame):
         return bkwargs #only the kwargs appropriate for buttons
     def __init__(self, parent, check, exdict, group, **kwargs):
         self.exs=exdict
-        self.check=check #this is the task/check
+        self.check=check #the task/check OR the scrollingframe! use self.check.task
         self.group=group
         # self,parent,group,row,column=0,label=False,canary=None,canary2=None,
         # alwaysrefreshable=False,playable=False,renew=False,unsortable=False,
@@ -10290,10 +10296,14 @@ class ToneGroupButtonFrame(ui.Frame):
         if kwargs['playable']:
             kwargs['wsoundfile']=True
         #set this for buttons:
-        kwargs['ipady']=kwargs.pop('bipady',defaults.get('bipady',15))
-        kwargs['ipady']=kwargs.pop('bipadx',defaults.get('bipadx',15))
+        if self.check.task.settings.lowverticalspace:
+            maxpad=0
+        else:
+            maxpad=15
+        kwargs['ipady']=kwargs.pop('bipady',defaults.get('bipady',maxpad))
+        kwargs['ipadx']=kwargs.pop('bipadx',defaults.get('bipadx',maxpad))
         kwargs['pady']=kwargs.pop('bpady',defaults.get('bpady',0))
-        kwargs['pady']=kwargs.pop('bpadx',defaults.get('bpadx',0))
+        kwargs['padx']=kwargs.pop('bpadx',defaults.get('bpadx',0))
         self.kwargs=kwargs
         self._var=ui.BooleanVar()
         super(ToneGroupButtonFrame,self).__init__(parent, **frameargs)
@@ -11311,6 +11321,22 @@ class StatusDict(dict):
             self.store()
         if task in sn['last']:
             return sn['last'][task]
+    def isanalysisOK(self,**kwargs):
+        a=self.last('analysis',**kwargs)
+        s=self.last('sort',**kwargs)
+        j=self.last('joinUF',**kwargs)
+        if a and s:
+            ok=a>s
+        elif a:
+            ok=True # b/c analysis would be more recent than last sorting
+        else:
+            ok=False # w/o info, trigger reanalysis
+        annalysisoknotice=("Last analysis at {};\n"
+                    "last join at {}\n"
+                    "last sort at {}\n(analysisOK={})"
+                    "".format(a,j,s,ok))
+        log.info(annalysisoknotice)
+        return ok, annalysisoknotice
     def __init__(self,checkparameters,slicedict,toneframes,filename,dict):
         """To populate subchecks, use self.groups()"""
         self._filename=filename
@@ -11504,12 +11530,15 @@ class ErrorNotice(ui.Window):
     to find it in the logs."""
     def destroy(self, event=None):
         ui.Window.destroy(self)
-    def __init__(self, text, parent=None, title="Error!", wait=False, button=False):
+    def withdraw(self, event=None):
+        ui.Window.withdraw(self)
+    def __init__(self, text, **kwargs):
+        # parent=None, title="Error!", wait=False, button=False,):
         # log.info("Making ErrorNotice")
-        if not parent:
-            parent=program['root']
-        if title == "Error!":
-            title=_("Error!")
+        parent=kwargs.get('parent',program['root'])
+        title=kwargs.get('title',_("Error!"))
+        wait=kwargs.get('wait',False)
+        button=kwargs.get('button',False)
         super(ErrorNotice, self).__init__(parent,title=title)
         self.title = title
         self.text = text
@@ -11519,7 +11548,8 @@ class ErrorNotice(ui.Window):
             b=ui.Button(self.frame, text=button[0],
                     cmd=None,
                     row=1, column=0, sticky='e')
-            b.bind('<ButtonRelease>',button[1])
+            b.bind('<ButtonRelease>',self.withdraw)
+            b.bind('<ButtonRelease>',button[1],add='+')
             b.bind('<ButtonRelease>',self.destroy,add='+')
         self.attributes("-topmost", True)
         if wait:
@@ -12119,32 +12149,32 @@ def sysrestart(event=None):
             # os.execvp(sys.executable, sys.argv)
         except Exception as e:
             try:
-                log.info("Failed ({}); Trying execl")
+                log.info("Failed ({}); Trying execl".format(e))
                 os.execl(sys.argv[0], *sys.argv)
             except Exception as e:
-                log.info("Failed ({}); Trying execlp".format(e))
                 try:
-                    os.execlp(sys.argv[0], *sys.argv)
-                except Exception as e:
                     log.info("Failed ({}); Trying spawnv".format(e))
+                    os.spawnv(os.P_NOWAIT, sys.argv[0], sys.argv)
+                except Exception as e:
                     try:
-                        os.spawnv(os.P_NOWAIT, sys.argv[0], sys.argv)
-                    except Exception as e:
                         log.info("Failed ({}); Trying spawnl".format(e))
+                        os.spawnl(os.P_NOWAIT, sys.argv[0], *sys.argv)
+                    except Exception as e:
                         try:
-                            os.spawnl(os.P_NOWAIT, sys.argv[0], sys.argv)
+                            log.info("Failed ({}); Trying subprocess.run"
+                                        "".format(e))
+                            subprocess.run([*sys.argv])# also try run(sys.argv)
                         except Exception as e:
-                            log.info("Failed ({}); Trying spawnvp".format(e))
                             try:
-                                os.spawnvp(os.P_NOWAIT, sys.argv[0], sys.argv)
+                                log.info("Failed ({}); Trying subprocess.run "
+                                            "with executable".format(e))
+                                subprocess.run([sys.executable,*sys.argv])
                             except Exception as e:
-                                log.info("Failed ({}); Trying spawnlp".format(e))
-                                try:
-                                    os.spawnlp(os.P_NOWAIT, sys.argv[0], sys.argv)
-                                except:
-                                    log.info("Failed ({})")
+                                log.info("Failed ({}); giving up.".format(e))
     sys.exit()
 def updateazt(**kwargs): #should only be parent, for errorroot
+    def tryagain(event=None):
+        updateazt()
     if 'git' in program:
         gitargs=[str(program['git']), "-C", str(program['aztdir']), "pull"]
         try:
@@ -12159,17 +12189,21 @@ def updateazt(**kwargs): #should only be parent, for errorroot
         except:
             t=o
         log.info("git output: {} ({})".format(t,type(t)))
-        if (type(t) is str and
-                    "Already up to date." not in t and
-                    "No route to host" not in t) or (
-            type(t) is not str and
-                        b"Already up to date." not in t and
-                        b"No route to host" not in t):
+        if (type(t) is str and "Already up to date." in t) or (
+            type(t) is not str and b"Already up to date." in t):
+            button=False
+        elif type(t) is str and ("No route to host" in t or
+                                    "unable to access" in t or
+                                    "Could not resolve host:" in t) or (
+            type(t) is not str and (b"No route to host" in t or
+                                        b"unable to access" in t or
+                                        b"Could not resolve host:" in t)):
+            t=str(t)+_('\n(Check your internet connection and try again)')
+            button=(_("Try Again"),tryagain)
+        else:
             t=str(t)+_('\n(Restart {} to use this update)').format(
                                                             program['name'])
             button=(_("Restart Now"),sysrestart)
-        else:
-            button=False
         if set(['parent']).issuperset(set(kwargs.keys())):
             # log.info("Making Error Window")
             # log.info(t)
@@ -12191,9 +12225,19 @@ def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    root = program['root']=ui.Root(program=program)
+    # program['theme']=ui.Theme(program,ipady=0)
+    root = program['root']=ui.Root(program=program,
+                                    # ipady=0,
+                                    # ipadx=10,
+                                    # pady=20,
+                                    # padx=30,
+                                    )
     program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
+    # log.info("Theme ipady: {}".format(program['theme'].ipady))
+    # log.info("Theme ipadx: {}".format(program['theme'].ipadx))
+    # log.info("Theme pady: {}".format(program['theme'].pady))
+    # log.info("Theme padx: {}".format(program['theme'].padx))
     root.program=program
     root.wraplength=root.winfo_screenwidth()-300 #exit button
     root.wraplength=int(root.winfo_screenwidth()*.7) #exit button
