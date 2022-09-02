@@ -11518,7 +11518,6 @@ class ErrorNotice(ui.Window):
     to find it in the logs."""
     def destroy(self, event=None):
         ui.Window.destroy(self)
-    def __init__(self, text, parent=None, title="Error!", wait=False, button=False):
     def withdraw(self, event=None):
         ui.Window.withdraw(self)
     def __init__(self, text, **kwargs):
