@@ -260,7 +260,9 @@ if __name__ == "__main__":
     'ⁿj','ⁿs','ⁿz',
                 # ]
     # x={} #dict to put all hypothetical segements in, by category
-    # x['G']=['ẅ','y','Y','w','W']
+    # x['G']=[
+    'ẅ','y','Y','w','W',
+    # ]
     # x['N']=['m','M','n','ŋ','ɲ','ɱ'] #'N', messed with profiles
     # x['Ndg']=['mm','ŋŋ','ny','gn','nn']
     # x['Ntg']=["ng'"]
