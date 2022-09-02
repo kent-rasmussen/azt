@@ -79,18 +79,25 @@ class Transcriber(ui.Frame):
                                             settings=self.soundsettings)
         if 'chars' in kwargs and kwargs['chars'] and type(kwargs['chars']) is list:
             chars=kwargs.pop('chars')
-            if len(chars) >25:
-                root=int(len(chars)**(1/2))+2
+            if len(chars)> 50:
+                root=False #don't make it square, but 4:3
+            elif len(chars) >25:
+                root=int(len(chars)**(1/2))+2 #make it square
             else:
                 root=7 #at least this many columns
-            if len(chars)%root:
+            if root and len(chars)%root:
                 # log.info("{} indivisible by {}!".format(len(chars),root))
                 nrows=len(chars)//root+1
                 ncols=len(chars)//nrows+1
-            else:
+            elif root:
                 # log.info("{} divisible by {}!".format(len(chars),root))
                 ncols=root
                 nrows=len(chars)//root
+            else: #this isn't the right math, but close enough for now
+                x=5
+                y=3
+                ncols=int((len(chars)*x/y)**(1/2))+1
+                nrows=len(chars)//ncols
             chars+=['∅']
         else:
             chars=kwargs.pop('chars',None) #in case it is None/0/False, etc.
@@ -170,5 +177,99 @@ if __name__ == "__main__":
     w=ui.Root()
     w.title('Transcriber')
     # soundsettings=sound.SoundSettings()
-    Transcriber(w,initval='˥˥ ˩˩ ˧˧',column=0,row=0)#,soundsettings=soundsettings)
+    Transcriber(w,initval='˥˥ ˩˩ ˧˧',column=0,row=0,
+    chars=[
+    # c['pvd'][2]=[
+    'bh','dh','gh','gb',
+    'bb','dd','gg', #French
+    'gw','dw', 'ɗw', #gnd
+    'mb','nd','ŋg',
+    #             ]
+    # c['pvd'][3]=[
+    'ndw', 'ŋgw', #gnd
+                # ]
+    # c['pvd'][1]=[
+    'b','B','d','g','ɡ',
+    # ] #,'G' messes with profiles
+    # c['p']={}
+    # c['p'][2]=[
+    'kk','kp','cc','pp','pt','tt','ck',
+                'kw','tw',
+                # ] #gnd
+    # c['p'][1]=[
+    'p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q',
+    # ]
+    # c['fvd']={}
+    # c['fvd'][2]=[
+    'bh','vh','zh',
+    # ]
+    # c['fvd'][1]=[
+    'j','J','v','z','Z','ʒ','ð','ɣ',
+    # ] #problems w x?
+    # c['f']={}
+    # c['f'][3]=[
+    'sch',
+    # ]
+    # c['f'][2]=[
+    'ch','ph','sh','hh','pf','bv','ff','sc','ss','th',
+                'hw', #gnd
+                # ]
+    #Assuming x is voiceless, per IPA and most useage...
+    # c['f'][1]=[
+    'F','f','s','ʃ','θ','x','h',
+    # ] #not 'S'
+    # c['avd']={}
+    # c['avd'][2]=[
+    'dj','dz','dʒ',
+    # ]
+    # c['avd'][3]=[
+    'ndz','dzw',
+    # ] #gnd
+    # c['avd'][4]=[
+    'ndzw',
+    # ] #gnd
+    # c['a']={}
+    # c['a'][3]=[
+    'chk','tch',
+    # ]
+    # c['a'][2]=[
+    'ts','tʃ',
+    # ]
+    # c['lfvd']={}
+    # c['lfvd'][3]=[
+    'zlw',
+    # ]
+    # c['lfvd'][2]=[
+    'zl',
+    # ]
+    # c['lfvd'][1]=[
+    'ɮ',
+    # ]
+    # c['lf']={}
+    # c['lf'][3]=[
+    'slw',
+    # ]
+    # c['lf'][2]=[
+    'sl',
+    # ]
+    # c['lf'][1]=[
+    'ɬ',
+    # ]
+    # c['pn']={}
+    'ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
+    'ⁿj','ⁿs','ⁿz',
+                # ]
+    # x={} #dict to put all hypothetical segements in, by category
+    # x['G']=['ẅ','y','Y','w','W']
+    # x['N']=['m','M','n','ŋ','ɲ','ɱ'] #'N', messed with profiles
+    # x['Ndg']=['mm','ŋŋ','ny','gn','nn']
+    # x['Ntg']=["ng'"]
+    # """Non-Nasal/Glide Sonorants"""
+    # x['S']=['l','r']
+    # x['Sdg']=['rh','wh','ll','rr',
+    #             'rw','lw' #gnd
+    #             ]
+
+    ]
+    )#,soundsettings=soundsettings)
     w.mainloop()
