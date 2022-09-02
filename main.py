@@ -6914,15 +6914,7 @@ class Report(object):
                                                         listword=True,
                                                         showgroups=showgroups)
                         break #do it on first present lang, and do next ex
-        a=self.status.last('analysis',**kwargs)
-        s=self.status.last('sort',**kwargs)
-        j=self.status.last('joinUF',**kwargs)
-        if a and s:
-            analysisOK=a>s
-        elif a:
-            analysisOK=True # b/c analysis would be more recent than last sorting
-        else:
-            analysisOK=False # w/o info, trigger reanalysis
+        analysisOK,timestamps=self.status.isanalysisOK(**kwargs)
         self.datadict.refresh() #get the most recent data
         silent=kwargs.get('silent',False)
         default=kwargs.get('default',True)
@@ -6938,15 +6930,11 @@ class Report(object):
                 log.error("{} {} came up with no checks.".format(ps,profile))
                 return
             self.getprofile(wsorted=True)
-        redonotice=("Starting report {} {} with last analysis at {}; "
-                    "last join at {}, "
-                    "last sort at {} (analysisOK={})..."
-                    "".format(ps,profile,a,j,s,analysisOK))
-        log.info(redonotice)
-        if me or not analysisOK:
-            ErrorNotice(redonotice)
+        startnotice=("Starting report {} {}".format(ps,profile))
+        log.info(startnotice)
         self.settings.storesettingsfile()
-        waitmsg=_("{} {} Tone Report in Process").format(ps,profile)
+        waitmsg=_("{} {} Tone Report in Process\n({})").format(ps,profile,
+                                                                timestamps)
         if usegui:
             resultswindow=ResultWindow(self.parent,msg=waitmsg)
         bits=[str(self.reportbasefilename),
@@ -8618,18 +8606,23 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
             self.runwindow.destroy()
             self.status.last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
-        def redo():
-            self.runwindow.wait(_("Redoing Tone Analysis"))
         analysis=self.makeanalysis()
+        def redo(timestamps):
+            self.wait(_("Redoing Tone Analysis")+'\n'+timestamps)
             analysis.do()
-            # self.runwindow.waitdone()
+            self.waitdone()
             # self.runwindow.destroy()
             self.tonegroupsjoinrename() #call again, in case needed
         def done():
             self.runwindow.destroy()
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
-        self.getrunwindow()
+        analysisOK,timestamps=self.status.isanalysisOK(**kwargs) #Should specify which lasts...
+        if not analysisOK:
+            redo(timestamps) #otherwise, the user will almost certainly be upset to have to do it later
+            return
+        self.getrunwindow(msg=_("Preparing to join draft underlying form groups"
+                                "")+'\n'+timestamps)
         title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
                                                         ps,profile))
         self.runwindow.title(title)
