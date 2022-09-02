@@ -94,7 +94,7 @@ class Transcriber(ui.Frame):
                 ncols=root
                 nrows=len(chars)//root
             else: #this isn't the right math, but close enough for now
-                x=5
+                x=9
                 y=3
                 ncols=int((len(chars)*x/y)**(1/2))+1
                 nrows=len(chars)//ncols
