@@ -6913,7 +6913,7 @@ class Report(object):
                         break #do it on first present lang, and do next ex
         a=self.status.last('analysis',**kwargs)
         s=self.status.last('sort',**kwargs)
-        j=self.status.last('join',**kwargs)
+        j=self.status.last('joinUF',**kwargs)
         if a and s:
             analysisOK=a>s
         elif a:
@@ -6935,8 +6935,13 @@ class Report(object):
                 log.error("{} {} came up with no checks.".format(ps,profile))
                 return
             self.getprofile(wsorted=True)
-        log.info("Starting report {} {} at {}; last sort at {} (since={})..."
-                "".format(ps,profile,a,s,analysisOK))
+        redonotice=("Starting report {} {} with last analysis at {}; "
+                    "last join at {}, "
+                    "last sort at {} (analysisOK={})..."
+                    "".format(ps,profile,a,j,s,analysisOK))
+        log.info(redonotice)
+        if me or not analysisOK:
+            ErrorNotice(redonotice)
         self.settings.storesettingsfile()
         waitmsg=_("{} {} Tone Report in Process").format(ps,profile)
         if usegui:
@@ -8604,7 +8609,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                         write=False)
             self.db.write()
             self.runwindow.destroy()
-            self.status.last('join',update=True)
+            self.status.last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
         def redo():
             self.runwindow.wait(_("Redoing Tone Analysis"))
