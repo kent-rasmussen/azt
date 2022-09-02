@@ -12133,7 +12133,7 @@ def sysrestart(event=None):
             # os.execvp(sys.executable, sys.argv)
         except Exception as e:
             try:
-                log.info("Failed ({}); Trying execl")
+                log.info("Failed ({}); Trying execl".format(e))
                 os.execl(sys.argv[0], *sys.argv)
             except Exception as e:
                 log.info("Failed ({}); Trying execlp".format(e))
@@ -12155,8 +12155,8 @@ def sysrestart(event=None):
                                 log.info("Failed ({}); Trying spawnlp".format(e))
                                 try:
                                     os.spawnlp(os.P_NOWAIT, sys.argv[0], sys.argv)
-                                except:
-                                    log.info("Failed ({})")
+                                except Exception as e:
+                                    log.info("Failed ({})".format(e))
     sys.exit()
 def updateazt(**kwargs): #should only be parent, for errorroot
     if 'git' in program:
