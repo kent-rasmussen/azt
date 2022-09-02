@@ -11326,6 +11326,22 @@ class StatusDict(dict):
             self.store()
         if task in sn['last']:
             return sn['last'][task]
+    def isanalysisOK(self,**kwargs):
+        a=self.last('analysis',**kwargs)
+        s=self.last('sort',**kwargs)
+        j=self.last('joinUF',**kwargs)
+        if a and s:
+            ok=a>s
+        elif a:
+            ok=True # b/c analysis would be more recent than last sorting
+        else:
+            ok=False # w/o info, trigger reanalysis
+        annalysisoknotice=("Last analysis at {};\n"
+                    "last join at {}\n"
+                    "last sort at {}\n(analysisOK={})"
+                    "".format(a,j,s,ok))
+        log.info(annalysisoknotice)
+        return ok, annalysisoknotice
     def __init__(self,checkparameters,slicedict,toneframes,filename,dict):
         """To populate subchecks, use self.groups()"""
         self._filename=filename
