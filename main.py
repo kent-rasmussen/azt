@@ -5914,8 +5914,9 @@ class Sort(object):
         else:
             context=self.params.cvcheckname(self.check)
             descripttext=("by {}").format(self.check)
-        title=_("Sort {} Tone ({})").format(
+        title=_("Sort {} {} ({})").format(
                                         self.settings.languagenames[self.analang],
+                                        context,
                                         descripttext)
         ui.Label(self.titles, text=title,font='title',anchor='c',
                                             column=0, row=0, sticky="ew")
