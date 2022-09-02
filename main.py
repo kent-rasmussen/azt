@@ -11521,11 +11521,13 @@ class ErrorNotice(ui.Window):
     def __init__(self, text, parent=None, title="Error!", wait=False, button=False):
     def withdraw(self, event=None):
         ui.Window.withdraw(self)
+    def __init__(self, text, **kwargs):
+        # parent=None, title="Error!", wait=False, button=False,):
         # log.info("Making ErrorNotice")
-        if not parent:
-            parent=program['root']
-        if title == "Error!":
-            title=_("Error!")
+        parent=kwargs.get('parent',program['root'])
+        title=kwargs.get('title',_("Error!"))
+        wait=kwargs.get('wait',False)
+        button=kwargs.get('button',False)
         super(ErrorNotice, self).__init__(parent,title=title)
         self.title = title
         self.text = text
