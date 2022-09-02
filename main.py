@@ -12209,10 +12209,10 @@ def main():
                                     platform.platform())) #Don't translate yet!
     # program['theme']=ui.Theme(program,ipady=0)
     root = program['root']=ui.Root(program=program,
-                                    ipady=0,
-                                    ipadx=10,
-                                    pady=20,
-                                    padx=30,
+                                    # ipady=0,
+                                    # ipadx=10,
+                                    # pady=20,
+                                    # padx=30,
                                     )
     program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
