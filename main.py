@@ -12152,27 +12152,25 @@ def sysrestart(event=None):
                 log.info("Failed ({}); Trying execl".format(e))
                 os.execl(sys.argv[0], *sys.argv)
             except Exception as e:
-                log.info("Failed ({}); Trying execlp".format(e))
                 try:
-                    os.execlp(sys.argv[0], *sys.argv)
-                except Exception as e:
                     log.info("Failed ({}); Trying spawnv".format(e))
+                    os.spawnv(os.P_NOWAIT, sys.argv[0], sys.argv)
+                except Exception as e:
                     try:
-                        os.spawnv(os.P_NOWAIT, sys.argv[0], sys.argv)
-                    except Exception as e:
                         log.info("Failed ({}); Trying spawnl".format(e))
+                        os.spawnl(os.P_NOWAIT, sys.argv[0], *sys.argv)
+                    except Exception as e:
                         try:
-                            os.spawnl(os.P_NOWAIT, sys.argv[0], sys.argv)
+                            log.info("Failed ({}); Trying subprocess.run"
+                                        "".format(e))
+                            subprocess.run([*sys.argv])# also try run(sys.argv)
                         except Exception as e:
-                            log.info("Failed ({}); Trying spawnvp".format(e))
                             try:
-                                os.spawnvp(os.P_NOWAIT, sys.argv[0], sys.argv)
+                                log.info("Failed ({}); Trying subprocess.run "
+                                            "with executable".format(e))
+                                subprocess.run([sys.executable,*sys.argv])
                             except Exception as e:
-                                log.info("Failed ({}); Trying spawnlp".format(e))
-                                try:
-                                    os.spawnlp(os.P_NOWAIT, sys.argv[0], sys.argv)
-                                except Exception as e:
-                                    log.info("Failed ({})".format(e))
+                                log.info("Failed ({}); giving up.".format(e))
     sys.exit()
 def updateazt(**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
