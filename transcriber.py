@@ -98,6 +98,8 @@ class Transcriber(ui.Frame):
                 y=3
                 ncols=int((len(chars)*x/y)**(1/2))+1
                 nrows=len(chars)//ncols
+                log.info("chars: {}; ncols: {}; nrows: {}; x:y={}"
+                        "".format(len(chars),ncols,nrows,ncols/nrows))
             chars+=['∅']
         else:
             chars=kwargs.pop('chars',None) #in case it is None/0/False, etc.
