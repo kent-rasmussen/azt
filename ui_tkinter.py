@@ -363,10 +363,15 @@ class Theme(object):
             self.program['scale']=1
         log.info("Largest variance from 1:1 ratio: {} (this will be used to scale "
                 "stuff.)".format(self.program['scale']))
-    def __init__(self,program=None,name=None):
+    def setpads(self,**kwargs):
+        for kwarg in ['ipady','ipadx','pady','padx']:
+            if kwarg in kwargs:
+                setattr(self,kwarg,kwargs[kwarg])
+    def __init__(self,program=None,name=None,**kwargs):
         self.program=program
         self.name=name
         self.setscale()
+        self.setpads(**kwargs)
         self.setthemes()
         self.setfonts()
         self.setimages()
@@ -640,6 +645,9 @@ class UI(ObectwArgs):
             for a in ['background','bg','troughcolor']:
                 if a in self.keys():
                     self[a]=self.theme.background
+            for a in ['ipady','ipadx','pady','padx']:
+                if a in self.keys() and hasattr(self.theme,a):
+                    self[a]=getattr(self.theme,a)
             for a in ['activebackground','selectcolor']:
                 if a in self.keys():
                     self[a]=self.theme.activebackground
@@ -678,11 +686,11 @@ class Root(Exitable,tkinter.Tk):
         else:
             self.program={}
         if theme and not isinstance(theme,Theme) and type(theme) is str:
-            self.theme=Theme(self.program,theme)
+            self.theme=Theme(self.program,theme, **kwargs)
         elif theme and isinstance(theme,Theme):
             self.theme=theme
         else:
-            self.theme=Theme(self.program) #OK if program==None
+            self.theme=Theme(self.program, **kwargs) #OK if program==None
         self.renderer=Renderer()
         Exitable.__init__(self)
         UI.__init__(self)
