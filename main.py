@@ -8433,8 +8433,10 @@ class Transcribe(Sound,Sort):
         self.sub_c.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
-    def __init__(self): #frame, filename=None
+    def __init__(self,parent): #frame, filename=None
+        parent.settings.makeeverythingok()
         self.mistake=False #track when a user has made a mistake
+        self.status.makecheckok()
         Sound.__init__(self)
 class TranscribeV(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
@@ -8475,7 +8477,7 @@ class TranscribeV(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
         # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
         ]
         self.params.cvt('V')
-        Transcribe.__init__(self)
+        Transcribe.__init__(self,parent)
 class TranscribeC(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Consonant Letters")
@@ -8531,7 +8533,7 @@ class TranscribeC(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
         'rh','wh',
         ]
         self.params.cvt('C')
-        Transcribe.__init__(self)
+        Transcribe.__init__(self,parent)
 class TranscribeT(Transcribe,Tone,Sound,Sort,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Transcribe Tone")
@@ -8554,7 +8556,7 @@ class TranscribeT(Transcribe,Tone,Sound,Sort,TaskDressing,ui.Window):
         TaskDressing.__init__(self, parent)
         self.glyphspossible=None
         self.params.cvt('T')
-        Transcribe.__init__(self)
+        Transcribe.__init__(self,parent)
 class JoinUFgroups(Tone,TaskDressing,ui.Window):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
