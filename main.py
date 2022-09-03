@@ -3583,46 +3583,8 @@ class TaskDressing(object):
         group=kwargs.get('group',self.status.group())
         # log.info("about to return {}={}".format(check,group))
         return check+'='+group
-    def schedule_write_check(self):
-        """Schedule `check_if_write_done()` function after five seconds."""
-        log.info("Scheduling check")
-        program['root'].after(2000, self.check_if_write_done)
-        # log.info("Scheduled check")
-        # self.taskchooser.after(5000, self.check_if_write_done, t)
-    def check_if_write_done(self):
-        # If the thread has finished, allow another write.
-        log.info("Checking if writing done to lift.")
-        try:
-            done=not self.writethread.is_alive()
-        except AttributeError:
-            done=True
-        except Exception as e:
-            log.info("Exception: {}".format(e))
-            log.info("writethread: {}".format(hasattr(self,'writethread')))
-        if done:
-            log.info("Done writing to lift.")
-            self.taskchooser.writing=False
-        else:
-            # Otherwise check again later.
-            log.info("schedule_write_check writing to lift.")
-            self.schedule_write_check()
     def maybewrite(self,definitely=False):
-        write=self.timetowrite() #just call this once!
-        if (write and not self.taskchooser.writing) or definitely:
-            self.taskchooser.towrite=False
-            self.writethread = threading.Thread(target=self.db.write)
-            self.taskchooser.writing=True
-            log.info("Writing to lift...")
-            self.writethread.start()
-            self.schedule_write_check()
-        elif write:
-            log.info("Already writing to lift; I trust this new mod will "
-                    "get picked up later...")
-            self.taskchooser.towrite=True
-    def timetowrite(self):
-        """only write to file every self.writeeverynwrites times you might."""
-        self.taskchooser.writeable+=1 #and tally here each time this is asked
-        return not self.taskchooser.writeable%self.settings.writeeverynwrites
+        self.taskchooser.maybewrite(definitely=definitely)
     def killall(self):
         log.info("Shutting down Task")
         if self.taskchooser.towrite:
@@ -4183,7 +4145,7 @@ class TaskChooser(TaskDressing,ui.Window):
             self.task.runwindow.withdraw() #so users don't do stuff while waiting
         except AttributeError:
             log.info("There doesn't seem to be a runwindow to hide; moving on.")
-        while self.taskchooser.writing:
+        while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
             #     self.towrite,self.writing,self.taskchooser.writing))
             log.info("Waiting to finish writing to lift")
