@@ -288,6 +288,11 @@ def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
 if __name__ == '__main__':
     x='ne [pas] plaire, ne pas agréer, ne pas'
     print(id(x))
+    impname='Imperative'
+    y='field[@type="{}"][@value^="{}"]'.format(impname,1)
+    splitxpath(y)
+    y="field[@type='{}'][@value^='{}']".format(impname,1)
+    splitxpath(y)
     # s='ááààééèèííììóóòòúúùù'
     # s2=makeprecomposed(s)
     # print(s,s2)
