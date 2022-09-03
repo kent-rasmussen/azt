@@ -1472,7 +1472,8 @@ class Settings(object):
         self.secondformfield={}
         log.info(_("Fields found in lexicon: {}".format(str(fields))))
         self.plopts=['Plural', 'plural', 'pl', 'Pluriel', 'pluriel']
-        self.impopts=['Imperative', 'imperative', 'imp', 'Imp']
+        self.impopts=['Imperative', 'imperative', 'imp', 'Imp', 'Imperatif',
+                                                    'imperatif']
         for opt in self.plopts:
             if opt in fields:
                 self.secondformfield[self.nominalps]=self.pluralname=opt
