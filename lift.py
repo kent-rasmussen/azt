@@ -1473,6 +1473,11 @@ class Node(ET.Element):
         n=Node(self,'trait',attrib={'name':type, 'value':str(value)})
         if gimmenode:
             return n
+    def childrenwtext(self):
+        return [i for i in self
+                    if i.findall('text') and
+                    [j for j in i.findall('text') if j.text]
+                ]
     def __init__(self, parent, tag, attrib={}, **kwargs):
         super(Node, self).__init__(tag, attrib, **kwargs)
         parent.append(self)
