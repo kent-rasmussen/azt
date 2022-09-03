@@ -1280,29 +1280,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             output[lang]=[i for i in self.citation(**kwargs) if i] #.get('text')
         # log.info("Found the following citation forms: {}".format(output))
         return output
-    def citationformnodeofentry(self,entry,analang):
-        nodes=entry.findall('citation')
-        for node in nodes:
-            formtexts=node.findall('form[@lang="{}"]/text'.format(analang))
-            if formtexts:
-                return formtexts[0]
-        if nodes:
-            return Node.makeformnode(nodes[0],analang,gimmetext=True)
-        else:
-            citationnode=Node(entry,'citation')
-            return citationnode.makeformnode(analang,gimmetext=True)
-    def lexemeformnodeofentry(self,entry,analang):
-        """This produces a list; specify senseid and analang as you like."""
-        nodes=entry.findall('lexical-unit') #always there, even if empty
-        for node in nodes:
-            formtexts=node.findall('form[@lang="{}"]/text'.format(analang))
-            if formtexts:
-                return formtexts[0]
-        if nodes:
-            return Node.makeformnode(node,analang,gimmetext=True)
-        else:
-            lexemenode=Node(entry,'lexical-unit')
-            return lexemenode.makeformnode(analang,gimmetext=True)
     def lexeme(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
         output=self.get('lexeme/form/text',**kwargs).get('text')
