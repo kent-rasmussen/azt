@@ -4820,7 +4820,8 @@ class Parse(TaskDressing,ui.Window,Segments):
     def taskicon(self):
         return program['theme'].photo['iconWord']
     def tooltip(self):
-        return _("This task will help you parse your citation forms.")
+        return _("This task will help you parse your citation forms, "
+                "automatically, for the whole dictionary at once.")
     def dobuttonkwargs(self):
         fn=self.doparse
         text=_("Parse Citation Forms")
@@ -4836,18 +4837,93 @@ class Parse(TaskDressing,ui.Window,Segments):
                 'tttext':tttext
                 }
     def tasktitle(self):
-        return _("Parse Citation Forms")
+        return _("Parse Whole Dictionary")
     def doparse(self):
-        window=ui.Window(self,title=self.tasktitle())
-        ui.Label(window,text=_("Parsing!"),row=0,column=0)
-        todo=self.getlisttodo(all=self.dodone)
-        ui.Label(window,text=todo[:50],wraplength=program['root'].wraplength, row=1,column=0)
+        def copylc2lx(event=None):
+            self.runwindow.resetframe()
+            forms['lx'].text=forms['lc'].text
+            self.maybewrite()
+            log.info("copylc2lx done")
+        def skiplc(event=None):
+            self.runwindow.resetframe()
+        log.info("taskchooser: {}".format(self.taskchooser))
+        log.info("task: {}".format(self.task))
+        todo=self.getlisttodo()
+        plname,impname=self.secondfieldnames()
+        tags={'lc': 'citation',
+                'lx': 'lexical-unit',
+                'pl': 'field[@type="{}"]'.format(plname), #not necessarily pl
+                'imp': 'field[@type="{}"]'.format(impname)
+                }
+        if self.checkeach:
+            self.getrunwindow(nowait=True)
+            # self.runwindow.resetframe()
+            self.runwindow.title(self.tasktitle())
+            ui.Label(self.runwindow.outsideframe,text=_("Parsing!"),row=0,column=0,
+            columnspan=3)
+        else:
+            self.wait(msg=_("Parsing automatically"))
+        for entry in todo:
+            forms=dict()
+            for i in tags:
+                forms[i]=lift.Entry.formtextnodeofentry(entry,tags[i],self.analang)
+            if self.checkeach:
+                if self.runwindow.exitFlag.istrue():
+                    return
+                text=_("Copy this citation to lexeme field?")
+                text+="\n"+str(forms['lc'].text)+' > '+str(forms['lx'].text)
+                text+='\n'+_("Nominal second form: ")+str(forms['pl'].text)
+                text+='\n'+_("Verbal second form: ")+str(forms['imp'].text)
+                # log.info("w1: {}".format(self))
+                # log.info("w2: {}".format(self.runwindow))
+                # log.info("w3: {}".format(self.runwindow.frame))
+                ask=ui.Button(self.runwindow.frame, text=text, cmd=copylc2lx,
+                            row=0, column=0)
+                skip=ui.Button(self.runwindow.frame, text=_("Skip"), cmd=skiplc,
+                            row=0, column=1)
+                self.wait_window(self.runwindow.frame)
+            else:
+                forms['lx'].text=forms['lc'].text
+        if self.checkeach:
+            self.runwindow.destroy()
+        else:
+            self.maybewrite()
+            self.waitdone()
     def __init__(self, parent): #frame, filename=None
         log.info("Initializing {}".format(self.tasktitle()))
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        self.textnodefn=self.db.lexemeformnodeofentry
-        self.dodone=False
+        self.nodetag='citation'
+        self.dodone=True #give me words with citation done
+        self.checkeach=False #don't confirm each word
+        self.dodoneonly=True #don't give me other words
+class ParseWords(Parse):
+    def tasktitle(self):
+        return _("Parse Whole Dictionary, word by word")
+    def tooltip(self):
+        return _("This task will help you parse your whole dictionary, "
+                "word by word.")
+    def __init__(self, parent): #frame, filename=None
+        ParseSlice.__init__(self,parent)
+        self.checkeach=True #confirm each word
+class ParseSlice(Parse):
+    def tasktitle(self):
+        return _("Parse One Slice")
+    def tooltip(self):
+        return _("This task will help you parse your citation forms, "
+                "for one slice of the dictionary at a time.")
+    def __init__(self, parent): #frame, filename=None
+        Parse.__init__(self,parent)
+        self.byslice=True #give me words in a selected slice (make this selectable?)
+class ParseSliceWords(ParseSlice):
+    def tasktitle(self):
+        return _("Parse One Slice, word by word")
+    def tooltip(self):
+        return _("This task will help you parse your citation forms, "
+                "for one slice of the dictionary at a time.")
+    def __init__(self, parent): #frame, filename=None
+        ParseSlice.__init__(self,parent)
+        self.checkeach=True #confirm each word
 class Placeholder(TaskDressing,ui.Window):
     """Fake check, placeholder for now."""
     def taskicon(self):
