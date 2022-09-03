@@ -940,7 +940,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             self.entrieswcitationdata[lang]=[
                     i for i in self.nodes.findall('entry')
-                    if textornone(self.citationformnodeofentry(i,lang))
+                    if textornone(Entry.formtextnodeofentry(i,'citation',lang))
                             ]
             self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
     def getentrieswlexemedata(self):
@@ -948,8 +948,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nentrieswlexemedata={}
         for lang in self.analangs:
             self.entrieswlexemedata[lang]=[
-                    i for i in self.nodes.findall('entry')
-                    if textornone(self.lexemeformnodeofentry(i,lang))
+                i for i in self.nodes.findall('entry')
+                if textornone(Entry.formtextnodeofentry(i,'lexical-unit',lang))
                             ]
             self.nentrieswlexemedata[lang]=len(self.entrieswlexemedata[lang])
     def getfieldswsoundfiles(self):
