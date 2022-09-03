@@ -4243,7 +4243,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if hasattr(self.file,'analang'): #i.e., new file
             self.analang=self.file.analang #I need to keep this alive until objects are done
         self.makesettings()
-        TaskDressing.__init__(self,parent)
+        TaskDressing.__init__(self,parent) #I think this should be after settings
         if not self.settings.writeeverynwrites: #0/None are not sensible values
             self.settings.writeeverynwrites=1
             self.settings.storesettingsfile()
