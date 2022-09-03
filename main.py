@@ -3938,10 +3938,7 @@ class TaskChooser(TaskDressing,ui.Window):
                         lxft.text='' #clear only on move
         # self.db.write(self.file.name+str(now()))
         self.db.write()
-        conversionlogfile=logsetup.writelzma() # log.filename no longer needed
-        #             tmpdb.nodes.findall('entry/citation')):
-        #     for f in n.findall('form'):
-        #         n.remove(f)
+        conversionlogfile=logsetup.writelzma()
         ErrorNotice(_("The conversion is done now, so {0} will quit. You may "
                     "want to inspect your current file ({1}) and the backup "
                     "({2}) to confirm this did what you wanted, before "
