@@ -4742,7 +4742,8 @@ class WordCollection(Segments):
         l=ui.Label(self.wordframe, text=glossesthere, font='read',
                 row=1, column=0, columnspan=3, sticky='ew')
         l.wrap()
-        self.lxtextnode=self.textnodefn(entry,self.analang)
+        self.lxtextnode=lift.Entry.formtextnodeofentry(entry,self.nodetag,
+                                                            self.analang)
         # log.info("lxtextnode: {}".format(self.lxtextnode))
         self.lxvar=ui.StringVar(value=self.lxtextnode.text)
         # get('entry',path=['lexeme'],analang=self.analang,
