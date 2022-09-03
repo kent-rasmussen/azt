@@ -3911,31 +3911,7 @@ class TaskChooser(TaskDressing,ui.Window):
         window.destroy()
         backup=self.file.name+"_backupBeforeLx2LcConversion"
         self.db.write(backup)
-        for e in self.db.nodes.findall('entry'):
-            lxs=e.findall('lexical-unit')
-            for lx in lxs:
-                log.info("Looking at entry w/guid: {}".format(e.get("guid")))
-                #,lx.find('text').get('lang')))
-                # log.info("Found {}".format([i for i in lx
-                # if i.findall('text')
-                # and [j for j in i.findall('text') if j.text]
-                # # and i.find('text').text
-                #         ]))
-                for lxf in [i for i in lx
-                            if i.findall('text') and
-                            [j for j in i.findall('text') if j.text]
-                        ]: #only forms with text info
-                    lxfl=lxf.get('lang')
-                    lxft=lxf.find('text')
-                    # log.info("Moving {} from lang {}".format(lxft.text,lxfl))
-                    # lc=e.findall('citation')
-                    """This finds or creates, by lang:"""
-                    lc=self.db.citationformnodeofentry(e,lxfl)
-                    log.info("Moving lexeme ‘{}’ to citation (was {}) for lang {}"
-                            "".format(lxft.text,lc.text,lxfl))
-                    if not lc.text: #don't overwrite info
-                        lc.text=lxft.text
-                        lxft.text='' #clear only on move
+        self.db.convertlxtolc()
         # self.db.write(self.file.name+str(now()))
         self.db.write()
         conversionlogfile=logsetup.writelzma()
