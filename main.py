@@ -3282,6 +3282,9 @@ class TaskDressing(object):
                             cmd=getother
                             )
         window.wait_window(window)
+    def secondfieldnames(self):
+        return (self.settings.secondformfield[self.settings.verbalps],
+                self.settings.secondformfield[self.settings.nominalps])
     def getbuttoncolumns(self,event=None):
         log.info("Asking for number of button columns...")
         window=ui.Window(self.frame,title=_('Select Button Columns'))
