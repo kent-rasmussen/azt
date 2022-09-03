@@ -7159,10 +7159,9 @@ class Report(object):
         output(window,r,text)
         r.close()
         if usegui:
+            resultswindow.waitdone()
             if me:
                 resultswindow.on_quit()
-            else:
-                resultswindow.waitdone()
         self.status.last('report',update=True)
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
