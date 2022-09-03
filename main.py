@@ -4254,22 +4254,30 @@ class TaskChooser(TaskDressing,ui.Window):
         splash.destroy()
 class Segments(object):
     """docstring for Segments."""
-    def getlisttodo(self,all=False):
-        """Whichever field is being asked for (textnodefn), this fn returns
+    def getlisttodo(self,**kwargs):
+        """Whichever field is being asked for (self.nodetag), this fn returns
         which are left to do."""
-        all=self.db.get('entry',
+        self.dodone=True
+        if not hasattr(self,'dodoneonly'):
+            self.dodoneonly=False
+        if hasattr(self,'byslice') and self.byslice:
+            log.info("Limiting segment work to this slice")
+            all=[]
+            for senseid in self.slices.senseids():
+                all+=self.db.get('entry',senseid=senseid
+                                # showurl=True
+                                ).get()
+        else:
+            all=self.db.get('entry',**kwargs
                         # showurl=True
                         ).get()
-        # done=self.db.get('entry',path=['lexeme'],analang=analang,
-        #                 showurl=True).get()
-        # for i in all[:10]:
-        #     log.info("textnodecontents: {}".format(self.textnodefn(i,analang).text))
+        if self.dodone and not self.dodoneonly:
+            return all
         done=[i for i in all
-                    if self.textnodefn(i,self.analang).text
-                    # self.db.get('lexeme/form/text', node=i, analang=analang,
-                    # showurl=True
-                    #                 ).get('text') != ''
-                    ]
+            if lift.Entry.formtextnodeofentry(i,self.nodetag,self.analang).text
+                ]
+        if self.dodone:
+            return done
         todo=[x for x in all if x not in done]
         log.info("To do: ({}) {}".format(len(todo),todo))
         return todo
