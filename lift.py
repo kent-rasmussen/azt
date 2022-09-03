@@ -1479,6 +1479,21 @@ class Node(ET.Element):
 class Entry(object): # what does "object do here?"
     #import lift.put as put #class put:
     #import get #class put:
+    def formtextnodeofentry(self,tag,lang):
+        # this gives the form/text node, from which one can easily extract .text
+        # hence, the limiting by lang
+        nodes=self.findall(tag)
+        for node in nodes:
+            formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
+            if formtexts:
+                return formtexts[0]
+        if nodes:
+            return Node.makeformnode(nodes[0],lang,gimmetext=True)
+        else:
+            tag,attrib=rx.splitxpath(tag)
+            tagnode=Node(self,tag,attrib)
+            prettyprint(tagnode)
+            return tagnode.makeformnode(lang,gimmetext=True)
     def __init__(self, db, guid=None, *args, **kwargs):
         if guid is None:
             log.info("Sorry, I was kidding about that; I really do need the entry's guid.")
