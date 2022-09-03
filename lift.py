@@ -956,6 +956,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This is NOT sensitive to sense level fields, which is where we store
         analysis and verification. This should just pick up entry form fields,
         or CAWL numbers, etc, which shouldn't be coded for analang."""
+        fieldswannotations={}
         fieldswsoundfiles={}
         self.nfieldswsoundfiles={}
         self.nfieldswannotations={}
@@ -966,24 +967,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     'lexical-unit']
         fieldopts+=['field[@type="{}"]'.format(f) for f in self.fields]
         for field in fieldopts:
-            fields[field]={}
+            self.fields[field]={}
+            fieldswannotations[field]={}
             fieldswsoundfiles[field]={}
             self.nfields[field]={}
             self.nfieldswsoundfiles[field]={}
             self.nfieldswannotations[field]={}
             for lang in self.analangs:
-                fields[field][lang]=[i for i in
+                self.fields[field][lang]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
                                                                 field,lang))
                     if i.text
                                     ]
-                self.nfields[field][lang]=len(fields[field][lang])
-                fields[field][lang]=[i for i in
-                    self.nodes.findall('entry/{}/form[@lang="{}"]/annotation'.format(
-                                                                field,lang))
-                    if i.get('value')
-                                    ]
-                self.nfieldswannotations[field][lang]=len(fields[field][lang])
+                self.nfields[field][lang]=len(self.fields[field][lang])
+                fieldswannotations[field][lang]=[i for i in
+                    self.nodes.findall('entry/{}/form'
+                                '[@lang="{}"]/annotation'.format(field,lang))
+                                                if i.get('value')
+                                                        ]
+                self.nfieldswannotations[field][lang]=len(
+                                        fieldswannotations[field][lang])
             for lang in self.audiolangs:
                 fieldswsoundfiles[field][lang]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
