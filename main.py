@@ -3869,6 +3869,10 @@ class TaskChooser(TaskDressing,ui.Window):
             if self.doneenough['analysis']:
                 tasks.append(JoinUFgroups)
             if me:
+                tasks.append(Parse)
+                tasks.append(ParseWords)
+                tasks.append(ParseSlice)
+                tasks.append(ParseSliceWords)
                 tasks.append(ReportConsultantCheck)
         # tasks.append(WordCollectionCitation),
         # tasks.append(WordCollectionPlImp),
