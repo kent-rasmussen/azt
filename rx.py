@@ -20,6 +20,17 @@ def urlok(x):
     for i in [d,p,l]:
         x=re.sub('['+i[0]+']',i[1],x)
     return x
+def splitxpath(x):
+    tag,*features=split('[\]\[]',x)
+    attrib={}
+    for f in [i for i in features if i]:
+        # print('-'+f)
+        key,val=split('=',f)
+        key=split('^@',key)
+        val=val.strip('"\'')
+        # print(key,val)
+        attrib[key[1]]=val
+    return tag,attrib
 def escapeattr(x):
     x=str(x)
     if "'" in x:
