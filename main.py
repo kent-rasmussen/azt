@@ -3587,7 +3587,11 @@ class TaskDressing(object):
         self.taskchooser.maybewrite(definitely=definitely)
     def killall(self):
         log.info("Shutting down Task")
-        if self.taskchooser.towrite:
+        try:
+            towrite=self.taskchooser.towrite
+        except AttributeError:
+            towrite=self.towrite #if taskchooser; shouldn't happen, but in case.
+        if towrite:
             log.info("Final write to lift")
             self.maybewrite(definitely=True)
         else:
