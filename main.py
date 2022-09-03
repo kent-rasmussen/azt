@@ -4763,6 +4763,8 @@ class WordCollection(Segments):
         )
         # self.navigationframe.grid_columnconfigure(1,weight=1)
         self.frame.grid_columnconfigure(1,weight=1)
+    def __init__(self):
+        self.dodone=False
 class WordCollectionLexeme(TaskDressing,ui.Window,WordCollection):
     def tasktitle(self):
         return _("Word Collection for Lexeme Forms")
@@ -4771,9 +4773,10 @@ class WordCollectionLexeme(TaskDressing,ui.Window,WordCollection):
         left it"""
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
-        self.textnodefn=self.db.lexemeformnodeofentry
+        self.nodetag='lexical-unit'
         self.getwords()
 class WordCollectionCitation(TaskDressing,ui.Window,WordCollection):
     def taskicon(self):
@@ -4811,9 +4814,10 @@ class WordCollectionCitation(TaskDressing,ui.Window,WordCollection):
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
-        self.textnodefn=self.db.citationformnodeofentry
+        self.nodetag='citation' #lift.Entry.citationformnodeofentry
         self.getwords()
 class Parse(TaskDressing,ui.Window,Segments):
     """docstring for Parse."""
