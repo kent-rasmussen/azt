@@ -6914,17 +6914,13 @@ class Report(object):
                                                         listword=True,
                                                         showgroups=showgroups)
                         break #do it on first present lang, and do next ex
-        analysisOK,timestamps=self.status.isanalysisOK(**kwargs)
+        analysisOK,showgroups,timestamps=self.status.isanalysisOK(**kwargs)
         self.datadict.refresh() #get the most recent data
         silent=kwargs.get('silent',False)
         default=kwargs.get('default',True)
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         checks=self.status.checks(wsorted=True,**kwargs)
-        if analysisOK and j and j > a:
-            showgroups=True #show groups on all non-default reports
-        else:
-            showgroups=False #show groups on all non-default reports
         if not checks:
             if 'profile' in kwargs:
                 log.error("{} {} came up with no checks.".format(ps,profile))
@@ -8618,7 +8614,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
             self.runwindow.destroy()
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
-        analysisOK,timestamps=self.status.isanalysisOK(**kwargs) #Should specify which lasts...
+        analysisOK,joinedsince,timestamps=self.status.isanalysisOK(**kwargs) #Should specify which lasts...
         if not analysisOK:
             redo(timestamps) #otherwise, the user will almost certainly be upset to have to do it later
             return
@@ -11330,12 +11326,16 @@ class StatusDict(dict):
             ok=True # b/c analysis would be more recent than last sorting
         else:
             ok=False # w/o info, trigger reanalysis
+        if ok and j and j > a:
+            joinsinceanalysis=True #show groups on all non-default reports
+        else:
+            joinsinceanalysis=False
         annalysisoknotice=("Last analysis at {};\n"
                     "last join at {}\n"
                     "last sort at {}\n(analysisOK={})"
                     "".format(a,j,s,ok))
         log.info(annalysisoknotice)
-        return ok, annalysisoknotice
+        return ok, joinsinceanalysis, annalysisoknotice
     def __init__(self,checkparameters,slicedict,toneframes,filename,dict):
         """To populate subchecks, use self.groups()"""
         self._filename=filename
