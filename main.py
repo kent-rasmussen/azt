@@ -992,11 +992,11 @@ class StatusFrame(ui.Frame):
         if isinstance(self.task,Segments):
             self.fieldsline()
         if hasattr(self.settings,'slices') and (isinstance(self.task,Sort) or
-            (isinstance(self.task,Tone) and
-                not isinstance(self.task,Report)) or
+            (isinstance(self.task,Tone) and not isinstance(self.task,Report)) or
             (isinstance(self.task,Report) and
-                not isinstance(self.task,Comprehensive))
-            ):
+                                    not isinstance(self.task,Comprehensive)) or
+            isinstance(self.task,ParseSlice)
+                    ):
             self.cvt=self.settings.params.cvt()
             self.ps=self.settings.slices.ps()
             self.profile=self.settings.slices.profile()
@@ -1005,7 +1005,8 @@ class StatusFrame(ui.Frame):
             self.sliceline()
             if not (isinstance(self.task,Report) or
                     isinstance(self.task,Record) or
-                    isinstance(self.task,JoinUFgroups)
+                    isinstance(self.task,JoinUFgroups) or
+                    isinstance(self.task,Parse)
                     ):
                 self.cvtline()
                 self.buttoncolumnsline()
