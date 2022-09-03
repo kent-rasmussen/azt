@@ -1446,6 +1446,42 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Found these morph-type values: {}".format(m))
         return m
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
+    def copylctolx(self):
+        # This is a copy operation, leaving lc in place
+        for e in self.getentrynode(**kwargs):
+            lcs=e.findall('citation') # I need form node, not text node
+            log.info("Looking at entry w/guid: {}".format(e.get("guid")))
+            for lc in lcs:
+                log.info("Found {}".format(Node.childrenwtext(lc)))
+                for lcf in Node.childrenwtext(lc):
+                    lcfl=lcf.get('lang')
+                    lcft=lcf.find('text')
+                    # log.info("Copying {} from lang {}".format(lcft.text,lcfl))
+                    """This finds or creates, by lang:"""
+                    lx=Entry.formtextnodeofentry(e,'lexical-unit',lcfl) #This gives text node
+                    log.info("Copying citation ‘{}’ to lexeme (was {}) for "
+                            "lang {}".format(lcft.text,lx.text,lcfl))
+                    lx.text=lcft.text #overwrite in any case
+                    # if not lx.text: #don't overwrite info
+                    #     lcft.text='' #don't clear
+    def convertlxtolc(self,**kwargs):
+        # This is a move operation, removing lx when done
+        for e in self.getentrynode(**kwargs):
+            lxs=e.findall('lexical-unit') # I need form node, not text node
+            for lx in lxs:
+                log.info("Looking at entry w/guid: {}".format(e.get("guid")))
+                log.info("Found {}".format(Node.childrenwtext(lx)))
+                for lxf in Node.childrenwtext(lx):
+                    lxfl=lxf.get('lang')
+                    lxft=lxf.find('text')
+                    # log.info("Moving {} from lang {}".format(lxft.text,lxfl))
+                    """This finds or creates, by lang:"""
+                    lc=Entry.formtextnodeofentry(e,'citation',lxfl) #This gives text node
+                    log.info("Moving lexeme ‘{}’ to citation (was {}) for lang {}"
+                            "".format(lxft.text,lc.text,lxfl))
+                    if not lc.text: #don't overwrite info
+                        lc.text=lxft.text
+                        lxft.text='' #clear only on move
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
     def __init__(self):
