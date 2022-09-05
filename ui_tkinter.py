@@ -157,9 +157,9 @@ class Theme(object):
             try:
                 #hyperthread here!
                 mkimg(name,relurl)
-            except:
-                log.debug("Image {} at {} not compiled (is it there?)".format(
-                            name,relurl
+            except Exception as e:
+                log.info("Image {} ({}) not compiled ({})".format(
+                            name,filename,e
                             ))
     def settheme(self):
         if not self.name:
