@@ -6193,7 +6193,7 @@ class Sort(object):
                     **kwargs
                     ).grid(column=column, row=0,
                             sticky="ew",
-                            ipady=15*program['scale'] #Inside the buttons...
+                            ipady=ipady #Inside the buttons...
                             )
     def join(self):
         log.info("Running join!")
