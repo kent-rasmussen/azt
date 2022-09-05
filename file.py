@@ -44,6 +44,10 @@ def getimagesdir(dirname):
     if not os.path.exists(dir):
         os.mkdir(dir)
     return dir
+def getimagesdiralternate(dirname):
+    dir=pathlib.Path.joinpath(dirname,'pictures') #WeSay uses this
+    if os.path.exists(dir):
+        return dir
 def getaudiodir(dirname):
     dir=pathlib.Path.joinpath(dirname,'audio')
     log.debug("Looking for {}".format(dir))
