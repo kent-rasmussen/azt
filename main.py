@@ -11749,6 +11749,25 @@ class Repository(object):
         self.ignorecheck()
         log.info("Mercurial repository object initialized, with {} files."
                 "".format(len(self.files)))
+class Mercurial(Repository):
+    def __init__(self, url):
+        self.code='hg'
+        # self.cmd=program['hg']
+        self.wdownloadsurl="https://www.mercurial-scm.org/wiki/Download"
+        self.wexename="Mercurial-6.0-x64.exe"
+        self.wexeurl=("https://www.mercurial-scm.org/release/windows/{}"
+                        "".format(self.wexename))
+        super(Mercurial, self).__init__(url)
+class Git(Repository):
+    def init(self):
+        self.do(['init'])
+    def __init__(self, url):
+        self.code='git'
+        self.wdownloadsurl="https://git-scm.com/download/win"
+        self.wexename="Git-2.33.0.2-64-bit.exe"
+        self.wexeurl=("https://github.com/git-for-windows/git/releases/"
+                        "download/v2.33.0.windows.2/{}".format(self.wexename))
+        super(Git, self).__init__(url)
 class ResultWindow(ui.Window):
     def __init__(self, parent, nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
