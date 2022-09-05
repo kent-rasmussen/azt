@@ -12060,6 +12060,10 @@ def findpath():
 def findexecutable(exe):
     exeOS=exe
     os=platform.system()
+    #This breaks search for testing:
+    if exe in ['hg']: #'git',
+        program[exe]=None
+        return
     if os == 'Linux':
         which='which'
         if exe == 'sendpraat':
