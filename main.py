@@ -1197,7 +1197,6 @@ class Settings(object):
                     self.loadandconvertlegacysettingsfile(setting=setting)
             if (str(savefile).endswith('.dat') and
                     file.exists(savefile) and
-                    self.repo and
                     not me):
                 self.repo.add(savefile)
         if self.repo:
