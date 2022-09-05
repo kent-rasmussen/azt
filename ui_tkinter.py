@@ -83,9 +83,9 @@ class Theme(object):
                 if scaledalready != relurl: # should scale if off by >2% either way
                     log.info("Scaling {}".format(relurl)) #Just do this once!
                     self.photo[name] = tkinter.PhotoImage(
-                                                        file = imgurl
-                                                        ).zoom(x,x
-                                                        ).subsample(y,y)
+                                                file = file.fullpathname(relurl)
+                                                ).zoom(x,x
+                                                ).subsample(y,y)
                     self.photo[name].write(scaledalready)
                     return
             # log.info("Using {}".format(relurl))
