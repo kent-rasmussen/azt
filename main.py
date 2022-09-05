@@ -11706,6 +11706,8 @@ class Repository(object):
     def getignorecontents(self):
         with open(self.hgignorefile,'r') as f:
             self.hgignore=f.readlines()
+    def exists(self):
+        return file.exists(self.deltadir)
     def exewarning(self):
         title=_("Warning: {} Executable Missing!".format(self.repotypename))
         text=_("You seem to be working on a repository of data ({0}), "
