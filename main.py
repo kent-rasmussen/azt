@@ -11813,6 +11813,9 @@ class Mercurial(Repository):
         self.wexename="Mercurial-6.0-x64.exe"
         self.wexeurl=("https://www.mercurial-scm.org/release/windows/{}"
                         "".format(self.wexename))
+        self.pwd='--cwd'
+        self.lsfiles='files'
+        self.argstogetusername=['config', 'ui.username']
         super(Mercurial, self).__init__(url)
 class Git(Repository):
     def init(self):
@@ -11823,6 +11826,9 @@ class Git(Repository):
         self.wexename="Git-2.33.0.2-64-bit.exe"
         self.wexeurl=("https://github.com/git-for-windows/git/releases/"
                         "download/v2.33.0.windows.2/{}".format(self.wexename))
+        self.pwd='-C'
+        self.lsfiles='ls-files'
+        self.argstogetusername=['config', '--get', 'user.name']
         super(Git, self).__init__(url)
 class ResultWindow(ui.Window):
     def __init__(self, parent, nowait=False,msg=None,title=None):
