@@ -93,9 +93,9 @@ class Theme(object):
         x=int(scale*y)
         self.photo={}
         def mkimg(name,filename):
+            relurl=file.getdiredurl('images/',filename)
             if x != y:
                 scaledalready=file.getdiredurl(scaledalreadydir,filename)
-                relurl=file.getdiredurl('images/',filename)
                 if file.exists(file.fullpathname(scaledalready)):
                     # log.info("scaled image exists for {}".format(filename))
                     relurl=scaledalready
