@@ -88,8 +88,9 @@ class Theme(object):
         #         p.terminate() #for processes, not threads
         # x and y here express a float as two integers, so 0.7 = 7/10, because
         # the zoom and subsample fns only work on integers
-        y=25 #10 #Higher number is better resolution (x*y/y), more time to process
-        y=int(y) # These all must be integers
+        # Higher number is better resolution (x*y/y), more time to process
+        y=50 #10 High OK, since we do this just once now
+        y=int(y)
         x=int(scale*y)
         self.photo={}
         #do these once:
