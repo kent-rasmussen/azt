@@ -92,13 +92,24 @@ class Theme(object):
         y=int(y) # These all must be integers
         x=int(scale*y)
         self.photo={}
-        def mkimg(name,relurl):
-            imgurl=file.fullpathname(relurl)
-            if x != y: # should scale if off by >2% either way
-                self.photo[name] = tkinter.PhotoImage(
-                                        file = imgurl).zoom(x,x).subsample(y,y)
-            else: #if close enough...
-                self.photo[name] = tkinter.PhotoImage(file = imgurl)
+        def mkimg(name,filename):
+            if x != y:
+                scaledalready=file.getdiredurl(scaledalreadydir,filename)
+                relurl=file.getdiredurl('images/',filename)
+                if file.exists(file.fullpathname(scaledalready)):
+                    # log.info("scaled image exists for {}".format(filename))
+                    relurl=scaledalready
+                # log.info("Dirs: {}?={}".format(scaledalready,relurl))
+                if scaledalready != relurl: # should scale if off by >2% either way
+                    log.info("Scaling {}".format(relurl)) #Just do this once!
+                    self.photo[name] = tkinter.PhotoImage(
+                                                        file = imgurl
+                                                        ).zoom(x,x
+                                                        ).subsample(y,y)
+                    self.photo[name].write(scaledalready)
+                    return
+            # log.info("Using {}".format(relurl))
+            self.photo[name] = tkinter.PhotoImage(file = file.fullpathname(relurl))
         for name,filename in [ ('transparent','AZT stacks6.png'),
                             ('tall','AZT clear stacks tall.png'),
                             ('small','AZT stacks6_sm.png'),
