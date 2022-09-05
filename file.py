@@ -112,6 +112,8 @@ def getnewlifturl(dir,xyz):
     url=url.with_suffix('.lift')
     return url
 def getdiredurl(dir,filename):
+    if type(dir) is str:
+        dir=getfile(dir)
     return pathlib.Path.joinpath(dir,filename)
 def getdiredrelURL(reldir,filename):
     return pathlib.Path(reldir).joinpath(filename)
