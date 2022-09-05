@@ -11738,17 +11738,31 @@ class Repository(object):
         with open(self.hgignorefile,'r') as f:
             self.hgignore=f.readlines()
     def __init__(self, url):
-        if not program['hg']:
-            log.error("Mercurial isn't found on this computer; no repo object.")
-            return
         super(Repository, self).__init__()
         self.url = url
+        self.repotypename=self.__class__.__name__
+        self.thisos=platform.system()
+        # For testing:
+        self.thisos="Windows"
+        if self.thisos == "Linux":
+            self.installpage=("https://github.com/kent-rasmussen/azt/blob/main/"
+                                "SIMPLEINSTALL_LINUX.md")
+        elif self.thisos == 'Windows':
+            self.installpage=("https://github.com/kent-rasmussen/azt/blob/main/"
+                                "SIMPLEINSTALL.md")
+        self.cmd=program[self.code]
+        self.deltadir=file.getdiredurl(self.url,'.'+self.code)
+        if not self.cmd:
+            log.info("Found no executable!")
+            self.exewarning()
+            self=None
+            return
         self.usernameargs=self.getusernameargs()
         self.files()
         self.choruscheck()
         self.ignorecheck()
-        log.info("Mercurial repository object initialized, with {} files."
-                "".format(len(self.files)))
+        log.info("{} repository object initialized, with {} files."
+                "".format(self.repotypename,len(self.files)))
 class Mercurial(Repository):
     def __init__(self, url):
         self.code='hg'
