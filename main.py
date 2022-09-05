@@ -11806,6 +11806,8 @@ class Repository(object):
         log.info("{} repository object initialized, with {} files."
                 "".format(self.repotypename,len(self.files)))
 class Mercurial(Repository):
+    def argstoputusername(self,username):
+        return ['--config','ui.username={}'.format(username)]
     def __init__(self, url):
         self.code='hg'
         # self.cmd=program['hg']
@@ -11818,6 +11820,8 @@ class Mercurial(Repository):
         self.argstogetusername=['config', 'ui.username']
         super(Mercurial, self).__init__(url)
 class Git(Repository):
+    def argstoputusername(self,username):
+        return ['-c','user.name={}'.format(username)]
     def init(self):
         self.do(['init'])
     def __init__(self, url):
