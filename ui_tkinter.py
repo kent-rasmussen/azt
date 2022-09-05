@@ -1018,6 +1018,8 @@ class Window(Toplevel):
                                 pady=(0,25)
                                 )
         """Give windows some margin"""
+        # log.info("Theme: {}".format(self.theme))
+        # log.info("Theme.photo: {}".format(self.theme.photo))
         self.iconphoto(False, self.theme.photo['icon']) #don't want this transparent
         self.title(title)
         self.resetframe()
