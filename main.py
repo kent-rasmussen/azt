@@ -5686,7 +5686,11 @@ class Sort(object):
             if len(set(curvervaluecodes)) >1:
                 log.error("Too many values for verification node! ({})"
                             "".format(curvervaluecodes))
-            curvervalue=firstoflist(curvervaluecodes).split('=')[-1] #last, if multiple
+            firstcode=firstoflist(curvervaluecodes)
+            if firstcode:
+                curvervalue=firstcode.split('=')[-1] #last, if multiple
+            else:
+                curvervalue=None
             if curvervalue == oldgroup: #only update if starting the same
                 rm=self.verifictioncode(check=check,group=oldgroup)
                 add=self.verifictioncode(check=check,group=group)
