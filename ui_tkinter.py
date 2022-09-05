@@ -1678,6 +1678,17 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent (not used yet)
     return unicodedata.normalize('NFD', str(x))
+def testapp():
+    r=Root()
+    r.withdraw()
+    w=Window(r)
+    Label(w,text="Seems to work!",font='title',
+            row=0,column=0)# loglevel='Debug'
+    Label(w,text="At least this much",image=r.theme.photo['transparent'],
+            compound="bottom",
+            row=1,column=0)# loglevel='Debug'
+    r.mainloop()
 if __name__ == '__main__':
     """To Test:"""
     # loglevel='Debug'
+    testapp()
