@@ -12525,6 +12525,9 @@ def mainproblem():
     if newtk: #likely never work/needed?
         errorroot.mainloop() #This has to be the last thing
 """functions which are not (no longer?) used"""
+def callerfn():
+    #Not this function, nor the one that called it, but the one that called that
+    return inspect.getouterframes(inspect.currentframe())[2].function
 def name(x):
     try:
         name=x.__name__ #If x is a function
