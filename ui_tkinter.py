@@ -92,6 +92,10 @@ class Theme(object):
         y=int(y) # These all must be integers
         x=int(scale*y)
         self.photo={}
+        #do these once:
+        if x != y: #should be the same as scale != 1
+            scaledalreadydir='images/scaled/'+str(scale)+'/'
+            file.makedir(file.fullpathname(scaledalreadydir)) #in case not there
         def mkimg(name,filename):
             relurl=file.getdiredurl('images/',filename)
             if x != y:
