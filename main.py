@@ -1198,9 +1198,10 @@ class Settings(object):
             if (str(savefile).endswith('.dat') and
                     file.exists(savefile) and
                     not me):
-                self.repo.add(savefile)
-        if self.repo:
-            self.repo.commit()
+                for r in self.repo:
+                    self.repo[r].add(savefile)
+        for r in self.repo:
+            self.repo[r].commit()
     def moveattrstoobjects(self):
         # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
         for attr in self.fndict:
