@@ -11613,19 +11613,6 @@ class ErrorNotice(ui.Window):
             self.wait_window(self)
 class Repository(object):
     """docstring for Mercurial Repository."""
-    def choruscheck(self):
-        rescues=[]
-        for file in self.files:
-            if file.endswith('.ChorusRescuedFile'):
-                rescues.append(file)
-        if rescues:
-            error=_("You have the following files ( in {}) that need to be "
-                    "resolved from Chorus merges:\n {}"
-                    "").format(self.url,'\n'.join(rescues))
-            log.error(error)
-            ErrorNotice(error,title=_("Chorus Rescue files found!"))
-            if me:
-                exit()
     def add(self,file):
         if not self.alreadythere(file):
             args=["add", str(file)]
@@ -11808,6 +11795,19 @@ class Repository(object):
 class Mercurial(Repository):
     def argstoputusername(self,username):
         return ['--config','ui.username={}'.format(username)]
+    def choruscheck(self):
+        rescues=[]
+        for file in self.files:
+            if file.endswith('.ChorusRescuedFile'):
+                rescues.append(file)
+        if rescues:
+            error=_("You have the following files ( in {}) that need to be "
+                    "resolved from Chorus merges:\n {}"
+                    "").format(self.url,'\n'.join(rescues))
+            log.error(error)
+            ErrorNotice(error,title=_("Chorus Rescue files found!"))
+            if me:
+                exit()
     def __init__(self, url):
         self.code='hg'
         # self.cmd=program['hg']
