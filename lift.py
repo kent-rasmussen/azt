@@ -375,11 +375,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                                         ftype)})
             vft=vf.makeformnode(lang=self.pylang(analang),text=t,gimmetext=True)
         return vft,vf,sensenode #textnode, fieldnode, sensenode
-    def getentrynode(self,senseid,showurl=False):
-        return self.get('entry',senseid=senseid).get()
-    def getsensenode(self,senseid,showurl=False):
+    def getentrynode(self,**kwargs):
+        return self.get('entry',**kwargs).get()
+    def getsensenode(self,**kwargs):
         # log.info("senseid: {}".format(senseid))
-        x=self.get('sense',senseid=senseid,
+        x=self.get('sense',**kwargs,
                     # showurl=True
                     ).get()
         # log.info("x: {}".format(x))
@@ -940,7 +940,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             self.entrieswcitationdata[lang]=[
                     i for i in self.nodes.findall('entry')
-                    if textornone(self.citationformnodeofentry(i,lang))
+                    if textornone(Entry.formtextnodeofentry(i,'citation',lang))
                             ]
             self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
     def getentrieswlexemedata(self):
@@ -948,14 +948,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nentrieswlexemedata={}
         for lang in self.analangs:
             self.entrieswlexemedata[lang]=[
-                    i for i in self.nodes.findall('entry')
-                    if textornone(self.lexemeformnodeofentry(i,lang))
+                i for i in self.nodes.findall('entry')
+                if textornone(Entry.formtextnodeofentry(i,'lexical-unit',lang))
                             ]
             self.nentrieswlexemedata[lang]=len(self.entrieswlexemedata[lang])
     def getfieldswsoundfiles(self):
         """This is NOT sensitive to sense level fields, which is where we store
         analysis and verification. This should just pick up entry form fields,
         or CAWL numbers, etc, which shouldn't be coded for analang."""
+        fieldswannotations={}
         fieldswsoundfiles={}
         self.nfieldswsoundfiles={}
         self.nfieldswannotations={}
@@ -966,24 +967,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     'lexical-unit']
         fieldopts+=['field[@type="{}"]'.format(f) for f in self.fields]
         for field in fieldopts:
-            fields[field]={}
+            self.fields[field]={}
+            fieldswannotations[field]={}
             fieldswsoundfiles[field]={}
             self.nfields[field]={}
             self.nfieldswsoundfiles[field]={}
             self.nfieldswannotations[field]={}
             for lang in self.analangs:
-                fields[field][lang]=[i for i in
+                self.fields[field][lang]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
                                                                 field,lang))
                     if i.text
                                     ]
-                self.nfields[field][lang]=len(fields[field][lang])
-                fields[field][lang]=[i for i in
-                    self.nodes.findall('entry/{}/form[@lang="{}"]/annotation'.format(
-                                                                field,lang))
-                    if i.get('value')
-                                    ]
-                self.nfieldswannotations[field][lang]=len(fields[field][lang])
+                self.nfields[field][lang]=len(self.fields[field][lang])
+                fieldswannotations[field][lang]=[i for i in
+                    self.nodes.findall('entry/{}/form'
+                                '[@lang="{}"]/annotation'.format(field,lang))
+                                                if i.get('value')
+                                                        ]
+                self.nfieldswannotations[field][lang]=len(
+                                        fieldswannotations[field][lang])
             for lang in self.audiolangs:
                 fieldswsoundfiles[field][lang]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
@@ -1280,29 +1283,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             output[lang]=[i for i in self.citation(**kwargs) if i] #.get('text')
         # log.info("Found the following citation forms: {}".format(output))
         return output
-    def citationformnodeofentry(self,entry,analang):
-        nodes=entry.findall('citation')
-        for node in nodes:
-            formtexts=node.findall('form[@lang="{}"]/text'.format(analang))
-            if formtexts:
-                return formtexts[0]
-        if nodes:
-            return Node.makeformnode(nodes[0],analang,gimmetext=True)
-        else:
-            citationnode=Node(entry,'citation')
-            return citationnode.makeformnode(analang,gimmetext=True)
-    def lexemeformnodeofentry(self,entry,analang):
-        """This produces a list; specify senseid and analang as you like."""
-        nodes=entry.findall('lexical-unit') #always there, even if empty
-        for node in nodes:
-            formtexts=node.findall('form[@lang="{}"]/text'.format(analang))
-            if formtexts:
-                return formtexts[0]
-        if nodes:
-            return Node.makeformnode(node,analang,gimmetext=True)
-        else:
-            lexemenode=Node(entry,'lexical-unit')
-            return lexemenode.makeformnode(analang,gimmetext=True)
     def lexeme(self,**kwargs):
         """This produces a list; specify senseid and analang as you like."""
         output=self.get('lexeme/form/text',**kwargs).get('text')
@@ -1446,6 +1426,42 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info("Found these morph-type values: {}".format(m))
         return m
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
+    def copylctolx(self):
+        # This is a copy operation, leaving lc in place
+        for e in self.getentrynode(**kwargs):
+            lcs=e.findall('citation') # I need form node, not text node
+            log.info("Looking at entry w/guid: {}".format(e.get("guid")))
+            for lc in lcs:
+                log.info("Found {}".format(Node.childrenwtext(lc)))
+                for lcf in Node.childrenwtext(lc):
+                    lcfl=lcf.get('lang')
+                    lcft=lcf.find('text')
+                    # log.info("Copying {} from lang {}".format(lcft.text,lcfl))
+                    """This finds or creates, by lang:"""
+                    lx=Entry.formtextnodeofentry(e,'lexical-unit',lcfl) #This gives text node
+                    log.info("Copying citation ‘{}’ to lexeme (was {}) for "
+                            "lang {}".format(lcft.text,lx.text,lcfl))
+                    lx.text=lcft.text #overwrite in any case
+                    # if not lx.text: #don't overwrite info
+                    #     lcft.text='' #don't clear
+    def convertlxtolc(self,**kwargs):
+        # This is a move operation, removing lx when done
+        for e in self.getentrynode(**kwargs):
+            lxs=e.findall('lexical-unit') # I need form node, not text node
+            for lx in lxs:
+                log.info("Looking at entry w/guid: {}".format(e.get("guid")))
+                log.info("Found {}".format(Node.childrenwtext(lx)))
+                for lxf in Node.childrenwtext(lx):
+                    lxfl=lxf.get('lang')
+                    lxft=lxf.find('text')
+                    # log.info("Moving {} from lang {}".format(lxft.text,lxfl))
+                    """This finds or creates, by lang:"""
+                    lc=Entry.formtextnodeofentry(e,'citation',lxfl) #This gives text node
+                    log.info("Moving lexeme ‘{}’ to citation (was {}) for lang {}"
+                            "".format(lxft.text,lc.text,lxfl))
+                    if not lc.text: #don't overwrite info
+                        lc.text=lxft.text
+                        lxft.text='' #clear only on move
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
     def __init__(self):
@@ -1473,12 +1489,32 @@ class Node(ET.Element):
         n=Node(self,'trait',attrib={'name':type, 'value':str(value)})
         if gimmenode:
             return n
+    def childrenwtext(self):
+        return [i for i in self
+                    if i.findall('text') and
+                    [j for j in i.findall('text') if j.text]
+                ]
     def __init__(self, parent, tag, attrib={}, **kwargs):
         super(Node, self).__init__(tag, attrib, **kwargs)
         parent.append(self)
 class Entry(object): # what does "object do here?"
     #import lift.put as put #class put:
     #import get #class put:
+    def formtextnodeofentry(self,tag,lang):
+        # this gives the form/text node, from which one can easily extract .text
+        # hence, the limiting by lang
+        nodes=self.findall(tag)
+        for node in nodes:
+            formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
+            if formtexts:
+                return formtexts[0]
+        if nodes:
+            return Node.makeformnode(nodes[0],lang,gimmetext=True)
+        else:
+            tag,attrib=rx.splitxpath(tag)
+            tagnode=Node(self,tag,attrib)
+            prettyprint(tagnode)
+            return tagnode.makeformnode(lang,gimmetext=True)
     def __init__(self, db, guid=None, *args, **kwargs):
         if guid is None:
             log.info("Sorry, I was kidding about that; I really do need the entry's guid.")
