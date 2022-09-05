@@ -61,31 +61,6 @@ class Theme(object):
             scale=self.program['scale']
         except (NameError,AttributeError):
             scale=1
-        # threading.Thread(target=thread_function, args=(arg1,),kwargs={'arg2': arg2})
-        # if process:
-        #     from multiprocessing import Process
-        #     log.info("Running as multi-process")
-        #     p = Process(target=block)
-        # elif thread:
-        #     from threading import Thread
-        #     log.info("Running as threaded")
-        #     p = Thread(target=block)
-        # else:
-        #     log.info("Running in line")
-        #     block()
-        # if process or thread:
-        #     p.exception = None
-        #     try:
-        #         p.start()
-        #     except BaseException as e:
-        #         log.error("Exception!", traceback.format_exc())
-        #         p.exception = e
-        #     p.join(timeout) #finish this after timeout, in any case
-        #     if p.exception:
-        #         log.error("Exception2!", traceback.format_exc())
-        #         raise p.exception
-        #     if process:
-        #         p.terminate() #for processes, not threads
         # x and y here express a float as two integers, so 0.7 = 7/10, because
         # the zoom and subsample fns only work on integers
         # Higher number is better resolution (x*y/y), more time to process
