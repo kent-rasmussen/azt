@@ -54,6 +54,7 @@ def stripquotes(x):
         return x
 """passthrough fns"""
 def sub(*args,**kwargs):
+    # pattern, repl, string, count=0, flags=0
     return re.sub(*args,**kwargs)
 def compile(x):
     return re.compile(x, re.UNICODE)
