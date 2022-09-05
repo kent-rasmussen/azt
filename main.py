@@ -1030,14 +1030,20 @@ class Settings(object):
         else:
             return interfacelang()
     def repocheck(self):
-        self.repo=None #leave this for test of both repo and exe
-        if file.exists(file.getdiredurl(self.directory,'.hg')):
-            log.info("Found Mercurial Repository!")
-            if not program['hg']:
-                log.info("But found no Mercurial executable!")
-                self.mercurialwarning(self.directory)
+        # self.repo=None #?leave this for test of both repo and exe
+        self.repo={
+                    'git': Git(self.directory),
+                    'hg': Mercurial(self.directory),
+                    }
+        for r in self.repo:
+            if not self.repo[r]:
+                del self.repo[r]
             else:
-                self.repo=Repository(self.directory)
+                if self.repo[r].exists():
+                    log.info(_("Found {} Repository!"
+                                ).format(self.repo[r].repotypename))
+                elif r == 'git': #don't worry about hg, if not there already
+                    self.repo[r].init()
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
         self.settings={'defaults':{
