@@ -6175,12 +6175,16 @@ class Sort(object):
         check=self.params.check()
         framed.setframe(check)
         text=framed.formatted(showtonegroup=False)
+        if self.lowverticalspace:
+            ipady=0
+        else:
+            ipady=15*program['scale']
         if label==True:
             b=ui.Label(parent, text=text,
                     **kwargs
                     ).grid(column=column, row=row,
                             sticky="ew",
-                            ipady=15)
+                            ipady=ipady)
         else:
             bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
             bf.grid(column=column, row=row, sticky='ew')
