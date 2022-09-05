@@ -992,11 +992,11 @@ class StatusFrame(ui.Frame):
         if isinstance(self.task,Segments):
             self.fieldsline()
         if hasattr(self.settings,'slices') and (isinstance(self.task,Sort) or
-            (isinstance(self.task,Tone) and
-                not isinstance(self.task,Report)) or
+            (isinstance(self.task,Tone) and not isinstance(self.task,Report)) or
             (isinstance(self.task,Report) and
-                not isinstance(self.task,Comprehensive))
-            ):
+                                    not isinstance(self.task,Comprehensive)) or
+            isinstance(self.task,ParseSlice)
+                    ):
             self.cvt=self.settings.params.cvt()
             self.ps=self.settings.slices.ps()
             self.profile=self.settings.slices.profile()
@@ -1005,7 +1005,8 @@ class StatusFrame(ui.Frame):
             self.sliceline()
             if not (isinstance(self.task,Report) or
                     isinstance(self.task,Record) or
-                    isinstance(self.task,JoinUFgroups)
+                    isinstance(self.task,JoinUFgroups) or
+                    isinstance(self.task,Parse)
                     ):
                 self.cvtline()
                 self.buttoncolumnsline()
@@ -1471,7 +1472,8 @@ class Settings(object):
         self.secondformfield={}
         log.info(_("Fields found in lexicon: {}".format(str(fields))))
         self.plopts=['Plural', 'plural', 'pl', 'Pluriel', 'pluriel']
-        self.impopts=['Imperative', 'imperative', 'imp', 'Imp']
+        self.impopts=['Imperative', 'imperative', 'imp', 'Imp', 'Imperatif',
+                                                    'imperatif']
         for opt in self.plopts:
             if opt in fields:
                 self.secondformfield[self.nominalps]=self.pluralname=opt
@@ -3280,6 +3282,9 @@ class TaskDressing(object):
                             cmd=getother
                             )
         window.wait_window(window)
+    def secondfieldnames(self):
+        return (self.settings.secondformfield[self.settings.verbalps],
+                self.settings.secondformfield[self.settings.nominalps])
     def getbuttoncolumns(self,event=None):
         log.info("Asking for number of button columns...")
         window=ui.Window(self.frame,title=_('Select Button Columns'))
@@ -3581,49 +3586,15 @@ class TaskDressing(object):
         group=kwargs.get('group',self.status.group())
         # log.info("about to return {}={}".format(check,group))
         return check+'='+group
-    def schedule_write_check(self):
-        """Schedule `check_if_write_done()` function after five seconds."""
-        log.info("Scheduling check")
-        program['root'].after(2000, self.check_if_write_done)
-        # log.info("Scheduled check")
-        # self.taskchooser.after(5000, self.check_if_write_done, t)
-    def check_if_write_done(self):
-        # If the thread has finished, allow another write.
-        log.info("Checking if writing done to lift.")
-        try:
-            done=not self.writethread.is_alive()
-        except AttributeError:
-            done=True
-        except Exception as e:
-            log.info("Exception: {}".format(e))
-            log.info("writethread: {}".format(hasattr(self,'writethread')))
-        if done:
-            log.info("Done writing to lift.")
-            self.taskchooser.writing=False
-        else:
-            # Otherwise check again later.
-            log.info("schedule_write_check writing to lift.")
-            self.schedule_write_check()
     def maybewrite(self,definitely=False):
-        write=self.timetowrite() #just call this once!
-        if (write and not self.taskchooser.writing) or definitely:
-            self.taskchooser.towrite=False
-            self.writethread = threading.Thread(target=self.db.write)
-            self.taskchooser.writing=True
-            log.info("Writing to lift...")
-            self.writethread.start()
-            self.schedule_write_check()
-        elif write:
-            log.info("Already writing to lift; I trust this new mod will "
-                    "get picked up later...")
-            self.taskchooser.towrite=True
-    def timetowrite(self):
-        """only write to file every self.writeeverynwrites times you might."""
-        self.taskchooser.writeable+=1 #and tally here each time this is asked
-        return not self.taskchooser.writeable%self.settings.writeeverynwrites
+        self.taskchooser.maybewrite(definitely=definitely)
     def killall(self):
         log.info("Shutting down Task")
-        if self.taskchooser.towrite:
+        try:
+            towrite=self.taskchooser.towrite
+        except AttributeError:
+            towrite=self.towrite #if taskchooser; shouldn't happen, but in case.
+        if towrite:
             log.info("Final write to lift")
             self.maybewrite(definitely=True)
         else:
@@ -3905,6 +3876,10 @@ class TaskChooser(TaskDressing,ui.Window):
             if self.doneenough['analysis']:
                 tasks.append(JoinUFgroups)
             if me:
+                tasks.append(Parse)
+                tasks.append(ParseWords)
+                tasks.append(ParseSlice)
+                tasks.append(ParseSliceWords)
                 tasks.append(ReportConsultantCheck)
         # tasks.append(WordCollectionCitation),
         # tasks.append(WordCollectionPlImp),
@@ -3947,37 +3922,10 @@ class TaskChooser(TaskDressing,ui.Window):
         window.destroy()
         backup=self.file.name+"_backupBeforeLx2LcConversion"
         self.db.write(backup)
-        for e in self.db.nodes.findall('entry'):
-            lxs=e.findall('lexical-unit')
-            for lx in lxs:
-                log.info("Looking at entry w/guid: {}".format(e.get("guid")))
-                #,lx.find('text').get('lang')))
-                # log.info("Found {}".format([i for i in lx
-                # if i.findall('text')
-                # and [j for j in i.findall('text') if j.text]
-                # # and i.find('text').text
-                #         ]))
-                for lxf in [i for i in lx
-                            if i.findall('text') and
-                            [j for j in i.findall('text') if j.text]
-                        ]: #only forms with text info
-                    lxfl=lxf.get('lang')
-                    lxft=lxf.find('text')
-                    # log.info("Moving {} from lang {}".format(lxft.text,lxfl))
-                    # lc=e.findall('citation')
-                    """This finds or creates, by lang:"""
-                    lc=self.db.citationformnodeofentry(e,lxfl)
-                    log.info("Moving lexeme ‘{}’ to citation (was {}) for lang {}"
-                            "".format(lxft.text,lc.text,lxfl))
-                    if not lc.text: #don't overwrite info
-                        lc.text=lxft.text
-                        lxft.text='' #clear only on move
+        self.db.convertlxtolc()
         # self.db.write(self.file.name+str(now()))
         self.db.write()
-        conversionlogfile=logsetup.writelzma() # log.filename no longer needed
-        #             tmpdb.nodes.findall('entry/citation')):
-        #     for f in n.findall('form'):
-        #         n.remove(f)
+        conversionlogfile=logsetup.writelzma()
         ErrorNotice(_("The conversion is done now, so {0} will quit. You may "
                     "want to inspect your current file ({1}) and the backup "
                     "({2}) to confirm this did what you wanted, before "
@@ -4181,7 +4129,7 @@ class TaskChooser(TaskDressing,ui.Window):
             self.task.runwindow.withdraw() #so users don't do stuff while waiting
         except AttributeError:
             log.info("There doesn't seem to be a runwindow to hide; moving on.")
-        while self.taskchooser.writing:
+        while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
             #     self.towrite,self.writing,self.taskchooser.writing))
             log.info("Waiting to finish writing to lift")
@@ -4219,6 +4167,46 @@ class TaskChooser(TaskDressing,ui.Window):
                 "it as default so you can open another"))
                 file.writefilename()
                 raise
+    def timetowrite(self):
+        """only write to file every self.writeeverynwrites times you might."""
+        self.writeable+=1 #and tally here each time this is asked
+        return not self.writeable%self.settings.writeeverynwrites
+    def schedule_write_check(self):
+        """Schedule `check_if_write_done()` function after five seconds."""
+        log.info("Scheduling check")
+        program['root'].after(2000, self.check_if_write_done)
+        # log.info("Scheduled check")
+        # self.taskchooser.after(5000, self.check_if_write_done, t)
+    def check_if_write_done(self):
+        # If the thread has finished, allow another write.
+        log.info("Checking if writing done to lift.")
+        try:
+            done=not self.writethread.is_alive()
+        except AttributeError:
+            done=True
+        except Exception as e:
+            log.info("Exception: {}".format(e))
+            log.info("writethread: {}".format(hasattr(self,'writethread')))
+        if done:
+            log.info("Done writing to lift.")
+            self.writing=False
+        else:
+            # Otherwise check again later.
+            log.info("schedule_write_check writing to lift.")
+            self.schedule_write_check()
+    def maybewrite(self,definitely=False):
+        write=self.timetowrite() #just call this once!
+        if (write and not self.writing) or definitely:
+            self.towrite=False
+            self.writethread = threading.Thread(target=self.db.write)
+            self.writing=True
+            log.info("Writing to lift...")
+            self.writethread.start()
+            self.schedule_write_check()
+        elif write:
+            log.info("Already writing to lift; I trust this new mod will "
+                    "get picked up later...")
+            self.towrite=True
     def __init__(self,parent):
         # self.testdefault=Parse
         self.start_time=time.time() #this enables boot time evaluation
@@ -4241,7 +4229,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if hasattr(self.file,'analang'): #i.e., new file
             self.analang=self.file.analang #I need to keep this alive until objects are done
         self.makesettings()
-        TaskDressing.__init__(self,parent)
+        TaskDressing.__init__(self,parent) #I think this should be after settings
         if not self.settings.writeeverynwrites: #0/None are not sensible values
             self.settings.writeeverynwrites=1
             self.settings.storesettingsfile()
@@ -4252,22 +4240,30 @@ class TaskChooser(TaskDressing,ui.Window):
         splash.destroy()
 class Segments(object):
     """docstring for Segments."""
-    def getlisttodo(self,all=False):
-        """Whichever field is being asked for (textnodefn), this fn returns
+    def getlisttodo(self,**kwargs):
+        """Whichever field is being asked for (self.nodetag), this fn returns
         which are left to do."""
-        all=self.db.get('entry',
+        self.dodone=True
+        if not hasattr(self,'dodoneonly'):
+            self.dodoneonly=False
+        if hasattr(self,'byslice') and self.byslice:
+            log.info("Limiting segment work to this slice")
+            all=[]
+            for senseid in self.slices.senseids():
+                all+=self.db.get('entry',senseid=senseid
+                                # showurl=True
+                                ).get()
+        else:
+            all=self.db.get('entry',**kwargs
                         # showurl=True
                         ).get()
-        # done=self.db.get('entry',path=['lexeme'],analang=analang,
-        #                 showurl=True).get()
-        # for i in all[:10]:
-        #     log.info("textnodecontents: {}".format(self.textnodefn(i,analang).text))
+        if self.dodone and not self.dodoneonly:
+            return all
         done=[i for i in all
-                    if self.textnodefn(i,self.analang).text
-                    # self.db.get('lexeme/form/text', node=i, analang=analang,
-                    # showurl=True
-                    #                 ).get('text') != ''
-                    ]
+            if lift.Entry.formtextnodeofentry(i,self.nodetag,self.analang).text
+                ]
+        if self.dodone:
+            return done
         todo=[x for x in all if x not in done]
         log.info("To do: ({}) {}".format(len(todo),todo))
         return todo
@@ -4740,7 +4736,8 @@ class WordCollection(Segments):
         l=ui.Label(self.wordframe, text=glossesthere, font='read',
                 row=1, column=0, columnspan=3, sticky='ew')
         l.wrap()
-        self.lxtextnode=self.textnodefn(entry,self.analang)
+        self.lxtextnode=lift.Entry.formtextnodeofentry(entry,self.nodetag,
+                                                            self.analang)
         # log.info("lxtextnode: {}".format(self.lxtextnode))
         self.lxvar=ui.StringVar(value=self.lxtextnode.text)
         # get('entry',path=['lexeme'],analang=self.analang,
@@ -4761,6 +4758,8 @@ class WordCollection(Segments):
         )
         # self.navigationframe.grid_columnconfigure(1,weight=1)
         self.frame.grid_columnconfigure(1,weight=1)
+    def __init__(self):
+        self.dodone=False
 class WordCollectionLexeme(TaskDressing,ui.Window,WordCollection):
     def tasktitle(self):
         return _("Word Collection for Lexeme Forms")
@@ -4769,9 +4768,10 @@ class WordCollectionLexeme(TaskDressing,ui.Window,WordCollection):
         left it"""
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
-        self.textnodefn=self.db.lexemeformnodeofentry
+        self.nodetag='lexical-unit'
         self.getwords()
 class WordCollectionCitation(TaskDressing,ui.Window,WordCollection):
     def taskicon(self):
@@ -4809,16 +4809,18 @@ class WordCollectionCitation(TaskDressing,ui.Window,WordCollection):
     def __init__(self, parent): #frame, filename=None
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
-        self.textnodefn=self.db.citationformnodeofentry
+        self.nodetag='citation' #lift.Entry.citationformnodeofentry
         self.getwords()
 class Parse(TaskDressing,ui.Window,Segments):
     """docstring for Parse."""
     def taskicon(self):
         return program['theme'].photo['iconWord']
     def tooltip(self):
-        return _("This task will help you parse your citation forms.")
+        return _("This task will help you parse your citation forms, "
+                "automatically, for the whole dictionary at once.")
     def dobuttonkwargs(self):
         fn=self.doparse
         text=_("Parse Citation Forms")
@@ -4834,18 +4836,93 @@ class Parse(TaskDressing,ui.Window,Segments):
                 'tttext':tttext
                 }
     def tasktitle(self):
-        return _("Parse Citation Forms")
+        return _("Parse Whole Dictionary")
     def doparse(self):
-        window=ui.Window(self,title=self.tasktitle())
-        ui.Label(window,text=_("Parsing!"),row=0,column=0)
-        todo=self.getlisttodo(all=self.dodone)
-        ui.Label(window,text=todo[:50],wraplength=program['root'].wraplength, row=1,column=0)
+        def copylc2lx(event=None):
+            self.runwindow.resetframe()
+            forms['lx'].text=forms['lc'].text
+            self.maybewrite()
+            log.info("copylc2lx done")
+        def skiplc(event=None):
+            self.runwindow.resetframe()
+        log.info("taskchooser: {}".format(self.taskchooser))
+        log.info("task: {}".format(self.task))
+        todo=self.getlisttodo()
+        plname,impname=self.secondfieldnames()
+        tags={'lc': 'citation',
+                'lx': 'lexical-unit',
+                'pl': 'field[@type="{}"]'.format(plname), #not necessarily pl
+                'imp': 'field[@type="{}"]'.format(impname)
+                }
+        if self.checkeach:
+            self.getrunwindow(nowait=True)
+            # self.runwindow.resetframe()
+            self.runwindow.title(self.tasktitle())
+            ui.Label(self.runwindow.outsideframe,text=_("Parsing!"),row=0,column=0,
+            columnspan=3)
+        else:
+            self.wait(msg=_("Parsing automatically"))
+        for entry in todo:
+            forms=dict()
+            for i in tags:
+                forms[i]=lift.Entry.formtextnodeofentry(entry,tags[i],self.analang)
+            if self.checkeach:
+                if self.runwindow.exitFlag.istrue():
+                    return
+                text=_("Copy this citation to lexeme field?")
+                text+="\n"+str(forms['lc'].text)+' > '+str(forms['lx'].text)
+                text+='\n'+_("Nominal second form: ")+str(forms['pl'].text)
+                text+='\n'+_("Verbal second form: ")+str(forms['imp'].text)
+                # log.info("w1: {}".format(self))
+                # log.info("w2: {}".format(self.runwindow))
+                # log.info("w3: {}".format(self.runwindow.frame))
+                ask=ui.Button(self.runwindow.frame, text=text, cmd=copylc2lx,
+                            row=0, column=0)
+                skip=ui.Button(self.runwindow.frame, text=_("Skip"), cmd=skiplc,
+                            row=0, column=1)
+                self.wait_window(self.runwindow.frame)
+            else:
+                forms['lx'].text=forms['lc'].text
+        if self.checkeach:
+            self.runwindow.destroy()
+        else:
+            self.maybewrite()
+            self.waitdone()
     def __init__(self, parent): #frame, filename=None
         log.info("Initializing {}".format(self.tasktitle()))
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
-        self.textnodefn=self.db.lexemeformnodeofentry
-        self.dodone=False
+        self.nodetag='citation'
+        self.dodone=True #give me words with citation done
+        self.checkeach=False #don't confirm each word
+        self.dodoneonly=True #don't give me other words
+class ParseWords(Parse):
+    def tasktitle(self):
+        return _("Parse Whole Dictionary, word by word")
+    def tooltip(self):
+        return _("This task will help you parse your whole dictionary, "
+                "word by word.")
+    def __init__(self, parent): #frame, filename=None
+        ParseSlice.__init__(self,parent)
+        self.checkeach=True #confirm each word
+class ParseSlice(Parse):
+    def tasktitle(self):
+        return _("Parse One Slice")
+    def tooltip(self):
+        return _("This task will help you parse your citation forms, "
+                "for one slice of the dictionary at a time.")
+    def __init__(self, parent): #frame, filename=None
+        Parse.__init__(self,parent)
+        self.byslice=True #give me words in a selected slice (make this selectable?)
+class ParseSliceWords(ParseSlice):
+    def tasktitle(self):
+        return _("Parse One Slice, word by word")
+    def tooltip(self):
+        return _("This task will help you parse your citation forms, "
+                "for one slice of the dictionary at a time.")
+    def __init__(self, parent): #frame, filename=None
+        ParseSlice.__init__(self,parent)
+        self.checkeach=True #confirm each word
 class Placeholder(TaskDressing,ui.Window):
     """Fake check, placeholder for now."""
     def taskicon(self):
@@ -6914,17 +6991,13 @@ class Report(object):
                                                         listword=True,
                                                         showgroups=showgroups)
                         break #do it on first present lang, and do next ex
-        analysisOK,timestamps=self.status.isanalysisOK(**kwargs)
+        analysisOK,showgroups,timestamps=self.status.isanalysisOK(**kwargs)
         self.datadict.refresh() #get the most recent data
         silent=kwargs.get('silent',False)
         default=kwargs.get('default',True)
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         checks=self.status.checks(wsorted=True,**kwargs)
-        if analysisOK and j and j > a:
-            showgroups=True #show groups on all non-default reports
-        else:
-            showgroups=False #show groups on all non-default reports
         if not checks:
             if 'profile' in kwargs:
                 log.error("{} {} came up with no checks.".format(ps,profile))
@@ -7159,10 +7232,9 @@ class Report(object):
         output(window,r,text)
         r.close()
         if usegui:
+            resultswindow.waitdone()
             if me:
                 resultswindow.on_quit()
-            else:
-                resultswindow.waitdone()
         self.status.last('report',update=True)
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
@@ -8619,7 +8691,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
             self.runwindow.destroy()
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
-        analysisOK,timestamps=self.status.isanalysisOK(**kwargs) #Should specify which lasts...
+        analysisOK,joinedsince,timestamps=self.status.isanalysisOK(**kwargs) #Should specify which lasts...
         if not analysisOK:
             redo(timestamps) #otherwise, the user will almost certainly be upset to have to do it later
             return
@@ -9845,6 +9917,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         if self.exitFlag.istrue():
             return #just don't die
         if self.task.settings.lowverticalspace:
+            log.info("using lowverticalspace for addgroupbutton")
             scaledpady=0
         else:
             scaledpady=int(40*program['scale'])
@@ -10297,6 +10370,7 @@ class ToneGroupButtonFrame(ui.Frame):
             kwargs['wsoundfile']=True
         #set this for buttons:
         if self.check.task.settings.lowverticalspace:
+            log.info("using lowverticalspace for ToneGroupButtonFrame")
             maxpad=0
         else:
             maxpad=15
@@ -11331,12 +11405,16 @@ class StatusDict(dict):
             ok=True # b/c analysis would be more recent than last sorting
         else:
             ok=False # w/o info, trigger reanalysis
+        if ok and j and j > a:
+            joinsinceanalysis=True #show groups on all non-default reports
+        else:
+            joinsinceanalysis=False
         annalysisoknotice=("Last analysis at {};\n"
                     "last join at {}\n"
                     "last sort at {}\n(analysisOK={})"
                     "".format(a,j,s,ok))
         log.info(annalysisoknotice)
-        return ok, annalysisoknotice
+        return ok, joinsinceanalysis, annalysisoknotice
     def __init__(self,checkparameters,slicedict,toneframes,filename,dict):
         """To populate subchecks, use self.groups()"""
         self._filename=filename
