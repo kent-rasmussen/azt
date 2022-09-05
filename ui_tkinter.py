@@ -56,7 +56,7 @@ class Theme(object):
     """docstring for Theme."""
     def setimages(self):
         # Program icon(s) (First should be transparent!)
-        log.info("Scaling images; please wait...") #threading?
+        log.info("Maybe scaling images; please wait...") #threading?
         try:
             scale=self.program['scale']
         except (NameError,AttributeError):
