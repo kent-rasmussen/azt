@@ -1029,37 +1029,6 @@ class Settings(object):
             self.taskchooser.mainwindowis.maketitle()
         else:
             return interfacelang()
-    def mercurialwarning(self,filedir):
-        title=_("Warning: Mercurial Repository without Executable")
-        window=ui.Window(self.taskchooser.frame,title=title)
-        hgurl="https://www.mercurial-scm.org/wiki/Download"
-        hgfilename="Mercurial-6.0-x64.exe"
-        hgfile=("https://www.mercurial-scm.org/release/windows/{}".format(
-                                                                    hgfilename))
-        text=_("You seem to be working on a repository of data ({}), "
-        "\nwhich seems to be tracked by mercurial (used by Chorus "
-        "and languagedepot.org), "
-        "\nbut you don't seem to have the Mercurial executable installed in "
-        "your computer's PATH.").format(filedir)
-        clickable=_("Please see {} for installation recommendations").format(
-                                                                program['url'])
-        clickable1=_("(e.g., in Windows, install *this* file),").format(hgfile)
-        clickable2=_("or see all your options at {}.").format(hgurl)
-        l=ui.Label(window.frame, text=text)
-        l.grid(column=0, row=0)
-        m=ui.Label(window.frame, text=clickable)
-        m.grid(column=0, row=1)
-        m.bind("<Button-1>", lambda e: openweburl(program['url']))
-        mtt=ui.ToolTip(m,_("Go to {}").format(program['url']))
-        n=ui.Label(window.frame, text=clickable1)
-        n.grid(column=0, row=2)
-        n.bind("<Button-1>", lambda e: openweburl(hgfile))
-        ntt=ui.ToolTip(n,_("download {}").format(hgfilename))
-        o=ui.Label(window.frame, text=clickable2)
-        o.grid(column=0, row=3)
-        o.bind("<Button-1>", lambda e: openweburl(hgurl))
-        mtt=ui.ToolTip(o,_("Go to {}").format(hgurl))
-        window.lift()
     def repocheck(self):
         self.repo=None #leave this for test of both repo and exe
         if file.exists(file.getdiredurl(self.directory,'.hg')):
@@ -11737,6 +11706,58 @@ class Repository(object):
     def getignorecontents(self):
         with open(self.hgignorefile,'r') as f:
             self.hgignore=f.readlines()
+    def exewarning(self):
+        title=_("Warning: {} Executable Missing!".format(self.repotypename))
+        text=_("You seem to be working on a repository of data ({0}), "
+                "\nwhich may be tracked by {1}, "
+                "\nbut you don't seem to have the {1} executable installed in "
+                "your computer's PATH.").format(self.url,self.repotypename)
+        if self.repotypename == "Mercurial":
+             text+='\n'+_("(Mercurial is used by Chorus and languagedepot.org)")
+             if not self.exists():
+                 log.info(_("No {0} repo, nor {0} executable; moving on."
+                            ).format(self.repotypename))
+                 return
+        w=ui.Window(program['root'],title=title)
+        w.withdraw()
+        if self.repotypename == "Git":
+             text+='\n'+_("(Git is used by A→Z+T to track changes in your data)")
+        clickable=_("Please see {} for installation recommendations"
+                    ).format(self.installpage)
+        l=ui.Label(w.frame, text=text, column=0, row=0)
+        l.wrap()
+        m=ui.Label(w.frame, text=clickable, column=0, row=1)
+        m.wrap()
+        m.bind("<Button-1>", lambda e: openweburl(self.installpage))
+        mtt=ui.ToolTip(m,_("Go to {}").format(self.installpage))
+        if self.thisos == "Windows":
+            clickable1=_("(e.g., in Windows, install *this* file),"
+                        ).format(self.wexeurl)
+            clickable2=_("or see all your options at {}."
+                        ).format(self.wdownloadsurl)
+            n=ui.Label(w.frame, text=clickable1, column=0, row=2)
+            n.bind("<Button-1>", lambda e: openweburl(self.wexeurl))
+            ntt=ui.ToolTip(n,_("download {}").format(self.wexeurl))
+            o=ui.Label(w.frame, text=clickable2, column=0, row=3)
+            o.bind("<Button-1>", lambda e: openweburl(self.wdownloadsurl))
+            mtt=ui.ToolTip(o,_("Go to {}").format(self.wdownloadsurl))
+        button=(_("Restart Now"),sysrestart)
+        text=_("After you install {}, you should restart."
+                ).format(self.repotypename)
+        if self.repotypename == "Git":
+            text+='\n'+_("You can keep using {} without installing {}, but "
+                        "it is not recommended, and you will continue to see "
+                        "this warning."
+                        " And sooner or later that's going to get really annoying"
+                        ).format(program['name'],self.repotypename)
+        r=ui.Label(w.frame, text=text, column=0, row=4)
+        r.wrap()
+        rb=ui.Button(w.frame, text=_("Restart Now"), column=1, row=4,
+                                                            cmd=sysrestart)
+        rbtt=ui.ToolTip(rb,_("Install {} first, then do this"
+                            ).format(self.repotypename))
+        w.deiconify()
+        w.lift()
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
