@@ -9917,6 +9917,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         if self.exitFlag.istrue():
             return #just don't die
         if self.task.settings.lowverticalspace:
+            log.info("using lowverticalspace for addgroupbutton")
             scaledpady=0
         else:
             scaledpady=int(40*program['scale'])
@@ -10369,6 +10370,7 @@ class ToneGroupButtonFrame(ui.Frame):
             kwargs['wsoundfile']=True
         #set this for buttons:
         if self.check.task.settings.lowverticalspace:
+            log.info("using lowverticalspace for ToneGroupButtonFrame")
             maxpad=0
         else:
             maxpad=15
