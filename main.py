@@ -11705,7 +11705,20 @@ class Repository(object):
             return
         """First time basic setup here"""
         for x in ['pdf','xcf','XLingPaperPDFTemp','backupBeforeLx2LcConversion',
-                    '.txt', '.7z', '.zip']:
+                    '.txt', '.7z', '.zip',
+                    '__pycache__*',
+                    'lift_url.py',
+                    'ui_lang.py',
+                    '*~',
+                    'userlogs/*',
+                    'test*wav',
+                    'excess/',
+                    'images/archive',
+                    'images/scaled',
+                    '.ChorusRescuedFile',
+                    '.git',
+                    '.hg'
+                ]:
             self.ignore(x)
         self.add(self.hgignorefile)
         self.commit()
