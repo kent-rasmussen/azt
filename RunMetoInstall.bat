@@ -49,6 +49,8 @@ ECHO I'll pause now; cancel now to be finished, or press any key to continue
 ECHO to install XLingPaper, Praat and Mercurial, to get the most out of A→Z+T.
 pause
 
+cd /d "%userprofile%/Downloads"
+
 ECHO Downloading XLingPaper 3.10...
 If exist XLingPaper3-10-1XXEPersonalEditionFullSetup.exe (ECHO XLingPaper3-10-1XXEPersonalEditionFullSetup.exe is there!) ELSE (powershell.exe -noprofile -command "Invoke-WebRequest 'https://software.sil.org/downloads/r/xlingpaper/XLingPaper3-10-1XXEPersonalEditionFullSetup.exe' -OutFile 'XLingPaper3-10-1XXEPersonalEditionFullSetup.exe'")
 
