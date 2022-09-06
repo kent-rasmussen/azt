@@ -1494,18 +1494,18 @@ class Settings(object):
             "".format(self.db.pss[self.analang]))
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
-        log.info(self.db.fields)
+        # log.info(self.db.fieldnames)
         try:
-            fields=self.db.fields[self.analang]
+            fieldnames=self.db.fieldnames[self.analang]
         except KeyError:
-            fields=[]
+            fieldnames=[]
         self.secondformfield={}
-        log.info(_("Fields found in lexicon: {}".format(str(fields))))
+        log.info(_("Fields found in lexicon: {}".format(str(fieldnames))))
         self.plopts=['Plural', 'plural', 'pl', 'Pluriel', 'pluriel']
         self.impopts=['Imperative', 'imperative', 'imp', 'Imp', 'Imperatif',
                                                     'imperatif']
         for opt in self.plopts:
-            if opt in fields:
+            if opt in fieldnames:
                 self.secondformfield[self.nominalps]=self.pluralname=opt
         try:
             log.info(_('Plural field name: {}').format(self.pluralname))
@@ -1513,7 +1513,7 @@ class Settings(object):
             log.info(_('Looks like there is no Plural field in the database'))
             self.pluralname=None
         for opt in self.impopts:
-            if opt in fields:
+            if opt in fieldnames:
                 self.secondformfield[self.verbalps]=self.imperativename=opt
         try:
             log.info(_('Imperative field name: {}'.format(self.imperativename)))
