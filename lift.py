@@ -527,137 +527,143 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         dup=False
         senses=self.nodes.findall('entry/sense')
         for sense in senses:
-            for l in self.locations:
-                examples=sense.findall('example/field[@type="location"]/'
-                                        'form[text="{}"]/../..'.format(l)) #'senselocations'
-                if len(examples)>1:
-                    log.error("Found multiple/duplicate examples (of the same "
-                        "location ({}) in the same sense: {})"
-                    "".format(l,[
-                        x.findall('form[@lang="{}"]/text'.format(lang)).text
-                            for x in examples
-                            for lang in self.analangs
-                            if x.find('form[@lang="{}"]/text'.format(lang))]))
-                    """Before implementing the following, we need a test for
-                    presence of audio file link, and different tone values,
-                    including which to preserve if different (i.e., not '')"""
-                    # for e in examples[1:]:
-                    #     sense.remove(e)
-                    dup=True
-                    nodes={}
-                    uniq={}
-                    first={}
-                    langs=self.analangs+self.glosslangs
-                    for n in self.analangs:
-                        nodes['al-'+n]=[]
-                    for n in self.glosslangs:
-                        nodes['gl-'+n]=[]
-                    for n in ['value']:
-                        nodes[n]=[]
-                    for example in examples:
-                        for lang in self.analangs:
-                            # log.info("looking for {} (analang) data".format(lang))
-                            l=example.findall("form[@lang='{}']/text"
-                                                "".format(lang))
-                            """I actually don't want data from alternate analangs.
-                            A→Z+T should be producing examples with exactly
-                            one analang (at least for now), so if I find one
-                            here, that should be good."""
-                            # if not l:
-                            #     log.info("empty node found for {}".format(lang))
-                            #     l=[emptytextnode] #must distinguish empty/missing nodes
-                            nodes['al-'+lang].extend(l)
-                        for lang in self.glosslangs:
-                            # log.info("looking for {} (glosslang) data".format(lang))
-                            g=example.findall("translation/form[@lang='{}']"
-                                            "/text".format(lang))
-                            if not g:
-                                # log.info("No text node found for {}".format(lang))
-                                g=[emptytextnode]
-                            for gi in g:
-                                # if gi.text and ('‘' in gi.text or '’' in gi.text):
-                                    gi.text=rx.stripquotes(gi.text)
-                            nodes['gl-'+lang].extend(g)
-                        #This should ultimately have [@lang='{}'].analang
-                        t=example.findall("field[@type='tone']/form/text")
-                        if not t:
-                            log.info("empty tone node found")
-                            t=[emptytextnode]
-                        nodes['value'].extend(t)
-                    for n in nodes:
-                        """Collect all distinct values, not considering
-                        missing nodes (None) or values that differ only by
-                        initial or final quotes. Notably, i.text as None is
-                        allowed, as this is an important difference to track"""
-                        uniq[n]=list(set([rx.stripquotes(textornone(i))
-                                            for i in nodes[n]
-                                            if i is not None]))
-                    if [n for n in uniq if len(uniq[n]) >1]: #any multiples
-                        # if not [l for l in langs if len(uniq[l]) >1]: #nonlang
-                        if not [l for l in uniq if len(uniq[l]) >1
-                                                    if l != 'value']: #nonlang
-                            nonint=[noninteger(j) for j in uniq['value'] #nonint
-                                                if noninteger(j) is not None]
-                            nonnone=[j for j in uniq['value'] #nonint
-                                                if j is not None]
-                            if not nonint or len(nonint) >1:
-                                if nonnone and len(nonnone) == 1:
-                                    """This is where we save an integer tone
-                                    value, and ditch a None value."""
-                                    log.info("A single non-None value found: {}"
-                                            "".format(nonnone[0]))
-                                    savevalue=nonnone[0]
-                                else:
-                                    log.info("Sorry, I don't know how to combine "
-                                        "these example values: {} ({})"
-                                        "".format(uniq[n],n))
-                                    continue
-                            else: #only one noninteger tone value
-                                savevalue=nonint[0]
-                                log.info("A single non-integer value found: {}"
-                                        "".format(nonint[0]))
-                            log.info("These examples have the same "
-                                        "language data, so we will merge their "
-                                        "tone values, if possible. ({})"
-                                        "".format(uniq))
-                            for example in examples:
-                                #This should ultimately have [@lang='{}'].analang
-                                l=[i.text for i in example.findall(
-                                                    'form[@lang="{}"]/text'
-                                                    ''.format(self.analangs[0]))
-                                        if i]
-                                url=("field[@type='tone']/form[text='{}']"
-                                    "".format(savevalue))
-                                if not example.find(url):
-                                    et=example.find(
-                                        "field[@type='tone']/form/text"
-                                        )
-                                    if not et:
-                                        et=emptytextnode
-                                    log.info("Removing duplicate ({}) "
-                                    "example with value: {}"
-                                    "".format(l, et.text))
-                                    sense.remove(example)
-                                else:
-                                    log.info("Keeping duplicate ({}) "
-                                    "example with value: {}".format(l,
-                                        savevalue))
-                        else:
-                            log.info("It looks like we are dealing with "
-                                "different language data in the examples, so "
-                                "you  will need to resolve this manually: {}"
-                                "".format(uniq))
+            t = threading.Thread(target=self.findduplicateexample,
+                            args=(sense,noninteger,emptytextnode))
+            t.start()
+    def findduplicateexample(self,sense,noninteger,emptytextnode):
+        senseid=sense.get('id')
+        for l in self.locations:
+            examples=sense.findall('example/field[@type="location"]/'
+                                    'form[text="{}"]/../..'.format(l)) #'senselocations'
+            if len(examples)>1:
+                log.error("Found multiple/duplicate examples (of the same "
+                    "location ({}) in the same sense ({}): {})"
+                "".format(l,senseid,[
+                    x.findall('form[@lang="{}"]/text'.format(lang)).text
+                        for x in examples
+                        for lang in self.analangs
+                        if x.find('form[@lang="{}"]/text'.format(lang))]))
+                """Before implementing the following, we need a test for
+                presence of audio file link, and different tone values,
+                including which to preserve if different (i.e., not '')"""
+                # for e in examples[1:]:
+                #     sense.remove(e)
+                dup=True
+                nodes={}
+                uniq={}
+                first={}
+                langs=self.analangs+self.glosslangs
+                for n in self.analangs:
+                    nodes['al-'+n]=[]
+                for n in self.glosslangs:
+                    nodes['gl-'+n]=[]
+                for n in ['value']:
+                    nodes[n]=[]
+                for example in examples:
+                    for lang in self.analangs:
+                        # log.info("looking for {} (analang) data".format(lang))
+                        l=example.findall("form[@lang='{}']/text"
+                                            "".format(lang))
+                        """I actually don't want data from alternate analangs.
+                        A→Z+T should be producing examples with exactly
+                        one analang (at least for now), so if I find one
+                        here, that should be good."""
+                        # if not l:
+                        #     log.info("empty node found for {}".format(lang))
+                        #     l=[emptytextnode] #must distinguish empty/missing nodes
+                        nodes['al-'+lang].extend(l)
+                    for lang in self.glosslangs:
+                        # log.info("looking for {} (glosslang) data".format(lang))
+                        g=example.findall("translation/form[@lang='{}']"
+                                        "/text".format(lang))
+                        if not g:
+                            # log.info("No text node found for {}".format(lang))
+                            g=[emptytextnode]
+                        for gi in g:
+                            # if gi.text and ('‘' in gi.text or '’' in gi.text):
+                                gi.text=rx.stripquotes(gi.text)
+                        nodes['gl-'+lang].extend(g)
+                    #This should ultimately have [@lang='{}'].analang
+                    t=example.findall("field[@type='tone']/form/text")
+                    if not t:
+                        log.info("empty tone node found")
+                        t=[emptytextnode]
+                    nodes['value'].extend(t)
+                for n in nodes:
+                    """Collect all distinct values, not considering
+                    missing nodes (None) or values that differ only by
+                    initial or final quotes. Notably, i.text as None is
+                    allowed, as this is an important difference to track"""
+                    uniq[n]=list(set([rx.stripquotes(textornone(i))
+                                        for i in nodes[n]
+                                        if i is not None]))
+                if [n for n in uniq if len(uniq[n]) >1]: #any multiples
+                    # if not [l for l in langs if len(uniq[l]) >1]: #nonlang
+                    if not [l for l in uniq if len(uniq[l]) >1
+                                                if l != 'value']: #nonlang
+                        nonint=[noninteger(j) for j in uniq['value'] #nonint
+                                            if noninteger(j) is not None]
+                        nonnone=[j for j in uniq['value'] #nonint
+                                            if j is not None]
+                        if not nonint or len(nonint) >1:
+                            if nonnone and len(nonnone) == 1:
+                                """This is where we save an integer tone
+                                value, and ditch a None value."""
+                                log.info("A single non-None value found: {}"
+                                        "".format(nonnone[0]))
+                                savevalue=nonnone[0]
+                            else:
+                                log.info("Sorry, I don't know how to combine "
+                                    "these example values: {} ({}) "
+                                    "(senseid: {})"
+                                    "".format(uniq[n],n,senseid))
+                                continue
+                        else: #only one noninteger tone value
+                            savevalue=nonint[0]
+                            log.info("A single non-integer value found: {}"
+                                    "".format(nonint[0]))
+                        log.info("These examples have the same "
+                                    "language data, so we will merge their "
+                                    "tone values, if possible. ({})"
+                                    "".format(uniq))
+                        for example in examples:
+                            #This should ultimately have [@lang='{}'].analang
+                            l=[i.text for i in example.findall(
+                                                'form[@lang="{}"]/text'
+                                                ''.format(self.analangs[0]))
+                                    if i]
+                            url=("field[@type='tone']/form[text='{}']"
+                                "".format(savevalue))
+                            if not example.find(url):
+                                et=example.find(
+                                    "field[@type='tone']/form/text"
+                                    )
+                                if not et:
+                                    et=emptytextnode
+                                log.info("Removing duplicate ({}) "
+                                "example with value: {}"
+                                "".format(l, et.text))
+                                sense.remove(example)
+                            else:
+                                log.info("Keeping duplicate ({}) "
+                                "example with value: {}".format(l,
+                                    savevalue))
                     else:
-                        log.info("It looks like all examples have all the same "
-                            "values, so we're deleting all but the first: {}"
+                        log.info("It looks like we are dealing with "
+                            "different language data in the examples, so "
+                            "you  will need to resolve this manually: {}"
                             "".format(uniq))
-                        for example in examples[1:]:
-                            sense.remove(example)
+                else:
+                    log.info("It looks like all examples have all the same "
+                        "values, so we're deleting all but the first: {}"
+                        "".format(uniq))
+                    for example in examples[1:]:
+                        sense.remove(example)
         #     self.write()
         # else:
-        if not dup:
-            log.info("No duplicate examples (same sense and location) were "
-                    "found in the lexicon.")
+        # if not dup:
+        #     log.info("No duplicate examples (same sense and location) were "
+        #             "found in the lexicon.")
     def addtoneUF(self,senseid,group,analang,guid=None,**kwargs):
         showurl=kwargs.get('showurl',False)
         write=kwargs.get('write',True)
