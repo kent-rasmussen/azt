@@ -4033,8 +4033,9 @@ class TaskChooser(TaskDressing,ui.Window):
         for i in range(1700):
             if "{:04}".format(i+1) not in cawls:
                 self.cawlmissing.append(i+1)
-        log.info("CAWL missing ({}): {}".format(len(self.cawlmissing),
-                                                    self.cawlmissing))
+        if len(self.cawlmissing) < 10:
+            log.info("CAWL missing ({}): {}".format(len(self.cawlmissing),
+                                                        self.cawlmissing))
     def whatsdone(self):
         """I should probably have a roundtable with people to discuss these
         numbers, to see that we agree the decision points are rational."""
