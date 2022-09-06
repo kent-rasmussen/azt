@@ -6215,7 +6215,7 @@ class Sort(object):
         check=self.params.check()
         framed.setframe(check)
         text=framed.formatted(showtonegroup=False)
-        if self.lowverticalspace:
+        if self.settings.lowverticalspace:
             ipady=0
         else:
             ipady=15*program['scale']
