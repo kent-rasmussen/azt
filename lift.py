@@ -2882,11 +2882,26 @@ if __name__ == '__main__':
     ftype='lc'
     group=1
     t=[]
+    senseid='d99536c2-a7dd-49a2-afe0-1669dc20551e'
     # pr=lift.get('pronunciation',path=['annotation'],**kwargs).get('value')
+
     # print(pr)
     # for kwargs['node'] in lift.fieldnode(**kwargs):
     #     t.extend(lift.get('annotation',**kwargs).get('value'))
     # print(t)
+    location='Isolation'
+    analang='gnd'
+    """Not looking for: Using URL entry/sense[
+            @id='d99536c2-a7dd-49a2-afe0-1669dc20551e']/../sense[
+            @id='d99536c2-a7dd-49a2-afe0-1669dc20551e']/example/field[
+            @type='location']/form[text='Isolation']/text/../../../form[
+            @lang='gnd'][text='location']/text"""
+    """why is location taken as a text value??!? maybe it should be cleared
+    once used?"""
+    formvaluenode=lift.get("example/form/text", senseid=senseid,
+        analang=analang, location=location, showurl=True).get('node')
+    print(formvaluenode)
+    exit()
     lf=lift.fieldtext(ftype='ph')
     # ,location=check,
     #                     tonevalue=group,
