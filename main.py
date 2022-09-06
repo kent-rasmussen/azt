@@ -11734,10 +11734,11 @@ class Repository(object):
         return t
     def alreadythere(self,url):
         if str(file.getreldir(self.url,url)) in self.files:
-            log.info(_("URL {} is already in repo {}".format(url,self.url)))
+            # log.info(_("URL {} is already in repo {}".format(url,self.url)))
             return True
-        else:
-            log.info(_("URL {} is not already in repo {}:\n{}".format(url,self.url,self.files)))
+        # else:
+        #     log.info(_("URL {} is not already in repo {}:\n{}"
+        #                 "".format(url,self.url,self.files)))
     def ignore(self,file):
         if not hasattr(self,'ignored') or file not in self.ignored:
             with open(self.ignorefile,'a') as f:
