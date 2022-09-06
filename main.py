@@ -1431,7 +1431,9 @@ class Settings(object):
                         # self.soundsettingsfile #per computer, definitely don't share!
                         ]
         program['root'].update() #before threading
-        for r in self.repo:
+        # for r in self.repo:
+        r='git' #only look for this; don't duplicate repos unnecessarily
+        if r in self.repo:
             present=set(self.repo[r].files)
             log.info("{} currently has {} files".format(r,len(present)))
             for f in set(maindirfiles)-present:
