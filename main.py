@@ -11687,15 +11687,15 @@ class Repository(object):
             else:
                 log.info("Hg add OK".format(r))
     def commit(self,file=None):
-        args=["commit", file, '-m', "Autocommit from AZT"]
+        #I may need to rearrange these args:
+        if not file and self.code == 'git':
+            file='-a' # 'git commit -a' is equivalend to 'hg commit'.
+        args=["commit", '-m', "Autocommit from AZT", file]
         if me: #I only want to commit manually to people's repos
             log.info("Not committing as asked: {}".format(args))
             return
-        r=self.do([i for i in args if i is not None])
-        if r:
-            log.info("Hg commit: {}".format(r))
-        else:
-            log.info("Hg commit OK".format(r))
+        if self.diff(): #don't try to commit without changes; it clogs the log
+            self.do([i for i in args if i is not None])
     def diff(self):
         args=["diff"]
         r=self.do(args)
