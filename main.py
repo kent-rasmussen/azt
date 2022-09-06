@@ -417,7 +417,7 @@ class Menus(ui.Menu):
                             self.parent.settings.reloadprofiledata),
                 (_("Remake Status file (All: several minutes)"),
                             self.parent.settings.reloadstatusdata),
-                (_("Remake Status file (just this page)"),
+                (_("Remake Status file (just this category)"),
                             self.parent.settings.reloadstatusdatabycvtps),
                 ]
         for m in options:
