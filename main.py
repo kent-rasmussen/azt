@@ -419,6 +419,8 @@ class Menus(ui.Menu):
                             self.parent.settings.reloadstatusdata),
                 (_("Remake Status file (just this category)"),
                             self.parent.settings.reloadstatusdatabycvtps),
+                (_("Remake Status file (just this profile)"),
+                        self.parent.settings.reloadstatusdatabycvtpsprofile),
                 ]
         for m in options:
             self.command(self.advancedmenu,
