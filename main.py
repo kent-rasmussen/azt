@@ -11677,7 +11677,7 @@ class ErrorNotice(ui.Window):
         if wait:
             self.wait_window(self)
 class Repository(object):
-    """docstring for Mercurial Repository."""
+    """SuperClass for Repository classes"""
     def add(self,file):
         if not self.alreadythere(file):
             args=["add", str(file)]
