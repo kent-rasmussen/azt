@@ -1395,6 +1395,11 @@ class Settings(object):
         self.repocheck()
         self.settingsfilecheck()
         self.imagesdir=file.getimagesdir(self.directory)
+        pictures=file.getimagesdiralternate(self.directory)
+        if (not file.getfilesofdirectory(self.imagesdir) and
+                file.getfilesofdirectory(pictures)
+            ):
+            self.imagesdir=pictures #us this, if this is where they are.
         self.audiodir=file.getaudiodir(self.directory)
         log.info('self.audiodir: {}'.format(self.audiodir))
         self.reportsdir=file.getreportdir(self.directory)
