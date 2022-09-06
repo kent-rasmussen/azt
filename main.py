@@ -11711,15 +11711,6 @@ class Repository(object):
     def files(self):
         args=["files"]
         self.files=self.do(args).split('\n')
-    def getusernameargs(self):
-        r=self.do(['config', 'ui.username'])
-        if r:
-            log.info("Using Mercurial username '{}'".format(r))
-            return []
-        else:
-            r=program['name']+'-'+program['hostname']
-            log.info("No config Mercurial username found; using '{}'".format(r))
-            return ['--config','ui.username={}'.format(r)]
     def do(self,args):
         cmd=[self.cmd,self.pwd,str(self.url)] #-R
         try:
