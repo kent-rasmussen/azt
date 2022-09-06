@@ -73,8 +73,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.legacylangconvert() #update from any old language forms to xyz-x-py
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
-        self.getfields() #sets self.fields (of entry)
-        self.getsensefields() #sets self.sensefields (fields of sense)
+        self.getfieldnames() #sets self.fieldnames (of entry)
+        self.getsensefieldnames() #sets self.sensefieldnames (fields of sense)
         self.legacyverificationconvert() #data to form nodes (no name changes)
         self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
         "with citation data) "
@@ -884,8 +884,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         d=self.get('definition/form').get('lang')
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {}".format(self.glosslangs)))
-    def getfields(self,guid=None,lang=None): # all field types in a given entry
-        self.fields={}
+    def getfieldnames(self,guid=None,lang=None): # all field types in a given entry
+        self.fieldnames={}
         langs=set(self.get('entry/field/form',
                 # lang=lang,
                 # showurl=True
@@ -893,26 +893,26 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # log.info("Found these entry field languages: {}".format(langs))
         for lang in langs:
             # log.info("Looking for entry fields coded by lang [{}]".format(lang))
-            self.fields[lang]=list(dict.fromkeys(self.get('entry/field',
+            self.fieldnames[lang]=list(dict.fromkeys(self.get('entry/field',
                                                 lang=lang,
                                                 # showurl=True
                                                 ).get('type')))
-        log.info('Fields found in Entries: {}'.format(self.fields))
-    def getsensefields(self,guid=None,lang=None): # all field types in a given entry
+        log.info('Fields found in Entries: {}'.format(self.fieldnames))
+    def getsensefieldnames(self,guid=None,lang=None): # all field types in a given entry
         #This presumes there is a form@lang!
-        self.sensefields={}
+        self.sensefieldnames={}
         langs=set(self.get('entry/sense/field/form',
                 # lang=lang,
                 # showurl=True
                 ).get('lang'))
         # log.info("Found these sense field languages: {}".format(langs))
         for lang in langs:
-            self.sensefields[lang]=list(dict.fromkeys(
+            self.sensefieldnames[lang]=list(dict.fromkeys(
                     self.get('entry/sense/field',
                             lang=lang,
                             # showurl=True
                             ).get('type')))
-        log.info('Fields found in Senses: {}'.format(self.sensefields))
+        log.info('Fields found in Senses: {}'.format(self.sensefieldnames))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
         self.locations=list(dict.fromkeys(self.get('example/locationfield/form/text',
                                                     what='text',
@@ -966,40 +966,46 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         fieldswsoundfiles={}
         self.nfieldswsoundfiles={}
         self.nfieldswannotations={}
-        fields={}
+        self.fields={}
         self.nfields={}
-        fieldopts=['sense/example',
-                    'citation',
-                    'lexical-unit']
-        fieldopts+=['field[@type="{}"]'.format(f) for f in self.fields]
-        for field in fieldopts:
-            self.fields[field]={}
-            fieldswannotations[field]={}
-            fieldswsoundfiles[field]={}
-            self.nfields[field]={}
-            self.nfieldswsoundfiles[field]={}
-            self.nfieldswannotations[field]={}
-            for lang in self.analangs:
-                self.fields[field][lang]=[i for i in
+        fieldopts={k:k for k in ['sense/example',
+                                'citation',
+                                'lexical-unit']}
+        fieldopts.update(
+                            {f:'field[@type="{}"]'.format(f)
+                                    for l in self.analangs
+                                    for f in self.fieldnames[l]
+                                    if l in self.fieldnames})
+        for lang in self.analangs:
+            self.fields[lang]={}
+            fieldswannotations[lang]={}
+            fieldswsoundfiles[lang]={}
+            self.nfields[lang]={}
+            self.nfieldswsoundfiles[lang]={}
+            self.nfieldswannotations[lang]={}
+            for field in fieldopts:
+                self.fields[lang][field]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
                                                                 field,lang))
                     if i.text
                                     ]
-                self.nfields[field][lang]=len(self.fields[field][lang])
-                fieldswannotations[field][lang]=[i for i in
+                self.nfields[lang][field]=len(self.fields[lang][field])
+                fieldswannotations[lang][field]=[i for i in
                     self.nodes.findall('entry/{}/form'
                                 '[@lang="{}"]/annotation'.format(field,lang))
                                                 if i.get('value')
                                                         ]
-                self.nfieldswannotations[field][lang]=len(
-                                        fieldswannotations[field][lang])
-            for lang in self.audiolangs:
-                fieldswsoundfiles[field][lang]=[i for i in
-                    self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
-                                                                field,lang))
-                    if i.text
-                                ]
-                self.nfieldswsoundfiles[field][lang]=len(fieldswsoundfiles[field][lang])
+                self.nfieldswannotations[lang][field]=len(
+                                        fieldswannotations[lang][field])
+        for lang in self.audiolangs:
+            fieldswsoundfiles[lang]={}
+            self.nfieldswsoundfiles[lang]={}
+            fieldswsoundfiles[lang][field]=[i for i in
+                self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
+                                                            field,lang))
+                if i.text
+                            ]
+            self.nfieldswsoundfiles[lang][field]=len(fieldswsoundfiles[lang][field])
     def getguids(self):
         self.guids=self.get('entry').get('guid')
         self.nguids=len(self.guids)
