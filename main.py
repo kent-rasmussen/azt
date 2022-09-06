@@ -11698,7 +11698,8 @@ class Repository(object):
             log.info("Hg commit OK".format(r))
     def diff(self):
         args=["diff"]
-        self.do(args)
+        r=self.do(args)
+        # log.info("{} diff returned {}".format(self.repotypename,r))
     def status(self):
         args=["status"]
         log.info(self.do(args))
