@@ -11739,16 +11739,14 @@ class Repository(object):
         else:
             log.info(_("URL {} is not already in repo {}:\n{}".format(url,self.url,self.files)))
     def ignore(self,file):
-        if not hasattr(self,'hgignore') or file not in self.hgignore:
-            with open(self.hgignorefile,'a') as f:
+        if not hasattr(self,'ignored') or file not in self.ignored:
+            with open(self.ignorefile,'a') as f:
                 f.write(file+'\n')
             self.getignorecontents()
     def ignorecheck(self):
-        self.hgignorefile=file.getdiredurl(self.url,'.hgignore')
-        if str(self.hgignorefile) in self.files or me:
-            log.info("Not creating .hgignore.")
-            return
-        """First time basic setup here"""
+        self.ignorefile=file.getdiredurl(self.url,'.'+self.code+'ignore')
+        self.getignorecontents() #make sure this is up to date
+        """These should all be ignored"""
         for x in ['pdf','xcf','XLingPaperPDFTemp','backupBeforeLx2LcConversion',
                     '.txt', '.7z', '.zip',
                     '__pycache__*',
