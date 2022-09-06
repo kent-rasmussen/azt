@@ -1031,15 +1031,14 @@ class Settings(object):
             return interfacelang()
     def repocheck(self):
         # self.repo=None #?leave this for test of both repo and exe
-        self.repo={
-                    'git': Git(self.directory),
-                    'hg': Mercurial(self.directory),
-                    }
-        for r in self.repo:
-            if not self.repo[r]:
-                del self.repo[r]
-            else:
-                if self.repo[r].exists():
+        repo={ #start with local variable:
+                'git': Git(self.directory),
+                'hg': Mercurial(self.directory),
+                }
+        self.repo=dict() #then copy to class attribute if there
+        for r in repo:
+            if hasattr(repo[r],'files'):
+                if repo[r].exists():
                     log.info(_("Found {} Repository!"
                                 ).format(self.repo[r].repotypename))
                 elif r == 'git': #don't worry about hg, if not there already
