@@ -1195,9 +1195,7 @@ class Settings(object):
                 if file.exists(legacy):
                     log.debug("But legacy file {} does; converting!".format(legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
-            if (str(savefile).endswith('.dat') and
-                    file.exists(savefile) and
-                    not me):
+            if str(savefile).endswith('.dat') and file.exists(savefile):
                 for r in self.repo:
                     self.repo[r].add(savefile)
         for r in self.repo:
