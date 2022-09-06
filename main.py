@@ -1410,6 +1410,58 @@ class Settings(object):
         # log.info('self.reportbasefilename: {}'.format(self.reportbasefilename))
         # log.info('self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
+    def trackuntrackedfiles(self):
+        # This method is here to pick up files that are there, but not tracked,
+        # either in constructing a repository, or as a result of changes by other
+        # editors (e.g., WeSay).
+        # This is for new files, not changes to known files; that is done
+        # on close.
+        def ifnotthereadd(file,repo):
+            if file not in self.repo[repo].files:
+                self.repo[repo].add(file)
+        maindirfiles=[self.liftfilename,
+                        self.toneframesfile,
+                        self.statusfile,
+                        self.profiledatafile,
+                        # I don't know if anyone is using this, but if so, they share...
+                        self.adhocgroupsfile,
+                        #self.defaultfile # This probably shouldn't be shared
+                        # self.soundsettingsfile #per computer, definitely don't share!
+                        ]
+        program['root'].update() #before threading
+        for r in self.repo:
+            present=set(self.repo[r].files)
+            log.info("{} currently has {} files".format(r,len(present)))
+            for f in set(maindirfiles)-present:
+                if f not in self.repo[r].files:
+                    self.repo[r].add(f)
+            # In case I run into formatting issues again:
+            # log.info(', '.join(list(self.repo[r].files)[:5]))
+            # log.info(', '.join([file.getreldir(self.repo[r].url,i) for i in file.getfilesofdirectory(self.audiodir, '*.wav')][:5]))
+            # If we ever support mp3, we should add it here:
+            audio=set([file.getreldir(self.repo[r].url,i)
+                    for i in file.getfilesofdirectory(self.audiodir,
+                                                        '*.wav')])-present
+            log.info("{} wav files to check for the {} repo".format(len(audio),r))
+            for f in audio:
+                t = threading.Thread(target=ifnotthereadd, args=(f,r))
+                t.start()
+                # self.repo[r].add(f)
+            for ext in ['png','jpg','gif']:
+                i=set([file.getreldir(self.repo[r].url,i)
+                        for i in file.getfilesofdirectory(self.imagesdir,
+                                                '*.'+ext)]
+                        )-present
+                log.info("{} {} files to check for the {} repo"
+                        "".format(len(i),ext,r))
+                for f in i:
+                    u = threading.Thread(target=ifnotthereadd, args=(f,r))
+                    u.start()
+            try:
+                t.join()
+                u.join()
+            except UnboundLocalError as e:
+                log.info("Looks like t beat u: {}".format(e))
     def pss(self):
         log.info("checking these lexical category names for plausible noun "
                 "and verb names: {}".format(self.db.pss[self.analang]))
