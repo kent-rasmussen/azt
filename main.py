@@ -3625,11 +3625,17 @@ class TaskDressing(object):
             towrite=self.taskchooser.towrite
         except AttributeError:
             towrite=self.towrite #if taskchooser; shouldn't happen, but in case.
+        self.wait(msg=_("Closing down {} and storing changes").format(
+                                                                program['name']
+                                                                ))
         if towrite:
             log.info("Final write to lift")
             self.maybewrite(definitely=True)
         else:
             log.info("No final write to lift")
+        self.settings.trackuntrackedfiles()
+        for r in self.settings.repo:
+            self.settings.repo[r].commit()
         ui.Window.killall(self) #Exitable
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
