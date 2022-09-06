@@ -11708,8 +11708,9 @@ class Repository(object):
     def root(self):
         args=["root"]
         self.root=self.do(args)
-    def files(self):
-        args=["files"]
+    def getfiles(self):
+        args=self.leaveunicodealonesargs()
+        args+=[self.lsfiles]
         self.files=self.do(args).split('\n')
     def do(self,args):
         cmd=[self.cmd,self.pwd,str(self.url)] #-R
@@ -11873,6 +11874,8 @@ class Repository(object):
         log.info("{} repository object initialized, with {} files."
                 "".format(self.repotypename,len(self.files)))
 class Mercurial(Repository):
+    def leaveunicodealonesargs(self):
+        return []
     def argstoputusername(self,username):
         return ['--config','ui.username={}'.format(username)]
     def choruscheck(self):
@@ -11906,6 +11909,8 @@ class Mercurial(Repository):
         else:
             self=None
 class Git(Repository):
+    def leaveunicodealonesargs(self):
+        return ['-c','core.quotePath=false']
     def argstoputusername(self,username):
         return ['-c','user.name={}'.format(username)]
     def init(self):
