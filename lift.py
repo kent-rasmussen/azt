@@ -985,27 +985,33 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             self.nfieldswannotations[lang]={}
             for field in fieldopts:
                 self.fields[lang][field]=[i for i in
-                    self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
-                                                                field,lang))
-                    if i.text
-                                    ]
+                    self.nodes.findall('entry/{}/form[@lang="{}"]/text'
+                                        ''.format(fieldopts[field],lang))
+                                        if i.text
+                                        ]
                 self.nfields[lang][field]=len(self.fields[lang][field])
                 fieldswannotations[lang][field]=[i for i in
-                    self.nodes.findall('entry/{}/form'
-                                '[@lang="{}"]/annotation'.format(field,lang))
-                                                if i.get('value')
-                                                        ]
+                    self.nodes.findall('entry/{}/form[@lang="{}"]/annotation'
+                                        ''.format(fieldopts[field],lang))
+                                        if i.get('value')
+                                                ]
                 self.nfieldswannotations[lang][field]=len(
                                         fieldswannotations[lang][field])
+        #get actual audiolangs here; relate to analangs elsewhere
         for lang in self.audiolangs:
             fieldswsoundfiles[lang]={}
             self.nfieldswsoundfiles[lang]={}
-            fieldswsoundfiles[lang][field]=[i for i in
-                self.nodes.findall('entry/{}/form[@lang="{}"]/text'.format(
-                                                            field,lang))
-                if i.text
-                            ]
-            self.nfieldswsoundfiles[lang][field]=len(fieldswsoundfiles[lang][field])
+            for field in fieldopts:
+                fieldswsoundfiles[lang][field]=[i for i in
+                    self.nodes.findall('entry/{}/form[@lang="{}"]/text'
+                                        ''.format(fieldopts[field],lang))
+                                        if i.text
+                                                ]
+                self.nfieldswsoundfiles[lang][field]=len(fieldswsoundfiles[lang]
+                                                                        [field])
+                log.info("Found {} fieldswsoundfiles for {}".format(
+                            self.nfieldswsoundfiles[lang],lang))
+        # log.info("Found {} fieldswsoundfiles".format(self.nfieldswsoundfiles))
     def getguids(self):
         self.guids=self.get('entry').get('guid')
         self.nguids=len(self.guids)
