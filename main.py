@@ -8314,7 +8314,7 @@ class Transcribe(Sound,Sort):
             ints=[i for i in self.status.groups(wsorted=True) if i in range(50)]
             if ints:
                 log.info("Found integer groups: {}".format(ints))
-                self.status.group(min(ints))#Look for integers first
+                self.status.group(str(min(ints)))#Look for integers first
             else:
                 log.info("Didn't Find integer groups: {}".format(ints))
                 self.status.nextgroup(wsorted=True)
