@@ -11772,6 +11772,7 @@ class Repository(object):
                     "\nYou may also get a 'fatal: not a git repository...' "
                     "notice, if the repo isn't there yet. ".format(e))
         cmd.extend(args)
+        # log.info("{} cmd args: {};{}".format(self.code,cmd))
         try:
             output=subprocess.check_output(cmd, shell=False)
         except subprocess.CalledProcessError as e:
