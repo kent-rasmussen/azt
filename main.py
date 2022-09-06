@@ -9360,10 +9360,16 @@ class ExampleDict(dict):
                         kwargs['renew']=True
                     else:
                         i=senseids.index(self[group])
-                        if i == len(senseids)-1: #loop back on last
-                            senseid=senseids[0]
+                        if not kwargs.get('goback'):
+                            if i == len(senseids)-1: #loop back on last
+                                senseid=senseids[0]
+                            else:
+                                senseid=senseids[i+1]
                         else:
-                            senseid=senseids[i+1]
+                            if i == 0: #loop back on last
+                                senseid=senseids[len(senseids)-1]
+                            else:
+                                senseid=senseids[i-1]
                         log.info("Using next value for ‘{}’ group: ‘{}’"
                                 "".format(group, self[group]))
                 else:
@@ -10188,6 +10194,15 @@ class ToneGroupButtonFrame(ui.Frame):
         self.update_idletasks()
         if self.kwargs['playable'] and self._playable:
             self.player.play()
+    def backup(self,event=None):
+        log.info("Resetting tone group example ({}): {} of {} examples with "
+                "kwargs: {}".format(self.group,self.exs[self.group],self._n,
+                                                                self.kwargs))
+        self.kwargs['goback']=True
+        self.kwargs['alwaysrefreshable']=True
+        self.getexample(**self.kwargs)
+        self.again()
+        self.kwargs['goback']=False #don't keep going on next
     def select(self):
         self._var.set(True)
     def sortnext(self):
@@ -10318,7 +10333,8 @@ class ToneGroupButtonFrame(ui.Frame):
                         row=0,
                         sticky="nsew",
                         **tinyfontkwargs)
-        bct=ui.ToolTip(bc,_("Change example word"))
+        bc.bind('<ButtonRelease-3>',self.backup)
+        bct=ui.ToolTip(bc,text=_("Change example word; Right click to back up"))
     def unsortbutton(self):
         t=_("<= resort *this* *word*")
         usbkwargs=self.buttonkwargs()
@@ -10374,6 +10390,7 @@ class ToneGroupButtonFrame(ui.Frame):
                             'label','playable','unsortable',
                             'alwaysrefreshable','wsoundfile',
                             'showtonegroup',
+                            'goback'
                             ]
         for arg in self.unbuttonargs:
             kwargs[arg]=kwargs.pop(arg,False)
