@@ -4076,9 +4076,9 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("nfields in db: {}".format(self.db.nfields))
         log.info("wannotations in db: {}".format(self.db.nfieldswannotations))
         sorts={k:v for (k,v) in self.db.nfields.items()
-                                            if v == 'sense/example'}
+                                            if 'sense/example' in v}
         sorts.update({k:v for (k,v) in self.db.nfieldswannotations.items()
-                                            if v != 'sense/example'})
+                                            if 'sense/example' not in v})
         log.info("nfields by lang: {}".format(sorts))
         sortsrecorded=self.db.nfieldswsoundfiles
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
