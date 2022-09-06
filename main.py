@@ -11863,7 +11863,7 @@ class Mercurial(Repository):
     def choruscheck(self):
         rescues=[]
         for file in self.files:
-            if file.endswith('.ChorusRescuedFile'):
+            if str(file).endswith('.ChorusRescuedFile'):
                 rescues.append(file)
         if rescues:
             error=_("You have the following files ( in {}) that need to be "
@@ -11884,6 +11884,12 @@ class Mercurial(Repository):
         self.lsfiles='files'
         self.argstogetusername=['config', 'ui.username']
         super(Mercurial, self).__init__(url)
+        # These files are just ignored in git, but if Chorus put something
+        # there, we want to know
+        if hasattr(self,'files'):
+            self.choruscheck()
+        else:
+            self=None
 class Git(Repository):
     def argstoputusername(self,username):
         return ['-c','user.name={}'.format(username)]
