@@ -2,6 +2,7 @@
 # coding=UTF-8
 import datetime
 import logging
+import logging.handlers
 import lzma
 import re
 import pathlib
@@ -56,7 +57,10 @@ def dorootloghandlers(self):
     console = logging.StreamHandler()
     console.setLevel(0) #Let the loglevel determine what to show
     console.setFormatter(simpleformat)
-    file = logging.FileHandler(filename,mode='w', encoding='utf-8')
+    file = logging.handlers.RotatingFileHandler(filename,mode='w', encoding='utf-8',
+                                        maxBytes=100000,backupCount=5)
+    file.doRollover()# start at the beginning of a file
+    # file = logging.FileHandler(filename,mode='w', encoding='utf-8')
     file.setLevel(0) #Let the loglevel determine what to show
     file.setFormatter(timelessformat)
     self.addHandler(console)
