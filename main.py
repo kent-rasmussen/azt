@@ -11762,6 +11762,7 @@ class Repository(object):
     def getfiles(self):
         args=self.leaveunicodealonesargs()
         args+=[self.lsfiles]
+        # log.info("{} getfiles args: {}".format(self.code,args))
         self.files=self.do(args).split('\n')
     def do(self,args):
         cmd=[self.cmd,self.pwd,str(self.url)] #-R
