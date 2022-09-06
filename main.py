@@ -11754,7 +11754,7 @@ class Repository(object):
         if not hasattr(self,'ignored') or file not in self.ignored:
             with open(self.ignorefile,'a') as f:
                 f.write(file+'\n')
-            self.getignorecontents()
+            self.getignorecontents() #make sure this is up to date
     def ignorecheck(self):
         self.ignorefile=file.getdiredurl(self.url,'.'+self.code+'ignore')
         self.getignorecontents() #make sure this is up to date
