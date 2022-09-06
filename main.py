@@ -1948,9 +1948,9 @@ class Settings(object):
             self.rx[sclass][pn]=rx.s(self.s[self.analang],sclass,polyn=pn,
                                                             compile=True)
             if self.rx[sclass][pn] == rx.compile('()'):
-                log.info("Empty Regex; removing.")
+                # log.info("Empty Regex; removing.")
                 del self.rx[sclass][pn]
-        log.info("compileCVrxforsclass RXs: {}".format(self.rx))
+        # log.info("compileCVrxforsclass RXs: {}".format(self.rx))
         sin=self.s[self.analang][sclass]
         sout=[i for k,v in self.s[self.analang].items()
                 if (k not in [sclass,'<','='] # no affix boundary or punctuation
