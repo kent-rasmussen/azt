@@ -11681,11 +11681,9 @@ class Repository(object):
     def add(self,file):
         if not self.alreadythere(file):
             args=["add", str(file)]
-            r=self.do(args)
-            if r:
-                log.info("Hg add: {}".format(r))
-            else:
-                log.info("Hg add OK".format(r))
+            self.do(args)
+            self.files+=[file] #keep this up to date
+            # self.getfiles() #this was more work
     def commit(self,file=None):
         #I may need to rearrange these args:
         if not file and self.code == 'git':
