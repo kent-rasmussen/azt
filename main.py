@@ -11831,6 +11831,15 @@ class Repository(object):
                             ).format(self.repotypename))
         w.deiconify()
         w.lift()
+    def getusernameargs(self):
+        r=self.do(self.argstogetusername)
+        if r:
+            log.info("Using {} username '{}'".format(r,self.repotypename))
+        else:
+            r=program['name']+'-'+program['hostname']
+            log.info("No config {} username found; using '{}'"
+                    "".format(r,self.repotypename))
+        return self.argstoputusername(r)
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
