@@ -1311,13 +1311,13 @@ class Settings(object):
             if setting == "adhocgroups":
                 self.adhocgroups={}
             return
-        log.debug("Trying for {} settings in {}".format(setting, filename))
+        # log.debug("Trying for {} settings in {}".format(setting, filename))
         d={}
         for section in self.settings[setting]['attributes']:
             if section in config:
-                log.debug("Trying for {} settings in {}".format(section, setting))
+                # log.debug("Trying for {} settings in {}".format(section, setting))
                 if len(config[section].values())>0:
-                    log.debug("Found Dictionary value for {}".format(section))
+                    # log.debug("Found Dictionary value for {}".format(section))
                     d[section]={}
                     for s in config[section]:
                         d[section][s]={}
