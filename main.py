@@ -11847,13 +11847,11 @@ class Repository(object):
         self.cmd=program[self.code]
         self.deltadir=file.getdiredurl(self.url,'.'+self.code)
         if not self.cmd:
-            log.info("Found no executable!")
+            log.info("Found no {} executable!".format(self.repotypename))
             self.exewarning()
-            self=None
-            return
+            return #before getting a file list!
         self.usernameargs=self.getusernameargs()
-        self.files()
-        self.choruscheck()
+        self.getfiles()
         self.ignorecheck()
         log.info("{} repository object initialized, with {} files."
                 "".format(self.repotypename,len(self.files)))
