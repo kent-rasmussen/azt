@@ -11724,8 +11724,10 @@ class Repository(object):
         cmd=[program['hg'],'--cwd',str(self.url)] #-R
         try:
             args+=self.usernameargs
-        except AttributeError:
-            log.info("usernameargs not found; OK if initializing the repo")
+        except AttributeError as e:
+            log.info("usernameargs not found ({}); OK if initializing the repo."
+                    "\nYou may also get a 'fatal: not a git repository...' "
+                    "notice, if the repo isn't there yet. ".format(e))
         cmd.extend(args)
         try:
             output=subprocess.check_output(cmd, shell=False)
