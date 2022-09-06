@@ -4039,6 +4039,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def whatsdone(self):
         """I should probably have a roundtable with people to discuss these
         numbers, to see that we agree the decision points are rational."""
+        #This should probably not be redone entirely each time a task is done
         self.donew={} # last is default to show user
         self.doneenough={} # which options the user *can* see
         for taskreq in ['collectionlc','parsedlx','collectionplimp',
