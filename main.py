@@ -3277,7 +3277,7 @@ class TaskDressing(object):
                                     setcmd=setcmd,
                                     other=True)
         log.info("Asking for ‘{}’ second form field...".format(ps))
-        optionslist = self.db.fields[self.analang]
+        optionslist = self.db.fieldnames[self.analang]
         if not optionslist:
             ErrorNotice(_("I don't see any appropriate fields; I'll give you "
             "some commonly used ones to choose from."), wait=True)
@@ -4072,9 +4072,9 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("nfields in db: {}".format(self.db.nfields))
         log.info("wannotations in db: {}".format(self.db.nfieldswannotations))
         sorts={k:v for (k,v) in self.db.nfields.items()
-                                            if k == 'sense/example'}
+                                            if v == 'sense/example'}
         sorts.update({k:v for (k,v) in self.db.nfieldswannotations.items()
-                                            if k != 'sense/example'})
+                                            if v != 'sense/example'})
         log.info("nfields by lang: {}".format(sorts))
         sortsrecorded=self.db.nfieldswsoundfiles
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
@@ -4083,49 +4083,50 @@ class TaskChooser(TaskDressing,ui.Window):
             enough=0
         else:
             enough=25
-        for f in sorts:
-            if f not in sortsrecorded:
-                sortsrecorded[f]={}
-            sortsnotrecorded[f]={}
-            for l in sorts[f]:
+        for l in sorts:
+            maybeals=[i for i in self.db.audiolangs if l in i]
+            if maybeals:
+                al=maybeals[0]
+                log.info("Using audiolang {} for analang {}"
+                            "".format(al,l))
+            else:
+                log.info("Couldn't find plausible audiolang (among {}) "
+                        "for analang {}".format(self.db.audiolangs,l))
+            if l not in sortsrecorded:
+                sortsrecorded[l]={}
+            sortsnotrecorded[l]={}
+            for f in sorts[l]:
                 """I don't think I can faithfully distinguish between
                 sorting on lc v other fields here, at least not yet"""
                 if f == 'sense/example':
                     #sorting is never done; mark when the top slices are done?
-                    if sorts[f][l] >= enough: #what is a reasonable number here?
+                    if sorts[l][f] >= enough: #what is a reasonable number here?
                         self.doneenough['sortT']=True
                 else:
-                    if sorts[f][l] >= enough: #what is a reasonable number here?
+                    if sorts[l][f] >= enough: #what is a reasonable number here?
                         self.doneenough['sort']=True
                 #This is a bit of a hack, but no analang nor audiolang yet.
-                maybeals=[i for i in self.db.audiolangs if l in i]
-                if maybeals:
-                    al=maybeals[0]
-                    log.info("Using audiolang {} for analang {}".format(al,l))
-                    if al not in sortsrecorded[f]:
-                        sortsrecorded[f][al]=0
-                    sortsnotrecorded[f][l]=sorts[f][l]-sortsrecorded[f][al]
-                    if f == 'sense/example':
-                        if not sortsnotrecorded[f][l]:
-                            self.donew['recordedT']=True
-                        if sortsrecorded[f][al] >= enough:
-                            self.doneenough['recordedT']=True
-                        # Needed? Any time sorting is done, show recording
-                        # if not sortsrecorded[f][al]:
-                        #     self.donew['torecordT']=True
-                        if sortsnotrecorded[f][l] < enough:
-                            self.doneenough['torecordT']=True
-                    else:
-                        if not sortsnotrecorded[f][l]:
-                            self.donew['recorded']=True
-                        if sortsrecorded[f][al] >= enough:
-                            self.doneenough['recorded']=True
-                        #see above
-                        if sortsnotrecorded[f][l] < enough:
-                            self.doneenough['torecord']=True
+                if f not in sortsrecorded[l]:
+                    sortsrecorded[l]={f:0}
+                sortsnotrecorded[l][f]=sorts[l][f]-sortsrecorded[l][f]
+                if f == 'sense/example':
+                    if not sortsnotrecorded[l][f]:
+                        self.donew['recordedT']=True
+                    if sortsrecorded[l][f] >= enough:
+                        self.doneenough['recordedT']=True
+                    # Needed? Any time sorting is done, show recording
+                    # if not sortsrecorded[f][al]:
+                    #     self.donew['torecordT']=True
+                    if sortsnotrecorded[l][f] < enough:
+                        self.doneenough['torecordT']=True
                 else:
-                    log.info("Couldn't find plausible audiolang (among {}) "
-                            "for analang {}".format(self.db.audiolangs,l))
+                    if not sortsnotrecorded[l][f]:
+                        self.donew['recorded']=True
+                    if sortsrecorded[l][f] >= enough:
+                        self.doneenough['recorded']=True
+                    #see above
+                    if sortsnotrecorded[l][f] < enough:
+                        self.doneenough['torecord']=True
         log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
         for lang in self.file.db.nentrieswlexemedata:
             remaining=self.file.db.nentrieswcitationdata[lang
@@ -4141,7 +4142,7 @@ class TaskChooser(TaskDressing,ui.Window):
             if me or citationsdone[lang] > 200: #was 705
                 self.doneenough['collectionlc']=True#I need to think through this
             # log.info("checking '{}'".format(f))
-        for f in [i for j in self.db.sensefields.values() for i in j]:
+        for f in [i for j in self.db.sensefieldnames.values() for i in j]:
             if 'verification' in f:
                 # log.info("Found ‘verification’ in ‘{}’".format(f))
                 #I need to tweak this, it should follow tone (only) reports:
