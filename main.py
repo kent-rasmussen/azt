@@ -4096,8 +4096,8 @@ class TaskChooser(TaskDressing,ui.Window):
             else:
                 log.info("Couldn't find plausible audiolang (among {}) "
                         "for analang {}".format(self.db.audiolangs,l))
-            if l not in sortsrecorded:
-                sortsrecorded[l]={}
+            if al not in sortsrecorded:
+                sortsrecorded[al]={}
             sortsnotrecorded[l]={}
             for f in sorts[l]:
                 """I don't think I can faithfully distinguish between
@@ -4110,13 +4110,13 @@ class TaskChooser(TaskDressing,ui.Window):
                     if sorts[l][f] >= enough: #what is a reasonable number here?
                         self.doneenough['sort']=True
                 #This is a bit of a hack, but no analang nor audiolang yet.
-                if f not in sortsrecorded[l]:
-                    sortsrecorded[l]={f:0}
-                sortsnotrecorded[l][f]=sorts[l][f]-sortsrecorded[l][f]
+                if f not in sortsrecorded[al]:
+                    sortsrecorded[al]={f:0}
+                sortsnotrecorded[l][f]=sorts[l][f]-sortsrecorded[al][f]
                 if f == 'sense/example':
                     if not sortsnotrecorded[l][f]:
                         self.donew['recordedT']=True
-                    if sortsrecorded[l][f] >= enough:
+                    if sortsrecorded[al][f] >= enough:
                         self.doneenough['recordedT']=True
                     # Needed? Any time sorting is done, show recording
                     # if not sortsrecorded[f][al]:
@@ -4126,7 +4126,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 else:
                     if not sortsnotrecorded[l][f]:
                         self.donew['recorded']=True
-                    if sortsrecorded[l][f] >= enough:
+                    if sortsrecorded[al][f] >= enough:
                         self.doneenough['recorded']=True
                     #see above
                     if sortsnotrecorded[l][f] < enough:
