@@ -417,8 +417,10 @@ class Menus(ui.Menu):
                             self.parent.settings.reloadprofiledata),
                 (_("Remake Status file (All: several minutes)"),
                             self.parent.settings.reloadstatusdata),
-                (_("Remake Status file (just this page)"),
+                (_("Remake Status file (just this category)"),
                             self.parent.settings.reloadstatusdatabycvtps),
+                (_("Remake Status file (just this profile)"),
+                        self.parent.settings.reloadstatusdatabycvtpsprofile),
                 ]
         for m in options:
             self.command(self.advancedmenu,
@@ -5803,7 +5805,11 @@ class Sort(object):
             if len(set(curvervaluecodes)) >1:
                 log.error("Too many values for verification node! ({})"
                             "".format(curvervaluecodes))
-            curvervalue=firstoflist(curvervaluecodes).split('=')[-1] #last, if multiple
+            firstcode=firstoflist(curvervaluecodes)
+            if firstcode:
+                curvervalue=firstcode.split('=')[-1] #last, if multiple
+            else:
+                curvervalue=None
             if curvervalue == oldgroup: #only update if starting the same
                 rm=self.verifictioncode(check=check,group=oldgroup)
                 add=self.verifictioncode(check=check,group=group)
@@ -8185,18 +8191,32 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
 class Transcribe(Sound,Sort):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
-    def switchgroups(self):
-        if not (hasattr(self,'group') and hasattr(self,'group_comparison')):
-            log.error("Missing either group or comparison; can't switch them.")
+    def switchgroups(self,comparison=None):
+        #this doesn't save!
+        if (not hasattr(self,'group') or not hasattr(self,'group_comparison')
+            and not comparison):
+            log.error(_("Missing either group or comparison, without value "
+                        "specified; can't switch them."))
             return
         g=self.group
-        gc=self.group_comparison
+        if comparison:
+            gc=comparison
+        else:
+            gc=self.group_comparison
         self.status.group(gc)
         self.settings.set('group_comparison',g)
         # self.settings.setgroup(gc)
         self.runwindow.destroy()
-        # self.maybeswitchmenu.destroy()
         self.makewindow()
+    def submitandswitch(self):
+        if hasattr(self,'group_comparison'):
+            comparison=self.group_comparison
+        else:
+            self.errorlabel['text'] = _("Sorry, pick a comparison first!")
+            return 1
+        error=self.submitform()
+        if not error:
+            self.switchgroups(comparison)
     def updategroups(self):
         # Update locals group, groups, and othergroups from objects
         self.groups=self.status.groups(wsorted=True)
@@ -8301,7 +8321,7 @@ class Transcribe(Sound,Sort):
             # update forms, even if group doesn't change. I should have a test
             # for when this is needed..…
             group=self.status.group()
-            if not str(group).isdigit():
+            if not isinteger(group): #Don't do this for default groups
                 ftype=self.params.ftype()
                 check=self.params.check()
                 log.info("updating for type {} check {}, group ‘{}’"
@@ -8331,7 +8351,14 @@ class Transcribe(Sound,Sort):
         error=self.submitform()
         if not error:
             # log.debug("group: {}".format(group))
-            self.status.nextgroup(wsorted=True)
+            ints=[i for i in self.status.groups(wsorted=True) if isinteger(i)]
+            if ints:
+                log.info("Found integer groups: {}".format(ints))
+                self.status.group(str(min(ints)))#Look for integers first
+            else:
+                log.info("Didn't Find integer groups: {}".format(
+                    self.status.groups(wsorted=True)))
+                self.status.nextgroup(wsorted=True)
             # log.debug("group: {}".format(group))
             self.makewindow()
     def nextcheck(self):
@@ -8361,6 +8388,8 @@ class Transcribe(Sound,Sort):
                                             self.settings.group_comparison))
         if hasattr(self.settings,'group_comparison'):
             self.group_comparison=self.settings.group_comparison
+        if self.errorlabel['text'] == _("Sorry, pick a comparison first!"):
+            self.updateerror()
         self.comparisonbuttons()
     def comparisonbuttons(self):
         try: #successive runs
@@ -8368,8 +8397,6 @@ class Transcribe(Sound,Sort):
             log.info("Comparison frameb destroyed!")
         except: #first run
             log.info("Problem destroying comparison frame, making...")
-        # self.buttonframew=int(program['screenw']/4)
-        # b['wraplength']=buttonframew
         self.compframe.compframeb=ui.Frame(self.compframe)
         self.compframe.compframeb.grid(row=1,column=0)
         t=_('Compare with another group')
@@ -8391,9 +8418,15 @@ class Transcribe(Sound,Sort):
                                     wraplength=self.buttonframew
                                     )
             self.compframe.bf2.grid(row=0, column=0, sticky='w')
-            self.maybeswitchmenu=ui.ContextMenu(self.compframe)
-            self.maybeswitchmenu.menuitem(_("Switch to this group"),
-                                            self.switchgroups)
+            self.compframe.b2=ui.Button(self.compframe.compframeb,
+                                        text=_("Switch Groups"),
+                                        cmd=self.switchgroups,
+                                        row=0, column=1, sticky='w')
+            self.compframe.b2tt=ui.ToolTip(self.compframe.b2,
+                                        _("This doesn't save the curent group"))
+            # self.maybeswitchmenu=ui.ContextMenu(self.compframe)
+            # self.maybeswitchmenu.menuitem(_("Switch to this group"),
+            #                                 self.switchgroups)
         elif not hasattr(self, 'group_comparison'):
             log.info("No comparison found !")
         elif self.group_comparison not in self.groups:
@@ -8513,7 +8546,9 @@ class Transcribe(Sound,Sort):
             buttons+=[(_('next tone frame'), self.nextcheck)]
         else:
             buttons+=[(_('next check'), self.nextcheck)]
-        buttons+=[(_('next syllable profile'), self.nextprofile)]
+        buttons+=[(_('next syllable profile'), self.nextprofile),
+                (_('comparison group'), self.submitandswitch)
+                ]
         for button in buttons:
             column+=1
             ui.Button(responseframe,text = button[0], command = button[1],
@@ -9393,10 +9428,16 @@ class ExampleDict(dict):
                         kwargs['renew']=True
                     else:
                         i=senseids.index(self[group])
-                        if i == len(senseids)-1: #loop back on last
-                            senseid=senseids[0]
+                        if not kwargs.get('goback'):
+                            if i == len(senseids)-1: #loop back on last
+                                senseid=senseids[0]
+                            else:
+                                senseid=senseids[i+1]
                         else:
-                            senseid=senseids[i+1]
+                            if i == 0: #loop back on last
+                                senseid=senseids[len(senseids)-1]
+                            else:
+                                senseid=senseids[i-1]
                         log.info("Using next value for ‘{}’ group: ‘{}’"
                                 "".format(group, self[group]))
                 else:
@@ -10221,6 +10262,15 @@ class ToneGroupButtonFrame(ui.Frame):
         self.update_idletasks()
         if self.kwargs['playable'] and self._playable:
             self.player.play()
+    def backup(self,event=None):
+        log.info("Resetting tone group example ({}): {} of {} examples with "
+                "kwargs: {}".format(self.group,self.exs[self.group],self._n,
+                                                                self.kwargs))
+        self.kwargs['goback']=True
+        self.kwargs['alwaysrefreshable']=True
+        self.getexample(**self.kwargs)
+        self.again()
+        self.kwargs['goback']=False #don't keep going on next
     def select(self):
         self._var.set(True)
     def sortnext(self):
@@ -10351,7 +10401,8 @@ class ToneGroupButtonFrame(ui.Frame):
                         row=0,
                         sticky="nsew",
                         **tinyfontkwargs)
-        bct=ui.ToolTip(bc,_("Change example word"))
+        bc.bind('<ButtonRelease-3>',self.backup)
+        bct=ui.ToolTip(bc,text=_("Change example word; Right click to back up"))
     def unsortbutton(self):
         t=_("<= resort *this* *word*")
         usbkwargs=self.buttonkwargs()
@@ -10407,6 +10458,7 @@ class ToneGroupButtonFrame(ui.Frame):
                             'label','playable','unsortable',
                             'alwaysrefreshable','wsoundfile',
                             'showtonegroup',
+                            'goback'
                             ]
         for arg in self.unbuttonargs:
             kwargs[arg]=kwargs.pop(arg,False)

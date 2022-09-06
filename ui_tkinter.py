@@ -857,6 +857,7 @@ class Button(Gridded,Text,tkinter.Button):
         pass
     def __init__(self, parent, choice=None, window=None, command=None, **kwargs):
         """Usta include column=0, row=1, norender=False,"""
+        # log.info("button kwargs: {}".format(kwargs))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
