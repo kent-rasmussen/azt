@@ -8281,7 +8281,7 @@ class Transcribe(Sound,Sort):
             # update forms, even if group doesn't change. I should have a test
             # for when this is needed..…
             group=self.status.group()
-            if not str(group).isdigit():
+            if not isinteger(group): #Don't do this for default groups
                 ftype=self.params.ftype()
                 check=self.params.check()
                 log.info("updating for type {} check {}, group ‘{}’"
@@ -8311,12 +8311,13 @@ class Transcribe(Sound,Sort):
         error=self.submitform()
         if not error:
             # log.debug("group: {}".format(group))
-            ints=[i for i in self.status.groups(wsorted=True) if i in range(50)]
+            ints=[i for i in self.status.groups(wsorted=True) if isinteger(i)]
             if ints:
                 log.info("Found integer groups: {}".format(ints))
                 self.status.group(str(min(ints)))#Look for integers first
             else:
-                log.info("Didn't Find integer groups: {}".format(ints))
+                log.info("Didn't Find integer groups: {}".format(
+                    self.status.groups(wsorted=True)))
                 self.status.nextgroup(wsorted=True)
             # log.debug("group: {}".format(group))
             self.makewindow()
