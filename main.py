@@ -1040,9 +1040,10 @@ class Settings(object):
             if hasattr(repo[r],'files'):
                 if repo[r].exists():
                     log.info(_("Found {} Repository!"
-                                ).format(self.repo[r].repotypename))
+                                ).format(repo[r].repotypename))
                 elif r == 'git': #don't worry about hg, if not there already
-                    self.repo[r].init()
+                    repo[r].init()
+                self.repo[r]=repo[r]
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
         self.settings={'defaults':{
