@@ -11768,8 +11768,13 @@ class Repository(object):
         self.add(self.hgignorefile)
         self.commit()
     def getignorecontents(self):
-        with open(self.hgignorefile,'r') as f:
-            self.hgignore=f.readlines()
+        #This reads file contents to attribute
+        try: #in case the file doesn't exist yet
+            with open(self.ignorefile) as f:
+                self.ignored=[i.rstrip() for i in f.readlines()]
+            log.info("self.ignored now {}".format(self.ignored))
+        except FileNotFoundError as e:
+            log.info("Hope this is OK: {}".format(e))
     def exists(self):
         return file.exists(self.deltadir)
     def exewarning(self):
