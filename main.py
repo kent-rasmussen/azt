@@ -11834,7 +11834,7 @@ class Repository(object):
         try: #in case the file doesn't exist yet
             with open(self.ignorefile) as f:
                 self.ignored=[i.rstrip() for i in f.readlines()]
-            log.info("self.ignored now {}".format(self.ignored))
+            log.info("self.ignored for {} now {}".format(self.code,self.ignored))
         except FileNotFoundError as e:
             log.info("Hope this is OK: {}".format(e))
     def exists(self):
