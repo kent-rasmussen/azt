@@ -11727,10 +11727,21 @@ class Repository(object):
         except Exception as e:
             log.info(_("Call to Mercurial ({}) failed: {}").format(args,e))
             return e
+        iwascalledby=callerfn()
         try:
-            t=output.decode(sys.stdout.encoding).strip()
+            if iwascalledby == 'getfiles':
+                log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
+            t=output.decode(sys.stdout.encoding,errors='backslashreplace').strip()
+            if iwascalledby == 'getfiles':
+                log.info("Looks like that worked")
         except:
+            if iwascalledby == 'getfiles':
+                log.info("Looks like that didn't work")
             t=output
+        if t and iwascalledby not in ['diff','getfiles']: #These give massive output!
+            log.info("{} {}: {}".format(self.repotypename,iwascalledby,t))
+        elif iwascalledby not in ['add','commit']:
+            log.info("{} {} OK".format(self.repotypename,iwascalledby))
         return t
     def alreadythere(self,url):
         if str(file.getreldir(self.url,url)) in self.files:
