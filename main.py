@@ -2520,6 +2520,7 @@ class Settings(object):
         self.liftfilename=liftfileobject.name
         self.db=liftfileobject.db
         self.getdirectories() #incl settingsfilecheck and repocheck
+        self.trackuntrackedfiles()
         self.setinvalidcharacters()
         # self.settingsfilecheck()
         self.settingsinit() #init, clear, fields
