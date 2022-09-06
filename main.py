@@ -11765,7 +11765,7 @@ class Repository(object):
                     '.hg'
                 ]:
             self.ignore(x)
-        self.add(self.hgignorefile)
+        self.add(self.ignorefile)
         self.commit()
     def getignorecontents(self):
         #This reads file contents to attribute
