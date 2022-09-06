@@ -8152,6 +8152,7 @@ class Transcribe(Sound,Sort):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
     def switchgroups(self):
+        #this doesn't save!
         if not (hasattr(self,'group') and hasattr(self,'group_comparison')):
             log.error("Missing either group or comparison; can't switch them.")
             return
