@@ -11766,7 +11766,7 @@ class Repository(object):
     def do(self,args):
         cmd=[self.cmd,self.pwd,str(self.url)] #-R
         try:
-            args+=self.usernameargs
+            cmd.extend(self.usernameargs)
         except AttributeError as e:
             log.info("usernameargs not found ({}); OK if initializing the repo."
                     "\nYou may also get a 'fatal: not a git repository...' "
