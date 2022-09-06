@@ -77,7 +77,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getsensefieldnames() #sets self.sensefieldnames (fields of sense)
         self.legacyverificationconvert() #data to form nodes (no name changes)
         self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
-        "with citation data) "
         log.info("Working on {} with {} entries, with lexeme data counts: {}, "
         "citation data counts: {} and {} senses".format(filename,self.nguids,
                                                     self.nentrieswlexemedata,
@@ -976,12 +975,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                     for l in self.analangs
                                     for f in self.fieldnames[l]
                                     if l in self.fieldnames})
+        # log.info("fieldopts: {}".format(fieldopts))
         for lang in self.analangs:
             self.fields[lang]={}
             fieldswannotations[lang]={}
-            fieldswsoundfiles[lang]={}
+            # fieldswsoundfiles[lang]={}
             self.nfields[lang]={}
-            self.nfieldswsoundfiles[lang]={}
+            # self.nfieldswsoundfiles[lang]={}
             self.nfieldswannotations[lang]={}
             for field in fieldopts:
                 self.fields[lang][field]=[i for i in
