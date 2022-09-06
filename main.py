@@ -8162,7 +8162,6 @@ class Transcribe(Sound,Sort):
         self.settings.set('group_comparison',g)
         # self.settings.setgroup(gc)
         self.runwindow.destroy()
-        # self.maybeswitchmenu.destroy()
         self.makewindow()
     def submitandswitch(self):
         error=self.submitform()
