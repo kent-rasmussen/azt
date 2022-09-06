@@ -11721,7 +11721,7 @@ class Repository(object):
             log.info("No config Mercurial username found; using '{}'".format(r))
             return ['--config','ui.username={}'.format(r)]
     def do(self,args):
-        cmd=[program['hg'],'--cwd',str(self.url)] #-R
+        cmd=[self.cmd,self.pwd,str(self.url)] #-R
         try:
             args+=self.usernameargs
         except AttributeError as e:
