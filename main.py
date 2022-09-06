@@ -8151,22 +8151,32 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
 class Transcribe(Sound,Sort):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
-    def switchgroups(self):
+    def switchgroups(self,comparison=None):
         #this doesn't save!
-        if not (hasattr(self,'group') and hasattr(self,'group_comparison')):
-            log.error("Missing either group or comparison; can't switch them.")
+        if (not hasattr(self,'group') or not hasattr(self,'group_comparison')
+            and not comparison):
+            log.error(_("Missing either group or comparison, without value "
+                        "specified; can't switch them."))
             return
         g=self.group
-        gc=self.group_comparison
+        if comparison:
+            gc=comparison
+        else:
+            gc=self.group_comparison
         self.status.group(gc)
         self.settings.set('group_comparison',g)
         # self.settings.setgroup(gc)
         self.runwindow.destroy()
         self.makewindow()
     def submitandswitch(self):
+        if hasattr(self,'group_comparison'):
+            comparison=self.group_comparison
+        else:
+            self.errorlabel['text'] = _("Sorry, pick a comparison first!")
+            return 1
         error=self.submitform()
         if not error:
-            self.switchgroups()
+            self.switchgroups(comparison)
     def updategroups(self):
         # Update locals group, groups, and othergroups from objects
         self.groups=self.status.groups(wsorted=True)
@@ -8337,6 +8347,8 @@ class Transcribe(Sound,Sort):
                                             self.settings.group_comparison))
         if hasattr(self.settings,'group_comparison'):
             self.group_comparison=self.settings.group_comparison
+        if self.errorlabel['text'] == _("Sorry, pick a comparison first!"):
+            self.updateerror()
         self.comparisonbuttons()
     def comparisonbuttons(self):
         try: #successive runs
