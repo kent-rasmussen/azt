@@ -1401,14 +1401,14 @@ class Settings(object):
             ):
             self.imagesdir=pictures #us this, if this is where they are.
         self.audiodir=file.getaudiodir(self.directory)
-        log.info('self.audiodir: {}'.format(self.audiodir))
+        # log.info('self.audiodir: {}'.format(self.audiodir))
         self.reportsdir=file.getreportdir(self.directory)
         self.reportbasefilename=file.getdiredurl(self.reportsdir,
                                                     self.liftnamebase)
         self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
-        log.log(2,'self.reportsdir: {}'.format(self.reportsdir))
-        log.log(2,'self.reportbasefilename: {}'.format(self.reportbasefilename))
-        log.log(2,'self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
+        # log.info('self.reportsdir: {}'.format(self.reportsdir))
+        # log.info('self.reportbasefilename: {}'.format(self.reportbasefilename))
+        # log.info('self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
     def pss(self):
         log.info("checking these lexical category names for plausible noun "
