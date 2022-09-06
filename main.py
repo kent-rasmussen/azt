@@ -4079,7 +4079,7 @@ class TaskChooser(TaskDressing,ui.Window):
                                             if 'sense/example' in v}
         sorts.update({k:v for (k,v) in self.db.nfieldswannotations.items()
                                             if 'sense/example' not in v})
-        log.info("nfields by lang: {}".format(sorts))
+        # log.info("nfields by lang (updated): {}".format(sorts))
         sortsrecorded=self.db.nfieldswsoundfiles
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
@@ -4087,6 +4087,7 @@ class TaskChooser(TaskDressing,ui.Window):
             enough=0
         else:
             enough=25
+        # log.info("looking at sorts now: {}".format(sorts))
         for l in sorts:
             maybeals=[i for i in self.db.audiolangs if l in i]
             if maybeals:
@@ -4131,7 +4132,8 @@ class TaskChooser(TaskDressing,ui.Window):
                     #see above
                     if sortsnotrecorded[l][f] < enough:
                         self.doneenough['torecord']=True
-        log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
+                # log.info("Finished looking at [{}]{} field: {}".format(l,f,self.doneenough))
+        # log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
         for lang in self.file.db.nentrieswlexemedata:
             remaining=self.file.db.nentrieswcitationdata[lang
                                         ]-self.file.db.nentrieswlexemedata[lang]
