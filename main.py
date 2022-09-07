@@ -11826,13 +11826,13 @@ class Repository(object):
         #Git doesn't seem to care if repos are related, but I do...
         pass
     def findremote(self,remote=None):
-        if remote and self.exists(remote):
+        if remote and file.exists(remote):
             return remote
         if hasattr(self,'remote') and file.exists(self.remote):
             return self.remote
         d=file.getdirectory(_("Please select where to find the AZT source "
                                 "locally"))
-        if self.exists(d):
+        if file.exists(d):
             return d
     def root(self):
         args=["root"]
