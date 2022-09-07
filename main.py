@@ -12013,7 +12013,7 @@ class Git(Repository):
     def reverttomain(self,event=None):
         args=['checkout','main']
         r=self.do(args)
-        log.info("reverttomain:{}".format(r))
+        log.info("reverttomain: {}".format(r))
         return r
     def testversion(self,event=None):
         args=['checkout',program['testversionname']]
