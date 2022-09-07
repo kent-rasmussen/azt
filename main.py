@@ -11840,7 +11840,7 @@ class Repository(object):
         if hasattr(self,'_remote') and file.exists(self._remote):
             return self._remote
         if hasattr(self,'_remotes'):
-            for d in self.remotes.values():
+            for d in self._remotes.values():
                 if file.exists(d):
                     self.addremote(d)
                     return d #take the first one
