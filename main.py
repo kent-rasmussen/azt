@@ -1084,8 +1084,6 @@ class Settings(object):
                                 'buttoncolumns',
                                 'showoriginalorthographyinreports',
                                 'lowverticalspace',
-                                'hg',
-                                'git',
                                 'giturls',
                                 'hgurls',
                                 'aztrepourls',
@@ -1266,13 +1264,13 @@ class Settings(object):
                 # log.info("Trying to dict {} attr".format(s))
                 try:
                     d[s]=self.fndict[s]()
-                    # log.info("Value {}={} found in object".format(s,d[s]))
+                    log.info("Value {}={} found in object".format(s,d[s]))
                 except:
                     log.error("Value of {} not found in object".format(s))
             elif hasattr(o,s) and getattr(o,s):
                 d[s]=getattr(o,s)
-                # log.log(4,"Trying to dict self.{} with value {}, type {}"
-                #         "".format(s,d[s],type(d[s])))
+                log.info("Trying to dict self.{} with value {}, type {}"
+                        "".format(s,d[s],type(d[s])))
             # else:
             #     log.error("Couldn't find {} in {}".format(s,setting))
         """This is the only glosslang > glosslangs conversion"""
@@ -3692,6 +3690,7 @@ class TaskDressing(object):
         else:
             log.info("No final write to lift")
         self.settings.trackuntrackedfiles()
+        self.settings.storesettingsfile()
         for r in self.settings.repo:
             self.settings.repo[r].commit()
             self.settings.repo[r].push()
