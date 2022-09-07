@@ -11917,6 +11917,10 @@ class Repository(object):
             log.info("No config {} username found; using '{}'"
                     "".format(r,self.repotypename))
         return self.argstoputusername(r)
+    def branchname(self):
+        # mode='r'
+        file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
+            branchURL=file.getfile(f.read())
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
@@ -11961,6 +11965,7 @@ class Mercurial(Repository):
                 exit()
     def __init__(self, url):
         self.code='hg'
+        self.branchnamefile='branch'
         # self.cmd=program['hg']
         self.wdownloadsurl="https://www.mercurial-scm.org/wiki/Download"
         self.wexename="Mercurial-6.0-x64.exe"
@@ -11995,6 +12000,7 @@ class Git(Repository):
         log.info(self.do(args))
     def __init__(self, url):
         self.code='git'
+        self.branchnamefile='HEAD'
         self.wdownloadsurl="https://git-scm.com/download/win"
         self.wexename="Git-2.33.0.2-64-bit.exe"
         self.wexeurl=("https://github.com/git-for-windows/git/releases/"
