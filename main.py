@@ -3628,7 +3628,7 @@ class TaskDressing(object):
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
     def updateaztlocal(self,event=None):
-        r=program['repo'].pull(d)
+        r=program['repo'].pull()
     def updateazt(self,event=None):
         updateazt()
     def reverttomainazt(self,event=None):
@@ -11828,6 +11828,8 @@ class Repository(object):
         else:
             d=file.getdirectory(_("Please select where to find the AZT source "
                                 "locally"))
+            if self.exists(d):
+                return d
     def root(self):
         args=["root"]
         self.root=self.do(args)
