@@ -11832,7 +11832,7 @@ class Repository(object):
         pass
     def findremote(self,remote=None):
         log.info("running with remote: {} and _remote: {}".format(remote,
-            getattr(self,'_remote')))
+            getattr(self,'_remote',None)))
         if remote and file.exists(remote):
             return remote
         if hasattr(self,'_remote') and file.exists(self._remote):
