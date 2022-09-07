@@ -12038,9 +12038,9 @@ class Repository(object):
             self.exewarning()
             return #before getting a file list!
         self.usernameargs=self.getusernameargs()
+        self._remotes={} #don't die right away
         self.getfiles()
         self.ignorecheck()
-        self.remoteurls({}) #don't die right away
         log.info("{} repository object initialized, with {} files."
                 "".format(self.repotypename,len(self.files)))
 class Mercurial(Repository):
