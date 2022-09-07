@@ -531,7 +531,7 @@ class Menus(ui.Menu):
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
             helpitems+=[(_("Update A→Z+T"), updateazt)]
-            if program['rep'].branchname() == 'main':
+            if program['repo'].branchname() == 'main':
                 helpitems+=[(_("Try A→Z+T test version"),
                                 program['repo'].testversion)]
             else:
