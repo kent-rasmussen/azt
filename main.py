@@ -3631,7 +3631,7 @@ class TaskDressing(object):
             if r:
                 print("Something random")
                 print(r)
-        except exception as e:
+        except Exception as e:
             log.info("reverttomainazt exception: {}".format(e))
         r=program['repo'].reverttomain()
         if r:
