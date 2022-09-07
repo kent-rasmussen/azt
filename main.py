@@ -11787,7 +11787,6 @@ class Repository(object):
             return e
         iwascalledby=callerfn()
         try:
-            if iwascalledby == 'getfiles':
                 log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
             t=output.decode(sys.stdout.encoding,errors='backslashreplace').strip()
             if iwascalledby == 'getfiles':
