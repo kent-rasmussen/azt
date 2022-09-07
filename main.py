@@ -3628,6 +3628,7 @@ class TaskDressing(object):
     def reverttomainazt(self):
         #This doesn't care which test version one is on
         r=program['repo'].reverttomain()
+        log.info("reverttomainazt: {}".format(r))
         if r == "Your branch is up to date with 'origin/main'.":
             self.taskchooser.restart()
         else:
@@ -3635,6 +3636,7 @@ class TaskDressing(object):
     def trytestazt(self):
         #This only goes to the test version at the top of this file
         r=program['repo'].testversion()
+        log.info("trytestazt: {}".format(r))
         if r == "Your branch is up to date with 'origin/{}'.".format(
                                                     program['testversionname']):
             self.taskchooser.restart()
@@ -11812,7 +11814,8 @@ class Repository(object):
         except subprocess.CalledProcessError as e:
             output=e.output
         except Exception as e:
-            log.info(_("Call to Mercurial ({}) failed: {}").format(args,e))
+            log.info(_("Call to {} ({}) failed: {}").format(self.repotypename,
+                                                            args,e))
             return e
         iwascalledby=callerfn()
         try:
