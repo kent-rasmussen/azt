@@ -1234,9 +1234,9 @@ class Settings(object):
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
             fns['glosslangs']=self.glosslangs.langs
+            fns['aztrepourls']=program['repo'].remoteurls
             fns['giturls']=self.repo['git'].remoteurls
             fns['hgurls']=self.repo['hg'].remoteurls
-            fns['aztrepourls']=program['repo'].remoteurls
             fns['ps']=self.slices.ps
             fns['profile']=self.slices.profile
             # except this one, which pretends to set but doesn't (throws arg away)
