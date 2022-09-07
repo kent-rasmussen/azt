@@ -1083,6 +1083,9 @@ class Settings(object):
                                 'buttoncolumns',
                                 'showoriginalorthographyinreports',
                                 'lowverticalspace',
+                                'hg',
+                                'git',
+                                'aztrepo',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -1230,6 +1233,9 @@ class Settings(object):
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
             fns['glosslangs']=self.glosslangs.langs
+            fns['git']=self.repo['git'].remote
+            fns['hg']=self.repo['hg'].remote
+            fns['aztrepo']=self.repo['aztrepo'].remote
             fns['ps']=self.slices.ps
             fns['profile']=self.slices.profile
             # except this one, which pretends to set but doesn't (throws arg away)
@@ -11816,10 +11822,13 @@ class Repository(object):
         args=["push",self.findremote(remote)]
         r=self.do(args)
         log.info(r)
+    def isrelated(self):
+        #Git doesn't seem to care if repos are related, but I do...
+        pass
     def findremote(self,remote=None):
         if remote and self.exists(remote):
             return remote
-        if hasattr(self,'remote') and self.exists(self.remote):
+        if hasattr(self,'remote') and file.exists(self.remote):
             return self.remote
         d=file.getdirectory(_("Please select where to find the AZT source "
                                 "locally"))
@@ -11976,6 +11985,11 @@ class Repository(object):
         # mode='r'
         with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
             branchURL=file.getfile(f.read())
+    def remoteurl(self,remote=None):
+        if remote:
+            self._remote=remote
+        else:
+            return remote
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
