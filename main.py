@@ -1039,8 +1039,8 @@ class Settings(object):
                 }
         self.repo=dict() #then copy to class attribute if there
         for r in repo:
-            if hasattr(repo[r],'files'):
-                if repo[r].exists():
+            if hasattr(repo[r],'files'): #fails if no exe
+                if repo[r].exists(): #tests for .code dir
                     log.info(_("Found {} Repository!"
                                 ).format(repo[r].repotypename))
                 elif r == 'git': #don't worry about hg, if not there already
@@ -3640,6 +3640,7 @@ class TaskDressing(object):
         self.settings.trackuntrackedfiles()
         for r in self.settings.repo:
             self.settings.repo[r].commit()
+            log.info("Committed to {}".format(r))
         ui.Window.killall(self) #Exitable
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
@@ -11752,7 +11753,7 @@ class Repository(object):
             self.do([i for i in args if i is not None])
     def diff(self):
         args=["diff"]
-        r=self.do(args)
+        return self.do(args)
         # log.info("{} diff returned {}".format(self.repotypename,r))
     def status(self):
         args=["status"]
@@ -11969,6 +11970,9 @@ class Mercurial(Repository):
         else:
             self=None
 class Git(Repository):
+    def reverttomain():
+        self.do(['checkout','main'])
+        log.info(self.do(args))
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
     def argstoputusername(self,username):
@@ -12558,6 +12562,7 @@ def main():
                                     # pady=20,
                                     # padx=30,
                                     )
+    program['repo']=Git(program['aztdir'])
     program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
     # log.info("Theme ipady: {}".format(program['theme'].ipady))
