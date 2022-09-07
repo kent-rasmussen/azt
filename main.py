@@ -11982,7 +11982,7 @@ class Mercurial(Repository):
         else:
             self=None
 class Git(Repository):
-    def reverttomain():
+    def reverttomain(self,event=None):
         self.do(['checkout','main'])
         log.info(self.do(args))
     def testversion(self,event=None):
