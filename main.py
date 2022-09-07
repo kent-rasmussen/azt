@@ -12014,6 +12014,8 @@ class Git(Repository):
         args=['checkout','main']
         r=self.do(args)
         log.info("reverttomain: {}".format(r))
+        print("reverttomain: {}".format(r))
+        ErrorNotice("reverttomain: {}".format(r))
         return r
     def testversion(self,event=None):
         args=['checkout',program['testversionname']]
