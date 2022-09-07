@@ -12040,6 +12040,7 @@ class Repository(object):
         self.usernameargs=self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
+        self.remoteurls({}) #don't die right away
         log.info("{} repository object initialized, with {} files."
                 "".format(self.repotypename,len(self.files)))
 class Mercurial(Repository):
