@@ -533,10 +533,10 @@ class Menus(ui.Menu):
             helpitems+=[(_("Update A→Z+T"), updateazt)]
             if program['repo'].branchname() == 'main':
                 helpitems+=[(_("Try A→Z+T test version"),
-                                program['repo'].testversion)]
+                                self.parent.trytestazt)]
             else:
                 helpitems+=[(_("Revert to A→Z+T main version"),
-                                program['repo'].reverttomain)]
+                                self.parent.reverttomainazt)]
         helpitems+=[("What's with the New Interface?",
                         self.parent.helpnewinterface)
                     ]
