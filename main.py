@@ -3627,9 +3627,16 @@ class TaskDressing(object):
         updateazt()
     def reverttomainazt(self):
         #This doesn't care which test version one is on
+        if r:
+            print("Something random")
+            print(r)
         r=program['repo'].reverttomain()
-        print("Something random")
-        print(r)
+        if r:
+            print("Something random2")
+            print(r)
+        else:
+            print("Something random3")
+            print(r)
         log.info("Something random")
         log.info("reverttomainazt: {}".format(r))
         if r == "Your branch is up to date with 'origin/main'.":
