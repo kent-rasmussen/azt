@@ -3630,12 +3630,16 @@ class TaskDressing(object):
         program['repo'].reverttomain()
         if r == "Your branch is up to date with 'origin/main'.":
             self.taskchooser.restart()
+        else:
+            ErrorNotice(r)
     def trytestazt(self):
         #This only goes to the test version at the top of this file
         program['repo'].testversion()
         if r == "Your branch is up to date with 'origin/{}'.".format(
                                                     program['testversionname']):
             self.taskchooser.restart()
+        else:
+            ErrorNotice(r)
     def verifictioncode(self,**kwargs):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
