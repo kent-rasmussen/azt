@@ -12010,7 +12010,7 @@ class Repository(object):
                 return
         except AttributeError as e:
             log.error(e)
-            self._remotes={}        
+            self._remotes={}
         if remote not in self._remotes.values():
             for key in ["Thing"+str(i) for i in range(1,20)]:
                 if key not in self._remotes: #don't overwrite keys
@@ -12025,7 +12025,7 @@ class Repository(object):
         elif remotes:
             log.info("You passed me a remotes value that isn't a dict?")
         else:
-            return self._remotes
+            return getattr(self,'_remotes',{})
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
