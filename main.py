@@ -11963,6 +11963,8 @@ class Mercurial(Repository):
             ErrorNotice(error,title=_("Chorus Rescue files found!"))
             if me:
                 exit()
+    def makebare(self):
+        args=['update', 'null']
     def __init__(self, url):
         self.code='hg'
         self.branchnamefile='branch'
@@ -11982,6 +11984,8 @@ class Mercurial(Repository):
         else:
             self=None
 class Git(Repository):
+    def makebare(self):
+        args=['config', '--bool', 'core.bare', 'true']
     def reverttomain(self,event=None):
         self.do(['checkout','main'])
         log.info(self.do(args))
