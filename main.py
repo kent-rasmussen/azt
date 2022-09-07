@@ -3676,7 +3676,7 @@ class TaskDressing(object):
         self.settings.trackuntrackedfiles()
         for r in self.settings.repo:
             self.settings.repo[r].commit()
-            log.info("Committed to {}".format(r))
+            log.info("Done maybe committing to {}".format(r))
         ui.Window.killall(self) #Exitable
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
