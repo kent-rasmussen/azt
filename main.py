@@ -3623,9 +3623,9 @@ class TaskDressing(object):
         if not nowait:
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
-    def updateazt(self):
+    def updateazt(self,event=None):
         updateazt()
-    def reverttomainazt(self):
+    def reverttomainazt(self,event=None):
         #This doesn't care which test version one is on
         if r:
             print("Something random")
