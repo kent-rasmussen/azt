@@ -531,6 +531,7 @@ class Menus(ui.Menu):
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
             helpitems+=[(_("Update A→Z+T"), updateazt)]
+            helpitems+=[(_("Update A→Z+T (local)"), self.parent.updateaztlocal)]
             if program['repo'].branchname() == 'main':
                 helpitems+=[(_("Try A→Z+T test version"),
                                 self.parent.trytestazt)]
@@ -3623,6 +3624,8 @@ class TaskDressing(object):
         if not nowait:
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
+    def updateaztlocal(self,event=None):
+        r=program['repo'].pull(d)
     def updateazt(self,event=None):
         updateazt()
     def reverttomainazt(self,event=None):
@@ -11801,9 +11804,16 @@ class Repository(object):
     def log(self):
         args=["log"]
         log.info(self.do(args))
-    def pull(self):
-        args=["pull",self.remote]
-        log.info(self.do(args))
+    def pull(self,remote=self.remote):
+        args=["pull",remote]
+        r=self.do(args)
+        log.info(r)
+    def findremote():
+        if self.remote:
+            return self.remote
+        else:
+            d=file.getdirectory(_("Please select where to find the AZT source "
+                                "locally"))
     def root(self):
         args=["root"]
         self.root=self.do(args)
