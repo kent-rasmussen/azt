@@ -11760,6 +11760,9 @@ class Repository(object):
     def log(self):
         args=["log"]
         log.info(self.do(args))
+    def pull(self):
+        args=["pull",self.remote]
+        log.info(self.do(args))
     def root(self):
         args=["root"]
         self.root=self.do(args)
@@ -11970,8 +11973,12 @@ class Git(Repository):
         return ['-c','core.quotePath=false']
     def argstoputusername(self,username):
         return ['-c','user.name={}'.format(username)]
+    def setremote(self):
+        """How to find out where something is on system?"""
+        self.remote='/path/to/usb'
     def init(self):
         self.do(['init'])
+        log.info(self.do(args))
     def __init__(self, url):
         self.code='git'
         self.wdownloadsurl="https://git-scm.com/download/win"
