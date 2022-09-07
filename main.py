@@ -1236,9 +1236,9 @@ class Settings(object):
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
             fns['glosslangs']=self.glosslangs.langs
-            fns['giturls']=self.repo['git'].remotes
-            fns['hgurls']=self.repo['hg'].remotes
-            fns['aztrepourls']=self.repo['aztrepo'].remotes
+            fns['giturls']=self.repo['git'].remoteurls
+            fns['hgurls']=self.repo['hg'].remoteurls
+            fns['aztrepourls']=self.repo['aztrepo'].remoteurls
             fns['ps']=self.slices.ps
             fns['profile']=self.slices.profile
             # except this one, which pretends to set but doesn't (throws arg away)
@@ -12009,6 +12009,7 @@ class Repository(object):
         if remote not in self._remotes.values():
             for key in range(1,20):
                 if key not in self._remotes: #don't overwrite keys
+                    log.info("Setting {} key with {} value".format(key,remote))
                     self._remotes[key]=remote
                     self.remoteurl(remote) #make this the current default
     def remoteurls(self,remotes=None):
