@@ -4186,6 +4186,7 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("Analysis of what you're done with: {}".format(self.donew))
         log.info("You're done enough with: {}".format(self.doneenough))
     def restart(self,filename=None):
+        log.info("Restarting from TaskChooser")
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
         # log.info("towrite: {}; writing: {}".format(self.towrite,self.writing))
