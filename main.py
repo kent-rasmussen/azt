@@ -11994,9 +11994,13 @@ class Git(Repository):
         return ['-c','user.name={}'.format(username)]
     def setremote(self):
         """How to find out where something is on system?"""
+        # file.getfilenamedir(url)
+        # file.getfilename(url)
+        # /media/kentr/88C5-0968/gnd
         self.remote='/path/to/usb'
     def init(self):
-        self.do(['init'])
+        args=['init']
+        self.do(args)
         log.info(self.do(args))
     def __init__(self, url):
         self.code='git'
