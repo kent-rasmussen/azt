@@ -11816,21 +11816,25 @@ class Repository(object):
         args=["log"]
         log.info(self.do(args))
     def pull(self,remote=None):
-        args=["pull",self.findremote(remote)]
-        r=self.do(args)
-        log.info(r)
+        self.findremote(remote)
+        if remote:
+            args=["pull",remote]
+            r=self.do(args)
+        # log.info(r)
     def push(self,remote=None):
-        args=["push",self.findremote(remote)]
-        r=self.do(args)
-        log.info(r)
+        self.findremote(remote)
+        if remote:
+            args=["push",remote]
+            r=self.do(args)
+            # log.info(r)
     def isrelated(self):
         #Git doesn't seem to care if repos are related, but I do...
         pass
     def findremote(self,remote=None):
         if remote and file.exists(remote):
             return remote
-        if hasattr(self,'remote') and file.exists(self.remote):
-            return self.remote
+        if hasattr(self,'_remote') and file.exists(self._remote):
+            return self._remote
         d=file.getdirectory(_("Please select where to find the AZT source "
                                 "locally"))
         if file.exists(d):
@@ -11990,7 +11994,7 @@ class Repository(object):
         if remote:
             self._remote=remote
         else:
-            return remote
+            return self._remote
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
