@@ -3628,6 +3628,8 @@ class TaskDressing(object):
     def reverttomainazt(self):
         #This doesn't care which test version one is on
         r=program['repo'].reverttomain()
+        print("Something random")
+        print(r)
         log.info("Something random")
         log.info("reverttomainazt: {}".format(r))
         if r == "Your branch is up to date with 'origin/main'.":
@@ -12011,7 +12013,7 @@ class Git(Repository):
     def reverttomain(self,event=None):
         args=['checkout','main']
         r=self.do(args)
-        log.info(r)
+        log.info("reverttomain:{}".format(r))
         return r
     def testversion(self,event=None):
         args=['checkout',program['testversionname']]
