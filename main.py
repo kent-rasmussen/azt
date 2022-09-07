@@ -11821,13 +11821,10 @@ class Repository(object):
             return remote
         if hasattr(self,'remote') and self.exists(self.remote):
             return self.remote
-        elif self.remote:
-            remote=self.remote
-        else:
-            d=file.getdirectory(_("Please select where to find the AZT source "
+        d=file.getdirectory(_("Please select where to find the AZT source "
                                 "locally"))
-            if self.exists(d):
-                return d
+        if self.exists(d):
+            return d
     def root(self):
         args=["root"]
         self.root=self.do(args)
