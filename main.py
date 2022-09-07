@@ -12005,6 +12005,12 @@ class Repository(object):
         else:
             return self._remote
     def addremote(self,remote):
+        try:
+            if remote in self._remotes.values():
+                return
+        except AttributeError as e:
+            log.error(e)
+            self._remotes={}        
         if remote not in self._remotes.values():
             for key in ["Thing"+str(i) for i in range(1,20)]:
                 if key not in self._remotes: #don't overwrite keys
