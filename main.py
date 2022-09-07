@@ -11847,7 +11847,7 @@ class Repository(object):
         d=file.getdirectory(_("Please select where to find the AZT source "
                                 "locally"))
         if file.exists(d):
-            self.addremote(remote)
+            self.addremote(d)
             return d
     def root(self):
         args=["root"]
