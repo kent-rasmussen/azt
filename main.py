@@ -1430,7 +1430,7 @@ class Settings(object):
                         #self.defaultfile # This probably shouldn't be shared
                         # self.soundsettingsfile #per computer, definitely don't share!
                         ]
-        program['root'].update() #before threading
+        program['root'].update() #update GUI before threading
         # for r in self.repo:
         r='git' #only look for this; don't duplicate repos unnecessarily
         if r in self.repo:
