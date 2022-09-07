@@ -1032,7 +1032,8 @@ class Settings(object):
         else:
             return interfacelang()
     def repocheck(self):
-        # self.repo=None #?leave this for test of both repo and exe
+        self.repo={}
+        return #for now, until fixed
         repo={ #start with local variable:
                 'git': Git(self.directory),
                 'hg': Mercurial(self.directory),
@@ -1394,7 +1395,7 @@ class Settings(object):
             log.info(_("Looks like there's a problem with your directory... {}"
                     "\n{}".format(self.liftfilename,filemod)))
             exit()
-        # self.repocheck()
+        self.repocheck()
         self.settingsfilecheck()
         self.imagesdir=file.getimagesdir(self.directory)
         pictures=file.getimagesdiralternate(self.directory)
