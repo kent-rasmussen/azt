@@ -11987,8 +11987,9 @@ class Git(Repository):
     def makebare(self):
         args=['config', '--bool', 'core.bare', 'true']
     def reverttomain(self,event=None):
-        self.do(['checkout','main'])
-        log.info(self.do(args))
+        args=['checkout','main']
+        r=self.do(args)
+        log.info(r)
     def testversion(self,event=None):
         self.do(['checkout',program['testversionname']])
         log.info(self.do(args))
