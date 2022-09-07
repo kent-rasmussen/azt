@@ -12006,7 +12006,7 @@ class Repository(object):
             return self._remote
     def addremote(self,remote):
         if remote not in self._remotes.values():
-            for key in range(1,20):
+            for key in ["Thing"+str(i) for i in range(1,20)]:
                 if key not in self._remotes: #don't overwrite keys
                     log.info("Setting {} key with {} value".format(key,remote))
                     self._remotes[key]=remote
