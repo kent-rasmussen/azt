@@ -3623,6 +3623,19 @@ class TaskDressing(object):
         if not nowait:
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
+    def updateazt(self):
+        updateazt()
+    def reverttomainazt(self):
+        #This doesn't care which test version one is on
+        program['repo'].reverttomain()
+        if r == "Your branch is up to date with 'origin/main'.":
+            self.restart()
+    def trytestazt(self):
+        #This only goes to the test version at the top of this file
+        program['repo'].testversion()
+        if r == "Your branch is up to date with 'origin/{}'.".format(
+                                                    program['testversionname']):
+            self.restart()
     def verifictioncode(self,**kwargs):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
@@ -8325,7 +8338,7 @@ class Transcribe(Sound,Sort):
             #because people need to do a profile analysis here.
             if diff:
                 self.settings.reloadprofiledata(showpolygraphs=showpolygraphs)
-            # sysrestart()
+            # self.restart()
             """Update regular expressions here!!"""
         else: #move on, but notify in logs
             log.info("User selected ‘{}’, but with no change.".format(
@@ -11891,7 +11904,7 @@ class Repository(object):
             o=ui.Label(w.frame, text=clickable2, column=0, row=3)
             o.bind("<Button-1>", lambda e: openweburl(self.wdownloadsurl))
             mtt=ui.ToolTip(o,_("Go to {}").format(self.wdownloadsurl))
-        button=(_("Restart Now"),sysrestart)
+        # button=(_("Restart Now"),sysrestart) #This should be in task/chooser
         text=_("After you install {}, you should restart."
                 ).format(self.repotypename)
         if self.repotypename == "Git":
@@ -11903,7 +11916,7 @@ class Repository(object):
         r=ui.Label(w.frame, text=text, column=0, row=4)
         r.wrap()
         rb=ui.Button(w.frame, text=_("Restart Now"), column=1, row=4,
-                                                            cmd=sysrestart)
+                    cmd=sysrestart) #This should be in task/chooser
         rbtt=ui.ToolTip(rb,_("Install {} first, then do this"
                             ).format(self.repotypename))
         w.deiconify()
@@ -11990,9 +12003,12 @@ class Git(Repository):
         args=['checkout','main']
         r=self.do(args)
         log.info(r)
+        return r
     def testversion(self,event=None):
-        self.do(['checkout',program['testversionname']])
-        log.info(self.do(args))
+        args=['checkout',program['testversionname']]
+        r=self.do(args)
+        log.info(r)
+        return r
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
     def argstoputusername(self,username):
@@ -12558,7 +12574,7 @@ def updateazt(**kwargs): #should only be parent, for errorroot
         else:
             t=str(t)+_('\n(Restart {} to use this update)').format(
                                                             program['name'])
-            button=(_("Restart Now"),sysrestart)
+            button=(_("Restart Now"),sysrestart) #This should be in task/chooser
         if set(['parent']).issuperset(set(kwargs.keys())):
             # log.info("Making Error Window")
             # log.info(t)
@@ -12705,7 +12721,7 @@ def mainproblem():
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
     ui.Button(errorw.outsideframe,text=_("Restart {}").format(program['name']),
-                cmd=sysrestart,
+                cmd=sysrestart, #This should be in task/chooser
                 row=1,column=2)
     if program['git']:
         # log.info("Making update menu")
