@@ -11919,7 +11919,7 @@ class Repository(object):
         return self.argstoputusername(r)
     def branchname(self):
         # mode='r'
-        file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
+        with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
             branchURL=file.getfile(f.read())
     def __init__(self, url):
         super(Repository, self).__init__()
