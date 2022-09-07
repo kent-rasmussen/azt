@@ -8,6 +8,7 @@ program['testing']=True #True eliminates Error screens and zipped logs
 program['demo']=True #sets me=False, production=True, testing=False
 # program['demo']=False
 program['version']='0.9.4' #This is a string...
+program['testversionname']='tweaks'
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 exceptiononload=False
@@ -530,6 +531,12 @@ class Menus(ui.Menu):
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
             helpitems+=[(_("Update A→Z+T"), updateazt)]
+            if program['rep'].branchname() == 'main':
+                helpitems+=[(_("Try A→Z+T test version"),
+                                program['repo'].testversion)]
+            else:
+                helpitems+=[(_("Revert to A→Z+T main version"),
+                                program['repo'].reverttomain)]
         helpitems+=[("What's with the New Interface?",
                         self.parent.helpnewinterface)
                     ]
@@ -11972,6 +11979,9 @@ class Mercurial(Repository):
 class Git(Repository):
     def reverttomain():
         self.do(['checkout','main'])
+        log.info(self.do(args))
+    def testversion(self,event=None):
+        self.do(['checkout',program['testversionname']])
         log.info(self.do(args))
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
