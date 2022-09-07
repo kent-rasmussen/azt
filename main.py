@@ -3643,7 +3643,7 @@ class TaskDressing(object):
             self.taskchooser.restart()
         else:
             ErrorNotice(r)
-    def trytestazt(self):
+    def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
         r=program['repo'].testversion()
         log.info("trytestazt: {}".format(r))
