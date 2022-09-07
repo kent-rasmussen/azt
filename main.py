@@ -1086,7 +1086,9 @@ class Settings(object):
                                 'lowverticalspace',
                                 'hg',
                                 'git',
-                                'aztrepo',
+                                'giturls',
+                                'hgurls',
+                                'aztrepourls',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -1234,9 +1236,9 @@ class Settings(object):
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
             fns['glosslangs']=self.glosslangs.langs
-            fns['git']=self.repo['git'].remote
-            fns['hg']=self.repo['hg'].remote
-            fns['aztrepo']=self.repo['aztrepo'].remote
+            fns['giturls']=self.repo['git'].remote
+            fns['hgurls']=self.repo['hg'].remote
+            fns['aztrepourls']=self.repo['aztrepo'].remote
             fns['ps']=self.slices.ps
             fns['profile']=self.slices.profile
             # except this one, which pretends to set but doesn't (throws arg away)
@@ -11837,10 +11839,15 @@ class Repository(object):
             return remote
         if hasattr(self,'_remote') and file.exists(self._remote):
             return self._remote
+        if hasattr(self,'_remotes'):
+            for d in self.remotes.values():
+                if file.exists(d):
+                    self.addremote(d)
+                    return d #take the first one
         d=file.getdirectory(_("Please select where to find the AZT source "
                                 "locally"))
         if file.exists(d):
-            self._remote=d
+            self.addremote(remote)
             return d
     def root(self):
         args=["root"]
@@ -11998,6 +12005,19 @@ class Repository(object):
             self._remote=remote
         else:
             return self._remote
+    def addremote(self,remote):
+        if remote not in self._remotes.values():
+            for key in range(1,20):
+                if key not in self._remotes: #don't overwrite keys
+                    self._remotes[key]=remote
+                    self.remote(remote) #make this the current default
+    def remoteurls(self,remotes=None):
+        if remotes and type(remotes) is dict:
+            self._remotes=remotes
+        elif remotes:
+            log.info("You passed me a remotes value that isn't a dict?")
+        else:
+            return self._remotes
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
