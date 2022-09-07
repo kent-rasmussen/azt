@@ -11809,13 +11809,11 @@ class Repository(object):
         args=["log"]
         log.info(self.do(args))
     def pull(self,remote=None):
-        if not remote and self.remote:
-            remote=self.remote
-        args=["pull",remote]
+        args=["pull",self.findremote(remote)]
         r=self.do(args)
         log.info(r)
     def push(self,remote=None):
-        args=["push",remote]
+        args=["push",self.findremote(remote)]
         r=self.do(args)
         log.info(r)
     def findremote(self,remote=None):
