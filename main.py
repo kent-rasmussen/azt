@@ -11787,13 +11787,14 @@ class Repository(object):
             return e
         iwascalledby=callerfn()
         try:
-                log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
+            # if iwascalledby == 'getfiles':
+            #     log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
             t=output.decode(sys.stdout.encoding,errors='backslashreplace').strip()
-            if iwascalledby == 'getfiles':
-                log.info("Looks like that worked")
+            # if iwascalledby == 'getfiles':
+            #     log.info("Looks like that worked")
         except:
-            if iwascalledby == 'getfiles':
-                log.info("Looks like that didn't work")
+            # if iwascalledby == 'getfiles':
+            #     log.info("Looks like that didn't work")
             t=output
         if t and iwascalledby not in ['diff','getfiles']: #These give massive output!
             log.info("{} {}: {}".format(self.repotypename,iwascalledby,t))
