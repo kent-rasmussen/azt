@@ -12012,6 +12012,7 @@ class Repository(object):
                     log.info("Setting {} key with {} value".format(key,remote))
                     self._remotes[key]=remote
                     self.remoteurl(remote) #make this the current default
+                    return
     def remoteurls(self,remotes=None):
         if remotes and type(remotes) is dict:
             self._remotes=remotes
