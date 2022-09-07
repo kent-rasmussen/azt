@@ -1236,7 +1236,7 @@ class Settings(object):
             fns['glosslangs']=self.glosslangs.langs
             fns['giturls']=self.repo['git'].remoteurls
             fns['hgurls']=self.repo['hg'].remoteurls
-            fns['aztrepourls']=self.repo['aztrepo'].remoteurls
+            fns['aztrepourls']=program['repo'].remoteurls
             fns['ps']=self.slices.ps
             fns['profile']=self.slices.profile
             # except this one, which pretends to set but doesn't (throws arg away)
@@ -1292,12 +1292,12 @@ class Settings(object):
         for s in dict:
             v=d[s]
             if hasattr(self,'fndict') and s in self.fndict:
-                # log.debug("Trying to read {} to object with value {} and fn "
-                #             "{}".format(s,v,self.fndict[s]))
+                log.info("Trying to read {} to object with value {} and fn "
+                            "{}".format(s,v,self.fndict[s]))
                 self.fndict[s](v)
             else:
-                # log.debug("Trying to read {} to {} with value {}, type {}"
-                #             "".format(s,o,v,type(v)))
+                log.info("Trying to read {} to {} with value {}, type {}"
+                            "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return d
     def storesettingsfile(self,setting='defaults',noobjects=False):
