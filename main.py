@@ -1429,6 +1429,7 @@ class Settings(object):
         def ifnotthereadd(file,repo):
             if file not in self.repo[repo].files:
                 self.repo[repo].add(file)
+        maxthreads=8 #This causes problems with lots of threads
         maindirfiles=[self.liftfilename,
                         self.toneframesfile,
                         self.statusfile,
@@ -1456,8 +1457,9 @@ class Settings(object):
                                                         '*.wav')])-present
             log.info("{} wav files to check for the {} repo".format(len(audio),r))
             for f in audio:
-                t = threading.Thread(target=ifnotthereadd, args=(f,r))
-                t.start()
+                if threading.active_count()<maxthreads:
+                    t = threading.Thread(target=ifnotthereadd, args=(f,r))
+                    t.start()
                 # self.repo[r].add(f)
             for ext in ['png','jpg','gif']:
                 i=set([file.getreldir(self.repo[r].url,i)
@@ -1467,8 +1469,9 @@ class Settings(object):
                 log.info("{} {} files to check for the {} repo"
                         "".format(len(i),ext,r))
                 for f in i:
-                    u = threading.Thread(target=ifnotthereadd, args=(f,r))
-                    u.start()
+                    if threading.active_count()<maxthreads:
+                        u = threading.Thread(target=ifnotthereadd, args=(f,r))
+                        u.start()
             try:
                 t.join()
                 u.join()
@@ -11805,13 +11808,23 @@ class Repository(object):
     def log(self):
         args=["log"]
         log.info(self.do(args))
-    def pull(self,remote=self.remote):
+    def pull(self,remote=None):
+        if not remote and self.remote:
+            remote=self.remote
         args=["pull",remote]
         r=self.do(args)
         log.info(r)
-    def findremote():
-        if self.remote:
+    def push(self,remote=None):
+        args=["push",remote]
+        r=self.do(args)
+        log.info(r)
+    def findremote(self,remote=None):
+        if remote and self.exists(remote):
+            return remote
+        if hasattr(self,'remote') and self.exists(self.remote):
             return self.remote
+        elif self.remote:
+            remote=self.remote
         else:
             d=file.getdirectory(_("Please select where to find the AZT source "
                                 "locally"))
@@ -12057,6 +12070,11 @@ class Git(Repository):
         args=['init']
         self.do(args)
         log.info(self.do(args))
+    def lastcommitdate(self):
+        args=['log', '-1', '--format=%cd']
+        r=self.do(args)
+        # log.info(r)
+        return r
     def __init__(self, url):
         self.code='git'
         self.branchnamefile='HEAD'
@@ -12637,7 +12655,6 @@ def main():
                                     # pady=20,
                                     # padx=30,
                                     )
-    program['repo']=Git(program['aztdir'])
     program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
     # log.info("Theme ipady: {}".format(program['theme'].ipady))
@@ -12781,6 +12798,7 @@ def name(x):
         name=x.__class__.__name__ #If x is a class instance
         return "class."+name
 if __name__ == "__main__":
+    program['start_time'] = time.time()
     """These things need to be done outside of a function, as we need global
     variables."""
     # log.info("TaskChooser MRO: {}".format(TaskChooser.mro()))
@@ -12816,7 +12834,7 @@ if __name__ == "__main__":
     log.info("Working directory is {} on {} ".format(program['aztdir'],
                                                     program['hostname']))
     program['start_time'] = time.time()
-    log.info("Loglevel is {}; starting at {}".format(loglevel,
+    log.info("Loglevel is {}; started at {}".format(loglevel,
                                     datetime.datetime.utcnow().isoformat()))
     transdir=file.gettranslationdirin(program['aztdir'])
     i18n={}
@@ -12827,6 +12845,8 @@ if __name__ == "__main__":
         findexecutable(exe)
     if program['python3']: #be sure we're using python v3
         program['python']=program.pop('python3')
+    program['repo']=Git(program['aztdir'])
+    lastcommit=program['repo'].lastcommitdate()
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         pythonmodules()
