@@ -3627,14 +3627,14 @@ class TaskDressing(object):
         updateazt()
     def reverttomainazt(self):
         #This doesn't care which test version one is on
-        program['repo'].reverttomain()
+        r=program['repo'].reverttomain()
         if r == "Your branch is up to date with 'origin/main'.":
             self.taskchooser.restart()
         else:
             ErrorNotice(r)
     def trytestazt(self):
         #This only goes to the test version at the top of this file
-        program['repo'].testversion()
+        r=program['repo'].testversion()
         if r == "Your branch is up to date with 'origin/{}'.".format(
                                                     program['testversionname']):
             self.taskchooser.restart()
