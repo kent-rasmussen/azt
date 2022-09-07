@@ -3627,9 +3627,12 @@ class TaskDressing(object):
         updateazt()
     def reverttomainazt(self,event=None):
         #This doesn't care which test version one is on
-        if r:
-            print("Something random")
-            print(r)
+        try:
+            if r:
+                print("Something random")
+                print(r)
+        except exception as e:
+            log.info("reverttomainazt exception: {}".format(e))
         r=program['repo'].reverttomain()
         if r:
             print("Something random2")
