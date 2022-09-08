@@ -11804,9 +11804,6 @@ class Repository(object):
     def share(self):
         self.pull()
         self.push()
-    def pull(self):
-        # could use ',remote=None'; any reason ever to specify remote here/below?
-        if remote:
     def pull(self,remotes=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
