@@ -12040,10 +12040,12 @@ class Repository(object):
                     log.info("URL Settings: {}".format(self.remoteurls()))
                     return
     def removeremote(self,remote):
+        # This is one of two functions that touch self._remotes directly
         for k,v in self.remoteurls().items():
             if v == remote:
                 del self._remotes[k]
     def remoteurls(self,remotes=None):
+        # This is one of two functions that touch self._remotes directly
         # This returns a copy of the dict, so don't operate on it directly.
         # Rather, read and write using this function.
         if remotes and type(remotes) is dict:
