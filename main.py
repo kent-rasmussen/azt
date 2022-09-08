@@ -12004,6 +12004,10 @@ class Repository(object):
                     self.remoteurl(remote) #make this the current default
                     log.info("URL Settings: {}".format(self.remoteurls()))
                     return
+    def removeremote(self,remote):
+        for k,v in self.remoteurls().items():
+            if v == remote:
+                del self._remotes[k]
     def remoteurls(self,remotes=None):
         # This returns a copy of the dict, so don't operate on it directly.
         # Rather, read and write using this function.
