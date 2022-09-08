@@ -11912,6 +11912,7 @@ class Repository(object):
             ErrorNotice(_("Call to {} ({}) gave error: \n{}").format(
                                                             self.repotypename,
                                                             ' '.join(args),output))
+            return
         except Exception as e:
             ErrorNotice(_("Call to {} ({}) failed: {}").format(
                                                             self.repotypename,
