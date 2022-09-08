@@ -11831,7 +11831,7 @@ class Repository(object):
         if not remotes:
             log.info("Couldn't find a local drive to pull from; giving up")
         for remote in remotes:
-            args=["pull",remote]
+            args=["pull",remote,'main',program['testversionname']]
             r=self.do(args)
             # log.info(r)
     def push(self,remotes=None):
@@ -11840,7 +11840,7 @@ class Repository(object):
         if not remotes:
             log.info("Couldn't find a local drive to push to; giving up")
         for remote in remotes:
-            args=["push",remote]
+            args=["push",remote,'main',program['testversionname']]
             r=self.do(args)
             # log.info(r)
     def isrelated(self,directory):
