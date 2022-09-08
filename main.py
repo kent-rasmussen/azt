@@ -12131,25 +12131,10 @@ class Mercurial(Repository):
 class Git(Repository):
     def makebare(self):
         args=['config', '--bool', 'core.bare', 'true']
-    def reverttomain(self,event=None):
-        args=['checkout','main']
-        r=self.do(args)
-        return r
-    def testversion(self,event=None):
-        args=['checkout',program['testversionname']]
-        r=self.do(args)
-        log.info(r)
-        return r
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
     def argstoputusername(self,username):
         return ['-c','user.name={}'.format(username)]
-    def setremote(self):
-        """How to find out where something is on system?"""
-        # file.getfilenamedir(url)
-        # file.getfilename(url)
-        # /media/kentr/88C5-0968/gnd
-        self.remote='/path/to/usb'
     def init(self):
         args=['init']
         self.do(args)
@@ -12171,6 +12156,15 @@ class Git(Repository):
         self.argstogetusername=['config', '--get', 'user.name']
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
+    def reverttomain(self,event=None):
+        args=['checkout','main']
+        r=self.do(args)
+        return r
+    def testversion(self,event=None):
+        args=['checkout',program['testversionname']]
+        r=self.do(args)
+        log.info(r)
+        return r
     def add(self,file):
         pass
     def commit(self,file=None):
