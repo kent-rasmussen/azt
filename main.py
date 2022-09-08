@@ -12168,7 +12168,6 @@ class Git(Repository):
 class GitReadOnly(Git):
     def branchname(self):
         with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
-            # mode='r'
             return file.getfile(f.read())
     def share(self,event=None):
         remotes=self.findpresentremotes() #do once
