@@ -11855,8 +11855,12 @@ class Repository(object):
             output=subprocess.check_output(cmd, shell=False)
         except subprocess.CalledProcessError as e:
             output=e.output
+            ErrorNotice(_("Call to {} ({}) gave error: \n{}").format(
+                                                            self.repotypename,
+                                                            ' '.join(args),output))
         except Exception as e:
-            log.info(_("Call to {} ({}) failed: {}").format(self.repotypename,
+            ErrorNotice(_("Call to {} ({}) failed: {}").format(
+                                                            self.repotypename,
                                                             args,e))
             return e
         iwascalledby=callerfn()
