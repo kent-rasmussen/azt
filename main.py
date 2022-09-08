@@ -11863,7 +11863,7 @@ class Repository(object):
     def findpresentremotes(self,remote=None):
         l=[]
         for d in self.remoteurls().values():
-            log.info("adding {} to {}".format(d,l))
+            # log.info("adding {} to {}".format(d,l))
             l+=self.addifis(d) #add to list only what is there now AND related
             # the related test will remove it if there AND NOT related.
             # Otherwise, we leave it for later, in case it just isn't there now.
@@ -11924,7 +11924,7 @@ class Repository(object):
         #These give massive output!
         if t and iwascalledby not in ['diff','getfiles','commithashes']:
             log.info("{} {}: {}".format(self.repotypename,iwascalledby,t))
-        elif iwascalledby not in ['add','commit']:
+        elif iwascalledby not in ['add','commit','commithashes']:
             log.info("{} {} OK".format(self.repotypename,iwascalledby))
         return t
     def alreadythere(self,url):
