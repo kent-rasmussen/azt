@@ -11807,17 +11807,21 @@ class Repository(object):
     def pull(self):
         # could use ',remote=None'; any reason ever to specify remote here/below?
         if remote:
+    def pull(self,remotes=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
+        if not remotes:
+            log.info("Couldn't find a local drive to pull from; giving up")
         for remote in remotes:
             args=["pull",remote]
             r=self.do(args)
             # log.info(r)
-        else:
-            log.info("Couldn't find a local drive to share pull from")
-    def push(self):
-        if remote:
+    def push(self,remotes=None):
+        if not remotes:
             remotes=self.findpresentremotes() #do once
+        if not remotes:
+            log.info("Couldn't find a local drive to push to; giving up")
+        for remote in remotes:
             args=["push",remote]
             r=self.do(args)
             # log.info(r)
