@@ -12050,7 +12050,7 @@ class Repository(object):
             if key not in remotes: #don't overwrite keys
                 log.info("Setting {} key with {} value".format(key,remote))
                 remotes[key]=remote
-                log.info("URL Settings: {}".format(self.remoteurls()))
+                log.info("URL Settings now {}".format(self.remoteurls()))
                 return
     def removeremote(self,remote):
         # This is one of two functions that touch self._remotes directly
