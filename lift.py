@@ -972,9 +972,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                 'lexical-unit']}
         fieldopts.update(
                             {f:'field[@type="{}"]'.format(f)
-                                    for f in self.fieldnames[l]
                                     for l in self.analangs
                                     if l in self.fieldnames
+                                    for f in self.fieldnames[l]
                                     })
         # log.info("fieldopts: {}".format(fieldopts))
         for lang in self.analangs:
