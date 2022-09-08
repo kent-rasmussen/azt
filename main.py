@@ -11818,29 +11818,34 @@ class Repository(object):
             return r.split('\n')
         else:
             return []
-    def share(self):
-        remotes=self.findpresentremotes() #do once
+    def share(self,remotes=None,branch=None):
+        if not remotes:
+            remotes=self.findpresentremotes() #do once
         if not remotes:
             log.info("Couldn't find a local drive to share with; giving up")
             return
         self.pull(remotes)
         self.push(remotes)
-    def pull(self,remotes=None):
+    def pull(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
             log.info("Couldn't find a local drive to pull from; giving up")
         for remote in remotes:
-            args=["pull",remote,'main',program['testversionname']]
+            args=["pull",remote]
+            if branch:
+                args+=[branch]
             r=self.do(args)
             # log.info(r)
-    def push(self,remotes=None):
+    def push(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
             log.info("Couldn't find a local drive to push to; giving up")
         for remote in remotes:
-            args=["push",remote,'main',program['testversionname']]
+            args=["push",remote]
+            if branch:
+                args+=[branch]
             r=self.do(args)
             # log.info(r)
     def isrelated(self,directory):
