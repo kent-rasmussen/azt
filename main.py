@@ -11848,7 +11848,7 @@ class Repository(object):
         thisrepohashes=self.commithashes(directory)
         commonhashes=set(thisrepohashes)&set(thisrepohashes)
         log.info("found {} common commits".format(len(commonhashes)))
-        if commonhashes:
+        if len(commonhashes) >1: #just in case we find one...
             return True
         error=_("The directory {} doesn't seem to have a repository related "
                 "to {}; removing.").format(directory,self.url)
