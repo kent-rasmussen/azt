@@ -11806,9 +11806,9 @@ class Repository(object):
         if remote:
             args=["pull",remote]
             r=self.do(args)
-        # log.info(r)
     def push(self,remote=None):
         self.findremote(remote)
+            # log.info(r)
         if remote:
             args=["push",remote]
             r=self.do(args)
