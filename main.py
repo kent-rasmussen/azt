@@ -12163,6 +12163,21 @@ class GitReadOnly(Git):
         with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
             # mode='r'
             return file.getfile(f.read())
+    def share(self,event=None):
+        remotes=self.findpresentremotes() #do once
+        if not remotes:
+            return
+        branches = ['main',program['testversionname']]
+        fns = [testversion, reverttomain]
+        if self.branchname() != 'main':
+            branches.reverse()
+            fns.reverse()
+        try:
+            for i in range(2):
+                Repository.share(self,remotes=remotes,branch=branches[i])
+                fns[i]()
+        except Exception as e:
+            ErrorNotice(e)
     def reverttomain(self,event=None):
         args=['checkout','main']
         r=self.do(args)
