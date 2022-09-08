@@ -12025,20 +12025,16 @@ class Repository(object):
         else:
             return self._remote
     def addremote(self,remote):
-        try:
-            if remote in self._remotes.values():
+        #This doesn't return a value
+        remotes=self.remoteurls()
+        if remote in remotes.values():
+            return
+        for key in ["Thing"+str(i) for i in range(1,20)]:
+            if key not in remotes: #don't overwrite keys
+                log.info("Setting {} key with {} value".format(key,remote))
+                remotes[key]=remote
+                log.info("URL Settings: {}".format(self.remoteurls()))
                 return
-        except AttributeError as e:
-            log.error(e)
-            self._remotes={}
-        if remote not in self._remotes.values():
-            for key in ["Thing"+str(i) for i in range(1,20)]:
-                if key not in self._remotes: #don't overwrite keys
-                    log.info("Setting {} key with {} value".format(key,remote))
-                    self._remotes[key]=remote
-                    self.remoteurl(remote) #make this the current default
-                    log.info("URL Settings: {}".format(self.remoteurls()))
-                    return
     def removeremote(self,remote):
         # This is one of two functions that touch self._remotes directly
         for k,v in self.remoteurls().items():
