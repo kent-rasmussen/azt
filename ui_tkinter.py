@@ -1060,7 +1060,7 @@ class ContextMenu(Childof):
         """redo menu on context change"""
         self.menu = Menu(self.root, tearoff=0)
         try:
-            log.info("menuinit done: {}".format(self.menu.__dict__))
+            log.info("menuinit done"#: {}".format(self.menu.__dict__))
         except:
             log.error("Problem initializing context menu")
     def menuitem(self,msg,cmd):
