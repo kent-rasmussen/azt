@@ -11808,6 +11808,8 @@ class Repository(object):
             args=["pull",remote]
             r=self.do(args)
             # log.info(r)
+        else:
+            log.info("Couldn't find a local drive to share pull from")
     def push(self):
         remote=self.findremote()
         if remote:
