@@ -12186,7 +12186,7 @@ class GitReadOnly(Git):
         except Exception as e:
             ErrorNotice(e)
     def reverttomain(self,event=None):
-        self.checkout('main')
+        r=self.checkout('main')
         log.info(r)
         return r
     def testversion(self,event=None):
