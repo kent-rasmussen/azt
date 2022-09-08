@@ -11928,7 +11928,8 @@ class Repository(object):
             # if iwascalledby == 'getfiles':
             #     log.info("Looks like that didn't work")
             t=output
-        if t and iwascalledby not in ['diff','getfiles']: #These give massive output!
+        #These give massive output!
+        if t and iwascalledby not in ['diff','getfiles','commithashes']:
             log.info("{} {}: {}".format(self.repotypename,iwascalledby,t))
         elif iwascalledby not in ['add','commit']:
             log.info("{} {} OK".format(self.repotypename,iwascalledby))
