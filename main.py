@@ -12042,10 +12042,6 @@ class Repository(object):
             log.info("No config {} username found; using '{}'"
                     "".format(r,self.repotypename))
         return self.argstoputusername(r)
-    def branchname(self):
-        # mode='r'
-        with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
-            branchURL=file.getfile(f.read())
     def addremote(self,remote):
         #This doesn't return a value
         remotes=self.remoteurls()
@@ -12163,6 +12159,10 @@ class Git(Repository):
         self.argstogetusername=['config', '--get', 'user.name']
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
+    def branchname(self):
+        with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
+            # mode='r'
+            return file.getfile(f.read())
     def reverttomain(self,event=None):
         args=['checkout','main']
         r=self.do(args)
