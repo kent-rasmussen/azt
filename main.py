@@ -3636,7 +3636,7 @@ class TaskDressing(object):
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
     def updateaztlocal(self,event=None):
-        r=program['repo'].pull()
+        r=program['repo'].share()
     def updateazt(self,event=None):
         updateazt()
     def reverttomainazt(self,event=None):
@@ -11801,6 +11801,9 @@ class Repository(object):
     def log(self):
         args=["log"]
         log.info(self.do(args))
+    def share(self):
+        self.pull()
+        self.push()
     def pull(self):
         # could use ',remote=None'; any reason ever to specify remote here/below?
         remote=self.findremote()
