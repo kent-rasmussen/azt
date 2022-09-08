@@ -196,7 +196,8 @@ def getdirectory(title=None):
     if not title:
         title=_("Select a new location for your LIFT Lexicon and other Files")
     f=filedialog.askdirectory(initialdir = home, title = title)
-    return f
+    if f:
+        return f
 def getfilesofdirectory(dir,regex='*'):
     # return pathlib.Path(dir).iterdir()
     return pathlib.Path(dir).glob(regex)
