@@ -11861,12 +11861,8 @@ class Repository(object):
             return [directory] #this needs to add to lists, and iterate
         return []
     def findpresentremotes(self,remote=None):
-        remotes=self.remoteurls().values()
-        log.info("running with remote: {}"
-                "".format(remote,
-                remotes))
         l=[]
-        for d in remotes:
+        for d in self.remoteurls().values():
             log.info("adding {} to {}".format(d,l))
             l+=self.addifis(d) #add to list only what is there now AND related
             # the related test will remove it if there AND NOT related.
