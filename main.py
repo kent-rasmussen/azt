@@ -12174,7 +12174,7 @@ class GitReadOnly(Git):
             fns.reverse()
         try:
             for i in range(2):
-                log.info("Running index {} ({} {}})".format(i,branches[i],fns[i]))
+                log.info("Running index {} ({} {})".format(i,branches[i],fns[i]))
                 r=Repository.share(self,remotes=remotes,branch=branches[i])
                 if not r:
                     log.info("Share busted.")
