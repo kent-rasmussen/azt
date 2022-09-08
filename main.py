@@ -11844,22 +11844,17 @@ class Repository(object):
             # log.info(r)
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
-        #this should result from logic...
-        if not hasattr(self,'relatedbool'):
-            self.relatedbool=0
-        self.relatedbool+=1 #=not(getattr(self,'relatedbool',False))
-        self.relatedbool%=4 #give false:true 1:3 times
-        log.info(_("Not checking (yet!) that {} is related to {}; just "
-                    "going back and forth for now (related={})."
-                    ).format(directory,self.url,self.relatedbool))
-        """once the logic is done, act on it"""
-        if not self.relatedbool:
-            error=_("The directory {} doesn't seem to have a repository related "
-                    "to {}; removing.").format(directory,self.url)
-            log.info(error)
-            ErrorNotice(error,wait=True)
-            self.removeremote(directory)
-        return self.relatedbool #0 #1 #make this work...
+        thisrepohashes=self.commithashes()
+        thisrepohashes=self.commithashes(directory)
+        commonhashes=set(thisrepohashes)&set(thisrepohashes)
+        log.info("found {} common commits".format(len(commonhashes)))
+        if commonhashes:
+            return True
+        error=_("The directory {} doesn't seem to have a repository related "
+                "to {}; removing.").format(directory,self.url)
+        log.info(error)
+        ErrorNotice(error,wait=True)
+        self.removeremote(directory)
     def addifis(self,directory):
         if directory and file.exists(directory) and self.isrelated(directory):
             self.addremote(directory)
