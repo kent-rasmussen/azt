@@ -12174,8 +12174,12 @@ class GitReadOnly(Git):
             fns.reverse()
         try:
             for i in range(2):
-                Repository.share(self,remotes=remotes,branch=branches[i])
-                fns[i]()
+                r=Repository.share(self,remotes=remotes,branch=branches[i])
+                if not r:
+                    return
+                r=fns[i]()
+                if not r:
+                    return
         except Exception as e:
             ErrorNotice(e)
     def reverttomain(self,event=None):
