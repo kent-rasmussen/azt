@@ -11801,6 +11801,22 @@ class Repository(object):
     def log(self):
         args=["log"]
         log.info(self.do(args))
+    def commithashes(self,otherurl=None):
+        if otherurl:
+            url=self.url
+            self.url=otherurl
+        r=self.do(["log", "--format=%H"])
+        if r:
+            log.info("Found {} commits for {}".format(len(r),self.url))
+        else:
+            log.info("Found no commits; is {} a {} repo?".format(self.url,
+                                                            self.repotypename))
+        if otherurl:
+            self.url=url
+        if r:
+            return r.split('\n')
+        else:
+            return []
     def share(self):
         remotes=self.findpresentremotes() #do once
         if not remotes:
