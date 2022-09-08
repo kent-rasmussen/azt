@@ -11801,14 +11801,15 @@ class Repository(object):
     def log(self):
         args=["log"]
         log.info(self.do(args))
-    def pull(self,remote=None):
-        self.findremote(remote)
+    def pull(self):
+        # could use ',remote=None'; any reason ever to specify remote here/below?
+        remote=self.findremote()
         if remote:
             args=["pull",remote]
             r=self.do(args)
-    def push(self,remote=None):
-        self.findremote(remote)
             # log.info(r)
+    def push(self):
+        remote=self.findremote()
         if remote:
             args=["push",remote]
             r=self.do(args)
