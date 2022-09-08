@@ -3641,25 +3641,9 @@ class TaskDressing(object):
         updateazt()
     def reverttomainazt(self,event=None):
         #This doesn't care which test version one is on
-        try:
-            if r:
-                print("Something random")
-                print(r)
-        except Exception as e:
-            log.info("reverttomainazt exception: {}".format(e))
         r=program['repo'].reverttomain()
-        if r:
-            print("Something random2")
-            print(r)
-        else:
-            print("Something random3")
-            print(r)
-        log.info("Something random")
-        log.info("reverttomainazt: {}".format(r))
         if r == "Your branch is up to date with 'origin/main'.":
             self.taskchooser.restart()
-        else:
-            ErrorNotice(r)
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
         r=program['repo'].testversion()
@@ -12096,9 +12080,6 @@ class Git(Repository):
     def reverttomain(self,event=None):
         args=['checkout','main']
         r=self.do(args)
-        log.info("reverttomain: {}".format(r))
-        print("reverttomain: {}".format(r))
-        ErrorNotice("reverttomain: {}".format(r))
         return r
     def testversion(self,event=None):
         args=['checkout',program['testversionname']]
@@ -12142,7 +12123,6 @@ class GitReadOnly(Git):
         pass
     def __init__(self, url):
         super(GitReadOnly, self).__init__(url)
-
 class ResultWindow(ui.Window):
     def __init__(self, parent, nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
