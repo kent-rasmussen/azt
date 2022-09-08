@@ -12174,17 +12174,21 @@ class GitReadOnly(Git):
             fns.reverse()
         try:
             for i in range(2):
+                log.info("Running index {} ({} {}})".format(i,branches[i],fns[i]))
                 r=Repository.share(self,remotes=remotes,branch=branches[i])
                 if not r:
+                    log.info("Share busted.")
                     return
                 r=fns[i]()
                 if not r:
+                    log.info("Branch switch function busted.")
                     return
         except Exception as e:
             ErrorNotice(e)
     def reverttomain(self,event=None):
         args=['checkout','main']
         r=self.do(args)
+        log.info(r)
         return r
     def testversion(self,event=None):
         args=['checkout',program['testversionname']]
