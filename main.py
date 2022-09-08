@@ -11780,8 +11780,9 @@ class Repository(object):
         args=['checkout',reponame]
         r=self.do(args)
         log.info(r)
-        r=self.pull()
-        log.info(r)
+        # if r:
+        #     r=self.pull()
+        #     log.info(r)
         return r
     def add(self,file):
         if not self.alreadythere(file):
@@ -11831,8 +11832,10 @@ class Repository(object):
         if not remotes:
             log.info("Couldn't find a local drive to share with; giving up")
             return
-        self.pull(remotes)
-        self.push(remotes)
+        r=self.pull(remotes)
+        if r:
+            r=self.push(remotes)
+        return r
     def pull(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -11844,6 +11847,7 @@ class Repository(object):
                 args+=[branch]
             r=self.do(args)
             # log.info(r)
+        return r
     def push(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -11855,6 +11859,7 @@ class Repository(object):
                 args+=[branch]
             r=self.do(args)
             # log.info(r)
+        return r
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
         thisrepohashes=self.commithashes()
@@ -12182,7 +12187,8 @@ class GitReadOnly(Git):
             for i in range(2):
                 log.info("Running index {} ({} {})".format(i,branches[i],fns[i]))
                 r=Repository.share(self,remotes=remotes,branch=branches[i])
-                r=fns[i]()
+                if r:
+                    r=fns[i]()
         except Exception as e:
             ErrorNotice(e)
     def reverttomain(self,event=None):
