@@ -11842,7 +11842,7 @@ class Repository(object):
     def addifis(self,directory):
         if directory and file.exists(directory) and self.isrelated(directory):
             self.addremote(directory)
-            return directory
+            return [directory] #this needs to add to lists, and iterate
     def findpresentremotes(self,remote=None):
         remotes=self.remoteurls().values()
         log.info("running with remote: {}"
