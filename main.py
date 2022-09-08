@@ -11776,6 +11776,13 @@ class ErrorNotice(ui.Window):
             self.wait_window(self)
 class Repository(object):
     """SuperClass for Repository classes"""
+    def checkout(self,reponame):
+        args=['checkout',reponame]
+        r=self.do(args)
+        log.info(r)
+        r=self.pull()
+        log.info(r)
+        return r
     def add(self,file):
         if not self.alreadythere(file):
             args=["add", str(file)]
@@ -12186,13 +12193,11 @@ class GitReadOnly(Git):
         except Exception as e:
             ErrorNotice(e)
     def reverttomain(self,event=None):
-        args=['checkout','main']
-        r=self.do(args)
+        self.checkout('main')
         log.info(r)
         return r
     def testversion(self,event=None):
-        args=['checkout',program['testversionname']]
-        r=self.do(args)
+        r=self.checkout(program['testversionname'])
         log.info(r)
         return r
     def add(self,file):
