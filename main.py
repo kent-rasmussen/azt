@@ -11806,16 +11806,18 @@ class Repository(object):
         self.push()
     def pull(self):
         # could use ',remote=None'; any reason ever to specify remote here/below?
-        remote=self.findremote()
         if remote:
+        if not remotes:
+            remotes=self.findpresentremotes() #do once
+        for remote in remotes:
             args=["pull",remote]
             r=self.do(args)
             # log.info(r)
         else:
             log.info("Couldn't find a local drive to share pull from")
     def push(self):
-        remote=self.findremote()
         if remote:
+            remotes=self.findpresentremotes() #do once
             args=["push",remote]
             r=self.do(args)
             # log.info(r)
@@ -11841,21 +11843,24 @@ class Repository(object):
         if directory and file.exists(directory) and self.isrelated(directory):
             self.addremote(directory)
             return directory
-    def findremote(self,remote=None):
-        log.info("running with remote: {}, _remote: {}, and _remotes: {}"
-                "".format(remote, getattr(self,'_remote',None), self._remotes))
-        if self.addifis(remote):
-            return remote #only if there
-        if hasattr(self,'_remote') and self.addifis(self._remote):
-            return self._remote #only if there
-        for d in self.remoteurls().values():
-            d=self.addifis(d)
-            if d:
-                return d #take the first one
-        d=file.getdirectory(_("Please select where to find the AZT source "
-                                "locally"))
-        # log.info("file.getdirectory returned {}".format(d))
-        return self.addifis(d)
+    def findpresentremotes(self,remote=None):
+        remotes=self.remoteurls().values()
+        log.info("running with remote: {}"
+                "".format(remote,
+                remotes))
+        l=[]
+        for d in remotes:
+            log.info("adding {} to {}".format(d,l))
+            l+=self.addifis(d) #add to list only what is there now AND related
+            # the related test will remove it if there AND NOT related.
+            # Otherwise, we leave it for later, in case it just isn't there now.
+        if l:
+            return l
+        else:
+            d=file.getdirectory(_("Please select where to find the AZT source "
+                                    "locally"))
+            # log.info("file.getdirectory returned {}".format(d))
+            return self.addifis(d)
     def root(self):
         args=["root"]
         self.root=self.do(args)
@@ -12019,11 +12024,6 @@ class Repository(object):
         # mode='r'
         with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
             branchURL=file.getfile(f.read())
-    def remoteurl(self,remote=None):
-        if remote:
-            self._remote=remote
-        else:
-            return self._remote
     def addremote(self,remote):
         #This doesn't return a value
         remotes=self.remoteurls()
