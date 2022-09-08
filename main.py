@@ -11916,7 +11916,7 @@ class Repository(object):
             ErrorNotice(_("Call to {} ({}) failed: {}").format(
                                                             self.repotypename,
                                                             args,e))
-            return e
+            return
         iwascalledby=callerfn()
         try:
             # if iwascalledby == 'getfiles':
