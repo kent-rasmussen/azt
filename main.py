@@ -12168,7 +12168,7 @@ class GitReadOnly(Git):
         if not remotes:
             return
         branches = ['main',program['testversionname']]
-        fns = [testversion, reverttomain]
+        fns = [self.testversion, self.reverttomain]
         if self.branchname() != 'main':
             branches.reverse()
             fns.reverse()
