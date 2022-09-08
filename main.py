@@ -11832,7 +11832,7 @@ class Repository(object):
             log.info("Couldn't find a local drive to share with; giving up")
             return
         self.pull(remotes)
-        # self.push(remotes)
+        self.push(remotes)
     def pull(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
