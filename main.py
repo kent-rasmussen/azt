@@ -11802,8 +11802,12 @@ class Repository(object):
         args=["log"]
         log.info(self.do(args))
     def share(self):
-        self.pull()
-        self.push()
+        remotes=self.findpresentremotes() #do once
+        if not remotes:
+            log.info("Couldn't find a local drive to share with; giving up")
+            return
+        self.pull(remotes)
+        self.push(remotes)
     def pull(self,remotes=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
