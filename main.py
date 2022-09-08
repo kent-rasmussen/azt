@@ -11917,8 +11917,12 @@ class Repository(object):
             log.info("self.ignored for {} now {}".format(self.code,self.ignored))
         except FileNotFoundError as e:
             log.info("Hope this is OK: {}".format(e))
-    def exists(self):
-        return file.exists(self.deltadir)
+    def exists(self,f=None):
+        if not f:
+            f=self.deltadir
+            log.info("FYI, I didn't get an arg to check, so checking {}".format(
+                                                                            f))
+        return file.exists(f)
     def exewarning(self):
         title=_("Warning: {} Executable Missing!".format(self.repotypename))
         text=_("You seem to be working on a repository of data ({0}), "
