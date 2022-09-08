@@ -8,7 +8,7 @@ program['testing']=True #True eliminates Error screens and zipped logs
 program['demo']=True #sets me=False, production=True, testing=False
 # program['demo']=False
 program['version']='0.9.4' #This is a string...
-program['testversionname']='tweaks'
+program['testversionname']='tweaks' #always have some real test branch here
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 exceptiononload=False
