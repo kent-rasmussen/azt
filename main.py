@@ -12134,6 +12134,14 @@ class Git(Repository):
         self.lsfiles='ls-files'
         self.argstogetusername=['config', '--get', 'user.name']
         super(Git, self).__init__(url)
+class GitReadOnly(Git):
+    def add(self,file):
+        pass
+    def commit(self,file=None):
+        pass
+    def __init__(self, url):
+        super(GitReadOnly, self).__init__(url)
+
 class ResultWindow(ui.Window):
     def __init__(self, parent, nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
@@ -12893,7 +12901,7 @@ if __name__ == "__main__":
         findexecutable(exe)
     if program['python3']: #be sure we're using python v3
         program['python']=program.pop('python3')
-    program['repo']=Git(program['aztdir'])
+    program['repo']=GitReadOnly(program['aztdir'])
     lastcommit=program['repo'].lastcommitdate()
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
