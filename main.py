@@ -12005,12 +12005,14 @@ class Repository(object):
                     log.info("URL Settings: {}".format(self.remoteurls()))
                     return
     def remoteurls(self,remotes=None):
+        # This returns a copy of the dict, so don't operate on it directly.
+        # Rather, read and write using this function.
         if remotes and type(remotes) is dict:
             self._remotes=remotes
         elif remotes:
             log.info("You passed me a remotes value that isn't a dict?")
         else:
-            return getattr(self,'_remotes',{})
+            return getattr(self,'_remotes',{}).copy() #so I can iterate and change
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
