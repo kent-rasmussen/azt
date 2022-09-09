@@ -11842,26 +11842,26 @@ class Repository(object):
             remotes=self.findpresentremotes() #do once
         if not remotes:
             log.info("Couldn't find a local drive to pull from; giving up")
+            return
         for remote in remotes:
             args=["pull",remote]
             if branch:
                 args+=[branch]
             r=self.do(args)
             # log.info(r)
-        if r:
             return r
     def push(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
             log.info("Couldn't find a local drive to push to; giving up")
+            return
         for remote in remotes:
             args=["push",remote]
             if branch:
                 args+=[branch]
             r=self.do(args)
             # log.info(r)
-        if r:
             return r
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
