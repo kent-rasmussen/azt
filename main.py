@@ -12222,6 +12222,7 @@ class GitReadOnly(Git):
         pass
     def __init__(self, url):
         super(GitReadOnly, self).__init__(url)
+        log.info("Using branch {}".format(self.branchname()))
 class ResultWindow(ui.Window):
     def __init__(self, parent, nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
