@@ -6,7 +6,7 @@ program['tkinter']=True
 program['production']=False #True for making screenshots (default theme)
 program['testing']=True #True eliminates Error screens and zipped logs
 program['demo']=True #sets me=False, production=True, testing=False
-# program['demo']=False
+program['demo']=False
 program['version']='0.9.5' #This is a string...
 program['testversionname']='tweaks' #always have some real test branch here
 program['url']='https://github.com/kent-rasmussen/azt'
