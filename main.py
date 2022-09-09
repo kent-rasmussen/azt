@@ -11838,6 +11838,8 @@ class Repository(object):
         if self.diff() and (not me or self.commitconfirm()):
             r=self.do([i for i in args if i is not None])
             return r
+        # if theres no diff, or I don't want to commit, still share commits:
+        return True
     def diff(self):
         args=["diff"]
         return self.do(args)
