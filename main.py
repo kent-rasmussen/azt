@@ -11851,7 +11851,8 @@ class Repository(object):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
-            log.info("Couldn't find a local drive to pull from; giving up")
+            log.info(_("Couldn't find a local drive to pull from via {}; "
+                    "giving up").format(self.repotypename))
             return
         for remote in remotes:
             args=["pull",remote]
@@ -11864,7 +11865,8 @@ class Repository(object):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
-            log.info("Couldn't find a local drive to push to; giving up")
+            log.info(_("Couldn't find a local drive to push to via {}; "
+                    "giving up").format(self.repotypename))
             return
         for remote in remotes:
             args=["push"]
