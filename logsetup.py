@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-import file
+"""we cannot import file; file imports this module!"""
 import tarfile
 import datetime
 import logging
