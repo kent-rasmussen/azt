@@ -11848,7 +11848,8 @@ class Repository(object):
                 args+=[branch]
             r=self.do(args)
             # log.info(r)
-        return r
+        if r:
+            return r
     def push(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -11860,7 +11861,8 @@ class Repository(object):
                 args+=[branch]
             r=self.do(args)
             # log.info(r)
-        return r
+        if r:
+            return r
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
         thisrepohashes=self.commithashes()
