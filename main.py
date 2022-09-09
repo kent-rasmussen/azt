@@ -3651,6 +3651,7 @@ class TaskDressing(object):
     def reverttomainazt(self,event=None):
         #This doesn't care which test version one is on
         r=program['repo'].reverttomain()
+        log.info("reverttomainazt: {}".format(r))
         if r:# == ("Switched to branch 'main'"
                 # "\nYour branch is up to date with 'origin/main'."):
             self.taskchooser.restart()
