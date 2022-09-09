@@ -2543,8 +2543,7 @@ class Settings(object):
         self.makestatus() #needs params, slices, data, toneframes, exs
         self.makeeverythingok()
         self.settingsobjects() #needs params, glosslangs, slices
-        self.moveattrstoobjects()
-        self.trackuntrackedfiles()
+        self.moveattrstoobjects() #catch what wasn't done before
     def __init__(self,taskchooser,liftfileobject):
         self.taskchooser=taskchooser
         self.liftfilename=liftfileobject.name
@@ -2573,6 +2572,9 @@ class Settings(object):
         self.makeglosslangs()
         self.checkglosslangs() #if stated aren't in db, guess
         self.makeparameters() #depends on nothing but self.analang
+        self.settingsobjects() #should do this more; can be redone!
+        self.moveattrstoobjects()
+        self.trackuntrackedfiles()
         if not self.buttoncolumns:
             self.setbuttoncolumns(1)
         """The following might be OK here, but need to be OK later, too."""
