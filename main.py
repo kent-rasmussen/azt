@@ -1259,7 +1259,7 @@ class Settings(object):
             at the end of settings init. So this block is not used in
             conversion, only in later saves."""
             if hasattr(self,'fndict') and s in self.fndict:
-                log.info("Trying to dict {} attr".format(s))
+                # log.info("Trying to dict {} attr".format(s))
                 try:
                     d[s]=self.fndict[s]()
                     log.info("Value {}={} found in object".format(s,d[s]))
