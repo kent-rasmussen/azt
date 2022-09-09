@@ -12240,7 +12240,6 @@ class Object:
         self.value=None
 """These are non-method utilities I'm actually using."""
 def now():
-    # datetime.datetime.utcnow().isoformat()[:-7]+'Z'
     return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
 def nowruntime():
     #this returns a delta!
