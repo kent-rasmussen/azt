@@ -11848,7 +11848,8 @@ class Repository(object):
                 args+=[branch]
             r=self.do(args)
             # log.info(r)
-        return r
+        if r:
+            return r
     def push(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -11860,7 +11861,8 @@ class Repository(object):
                 args+=[branch]
             r=self.do(args)
             # log.info(r)
-        return r
+        if r:
+            return r
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
         thisrepohashes=self.commithashes()
@@ -12185,9 +12187,9 @@ class GitReadOnly(Git):
         with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
             c=f.read()
             log.info("Found info {}".format(c))
-            self.branchname=c.split('/')[-1]
-            log.info("Found info {} with branch: {}".format(c,self.branchname))
-        return self.branchname
+            self.branch=c.split('/')[-1]
+            log.info("Found info {} with branch: {}".format(c,self.branch))
+        return self.branch
     def share(self,event=None):
         remotes=self.findpresentremotes() #do once
         if not remotes:
