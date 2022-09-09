@@ -11866,9 +11866,16 @@ class Repository(object):
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
         thisrepohashes=self.commithashes()
-        thisrepohashes=self.commithashes(directory)
-        commonhashes=set(thisrepohashes)&set(thisrepohashes)
-        log.info("found {} common commits".format(len(commonhashes)))
+        thatrepohashes=self.commithashes(directory)
+        # with open(rx.urlok(self.url),'a') as f:
+        #     for l in thisrepohashes:
+        #         f.write(l+'\n')
+        # with open(rx.urlok(directory),'a') as f:
+        #     for l in thatrepohashes:
+        #         f.write(l+'\n')
+        commonhashes=set(thisrepohashes)&set(thatrepohashes)
+        log.info("found {} common commits: {}".format(len(commonhashes),
+                                                    list(commonhashes)[:10]))
         if len(commonhashes) >1: #just in case we find one...
             return True
         error=_("The directory {} doesn't seem to have a repository related "
