@@ -1263,13 +1263,13 @@ class Settings(object):
                 # log.info("Trying to dict {} attr".format(s))
                 try:
                     d[s]=self.fndict[s]()
-                    log.info("Value {}={} found in object".format(s,d[s]))
+                    # log.info("Value {}={} found in object".format(s,d[s]))
                 except:
                     log.error("Value of {} not found in object".format(s))
             elif hasattr(o,s) and getattr(o,s):
                 d[s]=getattr(o,s)
-                log.info("Set to dict self.{} with value {}, type {}"
-                        "".format(s,d[s],type(d[s])))
+                # log.info("Set to dict self.{} with value {}, type {}"
+                #         "".format(s,d[s],type(d[s])))
             # else:
             #     log.error("Couldn't find {} in {}".format(s,setting))
         """This is the only glosslang > glosslangs conversion"""
@@ -1291,12 +1291,12 @@ class Settings(object):
         for s in dict:
             v=d[s]
             if hasattr(self,'fndict') and s in self.fndict:
-                log.info("Trying to read {} to object with value {} and fn "
-                            "{}".format(s,v,self.fndict[s]))
+                # log.info("Trying to read {} to object with value {} and fn "
+                #             "{}".format(s,v,self.fndict[s]))
                 self.fndict[s](v)
             else:
-                log.info("Trying to read {} to {} with value {}, type {}"
-                            "".format(s,o,v,type(v)))
+                # log.info("Trying to read {} to {} with value {}, type {}"
+                #             "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return d
     def storesettingsfile(self,setting='defaults',noobjects=False):
