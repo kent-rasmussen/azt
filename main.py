@@ -12184,6 +12184,7 @@ class GitReadOnly(Git):
     def branchname(self):
         with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
             c=f.read()
+            log.info("Found info {}".format(c))
             self.branchname=c.split('/')[-1]
             log.info("Found info {} with branch: {}".format(c,n))
         return self.branchname
