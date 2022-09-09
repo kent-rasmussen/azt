@@ -1048,8 +1048,9 @@ class Settings(object):
         for r in repo:
             if hasattr(repo[r],'files'): #fails if no exe
                 if repo[r].exists(): #tests for .code dir
-                    log.info(_("Found {} Repository!"
+                    log.info(_("Found {} Repository; checking for a USB drive!"
                                 ).format(repo[r].repotypename))
+                    repo[r].share()
                 # elif r == 'git': #don't worry about hg, if not there already
                 #     repo[r].init()
                 self.repo[r]=repo[r]
