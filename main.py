@@ -3636,7 +3636,10 @@ class TaskDressing(object):
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
     def updateaztlocal(self,event=None):
-        r=program['repo'].share()
+        if me:
+            r=program['repo'].share()
+        else:
+            r=program['repo'].pull()
     def updateazt(self,event=None):
         updateazt()
     def reverttomainazt(self,event=None):
