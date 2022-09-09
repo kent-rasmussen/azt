@@ -12015,9 +12015,11 @@ class Repository(object):
             t=output
         #These give massive output!
         if t and iwascalledby not in ['diff','getfiles','commithashes']:
-            log.info("{} {}: {}".format(self.repotypename,iwascalledby,t))
+            log.info("{} {} {}: {}".format(self.repotypename,
+                                            iwascalledby,args[1:],t))
         elif iwascalledby not in ['add','commit','commithashes']:
-            log.info("{} {} OK".format(self.repotypename,iwascalledby))
+            log.info("{} {} {} OK".format(self.repotypename,
+                                            iwascalledby,args[1:]))
         return t
     def alreadythere(self,url):
         if str(file.getreldir(self.url,url)) in self.files:
