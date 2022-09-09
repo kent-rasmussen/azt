@@ -1452,7 +1452,7 @@ class Settings(object):
             present=set(self.repo[r].files)
             log.info("{} currently has {} files".format(r,len(present)))
             for f in set(maindirfiles)-present:
-                if f not in self.repo[r].files:
+                if file.exists(f) and f not in self.repo[r].files:
                     self.repo[r].add(f)
             # In case I run into formatting issues again:
             # log.info(', '.join(list(self.repo[r].files)[:5]))
