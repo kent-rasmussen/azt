@@ -11906,8 +11906,6 @@ class Repository(object):
         if l:
             return l
         elif self.code is 'git':
-            d=file.getdirectory(_("Please select where to find the AZT source "
-                                    "locally"))
             d=file.getdirectory(_("Please select where to find the {} "
                                     "locally").format(self.description))
             # log.info("file.getdirectory returned {}".format(d))
