@@ -3688,8 +3688,7 @@ class TaskDressing(object):
             log.info("No final write to lift")
         self.settings.trackuntrackedfiles()
         for r in self.settings.repo:
-            self.settings.repo[r].commit()
-            self.settings.repo[r].push()
+            self.settings.repo[r].share()
             log.info("Done maybe committing/pushing to {}".format(r))
         self.settings.storesettingsfile() #in case we added repos
         ui.Window.killall(self) #Exitable
