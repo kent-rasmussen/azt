@@ -11857,10 +11857,18 @@ class Repository(object):
             log.info("Couldn't find a local drive to push to; giving up")
             return
         for remote in remotes:
-            args=["push",remote]
+            args=["push"]
+            if setupstream:
+                args+=['--set-upstream']
+            args+=[remote]
             if branch:
                 args+=[branch]
             r=self.do(args)
+            if "The current branch master has no upstream branch." in r:
+                r=self.push(remotes=[remote],
+                            #always keep branch names aligned.
+                            branch=self.branchname(),
+                            setupstream=True)
             # log.info(r)
             return r
     def isrelated(self,directory):
