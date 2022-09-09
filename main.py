@@ -12094,6 +12094,15 @@ class Repository(object):
             log.info("You passed me a remotes value that isn't a dict?")
         else:
             return getattr(self,'_remotes',{}).copy() #so I can iterate and change
+    def branchname(self):
+        repoheadfile='.'+self.code+'/'+self.branchnamefile
+        with file.getdiredurl(self.url,repoheadfile).open() as f:
+            c=f.read()
+            log.info("Found repo head info {}".format(c))
+            if c:
+                self.branch=c.split('/')[-1].strip()
+                log.info("Found branch: {}".format(self.branch))
+        return self.branch
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
@@ -12185,14 +12194,6 @@ class Git(Repository):
         self.argstogetusername=['config', '--get', 'user.name']
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
-    def branchname(self):
-        with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
-            c=f.read()
-            log.info("Found repo head info {}".format(c))
-            if c:
-                self.branch=c.split('/')[-1].strip()
-                log.info("Found branch: {}".format(self.branch))
-        return self.branch
     def share(self,event=None):
         remotes=self.findpresentremotes() #do once
         if not remotes:
