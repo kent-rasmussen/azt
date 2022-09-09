@@ -1039,7 +1039,7 @@ class Settings(object):
             return interfacelang()
     def repocheck(self):
         self.repo={}
-        return #for now, until fixed
+        # return #for now, until fixed
         repo={ #start with local variable:
                 'git': Git(self.directory),
                 'hg': Mercurial(self.directory),
