@@ -11850,7 +11850,7 @@ class Repository(object):
             r=self.do(args)
             # log.info(r)
             return r
-    def push(self,remotes=None,branch=None):
+    def push(self,remotes=None,branch=None,setupstream=False):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
@@ -11950,6 +11950,12 @@ class Repository(object):
                                                             self.repotypename,
                                                             ' '.join(args),
                                                             output))
+            if "The current branch master has no upstream branch." in output:
+                log.info("iwascalledby {}, but don't have upstream."
+                            "".format(iwascalledby))
+                if iwascalledby not in ["push"]:
+                    ErrorNotice(output)
+                return output
             return
         except Exception as e:
             ErrorNotice(_("Call to {} ({}) failed: {}").format(
