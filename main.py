@@ -3684,11 +3684,11 @@ class TaskDressing(object):
         else:
             log.info("No final write to lift")
         self.settings.trackuntrackedfiles()
-        self.settings.storesettingsfile()
         for r in self.settings.repo:
             self.settings.repo[r].commit()
             self.settings.repo[r].push()
             log.info("Done maybe committing/pushing to {}".format(r))
+        self.settings.storesettingsfile() #in case we added repos
         ui.Window.killall(self) #Exitable
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
