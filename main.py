@@ -11798,9 +11798,10 @@ class Repository(object):
         args=["commit", '-m', "Autocommit from AZT", file]
         if me: #I only want to commit manually to people's repos
             log.info("Not committing as asked: {}".format(args))
-            return
+            return True
         if self.diff(): #don't try to commit without changes; it clogs the log
-            self.do([i for i in args if i is not None])
+            r=self.do([i for i in args if i is not None])
+            return r
     def diff(self):
         args=["diff"]
         return self.do(args)
@@ -11833,9 +11834,11 @@ class Repository(object):
         if not remotes:
             log.info("Couldn't find a local drive to share with; giving up")
             return
-        r=self.pull(remotes)
+        r=self.commit() #should always before pulling, at least here
         if r:
-            r=self.push(remotes)
+            r=self.pull(remotes,branch)
+        if r:
+            r=self.push(remotes,branch)
         return r
     def pull(self,remotes=None,branch=None):
         if not remotes:
