@@ -11921,10 +11921,12 @@ class Repository(object):
                                     errors='backslashreplace'
                                     ).strip()
             if iwascalledby not in ["getusernameargs"]:
-                ErrorNotice(_("Call to {} ({}) gave error: \n{} ({})").format(
+                if not output:
+                    output=e
+                ErrorNotice(_("Call to {} ({}) gave error: \n{}").format(
                                                             self.repotypename,
                                                             ' '.join(args),
-                                                            output,e))
+                                                            output))
             return
         except Exception as e:
             ErrorNotice(_("Call to {} ({}) failed: {}").format(
