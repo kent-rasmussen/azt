@@ -12261,14 +12261,19 @@ def interfacelang(lang=None,magic=False):
     if lang:
         curlang=interfacelang()
         try:
-            log.debug("Magic: {}".format(str(_)))
-            magic=True
+            if _.__module__ == 'gettext':
+                log.debug("Magic: {}".format(_.__module__))
+                magic=True
+            else:
+                log.debug("Magic seems to be installed, but not gettext: {}"
+                            "".format(_.__module__))
         except:
             log.debug("Looks like translation magic isn't defined yet; making")
         if lang != curlang or magic == False:
             if lang is not None: #lang is not None:
                 log.debug("Setting Interface language: {}".format(lang))
                 i18n[lang].install()
+                log.debug("New Magic: {}".format(_.__module__))
             else:
                 log.debug("Setting Default Interface language: {}".format(curlang))
                 i18n[curlang].install()
