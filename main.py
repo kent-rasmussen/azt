@@ -3688,8 +3688,7 @@ class TaskDressing(object):
             log.info("No final write to lift")
         self.settings.trackuntrackedfiles()
         for r in self.settings.repo:
-            self.settings.repo[r].commit()
-            self.settings.repo[r].push()
+            self.settings.repo[r].share()
             log.info("Done maybe committing/pushing to {}".format(r))
         self.settings.storesettingsfile() #in case we added repos
         ui.Window.killall(self) #Exitable
@@ -11839,6 +11838,8 @@ class Repository(object):
         if self.diff() and (not me or self.commitconfirm()):
             r=self.do([i for i in args if i is not None])
             return r
+        # if theres no diff, or I don't want to commit, still share commits:
+        return True
     def diff(self):
         args=["diff"]
         return self.do(args)
@@ -11876,7 +11877,7 @@ class Repository(object):
             r=self.pull(remotes,branch)
         if r:
             r=self.push(remotes,branch)
-        return r
+        return r #ok if we don't track results for each
     def pull(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -11890,7 +11891,7 @@ class Repository(object):
                 args+=[branch]
             r=self.do(args)
             # log.info(r)
-            return r
+        return r #ok if we don't track results for each
     def push(self,remotes=None,branch=None,setupstream=False):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -11912,7 +11913,7 @@ class Repository(object):
                             branch=self.branchname(),
                             setupstream=True)
             # log.info(r)
-            return r
+        return r #ok if we don't track results for each
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
         thisrepohashes=self.commithashes()
@@ -12016,9 +12017,11 @@ class Repository(object):
             t=output
         #These give massive output!
         if t and iwascalledby not in ['diff','getfiles','commithashes']:
-            log.info("{} {}: {}".format(self.repotypename,iwascalledby,t))
+            log.info("{} {} {}: {}".format(self.repotypename,
+                                            iwascalledby,args[1:],t))
         elif iwascalledby not in ['add','commit','commithashes']:
-            log.info("{} {} OK".format(self.repotypename,iwascalledby))
+            log.info("{} {} {} OK".format(self.repotypename,
+                                            iwascalledby,args[1:]))
         return t
     def alreadythere(self,url):
         if str(file.getreldir(self.url,url)) in self.files:
