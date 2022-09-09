@@ -134,3 +134,10 @@ def writelzma(filename=None):
 log = logging.getLogger() #this is the root; set level with setlevel
 setlevel('INFO') #If not set elsewhere
 dorootloghandlers(log)
+if __name__ == "__main__":
+    loglevel=10
+    log=getlog('root') #not ever a module
+    setlevel(loglevel)
+    log.info("Hey, this is something.")
+    writelzma()
+    shutdown()
