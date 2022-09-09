@@ -2544,12 +2544,12 @@ class Settings(object):
         self.makeeverythingok()
         self.settingsobjects() #needs params, glosslangs, slices
         self.moveattrstoobjects()
+        self.trackuntrackedfiles()
     def __init__(self,taskchooser,liftfileobject):
         self.taskchooser=taskchooser
         self.liftfilename=liftfileobject.name
         self.db=liftfileobject.db
         self.getdirectories() #incl settingsfilecheck and repocheck
-        self.trackuntrackedfiles()
         self.setinvalidcharacters()
         # self.settingsfilecheck()
         self.settingsinit() #init, clear, fields
