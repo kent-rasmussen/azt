@@ -51,6 +51,8 @@ except Exception as e:
     log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
     exceptiononload=True
 """Other people's stuff"""
+import datetime
+program['start_time'] = datetime.datetime.utcnow() #time.time()
 import threading
 import multiprocessing
 import itertools
@@ -73,7 +75,6 @@ if program['tkinter']==True:
 """
 import ast
 import time
-import datetime
 import wave
 # #for some day...
 # from PIL import Image #, ImageTk
@@ -12247,9 +12248,8 @@ def now():
     return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
 def nowruntime():
     # calibration=program['start_time']
-    return time.time()-program['start_time']
-def logfinished(start):
-    calibration=program['start_time']
+    return datetime.datetime.utcnow()-program['start_time']
+def logfinished(start=program['start_time']):
     run_time=nowruntime()
     log.info("Finished at {} ({:1.0f}m, {:2.3f}s)"
             "".format(run_time,*divmod(run_time-start,60)))
@@ -12928,7 +12928,6 @@ def name(x):
         name=x.__class__.__name__ #If x is a class instance
         return "class."+name
 if __name__ == "__main__":
-    program['start_time'] = time.time()
     """These things need to be done outside of a function, as we need global
     variables."""
     # log.info("TaskChooser MRO: {}".format(TaskChooser.mro()))
@@ -12962,9 +12961,8 @@ if __name__ == "__main__":
                                                     sys.argv[0], sys.argv))
     log.info("Working directory is {} on {} ".format(program['aztdir'],
                                                     program['hostname']))
-    program['start_time'] = time.time()
     log.info("Loglevel is {}; started at {}".format(loglevel,
-                                    datetime.datetime.utcnow().isoformat()))
+                                        program['start_time'].isoformat()))
     transdir=file.gettranslationdirin(program['aztdir'])
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
