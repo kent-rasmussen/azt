@@ -8,6 +8,7 @@ program['testing']=True #True eliminates Error screens and zipped logs
 program['demo']=True #sets me=False, production=True, testing=False
 # program['demo']=False
 program['version']='0.9.5' #This is a string...
+program['testversionname']='tweaks' #always have some real test branch here
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 exceptiononload=False
@@ -22,7 +23,8 @@ information than 'DEBUG' does):
     helpful.
 Other levels:'WARNING','ERROR','CRITICAL'
 """
-if platform.uname().node == 'karlap':
+program['hostname']=platform.uname().node
+if program['hostname'] == 'karlap':
     loglevel=6 #
     if program['demo']:
         me=False
@@ -49,6 +51,8 @@ except Exception as e:
     log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
     exceptiononload=True
 """Other people's stuff"""
+import datetime
+program['start_time'] = datetime.datetime.utcnow()
 import threading
 import multiprocessing
 import itertools
@@ -71,7 +75,6 @@ if program['tkinter']==True:
 """
 import ast
 import time
-import datetime
 import wave
 # #for some day...
 # from PIL import Image #, ImageTk
@@ -238,12 +241,8 @@ class FileChooser(object):
             print(_("Apparently we've run this before today; not backing "
             "up again."))
     def senseidtriage(self):
-        # import time
-        # print("Doing senseid triage... This takes awhile...")
-        # start_time=time.time()
         self.senseids=self.db.senseids
         self.senseidsinvalid=[] #nothing, for now...
-        # print(time.time() - start_time,"seconds.")
         print(len(self.senseidsinvalid),'senses with invalid data found.')
         self.db.senseidsinvalid=self.senseidsinvalid
         self.senseidsvalid=[]
@@ -530,6 +529,13 @@ class Menus(ui.Menu):
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
             helpitems+=[(_("Update A→Z+T"), updateazt)]
+            helpitems+=[(_("Update A→Z+T (local)"), self.parent.updateaztlocal)]
+            if program['repo'].branchname() == 'main':
+                helpitems+=[(_("Try A→Z+T test version"),
+                                self.parent.trytestazt)]
+            else:
+                helpitems+=[(_("Revert to A→Z+T main version"),
+                                self.parent.reverttomainazt)]
         helpitems+=[("What's with the New Interface?",
                         self.parent.helpnewinterface)
                     ]
@@ -1033,19 +1039,19 @@ class Settings(object):
             return interfacelang()
     def repocheck(self):
         self.repo={}
-        return #for now, until fixed
+        # return #for now, until fixed
         repo={ #start with local variable:
                 'git': Git(self.directory),
                 'hg': Mercurial(self.directory),
                 }
         self.repo=dict() #then copy to class attribute if there
         for r in repo:
-            if hasattr(repo[r],'files'):
-                if repo[r].exists():
+            if hasattr(repo[r],'files'): #fails if no exe
+                if repo[r].exists(): #tests for .code dir
                     log.info(_("Found {} Repository!"
                                 ).format(repo[r].repotypename))
-                elif r == 'git': #don't worry about hg, if not there already
-                    repo[r].init()
+                # elif r == 'git': #don't worry about hg, if not there already
+                #     repo[r].init()
                 self.repo[r]=repo[r]
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
@@ -1076,6 +1082,9 @@ class Settings(object):
                                 'buttoncolumns',
                                 'showoriginalorthographyinreports',
                                 'lowverticalspace',
+                                'giturls',
+                                'hgurls',
+                                'aztrepourls',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -1223,13 +1232,17 @@ class Settings(object):
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
             fns['glosslangs']=self.glosslangs.langs
+            fns['aztrepourls']=program['repo'].remoteurls
+            fns['giturls']=self.repo['git'].remoteurls
+            fns['hgurls']=self.repo['hg'].remoteurls
             fns['ps']=self.slices.ps
             fns['profile']=self.slices.profile
             # except this one, which pretends to set but doesn't (throws arg away)
             fns['profilecounts']=self.slices.slicepriority
-        except:
-            log.error("Only finished settingsobjects up to {}".format(fns))
+        except Exception as e:
+            log.error("Only finished settingsobjects up to {} ({})".format(fns.keys(),e))
             return []
+        log.info("Finished settingsobjects up to {}".format(fns.keys()))
     def makesettingsdict(self,setting='defaults'):
         """This returns a dictionary of values, keyed by a set of settings"""
         """It pulls from objects if it can, otherwise from self attributes
@@ -1255,7 +1268,7 @@ class Settings(object):
                     log.error("Value of {} not found in object".format(s))
             elif hasattr(o,s) and getattr(o,s):
                 d[s]=getattr(o,s)
-                # log.log(4,"Trying to dict self.{} with value {}, type {}"
+                # log.info("Set to dict self.{} with value {}, type {}"
                 #         "".format(s,d[s],type(d[s])))
             # else:
             #     log.error("Couldn't find {} in {}".format(s,setting))
@@ -1278,11 +1291,11 @@ class Settings(object):
         for s in dict:
             v=d[s]
             if hasattr(self,'fndict') and s in self.fndict:
-                # log.debug("Trying to read {} to object with value {} and fn "
+                # log.info("Trying to read {} to object with value {} and fn "
                 #             "{}".format(s,v,self.fndict[s]))
                 self.fndict[s](v)
             else:
-                # log.debug("Trying to read {} to {} with value {}, type {}"
+                # log.info("Trying to read {} to {} with value {}, type {}"
                 #             "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return d
@@ -1414,14 +1427,16 @@ class Settings(object):
         # log.info('self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
     def trackuntrackedfiles(self):
+        # return #until this doesn't cause problems
         # This method is here to pick up files that are there, but not tracked,
         # either in constructing a repository, or as a result of changes by other
         # editors (e.g., WeSay).
         # This is for new files, not changes to known files; that is done
         # on close.
-        def ifnotthereadd(file,repo):
-            if file not in self.repo[repo].files:
-                self.repo[repo].add(file)
+        def ifnotthereadd(f,repo):
+            if f not in self.repo[repo].files:
+                self.repo[repo].add(f)
+        maxthreads=8 #This causes problems with lots of threads
         maindirfiles=[self.liftfilename,
                         self.toneframesfile,
                         self.statusfile,
@@ -1438,7 +1453,7 @@ class Settings(object):
             present=set(self.repo[r].files)
             log.info("{} currently has {} files".format(r,len(present)))
             for f in set(maindirfiles)-present:
-                if f not in self.repo[r].files:
+                if file.exists(f) and f not in self.repo[r].files:
                     self.repo[r].add(f)
             # In case I run into formatting issues again:
             # log.info(', '.join(list(self.repo[r].files)[:5]))
@@ -1449,8 +1464,9 @@ class Settings(object):
                                                         '*.wav')])-present
             log.info("{} wav files to check for the {} repo".format(len(audio),r))
             for f in audio:
-                t = threading.Thread(target=ifnotthereadd, args=(f,r))
-                t.start()
+                if threading.active_count()<maxthreads:
+                    t = threading.Thread(target=ifnotthereadd, args=(f,r))
+                    t.start()
                 # self.repo[r].add(f)
             for ext in ['png','jpg','gif']:
                 i=set([file.getreldir(self.repo[r].url,i)
@@ -1460,8 +1476,9 @@ class Settings(object):
                 log.info("{} {} files to check for the {} repo"
                         "".format(len(i),ext,r))
                 for f in i:
-                    u = threading.Thread(target=ifnotthereadd, args=(f,r))
-                    u.start()
+                    if threading.active_count()<maxthreads:
+                        u = threading.Thread(target=ifnotthereadd, args=(f,r))
+                        u.start()
             try:
                 t.join()
                 u.join()
@@ -1996,9 +2013,12 @@ class Settings(object):
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
+        start_time=nowruntime()
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
+        log.info("Refreshing {} {} {} status settings from LIFT"
+                "".format(profile,ps,cvt))
         checks=self.status.checks(cvt=cvt, ps=ps, profile=profile)
         for c in checks:
             # log.info("Working on {}".format(c))
@@ -2006,27 +2026,32 @@ class Settings(object):
             """this just populates groups and the tosort boolean."""
             self.updatesortingstatus(cvt=cvt,ps=ps,profile=profile,check=c,
                                     store=False) #do below
+        logfinished(start_time)
     def reloadstatusdatabycvtps(self,**kwargs):
         # This reloads the status info as relevant on a particular page (ps and
         # cvt), so it needs to be iterated over, or done for each page switch,
         # if desired.
         # These are specified in iteration, pulled from object if called by menu
+        start_time=nowruntime()
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
+        log.info("Refreshing {} {} status settings from LIFT".format(ps,cvt))
         profiles=self.slices.profiles(ps=ps) #This depends on ps only
         for p in profiles:
             # log.info("Working on {}".format(p))
             self.reloadstatusdatabycvtpsprofile(profile=p,**kwargs)
         if kwargs.get('store',True):
             self.storesettingsfile(setting='status')
+        logfinished(start_time)
     def reloadstatusdata(self):
         # This fn is very inefficient, as it iterates over everything in
         # profilesbysense, creating status dictionaries for all of that, in
         # order to populate it if found —before removing empty entires.
         # This also has no access to verification information, which comes only
         # from verify()
+        start_time=nowruntime()
+        log.info("Refreshing all status settings from LIFT")
         w=ui.Wait(parent=program['root'],msg=_("Reloading status data"))
-        start_time=time.time()
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
         #This limits reload to what is there (i.e., only V, if only V has been done)
@@ -2044,8 +2069,7 @@ class Settings(object):
         if None in self.status: #This should never be there
             del self.status[None]
         self.status.store()
-        log.info("Status settings refreshed from LIFT in {:1.0f}m, {:2.3f}s"
-                    "".format(*divmod(time.time()-start_time,60)))
+        logfinished(start_time)
         w.destroy()
     def categorizebygrouping(self,fn,senseid,**kwargs):
         #Don't complain if more than one found:
@@ -2519,13 +2543,12 @@ class Settings(object):
         self.makestatus() #needs params, slices, data, toneframes, exs
         self.makeeverythingok()
         self.settingsobjects() #needs params, glosslangs, slices
-        self.moveattrstoobjects()
+        self.moveattrstoobjects() #catch what wasn't done before
     def __init__(self,taskchooser,liftfileobject):
         self.taskchooser=taskchooser
         self.liftfilename=liftfileobject.name
         self.db=liftfileobject.db
         self.getdirectories() #incl settingsfilecheck and repocheck
-        self.trackuntrackedfiles()
         self.setinvalidcharacters()
         # self.settingsfilecheck()
         self.settingsinit() #init, clear, fields
@@ -2549,6 +2572,9 @@ class Settings(object):
         self.makeglosslangs()
         self.checkglosslangs() #if stated aren't in db, guess
         self.makeparameters() #depends on nothing but self.analang
+        self.settingsobjects() #should do this more; can be redone!
+        self.moveattrstoobjects()
+        self.trackuntrackedfiles()
         if not self.buttoncolumns:
             self.setbuttoncolumns(1)
         """The following might be OK here, but need to be OK later, too."""
@@ -3612,11 +3638,33 @@ class TaskDressing(object):
         else:
             self.runwindow=ui.Window(self.frame,title=title)
         self.runwindow.title(title)
+        self.runwindow.attributes('-fullscreen', True)
         self.runwindow.lift()
         self.runwindow.cleanup=self.runwindowcleanup
         if not nowait:
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
+    def updateaztlocal(self,event=None):
+        if me:
+            r=program['repo'].share()
+        else:
+            r=program['repo'].pull()
+    def updateazt(self,event=None):
+        updateazt()
+    def reverttomainazt(self,event=None):
+        #This doesn't care which test version one is on
+        r=program['repo'].reverttomain()
+        log.info("reverttomainazt: {}".format(r))
+        if r:# == ("Switched to branch 'main'"
+                # "\nYour branch is up to date with 'origin/main'."):
+            self.taskchooser.restart()
+    def trytestazt(self,event=None):
+        #This only goes to the test version at the top of this file
+        r=program['repo'].testversion()
+        log.info("trytestazt: {}".format(r))
+        if r:# == "Your branch is up to date with 'origin/{}'.".format(
+                                                    # program['testversionname']):
+            self.taskchooser.restart()
     def verifictioncode(self,**kwargs):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
@@ -3641,6 +3689,9 @@ class TaskDressing(object):
         self.settings.trackuntrackedfiles()
         for r in self.settings.repo:
             self.settings.repo[r].commit()
+            self.settings.repo[r].push()
+            log.info("Done maybe committing/pushing to {}".format(r))
+        self.settings.storesettingsfile() #in case we added repos
         ui.Window.killall(self) #Exitable
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
@@ -3722,13 +3773,12 @@ class TaskChooser(TaskDressing,ui.Window):
         self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
     def guidtriage(self):
         # import time
-        log.info("Doing guid triage... This takes awhile...")
-        start_time=time.time()
+        log.info("Doing guid triage and other variables —this takes awhile...")
+        start_time=nowruntime()
         self.guids=self.db.guids
         self.guidsinvalid=[] #nothing, for now...
         self.senseids=self.db.senseids
         self.senseidsinvalid=[] #nothing, for now...
-        print(time.time() - start_time,"seconds.")
         print(len(self.guidsinvalid),'entries with invalid data found.')
         self.db.guidsinvalid=self.guidsinvalid
         self.guidsvalid=[]
@@ -3748,15 +3798,13 @@ class TaskChooser(TaskDressing,ui.Window):
         self.db.guidsvalidwps=self.guidsvalidwps #This is what we'll search
         print(len(self.guidsvalidwops),'entries with valid data but no ps data.')
         print(len(self.guidsvalidwps),'entries with valid data and ps data.')
-        print(time.time() - start_time,"seconds.")
         # for var in [self.guids, self.guidswanyps, self.guidsvalidwops, self.guidsvalidwps, self.guidsinvalid, self.guidsvalid]:
         #     print(len(var),str(var))
         # for guid in self.guidswanyps:
         #     if guid not in self.formstosearch[self.analangs[0]][None]:
         #         guids+=[guid]
         # print(len(guids),guids)
-        print("Set the above variables in "+str(time.time() - start_time)+" se"
-                "conds.")
+        logfinished(start_time)
     def guidtriagebyps(self):
         log.info("Doing guid triage by ps... This also takes awhile?...")
         self.guidsvalidbyps={}
@@ -3871,10 +3919,7 @@ class TaskChooser(TaskDressing,ui.Window):
         not offer recordingT as default if all examples have sound files, yet
         a user may well want to go back and look at those recordings, and maybe
         rerecord some."""
-        # start=time.time()
         self.whatsdone()
-        # log.info("checked whatsdone in {}s".format(time.time()-start))
-        #if nothing to do??
         if self.showreports:
             tasks=[
                     ReportCitation,
@@ -4162,6 +4207,7 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("Analysis of what you're done with: {}".format(self.donew))
         log.info("You're done enough with: {}".format(self.doneenough))
     def restart(self,filename=None):
+        log.info("Restarting from TaskChooser")
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
         # log.info("towrite: {}; writing: {}".format(self.towrite,self.writing))
@@ -4254,9 +4300,11 @@ class TaskChooser(TaskDressing,ui.Window):
             log.info("Already writing to lift; I trust this new mod will "
                     "get picked up later...")
             self.towrite=True
+    def usbcheck(self):
+        for r in self.settings.repo.values():
+            r.share()
     def __init__(self,parent):
         # self.testdefault=Parse
-        self.start_time=time.time() #this enables boot time evaluation
         self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
@@ -4280,6 +4328,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if not self.settings.writeeverynwrites: #0/None are not sensible values
             self.settings.writeeverynwrites=1
             self.settings.storesettingsfile()
+        self.usbcheck()
         self.writeable=0 #start the count
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
@@ -7082,7 +7131,7 @@ class Report(object):
                 resultswindow.destroy()
                 ErrorNotice(error)
             return
-        start_time=time.time()
+        start_time=nowruntime()
         counts={'senses':0,'examples':0, 'audio':0}
         analysis=self.makeanalysis(**kwargs)
         if analysisOK:
@@ -7281,7 +7330,8 @@ class Report(object):
                             eps,audiopercent)
         ps2=xlp.Paragraph(s2,text=ptext)
         xlpr.close(me=me)
-        text=_("Finished in {} seconds.").format(str(time.time() -start_time))
+        text=_("Finished in {} seconds.").format(nowruntime()-start_time)
+        logfinished(start_time)
         output(window,r,text)
         text=_("(Report is also available at ({})").format(self.tonereportfile)
         output(window,r,text)
@@ -8318,7 +8368,7 @@ class Transcribe(Sound,Sort):
             #because people need to do a profile analysis here.
             if diff:
                 self.settings.reloadprofiledata(showpolygraphs=showpolygraphs)
-            # sysrestart()
+            # self.restart()
             """Update regular expressions here!!"""
         else: #move on, but notify in logs
             log.info("User selected ‘{}’, but with no change.".format(
@@ -9899,7 +9949,7 @@ class MainApplication(ui.Window):
             self.parent.grid_rowconfigure(rc, weight=3)
             self.parent.grid_columnconfigure(rc, weight=3)
     def __init__(self,parent,exit=0):
-        start_time=time.time() #this enables boot time evaluation
+        start_time=nowruntime() #this enables boot time evaluation
         """Things that belong to a ui.Frame go after this:"""
         super(MainApplication,self).__init__(parent,
                 exit=False
@@ -9938,8 +9988,7 @@ class MainApplication(ui.Window):
         # ui.ContextMenu(self)
         # filechooser=FileChooser()
         tasks=TaskChooser(self)
-        print("Finished loading main window in",time.time() - start_time," "
-                                                                    "seconds.")
+        logfinished(start_time)
         """finished loading so destroy splash"""
         """Don't show window again until check is done"""
 class SortButtonFrame(ui.ScrollingFrame):
@@ -11735,25 +11784,64 @@ class ErrorNotice(ui.Window):
             self.wait_window(self)
 class Repository(object):
     """SuperClass for Repository classes"""
+    def checkout(self,reponame):
+        args=['checkout',reponame]
+        r=self.do(args)
+        log.info(r)
+        # if r:
+        #     r=self.pull()
+        #     log.info(r)
+        return r
     def add(self,file):
         if not self.alreadythere(file):
             args=["add", str(file)]
             self.do(args)
             self.files+=[file] #keep this up to date
             # self.getfiles() #this was more work
+    def commitconfirm(self):
+        def ok(event=None):
+            self.commitconfirmed=nowruntime()
+            yes.destroy()
+        def notok(event=None):
+            self.commitdenied=nowruntime()
+            w.on_quit()
+        def recent(x):
+            if (x-nowruntime()).total_seconds()<5*60:
+                return True
+        if hasattr(self,'commitconfirmed') and recent(self.commitconfirmed):
+            return True
+        elif hasattr(self,'commitdenied') and recent(self.commitdenied):
+            return False
+        w=ui.Window(program['root'],title="Commit Confirm",exit=False)
+        text=_("Do you want to commit language data via {} now?"
+                ).format(self.repotypename)
+        prompt=ui.Label(w,text=text,row=0,column=0,sticky='')
+        bf=ui.Frame(w,row=1,column=0,sticky='')
+        yes=ui.Button(bf,text=_("Yes"),command=ok,
+                        row=1,column=0,sticky='w',
+                        padx=50)
+        no=ui.Button(bf,text=_("No"),command=notok,
+                        row=1,column=1,sticky='e',
+                        padx=50)
+        w.lift()
+        yes.wait_window(yes)
+        if not w.exitFlag.istrue():
+            w.on_quit()
+            log.info("Me not committing when asked to by {}".format(
+                                                            program['name']))
+            return True
     def commit(self,file=None):
         #I may need to rearrange these args:
         if not file and self.code == 'git':
             file='-a' # 'git commit -a' is equivalend to 'hg commit'.
         args=["commit", '-m', "Autocommit from AZT", file]
-        if me: #I only want to commit manually to people's repos
-            log.info("Not committing as asked: {}".format(args))
-            return
-        if self.diff(): #don't try to commit without changes; it clogs the log
-            self.do([i for i in args if i is not None])
+        #don't try to commit without changes; it clogs the log
+        if self.diff() and (not me or self.commitconfirm()):
+            r=self.do([i for i in args if i is not None])
+            return r
     def diff(self):
         args=["diff"]
-        r=self.do(args)
+        return self.do(args)
         # log.info("{} diff returned {}".format(self.repotypename,r))
     def status(self):
         args=["status"]
@@ -11761,6 +11849,111 @@ class Repository(object):
     def log(self):
         args=["log"]
         log.info(self.do(args))
+    def commithashes(self,otherurl=None):
+        if otherurl:
+            url=self.url
+            self.url=otherurl
+        r=self.do(["log", "--format=%H"])
+        if r:
+            log.info("Found {} commits for {}".format(len(r),self.url))
+        else:
+            log.info("Found no commits; is {} a {} repo?".format(self.url,
+                                                            self.repotypename))
+        if otherurl:
+            self.url=url
+        if r:
+            return r.split('\n')
+        else:
+            return []
+    def share(self,remotes=None,branch=None):
+        if not remotes:
+            remotes=self.findpresentremotes() #do once
+        if not remotes:
+            log.info("Couldn't find a local drive to share with; giving up")
+            return
+        r=self.commit() #should always before pulling, at least here
+        if r:
+            r=self.pull(remotes,branch)
+        if r:
+            r=self.push(remotes,branch)
+        return r
+    def pull(self,remotes=None,branch=None):
+        if not remotes:
+            remotes=self.findpresentremotes() #do once
+        if not remotes:
+            log.info(_("Couldn't find a local drive to pull from via {}; "
+                    "giving up").format(self.repotypename))
+            return
+        for remote in remotes:
+            args=["pull",remote]
+            if branch:
+                args+=[branch]
+            r=self.do(args)
+            # log.info(r)
+            return r
+    def push(self,remotes=None,branch=None,setupstream=False):
+        if not remotes:
+            remotes=self.findpresentremotes() #do once
+        if not remotes:
+            log.info(_("Couldn't find a local drive to push to via {}; "
+                    "giving up").format(self.repotypename))
+            return
+        for remote in remotes:
+            args=["push"]
+            if setupstream:
+                args+=['--set-upstream']
+            args+=[remote]
+            if branch:
+                args+=[branch]
+            r=self.do(args)
+            if "The current branch master has no upstream branch." in r:
+                r=self.push(remotes=[remote],
+                            #always keep branch names aligned.
+                            branch=self.branchname(),
+                            setupstream=True)
+            # log.info(r)
+            return r
+    def isrelated(self,directory):
+        #Git doesn't seem to care if repos are related, but I do...
+        thisrepohashes=self.commithashes()
+        thatrepohashes=self.commithashes(directory)
+        # with open(rx.urlok(self.url),'a') as f:
+        #     for l in thisrepohashes:
+        #         f.write(l+'\n')
+        # with open(rx.urlok(directory),'a') as f:
+        #     for l in thatrepohashes:
+        #         f.write(l+'\n')
+        commonhashes=set(thisrepohashes)&set(thatrepohashes)
+        log.info("found {} common commits: {}".format(len(commonhashes),
+                                                    list(commonhashes)[:10]))
+        if len(commonhashes) >1: #just in case we find one...
+            return True
+        error=_("The directory {} doesn't seem to have a repository related "
+                "to {}; removing.").format(directory,self.url)
+        log.info(error)
+        ErrorNotice(error,wait=True)
+        self.removeremote(directory)
+    def addifis(self,directory):
+        if directory and file.exists(directory) and self.isrelated(directory):
+            self.addremote(directory)
+            return [directory] #this needs to add to lists, and iterate
+        return []
+    def findpresentremotes(self,remote=None):
+        l=[]
+        for d in self.remoteurls().values():
+            # log.info("adding {} to {}".format(d,l))
+            l+=self.addifis(d) #add to list only what is there now AND related
+            # the related test will remove it if there AND NOT related.
+            # Otherwise, we leave it for later, in case it just isn't there now.
+        if l:
+            return l
+        elif self.code is 'git':
+            d=file.getdirectory(_("Please select where to find the {} "
+                                    "locally").format(self.description))
+            # log.info("file.getdirectory returned {}".format(d))
+            return self.addifis(d)
+        else:
+            return l
     def root(self):
         args=["root"]
         self.root=self.do(args)
@@ -11768,7 +11961,11 @@ class Repository(object):
         args=self.leaveunicodealonesargs()
         args+=[self.lsfiles]
         # log.info("{} getfiles args: {}".format(self.code,args))
-        self.files=self.do(args).split('\n')
+        r=self.do(args)
+        if r:
+            self.files=r.split('\n')
+        else:
+            self.files=[]
     def do(self,args):
         cmd=[self.cmd,self.pwd,str(self.url)] #-R
         try:
@@ -11779,27 +11976,48 @@ class Repository(object):
                     "notice, if the repo isn't there yet. ".format(e))
         cmd.extend(args)
         # log.info("{} cmd args: {};{}".format(self.code,cmd))
-        try:
-            output=subprocess.check_output(cmd, shell=False)
-        except subprocess.CalledProcessError as e:
-            output=e.output
-        except Exception as e:
-            log.info(_("Call to Mercurial ({}) failed: {}").format(args,e))
-            return e
         iwascalledby=callerfn()
         try:
-            if iwascalledby == 'getfiles':
-                log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
+            output=subprocess.check_output(cmd,
+                                            stderr=subprocess.STDOUT,
+                                            shell=False)
+        except subprocess.CalledProcessError as e:
+            output=e.output.decode(sys.stdout.encoding,
+                                    errors='backslashreplace'
+                                    ).strip()
+            if iwascalledby not in ["getusernameargs"]:
+                if not output:
+                    output=e
+                ErrorNotice(_("Call to {} ({}) gave error: \n{}").format(
+                                                            self.repotypename,
+                                                            ' '.join(args),
+                                                            output))
+            if "The current branch master has no upstream branch." in output:
+                log.info("iwascalledby {}, but don't have upstream."
+                            "".format(iwascalledby))
+                if iwascalledby not in ["push"]:
+                    ErrorNotice(output)
+                return output
+            return
+        except Exception as e:
+            ErrorNotice(_("Call to {} ({}) failed: {}").format(
+                                                            self.repotypename,
+                                                            args,e))
+            return
+        try:
+            # if iwascalledby == 'getfiles':
+            #     log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
             t=output.decode(sys.stdout.encoding,errors='backslashreplace').strip()
-            if iwascalledby == 'getfiles':
-                log.info("Looks like that worked")
+            # if iwascalledby == 'getfiles':
+            #     log.info("Looks like that worked")
         except:
-            if iwascalledby == 'getfiles':
-                log.info("Looks like that didn't work")
+            # if iwascalledby == 'getfiles':
+            #     log.info("Looks like that didn't work")
             t=output
-        if t and iwascalledby not in ['diff','getfiles']: #These give massive output!
+        #These give massive output!
+        if t and iwascalledby not in ['diff','getfiles','commithashes']:
             log.info("{} {}: {}".format(self.repotypename,iwascalledby,t))
-        elif iwascalledby not in ['add','commit']:
+        elif iwascalledby not in ['add','commit','commithashes']:
             log.info("{} {} OK".format(self.repotypename,iwascalledby))
         return t
     def alreadythere(self,url):
@@ -11844,8 +12062,12 @@ class Repository(object):
             log.info("self.ignored for {} now {}".format(self.code,self.ignored))
         except FileNotFoundError as e:
             log.info("Hope this is OK: {}".format(e))
-    def exists(self):
-        return file.exists(self.deltadir)
+    def exists(self,f=None):
+        if not f:
+            f=self.deltadir
+            log.info("FYI, I didn't get an arg to check, so checking {}".format(
+                                                                            f))
+        return file.exists(f)
     def exewarning(self):
         title=_("Warning: {} Executable Missing!".format(self.repotypename))
         text=_("You seem to be working on a repository of data ({0}), "
@@ -11881,7 +12103,7 @@ class Repository(object):
             o=ui.Label(w.frame, text=clickable2, column=0, row=3)
             o.bind("<Button-1>", lambda e: openweburl(self.wdownloadsurl))
             mtt=ui.ToolTip(o,_("Go to {}").format(self.wdownloadsurl))
-        button=(_("Restart Now"),sysrestart)
+        # button=(_("Restart Now"),sysrestart) #This should be in task/chooser
         text=_("After you install {}, you should restart."
                 ).format(self.repotypename)
         if self.repotypename == "Git":
@@ -11893,7 +12115,7 @@ class Repository(object):
         r=ui.Label(w.frame, text=text, column=0, row=4)
         r.wrap()
         rb=ui.Button(w.frame, text=_("Restart Now"), column=1, row=4,
-                                                            cmd=sysrestart)
+                    cmd=sysrestart) #This should be in task/chooser
         rbtt=ui.ToolTip(rb,_("Install {} first, then do this"
                             ).format(self.repotypename))
         w.deiconify()
@@ -11903,10 +12125,47 @@ class Repository(object):
         if r:
             log.info("Using {} username '{}'".format(r,self.repotypename))
         else:
-            r=program['name']+'-'+program['hostname']
-            log.info("No config {} username found; using '{}'"
-                    "".format(r,self.repotypename))
+            r=[program['name']+'-'+program['hostname'],
+                program['name']+'@'+program['hostname']]
+            log.info("No {} username found; using '{}'"
+                    "".format(self.repotypename,r))
         return self.argstoputusername(r)
+    def addremote(self,remote):
+        #This doesn't return a value
+        remotes=self.remoteurls()
+        if remote in remotes.values():
+            return
+        for key in ["Thing"+str(i) for i in range(1,20)]:
+            if key not in remotes: #don't overwrite keys
+                log.info("Setting {} key with {} value".format(key,remote))
+                remotes[key]=remote
+                self.remoteurls(remotes) #save
+                log.info("URL Settings now {}".format(self.remoteurls()))
+                return
+    def removeremote(self,remote):
+        # This is one of two functions that touch self._remotes directly
+        for k,v in self.remoteurls().items():
+            if v == remote:
+                del self._remotes[k]
+    def remoteurls(self,remotes=None):
+        # This is one of two functions that touch self._remotes directly
+        # This returns a copy of the dict, so don't operate on it directly.
+        # Rather, read and write using this function.
+        if remotes and type(remotes) is dict:
+            self._remotes=remotes
+        elif remotes:
+            log.info("You passed me a remotes value that isn't a dict?")
+        else:
+            return getattr(self,'_remotes',{}).copy() #so I can iterate and change
+    def branchname(self):
+        repoheadfile='.'+self.code+'/'+self.branchnamefile
+        with file.getdiredurl(self.url,repoheadfile).open() as f:
+            c=f.read()
+            # log.info("Found repo head info {}".format(c))
+            if c:
+                self.branch=c.split('/')[-1].strip()
+                log.info("Found branch: {}".format(self.branch))
+        return self.branch
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
@@ -11929,13 +12188,16 @@ class Repository(object):
         self.usernameargs=self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
-        log.info("{} repository object initialized, with {} files."
-                "".format(self.repotypename,len(self.files)))
+        self.description="language data"
+        log.info("{} repository object initialized on branch {} at {} for {}, "
+        "with {} files."
+                "".format(self.repotypename, self.branchname(), self.url,
+                        self.description, len(self.files)))
 class Mercurial(Repository):
     def leaveunicodealonesargs(self):
         return []
     def argstoputusername(self,username):
-        return ['--config','ui.username={}'.format(username)]
+        return ['--config','ui.username={}'.format(username[0])]
     def choruscheck(self):
         rescues=[]
         for file in self.files:
@@ -11949,8 +12211,11 @@ class Mercurial(Repository):
             ErrorNotice(error,title=_("Chorus Rescue files found!"))
             if me:
                 exit()
+    def makebare(self):
+        args=['update', 'null']
     def __init__(self, url):
         self.code='hg'
+        self.branchnamefile='branch'
         # self.cmd=program['hg']
         self.wdownloadsurl="https://www.mercurial-scm.org/wiki/Download"
         self.wexename="Mercurial-6.0-x64.exe"
@@ -11967,14 +12232,25 @@ class Mercurial(Repository):
         else:
             self=None
 class Git(Repository):
+    def makebare(self):
+        args=['config', '--bool', 'core.bare', 'true']
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
     def argstoputusername(self,username):
-        return ['-c','user.name={}'.format(username)]
+        return ['-c', 'user.name={}'.format(username[0]),
+                '-c', 'user.email={}'.format(username[1])]
     def init(self):
-        self.do(['init'])
+        args=['init']
+        self.do(args)
+        log.info(self.do(args))
+    def lastcommitdate(self):
+        args=['log', '-1', '--format=%cd']
+        r=self.do(args)
+        # log.info(r)
+        return r
     def __init__(self, url):
         self.code='git'
+        self.branchnamefile='HEAD'
         self.wdownloadsurl="https://git-scm.com/download/win"
         self.wexename="Git-2.33.0.2-64-bit.exe"
         self.wexeurl=("https://github.com/git-for-windows/git/releases/"
@@ -11983,6 +12259,49 @@ class Git(Repository):
         self.lsfiles='ls-files'
         self.argstogetusername=['config', '--get', 'user.name']
         super(Git, self).__init__(url)
+class GitReadOnly(Git):
+    def share(self,event=None):
+        remotes=self.findpresentremotes() #do once
+        if not remotes:
+            return
+        branches = ['main',program['testversionname']]
+        fns = [self.testversion, self.reverttomain]
+        if self.branchname() != 'main':
+            branches.reverse()
+            fns.reverse()
+        try:
+            for i in range(2):
+                log.info("Running index {} ({} {})".format(i,branches[i],fns[i]))
+                #not pulling here, as not sharing in that direction.
+                r=Repository.push(self,remotes=remotes,branch=branches[i])
+                if r:
+                    r=fns[i]()
+        except Exception as e:
+            ErrorNotice(e)
+    def reverttomain(self,event=None):
+        r=self.checkout('main')
+        log.info(r)
+        if self.branchname() == 'main':
+            return True
+        else:
+            ErrorNotice(r)
+    def testversion(self,event=None):
+        r=self.checkout(program['testversionname'])
+        log.info(r)
+        if self.branchname() == program['testversionname']:
+            return True
+        else:
+            ErrorNotice(r)
+    def add(self,file):
+        pass
+    def commit(self,file=None):
+        pass
+    def __init__(self, url):
+        super(GitReadOnly, self).__init__(url)
+        self.description="AZT source"
+        log.info("Using branch {} at {} for {}".format(self.branchname(),
+                                                        self.url,
+                                                        self.description))
 class ResultWindow(ui.Window):
     def __init__(self, parent, nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
@@ -12017,16 +12336,16 @@ class Object:
         self.value=None
 """These are non-method utilities I'm actually using."""
 def now():
-    # datetime.datetime.utcnow().isoformat()[:-7]+'Z'
     return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
 def nowruntime():
-    # calibration=program['start_time']
-    return time.time()-program['start_time']
-def logfinished(start):
-    calibration=program['start_time']
+    #this returns a delta!
+    return datetime.datetime.utcnow()-program['start_time']
+def logfinished(start=program['start_time']):
     run_time=nowruntime()
+    if type(start) is datetime.datetime: #only work with deltas
+        start-=program['start_time']
     log.info("Finished at {} ({:1.0f}m, {:2.3f}s)"
-            "".format(run_time,*divmod(run_time-start,60)))
+            "".format(now(),*divmod((run_time-start).total_seconds(),60)))
 def interfacelang(lang=None,magic=False):
     global i18n
     global _
@@ -12036,14 +12355,19 @@ def interfacelang(lang=None,magic=False):
     if lang:
         curlang=interfacelang()
         try:
-            log.debug("Magic: {}".format(str(_)))
-            magic=True
+            if _.__module__ == 'gettext':
+                log.debug("Magic: {}".format(_.__module__))
+                magic=True
+            else:
+                log.debug("Magic seems to be installed, but not gettext: {}"
+                            "".format(_.__module__))
         except:
             log.debug("Looks like translation magic isn't defined yet; making")
         if lang != curlang or magic == False:
-            if lang is not None: #lang is not None:
+            if lang is not None:
                 log.debug("Setting Interface language: {}".format(lang))
                 i18n[lang].install()
+                log.debug("New Magic: {}".format(_.__module__))
             else:
                 log.debug("Setting Default Interface language: {}".format(curlang))
                 i18n[curlang].install()
@@ -12523,7 +12847,7 @@ def updateazt(**kwargs): #should only be parent, for errorroot
         else:
             t=str(t)+_('\n(Restart {} to use this update)').format(
                                                             program['name'])
-            button=(_("Restart Now"),sysrestart)
+            button=(_("Restart Now"),sysrestart) #This should be in task/chooser
         if set(['parent']).issuperset(set(kwargs.keys())):
             # log.info("Making Error Window")
             # log.info(t)
@@ -12558,6 +12882,8 @@ def main():
     # log.info("Theme ipadx: {}".format(program['theme'].ipadx))
     # log.info("Theme pady: {}".format(program['theme'].pady))
     # log.info("Theme padx: {}".format(program['theme'].padx))
+    program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
+    lastcommit=program['repo'].lastcommitdate()
     root.program=program
     root.wraplength=root.winfo_screenwidth()-300 #exit button
     root.wraplength=int(root.winfo_screenwidth()*.7) #exit button
@@ -12669,7 +12995,7 @@ def mainproblem():
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
     ui.Button(errorw.outsideframe,text=_("Restart {}").format(program['name']),
-                cmd=sysrestart,
+                cmd=sysrestart, #This should be in task/chooser
                 row=1,column=2)
     if program['git']:
         # log.info("Making update menu")
@@ -12712,6 +13038,7 @@ if __name__ == "__main__":
         program['aztdir']=sys._MEIPASS
     else:
         program['aztdir'] = thisexe.parent
+    #This isn't helpful where things are copied to disk later:
     mt=datetime.datetime.fromtimestamp(thisexe.stat().st_mtime)
     try:
         with file.getdiredurl(program['aztdir'],'.git/HEAD').open(mode='r') as f:
@@ -12722,20 +13049,19 @@ if __name__ == "__main__":
     except FileNotFoundError:
         log.info(".git/HEAD File Not Found; assuming this is the main branch.")
     """Not translating yet"""
-    log.info("Running {} v{} (main.py updated to {})".format(
-                                    program['name'],program['version'],mt))
-    log.info("Called with arguments ({}) {} / {}".format(sys.executable,
-                                                    sys.argv[0], sys.argv))
-    program['hostname']=platform.uname().node
-    log.info("Working directory is {} on {} ".format(program['aztdir'],
-                                                    program['hostname']))
-    program['start_time'] = time.time()
-    log.info("Loglevel is {}; starting at {}".format(loglevel,
-                                    datetime.datetime.utcnow().isoformat()))
     transdir=file.gettranslationdirin(program['aztdir'])
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
+    interfacelang(interfacelang()) #translation works from here
+    log.info(_("Running {} v{} (main.py updated to {})").format(
+                                    program['name'],program['version'],mt))
+    log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
+                                                    sys.argv[0], sys.argv))
+    log.info(_("Working directory is {} on {} ").format(program['aztdir'],
+                                                    program['hostname']))
+    log.info(_("Loglevel is {}; started at {}").format(loglevel,
+                                        program['start_time'].isoformat()))
     #'sendpraat' now in 'praat', if useful
     for exe in ['praat','hg','ffmpeg','lame','git','python','python3']:
         findexecutable(exe)

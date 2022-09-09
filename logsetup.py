@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
+"""we cannot import file; file imports this module!"""
+import tarfile
 import datetime
 import logging
 import logging.handlers
@@ -58,7 +60,7 @@ def dorootloghandlers(self):
     console.setLevel(0) #Let the loglevel determine what to show
     console.setFormatter(simpleformat)
     file = logging.handlers.RotatingFileHandler(filename,mode='w', encoding='utf-8',
-                                        maxBytes=100000,backupCount=5)
+                                        maxBytes=300000,backupCount=5)
     file.doRollover()# start at the beginning of a file
     # file = logging.FileHandler(filename,mode='w', encoding='utf-8')
     file.setLevel(0) #Let the loglevel determine what to show
@@ -90,6 +92,22 @@ def writelzma(filename=None):
     compressedurl=pathlib.Path.joinpath(logdir,compressed)
     if not filename:
         filename=getlogfilename()
+    log.info("Using filename {}".format(filename))
+    filenames=list(pathlib.Path(logdir).glob(pathlib.Path(filename).name+'*'))
+    f=tarfile.open(name=str(compressedurl)+'.tar.xz', mode='x:xz',
+                    encoding='utf-8', preset=9,
+                    debug=3
+                    ) #as f:
+    for fn in filenames:
+        # log.info("Compressing file {}".format(fn))
+        try:
+            f.add(fn,arcname=pathlib.Path(fn).name)
+            # log.info("Compressed file {}".format(fn))
+        except Exception as e:
+            log.info(e)
+    log.info("Compressed files: {}".format(f.getnames()))
+    f.close()
+    """Probably can cut from here, once I see this is working on windows"""
     with open(filename,'r', encoding='utf-8') as d:
         log.debug("Logfile {} opened.".format(filename))
         with lzma.open(compressedurl, "wt", encoding='utf-8') as f:
@@ -115,3 +133,10 @@ def writelzma(filename=None):
 log = logging.getLogger() #this is the root; set level with setlevel
 setlevel('INFO') #If not set elsewhere
 dorootloghandlers(log)
+if __name__ == "__main__":
+    loglevel=10
+    log=getlog('root') #not ever a module
+    setlevel(loglevel)
+    log.info("Hey, this is something.")
+    writelzma()
+    shutdown()

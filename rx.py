@@ -9,6 +9,7 @@ logsetup.setlevel('DEBUG',log) #for this file
 """This is called from a number of places"""
 framerx=re.compile('__') #replace this w/data in frames.
 def urlok(x):
+    x=str(x) # just in case we pass a path object
     #These should each be tuple of
     # 1. a simple list of characters to strip,
     # 2. replacement
