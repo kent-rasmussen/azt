@@ -1240,9 +1240,9 @@ class Settings(object):
             # except this one, which pretends to set but doesn't (throws arg away)
             fns['profilecounts']=self.slices.slicepriority
         except Exception as e:
-            log.error("Only finished settingsobjects up to {} ({})".format(fns,e))
+            log.error("Only finished settingsobjects up to {} ({})".format(fns.keys(),e))
             return []
-        log.info("Finished settingsobjects up to {}".format(fns))
+        log.info("Finished settingsobjects up to {}".format(fns.keys()))
     def makesettingsdict(self,setting='defaults'):
         """This returns a dictionary of values, keyed by a set of settings"""
         """It pulls from objects if it can, otherwise from self attributes
