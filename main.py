@@ -11798,15 +11798,45 @@ class Repository(object):
             self.do(args)
             self.files+=[file] #keep this up to date
             # self.getfiles() #this was more work
+    def commitconfirm(self):
+        def ok(event=None):
+            self.commitconfirmed=nowruntime()
+            yes.destroy()
+        def notok(event=None):
+            self.commitdenied=nowruntime()
+            w.on_quit()
+        def recent(x):
+            if (x-nowruntime()).total_seconds()<5*60:
+                return True
+        if hasattr(self,'commitconfirmed') and recent(self.commitconfirmed):
+            return True
+        elif hasattr(self,'commitdenied') and recent(self.commitdenied):
+            return False
+        w=ui.Window(program['root'],title="Commit Confirm",exit=False)
+        text=_("Do you want to commit language data via {} now?"
+                ).format(self.repotypename)
+        prompt=ui.Label(w,text=text,row=0,column=0,sticky='')
+        bf=ui.Frame(w,row=1,column=0,sticky='')
+        yes=ui.Button(bf,text=_("Yes"),command=ok,
+                        row=1,column=0,sticky='w',
+                        padx=50)
+        no=ui.Button(bf,text=_("No"),command=notok,
+                        row=1,column=1,sticky='e',
+                        padx=50)
+        w.lift()
+        yes.wait_window(yes)
+        if not w.exitFlag.istrue():
+            w.on_quit()
+            log.info("Me not committing when asked to by {}".format(
+                                                            program['name']))
+            return True
     def commit(self,file=None):
         #I may need to rearrange these args:
         if not file and self.code == 'git':
             file='-a' # 'git commit -a' is equivalend to 'hg commit'.
         args=["commit", '-m', "Autocommit from AZT", file]
-        if me: #I only want to commit manually to people's repos
-            log.info("Not committing as asked: {}".format(args))
-            return True
-        if self.diff(): #don't try to commit without changes; it clogs the log
+        #don't try to commit without changes; it clogs the log
+        if self.diff() and (not me or self.commitconfirm()):
             r=self.do([i for i in args if i is not None])
             return r
     def diff(self):
