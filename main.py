@@ -1428,7 +1428,7 @@ class Settings(object):
         # log.info('self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
     def trackuntrackedfiles(self):
-        return #until this doesn't caus problems
+        # return #until this doesn't cause problems
         # This method is here to pick up files that are there, but not tracked,
         # either in constructing a repository, or as a result of changes by other
         # editors (e.g., WeSay).
