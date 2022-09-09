@@ -11890,11 +11890,13 @@ class Repository(object):
             # Otherwise, we leave it for later, in case it just isn't there now.
         if l:
             return l
-        else:
+        elif self.code is 'git':
             d=file.getdirectory(_("Please select where to find the AZT source "
                                     "locally"))
             # log.info("file.getdirectory returned {}".format(d))
             return self.addifis(d)
+        else:
+            return l
     def root(self):
         args=["root"]
         self.root=self.do(args)
