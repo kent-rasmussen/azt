@@ -12270,7 +12270,7 @@ def interfacelang(lang=None,magic=False):
         except:
             log.debug("Looks like translation magic isn't defined yet; making")
         if lang != curlang or magic == False:
-            if lang is not None: #lang is not None:
+            if lang is not None:
                 log.debug("Setting Interface language: {}".format(lang))
                 i18n[lang].install()
                 log.debug("New Magic: {}".format(_.__module__))
