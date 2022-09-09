@@ -12966,6 +12966,7 @@ if __name__ == "__main__":
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
+    interfacelang()
     #'sendpraat' now in 'praat', if useful
     for exe in ['praat','hg','ffmpeg','lame','git','python','python3']:
         findexecutable(exe)
