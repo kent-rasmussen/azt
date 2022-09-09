@@ -11900,7 +11900,11 @@ class Repository(object):
         args=self.leaveunicodealonesargs()
         args+=[self.lsfiles]
         # log.info("{} getfiles args: {}".format(self.code,args))
-        self.files=self.do(args).split('\n')
+        r=self.do(args)
+        if r:
+            self.files=r.split('\n')
+        else:
+            self.files=[]
     def do(self,args):
         cmd=[self.cmd,self.pwd,str(self.url)] #-R
         try:
