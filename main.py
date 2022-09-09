@@ -3635,6 +3635,7 @@ class TaskDressing(object):
         else:
             self.runwindow=ui.Window(self.frame,title=title)
         self.runwindow.title(title)
+        self.runwindow.attributes('-fullscreen', True)
         self.runwindow.lift()
         self.runwindow.cleanup=self.runwindowcleanup
         if not nowait:
