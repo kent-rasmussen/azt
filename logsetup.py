@@ -58,7 +58,7 @@ def dorootloghandlers(self):
     console.setLevel(0) #Let the loglevel determine what to show
     console.setFormatter(simpleformat)
     file = logging.handlers.RotatingFileHandler(filename,mode='w', encoding='utf-8',
-                                        maxBytes=100000,backupCount=5)
+                                        maxBytes=300000,backupCount=5)
     file.doRollover()# start at the beginning of a file
     # file = logging.FileHandler(filename,mode='w', encoding='utf-8')
     file.setLevel(0) #Let the loglevel determine what to show
