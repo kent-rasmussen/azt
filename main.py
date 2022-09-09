@@ -1242,6 +1242,7 @@ class Settings(object):
         except Exception as e:
             log.error("Only finished settingsobjects up to {} ({})".format(fns,e))
             return []
+        log.info("Finished settingsobjects up to {}".format(fns))
     def makesettingsdict(self,setting='defaults'):
         """This returns a dictionary of values, keyed by a set of settings"""
         """It pulls from objects if it can, otherwise from self attributes
