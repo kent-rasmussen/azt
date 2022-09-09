@@ -12158,8 +12158,8 @@ class Git(Repository):
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
     def argstoputusername(self,username):
-        return ['-c','user.name={}'.format(username[0]),
-                '-c' 'user.email={}'.format(username[1])]
+        return ['-c', 'user.name={}'.format(username[0]),
+                '-c', 'user.email={}'.format(username[1])]
     def init(self):
         args=['init']
         self.do(args)
