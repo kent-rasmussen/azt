@@ -23,7 +23,8 @@ information than 'DEBUG' does):
     helpful.
 Other levels:'WARNING','ERROR','CRITICAL'
 """
-if platform.uname().node == 'karlap':
+program['hostname']=platform.uname().node
+if program['hostname'] == 'karlap':
     loglevel=6 #
     if program['demo']:
         me=False
@@ -12959,7 +12960,6 @@ if __name__ == "__main__":
                                     program['name'],program['version'],mt))
     log.info("Called with arguments ({}) {} / {}".format(sys.executable,
                                                     sys.argv[0], sys.argv))
-    program['hostname']=platform.uname().node
     log.info("Working directory is {} on {} ".format(program['aztdir'],
                                                     program['hostname']))
     program['start_time'] = time.time()
