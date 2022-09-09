@@ -11911,6 +11911,7 @@ class Repository(object):
                     "notice, if the repo isn't there yet. ".format(e))
         cmd.extend(args)
         # log.info("{} cmd args: {};{}".format(self.code,cmd))
+        iwascalledby=callerfn()
         try:
             output=subprocess.check_output(cmd,
                                             stderr=subprocess.STDOUT,
@@ -11919,7 +11920,8 @@ class Repository(object):
             output=e.output.decode(sys.stdout.encoding,
                                     errors='backslashreplace'
                                     ).strip()
-            ErrorNotice(_("Call to {} ({}) gave error: \n{} ({})").format(
+            if iwascalledby not in ["getusernameargs"]:
+                ErrorNotice(_("Call to {} ({}) gave error: \n{} ({})").format(
                                                             self.repotypename,
                                                             ' '.join(args),
                                                             output,e))
