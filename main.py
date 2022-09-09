@@ -12054,7 +12054,8 @@ class Repository(object):
         if r:
             log.info("Using {} username '{}'".format(r,self.repotypename))
         else:
-            r=program['name']+'-'+program['hostname']
+            r=[program['name']+'-'+program['hostname'],
+                program['name']+'-'+program['hostname']]
             log.info("No config {} username found; using '{}'"
                     "".format(r,self.repotypename))
         return self.argstoputusername(r)
@@ -12113,7 +12114,7 @@ class Mercurial(Repository):
     def leaveunicodealonesargs(self):
         return []
     def argstoputusername(self,username):
-        return ['--config','ui.username={}'.format(username)]
+        return ['--config','ui.username={}'.format(username[0])]
     def choruscheck(self):
         rescues=[]
         for file in self.files:
@@ -12153,7 +12154,8 @@ class Git(Repository):
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
     def argstoputusername(self,username):
-        return ['-c','user.name={}'.format(username)]
+        return ['-c','user.name={}'.format(username[0]),
+                '-c' 'user.email={}'.format(username[1])]
     def init(self):
         args=['init']
         self.do(args)
