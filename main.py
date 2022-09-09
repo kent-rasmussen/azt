@@ -11931,7 +11931,6 @@ class Repository(object):
                                                             self.repotypename,
                                                             args,e))
             return
-        iwascalledby=callerfn()
         try:
             # if iwascalledby == 'getfiles':
             #     log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
