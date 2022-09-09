@@ -12121,7 +12121,7 @@ class Repository(object):
         repoheadfile='.'+self.code+'/'+self.branchnamefile
         with file.getdiredurl(self.url,repoheadfile).open() as f:
             c=f.read()
-            log.info("Found repo head info {}".format(c))
+            # log.info("Found repo head info {}".format(c))
             if c:
                 self.branch=c.split('/')[-1].strip()
                 log.info("Found branch: {}".format(self.branch))
