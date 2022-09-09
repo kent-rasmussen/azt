@@ -92,6 +92,23 @@ def writelzma(filename=None):
     compressedurl=pathlib.Path.joinpath(logdir,compressed)
     if not filename:
         filename=getlogfilename()
+    log.info("Using filename {}".format(filename))
+    filenames=list(file.getfilesofdirectory(logdir,
+                                regex=file.getfilenamefrompath(filename)+'*'))
+    f=tarfile.open(name=str(compressedurl)+'.tar.xz', mode='x:xz',
+                    encoding='utf-8', preset=9,
+                    debug=3
+                    ) #as f:
+    for fn in filenames:
+        # log.info("Compressing file {}".format(fn))
+        try:
+            f.add(fn,arcname=file.getfilenamefrompath(fn))
+            # log.info("Compressed file {}".format(fn))
+        except Exception as e:
+            log.info(e)
+    log.info("Compressed files: {}".format(f.getnames()))
+    f.close()
+    """Probably can cut from here, once I see this is working on windows"""
     with open(filename,'r', encoding='utf-8') as d:
         log.debug("Logfile {} opened.".format(filename))
         with lzma.open(compressedurl, "wt", encoding='utf-8') as f:
