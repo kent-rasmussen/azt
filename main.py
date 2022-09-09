@@ -11908,6 +11908,8 @@ class Repository(object):
         elif self.code is 'git':
             d=file.getdirectory(_("Please select where to find the AZT source "
                                     "locally"))
+            d=file.getdirectory(_("Please select where to find the {} "
+                                    "locally").format(self.description))
             # log.info("file.getdirectory returned {}".format(d))
             return self.addifis(d)
         else:
@@ -12146,8 +12148,11 @@ class Repository(object):
         self.usernameargs=self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
-        log.info("{} repository object initialized, with {} files."
-                "".format(self.repotypename,len(self.files)))
+        self.description="language data"
+        log.info("{} repository object initialized on branch {} at {} for {}, "
+        "with {} files."
+                "".format(self.repotypename, self.branchname(), self.url,
+                        self.description, len(self.files)))
 class Mercurial(Repository):
     def leaveunicodealonesargs(self):
         return []
@@ -12252,7 +12257,10 @@ class GitReadOnly(Git):
         pass
     def __init__(self, url):
         super(GitReadOnly, self).__init__(url)
-        log.info("Using branch {}".format(self.branchname()))
+        self.description="AZT source"
+        log.info("Using branch {} at {} for {}".format(self.branchname(),
+                                                        self.url,
+                                                        self.description))
 class ResultWindow(ui.Window):
     def __init__(self, parent, nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
