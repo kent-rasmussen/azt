@@ -1267,7 +1267,7 @@ class Settings(object):
                     log.error("Value of {} not found in object".format(s))
             elif hasattr(o,s) and getattr(o,s):
                 d[s]=getattr(o,s)
-                log.info("Trying to dict self.{} with value {}, type {}"
+                log.info("Set to dict self.{} with value {}, type {}"
                         "".format(s,d[s],type(d[s])))
             # else:
             #     log.error("Couldn't find {} in {}".format(s,setting))
