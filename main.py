@@ -11919,10 +11919,10 @@ class Repository(object):
             output=e.output.decode(sys.stdout.encoding,
                                     errors='backslashreplace'
                                     ).strip()
-            ErrorNotice(_("Call to {} ({}) gave error: \n{}").format(
+            ErrorNotice(_("Call to {} ({}) gave error: \n{} ({})").format(
                                                             self.repotypename,
                                                             ' '.join(args),
-                                                            output))
+                                                            output,e))
             return
         except Exception as e:
             ErrorNotice(_("Call to {} ({}) failed: {}").format(
