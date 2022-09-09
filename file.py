@@ -17,7 +17,7 @@ except:
         return x
 def getfile(filename):
     return pathlib.Path(filename)
-def getfilename(filename):
+def getfilenamefrompath(filename):
     return pathlib.Path(filename).name
 def fullpathname(filename):
     try:
