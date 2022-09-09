@@ -12955,19 +12955,19 @@ if __name__ == "__main__":
     except FileNotFoundError:
         log.info(".git/HEAD File Not Found; assuming this is the main branch.")
     """Not translating yet"""
-    log.info("Running {} v{} (main.py updated to {})".format(
-                                    program['name'],program['version'],mt))
-    log.info("Called with arguments ({}) {} / {}".format(sys.executable,
-                                                    sys.argv[0], sys.argv))
-    log.info("Working directory is {} on {} ".format(program['aztdir'],
-                                                    program['hostname']))
-    log.info("Loglevel is {}; started at {}".format(loglevel,
-                                        program['start_time'].isoformat()))
     transdir=file.gettranslationdirin(program['aztdir'])
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    interfacelang(interfacelang())
+    interfacelang(interfacelang()) #translation works from here
+    log.info(_("Running {} v{} (main.py updated to {})").format(
+                                    program['name'],program['version'],mt))
+    log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
+                                                    sys.argv[0], sys.argv))
+    log.info(_("Working directory is {} on {} ").format(program['aztdir'],
+                                                    program['hostname']))
+    log.info(_("Loglevel is {}; started at {}").format(loglevel,
+                                        program['start_time'].isoformat()))
     #'sendpraat' now in 'praat', if useful
     for exe in ['praat','hg','ffmpeg','lame','git','python','python3']:
         findexecutable(exe)
