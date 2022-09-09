@@ -1432,9 +1432,9 @@ class Settings(object):
         # editors (e.g., WeSay).
         # This is for new files, not changes to known files; that is done
         # on close.
-        def ifnotthereadd(file,repo):
-            if file not in self.repo[repo].files:
-                self.repo[repo].add(file)
+        def ifnotthereadd(f,repo):
+            if f not in self.repo[repo].files:
+                self.repo[repo].add(f)
         maxthreads=8 #This causes problems with lots of threads
         maindirfiles=[self.liftfilename,
                         self.toneframesfile,
