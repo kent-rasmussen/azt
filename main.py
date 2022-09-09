@@ -12264,6 +12264,7 @@ class Git(Repository):
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
     def share(self,event=None):
+        """I'm going to ned to stash and stash apply here, I think"""
         remotes=self.findpresentremotes() #do once
         if not remotes:
             return
