@@ -8,6 +8,7 @@ program['testing']=True #True eliminates Error screens and zipped logs
 program['demo']=True #sets me=False, production=True, testing=False
 # program['demo']=False
 program['version']='0.9.5repos' #This is a string...
+program['testversionname']='tweaks' #always have some real test branch here
 program['url']='https://github.com/kent-rasmussen/azt'
 program['Email']='kent_rasmussen@sil.org'
 exceptiononload=False
@@ -530,6 +531,13 @@ class Menus(ui.Menu):
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
             helpitems+=[(_("Update A→Z+T"), updateazt)]
+            helpitems+=[(_("Update A→Z+T (local)"), self.parent.updateaztlocal)]
+            if program['repo'].branchname() == 'main':
+                helpitems+=[(_("Try A→Z+T test version"),
+                                self.parent.trytestazt)]
+            else:
+                helpitems+=[(_("Revert to A→Z+T main version"),
+                                self.parent.reverttomainazt)]
         helpitems+=[("What's with the New Interface?",
                         self.parent.helpnewinterface)
                     ]
@@ -1040,8 +1048,8 @@ class Settings(object):
                 }
         self.repo=dict() #then copy to class attribute if there
         for r in repo:
-            if hasattr(repo[r],'files'):
-                if repo[r].exists():
+            if hasattr(repo[r],'files'): #fails if no exe
+                if repo[r].exists(): #tests for .code dir
                     log.info(_("Found {} Repository!"
                                 ).format(repo[r].repotypename))
                 elif r == 'git': #don't worry about hg, if not there already
@@ -1076,6 +1084,9 @@ class Settings(object):
                                 'buttoncolumns',
                                 'showoriginalorthographyinreports',
                                 'lowverticalspace',
+                                'giturls',
+                                'hgurls',
+                                'aztrepourls',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -1223,12 +1234,15 @@ class Settings(object):
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
             fns['glosslangs']=self.glosslangs.langs
+            fns['aztrepourls']=program['repo'].remoteurls
+            fns['giturls']=self.repo['git'].remoteurls
+            fns['hgurls']=self.repo['hg'].remoteurls
             fns['ps']=self.slices.ps
             fns['profile']=self.slices.profile
             # except this one, which pretends to set but doesn't (throws arg away)
             fns['profilecounts']=self.slices.slicepriority
-        except:
-            log.error("Only finished settingsobjects up to {}".format(fns))
+        except Exception as e:
+            log.error("Only finished settingsobjects up to {} ({})".format(fns,e))
             return []
     def makesettingsdict(self,setting='defaults'):
         """This returns a dictionary of values, keyed by a set of settings"""
@@ -1247,16 +1261,16 @@ class Settings(object):
             at the end of settings init. So this block is not used in
             conversion, only in later saves."""
             if hasattr(self,'fndict') and s in self.fndict:
-                # log.info("Trying to dict {} attr".format(s))
+                log.info("Trying to dict {} attr".format(s))
                 try:
                     d[s]=self.fndict[s]()
-                    # log.info("Value {}={} found in object".format(s,d[s]))
+                    log.info("Value {}={} found in object".format(s,d[s]))
                 except:
                     log.error("Value of {} not found in object".format(s))
             elif hasattr(o,s) and getattr(o,s):
                 d[s]=getattr(o,s)
-                # log.log(4,"Trying to dict self.{} with value {}, type {}"
-                #         "".format(s,d[s],type(d[s])))
+                log.info("Trying to dict self.{} with value {}, type {}"
+                        "".format(s,d[s],type(d[s])))
             # else:
             #     log.error("Couldn't find {} in {}".format(s,setting))
         """This is the only glosslang > glosslangs conversion"""
@@ -1278,12 +1292,12 @@ class Settings(object):
         for s in dict:
             v=d[s]
             if hasattr(self,'fndict') and s in self.fndict:
-                # log.debug("Trying to read {} to object with value {} and fn "
-                #             "{}".format(s,v,self.fndict[s]))
+                log.info("Trying to read {} to object with value {} and fn "
+                            "{}".format(s,v,self.fndict[s]))
                 self.fndict[s](v)
             else:
-                # log.debug("Trying to read {} to {} with value {}, type {}"
-                #             "".format(s,o,v,type(v)))
+                log.info("Trying to read {} to {} with value {}, type {}"
+                            "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return d
     def storesettingsfile(self,setting='defaults',noobjects=False):
@@ -1414,6 +1428,7 @@ class Settings(object):
         # log.info('self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
         # setdefaults.langs(self.db) #This will be done again, on resets
     def trackuntrackedfiles(self):
+        return #until this doesn't caus problems
         # This method is here to pick up files that are there, but not tracked,
         # either in constructing a repository, or as a result of changes by other
         # editors (e.g., WeSay).
@@ -1422,6 +1437,7 @@ class Settings(object):
         def ifnotthereadd(file,repo):
             if file not in self.repo[repo].files:
                 self.repo[repo].add(file)
+        maxthreads=8 #This causes problems with lots of threads
         maindirfiles=[self.liftfilename,
                         self.toneframesfile,
                         self.statusfile,
@@ -1449,8 +1465,9 @@ class Settings(object):
                                                         '*.wav')])-present
             log.info("{} wav files to check for the {} repo".format(len(audio),r))
             for f in audio:
-                t = threading.Thread(target=ifnotthereadd, args=(f,r))
-                t.start()
+                if threading.active_count()<maxthreads:
+                    t = threading.Thread(target=ifnotthereadd, args=(f,r))
+                    t.start()
                 # self.repo[r].add(f)
             for ext in ['png','jpg','gif']:
                 i=set([file.getreldir(self.repo[r].url,i)
@@ -1460,8 +1477,9 @@ class Settings(object):
                 log.info("{} {} files to check for the {} repo"
                         "".format(len(i),ext,r))
                 for f in i:
-                    u = threading.Thread(target=ifnotthereadd, args=(f,r))
-                    u.start()
+                    if threading.active_count()<maxthreads:
+                        u = threading.Thread(target=ifnotthereadd, args=(f,r))
+                        u.start()
             try:
                 t.join()
                 u.join()
@@ -3617,6 +3635,25 @@ class TaskDressing(object):
         if not nowait:
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
+    def updateaztlocal(self,event=None):
+        r=program['repo'].share()
+    def updateazt(self,event=None):
+        updateazt()
+    def reverttomainazt(self,event=None):
+        #This doesn't care which test version one is on
+        r=program['repo'].reverttomain()
+        if r == ("Switched to branch 'main'"
+                "\nYour branch is up to date with 'origin/main'."):
+            self.taskchooser.restart()
+    def trytestazt(self,event=None):
+        #This only goes to the test version at the top of this file
+        r=program['repo'].testversion()
+        log.info("trytestazt: {}".format(r))
+        if r == "Your branch is up to date with 'origin/{}'.".format(
+                                                    program['testversionname']):
+            self.taskchooser.restart()
+        else:
+            ErrorNotice(r)
     def verifictioncode(self,**kwargs):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
@@ -3639,8 +3676,11 @@ class TaskDressing(object):
         else:
             log.info("No final write to lift")
         self.settings.trackuntrackedfiles()
+        self.settings.storesettingsfile()
         for r in self.settings.repo:
             self.settings.repo[r].commit()
+            self.settings.repo[r].push()
+            log.info("Done maybe committing/pushing to {}".format(r))
         ui.Window.killall(self) #Exitable
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
@@ -4162,6 +4202,7 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("Analysis of what you're done with: {}".format(self.donew))
         log.info("You're done enough with: {}".format(self.doneenough))
     def restart(self,filename=None):
+        log.info("Restarting from TaskChooser")
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
         # log.info("towrite: {}; writing: {}".format(self.towrite,self.writing))
@@ -8318,7 +8359,7 @@ class Transcribe(Sound,Sort):
             #because people need to do a profile analysis here.
             if diff:
                 self.settings.reloadprofiledata(showpolygraphs=showpolygraphs)
-            # sysrestart()
+            # self.restart()
             """Update regular expressions here!!"""
         else: #move on, but notify in logs
             log.info("User selected ‘{}’, but with no change.".format(
@@ -11735,6 +11776,14 @@ class ErrorNotice(ui.Window):
             self.wait_window(self)
 class Repository(object):
     """SuperClass for Repository classes"""
+    def checkout(self,reponame):
+        args=['checkout',reponame]
+        r=self.do(args)
+        log.info(r)
+        # if r:
+        #     r=self.pull()
+        #     log.info(r)
+        return r
     def add(self,file):
         if not self.alreadythere(file):
             args=["add", str(file)]
@@ -11753,7 +11802,7 @@ class Repository(object):
             self.do([i for i in args if i is not None])
     def diff(self):
         args=["diff"]
-        r=self.do(args)
+        return self.do(args)
         # log.info("{} diff returned {}".format(self.repotypename,r))
     def status(self):
         args=["status"]
@@ -11761,6 +11810,88 @@ class Repository(object):
     def log(self):
         args=["log"]
         log.info(self.do(args))
+    def commithashes(self,otherurl=None):
+        if otherurl:
+            url=self.url
+            self.url=otherurl
+        r=self.do(["log", "--format=%H"])
+        if r:
+            log.info("Found {} commits for {}".format(len(r),self.url))
+        else:
+            log.info("Found no commits; is {} a {} repo?".format(self.url,
+                                                            self.repotypename))
+        if otherurl:
+            self.url=url
+        if r:
+            return r.split('\n')
+        else:
+            return []
+    def share(self,remotes=None,branch=None):
+        if not remotes:
+            remotes=self.findpresentremotes() #do once
+        if not remotes:
+            log.info("Couldn't find a local drive to share with; giving up")
+            return
+        r=self.pull(remotes)
+        if r:
+            r=self.push(remotes)
+        return r
+    def pull(self,remotes=None,branch=None):
+        if not remotes:
+            remotes=self.findpresentremotes() #do once
+        if not remotes:
+            log.info("Couldn't find a local drive to pull from; giving up")
+        for remote in remotes:
+            args=["pull",remote]
+            if branch:
+                args+=[branch]
+            r=self.do(args)
+            # log.info(r)
+        return r
+    def push(self,remotes=None,branch=None):
+        if not remotes:
+            remotes=self.findpresentremotes() #do once
+        if not remotes:
+            log.info("Couldn't find a local drive to push to; giving up")
+        for remote in remotes:
+            args=["push",remote]
+            if branch:
+                args+=[branch]
+            r=self.do(args)
+            # log.info(r)
+        return r
+    def isrelated(self,directory):
+        #Git doesn't seem to care if repos are related, but I do...
+        thisrepohashes=self.commithashes()
+        thisrepohashes=self.commithashes(directory)
+        commonhashes=set(thisrepohashes)&set(thisrepohashes)
+        log.info("found {} common commits".format(len(commonhashes)))
+        if len(commonhashes) >1: #just in case we find one...
+            return True
+        error=_("The directory {} doesn't seem to have a repository related "
+                "to {}; removing.").format(directory,self.url)
+        log.info(error)
+        ErrorNotice(error,wait=True)
+        self.removeremote(directory)
+    def addifis(self,directory):
+        if directory and file.exists(directory) and self.isrelated(directory):
+            self.addremote(directory)
+            return [directory] #this needs to add to lists, and iterate
+        return []
+    def findpresentremotes(self,remote=None):
+        l=[]
+        for d in self.remoteurls().values():
+            # log.info("adding {} to {}".format(d,l))
+            l+=self.addifis(d) #add to list only what is there now AND related
+            # the related test will remove it if there AND NOT related.
+            # Otherwise, we leave it for later, in case it just isn't there now.
+        if l:
+            return l
+        else:
+            d=file.getdirectory(_("Please select where to find the AZT source "
+                                    "locally"))
+            # log.info("file.getdirectory returned {}".format(d))
+            return self.addifis(d)
     def root(self):
         args=["root"]
         self.root=self.do(args)
@@ -11780,26 +11911,38 @@ class Repository(object):
         cmd.extend(args)
         # log.info("{} cmd args: {};{}".format(self.code,cmd))
         try:
-            output=subprocess.check_output(cmd, shell=False)
+            output=subprocess.check_output(cmd,
+                                            stderr=subprocess.STDOUT,
+                                            shell=False)
         except subprocess.CalledProcessError as e:
-            output=e.output
+            output=e.output.decode(sys.stdout.encoding,
+                                    errors='backslashreplace'
+                                    ).strip()
+            ErrorNotice(_("Call to {} ({}) gave error: \n{}").format(
+                                                            self.repotypename,
+                                                            ' '.join(args),
+                                                            output))
+            return
         except Exception as e:
-            log.info(_("Call to Mercurial ({}) failed: {}").format(args,e))
-            return e
+            ErrorNotice(_("Call to {} ({}) failed: {}").format(
+                                                            self.repotypename,
+                                                            args,e))
+            return
         iwascalledby=callerfn()
         try:
-            if iwascalledby == 'getfiles':
-                log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
+            # if iwascalledby == 'getfiles':
+            #     log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
             t=output.decode(sys.stdout.encoding,errors='backslashreplace').strip()
-            if iwascalledby == 'getfiles':
-                log.info("Looks like that worked")
+            # if iwascalledby == 'getfiles':
+            #     log.info("Looks like that worked")
         except:
-            if iwascalledby == 'getfiles':
-                log.info("Looks like that didn't work")
+            # if iwascalledby == 'getfiles':
+            #     log.info("Looks like that didn't work")
             t=output
-        if t and iwascalledby not in ['diff','getfiles']: #These give massive output!
+        #These give massive output!
+        if t and iwascalledby not in ['diff','getfiles','commithashes']:
             log.info("{} {}: {}".format(self.repotypename,iwascalledby,t))
-        elif iwascalledby not in ['add','commit']:
+        elif iwascalledby not in ['add','commit','commithashes']:
             log.info("{} {} OK".format(self.repotypename,iwascalledby))
         return t
     def alreadythere(self,url):
@@ -11844,8 +11987,12 @@ class Repository(object):
             log.info("self.ignored for {} now {}".format(self.code,self.ignored))
         except FileNotFoundError as e:
             log.info("Hope this is OK: {}".format(e))
-    def exists(self):
-        return file.exists(self.deltadir)
+    def exists(self,f=None):
+        if not f:
+            f=self.deltadir
+            log.info("FYI, I didn't get an arg to check, so checking {}".format(
+                                                                            f))
+        return file.exists(f)
     def exewarning(self):
         title=_("Warning: {} Executable Missing!".format(self.repotypename))
         text=_("You seem to be working on a repository of data ({0}), "
@@ -11881,7 +12028,7 @@ class Repository(object):
             o=ui.Label(w.frame, text=clickable2, column=0, row=3)
             o.bind("<Button-1>", lambda e: openweburl(self.wdownloadsurl))
             mtt=ui.ToolTip(o,_("Go to {}").format(self.wdownloadsurl))
-        button=(_("Restart Now"),sysrestart)
+        # button=(_("Restart Now"),sysrestart) #This should be in task/chooser
         text=_("After you install {}, you should restart."
                 ).format(self.repotypename)
         if self.repotypename == "Git":
@@ -11893,7 +12040,7 @@ class Repository(object):
         r=ui.Label(w.frame, text=text, column=0, row=4)
         r.wrap()
         rb=ui.Button(w.frame, text=_("Restart Now"), column=1, row=4,
-                                                            cmd=sysrestart)
+                    cmd=sysrestart) #This should be in task/chooser
         rbtt=ui.ToolTip(rb,_("Install {} first, then do this"
                             ).format(self.repotypename))
         w.deiconify()
@@ -11907,6 +12054,33 @@ class Repository(object):
             log.info("No config {} username found; using '{}'"
                     "".format(r,self.repotypename))
         return self.argstoputusername(r)
+    def addremote(self,remote):
+        #This doesn't return a value
+        remotes=self.remoteurls()
+        if remote in remotes.values():
+            return
+        for key in ["Thing"+str(i) for i in range(1,20)]:
+            if key not in remotes: #don't overwrite keys
+                log.info("Setting {} key with {} value".format(key,remote))
+                remotes[key]=remote
+                self.remoteurls(remotes) #save
+                log.info("URL Settings now {}".format(self.remoteurls()))
+                return
+    def removeremote(self,remote):
+        # This is one of two functions that touch self._remotes directly
+        for k,v in self.remoteurls().items():
+            if v == remote:
+                del self._remotes[k]
+    def remoteurls(self,remotes=None):
+        # This is one of two functions that touch self._remotes directly
+        # This returns a copy of the dict, so don't operate on it directly.
+        # Rather, read and write using this function.
+        if remotes and type(remotes) is dict:
+            self._remotes=remotes
+        elif remotes:
+            log.info("You passed me a remotes value that isn't a dict?")
+        else:
+            return getattr(self,'_remotes',{}).copy() #so I can iterate and change
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
@@ -11949,8 +12123,11 @@ class Mercurial(Repository):
             ErrorNotice(error,title=_("Chorus Rescue files found!"))
             if me:
                 exit()
+    def makebare(self):
+        args=['update', 'null']
     def __init__(self, url):
         self.code='hg'
+        self.branchnamefile='branch'
         # self.cmd=program['hg']
         self.wdownloadsurl="https://www.mercurial-scm.org/wiki/Download"
         self.wexename="Mercurial-6.0-x64.exe"
@@ -11967,14 +12144,24 @@ class Mercurial(Repository):
         else:
             self=None
 class Git(Repository):
+    def makebare(self):
+        args=['config', '--bool', 'core.bare', 'true']
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
     def argstoputusername(self,username):
         return ['-c','user.name={}'.format(username)]
     def init(self):
-        self.do(['init'])
+        args=['init']
+        self.do(args)
+        log.info(self.do(args))
+    def lastcommitdate(self):
+        args=['log', '-1', '--format=%cd']
+        r=self.do(args)
+        # log.info(r)
+        return r
     def __init__(self, url):
         self.code='git'
+        self.branchnamefile='HEAD'
         self.wdownloadsurl="https://git-scm.com/download/win"
         self.wexename="Git-2.33.0.2-64-bit.exe"
         self.wexeurl=("https://github.com/git-for-windows/git/releases/"
@@ -11983,6 +12170,41 @@ class Git(Repository):
         self.lsfiles='ls-files'
         self.argstogetusername=['config', '--get', 'user.name']
         super(Git, self).__init__(url)
+class GitReadOnly(Git):
+    def branchname(self):
+        with file.getdiredurl(self.url,'.git/'+self.branchnamefile).open() as f:
+            return file.getfile(f.read())
+    def share(self,event=None):
+        remotes=self.findpresentremotes() #do once
+        if not remotes:
+            return
+        branches = ['main',program['testversionname']]
+        fns = [self.testversion, self.reverttomain]
+        if self.branchname() != 'main':
+            branches.reverse()
+            fns.reverse()
+        try:
+            for i in range(2):
+                log.info("Running index {} ({} {})".format(i,branches[i],fns[i]))
+                r=Repository.share(self,remotes=remotes,branch=branches[i])
+                if r:
+                    r=fns[i]()
+        except Exception as e:
+            ErrorNotice(e)
+    def reverttomain(self,event=None):
+        r=self.checkout('main')
+        log.info(r)
+        return r
+    def testversion(self,event=None):
+        r=self.checkout(program['testversionname'])
+        log.info(r)
+        return r
+    def add(self,file):
+        pass
+    def commit(self,file=None):
+        pass
+    def __init__(self, url):
+        super(GitReadOnly, self).__init__(url)
 class ResultWindow(ui.Window):
     def __init__(self, parent, nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
@@ -12523,7 +12745,7 @@ def updateazt(**kwargs): #should only be parent, for errorroot
         else:
             t=str(t)+_('\n(Restart {} to use this update)').format(
                                                             program['name'])
-            button=(_("Restart Now"),sysrestart)
+            button=(_("Restart Now"),sysrestart) #This should be in task/chooser
         if set(['parent']).issuperset(set(kwargs.keys())):
             # log.info("Making Error Window")
             # log.info(t)
@@ -12669,7 +12891,7 @@ def mainproblem():
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
     ui.Button(errorw.outsideframe,text=_("Restart {}").format(program['name']),
-                cmd=sysrestart,
+                cmd=sysrestart, #This should be in task/chooser
                 row=1,column=2)
     if program['git']:
         # log.info("Making update menu")
@@ -12695,6 +12917,7 @@ def name(x):
         name=x.__class__.__name__ #If x is a class instance
         return "class."+name
 if __name__ == "__main__":
+    program['start_time'] = time.time()
     """These things need to be done outside of a function, as we need global
     variables."""
     # log.info("TaskChooser MRO: {}".format(TaskChooser.mro()))
@@ -12730,7 +12953,7 @@ if __name__ == "__main__":
     log.info("Working directory is {} on {} ".format(program['aztdir'],
                                                     program['hostname']))
     program['start_time'] = time.time()
-    log.info("Loglevel is {}; starting at {}".format(loglevel,
+    log.info("Loglevel is {}; started at {}".format(loglevel,
                                     datetime.datetime.utcnow().isoformat()))
     transdir=file.gettranslationdirin(program['aztdir'])
     i18n={}
@@ -12741,6 +12964,8 @@ if __name__ == "__main__":
         findexecutable(exe)
     if program['python3']: #be sure we're using python v3
         program['python']=program.pop('python3')
+    program['repo']=GitReadOnly(program['aztdir'])
+    lastcommit=program['repo'].lastcommitdate()
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         pythonmodules()

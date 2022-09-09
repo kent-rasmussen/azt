@@ -17,6 +17,8 @@ except:
         return x
 def getfile(filename):
     return pathlib.Path(filename)
+def getfilename(filename):
+    return pathlib.Path(filename).name
 def fullpathname(filename):
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
@@ -188,12 +190,14 @@ def gethome():
     if platform.uname().node == 'karlap':
         home=pathlib.Path.joinpath(home, "Assignment","Tools","WeSay")
     return home
-def getdirectory():
+def getdirectory(title=None):
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()
-    f=filedialog.askdirectory(initialdir = home, title = _("Select a new "
-                            "location for your LIFT Lexicon and other Files"))
-    return f
+    if not title:
+        title=_("Select a new location for your LIFT Lexicon and other Files")
+    f=filedialog.askdirectory(initialdir = home, title = title)
+    if f:
+        return f
 def getfilesofdirectory(dir,regex='*'):
     # return pathlib.Path(dir).iterdir()
     return pathlib.Path(dir).glob(regex)
