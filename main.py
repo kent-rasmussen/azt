@@ -12920,6 +12920,8 @@ def name(x):
         name=x.__class__.__name__ #If x is a class instance
         return "class."+name
 if __name__ == "__main__":
+    def _(x):
+        return x
     program['start_time'] = time.time()
     """These things need to be done outside of a function, as we need global
     variables."""
