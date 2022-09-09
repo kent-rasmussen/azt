@@ -3650,18 +3650,16 @@ class TaskDressing(object):
     def reverttomainazt(self,event=None):
         #This doesn't care which test version one is on
         r=program['repo'].reverttomain()
-        if r == ("Switched to branch 'main'"
-                "\nYour branch is up to date with 'origin/main'."):
+        if r:# == ("Switched to branch 'main'"
+                # "\nYour branch is up to date with 'origin/main'."):
             self.taskchooser.restart()
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
         r=program['repo'].testversion()
         log.info("trytestazt: {}".format(r))
-        if r == "Your branch is up to date with 'origin/{}'.".format(
-                                                    program['testversionname']):
+        if r:# == "Your branch is up to date with 'origin/{}'.".format(
+                                                    # program['testversionname']):
             self.taskchooser.restart()
-        else:
-            ErrorNotice(r)
     def verifictioncode(self,**kwargs):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
@@ -12207,11 +12205,17 @@ class GitReadOnly(Git):
     def reverttomain(self,event=None):
         r=self.checkout('main')
         log.info(r)
-        return r
+        if self.branchname() == 'main':
+            return True
+        else:
+            ErrorNotice(r)
     def testversion(self,event=None):
         r=self.checkout(program['testversionname'])
         log.info(r)
-        return r
+        if self.branchname() == program['testversionname']:
+            return True
+        else:
+            ErrorNotice(r)
     def add(self,file):
         pass
     def commit(self,file=None):
