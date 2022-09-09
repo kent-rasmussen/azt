@@ -12232,7 +12232,8 @@ class GitReadOnly(Git):
         try:
             for i in range(2):
                 log.info("Running index {} ({} {})".format(i,branches[i],fns[i]))
-                r=Repository.share(self,remotes=remotes,branch=branches[i])
+                #not pulling here, as not sharing in that direction.
+                r=Repository.push(self,remotes=remotes,branch=branches[i])
                 if r:
                     r=fns[i]()
         except Exception as e:
