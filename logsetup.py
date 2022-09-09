@@ -93,8 +93,7 @@ def writelzma(filename=None):
     if not filename:
         filename=getlogfilename()
     log.info("Using filename {}".format(filename))
-    filenames=list(file.getfilesofdirectory(logdir,
-                                regex=file.getfilenamefrompath(filename)+'*'))
+    filenames=list(pathlib.Path(logdir).glob(pathlib.Path(filename).name+'*'))
     f=tarfile.open(name=str(compressedurl)+'.tar.xz', mode='x:xz',
                     encoding='utf-8', preset=9,
                     debug=3
@@ -102,7 +101,7 @@ def writelzma(filename=None):
     for fn in filenames:
         # log.info("Compressing file {}".format(fn))
         try:
-            f.add(fn,arcname=file.getfilenamefrompath(fn))
+            f.add(fn,arcname=pathlib.Path(fn).name)
             # log.info("Compressed file {}".format(fn))
         except Exception as e:
             log.info(e)
