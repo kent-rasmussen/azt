@@ -12059,9 +12059,9 @@ class Repository(object):
             log.info("Using {} username '{}'".format(r,self.repotypename))
         else:
             r=[program['name']+'-'+program['hostname'],
-                program['name']+'-'+program['hostname']]
-            log.info("No config {} username found; using '{}'"
-                    "".format(r,self.repotypename))
+                program['name']+'@'+program['hostname']]
+            log.info("No {} username found; using '{}'"
+                    "".format(self.repotypename,r))
         return self.argstoputusername(r)
     def addremote(self,remote):
         #This doesn't return a value
