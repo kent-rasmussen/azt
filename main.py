@@ -12783,6 +12783,8 @@ def main():
     # log.info("Theme ipadx: {}".format(program['theme'].ipadx))
     # log.info("Theme pady: {}".format(program['theme'].pady))
     # log.info("Theme padx: {}".format(program['theme'].padx))
+    program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
+    lastcommit=program['repo'].lastcommitdate()
     root.program=program
     root.wraplength=root.winfo_screenwidth()-300 #exit button
     root.wraplength=int(root.winfo_screenwidth()*.7) #exit button
@@ -12969,8 +12971,6 @@ if __name__ == "__main__":
         findexecutable(exe)
     if program['python3']: #be sure we're using python v3
         program['python']=program.pop('python3')
-    program['repo']=GitReadOnly(program['aztdir'])
-    lastcommit=program['repo'].lastcommitdate()
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         pythonmodules()
