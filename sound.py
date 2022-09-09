@@ -578,7 +578,7 @@ class BeepGenerator(object):
                                             )
                                     ).astype(numpy.float32)
             self.wavdata=numpy.append(self.wavdata,numpy.zeros(int(self.secperwordbreak*self.bitrate),dtype=numpy.float32))
-        with wave.open(test+__name__+'.wav','wb') as f:
+        with wave.open('test'+__name__+'.wav','wb') as f:
             f.setnchannels(self.settings.channels)
             # log.info(self.p.get_sample_size(self.format))
             f.setsampwidth(self.p.get_sample_size(self.format))
