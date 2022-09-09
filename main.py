@@ -1048,9 +1048,8 @@ class Settings(object):
         for r in repo:
             if hasattr(repo[r],'files'): #fails if no exe
                 if repo[r].exists(): #tests for .code dir
-                    log.info(_("Found {} Repository; checking for a USB drive!"
+                    log.info(_("Found {} Repository!"
                                 ).format(repo[r].repotypename))
-                    repo[r].share()
                 # elif r == 'git': #don't worry about hg, if not there already
                 #     repo[r].init()
                 self.repo[r]=repo[r]
@@ -4298,6 +4297,9 @@ class TaskChooser(TaskDressing,ui.Window):
             log.info("Already writing to lift; I trust this new mod will "
                     "get picked up later...")
             self.towrite=True
+    def usbcheck(self):
+        for r in self.settings.repo.values():
+            r.share()
     def __init__(self,parent):
         # self.testdefault=Parse
         self.towrite=False
@@ -4323,6 +4325,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if not self.settings.writeeverynwrites: #0/None are not sensible values
             self.settings.writeeverynwrites=1
             self.settings.storesettingsfile()
+        self.usbcheck()
         self.writeable=0 #start the count
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
