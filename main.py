@@ -11875,7 +11875,7 @@ class Repository(object):
             r=self.pull(remotes,branch)
         if r:
             r=self.push(remotes,branch)
-        return r
+        return r #ok if we don't track results for each
     def pull(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -11889,7 +11889,7 @@ class Repository(object):
                 args+=[branch]
             r=self.do(args)
             # log.info(r)
-            return r
+        return r #ok if we don't track results for each
     def push(self,remotes=None,branch=None,setupstream=False):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -11911,7 +11911,7 @@ class Repository(object):
                             branch=self.branchname(),
                             setupstream=True)
             # log.info(r)
-            return r
+        return r #ok if we don't track results for each
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
         thisrepohashes=self.commithashes()
