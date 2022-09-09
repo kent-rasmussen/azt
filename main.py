@@ -52,7 +52,7 @@ except Exception as e:
     exceptiononload=True
 """Other people's stuff"""
 import datetime
-program['start_time'] = datetime.datetime.utcnow() #time.time()
+program['start_time'] = datetime.datetime.utcnow()
 import threading
 import multiprocessing
 import itertools
@@ -241,12 +241,8 @@ class FileChooser(object):
             print(_("Apparently we've run this before today; not backing "
             "up again."))
     def senseidtriage(self):
-        # import time
-        # print("Doing senseid triage... This takes awhile...")
-        # start_time=time.time()
         self.senseids=self.db.senseids
         self.senseidsinvalid=[] #nothing, for now...
-        # print(time.time() - start_time,"seconds.")
         print(len(self.senseidsinvalid),'senses with invalid data found.')
         self.db.senseidsinvalid=self.senseidsinvalid
         self.senseidsvalid=[]
@@ -2016,9 +2012,12 @@ class Settings(object):
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
+        start_time=nowruntime()
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
+        log.info("Refreshing {} {} {} status settings from LIFT"
+                "".format(profile,ps,cvt))
         checks=self.status.checks(cvt=cvt, ps=ps, profile=profile)
         for c in checks:
             # log.info("Working on {}".format(c))
@@ -2026,27 +2025,32 @@ class Settings(object):
             """this just populates groups and the tosort boolean."""
             self.updatesortingstatus(cvt=cvt,ps=ps,profile=profile,check=c,
                                     store=False) #do below
+        logfinished(start_time)
     def reloadstatusdatabycvtps(self,**kwargs):
         # This reloads the status info as relevant on a particular page (ps and
         # cvt), so it needs to be iterated over, or done for each page switch,
         # if desired.
         # These are specified in iteration, pulled from object if called by menu
+        start_time=nowruntime()
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
+        log.info("Refreshing {} {} status settings from LIFT".format(ps,cvt))
         profiles=self.slices.profiles(ps=ps) #This depends on ps only
         for p in profiles:
             # log.info("Working on {}".format(p))
             self.reloadstatusdatabycvtpsprofile(profile=p,**kwargs)
         if kwargs.get('store',True):
             self.storesettingsfile(setting='status')
+        logfinished(start_time)
     def reloadstatusdata(self):
         # This fn is very inefficient, as it iterates over everything in
         # profilesbysense, creating status dictionaries for all of that, in
         # order to populate it if found —before removing empty entires.
         # This also has no access to verification information, which comes only
         # from verify()
+        start_time=nowruntime()
+        log.info("Refreshing all status settings from LIFT")
         w=ui.Wait(parent=program['root'],msg=_("Reloading status data"))
-        start_time=time.time()
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
         #This limits reload to what is there (i.e., only V, if only V has been done)
@@ -2064,8 +2068,7 @@ class Settings(object):
         if None in self.status: #This should never be there
             del self.status[None]
         self.status.store()
-        log.info("Status settings refreshed from LIFT in {:1.0f}m, {:2.3f}s"
-                    "".format(*divmod(time.time()-start_time,60)))
+        logfinished(start_time)
         w.destroy()
     def categorizebygrouping(self,fn,senseid,**kwargs):
         #Don't complain if more than one found:
@@ -3767,13 +3770,12 @@ class TaskChooser(TaskDressing,ui.Window):
         self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
     def guidtriage(self):
         # import time
-        log.info("Doing guid triage... This takes awhile...")
-        start_time=time.time()
+        log.info("Doing guid triage and other variables —this takes awhile...")
+        start_time=nowruntime()
         self.guids=self.db.guids
         self.guidsinvalid=[] #nothing, for now...
         self.senseids=self.db.senseids
         self.senseidsinvalid=[] #nothing, for now...
-        print(time.time() - start_time,"seconds.")
         print(len(self.guidsinvalid),'entries with invalid data found.')
         self.db.guidsinvalid=self.guidsinvalid
         self.guidsvalid=[]
@@ -3793,15 +3795,13 @@ class TaskChooser(TaskDressing,ui.Window):
         self.db.guidsvalidwps=self.guidsvalidwps #This is what we'll search
         print(len(self.guidsvalidwops),'entries with valid data but no ps data.')
         print(len(self.guidsvalidwps),'entries with valid data and ps data.')
-        print(time.time() - start_time,"seconds.")
         # for var in [self.guids, self.guidswanyps, self.guidsvalidwops, self.guidsvalidwps, self.guidsinvalid, self.guidsvalid]:
         #     print(len(var),str(var))
         # for guid in self.guidswanyps:
         #     if guid not in self.formstosearch[self.analangs[0]][None]:
         #         guids+=[guid]
         # print(len(guids),guids)
-        print("Set the above variables in "+str(time.time() - start_time)+" se"
-                "conds.")
+        logfinished(start_time)
     def guidtriagebyps(self):
         log.info("Doing guid triage by ps... This also takes awhile?...")
         self.guidsvalidbyps={}
@@ -3916,10 +3916,7 @@ class TaskChooser(TaskDressing,ui.Window):
         not offer recordingT as default if all examples have sound files, yet
         a user may well want to go back and look at those recordings, and maybe
         rerecord some."""
-        # start=time.time()
         self.whatsdone()
-        # log.info("checked whatsdone in {}s".format(time.time()-start))
-        #if nothing to do??
         if self.showreports:
             tasks=[
                     ReportCitation,
@@ -4302,7 +4299,6 @@ class TaskChooser(TaskDressing,ui.Window):
             self.towrite=True
     def __init__(self,parent):
         # self.testdefault=Parse
-        self.start_time=time.time() #this enables boot time evaluation
         self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
@@ -7128,7 +7124,7 @@ class Report(object):
                 resultswindow.destroy()
                 ErrorNotice(error)
             return
-        start_time=time.time()
+        start_time=nowruntime()
         counts={'senses':0,'examples':0, 'audio':0}
         analysis=self.makeanalysis(**kwargs)
         if analysisOK:
@@ -7327,7 +7323,8 @@ class Report(object):
                             eps,audiopercent)
         ps2=xlp.Paragraph(s2,text=ptext)
         xlpr.close(me=me)
-        text=_("Finished in {} seconds.").format(str(time.time() -start_time))
+        text=_("Finished in {} seconds.").format(nowruntime()-start_time)
+        logfinished(start_time)
         output(window,r,text)
         text=_("(Report is also available at ({})").format(self.tonereportfile)
         output(window,r,text)
@@ -9945,7 +9942,7 @@ class MainApplication(ui.Window):
             self.parent.grid_rowconfigure(rc, weight=3)
             self.parent.grid_columnconfigure(rc, weight=3)
     def __init__(self,parent,exit=0):
-        start_time=time.time() #this enables boot time evaluation
+        start_time=nowruntime() #this enables boot time evaluation
         """Things that belong to a ui.Frame go after this:"""
         super(MainApplication,self).__init__(parent,
                 exit=False
@@ -9984,8 +9981,7 @@ class MainApplication(ui.Window):
         # ui.ContextMenu(self)
         # filechooser=FileChooser()
         tasks=TaskChooser(self)
-        print("Finished loading main window in",time.time() - start_time," "
-                                                                    "seconds.")
+        logfinished(start_time)
         """finished loading so destroy splash"""
         """Don't show window again until check is done"""
 class SortButtonFrame(ui.ScrollingFrame):
@@ -12247,12 +12243,14 @@ def now():
     # datetime.datetime.utcnow().isoformat()[:-7]+'Z'
     return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
 def nowruntime():
-    # calibration=program['start_time']
+    #this returns a delta!
     return datetime.datetime.utcnow()-program['start_time']
 def logfinished(start=program['start_time']):
     run_time=nowruntime()
+    if type(start) is datetime.datetime: #only work with deltas
+        start-=program['start_time']
     log.info("Finished at {} ({:1.0f}m, {:2.3f}s)"
-            "".format(run_time,*divmod(run_time-start,60)))
+            "".format(now(),*divmod((run_time-start).total_seconds(),60)))
 def interfacelang(lang=None,magic=False):
     global i18n
     global _
