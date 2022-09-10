@@ -1050,8 +1050,8 @@ class Settings(object):
                 if repo[r].exists(): #tests for .code dir
                     log.info(_("Found {} Repository!"
                                 ).format(repo[r].repotypename))
-                # elif r == 'git': #don't worry about hg, if not there already
-                #     repo[r].init()
+                elif r == 'git': #don't worry about hg, if not there already
+                    repo[r].init()
                 self.repo[r]=repo[r]
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
