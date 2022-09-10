@@ -967,6 +967,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nfieldswannotations={}
         self.fields={}
         self.nfields={}
+        # for l in self.fieldnames:
+        #     del self.fieldnames[l] #for testing cases without fields!
         fieldopts={k:k for k in ['sense/example',
                                 'citation',
                                 'lexical-unit']}
