@@ -12192,9 +12192,15 @@ class Repository(object):
         self.getfiles()
         self.ignorecheck()
         self.description="language data"
-        log.info("{} repository object initialized on branch {} at {} for {}, "
-        "with {} files."
-                "".format(self.repotypename, self.branchname(), self.url,
+        try:
+            log.info("{} repository object initialized on branch {} at {} "
+                    "for {}, with {} files."
+                    "".format(self.repotypename, self.branchname(), self.url,
+                        self.description, len(self.files)))
+        except FileNotFoundError:
+            log.info("{} repository object initialized at {} "
+                    "for {}, with {} files."
+                    "".format(self.repotypename, self.url,
                         self.description, len(self.files)))
 class Mercurial(Repository):
     def leaveunicodealonesargs(self):
