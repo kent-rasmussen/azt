@@ -4215,11 +4215,11 @@ class TaskChooser(TaskDressing,ui.Window):
             self.maybewrite(definitely=True)
         try:
             self.task.withdraw() #so users don't do stuff while waiting
-        except (AttributeError,_tkinter.TclError):
+        except (AttributeError,tkinter.TclError):
             log.info("There doesn't seem to be a task to hide; moving on.")
         try:
             self.task.runwindow.withdraw() #so users don't do stuff while waiting
-        except (AttributeError,_tkinter.TclError):
+        except (AttributeError,tkinter.TclError):
             log.info("There doesn't seem to be a runwindow to hide; moving on.")
         while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
