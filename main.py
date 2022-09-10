@@ -12254,8 +12254,8 @@ class Git(Repository):
                 '-c', 'user.email={}'.format(username[1])]
     def init(self):
         args=['init']
-        self.do(args)
-        log.info(self.do(args))
+        r=self.do(args)
+        log.info(r)
     def lastcommitdate(self):
         args=['log', '-1', '--format=%cd']
         r=self.do(args)
