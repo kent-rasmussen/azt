@@ -11993,21 +11993,32 @@ class Repository(object):
             if iwascalledby not in ["getusernameargs"]:
                 # if not output:
                 #     output=e
-                ErrorNotice(_("Call to {} ({}) gave error: \n{}").format(
-                                                            self.repotypename,
-                                                            ' '.join(args),
-                                                            output))
+                txt=_("Call to {} ({}) gave error: \n{}").format(
+                                                        self.repotypename,
+                                                        ' '.join(args),
+                                                        output)
+                try:
+                    ErrorNotice(txt)
+                except RuntimeError:
+                    log(txt)
             if "The current branch master has no upstream branch." in output:
                 log.info("iwascalledby {}, but don't have upstream."
                             "".format(iwascalledby))
                 if iwascalledby not in ["push"]:
-                    ErrorNotice(output)
+                    try:
+                        ErrorNotice(output)
+                    except RuntimeError:
+                        log.info(output)
                 return output
             return
         except Exception as e:
-            ErrorNotice(_("Call to {} ({}) failed: {}").format(
-                                                            self.repotypename,
-                                                            args,e))
+            text=_("Call to {} ({}) failed: {}").format(
+                                                        self.repotypename,
+                                                        args,e)
+            try:
+                ErrorNotice(text)
+            except RuntimeError:
+                log.info(text)
             return
         try:
             # if iwascalledby == 'getfiles':
