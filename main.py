@@ -11886,9 +11886,9 @@ class Repository(object):
                     "giving up").format(self.repotypename))
             return
         for remote in remotes:
-            args=["pull",remote]
-            if branch:
-                args+=[branch]
+            args=["pull",remote,self.branchname()]
+            # if branch:
+            #     args+=[branch]
             r=self.do(args)
             # log.info(r)
         return r #ok if we don't track results for each
@@ -11903,9 +11903,9 @@ class Repository(object):
             args=["push"]
             if setupstream:
                 args+=['--set-upstream']
-            args+=[remote]
-            if branch:
-                args+=[branch]
+            args+=[remote,self.branchname()]
+            # if branch:
+            #     args+=[branch]
             r=self.do(args)
             if "The current branch master has no upstream branch." in r:
                 r=self.push(remotes=[remote],
