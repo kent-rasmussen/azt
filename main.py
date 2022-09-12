@@ -1308,7 +1308,13 @@ class Settings(object):
             v=d[s]
             # log.info("Ready to store {} type data: {}".format(type(v),v))
             if isinstance(v, dict):
-                config[s]=v
+                config[s]={}
+                for j in v:
+                    if type(v[j]) is dict:
+                        config[s][j]={i:'\n'.join(str(j[i])) for i in j
+                                                            if type(j) is dict}
+                    elif v[j]:
+                        config[s][j]=v[j]
             else:
                 config['default'][s]=str(v)
         if config['default'] == {}:
