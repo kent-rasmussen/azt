@@ -11952,7 +11952,7 @@ class Repository(object):
             # Otherwise, we leave it for later, in case it just isn't there now.
         if l:
             return l
-        elif self.code is 'git':
+        elif self.code == 'git':
             d=file.getdirectory(_("Please select where to find the {} "
                                     "locally").format(self.description))
             # log.info("file.getdirectory returned {}".format(d))
