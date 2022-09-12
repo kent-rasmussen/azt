@@ -1050,8 +1050,8 @@ class Settings(object):
                 if repo[r].exists(): #tests for .code dir
                     log.info(_("Found {} Repository!"
                                 ).format(repo[r].repotypename))
-                # elif r == 'git': #don't worry about hg, if not there already
-                #     repo[r].init()
+                elif r == 'git': #don't worry about hg, if not there already
+                    repo[r].init()
                 self.repo[r]=repo[r]
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
@@ -4215,11 +4215,11 @@ class TaskChooser(TaskDressing,ui.Window):
             self.maybewrite(definitely=True)
         try:
             self.task.withdraw() #so users don't do stuff while waiting
-        except AttributeError:
+        except (AttributeError,tkinter.TclError):
             log.info("There doesn't seem to be a task to hide; moving on.")
         try:
             self.task.runwindow.withdraw() #so users don't do stuff while waiting
-        except AttributeError:
+        except (AttributeError,tkinter.TclError):
             log.info("There doesn't seem to be a runwindow to hide; moving on.")
         while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
@@ -11929,6 +11929,10 @@ class Repository(object):
                                                     list(commonhashes)[:10]))
         if len(commonhashes) >1: #just in case we find one...
             return True
+        elif not len(thatrepohashes):
+            log.info("Repository at {} looks empty, so I'm assuming you "
+            "just cloned it".format(directory))
+            True
         error=_("The directory {} doesn't seem to have a repository related "
                 "to {}; removing.").format(directory,self.url)
         log.info(error)
@@ -11987,8 +11991,8 @@ class Repository(object):
                                     errors='backslashreplace'
                                     ).strip()
             if iwascalledby not in ["getusernameargs"]:
-                if not output:
-                    output=e
+                # if not output:
+                #     output=e
                 ErrorNotice(_("Call to {} ({}) gave error: \n{}").format(
                                                             self.repotypename,
                                                             ' '.join(args),
@@ -12192,9 +12196,15 @@ class Repository(object):
         self.getfiles()
         self.ignorecheck()
         self.description="language data"
-        log.info("{} repository object initialized on branch {} at {} for {}, "
-        "with {} files."
-                "".format(self.repotypename, self.branchname(), self.url,
+        try:
+            log.info("{} repository object initialized on branch {} at {} "
+                    "for {}, with {} files."
+                    "".format(self.repotypename, self.branchname(), self.url,
+                        self.description, len(self.files)))
+        except FileNotFoundError:
+            log.info("{} repository object initialized at {} "
+                    "for {}, with {} files."
+                    "".format(self.repotypename, self.url,
                         self.description, len(self.files)))
 class Mercurial(Repository):
     def leaveunicodealonesargs(self):
@@ -12244,8 +12254,8 @@ class Git(Repository):
                 '-c', 'user.email={}'.format(username[1])]
     def init(self):
         args=['init']
-        self.do(args)
-        log.info(self.do(args))
+        r=self.do(args)
+        log.info(r)
     def lastcommitdate(self):
         args=['log', '-1', '--format=%cd']
         r=self.do(args)
