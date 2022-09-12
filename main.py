@@ -12772,53 +12772,57 @@ def tryrun(cmd):
         ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
 def sysrestart(event=None):
     osys=platform.system()
+    logsetup.shutdown()
     if osys == "Linux":
-        log.info("Trying argv[0] with args {}, {} and {}".format(sys.executable,
-                                                                sys.argv[0],
-                                                                sys.argv))
-        try:
-            log.info("Trying argv[0]")
-            os.execv(sys.argv[0], sys.argv)
-        except Exception as e:
-            log.info("Failed ({}); Trying executable".format(e))
-            os.execv(sys.executable, sys.argv)
-    elif osys == 'Windows':
-        log.info("Trying execv")
+        os.execv(sys.argv[0], sys.argv)
+        # log.info("Trying argv[0] with args {}, {} and {}".format(sys.executable,
+        #                                                         sys.argv[0],
+        #                                                         sys.argv))
         # try:
+        #     log.info("Trying argv[0]")
+        #     os.execv(sys.argv[0], sys.argv)
+        # except Exception as e:
+        #     log.info("Failed ({}); Trying executable".format(e))
         #     os.execv(sys.executable, sys.argv)
-        # except Exception as e:
-        # log.info("Failed ({}); Trying execl".format(e))
+    elif osys == 'Windows':
+        # log.info("Trying subprocess.run with executable".format(e))
+        subprocess.run([sys.executable,*sys.argv])
+        # log.info("Trying execv")
+        # # try:
+        # #     os.execv(sys.executable, sys.argv)
+        # # except Exception as e:
+        # # log.info("Failed ({}); Trying execl".format(e))
+        # # try:
+        # #     os.execl(sys.executable, sys.argv)
+        # # except Exception as e:
         # try:
-        #     os.execl(sys.executable, sys.argv)
+        #     log.info("Trying os.execv sys.argv[0]")
+        #     os.execv(sys.argv[0], sys.argv)
+        #     # os.execvp(sys.executable, sys.argv)
         # except Exception as e:
-        try:
-            log.info("Trying os.execv sys.argv[0]")
-            os.execv(sys.argv[0], sys.argv)
-            # os.execvp(sys.executable, sys.argv)
-        except Exception as e:
-            try:
-                log.info("Failed ({}); Trying execl".format(e))
-                os.execl(sys.argv[0], *sys.argv)
-            except Exception as e:
-                try:
-                    log.info("Failed ({}); Trying spawnv".format(e))
-                    os.spawnv(os.P_NOWAIT, sys.argv[0], sys.argv)
-                except Exception as e:
-                    try:
-                        log.info("Failed ({}); Trying spawnl".format(e))
-                        os.spawnl(os.P_NOWAIT, sys.argv[0], *sys.argv)
-                    except Exception as e:
-                        try:
-                            log.info("Failed ({}); Trying subprocess.run"
-                                        "".format(e))
-                            subprocess.run([*sys.argv])# also try run(sys.argv)
-                        except Exception as e:
-                            try:
-                                log.info("Failed ({}); Trying subprocess.run "
-                                            "with executable".format(e))
-                                subprocess.run([sys.executable,*sys.argv])
-                            except Exception as e:
-                                log.info("Failed ({}); giving up.".format(e))
+        #     try:
+        #         log.info("Failed ({}); Trying execl".format(e))
+        #         os.execl(sys.argv[0], *sys.argv)
+        #     except Exception as e:
+        #         try:
+        #             log.info("Failed ({}); Trying spawnv".format(e))
+        #             os.spawnv(os.P_NOWAIT, sys.argv[0], sys.argv)
+        #         except Exception as e:
+        #             try:
+        #                 log.info("Failed ({}); Trying spawnl".format(e))
+        #                 os.spawnl(os.P_NOWAIT, sys.argv[0], *sys.argv)
+        #             except Exception as e:
+        #                 try:
+        #                     log.info("Failed ({}); Trying subprocess.run"
+        #                                 "".format(e))
+        #                     subprocess.run([*sys.argv])# also try run(sys.argv)
+        #                 except Exception as e:
+        #                     try:
+        #                         log.info("Failed ({}); Trying subprocess.run "
+        #                                     "with executable".format(e))
+        #                         subprocess.run([sys.executable,*sys.argv])
+        #                     except Exception as e:
+        #                         log.info("Failed ({}); giving up.".format(e))
     sys.exit()
 def updateazt(**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
