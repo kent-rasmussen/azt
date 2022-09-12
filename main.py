@@ -47,7 +47,9 @@ import xlp
 try:
     import sound
     import transcriber
+    program['nosound']=False
 except Exception as e:
+    program['nosound']=True
     log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
     exceptiononload=True
 """Other people's stuff"""
