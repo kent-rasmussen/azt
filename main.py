@@ -12723,6 +12723,7 @@ def findexecutable(exe):
         log.info("Executable {} found multiple items: {}".format(exe,program[exe]))
     if exe == 'praat' and program[exe] and not praatversioncheck():
         findexecutable('sendpraat') #only ask if it would be useful
+    # os.environ["PATH"] += os.pathsep + os.path.join(os.getcwd(), 'node')
 def praatversioncheck():
     praatvargs=[program['praat'], "--version"]
     versionraw=subprocess.check_output(praatvargs, shell=False)
