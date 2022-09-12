@@ -4331,6 +4331,13 @@ class TaskChooser(TaskDressing,ui.Window):
             self.settings.storesettingsfile()
         self.usbcheck()
         self.writeable=0 #start the count
+        if program['nosound']:
+            e=_("You don't have the sound module installed. For best use of {},"
+                "you should switch back to the main branch, connect to the "
+                "internet, and restart. In the mean time. You won't be able "
+                "to record or play audio!"
+                ).format(program['name'])
+            ErrorNotice(e)
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
