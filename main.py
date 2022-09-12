@@ -1050,8 +1050,8 @@ class Settings(object):
                 if repo[r].exists(): #tests for .code dir
                     log.info(_("Found {} Repository!"
                                 ).format(repo[r].repotypename))
-                # elif r == 'git': #don't worry about hg, if not there already
-                #     repo[r].init()
+                elif r == 'git': #don't worry about hg, if not there already
+                    repo[r].init()
                 self.repo[r]=repo[r]
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
@@ -2693,7 +2693,9 @@ class TaskDressing(object):
         t=ui.Label(self.frame, font='title',
                 text=self.tasktitle(),
                 row=0, column=0, columnspan=2)
-        t.bind("<Button-1>",self.taskchooser.gettask)
+        tasks=_("Tasks")
+        t.tt=ui.ToolTip(t,text=_("click ‘{}’ to change tasks").format(tasks))
+        # t.bind("<Button-1>",self.taskchooser.gettask)
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
@@ -4221,11 +4223,11 @@ class TaskChooser(TaskDressing,ui.Window):
             self.maybewrite(definitely=True)
         try:
             self.task.withdraw() #so users don't do stuff while waiting
-        except AttributeError:
+        except (AttributeError,tkinter.TclError):
             log.info("There doesn't seem to be a task to hide; moving on.")
         try:
             self.task.runwindow.withdraw() #so users don't do stuff while waiting
-        except AttributeError:
+        except (AttributeError,tkinter.TclError):
             log.info("There doesn't seem to be a runwindow to hide; moving on.")
         while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
@@ -9388,7 +9390,7 @@ class DictbyLang(dict):
                                     if i != 'field'
                 ]:
             # log.info("Using lang {}".format(l))
-            if ftype in self[l]:
+            if type(self[l]) is dict and ftype in self[l]:
                 # log.info("Subbing {} into {}".format(self[l][ftype],framedict[l]))
                 t=self[l][ftype]
             else:
@@ -11818,8 +11820,8 @@ class Repository(object):
         elif hasattr(self,'commitdenied') and recent(self.commitdenied):
             return False
         w=ui.Window(program['root'],title="Commit Confirm",exit=False)
-        text=_("Do you want to commit language data via {} now?"
-                ).format(self.repotypename)
+        text=_("Do you want to commit language data via {} now?\n{}"
+                ).format(self.repotypename,self.diff())
         prompt=ui.Label(w,text=text,row=0,column=0,sticky='')
         bf=ui.Frame(w,row=1,column=0,sticky='')
         yes=ui.Button(bf,text=_("Yes"),command=ok,
@@ -11837,6 +11839,8 @@ class Repository(object):
             return True
     def commit(self,file=None):
         #I may need to rearrange these args:
+        if self.code == 'hg': #don't commit here, at least for now
+            return True
         if not file and self.code == 'git':
             file='-a' # 'git commit -a' is equivalend to 'hg commit'.
         args=["commit", '-m', "Autocommit from AZT", file]
@@ -11892,9 +11896,9 @@ class Repository(object):
                     "giving up").format(self.repotypename))
             return
         for remote in remotes:
-            args=["pull",remote]
-            if branch:
-                args+=[branch]
+            args=["pull",remote,self.branchname()]
+            # if branch:
+            #     args+=[branch]
             r=self.do(args)
             # log.info(r)
         return r #ok if we don't track results for each
@@ -11909,9 +11913,9 @@ class Repository(object):
             args=["push"]
             if setupstream:
                 args+=['--set-upstream']
-            args+=[remote]
-            if branch:
-                args+=[branch]
+            args+=[remote,self.branchname()]
+            # if branch:
+            #     args+=[branch]
             r=self.do(args)
             if "The current branch master has no upstream branch." in r:
                 r=self.push(remotes=[remote],
@@ -11935,6 +11939,10 @@ class Repository(object):
                                                     list(commonhashes)[:10]))
         if len(commonhashes) >1: #just in case we find one...
             return True
+        elif not len(thatrepohashes):
+            log.info("Repository at {} looks empty, so I'm assuming you "
+            "just cloned it".format(directory))
+            True
         error=_("The directory {} doesn't seem to have a repository related "
                 "to {}; removing.").format(directory,self.url)
         log.info(error)
@@ -11954,7 +11962,7 @@ class Repository(object):
             # Otherwise, we leave it for later, in case it just isn't there now.
         if l:
             return l
-        elif self.code is 'git':
+        elif self.code == 'git':
             d=file.getdirectory(_("Please select where to find the {} "
                                     "locally").format(self.description))
             # log.info("file.getdirectory returned {}".format(d))
@@ -11992,24 +12000,46 @@ class Repository(object):
             output=e.output.decode(sys.stdout.encoding,
                                     errors='backslashreplace'
                                     ).strip()
-            if iwascalledby not in ["getusernameargs"]:
-                if not output:
-                    output=e
-                ErrorNotice(_("Call to {} ({}) gave error: \n{}").format(
-                                                            self.repotypename,
-                                                            ' '.join(args),
-                                                            output))
+            if iwascalledby not in ["getusernameargs","pull"]:
+                # if not output:
+                #     output=e
+                txt=_("Call to {} ({}) gave error: \n{}").format(
+                                                        self.repotypename,
+                                                        ' '.join(args),
+                                                        output)
+                try:
+                    assert self.code == 'git' #don't give hg notices here
+                    ErrorNotice(txt)
+                except (RuntimeError,AssertionError):
+                    log.info(txt)
+            if iwascalledby in ["pull"] and self.code == 'git':
+                log.info(_("Call to {} ({}) gave error: \n{}\nMerging.").format(
+                                                        self.repotypename,
+                                                        ' '.join(args),
+                                                        output))
+                r=self.mergetool()
+                if r:
+                    self.pull()
             if "The current branch master has no upstream branch." in output:
                 log.info("iwascalledby {}, but don't have upstream."
                             "".format(iwascalledby))
                 if iwascalledby not in ["push"]:
-                    ErrorNotice(output)
+                    try:
+                        assert self.code == 'git' #don't give hg notices here
+                        ErrorNotice(output)
+                    except (RuntimeError,AssertionError):
+                        log.info(output)
                 return output
             return
         except Exception as e:
-            ErrorNotice(_("Call to {} ({}) failed: {}").format(
-                                                            self.repotypename,
-                                                            args,e))
+            text=_("Call to {} ({}) failed: {}").format(
+                                                        self.repotypename,
+                                                        args,e)
+            try:
+                assert self.code == 'git' #don't give hg notices here
+                ErrorNotice(text)
+            except (RuntimeError,AssertionError):
+                log.info(text)
             return
         try:
             # if iwascalledby == 'getfiles':
@@ -12168,6 +12198,8 @@ class Repository(object):
             return getattr(self,'_remotes',{}).copy() #so I can iterate and change
     def branchname(self):
         repoheadfile='.'+self.code+'/'+self.branchnamefile
+        log.info("Looking for {} branch name in {}".format(self.repotypename,
+                                                            repoheadfile))
         with file.getdiredurl(self.url,repoheadfile).open() as f:
             c=f.read()
             # log.info("Found repo head info {}".format(c))
@@ -12198,9 +12230,15 @@ class Repository(object):
         self.getfiles()
         self.ignorecheck()
         self.description="language data"
-        log.info("{} repository object initialized on branch {} at {} for {}, "
-        "with {} files."
-                "".format(self.repotypename, self.branchname(), self.url,
+        try:
+            log.info("{} repository object initialized on branch {} at {} "
+                    "for {}, with {} files."
+                    "".format(self.repotypename, self.branchname(), self.url,
+                        self.description, len(self.files)))
+        except FileNotFoundError:
+            log.info("{} repository object initialized at {} "
+                    "for {}, with {} files."
+                    "".format(self.repotypename, self.url,
                         self.description, len(self.files)))
 class Mercurial(Repository):
     def leaveunicodealonesargs(self):
@@ -12241,6 +12279,15 @@ class Mercurial(Repository):
         else:
             self=None
 class Git(Repository):
+    def mergetool(self):
+        args=['mergetool', '--tool=xmlmeld']
+        r=self.do(args)
+        log.info(r)
+        return r
+        # git mergetool --tool=<tool>' may be set to one of the following:
+		# araxis
+		# kdiff3
+		# meld
     def makebare(self):
         args=['config', '--bool', 'core.bare', 'true']
     def leaveunicodealonesargs(self):
@@ -12250,8 +12297,9 @@ class Git(Repository):
                 '-c', 'user.email={}'.format(username[1])]
     def init(self):
         args=['init']
-        self.do(args)
-        log.info(self.do(args))
+        r=self.do(args)
+        log.info(r)
+        # git config branch.$branchname.mergeoptions "-X ignore-space-change"
     def lastcommitdate(self):
         args=['log', '-1', '--format=%cd']
         r=self.do(args)
