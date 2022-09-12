@@ -11998,16 +11998,18 @@ class Repository(object):
                                                         ' '.join(args),
                                                         output)
                 try:
+                    assert self.code == 'git' #don't give hg notices here
                     ErrorNotice(txt)
-                except RuntimeError:
+                except (RuntimeError,AssertionError):
                     log.info(txt)
             if "The current branch master has no upstream branch." in output:
                 log.info("iwascalledby {}, but don't have upstream."
                             "".format(iwascalledby))
                 if iwascalledby not in ["push"]:
                     try:
+                        assert self.code == 'git' #don't give hg notices here
                         ErrorNotice(output)
-                    except RuntimeError:
+                    except (RuntimeError,AssertionError):
                         log.info(output)
                 return output
             return
@@ -12016,8 +12018,9 @@ class Repository(object):
                                                         self.repotypename,
                                                         args,e)
             try:
+                assert self.code == 'git' #don't give hg notices here
                 ErrorNotice(text)
-            except RuntimeError:
+            except (RuntimeError,AssertionError):
                 log.info(text)
             return
         try:
