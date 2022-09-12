@@ -12765,6 +12765,10 @@ def pythonmodules():
                                         stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             o=e.output
+            if 'ERROR: Could not find a version' in o:
+                del pyargs[-1] #pull no-index
+                o=subprocess.check_output(pyargs,shell=False,
+                                            stderr=subprocess.STDOUT)
         try:
             log.info(o.decode(sys.stdout.encoding).strip())
         except:
