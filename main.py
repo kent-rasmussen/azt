@@ -13137,6 +13137,8 @@ if __name__ == "__main__":
         findexecutable(exe)
     if program['python3']: #be sure we're using python v3
         program['python']=program.pop('python3')
+    if not program['python']:
+        program['python']=sys.executable
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         pythonmodules()
