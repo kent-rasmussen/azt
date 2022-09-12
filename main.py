@@ -12274,7 +12274,7 @@ class Mercurial(Repository):
             self=None
 class Git(Repository):
     def mergetool(self):
-        args=['mergetool', '--tool=meld']
+        args=['mergetool', '--tool=xmlmeld']
         r=self.do(args)
         log.info(r)
         return r
