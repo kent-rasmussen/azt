@@ -9382,7 +9382,7 @@ class DictbyLang(dict):
                                     if i != 'field'
                 ]:
             # log.info("Using lang {}".format(l))
-            if ftype in self[l]:
+            if type(self[l]) is dict and ftype in self[l]:
                 # log.info("Subbing {} into {}".format(self[l][ftype],framedict[l]))
                 t=self[l][ftype]
             else:
