@@ -17,3 +17,5 @@ backupBeforeLx2LcConversion
 .ChorusRescuedFile
 .git
 .hg
+.tar.gz
+.whl
