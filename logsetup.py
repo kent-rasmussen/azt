@@ -23,6 +23,7 @@ CRITICAL (50): A serious error, indicating that the program itself
                   may be unable to continue running.
 """
 def shutdown():
+    log.info("shutting down logging")
     logging.shutdown()
 def getlog(name):
     return logging.getLogger(name)
