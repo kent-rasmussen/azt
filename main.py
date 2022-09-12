@@ -12756,8 +12756,10 @@ def pythonmodules():
             ['patiencediff']
             ]
     for install in installs:
-        pyargs=[program['python'], '-m', 'pip', 'install']
-        offlineargs=['*', '-f', './', '--no-index']
+        pyargs=[program['python'], '-m', 'pip', 'install',
+                    '-f', '.', #install the one in this folder, if there
+                    '--no-index' #This stops it from looking online
+                    ]
         pyargs.extend(install)
         log.info("Running `{}`".format(' '.join(pyargs)))
         try:
