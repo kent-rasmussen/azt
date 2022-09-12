@@ -12703,6 +12703,7 @@ def pythonmodules():
             ]
     for install in installs:
         pyargs=[program['python'], '-m', 'pip', 'install']
+        offlineargs=['*', '-f', './', '--no-index']
         pyargs.extend(install)
         log.info("Running `{}`".format(' '.join(pyargs)))
         try:
