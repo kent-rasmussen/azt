@@ -12182,6 +12182,8 @@ class Repository(object):
             return getattr(self,'_remotes',{}).copy() #so I can iterate and change
     def branchname(self):
         repoheadfile='.'+self.code+'/'+self.branchnamefile
+        log.info("Looking for {} branch name in {}".format(self.repotypename,
+                                                            repoheadfile))
         with file.getdiredurl(self.url,repoheadfile).open() as f:
             c=f.read()
             # log.info("Found repo head info {}".format(c))
