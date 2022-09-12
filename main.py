@@ -12000,7 +12000,7 @@ class Repository(object):
                 try:
                     ErrorNotice(txt)
                 except RuntimeError:
-                    log(txt)
+                    log.info(txt)
             if "The current branch master has no upstream branch." in output:
                 log.info("iwascalledby {}, but don't have upstream."
                             "".format(iwascalledby))
