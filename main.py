@@ -12827,6 +12827,7 @@ def tryrun(cmd):
         ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
 def sysrestart(event=None):
     osys=platform.system()
+    log.info("Hard shutting down now.")
     logsetup.shutdown()
     if osys == "Linux":
         os.execv(sys.argv[0], sys.argv)
