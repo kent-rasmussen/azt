@@ -11994,7 +11994,7 @@ class Repository(object):
             output=e.output.decode(sys.stdout.encoding,
                                     errors='backslashreplace'
                                     ).strip()
-            if iwascalledby not in ["getusernameargs"]:
+            if iwascalledby not in ["getusernameargs","pull"]:
                 # if not output:
                 #     output=e
                 txt=_("Call to {} ({}) gave error: \n{}").format(
@@ -12006,6 +12006,14 @@ class Repository(object):
                     ErrorNotice(txt)
                 except (RuntimeError,AssertionError):
                     log.info(txt)
+            if iwascalledby in ["pull"] and self.code == 'git':
+                log.info(_("Call to {} ({}) gave error: \n{}\nMerging.").format(
+                                                        self.repotypename,
+                                                        ' '.join(args),
+                                                        output))
+                r=self.mergetool()
+                if r:
+                    self.pull()
             if "The current branch master has no upstream branch." in output:
                 log.info("iwascalledby {}, but don't have upstream."
                             "".format(iwascalledby))
@@ -12265,6 +12273,15 @@ class Mercurial(Repository):
         else:
             self=None
 class Git(Repository):
+    def mergetool(self):
+        args=['mergetool', '--tool=meld']
+        r=self.do(args)
+        log.info(r)
+        return r
+        # git mergetool --tool=<tool>' may be set to one of the following:
+		# araxis
+		# kdiff3
+		# meld
     def makebare(self):
         args=['config', '--bool', 'core.bare', 'true']
     def leaveunicodealonesargs(self):
@@ -12276,6 +12293,7 @@ class Git(Repository):
         args=['init']
         r=self.do(args)
         log.info(r)
+        # git config branch.$branchname.mergeoptions "-X ignore-space-change"
     def lastcommitdate(self):
         args=['log', '-1', '--format=%cd']
         r=self.do(args)
