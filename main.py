@@ -2687,7 +2687,9 @@ class TaskDressing(object):
         t=ui.Label(self.frame, font='title',
                 text=self.tasktitle(),
                 row=0, column=0, columnspan=2)
-        t.bind("<Button-1>",self.taskchooser.gettask)
+        tasks=_("Tasks")
+        t.tt=ui.ToolTip(t,text=_("click ‘{}’ to change tasks").format(tasks))
+        # t.bind("<Button-1>",self.taskchooser.gettask)
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
