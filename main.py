@@ -11814,8 +11814,8 @@ class Repository(object):
         elif hasattr(self,'commitdenied') and recent(self.commitdenied):
             return False
         w=ui.Window(program['root'],title="Commit Confirm",exit=False)
-        text=_("Do you want to commit language data via {} now?"
-                ).format(self.repotypename)
+        text=_("Do you want to commit language data via {} now?\n{}"
+                ).format(self.repotypename,self.diff())
         prompt=ui.Label(w,text=text,row=0,column=0,sticky='')
         bf=ui.Frame(w,row=1,column=0,sticky='')
         yes=ui.Button(bf,text=_("Yes"),command=ok,
