@@ -1491,7 +1491,7 @@ class Settings(object):
             present=set(self.repo[r].files)
             log.info("{} currently has {} files".format(r,len(present)))
             for f in set(maindirfiles)-present:
-                if file.exists(f) and f not in self.repo[r].files:
+                if file.exists(f):# and f not in self.repo[r].files:
                     self.repo[r].add(f)
             # In case I run into formatting issues again:
             # log.info(', '.join(list(self.repo[r].files)[:5]))
@@ -3668,6 +3668,8 @@ class TaskDressing(object):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
         need to test for both."""
+        def releasefullscreen(event):
+            self.runwindow.attributes('-fullscreen', False)
         if title is None:
             title=(_("Run Window"))
         if self.exitFlag.istrue():
@@ -3679,6 +3681,7 @@ class TaskDressing(object):
             self.runwindow=ui.Window(self.frame,title=title)
         self.runwindow.title(title)
         self.runwindow.attributes('-fullscreen', True)
+        self.runwindow.bind('<Escape>', releasefullscreen)
         self.runwindow.lift()
         self.runwindow.cleanup=self.runwindowcleanup
         if not nowait:
@@ -3973,7 +3976,9 @@ class TaskChooser(TaskDressing,ui.Window):
             if self.doneenough['sortT']:
                 tasks.append(ReportCitationT)
                 tasks.append(ReportCitationTlocation)
+                tasks.append(ReportCitationTlocationBackground)
                 tasks.append(ReportCitationBasicT)
+                tasks.append(ReportCitationBasicTBackground)
         elif self.datacollection:
             tasks=[
                     WordCollectionCitation,
@@ -7099,6 +7104,8 @@ class Report(object):
         self.bylocation=True
         self.tonegroupreportcomprehensive()
     def tonegroupreportcomprehensive(self,**kwargs):
+        """Should set this to do all analyses upfront, then run all in the
+        background"""
         pss=self.slices.pss()[:self.settings.maxpss]
         d={}
         for ps in pss:
@@ -7107,7 +7114,8 @@ class Report(object):
         kwargs['usegui']=False
         for ps in pss:
             for profile in d[ps]:
-                kwargs={'ps': ps, 'profile': profile}
+                kwargs['ps']=ps
+                kwargs['profile']=profile
                 # self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
                 self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
             """Not working:"""
@@ -7117,8 +7125,30 @@ class Report(object):
     def tonegroupreportmulti(self,**kwargs):
         # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
         kwargs['usegui']=False
-        t=multiprocessing.Process(target=self.tonegroupreport,kwargs=kwargs)
-        t.start()
+        if hasattr(self.settings,'maxpss'):
+            pss=self.slices.pss()[:self.settings.maxpss]
+        else:
+            pss=[self.slices.ps()]
+        d={}
+        for ps in pss:
+            if hasattr(self.settings,'maxprofiles'):
+                d[ps]=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
+            else:
+                d[ps]=[self.slices.profile()]
+        log.info("Starting background reports for {}".format(d))
+        for ps in pss:
+            for profile in d[ps]:
+                kwargs['ps']=ps
+                kwargs['profile']=profile
+                t=multiprocessing.Process(target=self.tonegroupreport,
+                                            kwargs=kwargs)
+                t.start()
+                time.sleep(0.1) #give it 100ms before checking if it returned already
+                if not t.is_alive():
+                    ErrorNotice(_("Looks like that didn't work; you may need "
+                                    "to run a report first, or not do it in "
+                                    "the background ({})."
+                                ).format(kwargs))
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
@@ -7180,9 +7210,18 @@ class Report(object):
         start_time=nowruntime()
         counts={'senses':0,'examples':0, 'audio':0}
         analysis=self.makeanalysis(**kwargs)
+        # log.info("Caller function: {}".format(callerfn()))
         if analysisOK:
+            log.info(_("Looks like the analysis is good; moving on."))
             analysis.donoUFanalysis() #based on (sense) UF fields
+        elif callerfn() == 'run': #self.tonegroupreportmulti
+            log.info(_("Sorry, the analysis isn't good, and we're running "
+                    "in the background. That isn't going to work, so I'm "
+                    "stopping here."))
+            return
         else:
+            log.info(_("Looks like the analysis isn't good, but we're not "
+                    "in the background, so I'm doing a new analysis now."))
             analysis.do() #full analysis from scratch, output to UF fields
         """These are from LIFT, ordered by similarity for the report."""
         if not analysis.orderedchecks or not analysis.orderedUFs:
@@ -8875,6 +8914,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         if not analysisOK:
             redo(timestamps) #otherwise, the user will almost certainly be upset to have to do it later
             return
+        self.update()
         self.getrunwindow(msg=_("Preparing to join draft underlying form groups"
                                 "")+'\n'+timestamps)
         title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
@@ -9269,6 +9309,34 @@ class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=True
+class ReportCitationTlocationBackground(ReportCitationTlocation,Report,Tone,TaskDressing,ui.Window):
+    """docstring for ReportCitationT."""
+    def tasktitle(self):
+        return _("Tone Report (by frames, in the background)")
+        # "Make Reports on Citation Form Sorting in Tone Frames")
+        # return _("Report on one slice of Citation Forms (in Tone Frames)")
+    def taskicon(self):
+        return program['theme'].photo['iconTRep']
+    def tooltip(self):
+        return _("This report gives you report for one lexical "
+                "category, in one syllable profile. \nIt does "
+                "this for all data sorted in tone frames, organized by frame.")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.do,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['TRep'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        self.do=self.tonegroupreportmulti
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+        self.bylocation=True
 class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
@@ -9297,6 +9365,34 @@ class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=False
+class ReportCitationBasicTBackground(ReportCitationBasicT,Report,Comprehensive,Tone,TaskDressing,ui.Window):
+    """docstring for ReportCitationT."""
+    def tasktitle(self):
+        return _("Comprehensive Tone Report, in the background")
+        # Report on several slices of Citation Forms (in Tone Frames)")
+    def taskicon(self):
+        return program['theme'].photo['iconTRepcomp']
+    def tooltip(self):
+        return _("This report gives you reports across multiple lexical "
+                "categories, and across multiple syllable profiles. \nIt does "
+                "this for all data sorted in tone frames, organized by word.")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.do,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['TRepcomp'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        self.do=self.tonegroupreportmulti
+        # self.do=self.tonegroupreport
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+        self.bylocation=True
 """Task definitions end here"""
 class Entry(lift.Entry): #Not in use
     def __init__(self, db, guid, window=None, check=None, problem=None,
@@ -11898,7 +11994,7 @@ class Repository(object):
         # if theres no diff, or I don't want to commit, still share commits:
         return True
     def diff(self):
-        args=["diff"]
+        args=["diff","--stat"]
         return self.do(args)
         # log.info("{} diff returned {}".format(self.repotypename,r))
     def status(self):
@@ -11964,7 +12060,7 @@ class Repository(object):
             # if branch:
             #     args+=[branch]
             r=self.do(args)
-            if "The current branch master has no upstream branch." in r:
+            if r and "The current branch master has no upstream branch." in r:
                 r=self.push(remotes=[remote],
                             #always keep branch names aligned.
                             branch=self.branchname(),
@@ -12056,7 +12152,7 @@ class Repository(object):
             output=e.output.decode(sys.stdout.encoding,
                                     errors='backslashreplace'
                                     ).strip()
-            if iwascalledby not in ["getusernameargs","pull"]:
+            if iwascalledby not in ["getusernameargs","pull","log"]:
                 # if not output:
                 #     output=e
                 txt=_("Call to {} ({}) gave error: \n{}").format(
@@ -13140,6 +13236,9 @@ def mainproblem():
 def callerfn():
     #Not this function, nor the one that called it, but the one that called that
     return inspect.getouterframes(inspect.currentframe())[2].function
+def callerfnparent():
+    #Not this function, nor the one that called it, but the one that called that
+    return inspect.getouterframes(inspect.currentframe())[1].function
 def name(x):
     try:
         name=x.__name__ #If x is a function

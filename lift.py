@@ -1441,7 +1441,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             analangs=self.analangs
         for lang in analangs:
             counted = collections.Counter(self.ps(lang=lang))
-            ordered[lang] = [value for value, count in counted.most_common()]
+            ordered[lang] = [value for value, count in counted.most_common()
+                            if value] #don't include '' or None!
         log.info("Found these ps values, by frequency: {}".format(ordered))
         return ordered
     def getmorphtypes(self): #get all morph-type values in the LIFT file
