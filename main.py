@@ -3943,6 +3943,7 @@ class TaskChooser(TaskDressing,ui.Window):
             if self.doneenough['sortT']:
                 tasks.append(ReportCitationT)
                 tasks.append(ReportCitationTlocation)
+                tasks.append(ReportCitationTlocationBackground)
                 tasks.append(ReportCitationBasicT)
         elif self.datacollection:
             tasks=[
@@ -7069,6 +7070,8 @@ class Report(object):
         self.bylocation=True
         self.tonegroupreportcomprehensive()
     def tonegroupreportcomprehensive(self,**kwargs):
+        """Should set this to do all analyses upfront, then run all in the
+        background"""
         pss=self.slices.pss()[:self.settings.maxpss]
         d={}
         for ps in pss:
@@ -7089,6 +7092,10 @@ class Report(object):
         kwargs['usegui']=False
         t=multiprocessing.Process(target=self.tonegroupreport,kwargs=kwargs)
         t.start()
+        time.sleep(0.1) #give it 100ms before checking if it returned already
+        if not t.is_alive():
+            ErrorNotice("Looks like that didn't work; you may need to run a "
+                        "report first, or not do it in the background.")
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
