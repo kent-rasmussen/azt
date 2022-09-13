@@ -7080,7 +7080,8 @@ class Report(object):
         kwargs['usegui']=False
         for ps in pss:
             for profile in d[ps]:
-                kwargs={'ps': ps, 'profile': profile}
+                kwargs['ps']=ps
+                kwargs['profile']=profile
                 # self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
                 self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
             """Not working:"""
