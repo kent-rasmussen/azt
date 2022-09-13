@@ -3635,6 +3635,8 @@ class TaskDressing(object):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
         need to test for both."""
+        def releasefullscreen(event):
+            self.runwindow.attributes('-fullscreen', False)
         if title is None:
             title=(_("Run Window"))
         if self.exitFlag.istrue():
@@ -3646,6 +3648,7 @@ class TaskDressing(object):
             self.runwindow=ui.Window(self.frame,title=title)
         self.runwindow.title(title)
         self.runwindow.attributes('-fullscreen', True)
+        self.runwindow.bind('<Escape>', releasefullscreen)
         self.runwindow.lift()
         self.runwindow.cleanup=self.runwindowcleanup
         if not nowait:
