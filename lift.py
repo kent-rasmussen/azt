@@ -934,7 +934,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     self.nsenseidsbyps[ps],ps))
         else:
             pssanylang=setlistsofanykey(self.pss)
-            for ps in pssanylang:
+            for ps in [i for i in pssanylang if i]:
                 self.getsenseidsbyps(ps)
     def getsenseids(self):
         self.senseids=self.get('sense').get('senseid')
