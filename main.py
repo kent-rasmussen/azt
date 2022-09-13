@@ -11973,7 +11973,7 @@ class Repository(object):
             self.addremote(directory)
             return [directory] #this needs to add to lists, and iterate
         return []
-    def findpresentremotes(self,remote=None):
+    def findpresentremotes(self,remote=None,firsttry=True):
         l=[]
         for d in self.remoteurls().values():
             # log.info("adding {} to {}".format(d,l))
@@ -11983,10 +11983,19 @@ class Repository(object):
         if l:
             return l
         elif self.code == 'git':
-            d=file.getdirectory(_("Please select where to find the {} "
-                                    "locally").format(self.description))
-            # log.info("file.getdirectory returned {}".format(d))
-            return self.addifis(d)
+            if firsttry:
+                ErrorNotice(_("I can't find where you store your {} {} locally; is "
+                            "it attached?").format(self.repotypename,
+                                                    self.description),
+                            title=_("Please plug in USB for {}"
+                                    ).format(self.description),
+                            wait=True)
+                return self.findpresentremotes(firsttry=False)
+            else:
+                d=file.getdirectory(_("Please select where to find the {} "
+                                        "locally").format(self.description))
+                # log.info("file.getdirectory returned {}".format(d))
+                return self.addifis(d)
         else:
             return l
     def root(self):
