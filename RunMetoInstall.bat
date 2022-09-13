@@ -38,10 +38,18 @@ pause
 
 ECHO Cloning A→Z+T source to azt directory on your desktop
 cd /d "%userprofile%/desktop"
-powershell.exe -noprofile -command "git clone 'https://github.com/kent-rasmussen/azt.git' '%userprofile%/desktop/azt'"
+powershell.exe -noprofile -command "git.exe clone 'https://github.com/kent-rasmussen/azt.git' '%userprofile%/desktop/azt'"
 ECHO making links to AZT and Transcriber tool...
 mklink "%userprofile%/desktop/A>Z+T" "%userprofile%/desktop/azt/main.py"
 mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
+ECHO WshShell = CreateObject("Wscript.shell")
+ECHO strDesktop = WshShell.SpecialFolders("Desktop")
+ECHO oMyShortcut = WshShell.CreateShortcut(strDesktop + "\Sample.lnk")
+ECHO oMyShortcut.WindowStyle = 3 &&Maximized 7=Minimized 4=Normal
+ECHO oMyShortcut.IconLocation = "C:\myicon.ico"
+ECHO OMyShortcut.TargetPath = "%windir%\notepad.exe"
+ECHO oMyShortCut.Hotkey = "ALT+CTRL+F"
+ECHO oMyShortCut.Save
 
 ECHO Install done! (hopefully!)
 
