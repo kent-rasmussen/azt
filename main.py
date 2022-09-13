@@ -1306,16 +1306,30 @@ class Settings(object):
         config=ConfigParser()
         config['default']={}
         d=self.makesettingsdict(setting=setting)
+        log.info("storing settings file {}".format(setting))
         for s in [i for i in d if i not in [None,'None']]:
             v=d[s]
             # log.info("Ready to store {} type data: {}".format(type(v),v))
             if isinstance(v, dict):
                 config[s]={}
                 for j in v:
-                    if type(v[j]) is dict:
-                        config[s][j]={i:'\n'.join(str(j[i])) for i in j
-                                                            if type(j) is dict}
+                    if isinstance(v[j], dict):
+                        config[s][j]='\n\t'.join(str({i:v[j][i] for i in v[j]}))
+                        # for k in v[j]:
+                        #     if isinstance(v[j][k], dict):
+                        #         log.info("printing double indented dict for {} "
+                        #                 "key".format(k))
+                        #         config[s][j][k]='\n\t\t'.join(str({i:v[j][k][i]
+                        #                                     for i in v[j][k]}))
+                        #     else:
+                        #         log.info("printing indented dict for {} "
+                        #                 "key".format(k))
+                        #         config[s][j][k]=v[j][k]
+                                # '\n\t'.join(str({i:v[j][k]
+                                #                             for i in v[j]}))
                     elif v[j]:
+                        log.info("printing unindented dict for {} "
+                                "key".format(j))
                         config[s][j]=v[j]
             else:
                 config['default'][s]=str(v)
