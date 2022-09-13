@@ -1440,8 +1440,7 @@ class Settings(object):
             if f not in self.repo[repo].files:
                 print('ifnotthereadd',2)
                 self.repo[repo].add(f)
-        log.info(_("Looking for untracked files to add to {} repository"
-                    ).format())
+        log.info(_("Looking for untracked files to add to repositories"))
         maxthreads=8 #This causes problems with lots of threads
         maindirfiles=[self.liftfilename,
                         self.toneframesfile,
