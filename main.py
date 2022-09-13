@@ -12249,7 +12249,7 @@ class Repository(object):
         self.usernameargs=self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
-        self.description="language data"
+        self.description=_("language data")
         try:
             log.info("{} repository object initialized on branch {} at {} "
                     "for {}, with {} files."
