@@ -3945,6 +3945,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(ReportCitationTlocation)
                 tasks.append(ReportCitationTlocationBackground)
                 tasks.append(ReportCitationBasicT)
+                tasks.append(ReportCitationBasicTBackground)
         elif self.datacollection:
             tasks=[
                     WordCollectionCitation,
