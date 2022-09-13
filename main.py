@@ -1314,19 +1314,32 @@ class Settings(object):
                 config[s]={}
                 for j in v:
                     if isinstance(v[j], dict):
-                        config[s][j]='\n\t'.join(str({i:v[j][i] for i in v[j]}))
-                        # for k in v[j]:
-                        #     if isinstance(v[j][k], dict):
-                        #         log.info("printing double indented dict for {} "
-                        #                 "key".format(k))
-                        #         config[s][j][k]='\n\t\t'.join(str({i:v[j][k][i]
-                        #                                     for i in v[j][k]}))
-                        #     else:
-                        #         log.info("printing indented dict for {} "
-                        #                 "key".format(k))
-                        #         config[s][j][k]=v[j][k]
-                                # '\n\t'.join(str({i:v[j][k]
-                                #                             for i in v[j]}))
+                        # log.info("printing indented dict for {} key".format(j))
+                        # config[s][j]='\n'.join(['{'+i+':'+str(v[j][i])+'}'
+                        #                             for i in v[j].keys()])
+                        if True in [isinstance(i, dict) for i in v[j].values()]:
+                            log.info("printing double indented dict for {} "
+                                        "keys".format(v[j].keys()))
+                            config[s][j]='{'+',\n'.join(["'"+k+"':{"+',\n\t'.join(
+                                                    ["'"+i+"':"+str(
+                                                                    v[j][k][i]
+                                                                    )
+                                                    for i in v[j][k].keys()
+                                                    for k in v[j].keys()
+                                                    if i in v[j][k].keys()
+                                                    if k in v[j].keys()
+                                                    ]
+                                                    )+'}'
+                                                    for k in v[j].keys()
+                                                        ]
+                                                        )+'}'
+                            # '\n\t\t'.join(str({i:v[j][k][i]
+                            #                             for i in v[j][k]}))
+                        else:
+                            log.info("printing indented dict for {} "
+                                    "key".format(k))
+                            config[s][j]=',\n'.join(['{'+i+':'+str(v[j][i])+'}'
+                                                    for i in v[j].keys()])
                     elif v[j]:
                         log.info("printing unindented dict for {} "
                                 "key".format(j))
