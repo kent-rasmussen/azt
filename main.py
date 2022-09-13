@@ -13125,6 +13125,9 @@ def mainproblem():
 def callerfn():
     #Not this function, nor the one that called it, but the one that called that
     return inspect.getouterframes(inspect.currentframe())[2].function
+def callerfnparent():
+    #Not this function, nor the one that called it, but the one that called that
+    return inspect.getouterframes(inspect.currentframe())[1].function
 def name(x):
     try:
         name=x.__name__ #If x is a function
