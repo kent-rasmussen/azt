@@ -11859,7 +11859,8 @@ class Repository(object):
             file='-a' # 'git commit -a' is equivalend to 'hg commit'.
         args=["commit", '-m', "Autocommit from AZT", file]
         #don't try to commit without changes; it clogs the log
-        if self.diff() and (not me or self.commitconfirm()):
+        diff=self.diff()
+        if self.diff() and (not me or self.commitconfirm(diff)):
             r=self.do([i for i in args if i is not None])
             return r
         # if theres no diff, or I don't want to commit, still share commits:
