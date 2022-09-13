@@ -7091,12 +7091,30 @@ class Report(object):
     def tonegroupreportmulti(self,**kwargs):
         # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
         kwargs['usegui']=False
-        t=multiprocessing.Process(target=self.tonegroupreport,kwargs=kwargs)
-        t.start()
-        time.sleep(0.1) #give it 100ms before checking if it returned already
-        if not t.is_alive():
-            ErrorNotice("Looks like that didn't work; you may need to run a "
-                        "report first, or not do it in the background.")
+        if hasattr(self.settings,'maxpss'):
+            pss=self.slices.pss()[:self.settings.maxpss]
+        else:
+            pss=[self.slices.ps()]
+        d={}
+        for ps in pss:
+            if hasattr(self.settings,'maxprofiles'):
+                d[ps]=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
+            else:
+                d[ps]=[self.slices.profile()]
+        log.info("Starting background reports for {}".format(d))
+        for ps in pss:
+            for profile in d[ps]:
+                kwargs['ps']=ps
+                kwargs['profile']=profile
+                t=multiprocessing.Process(target=self.tonegroupreport,
+                                            kwargs=kwargs)
+                t.start()
+                time.sleep(0.1) #give it 100ms before checking if it returned already
+                if not t.is_alive():
+                    ErrorNotice(_("Looks like that didn't work; you may need "
+                                    "to run a report first, or not do it in "
+                                    "the background ({})."
+                                ).format(kwargs))
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
