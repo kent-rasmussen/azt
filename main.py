@@ -12017,7 +12017,7 @@ class Repository(object):
             output=e.output.decode(sys.stdout.encoding,
                                     errors='backslashreplace'
                                     ).strip()
-            if iwascalledby not in ["getusernameargs","pull"]:
+            if iwascalledby not in ["getusernameargs","pull","log"]:
                 # if not output:
                 #     output=e
                 txt=_("Call to {} ({}) gave error: \n{}").format(
