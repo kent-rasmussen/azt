@@ -7136,6 +7136,7 @@ class Report(object):
             else:
                 d[ps]=[self.slices.profile()]
         log.info("Starting background reports for {}".format(d))
+        unbackground=[]
         for ps in pss:
             for profile in d[ps]:
                 kwargs['ps']=ps
@@ -7143,12 +7144,15 @@ class Report(object):
                 t=multiprocessing.Process(target=self.tonegroupreport,
                                             kwargs=kwargs)
                 t.start()
-                time.sleep(0.1) #give it 100ms before checking if it returned already
+                time.sleep(0.2) #give it 200ms before checking if it returned already
                 if not t.is_alive():
                     ErrorNotice(_("Looks like that didn't work; you may need "
                                     "to run a report first, or not do it in "
                                     "the background ({})."
                                 ).format(kwargs))
+                    unbackground+=[kwargs]
+        for kwargs in unbackground:
+            self.tonegroupreport(**kwargs) #run what failed in background here
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
