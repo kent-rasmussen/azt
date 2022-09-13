@@ -9332,7 +9332,7 @@ class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=False
-class ReportCitationBasicT(ReportCitationBasicT,Report,Comprehensive,Tone,TaskDressing,ui.Window):
+class ReportCitationBasicTBackground(ReportCitationBasicT,Report,Comprehensive,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Comprehensive Tone Report, in the background")
@@ -9359,7 +9359,7 @@ class ReportCitationBasicT(ReportCitationBasicT,Report,Comprehensive,Tone,TaskDr
         # self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
-        self.bylocation=False
+        self.bylocation=True
 """Task definitions end here"""
 class Entry(lift.Entry): #Not in use
     def __init__(self, db, guid, window=None, check=None, problem=None,
