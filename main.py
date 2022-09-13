@@ -8880,6 +8880,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         if not analysisOK:
             redo(timestamps) #otherwise, the user will almost certainly be upset to have to do it later
             return
+        self.update()
         self.getrunwindow(msg=_("Preparing to join draft underlying form groups"
                                 "")+'\n'+timestamps)
         title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
