@@ -9330,6 +9330,34 @@ class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=False
+class ReportCitationBasicT(ReportCitationBasicT,Report,Comprehensive,Tone,TaskDressing,ui.Window):
+    """docstring for ReportCitationT."""
+    def tasktitle(self):
+        return _("Comprehensive Tone Report, in the background")
+        # Report on several slices of Citation Forms (in Tone Frames)")
+    def taskicon(self):
+        return program['theme'].photo['iconTRepcomp']
+    def tooltip(self):
+        return _("This report gives you reports across multiple lexical "
+                "categories, and across multiple syllable profiles. \nIt does "
+                "this for all data sorted in tone frames, organized by word.")
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.do,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['TRepcomp'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        Tone.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        self.do=self.tonegroupreportmulti
+        # self.do=self.tonegroupreport
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
+        self.bylocation=False
 """Task definitions end here"""
 class Entry(lift.Entry): #Not in use
     def __init__(self, db, guid, window=None, check=None, problem=None,
