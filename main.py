@@ -1436,8 +1436,12 @@ class Settings(object):
         # This is for new files, not changes to known files; that is done
         # on close.
         def ifnotthereadd(f,repo):
+            print('ifnotthereadd')
             if f not in self.repo[repo].files:
+                print('ifnotthereadd',2)
                 self.repo[repo].add(f)
+        log.info(_("Looking for untracked files to add to {} repository"
+                    ).format())
         maxthreads=8 #This causes problems with lots of threads
         maindirfiles=[self.liftfilename,
                         self.toneframesfile,
@@ -11804,11 +11808,14 @@ class Repository(object):
         return r
     def add(self,file):
         if not self.alreadythere(file):
+            log.info(_("Adding {}, which is not already there.").format(file))
             args=["add", str(file)]
             self.do(args)
             self.files+=[file] #keep this up to date
             # self.getfiles() #this was more work
-    def commitconfirm(self):
+        else:
+            log.info(_("Not adding {}, which is already there.").format(file))
+    def commitconfirm(self,diff): #don't run the diff again...
         def ok(event=None):
             self.commitconfirmed=nowruntime()
             yes.destroy()
@@ -11819,12 +11826,16 @@ class Repository(object):
             if (x-nowruntime()).total_seconds()<5*60:
                 return True
         if hasattr(self,'commitconfirmed') and recent(self.commitconfirmed):
+            log.info(_("Asked for commit confirm; returning auto True"))
             return True
         elif hasattr(self,'commitdenied') and recent(self.commitdenied):
+            log.info(_("Asked for commit confirm; returning auto False"))
             return False
+        log.info(_("Asked for commit confirm; asking user"))
         w=ui.Window(program['root'],title="Commit Confirm",exit=False)
         text=_("Do you want to commit language data via {} now?\n{}"
                 ).format(self.repotypename,diff[:300])
+        # text="some other text"
         prompt=ui.Label(w,text=text,row=0,column=0,sticky='')
         bf=ui.Frame(w,row=1,column=0,sticky='')
         yes=ui.Button(bf,text=_("Yes"),command=ok,
