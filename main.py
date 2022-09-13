@@ -7150,9 +7150,18 @@ class Report(object):
         start_time=nowruntime()
         counts={'senses':0,'examples':0, 'audio':0}
         analysis=self.makeanalysis(**kwargs)
+        # log.info("Caller function: {}".format(callerfn()))
         if analysisOK:
+            log.info(_("Looks like the analysis is good; moving on."))
             analysis.donoUFanalysis() #based on (sense) UF fields
+        elif callerfn() == 'run': #self.tonegroupreportmulti
+            log.info(_("Sorry, the analysis isn't good, and we're running "
+                    "in the background. That isn't going to work, so I'm "
+                    "stopping here."))
+            return
         else:
+            log.info(_("Looks like the analysis isn't good, but we're not "
+                    "in the background, so I'm doing a new analysis now."))
             analysis.do() #full analysis from scratch, output to UF fields
         """These are from LIFT, ordered by similarity for the report."""
         if not analysis.orderedchecks or not analysis.orderedUFs:
