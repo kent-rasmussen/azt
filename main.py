@@ -11961,7 +11961,7 @@ class Repository(object):
         # if theres no diff, or I don't want to commit, still share commits:
         return True
     def diff(self):
-        args=["diff"]
+        args=["diff","--stat"]
         return self.do(args)
         # log.info("{} diff returned {}".format(self.repotypename,r))
     def status(self):
