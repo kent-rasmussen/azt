@@ -11824,7 +11824,7 @@ class Repository(object):
             return False
         w=ui.Window(program['root'],title="Commit Confirm",exit=False)
         text=_("Do you want to commit language data via {} now?\n{}"
-                ).format(self.repotypename,self.diff())
+                ).format(self.repotypename,diff[:300])
         prompt=ui.Label(w,text=text,row=0,column=0,sticky='')
         bf=ui.Frame(w,row=1,column=0,sticky='')
         yes=ui.Button(bf,text=_("Yes"),command=ok,
