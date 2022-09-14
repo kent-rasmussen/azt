@@ -3711,9 +3711,13 @@ class TaskDressing(object):
         for r in self.settings.repo:
             self.settings.repo[r].share()
             log.info("Done maybe committing/pushing to {}".format(r))
+        log.info("Saving settings for next time")
         self.settings.storesettingsfile() #in case we added repos
+        log.info("Settings saved")
         self.waitdone()
+        log.info("Killing window")
         ui.Window.killall(self) #Exitable
+        log.info("Window killed")
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
