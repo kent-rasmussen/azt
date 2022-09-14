@@ -1733,8 +1733,8 @@ class Settings(object):
             t=nowruntime()
             log.info("Starting profile analysis at {}".format(now()))
             self.getprofiles() #creates self.profilesbysense nested dicts
-            for var in ['rx','profilesbysense']:
-                # log.debug("{}: {}".format(var,getattr(self,var)))
+            # for var in ['rx','profilesbysense']:
+            #     log.debug("{}: {}".format(var,getattr(self,var)))
             self.storesettingsfile(setting='profiledata')
             logfinished(t)
     def addtoprofilesbysense(self,senseid,ps,profile):
