@@ -2099,6 +2099,8 @@ class Settings(object):
         So don't iterate over it. Instead, use checkforsenseidstosort to just
         confirm tosort status"""
         """To get this from the object, use status.tosort(), todo() or done()"""
+        # log.info("updatesortingstatus called with store={} and kwargs: {}"
+        #         "".format(store,kwargs))
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
@@ -2128,6 +2130,7 @@ class Settings(object):
                 "tosort: {}".format(kwargs.values(),sorted,verified,
                                     self.status.tosort(**kwargs)))
         if store:
+            # log.info("updatesortingstatus kwargs: {}".format(kwargs))
             self.storesettingsfile(setting='status')
     def guessanalang(self):
         #have this call set()?
@@ -12682,6 +12685,7 @@ def dictcompare(x,y,ignore=[]):
     return (r,pairs,unpairs)
 def indenteddict(indict):
     outdict={}
+    # log.info("working on dict with keys {}".format(indict.keys()))
     for j in indict:
         log.info("working on {}".format(j))
         if isinstance(indict[j], dict):
@@ -12689,8 +12693,8 @@ def indenteddict(indict):
             # config[s][j]='\n'.join(['{'+i+':'+str(v[j][i])+'}'
             #                             for i in v[j].keys()])
             if True in [isinstance(i, dict) for i in indict[j].values()]:
-                log.info("printing double indented dict for {} "
-                            "keys".format(indict[j].keys()))
+                # log.info("printing double indented dict for {}: {} "
+                #             "keys".format(j,indict[j].keys()))
                 outdict[j]='{'+',\n'.join(["'"+k+"':{"+',\n\t'.join(
                                         ["'"+i+"':"+str(
                                                         indict[j][k][i]
