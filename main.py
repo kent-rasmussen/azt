@@ -2020,18 +2020,18 @@ class Settings(object):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
         start_time=nowruntime()
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
+        kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
+        kwargs['ps']=kwargs.get('ps',self.slices.ps())
+        kwargs['profile']=kwargs.get('profile',self.slices.profile())
         log.info("Refreshing {} {} {} status settings from LIFT"
-                "".format(profile,ps,cvt))
-        checks=self.status.checks(cvt=cvt, ps=ps, profile=profile)
-        for c in checks:
+                "".format(kwargs['profile'],kwargs['ps'],kwargs['cvt']))
+        checks=self.status.checks(**kwargs)
+        kwargs['profile']=False #do below
+        for kwargs['check'] in checks:
             # log.info("Working on {}".format(c))
-            self.status.build(cvt=cvt, ps=ps, profile=profile, check=c)
+            self.status.build(**kwargs)
             """this just populates groups and the tosort boolean."""
-            self.updatesortingstatus(cvt=cvt,ps=ps,profile=profile,check=c,
-                                    store=False) #do below
+            self.updatesortingstatus(**kwargs)
         logfinished(start_time)
     def reloadstatusdatabycvtps(self,**kwargs):
         # This reloads the status info as relevant on a particular page (ps and
@@ -2039,14 +2039,15 @@ class Settings(object):
         # if desired.
         # These are specified in iteration, pulled from object if called by menu
         start_time=nowruntime()
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        log.info("Refreshing {} {} status settings from LIFT".format(ps,cvt))
-        profiles=self.slices.profiles(ps=ps) #This depends on ps only
-        for p in profiles:
+        kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
+        kwargs['ps']=kwargs.get('ps',self.slices.ps())
+        log.info("Refreshing {} {} status settings from LIFT".format(
+                                                                kwargs['ps'],
+                                                                kwargs['cvt']))
+        profiles=self.slices.profiles(ps=kwargs['ps']) #This depends on ps only
+        for kwargs['profile'] in profiles:
             # log.info("Working on {}".format(p))
-            self.reloadstatusdatabycvtpsprofile(cvt=cvt,ps=ps,profile=p,
-                                                **kwargs)
+            self.reloadstatusdatabycvtpsprofile(**kwargs)
         if kwargs.get('store',True):
             self.storesettingsfile(setting='status')
         logfinished(start_time)
@@ -2127,7 +2128,7 @@ class Settings(object):
         """This should pull verification status from LIFT, someday"""
         self.status.verified(list(verified&sorted),**kwargs) #set
         log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
-                "tosort: {}".format(kwargs.values(),sorted,verified,
+                "tosort: {}".format(kwargs,sorted,verified,
                                     self.status.tosort(**kwargs)))
         if store:
             # log.info("updatesortingstatus kwargs: {}".format(kwargs))
