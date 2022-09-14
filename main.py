@@ -12714,13 +12714,13 @@ def indenteddict(indict):
             else:
                 log.info("printing indented dict for {} "
                         "key".format(j))
-                outdict[j]=',\n'.join(['{'+i+':'+str(indict[j][i])+'}'
+                outdict[j]='{'+',\n'.join(["'"+i+"':"+str(indict[j][i])
                                         for i in indict[j].keys()
-                                        if i])
+                                        if i])+'}'
         elif indict[j]:
             log.info("printing unindented dict for {} "
                     "key".format(j))
-            outdict[j]=str(indict[j])
+            outdict[j]="'"+str(indict[j])+"'"
     return outdict
 def selected(groupvars):
     return [k for k in groupvars
