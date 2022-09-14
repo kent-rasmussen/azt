@@ -12738,19 +12738,20 @@ def indenteddict(indict):
             if True in [isinstance(i, dict) for i in indict[j].values()]:
                 # log.info("printing double indented dict for {}: {} "
                 #             "keys".format(j,indict[j].keys()))
-                outdict[j]='{'+',\n'.join(["'"+k+"':{"+',\n\t'.join(
-                                        ["'"+i+"':"+str(
-                                                        indict[j][k][i]
-                                                        )
-                                        for i in indict[j][k].keys()
-                                        # for k in indict[j].keys()
-                                        if i and i in indict[j][k].keys()
+                log.info("printing double indented dict for {}: {} "
+                            "keys".format(j,indict[j].keys()))
+                outdict[j]='{'+',\n'.join(
+                    ["'"+k+"':{"+',\n\t'.join(
+                                        ["'"+i+"':"+str(indict[j][k][i])
+                                            for i in indict[j][k]#.keys()
+                                            # for k in indict[j].keys()
+                                            if i #and i in indict[j][k].keys()
                                         ]
-                                        )+'}'
-                                        for k in indict[j].keys()
-                                        if k and k in indict[j].keys()
-                                        # if k
-                                            ]
+                                                )+'}'
+                    for k in indict[j]#.keys()
+                    if k #and k in indict[j].keys()
+                    # if k
+                    ]
                                             )+'}'
                 # '\n\t\t'.join(str({i:v[j][k][i]
                 #                             for i in v[j][k]}))
