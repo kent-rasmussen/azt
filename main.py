@@ -11942,14 +11942,15 @@ class Repository(object):
         #     log.info(r)
         return r
     def add(self,file):
+        #This function must be used to see changes
+        args=["add", str(file)]
+        self.do(args)
         if not self.alreadythere(file):
             log.info(_("Adding {}, which is not already there.").format(file))
-            args=["add", str(file)]
-            self.do(args)
             self.files+=[file] #keep this up to date
             # self.getfiles() #this was more work
         else:
-            log.info(_("Not adding {}, which is already there.").format(file))
+            log.info(_("Adding {}, which is already there.").format(file))
     def commitconfirm(self,diff): #don't run the diff again...
         def ok(event=None):
             self.commitconfirmed=nowruntime()
@@ -11991,7 +11992,7 @@ class Repository(object):
         if self.code == 'hg': #don't commit here, at least for now
             return True
         if not file and self.code == 'git':
-            file='-a' # 'git commit -a' is equivalend to 'hg commit'.
+            file='-a' # 'git commit -a' is equivalent to 'hg commit'.
         args=["commit", '-m', "Autocommit from AZT", file]
         #don't try to commit without changes; it clogs the log
         diff=self.diff()
