@@ -2126,8 +2126,10 @@ class Settings(object):
                             args=(fn,senseid),
                             kwargs=kwargs)
             t.start()
-        if threading.active_count():
+        try:
             t.join()
+        except UnboundLocalError:
+            log.info("The threading didn't happen, or is done already")
         """update 'tosort' status"""
         """update status groups"""
         sorted=set(self._groups)
