@@ -2033,7 +2033,7 @@ class Settings(object):
         log.info("Refreshing {} {} {} status settings from LIFT"
                 "".format(kwargs['profile'],kwargs['ps'],kwargs['cvt']))
         checks=self.status.checks(**kwargs)
-        kwargs['profile']=False #do below
+        kwargs['store']=False #do below
         for kwargs['check'] in checks:
             # log.info("Working on {}".format(c))
             self.status.build(**kwargs)
