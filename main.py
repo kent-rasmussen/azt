@@ -10986,12 +10986,14 @@ class SliceDict(dict):
         # list(self._senseidsbyps[self._ps][self._profile])
         if not ps and not profile:
             return self._senseids #this is always the current slice
-        else:
-            if not ps:
-                ps=self._ps
-            if not profile:
-                profile=self._profile
+        if not ps:
+            ps=self._ps
+        if not profile:
+            profile=self._profile
+        if ps in self._profilesbysense and profile in self._profilesbysense:
             return list(self._profilesbysense[ps][profile]) #specified slice
+        else:
+            return []
     def senseidsbyps(self,ps):
         return self._senseidsbyps[ps]
     def makesenseidsbyps(self):
