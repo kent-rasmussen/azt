@@ -10674,6 +10674,11 @@ class ToneGroupButtonFrame(ui.Frame):
         # """Should I do this outside the class?"""
         # self.grid(column=column, row=row, sticky=sticky)
 class Splash(ui.Window):
+    def updateaztlocal(self,event=None):
+        if me:
+            r=program['repo'].share()
+        else:
+            r=program['repo'].pull()
     def __init__(self, parent):
         parent.withdraw()
         super(Splash, self).__init__(parent,exit=0)
@@ -10710,6 +10715,10 @@ class Splash(ui.Window):
         menu.add_command(
                             label=_("Update A→Z+T"),
                             command=lambda x=self:updateazt(parent=x)
+                            )
+        menu.add_command(
+                            label='    '+_("Update A→Z+T (local)"),
+                            command=self.updateaztlocal
                             )
         self.config(menu=menu)
         self.geometry('+%d+%d' % (x, y))
