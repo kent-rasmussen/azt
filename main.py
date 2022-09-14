@@ -1724,7 +1724,7 @@ class Settings(object):
                 self.profilesbysense['analang'] != self.analang
                 ):
             t=nowruntime()
-            log.info("Starting profile analysis at {}".format(t))
+            log.info("Starting profile analysis at {}".format(now()))
             self.getprofiles() #creates self.profilesbysense nested dicts
             for var in ['rx','profilesbysense']:
                 log.debug("{}: {}".format(var,getattr(self,var)))
