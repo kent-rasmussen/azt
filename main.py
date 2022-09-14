@@ -11485,8 +11485,8 @@ class StatusDict(dict):
                                         key,kwargs['profile'],kwargs['check']))
                 base['presorted']=False
                 changed=True
-        if changed == True:
-            self.store()
+        # if changed == True:
+        #     self.store()
     def cull(self):
         """This iterates across the whole dictionary, and removes empty nodes.
         Only do this when you're cleaning up, not about to start new work."""
@@ -12732,7 +12732,7 @@ def indenteddict(indict):
     outdict={}
     # log.info("working on dict with keys {}".format(indict.keys()))
     for j in indict:
-        # log.info("working on {}".format(j))
+        log.info("working on {}".format(j))
         if isinstance(indict[j], dict):
             # log.info("printing indented dict for {} key".format(j))
             # config[s][j]='\n'.join(['{'+i+':'+str(v[j][i])+'}'
