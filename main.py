@@ -1734,7 +1734,7 @@ class Settings(object):
             log.info("Starting profile analysis at {}".format(now()))
             self.getprofiles() #creates self.profilesbysense nested dicts
             for var in ['rx','profilesbysense']:
-                log.debug("{}: {}".format(var,getattr(self,var)))
+                # log.debug("{}: {}".format(var,getattr(self,var)))
             self.storesettingsfile(setting='profiledata')
             logfinished(t)
     def addtoprofilesbysense(self,senseid,ps,profile):
@@ -11280,7 +11280,7 @@ class StatusDict(dict):
                 kwargs['tojoin'] and self.profiletojoin(**kwargs)
                 ):
                 p+=[kwargs['profile']]
-        log.log(4,"Profiles with kwargs {}: {}".format(kwargs,p))
+        # log.info("Profiles with kwargs {}: {}".format(kwargs,p))
         return p
     def checks(self, **kwargs):
         """This method is designed for tone, which depends on ps, not profile.
