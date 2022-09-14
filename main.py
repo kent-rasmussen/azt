@@ -1655,7 +1655,7 @@ class Settings(object):
                 for pg in self.db.s[lang][sclass]:
                     vars[lang][pclass][pg] = ui.BooleanVar()
                     vars[lang][pclass][pg].set(
-                                    self.polygraphs[lang][pclass].get(pg,False))
+                                    self.polygraphs[lang][pclass].get(pg,True))
                     cb=ui.CheckButton(scroll.content, text = pg, #.content
                                         variable = vars[lang][pclass][pg],
                                         onvalue = True, offvalue = False,
