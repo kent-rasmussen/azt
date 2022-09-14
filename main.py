@@ -12038,7 +12038,8 @@ class Repository(object):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
-            log.info("Couldn't find a local drive to share with; giving up")
+            log.info("Couldn't find a local drive to share with via {}; "
+                    "giving up".format(self.repotypename))
             return
         r=self.commit() #should always before pulling, at least here
         if r:
