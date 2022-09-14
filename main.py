@@ -12243,21 +12243,7 @@ class Repository(object):
         self.ignorefile=file.getdiredurl(self.url,'.'+self.code+'ignore')
         self.getignorecontents() #make sure this is up to date
         """These should all be ignored"""
-        for x in ['pdf','xcf','XLingPaperPDFTemp','backupBeforeLx2LcConversion',
-                    '.txt', '.7z', '.zip',
-                    '__pycache__*',
-                    'lift_url.py',
-                    'ui_lang.py',
-                    '*~',
-                    'userlogs/*',
-                    'test*wav',
-                    'excess/',
-                    'images/archive',
-                    'images/scaled',
-                    '.ChorusRescuedFile',
-                    '.git',
-                    '.hg'
-                ]:
+        for x in self.ignorelist():
             self.ignore(x)
         self.add(self.ignorefile)
         self.commit()
@@ -12409,6 +12395,10 @@ class Repository(object):
                     "".format(self.repotypename, self.url,
                         self.description, len(self.files)))
 class Mercurial(Repository):
+    def ignorelist(self):
+        return ['*.pdf','*.xcf',
+                '*.hg','*~',
+                ]
     def leaveunicodealonesargs(self):
         return []
     def argstoputusername(self,username):
@@ -12447,6 +12437,30 @@ class Mercurial(Repository):
         else:
             self=None
 class Git(Repository):
+    def ignorelist(self):
+        return ['*.pdf','*.xcf',
+                'XLingPaperPDFTemp/**',
+                '*backupBeforeLx2LcConversion',
+                '*.txt', '*.7z', '*.zip','*ori',
+                '__pycache__/**', '*(copy)*',
+                'lift_url.py',
+                'ui_lang.py',
+                '*~',
+                'userlogs/**',
+                '*test*wav',
+                'excess/**',
+                'images/archive/**',
+                'images/scaled/**',
+                'reports/**',
+                '*.ChorusNotes',
+                '*.WeSayUserMemory',
+                '*.WeSayConfig*',
+                '*.WeSayUserConfig',
+                '*.ChorusRescuedFile',
+                '*.git',
+                '*.ini',
+                '*lift*',
+                ]
     def mergetool(self):
         args=['mergetool', '--tool=xmlmeld']
         r=self.do(args)
