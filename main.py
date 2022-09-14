@@ -2126,7 +2126,7 @@ class Settings(object):
                             args=(fn,senseid),
                             kwargs=kwargs)
             t.start()
-        if threading.active_count:
+        if threading.active_count():
             t.join()
         """update 'tosort' status"""
         """update status groups"""
