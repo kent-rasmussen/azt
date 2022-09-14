@@ -1486,10 +1486,14 @@ class Settings(object):
                     if threading.active_count()<maxthreads:
                         u = threading.Thread(target=ifnotthereadd, args=(f,r))
                         u.start()
+                log.info("trackuntrackedfiles waiting for {} file threads."
+                        "".format(ext))
+                if u:
+                    u.join()
+            log.info("trackuntrackedfiles waiting for audio file threads.")
             if t:
                 t.join()
-            if u:
-                u.join()
+            log.info("trackuntrackedfiles finished.")
     def pss(self):
         log.info("checking these lexical category names for plausible noun "
                 "and verb names: {}".format(self.db.pss[self.analang]))
