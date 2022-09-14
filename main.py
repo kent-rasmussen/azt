@@ -11015,7 +11015,7 @@ class SliceDict(dict):
             ps=self._ps
         if not profile:
             profile=self._profile
-        if ps in self._profilesbysense and profile in self._profilesbysense:
+        if ps in self._profilesbysense and profile in self._profilesbysense[ps]:
             return list(self._profilesbysense[ps][profile]) #specified slice
         else:
             return []
