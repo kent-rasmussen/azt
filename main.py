@@ -1471,13 +1471,14 @@ class Settings(object):
                                                         '*.wav')])-present
             log.info("{} wav files to check for the {} repo".format(len(audio),r))
             for f in audio:
-                if threading.active_count()<maxthreads:
-                    t = threading.Thread(target=ifnotthereadd, args=(f,r))
-                    t.start()
-                log.info(_("trackuntrackedfiles waiting for {} audio file threads."
-                        ).format(threading.active_count()))
-                if t:
-                    t.join()
+                self.repo[repo].add(f) #These should exist, from ls above
+                # if threading.active_count()<maxthreads:
+                #     t = threading.Thread(target=ifnotthereadd, args=(f,r))
+                #     t.start()
+                # log.info(_("trackuntrackedfiles waiting for {} audio file threads."
+                #         ).format(threading.active_count()))
+                # if t:
+                #     t.join()
                 # self.repo[r].add(f)
             for ext in ['png','jpg','gif']:
                 i=set([file.getreldir(self.repo[r].url,i)
@@ -1487,14 +1488,15 @@ class Settings(object):
                 log.info("{} {} files to check for the {} repo"
                         "".format(len(i),ext,r))
                 for f in i:
-                    if threading.active_count()<maxthreads:
-                        u = threading.Thread(target=ifnotthereadd, args=(f,r))
-                        u.start()
-                    log.info("trackuntrackedfiles waiting for {} {} file "
-                        "threads.".format(threading.active_count(),ext))
-                    if u:
-                        u.join()
-            log.info("trackuntrackedfiles finished.")
+                    self.repo[repo].add(f) #These should exist, from ls above
+                    # if threading.active_count()<maxthreads:
+                    #     u = threading.Thread(target=ifnotthereadd, args=(f,r))
+                    #     u.start()
+                    # log.info("trackuntrackedfiles waiting for {} {} file "
+                    #     "threads.".format(threading.active_count(),ext))
+                    # if u:
+                    #     u.join()
+        log.info("trackuntrackedfiles finished.")
     def pss(self):
         log.info("checking these lexical category names for plausible noun "
                 "and verb names: {}".format(self.db.pss[self.analang]))
