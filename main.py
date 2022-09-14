@@ -12741,13 +12741,13 @@ def indenteddict(indict):
                                                         indict[j][k][i]
                                                         )
                                         for i in indict[j][k].keys()
-                                        for k in indict[j].keys()
+                                        # for k in indict[j].keys()
                                         if i and i in indict[j][k].keys()
-                                        if k and k in indict[j].keys()
                                         ]
                                         )+'}'
                                         for k in indict[j].keys()
-                                        if k
+                                        if k and k in indict[j].keys()
+                                        # if k
                                             ]
                                             )+'}'
                 # '\n\t\t'.join(str({i:v[j][k][i]
