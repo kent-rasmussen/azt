@@ -1311,39 +1311,7 @@ class Settings(object):
             v=d[s]
             # log.info("Ready to store {} type data: {}".format(type(v),v))
             if isinstance(v, dict):
-                config[s]={}
-                for j in v:
-                    if isinstance(v[j], dict):
-                        # log.info("printing indented dict for {} key".format(j))
-                        # config[s][j]='\n'.join(['{'+i+':'+str(v[j][i])+'}'
-                        #                             for i in v[j].keys()])
-                        if True in [isinstance(i, dict) for i in v[j].values()]:
-                            log.info("printing double indented dict for {} "
-                                        "keys".format(v[j].keys()))
-                            config[s][j]='{'+',\n'.join(["'"+k+"':{"+',\n\t'.join(
-                                                    ["'"+i+"':"+str(
-                                                                    v[j][k][i]
-                                                                    )
-                                                    for i in v[j][k].keys()
-                                                    for k in v[j].keys()
-                                                    if i in v[j][k].keys()
-                                                    if k in v[j].keys()
-                                                    ]
-                                                    )+'}'
-                                                    for k in v[j].keys()
-                                                        ]
-                                                        )+'}'
-                            # '\n\t\t'.join(str({i:v[j][k][i]
-                            #                             for i in v[j][k]}))
-                        else:
-                            log.info("printing indented dict for {} "
-                                    "key".format(k))
-                            config[s][j]=',\n'.join(['{'+i+':'+str(v[j][i])+'}'
-                                                    for i in v[j].keys()])
-                    elif v[j]:
-                        log.info("printing unindented dict for {} "
-                                "key".format(j))
-                        config[s][j]=v[j]
+                config[s]=indenteddict(v)
             else:
                 config['default'][s]=str(v)
         if config['default'] == {}:
@@ -11389,7 +11357,7 @@ class StatusDict(dict):
         """This will just store to file; reading will come from check."""
         log.log(4,"Saving status dict to file")
         config=ConfigParser()
-        config['status']=self #getattr(o,s)
+        config['status']=indenteddict(self) #getattr(o,s)
         with open(self._filename, "w", encoding='utf-8') as file:
             config.write(file)
     def dict(self): #needed?
@@ -12711,6 +12679,43 @@ def dictcompare(x,y,ignore=[]):
     else:
         r=len(pairs)/(len(pairs)+len(unpairs))
     return (r,pairs,unpairs)
+def indenteddict(indict):
+    outdict={}
+    for j in indict:
+        if isinstance(indict[j], dict):
+            # log.info("printing indented dict for {} key".format(j))
+            # config[s][j]='\n'.join(['{'+i+':'+str(v[j][i])+'}'
+            #                             for i in v[j].keys()])
+            if True in [isinstance(i, dict) for i in indict[j].values()]:
+                log.info("printing double indented dict for {} "
+                            "keys".format(indict[j].keys()))
+                outdict[j]='{'+',\n'.join(["'"+k+"':{"+',\n\t'.join(
+                                        ["'"+i+"':"+str(
+                                                        indict[j][k][i]
+                                                        )
+                                        for i in indict[j][k].keys()
+                                        for k in indict[j].keys()
+                                        if i and i in indict[j][k].keys()
+                                        if k and k in indict[j].keys()
+                                        ]
+                                        )+'}'
+                                        for k in indict[j].keys()
+                                        if k
+                                            ]
+                                            )+'}'
+                # '\n\t\t'.join(str({i:v[j][k][i]
+                #                             for i in v[j][k]}))
+            else:
+                log.info("printing indented dict for {} "
+                        "key".format(j))
+                outdict[j]=',\n'.join(['{'+i+':'+str(indict[j][i])+'}'
+                                        for i in indict[j].keys()
+                                        if i])
+        elif indict[j]:
+            log.info("printing unindented dict for {} "
+                    "key".format(j))
+            outdict[j]=str(indict[j])
+    return outdict
 def selected(groupvars):
     return [k for k in groupvars
             if groupvars[k] is not None #necessary?
