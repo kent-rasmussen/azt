@@ -2069,6 +2069,7 @@ class Settings(object):
         w=ui.Wait(parent=program['root'],msg=_("Reloading status data"))
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
+        pss=self.db.pss[self.params.analang()]
         #This limits reload to what is there (i.e., only V, if only V has been done)
         # cvts=[i for i in self.params.cvts() if i in self.status]
         cvts=self.params.cvts()
