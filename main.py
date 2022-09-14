@@ -12683,6 +12683,7 @@ def dictcompare(x,y,ignore=[]):
 def indenteddict(indict):
     outdict={}
     for j in indict:
+        log.info("working on {}".format(j))
         if isinstance(indict[j], dict):
             # log.info("printing indented dict for {} key".format(j))
             # config[s][j]='\n'.join(['{'+i+':'+str(v[j][i])+'}'
