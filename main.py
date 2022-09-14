@@ -1486,11 +1486,12 @@ class Settings(object):
                     if threading.active_count()<maxthreads:
                         u = threading.Thread(target=ifnotthereadd, args=(f,r))
                         u.start()
-                log.info("trackuntrackedfiles waiting for {} file threads."
-                        "".format(ext))
+                log.info("trackuntrackedfiles waiting for {} {} file threads."
+                        "".format(threading.active_count(),ext))
                 if u:
                     u.join()
-            log.info("trackuntrackedfiles waiting for audio file threads.")
+            log.info(_("trackuntrackedfiles waiting for {} audio file threads."
+                    ).format(threading.active_count()))
             if t:
                 t.join()
             log.info("trackuntrackedfiles finished.")
@@ -13341,8 +13342,10 @@ if __name__ == "__main__":
                                     program['name'],program['version'],mt))
     log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
                                                     sys.argv[0], sys.argv))
-    log.info(_("Working directory is {} on {} ").format(program['aztdir'],
-                                                    program['hostname']))
+    log.info(_("Working directory is {} on {}, running on {} cores"
+            ).format(program['aztdir'],
+                    program['hostname'],
+                    multiprocessing.cpu_count()))
     log.info(_("Loglevel is {}; started at {}").format(loglevel,
                                         program['start_time'].isoformat()))
     #'sendpraat' now in 'praat', if useful
