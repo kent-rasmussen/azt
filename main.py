@@ -11388,7 +11388,7 @@ class StatusDict(dict):
         # log.info("Tosort now {} (marksenseidtosort)".format(self.tosort()))
     def store(self):
         """This will just store to file; reading will come from check."""
-        log.log(4,"Saving status dict to file")
+        log.info("Saving status dict to file")
         config=ConfigParser()
         config['status']=indenteddict(self) #getattr(o,s)
         with open(self._filename, "w", encoding='utf-8') as file:
