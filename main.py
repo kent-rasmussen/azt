@@ -1439,7 +1439,7 @@ class Settings(object):
         def ifnotthereadd(f,repo):
             print('ifnotthereadd')
             if f not in self.repo[repo].files:
-                print('ifnotthereadd',2)
+                print('ifnotthereadd',f,2)
                 self.repo[repo].add(f)
         log.info(_("Looking for untracked files to add to repositories"))
         maxthreads=8 #This causes problems with lots of threads
@@ -1456,6 +1456,7 @@ class Settings(object):
         # for r in self.repo:
         r='git' #only look for this; don't duplicate repos unnecessarily
         if r in self.repo:
+            t=u=None
             present=set(self.repo[r].files)
             log.info("{} currently has {} files".format(r,len(present)))
             for f in set(maindirfiles)-present:
@@ -1485,11 +1486,10 @@ class Settings(object):
                     if threading.active_count()<maxthreads:
                         u = threading.Thread(target=ifnotthereadd, args=(f,r))
                         u.start()
-            try:
+            if t:
                 t.join()
+            if u:
                 u.join()
-            except UnboundLocalError as e:
-                log.info("Looks like t beat u: {}".format(e))
     def pss(self):
         log.info("checking these lexical category names for plausible noun "
                 "and verb names: {}".format(self.db.pss[self.analang]))
