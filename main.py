@@ -2119,7 +2119,8 @@ class Settings(object):
                             args=(fn,senseid),
                             kwargs=kwargs)
             t.start()
-        t.join()
+        if t:
+            t.join()
         """update 'tosort' status"""
         """update status groups"""
         sorted=set(self._groups)
