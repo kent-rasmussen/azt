@@ -2123,14 +2123,15 @@ class Settings(object):
         else:
             fn=Segments.getgroupofsenseid
         for senseid in senseids:
-            t = threading.Thread(target=self.categorizebygrouping,
-                            args=(fn,senseid),
-                            kwargs=kwargs)
-            t.start()
-        try:
-            t.join()
-        except UnboundLocalError:
-            log.info("The threading didn't happen, or is done already")
+            self.categorizebygrouping(fn,senseid,**kwargs)
+        #     t = threading.Thread(target=self.categorizebygrouping,
+        #                     args=(fn,senseid),
+        #                     kwargs=kwargs)
+        #     t.start()
+        # try:
+        #     t.join()
+        # except UnboundLocalError:
+        #     log.info("The threading didn't happen, or is done already")
         """update 'tosort' status"""
         """update status groups"""
         sorted=set(self._groups)
