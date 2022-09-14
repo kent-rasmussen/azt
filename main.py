@@ -1437,9 +1437,9 @@ class Settings(object):
         # This is for new files, not changes to known files; that is done
         # on close.
         def ifnotthereadd(f,repo):
-            print('ifnotthereadd')
+            # print('ifnotthereadd')
             if f not in self.repo[repo].files:
-                print('ifnotthereadd',f,2)
+                # print('ifnotthereadd',f,2)
                 self.repo[repo].add(f)
         log.info(_("Looking for untracked files to add to repositories"))
         maxthreads=8 #This causes problems with lots of threads
@@ -1474,6 +1474,10 @@ class Settings(object):
                 if threading.active_count()<maxthreads:
                     t = threading.Thread(target=ifnotthereadd, args=(f,r))
                     t.start()
+                log.info(_("trackuntrackedfiles waiting for {} audio file threads."
+                        ).format(threading.active_count()))
+                if t:
+                    t.join()
                 # self.repo[r].add(f)
             for ext in ['png','jpg','gif']:
                 i=set([file.getreldir(self.repo[r].url,i)
@@ -1486,14 +1490,10 @@ class Settings(object):
                     if threading.active_count()<maxthreads:
                         u = threading.Thread(target=ifnotthereadd, args=(f,r))
                         u.start()
-                log.info("trackuntrackedfiles waiting for {} {} file threads."
-                        "".format(threading.active_count(),ext))
-                if u:
-                    u.join()
-            log.info(_("trackuntrackedfiles waiting for {} audio file threads."
-                    ).format(threading.active_count()))
-            if t:
-                t.join()
+                    log.info("trackuntrackedfiles waiting for {} {} file "
+                        "threads.".format(threading.active_count(),ext))
+                    if u:
+                        u.join()
             log.info("trackuntrackedfiles finished.")
     def pss(self):
         log.info("checking these lexical category names for plausible noun "
