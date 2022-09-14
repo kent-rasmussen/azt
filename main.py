@@ -2031,7 +2031,7 @@ class Settings(object):
         kwargs['ps']=kwargs.get('ps',self.slices.ps())
         kwargs['profile']=kwargs.get('profile',self.slices.profile())
         log.info("Refreshing {} {} {} status settings from LIFT"
-                "".format(kwargs['profile'],kwargs['ps'],kwargs['cvt']))
+                "".format(kwargs['cvt'],kwargs['ps'],kwargs['profile']))
         checks=self.status.checks(**kwargs)
         kwargs['store']=False #do below
         for kwargs['check'] in checks:
