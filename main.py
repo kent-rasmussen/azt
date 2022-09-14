@@ -2126,7 +2126,7 @@ class Settings(object):
                             args=(fn,senseid),
                             kwargs=kwargs)
             t.start()
-        if t:
+        if multithreading.active_count:
             t.join()
         """update 'tosort' status"""
         """update status groups"""
