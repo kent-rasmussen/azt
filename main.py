@@ -12554,12 +12554,18 @@ def now():
 def nowruntime():
     #this returns a delta!
     return datetime.datetime.utcnow()-program['start_time']
-def logfinished(start=program['start_time']):
+def logfinished(start=program['start_time'],msg=None):
     run_time=nowruntime()
     if type(start) is datetime.datetime: #only work with deltas
         start-=program['start_time']
-    log.info("Finished at {} ({:1.0f}m, {:2.3f}s)"
-            "".format(now(),*divmod((run_time-start).total_seconds(),60)))
+    if msg:
+        msg=str(msg)+' '
+    else:
+        msg=''
+    text=_("Finished {}at {} ({:1.0f}m, {:2.3f}s)"
+            "").format(msg,now(),*divmod((run_time-start).total_seconds(),60))
+    log.info(text)
+    return text
 def interfacelang(lang=None,magic=False):
     global i18n
     global _
