@@ -1,5 +1,5 @@
 __pycache__*
-installfolder/*[.]*
+modulestoinstall/*[.]*
 lift_url.py
 ui_lang.py
 *~
