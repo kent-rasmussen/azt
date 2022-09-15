@@ -12996,7 +12996,7 @@ def pythonmodules():
     import distutils.util
     log.info("Installing python dependencies")
     log.info("FYI, looking for this platform: {}".format(
-                distutils.util.get_platform().replace('[.-]','_')))
+                distutils.util.get_platform().replace('.','_').replace('-','_')))
     installfolder='modulestoinstall/'
     if not program['python']:
         log.error("Can't find python; how am I doing this? Put it in your PATH")
