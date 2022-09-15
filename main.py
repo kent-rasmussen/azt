@@ -12994,6 +12994,7 @@ def praatversioncheck():
         return False
 def pythonmodules():
     log.info("Installing python dependencies")
+    installfolder='modulestoinstall'
     if not program['python']:
         log.error("Can't find python; how am I doing this? Put it in your PATH")
         sys.exit()
@@ -13006,7 +13007,7 @@ def pythonmodules():
             ]
     for install in installs:
         pyargs=[program['python'], '-m', 'pip', 'install',
-                    '-f', '.', #install the one in this folder, if there
+                    '-f', installfolder, #install the one in this folder, if there
                     '--no-index' #This stops it from looking online
                     ]
         pyargs.extend(install)
