@@ -1472,6 +1472,9 @@ class Settings(object):
             audio=audiohere-present
             log.info("{} wav files to check for the {} repo (of {} files total "
                     "here)".format(len(audio),r,len(audiohere)))
+            log.info("head of wav files in repo: {}".format(present[:200]))
+            log.info("head of wav files here: {}".format(audiohere[:200]))
+            log.info("head of wav files to check: {}".format(audio[:200]))
             for f in audio:
                 self.repo[r].add(f) #These should exist, from ls above
                 # if threading.active_count()<maxthreads:
