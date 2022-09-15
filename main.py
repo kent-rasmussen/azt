@@ -12993,7 +12993,10 @@ def praatversioncheck():
         log.info("Praat version less than {}".format(justpraatversion))
         return False
 def pythonmodules():
+    import distutils.util
     log.info("Installing python dependencies")
+    log.info("FYI, looking for this platform: {}".format(
+                distutils.util.get_platform().replace('[.-]','_')))
     installfolder='modulestoinstall/'
     if not program['python']:
         log.error("Can't find python; how am I doing this? Put it in your PATH")
@@ -13023,10 +13026,11 @@ def pythonmodules():
                 del pyargs[-1] #pull no-index
                 o=subprocess.check_output(pyargs,shell=False,
                                             stderr=subprocess.STDOUT)
-        try:
-            log.info(o.decode(sys.stdout.encoding).strip())
-        except:
-            log.info(o) #just give bytes, if encoding isn't correct
+
+        log.info(o) #just give bytes, if encoding isn't correct
+        # try:
+        #     log.info(o.decode(sys.stdout.encoding).strip())
+        # except:
 def praatopen(file,newpraat=False,event=None):
     """sendpraat is now looked for only where praat version is before
     'Praat 6.2.04 (December 18 2021)', when new functionality was added to
