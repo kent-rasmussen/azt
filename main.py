@@ -12998,6 +12998,7 @@ def pythonmodules():
     log.info("FYI, looking for this platform: {}".format(
                 distutils.util.get_platform().replace('.','_').replace('-','_')))
     installfolder='modulestoinstall/'
+    installedsomething=False
     if not program['python']:
         log.error("Can't find python; how am I doing this? Put it in your PATH")
         sys.exit()
@@ -13018,6 +13019,10 @@ def pythonmodules():
         try:
             o=subprocess.check_output(pyargs,shell=False,
                                         stderr=subprocess.STDOUT)
+            if not o:
+                log.info("looks like it was successful; so I'm going to reboot "
+                            "in a bit.")
+                installedsomething=True
         except subprocess.CalledProcessError as e:
             o=e.output.decode(sys.stdout.encoding,
                                     errors='backslashreplace'
@@ -13028,6 +13033,8 @@ def pythonmodules():
                                             stderr=subprocess.STDOUT)
 
         log.info(o) #just give bytes, if encoding isn't correct
+    if installedsomething:
+        sysrestart()
         # try:
         #     log.info(o.decode(sys.stdout.encoding).strip())
         # except:
@@ -13403,7 +13410,7 @@ if __name__ == "__main__":
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         pythonmodules()
-        sysrestart()
+        # sysrestart()
         # mainproblem()
     else:
         try:
