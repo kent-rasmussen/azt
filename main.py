@@ -7121,13 +7121,14 @@ class Report(object):
         # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
         start_time=nowruntime()
         kwargs['usegui']=False
-        if hasattr(self.settings,'maxpss'):
+        if hasattr(self.settings,'maxpss') and self.settings.maxpss:
             pss=self.slices.pss()[:self.settings.maxpss]
         else:
             pss=[self.slices.ps()]
         d={}
         for ps in pss:
-            if hasattr(self.settings,'maxprofiles'):
+            if (hasattr(self.settings,'maxprofiles') and
+                    self.settings.maxprofiles):
                 d[ps]=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
             else:
                 d[ps]=[self.slices.profile()]
@@ -9347,6 +9348,8 @@ class ReportCitationTlocationBackground(ReportCitationTlocation,Report,Tone,Task
         ui.Window.__init__(self,parent)
         self.do=self.tonegroupreportmulti
         TaskDressing.__init__(self,parent)
+        self.settings.maxprofiles=None
+        self.settings.maxpss=None
         Report.__init__(self)
         self.bylocation=True
 class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
