@@ -1436,11 +1436,11 @@ class Settings(object):
         # editors (e.g., WeSay).
         # This is for new files, not changes to known files; that is done
         # on close.
-        def ifnotthereadd(f,repo):
-            # print('ifnotthereadd')
-            if f not in self.repo[repo].files:
-                # print('ifnotthereadd',f,2)
-                self.repo[repo].add(f)
+        # def ifnotthereadd(f,repo):
+        #     # print('ifnotthereadd')
+        #     if f not in self.repo[repo].files:
+        #         # print('ifnotthereadd',f,2)
+        #         self.repo[repo].add(f)
         log.info(_("Looking for untracked files to add to repositories"))
         maxthreads=8 #This causes problems with lots of threads
         maindirfiles=[self.liftfilename,
@@ -1471,7 +1471,7 @@ class Settings(object):
                                                         '*.wav')])-present
             log.info("{} wav files to check for the {} repo".format(len(audio),r))
             for f in audio:
-                self.repo[repo].add(f) #These should exist, from ls above
+                self.repo[r].add(f) #These should exist, from ls above
                 # if threading.active_count()<maxthreads:
                 #     t = threading.Thread(target=ifnotthereadd, args=(f,r))
                 #     t.start()
@@ -1488,7 +1488,7 @@ class Settings(object):
                 log.info("{} {} files to check for the {} repo"
                         "".format(len(i),ext,r))
                 for f in i:
-                    self.repo[repo].add(f) #These should exist, from ls above
+                    self.repo[r].add(f) #These should exist, from ls above
                     # if threading.active_count()<maxthreads:
                     #     u = threading.Thread(target=ifnotthereadd, args=(f,r))
                     #     u.start()
