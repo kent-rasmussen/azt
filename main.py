@@ -1466,10 +1466,12 @@ class Settings(object):
             # log.info(', '.join(list(self.repo[r].files)[:5]))
             # log.info(', '.join([file.getreldir(self.repo[r].url,i) for i in file.getfilesofdirectory(self.audiodir, '*.wav')][:5]))
             # If we ever support mp3, we should add it here:
-            audio=set([file.getreldir(self.repo[r].url,i)
+            audiohere=set([file.getreldir(self.repo[r].url,i)
                     for i in file.getfilesofdirectory(self.audiodir,
-                                                        '*.wav')])-present
-            log.info("{} wav files to check for the {} repo".format(len(audio),r))
+                                                        '*.wav')])
+            audio=audiohere-present
+            log.info("{} wav files to check for the {} repo (of {} files total "
+                    "here)".format(len(audio),r,len(audiohere)))
             for f in audio:
                 self.repo[r].add(f) #These should exist, from ls above
                 # if threading.active_count()<maxthreads:
