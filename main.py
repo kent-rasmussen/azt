@@ -1460,13 +1460,23 @@ class Settings(object):
             present=set(self.repo[r].files)
             log.info("{} currently has {} files".format(r,len(present)))
             for f in maindirfiles:
+                log.info("{}".format([file.getreldirposix(self.repo[r].url,f)]))
+                log.info("working on {}".format(file.getreldirposix(self.repo[r].url,f)))
+                log.info("working on {}".format(file.getfile(f)))
+                # f=file.getreldirposix(self.repo[r].url,f)
                 if file.exists(f):# They won't always be there
-                    self.repo[r].add(f)
+                    self.repo[r].add(file.getreldirposix(self.repo[r].url,f))
             # In case I run into formatting issues again:
             # log.info(', '.join(list(self.repo[r].files)[:5]))
             # log.info(', '.join([file.getreldir(self.repo[r].url,i) for i in file.getfilesofdirectory(self.audiodir, '*.wav')][:5]))
             # If we ever support mp3, we should add it here:
-            audiohere=set([file.getreldir(self.repo[r].url,i)
+            log.info("{}".format([file.getreldirposix(self.repo[r].url,i)
+                    for i in file.getfilesofdirectory(self.audiodir,
+                                                        '*.wav')]))
+            log.info("{}".format(set(file.getreldirposix(self.repo[r].url,i)
+                    for i in file.getfilesofdirectory(self.audiodir,
+                                                        '*.wav'))))
+            audiohere=set([file.getreldirposix(self.repo[r].url,i)
                     for i in file.getfilesofdirectory(self.audiodir,
                                                         '*.wav')])
             audio=audiohere-present
@@ -1486,7 +1496,7 @@ class Settings(object):
                 #     t.join()
                 # self.repo[r].add(f)
             for ext in ['png','jpg','gif']:
-                i=set([file.getreldir(self.repo[r].url,i)
+                i=set([file.getreldirposix(self.repo[r].url,i)
                         for i in file.getfilesofdirectory(self.imagesdir,
                                                 '*.'+ext)]
                         )-present
@@ -12158,7 +12168,7 @@ class Repository(object):
         # log.info("{} getfiles args: {}".format(self.code,args))
         r=self.do(args)
         if r:
-            self.files=r.split('\n')
+            self.files=[file.getfile(i) for i in r.split('\n')]
         else:
             self.files=[]
     def do(self,args):
@@ -12240,7 +12250,7 @@ class Repository(object):
                                             iwascalledby,args[1:]))
         return t
     def alreadythere(self,url):
-        if str(file.getreldir(self.url,url)) in self.files:
+        if file.getreldir(self.url,url) in self.files: # as str
             # log.info(_("URL {} is already in repo {}".format(url,self.url)))
             return True
         # else:
