@@ -1,5 +1,5 @@
 __pycache__*
-installfolder/**
+installfolder/*[.]*
 lift_url.py
 ui_lang.py
 *~

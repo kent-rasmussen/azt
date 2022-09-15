@@ -12994,7 +12994,7 @@ def praatversioncheck():
         return False
 def pythonmodules():
     log.info("Installing python dependencies")
-    installfolder='modulestoinstall'
+    installfolder='modulestoinstall/'
     if not program['python']:
         log.error("Can't find python; how am I doing this? Put it in your PATH")
         sys.exit()
@@ -13016,7 +13016,9 @@ def pythonmodules():
             o=subprocess.check_output(pyargs,shell=False,
                                         stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
-            o=e.output
+            o=e.output.decode(sys.stdout.encoding,
+                                    errors='backslashreplace'
+                                    ).strip()
             if 'ERROR: Could not find a version' in o:
                 del pyargs[-1] #pull no-index
                 o=subprocess.check_output(pyargs,shell=False,
