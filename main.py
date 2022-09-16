@@ -4910,7 +4910,7 @@ class WordCollection(Segments):
         )
         # self.navigationframe.grid_columnconfigure(1,weight=1)
         self.frame.grid_columnconfigure(1,weight=1)
-    def __init__(self):
+    def __init__(self, parent):
         self.dodone=False
 class WordCollectionLexeme(TaskDressing,ui.Window,WordCollection):
     def tasktitle(self):
