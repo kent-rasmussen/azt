@@ -12995,6 +12995,9 @@ def praatversioncheck():
 def pythonmodules():
     import distutils.util
     log.info("Installing python dependencies")
+    if platform.platform() == 'Linux':
+        log.info("If you have errors containing ˋportaudioˊ above, you should "
+            "install pyaudio with your package manager.")
     log.info("FYI, looking for this platform: {}".format(
                 distutils.util.get_platform().replace('.','_').replace('-','_')))
     installfolder='modulestoinstall/'
