@@ -13020,6 +13020,9 @@ def pythonmodules():
         try:
             o=subprocess.check_output(pyargs,shell=False,
                                         stderr=subprocess.STDOUT)
+            o=e.output.decode(sys.stdout.encoding,
+                                    errors='backslashreplace'
+                                    ).strip()
             if not o:
                 log.info("looks like it was successful; so I'm going to reboot "
                             "in a bit.")
