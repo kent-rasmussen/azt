@@ -13029,6 +13029,7 @@ def pythonmodules():
                                     ).strip()
             if 'Could not find a version' in o:
                 del pyargs[-1] #pull no-index
+                log.info("Running `{}`".format(' '.join(pyargs)))
                 o=subprocess.check_output(pyargs,shell=False,
                                             stderr=subprocess.STDOUT)
 
