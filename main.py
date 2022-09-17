@@ -13029,7 +13029,7 @@ def pythonmodules():
                                     errors='backslashreplace'
                                     ).strip()
             if 'Could not find a version' in o:
-                del pyargs[npyargs] #pull no-index
+                del pyargs[npyargs-1] #pull no-index
                 log.info("Running `{}`".format(' '.join(pyargs)))
                 o=subprocess.check_output(pyargs,shell=False,
                                             stderr=subprocess.STDOUT)
