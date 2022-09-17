@@ -13027,7 +13027,7 @@ def pythonmodules():
             o=e.output.decode(sys.stdout.encoding,
                                     errors='backslashreplace'
                                     ).strip()
-            if 'ERROR: Could not find a version' in o:
+            if 'Could not find a version' in o:
                 del pyargs[-1] #pull no-index
                 o=subprocess.check_output(pyargs,shell=False,
                                             stderr=subprocess.STDOUT)
