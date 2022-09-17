@@ -13218,8 +13218,9 @@ def main():
                                     # pady=20,
                                     # padx=30,
                                     )
-    except _tkinter.TclError as e:
+    except tkinter.TclError as e:
         log.info("Evidently you can't make a root window? ({})".format(e))
+        return
     program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
     # log.info("Theme ipady: {}".format(program['theme'].ipady))
@@ -13274,10 +13275,15 @@ def mainproblem():
         for w in errorroot.winfo_children():
             w.destroy()
     except:
-        errorroot = ui.Root(program=program)
-        errorroot.wraplength=int(errorroot.winfo_screenwidth()*.7) #exit button
-        newtk=True
-        log.info(_("Starting with new root"))
+        try:
+            errorroot = ui.Root(program=program)
+            errorroot.wraplength=int(errorroot.winfo_screenwidth()*.7) #exit button
+            newtk=True
+            log.info(_("Starting with new root"))
+        except tkinter.TclError as e:
+            log.info("Evidently you can't make a root window? ({})".format(e))
+            log.info("This was your error:\n{}".format(logsetup.contents(50)))
+            return
     errorroot.withdraw()
     errorw=ui.Window(errorroot)
     errorw.title(_("Serious Problem!"))
