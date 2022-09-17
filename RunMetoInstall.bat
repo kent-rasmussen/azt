@@ -38,6 +38,7 @@ pause
 
 ECHO Cloning A→Z+T source to azt directory on your desktop
 cd /d "%userprofile%/desktop"
+ECHO "Running git.exe clone 'https://github.com/kent-rasmussen/azt.git' '%userprofile%/desktop/azt'"
 powershell.exe -noprofile -command "git.exe clone 'https://github.com/kent-rasmussen/azt.git' '%userprofile%/desktop/azt'"
 ECHO making links to AZT and Transcriber tool...
 mklink "%userprofile%/desktop/A>Z+T" "%userprofile%/desktop/azt/main.py"
