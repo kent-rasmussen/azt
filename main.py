@@ -13208,12 +13208,15 @@ def main():
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
     # program['theme']=ui.Theme(program,ipady=0)
-    root = program['root']=ui.Root(program=program,
+    try:
+        root = program['root']=ui.Root(program=program,
                                     # ipady=0,
                                     # ipadx=10,
                                     # pady=20,
                                     # padx=30,
                                     )
+    except _tkinter.TclError as e:
+        log.info("Evidently you can't make a root window? ({})".format(e))
     program['theme']=root.theme #ui.Theme(program)
     log.info("Theme name: {}".format(program['theme'].name))
     # log.info("Theme ipady: {}".format(program['theme'].ipady))
