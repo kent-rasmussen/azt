@@ -13014,6 +13014,7 @@ def pythonmodules():
                     '-f', installfolder, #install the one in this folder, if there
                     '--no-index' #This stops it from looking online
                     ]
+        npyargs=len(pyargs)
         pyargs.extend(install)
         log.info("Running `{}`".format(' '.join(pyargs)))
         try:
@@ -13028,7 +13029,7 @@ def pythonmodules():
                                     errors='backslashreplace'
                                     ).strip()
             if 'Could not find a version' in o:
-                del pyargs[-1] #pull no-index
+                del pyargs[npyargs] #pull no-index
                 log.info("Running `{}`".format(' '.join(pyargs)))
                 o=subprocess.check_output(pyargs,shell=False,
                                             stderr=subprocess.STDOUT)
