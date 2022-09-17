@@ -13025,7 +13025,7 @@ def pythonmodules():
                                     ).strip()
             if not o:
                 log.info("looks like it was successful; so I'm going to reboot "
-                            "in a bit.")
+                            "in a bit. ({})".format(o))
                 installedsomething=True
         except subprocess.CalledProcessError as e:
             o=e.output.decode(sys.stdout.encoding,
