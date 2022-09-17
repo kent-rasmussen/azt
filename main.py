@@ -13020,7 +13020,7 @@ def pythonmodules():
         try:
             o=subprocess.check_output(pyargs,shell=False,
                                         stderr=subprocess.STDOUT)
-            o=o.output.decode(sys.stdout.encoding,
+            o=o.decode(sys.stdout.encoding,
                                     errors='backslashreplace'
                                     ).strip()
             if not o:
