@@ -27,7 +27,7 @@ If that throws an error, you may need to first install the [SIL packages reposit
 Run this command: `cd;git clone https://github.com/kent-rasmussen/azt.git`.
 
 ## Set up A→Z+T for normal use
-1. Download [this file](installfiles/azt.desktop). If asked, save it to your "Downloads" folder.
+1. Download [this file](installfiles/azt.desktop?raw=true). If asked, save it to your "Downloads" folder.
 2. Run the following commands:
 - `cp $HOME/Downloads/azt.desktop $HOME/.local/share/applications/`
 - `sudo desktop-file-validate  $HOME/.local/share/applications/azt.desktop`
