@@ -3369,9 +3369,9 @@ class TaskDressing(object):
             text=_("What is the database field for second forms for ‘{}’ words?"
             "".format(ps))
             try:
-                optionslist.remove(othername)
+                optionslist.remove(othername) #don't present other ps 2nd field
             except ValueError:
-                log.info("Imperative field ‘{}’ doesn't seem to be there: {}"
+                log.info("Other second field ‘{}’ doesn't seem to be there: {}"
                         "".format(othername,optionslist))
         ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
