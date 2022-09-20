@@ -4510,7 +4510,11 @@ class Segments(object):
             t = threading.Thread(target=self.ifregexadd,
                                 args=(regex,form,id))
             t.start()
-        t.join()
+        try:
+            t.join()
+        except:
+            log.info("Looks like no forms in senseidstocheck: {}".format(
+                                                        senseidstocheck))
         # log.info("Found sensess: {}".format(self.outputs))
         # log.info("Found senses: {}".format(self.output))
         return self.output
