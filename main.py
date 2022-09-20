@@ -3389,6 +3389,12 @@ class TaskDressing(object):
                             column=0, row=1,
                             cmd=getother
                             )
+        else:
+            otherbutton=ui.Button(buttonFrame1.content,
+                            text=_("None of these work; make my own field"),
+                            column=0, row=1,
+                            cmd=getcustom
+                            )
         window.wait_window(window)
     def secondfieldnames(self):
         return (self.settings.secondformfield[self.settings.verbalps],
