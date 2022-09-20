@@ -9151,6 +9151,15 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
             i+=1
             return
         self.getresults()
+class ReportCitationByUF(ByUF,ReportCitation):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Alphabet Report by Tone group") # on One Data Slice
+    def taskicon(self):
+        return program['theme'].photo['iconReport']
+    def __init__(self, parent): #frame, filename=None
+        ReportCitation.__init__(self, parent)
+        ByUF.__init__(self)
 class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
@@ -9204,6 +9213,13 @@ class ReportCitationBasicV(Report,Comprehensive,Segments,TaskDressing,ui.Window)
         Report.__init__(self)
         self.cvtstodo=['V']
         Comprehensive.__init__(self)
+class ReportCitationBasicVByUF(ByUF,ReportCitationBasicV):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Comprehensive Vowel Report by tone group") # on Citation Forms
+    def __init__(self, parent): #frame, filename=None
+        ReportCitationBasicV.__init__(self, parent)
+        ByUF.__init__(self)
 class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
