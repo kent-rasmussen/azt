@@ -8013,6 +8013,7 @@ class Report(object):
         self.distinguish=self.settings.distinguish
         self.profilesbysense=self.settings.profilesbysense
         self.s=self.settings.s
+        self.byUFgroup=False
 class Comprehensive(object):
     def __init__(self):
         self.status.group(None)
