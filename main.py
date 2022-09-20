@@ -5637,13 +5637,13 @@ class Tone(object):
     def getgroupofsenseid(self,senseid,check):
         return self.db.get("example/tonefield/form/text",
                 senseid=senseid, location=check).get('text')
-    def __init__(self,parent):
     def getUFgroupofsenseid(self,senseid):
         return self.db.get("sense/field/form/text",
                             path=["toneUFfield"],
                             senseid=senseid,
                             # showurl=True
                             ).get('text')
+    def __init__(self):
         pass
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
