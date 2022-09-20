@@ -1542,6 +1542,10 @@ class Settings(object):
             log.info("Problem with finding a nominal and verbal lexical "
             "category (looked in first two of [{}])"
             "".format(self.db.pss[self.analang]))
+        if self.nominalps in self.secondformfield:
+            self.pluralname=self.secondformfield[self.nominalps]
+        if self.verbalps in self.secondformfield:
+            self.imperativename=self.secondformfield[self.verbalps]
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
         # log.info(self.db.fieldnames)
