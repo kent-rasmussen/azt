@@ -7481,6 +7481,14 @@ class Report(object):
         else:
             log.error("Tried to get a results frame without a runwindow!")
     def getresults(self,**kwargs):
+        def iterateUFgroups(parent,**kwargs):
+            if 'x' in kwargs['check'] and kwargs['cvt'] != 'CV': #CV has no C=V...
+                self.docheckreport(parent,check=rx.sub('x','=',kwargs['check'],
+                                                        count=1),
+                                    **kwargs)
+            self.docheckreport(parent,**kwargs) #this needs parent
+            if 'x' in check:
+                self.coocurrencetables(xlpr,**kwargs)
         self.getrunwindow()
         # self.makeresultsframe() #not for now, causing problems
         kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
@@ -7506,12 +7514,24 @@ class Report(object):
             ui.Label(self.results, text=text).grid(column=0, row=self.results.row)
         self.runwindow.wait()
         si=xlp.Section(xlpr,text)
-        if 'x' in check and cvt != 'CV': #CV has no C=V...
-            self.docheckreport(si,check=rx.sub('x','=',check, count=1))
-        self.docheckreport(si) #this needs parent
-        if 'x' in check:
-            self.coocurrencetables(xlpr)
-        # These lines get all senseids, to test that we're not losing any, below
+        if self.byUFgroup:
+            analysis=self.makeanalysis()
+            analysis.donoUFanalysis()
+            # torecord=analysis.senseidsbygroup
+            ufgroupsnsenseids=analysis.senseidsbygroup.items()
+            kwargs['sectlevel']=4
+            t=_("{} checks".format(self.params.cvtdict()[kwargs['cvt']]['sg']))
+            for kwargs['ufgroup'],kwargs['ufsenseids'] in ufgroupsnsenseids:
+                if 'ufgroup' in kwargs:
+                    log.info("Going to run {} report for UF group {}"
+                            "".format(self.params.cvtdict()[kwargs['cvt']]['sg'],
+                                    kwargs['ufgroup']))
+                sid=" ".join([t,"for",kwargs['ufgroup']])
+                s2=xlp.Section(si,sid) #,level=2
+                iterateUFgroups(s2,**kwargs)
+        else:
+            iterateUFgroups(si,**kwargs)
+            # These lines get all senseids, to test that we're not losing any, below
         # This is the first of three blocks to uncomment (on line, then logs)
         # self.regexCV=profile
         # self.regex=rx.fromCV(self,lang=self.analang,
@@ -7908,9 +7928,19 @@ class Report(object):
             if ps in ['Invalid','analang']:
                 continue
             print(ps, self.profilesbysense[ps])
-    def basicreport(self):
+    def basicreport(self,**kwargs):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
+        def iteratecvt(parent,**kwargs):
+            for cvt in self.cvtstodo:
+                t=_("{} checks".format(self.params.cvtdict()[cvt]['sg']))
+                print(t)
+                log.info(t)
+                sid=" ".join([t,"for",kwargs['profile'],kwargs['ps']+'s'])
+                s34=xlp.Section(parent,sid,level=kwargs['sectlevel'])
+                maxcount=rx.countxiny(cvt, kwargs['profile'])
+                # re.subn(cvt, cvt, profile)[1]
+                self.wordsbypsprofilechecksubcheck(s34,**kwargs)
         #Convert to iterate over local variables
         instr=_("The data in this report is given by most restrictive test "
                 "first, followed by less restrictive tests (e.g., V1=V2 "
@@ -7959,16 +7989,25 @@ class Report(object):
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
                 log.info(t)
-                for cvt in self.cvtstodo:
-                    t=_("{} checks".format(self.params.cvtdict()[cvt]['sg']))
-                    print(t)
-                    log.info(t)
-                    sid=" ".join([t,"for",profile,ps+'s'])
-                    s3=xlp.Section(s2,sid,level=3)
-                    maxcount=rx.countxiny(cvt, profile)
-                    # re.subn(cvt, cvt, profile)[1]
-                    self.wordsbypsprofilechecksubcheck(s3,cvt=cvt,ps=ps,
-                                                        profile=profile)
+                if self.byUFgroup:
+                    analysis=self.makeanalysis()
+                    analysis.donoUFanalysis()
+                    # torecord=analysis.senseidsbygroup
+                    ufgroupsnids=analysis.senseidsbygroup.items()
+                    kwargs['sectlevel']=4
+                    for kwargs['ufgroup'],kwargs['ufsenseids'] in ufgroupsnids:
+                        if 'ufgroup' in kwargs:
+                            log.info("Going to run report for UF group {}"
+                                    "".format(kwargs['ufgroup']))
+                        sid=" ".join([t,"for",kwargs['ufgroup']])
+                        s3=xlp.Section(s2,sid,level=3)
+                        iteratecvt(parent=s3,**kwargs)
+                        # for check in self.checks: #self.checkcodesbyprofile:
+                        #     """multithread here"""
+                        #     self.docheckreport(parent,check=check,cvt=cvt,**kwargs)
+                else:
+                    kwargs['sectlevel']=3
+                    iteratecvt(parent=s2,**kwargs)
         self.coocurrencetables(xlpr)
         log.info(self.checkcounts)
         xlpr.close(me=me)
