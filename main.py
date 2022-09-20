@@ -7476,15 +7476,14 @@ class Report(object):
     def getresults(self,**kwargs):
         self.getrunwindow()
         # self.makeresultsframe() #not for now, causing problems
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
-        self.adhocreportfileXLP=''.join([str(self.reportbasefilename)
-                                        ,'_',str(ps)
-                                        ,'-',str(profile)
-                                        ,'_',str(check)
-                                        ,'_ReportXLP.xml'])
+        kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
+        kwargs['ps']=kwargs.get('ps',self.slices.ps())
+        kwargs['profile']=kwargs.get('profile',self.slices.profile())
+        kwargs['check']=kwargs.get('check',self.params.check())
+        self.adhocreportfileXLP='_'.join([str(self.reportbasefilename)
+                                        ,str(kwargs['ps'])+'-'+str(kwargs['profile'])
+                                        ,str(kwargs['check'])
+                                        ,'ReportXLP.xml'])
         self.checkcounts={}
         xlpr=self.xlpstart()
         """"Do I need this?"""
