@@ -7493,7 +7493,9 @@ class Report(object):
         c2 = "Any"
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
-        text=(_("{} roots of form {} by {}".format(ps,profile,check)))
+        text=(_("{} roots of form {} by {}".format(kwargs['ps'],
+                                                    kwargs['profile'],
+                                                    kwargs['check'])))
         if hasattr(self,'results'): #i.e., showing results in window
             ui.Label(self.results, text=text).grid(column=0, row=self.results.row)
         self.runwindow.wait()
