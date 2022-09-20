@@ -2401,16 +2401,18 @@ class Settings(object):
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setsecondformfieldN(self,choice,window=None):
         # ps=Noun# t=self.params.cvt()
-        self.secondformfield[self.nominalps]=choice
+        self.secondformfield[self.nominalps]=self.pluralname=choice
         self.attrschanged.append('secondformfield')
         self.refreshattributechanges()
-        window.destroy()
+        if window:
+            window.destroy()
     def setsecondformfieldV(self,choice,window=None):
         # ps=Noun# t=self.params.cvt()
-        self.secondformfield[self.verbalps]=choice
+        self.secondformfield[self.verbalps]=self.imperativename=choice
         self.attrschanged.append('secondformfield')
         self.refreshattributechanges()
-        window.destroy()
+        if window:
+            window.destroy()
     def setprofile(self,choice,window):
         self.slices.profile(choice)
         self.attrschanged.append('profile')
