@@ -293,9 +293,15 @@ class Report(object):
         # >
 
 class Section(ET.Element):
-    def __init__(self,parent,title="No Section Title!",level=1,landscape=False):
+    def __init__(self,parent,title="No Section Title!",level=None,landscape=False):
         id=rx.id(title)
-        name='section'+str(level)
+        if level: #this shouldn't happen
+            self.level=level
+        elif hasattr(parent,level): #this should manage most cases
+            self.level=parent.level+1
+        else:
+            self.level=1
+        name='section'+str(self.level)
         attribs={'id':id}
         if landscape:
             attribs['showinlandscapemode']='yes'
