@@ -9115,11 +9115,6 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
                 'image':self.taskchooser.theme.photo['Report'],
                 'sticky':'ew'
                 }
-    def __init__(self, parent): #frame, filename=None
-        Segments.__init__(self,parent)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
-        Report.__init__(self)
     def runcheck(self):
         """This needs to get stripped down and updated for just this check"""
         self.settings.storesettingsfile()
@@ -9151,6 +9146,11 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
             i+=1
             return
         self.getresults()
+    def __init__(self, parent): #frame, filename=None
+        Segments.__init__(self,parent)
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
+        Report.__init__(self)
 class ReportCitationByUF(ByUF,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
