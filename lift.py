@@ -2855,7 +2855,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift_2021-12-06.txt"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
@@ -2911,9 +2911,20 @@ if __name__ == '__main__':
             @lang='gnd'][text='location']/text"""
     """why is location taken as a text value??!? maybe it should be cleared
     once used?"""
-    formvaluenode=lift.get("example/form/text", senseid=senseid,
-        analang=analang, location=location, showurl=True).get('node')
-    print(formvaluenode)
+    senseids=lift.get('sense',
+                        # field='tone',
+                        toneUFvalue='Nom_CVCVC_1',
+                        # tonevalue=group,
+                        # path=['example'],
+                        showurl=True
+                        ).get('senseid')
+    print(senseids)
+    for senseid in senseids:
+        value=lift.get("sense/field/form/text",
+                path=["toneUFfield"],
+                senseid=senseid,
+                showurl=True).get('text')
+        log.info("{}: {}".format(senseid,value))
     exit()
     lf=lift.fieldtext(ftype='ph')
     # ,location=check,
