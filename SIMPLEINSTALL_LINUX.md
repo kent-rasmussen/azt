@@ -11,7 +11,7 @@ To run these commands, open a terminal, and copy/paste the command, then hit ent
 ## Install system and python packages
 Run the following commands:
 1. `sudo apt-get install git python3-tk python3-pip portaudio19-dev texlive-xetex`. (This last one is a large download)
-2. `python3 -m pip install pyaudio tkinter lxml Pillow`
+2. `python3 -m pip install pyaudio lxml Pillow`
 3. `cd;git clone https://github.com/kent-rasmussen/azt.git;cd -`
 
 ### Fonts
