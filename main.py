@@ -5622,6 +5622,12 @@ class Tone(object):
                                 **kwargs #should only include framed, if desired
                                 )
         # log.info("Done setting tone sort group")
+    def getsenseidsinUFgroup(self,group):
+        return self.db.get('sense',
+                            toneUFvalue=group,
+                            # path=['example'],
+                            # showurl=True
+                            ).get('senseid')
     def getsenseidsingroup(self,check,group):
         return self.db.get('sense',location=check,
                                     tonevalue=group,
@@ -5632,6 +5638,12 @@ class Tone(object):
         return self.db.get("example/tonefield/form/text",
                 senseid=senseid, location=check).get('text')
     def __init__(self,parent):
+    def getUFgroupofsenseid(self,senseid):
+        return self.db.get("sense/field/form/text",
+                            path=["toneUFfield"],
+                            senseid=senseid,
+                            # showurl=True
+                            ).get('text')
         pass
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
