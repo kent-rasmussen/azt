@@ -7671,7 +7671,9 @@ class Report(object):
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
         log.info("regexCV: {}; \nregex: {}".format(self.regexCV,self.regex))
-        matches=set(self.senseidformsbyregex(self.regex,ps=ps))
+        matches=set(self.senseidformsbyregex(self.regex,**kwargs))
+        if 'ufgroup' in kwargs:
+            matches=matches&set(kwargs['ufsenseids'])
         if 'x' not in check and '=' not in check: #only pull from simple reports
             for ncvt in self.ncvts: #for basic reports
                 try:    # this removes senses already reported (e.g., in V1=V2)
@@ -7753,6 +7755,8 @@ class Report(object):
             titlebits='x'+ps+profile+check+group
             if 'x' in check:
                 titlebits+='x'+othergroup
+            if 'ufgroup' in kwargs:
+                titlebits+=kwargs['ufgroup']
             id=rx.id(titlebits)
             ex=xlp.Example(parent,id)
             for senseid in matches:
