@@ -7923,19 +7923,19 @@ class Report(object):
         log.info(t)
         print(t)
         p=xlp.Paragraph(si,t)
-        for ps in self.slices.pss()[:2]: #just the first two (Noun and Verb)
-            profiles=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
-            t=_("{} data: (profiles: {})".format(ps,profiles))
+        for kwargs['ps'] in self.slices.pss()[:2]: #just the first two (Noun and Verb)
+            profiles=self.slices.profiles(ps=kwargs['ps'])[:self.settings.maxprofiles]
+            t=_("{} data: (profiles: {})".format(kwargs['ps'],profiles))
             log.info(t)
             print(t)
             s1=xlp.Section(xlpr,t)
             t=_("This section covers the following top syllable profiles "
-                "which are found in {}s: {}".format(ps,profiles))
+                "which are found in {}s: {}".format(kwargs['ps'],profiles))
             p=xlp.Paragraph(s1,t)
             log.info(t)
             print(t)
-            for profile in profiles:
-                t=_("{} {}s".format(profile,ps))
+            for kwargs['profile'] in profiles:
+                t=_("{} {}s".format(kwargs['profile'],kwargs['ps']))
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
                 log.info(t)
