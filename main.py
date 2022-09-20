@@ -3351,6 +3351,14 @@ class TaskDressing(object):
                                     othername=othername,
                                     setcmd=setcmd,
                                     other=True)
+        def getcustom():
+            window.destroy()
+            self.getcustomsecondformfield(ps=ps,
+                                    # opts=opts,
+                                    othername=othername,
+                                    setcmd=setcmd,
+                                    # other=True
+                                    )
         log.info("Asking for ‘{}’ second form field...".format(ps))
         if not self.analang in self.db.fieldnames or not self.db.fieldnames[
                                                                 self.analang]:
