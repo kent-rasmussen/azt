@@ -8018,6 +8018,11 @@ class Comprehensive(object):
         self.status.group(None)
         log.info("doing basic report on {} with groups {}".format(self.cvtstodo,
                                                         self.status.group()))
+class ByUF(Tone):
+    def __init__(self):
+        Tone.__init__(self)
+        self.byUFgroup=True
+        log.info("doing report by UF groups")
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
@@ -8320,7 +8325,7 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
+        Tone.__init__(self)
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         self.params.cvt('T')
@@ -8865,7 +8870,7 @@ class TranscribeT(Transcribe,Tone,Sound,Sort,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconTranscribe']
     def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self, parent)
+        Tone.__init__(self)
         ui.Window.__init__(self, parent)
         TaskDressing.__init__(self, parent)
         self.glyphspossible=None
@@ -9043,7 +9048,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def __init__(self, parent):
-        Tone.__init__(self, parent)
+        Tone.__init__(self)
         ui.Window.__init__(self, parent)
         TaskDressing.__init__(self, parent)
 class RecordCitation(Record,Segments,TaskDressing,ui.Window):
@@ -9085,7 +9090,7 @@ class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Record Tone") #Citation Form Sorting in Tone Frames
     def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
+        Tone.__init__(self)
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Record.__init__(self)
@@ -9272,7 +9277,7 @@ class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
+        Tone.__init__(self)
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
@@ -9298,7 +9303,7 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
+        Tone.__init__(self)
         ui.Window.__init__(self,parent)
         self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
@@ -9326,7 +9331,7 @@ class ReportCitationTlocation(Report,Tone,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
+        Tone.__init__(self)
         ui.Window.__init__(self,parent)
         self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
@@ -9354,7 +9359,7 @@ class ReportCitationTlocationBackground(ReportCitationTlocation,Report,Tone,Task
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
+        Tone.__init__(self)
         ui.Window.__init__(self,parent)
         self.do=self.tonegroupreportmulti
         TaskDressing.__init__(self,parent)
@@ -9383,7 +9388,7 @@ class ReportCitationBasicT(Report,Comprehensive,Tone,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
+        Tone.__init__(self)
         ui.Window.__init__(self,parent)
         self.do=self.tonegroupreportcomprehensive
         # self.do=self.tonegroupreport
@@ -9411,7 +9416,7 @@ class ReportCitationBasicTBackground(ReportCitationBasicT,Report,Comprehensive,T
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self,parent)
+        Tone.__init__(self)
         ui.Window.__init__(self,parent)
         self.do=self.tonegroupreportmulti
         # self.do=self.tonegroupreport
