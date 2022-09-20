@@ -3343,6 +3343,39 @@ class TaskDressing(object):
         othername=self.settings.pluralname
         setcmd=self.settings.setsecondformfieldV
         self.getsecondformfield(ps,opts,othername,setcmd)
+    def getcustomsecondformfield(self,ps,othername,setcmd):
+        def updateerror(event=None):
+            if event.keysym != 'Return':
+                self.errorlabel['text'] = ''
+        def submitform(event=None):
+            log.info("setting {} (not {})".format(custom.get(), othername))
+            if custom.get() == othername:
+                text=_("That name is already used!")
+                log.error(text)
+                self.errorlabel['text']=text
+                return
+            setcmd(custom.get())
+            window.on_quit()
+        title=_('Make Custom Second Form Field for {}').format(ps)
+        window=ui.Window(self.frame,title=title)
+        #should never be othername
+        l=ui.Label(window,
+                text=_("What field name do you want to use for {} words?"
+                        ).format(ps),
+                row=0,column=0)
+        custom=ui.StringVar()
+        formfield = ui.EntryField(window, render=True,
+                                    textvariable=custom,
+                                    row=1,column=0,
+                                    sticky='')
+        formfield.focus_set()
+        formfield.bind('<Return>',submitform)
+        formfield.bind('<KeyRelease>',updateerror)
+        self.errorlabel=ui.Label(window,text='',
+                            fg='red',
+                            wraplength=int(self.frame.winfo_screenwidth()/3),
+                            row=2,column=0,sticky='nsew'
+                            )
     def getsecondformfield(self,ps,opts,othername,setcmd,other=False):
         def getother():
             window.destroy()
