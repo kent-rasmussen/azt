@@ -1,4 +1,5 @@
 # Simple and Straightforward Instructions for Installing A→Z+T on MS Windows
+## (This page should now be covered with [this script](RunMetoInstall.bat?raw=true), run as administrator.)
 This document offers instructions with **exactly one set of options**; to explore more options, see [INSTALL](INSTALL.md).
 
 For simple install instructions for Ubuntu Linux, see [SIMPLEINSTALL_LINUX](SIMPLEINSTALL_LINUX.md).
