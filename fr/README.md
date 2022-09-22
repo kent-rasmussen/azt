@@ -1,16 +1,14 @@
 <a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"></a><img src="https://gitlocalize.com/repo/7965/fr/badge.svg"> <a href="../README.md">Read this page in English</a>
 
-## [Je veux commencer à utiliser A→Z+T et obtenir l'aide d'un conseiller](HELP_PREREQUISITES.md)
+## Installation la plus simple sur [MS Windows](SIMPLEINSTALL.md) ou [Linux](SIMPLEINSTALL_LINUX.md)
 
-## Pour automatiser au maximum sur MS Windows, téléchargez et exécutez [ce fichier](../RunMetoInstall.bat?raw=true) en tant qu'administrateur
-
-## ou consultez [cette page](SIMPLEINSTALL.md) pour des instructions d'installation simples
-
-## Si vous utilisez actuellement FLEx et souhaitez comprendre ce qu'est A→Z+T, consultez [cette page](OWL_GUIDE.md) .
+## Si vous souhaitez l'aide d'un consultant, voir également [cette page](HELP_PREREQUISITES.md)
 
 # A→Z+T ![CV](../images/AZT%20stacks6_icon.png "AZT")
 
 [A→Z+T](https://github.com/kent-rasmussen/azt) est conçu pour accélérer le développement linguistique communautaire, complété par (et non en remplacement de) une formation linguistique formelle. Pour ce faire, il vérifie systématiquement un dictionnaire (et donc un système d'écriture), en se concentrant initialement sur la collecte de données pour les langues tonales. Des fonctionnalités supplémentaires sont encore en développement. Le travail [A→Z+T](https://github.com/kent-rasmussen/azt) aboutit à une base de données lexicale vérifiée sauvegardée avec des enregistrements, qui peuvent tous être visualisés et modifiés dans [WeSay](https://software.sil.org/wesay/) ou importés dans [FLEx](https://software.sil.org/fieldworks/) .
+
+## Si vous utilisez actuellement FLEx et souhaitez comprendre ce qu'est A→Z+T, consultez [cette page](OWL_GUIDE.md) .
 
 <!-- It is designed to *supplement* (not replace) formal training, on the one hand, and *facilitate* a particular kind of language development on the other, so it may not do what you want —it certainly does not do everything. If you want to get as many people involved in the development of their own language as possible, in a manner that results in a checked lexical database backed up by sound files, then this tool is for you. -->
 
