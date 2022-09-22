@@ -2,7 +2,7 @@
 
 ## [Je veux commencer à utiliser A→Z+T et obtenir l'aide d'un conseiller](HELP_PREREQUISITES.md)
 
-## Pour automatiser au maximum sur MS Windows, téléchargez et exécutez [ce fichier](RunMetoInstall.bat?raw=true) en tant qu'administrateur
+## Pour automatiser au maximum sur MS Windows, téléchargez et exécutez [ce fichier](../RunMetoInstall.bat?raw=true) en tant qu'administrateur
 
 ## ou consultez [cette page](SIMPLEINSTALL.md) pour des instructions d'installation simples
 
