@@ -1,4 +1,4 @@
-<a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg"> </a>
+<a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"></a><img src="https://gitlocalize.com/repo/7965/fr/badge.svg"> <a href="fr/README.md">Read this page in English</a>
 
 ## [Je veux commencer à utiliser A→Z+T et obtenir l'aide d'un conseiller](HELP_PREREQUISITES.md)
 
