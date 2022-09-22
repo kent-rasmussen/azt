@@ -1,5 +1,6 @@
 # Simple and Straightforward Instructions for Installing A→Z+T on Ubuntu Linux
 
+## (This page should now be covered with [this script](RunMetoInstall_Linux.sh?raw=true).)
 This document offers instructions with **exactly one set of options**; to explore more options, see [INSTALL](INSTALL.md).
 
 For simple install instructions for MS Windows, see [SIMPLEINSTALL](SIMPLEINSTALL.md).
