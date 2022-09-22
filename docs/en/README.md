@@ -1,9 +1,9 @@
 <a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg" /> </a>
-<a href="fr/README.md"> Lisez cette page en Français </a>
+<a href="../fr/README.md"> Lisez cette page en Français </a>
 ## Simplest install on [MS Windows](SIMPLEINSTALL.md) or [Linux](SIMPLEINSTALL_LINUX.md)
 ## If you want consultant help, see also [this page](HELP_PREREQUISITES.md)
 
-# A→Z+T ![CV](../images/AZT%20stacks6_icon.png "AZT")
+# A→Z+T ![CV](../../images/AZT%20stacks6_icon.png "AZT")
 
 [A→Z+T](https://github.com/kent-rasmussen/azt) is designed to accelerate community-based language development, supplemented by (not as a replacement for) formal linguistic training. It does this by systematically checking a dictionary (and thus a writing system), with initial focus on data collection for tonal languages.
 Additional features are still in development. [A→Z+T](https://github.com/kent-rasmussen/azt) work results in a checked lexical database backed up with sound files, all of which can be viewed and edited in [WeSay](https://software.sil.org/wesay/) or imported into [FLEx](https://software.sil.org/fieldworks/).
