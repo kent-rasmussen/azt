@@ -1,20 +1,20 @@
 # Guide de A→Z+T pour le linguiste de travail ordinaire
 
-## Or, how to think about A→Z+T, if you're used to FLEx (or WeSay).
+## Ou, comment penser de A→Z+T, si vous êtes habitué à FLEx (ou WeSay).
 
-Perhaps the first and most important thing to realize is that **[A→Z+T](https://github.com/kent-rasmussen/azt) is not designed to replace FLEx**. It has a different orientation, different intended audiences and different functions, and this is by design. So if [FLEx](https://software.sil.org/fieldworks/) does everything you want to do, then you will probably be happier just sticking with it.
+La première et la plus importante chose à réaliser est peut-être que **[A→Z+T](https://github.com/kent-rasmussen/azt) n'est pas conçu pour remplacer FLEx**. Il a une orientation différente, des publics cibles différents et des fonctions différentes, et c'est par conception. Donc, si [FLEx](https://software.sil.org/fieldworks/) fait tout ce que vous voulez faire, vous serez probablement plus heureux de vous y tenir.
 
-Most of the same could be said of [WeSay](https://software.sil.org/wesay/), though the audiences would be more similar.
+On pourrait dire la même chose de [WeSay](https://software.sil.org/wesay/), même si les audiences seraient plus similaires.
 
 ## Orientation
 
-Perhaps the second most important thing to say is that [A→Z+T](https://github.com/kent-rasmussen/azt) is designed to facilitate a **participatory model of data collection**, not just give you another way to collect data as you may have been taught in a field methods class.
+La deuxième chose la plus importante à dire est peut-être que [A→Z+T](https://github.com/kent-rasmussen/azt) est conçu pour faciliter un **modèle participatif de collecte de données**, et pas seulement pour vous donner une autre façon de collecter des données comme on vous l'a peut-être appris dans un cours de méthodes de terrain.
 
 Donc, si vous êtes assis sur le terrain avec quelqu'un qui n'a pas de diplôme d'études secondaires, vous n'allez probablement pas lui donner la souris et le clavier et lui demander d'apporter des modifications à [FLEx](https://software.sil.org/fieldworks/) . L'outil n'est tout simplement pas conçu pour être utilisé de cette façon, mais A→Z+T l'est.
 
-To use A→Z+T well, you want to gather a number of people who are proficient in their language and ready to discuss it with each other, and **hand one of them the mouse**. The keyboard is relevant for some tasks, but that should be them, too. You guide and direct the conversation, but the decisions should be registered with A→Z+T by the speakers of the language, not you.
+Pour bien utiliser A→Z+T, vous devez rassembler un certain nombre de personnes maîtrisant leur langue et prêtes à en discuter entre elles, et donner **la souris à l'une d'elles**. Le clavier est pertinent pour certaines tâches, mais cela devrait aussi être elles qui le controllent. Vous guidez et dirigez la conversation, mais les décisions doivent être enregistrées avec A→Z+T par les locuteurs de la langue, pas vous.
 
-## Audience
+## Public Cible
 
 ### Dépendance du champ, contexte haut/bas
 
@@ -22,13 +22,13 @@ Certaines personnes aiment voir les choses dans leur contexte, afin de mieux les
 
 FLEx est conçu pour les personnes à l'aise avec les ordinateurs et offre des options pour filtrer et trier les données de presque toutes les manières que vous pouvez imaginer. **Si vous aimez les feuilles de calcul, vous aimez probablement FLEx.**
 
-[A→Z+T](https://github.com/kent-rasmussen/azt), on the other hand, is designed for people who want to do a specific set of things, perhaps in a specific order, without needing a lot of options. On most pages, the user clicks one button at a time. Or, if there is a field to fill in (like for the word list collection), there is one field presented at a time. A→Z+T specifically avoids offering a user the chance to put good data in the wrong place. So **if you've ever been confused, frustrated or lost using a spreadsheet, you may enjoy using A→Z+T.**
+[A→Z+T](https://github.com/kent-rasmussen/azt) , d'autre part, est conçu pour les personnes qui veulent faire un ensemble spécifique de choses, peut-être dans un ordre spécifique, sans avoir besoin de beaucoup d'options. Sur la plupart des pages, l'utilisateur clique sur un bouton à la fois. Ou, s'il y a un champ à remplir (comme pour la collection de listes de mots), il y a un champ présenté à la fois. A→Z+T évite à l'expres d'offrir à un utilisateur la possibilité de mettre de bonnes données au mauvais endroit. Donc, **si vous avez déjà été confus, frustré ou perdu en utilisant une feuille de calcul, vous aimerez peut-être utiliser A→Z+T.**
 
 ## Les fonctions
 
-### Individual v Grouped Entries/senses
+### Entrées/Senses individuelles v groupées
 
-In terms of functions, both [A→Z+T](https://github.com/kent-rasmussen/azt) and FLEx (or WeSay) could be conceived of as dictionary builders. But FLEx (and typically WeSay) build data one entry at a time, once sense at a time. If there is a problem with data, you go in to that one entry/sense, and find the field with bad data, and change it.
+En termes de fonctions, [A→Z+T](https://github.com/kent-rasmussen/azt) et FLEx (ou WeSay) pourraient être conçus comme des constructeurs de dictionnaires. Mais FLEx (et généralement WeSay) construit les données une entrée à la fois, une sens à la fois. S'il y a un problème avec les données, vous allez dans cette entrée/sens, et trouvez le champ avec de mauvaises données, et modifiez-le.
 
 A→Z+T, d'autre part, traite les données dans des groupes pertinents. Si un certain nombre de mots se trient ensemble et qu'il y a un problème avec eux, il est corrigé une fois pour le groupe, plutôt que dans chaque entrée/sens. Les mots peuvent être triés dans et hors des groupes, mais il n'y a aucun moyen de modifier les données sur un mot/une entrée/un sens individuel.
 
