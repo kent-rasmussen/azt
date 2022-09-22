@@ -1,6 +1,6 @@
 # Instructions simples et directes pour l'installation de A→Z+T sur MS Windows
 
-## (Cette page devrait maintenant être recouverte de [ce script](../RunMetoInstall.bat?raw=true) , exécuté en tant qu'administrateur.)
+## (Ou exécutez simplement [ce script](RunMetoInstall.bat?raw=true) en tant qu'administrateur.)
 
 Ce document propose des instructions avec **exactement un jeu d'options** ; pour explorer plus d'options, voir [INSTALLER](INSTALL.md) .
 
