@@ -4,7 +4,7 @@ Certaines méthodologies (Kutsch Lojenga 1996) guident les gens à travers la d�
 
 D'autres méthodologies nécessitent le traitement de grandes quantités de données transcrites par un linguiste formellement formé (Snider 2018, Marlo 2013). Ceux-ci fournissent une meilleure documentation, mais ils limitent le type et le nombre de personnes qui peuvent être impliquées, en particulier si la communauté linguistique manque de linguistes qualifiés.
 
-To capitalize on the strengths of each of these approaches, [A→Z+T](https://github.com/kent-rasmussen/azt) is being developed to model pen and paper participatory methods on a computer, resulting in a checked lexical database with organized sound files to back up transcriptions. The tool constrains data collection by grammatical category and syllable profile (Snider 2014), while facilitating more cyclical and community based language development.
+Pour capitaliser sur les points forts de chacune de ces approches, [A→Z+T](https://github.com/kent-rasmussen/azt) est en cours de développement pour modéliser des méthodes participatives stylo et papier sur un ordinateur, résultant en une base de données lexicale vérifiée avec des fichiers audio organisés pour sauvegarder les transcriptions. L'outil limite la collecte de données par catégorie grammaticale et profil de syllabe (Snider 2014), tout en facilitant un développement linguistique plus cyclique et communautaire.
 
 ## Références
 
