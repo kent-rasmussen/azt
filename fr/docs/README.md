@@ -1,4 +1,4 @@
-<a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"></a><img src="https://gitlocalize.com/repo/7965/fr/badge.svg"> <a href="../README.md">Read this page in English</a>
+<a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg"> </a> <a href="fr/README.md"> Lisez cette page en Français </a>
 
 ## Installation la plus simple sur [MS Windows](SIMPLEINSTALL.md) ou [Linux](SIMPLEINSTALL_LINUX.md)
 
