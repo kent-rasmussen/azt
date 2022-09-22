@@ -8,7 +8,7 @@
 
 ## Si vous utilisez actuellement FLEx et souhaitez comprendre ce qu'est A→Z+T, consultez [cette page](OWL_GUIDE.md) .
 
-# A→Z+T ![CV](images/AZT%20stacks6_icon.png "AZT")
+# A→Z+T ![CV](../images/AZT%20stacks6_icon.png "AZT")
 
 [A→Z+T](https://github.com/kent-rasmussen/azt) est conçu pour accélérer le développement linguistique communautaire, complété par (et non en remplacement de) une formation linguistique formelle. Pour ce faire, il vérifie systématiquement un dictionnaire (et donc un système d'écriture), en se concentrant initialement sur la collecte de données pour les langues tonales. Des fonctionnalités supplémentaires sont encore en développement. Le travail [A→Z+T](https://github.com/kent-rasmussen/azt) aboutit à une base de données lexicale vérifiée sauvegardée avec des enregistrements, qui peuvent tous être visualisés et modifiés dans [WeSay](https://software.sil.org/wesay/) ou importés dans [FLEx](https://software.sil.org/fieldworks/) .
 
