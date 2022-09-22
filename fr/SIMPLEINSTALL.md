@@ -44,7 +44,7 @@ Si vous n'avez pas encore [Charis SIL](https://software.sil.org/charis/) sur vot
 
 ## Configurer A→Z+T pour une utilisation normale
 
-Once you have completed everything under [Install Python](#install-python) and [Install Git and Download A→Z+T](#install-git-and-download-azt):
+Une fois que vous avez tout terminé sous [Installer Python](#install-python) and [Installer Git et Télécharger A→Z+T](#install-git-and-download-azt) :
 
 1. Cliquez pour ouvrir le dossier `azt` sur votre bureau
 2. **Faites un clic droit** sur `main.py` (il peut apparaître comme `main` sur votre système) et sélectionnez "Envoyer vers... Bureau (créer un raccourci)".
