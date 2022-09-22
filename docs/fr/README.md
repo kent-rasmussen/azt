@@ -6,7 +6,7 @@
 
 # A→Z+T ![CV](../../images/AZT%20stacks6_icon.png "AZT")
 
-[A→Z+T](https://github.com/kent-rasmussen/azt) est conçu pour accélérer le développement linguistique communautaire, complété par (et non en remplacement de) une formation linguistique formelle. Pour ce faire, il vérifie systématiquement un dictionnaire (et donc un système d'écriture), en se concentrant initialement sur la collecte de données pour les langues tonales. Des fonctionnalités supplémentaires sont encore en développement. Le travail [A→Z+T](https://github.com/kent-rasmussen/azt) aboutit à une base de données lexicale vérifiée sauvegardée avec des enregistrements, qui peuvent tous être visualisés et modifiés dans [WeSay](https://software.sil.org/wesay/) ou importés dans [FLEx](https://software.sil.org/fieldworks/) .
+[A→Z+T](https://github.com/kent-rasmussen/azt) est conçu pour accélérer le développement linguistique communautaire, complété par (et non en remplacement de) une formation linguistique formelle. Pour ce faire, il vérifie systématiquement un dictionnaire (et donc un système d'écriture), en se concentrant initialement sur la collecte de données pour les langues tonales. Des fonctionnalités supplémentaires sont encore en développement. Le travail [A→Z+T](https://github.com/kent-rasmussen/azt) aboutit à une base de données lexicale vérifiée sauvegardée avec des enregistrements, qui peuvent tous être visualisés et modifiés dans [WeSay](https://software.sil.org/wesay/) ou importés dans [FLEx](https://software.sil.org/fieldworks/).
 
 ## Si vous utilisez actuellement FLEx et souhaitez comprendre ce qu'est A→Z+T, consultez [cette page](OWL_GUIDE.md) .
 
@@ -18,7 +18,7 @@ Voir [JUSTIFICATION](RATIONALE.md) pour plus d'informations sur pourquoi on devr
 
 ## Quoi
 
-[A→Z+T](https://github.com/kent-rasmussen/azt) est écrit en [Python](https://python.org) (3+) et [Tkinter](https://docs.python.org/3/library/tkinter.html) , avec [PyAudio](https://pypi.org/project/PyAudio/) pour l'enregistrement et la lecture de fichiers audio. [A→Z+T](https://github.com/kent-rasmussen/azt) produit des rapports à l'écran, des fichiers en texte brut et des documents [XLingPaper](https://software.sil.org/xlingpaper/) XML, qui peuvent à leur tour être facilement convertis en PDF et HTML, chacun avec des liens cliquables vers des fichiers audio.
+[A→Z+T](https://github.com/kent-rasmussen/azt) est écrit en [Python](https://python.org) (3+) et [Tkinter](https://docs.python.org/3/library/tkinter.html), avec [PyAudio](https://pypi.org/project/PyAudio/) pour l'enregistrement et la lecture de fichiers audio. [A→Z+T](https://github.com/kent-rasmussen/azt) produit des rapports à l'écran, des fichiers en texte brut et des documents [XLingPaper](https://software.sil.org/xlingpaper/) XML, qui peuvent à leur tour être facilement convertis en PDF et HTML, chacun avec des liens cliquables vers des fichiers audio.
 
 ## Comment
 
