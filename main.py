@@ -3940,6 +3940,8 @@ class TaskChooser(TaskDressing,ui.Window):
         optionlist_maxi=len(optionlist)-1
         if optionlist_maxi == 3:
             bpr=2
+        elif optionlist_maxi > 9:
+            bpr=4
         columnspan=1
         for n,o in enumerate(optionlist):
             if n is optionlist_maxi and int(n/bpr):
