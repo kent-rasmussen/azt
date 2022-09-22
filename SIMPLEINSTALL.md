@@ -1,5 +1,5 @@
 # Simple and Straightforward Instructions for Installing A→Z+T on MS Windows
-## (This page should now be covered with [this script](RunMetoInstall.bat?raw=true), run as administrator.)
+## (Or just run [this script](RunMetoInstall.bat?raw=true) as administrator.)
 This document offers instructions with **exactly one set of options**; to explore more options, see [INSTALL](INSTALL.md).
 
 For simple install instructions for Ubuntu Linux, see [SIMPLEINSTALL_LINUX](SIMPLEINSTALL_LINUX.md).
@@ -35,7 +35,7 @@ Before you can [Set up A→Z+T for normal use](#set-up-azt-for-normal-use), you 
 2. In the `Git-Bash` terminal, paste `git clone https://github.com/kent-rasmussen/azt.git` and hit enter. This will give you an `azt` folder on your desktop, where the A→Z+T program files will stay.
 
 ## Fonts
-If you don't already have [Charis SIL](https://software.sil.org/charis/) on your system, download and install the most recent version from [here](https://software.sil.org/downloads/r/charis/CharisSIL-6.001.zip). 
+If you don't already have [Charis SIL](https://software.sil.org/charis/) on your system, download and install the most recent version from [here](https://software.sil.org/downloads/r/charis/CharisSIL-6.001.zip).
 
 ## Set up A→Z+T for normal use
 Once you have completed everything under [Install Python](#install-python) and [Install Git and Download A→Z+T](#install-git-and-download-azt):
