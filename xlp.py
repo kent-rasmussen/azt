@@ -297,7 +297,7 @@ class Section(ET.Element):
         id=rx.id(title)
         if level: #this shouldn't happen
             self.level=level
-        elif hasattr(parent,level): #this should manage most cases
+        elif hasattr(parent,'level'): #this should manage most cases
             self.level=parent.level+1
         else:
             self.level=1
