@@ -1,6 +1,6 @@
 # Instructions simples et directes pour l'installation de A→Z+T sur Ubuntu Linux
 
-## (Cette page devrait maintenant être recouverte de [ce script](RunMetoInstall_Linux.sh?raw=true).)
+## (Cette page devrait maintenant être recouverte de [ce script](../RunMetoInstall_Linux.sh?raw=true).)
 
 Ce document propose des instructions avec **exactement un jeu d'options** ; pour explorer plus d'options, voir [INSTALLER](INSTALL.md) .
 
