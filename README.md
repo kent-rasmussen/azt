@@ -1,3 +1,4 @@
+<a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg" /> </a>
 ## [I want to start using A→Z+T, and get consultant help](HELP_PREREQUISITES.md)
 ## To automate as much as possible on MS Windows, download and run [this file](RunMetoInstall.bat?raw=true) as administrator
 ## or see [this page](SIMPLEINSTALL.md) for simple install instructions
