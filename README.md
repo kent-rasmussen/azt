@@ -1,16 +1,14 @@
 <a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg" /> </a>
 <a href="fr/README.md"> Lisez cette page en Français </a>
-## [I want to start using A→Z+T, and get consultant help](HELP_PREREQUISITES.md)
-## To automate as much as possible on MS Windows, download and run [this file](RunMetoInstall.bat?raw=true) as administrator
-## or see [this page](SIMPLEINSTALL.md) for simple install instructions
-
-## If you currently use FLEx, and want to understand what A→Z+T is, see [this page](OWL_GUIDE.md).
-
+## Simplest install on [MS Windows](SIMPLEINSTALL.md) or [Linux](SIMPLEINSTALL_LINUX.md)
+## If you want consultant help, see also [this page](HELP_PREREQUISITES.md)
 
 # A→Z+T ![CV](images/AZT%20stacks6_icon.png "AZT")
 
 [A→Z+T](https://github.com/kent-rasmussen/azt) is designed to accelerate community-based language development, supplemented by (not as a replacement for) formal linguistic training. It does this by systematically checking a dictionary (and thus a writing system), with initial focus on data collection for tonal languages.
 Additional features are still in development. [A→Z+T](https://github.com/kent-rasmussen/azt) work results in a checked lexical database backed up with sound files, all of which can be viewed and edited in [WeSay](https://software.sil.org/wesay/) or imported into [FLEx](https://software.sil.org/fieldworks/).
+
+## If you currently use FLEx, and want to understand what A→Z+T is, see [this page](OWL_GUIDE.md).
 
 <!-- It is designed to *supplement* (not replace) formal training, on the one hand, and *facilitate* a particular kind of language development on the other, so it may not do what you want —it certainly does not do everything. If you want to get as many people involved in the development of their own language as possible, in a manner that results in a checked lexical database backed up by sound files, then this tool is for you. -->
 ## Why
