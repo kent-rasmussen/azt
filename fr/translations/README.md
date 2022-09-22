@@ -11,9 +11,7 @@ En raison de la façon dont nous effectuons les traductions (dans les limites de
 - La meilleure pratique peut être de mettre un mot-clé sémantiquement utile pour chaque variable, comme ceci :
 
     ```
-    ```
     _("{name} Dictionary and Orthography Checker").format(name=self.program['name'])
-    ```
     ```
 
 - Sinon, il ne semble pas y avoir de moyen d'intégrer les éléments de format dans la traduction, nous sommes donc coincés, espérons-le, à comprendre plus ou moins ce que signifie chaque `{}` .
