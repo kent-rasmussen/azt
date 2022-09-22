@@ -4,11 +4,11 @@
 
 <!-- gives better overall format, with shading -->
 
-Because of the way we are doing translations (within the constraints of Python), there are a couple things we should all pay attention to:
+En raison de la façon dont nous effectuons les traductions (dans les limites de Python), il y a quelques points auxquels nous devrions tous prêter attention :
 
-- There doesn't seem to be any difference on the use of `_("").format()` syntax or `_("".format())` syntax
+- Il ne semble pas y avoir de différence dans l'utilisation de la syntaxe `_("").format()` ou de la syntaxe `_("".format())`
 
-- The best practice may be to put a semantically helpful keyword for each variable, like this:
+- La meilleure pratique peut être de mettre un mot-clé sémantiquement utile pour chaque variable, comme ceci :
 
     ```
     ```
@@ -16,24 +16,24 @@ Because of the way we are doing translations (within the constraints of Python),
     ```
     ```
 
-- Otherwise, there doesn't seem to be any way to bring the format items into the translation, so we're stuck hopefully understanding more or less what each `{}` means.
+- Sinon, il ne semble pas y avoir de moyen d'intégrer les éléments de format dans la traduction, nous sommes donc coincés, espérons-le, à comprendre plus ou moins ce que signifie chaque `{}` .
 
-- The following formats work:
+- Les formats suivants fonctionnent :
 
-    - format()ed string on one line:
+    - chaîne formatée sur une ligne :
 
         ```
         _("Language with code [{}]").format(xyz)
         ```
 
-    - format()ed strings, with format on line after reference
+    - chaînes formatées, avec format en ligne après référence
 
         ```
         _("{} doesn't look like a well formed lift file; please "
         "try again.").format(filename)`
         ```
 
-    - format()ed strings with multiple references to the same format item, given at the end
+    - chaînes formatées avec plusieurs références au même élément de format, donné à la fin
 
         ```
         _("Your regular expressions look OK for {0} (there are "
