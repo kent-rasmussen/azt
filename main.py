@@ -7596,6 +7596,7 @@ class Report(object):
                 s2=xlp.Section(si,sid) #,level=2
                 iterateUFgroups(s2,**kwargs)
         else:
+            kwargs['ufgroup']=_("All")
             iterateUFgroups(si,**kwargs)
             # These lines get all senseids, to test that we're not losing any, below
         # This is the first of three blocks to uncomment (on line, then logs)
