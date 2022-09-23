@@ -7856,8 +7856,7 @@ class Report(object):
         """check set here"""
         for kwargs['check'] in self.checks: #self.checkcodesbyprofile:
             """multithread here"""
-            self.docheckreport(parent,
-                                **kwargs)
+            self.docheckreport(parent,**kwargs)
     def orderchecks(self,checklist):
         checks=sorted([i for i in checklist if '=' in i], key=len, reverse=True)
         checks+=sorted([i for i in checklist if '=' not in i
