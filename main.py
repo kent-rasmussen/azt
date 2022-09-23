@@ -4030,6 +4030,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(ReportCitationBasicV)
                 tasks.append(ReportCitationBasicC)
                 tasks.append(ReportCitationBasicCV)
+                tasks.append(ReportCitationBasicVC)
                 tasks.append(ReportCitationBasic)
             if self.doneenough['sortT']:
                 tasks.append(ReportCitationT)
