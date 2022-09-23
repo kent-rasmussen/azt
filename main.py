@@ -7841,6 +7841,9 @@ class Report(object):
             elif cvt == 'CV':
                 groups=self.status.groups(cvt='C')
                 groupcomparisons=self.status.groups(cvt='V')
+            elif cvt == 'VC':
+                groups=self.status.groups(cvt='V')
+                groupcomparisons=self.status.groups(cvt='C')
             else:
                 log.error("Sorry, I don't know how to compare cvt: {}"
                                                     "".format(cvt))
@@ -9280,16 +9283,12 @@ class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window)
         self.cvtstodo=['C']
         # This is really hard on memory, with correspondences.
         Comprehensive.__init__(self)
-class ReportCitationBasicCV(Report,Comprehensive,Segments,TaskDressing,ui.Window):
+class ReportCitationBasicCV(ReportCitationBasic):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Comprehensive CxV Phonotactics Report") # on Citation Forms
     def taskicon(self):
         return program['theme'].photo['iconCVRepcomp']
-    def tooltip(self):
-        return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. \nIt does "
-                "this just for consonant-vowel correspondence checks.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
@@ -9300,12 +9299,26 @@ class ReportCitationBasicCV(Report,Comprehensive,Segments,TaskDressing,ui.Window
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Segments.__init__(self,parent)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
-        Report.__init__(self)
+        ReportCitationBasic.__init__(self,parent)
         self.cvtstodo=['CV']
-        Comprehensive.__init__(self)
+class ReportCitationBasicVC(ReportCitationBasic):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Comprehensive VxC Phonotactics Report") # on Citation Forms
+    def taskicon(self):
+        return program['theme'].photo['iconCVRepcomp']
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.basicreport,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['CVRepcomp'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        ReportCitationBasic.__init__(self,parent)
+        self.cvtstodo=['VC']
 class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
@@ -11889,6 +11902,8 @@ class CheckParameters(dict):
                 'C':{'sg':_('Consonant'),'pl':_('Consonants')},
                 'CV':{'sg':_('Consonant-Vowel combination'),
                         'pl':_('Consonant-Vowel combinations')},
+                'VC':{'sg':_('Vowel-Consonant combination'),
+                        'pl':_('Vowel-Consonant combinations')},
                 'T':{'sg':_('Tone'),'pl':_('Tones')},
                 }
         self._checknames={
