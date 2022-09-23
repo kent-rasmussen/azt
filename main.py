@@ -1032,7 +1032,6 @@ class Settings(object):
     def interfacelangwrapper(self,choice=None,window=None):
         if choice:
             interfacelang(choice) #change the UI *ONLY*; no object attributes
-            file.writeinterfacelangtofile(choice) #>ui_lang.py, for startup
             self.set('interfacelang',choice,window) #set variable for the future
             self.storesettingsfile() #>xyz.CheckDefaults.py
             #because otherwise, this stays as is...
