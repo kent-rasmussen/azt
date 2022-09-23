@@ -3,8 +3,8 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A→Z+T'}
 program['tkinter']=True
-program['production']=True #True for making screenshots (default theme)
-program['testing']=False #True eliminates Error screens and zipped logs
+program['production']=False #True for making screenshots (default theme)
+program['testing']=False #True eliminates Error screens and zipped logs, git
 program['demo']=True #sets me=False, production=True, testing=False
 program['demo']=False
 program['version']='0.9.6' #This is a string...
@@ -1041,21 +1041,22 @@ class Settings(object):
         else:
             return interfacelang()
     def repocheck(self):
-        self.repo={}
-        # return #for now, until fixed
-        repo={ #start with local variable:
-                'git': Git(self.directory),
-                'hg': Mercurial(self.directory),
-                }
+        # self.repo={}
         self.repo=dict() #then copy to class attribute if there
-        for r in repo:
-            if hasattr(repo[r],'files'): #fails if no exe
-                if repo[r].exists(): #tests for .code dir
-                    log.info(_("Found {} Repository!"
-                                ).format(repo[r].repotypename))
-                elif r == 'git': #don't worry about hg, if not there already
-                    repo[r].init()
-                self.repo[r]=repo[r]
+        # return #for now, until fixed
+        if not program['testing']:
+            repo={ #start with local variable:
+                    'git': Git(self.directory),
+                    'hg': Mercurial(self.directory),
+                    }
+            for r in repo:
+                if hasattr(repo[r],'files'): #fails if no exe
+                    if repo[r].exists(): #tests for .code dir
+                        log.info(_("Found {} Repository!"
+                                    ).format(repo[r].repotypename))
+                    elif r == 'git': #don't worry about hg, if not there already
+                        repo[r].init()
+                    self.repo[r]=repo[r]
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
         self.settings={'defaults':{
@@ -3739,6 +3740,7 @@ class TaskDressing(object):
         self.runwindow.title(title)
         self.runwindow.attributes('-fullscreen', True)
         self.runwindow.bind('<Escape>', releasefullscreen)
+        self.runwindow.bind('<Double-Button-1>', releasefullscreen)
         self.runwindow.lift()
         self.runwindow.cleanup=self.runwindowcleanup
         if not nowait:
