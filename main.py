@@ -7551,8 +7551,12 @@ class Report(object):
                                     **kwargs)
             self.docheckreport(parent,**kwargs) #this needs parent
             self.coocurrencetables(xlpr)
-        self.getrunwindow()
-        # self.makeresultsframe() #not for now, causing problems
+        log.info("getresults starting with kwargs {}".format(kwargs))
+        usegui=kwargs['usegui']=kwargs.get('usegui',True)
+        log.info("getresults continuing with kwargs {}".format(kwargs))
+        if usegui:
+            self.getrunwindow()
+            self.makeresultsframe() #not for now, causing problems
         kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
         kwargs['ps']=kwargs.get('ps',self.slices.ps())
         kwargs['profile']=kwargs.get('profile',self.slices.profile())
@@ -7572,9 +7576,9 @@ class Report(object):
         text=(_("{} roots of form {} by {}".format(kwargs['ps'],
                                                     kwargs['profile'],
                                                     kwargs['check'])))
-        if hasattr(self,'results'): #i.e., showing results in window
+        if usegui: #i.e., showing results in window
             ui.Label(self.results, text=text).grid(column=0, row=self.results.row)
-        self.runwindow.wait()
+            self.runwindow.wait()
         si=xlp.Section(xlpr,text)
         if self.byUFgroup:
             analysis=self.makeanalysis()
@@ -7606,9 +7610,10 @@ class Report(object):
         # log.info("senseidsnotsearchable: {}".format(len(senseidsnotsearchable)))
         # log.info("senseidsnotsearchable: {}".format(senseidsnotsearchable))
         xlpr.close(me=me)
-        self.runwindow.waitdone()
-        if not hasattr(self,'results'): #i.e., showing results in window
-            self.runwindow.on_quit()
+        if usegui:
+            self.runwindow.waitdone()
+            if not hasattr(self,'results'): #i.e., showing results in window
+                self.runwindow.on_quit()
         # Report on testing blocks above
         # log.info("senseids remaining (rx): ({}) {}".format(
         #                                                 len(rxsenseidsinslice),
@@ -7634,7 +7639,7 @@ class Report(object):
         if not n: #i.e., nothing was found above
             text=_("No results for {}/{} ({})!").format(profile,check,ps)
             log.info(text)
-            if hasattr(self,'results'): #i.e., showing results in window
+            if usegui: #i.e., showing results in window
                 ui.Label(self.results, text=text, column=0, row=self.results.row+1)
             return
     def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None,xcounts=None):
@@ -7715,6 +7720,7 @@ class Report(object):
         return xlpreport
     def wordsbypsprofilechecksubcheckp(self,parent,t="NoText!",**kwargs):
         log.info("Kwargs (wordsbypsprofilechecksubcheckp): {}".format(kwargs))
+        usegui=kwargs.get('usegui',True)
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
@@ -7820,7 +7826,7 @@ class Report(object):
                             self.basicreported[ncvt]=set([senseid])
                 framed=self.taskchooser.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,ftype=ftype,listword=True) #showgroups?
-                if hasattr(self,'results'): #i.e., showing results in window
+                if usegui: #i.e., showing results in window
                     self.results.row+=1
                     col=0
                     for lang in [self.analang]+self.glosslangs:
