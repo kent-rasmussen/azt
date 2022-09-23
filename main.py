@@ -1350,6 +1350,9 @@ class Settings(object):
             elif 'default' in config and section in config['default']:
                 d[section]=ofromstr(config['default'][section])
         self.readsettingsdict(d)
+        if self.interfacelang:
+            interfacelang(self.interfacelang)
+            self.taskchooser.mainwindowis.maketitle()
     def initdefaults(self):
         """Some of these defaults should be reset when setting another field.
         These are listed under that other field. If no field is specified
