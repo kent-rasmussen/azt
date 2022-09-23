@@ -60,6 +60,7 @@ import multiprocessing
 import itertools
 import importlib.util
 import collections
+import psutil
 from random import randint
 if program['tkinter']==True:
     try:
@@ -7545,8 +7546,7 @@ class Report(object):
                                                         count=1),
                                     **kwargs)
             self.docheckreport(parent,**kwargs) #this needs parent
-            if 'x' in check:
-                self.coocurrencetables(xlpr,**kwargs)
+            self.coocurrencetables(xlpr)
         self.getrunwindow()
         # self.makeresultsframe() #not for now, causing problems
         kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
@@ -7774,7 +7774,6 @@ class Report(object):
                 othergroup=group
                 check=rx.sub('=','x',check, count=1)
             try:
-                                                group][othergroup]=len(matches)
                 self.checkcounts[ps][profile][ufg][check][
                                                 group][othergroup]=n
             except KeyError:
