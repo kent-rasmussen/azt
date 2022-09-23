@@ -12713,9 +12713,12 @@ def interfacelang(lang=None,magic=False):
                 if i18n[lang] == _.__self__:
                     return lang
             except:
-                log.debug("_ doesn't look defined yet, returning 'en' as current "
-                                                            "interface language.")
-                return 'en'
+                log.debug("_ doesn't look defined yet, returning interface "
+                            "language from locale.")
+                loc,enc=locale.getdefaultlocale()
+                code=loc.split('_')[0]
+                if code in i18n:
+                    return code
 def dictofchilddicts(self,remove=None):
     # This takes a dict[x][y] and returns a dict[y], with all unique values
     # listed for all dict[*][y].
