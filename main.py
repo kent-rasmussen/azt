@@ -9234,7 +9234,7 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
                 "\n- Consonant-Vowel Correspondence")
     def dobuttonkwargs(self):
         return {'text':"Report!",
-                'fn':self.runcheck,
+                'fn':self.do,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
@@ -9277,6 +9277,14 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
+class ReportCitationBackground(ReportCitation):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Alphabet Report (Background)") # on One Data Slice
+    def __init__(self, parent): #frame, filename=None
+        self.reportfn=self.getresults
+        ReportCitation.__init__(self,parent)
+        self.do=self.reportmulti
 class ReportCitationByUF(ByUF,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
@@ -9503,7 +9511,8 @@ class ReportCitationTlocationBackground(ReportCitationTlocation,Report,Tone,Task
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self)
         ui.Window.__init__(self,parent)
-        self.do=self.tonegroupreportmulti
+        self.do=self.reportmulti
+        self.reportfn=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         self.settings.maxprofiles=None
         self.settings.maxpss=None
@@ -9560,8 +9569,8 @@ class ReportCitationBasicTBackground(ReportCitationBasicT,Report,Comprehensive,T
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self)
         ui.Window.__init__(self,parent)
-        self.do=self.tonegroupreportmulti
-        # self.do=self.tonegroupreport
+        self.do=self.reportmulti
+        self.reportfn=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
         self.bylocation=True
