@@ -7546,9 +7546,7 @@ class Report(object):
     def getresults(self,**kwargs):
         def iterateUFgroups(parent,**kwargs):
             if 'x' in kwargs['check'] and kwargs['cvt'] != 'CV': #CV has no C=V...
-                self.docheckreport(parent,check=rx.sub('x','=',kwargs['check'],
-                                                        count=1),
-                                    **kwargs)
+                kwargs['check']=rx.sub('x','=',kwargs['check'],count=1)
             self.docheckreport(parent,**kwargs) #this needs parent
             self.coocurrencetables(xlpr)
         log.info("getresults starting with kwargs {}".format(kwargs))
