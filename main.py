@@ -4032,6 +4032,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if self.showreports:
             tasks=[
                     ReportCitation,
+                    ReportCitationBackground
                     ]
             if self.doneenough['collectionlc']:
                 """This currently takes way too much time. Until it gets
