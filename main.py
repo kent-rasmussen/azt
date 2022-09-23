@@ -13554,10 +13554,12 @@ if __name__ == "__main__":
                                     program['name'],program['version'],mt))
     log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
                                                     sys.argv[0], sys.argv))
-    log.info(_("Working directory is {} on {}, running on {} cores"
+    log.info(_("Working directory is {} on {}, running on {} cores, at {}Mhz"
             ).format(program['aztdir'],
                     program['hostname'],
-                    multiprocessing.cpu_count()))
+                    multiprocessing.cpu_count(),
+                    psutil.cpu_freq(percpu=True)))
+    log.info(_("Computer identifies as {}").format(platform.uname()))
     log.info(_("Loglevel is {}; started at {}").format(loglevel,
                                         program['start_time'].isoformat()))
     #'sendpraat' now in 'praat', if useful
