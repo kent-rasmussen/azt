@@ -7209,7 +7209,7 @@ class Report(object):
             # with multiprocessing.Pool(processes=4) as pool:
             #     pool.map(self.tonegroupreport,[
             #             {'ps':ps,'profile':p,'usegui':False} for p in d[ps]])
-    def tonegroupreportmulti(self,**kwargs):
+    def reportmulti(self,**kwargs):
         # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
         start_time=nowruntime()
         # log.info("reportmulti starting with kwargs {}".format(kwargs))
@@ -7233,8 +7233,8 @@ class Report(object):
             for profile in d[ps]:
                 kwargs['ps']=ps
                 kwargs['profile']=profile
-                t=multiprocessing.Process(target=self.tonegroupreport,
                 # log.info("reportmulti background with kwargs {}".format(kwargs))
+                t=multiprocessing.Process(target=self.reportfn,
                                             kwargs=kwargs)
                 t.start()
                 log.info(_("Starting XLP background report with kwargs {}"
@@ -7253,8 +7253,8 @@ class Report(object):
         logfinished(start_time,msg="setting up background reports {}".format(done))
         log.info(_("Starting reports that didn't work in the background: {}").format(unbackground))
         for kwargs in unbackground:
-            self.tonegroupreport(**kwargs) #run what failed in background here
             # log.info("reportmulti unbackground with kwargs {}".format(kwargs))
+            self.reportfn(**kwargs) #run what failed in background here
         logfinished(start_time,msg="all reports ({})".format(all))
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
