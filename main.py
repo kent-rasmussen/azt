@@ -4009,13 +4009,6 @@ class TaskChooser(TaskDressing,ui.Window):
         self.mainwindowis=window
         self.mainwindowis.mainwindow=True #keep only one of these
         self.mainwindowis.deiconify()
-    def setiflang(self):
-        self.interfacelangs=file.getinterfacelangs()
-        iflang=file.getinterfacelang()
-        if iflang is None:
-            interfacelang('fr')
-        else:
-            interfacelang(iflang)
     def makeoptions(self):
         """This function (and probably a few dependent functions, maybe
         another class) provides a list of functions with prerequisites
