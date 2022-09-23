@@ -1543,6 +1543,11 @@ class Settings(object):
             log.info("Problem with finding a nominal and verbal lexical "
             "category (looked in first two of [{}])"
             "".format(self.db.pss[self.analang]))
+        if self.secondformfield:
+            if self.nominalps in self.secondformfield:
+                self.pluralname=self.secondformfield[self.nominalps]
+            if self.verbalps in self.secondformfield:
+                self.imperativename=self.secondformfield[self.verbalps]
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
         # log.info(self.db.fieldnames)
@@ -2398,16 +2403,18 @@ class Settings(object):
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setsecondformfieldN(self,choice,window=None):
         # ps=Noun# t=self.params.cvt()
-        self.secondformfield[self.nominalps]=choice
+        self.secondformfield[self.nominalps]=self.pluralname=choice
         self.attrschanged.append('secondformfield')
         self.refreshattributechanges()
-        window.destroy()
+        if window:
+            window.destroy()
     def setsecondformfieldV(self,choice,window=None):
         # ps=Noun# t=self.params.cvt()
-        self.secondformfield[self.verbalps]=choice
+        self.secondformfield[self.verbalps]=self.imperativename=choice
         self.attrschanged.append('secondformfield')
         self.refreshattributechanges()
-        window.destroy()
+        if window:
+            window.destroy()
     def setprofile(self,choice,window):
         self.slices.profile(choice)
         self.attrschanged.append('profile')
@@ -3340,6 +3347,39 @@ class TaskDressing(object):
         othername=self.settings.pluralname
         setcmd=self.settings.setsecondformfieldV
         self.getsecondformfield(ps,opts,othername,setcmd)
+    def getcustomsecondformfield(self,ps,othername,setcmd):
+        def updateerror(event=None):
+            if event.keysym != 'Return':
+                self.errorlabel['text'] = ''
+        def submitform(event=None):
+            log.info("setting {} (not {})".format(custom.get(), othername))
+            if custom.get() == othername:
+                text=_("That name is already used!")
+                log.error(text)
+                self.errorlabel['text']=text
+                return
+            setcmd(custom.get())
+            window.on_quit()
+        title=_('Make Custom Second Form Field for {}').format(ps)
+        window=ui.Window(self.frame,title=title)
+        #should never be othername
+        l=ui.Label(window,
+                text=_("What field name do you want to use for {} words?"
+                        ).format(ps),
+                row=0,column=0)
+        custom=ui.StringVar()
+        formfield = ui.EntryField(window, render=True,
+                                    textvariable=custom,
+                                    row=1,column=0,
+                                    sticky='')
+        formfield.focus_set()
+        formfield.bind('<Return>',submitform)
+        formfield.bind('<KeyRelease>',updateerror)
+        self.errorlabel=ui.Label(window,text='',
+                            fg='red',
+                            wraplength=int(self.frame.winfo_screenwidth()/3),
+                            row=2,column=0,sticky='nsew'
+                            )
     def getsecondformfield(self,ps,opts,othername,setcmd,other=False):
         def getother():
             window.destroy()
@@ -3348,12 +3388,22 @@ class TaskDressing(object):
                                     othername=othername,
                                     setcmd=setcmd,
                                     other=True)
+        def getcustom():
+            window.destroy()
+            self.getcustomsecondformfield(ps=ps,
+                                    # opts=opts,
+                                    othername=othername,
+                                    setcmd=setcmd,
+                                    # other=True
+                                    )
         log.info("Asking for ‘{}’ second form field...".format(ps))
-        optionslist = self.db.fieldnames[self.analang]
-        if not optionslist:
+        if not self.analang in self.db.fieldnames or not self.db.fieldnames[
+                                                                self.analang]:
             ErrorNotice(_("I don't see any appropriate fields; I'll give you "
             "some commonly used ones to choose from."), wait=True)
             other=True
+        else:
+            optionslist = self.db.fieldnames[self.analang]
         title=_('Select Second Form Field for {}').format(ps)
         window=ui.Window(self.frame,title=title)
         if other:
@@ -3364,9 +3414,9 @@ class TaskDressing(object):
             text=_("What is the database field for second forms for ‘{}’ words?"
             "".format(ps))
             try:
-                optionslist.remove(othername)
+                optionslist.remove(othername) #don't present other ps 2nd field
             except ValueError:
-                log.info("Imperative field ‘{}’ doesn't seem to be there: {}"
+                log.info("Other second field ‘{}’ doesn't seem to be there: {}"
                         "".format(othername,optionslist))
         ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
@@ -3383,6 +3433,12 @@ class TaskDressing(object):
                             text=_("None of these; make a new field"),
                             column=0, row=1,
                             cmd=getother
+                            )
+        else:
+            otherbutton=ui.Button(buttonFrame1.content,
+                            text=_("None of these work; make my own field"),
+                            column=0, row=1,
+                            cmd=getcustom
                             )
         window.wait_window(window)
     def secondfieldnames(self):
