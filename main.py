@@ -7212,7 +7212,9 @@ class Report(object):
     def tonegroupreportmulti(self,**kwargs):
         # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
         start_time=nowruntime()
+        # log.info("reportmulti starting with kwargs {}".format(kwargs))
         kwargs['usegui']=False
+        # log.info("reportmulti continuing with kwargs {}".format(kwargs))
         if hasattr(self.settings,'maxpss') and self.settings.maxpss:
             pss=self.slices.pss()[:self.settings.maxpss]
         else:
@@ -7232,6 +7234,7 @@ class Report(object):
                 kwargs['ps']=ps
                 kwargs['profile']=profile
                 t=multiprocessing.Process(target=self.tonegroupreport,
+                # log.info("reportmulti background with kwargs {}".format(kwargs))
                                             kwargs=kwargs)
                 t.start()
                 log.info(_("Starting XLP background report with kwargs {}"
@@ -7251,6 +7254,7 @@ class Report(object):
         log.info(_("Starting reports that didn't work in the background: {}").format(unbackground))
         for kwargs in unbackground:
             self.tonegroupreport(**kwargs) #run what failed in background here
+            # log.info("reportmulti unbackground with kwargs {}".format(kwargs))
         logfinished(start_time,msg="all reports ({})".format(all))
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
@@ -7549,9 +7553,9 @@ class Report(object):
                 kwargs['check']=rx.sub('x','=',kwargs['check'],count=1)
             self.docheckreport(parent,**kwargs) #this needs parent
             self.coocurrencetables(xlpr)
-        log.info("getresults starting with kwargs {}".format(kwargs))
+        # log.info("getresults starting with kwargs {}".format(kwargs))
         usegui=kwargs['usegui']=kwargs.get('usegui',True)
-        log.info("getresults continuing with kwargs {}".format(kwargs))
+        # log.info("getresults continuing with kwargs {}".format(kwargs))
         if usegui:
             self.getrunwindow()
             self.makeresultsframe() #not for now, causing problems
