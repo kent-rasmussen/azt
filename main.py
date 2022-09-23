@@ -12957,7 +12957,7 @@ def isinteger(x):
     try:
         int(x)
         return True
-    except ValueError:
+    except (ValueError,TypeError):
         return False
 def unlist(l,ignore=[None]):
     if l and isinstance(l[0],lift.ET.Element):
