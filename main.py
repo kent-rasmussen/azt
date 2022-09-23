@@ -7734,7 +7734,7 @@ class Report(object):
         self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
         log.info("regexCV: {}; \nregex: {}".format(self.regexCV,self.regex))
         matches=set(self.senseidformsbyregex(self.regex,**kwargs))
-        if 'ufgroup' in kwargs:
+        if 'ufsenseids' in kwargs:
             matches=matches&set(kwargs['ufsenseids'])
         if 'x' not in check and '=' not in check: #only pull from simple reports
             for ncvt in self.ncvts: #for basic reports
