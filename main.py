@@ -4418,7 +4418,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.showreports=False
         self.showingreports=False
         self.ifcollectionlcsettingsdone=False
-        self.setiflang() #before Splash
+        self.interfacelangs=getinterfacelangs()
         ui.Window.__init__(self,parent)
         self.setmainwindow(self)
         splash = Splash(self)
