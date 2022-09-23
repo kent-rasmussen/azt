@@ -137,11 +137,6 @@ def getlangnamepaths(filename, langs):
         log.log(1,filename)
     log.log(1,output)
     return output
-def getinterfacelangs():
-    return [{'code':'fr','name':'Français'},
-            {'code':'en','name':'English'},
-            {'code':'fub','name':'Fulfulde'}
-            ]
 def getinterfacelang():
     # I haven't figured out a way to translate the strings here, hope that's OK.
     # This is because this fn is called by the mainapplication class before

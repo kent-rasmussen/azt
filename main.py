@@ -12955,6 +12955,11 @@ def propagate(self,attr):
 def donothing():
     log.debug("Doing Nothing!")
     pass
+def getinterfacelangs():
+    return [{'code':'fr','name':'Français'},
+            {'code':'en','name':'English'},
+            {'code':'fub','name':'Fulfulde'}
+            ]
 def pathseparate(path):
     os=platform.system()
     if os == "Windows":
