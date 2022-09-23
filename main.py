@@ -7857,17 +7857,18 @@ class Report(object):
         possible values (as above), then restore the value."""
         """I need to find a way to limit these tests to appropriate
         profiles..."""
-        cvt=kwargs.pop('cvt',self.params.cvt()) #only send on one
+        kwargs['cvt']=kwargs.get('cvt',self.params.cvt()) #only send on one
         ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        groups=self.status.groups(cvt=cvt)
+        kwargs['profile']=kwargs.get('profile',self.slices.profile())
+        groups=self.status.groups(**kwargs) #was cvt only
         #CV checks depend on profile, too
-        checksunordered=self.status.checks(cvt=cvt,profile=profile)
+        checksunordered=self.status.checks(**kwargs)
         self.checks=self.orderchecks(checksunordered)
         """check set here"""
-        for check in self.checks: #self.checkcodesbyprofile:
+        for kwargs['check'] in self.checks: #self.checkcodesbyprofile:
             """multithread here"""
-            self.docheckreport(parent,check=check,cvt=cvt,**kwargs)
+            self.docheckreport(parent,
+                                **kwargs)
     def orderchecks(self,checklist):
         checks=sorted([i for i in checklist if '=' in i], key=len, reverse=True)
         checks+=sorted([i for i in checklist if '=' not in i
@@ -7875,44 +7876,52 @@ class Report(object):
         checks+=sorted([i for i in checklist if 'x' in i], key=len)
         return checks
     def docheckreport(self,parent,**kwargs):
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.pop('check',self.params.check()) #don't pass this twice!
-        groups=self.status.groups(cvt=cvt)
+        kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
+        kwargs['ps']=kwargs.get('ps',self.slices.ps())
+        kwargs['profile']=kwargs.get('profile',self.slices.profile())
+        kwargs['check']=kwargs.get('check',self.params.check())
+        groups=self.status.groups(**kwargs)
         group=self.status.group()
-        self.ncvts=rx.split('[=x]',check)
-        if 'x' in check:
+        self.ncvts=rx.split('[=x]',kwargs['check'])
+        if 'x' in kwargs['check']:
             log.debug('Hey, I cound a correspondence number!')
-            if cvt in ['V','C']:
+            if kwargs['cvt'] in ['V','C']:
                 groupcomparisons=groups
-            elif cvt == 'CV':
+            elif kwargs['cvt'] == 'CV':
                 groups=self.status.groups(cvt='C')
                 groupcomparisons=self.status.groups(cvt='V')
             else:
                 log.error("Sorry, I don't know how to compare cvt: {}"
-                                                    "".format(cvt))
+                                                    "".format(kwargs['cvt']))
             log.info("Going to run report for groups {}".format(groups))
             log.info("With comparison groups {}".format(groupcomparisons))
-            for group in groups:
+            for kwargs['group'] in groups:
                 for self.groupcomparison in groupcomparisons:
-                    if group != self.groupcomparison:
-                        t=_("{} {} {}={}-{}".format(ps,profile,
-                                            check,group,
-                                            self.groupcomparison))
-                        self.wordsbypsprofilechecksubcheckp(parent,t,
-                                        check=check, group=group,**kwargs)
+                    if kwargs['group'] != self.groupcomparison:
+                        t=_("{} {} {} {}={}-{}".format(kwargs['ps'],
+                                                        kwargs['profile'],
+                                                        kwargs['ufgroup'],
+                                                        kwargs['check'],
+                                                        kwargs['group'],
+                                                        self.groupcomparison))
+                        self.wordsbypsprofilechecksubcheckp(parent,t,**kwargs)
         elif group:
             log.info("Going to run report just for group {}".format(group))
-            t=_("{} {} {}={}".format(ps,profile,check,group))
-            self.wordsbypsprofilechecksubcheckp(parent,t,
-                                        check=check, group=group,**kwargs)
+            t=_("{} {} {} {}={}".format(kwargs['ps'],
+                                        kwargs['profile'],
+                                        kwargs['ufgroup'],
+                                        kwargs['check'],
+                                        group))
+            self.wordsbypsprofilechecksubcheckp(parent,t,group=group,**kwargs)
         elif groups:
             log.info("Going to run report for groups {}".format(groups))
-            for group in groups:
-                t=_("{} {} {}={}".format(ps,profile,check,group))
-                self.wordsbypsprofilechecksubcheckp(parent,t,
-                                        check=check, group=group,**kwargs)
+            for kwargs['group'] in groups:
+                t=_("{} {} {} {}={}".format(kwargs['ps'],
+                                            kwargs['profile'],
+                                            kwargs['ufgroup'],
+                                            kwargs['check'],
+                                            kwargs['group']))
+                self.wordsbypsprofilechecksubcheckp(parent,t,**kwargs)
     def idXLP(self,framed):
         id='x' #string!
         bits=[
