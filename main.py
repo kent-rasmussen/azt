@@ -7710,6 +7710,7 @@ class Report(object):
             xlpreport.addlang({'id':lang,'name': self.settings.languagenames[lang]})
         return xlpreport
     def wordsbypsprofilechecksubcheckp(self,parent,t="NoText!",**kwargs):
+        log.info("Kwargs (wordsbypsprofilechecksubcheckp): {}".format(kwargs))
         cvt=kwargs.get('cvt',self.params.cvt())
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
@@ -7744,28 +7745,27 @@ class Report(object):
                     log.info("Not removing ncvt {} ids from basic reported; "
                         "hope that's appropriate."
                         "".format(ncvt))
+        ufg=kwargs['ufgroup']
+        n=len(matches)
         # log.info("{} matches found!: {}".format(len(matches),matches))
         if 'x' not in check:
             try:
-                n=self.checkcounts[ps][profile][check][group]=len(matches)
-            except:
+                self.checkcounts[ps][profile][ufg][check][group]=n
+            except KeyError:
                 try:
-                    self.checkcounts[ps][profile][check]={}
-                    n=self.checkcounts[ps][profile][check][group]=len(matches)
-                except:
+                    self.checkcounts[ps][profile][ufg][check]={group:n}
+                except KeyError:
                     try:
-                        self.checkcounts[ps][profile]={}
-                        self.checkcounts[ps][profile][check]={}
-                        n=self.checkcounts[ps][profile][check][
-                                                            group]=len(matches)
-                    except:
-                        self.checkcounts[ps]={}
-                        self.checkcounts[ps][profile]={}
-                        self.checkcounts[ps][profile][check]={}
-                        log.info("ps: {}, profile: {}, check: {}, group: {}"
-                                "".format(ps,profile,check,group))
-                        n=self.checkcounts[ps][profile][check][
-                                                            group]=len(matches)
+                        self.checkcounts[ps][profile][ufg]={check:{group:n}}
+                    except KeyError:
+                        try:
+                            self.checkcounts[ps][profile]={ufg:{check:{
+                                                        group:n}}}
+                        except KeyError:
+                            self.checkcounts[ps]={profile:{ufg:{check:{
+                                                        group:n}}}}
+                            log.info("ps: {}, profile: {}, check: {}, group: {}"
+                                    "".format(ps,profile,check,group))
         if 'x' in check or len(check.split('=')) == 2:
             if 'x' in check:
                 othergroup=self.groupcomparison
@@ -7774,41 +7774,28 @@ class Report(object):
                 othergroup=group
                 check=rx.sub('=','x',check, count=1)
             try:
-                n=self.checkcounts[ps][profile][check][
                                                 group][othergroup]=len(matches)
+                self.checkcounts[ps][profile][ufg][check][
+                                                group][othergroup]=n
             except KeyError:
                 try:
-                    self.checkcounts[ps][profile][check][group]={}
-                    n=self.checkcounts[ps][profile][check][
-                                                group][othergroup]=len(matches)
+                    self.checkcounts[ps][profile][ufg][check][
+                                                group]={othergroup:n}
                 except KeyError:
                     try:
-                        self.checkcounts[ps][profile][check]={}
-                        self.checkcounts[ps][profile][check][group]={}
-                        n=self.checkcounts[ps][profile][check][
-                                                group][othergroup]=len(matches)
+                        self.checkcounts[ps][profile][ufg][check]={group:{
+                                                    othergroup:n}}
                     except KeyError:
                         try:
-                            self.checkcounts[ps][profile]={}
-                            self.checkcounts[ps][profile][check]={}
-                            self.checkcounts[ps][profile][check][group]={}
-                            n=self.checkcounts[ps][profile][check][
-                                                group][othergroup]=len(matches)
+                            self.checkcounts[ps][profile][ufg]={check:{group:{
+                                                    othergroup:n}}}
                         except KeyError:
                             try:
-                                self.checkcounts[ps]={}
-                                self.checkcounts[ps][profile]={}
-                                self.checkcounts[ps][profile][check]={}
-                                self.checkcounts[ps][profile][check][group]={}
-                                n=self.checkcounts[ps][profile][check][
-                                                group][othergroup]=len(matches)
+                                self.checkcounts[ps][profile]={ufg:{check:{
+                                            group:{othergroup:n}}}}
                             except KeyError:
-                                self.checkcounts[ps]={}
-                                self.checkcounts[ps][profile]={}
-                                self.checkcounts[ps][profile][check]={}
-                                self.checkcounts[ps][profile][check][group]={}
-                                n=self.checkcounts[ps][profile][check][
-                                                group][othergroup]=len(matches)
+                                self.checkcounts[ps]={profile:{ufg:{check:{
+                                            group:{othergroup:n}}}}}
         if n>0:
             titlebits='x'+ps+profile+check+group
             if 'x' in check:
