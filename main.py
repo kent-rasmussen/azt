@@ -10766,34 +10766,38 @@ class Splash(ui.Window):
             r=program['repo'].share()
         else:
             r=program['repo'].pull()
-    def __init__(self, parent):
-        parent.withdraw()
-        super(Splash, self).__init__(parent,exit=0)
-        title=(_("{name} Dictionary and Orthography Checker").format(
-                                                        name=program['name']))
-        self.title(title)
-        v=_("Version: {}".format(program['version']))
-        text=_("Your dictionary database is loading...\n\n"
-                "{name} is a computer program that accelerates community"
+    def maketexts(self):
+        self.labels['v']['text']=_("Version: {}".format(program['version']))
+        self.labels['text']['text']=_("Your dictionary database is loading...\n"
+                "\n{name} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
                 "beginning dictionary by vowels, consonants and tone. "
                 "(more in help:about)").format(name=program['name'])
-        l=ui.Label(self.frame, text=title, pady=10,
+        self.labels['titletext']['text']=(_("{name} Dictionary and Orthography "
+                                        "Checker").format(name=program['name']))
+        self.update_idletasks()
+
+    def __init__(self, parent):
+        parent.withdraw()
+        super(Splash, self).__init__(parent,exit=0)
+        self.labels={'titletext':ui.Label(self.frame, text='', pady=10,
                         font='title',anchor='c',padx=25,
                         row=0,column=0,sticky='we'
-                        )
-        m=ui.Label(self.frame, text=v, anchor='c',padx=25,
+                        ),
+                        'v':ui.Label(self.frame, text='', anchor='c',padx=25,
                         row=1,column=0,sticky='we'
-                        )
-        n=ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
+                        ),
+                        'photo':ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
                         row=2,column=0,sticky='we'
-                        )
-        o=ui.Label(self.frame, text=text, padx=50,
-                wraplength=int(self.winfo_screenwidth()/2),
-                row=3,column=0,sticky='we'
-                )
+                        ),
+                        'text':ui.Label(self.frame, text='', padx=50,
+                                    wraplength=int(self.winfo_screenwidth()/2),
+                                    row=3,column=0,sticky='we'
+                                    )
+                    }
+        self.maketexts()
+        self.title(self.labels['titletext']['text'])
         self.withdraw() #don't show until placed
-        self.update_idletasks()
         self.w = self.winfo_reqwidth()
         x=int(self.master.winfo_screenwidth()/2-(self.w/2))
         self.h = self.winfo_reqheight()
