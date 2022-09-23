@@ -7994,13 +7994,17 @@ class Report(object):
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
         def iteratecvt(parent,**kwargs):
-            for cvt in self.cvtstodo:
-                t=_("{} checks".format(self.params.cvtdict()[cvt]['sg']))
+            if 'ufgroup' not in kwargs:
+                kwargs['ufgroup']=_("All")
+            for kwargs['cvt'] in self.cvtstodo:
+                t=_("{} checks".format(self.params.cvtdict()[
+                                                        kwargs['cvt']]['sg']))
                 print(t)
                 log.info(t)
-                sid=" ".join([t,"for",kwargs['profile'],kwargs['ps']+'s'])
+                sid=" ".join([t,"for",kwargs['ufgroup'],kwargs['profile'],
+                            kwargs['ps']+'s'])
                 s34=xlp.Section(parent,sid,level=kwargs['sectlevel'])
-                maxcount=rx.countxiny(cvt, kwargs['profile'])
+                maxcount=rx.countxiny(kwargs['cvt'], kwargs['profile'])
                 # re.subn(cvt, cvt, profile)[1]
                 self.wordsbypsprofilechecksubcheck(s34,**kwargs)
         #Convert to iterate over local variables
