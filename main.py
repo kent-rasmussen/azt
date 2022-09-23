@@ -4049,6 +4049,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(ReportCitationBasicTBackground)
             if self.doneenough['analysis']:
                 tasks.append(ReportCitationByUF)
+                tasks.append(ReportCitationByUFBackground)
                 tasks.append(ReportCitationBasicVByUF)
         elif self.datacollection:
             tasks=[
@@ -8158,6 +8159,12 @@ class ByUF(Tone):
         Tone.__init__(self)
         self.byUFgroup=True
         log.info("doing report by UF groups")
+class Background(object):
+    """This class runs a report function in the background, where possible"""
+    def __init__(self, arg):
+        super(Background, self).__init__()
+        self.reportfn=self.do
+        self.do=self.reportmulti
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
@@ -9287,34 +9294,33 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
         self.do=self.getresults
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
-class ReportCitationBackground(ReportCitation):
+class ReportCitationBackground(Background,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Alphabet Report (Background)") # on One Data Slice
     def __init__(self, parent): #frame, filename=None
-        self.reportfn=self.getresults
+        # self.reportfn=self.getresults
         ReportCitation.__init__(self,parent)
-        self.do=self.reportmulti
+        Background.__init__(self,parent)
+        # self.do=self.reportmulti
 class ReportCitationByUF(ByUF,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Alphabet Report by Tone group") # on One Data Slice
-    def taskicon(self):
-        return program['theme'].photo['iconReport']
     def __init__(self, parent): #frame, filename=None
         ReportCitation.__init__(self, parent)
         ByUF.__init__(self)
-class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
+class ReportCitationByUFBackground(ByUF,ReportCitationBackground):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Alphabet Report by Tone group (Background)") # on One Data Slice
+    def __init__(self, parent): #frame, filename=None
+        ReportCitationBackground.__init__(self, parent)
+        ByUF.__init__(self)
+class ReportCitationBasic(Comprehensive,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Comprehensive Alphabet Report") # on Citation Forms
-    def taskicon(self):
-        return program['theme'].photo['iconVCCVRepcomp']
-    def tooltip(self):
-        return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. \nIt does "
-                "this for three sets of reports: \n- Vowel, \n- Consonant, and "
-                "\n- Consonant-Vowel Correspondence")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
@@ -9325,10 +9331,10 @@ class ReportCitationBasic(Report,Comprehensive,Segments,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Segments.__init__(self,parent)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
-        Report.__init__(self)
+        ReportCitation.__init__(self,parent)
+        # ui.Window.__init__(self,parent)
+        # TaskDressing.__init__(self,parent)
+        # Report.__init__(self)
         self.cvtstodo=['V','C','CV']
         Comprehensive.__init__(self)
 class ReportCitationBasicV(Report,Comprehensive,Segments,TaskDressing,ui.Window):
