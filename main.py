@@ -4,7 +4,8 @@
 program={'name':'A→Z+T'}
 program['tkinter']=True
 program['production']=False #True for making screenshots (default theme)
-program['testing']=False #True eliminates Error screens and zipped logs, git
+program['testing']=True #True eliminates Error screens and zipped logs, repos
+program['testing']=False
 program['demo']=True #sets me=False, production=True, testing=False
 program['demo']=False
 program['version']='0.9.6' #This is a string...
