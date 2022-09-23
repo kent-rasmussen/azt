@@ -9275,6 +9275,7 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     def __init__(self, parent): #frame, filename=None
         Segments.__init__(self,parent)
         ui.Window.__init__(self,parent)
+        self.do=self.getresults
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
 class ReportCitationBackground(ReportCitation):
