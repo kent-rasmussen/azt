@@ -8085,49 +8085,51 @@ class Report(object):
                 s3s=xlp.Section(s2s,' '.join([ps,profile]),level=3)
                 log.info("names used ({}-{}): {}".format(ps,profile,
                                 self.checkcounts[ps][profile].keys()))
-                checks=self.orderchecks(self.checkcounts[ps][profile].keys())
-                for check in checks:
-                    log.debug("Counts by ({}) check: {}".format(
-                        check,self.checkcounts[ps][profile][check]))
-                    rows=list(self.checkcounts[ps][profile][check])
-                    if not len(rows):
-                        continue
-                    if 'x' in check:
-                        cols=list(self.checkcounts[ps][profile][check][rows[0]])
+                for ufg in self.checkcounts[ps][profile]:
+                    checks=self.orderchecks(self.checkcounts[ps][profile][ufg])
+                    for check in checks:
+                        counts=self.checkcounts[ps][profile][ufg][check]
+                        if len(list(counts)) and len([counts[k] for k in counts
+                                                    ]):
+                            log.debug("Counts by ({}-{}) check: {}".format(ufg,
+                                                                check,counts))
+                            caption=' '.join([ufg,ps,profile,check])
+                            table=xlp.Table(s3s,caption)
+                            self.coocurrencetable(table,check,counts)
+    def coocurrencetable(self,table,check,counts):
+        """This needs to work with an additional layer, for UF groups"""
+        """Basic report doesn't seem to put out any data"""
+        rows=list(counts)#self.checkcounts[ps][profile][check])
+        if 'x' in check:
+            cols=list(counts[rows[0]])
+        else:
+            cols=[check]
+        for x1 in ['header']+rows:
+            h=xlp.Row(table)
+            for x2 in ['header']+cols:
+                log.debug("x1: {}; x2: {}".format(x1,x2))
+                # if x1 != 'header' and x2 not in ['header','n']:
+                #     log.debug("value: {}".format(self.checkcounts[
+                #         ps][profile][name][x1][x2]))
+                if x1 == 'header' and x2 == 'header':
+                    # log.debug("header corner")
+                    # cell=xlp.Cell(h,content=name,header=True)
+                    cell=xlp.Cell(h,content='',header=True)
+                elif x1 == 'header':
+                    # log.debug("header row")
+                    cell=xlp.Cell(h,content=x2,header=True)
+                elif x2 == 'header':
+                    # log.debug("header column")
+                    cell=xlp.Cell(h,content=x1,header=True)
+                else:
+                    # log.debug("Not a header")
+                    if x2 == check:
+                        value=counts[x1]
                     else:
-                        cols=[check]
-                    if not len(cols):
-                        continue
-                    caption=' '.join([ps,profile,check])
-                    t=xlp.Table(s3s,caption)
-                    for x1 in ['header']+rows:
-                        h=xlp.Row(t)
-                        for x2 in ['header']+cols:
-                            log.debug("x1: {}; x2: {}".format(x1,x2))
-                            # if x1 != 'header' and x2 not in ['header','n']:
-                            #     log.debug("value: {}".format(self.checkcounts[
-                            #         ps][profile][name][x1][x2]))
-                            if x1 == 'header' and x2 == 'header':
-                                # log.debug("header corner")
-                                # cell=xlp.Cell(h,content=name,header=True)
-                                cell=xlp.Cell(h,content='',header=True)
-                            elif x1 == 'header':
-                                # log.debug("header row")
-                                cell=xlp.Cell(h,content=x2,header=True)
-                            elif x2 == 'header':
-                                # log.debug("header column")
-                                cell=xlp.Cell(h,content=x1,header=True)
-                            else:
-                                # log.debug("Not a header")
-                                if x2 == check:
-                                    value=self.checkcounts[ps][
-                                                    profile][check][x1]
-                                else:
-                                    value=self.checkcounts[ps][
-                                                    profile][check][x1][x2]
-                                if not value:
-                                    value=''
-                                cell=xlp.Cell(h,content=value)
+                        value=counts[x1][x2]
+                    if not value:
+                        value=''
+                    cell=xlp.Cell(h,content=value)
     def __init__(self):
         self.reportbasefilename=self.settings.reportbasefilename
         self.reporttoaudiorelURL=self.settings.reporttoaudiorelURL
