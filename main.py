@@ -11957,16 +11957,17 @@ class CheckParameters(dict):
             "CV":{
                 1:[
                     # ("#CV1", "Word-initial CV"),
-                    ("C1xV1", _("Correspondence of C1 and V1")),
+                    ("CxV1", _("Correspondence of first CV")),
                     # ("CV1", "First/only CV")
                     ],
                 2:[
                     # ("CV2", "Second CV"),
-                    ("C2xV2", _("Correspondence of C2 and V2")),
+                    ("CxV2", _("Correspondence of second CV")),
                     ("CV1=CV2",_("Same First/only Two CVs")),
                     # ("CV2#", "Word-final CV")
                     ],
                 3:[
+                    ("CxV2", _("Correspondence of third CV")),
                     ("CV1=CV2=CV3",_("Same First/only Three CVs")),
                     ("CV3", _("Third CV"))
                     ],
@@ -11985,14 +11986,14 @@ class CheckParameters(dict):
                 },
             "VC":{
                 1:[
-                    ("V1xC1", _("Correspondence of first VC")),
+                    ("VxC1", _("Correspondence of first VC")),
                     ],
                 2:[
-                    ("V2xC2", _("Correspondence of second VC")),
+                    ("VxC2", _("Correspondence of second VC")),
                     # ("VC1=VC2",_("Same First/only Two VCs")),
                     ],
                 3:[
-                    ("V3xC3", _("Correspondence of third VC")),
+                    ("VxC3", _("Correspondence of third VC")),
                     # ("VC1=VC2=VC3",_("Same First/only Three VCs")),
                     # ("VC3", _("Third VC"))
                     ],
