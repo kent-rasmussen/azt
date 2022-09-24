@@ -1034,7 +1034,6 @@ class Settings(object):
     def interfacelangwrapper(self,choice=None,window=None):
         if choice:
             interfacelang(choice) #change the UI *ONLY*; no object attributes
-            file.writeinterfacelangtofile(choice) #>ui_lang.py, for startup
             self.set('interfacelang',choice,window) #set variable for the future
             self.storesettingsfile() #>xyz.CheckDefaults.py
             #because otherwise, this stays as is...
@@ -1352,6 +1351,9 @@ class Settings(object):
             elif 'default' in config and section in config['default']:
                 d[section]=ofromstr(config['default'][section])
         self.readsettingsdict(d)
+        if self.interfacelang:
+            interfacelang(self.interfacelang)
+            self.taskchooser.mainwindowis.maketitle()
     def initdefaults(self):
         """Some of these defaults should be reset when setting another field.
         These are listed under that other field. If no field is specified
@@ -4013,13 +4015,6 @@ class TaskChooser(TaskDressing,ui.Window):
         self.mainwindowis=window
         self.mainwindowis.mainwindow=True #keep only one of these
         self.mainwindowis.deiconify()
-    def setiflang(self):
-        self.interfacelangs=file.getinterfacelangs()
-        iflang=file.getinterfacelang()
-        if iflang is None:
-            interfacelang('fr')
-        else:
-            interfacelang(iflang)
     def makeoptions(self):
         """This function (and probably a few dependent functions, maybe
         another class) provides a list of functions with prerequisites
@@ -4040,6 +4035,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(ReportCitationBasicV)
                 tasks.append(ReportCitationBasicC)
                 tasks.append(ReportCitationBasicCV)
+                tasks.append(ReportCitationBasicVC)
                 tasks.append(ReportCitationBasic)
             if self.doneenough['sortT']:
                 tasks.append(ReportCitationT)
@@ -4427,7 +4423,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.showreports=False
         self.showingreports=False
         self.ifcollectionlcsettingsdone=False
-        self.setiflang() #before Splash
+        self.interfacelangs=getinterfacelangs()
         ui.Window.__init__(self,parent)
         self.setmainwindow(self)
         splash = Splash(self)
@@ -4440,6 +4436,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if hasattr(self.file,'analang'): #i.e., new file
             self.analang=self.file.analang #I need to keep this alive until objects are done
         self.makesettings()
+        splash.maketexts() #update for translation change
         TaskDressing.__init__(self,parent) #I think this should be after settings
         if not self.settings.writeeverynwrites: #0/None are not sensible values
             self.settings.writeeverynwrites=1
@@ -4503,59 +4500,51 @@ class Segments(object):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
         maxcount=rx.countxiny(cvt, profile)
-        # re.subn(cvt, cvt, profile)[1]
         if profile is None:
             print("It doesn't look like you've picked a syllable profile yet.")
             return
         """Don't need this; only doing count=1 at a time. Let's start with
         the easier ones, with the first occurrance changed."""
-        # log.info("self.regexCV: {}".format(self.regexCV))
         self.regexCV=str(profile) #Let's set this before changing it.
         # log.info("self.regexCV: {}".format(self.regexCV))
         """One pass for all regexes, S3, then S2, then S1, as needed."""
-        cvts=['V','C']
         # log.info("maxcount: {}".format(maxcount))
         # log.info("check: {}".format(check))
         # log.info("group: {}".format(group))
         # log.info("self.groupcomparison: {}".format(self.groupcomparison))
+        S=str(cvt) #should this ever be cvt? Do I ever want CV1xCV2,CV1=CV2?
+        regexS='.*?'+S #This will be a problem if S=NC or CG...
+        # log.info("regexS: {}".format(regexS))
         if 'x' in check:
-            if hasattr(self,'groupcomparison') and (self.groupcomparison
-                                                in self.status.groups(cvt='C')):
-                # self.s[self.analang]['V']:
-                cvts=['C','V'] #comparison needs to be done first
-        compared=False #don't reset this for each cvt
-        for t in cvts:
-            if t not in cvt:
-                continue
-            S=str(t) #should this ever be cvt? Do I ever want CV1xCV2,CV1=CV2?
-            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
-            # log.info("regexS: {}".format(regexS))
-            for occurrence in reversed(range(maxcount)):
-                occurrence+=1
-                # log.info("S+str(occurrence): {}".format(S+str(occurrence)))
-                # if re.search(S+str(occurrence),check) is not None:
-                if S+str(occurrence) in check:
-                    """Get the (n=occurrence) S, regardless of intervening
-                    non S..."""
-                    # log.info("regexS: {}".format(regexS))
-                    regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
-                    # log.info("regS: {}".format(regS))
-                    # log.info("regexS: {}".format(regexS))
-                    if 'x' in check:
-                        if compared == False: #occurrence == 2:
-                            replS='\\1'+self.groupcomparison
-                            compared=True
-                        else: #if occurrence == 1:
-                            replS='\\1'+group
-                    else:
-                        # log.info("Not comparing: {}".format(check))
-                        replS='\\1'+group
-                    # log.info("regS: {}".format(regS))
-                    # log.info("replS: {}".format(replS))
-                    # log.info("self.regexCV: {}".format(self.regexCV))
-                    self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
-                    # log.info("self.regexCV: {}".format(self.regexCV))
-        # log.info("self.regexCV: {}".format(self.regexCV))
+            replS='\\1'+group+self.groupcomparison
+            # log.info("Making regex for {} check with group {} and "
+            # "comparison {} ({})".format(check,group,self.groupcomparison,replS))
+        else:
+            # log.info("Not comparing: {}".format(check))
+            replS='\\1'+group
+            # log.info("Making regex for {} check with group {} ({})"
+            #         "".format(check,group,replS))
+        for occurrence in reversed(range(maxcount)):
+            occurrence+=1
+            # log.info("S+str(occurrence): {}".format(S+str(occurrence)))
+            # log.info("Check (less x): {}".format(check.replace('x','')))
+            if S+str(occurrence) in check.replace('x',''):
+                """Get the (n=occurrence) S, regardless of intervening
+                non S..."""
+                # log.info("regexS: {}".format(regexS))
+                # regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
+                regS='^('+regexS*(occurrence-1)+'.*?)('+S+')'
+                # log.info("regS: {}".format(regS))
+                # log.info("regexS: {}".format(regexS))
+                # log.info("regS: {}".format(regS))
+                # log.info("replS: {}".format(replS))
+                # log.info("self.regexCV: {}".format(self.regexCV))
+                self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
+                # log.info("self.regexCV: {}".format(self.regexCV))
+        #     else:
+        #         log.info("{} not found in {}".format(S+str(occurrence),
+        #                                             check.replace('x','')))
+        # log.info("self.regexCV (buildregex): {}".format(self.regexCV))
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self.regexCV, self.settings.s[self.analang],
                             self.settings.distinguish,
@@ -7889,6 +7878,9 @@ class Report(object):
             elif kwargs['cvt'] == 'CV':
                 groups=self.status.groups(cvt='C')
                 groupcomparisons=self.status.groups(cvt='V')
+            elif cvt == 'VC':
+                groups=self.status.groups(cvt='V')
+                groupcomparisons=self.status.groups(cvt='C')
             else:
                 log.error("Sorry, I don't know how to compare cvt: {}"
                                                     "".format(kwargs['cvt']))
@@ -9397,16 +9389,12 @@ class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window)
         self.cvtstodo=['C']
         # This is really hard on memory, with correspondences.
         Comprehensive.__init__(self)
-class ReportCitationBasicCV(Report,Comprehensive,Segments,TaskDressing,ui.Window):
+class ReportCitationBasicCV(ReportCitationBasic):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Comprehensive CxV Phonotactics Report") # on Citation Forms
     def taskicon(self):
         return program['theme'].photo['iconCVRepcomp']
-    def tooltip(self):
-        return _("This report gives you reports across multiple lexical "
-                "categories, and across multiple syllable profiles. \nIt does "
-                "this just for consonant-vowel correspondence checks.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.basicreport,
@@ -9417,12 +9405,26 @@ class ReportCitationBasicCV(Report,Comprehensive,Segments,TaskDressing,ui.Window
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Segments.__init__(self,parent)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
-        Report.__init__(self)
+        ReportCitationBasic.__init__(self,parent)
         self.cvtstodo=['CV']
-        Comprehensive.__init__(self)
+class ReportCitationBasicVC(ReportCitationBasic):
+    """docstring for ReportCitation."""
+    def tasktitle(self):
+        return _("Comprehensive VxC Phonotactics Report") # on Citation Forms
+    def taskicon(self):
+        return program['theme'].photo['iconCVRepcomp']
+    def dobuttonkwargs(self):
+        return {'text':"Report!",
+                'fn':self.basicreport,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['CVRepcomp'],
+                'sticky':'ew'
+                }
+    def __init__(self, parent): #frame, filename=None
+        ReportCitationBasic.__init__(self,parent)
+        self.cvtstodo=['VC']
 class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
@@ -10880,34 +10882,38 @@ class Splash(ui.Window):
             r=program['repo'].share()
         else:
             r=program['repo'].pull()
-    def __init__(self, parent):
-        parent.withdraw()
-        super(Splash, self).__init__(parent,exit=0)
-        title=(_("{name} Dictionary and Orthography Checker").format(
-                                                        name=program['name']))
-        self.title(title)
-        v=_("Version: {}".format(program['version']))
-        text=_("Your dictionary database is loading...\n\n"
-                "{name} is a computer program that accelerates community"
+    def maketexts(self):
+        self.labels['v']['text']=_("Version: {}".format(program['version']))
+        self.labels['text']['text']=_("Your dictionary database is loading...\n"
+                "\n{name} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
                 "beginning dictionary by vowels, consonants and tone. "
                 "(more in help:about)").format(name=program['name'])
-        l=ui.Label(self.frame, text=title, pady=10,
+        self.labels['titletext']['text']=(_("{name} Dictionary and Orthography "
+                                        "Checker").format(name=program['name']))
+        self.update_idletasks()
+
+    def __init__(self, parent):
+        parent.withdraw()
+        super(Splash, self).__init__(parent,exit=0)
+        self.labels={'titletext':ui.Label(self.frame, text='', pady=10,
                         font='title',anchor='c',padx=25,
                         row=0,column=0,sticky='we'
-                        )
-        m=ui.Label(self.frame, text=v, anchor='c',padx=25,
+                        ),
+                        'v':ui.Label(self.frame, text='', anchor='c',padx=25,
                         row=1,column=0,sticky='we'
-                        )
-        n=ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
+                        ),
+                        'photo':ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
                         row=2,column=0,sticky='we'
-                        )
-        o=ui.Label(self.frame, text=text, padx=50,
-                wraplength=int(self.winfo_screenwidth()/2),
-                row=3,column=0,sticky='we'
-                )
+                        ),
+                        'text':ui.Label(self.frame, text='', padx=50,
+                                    wraplength=int(self.winfo_screenwidth()/2),
+                                    row=3,column=0,sticky='we'
+                                    )
+                    }
+        self.maketexts()
+        self.title(self.labels['titletext']['text'])
         self.withdraw() #don't show until placed
-        self.update_idletasks()
         self.w = self.winfo_reqwidth()
         x=int(self.master.winfo_screenwidth()/2-(self.w/2))
         self.h = self.winfo_reqheight()
@@ -11532,7 +11538,7 @@ class StatusDict(dict):
             return list(set(sn['groups'])-set(sn['recorded']))
         else: #give theoretical possibilities (C or V only)
             """The following two are meaningless, without with kwargs above"""
-            if kwargs['cvt'] in ['CV','T']:
+            if kwargs['cvt'] in ['CV','VC','T']:
                 return None
             """This is organized class:(segment,count)"""
             thispsdict=self._slicedict.scount()[kwargs['ps']]
@@ -12003,6 +12009,8 @@ class CheckParameters(dict):
                 'C':{'sg':_('Consonant'),'pl':_('Consonants')},
                 'CV':{'sg':_('Consonant-Vowel combination'),
                         'pl':_('Consonant-Vowel combinations')},
+                'VC':{'sg':_('Vowel-Consonant combination'),
+                        'pl':_('Vowel-Consonant combinations')},
                 'T':{'sg':_('Tone'),'pl':_('Tones')},
                 }
         self._checknames={
@@ -12063,18 +12071,45 @@ class CheckParameters(dict):
             "CV":{
                 1:[
                     # ("#CV1", "Word-initial CV"),
-                    ("C1xV1", _("Correspondence of C1 and V1")),
+                    ("CxV1", _("Correspondence of first CV")),
                     # ("CV1", "First/only CV")
                     ],
                 2:[
                     # ("CV2", "Second CV"),
-                    ("C2xV2", _("Correspondence of C2 and V2")),
+                    ("CxV2", _("Correspondence of second CV")),
                     ("CV1=CV2",_("Same First/only Two CVs")),
                     # ("CV2#", "Word-final CV")
                     ],
                 3:[
+                    ("CxV2", _("Correspondence of third CV")),
                     ("CV1=CV2=CV3",_("Same First/only Three CVs")),
                     ("CV3", _("Third CV"))
+                    ],
+                4:[
+                    ("CV1=CV2=CV3=CV4","Same First/only Four CVs"),
+                    ("CV4", "Fourth CV")
+                    ],
+                5:[
+                    ("CV1=CV2=CV3=CV4=CV5","Same First/only Five CVs"),
+                    ("CV5", "Fifth CV")
+                    ],
+                6:[
+                    ("CV1=CV2=CV3=CV4=CV5=CV6","Same First/only Six CVs"),
+                    ("CV6", "Sixth CV")
+                    ]
+                },
+            "VC":{
+                1:[
+                    ("VxC1", _("Correspondence of first VC")),
+                    ],
+                2:[
+                    ("VxC2", _("Correspondence of second VC")),
+                    # ("VC1=VC2",_("Same First/only Two VCs")),
+                    ],
+                3:[
+                    ("VxC3", _("Correspondence of third VC")),
+                    # ("VC1=VC2=VC3",_("Same First/only Three VCs")),
+                    # ("VC3", _("Third VC"))
                     ],
                 4:[
                     ("CV1=CV2=CV3=CV4","Same First/only Four CVs"),
@@ -12823,9 +12858,12 @@ def interfacelang(lang=None,magic=False):
                 if i18n[lang] == _.__self__:
                     return lang
             except:
-                log.debug("_ doesn't look defined yet, returning 'en' as current "
-                                                            "interface language.")
-                return 'en'
+                log.debug("_ doesn't look defined yet, returning interface "
+                            "language from locale.")
+                loc,enc=locale.getdefaultlocale()
+                code=loc.split('_')[0]
+                if code in i18n:
+                    return code
 def dictofchilddicts(self,remove=None):
     # This takes a dict[x][y] and returns a dict[y], with all unique values
     # listed for all dict[*][y].
@@ -13069,6 +13107,11 @@ def propagate(self,attr):
 def donothing():
     log.debug("Doing Nothing!")
     pass
+def getinterfacelangs():
+    return [{'code':'fr','name':'Français'},
+            {'code':'en','name':'English'},
+            {'code':'fub','name':'Fulfulde'}
+            ]
 def pathseparate(path):
     os=platform.system()
     if os == "Windows":
