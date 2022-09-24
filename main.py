@@ -11432,7 +11432,7 @@ class StatusDict(dict):
             return list(set(sn['groups'])-set(sn['recorded']))
         else: #give theoretical possibilities (C or V only)
             """The following two are meaningless, without with kwargs above"""
-            if kwargs['cvt'] in ['CV','T']:
+            if kwargs['cvt'] in ['CV','VC','T']:
                 return None
             """This is organized class:(segment,count)"""
             thispsdict=self._slicedict.scount()[kwargs['ps']]
@@ -11977,6 +11977,32 @@ class CheckParameters(dict):
                 3:[
                     ("CV1=CV2=CV3",_("Same First/only Three CVs")),
                     ("CV3", _("Third CV"))
+                    ],
+                4:[
+                    ("CV1=CV2=CV3=CV4","Same First/only Four CVs"),
+                    ("CV4", "Fourth CV")
+                    ],
+                5:[
+                    ("CV1=CV2=CV3=CV4=CV5","Same First/only Five CVs"),
+                    ("CV5", "Fifth CV")
+                    ],
+                6:[
+                    ("CV1=CV2=CV3=CV4=CV5=CV6","Same First/only Six CVs"),
+                    ("CV6", "Sixth CV")
+                    ]
+                },
+            "VC":{
+                1:[
+                    ("V1xC1", _("Correspondence of first VC")),
+                    ],
+                2:[
+                    ("V2xC2", _("Correspondence of second VC")),
+                    # ("VC1=VC2",_("Same First/only Two VCs")),
+                    ],
+                3:[
+                    ("V3xC3", _("Correspondence of third VC")),
+                    # ("VC1=VC2=VC3",_("Same First/only Three VCs")),
+                    # ("VC3", _("Third VC"))
                     ],
                 4:[
                     ("CV1=CV2=CV3=CV4","Same First/only Four CVs"),
