@@ -4491,59 +4491,51 @@ class Segments(object):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
         maxcount=rx.countxiny(cvt, profile)
-        # re.subn(cvt, cvt, profile)[1]
         if profile is None:
             print("It doesn't look like you've picked a syllable profile yet.")
             return
         """Don't need this; only doing count=1 at a time. Let's start with
         the easier ones, with the first occurrance changed."""
-        # log.info("self.regexCV: {}".format(self.regexCV))
         self.regexCV=str(profile) #Let's set this before changing it.
         # log.info("self.regexCV: {}".format(self.regexCV))
         """One pass for all regexes, S3, then S2, then S1, as needed."""
-        cvts=['V','C']
         # log.info("maxcount: {}".format(maxcount))
         # log.info("check: {}".format(check))
         # log.info("group: {}".format(group))
         # log.info("self.groupcomparison: {}".format(self.groupcomparison))
+        S=str(cvt) #should this ever be cvt? Do I ever want CV1xCV2,CV1=CV2?
+        regexS='.*?'+S #This will be a problem if S=NC or CG...
+        # log.info("regexS: {}".format(regexS))
         if 'x' in check:
-            if hasattr(self,'groupcomparison') and (self.groupcomparison
-                                                in self.status.groups(cvt='C')):
-                # self.s[self.analang]['V']:
-                cvts=['C','V'] #comparison needs to be done first
-        compared=False #don't reset this for each cvt
-        for t in cvts:
-            if t not in cvt:
-                continue
-            S=str(t) #should this ever be cvt? Do I ever want CV1xCV2,CV1=CV2?
-            regexS='[^'+S+']*'+S #This will be a problem if S=NC or CG...
-            # log.info("regexS: {}".format(regexS))
-            for occurrence in reversed(range(maxcount)):
-                occurrence+=1
-                # log.info("S+str(occurrence): {}".format(S+str(occurrence)))
-                # if re.search(S+str(occurrence),check) is not None:
-                if S+str(occurrence) in check:
-                    """Get the (n=occurrence) S, regardless of intervening
-                    non S..."""
-                    # log.info("regexS: {}".format(regexS))
-                    regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
-                    # log.info("regS: {}".format(regS))
-                    # log.info("regexS: {}".format(regexS))
-                    if 'x' in check:
-                        if compared == False: #occurrence == 2:
-                            replS='\\1'+self.groupcomparison
-                            compared=True
-                        else: #if occurrence == 1:
-                            replS='\\1'+group
-                    else:
-                        # log.info("Not comparing: {}".format(check))
-                        replS='\\1'+group
-                    # log.info("regS: {}".format(regS))
-                    # log.info("replS: {}".format(replS))
-                    # log.info("self.regexCV: {}".format(self.regexCV))
-                    self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
-                    # log.info("self.regexCV: {}".format(self.regexCV))
-        # log.info("self.regexCV: {}".format(self.regexCV))
+            replS='\\1'+group+self.groupcomparison
+            # log.info("Making regex for {} check with group {} and "
+            # "comparison {} ({})".format(check,group,self.groupcomparison,replS))
+        else:
+            # log.info("Not comparing: {}".format(check))
+            replS='\\1'+group
+            # log.info("Making regex for {} check with group {} ({})"
+            #         "".format(check,group,replS))
+        for occurrence in reversed(range(maxcount)):
+            occurrence+=1
+            # log.info("S+str(occurrence): {}".format(S+str(occurrence)))
+            # log.info("Check (less x): {}".format(check.replace('x','')))
+            if S+str(occurrence) in check.replace('x',''):
+                """Get the (n=occurrence) S, regardless of intervening
+                non S..."""
+                # log.info("regexS: {}".format(regexS))
+                # regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
+                regS='^('+regexS*(occurrence-1)+'.*?)('+S+')'
+                # log.info("regS: {}".format(regS))
+                # log.info("regexS: {}".format(regexS))
+                # log.info("regS: {}".format(regS))
+                # log.info("replS: {}".format(replS))
+                # log.info("self.regexCV: {}".format(self.regexCV))
+                self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
+                # log.info("self.regexCV: {}".format(self.regexCV))
+        #     else:
+        #         log.info("{} not found in {}".format(S+str(occurrence),
+        #                                             check.replace('x','')))
+        # log.info("self.regexCV (buildregex): {}".format(self.regexCV))
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self.regexCV, self.settings.s[self.analang],
                             self.settings.distinguish,
