@@ -7208,7 +7208,8 @@ class Report(object):
     def reportmulti(self,**kwargs):
         # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
         start_time=nowruntime()
-        # log.info("reportmulti starting with kwargs {}".format(kwargs))
+        log.info("reportmulti starting with fn {} and kwargs {} ".format(
+                    self.reportfn.__name__,kwargs))
         kwargs['usegui']=False
         # log.info("reportmulti continuing with kwargs {}".format(kwargs))
         if hasattr(self.settings,'maxpss') and self.settings.maxpss:
@@ -7549,7 +7550,7 @@ class Report(object):
                 kwargs['check']=rx.sub('x','=',kwargs['check'],count=1)
             self.docheckreport(parent,**kwargs) #this needs parent
             self.coocurrencetables(xlpr)
-        # log.info("getresults starting with kwargs {}".format(kwargs))
+        log.info("getresults starting with kwargs {}".format(kwargs))
         usegui=kwargs['usegui']=kwargs.get('usegui',True)
         # log.info("getresults continuing with kwargs {}".format(kwargs))
         if usegui:
@@ -7874,6 +7875,7 @@ class Report(object):
         kwargs['ps']=kwargs.get('ps',self.slices.ps())
         kwargs['profile']=kwargs.get('profile',self.slices.profile())
         kwargs['check']=kwargs.get('check',self.params.check())
+        log.info("docheckreport starting with kwargs {}".format(kwargs))
         groups=self.status.groups(**kwargs)
         group=self.status.group()
         self.ncvts=rx.split('[=x]',kwargs['check'])
@@ -8014,6 +8016,7 @@ class Report(object):
                 # re.subn(cvt, cvt, profile)[1]
                 self.wordsbypsprofilechecksubcheck(s34,**kwargs)
         #Convert to iterate over local variables
+        log.info("basicreport starting with kwargs {}".format(kwargs))
         instr=_("The data in this report is given by most restrictive test "
                 "first, followed by less restrictive tests (e.g., V1=V2 "
                 "before V1 or V2). Additionally, each word only "
@@ -9305,6 +9308,8 @@ class ReportCitationBackground(Background,ReportCitation):
         ReportCitation.__init__(self,parent)
         Background.__init__(self,parent)
         # self.do=self.reportmulti
+        log.info("Setting up reports with do: {}; reportfn:{}"
+                "".format(self.do.__name__,self.reportfn.__name__))
 class ReportCitationByUF(ByUF,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
@@ -9312,6 +9317,8 @@ class ReportCitationByUF(ByUF,ReportCitation):
     def __init__(self, parent): #frame, filename=None
         ReportCitation.__init__(self, parent)
         ByUF.__init__(self)
+        log.info("Setting up reports with do: {}; reportfn:{}"
+                "".format(self.do.__name__,self.reportfn.__name__))
 class ReportCitationByUFBackground(ByUF,ReportCitationBackground):
     """docstring for ReportCitation."""
     def tasktitle(self):
