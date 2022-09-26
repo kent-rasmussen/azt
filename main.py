@@ -12575,7 +12575,7 @@ class Git(Repository):
                 '*.ChorusRescuedFile',
                 '*.git',
                 '*.ini',
-                '*lift*',
+                '*lift.*',
                 ]
     def mergetool(self):
         args=['mergetool', '--tool=xmlmeld']
