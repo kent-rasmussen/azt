@@ -7564,7 +7564,7 @@ class Report(object):
                                         ,str(kwargs['check'])
                                         ,'ReportXLP.xml'])
         self.checkcounts={}
-        xlpr=self.xlpstart()
+        xlpr=self.xlpstart(**kwargs)
         """"Do I need this?"""
         print(_("Getting results of Search request"))
         c1 = "Any"
