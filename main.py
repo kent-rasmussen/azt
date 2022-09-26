@@ -7878,7 +7878,7 @@ class Report(object):
             elif kwargs['cvt'] == 'CV':
                 groups=self.status.groups(cvt='C')
                 groupcomparisons=self.status.groups(cvt='V')
-            elif cvt == 'VC':
+            elif kwargs['cvt'] == 'VC':
                 groups=self.status.groups(cvt='V')
                 groupcomparisons=self.status.groups(cvt='C')
             else:
@@ -8148,15 +8148,18 @@ class Comprehensive(object):
                                                         self.status.group()))
 class ByUF(Tone):
     def __init__(self):
-        Tone.__init__(self)
+        Tone.__init__(self) #Nothing here; just make methods available
         self.byUFgroup=True
         log.info("doing report by UF groups")
 class Background(object):
     """This class runs a report function in the background, where possible"""
-    def __init__(self, arg):
-        super(Background, self).__init__()
+    def __init__(self,parent):
+        log.info("Setting up background report, based on {}"
+                "".format(self.do.__name__))
+        super(Background, self).__init__(parent)
         self.reportfn=self.do
         self.do=self.reportmulti
+        self.frame.status.finalbuttons() #because the fns changed
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
@@ -9315,7 +9318,7 @@ class ReportCitationBasic(Comprehensive,ReportCitation):
         return _("Comprehensive Alphabet Report") # on Citation Forms
     def dobuttonkwargs(self):
         return {'text':"Report!",
-                'fn':self.basicreport,
+                'fn':self.do,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
@@ -9324,6 +9327,7 @@ class ReportCitationBasic(Comprehensive,ReportCitation):
                 }
     def __init__(self, parent): #frame, filename=None
         ReportCitation.__init__(self,parent)
+        self.do=self.basicreport
         # ui.Window.__init__(self,parent)
         # TaskDressing.__init__(self,parent)
         # Report.__init__(self)
@@ -9389,42 +9393,32 @@ class ReportCitationBasicC(Report,Comprehensive,Segments,TaskDressing,ui.Window)
         self.cvtstodo=['C']
         # This is really hard on memory, with correspondences.
         Comprehensive.__init__(self)
-class ReportCitationBasicCV(ReportCitationBasic):
+class ReportCitationBasicCV(Comprehensive,Background,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Comprehensive CxV Phonotactics Report") # on Citation Forms
     def taskicon(self):
         return program['theme'].photo['iconCVRepcomp']
-    def dobuttonkwargs(self):
-        return {'text':"Report!",
-                'fn':self.basicreport,
-                # column=0,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['CVRepcomp'],
-                'sticky':'ew'
-                }
     def __init__(self, parent): #frame, filename=None
-        ReportCitationBasic.__init__(self,parent)
+        ReportCitation.__init__(self,parent)
         self.cvtstodo=['CV']
-class ReportCitationBasicVC(ReportCitationBasic):
+        Comprehensive.__init__(self)
+        Background.__init__(self,parent)
+        log.info("Setting up reports with cvtstodo: {}; do: {}; reportfn:{}"
+                "".format(self.cvtstodo,self.do.__name__,self.reportfn.__name__))
+class ReportCitationBasicVC(Comprehensive,Background,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Comprehensive VxC Phonotactics Report") # on Citation Forms
     def taskicon(self):
         return program['theme'].photo['iconCVRepcomp']
-    def dobuttonkwargs(self):
-        return {'text':"Report!",
-                'fn':self.basicreport,
-                # column=0,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['CVRepcomp'],
-                'sticky':'ew'
-                }
     def __init__(self, parent): #frame, filename=None
-        ReportCitationBasic.__init__(self,parent)
+        ReportCitation.__init__(self,parent)
         self.cvtstodo=['VC']
+        Comprehensive.__init__(self)
+        Background.__init__(self,parent)
+        log.info("Setting up reports with cvtstodo: {}; do: {}; reportfn:{}"
+                "".format(self.cvtstodo,self.do.__name__,self.reportfn.__name__))
 class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
     """docstring for ReportCitationT."""
     def tasktitle(self):
