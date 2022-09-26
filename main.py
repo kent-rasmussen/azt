@@ -9351,7 +9351,7 @@ class ReportCitationBasicV(Report,Comprehensive,Segments,TaskDressing,ui.Window)
                 "this just for vowel checks.")
     def dobuttonkwargs(self):
         return {'text':"Report!",
-                'fn':self.basicreport,
+                'fn':self.do,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
