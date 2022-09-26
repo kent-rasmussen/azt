@@ -1054,6 +1054,8 @@ class Settings(object):
                                     ).format(repo[r].repotypename))
                     elif r == 'git': #don't worry about hg, if not there already
                         repo[r].init()
+                        repo[r].add(self.liftfilename)
+                        repo[r].commit()
                     self.repo[r]=repo[r]
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
