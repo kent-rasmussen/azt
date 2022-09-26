@@ -7225,10 +7225,10 @@ class Report(object):
         log.info("Starting background reports for {}".format(d))
         unbackground=[]
         all=[]
-        for ps in pss:
-            for profile in d[ps]:
-                kwargs['ps']=ps
-                kwargs['profile']=profile
+        for kwargs['ps'] in pss:
+            for kwargs['profile'] in d[kwargs['ps']]:
+                # kwargs['ps']=ps
+                # kwargs['profile']=profile
                 # log.info("reportmulti background with kwargs {}".format(kwargs))
                 t=multiprocessing.Process(target=self.reportfn,
                                             kwargs=kwargs)
