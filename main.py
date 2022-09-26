@@ -8165,7 +8165,7 @@ class Background(object):
         super(Background, self).__init__(parent)
         self.reportfn=self.do
         self.do=self.reportmulti
-        self.frame.status.finalbuttons() #because the fns changed
+        self.frame.status.redofinalbuttons() #because the fns changed
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
