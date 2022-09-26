@@ -12043,6 +12043,7 @@ class ErrorNotice(ui.Window):
         self.text = text
         l=ui.Label(self.frame, text=text, row=0, column=0, ipadx=25)
         l.wrap()
+        log.error(text)
         if button and type(button) is tuple:
             b=ui.Button(self.frame, text=button[0],
                     cmd=None,
