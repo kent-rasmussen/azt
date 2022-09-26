@@ -12118,13 +12118,21 @@ class Repository(object):
         args=["commit", '-m', "Autocommit from AZT", file]
         #don't try to commit without changes; it clogs the log
         diff=self.diff()
-        if diff and (not me or self.commitconfirm(diff)):
+        diffcached=self.diff(cached=True)
+        difftext=''
+        for d in [diff,diffcached]:
+            if d:
+                difftext+=d
+        if difftext and (not me or self.commitconfirm(difftext)):
             r=self.do([i for i in args if i is not None])
             return r
         # if theres no diff, or I don't want to commit, still share commits:
         return True
-    def diff(self):
-        args=["diff","--stat"]
+    def diff(self,cached=False):
+        args=["diff"]
+        if cached:
+            args+=['--cached']
+        args+=['--stat']
         return self.do(args)
         # log.info("{} diff returned {}".format(self.repotypename,r))
     def status(self):
