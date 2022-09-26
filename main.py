@@ -1056,6 +1056,8 @@ class Settings(object):
                                     ).format(repo[r].repotypename))
                     elif r == 'git': #don't worry about hg, if not there already
                         repo[r].init()
+                        repo[r].add(self.liftfilename)
+                        repo[r].commit()
                     self.repo[r]=repo[r]
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
@@ -4072,7 +4074,7 @@ class TaskChooser(TaskDressing,ui.Window):
             #this maybe should depend on recordedT:
             if self.doneenough['sortT']:
                 tasks.append(TranscribeT)
-            if self.doneenough['analysis']:
+            if self.ifcollectionlcsettingsdone and self.doneenough['analysis']:
                 tasks.append(JoinUFgroups)
             if me:
                 tasks.append(Parse)
@@ -12151,6 +12153,7 @@ class ErrorNotice(ui.Window):
         self.text = text
         l=ui.Label(self.frame, text=text, row=0, column=0, ipadx=25)
         l.wrap()
+        log.error(text)
         if button and type(button) is tuple:
             b=ui.Button(self.frame, text=button[0],
                     cmd=None,
@@ -12226,13 +12229,21 @@ class Repository(object):
         args=["commit", '-m', "Autocommit from AZT", file]
         #don't try to commit without changes; it clogs the log
         diff=self.diff()
-        if diff and (not me or self.commitconfirm(diff)):
+        diffcached=self.diff(cached=True)
+        difftext=''
+        for d in [diff,diffcached]:
+            if d:
+                difftext+=d
+        if difftext and (not me or self.commitconfirm(difftext)):
             r=self.do([i for i in args if i is not None])
             return r
         # if theres no diff, or I don't want to commit, still share commits:
         return True
-    def diff(self):
-        args=["diff","--stat"]
+    def diff(self,cached=False):
+        args=["diff"]
+        if cached:
+            args+=['--cached']
+        args+=['--stat']
         return self.do(args)
         # log.info("{} diff returned {}".format(self.repotypename,r))
     def status(self):
@@ -12344,7 +12355,8 @@ class Repository(object):
             # Otherwise, we leave it for later, in case it just isn't there now.
         if l:
             return l
-        elif self.code == 'git':
+        #pull me once this is documented and reasonable to expect of users
+        elif self.code == 'git' and me:
             if firsttry:
                 ErrorNotice(_("I can't find where you store your {} {} locally; is "
                             "it attached?").format(self.repotypename,
@@ -12400,6 +12412,8 @@ class Repository(object):
                                                         output)
                 try:
                     assert self.code == 'git' #don't give hg notices here
+                    assert 'ot a git repository' not in output
+                    assert "error: unknown option `cached'" not in output
                     ErrorNotice(txt)
                 except (RuntimeError,AssertionError):
                     log.info(txt)
@@ -12682,7 +12696,7 @@ class Git(Repository):
                 '*.ChorusRescuedFile',
                 '*.git',
                 '*.ini',
-                '*lift*',
+                '*lift.*',
                 ]
     def mergetool(self):
         args=['mergetool', '--tool=xmlmeld']
