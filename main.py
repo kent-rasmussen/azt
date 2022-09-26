@@ -12236,7 +12236,8 @@ class Repository(object):
             # Otherwise, we leave it for later, in case it just isn't there now.
         if l:
             return l
-        elif self.code == 'git':
+        #pull me once this is documented and reasonable to expect of users
+        elif self.code == 'git' and me:
             if firsttry:
                 ErrorNotice(_("I can't find where you store your {} {} locally; is "
                             "it attached?").format(self.repotypename,
