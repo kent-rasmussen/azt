@@ -765,6 +765,10 @@ class StatusFrame(ui.Frame):
         self.opts['columnplus']=1
         t=(_("Max lexical categories: {}".format(self.settings.maxpss)))
         self.proselabel(t,cmd=self.taskchooser.getmaxpss,parent=line)
+    def redofinalbuttons(self):
+        if hasattr(self,'bigbutton') and self.bigbutton.winfo_exists():
+            self.bigbutton.destroy()
+            self.finalbuttons()
     def finalbuttons(self):
         # self.opts['row']+=6
         self.opts['row']+=1
