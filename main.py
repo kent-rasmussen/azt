@@ -12293,6 +12293,8 @@ class Repository(object):
                                                         output)
                 try:
                     assert self.code == 'git' #don't give hg notices here
+                    assert 'ot a git repository' not in output
+                    assert "error: unknown option `cached'" not in output
                     ErrorNotice(txt)
                 except (RuntimeError,AssertionError):
                     log.info(txt)
