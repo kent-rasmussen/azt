@@ -8150,6 +8150,7 @@ class Report(object):
 class Comprehensive(object):
     def __init__(self):
         self.status.group(None)
+        self.do=self.basicreport
         log.info("doing basic report on {} with groups {}".format(self.cvtstodo,
                                                         self.status.group()))
 class ByUF(Tone):
