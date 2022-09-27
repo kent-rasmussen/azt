@@ -339,7 +339,7 @@ class Row(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'tr')
 class Cell(ET.Element):
-    def __init__(self,parent,content,header=False,linebreakwords=False):
+    def __init__(self,parent,content='',header=False,linebreakwords=False):
         if header == False:
             tag='td'
         elif header == True:
