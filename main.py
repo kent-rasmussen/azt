@@ -7546,6 +7546,19 @@ class Report(object):
             self.results.row=0
         else:
             log.error("Tried to get a results frame without a runwindow!")
+    def background(self,fn,**kwargs):
+        kwargs['usegui']=False
+        t=multiprocessing.Process(target=fn,
+                                    kwargs=kwargs)
+        t.start()
+        log.info(_("Starting XLP background report with kwargs {}"
+                    ).format(kwargs))
+        time.sleep(0.2) #give it 200ms before checking if it returned already
+        if not t.is_alive():
+            ErrorNotice(_("Looks like that didn't work; you may need "
+                            "to run a report first, or not do it in "
+                            "the background ({})."
+                        ).format(kwargs))
     def getresults(self,**kwargs):
         def iterateUFgroups(parent,**kwargs):
             if 'x' in kwargs['check'] and kwargs['cvt'] != 'CV': #CV has no C=V...
