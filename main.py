@@ -7251,7 +7251,9 @@ class Report(object):
         log.info(_("Starting reports that didn't work in the background: {}").format(unbackground))
         for kwargs in unbackground:
             # log.info("reportmulti unbackground with kwargs {}".format(kwargs))
+            self.wait(msg=kwargs)
             self.reportfn(**kwargs) #run what failed in background here
+            self.waitdone()
         logfinished(start_time,msg="all reports ({})".format(all))
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
@@ -8026,7 +8028,8 @@ class Report(object):
                 "examples of a segment type occur with different values, e.g., "
                 "V1≠V2, those words will appear multiple times, e.g., for "
                 "both V1=x and V2=y.")
-        self.wait(msg=_("Running {}").format(self.tasktitle()))
+        if kwargs['usegui']: #i.e., showing results in window
+            self.wait(msg=_("Running {}").format(self.tasktitle()))
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                         ,'_',''.join(sorted(self.cvtstodo)[:2])
                                         ,'_BasicReport.txt'])
