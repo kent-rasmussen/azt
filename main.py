@@ -7652,7 +7652,9 @@ class Report(object):
                                     log.info("Not sure what I'm dealing with! "
                                             "({})".format(i2))
         if not n: #i.e., nothing was found above
-            text=_("No results for {}/{} ({})!").format(profile,check,ps)
+            text=_("No results for {}/{} ({})!").format(kwargs['profile'],
+                                                        kwargs['check'],
+                                                        kwargs['ps'])
             log.info(text)
             if usegui: #i.e., showing results in window
                 ui.Label(self.results, text=text, column=0, row=self.results.row+1)
