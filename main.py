@@ -8130,9 +8130,35 @@ class Report(object):
         """Basic report doesn't seem to put out any data"""
         rows=list(counts)#self.checkcounts[ps][profile][check])
         if 'x' in check:
-            cols=list(counts[rows[0]])
+            cols=sorted(set(ck
+                            for r,c in counts.items()
+                            for ck,cv in c.items()
+                            if c[ck]
+                            ))
         else:
             cols=[check]
+        maxcols=20
+        if len(cols) >maxcols: #break table
+            colsa=cols[:maxcols]
+            colsb=cols[maxcols:]
+            countsa={r:{ck:c[ck]
+                        for ck,cv in c.items()
+                        if ck in colsa
+                        } for r,c in counts.items()
+                    }
+            countsb={r:{ck:c[ck]
+                        for ck,cv in c.items()
+                        if ck in colsb
+                        } for r,c in counts.items()
+                    }
+            xlp.Row(table)
+            table1cell=xlp.Cell(table)
+            table1=xlp.Table(table1cell,numbered=False)
+            self.coocurrencetable(table1,check,countsa)
+            table2cell=xlp.Cell(table)
+            table2=xlp.Table(table2cell,numbered=False)
+            self.coocurrencetable(table2,check,countsb)
+            return
         for x1 in ['header']+rows:
             h=xlp.Row(table)
             for x2 in ['header']+cols:
