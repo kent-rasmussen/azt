@@ -329,12 +329,14 @@ class Table(ET.Element):
                 <tr><td/></tr>
             </table>
         </tablenumbered>"""
-    def __init__(self,parent,caption):
-        id=rx.id('nt'+caption)
-        self.numbered=ET.SubElement(parent.node,'tablenumbered',attrib={'id':id})
+    def __init__(self,parent,caption=None,numbered=True):
+        if numbered:
+            id=rx.id('nt'+caption)
+            self.numbered=ET.SubElement(parent.node,'tablenumbered',attrib={'id':id})
         self.node=ET.SubElement(self.numbered,'table')
-        self.caption=ET.SubElement(self.node,'caption')
-        self.caption.text=caption
+        if caption:
+            self.caption=ET.SubElement(self.node,'caption')
+            self.caption.text=caption
 class Row(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'tr')
