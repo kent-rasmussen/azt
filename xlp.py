@@ -19,6 +19,12 @@ class Report(object):
     def __init__(self,filename,report,langname):
         self.start_time=time.time()
         self.filename=filename
+        self.tmpfile=self.filename+'.tmp'
+        if file.exists(self.tmpfile):
+            log.info(_("Report {} already in process; not doing again."
+                    ).format(self.filename))
+            return
+        open(self.tmpfile, 'wb').close()
         self.stylesheetdir=file.getstylesheetdir(filename)
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
         self.node=ET.Element('lingPaper') #self.tree.getroot()
@@ -41,6 +47,7 @@ class Report(object):
         self.xlptypes()
         self.stylesheet()
         self.write()
+        file.remove(self.tmpfile)
         t=time.time()-self.start_time
         # m=int(t/60)
         # s=t%60
