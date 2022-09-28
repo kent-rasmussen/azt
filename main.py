@@ -2903,8 +2903,8 @@ class TaskDressing(object):
                                 self.makestatusframe,
                                 dictnow)
             return
-        log.info("Dict changes; checking attributes and updating the UI. ({})"
-                                                            "".format(dictnow))
+        # log.info("Dict changes; checking attributes and updating the UI. ({})"
+        #                                                     "".format(dictnow))
         if self.taskchooser.donew['collectionlc']:
             self.settings.makeeverythingok()
         #This will probably need to be reworked
@@ -7756,7 +7756,12 @@ class Report(object):
             return
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
-        log.info("regexCV: {}; \nregex: {}".format(self.regexCV,self.regex))
+        log.info("regexCV: {}"
+                # "; \nregex: {}"
+                "".format(
+                self.regexCV,
+                # self.regex
+                )         )
         matches=set(self.senseidformsbyregex(self.regex,**kwargs))
         if 'ufsenseids' in kwargs:
             matches=matches&set(kwargs['ufsenseids'])
@@ -8002,11 +8007,11 @@ class Report(object):
         for ps in self.slices.pss():
             if ps == 'Invalid':
                 continue
-            log.debug("Part of Speech {}:".format(ps))
+            log.info("Part of Speech {}:".format(ps))
             for line in self.slices.valid(ps=ps):
                 profile=line[0]
                 ps=line[1]
-                log.debug("{}: {}".format(profile,self.slices[line]))
+                log.info("{}: {}".format(profile,self.slices[line]))
             print(ps,"(total):",nTotals[ps])
     def printprofilesbyps(self):
         #This is only used in the basic report
@@ -8057,8 +8062,8 @@ class Report(object):
         #There is no runwindow here...
         self.basicreported={}
         self.checkcounts={}
-        self.printprofilesbyps()
-        self.printcountssorted()
+        # self.printprofilesbyps() #don't really need this
+        # self.printcountssorted() #don't really need this
         t=_("This report covers the following top two Grammatical categories, "
             "with the top {} syllable profiles in each. "
             "This is of course configurable, but I assume you don't want "
@@ -8164,7 +8169,7 @@ class Report(object):
         for x1 in ['header']+rows:
             h=xlp.Row(table)
             for x2 in ['header']+cols:
-                log.debug("x1: {}; x2: {}".format(x1,x2))
+                # log.debug("x1: {}; x2: {}".format(x1,x2))
                 # if x1 != 'header' and x2 not in ['header','n']:
                 #     log.debug("value: {}".format(self.checkcounts[
                 #         ps][profile][name][x1][x2]))
@@ -13024,7 +13029,7 @@ def indenteddict(indict):
     outdict={}
     # log.info("working on dict with keys {}".format(indict.keys()))
     for j in indict:
-        log.info("working on {}".format(j))
+        # log.info("working on {}".format(j))
         if isinstance(indict[j], dict):
             # log.info("printing indented dict for {} key".format(j))
             # config[s][j]='\n'.join(['{'+i+':'+str(v[j][i])+'}'
@@ -13054,8 +13059,8 @@ def indenteddict(indict):
                                         for i in indict[j]#.keys()
                                         if i])+'}'
         elif indict[j]:
-            log.info("printing unindented dict for {} "
-                    "key".format(j))
+            # log.info("printing unindented dict for {} "
+            #         "key".format(j))
             outdict[j]="'"+str(indict[j])+"'"
     return outdict
 def selected(groupvars):
