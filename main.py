@@ -8146,8 +8146,9 @@ class Report(object):
             cols=[check]
         maxcols=20
         if len(cols) >maxcols: #break table
-            colsa=cols[:maxcols]
-            colsb=cols[maxcols:]
+            ncols=int(len(cols)/2)+1
+            colsa=cols[:ncols]
+            colsb=cols[ncols:]
             countsa={r:{ck:c[ck]
                         for ck,cv in c.items()
                         if ck in colsa
@@ -8158,11 +8159,12 @@ class Report(object):
                         if ck in colsb
                         } for r,c in counts.items()
                     }
-            xlp.Row(table)
-            table1cell=xlp.Cell(table)
+            table1row=xlp.Row(table)
+            table1cell=xlp.Cell(table1row)
             table1=xlp.Table(table1cell,numbered=False)
             self.coocurrencetable(table1,check,countsa)
-            table2cell=xlp.Cell(table)
+            table2row=xlp.Row(table)
+            table2cell=xlp.Cell(table2row)
             table2=xlp.Table(table2cell,numbered=False)
             self.coocurrencetable(table2,check,countsb)
             return
