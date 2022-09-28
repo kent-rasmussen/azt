@@ -8202,7 +8202,10 @@ class Report(object):
 class Comprehensive(object):
     def __init__(self):
         self.status.group(None)
+        log.info("Setting up Multislice report, based on {}"
+                "".format(self.do.__name__))
         self.do=self.basicreport
+        self.frame.status.redofinalbuttons() #because the fns changed
         log.info("doing basic report on {} with groups {}".format(self.cvtstodo,
                                                         self.status.group()))
 class ByUF(Tone):
