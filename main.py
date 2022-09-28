@@ -7360,6 +7360,9 @@ class Report(object):
                             # bylocation=self.bylocation,
                             default=default
                             )
+        if not hasattr(xlpr,'node'):
+            log.info(_("Not repeating report that looks already started."))
+            return
         s1=xlp.Section(xlpr,title='Introduction')
         text=_("This report follows an analysis of sortings of {} morphemes "
         "(roots or affixes) across the following frames: {}. {} stores these "
@@ -7581,6 +7584,9 @@ class Report(object):
                                         ,'ReportXLP.xml'])
         self.checkcounts={}
         xlpr=self.xlpstart(**kwargs)
+        if not hasattr(xlpr,'node'):
+            log.info(_("Not repeating report that looks already started."))
+            return
         """"Do I need this?"""
         print(_("Getting results of Search request"))
         c1 = "Any"
@@ -8067,6 +8073,9 @@ class Report(object):
         log.info("kwargs['psprofiles']={}".format(kwargs['psprofiles']))
         xlpr=self.xlpstart(reporttype='Multislice '+''.join(self.cvtstodo),
                             **kwargs)
+        if not hasattr(xlpr,'node'):
+            log.info(_("Not repeating report that looks already started."))
+            return
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
