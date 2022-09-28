@@ -8069,10 +8069,8 @@ class Report(object):
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                         ,'_',''.join(sorted(self.cvtstodo)[:2])
                                         ,'_BasicReport.txt'])
-        kwargs['psprofiles']={ps:profiles
-                            for profiles in [self.slices.profiles(ps=ps)[
+        kwargs['psprofiles']={ps:self.slices.profiles(ps=ps)[
                                                     :self.settings.maxprofiles]
-                            for ps in self.slices.pss()[:self.settings.maxpss]]
                             for ps in self.slices.pss()[:self.settings.maxpss]
                             }
         log.info("kwargs['psprofiles']={}".format(kwargs['psprofiles']))
