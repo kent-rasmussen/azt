@@ -7945,13 +7945,7 @@ class Report(object):
             for kwargs['group'] in groups:
                 for self.groupcomparison in groupcomparisons:
                     if kwargs['group'] != self.groupcomparison:
-                        t=_("{} {} {} {}={}-{}".format(kwargs['ps'],
-                                                        kwargs['profile'],
-                                                        kwargs['ufgroup'],
-                                                        kwargs['check'],
-                                                        kwargs['group'],
-                                                        self.groupcomparison))
-                        self.wordsbypsprofilechecksubcheckp(parent,t,**kwargs)
+                        self.wordsbypsprofilechecksubcheckp(parent,**kwargs)
         elif group:
             log.info("Going to run subcheckp just for group {}".format(group))
             self.wordsbypsprofilechecksubcheckp(parent,group=group,**kwargs)
