@@ -7756,13 +7756,17 @@ class Report(object):
         group=kwargs.get('group',self.status.group())
         ftype=kwargs.get('ftype',self.params.ftype())
         skipthisone=False
+        checkprose=_("{} {} {} {}={}").format(kwargs['ps'],
+                                    kwargs['profile'],
+                                    kwargs['ufgroup'],
+                                    kwargs['check'],
+                                    kwargs['group'])
         if isinteger(group) or (hasattr(self,'groupcomparison') and
                                 isinteger(self.groupcomparison)):
-            t=_("Skipping check")+' '+t+' '+_("because it would break the regex")
+            log.info(_("Skipping check {} because it would break the regex"
+                        "").format(checkprose))
             skipthisone=True
-        xlp.Paragraph(parent,t)
-        print(t)
-        log.debug(t)
+        log.info(checkprose)
         if skipthisone:
             return
         """possibly iterating over all these parameters, used by buildregex"""
@@ -7845,7 +7849,7 @@ class Report(object):
             if 'ufgroup' in kwargs:
                 titlebits+=kwargs['ufgroup']
             id=rx.id(titlebits)
-            ex=xlp.Example(parent,id)
+            ex=xlp.Example(parent,id,heading=checkprose)
             for senseid in matches:
                 if 'x' not in check: #This won't add XxY data again.
                     for ncvt in self.ncvts:
@@ -7938,22 +7942,12 @@ class Report(object):
                                                         self.groupcomparison))
                         self.wordsbypsprofilechecksubcheckp(parent,t,**kwargs)
         elif group:
-            log.info("Going to run report just for group {}".format(group))
-            t=_("{} {} {} {}={}".format(kwargs['ps'],
-                                        kwargs['profile'],
-                                        kwargs['ufgroup'],
-                                        kwargs['check'],
-                                        group))
-            self.wordsbypsprofilechecksubcheckp(parent,t,group=group,**kwargs)
+            log.info("Going to run subcheckp just for group {}".format(group))
+            self.wordsbypsprofilechecksubcheckp(parent,group=group,**kwargs)
         elif groups:
-            log.info("Going to run report for groups {}".format(groups))
+            log.info("Going to run subcheckp for groups {}".format(groups))
             for kwargs['group'] in groups:
-                t=_("{} {} {} {}={}".format(kwargs['ps'],
-                                            kwargs['profile'],
-                                            kwargs['ufgroup'],
-                                            kwargs['check'],
-                                            kwargs['group']))
-                self.wordsbypsprofilechecksubcheckp(parent,t,**kwargs)
+                self.wordsbypsprofilechecksubcheckp(parent,**kwargs)
     def idXLP(self,framed):
         id='x' #string!
         bits=[
