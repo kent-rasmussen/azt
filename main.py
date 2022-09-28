@@ -4566,7 +4566,7 @@ class Segments(object):
         self.output=[] #This is just a list of senseids now: (Do we need the dict?)
         # self.outputs=[] #This is just a list of senseids now: (Do we need the dict?)
         dicttosearch=self.settings.formstosearch[ps]
-        log.info("Looking for senses by regex {}".format(regex))
+        # log.info("Looking for senses by regex {}".format(regex))
         for form,id in [i for i in dicttosearch.items() if i[0]]:
             # log.info("Looking for form {}, with id {}".format(form,id))
             t = threading.Thread(target=self.ifregexadd,
