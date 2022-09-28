@@ -7748,9 +7748,11 @@ class Report(object):
         reportfileXLP='_'.join(bits)+".xml"
         xlpreport=xlp.Report(reportfileXLP,reporttype,
                         self.settings.languagenames[self.analang])
-        langsalreadythere=[]
-        for lang in set([self.analang]+self.glosslangs)-set([None]):
-            xlpreport.addlang({'id':lang,'name': self.settings.languagenames[lang]})
+        # langsalreadythere=[]
+        if hasattr(xlpreport,'node'): #otherwise, this will fail
+            for lang in set([self.analang]+self.glosslangs)-set([None]):
+                xlpreport.addlang({'id':lang,
+                                    'name': self.settings.languagenames[lang]})
         return xlpreport
     def wordsbypsprofilechecksubcheckp(self,parent,**kwargs):
         log.info("Kwargs (wordsbypsprofilechecksubcheckp): {}".format(kwargs))
