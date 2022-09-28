@@ -149,7 +149,11 @@ class Report(object):
         try:
             subprocess.run(xetexargs,shell=False) # was call
             # subprocess.call(xetexargs,shell=False) #does twice help?
-            exts=['out','aux','log']
+            exts=[
+                'tex',
+                'out','aux','log',
+                'xmla','xmlb','xmlc'
+                ]
             # exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
             for ext in exts:
                 file.remove(outfile.replace('.xml', '.'+ext))
