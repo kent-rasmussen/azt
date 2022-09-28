@@ -7746,15 +7746,15 @@ class Report(object):
         for lang in set([self.analang]+self.glosslangs)-set([None]):
             xlpreport.addlang({'id':lang,'name': self.settings.languagenames[lang]})
         return xlpreport
-    def wordsbypsprofilechecksubcheckp(self,parent,t="NoText!",**kwargs):
+    def wordsbypsprofilechecksubcheckp(self,parent,**kwargs):
         log.info("Kwargs (wordsbypsprofilechecksubcheckp): {}".format(kwargs))
-        usegui=kwargs.get('usegui',True)
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
-        group=kwargs.get('group',self.status.group())
-        ftype=kwargs.get('ftype',self.params.ftype())
+        usegui=kwargs['usegui']=kwargs.get('usegui',True)
+        cvt=kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
+        ps=kwargs['ps']=kwargs.get('ps',self.slices.ps())
+        profile=kwargs['profile']=kwargs.get('profile',self.slices.profile())
+        check=kwargs['check']=kwargs.get('check',self.params.check())
+        group=kwargs['group']=kwargs.get('group',self.status.group())
+        ftype=kwargs['ftype']=kwargs.get('ftype',self.params.ftype())
         skipthisone=False
         checkprose=_("{} {} {} {}={}").format(kwargs['ps'],
                                     kwargs['profile'],
@@ -7770,7 +7770,7 @@ class Report(object):
         if skipthisone:
             return
         """possibly iterating over all these parameters, used by buildregex"""
-        self.buildregex(cvt=cvt,profile=profile,check=check,group=group)
+        self.buildregex(**kwargs)
         log.info("regexCV: {}"
                 # "; \nregex: {}"
                 "".format(
