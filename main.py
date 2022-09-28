@@ -7769,6 +7769,9 @@ class Report(object):
                                     kwargs['ufgroup'],
                                     kwargs['check'],
                                     kwargs['group'])
+        if ('x' in kwargs['check'] and hasattr(self,'groupcomparison')
+                    and self.groupcomparison):
+            checkprose+='-'+self.groupcomparison
         if isinteger(group) or (hasattr(self,'groupcomparison') and
                                 isinteger(self.groupcomparison)):
             log.info(_("Skipping check {} because it would break the regex"
