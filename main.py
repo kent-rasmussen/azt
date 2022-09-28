@@ -7755,7 +7755,7 @@ class Report(object):
                                     'name': self.settings.languagenames[lang]})
         return xlpreport
     def wordsbypsprofilechecksubcheckp(self,parent,**kwargs):
-        log.info("Kwargs (wordsbypsprofilechecksubcheckp): {}".format(kwargs))
+        # log.info("Kwargs (wordsbypsprofilechecksubcheckp): {}".format(kwargs))
         usegui=kwargs['usegui']=kwargs.get('usegui',True)
         cvt=kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
         ps=kwargs['ps']=kwargs.get('ps',self.slices.ps())
@@ -7777,14 +7777,14 @@ class Report(object):
             log.info(_("Skipping check {} because it would break the regex"
                         "").format(checkprose))
             skipthisone=True
-        log.info(checkprose)
         if skipthisone:
             return
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(**kwargs)
-        log.info("regexCV: {}"
+        log.info("{}; regexCV: {}"
                 # "; \nregex: {}"
                 "".format(
+                checkprose,
                 self.regexCV,
                 # self.regex
                 )         )
