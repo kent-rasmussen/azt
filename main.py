@@ -7863,7 +7863,7 @@ class Report(object):
                             self.basicreported[ncvt]=set([senseid])
                 framed=self.taskchooser.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,ftype=ftype,listword=True) #showgroups?
-                if usegui: #i.e., showing results in window
+                if usegui and hasattr(self,'results'): #i.e., showing results in window
                     self.results.row+=1
                     col=0
                     for lang in [self.analang]+self.glosslangs:
