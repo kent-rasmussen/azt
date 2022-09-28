@@ -7764,7 +7764,7 @@ class Report(object):
         group=kwargs['group']=kwargs.get('group',self.status.group())
         ftype=kwargs['ftype']=kwargs.get('ftype',self.params.ftype())
         skipthisone=False
-        checkprose=_("{} {} {} {}={}").format(kwargs['ps'],
+        checkprose="{} {} {} {}={}".format(kwargs['ps'],
                                     kwargs['profile'],
                                     kwargs['ufgroup'],
                                     kwargs['check'],
