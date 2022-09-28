@@ -7730,18 +7730,18 @@ class Report(object):
         elif not 'Basic' in reporttype: #We don't want this in the title
             #this is only for adhoc "big button" reports.
             reporttype=str(self.params.check())
-        reporttype=' '.join([ps,profile,reporttype])
         if 'psprofiles' in kwargs:
             reporttype=' '.join(
                         [' '.join(
                         [' '.join([ps]+
                                 ['('+'-'.join(kwargs['psprofiles'][ps])+')'
-                                            for ps in kwargs['psprofiles']
                                             ])
                                 for ps in kwargs['psprofiles']
                                 ]),
                                 # profile,
                                 reporttype])
+        else:
+            reporttype=' '.join([ps,profile,reporttype])
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
         if not default:
             bits.append('mod')
